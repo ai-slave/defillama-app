@@ -1384,6 +1384,12 @@ function SavedQueriesTab({
 	)
 }
 
+// Module scope keeps the ref callback's identity stable, so it runs when the input attaches, not on every keystroke.
+function focusAndSelect(input: HTMLInputElement | null) {
+	input?.focus()
+	input?.select()
+}
+
 function InlineRenameInput({
 	initial,
 	onCommit,
@@ -1394,16 +1400,10 @@ function InlineRenameInput({
 	onCancel: () => void
 }) {
 	const [value, setValue] = useState(initial)
-	const inputRef = useRef<HTMLInputElement | null>(null)
-
-	useEffect(() => {
-		inputRef.current?.focus()
-		inputRef.current?.select()
-	}, [])
 
 	return (
 		<input
-			ref={inputRef}
+			ref={focusAndSelect}
 			value={value}
 			onChange={(e) => setValue(e.target.value)}
 			onKeyDown={(e) => {

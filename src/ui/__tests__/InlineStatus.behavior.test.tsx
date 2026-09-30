@@ -69,3 +69,41 @@ test('an error rendered on a page does not scroll the page', async () => {
 	expect(alert.textContent).toBe('Could not create the dashboard.')
 	expect(scrolled).toEqual([])
 })
+
+// DeleteAccountCard renders its warning and its blocker in one slot, so a refetch that finds a blocker turns the
+// mounted warning into an error in place.
+function Eligibility() {
+	const [check, setCheck] = useState({ blocked: false, attempt: 1 })
+	return (
+		<Dialog size="sm" open onClose={() => {}}>
+			<DialogHeader title="Delete account" />
+			<DialogBody>
+				<button type="button" onClick={() => setCheck({ blocked: true, attempt: check.attempt + 1 })}>
+					Check again
+				</button>
+				{check.blocked ? (
+					<InlineStatus variant="error">{`Cancel your subscription first (check ${check.attempt}).`}</InlineStatus>
+				) : (
+					<InlineStatus variant="warning">Your dashboards are deleted too.</InlineStatus>
+				)}
+			</DialogBody>
+		</Dialog>
+	)
+}
+
+async function clickCheckAgain() {
+	const button = [...document.querySelectorAll('button')].find((candidate) => candidate.textContent === 'Check again')!
+	await act(async () => button.click())
+	return document.querySelector('[role=alert]')!
+}
+
+test('a dialog warning that turns into an error in place brings the error into view once', async () => {
+	await act(async () => root.render(<Eligibility />))
+	expect(scrolled).toEqual([])
+	const alert = await clickCheckAgain()
+	expect(alert.textContent).toBe('Cancel your subscription first (check 2).')
+	expect(scrolled).toEqual([{ element: alert, options: { block: 'nearest' } }])
+	await clickCheckAgain()
+	expect(alert.textContent).toBe('Cancel your subscription first (check 3).')
+	expect(scrolled).toHaveLength(1)
+})

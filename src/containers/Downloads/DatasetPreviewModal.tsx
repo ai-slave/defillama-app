@@ -206,9 +206,13 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	// The virtualizer reads the scroller through tableContainerRef; the overflow hook follows it across the
 	// remount when filtering empties the table. Kept stable so React does not detach it every render.
 	const setTableContainer = useCallback(
-		(node: HTMLDivElement | null) => {
+		(node: HTMLDivElement) => {
 			tableContainerRef.current = node
-			attachOverflow(node)
+			const detachOverflow = attachOverflow(node)
+			return () => {
+				tableContainerRef.current = null
+				detachOverflow()
+			}
 		},
 		[attachOverflow]
 	)

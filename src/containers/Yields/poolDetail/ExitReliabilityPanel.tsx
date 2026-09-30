@@ -10,6 +10,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { VerifiedBlock } from '../data/types'
+import { scrollIntoViewIfHashed } from './anchorScroll'
 import {
 	EXIT_OUTCOME_LABELS,
 	type ExitIncident,
@@ -19,7 +20,6 @@ import {
 	incidentWithdrawableShare
 } from './exitReliability'
 import type { DetailHolders } from './types'
-import { useAnchorScroll } from './useAnchorScroll'
 
 export const EXIT_STATUS_ID = 'exit-status'
 
@@ -91,9 +91,8 @@ export function ExitReliabilityPanel({
 	verified: VerifiedBlock | null
 	holders: DetailHolders | null
 }) {
-	useAnchorScroll(EXIT_STATUS_ID)
 	return (
-		<ChartPanel id={EXIT_STATUS_ID} className="@container scroll-mt-4">
+		<ChartPanel id={EXIT_STATUS_ID} ref={scrollIntoViewIfHashed} className="@container scroll-mt-4">
 			<ExitLedger model={model} verified={verified} holders={holders} />
 		</ChartPanel>
 	)

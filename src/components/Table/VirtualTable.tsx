@@ -1,7 +1,7 @@
 import type { RowData } from '@tanstack/react-table'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import * as React from 'react'
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
@@ -36,17 +36,14 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 }: VirtualTableProps<F, T>) {
 	'use no memo'
 	// React Virtual still exposes mutable render values behind a stable instance.
-	const tableContainerRef = useRef<HTMLDivElement>(null)
 	const { rows, headerGroups, visibleLeafColumns, subRowOrdinalById, isChainPage } = useTableView(table)
 	const firstColumnId = visibleLeafColumns[0]?.id
 	const [containerOffset, setContainerOffset] = useState(0)
-	useEffect(() => {
-		if (tableContainerRef.current) {
-			// Not offsetTop: it measures from the nearest positioned ancestor, and
-			// panel wrappers (ui/Panel) are position:relative — the window
-			// virtualizer needs the offset from the top of the document.
-			setContainerOffset(tableContainerRef.current.getBoundingClientRect().top + window.scrollY)
-		}
+	// Measured when the container mounts, before paint, so the first frame already renders the rows in view.
+	// Not offsetTop: it measures from the nearest positioned ancestor, and panel wrappers (ui/Panel) are
+	// position:relative — the window virtualizer needs the offset from the top of the document.
+	const measureContainerOffset = useCallback((container: HTMLDivElement) => {
+		setContainerOffset(container.getBoundingClientRect().top + window.scrollY)
 	}, [])
 
 	const estimatedRowSize = rowSize ?? (compact ? COMPACT_VIRTUAL_ROW_SIZE : DEFAULT_VIRTUAL_ROW_SIZE)
@@ -101,7 +98,7 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 	return (
 		<TableFrame
 			store={table.store}
-			containerRef={tableContainerRef}
+			onContainerMount={measureContainerOffset}
 			useStickyHeader={useStickyHeader}
 			visibleLeafColumns={visibleLeafColumns}
 			headerGroups={headerGroups}

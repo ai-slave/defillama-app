@@ -5,7 +5,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import type { VerifiedBlock, VerifiedConfidence } from '../data/types'
 import { SealGlyph, splitMethod } from '../Tables/Measured'
-import { useAnchorScroll } from './useAnchorScroll'
+import { scrollIntoViewIfHashed } from './anchorScroll'
 
 export const HOW_WE_VERIFY_ID = 'how-we-verify'
 
@@ -55,8 +55,6 @@ export function VerifiedApyPanel({
 	/** The pool, so the receipt names what it was run on. */
 	symbol?: string
 }) {
-	useAnchorScroll(HOW_WE_VERIFY_ID)
-
 	const confidence = verified.apy_confidence
 	const stamps: Array<[label: string, asOf: string]> = []
 	for (const [label, asOf] of [
@@ -67,7 +65,7 @@ export function VerifiedApyPanel({
 	}
 
 	return (
-		<ChartPanel id={HOW_WE_VERIFY_ID} className="scroll-mt-4">
+		<ChartPanel id={HOW_WE_VERIFY_ID} ref={scrollIntoViewIfHashed} className="scroll-mt-4">
 			<div className="flex flex-col gap-2 border-t border-subtle px-4 py-3">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 					<h3 className="flex items-center gap-1.5 label-lg text-primary">

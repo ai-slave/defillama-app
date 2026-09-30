@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
-import { act, type ReactNode } from 'react'
+import { act, type ReactNode, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CopyDashboardLinkButton } from '../CopyDashboardLinkButton'
@@ -145,4 +146,72 @@ test('a public dashboard keeps its link and embed snippet', async () => {
 	const embed = document.body.querySelector<HTMLTextAreaElement>('[aria-label="Embed code"]')!
 	expect(embed.value).toContain('<iframe')
 	expect(buttonLabelled('Make public')).toBeUndefined()
+})
+
+const copyLinkButton = () => document.body.querySelector<HTMLButtonElement>('button[aria-label="Copy link"]')
+
+// The dashboard turns public when its owner's save lands, which can commit before or after the save's promise resolves.
+function PublishingDashboard({
+	flip,
+	onMakePublic
+}: {
+	flip: 'before resolving' | 'after resolving' | 'never'
+	onMakePublic?: () => Promise<void>
+}) {
+	const [visibility, setVisibility] = useState<'private' | 'public'>('private')
+	return (
+		<>
+			<CopyDashboardLinkButton
+				dashboardVisibility={visibility}
+				dashboardId="dashboard-1"
+				isOwner
+				onMakePublic={
+					onMakePublic ??
+					(async () => {
+						if (flip === 'before resolving') flushSync(() => setVisibility('public'))
+						else if (flip === 'after resolving') queueMicrotask(() => setVisibility('public'))
+					})
+				}
+			/>
+			<button type="button" onClick={() => setVisibility('public')}>
+				Publish from settings
+			</button>
+		</>
+	)
+}
+
+test.each(['before resolving', 'after resolving'] as const)(
+	'Make public moves focus to Copy link when the dashboard turns public %s',
+	async (flip) => {
+		await act(async () => root.render(<PublishingDashboard flip={flip} />))
+		await openShare()
+		await act(async () => buttonLabelled('Make public')!.click())
+		expect(copyLinkButton()).not.toBeNull()
+		expect(document.activeElement).toBe(copyLinkButton())
+	}
+)
+
+test('opening the share popover of a public dashboard leaves Copy link unfocused', async () => {
+	await act(async () => root.render(<CopyDashboardLinkButton dashboardVisibility="public" dashboardId="dashboard-1" />))
+	await openShare()
+	expect(copyLinkButton()).not.toBeNull()
+	expect(document.activeElement).not.toBe(copyLinkButton())
+})
+
+test('a failed Make public leaves Copy link unfocused when the dashboard later turns public elsewhere', async () => {
+	await act(async () =>
+		root.render(
+			<PublishingDashboard
+				flip="never"
+				onMakePublic={async () => {
+					throw new Error('This dashboard is read-only')
+				}}
+			/>
+		)
+	)
+	await openShare()
+	await act(async () => buttonLabelled('Make public')!.click())
+	await act(async () => buttonLabelled('Publish from settings')!.click())
+	expect(copyLinkButton()).not.toBeNull()
+	expect(document.activeElement).not.toBe(copyLinkButton())
 })

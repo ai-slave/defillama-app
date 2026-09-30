@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
+import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -19,7 +20,6 @@ import {
 import { ResearchChart, ResearchChartStatus } from './ResearchChart'
 import { getResearchPresentation, RESEARCH_VIEWS, resolveResearchView } from './researchPresentation'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
-import { useLazyVisible } from './useLazyVisible'
 
 const STALE_TIME = 6 * 60 * 60 * 1000
 
@@ -117,11 +117,11 @@ function ResearchChartCard({
 	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
 }) {
 	const router = useRouter()
-	const { ref, visible } = useLazyVisible<HTMLDivElement>()
+	const { ref, seen } = useInViewOnce({ rootMargin: '400px' })
 	const query = useQuery({
 		queryKey: ['exchange-research-chart', part, range],
 		queryFn: () => loadReport(part, range),
-		enabled: visible,
+		enabled: seen,
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})

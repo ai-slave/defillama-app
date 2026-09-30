@@ -302,3 +302,27 @@ test('renaming with IME keeps the draft until composition ends, then saves the r
 		})
 	)
 })
+
+test('the selected tab scrolls into view when the bar mounts and when the workspace opens another tab', async () => {
+	const scrollIntoView = vi.mocked(HTMLElement.prototype.scrollIntoView)
+	await mount()
+	expect(scrollIntoView.mock.contexts).toEqual([tab('B').parentElement])
+	expect(scrollIntoView.mock.calls).toEqual([[{ block: 'nearest', inline: 'nearest' }]])
+
+	scrollIntoView.mockClear()
+	await settle(() => model.openTab({}))
+	const opened = container.querySelector('[role="tab"][aria-selected="true"]')!
+	expect(opened.getAttribute('aria-label')).not.toBe('B')
+	expect(scrollIntoView.mock.contexts).toEqual([opened.parentElement])
+})
+
+test('renaming a tab selects its whole name, and typing keeps the caret where the typing left it', async () => {
+	await mount()
+	await settle(() => tab('B').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })))
+	const input = container.querySelector<HTMLInputElement>('input[aria-label="Rename B"]')!
+	expect(document.activeElement).toBe(input)
+	expect([input.selectionStart, input.selectionEnd]).toEqual([0, 'B'.length])
+
+	await renameValue('Bravo')
+	expect([input.selectionStart, input.selectionEnd]).toEqual(['Bravo'.length, 'Bravo'.length])
+})

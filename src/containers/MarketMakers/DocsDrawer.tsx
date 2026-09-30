@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { docsAsset, FigureRadar, FigureTable } from './DocsFigures'
@@ -102,34 +102,28 @@ function DocFileIcon() {
 export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const [activeId, setActiveId] = useState(TOC[0].id)
 
-	useEffect(() => {
-		if (!open) return
-		let observer: IntersectionObserver | null = null
-		const raf = requestAnimationFrame(() => {
-			const sections = TOC.map((t) => document.getElementById(t.id)).filter((el): el is HTMLElement => el != null)
-			if (sections.length === 0) return
-			let root: HTMLElement | null = sections[0].parentElement
-			while (root && root !== document.body) {
-				const overflowY = getComputedStyle(root).overflowY
-				if (overflowY === 'auto' || overflowY === 'scroll') break
-				root = root.parentElement
-			}
-			observer = new IntersectionObserver(
-				(entries) => {
-					const visible = entries
-						.filter((e) => e.isIntersecting)
-						.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-					if (visible[0]) setActiveId(visible[0].target.id)
-				},
-				{ root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
-			)
-			for (const section of sections) observer?.observe(section)
-		})
-		return () => {
-			cancelAnimationFrame(raf)
-			observer?.disconnect()
+	// Highlights the section nearest the top of the drawer's scroll body. It attaches when the drawer's portal
+	// mounts the sections, which happens after `open` turns true.
+	const spySections = (sections: HTMLDivElement | null) => {
+		if (!sections) return
+		let root: HTMLElement | null = sections
+		while (root && root !== document.body) {
+			const overflowY = getComputedStyle(root).overflowY
+			if (overflowY === 'auto' || overflowY === 'scroll') break
+			root = root.parentElement
 		}
-	}, [open])
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const visible = entries
+					.filter((e) => e.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+				if (visible[0]) setActiveId(visible[0].target.id)
+			},
+			{ root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
+		)
+		for (const section of sections.querySelectorAll('section[id]')) observer.observe(section)
+		return () => observer.disconnect()
+	}
 
 	const scrollToSection = (id: string) => {
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -154,6 +148,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 									<li key={item.id}>
 										<button
 											type="button"
+											aria-current={active ? 'location' : undefined}
 											onClick={() => scrollToSection(item.id)}
 											className={`flex w-full cursor-pointer border-l-2 pl-3 text-left text-base whitespace-nowrap ${
 												active
@@ -170,7 +165,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 					</div>
 				</nav>
 
-				<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
+				<div ref={spySections} className="flex min-w-0 flex-1 flex-col gap-8 p-4">
 					<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-brand-muted p-2">
 						<div className="flex items-center gap-2">
 							<DocFileIcon />

@@ -1,11 +1,10 @@
 import { createColumnHelper, type TableOptions } from '@tanstack/react-table'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
-import { useResize } from '~/hooks/useResize'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
@@ -145,33 +144,42 @@ function PerkChips({ perks }: { perks: Array<string> }) {
 	)
 }
 
+/** How many chips fit on one line of `width`, keeping room for the counter. Always at least one. */
+function countFittingPerks(perks: Array<string>, width: number, sample: Element): number {
+	let used = 0
+	let count = 0
+	for (const [index, perk] of perks.entries()) {
+		const chip = perkChipWidth(perk, sample) + (index ? PERK_GAP : 0)
+		const stillHidden = perks.length - index - 1
+		// Keep room for the counter unless this chip empties the list.
+		const counter = stillHidden ? PERK_GAP + perkChipWidth(`+${stillHidden}`, sample) : 0
+		if (used + chip + counter > width) break
+		used += chip
+		count += 1
+	}
+	return Math.max(count, 1)
+}
+
 function PerksValue({ perks }: { perks: Array<string> }) {
-	const rowRef = useRef<HTMLDivElement>(null)
-	const { width, ref: measureRow } = useResize(rowRef)
 	// One chip until the row has been measured, which is also what SSR renders.
 	const [visible, setVisible] = useState(1)
-
-	useEffect(() => {
-		const sample = rowRef.current?.firstElementChild
-		if (!sample || !width) return
-		let used = 0
-		let count = 0
-		for (const [index, perk] of perks.entries()) {
-			const chip = perkChipWidth(perk, sample) + (index ? PERK_GAP : 0)
-			const stillHidden = perks.length - index - 1
-			// Keep room for the counter unless this chip empties the list.
-			const counter = stillHidden ? PERK_GAP + perkChipWidth(`+${stillHidden}`, sample) : 0
-			if (used + chip + counter > width) break
-			used += chip
-			count += 1
+	// Re-attaches when `perks` changes, so a new list is recounted against the same row.
+	const fitPerks = (row: HTMLDivElement | null) => {
+		const sample = row?.firstElementChild
+		if (!row || !sample) return
+		const measure = () => {
+			if (row.offsetWidth) setVisible(countFittingPerks(perks, row.offsetWidth, sample))
 		}
-		setVisible(Math.max(count, 1))
-	}, [perks, width])
+		measure()
+		const observer = new ResizeObserver(measure)
+		observer.observe(row, { box: 'border-box' })
+		return () => observer.disconnect()
+	}
 
 	if (perks.length === 0) return <EmptyValue />
 	const hidden = perks.slice(visible)
 	return (
-		<div ref={measureRow} className="flex flex-nowrap items-center gap-1 overflow-hidden">
+		<div ref={fitPerks} className="flex flex-nowrap items-center gap-1 overflow-hidden">
 			<PerkChips perks={perks.slice(0, visible)} />
 			{hidden.length > 0 ? (
 				<Hovercard

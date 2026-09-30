@@ -205,3 +205,26 @@ test("a Run before Save stores the fresh result with the card's chart setup", as
 		chart: { chartType: 'histogram', histogram: { valueCol: 'value', binCount: 12 } }
 	})
 })
+
+test('Cancel reports once that the editor has finished leaving, so its session can be dropped', async () => {
+	const onClosed = vi.fn()
+	function Harness() {
+		const [open, setOpen] = useState(true)
+		return <SqlChartModal editItem={item} isOpen={open} onClose={() => setOpen(false)} onClosed={onClosed} />
+	}
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<DashboardTestProvider>
+					<Harness />
+				</DashboardTestProvider>
+			</session.Wrapper>
+		)
+	)
+	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+	expect(onClosed).not.toHaveBeenCalled()
+
+	await click('Cancel')
+	expect(document.querySelector('[role="dialog"]')).toBeNull()
+	expect(onClosed).toHaveBeenCalledOnce()
+})

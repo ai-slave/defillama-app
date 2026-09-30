@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { NotebookMarkdown } from './NotebookMarkdown'
 
 interface MarkdownCellProps {
@@ -10,25 +10,14 @@ interface MarkdownCellProps {
 }
 
 export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: MarkdownCellProps) {
+	// An empty cell opens its editor when it gains focus, and a new cell mounts focused. Escape closes the editor
+	// until focus leaves and comes back.
 	const [editing, setEditing] = useState(() => focused && source.length === 0)
-	const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-	const wasSourceEmpty = useRef(source.length === 0)
-
-	useEffect(() => {
-		if (focused && wasSourceEmpty.current && source.length === 0) {
-			setEditing(true)
-		}
-		wasSourceEmpty.current = source.length === 0
-	}, [focused, source])
-
-	useEffect(() => {
-		if (editing && textareaRef.current) {
-			textareaRef.current.focus()
-			const end = textareaRef.current.value.length
-			textareaRef.current.setSelectionRange(end, end)
-			autoGrow(textareaRef.current)
-		}
-	}, [editing])
+	const [wasFocused, setWasFocused] = useState(focused)
+	if (focused !== wasFocused) {
+		setWasFocused(focused)
+		if (focused && source.length === 0) setEditing(true)
+	}
 
 	const startEdit = useCallback(() => {
 		setEditing(true)
@@ -43,7 +32,7 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 	if (editing) {
 		return (
 			<textarea
-				ref={textareaRef}
+				ref={focusAtEnd}
 				value={source}
 				onChange={(e) => {
 					onChange(e.target.value)
@@ -86,6 +75,14 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 			)}
 		</div>
 	)
+}
+
+// Module scope keeps the ref callback's identity stable, so it runs when the editor opens, not on every keystroke.
+function focusAtEnd(textarea: HTMLTextAreaElement | null) {
+	if (!textarea) return
+	textarea.focus()
+	textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+	autoGrow(textarea)
 }
 
 function autoGrow(el: HTMLTextAreaElement) {

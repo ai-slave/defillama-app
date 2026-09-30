@@ -190,19 +190,12 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		open: isOpen,
 		setOpen: (open) => {
 			if (!open) handleClose()
+		},
+		// Ariakit reports mounted = false once the exit transition ends, never on a first render that starts closed.
+		setMounted: (mounted) => {
+			if (!mounted) onClosed?.()
 		}
 	})
-	const isMounted = Ariakit.useStoreState(dialogStore, 'mounted')
-	const wasMountedRef = useRef(false)
-	useEffect(() => {
-		if (isMounted) {
-			wasMountedRef.current = true
-			return
-		}
-		if (!wasMountedRef.current) return
-		wasMountedRef.current = false
-		onClosed?.()
-	}, [isMounted, onClosed])
 
 	const editorLineCount = sql.split('\n').length
 	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`

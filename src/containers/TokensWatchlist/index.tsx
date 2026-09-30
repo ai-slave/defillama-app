@@ -9,7 +9,7 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { DialogForm } from '~/components/DialogForm'
 import { BasicLink } from '~/components/Link'
@@ -219,24 +219,20 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 // The token table scrolls horizontally, so the expanded markets panel is pinned to the left edge of the
 // scroll viewport and sized to it — keeping it fully visible instead of stretched across the wide table.
 function ExpandedTokenMarkets({ geckoId, symbol }: { geckoId: string; symbol: string }) {
-	const ref = useRef<HTMLDivElement>(null)
 	const [width, setWidth] = useState<number | null>(null)
-
-	useEffect(() => {
-		const el = ref.current
-		if (!el) return
-		const scroller = el.closest('[data-table-scroller]') as HTMLElement | null
+	const pinToScroller = (panel: HTMLDivElement | null) => {
+		const scroller = panel?.closest<HTMLElement>('[data-table-scroller]')
 		if (!scroller) return
 		const update = () => setWidth(scroller.clientWidth)
 		update()
 		const observer = new ResizeObserver(update)
 		observer.observe(scroller)
 		return () => observer.disconnect()
-	}, [])
+	}
 
 	return (
 		<div
-			ref={ref}
+			ref={pinToScroller}
 			className="sticky left-0 z-10 border-t border-subtle bg-surface"
 			style={{ width: width ? `${width}px` : undefined }}
 		>

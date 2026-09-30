@@ -9,7 +9,7 @@ import {
 import { column_getCanSort, column_getIsSorted, column_toggleSorting } from '@tanstack/react-table/static-functions'
 import clsx from 'clsx'
 import * as React from 'react'
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
@@ -57,7 +57,8 @@ interface TableFrameProps<F extends SortingFeatures & VisibilityFeatures, T exte
 	tableLayout: TableLayout
 	className?: string
 	style?: React.CSSProperties
-	containerRef?: React.RefObject<HTMLDivElement | null>
+	/** Runs each time the scroll container mounts. It is not rendered while every column is hidden. */
+	onContainerMount?: (container: HTMLDivElement) => void
 	useStickyHeader?: boolean
 }
 
@@ -72,11 +73,20 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 	tableLayout,
 	className,
 	style,
-	containerRef,
+	onContainerMount,
 	useStickyHeader = false
 }: TableFrameProps<F, T>) {
-	const ownContainerRef = useRef<HTMLDivElement>(null)
-	const tableContainerRef = containerRef ?? ownContainerRef
+	const tableContainerRef = useRef<HTMLDivElement>(null)
+	const attachContainer = useCallback(
+		(container: HTMLDivElement) => {
+			tableContainerRef.current = container
+			onContainerMount?.(container)
+			return () => {
+				tableContainerRef.current = null
+			}
+		},
+		[onContainerMount]
+	)
 	const isSmallScreen = useMedia('(max-width: 768px)')
 	const tableHeaderRef = useRef<HTMLTableSectionElement>(null)
 	const stickyHeaderTableRef = useRef<HTMLTableElement>(null)
@@ -348,7 +358,7 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 
 	return (
 		<div
-			ref={tableContainerRef}
+			ref={attachContainer}
 			className={clsx(
 				'relative isolate w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-surface',
 				className

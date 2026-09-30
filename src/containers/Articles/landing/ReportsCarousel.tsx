@@ -6,6 +6,7 @@ import { SponsoredByBadge } from '~/containers/Articles/landing/SponsoredByBadge
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
+import { useResize } from '~/hooks/useResize'
 import { Icon } from '~/ui/Icon'
 
 const MOBILE_QUERY = '(max-width: 767px)'
@@ -229,21 +230,9 @@ export function ReportsCarousel(props: ReportsCarouselProps) {
 
 	const [currentOverride, setCurrentOverride] = useState<number | null>(null)
 	const [isTransitioning, setIsTransitioning] = useState(false)
-	const [containerWidth, setContainerWidth] = useState(0)
+	const { width: containerWidth, ref: measureContainer } = useResize(containerRef)
 	const [isHovered, setIsHovered] = useState(false)
 	const current = TOTAL_COUNT > 0 ? Math.min(currentOverride ?? CENTER, TOTAL_COUNT - 1) : 0
-
-	const checkContainerWidth = useCallback(() => {
-		if (containerRef.current) {
-			setContainerWidth(containerRef.current.offsetWidth)
-		}
-	}, [])
-
-	useEffect(() => {
-		checkContainerWidth()
-		window.addEventListener('resize', checkContainerWidth)
-		return () => window.removeEventListener('resize', checkContainerWidth)
-	}, [checkContainerWidth])
 
 	const desktopOffsets = useMemo(() => {
 		if (isMobile || TOTAL_COUNT < 2 || containerWidth <= 0) return null
@@ -461,7 +450,7 @@ export function ReportsCarousel(props: ReportsCarouselProps) {
 				)}
 
 				<div
-					ref={containerRef}
+					ref={measureContainer}
 					className={clsx(
 						'relative mx-auto',
 						isMobile

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { UTR_GRADE_COLORS, type UtrGradeLabel } from './gradeBands'
 import type { UtrScoringConfig } from './types'
@@ -175,6 +175,11 @@ export function UtrDocsDrawer({
 	)
 }
 
+// The body mounts once per open, so the requested chapter scrolls into place when its section mounts.
+const scrollToStartOnMount = (section: HTMLElement | null) => {
+	section?.scrollIntoView({ block: 'start' })
+}
+
 const scrollToId = (id: string) => {
 	document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -193,54 +198,42 @@ function UtrDocsDrawerBody({
 	const activeChapter = chapters.find((chapter) => chapter.id === activeId) ?? chapters[0]
 	const subsections = chapterSubsections(activeChapter)
 
-	useEffect(() => {
-		if (!initialChapterId) return
-		const frame = requestAnimationFrame(() => {
-			document.getElementById(`utr-docs-${initialChapterId}`)?.scrollIntoView({ block: 'start' })
+	// Highlights the chapter and subsection nearest the top of the drawer's scroll body. It attaches when the
+	// sections mount and again when the chapters change, since new chapters bring new headings.
+	const spyChapters = (sections: HTMLDivElement | null) => {
+		if (!sections) return
+		const targets = chapters.flatMap((chapter) => {
+			const section = document.getElementById(`utr-docs-${chapter.id}`)
+			const headings = chapterSubsections(chapter)
+				.slice(1)
+				.map((subsection) => document.getElementById(subsection.id))
+			return [section, ...headings].filter((el): el is HTMLElement => el != null)
 		})
-		return () => cancelAnimationFrame(frame)
-	}, [initialChapterId])
-
-	useEffect(() => {
-		let observer: IntersectionObserver | null = null
-		const raf = requestAnimationFrame(() => {
-			const targets = chapters.flatMap((chapter) => {
-				const section = document.getElementById(`utr-docs-${chapter.id}`)
-				const headings = chapterSubsections(chapter)
-					.slice(1)
-					.map((subsection) => document.getElementById(subsection.id))
-				return [section, ...headings].filter((el): el is HTMLElement => el != null)
-			})
-			if (targets.length === 0) return
-			let root: HTMLElement | null = targets[0].parentElement
-			while (root && root !== document.body) {
-				const overflowY = getComputedStyle(root).overflowY
-				if (overflowY === 'auto' || overflowY === 'scroll') break
-				root = root.parentElement
-			}
-			observer = new IntersectionObserver(
-				(entries) => {
-					const visible = entries
-						.filter((entry) => entry.isIntersecting)
-						.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-					const topId = visible[0]?.target.id
-					if (!topId) return
-					const chapter = chapters.find(
-						(entry) => topId === `utr-docs-${entry.id}` || topId.startsWith(`utr-docs-${entry.id}-`)
-					)
-					if (!chapter) return
-					setActiveId(chapter.id)
-					setActiveSubId(topId === `utr-docs-${chapter.id}` ? `utr-docs-${chapter.id}` : topId)
-				},
-				{ root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
-			)
-			for (const target of targets) observer?.observe(target)
-		})
-		return () => {
-			cancelAnimationFrame(raf)
-			observer?.disconnect()
+		let root: HTMLElement | null = sections
+		while (root && root !== document.body) {
+			const overflowY = getComputedStyle(root).overflowY
+			if (overflowY === 'auto' || overflowY === 'scroll') break
+			root = root.parentElement
 		}
-	}, [chapters])
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const visible = entries
+					.filter((entry) => entry.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+				const topId = visible[0]?.target.id
+				if (!topId) return
+				const chapter = chapters.find(
+					(entry) => topId === `utr-docs-${entry.id}` || topId.startsWith(`utr-docs-${entry.id}-`)
+				)
+				if (!chapter) return
+				setActiveId(chapter.id)
+				setActiveSubId(topId === `utr-docs-${chapter.id}` ? `utr-docs-${chapter.id}` : topId)
+			},
+			{ root, rootMargin: '0px 0px -75% 0px', threshold: 0 }
+		)
+		for (const target of targets) observer.observe(target)
+		return () => observer.disconnect()
+	}
 
 	return (
 		<div className="flex flex-col gap-4 md:flex-row md:gap-6">
@@ -254,6 +247,7 @@ function UtrDocsDrawerBody({
 								<li key={chapter.id}>
 									<button
 										type="button"
+										aria-current={active ? 'location' : undefined}
 										onClick={() => {
 											setActiveId(chapter.id)
 											setActiveSubId(null)
@@ -295,11 +289,12 @@ function UtrDocsDrawerBody({
 				</div>
 			</nav>
 
-			<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
+			<div ref={spyChapters} className="flex min-w-0 flex-1 flex-col gap-8 p-4">
 				{chapters.map((chapter) => (
 					<section
 						key={chapter.id}
 						id={`utr-docs-${chapter.id}`}
+						ref={chapter.id === initialChapterId ? scrollToStartOnMount : undefined}
 						className={`flex scroll-mt-4 flex-col ${chapter.id === 'glossary' ? 'gap-2' : 'gap-5'}`}
 					>
 						<h2 className="heading-xs">{chapter.label}</h2>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 
 type TokenPageSectionNavItem = {
@@ -66,6 +66,25 @@ function subscribeToScroll(listener: () => void) {
 	}
 }
 
+// Runs when a pill becomes active, since its ref changes from undefined to this function, and when an active pill
+// mounts. It only scrolls the nav when the pill is outside it, so a repeat call is harmless.
+function revealInNav(link: HTMLAnchorElement | null) {
+	const nav = link?.parentElement
+	if (!link || !nav) return
+	const navRect = nav.getBoundingClientRect()
+	const linkRect = link.getBoundingClientRect()
+	const linkLeft = linkRect.left - navRect.left + nav.scrollLeft
+	const linkRight = linkLeft + linkRect.width
+	const visibleLeft = nav.scrollLeft
+	const visibleRight = visibleLeft + nav.clientWidth
+
+	if (linkLeft < visibleLeft) {
+		nav.scrollLeft = linkLeft
+	} else if (linkRight > visibleRight) {
+		nav.scrollLeft = linkRight - nav.clientWidth
+	}
+}
+
 export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSectionNavItem> }) {
 	// The server has no scroll position, so it renders the first section; hydration then reads where the page is,
 	// which also covers a section hash and a restored scroll position.
@@ -74,35 +93,11 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 		() => (sections.length === 0 ? '' : (clickedSectionId ?? readScrolledSectionId(sections))),
 		() => sections[0]?.id ?? ''
 	)
-	const navRef = useRef<HTMLElement | null>(null)
-	const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
-
-	useEffect(() => {
-		if (!activeSectionId) return
-
-		const navElement = navRef.current
-		const linkElement = linkRefs.current[activeSectionId]
-		if (!navElement || !linkElement) return
-
-		const navRect = navElement.getBoundingClientRect()
-		const linkRect = linkElement.getBoundingClientRect()
-		const linkLeft = linkRect.left - navRect.left + navElement.scrollLeft
-		const linkRight = linkLeft + linkRect.width
-		const visibleLeft = navElement.scrollLeft
-		const visibleRight = visibleLeft + navElement.clientWidth
-
-		if (linkLeft < visibleLeft) {
-			navElement.scrollLeft = linkLeft
-		} else if (linkRight > visibleRight) {
-			navElement.scrollLeft = linkRight - navElement.clientWidth
-		}
-	}, [activeSectionId])
-
 	if (sections.length === 0) return null
 
 	return (
 		<div className="sticky top-0 z-20 bg-surface">
-			<nav ref={navRef} className={tabTrackStyles} aria-label="Token page sections">
+			<nav className={tabTrackStyles} aria-label="Token page sections">
 				{sections.map((section) => {
 					const isActive = activeSectionId === section.id
 
@@ -110,13 +105,7 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 						<TabLink
 							key={section.id}
 							href={`#${section.id}`}
-							ref={(element) => {
-								if (!element) return
-								linkRefs.current[section.id] = element
-								return () => {
-									delete linkRefs.current[section.id]
-								}
-							}}
+							ref={isActive ? revealInNav : undefined}
 							aria-current={isActive ? 'location' : undefined}
 							onClick={() => {
 								clickedSectionId = section.id

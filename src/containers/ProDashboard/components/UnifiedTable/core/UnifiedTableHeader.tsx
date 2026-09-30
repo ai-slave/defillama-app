@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
 import { ProBadge, ProButton, ProChip, ProMeta } from '../../../ui'
@@ -41,14 +41,7 @@ function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) 
 	const [expanded, setExpanded] = useState(false)
 	const [retainedQuery, setRetainedQuery] = useState('')
 	const valueRef = useRef('')
-	const searchButtonRef = useRef<HTMLButtonElement>(null)
 	const restoreFocusRef = useRef(false)
-
-	useEffect(() => {
-		if (expanded || !restoreFocusRef.current) return
-		restoreFocusRef.current = false
-		searchButtonRef.current?.focus()
-	}, [expanded])
 
 	const collapse = (restoreFocus: boolean) => {
 		restoreFocusRef.current = restoreFocus
@@ -59,7 +52,11 @@ function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) 
 	if (!expanded) {
 		return (
 			<ProButton
-				ref={searchButtonRef}
+				ref={(node) => {
+					if (!node || !restoreFocusRef.current) return
+					restoreFocusRef.current = false
+					node.focus()
+				}}
 				size="sm"
 				square
 				variant="ghost"

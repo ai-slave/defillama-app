@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
@@ -36,19 +36,12 @@ export function AddChartModal({
 		open: isOpen,
 		setOpen: (open) => {
 			if (!open) onClose()
+		},
+		// Ariakit reports mounted = false once the exit transition ends, never on a first render that starts closed.
+		setMounted: (mounted) => {
+			if (!mounted) onClosed?.()
 		}
 	})
-	const isMounted = Ariakit.useStoreState(dialogStore, 'mounted')
-	const wasMountedRef = useRef(false)
-	useEffect(() => {
-		if (isMounted) {
-			wasMountedRef.current = true
-			return
-		}
-		if (!wasMountedRef.current) return
-		wasMountedRef.current = false
-		onClosed?.()
-	}, [isMounted, onClosed])
 	const { state, actions, computed } = useModalActions(editItem, onClose, placement, draftItem)
 	const { isAllowed: isSqlAllowed, isUnknown: isSqlAccessUnknown, isRetrying, retry } = useIsSqlAllowed()
 

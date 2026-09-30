@@ -10,7 +10,7 @@ import {
 } from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import type { Ref } from 'react'
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
@@ -207,21 +207,6 @@ export function MetricSentenceBuilder({
 	const protocolListRef = useRef<HTMLDivElement | null>(null)
 	const { availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 
-	useEffect(() => {
-		if (activeToken === 'subject') {
-			subjectCombobox.setOpen(true)
-			const timeout = setTimeout(() => {
-				const portal = document.querySelector('[data-metric-token] input') as HTMLInputElement | null
-				portal?.focus()
-			}, 10)
-			return () => clearTimeout(timeout)
-		}
-
-		subjectCombobox.setInputValue('')
-		subjectCombobox.setOpen(false)
-		return undefined
-	}, [activeToken, subjectCombobox])
-
 	const closePopover = () => {
 		popover.setOpen(false)
 	}
@@ -395,8 +380,14 @@ export function MetricSentenceBuilder({
 		const anchor = anchorRefs.current[token]
 		if (!anchor) return
 
+		// The subject list is a combobox that shows its items only while open. Switching to another token
+		// keeps the popover open, so the popover's own teardown does not clear the subject search.
 		if (token === 'subject') {
 			setSubjectTab(metricSubjectType)
+			subjectCombobox.setOpen(true)
+		} else {
+			subjectCombobox.setInputValue('')
+			subjectCombobox.setOpen(false)
 		}
 
 		// Switching tokens without closing keeps the popover open, so the previous token's search has to
@@ -602,6 +593,7 @@ export function MetricSentenceBuilder({
 								) : null}
 								<div className="rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-inner">
 									<Combobox
+										autoFocus
 										placeholder={subjectTab === 'chain' ? 'Search chains...' : 'Search protocols...'}
 										className="mb-1.5 w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 										aria-label="Search"

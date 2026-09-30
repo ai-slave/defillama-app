@@ -1,6 +1,6 @@
-import { Popover, PopoverDisclosure, usePopoverStore, useStoreState } from '@ariakit/react'
+import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useId, useMemo, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -46,9 +46,9 @@ export function AriakitVirtualizedSelect({
 }: AriakitVirtualizedSelectProps) {
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
-	const listRef = useRef<HTMLDivElement | null>(null)
-	const popover = usePopoverStore({ placement })
-	const isPopoverOpen = useStoreState(popover, 'open')
+	// State, not a ref: the popover portals the list in after this component renders, and the virtualizer picks up a
+	// scroll element only on a render after it exists.
+	const [listElement, setListElement] = useState<HTMLDivElement | null>(null)
 	const disclosureId = useId()
 
 	const filteredOptions = useMemo(() => {
@@ -58,21 +58,20 @@ export function AriakitVirtualizedSelect({
 
 	const virtualizer = useVirtualItems({
 		count: filteredOptions.length,
-		getScrollElement: () => listRef.current,
+		getScrollElement: () => listElement,
 		estimateSize: () => 44,
 		overscan: 8
 	})
 
-	const { measure, scrollToIndex } = virtualizer
-
-	useEffect(() => {
-		if (!isPopoverOpen) return
-
-		measure()
-		if (filteredOptions.length > 0) {
-			scrollToIndex(0, { align: 'start' })
+	const { scrollToIndex } = virtualizer
+	const popover = usePopoverStore({
+		placement,
+		// Every open starts at the top. The list stays in the DOM while hidden, and browsers ignore scroll writes to a
+		// hidden list, so it returns to the top as it closes, while it is still shown.
+		setOpen: (open) => {
+			if (!open) scrollToIndex(0, { align: 'start' })
 		}
-	}, [isPopoverOpen, filteredOptions.length, measure, scrollToIndex])
+	})
 
 	const selectedOption = options.find((opt) => opt.value === selectedValue)
 
@@ -171,13 +170,16 @@ export function AriakitVirtualizedSelect({
 								/>
 								<input
 									value={search}
-									onChange={(e) => setSearch(e.target.value)}
+									onChange={(e) => {
+										setSearch(e.target.value)
+										scrollToIndex(0, { align: 'start' })
+									}}
 									placeholder="Search..."
 									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 							<div
-								ref={listRef}
+								ref={setListElement}
 								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border"
 							>
 								{filteredOptions.length === 0 ? (

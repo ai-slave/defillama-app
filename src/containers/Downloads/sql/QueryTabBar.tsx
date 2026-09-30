@@ -41,7 +41,6 @@ export function QueryTabBar({
 	// Only explicit tab actions request focus; background query updates must not steal it.
 	const pendingFocus = useRef<string | null>(null)
 	const scrollerRef = useRef<HTMLDivElement | null>(null)
-	const activeRef = useRef<HTMLDivElement | null>(null)
 	const [renamingId, setRenamingId] = useState<string | null>(null)
 	const [menu, setMenu] = useState<ContextMenuState | null>(null)
 	const menuStore = Ariakit.useMenuStore()
@@ -55,11 +54,6 @@ export function QueryTabBar({
 
 	const [showLeftFade, setShowLeftFade] = useState(false)
 	const [showRightFade, setShowRightFade] = useState(false)
-
-	useLayoutEffect(() => {
-		activeRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- activeTabId is the trigger, not an input: the newly active tab is scrolled into view once it has rendered.
-	}, [activeTabId])
 
 	const updateFades = useCallback(() => {
 		const el = scrollerRef.current
@@ -142,7 +136,6 @@ export function QueryTabBar({
 							menuOpen={menuOpen && menu?.id === tab.id}
 							onOpenMenu={(trigger) => setMenu({ id: tab.id, trigger, anchor: null })}
 							onContextMenu={(e) => handleContextMenu(e, tab.id)}
-							activeRef={active ? activeRef : null}
 						/>
 					)
 				})}
@@ -306,7 +299,6 @@ interface TabPillProps {
 	onOpenMenu: (trigger: HTMLElement) => void
 	menuOpen: boolean
 	menuStore: Ariakit.MenuStore
-	activeRef: React.MutableRefObject<HTMLDivElement | null> | null
 }
 
 function TabPill({
@@ -321,8 +313,7 @@ function TabPill({
 	onContextMenu,
 	onOpenMenu,
 	menuStore,
-	menuOpen,
-	activeRef
+	menuOpen
 }: TabPillProps) {
 	const store = Ariakit.useTabContext()!
 	const prefix = Ariakit.useStoreState(store, 'id')
@@ -332,7 +323,7 @@ function TabPill({
 	const dirty = tab.dirty || (tab.cells?.some((c) => c.dirty) ?? false)
 	return (
 		<div
-			ref={activeRef ?? undefined}
+			ref={active ? scrollIntoViewNearest : undefined}
 			data-active={active}
 			className={`group before:bg-border-subtle/70 relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center rounded-t-md border-x border-t pr-1.5 text-[13px] transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 first:before:hidden hover:before:hidden data-[active=true]:before:hidden [[data-active=true]+&]:before:hidden ${active ? 'border-subtle bg-pro-app-bg text-pro-text-primary' : 'border-transparent bg-transparent text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'}`}
 		>
@@ -409,6 +400,16 @@ function TabPill({
 	)
 }
 
+// Module scope keeps each ref callback's identity stable, so it runs when its element attaches, not on every render.
+function scrollIntoViewNearest(pill: HTMLDivElement | null) {
+	pill?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+}
+
+function focusAndSelect(input: HTMLInputElement | null) {
+	input?.focus()
+	input?.select()
+}
+
 function RenameInput({
 	initial,
 	onCommit,
@@ -419,16 +420,11 @@ function RenameInput({
 	onCancel: () => void
 }) {
 	const [value, setValue] = useState(initial)
-	const inputRef = useRef<HTMLInputElement | null>(null)
 	// Enter/Escape may also cause blur when focus returns to the tab.
 	const finished = useRef(false)
-	useLayoutEffect(() => {
-		inputRef.current?.focus()
-		inputRef.current?.select()
-	}, [])
 	return (
 		<input
-			ref={inputRef}
+			ref={focusAndSelect}
 			aria-label={`Rename ${initial}`}
 			value={value}
 			onChange={(event) => setValue(event.target.value)}

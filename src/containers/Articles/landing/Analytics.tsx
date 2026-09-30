@@ -1,7 +1,8 @@
 import { useRouter } from 'next/router'
-import React, { useEffect, useEffectEvent } from 'react'
-import { useIntersectionObserver } from '~/containers/Articles/landing/useIntersectionObserver'
+import React, { useEffect } from 'react'
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
+import { useInViewOnce } from '~/hooks/useInViewOnce'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export type ResearchAnalyticsEventParams = [
@@ -117,26 +118,10 @@ export function useResearchSectionEngagement(section: ArticleSection) {
 	}, [router.events, section])
 }
 
-interface InViewAnalyticsProps {
-	eventParams: ResearchAnalyticsEventParams
-	intersectionOptions?: IntersectionObserverInit & { freezeOnceVisible?: boolean }
-}
-
-export function InViewAnalytics(props: InViewAnalyticsProps) {
-	const {
-		eventParams,
-		intersectionOptions = {
-			freezeOnceVisible: true
-		}
-	} = props
-
-	const { ref, isIntersecting } = useIntersectionObserver(intersectionOptions)
-	// Fires once per intersection with the params current at that moment, without re-running on param changes.
-	const pushEvent = useEffectEvent(() => pushResearchAnalyticsEvent(...eventParams))
-
-	useEffect(() => {
-		if (isIntersecting) pushEvent()
-	}, [isIntersecting])
+export function InViewAnalytics({ eventParams }: { eventParams: ResearchAnalyticsEventParams }) {
+	// Fires once, when the sentinel is first seen, with the params current at that moment.
+	const pushEvent = useStableCallback(() => pushResearchAnalyticsEvent(...eventParams))
+	const { ref } = useInViewOnce({ onSeen: pushEvent })
 
 	return <div ref={ref} className="invisible" />
 }

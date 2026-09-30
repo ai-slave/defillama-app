@@ -1,7 +1,7 @@
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from 'react'
 import { Panel } from './Panel'
 
-export function ChartPanel({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
+export function ChartPanel({ className, ...props }: ComponentProps<'div'>) {
 	return <Panel padding="none" className={className} {...props} />
 }
 

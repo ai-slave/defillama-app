@@ -162,7 +162,6 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	const lastAddedIdRef = useRef<string | null>(null)
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const inputRef = useRef<HTMLInputElement | null>(null)
-	const wasMountedRef = useRef(false)
 	const openingEditorRef = useRef(false)
 	const { protocols, chains, protocolsLoading, parentMapping } = useProDashboardCatalog()
 	const { loading, error, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
@@ -172,9 +171,12 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		open,
 		setOpen: (nextOpen) => {
 			if (!nextOpen) handleClose()
+		},
+		// Ariakit reports mounted = false once the exit transition ends, never on a first render that starts closed.
+		setMounted: (mounted) => {
+			if (!mounted) onClosed?.()
 		}
 	})
-	const isMounted = Ariakit.useStoreState(dialogStore, 'mounted')
 	const combobox = Ariakit.useComboboxStore({ open: true, value, setValue })
 	const activeId = Ariakit.useStoreState(combobox, 'activeId')
 
@@ -184,16 +186,6 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		},
 		[]
 	)
-
-	useEffect(() => {
-		if (isMounted) {
-			wasMountedRef.current = true
-			return
-		}
-		if (!wasMountedRef.current) return
-		wasMountedRef.current = false
-		onClosed?.()
-	}, [isMounted, onClosed])
 
 	const entities = useMemo(
 		() => buildQuickAddIndex({ protocols, chains, parentMapping }),

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { getEmbedAspectRatio, getEmbedProviderLabel } from '../embedProviders'
 import type { ArticleEmbedConfig } from '../types'
 
@@ -150,31 +151,9 @@ export function TweetEmbed({
 	options?: TweetEmbedOptions
 }) {
 	const containerRef = useRef<HTMLDivElement | null>(null)
-	const [visible, setVisible] = useState(false)
+	const { ref: observeVisibility, seen: visible } = useInViewOnce({ rootMargin: '200px' })
 	const [resolved, setResolved] = useState(false)
 	const [failed, setFailed] = useState(false)
-
-	useEffect(() => {
-		const el = containerRef.current
-		if (!el || typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
-			setVisible(true)
-			return
-		}
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						setVisible(true)
-						observer.disconnect()
-						break
-					}
-				}
-			},
-			{ rootMargin: '200px' }
-		)
-		observer.observe(el)
-		return () => observer.disconnect()
-	}, [])
 
 	useEffect(() => {
 		if (!visible) return
@@ -215,7 +194,17 @@ export function TweetEmbed({
 	}
 
 	return (
-		<div ref={containerRef} className="grid min-h-32 place-items-center">
+		<div
+			ref={(node: HTMLDivElement) => {
+				containerRef.current = node
+				const stopObserving = observeVisibility(node)
+				return () => {
+					containerRef.current = null
+					stopObserving?.()
+				}
+			}}
+			className="grid min-h-32 place-items-center"
+		>
 			{visible ? (
 				<blockquote
 					className="twitter-tweet"

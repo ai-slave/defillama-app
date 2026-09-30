@@ -69,19 +69,12 @@ afterEach(async () => {
 	container.remove()
 	vi.restoreAllMocks()
 })
-async function mount(focusSection?: 'volume') {
+async function mount() {
 	const close = vi.fn()
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<MMDetailDrawer
-					open
-					onClose={close}
-					marketMakerId="lhava"
-					range={{}}
-					badge="Last 30-day"
-					focusSection={focusSection}
-				/>
+				<MMDetailDrawer open onClose={close} marketMakerId="lhava" range={{}} badge="Last 30-day" />
 			</QueryClientProvider>
 		)
 	)
@@ -110,25 +103,6 @@ test('loads the selected market maker and renders its scores, services and venue
 	expect(dialog.textContent).toContain('Treasury Management')
 	await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click())
 	expect(close).toHaveBeenCalledOnce()
-})
-
-test('scrolls to the requested volume breakdown after its data loads', async () => {
-	const targets: Array<HTMLElement> = []
-	const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(function () {
-		targets.push(this)
-	})
-	try {
-		await mount('volume')
-		await waitForUi(async () => {
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 20))
-			})
-			expect(targets.at(-1)?.textContent).toContain('Volume KPIs')
-		})
-		expect(targets.at(-1)?.textContent).toContain('$1.23K')
-	} finally {
-		scroll.mockRestore()
-	}
 })
 
 test('says the market maker failed to load instead of showing zero scores when a request fails', async () => {

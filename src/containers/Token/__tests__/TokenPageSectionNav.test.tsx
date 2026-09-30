@@ -13,6 +13,10 @@ const SECTIONS = [
 
 /** Heading tops in the viewport. The page sets them as it scrolls; the nav reads them through the DOM. */
 let tops: Record<string, number>
+/** The pills' left edges along a nav that shows 200px of them, so Borrow starts past its right edge. */
+const PILL_LEFTS: Record<string, number> = { '#token-overview': 0, '#token-risks': 100, '#token-borrow': 250 }
+const PILL_WIDTH = 90
+const NAV_WIDTH = 200
 let reportBodyResize: () => void
 
 class FakeResizeObserver {
@@ -30,7 +34,12 @@ beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.stubGlobal('ResizeObserver', FakeResizeObserver)
 	vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-		return { top: tops[this.id] ?? 0, left: 0, width: 0, height: 0 } as DOMRect
+		const pillLeft = PILL_LEFTS[this.getAttribute('href') ?? '']
+		if (pillLeft === undefined) return { top: tops[this.id] ?? 0, left: 0, width: 0, height: 0 } as DOMRect
+		return { top: 0, left: pillLeft - this.parentElement!.scrollLeft, width: PILL_WIDTH, height: 0 } as DOMRect
+	})
+	vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
+		return this.tagName === 'NAV' ? NAV_WIDTH : 0
 	})
 	tops = { 'token-overview': 98, 'token-risks': 698, 'token-borrow': 1898 }
 	container = document.createElement('div')
@@ -128,4 +137,20 @@ test('scrolling back up with the wheel after clicking a section moves the highli
 	await scrollPage({ 'token-overview': -500, 'token-risks': 100, 'token-borrow': 1300 })
 
 	expect(highlighted()).toBe('Risks')
+})
+
+test('the nav scrolls sideways to show each pill the highlight moves to', async () => {
+	await renderNav()
+	const nav = container.querySelector('nav')!
+	expect(nav.scrollLeft).toBe(0)
+
+	await jumpToBorrow()
+	// Borrow's right edge (340px) lines up with the nav's right edge.
+	expect(nav.scrollLeft).toBe(140)
+
+	await act(async () => window.dispatchEvent(new WheelEvent('wheel', { deltaY: -400 })))
+	await scrollPage({ 'token-overview': -500, 'token-risks': 100, 'token-borrow': 1300 })
+	expect(highlighted()).toBe('Risks')
+	// Risks starts left of the visible part, so its left edge lines up with the nav's.
+	expect(nav.scrollLeft).toBe(100)
 })

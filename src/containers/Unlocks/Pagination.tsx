@@ -1,4 +1,5 @@
-import { Children, useEffect, useReducer, useRef, useState } from 'react'
+import { Children, useReducer, useRef, useState } from 'react'
+import { useResize } from '~/hooks/useResize'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
@@ -8,7 +9,6 @@ interface PaginationProps {
 }
 
 type PaginationState = {
-	visibleItems: number
 	pageOverride: { startIndex: number; page: number | null }
 	touchStart: number | null
 	touchEnd: number | null
@@ -22,7 +22,6 @@ type PageTransition = {
 }
 
 type PaginationAction =
-	| { type: 'SET_VISIBLE_ITEMS'; payload: number }
 	| { type: 'SET_PAGE_OVERRIDE'; payload: { startIndex: number; page: number | null } }
 	| { type: 'TOUCH_START'; payload: number }
 	| { type: 'TOUCH_MOVE'; payload: number }
@@ -30,7 +29,6 @@ type PaginationAction =
 	| { type: 'RESET_SWIPE' }
 
 const initialState: PaginationState = {
-	visibleItems: 1,
 	pageOverride: { startIndex: 0, page: null },
 	touchStart: null,
 	touchEnd: null,
@@ -38,10 +36,13 @@ const initialState: PaginationState = {
 	swipeOffset: 0
 }
 
+// The server and the first paint measure 0, which shows one item, as every phone width does.
+function itemsPerPage(width: number) {
+	return width < 768 ? 1 : Math.max(1, Math.floor((width - 100) / 390))
+}
+
 function paginationReducer(state: PaginationState, action: PaginationAction): PaginationState {
 	switch (action.type) {
-		case 'SET_VISIBLE_ITEMS':
-			return { ...state, visibleItems: action.payload }
 		case 'SET_PAGE_OVERRIDE':
 			return { ...state, pageOverride: action.payload }
 		case 'TOUCH_START':
@@ -79,45 +80,10 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 		}
 	}
 
-	const { visibleItems, pageOverride, touchStart, touchEnd, isSwiping, swipeOffset } = state
+	const { pageOverride, touchStart, touchEnd, isSwiping, swipeOffset } = state
+	const { width, ref: measurePagination } = useResize(paginationRef)
+	const visibleItems = itemsPerPage(width)
 	const minSwipeDistance = 50
-
-	useEffect(() => {
-		const calculateVisibleItems = () => {
-			if (typeof document !== 'undefined' && paginationRef.current) {
-				const paginationWidth = paginationRef.current.offsetWidth
-				if (paginationWidth < 768) {
-					dispatch({ type: 'SET_VISIBLE_ITEMS', payload: 1 })
-				} else {
-					const itemsPerPage = Math.max(1, Math.floor((paginationWidth - 100) / 390))
-					dispatch({ type: 'SET_VISIBLE_ITEMS', payload: itemsPerPage })
-				}
-			}
-		}
-
-		calculateVisibleItems()
-		let resizeObserver: ResizeObserver | null = null
-		const handleResize = () => calculateVisibleItems()
-		const hasWindow = typeof window !== 'undefined'
-		let addedResizeListener = false
-
-		if (hasWindow && 'ResizeObserver' in window && paginationRef.current) {
-			resizeObserver = new ResizeObserver(() => {
-				calculateVisibleItems()
-			})
-			resizeObserver.observe(paginationRef.current)
-		} else if (hasWindow) {
-			window.addEventListener('resize', handleResize)
-			addedResizeListener = true
-		}
-
-		return () => {
-			resizeObserver?.disconnect()
-			if (addedResizeListener) {
-				window.removeEventListener('resize', handleResize)
-			}
-		}
-	}, [])
 
 	const totalPages = Math.ceil(items.length / Math.max(1, visibleItems))
 	const startPage = Math.floor(startIndex / Math.max(1, visibleItems))
@@ -210,7 +176,7 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 	return (
 		<>
 			<div
-				ref={paginationRef}
+				ref={measurePagination}
 				className={paginationClassName}
 				onTouchStart={onTouchStart}
 				onTouchMove={onTouchMove}

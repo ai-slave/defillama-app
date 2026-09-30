@@ -29,18 +29,12 @@ export function CopyDashboardLinkButton({
 	const [makingPublic, setMakingPublic] = useState(false)
 	const pendingCopyLinkFocusRef = useRef(false)
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const copyLinkButtonRef = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		return () => {
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 		}
 	}, [])
 	const isPrivate = dashboardVisibility === 'private'
-	useEffect(() => {
-		if (isPrivate || !pendingCopyLinkFocusRef.current) return
-		pendingCopyLinkFocusRef.current = false
-		copyLinkButtonRef.current?.focus()
-	}, [isPrivate])
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-end' })
 
 	const dashboardKey = dashboardSlug || dashboardId
@@ -81,6 +75,9 @@ export function CopyDashboardLinkButton({
 	const makePublic = async () => {
 		if (!onMakePublic || makingPublic) return
 		setMakingPublic(true)
+		// Copy link mounts once the dashboard turns public, which can land before or after the save resolves, so the
+		// focus request is armed for the whole save and dropped only if the save fails.
+		pendingCopyLinkFocusRef.current = true
 		try {
 			await onMakePublic()
 			actionToast({
@@ -94,8 +91,8 @@ export function CopyDashboardLinkButton({
 				id: 'dashboard-live',
 				duration: TOAST_DURATION_UNDO
 			})
-			pendingCopyLinkFocusRef.current = true
 		} catch (error) {
+			pendingCopyLinkFocusRef.current = false
 			toast.error(error instanceof Error ? error.message : 'Could not make this dashboard public')
 		}
 		setMakingPublic(false)
@@ -154,7 +151,11 @@ export function CopyDashboardLinkButton({
 									size="sm"
 									square
 									variant="secondary"
-									ref={copyLinkButtonRef}
+									ref={(node) => {
+										if (!node || !pendingCopyLinkFocusRef.current) return
+										pendingCopyLinkFocusRef.current = false
+										node.focus()
+									}}
 									onClick={() => {
 										void handleCopyLink()
 									}}

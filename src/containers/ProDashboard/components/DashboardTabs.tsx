@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { type ReactNode, useCallback, useEffect, useRef } from 'react'
+import { type ReactNode, useCallback, useRef } from 'react'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
@@ -25,29 +25,21 @@ export function DashboardTabs({
 }) {
 	const values = tabs.map((tab) => tab.section.id)
 	const { ref: overflowRef, canScrollLeft, canScrollRight, scrollByPage } = useHorizontalOverflow<HTMLDivElement>(240)
-	const listRef = useRef<HTMLDivElement | null>(null)
-	const setListRef = useCallback(
-		(node: HTMLDivElement | null) => {
-			listRef.current = node
-			overflowRef(node)
-		},
-		[overflowRef]
-	)
-	const hasScrolledToActiveTab = useRef(false)
-	useEffect(() => {
-		if (!activeTabId) return
-		if (!hasScrolledToActiveTab.current) {
-			hasScrolledToActiveTab.current = true
+	// Each tab that becomes active centers itself in an overflowing rail. The tab active on mount stays where it
+	// renders, so a page load never animates the rail.
+	const hasActiveTab = useRef(false)
+	const centerActiveTab = useCallback((tab: HTMLButtonElement | null) => {
+		if (!tab) return
+		if (!hasActiveTab.current) {
+			hasActiveTab.current = true
 			return
 		}
-		const list = listRef.current
-		const active = list?.querySelector<HTMLElement>('[data-active="true"]')
-		if (!list || !active) return
+		const list = tab.parentElement!
 		const maxScrollLeft = list.scrollWidth - list.clientWidth
 		if (maxScrollLeft <= 0) return
-		const centered = active.offsetLeft - (list.clientWidth - active.offsetWidth) / 2
-		list.scrollTo?.({ left: Math.max(0, Math.min(centered, maxScrollLeft)), behavior: 'smooth' })
-	}, [activeTabId])
+		const centered = tab.offsetLeft - (list.clientWidth - tab.offsetWidth) / 2
+		list.scrollTo({ left: Math.max(0, Math.min(centered, maxScrollLeft)), behavior: 'smooth' })
+	}, [])
 
 	return (
 		<Tabs value={activeTabId} onValueChange={onChange} values={values} {...(id === undefined ? {} : { id })}>
@@ -69,13 +61,14 @@ export function DashboardTabs({
 					</>
 				) : null}
 				<Ariakit.TabList
-					ref={setListRef}
+					ref={overflowRef}
 					aria-label="Dashboard sections"
 					className="flex scrollbar-none overflow-x-auto border-b border-pro-cards-border"
 				>
 					{tabs.map((tab) => (
 						<Tab
 							key={tab.section.id}
+							ref={tab.section.id === activeTabId ? centerActiveTab : undefined}
 							type="button"
 							value={tab.section.id}
 							className={proTabStyles}

@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
@@ -90,28 +90,17 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 		(item): item is ResearchNewsletterItem => item !== undefined
 	)
 	const secondRow = remainingNewsletters.slice(0, 3)
-	const newsletterHeightRef = useRef(0)
-	const interviewScrollerRef = useRef<HTMLDivElement>(null)
-
-	useEffect(() => {
+	// The newsletter column is an earlier sibling, so its ref is attached before this one in the same commit.
+	const matchNewsletterHeight = (interviewScroller: HTMLDivElement | null) => {
 		const newsletterContent = newsletterContentRef.current
-		const interviewScroller = interviewScrollerRef.current
-		if (!newsletterContent || !interviewScroller) return
-
-		const updateHeight = (height: number) => {
-			if (height <= 0 || height === newsletterHeightRef.current) return
-			newsletterHeightRef.current = height
-			interviewScroller.style.setProperty('--newsletter-content-height', `${height}px`)
-		}
+		if (!interviewScroller || !newsletterContent) return
 		const observer = new ResizeObserver((entries) => {
 			const height = entries[0]?.contentRect.height
-			if (height) updateHeight(height)
+			if (height) interviewScroller.style.setProperty('--newsletter-content-height', `${height}px`)
 		})
-
 		observer.observe(newsletterContent)
-		updateHeight(newsletterContent.getBoundingClientRect().height)
 		return () => observer.disconnect()
-	}, [])
+	}
 
 	if (newsletters.length === 0) return null
 
@@ -161,7 +150,7 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 					</div>
 
 					<div
-						ref={interviewScrollerRef}
+						ref={matchNewsletterHeight}
 						className="max-h-[423px] min-h-0 overflow-y-auto lg:max-h-(--newsletter-content-height) lg:flex-1"
 						style={{ '--newsletter-content-height': '580px' } as CSSProperties}
 					>

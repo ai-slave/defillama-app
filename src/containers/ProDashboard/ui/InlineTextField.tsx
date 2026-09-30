@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { keepKeyboardEventsInsideCard } from './keyboard'
+
+// The field mounts each time editing starts, so its text is selected once per edit.
+const selectOnMount = (field: HTMLInputElement | HTMLTextAreaElement | null) => field?.select()
 
 export type InlineTextFieldStatus = 'idle' | 'saving' | 'error'
 
@@ -37,18 +40,9 @@ export function InlineTextField({
 		setSeenAutoFocus(autoFocus === true)
 		if (autoFocus) setEditing(true)
 	}
-	const fieldRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
-	const buttonRef = useRef<HTMLButtonElement>(null)
+	// Set by Enter and Escape; the value button takes focus when it mounts after one of them. A pointer blur leaves
+	// focus where the pointer put it.
 	const returnFocusToButtonRef = useRef(false)
-	useEffect(() => {
-		if (editing) {
-			fieldRef.current?.select()
-			return
-		}
-		if (!returnFocusToButtonRef.current) return
-		returnFocusToButtonRef.current = false
-		buttonRef.current?.focus()
-	}, [editing])
 	if (!editing && committedValue !== value) {
 		setCommittedValue(value)
 		setDraft(value)
@@ -76,7 +70,11 @@ export function InlineTextField({
 		return (
 			<span className={wrapperClassName}>
 				<button
-					ref={buttonRef}
+					ref={(button) => {
+						if (!button || !returnFocusToButtonRef.current) return
+						returnFocusToButtonRef.current = false
+						button.focus()
+					}}
 					type="button"
 					disabled={blocked}
 					aria-busy={saving || undefined}
@@ -128,7 +126,7 @@ export function InlineTextField({
 		return (
 			<span className={wrapperClassName}>
 				<textarea
-					ref={fieldRef as React.RefObject<HTMLTextAreaElement>}
+					ref={selectOnMount}
 					rows={2}
 					{...shared}
 					onKeyDown={(event) => {
@@ -147,7 +145,7 @@ export function InlineTextField({
 	return (
 		<span className={wrapperClassName}>
 			<input
-				ref={fieldRef as React.RefObject<HTMLInputElement>}
+				ref={selectOnMount}
 				{...shared}
 				onKeyDown={(event) => {
 					keepKeyboardEventsInsideCard(event)

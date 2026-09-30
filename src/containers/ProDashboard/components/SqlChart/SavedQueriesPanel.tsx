@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
@@ -111,6 +111,12 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 	)
 }
 
+// Module scope keeps the ref callback's identity stable, so it runs when the input attaches, not on every keystroke.
+function focusAndSelect(input: HTMLInputElement | null) {
+	input?.focus()
+	input?.select()
+}
+
 function InlineRenameInput({
 	initial,
 	onCommit,
@@ -121,16 +127,10 @@ function InlineRenameInput({
 	onCancel: () => void
 }) {
 	const [value, setValue] = useState(initial)
-	const inputRef = useRef<HTMLInputElement | null>(null)
-
-	useEffect(() => {
-		inputRef.current?.focus()
-		inputRef.current?.select()
-	}, [])
 
 	return (
 		<input
-			ref={inputRef}
+			ref={focusAndSelect}
 			aria-label="Saved query name"
 			value={value}
 			onChange={(e) => setValue(e.target.value)}

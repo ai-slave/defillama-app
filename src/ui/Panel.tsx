@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType } from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, ElementType } from 'react'
 
 /* ----------------------------------------------------------------------------
    Panel — the design.md chart/table panel recipe (Figma node 6183:148797).
@@ -21,7 +21,7 @@ type PanelPadding = 'none' | 'sm' | 'md'
 
 type PanelProps = {
 	padding: PanelPadding
-} & Omit<ComponentPropsWithoutRef<'div'>, 'className'> & {
+} & Omit<ComponentProps<'div'>, 'className'> & {
 		className?: string | undefined
 	}
 

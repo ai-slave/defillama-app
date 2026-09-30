@@ -43,37 +43,30 @@ export function topPriceMovers(
 // there is leftover height to fill. Below it the block is one row, full stop.
 const XL_QUERY = '(min-width: 80rem)'
 
-/** Whole rows of pills that fit the measured leftover height at xl; one row otherwise.
- *  The grid is `xl:h-0 xl:flex-1`, so its clientHeight is the leftover, not its own
- *  content — otherwise the count could only ever ratchet up. */
-function useFittedRows(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean): number {
+export function ProfileHighlights({ profile }: { profile: ExchangeProfileModel }) {
+	const movers = React.useMemo(() => topPriceMovers(profile), [profile])
 	const [rows, setRows] = React.useState(1)
-	React.useEffect(() => {
-		const node = ref.current
-		if (!node || !enabled || typeof ResizeObserver === 'undefined') return
+	/** Whole rows of pills that fit the measured leftover height at xl; one row otherwise.
+	 *  The grid is `xl:h-0 xl:flex-1`, so its clientHeight is the leftover, not its own
+	 *  content — otherwise the count could only ever ratchet up. */
+	const fitRows = (grid: HTMLDivElement | null) => {
+		if (!grid) return
 		const xl = window.matchMedia(XL_QUERY)
 		const measure = () => {
-			const pill = node.firstElementChild as HTMLElement | null
+			const pill = grid.firstElementChild as HTMLElement | null
 			if (!xl.matches || !pill) return setRows(1)
-			const fit = Math.floor((node.clientHeight + ROW_GAP_PX) / (pill.offsetHeight + ROW_GAP_PX))
+			const fit = Math.floor((grid.clientHeight + ROW_GAP_PX) / (pill.offsetHeight + ROW_GAP_PX))
 			setRows(Math.min(MAX_ROWS, Math.max(1, fit)))
 		}
 		measure()
 		const observer = new ResizeObserver(measure)
-		observer.observe(node)
+		observer.observe(grid)
 		xl.addEventListener('change', measure)
 		return () => {
 			observer.disconnect()
 			xl.removeEventListener('change', measure)
 		}
-	}, [ref, enabled])
-	return rows
-}
-
-export function ProfileHighlights({ profile }: { profile: ExchangeProfileModel }) {
-	const movers = React.useMemo(() => topPriceMovers(profile), [profile])
-	const gridRef = React.useRef<HTMLDivElement | null>(null)
-	const rows = useFittedRows(gridRef, movers.length > 0)
+	}
 	if (movers.length === 0) return null
 	return (
 		<section aria-labelledby="exchange-top-movers" className="flex min-h-0 flex-1 flex-col gap-1.5">
@@ -81,7 +74,7 @@ export function ProfileHighlights({ profile }: { profile: ExchangeProfileModel }
 				Top movers · 24h
 			</h3>
 			<div
-				ref={gridRef}
+				ref={fitRows}
 				className="grid min-h-0 grid-cols-1 content-start gap-2 overflow-hidden sm:grid-cols-3 xl:h-0 xl:flex-1"
 			>
 				{movers.slice(0, rows * PER_ROW).map(({ pair, segment }) => {

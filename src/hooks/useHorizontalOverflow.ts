@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 const SCROLL_EDGE_TOLERANCE = 10
 const DEFAULT_SCROLL_PAGE = 640
@@ -9,17 +9,12 @@ export type HorizontalScrollDirection = 'left' | 'right'
 
 export function useHorizontalOverflow<T extends HTMLElement = HTMLDivElement>(pageSize = DEFAULT_SCROLL_PAGE) {
 	const elementRef = useRef<T | null>(null)
-	const [element, setElement] = useState<T | null>(null)
 	const [overflow, setOverflow] = useState(NO_OVERFLOW)
 
-	const ref = useCallback((node: T | null) => {
-		elementRef.current = node
-		setElement(node)
-		if (!node) setOverflow(NO_OVERFLOW)
-	}, [])
-
-	useEffect(() => {
+	// Observes the element while it is attached. A caller that composes this ref must return its cleanup.
+	const ref = useCallback((element: T | null) => {
 		if (!element) return
+		elementRef.current = element
 		let frame: number | null = null
 		const read = () => {
 			frame = null
@@ -52,8 +47,10 @@ export function useHorizontalOverflow<T extends HTMLElement = HTMLDivElement>(pa
 			resizeObserver?.disconnect()
 			mutationObserver?.disconnect()
 			window.removeEventListener('resize', schedule)
+			elementRef.current = null
+			setOverflow(NO_OVERFLOW)
 		}
-	}, [element])
+	}, [])
 
 	const scrollByPage = useCallback(
 		(direction: HorizontalScrollDirection) => {

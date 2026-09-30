@@ -461,6 +461,40 @@ describe('UnifiedTable rendering', () => {
 		expect(container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!.value).toBe('aave')
 	})
 
+	test('an empty search that loses focus to another control collapses without pulling focus back', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify(unifiedTableResponse), {
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					})
+			)
+		)
+		await act(async () =>
+			root.render(
+				<QueryClientProvider client={createQueryClient()}>
+					<Dashboard streamDone>
+						<UnifiedTable config={unifiedTableConfig} />
+					</Dashboard>
+				</QueryClientProvider>
+			)
+		)
+		await waitForContent(container, 'Aave')
+		await act(async () =>
+			(container.querySelector('button[aria-label="Search table rows"]') as HTMLButtonElement).click()
+		)
+		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!
+		await act(async () => input.focus())
+		const elsewhere = document.createElement('button')
+		container.append(elsewhere)
+		await act(async () => elsewhere.focus())
+		expect(container.querySelector('input[aria-label="Search table rows"]')).toBeNull()
+		expect(container.querySelector('button[aria-label="Search table rows"]')).not.toBeNull()
+		expect(document.activeElement).toBe(elsewhere)
+	})
+
 	test.each([
 		[true, false],
 		[false, true]

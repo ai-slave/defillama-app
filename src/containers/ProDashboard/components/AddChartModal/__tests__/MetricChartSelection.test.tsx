@@ -77,3 +77,83 @@ test('chart type arrows update the draft once and None remains a selectable valu
 	await waitForUi(() => expect(radio('bar').checked).toBe(true))
 	expect(change.mock.calls).toEqual([['bar'], ['none'], ['bar']])
 })
+
+async function renderBuilder() {
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+	http.serve(appMetadataFixtures())
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={new QueryClient()}>
+				<AppMetadataProvider>
+					<DashboardTestProvider>
+						<MetricSentenceBuilder
+							aggregator="latest"
+							metricType="tvl"
+							metricSubjectType="chain"
+							metricChain={null}
+							metricProtocol={null}
+							metricWindow="7d"
+							chartType="sparkline"
+							availableMetricTypes={['tvl']}
+							chains={[]}
+							protocols={[]}
+							onAggregatorChange={vi.fn()}
+							onMetricTypeChange={vi.fn()}
+							onSubjectTypeChange={vi.fn()}
+							onChainChange={vi.fn()}
+							onProtocolChange={vi.fn()}
+							onWindowChange={vi.fn()}
+							onChartTypeChange={vi.fn()}
+						/>
+					</DashboardTestProvider>
+				</AppMetadataProvider>
+			</QueryClientProvider>
+		)
+	)
+}
+function token(label: string) {
+	const button = [...container.querySelectorAll<HTMLButtonElement>('button[data-metric-token]')].find(
+		(node) => node.textContent?.trim() === label
+	)
+	if (!button) throw new Error(`No "${label}" token`)
+	return button
+}
+const subjectSearch = () => document.querySelector<HTMLInputElement>('[role="dialog"] input[aria-label="Search"]')
+
+test('opening the subject token puts the cursor in the subject search', async () => {
+	await renderBuilder()
+	await act(async () => token('a chain').click())
+	await waitForUi(() => expect(document.activeElement).toBe(subjectSearch()))
+})
+
+test('switching from another open token to the subject token puts the cursor in the subject search', async () => {
+	await renderBuilder()
+	await act(async () => token('7 days').click())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
+	expect(subjectSearch()).toBeNull()
+
+	await act(async () => token('a chain').click())
+	await waitForUi(() => expect(document.activeElement).toBe(subjectSearch()))
+})
+
+test('switching from the subject token to another drops the subject search, and reopening starts empty', async () => {
+	await renderBuilder()
+	await act(async () => token('a chain').click())
+	await waitForUi(() => expect(document.activeElement).toBe(subjectSearch()))
+	await act(async () => {
+		const input = subjectSearch()!
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'eth')
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	expect(subjectSearch()!.value).toBe('eth')
+
+	await act(async () => token('7 days').click())
+	await waitForUi(() => expect(subjectSearch()).toBeNull())
+	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+
+	await act(async () => token('a chain').click())
+	await waitForUi(() => expect(document.activeElement).toBe(subjectSearch()))
+	expect(subjectSearch()!.value).toBe('')
+})

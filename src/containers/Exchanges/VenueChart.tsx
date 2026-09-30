@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -18,7 +19,6 @@ import {
 	type ExchangeResearchRange,
 	type VenueHistoryMetric
 } from './queryState'
-import { useLazyVisible } from './useLazyVisible'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -129,11 +129,11 @@ export function VenueChart({
 }) {
 	const router = useRouter()
 	const range = getResearchRange(router.query)
-	const { ref, visible } = useLazyVisible<HTMLDivElement>()
+	const { ref, seen } = useInViewOnce({ rootMargin: '400px' })
 	const query = useQuery({
 		queryKey: ['exchange-venue-series', exchange, range],
 		queryFn: () => loadSeries(exchange, range),
-		enabled: visible,
+		enabled: seen,
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
