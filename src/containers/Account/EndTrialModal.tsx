@@ -33,11 +33,11 @@ export function EndTrialModal(props: EndTrialModalProps) {
 function EndTrialDialog({
 	isOpen,
 	onClose,
-	title = 'Upgrade to Full Access',
+	title = 'Upgrade to full access',
 	description,
 	benefitsTitle = 'Benefits of converting now:',
 	benefits = DEFAULT_BENEFITS,
-	confirmLabel = 'Confirm & Upgrade Now',
+	confirmLabel = 'Confirm & upgrade now',
 	secondaryHref,
 	secondaryLabel
 }: EndTrialModalProps) {
@@ -58,7 +58,7 @@ function EndTrialDialog({
 	// A charge-now confirmation: no ×, the choice is the footer, and Close stays visible at every width.
 	return (
 		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={handleClose} pending={isLoading} portal unmountOnHide>
-			<DialogHeader title={upgraded ? 'Upgrade Successful' : title} closable={false} />
+			<DialogHeader title={upgraded ? 'Upgrade successful' : title} closable={false} />
 			{upgraded ? (
 				<>
 					<DialogBody>

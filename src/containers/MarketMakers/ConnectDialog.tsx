@@ -18,8 +18,8 @@ import { LeadCancelButton, LeadDialog, LeadField, LeadHoneypot, LeadSuccess } fr
 import { EMAIL_PATTERN } from './leadShared'
 
 const INTEREST_OPTIONS = [
-	{ value: 'engage-market-maker', label: 'Engage a Market Maker' },
-	{ value: 'treasury-management', label: 'Treasury Management' },
+	{ value: 'engage-market-maker', label: 'Engage a market maker' },
+	{ value: 'treasury-management', label: 'Treasury management' },
 	{ value: 'other', label: 'Other' }
 ] as const
 
@@ -311,7 +311,7 @@ function ConnectDialogForm({
 				) : null}
 				{showManualFields ? (
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<LeadField label="Project Name" error={showError('projectName')}>
+						<LeadField label="Project name" error={showError('projectName')}>
 							<Input
 								value={projectName}
 								onChange={(e) => setProjectName(e.target.value)}
@@ -321,7 +321,7 @@ function ConnectDialogForm({
 								placeholder="Project"
 							/>
 						</LeadField>
-						<LeadField label="Token Ticker" error={showError('tokenTicker')}>
+						<LeadField label="Token ticker" error={showError('tokenTicker')}>
 							<Input
 								value={tokenTicker}
 								onChange={(e) => setTokenTicker(e.target.value)}
@@ -343,9 +343,9 @@ function ConnectDialogForm({
 					</button>
 				) : null}
 				<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">
-					<span className="label-sm text-tertiary">Contact Information</span>
+					<span className="label-sm text-tertiary">Contact information</span>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<LeadField label="Full Name" error={showError('fullName')}>
+						<LeadField label="Full name" error={showError('fullName')}>
 							<Input
 								value={fullName}
 								onChange={(e) => setFullName(e.target.value)}
@@ -379,7 +379,7 @@ function ConnectDialogForm({
 					pendingLabel={submit.isPending ? 'Submitting…' : null}
 					onClick={onSubmit}
 				>
-					Submit Request
+					Submit request
 				</Button>
 			</DialogFooter>
 		</>

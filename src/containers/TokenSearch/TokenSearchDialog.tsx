@@ -95,7 +95,7 @@ export function TokenSearchDialog({
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
 				<div className="flex items-center gap-2 border-b border-subtle px-4 py-3">
-					<DialogHeading>Add Token</DialogHeading>
+					<DialogHeading>Add token</DialogHeading>
 					<DialogCloseButton className="ml-auto" />
 				</div>
 				<div className="border-b border-subtle px-4 py-3">

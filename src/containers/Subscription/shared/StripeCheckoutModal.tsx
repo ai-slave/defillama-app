@@ -54,19 +54,19 @@ const getFriendlyPaymentStatus = (status: string) => {
 // Asynchronous payment methods can take days to settle, so none of these promise a time.
 const UNDER_WAY_STEPS: Record<UnderWayStatus, { title: string; justPaid: string; earlier: string }> = {
 	processing: {
-		title: 'Payment Processing',
+		title: 'Payment processing',
 		justPaid:
 			'Your payment is processing. Some payment methods take a few business days, and your plan updates once it clears.',
 		earlier:
 			'Your earlier upgrade payment is still processing, so there is nothing to pay now. Your plan updates once it clears.'
 	},
 	requires_capture: {
-		title: 'Payment Authorized',
+		title: 'Payment authorized',
 		justPaid: 'Your payment is authorized but not captured yet. Your plan updates once it is captured.',
 		earlier: 'Your earlier upgrade payment is authorized but not captured yet, so there is nothing to pay now.'
 	},
 	succeeded: {
-		title: 'Upgrade Payment Received',
+		title: 'Upgrade payment received',
 		// A just-paid upgrade leaves for the return page, which confirms the plan there.
 		justPaid: '',
 		earlier: 'Your earlier upgrade payment went through and your plan is being updated, so there is nothing to pay now.'
@@ -130,7 +130,7 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 			<PaymentOutcomeStep
 				isOpen={isOpen}
 				onClose={close}
-				title="Earlier Upgrade Still Open"
+				title="Earlier upgrade still open"
 				description={
 					result.stale
 						? 'An upgrade payment you started over a day ago can still be paid, and its price may be out of date. Contact support to cancel it before upgrading again.'
@@ -175,7 +175,7 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 	// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height.
 	return (
 		<Dialog size="md" fullSheet open={isOpen} onClose={close} portal unmountOnHide>
-			<DialogHeader title="Complete Your Purchase" />
+			<DialogHeader title="Complete your purchase" />
 			{session.isError ? (
 				<>
 					<DialogBody>
@@ -183,7 +183,7 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 					</DialogBody>
 					<DialogFooter>
 						<Button type="button" variant="primary" size="md" onClick={retry}>
-							Try Again
+							Try again
 						</Button>
 					</DialogFooter>
 				</>
@@ -333,7 +333,7 @@ function UpgradePaymentDialog({
 			unmountOnHide
 		>
 			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
-				<DialogHeader title="Complete Your Upgrade" />
+				<DialogHeader title="Complete your upgrade" />
 				<DialogBody>
 					<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-elevated-1 px-4 py-3">
 						<div className="flex flex-col gap-1">
@@ -389,7 +389,7 @@ function UpgradePaymentDialog({
 						disabled={!stripe}
 						pendingLabel={paying ? 'Processing…' : null}
 					>
-						{awaitingVerification ? 'Complete Verification' : 'Complete Upgrade'}
+						{awaitingVerification ? 'Complete verification' : 'Complete upgrade'}
 					</Button>
 				</DialogFooter>
 				<span role="status" className="sr-only">

@@ -106,7 +106,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 	return (
 		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={pending} portal unmountOnHide>
 			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
-				<DialogHeader title={`Manage ${label} Seats`} />
+				<DialogHeader title={`Manage ${label} seats`} />
 				<DialogBody>
 					{isCanceling && cancelAtDate ? (
 						<InlineStatus variant="warning">
@@ -247,7 +247,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 						disabled={!pending && !billingWait && (!canChangeTeamBilling || !hasChange)}
 						pendingLabel={pending ? 'Updating…' : billingWait}
 					>
-						Update Seats
+						Update seats
 					</Button>
 				</DialogFooter>
 				<span role="status" className="sr-only">
@@ -263,13 +263,13 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 				}}
 				portal
 				unmountOnHide
-				title={`Cancel ${label} Subscription`}
+				title={`Cancel ${label} subscription`}
 				description={
 					occupiedSeats > 0
 						? `Cancel this ${label} subscription at the end of the current billing period? Assigned members keep access until the period ends, and you will not be billed again.`
 						: `Cancel this ${label} subscription at the end of the current billing period? You will not be billed again.`
 				}
-				confirmLabel="Cancel Subscription"
+				confirmLabel="Cancel subscription"
 				cancelLabel="Keep subscription"
 				confirmDisabled={!pending && billingLockReason !== null}
 				pendingLabel={pending ? 'Canceling subscription…' : null}

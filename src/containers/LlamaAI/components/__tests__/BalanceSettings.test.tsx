@@ -88,8 +88,8 @@ test('cancellation does not poll or claim payment succeeded', async () => {
 
 test('crypto checkout returns to Balance with separate completion and cancel results', async () => {
 	await draw(<BalanceSettings />)
-	await settle(() => expect(button('Pay with Crypto')).toBeDefined())
-	await act(async () => button('Pay with Crypto')!.click())
+	await settle(() => expect(button('Pay with crypto')).toBeDefined())
+	await act(async () => button('Pay with crypto')!.click())
 	await settle(() => expect(session.requests.some((request) => request.url.pathname === '/topup/create')).toBe(true))
 	const topup = session.requests.find((request) => request.url.pathname === '/topup/create')!
 	const body = JSON.parse(topup.init!.body as string)

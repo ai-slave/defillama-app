@@ -34,7 +34,7 @@ interface UnlocksChartTabProps {
 
 const UNLOCKS_CHART_TYPES = [
 	{ value: 'total', label: 'Total Unlocks' },
-	{ value: 'schedule', label: 'Unlocks Schedule' },
+	{ value: 'schedule', label: 'Unlocks schedule' },
 	{ value: 'allocation', label: 'Allocation' },
 	{ value: 'locked-unlocked', label: 'Locked/Unlocked %' }
 ]
@@ -360,7 +360,7 @@ export function UnlocksChartTab({
 
 				<div className={`grid grid-cols-1 gap-3 ${!hasSelection ? 'pointer-events-none opacity-50' : ''}`}>
 					<AriakitSelect
-						label="Chart Type"
+						label="Chart type"
 						options={chartTypeOptions}
 						selectedValue={selectedUnlocksChartType}
 						onChange={(option) =>

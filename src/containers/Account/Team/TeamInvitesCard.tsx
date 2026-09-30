@@ -93,7 +93,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 				portal
 				unmountOnHide
 				finalFocus={finalFocus}
-				title="Revoke Invite"
+				title="Revoke invite"
 				description={`Are you sure you want to revoke the invite for ${invite.email}?`}
 				confirmLabel="Revoke"
 				pendingLabel={revokeInviteMutation.isPending ? 'Revoking…' : null}

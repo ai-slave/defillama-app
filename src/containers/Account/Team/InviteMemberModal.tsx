@@ -43,7 +43,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 	return (
 		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={pending} portal unmountOnHide>
 			<form onSubmit={handleInvite} className="flex min-h-0 flex-auto flex-col">
-				<DialogHeader title="Invite Member" />
+				<DialogHeader title="Invite member" />
 				<DialogBody>
 					<p className="body-sm text-secondary">
 						Enter the email address of the person you want to invite. They will receive an email with a link to join
@@ -84,7 +84,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 					}
 				>
 					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>
-						Send Invite
+						Send invite
 					</Button>
 				</DialogFooter>
 				<span role="status" className="sr-only">

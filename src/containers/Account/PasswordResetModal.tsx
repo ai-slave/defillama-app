@@ -59,7 +59,7 @@ function PasswordResetDialog({
 
 	return (
 		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={isPending} portal unmountOnHide>
-			<DialogHeader title={showForm ? 'Change Password' : 'Reset Link Sent'} />
+			<DialogHeader title={showForm ? 'Change password' : 'Reset link sent'} />
 			<DialogBody>
 				<div role="status" className="flex flex-col gap-3 body-sm text-secondary">
 					{!showForm ? (

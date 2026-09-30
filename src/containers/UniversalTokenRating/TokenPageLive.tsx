@@ -243,7 +243,7 @@ function AboutDrawer({
 			<div className="flex min-h-full flex-col gap-4 bg-(--bg-page) p-4">
 				{description ? (
 					<div className="flex flex-col gap-2">
-						<h4 className="label-lg">Project Description</h4>
+						<h4 className="label-lg">Project description</h4>
 						<p className="body-lg text-secondary">{description}</p>
 					</div>
 				) : null}

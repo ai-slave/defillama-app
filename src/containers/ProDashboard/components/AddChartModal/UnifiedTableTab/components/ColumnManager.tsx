@@ -803,7 +803,7 @@ export function ColumnManager({
 							className="text-brand"
 						/>
 						<span className="text-xs font-semibold text-pro-text-primary">
-							{editingId ? 'Edit Custom Column' : 'Custom Column'}
+							{editingId ? 'Edit custom column' : 'Custom column'}
 							{!hasActiveSubscription ? <span className="ml-1 text-xs font-normal opacity-60">(Pro)</span> : null}
 						</span>
 						{(customColumns?.length ?? 0) > 0 ? (
@@ -837,7 +837,7 @@ export function ColumnManager({
 					<div className="mt-3 space-y-3 border-t border-pro-cards-border pt-3">
 						{editingId ? (
 							<div className="flex items-center justify-between">
-								<span className="text-xs text-pro-text-secondary">Editing: {customName || 'Custom Column'}</span>
+								<span className="text-xs text-pro-text-secondary">Editing: {customName || 'Custom column'}</span>
 								<button type="button" onClick={handleCancelEdit} className="text-xs text-brand hover:underline">
 									Cancel
 								</button>
@@ -998,7 +998,7 @@ export function ColumnManager({
 							disabled={!validation.isValid}
 							className="w-full rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-brand-muted disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							{editingId ? 'Update Column' : 'Add Custom Column'}
+							{editingId ? 'Update column' : 'Add custom column'}
 						</button>
 					</div>
 				) : null}

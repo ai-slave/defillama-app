@@ -79,7 +79,7 @@ export function PreviewStep() {
 			<div className="flex min-w-0 flex-col gap-4">
 				<div className="flex flex-col gap-1.5">
 					<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-						Dashboard Name
+						Dashboard name
 					</label>
 					<Input
 						id={`${id}-name`}
@@ -118,7 +118,7 @@ export function PreviewStep() {
 					<div className="mb-2 flex items-center justify-between">
 						<h3 className="flex items-center gap-1.5 label-sm text-primary">
 							<Icon name="activity" height={14} width={14} />
-							Add Metric Cards
+							Add metric cards
 						</h3>
 						<span className="body-sm text-tertiary">Optional</span>
 					</div>
@@ -175,7 +175,7 @@ export function PreviewStep() {
 						<span className="flex min-w-0 flex-col gap-0.5">
 							<span className="flex items-center gap-1.5 label-sm text-primary">
 								<Icon name="layout-grid" height={14} width={14} />
-								Include Comparison Table
+								Include comparison table
 							</span>
 							<span className="body-sm text-secondary">
 								Adds a table with detailed metrics for every compared item.

@@ -68,7 +68,7 @@ beforeEach(() => {
 test('visibility arrows update only the local draft; cancel and reopen discard it', async () => {
 	await dashboard(true)
 	const dialog = document.querySelector('[role="dialog"]')!
-	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Dashboard Settings')
+	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Dashboard settings')
 	expect(save).not.toHaveBeenCalled()
 	await press(radio('public'), 'ArrowRight')
 	expect(radio('private').checked).toBe(true)
@@ -161,7 +161,7 @@ test('dashboard deletion keeps its confirmation open on error and closes setting
 	await dashboard(true)
 	const button = (name: string) =>
 		[...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => accessibleName(e) === name)!
-	await act(async () => button('Delete Dashboard').click())
+	await act(async () => button('Delete dashboard').click())
 	await act(async () => button('Delete').click())
 	await waitForUi(() => expect(button('Deleting…')).toBeDefined())
 	expect(close).not.toHaveBeenCalled()

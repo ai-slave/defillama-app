@@ -146,13 +146,13 @@ function ClaimDialogForm({
 				</p>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div className="flex flex-col gap-1.5">
-						<span className="label-sm text-primary">Name of Organization</span>
+						<span className="label-sm text-primary">Name of organization</span>
 						<div className={`${inputStyles} flex items-center gap-2`} aria-readonly>
 							<TokenLogo src={marketMakerLogo ?? null} size={18} />
 							<span className="truncate">{marketMakerName}</span>
 						</div>
 					</div>
-					<LeadField label="Position at Organization" error={showError('position')}>
+					<LeadField label="Position at organization" error={showError('position')}>
 						<Input
 							value={position}
 							onChange={(e) => setPosition(e.target.value)}
@@ -186,7 +186,7 @@ function ClaimDialogForm({
 						/>
 					</LeadField>
 				) : null}
-				<LeadField label="Your Full Name" error={showError('fullName')}>
+				<LeadField label="Your full name" error={showError('fullName')}>
 					<Input
 						value={fullName}
 						onChange={(e) => setFullName(e.target.value)}
@@ -277,7 +277,7 @@ function ClaimDialogForm({
 					pendingLabel={submit.isPending ? 'Submitting…' : null}
 					onClick={onSubmit}
 				>
-					Submit Claim Request
+					Submit claim request
 				</Button>
 			</DialogFooter>
 		</>

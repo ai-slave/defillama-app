@@ -48,7 +48,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
-async function mount(mode = 'From Scratch', { toPreview = true } = {}) {
+async function mount(mode = 'From scratch', { toPreview = true } = {}) {
 	if (mode === 'Comparison') await import('../ComparisonWizard')
 	function Harness() {
 		store = Ariakit.useDialogStore({ defaultOpen: true })
@@ -120,7 +120,7 @@ describe('a subscriber', () => {
 		await mount()
 		const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
 		name.value = 'Keep my draft'
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		expect(document.querySelector('fieldset')!.disabled).toBe(true)
 		await click('Creating…')
 		expect(create).toHaveBeenCalledExactlyOnceWith({
@@ -137,7 +137,7 @@ describe('a subscriber', () => {
 		expect(document.querySelector('[role="alert"]')!.textContent).toBe('UnavailableYour choices are still here.')
 		expect(name.value).toBe('Keep my draft')
 		expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.checked).toBe(true)
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
 		await waitFor(() => expect(store.getState().open).toBe(false))
 		expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/new-dashboard/edit')
@@ -153,7 +153,7 @@ describe('a subscriber', () => {
 		)
 		await mount()
 		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Earlier draft'
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledOnce())
 		await act(async () => store.hide())
 		await act(async () => store.show())
@@ -167,20 +167,20 @@ describe('a subscriber', () => {
 	})
 
 	test.each([
-		['From Scratch', 'Cancel'],
+		['From scratch', 'Cancel'],
 		['Comparison', 'Close dialog']
 	])('%s shows the created dashboard after navigation fails and cannot create it again', async (mode, exit) => {
 		const saved = Promise.withResolvers<{ id: string; slug: string }>()
 		create.mockReturnValueOnce(saved.promise)
 		navigation.push.mockRejectedValueOnce(new Error('Route unavailable'))
 		await mount(mode)
-		if (mode === 'From Scratch') {
+		if (mode === 'From scratch') {
 			document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
 		}
 		const createButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(button) => accessibleName(button) === 'Create Dashboard'
+			(button) => accessibleName(button) === 'Create dashboard'
 		)!
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		expect(accessibleName(createButton)).toBe('Creating…')
 		const exitButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => accessibleName(button) === exit
@@ -196,17 +196,17 @@ describe('a subscriber', () => {
 		await act(async () => saved.resolve({ id: 'created', slug: 'created-dashboard' }))
 		await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).not.toBeNull())
 		expect(toast.error).not.toHaveBeenCalled()
-		expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Dashboard Created')
-		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')?.textContent).toBe('Open Dashboard')
+		expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Dashboard created')
+		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')?.textContent).toBe('Open dashboard')
 		expect(
-			[...document.querySelectorAll('button')].some((button) => accessibleName(button) === 'Create Dashboard')
+			[...document.querySelectorAll('button')].some((button) => accessibleName(button) === 'Create dashboard')
 		).toBe(false)
 		await click('Close')
 		expect(store.getState().open).toBe(false)
 		await act(async () => store.show())
 		// The preset reopens the wizard on its metrics step; Back walks out through the first step.
 		if (mode === 'Comparison') for (let step = 0; step < 3; step++) await click('Back')
-		await click('From Scratch')
+		await click('From scratch')
 		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).toBeNull()
 		expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
 		expect(create).toHaveBeenCalledOnce()
@@ -236,7 +236,7 @@ describe('a subscriber', () => {
 		expect(document.body.textContent).toContain('What would you like to compare?')
 		await click('Back')
 		await waitFor(() => expect(document.body.textContent).toContain('How would you like to create your dashboard?'))
-		await click('From Scratch')
+		await click('From scratch')
 		expect(names()).toContain('Back to dashboard choices')
 	})
 
@@ -284,7 +284,7 @@ describe('a subscriber', () => {
 		navigation.push.mockReturnValueOnce(route.promise)
 		await mount()
 		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		await waitFor(() => expect(navigation.push).toHaveBeenCalledOnce())
 		await act(async () => store.hide())
 		await act(async () => store.show())
@@ -300,7 +300,7 @@ describe('a subscriber', () => {
 		expect(document.body.textContent).toContain('Create in')
 		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Growth metrics'
 		await act(async () => document.querySelector<HTMLInputElement>('input[value="team"]')!.click())
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledOnce())
 		expect(create).toHaveBeenCalledWith({
 			dashboardName: 'Growth metrics',
@@ -329,7 +329,7 @@ describe('a free account', () => {
 		// The limit comes from the account's dashboard list, which loads alongside the picker.
 		await waitFor(() => expect(localStorage.getItem('lite-dashboards')).toContain('first'))
 		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Over the limit'
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 		const alert = document.querySelector('[role="alert"]')!
 		expect(alert.querySelector('span')!.textContent).toBe(limit)
@@ -345,7 +345,7 @@ describe('a free account', () => {
 		await mount()
 		expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.disabled).toBe(true)
 		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Open to everyone'
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		expect(create).toHaveBeenCalledExactlyOnceWith({
 			dashboardName: 'Open to everyone',
 			visibility: 'public',
@@ -361,7 +361,7 @@ describe('a free account', () => {
 		await mount()
 		expect(document.querySelector<HTMLInputElement>('input[value="team"]')!.disabled).toBe(true)
 		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Personal'
-		await click('Create Dashboard')
+		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledOnce())
 		expect(create.mock.calls[0][0]).not.toHaveProperty('teamId')
 	})

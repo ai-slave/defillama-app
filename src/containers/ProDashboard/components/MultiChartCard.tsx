@@ -458,7 +458,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					const duplicateId = handleDuplicateMultiChart(multi)
 					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
 				}}
-				title="Duplicate Chart"
+				title="Duplicate chart"
 				message="Create a duplicate of this chart in the dashboard?"
 				confirmText="Duplicate"
 				tone="primary"

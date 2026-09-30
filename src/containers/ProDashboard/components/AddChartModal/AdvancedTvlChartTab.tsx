@@ -45,10 +45,10 @@ const ADVANCED_TVL_CHART_TYPES: Array<{ value: AdvancedTvlChartType; label: stri
 	{ value: 'tvl', label: 'TVL' },
 	{ value: 'chainsTvl', label: 'TVL by Chains' },
 	{ value: 'tokenValuesUsd', label: 'Token Values (USD)' },
-	{ value: 'tokensPie', label: 'Tokens Breakdown' },
+	{ value: 'tokensPie', label: 'Tokens breakdown' },
 	{ value: 'tokenBalances', label: 'Token Balances (Raw)' },
 	{ value: 'usdInflows', label: 'USD Inflows' },
-	{ value: 'tokenInflows', label: 'Inflows by Token' }
+	{ value: 'tokenInflows', label: 'Inflows by token' }
 ]
 
 const AREA_PREVIEW_EXPORTS = {
@@ -310,7 +310,7 @@ export function AdvancedTvlChartTab({
 					render={<div />}
 				>
 					<AriakitSelect
-						label="Chart Type"
+						label="Chart type"
 						options={chartTypeOptions}
 						selectedValue={selectedAdvancedTvlChartType}
 						onChange={(option) => onSelectedAdvancedTvlChartTypeChange(option.value)}

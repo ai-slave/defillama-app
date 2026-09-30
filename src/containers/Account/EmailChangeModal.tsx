@@ -44,7 +44,7 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={pending} portal unmountOnHide>
 			{requestEmailChange.isSuccess ? (
 				<>
-					<DialogHeader title="Confirmation Link Sent" />
+					<DialogHeader title="Confirmation link sent" />
 					<DialogBody>
 						<p id={`${emailId}-success`} className="body-sm text-secondary">
 							A confirmation link has been sent to{' '}
@@ -67,7 +67,7 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 				</>
 			) : (
 				<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
-					<DialogHeader title="Change Your Email" />
+					<DialogHeader title="Change your email" />
 					<DialogBody>
 						<div className="flex flex-col gap-1.5">
 							<label htmlFor={emailId} className="label-sm text-secondary">
@@ -108,7 +108,7 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 						}
 					>
 						<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>
-							Confirm Email
+							Confirm email
 						</Button>
 					</DialogFooter>
 					<span role="status" className="sr-only">

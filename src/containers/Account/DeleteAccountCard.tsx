@@ -184,7 +184,7 @@ function DeleteAccountOverview({
 						onClick={check.onRetry}
 						pendingLabel={check.retrying ? 'Checking…' : null}
 					>
-						Try Again
+						Try again
 					</Button>
 				) : !isBlocked && confirmationType !== 'apple_reauth' ? (
 					<Button
@@ -192,7 +192,7 @@ function DeleteAccountOverview({
 						variant="destructive"
 						size="md"
 						onClick={onContinue}
-						pendingLabel={isRequesting ? (confirmationType === 'otp' ? 'Sending Code…' : 'Preparing…') : null}
+						pendingLabel={isRequesting ? (confirmationType === 'otp' ? 'Sending code…' : 'Preparing…') : null}
 					>
 						Continue
 					</Button>
@@ -300,9 +300,9 @@ function DeleteAccountConfirmationForm({
 					size="md"
 					// The field labels above say what unlocks it; a resend in flight shows its own "Sending code…".
 					disabled={!canSubmit || isRequesting}
-					pendingLabel={isDeleting ? 'Deleting Account…' : null}
+					pendingLabel={isDeleting ? 'Deleting account…' : null}
 				>
-					Delete Account Permanently
+					Delete account permanently
 				</Button>
 			</DialogFooter>
 		</form>
@@ -468,7 +468,7 @@ function DeleteAccountModal({
 	// so the exit never moves between the header and the footer mid-flow.
 	return (
 		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
-			<DialogHeader title="Delete Account" closable={false} />
+			<DialogHeader title="Delete account" closable={false} />
 			{step === 'confirm' && requiredConfirmation ? (
 				<DeleteAccountConfirmationForm
 					requiredConfirmation={requiredConfirmation}

@@ -2,8 +2,8 @@ import { Icon } from '~/ui/Icon'
 import type { ChartTabType } from './types'
 
 const CATEGORY_TITLES: Record<ChartTabType, string> = {
-	chain: 'Protocols & Chains',
-	protocol: 'Protocols & Chains',
+	chain: 'Protocols & chains',
+	protocol: 'Protocols & chains',
 	yields: 'Yields',
 	stablecoins: 'Stablecoins',
 	'advanced-tvl': 'Advanced TVL',

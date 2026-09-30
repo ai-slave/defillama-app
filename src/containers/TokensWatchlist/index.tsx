@@ -261,7 +261,7 @@ function TokensPortfolioSelection() {
 					className={`${selectTriggerStyles('filter', 'md')} min-w-[100px]`}
 				/>
 				<DialogForm
-					title="New Portfolio"
+					title="New portfolio"
 					description="Enter the name of your new portfolio"
 					open={open}
 					setOpen={setOpen}

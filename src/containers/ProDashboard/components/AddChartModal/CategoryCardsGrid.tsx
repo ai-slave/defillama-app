@@ -14,7 +14,7 @@ interface CategoryCardData {
 const CATEGORY_CARDS: Array<CategoryCardData> = [
 	{
 		id: 'chain',
-		title: 'Protocols & Chains',
+		title: 'Protocols & chains',
 		description: 'TVL, Fees, Revenue, Volume, Users across 5000+ protocols and 450+ chains',
 		icon: 'layers',
 		tags: ['TVL', 'Fees', 'Revenue', 'Volume', 'Users']
@@ -35,7 +35,7 @@ const CATEGORY_CARDS: Array<CategoryCardData> = [
 	},
 	{
 		id: 'yields',
-		title: 'Yields & Lending',
+		title: 'Yields & lending',
 		description: 'Supply APY, borrow cost, TVL, and available liquidity from Yields V2',
 		icon: 'trending-up',
 		tags: ['Supply APY', 'Borrow Cost', 'TVL', 'Available']

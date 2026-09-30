@@ -117,7 +117,7 @@ export function TagsField({
 					className="flex-1"
 				/>
 				<Button type="button" size="md" onClick={addTag} disabled={disabled}>
-					Add Tag
+					Add tag
 				</Button>
 			</div>
 			<p id={`${id}-hint`} className={dashboardFieldHintStyles}>

@@ -147,7 +147,7 @@ const TABLE_TYPE_CARDS: Array<{
 		description:
 			'Build custom protocol tables with advanced grouping by chain, category, or parent protocol. Filter by TVL, volume, fees, and 30+ metrics. Add custom calculated columns.',
 		icon: 'layers',
-		tags: ['Grouping', 'Chains', 'Categories', 'Custom Columns', '30+ Filters', 'Presets']
+		tags: ['Grouping', 'Chains', 'Categories', 'Custom columns', '30+ Filters', 'Presets']
 	},
 	{
 		value: 'yields',
@@ -203,9 +203,9 @@ const TABLE_TYPE_CARDS: Array<{
 const RWA_TABLE_TYPES = new Set<CombinedTableType>(['rwa', 'rwa-chains', 'rwa-selected-chain'])
 
 const RWA_TABS: Array<{ value: CombinedTableType; label: string }> = [
-	{ value: 'rwa-chains', label: 'By Chain' },
+	{ value: 'rwa-chains', label: 'By chain' },
 	{ value: 'rwa', label: 'Assets' },
-	{ value: 'rwa-selected-chain', label: 'On Chain' }
+	{ value: 'rwa-selected-chain', label: 'On chain' }
 ]
 
 const EQUITIES_TABLE_TYPES = new Set<CombinedTableType>(['equities', 'equities-financials', 'equities-filings'])
@@ -490,7 +490,7 @@ function TabContent({
 		() => [
 			{
 				key: 'setup' as const,
-				label: 'Grouping & Views',
+				label: 'Grouping & views',
 				badge: setupBadge
 			},
 			{
@@ -525,18 +525,18 @@ function TabContent({
 				<CollapsibleSection title="Grouping" badge="Protocols" className="shadow-sm">
 					<div className="flex flex-col gap-3">
 						<div>
-							<h4 className="mb-2 text-xs font-semibold text-pro-text-secondary">Configure Grouping</h4>
+							<h4 className="mb-2 text-xs font-semibold text-pro-text-secondary">Configure grouping</h4>
 							<GroupingOptions rowHeaders={rowHeaders} onToggleRowHeader={handleToggleRowHeader} />
 						</div>
 					</div>
 				</CollapsibleSection>
 
-				<CollapsibleSection title="Data Views" badge={activePreset?.name} className="shadow-sm">
+				<CollapsibleSection title="Data views" badge={activePreset?.name} className="shadow-sm">
 					<div className="flex flex-col gap-3">
 						{recommendedPresets.length > 0 ? (
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
-									<h4 className="text-xs font-semibold text-pro-text-secondary">Recommended Data Views</h4>
+									<h4 className="text-xs font-semibold text-pro-text-secondary">Recommended data views</h4>
 									<p className="text-xs text-pro-text-tertiary">Based on your filters</p>
 								</div>
 								<PresetPicker
@@ -547,7 +547,7 @@ function TabContent({
 							</div>
 						) : null}
 						<div className="flex flex-col gap-2">
-							<h4 className="text-xs font-semibold text-pro-text-secondary">All Data Views</h4>
+							<h4 className="text-xs font-semibold text-pro-text-secondary">All data views</h4>
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
@@ -714,7 +714,7 @@ function TabContent({
 
 				{activeRwaTab === 'rwa-selected-chain' ? (
 					<AriakitVirtualizedSelect
-						label="Select Chain"
+						label="Select chain"
 						options={chainOptions.filter((o) => o.value !== 'All')}
 						selectedValue={selectedDatasetChain}
 						onChange={(option) => onDatasetChainChange(option.value)}
@@ -775,7 +775,7 @@ function TabContent({
 
 				{needsTicker ? (
 					<AriakitVirtualizedSelect
-						label="Select Company"
+						label="Select company"
 						options={equitiesTickerOptions}
 						selectedValue={selectedDatasetChain}
 						onChange={(option) => onDatasetChainChange(option.value)}

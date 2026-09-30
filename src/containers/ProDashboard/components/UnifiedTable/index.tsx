@@ -497,7 +497,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 					const duplicateId = handleDuplicateUnifiedTable(config)
 					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
 				}}
-				title="Duplicate Table"
+				title="Duplicate table"
 				message="Create a duplicate of this table in the dashboard?"
 				confirmText="Duplicate"
 				tone="primary"

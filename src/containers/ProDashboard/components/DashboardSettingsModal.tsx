@@ -112,7 +112,7 @@ function DashboardSettingsModalInner({
 		<>
 			<Dialog size="sm" scope="pro" open={isOpen} onClose={onClose} pending={busy} portal unmountOnHide>
 				<form ref={formRef} onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col">
-					<DialogHeader title="Dashboard Settings" />
+					<DialogHeader title="Dashboard settings" />
 					<DialogBody>
 						<fieldset className="flex min-w-0 flex-col gap-4">
 							<VisibilityField
@@ -156,7 +156,7 @@ function DashboardSettingsModalInner({
 
 							{onDelete && dashboardId ? (
 								<div className="border-t border-subtle pt-4">
-									<p className="mb-1.5 block label-sm text-data-down">Danger Zone</p>
+									<p className="mb-1.5 block label-sm text-data-down">Danger zone</p>
 									<p className="mb-3 body-sm text-tertiary">Once you delete a dashboard, there is no going back.</p>
 									<Button
 										type="button"
@@ -167,7 +167,7 @@ function DashboardSettingsModalInner({
 										pendingLabel={deletion.isPending ? 'Deleting…' : null}
 									>
 										<Icon name="trash-2" height={16} width={16} />
-										Delete Dashboard
+										Delete dashboard
 									</Button>
 								</div>
 							) : null}
@@ -190,7 +190,7 @@ function DashboardSettingsModalInner({
 							disabled={deletion.isPending}
 							pendingLabel={save.isPending ? 'Saving…' : null}
 						>
-							Save Changes
+							Save changes
 						</Button>
 					</DialogFooter>
 					<span role="status" className="sr-only">
@@ -207,7 +207,7 @@ function DashboardSettingsModalInner({
 				pending={deletion.isPending}
 				pendingText="Deleting…"
 				error={deletion.isError ? 'Could not delete the dashboard. Try again.' : null}
-				title="Delete Dashboard"
+				title="Delete dashboard"
 				message={`Deleting “${dashboardName}” cannot be undone.`}
 				confirmText="Delete"
 			/>

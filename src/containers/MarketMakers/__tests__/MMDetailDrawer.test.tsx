@@ -102,7 +102,7 @@ test('loads the selected market maker and renders its scores, services and venue
 	})
 	const dialog = document.querySelector('[role="dialog"]')!
 	expect(dialog.textContent).toContain('Singapore')
-	expect(dialog.textContent).toContain('Fully Integrated')
+	expect(dialog.textContent).toContain('Fully integrated')
 	expect(dialog.textContent).toContain('Loan + Call Option')
 	expect(dialog.textContent).toContain('Retainer + Working Capital')
 	expect(dialog.textContent).toContain('Binance')

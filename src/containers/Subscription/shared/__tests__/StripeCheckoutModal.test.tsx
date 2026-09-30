@@ -123,7 +123,7 @@ const buttonNamed = (name: string) =>
 	[...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(
 		(button) => accessibleName(button) === name
 	)
-const pay = () => act(async () => buttonNamed('Complete Upgrade')!.click())
+const pay = () => act(async () => buttonNamed('Complete upgrade')!.click())
 const upgrade: CheckoutRequest = { type: 'api', billingInterval: 'year', isUpgradeFlow: true }
 const paidUpgrade = { isUpgrade: true, requiresPayment: true, clientSecret: 'pi_upgrade_secret_fixture' }
 const pendingKey = 'pending-upgrade:checkout-user'
@@ -171,7 +171,7 @@ test('an upgrade never mounts the embedded checkout', async () => {
 	session.serve({ '/subscription/create': paidUpgrade })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		expect(stripeMounts.count).toBe(0)
 	} finally {
 		await caller.cleanup()
@@ -187,7 +187,7 @@ test('an upgrade answer without a payment is an error, not a completed upgrade',
 				'No client secret returned for upgrade payment'
 			)
 		)
-		expect(buttonNamed('Try Again')).toBeTruthy()
+		expect(buttonNamed('Try again')).toBeTruthy()
 	} finally {
 		await caller.cleanup()
 	}
@@ -202,7 +202,7 @@ test('offers a retry when the checkout session fails to load, then loads a fresh
 	try {
 		await waitForUi(() => expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 		expect(dialog()!.querySelector('[role="status"]')).toBeNull()
-		await act(async () => buttonNamed('Try Again')!.click())
+		await act(async () => buttonNamed('Try again')!.click())
 		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
 		expect(dialog()!.querySelector('[role="alert"]')).toBeNull()
 		expect(creates()).toBe(2)
@@ -229,12 +229,12 @@ test('labels the wait while the checkout session loads', async () => {
 test.each([
 	[
 		'processing',
-		'Payment Processing',
+		'Payment processing',
 		'Your payment is processing. Some payment methods take a few business days, and your plan updates once it clears.'
 	],
 	[
 		'requires_capture',
-		'Payment Authorized',
+		'Payment authorized',
 		'Your payment is authorized but not captured yet. Your plan updates once it is captured.'
 	]
 ])('a %s upgrade payment ends on its own step without the pay button', async (status, title, description) => {
@@ -242,12 +242,12 @@ test.each([
 	stripe.confirmPayment.mockResolvedValue({ paymentIntent: { status } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
 		await waitForUi(() => expect(dialogTitled(title)).toBeTruthy())
 		expect(dialogTitled(title)!.textContent).toContain(description)
 		expect(dialog()!.querySelector('[role="alert"]')).toBeNull()
-		expect(buttonNamed('Complete Upgrade')).toBeUndefined()
+		expect(buttonNamed('Complete upgrade')).toBeUndefined()
 		await act(async () => buttonNamed('Done')!.click())
 		await waitForUi(() => expect(dialog()).toBeNull())
 	} finally {
@@ -260,7 +260,7 @@ test('a succeeded upgrade payment stays locked while it leaves for the next page
 	stripe.confirmPayment.mockResolvedValue({ paymentIntent: { status: 'succeeded' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
 		await waitForUi(() =>
 			expect(window.location.pathname + window.location.search).toBe('/account?success=true&plan=api&interval=year')
@@ -280,7 +280,7 @@ test('a declined upgrade payment shows the failure inline and keeps that payment
 	stripe.confirmPayment.mockResolvedValue({ paymentIntent: { status: 'requires_payment_method' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
 		await waitForUi(() =>
 			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
@@ -318,11 +318,11 @@ test('a payment waiting for bank verification is finished by verifying it, not b
 	stripe.handleNextAction.mockResolvedValue({ paymentIntent: { status: 'processing' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Verification')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete verification')).toBeTruthy())
 		expect(dialog()!.textContent).toContain('Your bank still needs to verify this payment.')
 		expect(upgradeIntent.clientSecret).toBe('pi_old_secret')
-		await act(async () => buttonNamed('Complete Verification')!.click())
-		await waitForUi(() => expect(dialogTitled('Payment Processing')).toBeTruthy())
+		await act(async () => buttonNamed('Complete verification')!.click())
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
 		expect(stripe.handleNextAction).toHaveBeenCalledExactlyOnceWith({ clientSecret: 'pi_old_secret' })
 		expect(stripe.confirmPayment).not.toHaveBeenCalled()
 		expect(creates()).toBe(0)
@@ -340,18 +340,18 @@ test('reopening while an earlier upgrade payment is processing shows it instead 
 	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'processing' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
-		await waitForUi(() => expect(dialogTitled('Payment Processing')).toBeTruthy())
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
 		await act(async () => buttonNamed('Done')!.click())
 		await waitForUi(() => expect(dialog()).toBeNull())
 
 		await caller.subscribe()
-		await waitForUi(() => expect(dialogTitled('Payment Processing')).toBeTruthy())
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
 		expect(dialog()!.textContent).toContain(
 			'Your earlier upgrade payment is still processing, so there is nothing to pay now.'
 		)
-		expect(buttonNamed('Complete Upgrade')).toBeUndefined()
+		expect(buttonNamed('Complete upgrade')).toBeUndefined()
 		expect(creates()).toBe(1)
 	} finally {
 		await caller.cleanup()
@@ -367,7 +367,7 @@ test('an earlier payment still processing stays guarded when its plan already sh
 	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'processing' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(dialogTitled('Payment Processing')).toBeTruthy())
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
 		expect(creates()).toBe(0)
 		expect(localStorage.getItem(pendingKey)).not.toBeNull()
 	} finally {
@@ -381,9 +381,9 @@ test('a lost confirmation response still counts as a payment under way', async (
 	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'processing' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
-		await waitForUi(() => expect(dialogTitled('Payment Processing')).toBeTruthy())
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
 		expect(JSON.parse(localStorage.getItem(pendingKey)!)).toMatchObject({ plan: 'api', interval: 'year' })
 	} finally {
 		await caller.cleanup()
@@ -396,7 +396,7 @@ test('a confirmation nobody can check keeps the upgrade pending and says to chec
 	stripe.retrievePaymentIntent.mockRejectedValue(new Error('offline'))
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		await pay()
 		await waitForUi(() =>
 			expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
@@ -418,7 +418,7 @@ test.each([
 	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		expect(creates()).toBe(1)
 		expect(upgradeIntent.clientSecret).toBe(paidUpgrade.clientSecret)
 		expect(JSON.parse(localStorage.getItem(pendingKey)!)).toMatchObject({ clientSecret: paidUpgrade.clientSecret })
@@ -449,9 +449,9 @@ test.each([
 		stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status } })
 		const caller = await mountCaller(upgrade)
 		try {
-			await waitForUi(() => expect(dialogTitled('Earlier Upgrade Still Open')).toBeTruthy())
+			await waitForUi(() => expect(dialogTitled('Earlier upgrade still open')).toBeTruthy())
 			expect(dialog()!.textContent).toContain(description)
-			expect(buttonNamed('Complete Upgrade')).toBeUndefined()
+			expect(buttonNamed('Complete upgrade')).toBeUndefined()
 			expect(creates()).toBe(0)
 			expect(localStorage.getItem(pendingKey)).toBe(record)
 		} finally {
@@ -494,7 +494,7 @@ test('two tabs opening the same upgrade at once create one payment between them'
 		await waitForUi(() =>
 			expect(
 				[...document.querySelectorAll('[role="dialog"] button')].filter(
-					(button) => accessibleName(button) === 'Complete Upgrade'
+					(button) => accessibleName(button) === 'Complete upgrade'
 				)
 			).toHaveLength(2)
 		)
@@ -513,7 +513,7 @@ test('an earlier upgrade payment that has not cleared in a week points to suppor
 	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'processing' } })
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(dialogTitled('Payment Processing')).toBeTruthy())
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
 		expect(dialog()!.textContent).toContain(
 			"This upgrade payment started over a week ago and hasn't cleared, so contact support before paying again."
 		)
@@ -533,7 +533,7 @@ test.each([
 	})
 	const caller = await mountCaller(upgrade)
 	try {
-		await waitForUi(() => expect(buttonNamed('Complete Upgrade')).toBeTruthy())
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		expect(dialog()!.textContent.includes('Upgrading turns extra usage charges back on')).toBe(warns)
 	} finally {
 		await caller.cleanup()

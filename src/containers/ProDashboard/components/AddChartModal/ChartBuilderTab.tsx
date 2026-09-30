@@ -78,9 +78,9 @@ const METRIC_OPTIONS: Array<{ value: ChartBuilderConfig['metric']; label: string
 	{ value: 'options-premium', label: 'Options Premium' },
 	{ value: 'bridge-aggregators', label: 'Bridge Aggregator Volume' },
 	{ value: 'perps-aggregators', label: 'Perps Aggregator Volume' },
-	{ value: 'stablecoins', label: 'Stablecoin Mcap (Chains only)' },
-	{ value: 'chain-fees', label: 'Chain Fees (Chains only)' },
-	{ value: 'chain-revenue', label: 'Chain Revenue (Chains only)' }
+	{ value: 'stablecoins', label: 'Stablecoin Mcap (chains only)' },
+	{ value: 'chain-fees', label: 'Chain Fees (chains only)' },
+	{ value: 'chain-revenue', label: 'Chain Revenue (chains only)' }
 ]
 
 const CHART_TYPE_OPTIONS: Array<{
@@ -91,11 +91,11 @@ const CHART_TYPE_OPTIONS: Array<{
 	{ value: 'stackedBar', label: 'Bar', icon: 'bar-chart-2' },
 	{ value: 'stackedArea', label: 'Area', icon: 'trending-up' },
 	{ value: 'line', label: 'Line', icon: 'activity' },
-	{ value: 'treemap', label: 'Tree Map', icon: 'layout-grid' }
+	{ value: 'treemap', label: 'Tree map', icon: 'layout-grid' }
 ]
 
 const DISPLAY_OPTIONS: Array<{ value: ChartBuilderConfig['displayAs']; label: string }> = [
-	{ value: 'timeSeries', label: 'Time Series' },
+	{ value: 'timeSeries', label: 'Time series' },
 	{ value: 'percentage', label: 'Percentage' }
 ]
 
@@ -112,8 +112,8 @@ const LIMIT_OPTIONS = [
 ]
 
 const MODE_OPTIONS: Array<{ value: ChartBuilderConfig['mode']; label: string }> = [
-	{ value: 'chains', label: 'Group by Protocol' }, // group by protocol filter by chains
-	{ value: 'protocol', label: 'Group by Chains' } // group by chains filter by protocol
+	{ value: 'chains', label: 'Group by protocol' }, // group by protocol filter by chains
+	{ value: 'protocol', label: 'Group by chains' } // group by chains filter by protocol
 ]
 
 const FILTER_MODE_OPTIONS: Array<{ value: 'include' | 'exclude'; label: string }> = [
@@ -573,7 +573,7 @@ export function ChartBuilderTab({
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
 				<div className="max-h-[calc(100vh-200px)] w-full shrink-0 space-y-1.5 overflow-x-visible overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 lg:w-[320px] xl:w-[360px]">
-					<h3 className="text-xs font-semibold text-pro-text-primary">Chart Configuration</h3>
+					<h3 className="text-xs font-semibold text-pro-text-primary">Chart configuration</h3>
 
 					<div>
 						<AriakitSelect
@@ -626,7 +626,7 @@ export function ChartBuilderTab({
 							<>
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Chains Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Chains filter</span>
 										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
 									</div>
 									{chainParameter.boundVariable ? (
@@ -650,7 +650,7 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Categories Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Categories filter</span>
 										<FilterModeToggle value={categoryFilterMode} onChange={handleCategoryFilterModeChange} />
 									</div>
 									<AriakitMultiSelect
@@ -668,7 +668,7 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<AriakitSelect
-										label="Number of Protocols"
+										label="Number of protocols"
 										options={LIMIT_OPTIONS}
 										selectedValue={chartBuilder.limit.toString()}
 										onChange={handleLimitChange}
@@ -712,7 +712,7 @@ export function ChartBuilderTab({
 							<>
 								{isProtocolUnsupportedMetric ? (
 									<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
-										<p className="text-xs text-pro-text-tertiary">This metric is available only for All Protocols.</p>
+										<p className="text-xs text-pro-text-tertiary">This metric is available only for all protocols.</p>
 									</div>
 								) : (
 									<div className="mb-1.5">
@@ -738,7 +738,7 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Chains Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Chains filter</span>
 										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
 									</div>
 									{chainParameter.boundVariable ? (
@@ -762,14 +762,14 @@ export function ChartBuilderTab({
 								{!isProtocolUnsupportedMetric && chartBuilder.metric !== 'tvl' && !chartBuilder.protocol ? (
 									<div className="mb-1.5">
 										<div className="mb-1 flex items-center justify-between">
-											<span className="text-xs font-medium text-pro-text-secondary">Protocol Categories Filter</span>
+											<span className="text-xs font-medium text-pro-text-secondary">Protocol categories filter</span>
 											<FilterModeToggle
 												value={protocolCategoryFilterMode}
 												onChange={handleProtocolCategoryFilterModeChange}
 											/>
 										</div>
 										<AriakitMultiSelect
-											label="Protocol Categories"
+											label="Protocol categories"
 											options={categoryOptions}
 											selectedValues={chartBuilder.protocolCategories ?? EMPTY_CATEGORIES}
 											onChange={handleProtocolCategoriesChange}
@@ -785,11 +785,11 @@ export function ChartBuilderTab({
 								) : null}
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Chain Categories Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Chain categories filter</span>
 										<FilterModeToggle value={chainCategoryFilterMode} onChange={handleChainCategoryFilterModeChange} />
 									</div>
 									<AriakitMultiSelect
-										label="Chain Categories"
+										label="Chain categories"
 										options={chainCategoryOptions}
 										selectedValues={chartBuilder.chainCategories ?? EMPTY_CATEGORIES}
 										onChange={handleChainCategoriesChange}
@@ -804,7 +804,7 @@ export function ChartBuilderTab({
 								</div>
 								<div className="mb-1.5">
 									<AriakitSelect
-										label="Number of Chains"
+										label="Number of chains"
 										options={LIMIT_OPTIONS}
 										selectedValue={chartBuilder.limit.toString()}
 										onChange={handleLimitChange}
@@ -973,7 +973,7 @@ export function ChartBuilderTab({
 					{visibleSeries.length > 0 ? (
 						<div className="mt-2 flex flex-col gap-1">
 							<div className="flex items-center justify-between gap-2">
-								<h4 className="text-xs font-medium text-pro-text-secondary">Series Colors</h4>
+								<h4 className="text-xs font-medium text-pro-text-secondary">Series colors</h4>
 								<button
 									type="button"
 									onClick={handleResetAllSeriesColors}
@@ -984,7 +984,7 @@ export function ChartBuilderTab({
 											: 'cursor-not-allowed text-pro-text-tertiary'
 									}`}
 								>
-									Reset All
+									Reset all
 								</button>
 							</div>
 							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
@@ -1034,7 +1034,7 @@ export function ChartBuilderTab({
 									? ` for ${
 											chartBuilder.protocol
 												? getProtocolInfo(chartBuilder.protocol)?.name || chartBuilder.protocol
-												: 'All Protocols'
+												: 'all protocols'
 										} across different chains`
 									: ` breakdown by top ${chartBuilder.limit} protocols`}
 								{chartBuilder.mode === 'chains' && chartBuilder.chains.length > 0

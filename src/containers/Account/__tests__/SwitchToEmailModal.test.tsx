@@ -113,7 +113,7 @@ test('saves the switched session while it is still the current one', async () =>
 	await settle()
 
 	expect(pb.authStore.token).toBe(token('switched-user'))
-	expect(document.body.textContent).toContain('Switch Successful')
+	expect(document.body.textContent).toContain('Switch successful')
 })
 
 test('does not overwrite a newer session with a late confirmation', async () => {
@@ -152,7 +152,7 @@ test('resending the code labels only the resend as pending and confirms the new 
 	await settle()
 
 	expect(button('Sending code…')).toBeDefined()
-	expect(button('Complete Switch')).toBeDefined()
+	expect(button('Complete switch')).toBeDefined()
 	await act(async () => resend.resolve(codeSent()))
 	await settle()
 

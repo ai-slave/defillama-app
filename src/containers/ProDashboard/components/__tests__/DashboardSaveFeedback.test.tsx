@@ -67,7 +67,7 @@ async function addTag(tag: string) {
 	tagInput().value = tag
 	await act(async () =>
 		Array.from(document.querySelectorAll<HTMLButtonElement>('button'))
-			.find((node) => node.textContent?.trim() === 'Add Tag')!
+			.find((node) => node.textContent?.trim() === 'Add tag')!
 			.click()
 	)
 }

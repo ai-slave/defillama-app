@@ -721,7 +721,7 @@ export function UnifiedChartTab({
 						onValueChange={handleSubjectTabChange}
 					/>
 					<div className="shrink-0">
-						<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Select Chart Type</span>
+						<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Select chart type</span>
 						<ChartTypePills
 							chartTypes={chartTypeOptions}
 							selectedType={selectedChartTypeSingle}
@@ -757,7 +757,7 @@ export function UnifiedChartTab({
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
 						<div className="shrink-0">
-							<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Change All Chart Types</span>
+							<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Change all chart types</span>
 							<ChartTypePills
 								chartTypes={bulkChartTypeOptions}
 								selectedType={bulkChartType}

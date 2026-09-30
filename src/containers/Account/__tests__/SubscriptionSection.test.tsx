@@ -125,11 +125,11 @@ test('keeps the upgrade success pane on screen after the upgrade refetches the t
 
 	await waitFor(() => expect(button('Upgrade to Pro')).toBeDefined())
 	await act(async () => button('Upgrade to Pro')!.click())
-	await waitFor(() => expect(button('Confirm & Upgrade Now')).toBeDefined())
-	await act(async () => button('Confirm & Upgrade Now')!.click())
+	await waitFor(() => expect(button('Confirm & upgrade now')).toBeDefined())
+	await act(async () => button('Confirm & upgrade now')!.click())
 
 	await waitFor(() => expect(text()).toContain('Monthly ($49/month)'))
-	expect(text()).toContain('Upgrade Successful')
+	expect(text()).toContain('Upgrade successful')
 })
 
 test('treats a failed team read as unknown billing ownership, not personal billing', async () => {
@@ -152,9 +152,9 @@ test('keeps the cancellation result on screen when the refetch after it fails', 
 
 	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
 	await act(async () => button('Cancel Subscription')!.click())
-	await waitFor(() => expect(button('Confirm Cancellation')).toBeDefined())
-	await act(async () => button('Confirm Cancellation')!.click())
+	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
+	await act(async () => button('Confirm cancellation')!.click())
 
 	await waitFor(() => expect(text()).toContain("Couldn't load your subscription"))
-	expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Cancellation Scheduled')
+	expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Cancellation scheduled')
 })

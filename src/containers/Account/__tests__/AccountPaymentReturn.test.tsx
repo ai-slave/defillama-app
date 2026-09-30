@@ -145,7 +145,7 @@ test('a monthly to yearly upgrade keeps confirming while the plan reads monthly,
 		session.serve({ '/subscription/status': { subscription: proPlan('year') } })
 		await page.wait(4000)
 
-		expect(page.title()).toBe('Payment Successful')
+		expect(page.title()).toBe('Payment successful')
 		const readsAtConfirm = statusReads().length
 		for (let step = 0; step < 3; step++) await page.wait(4000)
 		expect(statusReads()).toHaveLength(readsAtConfirm)
@@ -167,8 +167,8 @@ test('a checkout return removes the checkout and Stripe params from the URL', as
 })
 
 test.each([
-	['failed', 'Payment Not Completed', "Your payment didn't go through, so your plan hasn't changed."],
-	['requires_payment_method', 'Payment Not Completed', "Your payment didn't go through, so your plan hasn't changed."]
+	['failed', 'Payment not completed', "Your payment didn't go through, so your plan hasn't changed."],
+	['requires_payment_method', 'Payment not completed', "Your payment didn't go through, so your plan hasn't changed."]
 ])('a %s payment return names its outcome without waiting on the plan', async (status, title, description) => {
 	router.query = await upgradeReturnQuery(status)
 	const page = await renderReturnFromCheckout()
@@ -191,14 +191,14 @@ test('a processing payment return says so, then confirms once the bought plan ar
 	const page = await renderReturnFromCheckout()
 	try {
 		await page.wait(4000)
-		expect(page.title()).toBe('Payment Processing')
+		expect(page.title()).toBe('Payment processing')
 		expect(page.dialog()?.textContent).toContain(
 			'Your bank is still processing the payment. Your plan updates once it clears.'
 		)
 		session.serve({ '/subscription/status': { subscription: proPlan('year') } })
 		await page.wait(4000)
 
-		expect(page.title()).toBe('Payment Successful')
+		expect(page.title()).toBe('Payment successful')
 	} finally {
 		await page.unmount()
 	}
@@ -211,7 +211,7 @@ test('a processing payment that never clears while the page is open says to refr
 	try {
 		for (let step = 0; step < 6; step++) await page.wait(4000)
 
-		expect(page.title()).toBe('Payment Processing')
+		expect(page.title()).toBe('Payment processing')
 		expect(page.dialog()?.textContent).toContain(
 			'Your bank is still processing the payment. Refresh the page later to see your plan.'
 		)
@@ -236,7 +236,7 @@ test('a user with API who buys Pro yearly confirms on the Pro record, not the fi
 	try {
 		await page.wait(4000)
 
-		expect(page.title()).toBe('Payment Successful')
+		expect(page.title()).toBe('Payment successful')
 		expect(purchaseReads().length).toBeGreaterThan(0)
 	} finally {
 		await page.unmount()
@@ -258,7 +258,7 @@ test('an older return link without the plan confirms on any active subscription'
 		})
 		await page.wait(4000)
 
-		expect(page.title()).toBe('Payment Successful')
+		expect(page.title()).toBe('Payment successful')
 		expect(page.dialog()?.textContent).toContain('Your payment went through.')
 		for (let step = 0; step < 3; step++) await page.wait(4000)
 		expect(statusReads()).toHaveLength(3)
@@ -296,8 +296,8 @@ const earlierUpgrade = JSON.stringify({
 })
 
 test.each([
-	['failed', 'Payment Not Completed'],
-	['processing', 'Payment Processing']
+	['failed', 'Payment not completed'],
+	['processing', 'Payment processing']
 ])('a %s redirect return leaves the open upgrade payment to be resumed', async (status, title) => {
 	localStorage.setItem(pendingUpgradeKey, earlierUpgrade)
 	router.query = await upgradeReturnQuery(status)
@@ -332,7 +332,7 @@ test.each([
 	const page = await renderReturnFromCheckout()
 	try {
 		await page.wait(0)
-		expect(page.title()).toBe('Payment Successful')
+		expect(page.title()).toBe('Payment successful')
 		expect(stripe.retrievePaymentIntent).toHaveBeenCalledWith(storedUpgrade.clientSecret)
 		expect(readPendingUpgrade('checkout-user')).toEqual(remaining)
 	} finally {

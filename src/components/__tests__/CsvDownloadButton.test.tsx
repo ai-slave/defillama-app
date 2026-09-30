@@ -191,8 +191,8 @@ test('grouped export supports arrows and Escape, retains failed choices, and pre
 })
 
 test.each([
-	['trial', 'CSV Downloads Require Pro'],
-	['signed out', 'Unlock Pro Features']
+	['trial', 'CSV downloads require Pro'],
+	['signed out', 'Unlock Pro features']
 ] as const)('a %s reader opens an access dialog instead of exporting', async (account, heading) => {
 	if (account === 'trial') {
 		const record = { ...pb.authStore.record!, flags: { is_trial: true } }

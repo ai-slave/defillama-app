@@ -265,7 +265,7 @@ export function BorrowedChartTab({
 					render={<div />}
 				>
 					<AriakitSelect
-						label="Chart Type"
+						label="Chart type"
 						options={chartTypeOptions}
 						selectedValue={selectedBorrowedChartType}
 						onChange={(option) => onSelectedBorrowedChartTypeChange(option.value)}
@@ -292,7 +292,7 @@ export function BorrowedChartTab({
 						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
 							<div>
 								<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">{previewTitle}</h3>
-								<p className="text-xs text-pro-text-secondary">Borrowed Chart</p>
+								<p className="text-xs text-pro-text-secondary">Borrowed chart</p>
 							</div>
 							{activeChartType === 'tokensBorrowedPie' && pieSeriesNames.length > 1 ? (
 								<SelectWithCombobox

@@ -154,7 +154,7 @@ export function DashboardOverflowMenu({
 				pending={deletion.isPending}
 				pendingText="Deleting…"
 				error={deletion.isError ? 'Could not delete the dashboard. Try again.' : null}
-				title="Delete Dashboard"
+				title="Delete dashboard"
 				message={`Deleting “${dashboardName}” cannot be undone.`}
 				confirmText="Delete"
 			/>

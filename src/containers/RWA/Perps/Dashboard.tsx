@@ -1501,7 +1501,7 @@ function RWAPerpsFilterBrowser({
 			</div>
 			<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
 				{availableFilters.length > 0 ? (
-					<DialogPanelSection title="Market Fields">
+					<DialogPanelSection title="Market fields">
 						<div className="flex flex-wrap gap-1">
 							{availableFilters.map((filter) => (
 								<button
@@ -1578,7 +1578,7 @@ function RWAPerpsDraftFilterEditor({
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{filter.label}</span>
 					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-sm text-secondary uppercase">
-						Market Field
+						Market field
 					</span>
 				</div>
 				<Button

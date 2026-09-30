@@ -153,7 +153,7 @@ export function ReportIncorrectData({
 							<input name="subject" value={subject.name} disabled className={`${inputStyles} disabled:opacity-50`} />
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>Data Type</span>
+							<span>Data type</span>
 							{dataType ? (
 								<input name="dataType" value={dataType} disabled className={`${inputStyles} disabled:opacity-50`} />
 							) : (
@@ -234,7 +234,7 @@ export function ReportIncorrectData({
 			>
 				<div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
 					<Icon name="check-circle" height={64} width={64} strokeWidth={0.75} className="text-data-up" />
-					<DialogHeading>Reported Successfully</DialogHeading>
+					<DialogHeading>Reported successfully</DialogHeading>
 					<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Close</Ariakit.DialogDismiss>
 				</div>
 			</Ariakit.Dialog>

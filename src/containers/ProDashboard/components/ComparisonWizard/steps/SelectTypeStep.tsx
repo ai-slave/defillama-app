@@ -12,13 +12,13 @@ interface TypeOption {
 const TYPE_OPTIONS: Array<TypeOption> = [
 	{
 		type: 'chains',
-		title: 'Compare Chains',
+		title: 'Compare chains',
 		description: 'Compare metrics across multiple blockchain networks.',
 		icon: 'chain'
 	},
 	{
 		type: 'protocols',
-		title: 'Compare Protocols',
+		title: 'Compare protocols',
 		description: 'Compare metrics across multiple DeFi protocols.',
 		icon: 'protocol'
 	}

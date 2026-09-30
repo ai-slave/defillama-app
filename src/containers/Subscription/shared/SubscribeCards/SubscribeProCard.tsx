@@ -119,7 +119,7 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 						href="/subscription"
 						data-umami-event="subscribe-modal-goto-page"
 					>
-						Unlock Pro Features
+						Unlock Pro features
 					</Button>
 				</DialogFooter>
 			</Dialog>

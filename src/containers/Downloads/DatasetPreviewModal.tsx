@@ -1028,7 +1028,7 @@ function ChainPickerPopover({
 		<Ariakit.PopoverProvider store={popoverStore}>
 			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
 				<Icon name="link" className="size-3.5" />
-				{selected ?? 'All Chains'}
+				{selected ?? 'All chains'}
 			</Ariakit.PopoverDisclosure>
 			<Ariakit.Popover
 				gutter={6}
@@ -1053,7 +1053,7 @@ function ChainPickerPopover({
 						}}
 						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === null ? 'font-medium text-brand' : 'text-pro-text-secondary'}`}
 					>
-						All Chains
+						All chains
 					</button>
 					{filteredChains.map((chain) => (
 						<button

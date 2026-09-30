@@ -112,7 +112,7 @@ test('failed reports retain the draft for retry but reopening starts without the
 		contact: ''
 	})
 	await waitForUi(() =>
-		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported Successfully')
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported successfully')
 	)
 })
 
@@ -144,7 +144,7 @@ test.each(['success', 'failure'] as const)('a dismissed report %s leaves the reo
 	await submitReport('Revenue')
 	expect(JSON.parse(mocks.fetchJson.mock.calls[1][1].body).dataType).toBe('Revenue')
 	await waitForUi(() =>
-		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported Successfully')
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported successfully')
 	)
 })
 

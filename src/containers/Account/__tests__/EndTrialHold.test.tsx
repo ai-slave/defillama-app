@@ -83,9 +83,9 @@ async function upgradeFromAccount() {
 	await render()
 	await waitForUi(() => expect(button('Upgrade to Pro')).toBeDefined())
 	await act(async () => button('Upgrade to Pro')!.click())
-	await waitForUi(() => expect(button('Confirm & Upgrade Now')).toBeDefined())
-	await act(async () => button('Confirm & Upgrade Now')!.click())
-	await waitForUi(() => expect(text()).toContain('Upgrade Successful'))
+	await waitForUi(() => expect(button('Confirm & upgrade now')).toBeDefined())
+	await act(async () => button('Confirm & upgrade now')!.click())
+	await waitForUi(() => expect(text()).toContain('Upgrade successful'))
 	await act(async () => button('Close')!.click())
 	await waitForUi(() => expect(document.querySelector('[role=alertdialog]')).toBeNull())
 }

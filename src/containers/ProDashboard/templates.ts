@@ -183,7 +183,7 @@ export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	},
 	{
 		id: 'top-l1-chains',
-		name: 'Top L1 Chains',
+		name: 'Top L1 chains',
 		description: 'Compare top Layer 1 blockchains by TVL',
 		type: 'chains',
 		metrics: ['tvl', 'volume', 'fees', 'revenue', 'stablecoins', 'bridgedTvl'],
@@ -196,7 +196,7 @@ export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	},
 	{
 		id: 'l2-ecosystem',
-		name: 'L2 Ecosystem',
+		name: 'L2 ecosystem',
 		description: 'Compare Layer 2 rollups and scaling solutions',
 		type: 'chains',
 		metrics: ['tvl', 'volume', 'fees', 'revenue', 'stablecoins', 'bridgedTvl'],
@@ -209,7 +209,7 @@ export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	},
 	{
 		id: 'dex-leaders',
-		name: 'DEX Leaders',
+		name: 'DEX leaders',
 		description: 'Compare top decentralized exchanges by volume',
 		type: 'protocols',
 		metrics: ['volume', 'fees', 'revenue', 'tvl'],
@@ -220,7 +220,7 @@ export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	},
 	{
 		id: 'lending-protocols',
-		name: 'Lending Protocols',
+		name: 'Lending protocols',
 		description: 'Compare top lending and borrowing platforms',
 		type: 'protocols',
 		metrics: ['tvl', 'fees', 'revenue'],
@@ -242,7 +242,7 @@ export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	},
 	{
 		id: 'perps-protocols',
-		name: 'Perps Protocols',
+		name: 'Perps protocols',
 		description: 'Compare perpetual futures trading platforms',
 		type: 'protocols',
 		metrics: ['perps', 'openInterest', 'fees', 'revenue'],
@@ -264,7 +264,7 @@ export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	},
 	{
 		id: 'yield-farming-protocols',
-		name: 'Yield Protocols',
+		name: 'Yield protocols',
 		description: 'Compare top yield farming and optimization protocols',
 		type: 'protocols',
 		metrics: ['tvl', 'fees', 'revenue'],

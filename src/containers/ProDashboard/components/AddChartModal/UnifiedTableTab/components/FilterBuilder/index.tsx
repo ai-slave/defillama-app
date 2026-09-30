@@ -177,8 +177,8 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
 	changes: 'Changes',
 	dominance: 'Dominance',
 	aggregators: 'Aggregators',
-	'chain-metrics': 'Chain Metrics',
-	flags: 'Data Availability'
+	'chain-metrics': 'Chain metrics',
+	flags: 'Data availability'
 }
 
 const FILTERS_BY_CATEGORY = getFiltersByCategory()

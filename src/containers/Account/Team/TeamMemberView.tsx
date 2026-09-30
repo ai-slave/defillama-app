@@ -110,9 +110,9 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 				portal
 				unmountOnHide
 				finalFocus={finalFocus}
-				title="Leave Team"
+				title="Leave team"
 				description="Are you sure you want to leave this team? Your team subscription will be revoked and you will lose access to any team-managed features."
-				confirmLabel="Leave Team"
+				confirmLabel="Leave team"
 				pendingLabel={leaveTeamMutation.isPending ? 'Leaving team…' : null}
 				error={leaveTeamMutation.isError ? leaveTeamMutation.error.message : null}
 				onConfirm={() => {

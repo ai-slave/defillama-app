@@ -14,7 +14,7 @@ interface DashboardPaywallModalProps {
 
 const REASON_CONFIG: Record<PaywallReason, { title: string; description: string; features: Array<string> }> = {
 	'dashboard-limit': {
-		title: 'Dashboard Limit Reached',
+		title: 'Dashboard limit reached',
 		description: `Free accounts can create up to ${FREE_TIER_MAX_DASHBOARDS} dashboard${FREE_TIER_MAX_DASHBOARDS === 1 ? '' : 's'}. Upgrade to Pro for unlimited dashboards and more.`,
 		features: [
 			'Unlimited dashboards',
@@ -24,7 +24,7 @@ const REASON_CONFIG: Record<PaywallReason, { title: string; description: string;
 		]
 	},
 	llamaai: {
-		title: 'LlamaAI is a Pro Feature',
+		title: 'LlamaAI is a Pro feature',
 		description: 'Generate and edit dashboards with AI, add saved LlamaAI charts, and more.',
 		features: [
 			'Generate dashboards with AI',
@@ -34,7 +34,7 @@ const REASON_CONFIG: Record<PaywallReason, { title: string; description: string;
 		]
 	},
 	'private-dashboard': {
-		title: 'Private Dashboards Require Pro',
+		title: 'Private dashboards require Pro',
 		description: 'Free accounts can only create public dashboards. Upgrade to keep your dashboards private.',
 		features: [
 			'Private dashboards',
@@ -44,7 +44,7 @@ const REASON_CONFIG: Record<PaywallReason, { title: string; description: string;
 		]
 	},
 	'pro-feature': {
-		title: 'Pro Feature',
+		title: 'Pro feature',
 		description: 'This feature requires a Pro subscription. Upgrade to unlock the full dashboard experience.',
 		features: [
 			'Unlimited dashboards',

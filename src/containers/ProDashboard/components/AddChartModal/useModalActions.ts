@@ -45,7 +45,7 @@ export function useModalActions(
 
 	const chainOptions = useMemo(
 		() => [
-			{ value: 'All', label: 'All Chains' },
+			{ value: 'All', label: 'All chains' },
 			...chains.map((chain: Chain) => ({
 				value: chain.name,
 				label: chain.name

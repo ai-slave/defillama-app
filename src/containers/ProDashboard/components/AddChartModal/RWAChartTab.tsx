@@ -108,7 +108,7 @@ function RWAChartTabInner({
 	const { chains: rwaChains } = useRWAChainsList()
 
 	const chainOptions = useMemo(() => {
-		const opts = [{ value: 'All', label: 'All Chains' }]
+		const opts = [{ value: 'All', label: 'All chains' }]
 		for (const { chain, tvl } of rwaChains) {
 			opts.push({
 				value: chain,
@@ -147,7 +147,7 @@ function RWAChartTabInner({
 								: 'text-pro-text-secondary hover:text-pro-text-primary'
 						}`}
 					>
-						By Asset
+						By asset
 					</button>
 				</div>
 			</div>
@@ -167,7 +167,7 @@ function RWAChartTabInner({
 						onChange={(opt) => onSelectedRwaMetricChange(opt.value)}
 					/>
 					<AriakitSelect
-						label="Chart Type"
+						label="Chart type"
 						options={chartViewOptions}
 						selectedValue={selectedRwaChartView}
 						onChange={(opt) => onSelectedRwaChartViewChange(opt.value)}
@@ -260,7 +260,7 @@ function AssetControls({
 	return (
 		<div className="flex flex-col gap-3">
 			<AriakitVirtualizedSelect
-				label="Select Asset"
+				label="Select asset"
 				options={assetOptions}
 				selectedValue={selectedAssetId}
 				onChange={handleAssetChange}

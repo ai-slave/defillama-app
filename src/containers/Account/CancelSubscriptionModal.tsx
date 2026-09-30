@@ -56,7 +56,7 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant = 'trial' }: Cancel
 			{cancelled ? (
 				<>
 					<DialogHeader
-						title={cancelledImmediately ? 'Subscription Cancelled' : 'Cancellation Scheduled'}
+						title={cancelledImmediately ? 'Subscription cancelled' : 'Cancellation scheduled'}
 						closable={false}
 					/>
 					<DialogBody>
@@ -74,7 +74,7 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant = 'trial' }: Cancel
 				</>
 			) : (
 				<form onSubmit={handleConfirm} className="flex min-h-0 flex-auto flex-col">
-					<DialogHeader title={isTrial ? 'Cancel Free Trial' : 'Cancel Subscription'} closable={false} />
+					<DialogHeader title={isTrial ? 'Cancel free trial' : 'Cancel subscription'} closable={false} />
 					<DialogBody>
 						<Ariakit.DialogDescription className="body-sm text-secondary">
 							{CANCEL_BODY_TEXT[variant]}
@@ -102,10 +102,10 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant = 'trial' }: Cancel
 							accessibleWhenDisabled
 							render={<Button size="md" />}
 						>
-							{isTrial ? 'Keep Trial' : 'Keep Subscription'}
+							{isTrial ? 'Keep trial' : 'Keep subscription'}
 						</Ariakit.DialogDismiss>
 						<Button type="submit" variant="destructive" size="md" pendingLabel={isLoading ? 'Cancelling…' : null}>
-							Confirm Cancellation
+							Confirm cancellation
 						</Button>
 					</DialogFooter>
 					<span role="status" className="sr-only">

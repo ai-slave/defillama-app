@@ -147,7 +147,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 			unmountOnHide
 		>
 			<form onSubmit={handlePurchase} className="flex min-h-0 flex-auto flex-col">
-				<DialogHeader title={checkoutClientSecret ? 'Complete Payment' : 'Purchase Seats'} />
+				<DialogHeader title={checkoutClientSecret ? 'Complete payment' : 'Purchase seats'} />
 				<DialogBody>
 					{checkoutClientSecret ? (
 						stripeInstance ? (
@@ -362,7 +362,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 							disabled={!pending && !billingWait && (!canChangeTeamBilling || holdsForPendingCheckout)}
 							pendingLabel={pending ? 'Processing…' : billingWait}
 						>
-							Purchase Seats
+							Purchase seats
 						</Button>
 					</DialogFooter>
 				)}

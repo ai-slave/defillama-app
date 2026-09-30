@@ -133,7 +133,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	if (creation.isSuccess) {
 		return (
 			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" portal unmountOnHide>
-				<DialogHeader title="Dashboard Created" />
+				<DialogHeader title="Dashboard created" />
 				<DialogBody>
 					<Ariakit.DialogDescription className="body-sm text-secondary">
 						Your dashboard is saved.
@@ -153,7 +153,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						size="md"
 						autoFocus
 					>
-						Open Dashboard
+						Open dashboard
 					</Button>
 				</DialogFooter>
 				{announcement}
@@ -167,7 +167,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		return (
 			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" pending={pending} portal unmountOnHide>
 				<DialogHeader
-					title="Create New Dashboard"
+					title="Create new dashboard"
 					leading={<DialogBackButton label="Back to dashboard choices" onClick={handleBackToPicker} />}
 				/>
 				<DialogBody>
@@ -194,7 +194,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						data-umami-event="dashboard-create"
 						pendingLabel={pending ? 'Creating…' : null}
 					>
-						Create Dashboard
+						Create dashboard
 					</Button>
 				</DialogFooter>
 				{announcement}
@@ -215,7 +215,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 				unmountOnHide
 			>
 				{/* The footer's Back leads out of the wizard from its first step, so the header has no second back. */}
-				<DialogHeader title="Create Comparison Dashboard" />
+				<DialogHeader title="Create comparison dashboard" />
 				<fieldset disabled={locked} className="contents">
 					<Suspense
 						fallback={
@@ -242,7 +242,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 
 	return (
 		<Dialog ref={dialogRef} store={dialogStore} size="lg" scope="pro" pending={pending} portal unmountOnHide>
-			<DialogHeader title="Create New Dashboard" />
+			<DialogHeader title="Create new dashboard" />
 			<DialogBody>
 				<fieldset className="contents">
 					<Ariakit.DialogDescription className="body-sm text-secondary">
@@ -263,7 +263,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 								<Icon name="file-plus" height={20} width={20} />
 							</div>
 							<div>
-								<span className="block label-md text-primary">From Scratch</span>
+								<span className="block label-md text-primary">From scratch</span>
 								<span className="mt-1 block body-sm text-tertiary">
 									Create an empty dashboard and add charts manually
 								</span>
@@ -499,7 +499,7 @@ function CreateDashboardModalContent({
 			<fieldset disabled={status === 'pending' || status === 'success'} className="flex flex-col gap-4">
 				<div className="flex flex-col gap-1.5">
 					<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-						Dashboard Name
+						Dashboard name
 					</label>
 					{/* Ariakit's autoFocus, so the step starts on the name instead of the header controls. */}
 					<Ariakit.Focusable

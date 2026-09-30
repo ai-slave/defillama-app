@@ -109,12 +109,12 @@ test('cold catalog blocks Lending while From Scratch remains immediately usable'
 	expect(api.dimension).not.toHaveBeenCalled()
 	expect(api.category).not.toHaveBeenCalled()
 	await click('Create new dashboard')
-	await click('Lending Protocols')
+	await click('Lending protocols')
 	expect(api.create).not.toHaveBeenCalled()
-	expect(button('Lending Protocols').getAttribute('aria-disabled')).toBe('true')
-	await click('From Scratch')
+	expect(button('Lending protocols').getAttribute('aria-disabled')).toBe('true')
+	await click('From scratch')
 	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Blank by choice'
-	await click('Create Dashboard')
+	await click('Create dashboard')
 	expect(api.create).toHaveBeenCalledExactlyOnceWith({
 		dashboardName: 'Blank by choice',
 		visibility: 'private',
@@ -123,20 +123,20 @@ test('cold catalog blocks Lending while From Scratch remains immediately usable'
 	})
 	await click('Create new dashboard')
 	await act(async () => response.resolve(catalog))
-	await ready('Lending Protocols')
-	await click('Lending Protocols')
+	await ready('Lending protocols')
+	await click('Lending protocols')
 	expect(savedFilters()).toEqual({ protocols: ['aave', 'spark'] })
 })
 
 test.each([
-	['Top L1 Chains', ['Ethereum']],
-	['L2 Ecosystem', ['Base']]
+	['Top L1 chains', ['Ethereum']],
+	['L2 ecosystem', ['Base']]
 ] as const)('%s waits for category membership before selecting chains', async (name, chains) => {
 	const response = Promise.withResolvers<{ chainsUnique: Array<string> }>()
 	api.category.mockReturnValue(response.promise)
 	await mount()
 	await click('Create new dashboard')
-	await ready('Lending Protocols')
+	await ready('Lending protocols')
 	await click(name)
 	expect(api.create).not.toHaveBeenCalled()
 	await act(async () => response.resolve({ chainsUnique: ['Base'] }))
@@ -146,8 +146,8 @@ test.each([
 })
 
 test.each([
-	['DEX Leaders', 'dexs'],
-	['Perps Protocols', 'perps'],
+	['DEX leaders', 'dexs'],
+	['Perps protocols', 'perps'],
 	['DEX Aggregators', 'dex-aggregators']
 ])('%s waits for its dimension and can load independently of the catalog', async (name, endpoint) => {
 	const response = Promise.withResolvers<{ protocols: Array<{ slug: string; name: string }> }>()
@@ -173,7 +173,7 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 		api[source].mockRejectedValue(new Error('Unavailable'))
 		await mount()
 		await click('Create new dashboard')
-		const name = source === 'catalog' ? 'Lending Protocols' : source === 'category' ? 'L2 Ecosystem' : 'DEX Leaders'
+		const name = source === 'catalog' ? 'Lending protocols' : source === 'category' ? 'L2 ecosystem' : 'DEX leaders'
 		await act(async () => {
 			await waitForUi(() =>
 				expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load template data.')
@@ -217,11 +217,11 @@ test('empty dimension data cannot fall back to unrelated TVL data or create an e
 	api.dimension.mockResolvedValue({ protocols: [] })
 	await mount()
 	await click('Create new dashboard')
-	await ready('Lending Protocols')
+	await ready('Lending protocols')
 	await act(async () => {
-		await waitForUi(() => expect(button('DEX Leaders').textContent).toContain('No matching data available.'))
+		await waitForUi(() => expect(button('DEX leaders').textContent).toContain('No matching data available.'))
 	})
-	await click('DEX Leaders')
+	await click('DEX leaders')
 	expect(api.create).not.toHaveBeenCalled()
 })
 
@@ -230,14 +230,14 @@ test('closing and reopening while data loads never submits automatically or navi
 	api.catalog.mockReturnValue(response.promise)
 	await mount()
 	await click('Create new dashboard')
-	await click('Lending Protocols')
+	await click('Lending protocols')
 	await click('Close dialog')
 	await act(async () => response.resolve(catalog))
 	expect(api.create).not.toHaveBeenCalled()
 	expect(api.push).not.toHaveBeenCalled()
 	await click('Create new dashboard')
-	await ready('Lending Protocols')
-	await click('Lending Protocols')
+	await ready('Lending protocols')
+	await click('Lending protocols')
 	expect(api.create).toHaveBeenCalledOnce()
 	expect(savedFilters()).toEqual({ protocols: ['aave', 'spark'] })
 })
@@ -247,23 +247,23 @@ test('pending template creation keeps focus and ignores duplicate activation, th
 	api.create.mockReturnValueOnce(completion.promise).mockResolvedValueOnce({ id: 'created' })
 	await mount()
 	await click('Create new dashboard')
-	await ready('Lending Protocols')
-	const choice = button('Lending Protocols')
+	await ready('Lending protocols')
+	const choice = button('Lending protocols')
 	await act(async () => choice.focus())
-	await click('Lending Protocols')
+	await click('Lending protocols')
 	await act(async () => {
 		await waitForUi(() => expect(choice.getAttribute('aria-disabled')).toBe('true'))
 	})
 	expect(document.activeElement).toBe(choice)
 	expect(choice.querySelector('[role="status"]')?.textContent).toBe('Creating dashboard…')
 	expect(button('Liquid Staking').getAttribute('aria-busy')).toBe('false')
-	await click('Lending Protocols')
+	await click('Lending protocols')
 	expect(api.create).toHaveBeenCalledOnce()
 	await act(async () => completion.reject(new Error('Save unavailable')))
-	await ready('Lending Protocols')
+	await ready('Lending protocols')
 	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable')
 	expect(document.activeElement).toBe(choice)
-	await click('Lending Protocols')
+	await click('Lending protocols')
 	expect(api.create).toHaveBeenCalledTimes(2)
 	expect(savedFilters()).toEqual({ protocols: ['aave', 'spark'] })
 })
@@ -273,17 +273,17 @@ test('replaces the templates with the created dashboard until navigation finishe
 	api.push.mockReturnValueOnce(navigation.promise)
 	await mount()
 	await click('Create new dashboard')
-	await ready('Lending Protocols')
-	await click('Lending Protocols')
+	await ready('Lending protocols')
+	await click('Lending protocols')
 	await act(async () => {
 		await waitForUi(() =>
-			expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open Dashboard')
+			expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open dashboard')
 		)
 	})
-	expect(button('Lending Protocols')).toBeUndefined()
+	expect(button('Lending protocols')).toBeUndefined()
 	expect(api.create).toHaveBeenCalledOnce()
 	await act(async () => navigation.resolve(true))
 	await act(async () => {
-		await waitForUi(() => expect(button('Lending Protocols')).toBeUndefined())
+		await waitForUi(() => expect(button('Lending protocols')).toBeUndefined())
 	})
 })

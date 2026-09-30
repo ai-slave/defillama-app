@@ -34,7 +34,7 @@ const CHAIN_GROUPS = [
 	['Fees & Revenue', ['fees', 'revenue', 'chainFees', 'chainRevenue']],
 	['Activity', ['txs', 'activeUsers', 'newUsers', 'gasUsed']],
 	['Stablecoins', ['stablecoins', 'stablecoinInflows']],
-	['Native Token', ['chainMcap', 'chainPrice']]
+	['Native token', ['chainMcap', 'chainPrice']]
 ] as const satisfies ReadonlyArray<readonly [string, ReadonlyArray<string>]>
 
 export function ChartTypePills({
@@ -74,7 +74,7 @@ export function ChartTypePills({
 	}, [groups, chartTypeMap])
 
 	const selectedLabel = useMemo(() => {
-		if (!selectedType) return 'Select Chart Type'
+		if (!selectedType) return 'Select chart type'
 		const ct = chartTypeMap.get(selectedType)
 		return ct?.label || selectedType
 	}, [selectedType, chartTypeMap])

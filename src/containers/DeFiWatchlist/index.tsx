@@ -538,7 +538,7 @@ export function PortfolioNotifications({
 				<div className="flex items-start gap-3 border-b border-subtle px-4 py-3">
 					<div className="min-w-0">
 						<div className="flex flex-wrap items-center gap-2">
-							<DialogHeading>Email Notification Settings</DialogHeading>
+							<DialogHeading>Email notification settings</DialogHeading>
 							{preferences ? (
 								preferences.active ? (
 									<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-xs text-data-up">
@@ -571,7 +571,7 @@ export function PortfolioNotifications({
 					{/* The body scrolls and the footer stays pinned below it. */}
 					<div className={dialogScrollableBodyStyles}>
 						<div className="border-b border-subtle px-4 py-3">
-							<h3 className="mb-2 label-md text-primary">Protocol Metrics</h3>
+							<h3 className="mb-2 label-md text-primary">Protocol metrics</h3>
 							{filteredProtocols.length > 0 ? (
 								<>
 									<p className="mb-3 body-sm text-secondary">
@@ -601,7 +601,7 @@ export function PortfolioNotifications({
 						</div>
 
 						<div className="px-4 py-3">
-							<h3 className="mb-2 label-md text-primary">Chain Metrics</h3>
+							<h3 className="mb-2 label-md text-primary">Chain metrics</h3>
 							{filteredChains.length > 0 ? (
 								<>
 									<p className="mb-3 body-sm text-secondary">
@@ -666,7 +666,7 @@ export function PortfolioNotifications({
 							disabled={isChangingPreferences}
 							render={<Button type="submit" variant="primary" size="md" />}
 						>
-							{savePreferences.isPending ? 'Saving...' : preferences ? 'Update Settings' : 'Enable Notifications'}
+							{savePreferences.isPending ? 'Saving...' : preferences ? 'Update settings' : 'Enable notifications'}
 						</Ariakit.FormSubmit>
 					</DialogFooter>
 				</Ariakit.Form>
@@ -722,7 +722,7 @@ function PortfolioSelection() {
 					className={`${portfolioActionButtonClassName} min-w-[100px] justify-between`}
 				/>
 				<DialogForm
-					title="New Portfolio"
+					title="New portfolio"
 					description="Enter the name of your new portfolio"
 					open={open}
 					setOpen={setOpen}

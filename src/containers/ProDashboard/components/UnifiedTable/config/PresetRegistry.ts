@@ -24,7 +24,7 @@ const createVisibility = (columns: Array<string>): ColumnVisibilityState => {
 
 export const DEFAULT_UNIFIED_TABLE_PRESET: UnifiedTablePreset = {
 	id: 'essential-protocols',
-	name: 'Essential Protocols',
+	name: 'Essential protocols',
 	description: 'Core protocol overview with TVL, fees, revenue, volume and ratios.',
 	columnOrder: [
 		'name',
@@ -66,7 +66,7 @@ export const UNIFIED_TABLE_PRESETS: Array<UnifiedTablePreset> = [
 	DEFAULT_UNIFIED_TABLE_PRESET,
 	{
 		id: 'advanced-protocols',
-		name: 'Advanced Protocols',
+		name: 'Advanced protocols',
 		description: 'Protocol valuation with core activity and efficiency metrics.',
 		columnOrder: [
 			'name',

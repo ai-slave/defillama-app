@@ -177,7 +177,7 @@ export function TopupForm({
 						<div className="grid grid-cols-2 gap-2">
 							<Button type="button" size="md" onClick={handleStripe} disabled={!isValidAmount || isPaymentPending}>
 								<Icon name="credit-card" height={14} width={14} />
-								Pay with Card
+								Pay with card
 							</Button>
 							<Button
 								type="button"
@@ -187,7 +187,7 @@ export function TopupForm({
 								pendingLabel={isRedirecting ? 'Redirecting…' : null}
 							>
 								<Icon name="wallet" height={14} width={14} />
-								Pay with Crypto
+								Pay with crypto
 							</Button>
 						</div>
 					</fieldset>
@@ -209,7 +209,7 @@ export function TopupForm({
 			<>
 				<DialogHeader
 					leading={step === 'stripe' ? <DialogBackButton label="Back to amount" onClick={goBack} /> : null}
-					title={step === 'stripe' ? 'Complete Payment' : 'Top Up Balance'}
+					title={step === 'stripe' ? 'Complete payment' : 'Top up balance'}
 					subtitle={
 						<Ariakit.DialogDescription render={<span />}>
 							{step === 'stripe' ? stripeDescription : 'Add credits for LlamaAI to access premium data'}
@@ -230,7 +230,7 @@ export function TopupForm({
 							<Icon name="arrow-left" height={16} width={16} />
 						</Button>
 					) : null}
-					<h3 className="min-w-0 flex-1 label-md text-primary">{step === 'stripe' ? 'Complete Payment' : 'Top up'}</h3>
+					<h3 className="min-w-0 flex-1 label-md text-primary">{step === 'stripe' ? 'Complete payment' : 'Top up'}</h3>
 				</div>
 				{step === 'stripe' ? <p className="body-md text-secondary">{stripeDescription}</p> : null}
 			</header>

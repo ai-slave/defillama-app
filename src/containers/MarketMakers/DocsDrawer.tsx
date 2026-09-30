@@ -16,8 +16,8 @@ import {
 
 const TOC = [
 	{ id: 'overview', label: '1. Overview' },
-	{ id: 'calculation-methodology', label: '2. Calculation Methodology' },
-	{ id: 'how-to-interpret', label: '3. How to Interpret' },
+	{ id: 'calculation-methodology', label: '2. Calculation methodology' },
+	{ id: 'how-to-interpret', label: '3. How to interpret' },
 	{ id: 'filtering', label: '4. Filtering' }
 ]
 
@@ -140,13 +140,13 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 		<Drawer
 			open={open}
 			onClose={onClose}
-			title="Performance Index Documentation"
+			title="Performance Index documentation"
 			widthClassName="sm:max-w-2xl lg:max-w-5xl"
 		>
 			<div className="flex flex-col gap-4 md:flex-row md:gap-6">
 				<nav className="md:w-64 md:shrink-0 md:self-stretch md:border-r md:border-subtle">
 					<div className="md:sticky md:top-0">
-						<p className="border-b border-subtle px-5 py-4 heading-xs">Table of Contents</p>
+						<p className="border-b border-subtle px-5 py-4 heading-xs">Table of contents</p>
 						<ul className="flex flex-col gap-4 px-4 py-6">
 							{TOC.map((item) => {
 								const active = item.id === activeId
@@ -177,7 +177,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 							<p className="text-sm font-medium">Looking for the full Market Maker Leaderboard documentation?</p>
 						</div>
 						<Button as={BasicLink} href="/market-makers/documentation" variant="primary" size="md">
-							Read the Docs
+							Read the docs
 						</Button>
 					</div>
 
@@ -196,7 +196,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 					</section>
 
 					<section id="calculation-methodology" className="flex scroll-mt-4 flex-col gap-5">
-						<h2 className="heading-xs">Calculation Methodology</h2>
+						<h2 className="heading-xs">Calculation methodology</h2>
 						<p className="body-lg text-secondary">{PI_METHODOLOGY_INTRO}</p>
 						<p className="body-lg text-secondary">
 							Each KPI contributes to the composite score with its own weighting, reflecting its relative importance
@@ -290,7 +290,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 					</section>
 
 					<section id="how-to-interpret" className="flex scroll-mt-4 flex-col gap-5">
-						<h2 className="heading-xs">How to Interpret</h2>
+						<h2 className="heading-xs">How to interpret</h2>
 						<p className="body-lg text-secondary">
 							The composite score represents a relative measure of overall performance across all included dimensions.
 							Higher-ranked market makers have demonstrated stronger aggregate performance across the full set of
@@ -307,7 +307,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 						<p className="body-lg text-secondary">{PI_SAME_RANK_NOTE}</p>
 						<FigureRadar
 							src={docsAsset('radar_mm_details.png')}
-							alt="Market Maker detail view — Leaderboard Performance radar"
+							alt="Market maker detail view — leaderboards performance radar"
 						/>
 					</section>
 

@@ -60,7 +60,7 @@ const SIZE_PRESETS: Array<FilterPreset> = [
 const REVENUE_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'revenue-leaders',
-		name: 'Revenue Leaders',
+		name: 'Revenue leaders',
 		description: 'Protocols earning over $100k per day',
 		category: 'revenue',
 		filters: {
@@ -75,7 +75,7 @@ const REVENUE_PRESETS: Array<FilterPreset> = [
 const INVESTMENT_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'value-plays',
-		name: 'Value Protocols',
+		name: 'Value protocols',
 		description: 'P/F below 20 with meaningful revenue',
 		category: 'investment',
 		filters: {
@@ -90,7 +90,7 @@ const INVESTMENT_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'institutional-grade',
-		name: 'Institutional Grade',
+		name: 'Institutional grade',
 		description: 'Large protocols with $1B+ TVL and $10M+ 1y revenue',
 		category: 'investment',
 		filters: {
@@ -106,7 +106,7 @@ const INVESTMENT_PRESETS: Array<FilterPreset> = [
 const CATEGORY_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'dex-leaders',
-		name: 'DEX Leaders',
+		name: 'DEX leaders',
 		description: 'Top decentralized exchanges by activity',
 		category: 'category',
 		filters: {
@@ -120,7 +120,7 @@ const CATEGORY_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'perps-platforms',
-		name: 'Perps Platforms',
+		name: 'Perps platforms',
 		description: 'Perpetual futures venues with real usage',
 		category: 'category',
 		filters: {
@@ -136,7 +136,7 @@ const CATEGORY_PRESETS: Array<FilterPreset> = [
 const QUICK_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'active-protocols',
-		name: 'Active Protocols',
+		name: 'Active protocols',
 		description: 'Protocols with TVL and fee generation',
 		category: 'quick',
 		filters: {
@@ -149,7 +149,7 @@ const QUICK_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'with-token',
-		name: 'With Token',
+		name: 'With token',
 		description: 'Protocols that have a tradeable token',
 		category: 'quick',
 		filters: {
@@ -164,7 +164,7 @@ const QUICK_PRESETS: Array<FilterPreset> = [
 const GROWTH_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'tvl-growing-weekly',
-		name: 'TVL Growing (7d)',
+		name: 'TVL growing (7d)',
 		description: 'Protocols with positive TVL growth this week',
 		category: 'growth',
 		filters: {
@@ -177,7 +177,7 @@ const GROWTH_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'tvl-surging',
-		name: 'TVL Surging (1d)',
+		name: 'TVL surging (1d)',
 		description: 'Protocols with strong daily TVL increase',
 		category: 'growth',
 		filters: {
@@ -190,7 +190,7 @@ const GROWTH_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'volume-surge',
-		name: 'Volume Surge',
+		name: 'Volume surge',
 		description: 'Protocols with spiking trading volume',
 		category: 'growth',
 		filters: {
@@ -203,7 +203,7 @@ const GROWTH_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'revenue-growing',
-		name: 'Revenue Growing',
+		name: 'Revenue growing',
 		description: 'Protocols with increasing revenue',
 		category: 'growth',
 		filters: {
@@ -216,7 +216,7 @@ const GROWTH_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'fees-momentum',
-		name: 'Fees Momentum',
+		name: 'Fees momentum',
 		description: 'Protocols with growing fee generation',
 		category: 'growth',
 		filters: {
@@ -229,7 +229,7 @@ const GROWTH_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'hot-this-month',
-		name: 'Hot This Month',
+		name: 'Hot this month',
 		description: 'Strong growth across TVL and volume',
 		category: 'growth',
 		filters: {
@@ -246,7 +246,7 @@ const GROWTH_PRESETS: Array<FilterPreset> = [
 const ACTIVITY_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'high-volume-24h',
-		name: 'High Volume (24h)',
+		name: 'High volume (24h)',
 		description: 'Top protocols by daily trading volume',
 		category: 'activity',
 		filters: {
@@ -258,7 +258,7 @@ const ACTIVITY_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'volume-leaders-weekly',
-		name: 'Volume Leaders (7d)',
+		name: 'Volume leaders (7d)',
 		description: 'Protocols with strong weekly volume',
 		category: 'activity',
 		filters: {
@@ -270,7 +270,7 @@ const ACTIVITY_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'fee-generators',
-		name: 'Fee Generators',
+		name: 'Fee generators',
 		description: 'Protocols generating significant fees',
 		category: 'activity',
 		filters: {
@@ -282,7 +282,7 @@ const ACTIVITY_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'monthly-fee-leaders',
-		name: 'Monthly Fee Leaders',
+		name: 'Monthly fee leaders',
 		description: 'Top fee earners over 30 days',
 		category: 'activity',
 		filters: {
@@ -294,7 +294,7 @@ const ACTIVITY_PRESETS: Array<FilterPreset> = [
 	},
 	{
 		id: 'high-activity',
-		name: 'High Activity',
+		name: 'High activity',
 		description: 'Active protocols with volume and fees',
 		category: 'activity',
 		filters: {

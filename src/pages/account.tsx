@@ -22,11 +22,11 @@ const PAYMENT_CONFIRMATION_READS = 6
 
 const PAYMENT_TITLES = {
 	confirming: 'Confirming your payment',
-	confirmed: 'Payment Successful',
+	confirmed: 'Payment successful',
 	unconfirmed: 'Payment still confirming',
-	failed: 'Payment Not Completed',
-	processing: 'Payment Processing',
-	processingUnconfirmed: 'Payment Processing'
+	failed: 'Payment not completed',
+	processing: 'Payment processing',
+	processingUnconfirmed: 'Payment processing'
 } as const
 
 const PAYMENT_DESCRIPTIONS = {

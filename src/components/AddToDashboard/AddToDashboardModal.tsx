@@ -65,7 +65,7 @@ function getConfigName(config: DashboardChartConfig | null, llamaAIChart?: Llama
 	if (config.kind === 'stablecoin-asset') {
 		const chartTypeLabels: Record<string, string> = {
 			totalCirc: 'Total Circulating',
-			chainMcaps: 'By Chain',
+			chainMcaps: 'By chain',
 			chainPie: 'Pie',
 			chainDominance: 'Chain Dominance'
 		}
@@ -399,7 +399,7 @@ export function AddToDashboardModal({
 	return (
 		<Dialog size="sm" fullSheet store={dialogStore} pending={isSubmitting} onClose={resetSubmit} unmountOnHide portal>
 			<form onSubmit={handleAdd} className="flex min-h-0 flex-auto flex-col">
-				<DialogHeader title={repairTarget ? 'Replace Dashboard Chart' : 'Add to Dashboard'} />
+				<DialogHeader title={repairTarget ? 'Replace dashboard chart' : 'Add to dashboard'} />
 
 				<DialogBody>
 					{!repairTarget ? (
@@ -529,7 +529,7 @@ export function AddToDashboardModal({
 						pendingLabel={isSubmitting ? (repairTarget ? 'Replacing…' : 'Adding…') : null}
 					>
 						<Icon name={repairTarget ? 'repeat' : 'plus'} className="size-3.5" />
-						{repairTarget ? 'Replace Chart' : 'Add to Dashboard'}
+						{repairTarget ? 'Replace chart' : 'Add to dashboard'}
 					</Button>
 				</DialogFooter>
 			</form>

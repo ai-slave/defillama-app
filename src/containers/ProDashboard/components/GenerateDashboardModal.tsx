@@ -293,7 +293,7 @@ function GenerateDashboardModalInner({
 						{mode === 'create' ? (
 							<div className="flex flex-col gap-1.5">
 								<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-									Dashboard Name
+									Dashboard name
 								</label>
 								{/* Ariakit's autoFocus, so the dialog starts on the first field instead of the header ×. */}
 								<Ariakit.Focusable
@@ -403,7 +403,7 @@ function GenerateDashboardModalInner({
 				>
 					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? `${pendingLabel}…` : null}>
 						<Icon name="sparkles" height={16} width={16} />
-						{generation.data ? 'Retry save' : mode === 'iterate' ? 'Edit Dashboard' : 'Generate Dashboard'}
+						{generation.data ? 'Retry save' : mode === 'iterate' ? 'Edit dashboard' : 'Generate dashboard'}
 					</Button>
 				</DialogFooter>
 				<span role="status" className="sr-only">

@@ -65,25 +65,25 @@ afterEach(async () => {
 describe('lead dialogs start from a fresh form on each open', () => {
 	test('the claim form does not keep what was typed before it was closed', async () => {
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		const fullName = inputByLabel('Your Full Name')!
+		const fullName = inputByLabel('Your full name')!
 		expect(fullName.value).toBe('')
 		await type(fullName, 'Ada Lovelace')
-		expect(inputByLabel('Your Full Name')!.value).toBe('Ada Lovelace')
+		expect(inputByLabel('Your full name')!.value).toBe('Ada Lovelace')
 
 		await render(<ClaimDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		expect(inputByLabel('Your Full Name')!.value).toBe('')
+		expect(inputByLabel('Your full name')!.value).toBe('')
 	})
 
 	test('the connect form does not keep what was typed before it was closed', async () => {
 		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		const fullName = inputByLabel('Full Name')!
+		const fullName = inputByLabel('Full name')!
 		await type(fullName, 'Ada Lovelace')
-		expect(inputByLabel('Full Name')!.value).toBe('Ada Lovelace')
+		expect(inputByLabel('Full name')!.value).toBe('Ada Lovelace')
 
 		await render(<ConnectDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		expect(inputByLabel('Full Name')!.value).toBe('')
+		expect(inputByLabel('Full name')!.value).toBe('')
 	})
 })
 
@@ -92,7 +92,7 @@ describe('claim form submission', () => {
 		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', 'claim-site-key')
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 
-		await click(buttonByText('Submit Claim Request')!)
+		await click(buttonByText('Submit claim request')!)
 
 		expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
 			'Complete the verification check to submit'
@@ -104,15 +104,15 @@ describe('claim form submission', () => {
 		http.serve({ '/api/public/market-makers/lead/claim': { status: 'ok', request_id: 'req-1' } })
 		const onClose = vi.fn()
 		await render(<ClaimDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" />)
-		await type(inputByLabel('Position at Organization')!, 'CEO')
-		await type(inputByLabel('Your Full Name')!, 'Ada Lovelace')
+		await type(inputByLabel('Position at organization')!, 'CEO')
+		await type(inputByLabel('Your full name')!, 'Ada Lovelace')
 		await type(inputByLabel('Your LinkedIn or X profile')!, 'linkedin.com/in/ada')
 		await type(inputByLabel('Your organization email address')!, 'ada@acme.com')
 		for (const checkbox of document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[type="checkbox"]')) {
 			await click(checkbox)
 		}
 
-		await click(buttonByText('Submit Claim Request')!)
+		await click(buttonByText('Submit claim request')!)
 
 		await waitForUi(() =>
 			expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Claim request received')

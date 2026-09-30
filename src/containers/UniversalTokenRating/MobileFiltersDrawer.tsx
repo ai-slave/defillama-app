@@ -76,10 +76,10 @@ export function MobileFiltersDrawer({
 }) {
 	if (!open) return null
 	return (
-		<Drawer open onClose={onClose} title="Filters & Sorting">
+		<Drawer open onClose={onClose} title="Filters & sorting">
 			<div className="flex flex-col gap-4 p-4">
 				<FilterSection
-					title="FDV Range"
+					title="FDV range"
 					options={fdvOptions}
 					selected={fdvRanges}
 					onToggle={(key) => setFdvRanges(toggleValue(fdvRanges, key))}
@@ -91,13 +91,13 @@ export function MobileFiltersDrawer({
 					onToggle={(key) => setSectors(toggleValue(sectors, key))}
 				/>
 				<FilterSection
-					title="Exchange Listing Status"
+					title="Exchange listing status"
 					options={statusOptions}
 					selected={listingStatuses}
 					onToggle={(key) => setListingStatuses(toggleValue(listingStatuses, key))}
 				/>
 				<FilterSection
-					title="Sort By"
+					title="Sort by"
 					options={UTR_SORT_OPTIONS.map((option) => ({ key: option.key, name: option.name }))}
 					selected={[sort.key]}
 					onToggle={(key) => setSort({ key: key as UtrSortKey, desc: key !== 'rank' })}

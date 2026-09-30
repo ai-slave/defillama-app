@@ -59,7 +59,7 @@ export function AssignSubscriptionModal({ isOpen, onClose, member, finalFocus }:
 			unmountOnHide
 		>
 			<form onSubmit={handleAssign} className="flex min-h-0 flex-auto flex-col">
-				<DialogHeader title="Assign Subscription" />
+				<DialogHeader title="Assign subscription" />
 				<DialogBody>
 					<Ariakit.DialogDescription className="body-sm break-words text-secondary">
 						Select a subscription type to assign to <span className="font-medium text-primary">{member.email}</span>.

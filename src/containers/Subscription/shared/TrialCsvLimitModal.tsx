@@ -5,7 +5,7 @@ export function TrialCsvLimitModal({ isOpen, onClose }: { isOpen: boolean; onClo
 		<EndTrialModal
 			isOpen={isOpen}
 			onClose={onClose}
-			title="CSV Downloads Require Pro"
+			title="CSV downloads require Pro"
 			description="You're currently on a trial plan. Upgrade to export data from any chart or table across DefiLlama."
 			confirmLabel="Upgrade to Pro"
 			secondaryHref="/subscription"

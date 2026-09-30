@@ -33,7 +33,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 	const chainSelectOptions = useMemo(() => {
 		const base = availableChains.some((option) => option.value === 'All')
 			? availableChains
-			: [{ value: 'All', label: 'All Chains' }, ...availableChains]
+			: [{ value: 'All', label: 'All chains' }, ...availableChains]
 		return chainParameter.options.length > 0 ? [...chainParameter.options, ...base] : base
 	}, [availableChains, chainParameter.options])
 
@@ -197,7 +197,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 						</div>
 					</div>
 					<AriakitVirtualizedMultiSelect
-						label={categoryMode === 'include' ? 'Include Categories' : 'Exclude Categories'}
+						label={categoryMode === 'include' ? 'Include categories' : 'Exclude categories'}
 						options={categoryOptions}
 						selectedValues={categoryValues}
 						onChange={handleCategoryMultiSelectChange}

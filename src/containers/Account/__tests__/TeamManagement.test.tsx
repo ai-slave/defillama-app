@@ -260,15 +260,15 @@ test('invite validates the address, preserves a failed draft and retries through
 		options?.method === 'POST' ? first.promise : Promise.resolve(Response.json({ team }))
 	)
 	await mount(<Harness kind="invite" />)
-	expect(namedDialog('Invite Member')).toBeTruthy()
+	expect(namedDialog('Invite member')).toBeTruthy()
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
 	await waitForUi(() => expect(document.activeElement).toBe(input))
-	await click('Send Invite')
+	await click('Send invite')
 	await change(input, 'not-an-email')
-	await click('Send Invite')
+	await click('Send invite')
 	expect(posts()).toHaveLength(0)
 	await change(input, 'colleague@example.com')
-	await click('Send Invite')
+	await click('Send invite')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await waitForUi(() => expect(input.readOnly).toBe(true))
 	await click('Close dialog')
@@ -277,7 +277,7 @@ test('invite validates the address, preserves a failed draft and retries through
 	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Invite unavailable'))
 	expect(input.value).toBe('colleague@example.com')
 	api.fetch.mockImplementation(async () => Response.json({ team }))
-	await click('Send Invite')
+	await click('Send invite')
 	await waitForUi(() => expect(dialog()).toBeNull())
 	expect(posts().map(([, options]) => JSON.parse(options.body))).toEqual([
 		{ email: 'colleague@example.com' },
@@ -301,7 +301,7 @@ test('seat form locks its submitted amount and preserves it after a failure', as
 	await change(input, '4')
 	expect(dialog().textContent).toContain('$196/month')
 	expect(dialog().textContent).not.toContain('will not be refunded')
-	await click('Update Seats')
+	await click('Update seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 4 })
 	await waitForUi(() => expect(input.readOnly).toBe(true))
@@ -316,17 +316,17 @@ test('seat form locks its submitted amount and preserves it after a failure', as
 test('cancellation sends zero only after confirmation and preserves access until period end', async () => {
 	await mount(<Harness kind="manage" />)
 	await click('Cancel subscription')
-	const confirmation = namedDialog('Cancel Pro Subscription')
+	const confirmation = namedDialog('Cancel Pro subscription')
 	expect(confirmation.getAttribute('role')).toBe('alertdialog')
 	expect(confirmation.textContent).toContain('Assigned members keep access until the period ends')
 	const keep = [...confirmation.querySelectorAll('button')].find((b) => accessibleName(b) === 'Keep subscription')!
 	await waitForUi(() => expect(document.activeElement).toBe(keep))
 	await act(async () => keep.click())
-	await waitForUi(() => expect(namedDialog('Cancel Pro Subscription')).toBeUndefined())
-	expect(namedDialog('Manage Pro Seats')).toBeTruthy()
+	await waitForUi(() => expect(namedDialog('Cancel Pro subscription')).toBeUndefined())
+	expect(namedDialog('Manage Pro seats')).toBeTruthy()
 	expect(posts()).toHaveLength(0)
 	await click('Cancel subscription')
-	await click('Cancel Subscription')
+	await act(async () => confirmButton('Cancel Pro subscription', 'Cancel subscription').click())
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 0 })
 })
@@ -339,10 +339,10 @@ test('a cancel confirmation locked by a failed team refresh after a failed cance
 	)
 	await mount(<Harness kind="manage" />)
 	await click('Cancel subscription')
-	await click('Cancel Subscription')
-	const confirmation = namedDialog('Cancel Pro Subscription')
+	await act(async () => confirmButton('Cancel Pro subscription', 'Cancel subscription').click())
+	const confirmation = namedDialog('Cancel Pro subscription')
 	const confirm = () =>
-		[...confirmation.querySelectorAll('button')].find((b) => accessibleName(b) === 'Cancel Subscription')!
+		[...confirmation.querySelectorAll('button')].find((b) => accessibleName(b) === 'Cancel subscription')!
 	await waitForUi(() => expect(confirm().disabled).toBe(true))
 
 	expect(confirmation.querySelector('[role=alert]')?.textContent).toBe(
@@ -353,10 +353,10 @@ test('a cancel confirmation locked by a failed team refresh after a failed cance
 
 test('seat form says why Update Seats and Decrease seats are disabled', async () => {
 	await mount(<Harness kind="manage" />)
-	expect(button('Update Seats').disabled).toBe(true)
+	expect(button('Update seats').disabled).toBe(true)
 	expect(dialog().textContent).toContain('Change the seat count to update')
 	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '2')
-	expect(button('Update Seats').disabled).toBe(false)
+	expect(button('Update seats').disabled).toBe(false)
 	expect(dialog().textContent).not.toContain('Change the seat count to update')
 	expect(button('Decrease seats').disabled).toBe(true)
 	expect(dialog().textContent).toContain("You can't reduce below 2 seats")
@@ -374,9 +374,9 @@ test('an upgrade confirmation waits in its button while another team update runs
 		</>
 	)
 	await click('Upgrade to Yearly')
-	const confirmation = namedDialog('Upgrade Pro to Yearly')
+	const confirmation = namedDialog('Upgrade Pro to yearly')
 	const confirm = () => [...confirmation.querySelectorAll('button')].at(-1)!
-	expect(accessibleName(confirm())).toBe('Upgrade to Yearly')
+	expect(accessibleName(confirm())).toBe('Upgrade to yearly')
 	await act(async () => hooks.other.setSeatsMutation.mutate({ subscriptionType: 'llamafeed', seatCount: 4 }))
 	await waitForUi(() => expect(accessibleName(confirm())).toBe('Updating…'))
 	expect(confirmation.querySelector('[role=status]')?.textContent).toBe('Updating…')
@@ -401,7 +401,7 @@ test.each(['assign', 'revoke'] as const)('%s confirms success only once its dial
 	api.fetch.mockImplementation((_url, options) =>
 		options?.method === 'POST' ? Promise.resolve(Response.json({})) : refresh.promise
 	)
-	const title = action === 'assign' ? 'Assign Subscription' : 'Revoke Invite'
+	const title = action === 'assign' ? 'Assign subscription' : 'Revoke invite'
 	if (action === 'assign') {
 		await mount(<TeamMembersCard />)
 		await click('Assign subscription to member@example.com')
@@ -437,11 +437,11 @@ test('scheduled cancellation locks the current-seat floor and an increase retain
 	expect(button('Decrease seats').disabled).toBe(true)
 	expect(button('Cancel subscription')).toBeUndefined()
 	await change(input, '2')
-	await click('Update Seats')
+	await click('Update seats')
 	expect(posts()).toHaveLength(0)
 	await change(input, '4')
 	expect(dialog().textContent).toContain('resume billing and undo the pending cancellation')
-	await click('Update Seats')
+	await click('Update seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body).seatCount).toBe(4)
 })
@@ -458,7 +458,7 @@ test('purchase respects the existing billing interval and does not repeat a requ
 	expect(document.querySelector<HTMLInputElement>('input[value=year]')!.getAttribute('aria-checked')).toBe('true')
 	expect(dialog().textContent).toContain("Monthly and yearly billing can't be mixed for the same plan")
 	expect(dialog().textContent).toContain('$490/year')
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await waitForUi(() =>
 		expect(document.querySelector<HTMLInputElement>('input[value=api]')!.getAttribute('aria-disabled')).toBe('true')
@@ -471,7 +471,7 @@ test('purchase respects the existing billing interval and does not repeat a requ
 		billingInterval: 'year'
 	})
 	await act(async () => request.resolve(Response.json({ action: 'checkout_created', clientSecret: 'test-secret' })))
-	await waitForUi(() => expect(namedDialog('Complete Payment')).toBeTruthy())
+	await waitForUi(() => expect(namedDialog('Complete payment')).toBeTruthy())
 	expect(api.checkout).toHaveBeenLastCalledWith({ clientSecret: 'test-secret' })
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	expect(posts()).toHaveLength(1)
@@ -484,8 +484,8 @@ async function openSeatCheckout() {
 			: Response.json({ team })
 	)
 	await mount(<Harness kind="purchase" />)
-	await click('Purchase Seats')
-	await waitForUi(() => expect(namedDialog('Complete Payment')).toBeTruthy())
+	await click('Purchase seats')
+	await waitForUi(() => expect(namedDialog('Complete payment')).toBeTruthy())
 }
 const teamReads = () => api.fetch.mock.calls.filter(([url, options]) => url.endsWith('/team') && !options?.method)
 function confirmButton(title: string, name: string) {
@@ -500,12 +500,12 @@ test('closing the seat checkout asks first, and Keep paying keeps the same check
 	)
 	await act(async () => confirmButton('Leave checkout?', 'Keep paying').click())
 	await waitForUi(() => expect(namedDialog('Leave checkout?')).toBeUndefined())
-	expect(namedDialog('Complete Payment')).toBeTruthy()
+	expect(namedDialog('Complete payment')).toBeTruthy()
 	await act(async () => {
 		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 	})
 	await waitForUi(() => expect(namedDialog('Leave checkout?')).toBeTruthy())
-	expect(namedDialog('Complete Payment')).toBeTruthy()
+	expect(namedDialog('Complete payment')).toBeTruthy()
 	expect(api.checkoutMount).toHaveBeenCalledTimes(1)
 	expect(posts()).toHaveLength(1)
 })
@@ -519,20 +519,20 @@ test('leaving the seat checkout closes it and reads the team now and again later
 	await click('Close dialog')
 	const readsBefore = teamReads().length
 	await act(async () => confirmButton('Leave checkout?', 'Leave').click())
-	await waitForUi(() => expect(namedDialog('Complete Payment')).toBeUndefined())
+	await waitForUi(() => expect(namedDialog('Complete payment')).toBeUndefined())
 	await waitForUi(() => expect(teamReads()).toHaveLength(readsBefore + 1))
 	await act(async () => vi.advanceTimersByTimeAsync(4000))
 	await waitForUi(() => expect(teamReads()).toHaveLength(readsBefore + 2))
 	expect(posts()).toHaveLength(1)
 	await click('Open')
-	expect(namedDialog('Purchase Seats')).toBeTruthy()
+	expect(namedDialog('Purchase seats')).toBeTruthy()
 })
 
 test('a seat checkout returns to the team tab with the purchased type and seat count', async () => {
 	await mount(<Harness kind="purchase" />)
 	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
 	await change(document.querySelector<HTMLInputElement>('#seat-count')!, '4')
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toMatchObject({
 		redirectUrl: `${window.location.origin}/account?tab=team&team-checkout=success&type=api&seats=4`,
@@ -543,7 +543,7 @@ test('a seat checkout returns to the team tab with the purchased type and seat c
 test('closing the seat form before checkout needs no confirmation', async () => {
 	await mount(<Harness kind="purchase" />)
 	await click('Close dialog')
-	await waitForUi(() => expect(namedDialog('Purchase Seats')).toBeUndefined())
+	await waitForUi(() => expect(namedDialog('Purchase seats')).toBeUndefined())
 	expect(namedDialog('Leave checkout?')).toBeUndefined()
 })
 
@@ -571,7 +571,7 @@ test.each([
 			options?.method === 'POST' ? Promise.resolve(new Response('upstream timed out', { status: 504 })) : reread.promise
 		)
 		await mount(<Harness kind="purchase" />)
-		await click('Purchase Seats')
+		await click('Purchase seats')
 		const submit = () => dialog().querySelector<HTMLButtonElement>('button[type=submit]')!
 		await waitForUi(() => expect(accessibleName(submit())).toBe('Refreshing…'))
 		await act(async () => submit().click())
@@ -594,7 +594,7 @@ test('a timed-out first purchase of a plan says the team has none of its seats y
 	)
 	await mount(<Harness kind="purchase" />)
 	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() =>
 		expect(dialog().textContent).toContain("We couldn't confirm this purchase. Your team currently has no API seats.")
 	)
@@ -608,7 +608,7 @@ test('a rejected purchase shows the server message', async () => {
 			: Response.json({ team })
 	)
 	await mount(<Harness kind="purchase" />)
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() =>
 		expect(dialog().querySelector('[role=alert]')?.textContent).toBe(
 			'Team already has a monthly llamafeed subscription.'
@@ -622,7 +622,7 @@ test('Purchase stays locked while the purchase request runs', async () => {
 		options?.method === 'POST' ? request.promise : Promise.resolve(Response.json({ team }))
 	)
 	await mount(<Harness kind="purchase" />)
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	const submit = () => dialog().querySelector<HTMLButtonElement>('button[type=submit]')!
 	await waitForUi(() => expect(accessibleName(submit())).toBe('Processing…'))
 	await act(async () => submit().click())
@@ -639,7 +639,7 @@ test('a timed-out yearly upgrade names the billing the team shows after its re-r
 	)
 	await mount(<TeamSeatsCard />)
 	await click('Upgrade to Yearly')
-	await act(async () => confirmButton('Upgrade Pro to Yearly', 'Upgrade to Yearly').click())
+	await act(async () => confirmButton('Upgrade Pro to yearly', 'Upgrade to yearly').click())
 	await waitForUi(() => expect(teamReads()).toHaveLength(1))
 	await act(async () =>
 		reread.resolve(
@@ -647,7 +647,7 @@ test('a timed-out yearly upgrade names the billing the team shows after its re-r
 		)
 	)
 	await waitForUi(() =>
-		expect(namedDialog('Upgrade Pro to Yearly').querySelector('[role=alert]')?.textContent).toBe(
+		expect(namedDialog('Upgrade Pro to yearly').querySelector('[role=alert]')?.textContent).toBe(
 			"We couldn't confirm this upgrade. Your Pro plan currently bills yearly."
 		)
 	)
@@ -664,7 +664,7 @@ test('buying seats on a plan set to end says it resumes and how many seats renew
 	)
 	await change(document.querySelector<HTMLInputElement>('#seat-count')!, '5')
 	expect(warning()?.textContent).toContain('all 8 seats renew on Mar 14, 2099.')
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toMatchObject({ subscriptionType: 'llamafeed', seatCount: 5 })
 })
@@ -683,13 +683,13 @@ test('managing seats on a plan set to end shows its end date from cancelsAt', as
 
 test.each([
 	[
-		'Upgrade Pro to Yearly',
+		'Upgrade Pro to yearly',
 		'llamafeed',
 		10,
 		'Stripe charges your saved card now: up to $4,900 for 10 seats at $490/year, less credit for the unused part of this month. The plan then renews yearly from today.'
 	],
 	[
-		'Upgrade API to Yearly',
+		'Upgrade API to yearly',
 		'api',
 		2,
 		'Stripe charges your saved card now: up to $6,000 for 2 seats at $3,000/year, less credit for the unused part of this month. The plan then renews yearly from today.'
@@ -717,12 +717,12 @@ test('a paid Pro checkout still being confirmed holds a second Pro checkout and 
 	notePaidCheckout(60_000)
 	await mount(<Harness kind="purchase" />)
 	expect(dialog().textContent).toContain(heldReason)
-	expect(button('Purchase Seats').disabled).toBe(true)
+	expect(button('Purchase seats').disabled).toBe(true)
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	expect(posts()).toHaveLength(0)
 	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
 	expect(dialog().textContent).not.toContain('still being confirmed')
-	expect(button('Purchase Seats').disabled).toBe(false)
+	expect(button('Purchase seats').disabled).toBe(false)
 })
 
 test('a paid checkout note clears once the team shows the plan, and seats can be bought', async () => {
@@ -730,8 +730,8 @@ test('a paid checkout note clears once the team shows the plan, and seats can be
 	await mount(<TeamSeatsCard />)
 	await waitForUi(() => expect(readPendingTeamCheckout('user', 'llamafeed')).toBeNull())
 	await click('Purchase Seats')
-	await waitForUi(() => expect(namedDialog('Purchase Seats')).toBeTruthy())
-	expect(namedDialog('Purchase Seats').textContent).not.toContain('still being confirmed')
+	await waitForUi(() => expect(namedDialog('Purchase seats')).toBeTruthy())
+	expect(namedDialog('Purchase seats').textContent).not.toContain('still being confirmed')
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 })
@@ -741,7 +741,7 @@ test('a paid checkout note older than the hold no longer holds a purchase', asyn
 	notePaidCheckout(TEAM_CHECKOUT_HOLD_MS + 60_000)
 	await mount(<Harness kind="purchase" />)
 	expect(dialog().textContent).not.toContain('still being confirmed')
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 })
 
@@ -751,13 +751,13 @@ test('a late purchase response cannot close a new opening after navigation', asy
 		options?.method === 'POST' ? first.promise : Promise.resolve(Response.json({ team }))
 	)
 	await mount(<Harness key="old" kind="purchase" />)
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await mount(<Harness key="new" kind="purchase" />)
 	await act(async () => first.resolve(Response.json({ action: 'seats_added', seatsAdded: 1 })))
-	await waitForUi(() => expect(button('Purchase Seats').disabled).toBe(false))
-	expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true')
-	expect(namedDialog('Purchase Seats')).toBeTruthy()
+	await waitForUi(() => expect(button('Purchase seats').disabled).toBe(false))
+	expect(button('Purchase seats').getAttribute('aria-disabled')).not.toBe('true')
+	expect(namedDialog('Purchase seats')).toBeTruthy()
 })
 
 test('assignment requires a selected available plan and retains it after failure', async () => {
@@ -787,7 +787,7 @@ test('failed member removal keeps the row and its confirmation available for ret
 	await click('Remove member@example.com')
 	await click('Remove')
 	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Remove unavailable'))
-	expect(namedDialog('Remove Member')).toBeTruthy()
+	expect(namedDialog('Remove member')).toBeTruthy()
 	expect(container.textContent).toContain('member@example.com')
 	expect(button('Remove').getAttribute('aria-disabled')).not.toBe('true')
 	await click('Cancel')
@@ -817,9 +817,9 @@ test('returning during an upgrade waits for confirmed yearly pricing before anot
 	expect(submit().getAttribute('aria-busy')).toBe('true')
 	const updated = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
 	await act(async () => refresh.resolve(Response.json({ team: updated })))
-	await waitForUi(() => expect(accessibleName(submit())).toBe('Purchase Seats'))
+	await waitForUi(() => expect(accessibleName(submit())).toBe('Purchase seats'))
 	expect(dialog().textContent).toContain('$490/year')
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(2))
 	expect(JSON.parse(posts()[1][1].body).billingInterval).toBe('year')
 })
@@ -866,17 +866,17 @@ test('a successful write with a failed refresh blocks another billing change unt
 		throw new Error('Refresh offline')
 	})
 	await mount(<Harness kind="purchase" />)
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(dialog()).toBeNull())
 	await click('Open')
-	expect(button('Purchase Seats').disabled).toBe(true)
+	expect(button('Purchase seats').disabled).toBe(true)
 	expect(dialog().textContent).toContain("Couldn't refresh team billing")
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	expect(posts()).toHaveLength(1)
 	team = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
 	api.fetch.mockImplementation(async () => Response.json({ team }))
 	await click('Try again')
-	await waitForUi(() => expect(button('Purchase Seats').disabled).toBe(false))
+	await waitForUi(() => expect(button('Purchase seats').disabled).toBe(false))
 	expect(dialog().textContent).toContain('$490/year')
 	expect(posts()).toHaveLength(1)
 })
@@ -889,8 +889,8 @@ test('leaving a team waits for confirmation and focuses the surviving team regio
 	)
 	await mount(<TeamTab />)
 	await click('Leave Team')
-	const confirm = namedDialog('Leave Team').querySelectorAll('button')
-	await act(async () => [...confirm].find((b) => accessibleName(b) === 'Leave Team')!.click())
+	const confirm = namedDialog('Leave team').querySelectorAll('button')
+	await act(async () => [...confirm].find((b) => accessibleName(b) === 'Leave team')!.click())
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('Original')
 	await act(async () => request.resolve(Response.json({})))
@@ -953,7 +953,7 @@ test('revoking an invite keeps its row until confirmed and returns focus to Invi
 	await mount(<TeamInvitesCard />)
 	await click('Revoke')
 	await act(async () =>
-		[...namedDialog('Revoke Invite').querySelectorAll('button')].find((b) => accessibleName(b) === 'Revoke')!.click()
+		[...namedDialog('Revoke invite').querySelectorAll('button')].find((b) => accessibleName(b) === 'Revoke')!.click()
 	)
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('invite@example.com')
@@ -970,7 +970,7 @@ test.each(['', '1', '2.5', '0'])(
 		await change(document.querySelector<HTMLInputElement>('input[type=number]')!, value)
 		expect(dialog().textContent).not.toContain('Bill after update')
 		expect(dialog().textContent).not.toContain('will not be refunded')
-		await click('Update Seats')
+		await click('Update seats')
 		expect(posts()).toHaveLength(0)
 	}
 )

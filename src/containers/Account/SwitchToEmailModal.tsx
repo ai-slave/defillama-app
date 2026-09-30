@@ -216,7 +216,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 		>
 			{step === 'email' && (
 				<form onSubmit={handleRequestOtp} className="flex min-h-0 flex-auto flex-col">
-					<DialogHeader title="Switch to Email" />
+					<DialogHeader title="Switch to email" />
 					<DialogBody>
 						<p className="body-sm text-secondary">
 							Enter the email address you'd like to use for signing in. We'll send you a verification code.
@@ -261,7 +261,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							disabled={!email}
 							pendingLabel={requestOtpMutation.isPending ? 'Sending…' : null}
 						>
-							Send Verification Code
+							Send verification code
 						</Button>
 					</DialogFooter>
 				</form>
@@ -269,7 +269,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 
 			{step === 'confirm' && (
 				<form onSubmit={handleConfirm} className="flex min-h-0 flex-auto flex-col">
-					<DialogHeader title="Verify & Set Password" />
+					<DialogHeader title="Verify & set password" />
 					<DialogBody>
 						<p className="body-sm text-secondary">
 							Enter the 6-digit code sent to <span className="font-medium text-primary">{email}</span> and choose a
@@ -405,7 +405,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							disabled={confirmIncomplete || requestOtpMutation.isPending}
 							pendingLabel={confirmMutation.isPending ? 'Switching…' : null}
 						>
-							Complete Switch
+							Complete switch
 						</Button>
 					</DialogFooter>
 				</form>
@@ -413,7 +413,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 
 			{step === 'success' && (
 				<>
-					<DialogHeader title="Switch Successful" closable={false} />
+					<DialogHeader title="Switch successful" closable={false} />
 					<DialogBody>
 						<p className="body-sm text-secondary">
 							Your account now uses email authentication. You can sign in with{' '}

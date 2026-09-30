@@ -71,22 +71,22 @@ const footerText = () => dialog().querySelector('footer')?.textContent
 
 test('submit says why it is disabled until a dashboard is picked or named', async () => {
 	await renderModal()
-	const submit = button('Add to Dashboard')
+	const submit = button('Add to dashboard')
 	expect(submit.disabled).toBe(true)
-	expect(footerText()).toBe('Pick a dashboard or create a new oneCancelAdd to Dashboard')
+	expect(footerText()).toBe('Pick a dashboard or create a new oneCancelAdd to dashboard')
 
 	await act(async () => button('Create new dashboard').click())
-	expect(footerText()).toBe('Enter a name for the new dashboardCancelAdd to Dashboard')
+	expect(footerText()).toBe('Enter a name for the new dashboardCancelAdd to dashboard')
 	await type(dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!, 'Research')
 	expect(submit.disabled).toBe(false)
-	expect(footerText()).toBe('CancelAdd to Dashboard')
+	expect(footerText()).toBe('CancelAdd to dashboard')
 })
 
 test('a failed create shows its error inside the open dialog, not as a toast', async () => {
 	await renderModal()
 	await act(async () => button('Create new dashboard').click())
 	await type(dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!, 'Research')
-	await act(async () => button('Add to Dashboard').click())
+	await act(async () => button('Add to dashboard').click())
 
 	await waitForUi(() => expect(dialog().querySelector('[role="alert"]')?.textContent).toBe('Dashboard limit reached'))
 	const toasts = [...document.querySelectorAll('[role="status"]')].map((el) => el.textContent)

@@ -104,7 +104,7 @@ async function continueAndSubmit(fill = () => setInput('#delete-account-confirma
 	await act(async () => button('Continue')!.click())
 	await waitFor(() => expect(document.querySelector('#delete-account-confirmation')).not.toBeNull())
 	await act(async () => fill())
-	await act(async () => button('Delete Account Permanently')!.click())
+	await act(async () => button('Delete account permanently')!.click())
 }
 
 test('deletes a typed-confirmation account with the session that opened the flow, then signs out', async () => {
@@ -164,7 +164,7 @@ test('a failed account check shows its error in the dialog and Try Again recover
 	expect(button('Continue')).toBeUndefined()
 
 	session.serve({ [ELIGIBILITY]: eligibility })
-	await act(async () => button('Try Again')!.click())
+	await act(async () => button('Try again')!.click())
 	await waitFor(() => expect(button('Continue')).toBeDefined())
 	expect(text()).not.toContain('Account service unavailable')
 })

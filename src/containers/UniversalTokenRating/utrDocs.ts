@@ -32,14 +32,14 @@ export type UtrDocChapter = {
 	blocks: Array<UtrDocBlock>
 }
 
-export const UTR_DOCS_TITLE = 'Universal Token Rating Documentation'
+export const UTR_DOCS_TITLE = 'Universal Token Rating documentation'
 
 const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 	{
 		id: 'preface',
 		label: '1. Preface',
 		blocks: [
-			{ type: 'heading', text: '1,294 Total Tokens Scored' },
+			{ type: 'heading', text: '1,294 total tokens scored' },
 			{
 				type: 'paragraph',
 				text: "Forgd's Universal Token Ratings (“UTR”) provide a structured, continuously updated framework for evaluating the disclosure quality and live market performance of 1,200+ token projects across the digital asset ecosystem. The standard is designed for founders, investors, advisors, and researchers who require a consistent and transparent basis for assessing a project's operational health, not just at launch, but throughout its lifecycle."
@@ -87,7 +87,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 				type: 'paragraph',
 				text: 'At TGE (Token Generation Event), the Disclosure axis is fully measurable because the underlying disclosures either exist or they do not. The Performance axis, however, has no historical operating window yet — projects initially carry a provisional TVS score with Performance still accruing. Over time, the TVS transitions from a disclosure-heavy onboarding framework into a fully validated, continuously updated operational score.'
 			},
-			{ type: 'heading', text: 'Calculation Methodology' },
+			{ type: 'heading', text: 'Calculation methodology' },
 			{
 				type: 'paragraph',
 				text: 'Everything within the Visibility Standard is graded on a standardized 0–10 scale and weighted upwards through categories into two independent scoring axes: Disclosure (D) and Performance (P). The two scores are then multiplied together to produce the final 0–100 Visibility Standard score: Visibility Standard(t) = D(t) × P(t). The system is intentionally designed to evolve alongside a project rather than act as a one-time filing or disclosure event.'
@@ -179,7 +179,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 				type: 'paragraph',
 				text: 'At a high level, the Visibility Standard separates scoring into two independent dimensions: Disclosure and Performance. Disclosure primarily measures transparency and reporting quality, while Performance measures whether live market structure, liquidity conditions and operational behavior actually support those disclosures in practice. The categories below represent the current directional framework for how each axis is evaluated.'
 			},
-			{ type: 'heading', text: 'How to Interpret the TVS Score' },
+			{ type: 'heading', text: 'How to interpret the TVS score' },
 			{
 				type: 'paragraph',
 				text: 'A higher TVS score reflects stronger combined performance across both transparency and live market quality. The score is multiplicative by design — a project that performs well on the market but maintains poor disclosures will score proportionally lower than one that excels on both dimensions. The leaderboard displays both the D and P axis scores independently alongside the composite TVS score, allowing users to identify where a project is strongest and where gaps exist.'
@@ -202,7 +202,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 				type: 'paragraph',
 				text: "A 60-day staleness rule governs all disclosure categories. If any material amendment is not reflected within 60 days of the change occurring, that category's contribution to the overall Disclosure score is automatically reduced by 50% until the disclosure is updated and remediated. This prevents static filings from inflating scores for projects that stop maintaining their disclosures after the initial submission."
 			},
-			{ type: 'heading', text: 'Core Components' },
+			{ type: 'heading', text: 'Core components' },
 			{
 				type: 'paragraph',
 				text: 'The Disclosure Axis is organized into four categories. Category weights and sub-criterion weights are listed below.'
@@ -274,7 +274,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 					['Exchange engagement disclosures', '9%']
 				]
 			},
-			{ type: 'heading', text: 'Calculation Methodology' },
+			{ type: 'heading', text: 'Calculation methodology' },
 			{
 				type: 'paragraph',
 				text: 'Each sub-criterion is scored on a 0–10 scale using a graded rubric. Sub-criterion scores are multiplied by their individual weight to produce an adjusted score. Adjusted scores are summed within each category to produce the category score. The overall Disclosure axis score is the sum of all category scores:'
@@ -336,7 +336,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 				type: 'paragraph',
 				text: "The 60-day staleness penalty applies at the category level. If a material change occurs — for example, a market maker change not reflected in service provider disclosures — the entire affected category's contribution to D(t) is reduced by 50% until the disclosure is remediated. In the example above, if the Service Provider Engagements category were subject to the staleness penalty, its contribution would fall from 2.40 to 1.20, reducing D(t) from 8.55 to 7.15."
 			},
-			{ type: 'heading', text: 'How to Interpret' },
+			{ type: 'heading', text: 'How to interpret' },
 			{
 				type: 'paragraph',
 				text: 'A higher Disclosure axis score reflects a project that maintains complete, current, and verifiable reporting across team, tokenomics, legal, and service provider information. Lower scores indicate material gaps — either in what was disclosed initially or in maintaining those disclosures over time.'
@@ -364,7 +364,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 				type: 'paragraph',
 				text: 'Performance scoring begins accruing at TGE. At launch, the trailing evaluation window is effectively empty, so the axis carries a provisional status until sufficient operating history exists to produce statistically meaningful outputs. Over time, the Performance score becomes the primary driver of TVS score movement, as Disclosure scores for mature projects tend to stabilize while market conditions continue to fluctuate.'
 			},
-			{ type: 'heading', text: 'Core Components' },
+			{ type: 'heading', text: 'Core components' },
 			{
 				type: 'paragraph',
 				text: 'The Performance Axis is organized into four categories. Category weights and sub-criterion weights are listed below.'
@@ -442,7 +442,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 					['Buyback & Burn Events', '5%']
 				]
 			},
-			{ type: 'heading', text: 'Calculation Methodology' },
+			{ type: 'heading', text: 'Calculation methodology' },
 			{
 				type: 'paragraph',
 				text: 'Each sub-criterion is scored on a 0–10 scale against a published rubric for quantitative criteria, or a graded rubric for qualitative criteria. The score for each sub-criterion is multiplied by its weight to produce an adjusted score. Adjusted scores are summed within each category to produce the category score. The overall Performance axis score is the sum of all category scores:'
@@ -502,7 +502,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 			},
 			{ type: 'paragraph', text: 'Step #2: Sum all category scores to produce P(t).', strong: true },
 			{ type: 'formula', text: 'P(t) = 2.22 + 1.75 + 1.88 + 2.06 = 7.91' },
-			{ type: 'heading', text: 'How to Interpret' },
+			{ type: 'heading', text: 'How to interpret' },
 			{
 				type: 'paragraph',
 				text: 'A higher Performance axis score reflects a project whose live market conditions, liquidity quality, and on-chain delivery consistently validate its disclosed commitments. Lower scores indicate deterioration in one or more of the underlying market or tokenomics categories.'
@@ -528,7 +528,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 	},
 	{
 		id: 'grading-methodology',
-		label: '5. Grading Methodology',
+		label: '5. Grading methodology',
 		blocks: [
 			{
 				type: 'paragraph',
@@ -674,7 +674,7 @@ const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 		id: 'appendix',
 		label: '6. Appendix',
 		blocks: [
-			{ type: 'heading', text: '6.1. Exchange Classifications' },
+			{ type: 'heading', text: '6.1. Exchange classifications' },
 			{
 				type: 'paragraph',
 				text: "The Disclosure grade reflects the completeness, and ongoing maintenance of a project's disclosures across each of the applicable sub-criteria."
@@ -1000,7 +1000,7 @@ function categoryTableBlocks(
 
 function unavailableCoreBlocks(axis: 'Disclosure' | 'Performance'): Array<UtrDocBlock> {
 	return [
-		{ type: 'heading', text: 'Core Components' },
+		{ type: 'heading', text: 'Core components' },
 		{
 			type: 'paragraph',
 			text: `The ${axis} Axis category and criterion weights are loaded from Forgd's active scoring configuration.`
@@ -1016,7 +1016,7 @@ function unavailableCoreBlocks(axis: 'Disclosure' | 'Performance'): Array<UtrDoc
 function disclosureCoreBlocks(config: UtrScoringConfig | null): Array<UtrDocBlock> {
 	if (!config?.disclosure.categories.length) return unavailableCoreBlocks('Disclosure')
 	return [
-		{ type: 'heading', text: 'Core Components' },
+		{ type: 'heading', text: 'Core components' },
 		{
 			type: 'paragraph',
 			text: 'The Disclosure Axis is organized into the categories below. Category weights are calculated from the active sub-criterion weights.'
@@ -1030,20 +1030,20 @@ function performanceCoreBlocks(config: UtrScoringConfig | null): Array<UtrDocBlo
 	const postTge = categoryTableBlocks(config.performance.categories, 'postTge')
 	const preTge = categoryTableBlocks(config.performance.categories, 'preTge')
 	return [
-		{ type: 'heading', text: 'Core Components' },
+		{ type: 'heading', text: 'Core components' },
 		{
 			type: 'paragraph',
 			text: 'The Performance Axis criteria are grouped by their active pre-TGE or post-TGE applicability. Category weights are calculated from the active sub-criterion weights.'
 		},
-		...(postTge.length > 0 ? ([{ type: 'heading', text: 'Post-TGE Criteria' }, ...postTge] as Array<UtrDocBlock>) : []),
-		...(preTge.length > 0 ? ([{ type: 'heading', text: 'Pre-TGE Criteria' }, ...preTge] as Array<UtrDocBlock>) : [])
+		...(postTge.length > 0 ? ([{ type: 'heading', text: 'Post-TGE criteria' }, ...postTge] as Array<UtrDocBlock>) : []),
+		...(preTge.length > 0 ? ([{ type: 'heading', text: 'Pre-TGE criteria' }, ...preTge] as Array<UtrDocBlock>) : [])
 	]
 }
 
 function replaceCoreComponents(chapter: UtrDocChapter, blocks: Array<UtrDocBlock>): UtrDocChapter {
-	const start = chapter.blocks.findIndex((block) => block.type === 'heading' && block.text === 'Core Components')
+	const start = chapter.blocks.findIndex((block) => block.type === 'heading' && block.text === 'Core components')
 	const end = chapter.blocks.findIndex(
-		(block, index) => index > start && block.type === 'heading' && block.text === 'Calculation Methodology'
+		(block, index) => index > start && block.type === 'heading' && block.text === 'Calculation methodology'
 	)
 	if (start === -1 || end === -1) return chapter
 	return { ...chapter, blocks: [...chapter.blocks.slice(0, start), ...blocks, ...chapter.blocks.slice(end)] }
@@ -1051,14 +1051,14 @@ function replaceCoreComponents(chapter: UtrDocChapter, blocks: Array<UtrDocBlock
 
 function replacePerformanceCalculationMethodology(chapter: UtrDocChapter): UtrDocChapter {
 	const start = chapter.blocks.findIndex(
-		(block) => block.type === 'heading' && block.text === 'Calculation Methodology'
+		(block) => block.type === 'heading' && block.text === 'Calculation methodology'
 	)
 	const end = chapter.blocks.findIndex(
-		(block, index) => index > start && block.type === 'heading' && block.text === 'How to Interpret'
+		(block, index) => index > start && block.type === 'heading' && block.text === 'How to interpret'
 	)
 	if (start === -1 || end === -1) return chapter
 	const blocks: Array<UtrDocBlock> = [
-		{ type: 'heading', text: 'Calculation Methodology' },
+		{ type: 'heading', text: 'Calculation methodology' },
 		{
 			type: 'paragraph',
 			text: "Each active sub-criterion is scored on a 0–10 scale and multiplied by its weight from Forgd's current scoring configuration. The weighted sub-criterion scores are summed to produce the Performance axis score."
@@ -1114,7 +1114,7 @@ function gradingAxisBlocks(
 function gradingChapter(config: UtrScoringConfig | null): UtrDocChapter {
 	return {
 		id: 'grading-methodology',
-		label: '5. Grading Methodology',
+		label: '5. Grading methodology',
 		blocks: [
 			{
 				type: 'paragraph',

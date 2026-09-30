@@ -79,13 +79,13 @@ const tableTypeOptions: Array<{
 	},
 	{
 		value: 'rwa-chains',
-		label: 'RWA By Chain',
+		label: 'RWA by chain',
 		description: 'RWA metrics aggregated by chain',
 		icon: '🏛️'
 	},
 	{
 		value: 'rwa-selected-chain',
-		label: 'RWA On Chain',
+		label: 'RWA on chain',
 		description: 'RWA assets on a selected chain',
 		icon: '🏛️'
 	},
@@ -97,24 +97,24 @@ const tableTypeOptions: Array<{
 	},
 	{
 		value: 'equities-financials',
-		label: 'Equities Financials',
+		label: 'Equities financials',
 		description: 'Income statement, balance sheet & cashflow for a company',
 		icon: '📄'
 	},
 	{
 		value: 'equities-filings',
-		label: 'Equities Filings',
+		label: 'Equities filings',
 		description: 'SEC filings for a specific company',
 		icon: '📋'
 	}
 ]
 
 const CEX_ANALYTICS_VIEW_OPTIONS: Array<{ value: 'starter' | CexAnalyticsView; label: string }> = [
-	{ value: 'starter', label: 'Starter Preset' },
-	{ value: 'summary', label: 'Summary Cards' },
-	{ value: 'comparison', label: 'Comparison Table' },
-	{ value: 'spot-vs-derivatives', label: 'Spot vs Derivatives Chart' },
-	{ value: 'market-share', label: 'Market Share Chart' }
+	{ value: 'starter', label: 'Starter preset' },
+	{ value: 'summary', label: 'Summary cards' },
+	{ value: 'comparison', label: 'Comparison table' },
+	{ value: 'spot-vs-derivatives', label: 'Spot vs derivatives chart' },
+	{ value: 'market-share', label: 'Market share chart' }
 ]
 
 const CEX_ANALYTICS_VIEW_OPTIONS_EDIT = CEX_ANALYTICS_VIEW_OPTIONS.filter((option) => option.value !== 'starter')
@@ -186,7 +186,7 @@ function CexAnalyticsPreview({
 
 const EMPTY_TOKEN_OPTIONS: Array<{ value: string; label: string; logo?: string }> = []
 const CHAIN_CATEGORY_OPTIONS = [
-	{ value: 'All', label: 'All Chains' },
+	{ value: 'All', label: 'All chains' },
 	{ value: 'EVM', label: 'EVM Chains' },
 	{ value: 'non-EVM', label: 'Non-EVM Chains' },
 	{ value: 'Layer 2', label: 'Layer 2' },
@@ -286,7 +286,7 @@ export function SimpleTableConfig({
 			</button>
 
 			<AriakitVirtualizedSelect
-				label="Table Type"
+				label="Table type"
 				options={datasetSelectOptions}
 				selectedValue={selectedTableType}
 				onChange={(option) => {
@@ -299,7 +299,7 @@ export function SimpleTableConfig({
 
 			{selectedTableType === 'stablecoins' ? (
 				<AriakitVirtualizedSelect
-					label="Select Chain"
+					label="Select chain"
 					options={chainOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
@@ -309,7 +309,7 @@ export function SimpleTableConfig({
 				/>
 			) : selectedTableType === 'yields' ? (
 				<AriakitVirtualizedMultiSelect
-					label="Select Chains (optional)"
+					label="Select chains (optional)"
 					options={chainOptions}
 					selectedValues={selectedChains}
 					onChange={onChainsChange}
@@ -319,7 +319,7 @@ export function SimpleTableConfig({
 				/>
 			) : selectedTableType === 'chains' ? (
 				<AriakitSelect
-					label="Select Category (optional)"
+					label="Select category (optional)"
 					options={chainCategoryOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
@@ -341,7 +341,7 @@ export function SimpleTableConfig({
 					{selectedCexAnalyticsView === 'market-share' ? (
 						<>
 							<AriakitSelect
-								label="Share Metric"
+								label="Share metric"
 								options={CEX_ANALYTICS_METRIC_OPTIONS}
 								selectedValue={selectedCexAnalyticsMetric}
 								onChange={(option) => {
@@ -373,7 +373,7 @@ export function SimpleTableConfig({
 			) : selectedTableType === 'token-usage' ? (
 				<>
 					<AriakitVirtualizedMultiSelect
-						label="Select Tokens (up to 4)"
+						label="Select tokens (up to 4)"
 						options={mergedTokenOptions}
 						selectedValues={selectedTokens}
 						onChange={(values) => onTokensChange(values.slice(0, 4))}
@@ -450,7 +450,7 @@ export function SimpleTableConfig({
 				</>
 			) : selectedTableType === 'rwa-selected-chain' ? (
 				<AriakitVirtualizedSelect
-					label="Select Chain"
+					label="Select chain"
 					options={chainOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
@@ -460,7 +460,7 @@ export function SimpleTableConfig({
 				/>
 			) : selectedTableType === 'equities-financials' || selectedTableType === 'equities-filings' ? (
 				<AriakitVirtualizedSelect
-					label="Select Company"
+					label="Select company"
 					options={equitiesTickerOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}

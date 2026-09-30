@@ -110,7 +110,7 @@ export function MatchOnControls({ match }: { match: MatchConfig }) {
 			<div className="flex flex-col gap-1.5">
 				<span className="flex items-center gap-1 label-sm text-secondary">
 					Match
-					<HelpIcon items={MATCH_HELP} label="About Match modes" />
+					<HelpIcon items={MATCH_HELP} label="About match modes" />
 				</span>
 				<SegmentedControl
 					label="Match mode"

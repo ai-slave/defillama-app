@@ -348,7 +348,7 @@ function SearchField({
 					role="searchbox"
 					inputMode="search"
 					enterKeyHint="search"
-					aria-label="Search Research and Newsletters"
+					aria-label="Search Research and newsletters"
 					value={query}
 					onChange={(event) => onChange(event.currentTarget.value)}
 					placeholder="Search topics, protocols, or titles…"
@@ -459,7 +459,7 @@ function SearchResults({
 	if (isLoading) {
 		return (
 			<div className="flex min-h-64 items-center justify-center" role="status" aria-live="polite">
-				<LoadingIndicator label="Searching Research and Newsletters" />
+				<LoadingIndicator label="Searching Research and newsletters" />
 			</div>
 		)
 	}
@@ -539,7 +539,7 @@ export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant
 			>
 				<div className="flex items-start gap-3 px-4 pt-4 pb-3">
 					<div className="min-w-0">
-						<DialogHeading>Search Research &amp; Newsletters</DialogHeading>
+						<DialogHeading>Search Research &amp; newsletters</DialogHeading>
 						<p className="mt-0.5 body-sm text-tertiary">Find published analysis and Research Notes.</p>
 					</div>
 					<DialogCloseButton className="-mt-1 ml-auto" ariaLabel="Close Research search" />

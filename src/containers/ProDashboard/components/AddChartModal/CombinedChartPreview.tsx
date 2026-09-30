@@ -61,7 +61,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 						</div>
 					) : (
 						<>
-							<p className="mb-2 text-sm text-pro-text-secondary">Chart Preview</p>
+							<p className="mb-2 text-sm text-pro-text-secondary">Chart preview</p>
 							<p className="text-xs text-pro-text-tertiary">
 								{composerItems.length} chart
 								{composerItems.length > 1 ? 's' : ''} selected

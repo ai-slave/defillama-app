@@ -26,7 +26,7 @@ export function RefineDrawer({
 			title={
 				<span className="flex items-center gap-2">
 					<SlidersIcon />
-					Refine Leaderboard
+					Refine leaderboard
 				</span>
 			}
 		>

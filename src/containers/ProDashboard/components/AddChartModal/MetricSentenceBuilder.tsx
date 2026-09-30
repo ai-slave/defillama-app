@@ -58,10 +58,10 @@ const AGGREGATOR_OPTIONS: Array<{ value: MetricAggregator; label: string; descri
 	{ value: 'min', label: 'Low', description: 'Lowest value in the window' },
 	{ value: 'sum', label: 'Total', description: 'Sum of all values in the window' },
 	{ value: 'median', label: 'Median', description: 'Middle value, less affected by outliers' },
-	{ value: 'stddev', label: 'Std Deviation', description: 'Measure of volatility and variance' },
+	{ value: 'stddev', label: 'Std deviation', description: 'Measure of volatility and variance' },
 	{ value: 'first', label: 'First', description: 'First value at the beginning of the window' },
-	{ value: 'growth', label: 'Growth Rate', description: 'Percentage change from first to last value' },
-	{ value: 'movingavg', label: 'Moving Average', description: 'Smoothed trend analysis over the window' }
+	{ value: 'growth', label: 'Growth rate', description: 'Percentage change from first to last value' },
+	{ value: 'movingavg', label: 'Moving average', description: 'Smoothed trend analysis over the window' }
 ]
 
 const WINDOW_OPTIONS: Array<{ value: MetricWindow; label: string; description: string }> = [

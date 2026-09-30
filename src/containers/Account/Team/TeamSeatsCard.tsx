@@ -154,10 +154,10 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				unmountOnHide
 				finalFocus={manageButtonRef}
 				tone="primary"
-				title={`Upgrade ${label} to Yearly`}
+				title={`Upgrade ${label} to yearly`}
 				// Stripe invoices the yearly price for every seat at once, credited for the unused monthly time.
 				description={`Stripe charges your saved card now: up to ${formatUsd(yearlyUnit * subscription.seats.seatCount)} for ${subscription.seats.seatCount} seat${subscription.seats.seatCount === 1 ? '' : 's'} at ${formatUsd(yearlyUnit)}/year, less credit for the unused part of this month. The plan then renews yearly from today.`}
-				confirmLabel="Upgrade to Yearly"
+				confirmLabel="Upgrade to yearly"
 				confirmDisabled={!upgradeSeatsMutation.isPending && billingLockReason !== null}
 				pendingLabel={upgradeSeatsMutation.isPending ? 'Upgrading…' : null}
 				waitingLabel={billingWait}

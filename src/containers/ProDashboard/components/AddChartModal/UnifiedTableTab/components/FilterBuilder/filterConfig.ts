@@ -55,7 +55,7 @@ export const FILTER_CATEGORIES: Array<{ key: FilterCategory; label: string }> = 
 	{ key: 'changes', label: 'Changes' },
 	{ key: 'dominance', label: 'Share' },
 	{ key: 'aggregators', label: 'Aggregators' },
-	{ key: 'chain-metrics', label: 'Chain Metrics' },
+	{ key: 'chain-metrics', label: 'Chain metrics' },
 	{ key: 'flags', label: 'Flags' }
 ]
 

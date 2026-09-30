@@ -111,7 +111,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 				portal
 				unmountOnHide
 				finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
-				title="Unassign Subscription"
+				title="Unassign subscription"
 				description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
 				confirmLabel="Unassign"
 				pendingLabel={unassignMemberMutation.isPending ? 'Unassigning…' : null}
@@ -138,7 +138,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 				portal
 				unmountOnHide
 				finalFocus={removeFocusRef}
-				title="Remove Member"
+				title="Remove member"
 				description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
 				confirmLabel="Remove"
 				pendingLabel={removeMemberMutation.isPending ? 'Removing…' : null}

@@ -66,7 +66,7 @@ export function YieldsWatchlistContainer() {
 						data-umami-event="yields-watchlist-portfolio-switch"
 					/>
 					<DialogForm
-						title="New Portfolio"
+						title="New portfolio"
 						description="Enter the name of your new portfolio"
 						open={open}
 						setOpen={setOpen}

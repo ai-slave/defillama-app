@@ -1081,7 +1081,7 @@ export function ChartDatasetModal({
 		return ''
 	})()
 
-	const downloadLabel = isCategoryMode ? 'Download' : isBulk ? 'Download Combined' : 'Download'
+	const downloadLabel = isCategoryMode ? 'Download' : isBulk ? 'Download combined' : 'Download'
 	const topBarDownloadDisabled = (() => {
 		if (isPreview) return false
 		if (!hasSelection) return true

@@ -81,7 +81,7 @@ test('the form keeps visibility and tags and no longer carries the name or descr
 	expect(document.querySelector('[name="dashboardName"]')).toBeNull()
 	expect(document.querySelector('[name="description"]')).toBeNull()
 	tagInput().value = 'Lending'
-	await act(async () => button('Add Tag')!.click())
+	await act(async () => button('Add tag')!.click())
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][value="private"]')!.click())
 	await submit()
 	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'private', tags: ['lending'] })
@@ -103,7 +103,7 @@ test('a removed tag leaves the draft before the save is sent', async () => {
 test('deletion runs through the confirmation dialog and reports a failure there', async () => {
 	remove.mockRejectedValueOnce(new Error('Offline'))
 	await renderSettings()
-	await act(async () => button('Delete Dashboard')!.click())
+	await act(async () => button('Delete dashboard')!.click())
 	expect(document.body.textContent).toContain('Deleting “Original” cannot be undone.')
 	await act(async () => button('Delete')!.click())
 	await waitForUi(() =>

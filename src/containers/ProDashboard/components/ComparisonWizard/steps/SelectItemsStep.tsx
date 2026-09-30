@@ -260,7 +260,7 @@ export function SelectItemsStep() {
 				<div className="border-b border-subtle p-2">
 					<div className="mb-2">
 						<AriakitMultiSelect
-							label="Filter by Category"
+							label="Filter by category"
 							options={
 								state.comparisonType === 'chains'
 									? (chainCategoriesList || []).map((c) => ({ value: c, label: c }))

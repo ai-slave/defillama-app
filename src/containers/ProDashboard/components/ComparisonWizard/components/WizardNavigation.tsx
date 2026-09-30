@@ -98,7 +98,7 @@ export function WizardNavigation({
 					pendingLabel={creationStatus === 'pending' ? 'Creating…' : null}
 				>
 					<Icon name="plus" height={14} width={14} />
-					Create Dashboard
+					Create dashboard
 				</Button>
 			) : (
 				<Button type="button" variant="primary" size="md" onClick={onNext} disabled={!canProceed}>

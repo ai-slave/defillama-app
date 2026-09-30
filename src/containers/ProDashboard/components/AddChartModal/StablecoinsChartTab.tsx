@@ -66,7 +66,7 @@ const STABLECOIN_CHAIN_CHART_TYPES = [
 
 const STABLECOIN_ASSET_CHART_TYPES = [
 	{ value: 'totalCirc', label: 'Total Circulating' },
-	{ value: 'chainMcaps', label: 'By Chain' },
+	{ value: 'chainMcaps', label: 'By chain' },
 	{ value: 'chainPie', label: 'Pie' },
 	{ value: 'chainDominance', label: 'Chain Dominance' }
 ]
@@ -128,7 +128,7 @@ export function StablecoinsChartTab({
 	const chainsList = chainsListData ?? EMPTY_CHAIN_LIST
 	const assetsList = assetsListData ?? EMPTY_ASSET_LIST
 	const chainOptions: Array<VirtualizedSelectOption> = useMemo(() => {
-		const options: Array<VirtualizedSelectOption> = [{ value: 'All', label: 'All Chains', icon: '🌐' }]
+		const options: Array<VirtualizedSelectOption> = [{ value: 'All', label: 'All chains', icon: '🌐' }]
 		for (const chain of chainsList) {
 			options.push({
 				value: chain.name,
@@ -514,7 +514,7 @@ export function StablecoinsChartTab({
 								: 'text-pro-text-secondary hover:text-pro-text-primary'
 						}`}
 					>
-						By Chain
+						By chain
 					</button>
 					<button
 						type="button"
@@ -525,7 +525,7 @@ export function StablecoinsChartTab({
 								: 'text-pro-text-secondary hover:text-pro-text-primary'
 						}`}
 					>
-						By Asset
+						By asset
 					</button>
 				</div>
 
@@ -552,7 +552,7 @@ export function StablecoinsChartTab({
 						/>
 
 						<AriakitSelect
-							label="Chart Type"
+							label="Chart type"
 							options={STABLECOIN_CHAIN_CHART_TYPES}
 							selectedValue={chainChartType}
 							onChange={(option) => onSelectedStablecoinChartTypeChange(option.value)}
@@ -571,7 +571,7 @@ export function StablecoinsChartTab({
 						/>
 
 						<AriakitSelect
-							label="Chart Type"
+							label="Chart type"
 							options={STABLECOIN_ASSET_CHART_TYPES}
 							selectedValue={assetChartType}
 							onChange={(option) => onSelectedStablecoinAssetChartTypeChange(option.value)}
@@ -659,11 +659,11 @@ export function StablecoinsChartTab({
 						<div className="mb-3">
 							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
 								{stablecoinMode === 'chain'
-									? `${selectedStablecoinChain === 'All' ? 'All Chains' : selectedStablecoinChain} - ${chartTypeLabel}`
+									? `${selectedStablecoinChain === 'All' ? 'All chains' : selectedStablecoinChain} - ${chartTypeLabel}`
 									: `${stablecoinName || selectedStablecoinAsset}${stablecoinSymbol ? ` (${stablecoinSymbol})` : ''} - ${chartTypeLabel}`}
 							</h3>
 							<p className="text-xs text-pro-text-secondary">
-								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by Chain'}
+								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by chain'}
 							</p>
 						</div>
 						<div className="h-[320px]">{stablecoinMode === 'chain' ? renderChainChart() : renderAssetChart()}</div>

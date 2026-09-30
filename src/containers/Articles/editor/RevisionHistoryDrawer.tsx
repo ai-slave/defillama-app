@@ -841,8 +841,8 @@ function PreviewSpecimenHeader({
 							{revision ? <EventGlyph type={eventType} active={false} /> : null}
 							{revision ? EVENT_LABELS[eventType] : '—'}
 						</span>
-						{isLive ? <StatusBadge label="Currently Live" tone="live" /> : null}
-						{isPendingAnchor ? <StatusBadge label="Currently Pending" tone="pending" /> : null}
+						{isLive ? <StatusBadge label="Currently live" tone="live" /> : null}
+						{isPendingAnchor ? <StatusBadge label="Currently pending" tone="pending" /> : null}
 						{status ? (
 							<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">{status}</span>
 						) : null}

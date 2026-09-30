@@ -87,8 +87,8 @@ const CARD_BORDER = 'rounded-lg border border-subtle bg-surface'
 const EMPTY_SECTIONS = { depth: {}, volume: {}, spread: {}, kpi: {} }
 
 const INTEGRATION_LABEL: Record<'full' | 'partial' | 'none', string> = {
-	full: 'Fully Integrated',
-	partial: 'Partially Integrated',
+	full: 'Fully integrated',
+	partial: 'Partially integrated',
 	none: 'None'
 }
 
@@ -248,8 +248,8 @@ function DetailSections({ detail }: { detail: Dict }) {
 	return (
 		<>
 			<BadgeRow title="Available engagement options" items={engagementOptions} />
-			<VenueSection title="Major CEXs Supported" venues={cexs} />
-			<VenueSection title="Major DEXs Supported" venues={dexs} />
+			<VenueSection title="Major CEXs supported" venues={cexs} />
+			<VenueSection title="Major DEXs supported" venues={dexs} />
 			<BulletList title="Ancillary services offered" items={ancillary} />
 		</>
 	)
@@ -266,7 +266,7 @@ function ClaimBanner({ onClaim }: { onClaim: () => void }) {
 					profile details, and start tracking your activity.
 				</p>
 				<button type="button" onClick={onClaim} className={`${forgdCtaSecondaryButtonStyles} mt-1`}>
-					Claim Organization
+					Claim organization
 				</button>
 			</div>
 		</section>
@@ -344,7 +344,7 @@ function DrawerBody({
 
 	const d = asDict(detail.data)
 	const p = asDict(performance.data)
-	const name = asStr(d.name) ?? fallbackName ?? marketMakerId ?? 'Market Maker'
+	const name = asStr(d.name) ?? fallbackName ?? marketMakerId ?? 'Market maker'
 	const description = asStr(d.description) ?? FALLBACK
 	const status = asStr(p.integrationStatus)
 	const country = countryFromCode(asStr(d.countryCode))
@@ -378,7 +378,7 @@ function DrawerBody({
 
 			<section className="-mt-3 flex flex-col gap-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<h3 className="heading-xs">Leaderboards Performance</h3>
+					<h3 className="heading-xs">Leaderboards performance</h3>
 					<TimeframeBadge label={badge} />
 				</div>
 				<RadarChart scores={scores} />
@@ -430,7 +430,7 @@ function DrawerBody({
 					<span className="heading-sm">{activeEngagements == null ? FALLBACK : activeEngagements}</span>
 				</div>
 				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
-					<span className="body-sm text-secondary">Avg. FDV of Projects in Forgd</span>
+					<span className="body-sm text-secondary">Avg. FDV of projects in Forgd</span>
 					<span className="heading-sm">{avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}</span>
 				</div>
 			</section>
@@ -475,7 +475,7 @@ export function MMDetailDrawer({
 	const id = marketMakerId ?? lastId
 	const name = fallbackName ?? lastName
 	const detail = useMarketMakerDetail(id, open)
-	const title = asStr(asDict(detail.data).name) ?? name ?? id ?? 'Market Maker'
+	const title = asStr(asDict(detail.data).name) ?? name ?? id ?? 'Market maker'
 	const logo = asStr(asDict(detail.data).imageUrl)
 
 	const [leadDialog, setLeadDialog] = useState<'connect' | 'claim' | null>(null)

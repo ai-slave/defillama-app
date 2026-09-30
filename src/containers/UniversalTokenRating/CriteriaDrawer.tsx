@@ -71,9 +71,9 @@ export function CriteriaDrawer({
 			widthClassName="sm:max-w-[1110px]"
 			headerExtra={
 				state.axis === 'performance' ? (
-					<SecondaryBadge>Auto-Graded</SecondaryBadge>
+					<SecondaryBadge>Auto-graded</SecondaryBadge>
 				) : lastEditedAt ? (
-					<SecondaryBadge>{`Last Edited: ${lastEditedAt.slice(0, 10)}`}</SecondaryBadge>
+					<SecondaryBadge>{`Last edited: ${lastEditedAt.slice(0, 10)}`}</SecondaryBadge>
 				) : null
 			}
 		>
@@ -174,7 +174,7 @@ export function CriteriaDrawer({
 					) : null}
 					{doc?.rubric.length ? (
 						<div className="flex flex-col gap-2">
-							<h4 className="label-lg">Scoring Rubric</h4>
+							<h4 className="label-lg">Scoring rubric</h4>
 							<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
 								<div className="flex items-center justify-between gap-3 bg-brand px-4 py-2 label-sm text-on-brand">
 									<span className="flex-1 text-center">Rubric</span>

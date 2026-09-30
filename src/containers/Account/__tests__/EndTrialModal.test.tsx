@@ -48,5 +48,5 @@ test('the plans link cannot leave the page while the charge runs', async () => {
 	expect(control('View all plans').getAttribute('aria-disabled')).toBe('true')
 
 	await act(async () => charge.resolve(Response.json({ message: 'ok' })))
-	await waitForUi(() => expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Upgrade Successful'))
+	await waitForUi(() => expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Upgrade successful'))
 })
