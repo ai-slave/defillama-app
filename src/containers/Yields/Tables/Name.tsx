@@ -17,14 +17,14 @@ interface INameYield {
 
 // Quiet external-link glyph (text-tertiary → link on hover) in the leading rail,
 // so it sits at a constant x on every row.
-function PoolExternalLink({ url, name }: { url: string; name: string }) {
+function PoolExternalLink({ url, name, poolId }: { url: string; name: string; poolId: string }) {
 	return (
 		<a
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
 			aria-label="Open external pool"
-			onClick={() => trackUmamiEvent('yields-pool-external-link', { pool: name })}
+			onClick={() => trackUmamiEvent('yields-pool-external-link', { pool: name, pool_id: poolId })}
 			className="shrink-0 text-tertiary transition-colors hover:text-link"
 		>
 			<Icon name="external-link" height={14} width={14} />
@@ -85,7 +85,7 @@ export function PoolNameLockup({
 			{rowId != null && rowNumber != null ? (
 				<span className="inline-block min-w-4 shrink-0 text-left text-secondary">{rowNumber}</span>
 			) : null}
-			{url ? <PoolExternalLink url={url} name={value} /> : null}
+			{url ? <PoolExternalLink url={url} name={value} poolId={configID} /> : null}
 			<BasicLink
 				href={poolUrl}
 				target="_blank"
