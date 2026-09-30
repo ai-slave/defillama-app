@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef, type RefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurrentSecond'
 import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
@@ -30,7 +30,6 @@ const primaryButtonClass = buttonStyles({ variant: 'primary', size: 'sm' })
 const secondaryButtonClass = buttonStyles({ size: 'sm' })
 const iconButtonClass = buttonStyles({ variant: 'ghost', size: 'sm', square: true })
 const ROW = 'flex items-center gap-2 rounded-lg border border-subtle bg-surface px-3 py-2'
-const FAILED_ROW = 'flex items-center gap-2 rounded-lg border border-error/30 bg-error/5 px-3 py-2'
 
 function formatResetIn(resetTime: string | null | undefined, now: number): string | null {
 	if (!resetTime) return null
@@ -125,6 +124,7 @@ export function QueueChips({
 		!!quotaResetTime &&
 		rows.some((item) => item.kind === 'server' && item.state === 'not_sent' && item.reason === 'quota_exceeded')
 	const now = useCurrentSecond(hasQuotaCountdown) * 1000
+	const [showAll, setShowAll] = useState(false)
 	const quotaResetCopy = hasQuotaCountdown ? formatResetIn(quotaResetTime, now) : null
 	if (rows.length === 0) return null
 	const isHeadBlocked = rows[0]?.state === 'not_sent' || rows[0]?.state === 'editing'
@@ -132,6 +132,15 @@ export function QueueChips({
 		(item) => item.kind === 'server' && item.state === 'not_sent' && PAUSED_REASONS.has(item.reason)
 	)
 	const showQueueActions = isPaused || queueActionError?.action === 'clearing'
+	// A long queue folds after its first two prompts so it never buries the thread on a phone. A row that needs the
+	// reader (failed, paused, being edited) always stays on screen, and folded rows keep their real positions.
+	const isFolded = (item: (typeof rows)[number], index: number) =>
+		!showAll &&
+		rows.length > 3 &&
+		index >= 2 &&
+		(item.kind === 'local' ? item.state !== 'failed' : item.state === 'pending' || item.state === 'firing')
+	let foldedCount = 0
+	for (let index = 0; index < rows.length; index++) if (isFolded(rows[index], index)) foldedCount++
 
 	return (
 		<div className="flex flex-col gap-1.5">
@@ -192,12 +201,13 @@ export function QueueChips({
 			/>
 			<ul className="flex flex-col gap-1.5">
 				{rows.map((item, index) => {
+					if (isFolded(item, index)) return null
 					const rowKey = item.kind === 'local' ? item.payload.clientMutationId : (item.clientMutationId ?? item.id)
 					if (item.kind === 'local') {
 						const adding = item.state === 'adding'
 						const failed = item.state === 'failed'
 						return (
-							<li key={rowKey} className={failed ? FAILED_ROW : ROW}>
+							<li key={rowKey} className={ROW}>
 								{adding ? (
 									<span aria-label="Adding to queue" role="status" className="shrink-0 text-tertiary">
 										<LoadingSpinner size={14} />
@@ -341,7 +351,7 @@ export function QueueChips({
 					const resetCopy = item.reason === 'quota_exceeded' ? formatResetIn(quotaResetTime, now) : null
 					const busy = status?.action !== null && status?.action !== undefined
 					return (
-						<li key={rowKey} className={`${FAILED_ROW} items-start`}>
+						<li key={rowKey} className={`${ROW} items-start`}>
 							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
 							<div className="min-w-0 flex-1">
 								<p
@@ -393,6 +403,11 @@ export function QueueChips({
 					)
 				})}
 			</ul>
+			{foldedCount > 0 || showAll ? (
+				<Button type="button" size="sm" variant="ghost" className="self-start" onClick={() => setShowAll(!showAll)}>
+					{showAll ? 'Show fewer' : `${foldedCount} more queued`}
+				</Button>
+			) : null}
 		</div>
 	)
 }

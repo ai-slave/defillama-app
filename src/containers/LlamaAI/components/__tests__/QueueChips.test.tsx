@@ -313,4 +313,40 @@ describe('QueueChips', () => {
 
 		expect(container.textContent).toContain('waiting for the message above')
 	})
+	test('a long queue shows its first two prompts and folds the rest behind one button, keeping a failed row visible', async () => {
+		const messages = ['First', 'Second', 'Third', 'Fourth', 'Fifth']
+		const rows = messages.map((message, index) =>
+			index === 3
+				? {
+						kind: 'local' as const,
+						id: `l${index}`,
+						state: 'failed' as const,
+						error: 'Failed to queue your prompt.',
+						payload: { clientMutationId: `c${index}`, message, researchMode: false, client: 'web' as const }
+					}
+				: pending({ id: `q${index}`, clientMutationId: `c${index}`, message })
+		)
+		await render(surface({ rows }))
+		const shown = () => [...container.querySelectorAll('li')].map((row) => row.querySelector('p')?.textContent)
+		expect(shown()).toEqual(['First', 'Second', 'Fourth'])
+
+		const toggle = [...container.querySelectorAll('button')].find((button) => button.textContent === '2 more queued')!
+		await act(async () => toggle.click())
+		expect(shown()).toEqual(messages)
+		expect([...container.querySelectorAll('button')].some((button) => button.textContent === 'Show fewer')).toBe(true)
+	})
+
+	test('a short queue shows every prompt with nothing to expand', async () => {
+		await render(
+			surface({
+				rows: ['First', 'Second', 'Third'].map((message, index) =>
+					pending({ id: `q${index}`, clientMutationId: `c${index}`, message })
+				)
+			})
+		)
+		expect(container.querySelectorAll('li')).toHaveLength(3)
+		expect(
+			[...container.querySelectorAll('button')].some((button) => button.textContent?.includes('more queued'))
+		).toBe(false)
+	})
 })

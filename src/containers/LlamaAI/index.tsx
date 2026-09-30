@@ -38,6 +38,7 @@ import {
 	CitationSheetProvider,
 	useCitationSheetController
 } from '~/containers/LlamaAI/components/messages/CitationSheetContext'
+import type { PromptSubmitMode } from '~/containers/LlamaAI/components/PromptInput'
 import { ResearchLimitModal } from '~/containers/LlamaAI/components/ResearchLimitModal'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
 import { ShareModal } from '~/containers/LlamaAI/components/ShareModal'
@@ -2671,14 +2672,20 @@ export function AgenticChat({
 			queueActionError
 		]
 	)
-	const promptFailureAction =
-		!isStreaming && sessionPromptFailure && promptFailurePolicy
+	// While a failed prompt waits for Retry or Discard, the composer blocks sending and offers both.
+	const composerSubmitMode: PromptSubmitMode = queueOwnsComposer
+		? { kind: 'queue', atCapacity: queueAtCap, capacityMessage: queueCapMessage }
+		: !isStreaming && sessionPromptFailure && promptFailurePolicy
 			? {
-					label: promptFailurePolicy.label,
-					onActivate: handlePromptFailureAction,
-					...(promptFailurePolicy.canDiscard ? { onDiscard: handleDiscardPromptFailure } : {})
+					kind: 'blocked',
+					failure: {
+						label: promptFailurePolicy.label,
+						notice: promptFailurePolicy.notice,
+						onActivate: handlePromptFailureAction,
+						...(promptFailurePolicy.canDiscard ? { onDiscard: handleDiscardPromptFailure } : {})
+					}
 				}
-			: null
+			: { kind: 'direct' }
 
 	const conversationViewModel: ConversationViewModel = {
 		readOnly,
@@ -2714,7 +2721,6 @@ export function AgenticChat({
 		paginationError,
 		recovery,
 		error: visibleError,
-		promptFailureAction,
 		onReconnectNow: handleReconnectNow,
 		scrollContainerRef,
 		attachScrollContainer,
@@ -2728,11 +2734,7 @@ export function AgenticChat({
 		scrollToBottom,
 		syncScrollAfterLayout,
 		handleSubmit: handleComposerSubmit,
-		submitMode: queueOwnsComposer
-			? { kind: 'queue', atCapacity: queueAtCap, capacityMessage: queueCapMessage }
-			: sessionPromptFailure
-				? { kind: 'blocked', message: 'Retry or discard the failed prompt before sending another.' }
-				: { kind: 'direct' },
+		submitMode: composerSubmitMode,
 		queueSurface,
 		quotaResetTime: rateLimitDetails?.resetTime ?? null,
 		handleStopRequest,

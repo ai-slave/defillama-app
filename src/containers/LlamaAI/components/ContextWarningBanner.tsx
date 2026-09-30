@@ -2,6 +2,7 @@ import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticRes
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { ComposerTray } from './ComposerTray'
 
 interface ContextWarningBannerProps {
 	warning: ContextWarningPayload
@@ -29,29 +30,27 @@ export function ContextWarningBanner({ warning, onStartNewChat, onDismiss }: Con
 	}
 
 	return (
-		<div
-			role="status"
-			className="flex items-center gap-3 rounded-lg border border-warning/60 bg-warning/10 px-3.5 py-2.5"
+		<ComposerTray
+			tone="warning"
+			actions={
+				<>
+					<Button type="button" size="sm" onClick={handleStartNewChat}>
+						Start new chat
+					</Button>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						square
+						onClick={handleDismiss}
+						aria-label="Dismiss long-thread warning"
+					>
+						<Icon name="x" height={14} width={14} />
+					</Button>
+				</>
+			}
 		>
-			<Icon name="alert-triangle" height={16} width={16} className="shrink-0 text-warning" />
-			<p className="m-0 min-w-0 flex-1 text-[13px] text-warning">{warning.message}</p>
-			<button
-				type="button"
-				onClick={handleStartNewChat}
-				className="shrink-0 rounded-md bg-warning px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90"
-			>
-				Start new chat
-			</button>
-			<Button
-				type="button"
-				variant="ghost"
-				size="md"
-				square
-				onClick={handleDismiss}
-				aria-label="Dismiss long-thread warning"
-			>
-				<Icon name="x" height={16} width={16} />
-			</Button>
-		</div>
+			{warning.message}
+		</ComposerTray>
 	)
 }

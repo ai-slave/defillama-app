@@ -385,8 +385,7 @@ function ChartEditorSession({
 
 	let previewContent: ReactNode
 	if (previewPresentation.ok === false) {
-		const errorMsg = previewPresentation.error instanceof Error ? previewPresentation.error.message : 'Unknown error'
-		previewContent = <ChartErrorPlaceholder message={errorMsg} />
+		previewContent = <ChartErrorPlaceholder />
 	} else if (!previewPresentation.plan.hasData) {
 		previewContent = (
 			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
@@ -677,8 +676,7 @@ function ActiveSingleChart({
 	}
 
 	if (presentation.ok === false) {
-		const errorMsg = presentation.error instanceof Error ? presentation.error.message : 'Unknown error'
-		return <ChartErrorPlaceholder message={errorMsg} />
+		return <ChartErrorPlaceholder />
 	}
 
 	const renderPlan = presentation.plan
@@ -830,10 +828,10 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 		<div
 			role="status"
 			aria-live="polite"
-			className="flex flex-col items-center justify-center gap-2 rounded-md border border-subtle px-1 py-8 text-tertiary"
+			className="flex h-[360px] flex-col items-center justify-center gap-2 px-4 text-center body-sm text-tertiary"
 		>
 			<LoadingSpinner size={16} />
-			<p className="text-tertiary">
+			<p>
 				{chartTypes?.length ? (
 					<>
 						Creating {chartTypes.join(', ')} visualization{chartTypes.length > 1 ? 's' : ''}&hellip;
@@ -846,11 +844,12 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 	)
 }
 
-function ChartErrorPlaceholder({ message = 'Chart generation encountered an issue' }: { message?: string }) {
+// Readers see one plain sentence; a builder's exception text ("Cannot read properties of undefined") is not for them.
+function ChartErrorPlaceholder({ message = 'This chart couldn’t be drawn.' }: { message?: string }) {
 	return (
 		<div
 			role="alert"
-			className="flex flex-col items-center justify-center gap-2 rounded-md bg-error/10 p-1 py-8 text-error"
+			className="flex h-[360px] flex-col items-center justify-center gap-2 px-4 text-center body-sm text-data-down"
 		>
 			<Icon name="alert-triangle" height={16} width={16} />
 			<p>{message}</p>
@@ -906,12 +905,21 @@ function ChartRendererImpl({
 	const [selectedChartId, setSelectedChartId] = useState(charts[0]?.id)
 	const activeChartId = charts.some((chart) => chart.id === selectedChartId) ? selectedChartId : charts[0]?.id
 
+	// Without a chart yet, the placeholder gets the chart card's frame, so loading, loaded and failed share one box.
 	if (hasError && (!charts || charts.length === 0)) {
-		return <ChartErrorPlaceholder />
+		return (
+			<div className="rounded-lg border border-subtle bg-surface">
+				<ChartErrorPlaceholder />
+			</div>
+		)
 	}
 
 	if (isLoading && (!charts || charts.length === 0)) {
-		return <ChartLoadingPlaceholder chartTypes={chartTypes} />
+		return (
+			<div className="rounded-lg border border-subtle bg-surface">
+				<ChartLoadingPlaceholder chartTypes={chartTypes} />
+			</div>
+		)
 	}
 
 	if (!isLoading && !hasError && (!charts || charts.length === 0)) {

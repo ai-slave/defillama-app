@@ -125,7 +125,7 @@ test('an ordinary render exception offers to keep chatting instead of the failed
 		)
 	)
 	expect(host.querySelector('[role="alert"]')!.textContent).toBe(
-		'This response couldn’t be displayed.You can continue chatting, or reload to try displaying this response again.Reload page'
+		'This response couldn’t be displayed. You can keep chatting.Reload page'
 	)
 	expect(host.textContent).toContain('Composer')
 	await act(async () => root.unmount())

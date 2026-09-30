@@ -96,12 +96,12 @@ describe('promptFailures', () => {
 	})
 
 	test('retries definite failures only by user action and reconnects ambiguous failures automatically', () => {
-		expect(getPromptFailurePolicy(failure('mutation-a'))).toEqual({
+		expect(getPromptFailurePolicy(failure('mutation-a'))).toMatchObject({
 			label: 'Retry',
 			automaticallyReconnect: false,
 			canDiscard: true
 		})
-		expect(getPromptFailurePolicy({ ...failure('mutation-b'), kind: 'reconnect' })).toEqual({
+		expect(getPromptFailurePolicy({ ...failure('mutation-b'), kind: 'reconnect' })).toMatchObject({
 			label: 'Reconnect',
 			automaticallyReconnect: true,
 			canDiscard: false

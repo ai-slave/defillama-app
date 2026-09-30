@@ -38,6 +38,8 @@ import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import styles from '../LlamaAIChat.module.css'
+import { ComposerTray } from './ComposerTray'
+import { ChatStatusLine } from './status/ChatStatusLine'
 
 export interface ConversationViewModel {
 	draftScope: string
@@ -68,11 +70,6 @@ export interface ConversationViewModel {
 	paginationError: string | null
 	recovery: RecoveryState
 	error: string | null
-	promptFailureAction: {
-		label: 'Retry' | 'Reconnect'
-		onActivate: () => void
-		onDiscard?: () => void
-	} | null
 	onReconnectNow: () => void
 	scrollContainerRef: RefObject<HTMLDivElement | null>
 	/** Callback refs from useChatScroll: its listeners bind to the mounted elements through these. */
@@ -160,7 +157,7 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 	readOnly,
 	isSharedView,
 	isLlama,
-	isLatestAssistant,
+	isLatest,
 	onActionClick,
 	onEditMessage,
 	onBranchSwitch,
@@ -178,7 +175,7 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 	readOnly: boolean
 	isSharedView?: boolean
 	isLlama: boolean
-	isLatestAssistant?: boolean
+	isLatest?: boolean
 	onActionClick?: (message: string) => void
 	onEditMessage?: (messageId: string, newText: string, original: Message) => Promise<void>
 	onBranchSwitch?: (leafMessageId: string) => void
@@ -198,7 +195,7 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 			readOnly={readOnly}
 			isSharedView={isSharedView}
 			isLlama={isLlama}
-			isLatestAssistant={isLatestAssistant}
+			isLatest={isLatest}
 			onActionClick={onActionClick}
 			onEditMessage={onEditMessage}
 			onBranchSwitch={onBranchSwitch}
@@ -227,7 +224,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	isCompacting,
 	recovery,
 	error,
-	promptFailureAction,
+	errorFollowsPrompt,
 	onReconnectNow,
 	isResearchMode,
 	sessionId,
@@ -252,7 +249,8 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	isCompacting: boolean
 	recovery: RecoveryState
 	error: string | null
-	promptFailureAction: ConversationViewModel['promptFailureAction']
+	/** The error is about the prompt above it (its answer never came), so it sits under that prompt. */
+	errorFollowsPrompt: boolean
 	onReconnectNow: () => void
 	isResearchMode: boolean
 	sessionId: string | null
@@ -328,50 +326,24 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 			) : null}
 
 			{recovery.status === 'reconnecting' && (hideActivity || !(spawnProgress.size > 0 && spawnIsResearchMode)) ? (
-				<div
-					role="status"
-					aria-live="polite"
-					className="flex flex-col gap-1 rounded-lg border border-warning/30 bg-warning/10 p-4"
-				>
-					<p className="text-sm font-medium text-warning">Reconnecting&hellip;</p>
-					<p className="text-sm text-warning">
-						Trying to reconnect to the running {isResearchMode ? 'research session' : 'quick chat'}.
-					</p>
-					<div className="flex items-center justify-between">
-						<p className="text-xs text-warning">
-							Attempt {Math.max(recovery.attemptCount, 1)}. Connection lost temporarily.
-						</p>
+				<ChatStatusLine
+					variant="progress"
+					align="start"
+					action={
 						<Button type="button" size="sm" onClick={onReconnectNow}>
 							Reconnect now
 						</Button>
-					</div>
-				</div>
+					}
+				>
+					Reconnecting to the running {isResearchMode ? 'research session' : 'quick chat'} · attempt{' '}
+					{Math.max(recovery.attemptCount, 1)}
+				</ChatStatusLine>
 			) : null}
 
 			{recovery.status !== 'reconnecting' && error ? (
-				<div role="alert" className="flex flex-col gap-2 rounded-lg border border-error/30 bg-error/10 p-4">
-					<p className="text-sm text-error">{error}</p>
-					{promptFailureAction ? (
-						<div className="mt-1 flex items-center gap-2">
-							<button
-								type="button"
-								onClick={promptFailureAction.onActivate}
-								className="rounded-md bg-error/10 px-3 py-1 text-sm text-error not-disabled:not-aria-disabled:hover:bg-error/20"
-							>
-								{promptFailureAction.label}
-							</button>
-							{promptFailureAction.onDiscard ? (
-								<button
-									type="button"
-									onClick={promptFailureAction.onDiscard}
-									className="rounded-md px-3 py-1 text-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row"
-								>
-									Discard
-								</button>
-							) : null}
-						</div>
-					) : null}
-				</div>
+				<ChatStatusLine variant="error" align={errorFollowsPrompt ? 'end' : 'start'}>
+					{error}
+				</ChatStatusLine>
 			) : null}
 		</>
 	)
@@ -427,7 +399,6 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		paginationError,
 		recovery,
 		error,
-		promptFailureAction,
 		onReconnectNow,
 		scrollContainerRef,
 		attachScrollContainer,
@@ -661,15 +632,34 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 	})()
 	const renderedMessages = shouldSpaceLastExchange ? messages.slice(0, lastUserIndex) : messages
 	const canUseMessageControls = !readOnly && !isSharedView
+	const errorFollowsPrompt = messages.at(-1)?.role === 'user'
+	const showsContextWarning = !isSharedView && !!contextWarning && !!onStartNewChat && !!onDismissContextWarning
+	// The tray says what blocks or shapes the next prompt; while it shows, a tip would only pile on above it.
+	const hasComposerTray =
+		submitMode.kind === 'blocked' ||
+		(submitMode.kind === 'queue' && submitMode.atCapacity && !!submitMode.capacityMessage) ||
+		showsContextWarning
+	const scrollToBottomButton = (
+		<Tooltip
+			content="Scroll to bottom"
+			render={<button type="button" onClick={scrollToBottom} />}
+			className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay-sm not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
+		>
+			<Icon name="arrow-down" height={16} width={16} />
+			<span className="sr-only">Scroll to bottom</span>
+		</Tooltip>
+	)
 
-	// Only the newest assistant response keeps persistent controls; older controls
-	// stay available on hover/focus to reduce visual noise.
-	const lastAssistantId = (() => {
-		for (let i = messages.length - 1; i >= 0; i--) {
-			if (messages[i].role === 'assistant' && messages[i].id) return messages[i].id
-		}
-		return null
-	})()
+	// Only the newest prompt and the newest response keep persistent controls. Older controls appear on hover,
+	// or when the message is tapped or focused, so a phone without hover can still reach them.
+	let lastAssistantId: string | null = null
+	let lastUserId: string | null = null
+	for (let i = messages.length - 1; i >= 0 && !(lastAssistantId && lastUserId); i--) {
+		const { role, id } = messages[i]
+		if (!id) continue
+		if (role === 'assistant' && !lastAssistantId) lastAssistantId = id
+		else if (role === 'user' && !lastUserId) lastUserId = id
+	}
 
 	useLayoutEffect(() => {
 		const container = scrollContainerRef.current
@@ -720,9 +710,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 								) : null}
 
 								{paginationError ? (
-									<div role="alert" className="rounded-lg border border-error/30 bg-error/10 px-3 py-2">
-										<p className="text-xs text-error">{paginationError}</p>
-									</div>
+									<ChatStatusLine variant="error" align="start">
+										{paginationError}
+									</ChatStatusLine>
 								) : null}
 
 								{renderedMessages.map((message, index) => {
@@ -739,7 +729,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 											readOnly={readOnly}
 											isSharedView={isSharedView}
 											isLlama={isLlama}
-											isLatestAssistant={message.id === lastAssistantId}
+											isLatest={message.id === (message.role === 'user' ? lastUserId : lastAssistantId)}
 											onActionClick={!readOnly && !isStreaming ? handleActionClick : undefined}
 											onEditMessage={canUseMessageControls ? onEditMessage : undefined}
 											onBranchSwitch={canUseMessageControls && !isStreaming ? onBranchSwitch : undefined}
@@ -789,7 +779,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 														isCompacting={isCompacting}
 														recovery={recovery}
 														error={error}
-														promptFailureAction={promptFailureAction}
+														errorFollowsPrompt={errorFollowsPrompt}
 														onReconnectNow={onReconnectNow}
 														isResearchMode={isResearchMode}
 														sessionId={sessionId}
@@ -813,7 +803,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 													readOnly={readOnly}
 													isSharedView={isSharedView}
 													isLlama={isLlama}
-													isLatestAssistant={!item.isDraft && message.id === lastAssistantId}
+													isLatest={
+														!item.isDraft && message.id === (message.role === 'user' ? lastUserId : lastAssistantId)
+													}
 													onActionClick={!item.isDraft && !readOnly && !isStreaming ? handleActionClick : undefined}
 													onEditMessage={!item.isDraft && canUseMessageControls ? onEditMessage : undefined}
 													onBranchSwitch={
@@ -842,7 +834,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 										isCompacting={isCompacting}
 										recovery={recovery}
 										error={error}
-										promptFailureAction={promptFailureAction}
+										errorFollowsPrompt={errorFollowsPrompt}
 										onReconnectNow={onReconnectNow}
 										isResearchMode={isResearchMode}
 										sessionId={sessionId}
@@ -862,50 +854,69 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				</div>
 			</div>
 
-			<div
-				className={`pointer-events-none sticky z-10 mx-auto ${
-					readOnly ? 'bottom-8 -mb-2' : 'bottom-32 -mb-8'
-				} ${showScrollToBottom ? 'opacity-100' : 'opacity-0'}`}
-			>
-				<Tooltip
-					content="Scroll to bottom"
-					render={<button type="button" onClick={scrollToBottom} />}
-					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay-sm not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
+			{readOnly ? (
+				<div
+					className={`pointer-events-none sticky bottom-8 z-10 mx-auto -mb-2 ${showScrollToBottom ? 'opacity-100' : 'opacity-0'}`}
 				>
-					<Icon name="arrow-down" height={16} width={16} />
-					<span className="sr-only">Scroll to bottom</span>
-				</Tooltip>
-			</div>
+					{scrollToBottomButton}
+				</div>
+			) : null}
 
 			{!readOnly ? (
 				// The 10px side inset comes off the width instead of padding so the shared column
 				// max-width still applies to the composer itself and matches the message column.
 				<div className="llamaai-chat-width relative mx-auto flex w-[calc(100%-1.25rem)] flex-col gap-2 pb-2.5">
 					<div className="pointer-events-none absolute -top-8 right-0 left-0 h-8 bg-linear-to-b from-transparent to-surface" />
-					{!isSharedView && contextWarning && onStartNewChat && onDismissContextWarning ? (
-						<ContextWarningBanner
-							warning={contextWarning}
-							onStartNewChat={onStartNewChat}
-							onDismiss={onDismissContextWarning}
-						/>
-					) : null}
-					{!isSharedView && !contextWarning ? (
-						<div className="absolute right-0 bottom-[calc(100%+8px)] left-0 z-20">
-							<TipOrNotifyBanner
-								premiumResponseId={
-									!isStreaming && Number(messages.at(-1)?.messageMetadata?.x402CostUsd ?? 0) > 0
-										? messages.at(-1)?.id
-										: undefined
-								}
-							/>
-						</div>
-					) : null}
+					{/* Anchored to the composer's top edge, so a taller composer (a notice, queued prompts, a quote,
+					    several lines of text) carries the scroll button and the tip up with it. */}
+					<div className="pointer-events-none absolute right-0 bottom-[calc(100%+8px)] left-0 z-20 flex flex-col items-center gap-2">
+						<div className={showScrollToBottom ? 'opacity-100' : 'opacity-0'}>{scrollToBottomButton}</div>
+						{!isSharedView && !hasComposerTray ? (
+							<div className="pointer-events-auto w-full">
+								<TipOrNotifyBanner
+									premiumResponseId={
+										!isStreaming && Number(messages.at(-1)?.messageMetadata?.x402CostUsd ?? 0) > 0
+											? messages.at(-1)?.id
+											: undefined
+									}
+								/>
+							</div>
+						) : null}
+					</div>
 					{queueSurface && queueSurface.rows.length > 0 ? (
 						<QueueChips
 							key={sessionId}
 							surface={queueSurface}
 							quotaResetTime={quotaResetTime}
 							promptInputRef={promptInputRef}
+						/>
+					) : null}
+					{/* One tray at a time, most urgent first: it explains why sending is blocked or what to do next. */}
+					{submitMode.kind === 'blocked' ? (
+						<ComposerTray
+							tone="error"
+							actions={
+								<>
+									<Button type="button" size="sm" onClick={submitMode.failure.onActivate}>
+										{submitMode.failure.label}
+									</Button>
+									{submitMode.failure.onDiscard ? (
+										<Button type="button" size="sm" variant="ghost" onClick={submitMode.failure.onDiscard}>
+											Discard
+										</Button>
+									) : null}
+								</>
+							}
+						>
+							{submitMode.failure.notice}
+						</ComposerTray>
+					) : submitMode.kind === 'queue' && submitMode.atCapacity && submitMode.capacityMessage ? (
+						<ComposerTray tone="warning">{submitMode.capacityMessage}</ComposerTray>
+					) : showsContextWarning && contextWarning && onStartNewChat && onDismissContextWarning ? (
+						<ContextWarningBanner
+							warning={contextWarning}
+							onStartNewChat={onStartNewChat}
+							onDismiss={onDismissContextWarning}
 						/>
 					) : null}
 					<PromptInput
@@ -920,6 +931,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 						restoreRequest={restoreRequest}
 						onRestoreConsumed={onRestoreConsumed}
 						placeholder="Reply to LlamaAI&hellip; Type @ to add a protocol, chain or stablecoin, or $ to add a coin"
+						shortPlaceholder="Reply to LlamaAI&hellip;"
 						mode={mode}
 						setMode={setMode}
 						researchUsage={researchUsage}

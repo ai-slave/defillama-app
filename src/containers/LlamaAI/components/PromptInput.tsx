@@ -30,9 +30,17 @@ function revokeImageUrls(images: Array<{ url: string }>) {
 	for (const image of images) URL.revokeObjectURL(image.url)
 }
 
+/** What the reader can do about a failed prompt; the composer offers it while the failure blocks sending. */
+export type PromptFailureAction = {
+	label: 'Retry' | 'Reconnect'
+	notice: string
+	onActivate: () => void
+	onDiscard?: () => void
+}
+
 export type PromptSubmitMode =
 	| { kind: 'direct' }
-	| { kind: 'blocked'; message: string }
+	| { kind: 'blocked'; failure: PromptFailureAction }
 	| { kind: 'queue'; atCapacity: boolean; capacityMessage: string | null }
 
 interface PromptInputProps {
@@ -51,6 +59,8 @@ interface PromptInputProps {
 	isStreaming?: boolean
 	isStopping?: boolean
 	placeholder: string
+	/** Phones show this instead: the full hint wraps past one line there. */
+	shortPlaceholder: string
 	restoreRequest?: {
 		key: number
 		text: string
@@ -104,6 +114,7 @@ export function PromptInput({
 	isStreaming,
 	isStopping,
 	placeholder,
+	shortPlaceholder,
 	restoreRequest,
 	onRestoreConsumed,
 	mode,
@@ -186,10 +197,7 @@ export function PromptInput({
 	})
 	const { clearSearch, restoreEntities } = entityCombobox
 
-	// Mobile placeholder handling
 	const isMobile = useMedia('(max-width: 640px)')
-	const mobilePlaceholder = placeholder.replace('Type @ to add a protocol, chain or stablecoin', '')
-	const finalPlaceholder = isMobile ? mobilePlaceholder : placeholder
 	const sanitizedHighlightedHtml = highlightWord(
 		value,
 		entityCombobox.selectedEntities.map(({ term }) => term)
@@ -310,10 +318,8 @@ export function PromptInput({
 			const isSuggested = isSuggestedRef.current
 			isSuggestedRef.current = false
 
-			if (submitMode.kind === 'blocked') {
-				setSubmitError(submitMode.message)
-				return
-			}
+			// Send is disabled and the notice with its actions is already on screen.
+			if (submitMode.kind === 'blocked') return
 
 			if (submitMode.kind === 'queue') {
 				const restoreDraftIfUntouched = () => {
@@ -484,7 +490,7 @@ export function PromptInput({
 
 	return (
 		<form
-			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand"
+			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand [[data-composer-tray]+&]:rounded-t-none"
 			onSubmit={handleFormSubmit}
 			onPointerDown={handleFormPointerDown}
 		>
@@ -531,7 +537,7 @@ export function PromptInput({
 				wrapperRef={inputWrapperRef}
 				value={value}
 				sanitizedHighlightedHtml={sanitizedHighlightedHtml}
-				placeholder={finalPlaceholder}
+				placeholder={isMobile ? shortPlaceholder : placeholder}
 				disabled={!!isStopping || (isPending && !isStreaming)}
 				onScroll={handleScroll}
 				onChange={handleChange}
@@ -556,14 +562,6 @@ export function PromptInput({
 			{submitError ? (
 				<p role="alert" className="body-sm text-error">
 					{submitError}
-				</p>
-			) : submitMode.kind === 'blocked' ? (
-				<p role="status" className="body-sm text-tertiary">
-					{submitMode.message}
-				</p>
-			) : submitMode.kind === 'queue' && submitMode.atCapacity && submitMode.capacityMessage ? (
-				<p role="status" className="body-sm text-tertiary">
-					{submitMode.capacityMessage}
 				</p>
 			) : null}
 

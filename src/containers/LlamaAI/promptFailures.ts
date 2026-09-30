@@ -12,9 +12,20 @@ export interface PromptFailure {
 	readonly request: FailedRequest
 }
 
+// `notice` is what the composer says while the failure blocks a new prompt; the actions beside it say what to do.
 const PROMPT_FAILURE_POLICIES = {
-	retry: { label: 'Retry', automaticallyReconnect: false, canDiscard: true },
-	reconnect: { label: 'Reconnect', automaticallyReconnect: true, canDiscard: false }
+	retry: {
+		label: 'Retry',
+		notice: 'Your last prompt failed.',
+		automaticallyReconnect: false,
+		canDiscard: true
+	},
+	reconnect: {
+		label: 'Reconnect',
+		notice: 'Your last prompt may still be running.',
+		automaticallyReconnect: true,
+		canDiscard: false
+	}
 } as const
 
 export function getPromptFailurePolicy(failure: PromptFailure) {

@@ -35,26 +35,33 @@ import { Tooltip } from '~/ui/Tooltip'
 // Keyboard hints under the edit box.
 const KBD = 'rounded-sm border border-medium bg-surface-elevated-1 px-1 py-px mono-sm text-secondary'
 
+// Every state of a chart takes the finished chart's box (its card and 360px body), so nothing jumps when it lands.
 function StreamingChartPlaceholder() {
 	return (
 		<div
 			role="status"
-			className="my-4 flex h-[360px] items-center justify-center rounded-lg bg-surface-elevated-2 motion-safe:animate-pulse"
+			className="flex h-[360px] flex-col items-center justify-center gap-2 rounded-lg border border-subtle bg-surface body-sm text-tertiary"
 		>
-			<p className="text-sm text-tertiary">Loading chart…</p>
+			<LoadingSpinner size={16} />
+			<p>Loading chart…</p>
 		</div>
 	)
 }
 
+// Every state of a generated image takes the finished image's frame (max-w-sm, its aspect ratio or square).
+const IMAGE_FRAME =
+	'relative my-2 w-full max-w-sm overflow-hidden rounded-lg border border-medium bg-surface-elevated-2'
+
 function StreamingImagePlaceholder() {
 	return (
-		<div
-			className="my-2 flex w-full max-w-[220px] items-center justify-center overflow-hidden rounded-lg border border-brand/20 bg-brand/5 motion-safe:animate-pulse"
-			style={{ aspectRatio: '1 / 1' }}
-		>
-			<div className="flex flex-col items-center gap-1.5 text-brand">
-				<Icon name="image-plus" height={24} width={24} />
-				<p className="text-xs">Generating image…</p>
+		<div className={`${IMAGE_FRAME} flex items-center justify-center`} style={{ aspectRatio: '1 / 1' }}>
+			<div
+				aria-hidden="true"
+				className="absolute inset-0 bg-linear-to-br from-brand/10 via-brand/5 to-transparent motion-safe:animate-pulse"
+			/>
+			<div role="status" className="relative flex flex-col items-center gap-1.5 body-sm text-tertiary">
+				<Icon name="image-plus" height={20} width={20} />
+				<p>Generating image…</p>
 			</div>
 		</div>
 	)
@@ -88,11 +95,11 @@ function GeneratedImageBlock({
 			<div
 				role="img"
 				aria-label={prompt ? `Failed to load generated image for prompt: ${prompt}` : 'Failed to load generated image'}
-				className="my-2 flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-lg border border-error/20 bg-error/5 p-6 text-error"
-				style={aspect ? { aspectRatio: aspect } : undefined}
+				className={`${IMAGE_FRAME} flex flex-col items-center justify-center gap-2 p-6 text-center text-secondary`}
+				style={{ aspectRatio: aspect ?? '1 / 1' }}
 			>
-				<Icon name="alert-triangle" height={24} width={24} />
-				<p className="text-sm font-medium">Image failed to load</p>
+				<Icon name="alert-triangle" height={20} width={20} className="text-data-down" />
+				<p className="label-md text-data-down">Image failed to load</p>
 				<a
 					href={url}
 					target="_blank"
@@ -112,7 +119,7 @@ function GeneratedImageBlock({
 			title={prompt}
 			aria-label={prompt || 'Generated image'}
 			disabled={!interactive}
-			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-medium bg-surface-elevated-2 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer not-disabled:not-aria-disabled:hover:border-strong' : 'cursor-default'}`}
+			className={`group/genimg ${IMAGE_FRAME} block focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer not-disabled:not-aria-disabled:hover:border-strong' : 'cursor-default'}`}
 			style={aspect ? { aspectRatio: aspect } : undefined}
 		>
 			{!loaded ? (
@@ -384,7 +391,7 @@ function MessageBubbleContent({
 	hideControls = false,
 	isSharedView = false,
 	isLlama = false,
-	isLatestAssistant = false,
+	isLatest = false,
 	onActionClick,
 	onEditMessage,
 	onBranchSwitch,
@@ -406,7 +413,8 @@ function MessageBubbleContent({
 	hideControls?: boolean
 	isSharedView?: boolean
 	isLlama?: boolean
-	isLatestAssistant?: boolean
+	/** The newest message of its role keeps its controls on screen; older ones reveal them on hover, tap or focus. */
+	isLatest?: boolean
 	onActionClick?: (message: string) => void
 	onEditMessage?: (messageId: string, newText: string, original: Message) => Promise<void>
 	onBranchSwitch?: (leafMessageId: string) => void
@@ -456,6 +464,8 @@ function MessageBubbleContent({
 			<div
 				id={anchorId}
 				ref={anchorRef}
+				// Focusable so a tap on a phone, which has no hover, reveals the message's controls.
+				tabIndex={-1}
 				className={`group/msg ml-auto flex w-full max-w-[80%] flex-col items-end ${anchorClassName ?? ''}`}
 			>
 				<div
@@ -588,29 +598,36 @@ function MessageBubbleContent({
 						</Button>
 					</div>
 				) : hasControls ? (
-					<div className="mt-1 flex min-h-[26px] items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 sm:focus-within:opacity-100">
+					<div className="mt-1 flex min-h-[26px] items-center gap-0.5">
 						{canSwitchBranch && message.siblingInfo && message.siblingInfo.totalVersions > 1 && onBranchSwitch ? (
 							<BranchArrows info={message.siblingInfo} onSwitch={onBranchSwitch} disabled={isBranchSwitching} />
 						) : null}
 						{canEdit ? (
-							<Tooltip
-								content="Edit message"
-								render={
-									<Button
-										type="button"
-										size="sm"
-										variant="ghost"
-										square
-										onClick={() => {
-											setIsEditing(true)
-											setDraftText(message.content || '')
-										}}
-										aria-label="Edit message"
-									/>
+							// Branch arrows show which version is on screen, so only the edit action hides.
+							<span
+								className={
+									isLatest ? 'flex' : 'flex opacity-0 group-focus-within/msg:opacity-100 group-hover/msg:opacity-100'
 								}
 							>
-								<Icon name="pencil" height={16} width={16} />
-							</Tooltip>
+								<Tooltip
+									content="Edit message"
+									render={
+										<Button
+											type="button"
+											size="sm"
+											variant="ghost"
+											square
+											onClick={() => {
+												setIsEditing(true)
+												setDraftText(message.content || '')
+											}}
+											aria-label="Edit message"
+										/>
+									}
+								>
+									<Icon name="pencil" height={16} width={16} />
+								</Tooltip>
+							</span>
 						) : null}
 					</div>
 				) : null}
@@ -628,7 +645,13 @@ function MessageBubbleContent({
 	}
 
 	return (
-		<div id={anchorId} ref={anchorRef} className={`group/msg flex flex-col gap-2.5 ${anchorClassName ?? ''}`}>
+		<div
+			id={anchorId}
+			ref={anchorRef}
+			// Focusable so a tap on a phone, which has no hover, reveals the response's controls.
+			tabIndex={-1}
+			className={`group/msg flex flex-col gap-2.5 ${anchorClassName ?? ''}`}
+		>
 			{hideTimeline ? null : (
 				<AgentTimeline steps={stepsForMessage(message)} streaming={isDraft} showToolDetails={isLlama} />
 			)}
@@ -682,7 +705,7 @@ function MessageBubbleContent({
 					sessionId={sessionId}
 					readOnly={readOnly}
 					{...(message.messageMetadata === undefined ? {} : { messageMetadata: message.messageMetadata })}
-					isLatest={isLatestAssistant}
+					isLatest={isLatest}
 					{...(message.content
 						? {
 								articleExportRequest: () =>

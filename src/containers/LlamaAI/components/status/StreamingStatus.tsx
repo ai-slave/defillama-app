@@ -112,11 +112,9 @@ export function SpawnProgressCard({
 			) : null}
 
 			{recovery?.status === 'reconnecting' ? (
-				<div role="status" aria-live="polite" className="flex items-center gap-2 border-t border-warning/30 pt-2">
-					<span className="shrink-0 text-warning">
-						<LoadingSpinner size={14} />
-					</span>
-					<p className="m-0 flex-1 text-xs text-warning">
+				<div role="status" aria-live="polite" className="flex items-center gap-2 border-t border-subtle pt-2">
+					<LoadingSpinner size={14} />
+					<p className="m-0 flex-1 body-sm text-secondary">
 						Connection lost. Reconnecting{recovery.attemptCount > 0 ? ` (attempt ${recovery.attemptCount})` : ''}
 						&hellip;
 					</p>

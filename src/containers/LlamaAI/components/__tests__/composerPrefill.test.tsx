@@ -27,6 +27,7 @@ function Composer() {
 			isPending={false}
 			handleStopRequest={() => {}}
 			placeholder="Ask LlamaAI"
+			shortPlaceholder="Ask LlamaAI"
 			restoreRequest={composerPrefill.request}
 			onRestoreConsumed={composerPrefill.consume}
 			mode="quick"

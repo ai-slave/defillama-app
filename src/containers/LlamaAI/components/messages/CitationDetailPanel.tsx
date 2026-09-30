@@ -87,8 +87,8 @@ export function CitationDetailPanel({
 	const verification = (
 		<>
 			{mismatch ? (
-				<div className="flex items-start gap-1.5 rounded-md bg-warning/10 px-2.5 py-2 body-sm text-warning">
-					<Icon name="alert-triangle" height={14} width={14} className="mt-px shrink-0" />
+				<div className="flex items-start gap-1.5 rounded-md bg-surface-elevated-1 px-2.5 py-2 body-sm text-secondary">
+					<Icon name="alert-triangle" height={14} width={14} className="mt-px shrink-0 text-warning" />
 					<span>{mismatchLabel(activeRef)}</span>
 				</div>
 			) : unverified ? (

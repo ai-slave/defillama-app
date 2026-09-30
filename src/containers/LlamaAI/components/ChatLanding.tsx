@@ -168,7 +168,8 @@ export function ChatLanding({
 							isStopping={isStopping}
 							restoreRequest={restoreRequest}
 							onRestoreConsumed={onRestoreConsumed}
-							placeholder="Ask LlamaAI... Type @ to add a protocol, chain or stablecoin, or $ to add a coin"
+							placeholder="Ask LlamaAI&hellip; Type @ to add a protocol, chain or stablecoin, or $ to add a coin"
+							shortPlaceholder="Ask LlamaAI&hellip;"
 							mode={mode}
 							setMode={setMode}
 							researchUsage={researchUsage}
