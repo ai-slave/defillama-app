@@ -285,17 +285,13 @@ export function useChatExecutionOwner({
 			setViewError(null)
 			setPaginationError(null)
 			dispatch({ type: 'SET_ERROR', value: null })
-			if (resetStream) {
-				dispatch(queueItemId ? { type: 'START_QUEUED_STREAM', queueItemId } : { type: 'START_STREAM' })
-				currentMessageIdRef.current = null
-			}
 
 			await runAgenticRequest({
 				mode: 'resume',
 				operation,
 				initialEventCount: buffer.receivedEventCount,
-				createCallbacks: ({ isCurrent }) =>
-					createCallbacks({
+				createCallbacks: ({ isCurrent }) => {
+					const callbacks = createCallbacks({
 						buffer,
 						isCurrent,
 						targetSessionId,
@@ -306,7 +302,30 @@ export function useChatExecutionOwner({
 								dispatch({ type: 'QUEUED_USER_MESSAGE_READY', queueItemId: startedQueueItemId })
 							}
 						}
-					}),
+					})
+					if (!resetStream) return callbacks
+					// The server can hold this request until the queue fires, for as long as a duel waits for its
+					// vote. Holding is not an answer: the answer starts with the preamble that names the queued
+					// execution, whose `session` or `message_id` comes before any other event.
+					let started = false
+					const start = () => {
+						if (started || !isCurrent()) return
+						started = true
+						dispatch(queueItemId ? { type: 'START_QUEUED_STREAM', queueItemId } : { type: 'START_STREAM' })
+						currentMessageIdRef.current = null
+					}
+					return {
+						...callbacks,
+						onSessionId: (sessionId, startedAt) => {
+							start()
+							callbacks.onSessionId(sessionId, startedAt)
+						},
+						onMessageId: (messageId) => {
+							start()
+							callbacks.onMessageId?.(messageId)
+						}
+					}
+				},
 				execute: async ({ callbacks, signal, eventCounter }) => {
 					result.outcome = await attachAgenticStream({
 						sessionId: targetSessionId,
@@ -338,18 +357,16 @@ export function useChatExecutionOwner({
 						dispatch({ type: 'RESET_STREAM' })
 						return
 					}
-					if (kind !== 'abort' && result.outcome === 'error') {
+					// A hold that drops before its execution starts lost nothing; the next attempt waits again.
+					if (kind !== 'abort' && result.outcome === 'error' && buffer.executionId) {
 						dispatch({
 							type: 'SET_ERROR',
 							value: 'Lost connection while waiting for the queued response. Reconnecting…'
 						})
 					}
 				},
-				onSuccess: ({ isCurrent, eventCounter }) => {
+				onSuccess: ({ eventCounter }) => {
 					buffer.receivedEventCount = eventCounter.count
-					if (isCurrent() && result.outcome !== 'done' && buffer.receivedEventCount === 0) {
-						dispatch({ type: 'RESET_STREAM' })
-					}
 				}
 			})
 

@@ -186,7 +186,7 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 	enterToSend: boolean
 	isDraft?: boolean
 }) {
-	return (
+	const bubble = (
 		<MessageBubble
 			message={message}
 			isDraft={isDraft}
@@ -208,6 +208,15 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 			anchorClassName={anchorId ? styles.messageAnchor : undefined}
 			enterToSend={enterToSend}
 		/>
+	)
+	if (!message.answerLoadFailed) return bubble
+	return (
+		<>
+			{bubble}
+			<ChatStatusLine variant="error" align="start">
+				Couldn't load this answer. Reload the conversation.
+			</ChatStatusLine>
+		</>
 	)
 })
 

@@ -342,6 +342,7 @@ export function AgenticChat({
 	const duelStream = useDuelStream()
 	const duelPairId = duelStream.pairId
 	const duelOwnerExecutionId = duelStream.ownerExecutionId
+	const duelPromptMessageId = duelStream.promptMessageId
 	const duelMessageIdA = duelStream.a.messageId
 	const duelMessageIdB = duelStream.b.messageId
 	const startDuel = duelStream.start
@@ -1072,10 +1073,19 @@ export function AgenticChat({
 	const endDuel = useStableCallback((targetSessionId: string, streamingExecutionId: string | null) => {
 		if (!duelPairId || streamingExecutionId === duelOwnerExecutionId) return
 		const armMessageIds = [duelMessageIdA, duelMessageIdB]
+		const promptMessageId = duelPromptMessageId
 		resetDuel()
 		void restoreCoordinator.run(targetSessionId, async (operation) => {
 			const result = await restoreSession(targetSessionId, 10, undefined, operation.signal).catch(() => null)
-			if (!result || !operation.isCurrent()) return
+			if (!operation.isCurrent()) return
+			// The panel is already gone, so a failed load says so where the answer would be. A prompt an edit
+			// replaced is no longer in the thread, and nothing marks it.
+			if (!result) {
+				setMessages((current) =>
+					current.map((message) => (message.id === promptMessageId ? { ...message, answerLoadFailed: true } : message))
+				)
+				return
+			}
 			const saved = result.messages.map(mapPersistedMessage)
 			setMessages((current) => insertAbandonedDuelAnswer(current, saved, armMessageIds))
 		})
@@ -1104,6 +1114,7 @@ export function AgenticChat({
 			onUserMessageId?: (messageId: string) => void
 		}) => {
 			let completionSessionId = targetSessionId
+			let userMessageId: string | null = null
 			return createAgenticCallbacks({
 				isCurrent,
 				buffer,
@@ -1115,8 +1126,9 @@ export function AgenticChat({
 				deferEmptyDone,
 				notify,
 				onDuelStart: (pairId) => {
-					// Every stream opens with `message_id`, so the execution that owns the duel is known by now.
-					startDuel(pairId, buffer.executionId!)
+					// Every stream opens with `message_id`, so the execution that owns the duel is known by now, and the
+					// server sends the prompt's `user_message_id` before `duel_start`.
+					startDuel(pairId, buffer.executionId!, userMessageId)
 					onDuelStart?.(pairId)
 				},
 				onArmEvent: handleDuelArmEvent,
@@ -1127,8 +1139,15 @@ export function AgenticChat({
 				onTerminalRequest: (request) => {
 					void respondToTerminalRequest(request, completionSessionId, authorizedFetchCompat)
 				},
-				onMessageIdObserved: (messageId) => endDuel(targetSessionId, messageId),
-				onUserMessageIdObserved: onUserMessageId,
+				onMessageIdObserved: (messageId) => {
+					// A branch switch still loading would replace the thread this execution now writes into.
+					branchCoordinator.invalidate()
+					endDuel(targetSessionId, messageId)
+				},
+				onUserMessageIdObserved: (messageId) => {
+					userMessageId = messageId
+					onUserMessageId?.(messageId)
+				},
 				onSessionId: (observedSessionId) => {
 					completionSessionId = observedSessionId
 					onSessionId?.(observedSessionId)
@@ -1670,6 +1689,8 @@ export function AgenticChat({
 				}
 			}
 
+			// The prompt joins the thread now, so a branch switch still loading, such as a vote's, would drop it.
+			branchCoordinator.invalidate()
 			if (sessionId) endDuel(sessionId, null)
 
 			const execute = async (operation: ExecutionOperation) => {
@@ -1938,6 +1959,7 @@ export function AgenticChat({
 		[
 			isChatBusy,
 			dispatchStream,
+			branchCoordinator,
 			endDuel,
 			sessionId,
 			authorizedFetchCompat,
@@ -2395,7 +2417,9 @@ export function AgenticChat({
 	const handleBranchSwitch = useCallback(
 		async (leafMessageId: string) => {
 			if (!sessionId || isStreaming) return
-			abortActiveRequest()
+			// A queue attach that is only waiting keeps waiting: the answer it waits for, such as the one a duel
+			// vote releases, streams below whichever branch is active, and nothing would attach again.
+			if (executionCoordinator.runningIntent() !== 'queue') abortActiveRequest()
 			await branchCoordinator.run(sessionId, async (operation) => {
 				setViewError(null)
 				setPaginationError(null)
@@ -2435,6 +2459,7 @@ export function AgenticChat({
 			dispatchStream,
 			abortActiveRequest,
 			branchCoordinator,
+			executionCoordinator,
 			isStreaming,
 			restoreSessionSnapshot,
 			sessionId,
@@ -2496,25 +2521,21 @@ export function AgenticChat({
 			if (settlement !== 'stopped' || !isCurrentSession()) return
 			await abortActiveRequest()
 			if (!isCurrentSession()) return
-			resetDuel()
+			// A stopped duel stays on screen like a dropped one: the server saved the stopped run as arm A's
+			// answer, and the next execution's `endDuel` puts it back into the thread.
 			dispatchStream({ type: 'RESET_STREAM' })
 		})()
-	}, [
-		dispatchStream,
-		sessionId,
-		streamPhase.status,
-		abortActiveRequest,
-		authorizedFetchCompat,
-		resetDuel,
-		applyQueueSnapshot
-	])
+	}, [dispatchStream, sessionId, streamPhase.status, abortActiveRequest, authorizedFetchCompat, applyQueueSnapshot])
 
-	// Reuse the same submit path for assistant action buttons.
+	// Reuse the same submit path for assistant action buttons. While a queued prompt waits, a follow-up
+	// joins the queue behind it, as a typed prompt does.
 	const handleActionClick = useCallback(
 		(message: string) => {
-			if (!isStreaming) handleSubmit(message, undefined, undefined, undefined, { entrySource: 'follow-up' })
+			if (isStreaming) return
+			if (queueOwnsComposer) void handleQueue(message)
+			else handleSubmit(message, undefined, undefined, undefined, { entrySource: 'follow-up' })
 		},
-		[isStreaming, handleSubmit]
+		[isStreaming, queueOwnsComposer, handleQueue, handleSubmit]
 	)
 
 	const reconcileSessionExecution = useStableCallback(async (targetSessionId: string) => {

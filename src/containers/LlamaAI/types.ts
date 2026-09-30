@@ -243,6 +243,8 @@ export interface Message {
 	quotedText?: string
 	messageMetadata?: MessageMetadata
 	freeLimitOffer?: FreeLimitOffer
+	/** On a user message: the answer the server kept for it could not be loaded into the thread. */
+	answerLoadFailed?: true
 }
 
 export interface ChartSet {

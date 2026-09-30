@@ -54,6 +54,13 @@ stream: it runs until the response body closes, after `done`. A resume or queue 
 work does not block a prompt; the prompt replaces it. Both sources answer
 synchronously, so handlers read them directly; never mirror either in a ref.
 
+The server can hold a queue attach open until the queue fires, as long as a
+duel waits for its vote. Holding is not streaming: the chat enters `streaming`
+when the preamble that names the queued execution arrives, and a hold that
+drops before then retries without an error. While a queued prompt waits, the
+composer and follow-up actions add to the queue instead of prompting, and a
+branch switch, including the one a duel vote makes, leaves the hold attached.
+
 Direct prompt and edit mutations carry a stable `clientMutationId`. Reusing the
 same identifier reattaches to the retained execution or reconciles an already
 persisted mutation instead of starting duplicate work.
@@ -110,7 +117,12 @@ rolls back to the thread it replaced, and its duel is still open. The arms' stat
 `isStreaming`, which is only right while the duel's own execution streams.
 Ending a duel without a vote puts the answer the server kept for that turn
 back into the thread (`utils/abandonedDuel.ts`), because the duel's answers
-never enter message history.
+never enter message history. If that load fails, an error line sits under the
+duel's prompt. A confirmed Stop keeps the duel on screen like a dropped
+connection: the server saves the stopped run as arm A's answer. A prompt, or
+a new execution's `message_id`, supersedes a branch switch that is still
+loading, such as a vote's, because the switch would replace the thread that
+request writes into.
 
 ## Deep Links
 
