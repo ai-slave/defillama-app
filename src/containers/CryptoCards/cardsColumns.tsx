@@ -6,6 +6,7 @@ import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useResize } from '~/hooks/useResize'
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
@@ -263,7 +264,7 @@ export function buildCardsColumns(
 						) : null}
 						<TokenLogo src={card.logo} fallbackSrc={letterLogoDataUri(card.cardName)} alt={`${card.cardName} logo`} />
 						{/* The name opens the card page; the Get pill beside it is the one way to the issuer. */}
-						<div className="min-w-0 flex-1">
+						<div className="flex min-w-0 flex-1 items-center gap-1">
 							{reference.detailsHrefByIssuer[card.parentId] ? (
 								<BasicLink
 									href={reference.detailsHrefByIssuer[card.parentId]}
@@ -274,6 +275,30 @@ export function buildCardsColumns(
 							) : (
 								<span className="block truncate label-md">{card.cardName}</span>
 							)}
+							{card.cardId === 'gnosis-pay' ? (
+								<Hovercard
+									render={
+										<Button variant="ghost" size="sm" square aria-label="Gnosis Pay card discontinuation warning" />
+									}
+									content={
+										<div className="w-64 max-w-full space-y-2 body-sm">
+											<p>
+												The Gnosis Pay card will be discontinued on <strong>20 December 2026</strong> at 23:59 UTC.
+											</p>
+											<BasicLink
+												href="https://help.gnosispay.com/articles/1452055581-formal-notice-closure-of-the-gnosis-pay-web-app-and-card-21-september-2026"
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-link underline"
+											>
+												Read the official notice
+											</BasicLink>
+										</div>
+									}
+								>
+									<Icon name="alert-triangle" height={14} width={14} className="text-warning" aria-hidden="true" />
+								</Hovercard>
+							) : null}
 						</div>
 						{card.rowKind === 'card' ? (
 							<GetCardButton cardId={card.cardId} cardName={card.cardName} url={card.url} placement="table" />

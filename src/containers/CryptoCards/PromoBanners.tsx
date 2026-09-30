@@ -5,17 +5,17 @@ import { EthenaPayInviteDialog } from './GetCardButton'
 
 const CARD_PROMOS = [
 	{
-		id: 'ethena-pay',
-		name: 'Ethena Pay',
-		src: '/assets/crypto-cards/ethena-pay-v2.webp',
-		alt: 'Ethena Pay promotion placeholder: earn yield on your balance, cashback on everyday spending, and use global multi-currency payments.'
-	},
-	{
 		id: 'plasma-one',
 		name: 'Plasma One Card',
 		src: '/assets/crypto-cards/plasma-one-v2.webp',
 		href: 'https://www.plasma.org/download/LLAMAA',
 		alt: 'Plasma One Card promotion placeholder: spend stablecoins anywhere Visa is accepted, earn XPL cashback and yield, and get premium travel perks.'
+	},
+	{
+		id: 'ethena-pay',
+		name: 'Ethena Pay',
+		src: '/assets/crypto-cards/ethena-pay-v2.webp',
+		alt: 'Ethena Pay promotion placeholder: earn yield on your balance, cashback on everyday spending, and use global multi-currency payments.'
 	},
 	{
 		id: 'etherfi-cash',

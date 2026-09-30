@@ -9,7 +9,7 @@ interface CryptoCardIssuerProtocolIds {
 	childIds: Set<string>
 }
 
-function getCryptoCardIssuerProtocolIds(
+export function getCryptoCardIssuerProtocolIds(
 	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
 ): Map<string, CryptoCardIssuerProtocolIds> {
 	const issuers = new Map<string, CryptoCardIssuerProtocolIds>()

@@ -1,3 +1,4 @@
+import type { AdapterChainProtocol, AdapterMetricPeriods } from '~/containers/AdapterMetrics/api.types'
 import { cryptoCardIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import type {
@@ -9,6 +10,7 @@ import type {
 	CardsTier,
 	CardsTierCashback
 } from './api.types'
+import { getCryptoCardIssuerProtocolIds } from './issuers'
 
 /** One table row = one card tier. Card-level fields repeat on every row. */
 export interface CardTierRow {
@@ -406,10 +408,36 @@ export function groupCardRows(rows: Array<CardTierRow>): Array<CardTableRow> {
 
 export function mapCardsIndex(
 	response: CardsIndexResponse,
-	detailsHrefByIssuer: Record<string, string>
+	detailsHrefByIssuer: Record<string, string>,
+	issuerVolumes: ReadonlyArray<Pick<AdapterChainProtocol, 'defillamaId' | 'parentProtocol'> & AdapterMetricPeriods> = []
 ): CardsIndexModel {
+	const issuers = getCryptoCardIssuerProtocolIds(response.cards)
+	const catalogParentByChild = new Map<string, string>()
+	for (const { hostId, childIds } of issuers.values()) {
+		for (const childId of childIds) catalogParentByChild.set(childId, hostId)
+	}
+	const volumeByProtocol = new Map<string, number>()
+	const volumeByParent = new Map<string, number>()
+	for (const protocol of issuerVolumes) {
+		if (protocol.totalAllTime == null) continue
+		volumeByProtocol.set(protocol.defillamaId, protocol.totalAllTime)
+		// The catalog also declares parent relationships; the adapter may omit its own.
+		const parentId = protocol.parentProtocol || catalogParentByChild.get(protocol.defillamaId)
+		if (parentId) {
+			volumeByParent.set(parentId, (volumeByParent.get(parentId) ?? 0) + protocol.totalAllTime)
+		}
+	}
+	const volumeByIssuer = new Map<string, number>()
+	for (const [issuer, { hostId }] of issuers) {
+		volumeByIssuer.set(issuer, volumeByProtocol.get(hostId) ?? volumeByParent.get(hostId) ?? -1)
+	}
+	const issuerVolume = (card: CardsIndexCard) => volumeByIssuer.get(card.parent_id || card.id) ?? -1
+	// Rank by all-time issuer payment volume. Sort cards before expanding
+	// tiers so repeated cards/tiers never multiply issuer spend; ties keep catalog order.
+	// Siblings share their issuer's rank even when filters remove the mapped card.
+	const cards = response.cards.toSorted((a, b) => issuerVolume(b) - issuerVolume(a))
 	const rows: Array<CardTierRow> = []
-	for (const card of response.cards) {
+	for (const card of cards) {
 		for (const tier of card.tiers) rows.push(mapTier(card, tier))
 	}
 	return {

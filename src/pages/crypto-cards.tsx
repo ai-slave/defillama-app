@@ -13,13 +13,20 @@ import { withPerformanceLogging } from '~/utils/perf'
 type CryptoCardsPageProps = CardsIndexModel
 
 export const getStaticProps = withPerformanceLogging<CryptoCardsPageProps>('crypto-cards', async () => {
-	const [{ default: metadataCache }, index] = await Promise.all([
+	const { fetchAdapterChainMetrics } = await import('~/containers/AdapterMetrics/api')
+	const [{ default: metadataCache }, index, issuerVolumes] = await Promise.all([
 		import('~/utils/metadata'),
-		fetchCardsIndexFromNetwork()
+		fetchCardsIndexFromNetwork(),
+		fetchAdapterChainMetrics({
+			adapterType: 'dexs',
+			chain: 'All',
+			category: 'Crypto Card Issuer'
+		}).catch(() => null)
 	])
 	const { rows, reference } = mapCardsIndex(
 		index,
-		getCryptoCardDetailsHrefs(metadataCache.protocolMetadata, index.cards)
+		getCryptoCardDetailsHrefs(metadataCache.protocolMetadata, index.cards),
+		issuerVolumes?.protocols
 	)
 	return {
 		props: { rows, reference },
