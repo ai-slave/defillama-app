@@ -7,9 +7,9 @@ const CARD_PROMOS = [
 	{
 		id: 'plasma-one',
 		name: 'Plasma One Card',
-		src: '/assets/crypto-cards/plasma-one-v2.webp',
+		src: '/assets/crypto-cards/plasma-one-v3.webp',
 		href: 'https://www.plasma.org/download/LLAMAA',
-		alt: 'Plasma One Card promotion placeholder: spend stablecoins anywhere Visa is accepted, earn XPL cashback and yield, and get premium travel perks.'
+		alt: 'Plasma One Card: 10% cashback on AI and flights, 4% cashback on everything else, access to 1900+ airport lounges, zero foreign exchange fees, and $10K in value. Sign up.'
 	},
 	{
 		id: 'ethena-pay',
