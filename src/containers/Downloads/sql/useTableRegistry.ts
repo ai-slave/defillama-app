@@ -9,6 +9,12 @@ export type TableSource =
 	| { kind: 'dataset'; slug: string }
 	| { kind: 'chart'; slug: string; param: string; paramLabel?: string }
 
+/** Keyed by table name like `loading`, so the SQL reference shows the failure on the row that resolves to it. */
+export interface TableLoadError {
+	table: string
+	message: string
+}
+
 export interface RegisteredTable {
 	name: string
 	source: TableSource
@@ -69,7 +75,7 @@ function wasAborted(error: unknown, signal?: AbortSignal) {
 export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOptions) {
 	const [tables, setTables] = useState<Array<RegisteredTable>>([])
 	const [loading, setLoading] = useState<string | null>(null)
-	const [error, setError] = useState<string | null>(null)
+	const [error, setError] = useState<TableLoadError | null>(null)
 
 	const load = useCallback(
 		async (source: TableSource, signal?: AbortSignal): Promise<RegisteredTable | null> => {
@@ -118,7 +124,7 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 					return entry
 				} catch (loadError) {
 					if (wasAborted(loadError, signal)) return null
-					setError(loadErrorMessage(loadError))
+					setError({ table: name, message: loadErrorMessage(loadError) })
 					return null
 				}
 			}
@@ -195,7 +201,7 @@ async function fetchCsvFor(
 		const body = await safeJson(resp)
 		throw new Error(
 			body?.error ??
-				`Failed to load ${source.kind === 'dataset' ? source.slug : `${source.slug}/${source.param}`}: HTTP ${resp.status}`
+				`Couldn't load ${source.kind === 'dataset' ? source.slug : `${source.slug}/${source.param}`} (HTTP ${resp.status}). Try again.`
 		)
 	}
 	const csvText = await withAbort(resp.text(), signal)

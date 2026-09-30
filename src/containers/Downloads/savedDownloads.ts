@@ -78,6 +78,11 @@ export type QueryInput = DistributedOmit<QuerySavedConfig, 'id' | 'name' | 'crea
 
 export const MAX_RECENT_DOWNLOADS = 10
 
+/** Preset names are unique ignoring case and surrounding spaces, so saving "aave fees" replaces "Aave Fees". */
+export function presetNameKey(name: string): string {
+	return name.trim().toLowerCase()
+}
+
 // ID generation — crypto.randomUUID is available in Node 19+ and all modern browsers.
 // Fallback to Math.random for older environments.
 export function generatePresetId(): string {

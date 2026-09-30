@@ -2,10 +2,11 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { readAppStorage, writeAppStorage } from '~/contexts/LocalStorage'
+import { readAppStorage, useSavedDownloads, writeAppStorage } from '~/contexts/LocalStorage'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { DownloadsCatalog } from '../DownloadsCatalog'
+import { SavePresetDialog } from '../PresetDialogs'
 
 // Heavy dialogs the preset list can open; these tests assert nothing about them.
 vi.mock('../DatasetPreviewModal', () => ({ DatasetPreviewModal: () => null }))
@@ -50,6 +51,12 @@ async function click(el: HTMLElement) {
 	await act(async () => {
 		el.focus()
 		el.click()
+	})
+}
+async function type(input: HTMLInputElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }
 async function escape() {
@@ -154,4 +161,52 @@ test.each([
 		button(name).dispatchEvent(event)
 	})
 	expect(event.defaultPrevented).toBe(false)
+})
+
+// Wired the way the preview modals save a preset.
+function SaveHarness() {
+	const { savedDownloads, saveDownload } = useSavedDownloads()
+	return (
+		<SavePresetDialog
+			suggestedName=""
+			existingNames={savedDownloads.map((preset) => preset.name)}
+			onSave={(name, replaceExisting) =>
+				saveDownload(
+					{ id: 'new', name, kind: 'dataset', slug: 'protocols', columns: [], createdAt: 3 },
+					{ replaceByName: replaceExisting }
+				)
+			}
+			onClose={() => {}}
+		/>
+	)
+}
+
+test('saving under a name that differs only in case replaces that preset instead of adding a second one', async () => {
+	const saveRoot = createRoot(document.createElement('div'))
+	await act(async () => saveRoot.render(<SaveHarness />))
+	const dialog = [...document.querySelectorAll('[role="dialog"]')].find((el) =>
+		el.textContent?.includes('Save preset')
+	)!
+	await type(dialog.querySelector('input')!, ' first PRESET ')
+	expect(dialog.textContent).toContain('A preset named "First preset" exists. Saving replaces it.')
+	await click(button('Replace'))
+	expect(savedNames()).toEqual(['first PRESET', 'Second preset'])
+	await act(async () => saveRoot.unmount())
+})
+
+test("rename refuses another preset's name, ignoring case, and keeps both presets", async () => {
+	await click(button('Rename Second preset'))
+	const dialog = document.querySelector('[role="dialog"]')!
+	const input = dialog.querySelector<HTMLInputElement>('input')!
+	await type(input, 'first PRESET')
+	expect(dialog.textContent).toContain('Another preset is named "First preset". Choose a different name.')
+	expect(input.getAttribute('aria-invalid')).toBe('true')
+	await act(async () => {
+		input.form!.requestSubmit()
+	})
+	expect(button('Rename').disabled).toBe(true)
+	expect(savedNames()).toEqual(['First preset', 'Second preset'])
+	await type(input, 'second PRESET')
+	await click(button('Rename'))
+	expect(savedNames()).toEqual(['First preset', 'second PRESET'])
 })

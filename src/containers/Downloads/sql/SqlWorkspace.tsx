@@ -1,6 +1,6 @@
 import { TabList } from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
@@ -13,8 +13,14 @@ import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { chartDatasets } from '../chart-datasets'
 import { datasets } from '../datasets'
-import { extractQueryConfig, generatePresetId, type QuerySavedConfig, type QueryTableRef } from '../savedDownloads'
-import { SavePresetDialog } from '../SavePresetDialog'
+import { DeletePresetDialog, RenamePresetDialog, SavePresetDialog } from '../PresetDialogs'
+import {
+	extractQueryConfig,
+	generatePresetId,
+	type QuerySavedConfig,
+	type QueryTableRef,
+	type SavedDownload
+} from '../savedDownloads'
 import { decodeDownloadConfig, decodeNotebookShare } from '../urlState'
 import type { ChartConfig } from './chartConfig'
 import { queryDuckDB } from './duckdb/query'
@@ -157,6 +163,8 @@ function SqlWorkspaceInner({
 
 	const [sectionTab, setSectionTab] = useState<SqlTab>('editor')
 	const [schemaDrawerOpen, setSchemaDrawerOpen] = useState(false)
+	const savedTabRef = useRef<HTMLButtonElement>(null)
+	const [schemaParams, setSchemaParams] = useState<Record<string, string>>({})
 	const [savePresetOpen, setSavePresetOpen] = useState(false)
 	const [chartPreferredTab, setChartPreferredTab] = useState<string | null>(null)
 	const [playbookCollapsed, setPlaybookCollapsed] = useState<boolean>(() =>
@@ -901,7 +909,7 @@ function SqlWorkspaceInner({
 			/>
 
 			<Tabs<SqlTab> value={sectionTab} onValueChange={setSectionTab} values={SQL_TABS.map((item) => item.id)}>
-				<TabNav tab={sectionTab} savedCount={savedQueries.length} />
+				<TabNav tab={sectionTab} savedCount={savedQueries.length} savedTabRef={savedTabRef} />
 				<TabPanel value={sectionTab}>
 					{sectionTab === 'editor' ? (
 						<div
@@ -1057,6 +1065,8 @@ function SqlWorkspaceInner({
 					) : (
 						<SavedQueriesTab
 							savedQueries={savedQueries}
+							savedDownloads={savedDownloads}
+							savedTabRef={savedTabRef}
 							onOpen={onLoadSavedQuery}
 							onDelete={deleteDownload}
 							onRename={renameDownload}
@@ -1088,7 +1098,9 @@ function SqlWorkspaceInner({
 				onInsertAtCursor={onInsertAtCursor}
 				onApplyAndRun={onCookbookApply}
 				loading={registry.loading}
-				totalDatasetCount={TOTAL_SCHEMA_COUNT}
+				loadError={registry.error}
+				pickedParams={schemaParams}
+				setPickedParams={setSchemaParams}
 			/>
 		</div>
 	)
@@ -1180,7 +1192,15 @@ function Divider() {
 	return <span aria-hidden className="h-3 w-px bg-border-subtle" />
 }
 
-function TabNav({ tab, savedCount }: { tab: SqlTab; savedCount: number }) {
+function TabNav({
+	tab,
+	savedCount,
+	savedTabRef
+}: {
+	tab: SqlTab
+	savedCount: number
+	savedTabRef: RefObject<HTMLButtonElement | null>
+}) {
 	return (
 		<TabList aria-label="SQL workspace section" className="flex items-center gap-5 border-b border-subtle text-sm">
 			{SQL_TABS.map((t) => {
@@ -1189,6 +1209,7 @@ function TabNav({ tab, savedCount }: { tab: SqlTab; savedCount: number }) {
 				return (
 					<Tab
 						key={t.id}
+						ref={t.id === 'saved' ? savedTabRef : undefined}
 						value={t.id}
 						type="button"
 						className={`group relative flex items-center gap-1.5 pb-2 font-medium transition-colors ${
@@ -1290,18 +1311,24 @@ function EditorRunBar({
 
 function SavedQueriesTab({
 	savedQueries,
+	savedDownloads,
+	savedTabRef,
 	onOpen,
 	onDelete,
 	onRename,
 	busyTaskId
 }: {
 	savedQueries: Array<QuerySavedConfig>
+	/** Every preset kind, because a query's name must stay unique in the main Saved list too. */
+	savedDownloads: Array<SavedDownload>
+	savedTabRef: RefObject<HTMLButtonElement | null>
 	onOpen: (q: QuerySavedConfig) => void
 	onDelete: (id: string) => void
 	onRename: (id: string, name: string) => void
 	busyTaskId: string | null
 }) {
-	const [renamingId, setRenamingId] = useState<string | null>(null)
+	const [renaming, setRenaming] = useState<QuerySavedConfig | null>(null)
+	const [deleting, setDeleting] = useState<QuerySavedConfig | null>(null)
 
 	if (savedQueries.length === 0) {
 		return (
@@ -1316,112 +1343,78 @@ function SavedQueriesTab({
 	}
 	const busy = !!busyTaskId
 	return (
-		<ul className="flex flex-col divide-y divide-(--border-subtle) border-y border-subtle">
-			{savedQueries.map((q) => {
-				const isBusy = busyTaskId === `saved:${q.id}`
-				const isDim = busy && !isBusy
-				const isRenaming = renamingId === q.id
-				return (
-					<li key={q.id} className={`group flex items-center justify-between gap-3 py-3 ${isDim ? 'opacity-40' : ''}`}>
-						<button
-							type="button"
-							onClick={() => (isRenaming ? null : onOpen(q))}
-							onDoubleClick={() => setRenamingId(q.id)}
-							disabled={busy || isRenaming}
-							className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-not-allowed"
+		<>
+			<ul className="flex flex-col divide-y divide-(--border-subtle) border-y border-subtle">
+				{savedQueries.map((q) => {
+					const isBusy = busyTaskId === `saved:${q.id}`
+					const isDim = busy && !isBusy
+					return (
+						<li
+							key={q.id}
+							className={`group flex items-center justify-between gap-3 py-3 ${isDim ? 'opacity-40' : ''}`}
 						>
-							{isBusy ? (
-								<LoadingSpinner size={12} />
-							) : (
-								<Icon
-									name="arrow-right"
-									className="size-3.5 shrink-0 text-pro-text-tertiary transition-colors group-hover:text-brand"
-								/>
-							)}
-							<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-								{isRenaming ? (
-									<InlineRenameInput
-										initial={q.name}
-										onCommit={(next) => {
-											const trimmed = next.trim()
-											if (trimmed && trimmed !== q.name) onRename(q.id, trimmed)
-											setRenamingId(null)
-										}}
-										onCancel={() => setRenamingId(null)}
-									/>
+							<button
+								type="button"
+								onClick={() => onOpen(q)}
+								disabled={busy}
+								className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-not-allowed"
+							>
+								{isBusy ? (
+									<LoadingSpinner size={12} />
 								) : (
+									<Icon
+										name="arrow-right"
+										className="size-3.5 shrink-0 text-pro-text-tertiary transition-colors group-hover:text-brand"
+									/>
+								)}
+								<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 									<span className="truncate text-sm font-semibold text-pro-text-primary transition-colors group-hover:text-brand">
 										{q.name}
 									</span>
-								)}
-								<span className="truncate font-mono text-xs text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
-							</span>
-						</button>
-						<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-							<button
-								type="button"
-								onClick={() => setRenamingId(q.id)}
-								aria-label={`Rename ${q.name}`}
-								disabled={busy}
-								className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-40"
-							>
-								<Icon name="pencil" className="size-3.5" />
+									<span className="truncate font-mono text-xs text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
+								</span>
 							</button>
-							<button
-								type="button"
-								onClick={() => onDelete(q.id)}
-								aria-label={`Delete ${q.name}`}
-								disabled={busy}
-								className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
-							>
-								<Icon name="trash-2" className="size-3.5" />
-							</button>
-						</div>
-					</li>
-				)
-			})}
-		</ul>
-	)
-}
-
-// Module scope keeps the ref callback's identity stable, so it runs when the input attaches, not on every keystroke.
-function focusAndSelect(input: HTMLInputElement | null) {
-	input?.focus()
-	input?.select()
-}
-
-function InlineRenameInput({
-	initial,
-	onCommit,
-	onCancel
-}: {
-	initial: string
-	onCommit: (value: string) => void
-	onCancel: () => void
-}) {
-	const [value, setValue] = useState(initial)
-
-	return (
-		<input
-			ref={focusAndSelect}
-			value={value}
-			onChange={(e) => setValue(e.target.value)}
-			onKeyDown={(e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault()
-					onCommit(value)
-				} else if (e.key === 'Escape') {
-					e.preventDefault()
-					onCancel()
-				}
-				e.stopPropagation()
-			}}
-			onBlur={() => onCommit(value)}
-			onClick={(e) => e.stopPropagation()}
-			onDoubleClick={(e) => e.stopPropagation()}
-			onMouseDown={(e) => e.stopPropagation()}
-			className="min-w-0 rounded-sm px-1 py-px text-sm font-semibold text-pro-text-primary ring-1 ring-brand outline-hidden"
-		/>
+							<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+								<button
+									type="button"
+									onClick={() => setRenaming(q)}
+									aria-label={`Rename ${q.name}`}
+									disabled={busy}
+									className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+								>
+									<Icon name="pencil" className="size-3.5" />
+								</button>
+								<button
+									type="button"
+									onClick={() => setDeleting(q)}
+									aria-label={`Delete ${q.name}`}
+									disabled={busy}
+									className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
+								>
+									<Icon name="trash-2" className="size-3.5" />
+								</button>
+							</div>
+						</li>
+					)
+				})}
+			</ul>
+			{renaming ? (
+				<RenamePresetDialog
+					preset={renaming}
+					presets={savedDownloads}
+					onRename={onRename}
+					onClose={() => setRenaming(null)}
+				/>
+			) : null}
+			{deleting ? (
+				<DeletePresetDialog
+					preset={deleting}
+					finalFocus={savedTabRef}
+					onDelete={onDelete}
+					onClose={() => setDeleting(null)}
+				/>
+			) : null}
+		</>
 	)
 }
 

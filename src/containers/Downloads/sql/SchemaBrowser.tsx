@@ -1,11 +1,25 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { startTransition, useCallback, useDeferredValue, useMemo, useState } from 'react'
-import { toast } from 'react-hot-toast'
+import {
+	startTransition,
+	useCallback,
+	useDeferredValue,
+	useMemo,
+	useState,
+	type Dispatch,
+	type SetStateAction
+} from 'react'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Input, inputStyles, searchFieldIconStyles } from '~/ui/Input'
+import { popoverRowStyles, popoverScrollAreaStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { PopoverHeader } from '~/ui/PopoverHeader'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { formatNumber } from '~/utils/numberFormat'
 import {
 	chartDatasets,
@@ -14,10 +28,17 @@ import {
 	type ChartOptionsMap
 } from '../chart-datasets'
 import { datasets, datasetCategories, type DatasetDefinition } from '../datasets'
+import { CopyTextButton } from './CopyTextButton'
 import { formatDownloadRowCount } from './format'
 import { inferColumnKind, TypeBadge } from './primitives'
 import { columnShapeFor } from './schemaShapes'
-import { identifierize, tableNameFor, type RegisteredTable, type TableSource } from './useTableRegistry'
+import {
+	identifierize,
+	tableNameFor,
+	type RegisteredTable,
+	type TableLoadError,
+	type TableSource
+} from './useTableRegistry'
 
 const COLLAPSED_KEY = 'sql-schema-collapsed-categories'
 
@@ -37,6 +58,12 @@ export interface SchemaBrowserProps {
 	onReplaceSql: (snippet: string) => void
 	onInsertAtCursor: (text: string) => void
 	loading: string | null
+	/** The last table that failed to load; its row shows why. */
+	loadError: TableLoadError | null
+	/** The parameter picked per time-series slug. Rows unmount on a tab switch, a collapse or a search, so the
+	    host that stays mounted keeps the picks, and each row reads its load state for the table they name. */
+	pickedParams: Record<string, string>
+	setPickedParams: Dispatch<SetStateAction<Record<string, string>>>
 }
 
 type SchemaEntry =
@@ -64,7 +91,10 @@ export function SchemaBrowser({
 	onLoad,
 	onReplaceSql,
 	onInsertAtCursor,
-	loading
+	loading,
+	loadError,
+	pickedParams,
+	setPickedParams
 }: SchemaBrowserProps) {
 	const [search, setSearch] = useState('')
 	const [filter, setFilter] = useState<FilterKind>('all')
@@ -185,6 +215,9 @@ export function SchemaBrowser({
 							onInsertAtCursor={onInsertAtCursor}
 							onLoad={onLoad}
 							loading={loading}
+							loadError={loadError}
+							pickedParams={pickedParams}
+							setPickedParams={setPickedParams}
 						/>
 					))}
 				</div>
@@ -209,73 +242,76 @@ function BrowserHeader({
 	totalAvailable: number
 }) {
 	return (
-		<div className="flex flex-col gap-2">
-			<label className="relative">
-				<span className="sr-only">Search schema</span>
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-				<Input
-					type="text"
-					inputMode="search"
-					placeholder="Search tables, columns, descriptions…"
-					value={search}
-					onInput={(e) => onSearchChange(e.currentTarget.value)}
-					className="w-full pr-8 pl-8"
-				/>
-				{search ? (
-					<button
-						type="button"
-						onClick={() => onSearchChange('')}
-						aria-label="Clear search"
-						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-pro-text-tertiary hover:text-pro-text-primary"
-					>
-						<Icon name="x" className="size-3" />
-					</button>
-				) : null}
-			</label>
-
+		<div className="flex flex-col gap-3">
+			<SearchField
+				value={search}
+				onChange={onSearchChange}
+				label="Search schema"
+				placeholder="Search tables, columns, descriptions…"
+			/>
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<Ariakit.RadioProvider value={filter} setValue={(value) => onFilterChange(value as FilterKind)}>
-					<Ariakit.RadioGroup
-						aria-label="Dataset kind"
-						className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5"
-					>
-						{FILTER_KINDS.map((kind) => (
-							<label
-								key={kind}
-								className={`relative cursor-pointer rounded-sm px-2.5 py-1 text-xs font-medium transition-colors has-focus-visible:focus-ring ${
-									filter === kind
-										? 'bg-brand text-on-brand shadow-sm'
-										: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-								}`}
-							>
-								<Ariakit.Radio value={kind} className="sr-only" />
-								{FILTER_LABELS[kind]}
-							</label>
-						))}
-					</Ariakit.RadioGroup>
-				</Ariakit.RadioProvider>
-				<p className="text-[11px] text-pro-text-tertiary tabular-nums">
-					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable}`}
+				<SegmentedControl
+					label="Dataset kind"
+					variant="default"
+					size="md"
+					value={filter}
+					onValueChange={onFilterChange}
+					options={FILTER_KINDS.map((kind) => ({ value: kind, label: FILTER_LABELS[kind] }))}
+				/>
+				<p className="body-sm text-tertiary">
+					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable} tables`}
 				</p>
 			</div>
 		</div>
 	)
 }
 
+/** The search field used by every SQL reference tab. */
+export function SearchField({
+	value,
+	onChange,
+	label,
+	placeholder
+}: {
+	value: string
+	onChange: (v: string) => void
+	label: string
+	placeholder: string
+}) {
+	return (
+		<div className="relative">
+			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+			<Input
+				type="text"
+				inputMode="search"
+				aria-label={label}
+				placeholder={placeholder}
+				value={value}
+				onInput={(e) => onChange(e.currentTarget.value)}
+				className="w-full pr-9 pl-8"
+			/>
+			{value ? (
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					square
+					onClick={() => onChange('')}
+					aria-label="Clear search"
+					className="absolute top-1/2 right-1.5 -translate-y-1/2"
+				>
+					<Icon name="x" className="size-3.5" aria-hidden="true" />
+				</Button>
+			) : null}
+		</div>
+	)
+}
+
 function EmptyResults({ search }: { search: string }) {
 	return (
-		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
-			<Icon name="search" className="size-5 text-pro-text-tertiary" />
-			<p className="text-sm text-pro-text-secondary">
-				{search ? (
-					<>
-						No tables match <span className="font-mono text-pro-text-primary">"{search}"</span>.
-					</>
-				) : (
-					'No tables match these filters.'
-				)}
-			</p>
-		</div>
+		<p className="py-6 text-center body-sm text-tertiary">
+			{search ? `No tables match "${search}".` : 'No tables match these filters.'}
+		</p>
 	)
 }
 
@@ -289,7 +325,10 @@ function CategorySection({
 	onReplaceSql,
 	onInsertAtCursor,
 	onLoad,
-	loading
+	loading,
+	loadError,
+	pickedParams,
+	setPickedParams
 }: {
 	category: string
 	items: Array<SchemaEntry>
@@ -301,27 +340,31 @@ function CategorySection({
 	onInsertAtCursor: (text: string) => void
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	loading: string | null
+	loadError: TableLoadError | null
+	pickedParams: Record<string, string>
+	setPickedParams: Dispatch<SetStateAction<Record<string, string>>>
 }) {
 	return (
 		<section className="flex flex-col">
-			<button
-				type="button"
-				onClick={onToggle}
-				aria-expanded={!collapsed}
-				className="group flex items-baseline gap-2 border-b border-subtle pb-1.5 text-left"
-			>
-				<Icon
-					name="chevron-right"
-					className={`size-3 shrink-0 text-pro-text-tertiary transition-transform duration-150 group-hover:text-pro-text-primary ${
-						collapsed ? '' : 'rotate-90'
-					}`}
-				/>
-				<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">{category}</h3>
-				<span className="text-[11px] text-pro-text-tertiary tabular-nums">{items.length}</span>
-			</button>
+			<h3>
+				<button
+					type="button"
+					onClick={onToggle}
+					aria-expanded={!collapsed}
+					className="flex w-full items-center gap-2 border-b border-subtle pb-2 text-left label-md text-primary"
+				>
+					<Icon
+						name="chevron-right"
+						className={`size-4 shrink-0 text-tertiary transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`}
+						aria-hidden="true"
+					/>
+					{category}
+					<span className="body-sm text-tertiary">{items.length}</span>
+				</button>
+			</h3>
 
 			{!collapsed && (
-				<ul className="flex flex-col divide-y divide-(--border-subtle)/50">
+				<ul className="flex flex-col divide-y divide-(--border-subtle)">
 					{items.map((item) =>
 						item.kind === 'flat' ? (
 							<li key={item.id}>
@@ -332,6 +375,7 @@ function CategorySection({
 									onInsertAtCursor={onInsertAtCursor}
 									onLoad={onLoad}
 									loading={loading}
+									loadError={loadError}
 								/>
 							</li>
 						) : (
@@ -344,6 +388,9 @@ function CategorySection({
 									onInsertAtCursor={onInsertAtCursor}
 									onLoad={onLoad}
 									loading={loading}
+									loadError={loadError}
+									param={pickedParams[item.slug] ?? ''}
+									setParam={(param) => setPickedParams((prev) => ({ ...prev, [item.slug]: param }))}
 								/>
 							</li>
 						)
@@ -360,7 +407,8 @@ function FlatRow({
 	onReplaceSql,
 	onInsertAtCursor,
 	onLoad,
-	loading
+	loading,
+	loadError
 }: {
 	entry: Extract<SchemaEntry, { kind: 'flat' }>
 	loaded: RegisteredTable | undefined
@@ -368,6 +416,7 @@ function FlatRow({
 	onInsertAtCursor: (text: string) => void
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	loading: string | null
+	loadError: TableLoadError | null
 }) {
 	const snippet = `SELECT * FROM ${entry.tableName} LIMIT 100\n`
 	const isLoading = loading === entry.tableName
@@ -381,22 +430,22 @@ function FlatRow({
 			: loadedCols.map((c) => ({ name: c.name, type: c.type }))
 
 	return (
-		<div className="flex flex-col gap-2 py-3.5">
-			<div className="flex flex-wrap items-start justify-between gap-3">
+		<div className="flex flex-col gap-2 py-3">
+			<div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
 				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
-					<div className="flex min-w-0 flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-bold break-all text-pro-text-primary">{entry.tableName}</span>
-						<KindTag kind="flat" />
-						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : <AutoLoadHint />}
+					<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+						<span className="mono-md break-all text-primary">{entry.tableName}</span>
+						<Tag>Dataset</Tag>
+						{loaded ? <LoadedNote rowCount={loaded.rowCount} /> : null}
 					</div>
-					<p className="text-xs text-pro-text-secondary">{entry.description}</p>
+					<p className="body-sm text-secondary">{entry.description}</p>
 				</div>
 				<RowActions
+					tableName={entry.tableName}
 					onInsert={() => onReplaceSql(snippet)}
 					onLoad={() => {
 						onLoad({ kind: 'dataset', slug: entry.dataset.slug })
 					}}
-					onCopy={() => copyToClipboard(entry.tableName)}
 					isLoading={isLoading}
 					alreadyLoaded={!!loaded}
 					canLoad={!loading}
@@ -406,8 +455,9 @@ function FlatRow({
 			{columns.length > 0 ? (
 				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
 			) : (
-				<p className="text-[11px] text-pro-text-tertiary italic">Columns resolved on load.</p>
+				<p className="body-sm text-tertiary">Columns show once the table loads.</p>
 			)}
+			{loadError?.table === entry.tableName ? <InlineStatus variant="error">{loadError.message}</InlineStatus> : null}
 		</div>
 	)
 }
@@ -419,7 +469,10 @@ function TsRow({
 	onReplaceSql,
 	onInsertAtCursor,
 	onLoad,
-	loading
+	loading,
+	loadError,
+	param,
+	setParam
 }: {
 	entry: Extract<SchemaEntry, { kind: 'ts' }>
 	options: Array<{ label: string; value: string; category?: string; isChild?: boolean }>
@@ -428,8 +481,10 @@ function TsRow({
 	onInsertAtCursor: (text: string) => void
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	loading: string | null
+	loadError: TableLoadError | null
+	param: string
+	setParam: (param: string) => void
 }) {
-	const [param, setParam] = useState<string>('')
 	const selectedOption = options.find((o) => o.value === param)
 	const resolvedName = param ? tableNameFor({ kind: 'chart', slug: entry.slug, param }) : entry.displayName
 	const loaded = param ? loadedByKey.get(`ts:${entry.slug}:${param}`) : undefined
@@ -447,19 +502,18 @@ function TsRow({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 py-3.5">
-			<div className="flex flex-wrap items-start justify-between gap-3">
+		<div className="flex flex-col gap-2 py-3">
+			<div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
 				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
-					<div className="flex min-w-0 flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-bold break-all text-pro-text-primary">
-							{param ? resolvedName : <span className="text-pro-text-secondary">{entry.displayName}</span>}
-						</span>
-						<KindTag kind="ts" />
-						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : null}
+					<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+						<span className={`mono-md break-all ${param ? 'text-primary' : 'text-secondary'}`}>{resolvedName}</span>
+						<Tag>Time series</Tag>
+						{loaded ? <LoadedNote rowCount={loaded.rowCount} /> : null}
 					</div>
-					<p className="text-xs text-pro-text-secondary">{entry.description}</p>
+					<p className="body-sm text-secondary">{entry.description}</p>
 				</div>
 				<RowActions
+					tableName={resolvedName}
 					onInsert={() => onReplaceSql(snippet)}
 					onLoad={() => {
 						if (!param || !selectedOption) return
@@ -470,13 +524,10 @@ function TsRow({
 							paramLabel: selectedOption.label
 						})
 					}}
-					onCopy={() => param && copyToClipboard(resolvedName)}
 					isLoading={isLoading}
 					alreadyLoaded={!!loaded}
 					canLoad={!!param && !loading}
-					canInsert={!!param}
-					canCopy={!!param}
-					disabledHint={!param ? `Pick ${entry.dataset.paramLabel.toLowerCase()} →` : undefined}
+					blocked={!param}
 				/>
 			</div>
 
@@ -485,7 +536,10 @@ function TsRow({
 			{columns.length > 0 ? (
 				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
 			) : shape === 'dynamic' ? (
-				<p className="text-[11px] text-pro-text-tertiary italic">Columns depend on response — load to see.</p>
+				<p className="body-sm text-tertiary">Columns depend on the response and show once the table loads.</p>
+			) : null}
+			{param && loadError?.table === resolvedName ? (
+				<InlineStatus variant="error">{loadError.message}</InlineStatus>
 			) : null}
 		</div>
 	)
@@ -499,19 +553,16 @@ function ColumnChips({
 	onInsertColumn: (name: string) => void
 }) {
 	return (
-		<ul className="flex flex-wrap gap-1.5">
+		<ul aria-label="Columns, select one to insert it in the editor" className="flex flex-wrap gap-1.5">
 			{columns.map((c) => (
 				<li key={c.name}>
 					<button
 						type="button"
 						onClick={() => onInsertColumn(c.name)}
-						title={
-							c.type ? `${c.name} · ${c.type}\nClick to insert column name` : `${c.name}\nClick to insert column name`
-						}
-						className="group inline-flex items-center gap-1 rounded-sm border border-subtle bg-surface px-1.5 py-0.5 transition-colors hover:border-brand/50 hover:bg-brand/5"
+						className="touch-target hover-wash inline-flex min-h-6 items-center gap-1 rounded-md border border-subtle px-1.5 mono-sm text-primary hover:border-brand"
 					>
-						<TypeBadge kind={inferColumnKind(c.type)} />
-						<span className="font-mono text-[11.5px] text-pro-text-primary group-hover:text-brand">{c.name}</span>
+						{c.type ? <TypeBadge kind={inferColumnKind(c.type)} /> : null}
+						{c.name}
 					</button>
 				</li>
 			))}
@@ -520,59 +571,38 @@ function ColumnChips({
 }
 
 function RowActions({
+	tableName,
 	onInsert,
 	onLoad,
-	onCopy,
 	isLoading,
 	alreadyLoaded,
 	canLoad,
-	canInsert = true,
-	canCopy = true,
-	disabledHint
+	blocked = false
 }: {
+	tableName: string
 	onInsert: () => void
 	onLoad: () => void
-	onCopy: () => void
 	isLoading: boolean
 	alreadyLoaded: boolean
 	canLoad: boolean
-	canInsert?: boolean
-	canCopy?: boolean
-	disabledHint?: string
+	/** A time-series table needs its parameter first; the picker under the name asks for it. */
+	blocked?: boolean
 }) {
 	return (
-		<div className="flex shrink-0 items-center gap-1.5">
-			{disabledHint ? <span className="mr-1 text-[10px] text-pro-text-tertiary">{disabledHint}</span> : null}
-			<button
+		<div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+			<CopyTextButton text={tableName} label="Copy name" disabled={blocked} />
+			<Button
 				type="button"
-				onClick={onCopy}
-				disabled={!canCopy}
-				aria-label="Copy table name"
-				title="Copy table name"
-				className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-40"
-			>
-				<Icon name="copy" className="size-3.5" />
-			</button>
-			<button
-				type="button"
+				size="sm"
 				onClick={onLoad}
-				disabled={!canLoad || alreadyLoaded}
-				title={alreadyLoaded ? 'Already loaded in this session' : 'Load CSV into session'}
-				className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 text-xs font-medium text-pro-text-primary transition-colors hover:border-brand/40 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+				disabled={!isLoading && (!canLoad || alreadyLoaded)}
+				pendingLabel={isLoading ? 'Loading…' : null}
 			>
-				{isLoading ? <LoadingSpinner size={10} /> : <Icon name="download-cloud" className="size-3" />}
 				{alreadyLoaded ? 'Loaded' : 'Load'}
-			</button>
-			<button
-				type="button"
-				onClick={onInsert}
-				disabled={!canInsert}
-				title="Insert SELECT snippet at cursor"
-				className="inline-flex items-center gap-1.5 rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-			>
-				<Icon name="arrow-right" className="size-3" />
+			</Button>
+			<Button type="button" size="sm" onClick={onInsert} disabled={blocked}>
 				Insert
-			</button>
+			</Button>
 		</div>
 	)
 }
@@ -599,14 +629,14 @@ function ParamCombobox({
 	}, [options, search])
 
 	const current = options.find((o) => o.value === value)
+	const noun = paramLabel.toLowerCase()
 
 	if (options.length === 0) {
-		return <p className="text-[11px] text-pro-text-tertiary italic">No {paramLabel.toLowerCase()} options available.</p>
+		return <p className="body-sm text-tertiary">No {noun} options available.</p>
 	}
 
 	return (
-		<div className="flex items-center gap-2 text-xs">
-			<span className="shrink-0 text-pro-text-tertiary">{paramLabel}:</span>
+		<div className="flex flex-wrap items-center gap-2">
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
 				setInputValue={(v) => {
@@ -617,101 +647,51 @@ function ParamCombobox({
 					if (typeof next === 'string') onChange(next)
 				}}
 			>
-				<Ariakit.ComboboxSelect
-					className={`inline-flex max-w-[220px] min-w-[160px] items-center justify-between gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
-						value
-							? 'border-brand/50 bg-brand/5 text-brand'
-							: 'border-subtle bg-surface text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-					}`}
-				>
-					<span className="truncate font-mono">{current?.label ?? `Pick ${paramLabel.toLowerCase()}…`}</span>
-					<Ariakit.ComboboxSelectArrow />
+				<Ariakit.ComboboxLabel className="body-sm text-secondary">{paramLabel}</Ariakit.ComboboxLabel>
+				<Ariakit.ComboboxSelect className={`${selectTriggerStyles('filter', 'sm')} max-w-[240px] min-w-40`}>
+					<span className={`truncate ${current ? '' : 'text-secondary'}`}>{current?.label ?? `Pick a ${noun}`}</span>
+					<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 				</Ariakit.ComboboxSelect>
-				<Ariakit.ComboboxPopover
-					gutter={6}
-					portal
-					sameWidth={false}
-					unmountOnHide
-					className="z-50 flex max-h-80 w-[min(320px,90vw)] flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
-				>
-					<div className="relative border-b border-subtle p-2">
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<Ariakit.ComboboxInput
-							autoSelect
-							placeholder={`Filter ${paramLabel.toLowerCase()}s…`}
-							className={searchFieldInputStyles}
-						/>
-					</div>
-					<Ariakit.ComboboxList className="overflow-y-auto">
+				<ComboboxSurface heading={paramLabel} className="z-50 max-h-80 w-[min(320px,90vw)]">
+					<PopoverHeader
+						search={
+							<Ariakit.ComboboxInput autoSelect placeholder={`Search ${noun}s`} className={`w-full ${inputStyles}`} />
+						}
+					/>
+					<Ariakit.ComboboxList className={popoverScrollAreaStyles}>
 						{matches.length === 0 ? (
-							<p className="px-3 py-4 text-center text-xs text-pro-text-tertiary">No matches.</p>
+							<p className="px-3 py-6 text-center body-sm text-tertiary">No matches.</p>
 						) : (
 							matches.map((opt) => (
 								<Ariakit.ComboboxItem
 									key={opt.value}
 									value={opt.value}
-									className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-pro-text-primary data-active-item:bg-hover-row ${
-										opt.isChild ? 'pl-6 text-pro-text-secondary' : ''
-									}`}
+									className={`${popoverRowStyles} ${opt.isChild ? 'pl-6 text-secondary' : ''}`}
 								>
 									<span className="truncate">{opt.label}</span>
-									<Ariakit.ComboboxItemCheck className="ml-auto text-brand" />
+									<Ariakit.ComboboxItemSelected>
+										{(selected) => (
+											<Icon name="check" className={popoverSingleSelectCheckStyles(selected)} aria-hidden="true" />
+										)}
+									</Ariakit.ComboboxItemSelected>
 								</Ariakit.ComboboxItem>
 							))
 						)}
 					</Ariakit.ComboboxList>
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{value ? (
-				<button
-					type="button"
-					onClick={() => onChange('')}
-					aria-label="Clear selection"
-					className="text-[11px] text-pro-text-tertiary underline-offset-2 hover:text-pro-text-primary hover:underline"
-				>
-					clear
-				</button>
+				<Button type="button" variant="ghost" size="sm" onClick={() => onChange('')}>
+					Clear
+				</Button>
 			) : null}
-			<span className="ml-auto text-[10px] text-pro-text-tertiary tabular-nums">
-				{formatNumber(options.length)} option{options.length === 1 ? '' : 's'}
+			<span className="ml-auto body-sm text-tertiary">
+				{formatNumber(options.length)} {options.length === 1 ? 'option' : 'options'}
 			</span>
 		</div>
 	)
 }
 
-function KindTag({ kind }: { kind: 'flat' | 'ts' }) {
-	return (
-		<span className="rounded-sm bg-hover-row px-1.5 py-px text-[9px] font-semibold tracking-wider text-pro-text-tertiary uppercase">
-			{kind === 'flat' ? 'Dataset' : 'Time series'}
-		</span>
-	)
-}
-
-function AutoLoadHint() {
-	return (
-		<span
-			title="Referenced tables are auto-loaded when you run a query that references them."
-			className="inline-flex items-center gap-1 text-[10px] text-pro-text-tertiary"
-		>
-			<span aria-hidden className="inline-block size-1 rounded-full bg-pro-text-tertiary/60" />
-			auto-loads on run
-		</span>
-	)
-}
-
-function LoadedPill({ rowCount }: { rowCount: number }) {
-	return (
-		<span className="inline-flex items-center gap-1 rounded-sm bg-success/15 px-1.5 py-px text-[10px] font-medium text-success">
-			<Icon name="check" className="size-2.5" />
-			Loaded · {formatDownloadRowCount(rowCount)}
-		</span>
-	)
-}
-
-function copyToClipboard(text: string) {
-	if (typeof navigator === 'undefined' || !navigator.clipboard) return
-	navigator.clipboard.writeText(text).then(
-		() => toast.success('Copied', { duration: 1500 }),
-		() => toast.error('Copy failed')
-	)
+function LoadedNote({ rowCount }: { rowCount: number }) {
+	return <span className="body-sm text-tertiary">{formatDownloadRowCount(rowCount)} rows</span>
 }

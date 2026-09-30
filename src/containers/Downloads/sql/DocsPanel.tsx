@@ -1,8 +1,9 @@
 import { matchSorter } from 'match-sorter'
 import { Fragment, useDeferredValue, useMemo, useState } from 'react'
-import { toast } from 'react-hot-toast'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { Tooltip } from '~/ui/Tooltip'
+import { CopyTextButton } from './CopyTextButton'
 import {
 	COOKBOOK_SNIPPETS,
 	COOKBOOK_TAGS,
@@ -15,6 +16,7 @@ import {
 	type TechniqueName
 } from './dialectDocs'
 import { Keycap } from './primitives'
+import { SearchField } from './SchemaBrowser'
 
 // ─── Cookbook tab ───────────────────────────────────────────────────────────
 
@@ -45,33 +47,31 @@ export function CookbookTab({ onApplyAndRun }: CookbookProps) {
 	}, [filtered])
 
 	return (
-		<div className="flex flex-col gap-6">
-			<header className="flex flex-col gap-1">
-				<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Cookbook</h3>
-				<p className="text-[11.5px] leading-snug text-pro-text-tertiary">
-					Pragmatic idioms against DefiLlama tables — hover a technique to see what it does. Try it: swaps the editor
-					and runs the query.
+		<div className="flex flex-col gap-5">
+			<div className="flex flex-col gap-3">
+				<SearchField
+					value={search}
+					onChange={setSearch}
+					label="Search recipes"
+					placeholder="Search title, technique, tag, or SQL…"
+				/>
+				<p className="body-sm text-tertiary">
+					{filtered.length === COOKBOOK_SNIPPETS.length
+						? `${COOKBOOK_SNIPPETS.length} recipes`
+						: `${filtered.length} of ${COOKBOOK_SNIPPETS.length} recipes`}
 				</p>
-			</header>
-
-			<SearchBar
-				value={search}
-				onChange={setSearch}
-				placeholder="Search title, technique, tag, or SQL…"
-				resultCount={filtered.length}
-				totalCount={COOKBOOK_SNIPPETS.length}
-			/>
+			</div>
 
 			{grouped.length === 0 ? (
-				<EmptyResults label={`No snippets match "${deferred}".`} />
+				<p className="py-6 text-center body-sm text-tertiary">No recipes match "{deferred}".</p>
 			) : (
-				<div className="flex flex-col gap-7">
+				<div className="flex flex-col gap-5">
 					{grouped.map(({ tag, items }) => (
-						<section key={tag} className="flex flex-col gap-4">
-							<TagHeader tag={tag} count={items.length} />
-							<ul className="flex flex-col divide-y divide-(--border-subtle)/60">
+						<section key={tag} className="flex flex-col">
+							<SectionHeading title={tag} count={items.length} />
+							<ul className="flex flex-col divide-y divide-(--border-subtle)">
 								{items.map((s) => (
-									<li key={s.title} className="flex flex-col gap-3 py-4 first:pt-0">
+									<li key={s.title} className="py-4">
 										<Snippet snippet={s} onApplyAndRun={onApplyAndRun} />
 									</li>
 								))}
@@ -84,46 +84,28 @@ export function CookbookTab({ onApplyAndRun }: CookbookProps) {
 	)
 }
 
-function TagHeader({ tag, count }: { tag: CookbookTag; count: number }) {
+function SectionHeading({ title, count }: { title: string; count: number }) {
 	return (
-		<div className="flex items-baseline gap-2.5">
-			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
-			<span className="text-[10px] font-semibold tracking-[0.16em] text-pro-text-tertiary uppercase">{tag}</span>
-			<span className="text-[10px] text-pro-text-tertiary tabular-nums">{count}</span>
-			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
-		</div>
+		<h3 className="flex items-center gap-2 border-b border-subtle pb-2 label-md text-primary">
+			{title}
+			<span className="body-sm text-tertiary">{count}</span>
+		</h3>
 	)
 }
 
 function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApplyAndRun: (sql: string) => void }) {
 	return (
 		<div className="flex flex-col gap-2.5">
-			<div className="flex flex-wrap items-start justify-between gap-3">
-				<div className="flex min-w-0 flex-1 flex-col gap-1">
-					<h4 className="text-[13.5px] font-semibold text-pro-text-primary">{snippet.title}</h4>
-					<p className="text-xs leading-snug text-pro-text-secondary">{snippet.blurb}</p>
+			<div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
+					<h4 className="label-md text-primary">{snippet.title}</h4>
+					<p className="body-sm text-secondary">{snippet.blurb}</p>
 				</div>
 				<div className="flex shrink-0 items-center gap-1.5">
-					<button
-						type="button"
-						onClick={() => copy(snippet.sql)}
-						aria-label="Copy SQL"
-						title="Copy SQL"
-						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-					>
-						<Icon name="copy" className="size-3.5" />
-					</button>
-					<button
-						type="button"
-						onClick={() => onApplyAndRun(`${snippet.sql}\n`)}
-						title="Replace editor and run"
-						className="group inline-flex items-center gap-1.5 rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand shadow-sm transition-opacity hover:opacity-90"
-					>
-						<svg className="size-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-							<path d="M8 5v14l11-7z" />
-						</svg>
+					<CopyTextButton text={snippet.sql} label="Copy SQL" />
+					<Button type="button" size="sm" onClick={() => onApplyAndRun(`${snippet.sql}\n`)}>
 						Try it
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -137,16 +119,14 @@ function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApply
 function TechniqueChips({ techniques }: { techniques: Array<TechniqueName> }) {
 	if (techniques.length === 0) return null
 	return (
-		<ul className="flex flex-wrap gap-1.5">
+		<ul aria-label="Techniques" className="flex flex-wrap gap-1.5">
 			{techniques.map((t) => (
 				<li key={t}>
-					<button
-						type="button"
-						title={TECHNIQUE_DOCS[t]}
-						className="inline-flex cursor-help items-center gap-1 rounded-sm border border-subtle bg-pro-app-bg/60 px-1.5 py-0.5 font-mono text-[10.5px] tracking-tight text-pro-text-secondary transition-colors hover:border-brand/50 hover:text-brand focus:border-brand/60 focus:outline-hidden"
-					>
-						{t}
-					</button>
+					<Tooltip content={TECHNIQUE_DOCS[t]} tabIndex={0} className="rounded-md">
+						<span className="inline-flex min-h-6 cursor-help items-center rounded-md border border-subtle px-1.5 mono-sm text-secondary">
+							{t}
+						</span>
+					</Tooltip>
 				</li>
 			))}
 		</ul>
@@ -389,15 +369,15 @@ const TOKEN_CLASS: Record<TokenType, string> = {
 	fn: 'text-sub-violet dark:text-sub-violet-bright',
 	str: 'text-sub-warning-text-light dark:text-sub-warning-text-dark',
 	num: 'text-success',
-	cmt: 'italic text-pro-text-tertiary',
-	punct: 'text-pro-text-tertiary',
+	cmt: 'italic text-tertiary',
+	punct: 'text-tertiary',
 	plain: ''
 }
 
 function CodeBlock({ sql }: { sql: string }) {
 	const tokens = useMemo(() => tokenize(sql), [sql])
 	return (
-		<pre className="overflow-x-auto rounded-md border border-l-2 border-subtle border-l-brand/40 bg-pro-app-bg/70 px-3 py-2.5 font-mono text-xs leading-relaxed text-pro-text-primary">
+		<pre className="overflow-x-auto rounded-lg border border-subtle bg-page px-3 py-2.5 mono-sm text-primary">
 			<code>
 				{tokens.map((t, i) => {
 					const cls = TOKEN_CLASS[t.type]
@@ -419,18 +399,15 @@ function CodeBlock({ sql }: { sql: string }) {
 
 export function ShortcutsTab() {
 	return (
-		<div className="flex flex-col gap-6">
+		<div className="flex flex-col gap-5">
 			<section className="flex flex-col">
-				<div className="flex items-baseline gap-2 border-b border-subtle pb-1.5">
-					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Keyboard</h3>
-					<span className="text-[11px] text-pro-text-tertiary tabular-nums">{SHORTCUTS.length}</span>
-				</div>
-				<ul className="flex flex-col divide-y divide-(--border-subtle)/50">
+				<SectionHeading title="Keyboard" count={SHORTCUTS.length} />
+				<ul className="flex flex-col divide-y divide-(--border-subtle)">
 					{SHORTCUTS.map((s) => (
 						<li key={s.action} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
-							<div className="flex min-w-0 flex-1 flex-col">
-								<span className="text-sm text-pro-text-primary">{s.action}</span>
-								{s.note ? <span className="text-[11px] text-pro-text-tertiary">{s.note}</span> : null}
+							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+								<span className="body-md text-primary">{s.action}</span>
+								{s.note ? <span className="body-sm text-tertiary">{s.note}</span> : null}
 							</div>
 							<div className="flex shrink-0 items-center gap-1">
 								{s.keys.map((k, i) => (
@@ -444,98 +421,26 @@ export function ShortcutsTab() {
 			</section>
 
 			<section className="flex flex-col">
-				<div className="flex items-baseline gap-2 border-b border-subtle pb-1.5">
-					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Dialect tips</h3>
-					<span className="text-[11px] text-pro-text-tertiary tabular-nums">{DIALECT_TIPS.length}</span>
-				</div>
-				<ul className="flex flex-col divide-y divide-(--border-subtle)/50">
+				<SectionHeading title="Dialect tips" count={DIALECT_TIPS.length} />
+				<ul className="flex flex-col divide-y divide-(--border-subtle)">
 					{DIALECT_TIPS.map((t) => (
 						<li key={t.title} className="flex flex-col gap-1 py-3">
-							<h4 className="text-xs font-semibold tracking-tight text-pro-text-primary">{t.title}</h4>
-							<p className="text-xs leading-relaxed text-pro-text-secondary">{t.body}</p>
+							<h4 className="label-md text-primary">{t.title}</h4>
+							<p className="body-sm text-secondary">{t.body}</p>
 						</li>
 					))}
 				</ul>
 			</section>
 
-			<ExternalDocsLink />
+			<a
+				href={DUCKDB_DOCS_URL}
+				target="_blank"
+				rel="noreferrer"
+				className="inline-flex items-center gap-1 self-start body-sm text-link hover:underline"
+			>
+				Full LlamaSQL reference
+				<Icon name="external-link" className="size-3.5" aria-hidden="true" />
+			</a>
 		</div>
-	)
-}
-
-// ─── Shared bits ────────────────────────────────────────────────────────────
-
-function SearchBar({
-	value,
-	onChange,
-	placeholder,
-	resultCount,
-	totalCount
-}: {
-	value: string
-	onChange: (v: string) => void
-	placeholder: string
-	resultCount: number
-	totalCount: number
-}) {
-	return (
-		<div className="flex flex-col gap-2">
-			<label className="relative">
-				<span className="sr-only">Search</span>
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-				<Input
-					type="text"
-					inputMode="search"
-					placeholder={placeholder}
-					value={value}
-					onInput={(e) => onChange(e.currentTarget.value)}
-					className="w-full pr-8 pl-8"
-				/>
-				{value ? (
-					<button
-						type="button"
-						onClick={() => onChange('')}
-						aria-label="Clear search"
-						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-pro-text-tertiary hover:text-pro-text-primary"
-					>
-						<Icon name="x" className="size-3" />
-					</button>
-				) : null}
-			</label>
-			<p className="text-[11px] text-pro-text-tertiary tabular-nums">
-				{resultCount === totalCount ? `${totalCount}` : `${resultCount} of ${totalCount}`}
-			</p>
-		</div>
-	)
-}
-
-function EmptyResults({ label }: { label: string }) {
-	return (
-		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
-			<Icon name="search" className="size-5 text-pro-text-tertiary" />
-			<p className="text-sm text-pro-text-secondary">{label}</p>
-		</div>
-	)
-}
-
-function ExternalDocsLink() {
-	return (
-		<a
-			href={DUCKDB_DOCS_URL}
-			target="_blank"
-			rel="noreferrer"
-			className="inline-flex items-center gap-1.5 self-start text-xs text-pro-text-tertiary transition-colors hover:text-brand"
-		>
-			Full LlamaSQL reference
-			<Icon name="external-link" className="size-3" />
-		</a>
-	)
-}
-
-function copy(text: string) {
-	if (typeof navigator === 'undefined' || !navigator.clipboard) return
-	navigator.clipboard.writeText(text).then(
-		() => toast.success('Copied', { duration: 1500 }),
-		() => toast.error('Copy failed')
 	)
 }

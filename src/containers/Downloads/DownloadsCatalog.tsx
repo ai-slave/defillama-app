@@ -23,6 +23,7 @@ import { ChartDatasetModal } from './ChartDatasetModal'
 import { DatasetPreviewModal } from './DatasetPreviewModal'
 import { datasets, datasetCategories, datasetsBySlug, type DatasetDefinition } from './datasets'
 import { MultiMetricModal } from './MultiMetricModal'
+import { DeletePresetDialog, RenamePresetDialog } from './PresetDialogs'
 import {
 	type ChartSavedConfig,
 	type DatasetSavedConfig,
@@ -30,7 +31,6 @@ import {
 	type MultiMetricSavedConfig,
 	type SavedDownload
 } from './savedDownloads'
-import { SavePresetDialog } from './SavePresetDialog'
 import { decodeDownloadConfig, encodeDownloadConfig } from './urlState'
 
 const ALL_TABS = [
@@ -709,16 +709,7 @@ function SavedDownloadsContent({
 	onDelete: (id: string) => void
 }) {
 	const [renamingPreset, setRenamingPreset] = useState<SavedDownload | null>(null)
-	const [deletingId, setDeletingId] = useState<string | null>(null)
-
-	const otherNames = useMemo(() => {
-		if (!renamingPreset) return []
-		const names: Array<string> = []
-		for (const preset of savedDownloads) {
-			if (preset.id !== renamingPreset.id) names.push(preset.name)
-		}
-		return names
-	}, [savedDownloads, renamingPreset])
+	const [deletingPreset, setDeletingPreset] = useState<SavedDownload | null>(null)
 
 	const bucketCounts = useMemo(() => {
 		let dataset = 0
@@ -770,36 +761,24 @@ function SavedDownloadsContent({
 						preset={preset}
 						onRun={onRun}
 						onRenameRequest={setRenamingPreset}
-						onDeleteRequest={setDeletingId}
+						onDeleteRequest={setDeletingPreset}
 					/>
 				))}
 			</ul>
 			{renamingPreset ? (
-				<SavePresetDialog
-					suggestedName={renamingPreset.name}
-					existingNames={otherNames}
-					title="Rename preset"
-					description=""
-					submitLabel="Rename"
-					placeholder="Preset name"
-					onSave={(name) => {
-						if (name !== renamingPreset.name) {
-							onRename(renamingPreset.id, name)
-						}
-						setRenamingPreset(null)
-					}}
+				<RenamePresetDialog
+					preset={renamingPreset}
+					presets={savedDownloads}
+					onRename={onRename}
 					onClose={() => setRenamingPreset(null)}
 				/>
 			) : null}
-			{deletingId ? (
+			{deletingPreset ? (
 				<DeletePresetDialog
+					preset={deletingPreset}
 					finalFocus={finalFocus}
-					preset={savedDownloads.find((p) => p.id === deletingId) ?? null}
-					onConfirm={() => {
-						if (deletingId) onDelete(deletingId)
-						setDeletingId(null)
-					}}
-					onClose={() => setDeletingId(null)}
+					onDelete={onDelete}
+					onClose={() => setDeletingPreset(null)}
 				/>
 			) : null}
 		</>
@@ -850,7 +829,7 @@ function SavedDownloadRow({
 	preset: SavedDownload
 	onRun: (preset: SavedDownload) => void
 	onRenameRequest: (preset: SavedDownload) => void
-	onDeleteRequest: (id: string) => void
+	onDeleteRequest: (preset: SavedDownload) => void
 }) {
 	const style = kindStyle(preset.kind)
 	const description = describeSavedConfig(preset)
@@ -934,7 +913,7 @@ function SavedDownloadRow({
 						data-row-action
 						onClick={(e) => {
 							e.stopPropagation()
-							onDeleteRequest(preset.id)
+							onDeleteRequest(preset)
 						}}
 						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-error/10 hover:text-error focus-visible:bg-error/10 focus-visible:text-error focus-visible:outline-hidden"
 						aria-label={`Delete ${preset.name}`}
@@ -969,7 +948,7 @@ function SavedDownloadRow({
 						data-row-action
 						onClick={(e) => {
 							e.stopPropagation()
-							onDeleteRequest(preset.id)
+							onDeleteRequest(preset)
 						}}
 						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary"
 						aria-label={`Delete ${preset.name}`}
@@ -979,65 +958,5 @@ function SavedDownloadRow({
 				</div>
 			</div>
 		</li>
-	)
-}
-
-function DeletePresetDialog({
-	finalFocus,
-	preset,
-	onConfirm,
-	onClose
-}: {
-	finalFocus: RefObject<HTMLButtonElement | null>
-	preset: SavedDownload | null
-	onConfirm: () => void
-	onClose: () => void
-}) {
-	const returnFocusRef = useRef<HTMLElement | null>(null)
-	if (!preset) return null
-	return (
-		<Ariakit.Dialog
-			open
-			onClose={onClose}
-			finalFocus={returnFocusRef}
-			role="alertdialog"
-			backdrop={<div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />}
-			className="fixed inset-0 z-50 m-auto flex h-fit w-[calc(100%-2rem)] max-w-sm flex-col gap-3 rounded-xl border border-subtle bg-surface p-5 shadow-2xl"
-		>
-			<div className="flex items-start gap-3">
-				<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-error/10">
-					<Icon name="trash-2" className="size-4 text-error" />
-				</div>
-				<div className="flex flex-col gap-1">
-					<Ariakit.DialogHeading
-						render={<h3>Delete preset?</h3>}
-						className="text-sm font-semibold text-pro-text-primary"
-					/>
-					<Ariakit.DialogDescription className="text-xs text-pro-text-secondary">
-						<span className="font-medium text-pro-text-primary">"{preset.name}"</span> will be removed. This can't be
-						undone.
-					</Ariakit.DialogDescription>
-				</div>
-			</div>
-			<div className="flex justify-end gap-2 pt-1">
-				<Ariakit.DialogDismiss
-					type="button"
-					className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-				>
-					Cancel
-				</Ariakit.DialogDismiss>
-				<button
-					type="button"
-					onClick={() => {
-						// Deleting removes the trigger row; return to the persistent Saved control.
-						returnFocusRef.current = finalFocus.current
-						onConfirm()
-					}}
-					className="rounded-md bg-error px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-red-600"
-				>
-					Delete
-				</button>
-			</div>
-		</Ariakit.Dialog>
 	)
 }

@@ -30,10 +30,12 @@ function SchemaHarness({ onClose }: { onClose: () => void }) {
 					setOpen(false)
 					onClose()
 				}}
-				totalDatasetCount={0}
 				chartOptionsMap={{}}
 				loadedTables={[]}
 				loading={null}
+				loadError={null}
+				pickedParams={{}}
+				setPickedParams={vi.fn()}
 				onLoad={async () => null}
 				onReplaceSql={vi.fn()}
 				onInsertAtCursor={vi.fn()}
@@ -53,7 +55,7 @@ test.each(['dismiss', 'Escape'] as const)('SQL reference is named and %s closes 
 	})
 	const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('SQL reference')
-	const dismiss = dialog.querySelector<HTMLButtonElement>('[aria-label="Close SQL reference"]')!
+	const dismiss = dialog.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!
 	await act(async () => {
 		if (action === 'dismiss') dismiss.click()
 		else dismiss.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))

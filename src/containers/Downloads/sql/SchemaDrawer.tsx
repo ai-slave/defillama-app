@@ -1,90 +1,49 @@
-import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
-import { Icon } from '~/ui/Icon'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { DialogBody, DialogHeader, DialogToolbar, SideSheet } from '~/ui/Dialog'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { CookbookTab, ShortcutsTab } from './DocsPanel'
 import { SchemaBrowser, type SchemaBrowserProps } from './SchemaBrowser'
 
 interface SchemaDrawerProps extends SchemaBrowserProps {
 	open: boolean
 	onClose: () => void
-	totalDatasetCount: number
 	onApplyAndRun: (sql: string) => void
 }
 
 const TABS = [
-	{ id: 'schema', label: 'Schema' },
-	{ id: 'cookbook', label: 'Cookbook' },
-	{ id: 'shortcuts', label: 'Shortcuts' }
+	{ value: 'schema', label: 'Schema' },
+	{ value: 'cookbook', label: 'Cookbook' },
+	{ value: 'shortcuts', label: 'Shortcuts' }
 ] as const
-type TabId = (typeof TABS)[number]['id']
+type TabId = (typeof TABS)[number]['value']
 
 const DESCRIPTIONS: Record<TabId, string> = {
-	schema: 'Browse every queryable table. Insert a SELECT or load the CSV into this session.',
-	cookbook: 'Pragmatic LlamaSQL idioms against DefiLlama tables. Try it replaces the editor and runs.',
-	shortcuts: 'Editor keybindings and LlamaSQL dialect gotchas worth keeping in muscle memory.'
+	schema: 'Every table you can query with LlamaSQL.',
+	cookbook: 'LlamaSQL recipes for DefiLlama tables.',
+	shortcuts: 'Editor keybindings and LlamaSQL dialect tips.'
 }
 
-export function SchemaDrawer({
-	open,
-	onClose,
-	totalDatasetCount,
-	onReplaceSql,
-	onInsertAtCursor,
-	onApplyAndRun,
-	...browserProps
-}: SchemaDrawerProps) {
+export function SchemaDrawer({ open, onClose, onReplaceSql, onApplyAndRun, ...browserProps }: SchemaDrawerProps) {
 	const [tab, setTab] = useState<TabId>('schema')
 
-	const wrappedReplace = (snippet: string) => {
-		onReplaceSql(snippet)
-		onClose()
-	}
-
 	return (
-		<Ariakit.DialogProvider
-			open={open}
-			setOpen={(next) => {
-				if (!next) onClose()
-			}}
-		>
-			<Ariakit.Dialog
-				unmountOnHide
-				backdrop={
-					<div className="fixed inset-0 z-40 bg-black/20 opacity-0 transition-opacity duration-150 data-enter:opacity-100 dark:bg-black/40" />
-				}
-				className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-[640px] drawer-to-left flex-col overflow-hidden border-l border-subtle bg-surface shadow-2xl sm:max-w-[560px] lg:max-w-[640px]"
-			>
-				<header className="flex items-start justify-between gap-3 border-b border-subtle bg-pro-app-bg/40 px-5 py-3.5">
-					<div className="flex min-w-0 flex-col gap-0.5">
-						<Ariakit.DialogHeading
-							render={<h2>SQL reference</h2>}
-							className="text-sm font-semibold tracking-tight text-pro-text-primary"
-						/>
-						<p className="text-[11.5px] leading-snug text-pro-text-tertiary">
-							{tab === 'schema' ? (
-								<>
-									{totalDatasetCount} tables · {DESCRIPTIONS[tab]}
-								</>
-							) : (
-								DESCRIPTIONS[tab]
-							)}
-						</p>
-					</div>
-					<Ariakit.DialogDismiss
-						aria-label="Close SQL reference"
-						className="flex size-7 shrink-0 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-					>
-						<Icon name="x" className="size-4" />
-					</Ariakit.DialogDismiss>
-				</header>
-
-				<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.id)}>
-					<TabBar tab={tab} />
-
-					<TabPanel value={tab} className="flex-1 overflow-y-auto px-5 py-4">
+		<SideSheet open={open} onClose={onClose} size="md" portal unmountOnHide>
+			<DialogHeader title="SQL reference" subtitle={DESCRIPTIONS[tab]} />
+			<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.value)}>
+				<DialogToolbar>
+					<SegmentedControl semantics="tabs" label="SQL reference section" variant="field" size="md" options={TABS} />
+				</DialogToolbar>
+				<DialogBody>
+					<TabPanel value={tab}>
 						{tab === 'schema' ? (
-							<SchemaBrowser {...browserProps} onReplaceSql={wrappedReplace} onInsertAtCursor={onInsertAtCursor} />
+							<SchemaBrowser
+								{...browserProps}
+								onReplaceSql={(snippet) => {
+									onReplaceSql(snippet)
+									onClose()
+								}}
+							/>
 						) : tab === 'cookbook' ? (
 							<CookbookTab
 								onApplyAndRun={(sql) => {
@@ -96,34 +55,8 @@ export function SchemaDrawer({
 							<ShortcutsTab />
 						)}
 					</TabPanel>
-				</Tabs>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
-	)
-}
-
-function TabBar({ tab }: { tab: TabId }) {
-	return (
-		<Ariakit.TabList
-			aria-label="SQL reference section"
-			className="flex items-center gap-5 border-b border-subtle px-5 text-sm"
-		>
-			{TABS.map((t) => {
-				const active = tab === t.id
-				return (
-					<Tab
-						key={t.id}
-						value={t.id}
-						type="button"
-						className={`group relative flex items-center gap-1.5 pt-2.5 pb-2 text-xs font-medium transition-colors ${
-							active ? 'text-brand' : 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						{t.label}
-						{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" /> : null}
-					</Tab>
-				)
-			})}
-		</Ariakit.TabList>
+				</DialogBody>
+			</Tabs>
+		</SideSheet>
 	)
 }

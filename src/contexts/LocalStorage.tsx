@@ -1,5 +1,10 @@
 import { useDeferredValue, useEffect, useMemo, useSyncExternalStore } from 'react'
-import { MAX_RECENT_DOWNLOADS, sameSavedConfigShape, type SavedDownload } from '~/containers/Downloads/savedDownloads'
+import {
+	MAX_RECENT_DOWNLOADS,
+	presetNameKey,
+	sameSavedConfigShape,
+	type SavedDownload
+} from '~/containers/Downloads/savedDownloads'
 import { useIsClient } from '~/hooks/useIsClient'
 import { slug } from '~/utils'
 import { getThemeCookie, setThemeCookie } from '~/utils/cookies'
@@ -600,7 +605,8 @@ function setSavedDownloads(next: Array<SavedDownload>) {
 function saveDownload(config: SavedDownload, options?: { replaceByName?: boolean }) {
 	const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
 	if (options?.replaceByName) {
-		const without = current.filter((c) => c.name !== config.name)
+		const key = presetNameKey(config.name)
+		const without = current.filter((c) => presetNameKey(c.name) !== key)
 		setSavedDownloads([config, ...without])
 		return
 	}

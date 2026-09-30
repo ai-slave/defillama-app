@@ -1,5 +1,5 @@
 import { TabList } from '@ariakit/react'
-import { useState } from 'react'
+import { useState, type Dispatch, type SetStateAction } from 'react'
 import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { DUCKDB_DOCS_URL } from '~/containers/Downloads/sql/dialectDocs'
@@ -7,7 +7,7 @@ import { CookbookTab, ShortcutsTab } from '~/containers/Downloads/sql/DocsPanel'
 import type { ExampleQuery } from '~/containers/Downloads/sql/examples'
 import { ExamplesPanel } from '~/containers/Downloads/sql/ExamplesPanel'
 import { SchemaBrowser } from '~/containers/Downloads/sql/SchemaBrowser'
-import type { RegisteredTable, TableSource } from '~/containers/Downloads/sql/useTableRegistry'
+import type { RegisteredTable, TableLoadError, TableSource } from '~/containers/Downloads/sql/useTableRegistry'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { SavedQueriesPanel } from './SavedQueriesPanel'
 
@@ -25,7 +25,9 @@ interface SqlChartModalSidebarProps {
 	loadedTables: Array<RegisteredTable>
 	onLoadTable: (source: TableSource) => Promise<RegisteredTable | null>
 	schemaLoading: string | null
-	schemaError: string | null
+	schemaError: TableLoadError | null
+	schemaParams: Record<string, string>
+	setSchemaParams: Dispatch<SetStateAction<Record<string, string>>>
 	busyTaskId: string | null
 	savedQueries: Array<QuerySavedConfig>
 	onApplyExample: (example: ExampleQuery) => void
@@ -41,6 +43,8 @@ export function SqlChartModalSidebar({
 	onLoadTable,
 	schemaLoading,
 	schemaError,
+	schemaParams,
+	setSchemaParams,
 	busyTaskId,
 	savedQueries,
 	onApplyExample,
@@ -85,21 +89,17 @@ export function SqlChartModalSidebar({
 					{tab === 'examples' ? (
 						<ExamplesPanel onApply={onApplyExample} busyTaskId={busyTaskId} />
 					) : tab === 'schema' ? (
-						<>
-							{schemaError ? (
-								<p role="alert" className="mb-3 text-xs text-error">
-									{schemaError}
-								</p>
-							) : null}
-							<SchemaBrowser
-								chartOptionsMap={chartOptionsMap}
-								loadedTables={loadedTables}
-								onLoad={onLoadTable}
-								onReplaceSql={onReplaceSql}
-								onInsertAtCursor={onInsertAtCursor}
-								loading={schemaLoading}
-							/>
-						</>
+						<SchemaBrowser
+							chartOptionsMap={chartOptionsMap}
+							loadedTables={loadedTables}
+							onLoad={onLoadTable}
+							onReplaceSql={onReplaceSql}
+							onInsertAtCursor={onInsertAtCursor}
+							loading={schemaLoading}
+							loadError={schemaError}
+							pickedParams={schemaParams}
+							setPickedParams={setSchemaParams}
+						/>
 					) : tab === 'cookbook' ? (
 						<CookbookTab onApplyAndRun={onApplyAndRun} />
 					) : tab === 'shortcuts' ? (

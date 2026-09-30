@@ -109,10 +109,12 @@ test('SQL reference arrows preserve its content until explicit activation', asyn
 			<SchemaDrawer
 				open
 				onClose={vi.fn()}
-				totalDatasetCount={0}
 				chartOptionsMap={{}}
 				loadedTables={[]}
 				loading={null}
+				loadError={null}
+				pickedParams={{}}
+				setPickedParams={vi.fn()}
 				onLoad={async () => null}
 				onReplaceSql={vi.fn()}
 				onInsertAtCursor={vi.fn()}
@@ -141,7 +143,9 @@ test('SQL chart reference switches only on activation and keeps inactive section
 				loadedTables={[]}
 				onLoadTable={async () => null}
 				schemaLoading={null}
-				schemaError="Source unavailable"
+				schemaError={null}
+				schemaParams={{}}
+				setSchemaParams={vi.fn()}
 				busyTaskId={null}
 				savedQueries={[]}
 				onApplyExample={vi.fn()}
@@ -156,16 +160,13 @@ test('SQL chart reference switches only on activation and keeps inactive section
 	await press(examples, 'ArrowRight')
 	expect(document.activeElement).toBe(schema)
 	expectPanel(examples, 'Examples content')
-	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(mocks.schemaMount).not.toHaveBeenCalled()
 	await press(schema, 'Enter')
 	expectPanel(schema, 'Schema content')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Source unavailable')
 	await press(schema, 'End')
 	await press(shortcuts, ' ')
 	expectPanel(shortcuts, 'Shortcuts content')
 	await press(shortcuts, 'ArrowLeft')
 	await press(saved, 'Enter')
 	expectPanel(saved, 'Saved content')
-	expect(document.querySelector('[role="alert"]')).toBeNull()
 })

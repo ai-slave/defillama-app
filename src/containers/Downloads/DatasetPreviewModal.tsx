@@ -25,6 +25,7 @@ import { formatNumber } from '~/utils/numberFormat'
 import { parseCsv } from './csvParse'
 import type { DatasetDefinition, DatasetExcludeToggle } from './datasets'
 import { FormatSplitButton } from './FormatSplitButton'
+import { SavePresetDialog } from './PresetDialogs'
 import {
 	downloadPreviewHasTime,
 	formatDownloadPreviewDate,
@@ -43,7 +44,6 @@ import {
 	generatePresetId,
 	type SavedDownloadInput
 } from './savedDownloads'
-import { SavePresetDialog } from './SavePresetDialog'
 import { buildShareUrl } from './urlState'
 
 const SubscribeProModal = lazy(() =>

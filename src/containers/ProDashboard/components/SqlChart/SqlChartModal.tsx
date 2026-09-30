@@ -73,6 +73,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		error: schemaError
 	} = useTableRegistry({ conn: duckdb.conn ?? null, authorizedFetch })
 	const { savedDownloads, saveDownload } = useSavedDownloads()
+	const [schemaParams, setSchemaParams] = useState<Record<string, string>>({})
 	const savedQueries = useMemo(
 		() => savedDownloads.filter((d): d is QuerySavedConfig => d.kind === 'query'),
 		[savedDownloads]
@@ -411,6 +412,8 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 						}}
 						schemaLoading={schemaLoading}
 						schemaError={schemaError}
+						schemaParams={schemaParams}
+						setSchemaParams={setSchemaParams}
 						busyTaskId={state.execution?.taskId ?? null}
 						savedQueries={savedQueries}
 						onApplyExample={(example: ExampleQuery) =>

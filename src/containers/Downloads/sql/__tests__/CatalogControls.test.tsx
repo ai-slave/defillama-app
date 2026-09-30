@@ -1,12 +1,14 @@
 // @vitest-environment happy-dom
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { chartDatasets } from '../../chart-datasets'
 import { datasets } from '../../datasets'
 import { SchemaBrowser } from '../SchemaBrowser'
+import { SchemaDrawer } from '../SchemaDrawer'
 import { UpsellGate } from '../UpsellGate'
+import { useTableRegistry } from '../useTableRegistry'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/downloads?mode=sql' }) }))
 const flatDescription = datasets.find((dataset) => dataset.slug === 'hacks')!.description
@@ -40,6 +42,9 @@ test('schema radio filtering is reversible and retains search without loading a 
 				onReplaceSql={vi.fn()}
 				onInsertAtCursor={vi.fn()}
 				loading={null}
+				loadError={null}
+				pickedParams={{}}
+				setPickedParams={vi.fn()}
 			/>
 		)
 	)
@@ -86,4 +91,92 @@ test('SQL sample focus preserves the current query until activation', async () =
 	await act(async () => notebook.click())
 	expect(activePanel().getAttribute('aria-labelledby')).toBe(notebook.id)
 	expect(activePanel().textContent).toBe(initialContent)
+})
+
+function RegistryBrowser({ authorizedFetch }: { authorizedFetch: () => Promise<Response> }) {
+	// The fetch fails before the table reaches DuckDB, so the connection is never used.
+	const registry = useTableRegistry({ conn: {} as never, authorizedFetch })
+	const [pickedParams, setPickedParams] = useState<Record<string, string>>({})
+	return (
+		<SchemaBrowser
+			pickedParams={pickedParams}
+			setPickedParams={setPickedParams}
+			chartOptionsMap={{}}
+			loadedTables={registry.tables}
+			onLoad={registry.load}
+			onReplaceSql={vi.fn()}
+			onInsertAtCursor={vi.fn()}
+			loading={registry.loading}
+			loadError={registry.error}
+		/>
+	)
+}
+
+test('a table that fails to load says why on its own row', async () => {
+	const authorizedFetch = vi.fn(async () => Response.json({ error: 'Hacks export is unavailable' }, { status: 503 }))
+	await act(async () => root.render(<RegistryBrowser authorizedFetch={authorizedFetch} />))
+	const row = (description: string) =>
+		[...container.querySelectorAll('li')].find((li) => li.textContent?.includes(description))!
+	const load = [...row(flatDescription).querySelectorAll('button')].find((el) => el.textContent === 'Load')!
+	await act(async () => load.click())
+	await waitForUi(() =>
+		expect(row(flatDescription).querySelector('[role="alert"]')?.textContent).toBe('Hacks export is unavailable')
+	)
+	expect(authorizedFetch).toHaveBeenCalledWith('/api/private/downloads/hacks', undefined)
+	expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1)
+})
+
+// Holds the picks the way the SQL workspace does, above the sheet's tabs.
+function RegistryDrawer({ authorizedFetch }: { authorizedFetch: () => Promise<Response> }) {
+	const registry = useTableRegistry({ conn: {} as never, authorizedFetch })
+	const [pickedParams, setPickedParams] = useState<Record<string, string>>({})
+	return (
+		<SchemaDrawer
+			pickedParams={pickedParams}
+			setPickedParams={setPickedParams}
+			open
+			onClose={vi.fn()}
+			chartOptionsMap={{ 'protocol-tvl-chart': [{ label: 'Aave', value: 'aave' }] }}
+			loadedTables={registry.tables}
+			onLoad={registry.load}
+			onReplaceSql={vi.fn()}
+			onInsertAtCursor={vi.fn()}
+			onApplyAndRun={vi.fn()}
+			loading={registry.loading}
+			loadError={registry.error}
+		/>
+	)
+}
+
+test('a time series keeps its parameter across a tab switch and shows a failure that lands after the reader returns', async () => {
+	let fail!: () => void
+	const authorizedFetch = vi.fn(
+		() =>
+			new Promise<Response>((resolve) => {
+				fail = () => resolve(Response.json({ error: 'Aave TVL is unavailable' }, { status: 503 }))
+			})
+	)
+	await act(async () => root.render(<RegistryDrawer authorizedFetch={authorizedFetch} />))
+	const row = () => [...document.querySelectorAll('li')].find((li) => li.textContent?.includes(chartDescription))!
+	const control = (el: Element, name: string) =>
+		[...el.querySelectorAll<HTMLElement>('button, [role="tab"]')].find((b) => b.textContent === name)!
+	await act(async () => row().querySelector<HTMLElement>('[role="combobox"]')!.click())
+	const aave = await waitForUi(() => {
+		const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((o) => o.textContent === 'Aave')
+		expect(option).toBeDefined()
+		return option!
+	})
+	await act(async () => aave.click())
+	await act(async () => control(row(), 'Load').click())
+	await waitForUi(() => expect(authorizedFetch).toHaveBeenCalledTimes(1))
+
+	await act(async () => control(document.body, 'Cookbook').click())
+	await act(async () => control(document.body, 'Schema').click())
+	expect(row().querySelector('[role="combobox"]')!.textContent).toBe('Aave')
+	expect(row().querySelector('[aria-busy="true"]')?.textContent).toContain('Loading…')
+
+	await act(async () => fail())
+	await waitForUi(() => expect(row().querySelector('[role="alert"]')?.textContent).toBe('Aave TVL is unavailable'))
+	expect(authorizedFetch).toHaveBeenCalledWith('/api/private/downloads/chart/protocol-tvl-chart?param=aave', undefined)
+	expect(authorizedFetch).toHaveBeenCalledTimes(1)
 })
