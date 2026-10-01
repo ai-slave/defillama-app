@@ -14,6 +14,9 @@
 //
 //   bun scripts/policies/check-design-tokens.mjs          # check
 //   bun scripts/policies/check-design-tokens.mjs --update # rewrite baseline after removing debt
+//
+// The check also fails when a count drops below its baseline: the gap would
+// let the next change add that many violations back without failing.
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -491,7 +494,7 @@ for (const bucket of buckets) {
 	for (const rule of RULES) {
 		const now = counts[bucket][rule.id]
 		const was = baseline[bucket]?.[rule.id] ?? 0
-		const status = now > was ? 'FAIL' : now < was ? 'improved' : 'ok'
+		const status = now > was ? 'FAIL' : now < was ? 'UNLOCKED' : 'ok'
 		console.log(`${status.padEnd(9)} ${rule.id}: ${now} (baseline ${was})`)
 		if (now > was) {
 			failed = true
@@ -499,7 +502,10 @@ for (const bucket of buckets) {
 			const top = [...offenders[bucket][rule.id].entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)
 			for (const [file, n] of top) console.log(`    ${n}\t${file}`)
 		} else if (now < was) {
-			console.log(`  run \`bun scripts/policies/check-design-tokens.mjs --update\` to lock in the improvement`)
+			failed = true
+			console.log(
+				`  count dropped below the baseline; run \`bun scripts/policies/check-design-tokens.mjs --update\` to lock it in`
+			)
 		}
 	}
 }

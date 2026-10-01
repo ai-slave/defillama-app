@@ -1,5 +1,5 @@
 import type { GetServerSideProps } from 'next'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ThemeSwitch } from '~/components/Nav/ThemeSwitch'
 import { SEO } from '~/components/SEO'
@@ -347,7 +347,8 @@ type LandingCardContent = {
 	description: string
 	tags: ReadonlyArray<string>
 	accent: string
-	hoverClass: string
+	/** One partner brand color for the card's hover border and glow. */
+	brandColor: string
 }
 
 const PROJECT_CARD_CONTENT = {
@@ -356,49 +357,49 @@ const PROJECT_CARD_CONTENT = {
 		description: 'Financials, protocol overview, distribution rewards, and reports for the Spark ecosystem.',
 		tags: ['Financials', 'Lending', 'Rewards', 'Reports'],
 		accent: 'linear-gradient(90deg, #FA43BD, #FFA930)',
-		hoverClass: 'hover:border-[#FA43BD]/15 hover:shadow-lg hover:shadow-[#FA43BD]/[0.03]'
+		brandColor: '#FA43BD'
 	},
 	sonic: {
 		icon: <SonicIcon />,
 		description: 'Fees, ecosystem, vertical integration, and network stats for Sonic.',
 		tags: ['Financials', 'Vertical Integration', 'Yield', 'Network Stats'],
 		accent: 'linear-gradient(90deg, #fac461, #e3570a, #3b5d88, #203f55)',
-		hoverClass: 'hover:border-[#e3570a]/20 hover:shadow-lg hover:shadow-[#e3570a]/[0.04]'
+		brandColor: '#e3570a'
 	},
 	near: {
 		icon: <NearIcon className="size-9 shrink-0" />,
 		description: 'Revenue, ecosystem activity, products, and research for NEAR Protocol.',
 		tags: ['Revenue', 'Ecosystem', 'Products', 'Research'],
 		accent: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		hoverClass: 'hover:border-[#00EC97]/20 hover:shadow-lg hover:shadow-[#00EC97]/[0.04]'
+		brandColor: '#00EC97'
 	},
 	'odyssey-ecosystem': {
 		icon: <OdysseyIcon />,
 		description: 'TVL, revenue, incentives, pegs, treasury, and yield analytics for the Odyssey ecosystem.',
 		tags: ['TVL', 'Revenue', 'Incentives', 'Yields'],
 		accent: 'linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd)',
-		hoverClass: 'hover:border-[#3b82f6]/20 hover:shadow-lg hover:shadow-[#3b82f6]/[0.04]'
+		brandColor: '#3b82f6'
 	},
 	flare: {
 		icon: <FlareIcon />,
 		description: 'Network activity, data protocols, and ecosystem metrics for Flare.',
 		tags: ['Network Stats', 'Data Protocols', 'Ecosystem'],
 		accent: 'linear-gradient(90deg, #E62058, #FF7A8A)',
-		hoverClass: 'hover:border-[#E62058]/20 hover:shadow-lg hover:shadow-[#E62058]/[0.04]'
+		brandColor: '#E62058'
 	},
 	thorchain: {
 		icon: <ThorchainIcon />,
 		description: 'Liquidity, swap volume, fees, and protocol metrics for THORChain.',
 		tags: ['Liquidity', 'Swaps', 'Fees', 'Revenue'],
 		accent: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
-		hoverClass: 'hover:border-[#23DCC8]/20 hover:shadow-lg hover:shadow-[#23DCC8]/[0.04]'
+		brandColor: '#23DCC8'
 	},
 	kpk: {
 		icon: <KpkIcon />,
 		description: 'Treasury mandates, vault performance, and assets under management for KPK.',
 		tags: ['Treasury', 'Vaults', 'AUM', 'Performance'],
 		accent: 'linear-gradient(90deg, #007556, #00af82)',
-		hoverClass: 'hover:border-[#00af82]/20 hover:shadow-lg hover:shadow-[#00af82]/[0.04]'
+		brandColor: '#00af82'
 	}
 } satisfies Partial<Record<InvestorsProjectId, LandingCardContent>>
 
@@ -426,8 +427,11 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 	return (
 		<div
 			className={`group relative isolate flex flex-col overflow-hidden rounded-[20px] border border-pro-cards-border bg-pro-cards-bg transition-[border-color,box-shadow] duration-200 ${
-				content?.hoverClass ?? 'hover:border-sl-accent'
+				content
+					? 'hover:border-(--card-accent)/20 hover:shadow-lg hover:shadow-(color:--card-accent)/[0.04]'
+					: 'hover:border-sl-accent'
 			}`}
+			style={content ? ({ '--card-accent': content.brandColor } as CSSProperties) : undefined}
 		>
 			<div className="h-2 w-full" style={{ background: content?.accent ?? 'var(--sl-accent)' }} />
 			<div className="flex flex-1 flex-col gap-3 p-4">
