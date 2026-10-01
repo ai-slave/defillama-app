@@ -681,7 +681,7 @@ function MessageBubbleContent({
 			onBranchSwitch &&
 			message.siblingInfo &&
 			message.siblingInfo.totalVersions > 1 ? (
-				<div className="mt-1 flex items-center gap-0.5">
+				<div className="mt-1 -ml-1 flex items-center gap-0.5">
 					<BranchArrows info={message.siblingInfo} onSwitch={onBranchSwitch} disabled={isBranchSwitching} />
 				</div>
 			) : null}

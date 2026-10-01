@@ -173,7 +173,7 @@ export function ProjectsSidebarSection({
 							size="sm"
 							variant="ghost"
 							onClick={onProjectClick}
-							className="self-start"
+							className="-ml-2 self-start"
 						>
 							All projects ({projects.length})
 							<Icon name="arrow-right" height={14} width={14} />

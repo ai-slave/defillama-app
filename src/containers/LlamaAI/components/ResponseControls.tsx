@@ -224,7 +224,7 @@ export function ResponseControls({
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center gap-0.5 pb-3">
+			<div className="-ml-2 flex flex-wrap items-center gap-0.5 pb-3">
 				<div
 					className={`flex flex-wrap items-center gap-0.5${isLatest || copyStatus !== 'idle' ? '' : ' opacity-0 group-focus-within/msg:opacity-100 group-hover/msg:opacity-100'}`}
 				>
