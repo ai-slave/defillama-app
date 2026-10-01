@@ -9,6 +9,8 @@ import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ResearchSearchDialog } from '../ResearchSearchDialog'
 
+const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
+
 const http = installFixtureFetch()
 const articlesUrl = `${FEATURES_SERVER.replace(/\/$/, '')}/articles`
 let container: HTMLDivElement
@@ -20,7 +22,7 @@ beforeEach(async () => {
 		[articlesUrl]: {
 			items: [
 				{
-					...createEmptyLocalArticle(),
+					...createEmptyLocalArticle(ARTICLE_NOW),
 					id: 'report',
 					title: 'Liquidity report',
 					slug: 'liquidity-report',

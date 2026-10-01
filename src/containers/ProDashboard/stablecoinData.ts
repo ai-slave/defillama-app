@@ -104,11 +104,14 @@ export function buildStablecoinsChartCacheValue({
 export function buildStablecoinsTableData({
 	baseline,
 	chainData,
-	chain
+	chain,
+	currentTimeMs
 }: {
 	baseline: StablecoinBaselineData
 	chainData: StablecoinChartResponse
 	chain: string
+	/** When the data was fetched: the 1d/7d/30d changes describe the period ending then. */
+	currentTimeMs: number
 }) {
 	const chartCache = buildStablecoinsChartCacheValue({
 		peggedData: baseline.peggedData,
@@ -122,7 +125,8 @@ export function buildStablecoinsTableData({
 		rateData: baseline.rateData,
 		peggedAssetIdToChartDataIndex: chartCache.peggedAssetIdToChartDataIndex,
 		doublecountedIndexes: chartCache.doublecountedIds,
-		...(chain === 'All' ? {} : { chain })
+		...(chain === 'All' ? {} : { chain }),
+		currentTimeMs
 	})
 
 	const slugByAssetId = new Map<string, string>()
@@ -158,7 +162,7 @@ export async function fetchStablecoinsTableData(chain: string) {
 		fetchStablecoinBaselineData(),
 		chain === 'All' ? fetchStablecoinChartAllApi() : fetchStablecoinChartApi(chain)
 	])
-	return buildStablecoinsTableData({ baseline, chainData, chain })
+	return buildStablecoinsTableData({ baseline, chainData, chain, currentTimeMs: Date.now() })
 }
 
 export interface StablecoinAssetCacheValue {

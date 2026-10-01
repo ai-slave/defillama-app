@@ -20,6 +20,8 @@ function chart(bars: PoolChartModel['bars'], lines: PoolChartModel['lines'] = []
 	return { title: 'Supply APY', net: false, dates: [1_701_561_600_000], bars, lines, netLine: null }
 }
 const measured = { apy: { avg_1d: 4 } } as VerifiedBlock
+const PAGE_CLOCK_MS = Date.parse('2026-09-20T12:00:00Z')
+const PAID_UPDATED_AT_MS = Date.parse('2026-09-24T12:00:00Z')
 
 function view(overrides: Partial<Parameters<typeof resolvePoolVerifiedView>[0]> = {}) {
 	return resolvePoolVerifiedView({
@@ -29,6 +31,8 @@ function view(overrides: Partial<Parameters<typeof resolvePoolVerifiedView>[0]> 
 		paid: EMPTY_POOL_VERIFIED_PROPS,
 		paidLoading: false,
 		fromProps: EMPTY_POOL_VERIFIED_PROPS,
+		pageClockMs: PAGE_CLOCK_MS,
+		paidUpdatedAtMs: PAID_UPDATED_AT_MS,
 		...overrides
 	})
 }
@@ -92,5 +96,18 @@ describe('resolvePoolVerifiedView sections', () => {
 		expect(result.liquidityDecimals).toBe(18)
 		expect(result.supplyChart?.bars).toEqual([verifiedBar])
 		expect(result.supplyChart?.lines.map((line) => line.label)).toEqual(['stETH TVL'])
+	})
+
+	test('dates seeded sections by the page build and fetched ones by the paid fetch', () => {
+		expect(view({ fromProps, access: GRANTED })).toMatchObject({
+			verifiedClockMs: PAGE_CLOCK_MS,
+			supplyChartClockMs: PAGE_CLOCK_MS
+		})
+		const paid: PoolVerifiedProps = { ...EMPTY_POOL_VERIFIED_PROPS, verified: measured, supplyChart: seededChart }
+		const redacted: PoolVerifiedProps = { ...EMPTY_POOL_VERIFIED_PROPS, supplyChart: chart([base]) }
+		expect(view({ fromProps: redacted, access: GRANTED, paid })).toMatchObject({
+			verifiedClockMs: PAID_UPDATED_AT_MS,
+			supplyChartClockMs: PAID_UPDATED_AT_MS
+		})
 	})
 })

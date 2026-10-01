@@ -1,5 +1,5 @@
-import { useCallback, useState, useSyncExternalStore } from 'react'
-import { usePageClockSec } from './usePageClock'
+import { useCallback, useContext, useSyncExternalStore } from 'react'
+import { PageClockContext } from './usePageClock'
 
 const DEFAULT_TICK_MS = 30_000
 
@@ -85,12 +85,14 @@ function missingPageClock(): number {
 }
 
 /**
- * The unix time in seconds, ticking every `tickMs`. The first render, on the server
- * and on the hydrating client, uses `initialNowSeconds` when given, else the page clock its props carry; the value
- * then moves to the browser clock. A page without either is an error: the render would not hydrate.
+ * The unix time in seconds, ticking every `tickMs`, for values about now: a countdown, an age, an expiry, a staleness
+ * warning. Values that describe the page data's own period use `usePageClockSec` instead. The first render, on the
+ * server and on the hydrating client, uses `initialNowSeconds` when given, else the page clock its props carry; the
+ * value then moves to the browser clock. A page without either is an error: the render would not hydrate.
  */
 export function useNowSeconds(initialNowSeconds?: number, tickMs = DEFAULT_TICK_MS) {
-	const pageClockSec = usePageClockSec()
+	// A seeded caller may sit on a page without a data function, so this reads the clock without requiring one.
+	const pageClockSec = useContext(PageClockContext)
 	const subscribe = useCallback((listener: () => void) => subscribeToNowSeconds(listener, tickMs), [tickMs])
 	const getServerSnapshot = useCallback(
 		() => firstRenderSeconds(initialNowSeconds, pageClockSec),
@@ -98,23 +100,4 @@ export function useNowSeconds(initialNowSeconds?: number, tickMs = DEFAULT_TICK_
 	)
 
 	return useSyncExternalStore(subscribe, getNowSecondsSnapshot, getServerSnapshot)
-}
-
-const subscribeToNothing = () => () => {}
-
-/**
- * The unix time in seconds, read once: the same first render as `useNowSeconds`, then the browser second this
- * component mounted at, which never changes. It stays off the shared clock, so no other subscriber's tick and no
- * later render moves it.
- */
-export function useNowSecondsOnce(initialNowSeconds?: number) {
-	const pageClockSec = usePageClockSec()
-	const [mountSeconds] = useState(readNowSeconds)
-	const getSnapshot = useCallback(() => mountSeconds, [mountSeconds])
-	const getServerSnapshot = useCallback(
-		() => firstRenderSeconds(initialNowSeconds, pageClockSec),
-		[initialNowSeconds, pageClockSec]
-	)
-
-	return useSyncExternalStore(subscribeToNothing, getSnapshot, getServerSnapshot)
 }

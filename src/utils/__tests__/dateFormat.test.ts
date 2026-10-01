@@ -28,7 +28,7 @@ describe('date formatters', () => {
 		expect(formatDateTime('2026-07-24T12:00:00+14:30', { timeZone: 'UTC' })).toBeNull()
 		expect(formatDateTime('2026-07-24', { timeZone: 'UTC' })).toBeNull()
 		expect(formatDateTime('2026-07-24T16:30:00', { timeZone: 'local' })).toBeNull()
-		expect(formatRelativeTime('2026-07-24T16:30:00')).toBeNull()
+		expect(formatRelativeTime('2026-07-24T16:30:00', { now: new Date('2026-07-24T17:00:00Z') })).toBeNull()
 		expect(formatDate(new Date(Number.NaN))).toBeNull()
 		expect(formatRelativeTime('2026-07-24T16:30:00Z', { now: new Date(Number.NaN) })).toBeNull()
 	})

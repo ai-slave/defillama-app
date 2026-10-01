@@ -42,7 +42,7 @@ async function fetchCryptoCardProtocolReferences(): Promise<Array<CardsIndexCard
 async function fetchEmissionsHistoricalPrices(
 	emissions: Array<UnlockHistoricalPriceProtocol>
 ): Promise<IEmissionsHistoricalPrices> {
-	const { priceReqs, hasPriceRequests } = buildUnlocksHistoricalPriceRequests(emissions)
+	const { priceReqs, hasPriceRequests } = buildUnlocksHistoricalPriceRequests(emissions, Date.now() / 1000)
 	if (!hasPriceRequests) return {}
 
 	const prices: IEmissionsHistoricalPrices = {}

@@ -81,8 +81,8 @@ function getBridgeDailyVolume(point: BridgeDailyVolumePoint, useDepositAndWithdr
 export function getCompletedBridgeVolumeTotals(
 	chart: Array<BridgeDailyVolumePoint> | null | undefined,
 	days: ReadonlyArray<number>,
-	useDepositAndWithdrawalVolume = false,
-	currentTimeMs: number = Date.now()
+	useDepositAndWithdrawalVolume: boolean,
+	currentTimeMs: number
 ): Map<number, number | null> {
 	return getCompletedBridgeVolumeSummary(chart, days, useDepositAndWithdrawalVolume, currentTimeMs).totals
 }
@@ -137,14 +137,14 @@ export const formatBridgesData = ({
 	chartDataByBridge = [],
 	bridgeNameToChartDataIndex = {},
 	bridgeProps = [...BRIDGE_PROPERTIES_TO_KEEP],
-	currentTimeMs = Date.now()
+	currentTimeMs
 }: {
 	chain?: string
 	bridges?: Array<BridgeForFormatting>
 	chartDataByBridge?: Array<Array<BridgeSummaryChartPoint> | null>
 	bridgeNameToChartDataIndex?: Record<string, number>
 	bridgeProps?: ReadonlyArray<keyof BridgeForFormatting & string>
-	currentTimeMs?: number
+	currentTimeMs: number
 }) => {
 	let filteredBridges = [...bridges]
 
@@ -198,7 +198,7 @@ export const formatChainsData = ({
 	prevDayDataByChain = [],
 	netflowsDataDay = null,
 	netflowsDataWeek = null,
-	currentTimeMs = Date.now()
+	currentTimeMs
 }: {
 	chains?: Array<{ name: string }>
 	chartDataByChain?: Array<Array<
@@ -208,7 +208,7 @@ export const formatChainsData = ({
 	prevDayDataByChain?: Array<IDailyBridgeStats>
 	netflowsDataDay?: BridgeNetflowsResponse | null
 	netflowsDataWeek?: BridgeNetflowsResponse | null
-	currentTimeMs?: number
+	currentTimeMs: number
 }): Array<BridgeChainTableRow> => {
 	const prevDayDataByName = new Map<string, IDailyBridgeStats>()
 	for (const item of prevDayDataByChain ?? []) {

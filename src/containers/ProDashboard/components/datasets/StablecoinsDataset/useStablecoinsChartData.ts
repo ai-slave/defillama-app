@@ -65,9 +65,10 @@ export function buildProStablecoinOverviewPayload(
 	params: IBuildStablecoinChartDataParams,
 	chart: StablecoinOverviewChartType,
 	topToken: { symbol: string; mcap: number },
+	currentTimeMs: number,
 	selectedNames: Array<string> | null
 ): StablecoinChartSeriesPayload {
-	return buildStablecoinOverviewPayload(params, chart, topToken, {
+	return buildStablecoinOverviewPayload(params, chart, topToken, currentTimeMs, {
 		selectedNames,
 		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 		...(chart === 'usdInflows' ? { usdInflowsName: 'USD Inflows' } : {})
@@ -80,6 +81,7 @@ type ProStablecoinChartCollection =
 			collection: StablecoinOverviewChartCollection
 			rawData: StablecoinsChartCacheValue
 			chartType: StablecoinChartType
+			currentTimeMs: number
 	  }
 	| { kind: 'fixed'; chartType: StablecoinChartType; presentation: typeof EMPTY_STABLECOIN_PRESENTATION }
 
@@ -149,11 +151,14 @@ const buildProStablecoinPresentationResult = (
 export function collectProStablecoinChart({
 	rawData,
 	chain,
-	chartType
+	chartType,
+	currentTimeMs
 }: {
 	rawData: StablecoinsChartCacheValue
 	chain: string
 	chartType: StablecoinChartType
+	/** When the data was fetched: its summary changes describe the period ending then. */
+	currentTimeMs: number
 }): ProStablecoinChartCollection {
 	const params = getProStablecoinChartParams(rawData, chain)
 	if (chartType === 'tokenMcaps' || chartType === 'dominance' || chartType === 'tokenInflows') {
@@ -161,13 +166,20 @@ export function collectProStablecoinChart({
 			kind: 'selectable',
 			collection: collectStablecoinOverviewChart(params, chartType),
 			rawData,
-			chartType
+			chartType,
+			currentTimeMs
 		}
 	}
 	const chartPayload =
 		chartType === 'pie'
 			? EMPTY_CHART_PAYLOAD
-			: buildProStablecoinOverviewPayload(params, chartType, getTopStablecoinFromLatestPoints(params), null)
+			: buildProStablecoinOverviewPayload(
+					params,
+					chartType,
+					getTopStablecoinFromLatestPoints(params),
+					currentTimeMs,
+					null
+				)
 	return {
 		kind: 'fixed',
 		chartType,
@@ -180,7 +192,7 @@ export function buildProStablecoinChartPresentationFromCollection(
 	selectionOptions?: StablecoinBreakdownSelectionOptions
 ) {
 	if (collected.kind === 'fixed') return collected.presentation
-	const chartPayload = buildStablecoinOverviewPayloadFromCollection(collected.collection, {
+	const chartPayload = buildStablecoinOverviewPayloadFromCollection(collected.collection, collected.currentTimeMs, {
 		seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 		...selectionOptions
 	})
@@ -193,7 +205,8 @@ export function buildProStablecoinCsvDataset(
 	selectionOptions: StablecoinBreakdownSelectionOptions | undefined
 ): MultiSeriesChartDataset {
 	if (collected.kind === 'selectable') {
-		return buildStablecoinOverviewPayloadFromCollection(collected.collection, selectionOptions).dataset
+		return buildStablecoinOverviewPayloadFromCollection(collected.collection, collected.currentTimeMs, selectionOptions)
+			.dataset
 	}
 	return collected.presentation.chartPayload.dataset
 }
@@ -240,10 +253,15 @@ export function useStablecoinsChartData(
 	const { value: collected, isComputing } = useIdleChartComputation({
 		enabled: enabled && rawData != null && !isLoading,
 		signature: computeSignature,
-		input: { rawData, chain, chartType },
+		input: { rawData, chain, chartType, dataUpdatedAt },
 		compute: (input) =>
 			input.rawData
-				? collectProStablecoinChart({ rawData: input.rawData, chain: input.chain, chartType: input.chartType })
+				? collectProStablecoinChart({
+						rawData: input.rawData,
+						chain: input.chain,
+						chartType: input.chartType,
+						currentTimeMs: input.dataUpdatedAt
+					})
 				: { kind: 'fixed' as const, chartType: input.chartType, presentation: EMPTY_STABLECOIN_PRESENTATION },
 		emptyValue: { kind: 'fixed' as const, chartType, presentation: EMPTY_STABLECOIN_PRESENTATION }
 	})

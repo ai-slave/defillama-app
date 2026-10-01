@@ -36,6 +36,8 @@ const chartData: StablecoinChartResponse = {
 	doublecountedIds: ['asset-1']
 }
 
+const NOW = Date.parse('2026-07-22T12:00:00Z')
+
 const peggedConfig = { 'stable-one': 'asset-1', 'usda-primary': '405', 'usda-secondary': '192' }
 
 function build(chainData: StablecoinChartResponse) {
@@ -126,7 +128,8 @@ describe('buildStablecoinsChartCacheValue', () => {
 				peggedConfig: { ...peggedConfig, 'stable-zero': 'asset-2' }
 			},
 			chainData: lifecycleChartData,
-			chain: 'All'
+			chain: 'All',
+			currentTimeMs: NOW
 		})
 
 		expect(cache.chartDataByPeggedAsset[0]).toEqual([{ date: 1, mcap: { peggedUSD: 10 } }])
@@ -141,7 +144,8 @@ describe('buildStablecoinsChartCacheValue', () => {
 		const rows = buildStablecoinsTableData({
 			baseline: { peggedData, priceData: [], rateData: [], peggedConfig },
 			chainData: chartData,
-			chain: 'All'
+			chain: 'All',
+			currentTimeMs: NOW
 		})
 
 		expect(rows).toHaveLength(1)
@@ -173,7 +177,8 @@ describe('buildStablecoinsChartCacheValue', () => {
 				peggedConfig
 			},
 			chainData: chartData,
-			chain: 'All'
+			chain: 'All',
+			currentTimeMs: NOW
 		})
 
 		expect(rows[0]).toMatchObject({ price: null, change_1d: null, change_7d: null, change_1m: null })
@@ -204,7 +209,8 @@ describe('buildStablecoinsChartCacheValue', () => {
 		const rows = buildStablecoinsTableData({
 			baseline: { peggedData: duplicatePeggedData, priceData: [], rateData: [], peggedConfig },
 			chainData: duplicateChartData,
-			chain: 'All'
+			chain: 'All',
+			currentTimeMs: NOW
 		})
 
 		expect(cache.peggedAssetIdToChartDataIndex).toEqual({ '192': 1, '405': 0 })

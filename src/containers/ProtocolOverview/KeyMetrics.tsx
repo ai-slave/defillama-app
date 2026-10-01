@@ -4,7 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
-import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
@@ -678,14 +678,15 @@ function Earnings(props: IKeyMetricsProps) {
 }
 
 function BridgeVolume(props: IKeyMetricsProps) {
-	const nowSec = useNowSeconds()
+	// Completed days of the bridge volume props end at the day they were built, not the visitor's day.
+	const pageClockSec = usePageClockSec()
 
 	if (!props.bridgeVolume || props.bridgeVolume.length === 0) return null
 
 	const metrics = []
 	const { lastCompletedDay, sevenCompletedDays, thirtyCompletedDays, sinceDataStart } = getProtocolBridgeVolumeMetrics(
 		props.bridgeVolume,
-		nowSec * 1000
+		pageClockSec * 1000
 	)
 
 	if (thirtyCompletedDays != null) {

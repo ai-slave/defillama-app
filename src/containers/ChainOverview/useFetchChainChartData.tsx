@@ -5,7 +5,6 @@ import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/Multi
 import type { ChainAssetsChartResponse } from '~/containers/BridgedTVL/api.types'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
 import { useGetStabelcoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
-import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { feeRevenueMetrics } from '~/metrics/feesRevenue'
 import { fetchJson } from '~/utils/async'
 import {
@@ -18,6 +17,7 @@ import {
 } from './chainChartData'
 import type { ChainChartLabels } from './constants'
 import { buildChainTvlChartState } from './tvlChart'
+import type { IChainOverviewData } from './types'
 
 const chainFeesMetric = feeRevenueMetrics.chainFees
 const chainRevenueMetric = feeRevenueMetrics.chainRevenue
@@ -55,12 +55,7 @@ export const useFetchChainChartData = ({
 	denomination: string
 	selectedChain: string
 	tvlChart: Array<[number, number]>
-	tvlChartSummary: {
-		totalValueUSD: number | null
-		tvlPrevDay: number | null
-		valueChange24hUSD: number | null
-		change24h: number | null
-	}
+	tvlChartSummary: IChainOverviewData['tvlChartSummary']
 	extraTvlCharts: Record<string, Record<string, number>>
 	tvlSettings: Record<string, boolean>
 	chainGeckoId: string | null
@@ -69,7 +64,6 @@ export const useFetchChainChartData = ({
 	groupBy: ChartTimeGroupingWithCumulative
 }) => {
 	const toggledChartsSet = useMemo(() => new Set(toggledCharts), [toggledCharts])
-	const nowMs = useNowSecondsOnce() * 1000
 
 	const { denominationGeckoId, tokenGeckoId } = getChainChartGeckoIds({
 		denomination,
@@ -251,8 +245,15 @@ export const useFetchChainChartData = ({
 	})
 
 	const { finalTvlChart, totalValueUSD, valueChange24hUSD, change24h, isGovTokensEnabled } = useMemo(() => {
-		return buildChainTvlChartState({ tvlChart, tvlChartSummary, extraTvlCharts, tvlSettings, nowMs })
-	}, [tvlChart, tvlChartSummary, extraTvlCharts, tvlSettings, nowMs])
+		// The settings-adjusted change is measured on the day the server's summary was, wherever the data came from.
+		return buildChainTvlChartState({
+			tvlChart,
+			tvlChartSummary,
+			extraTvlCharts,
+			tvlSettings,
+			nowMs: tvlChartSummary.computedAtMs
+		})
+	}, [tvlChart, tvlChartSummary, extraTvlCharts, tvlSettings])
 
 	const chartData = useMemo(() => {
 		const loadingCharts: Array<string> = []

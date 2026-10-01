@@ -92,7 +92,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
 	const revalidateLanding = useResearchLandingRevalidation()
 	const queryClient = useQueryClient()
-	const [article, setArticle] = useState<LocalArticleDocument>(() => createEmptyLocalArticle())
+	const [article, setArticle] = useState<LocalArticleDocument>(() => createEmptyLocalArticle(new Date().toISOString()))
 	const [isDirty, setIsDirty] = useState(false)
 	// A save response may acknowledge an older draft while the user keeps typing.
 	const draftRevisionRef = useRef(0)
@@ -218,7 +218,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		refetchOnWindowFocus: false
 	})
 	const createArticleMutation = useMutation({
-		mutationFn: () => createArticle(createEmptyLocalArticle(), authorizedFetch)
+		mutationFn: () => createArticle(createEmptyLocalArticle(new Date().toISOString()), authorizedFetch)
 	})
 	const { mutate: createArticleMutate } = createArticleMutation
 	// The mutation forgets its error when a retry starts, so the page keeps the last one: the retry then waits in
@@ -325,7 +325,11 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		}
 		// Validation runs before the request so a malformed document reports
 		// itself instead of arriving in the catch below as a fake save failure.
-		const normalized = normalizeLocalArticleDocument({ ...article, contentJson: editor.getJSON() })
+		const normalized = normalizeLocalArticleDocument(
+			{ ...article, contentJson: editor.getJSON() },
+			null,
+			new Date().toISOString()
+		)
 		if (normalized.ok === false) {
 			setSaveError(true)
 			if (!opts.silent) toast.error(normalized.error)
@@ -835,7 +839,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 
 	const buildPreviewArticle = useCallback((): LocalArticleDocument => {
 		const contentJson = editor && !editor.isDestroyed ? editor.getJSON() : article.contentJson
-		const normalized = normalizeLocalArticleDocument({ ...article, contentJson }, article)
+		const normalized = normalizeLocalArticleDocument({ ...article, contentJson }, article, new Date().toISOString())
 		if (normalized.ok === false) return { ...article, contentJson }
 		return {
 			...normalized.value,

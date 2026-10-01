@@ -25,7 +25,7 @@ export async function createArticleWithBlocks(
 	blocks: Array<TiptapJson>,
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
-	const draft = createEmptyLocalArticle()
+	const draft = createEmptyLocalArticle(new Date().toISOString())
 	const trimmed = title.trim()
 	return createArticle(
 		{

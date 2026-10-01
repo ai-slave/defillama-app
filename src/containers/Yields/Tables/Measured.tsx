@@ -2,6 +2,7 @@
 // Unmeasured pools get nothing: a missing measurement is not a negative claim about the pool.
 import { useRouter } from 'next/router'
 import { Fragment, type ReactNode } from 'react'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -389,6 +390,8 @@ export function MeasuredCard({
 }) {
 	// The card mounts on hover only, so the router read never touches the row path.
 	const window = parseApyWindow(useRouter().query)
+	// The stale warning sits beside a live "x ago", so it ages on the same clock.
+	const nowMs = useNowSeconds() * 1000
 
 	if (offer) {
 		return (
@@ -410,7 +413,8 @@ export function MeasuredCard({
 		verified,
 		measured,
 		unsubstitutedMeasured,
-		window
+		window,
+		now: nowMs
 	})
 
 	return (

@@ -122,15 +122,28 @@ overwriting a choice the reader made.**
 - Every data function that goes through `withPerformanceLogging` or `withServerSidePropsTelemetry` stamps
   `pageClockSec` into its props, and `_app` provides it as the page clock. A page without a data function has no
   clock, and time-dependent content there renders after mount.
-- Read the clock through `useNowSeconds(seed?, tickMs?)` from `src/hooks/useNowSeconds.ts`. Without a seed it
-  uses the page clock for the first render and the browser clock afterwards. Pass a seed only when the value is
-  tied to the data, such as the time a dataset was built or React Query's `dataUpdatedAt`. `useNowSecondsOnce(seed?)`
-  has the same first render but then reads the browser clock once at mount and never moves; use it for values that
-  feed memoized transforms or a per-view decision.
-  A bare call on a page with no clock throws outside production: there is no safe guess.
+- Pick the clock by the question the value answers. There are two, and each has one hook:
+  - **Which period does this data describe?** The last completed day, a 7-day window ending at the data, whether a
+    rolling stat is from today, trimming today's partial point. The clock is the time the data was built:
+    `usePageClockSec()` from `src/hooks/usePageClock.tsx` for page props, the query's `dataUpdatedAt` for data a
+    client query fetched. Old data measured against the visitor's today has no rows for it and shows zeros; the
+    data's own clock shows what the data covers, and a client navigation brings the next page's clock with its
+    data. A query seeded from props needs `initialDataUpdatedAt` from the page clock, or the server and the
+    hydrating client disagree about its time.
+  - **How does now relate to something?** A countdown, an "ago" label, a cooldown, an expiry, a staleness
+    warning, a date input's max, a "today" marker. The clock is `useNowSeconds(seed?, tickMs?)` from
+    `src/hooks/useNowSeconds.ts`: the first render uses the page clock (or the seed), so the HTML hydrates, then it
+    ticks on the browser clock. Pass a seed only when the first render must use a time tied to the data, such as
+    the time a dataset was built.
+    Never freeze the clock at mount: a mounted page keeps that second across client navigations, so the next page's
+    data is measured against the wrong day. A default derived from the clock (the month a calendar opens on) is
+    derived during render; only the reader's own choice goes in state.
 - Never read `Date.now()`, `new Date()` or `dayjs()` while rendering: not in a component or hook body, not in a
-  `useMemo` or `useState` initializer, not in a default parameter value, and not in a helper a render path calls.
-  Effects, event handlers, query functions and data functions may read it.
+  `useMemo` or `useState` initializer, and not in a helper a render path calls. Effects, event handlers, query
+  functions and data functions may read it.
+- No helper defaults or falls back to the clock (`now = Date.now()`, `options.now ?? Date.now()`). Its caller passes
+  the clock it means: a data function reads `Date.now()` once and passes it down, and render code passes one of the
+  two hooks.
 - When a render value moves to the page clock, move everything compared against it too, including helpers in other
   modules. A range built from `useNowSeconds` and checked against `new Date()` in an imported helper agrees on the
   server and disagrees in the browser once the HTML crosses midnight.

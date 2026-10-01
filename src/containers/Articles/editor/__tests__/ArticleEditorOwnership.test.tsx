@@ -11,6 +11,8 @@ import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, ArticleRevision, LocalArticleDocument } from '../../types'
 import { ArticleEditorClient } from '../ArticleEditorClient'
 
+const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
+
 const router = vi.hoisted(() => ({
 	query: {},
 	asPath: '/research/edit/article-a',
@@ -22,7 +24,7 @@ const session = installSubscriberSession('article-editor')
 
 function stored(id: string, title: string): ArticleDocument {
 	return {
-		...createEmptyLocalArticle(),
+		...createEmptyLocalArticle(ARTICLE_NOW),
 		id,
 		title,
 		slug: id,

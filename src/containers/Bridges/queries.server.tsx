@@ -577,7 +577,8 @@ export async function getBridgeOverviewPageData(chain: string, options: { includ
 		bridges: bridgesWithTxCounts,
 		chartDataByBridge,
 		bridgeNameToChartDataIndex,
-		chain
+		chain,
+		currentTimeMs: Date.now()
 	})
 
 	return {
@@ -659,7 +660,8 @@ export async function getBridgeChainsPageData() {
 		chainToChartDataIndex,
 		prevDayDataByChain,
 		netflowsDataDay,
-		netflowsDataWeek
+		netflowsDataWeek,
+		currentTimeMs: Date.now()
 	}).map((chain) => ({
 		...chain,
 		...(isDeprecatedChain(metadataCache.chainMetadata, chain.name) ? { deprecated: true } : {})

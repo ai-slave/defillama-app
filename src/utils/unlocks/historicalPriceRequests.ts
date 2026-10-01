@@ -5,7 +5,7 @@ export type UnlockHistoricalPriceProtocol = Pick<ProtocolEmission, 'gecko_id' | 
 
 export function buildUnlocksHistoricalPriceRequests(
 	protocols: Array<UnlockHistoricalPriceProtocol>,
-	nowSec: number = Date.now() / 1000
+	nowSec: number
 ): {
 	priceReqs: Record<string, Array<number>>
 	hasPriceRequests: boolean

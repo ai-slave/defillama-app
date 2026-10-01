@@ -138,7 +138,8 @@ describe('getBridgeOverviewPageData', () => {
 			getBridgeOverviewSummaryTotals({
 				selectedChain: result.chain,
 				bridges: [{ lastDailyVolume: 5, weeklyVolume: 50, monthlyVolume: 500 }],
-				chainVolumeData: result.chainVolumeData
+				chainVolumeData: result.chainVolumeData,
+				nowSec: Date.parse('2026-07-14T12:00:00Z') / 1e3
 			})
 		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 50, monthTotalVolume: 500 })
 		expect(result.rawBridgeVolumeData).toHaveLength(2)

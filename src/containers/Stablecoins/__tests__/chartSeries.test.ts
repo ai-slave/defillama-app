@@ -20,6 +20,8 @@ import {
 
 // Token inflows reach users through the overview payload; the top token only feeds the summary.
 const summaryTopToken = { symbol: 'USDT', mcap: 150 }
+// Midday on the fixtures' last day: the overview summary measures its changes from that day.
+const NOW = Date.parse('2021-01-03T12:00:00Z')
 
 function datasetValue(dataset: MultiSeriesTimeSeriesDataset, rowIndex: number, dimension: string) {
 	return dataset.source[rowIndex]?.[dataset.dimensions.indexOf(dimension)]
@@ -103,7 +105,7 @@ describe('stablecoin chart series builders', () => {
 		})
 	})
 
-	test('builds each overview chart from its own rows and adds the shared summary', () => {
+	test('builds each overview chart from its own rows and adds the summary for the day the data was read', () => {
 		const topToken = { symbol: 'USDT', mcap: 150 }
 		const lastRows = {
 			tokenMcaps: [1_609_632_000_000, 150, 90],
@@ -113,20 +115,20 @@ describe('stablecoin chart series builders', () => {
 		}
 
 		for (const chart of ['tokenMcaps', 'dominance', 'usdInflows', 'tokenInflows'] as const) {
-			const payload = buildStablecoinOverviewPayload(params, chart, topToken)
+			const payload = buildStablecoinOverviewPayload(params, chart, topToken, NOW)
 			expect(payload.dataset.source.at(-1)).toEqual(lastRows[chart])
 			expect(payload.summary).toEqual({
 				totalMcapCurrent: 240,
-				change1d: null,
+				change1d: '29.73',
 				change7d: null,
 				change30d: null,
-				change1dUsd: null,
+				change1dUsd: 55,
 				change7dUsd: null,
 				change30dUsd: null,
 				topToken,
 				dominance: '62.50',
 				dataTimestamp: 1_609_632_000,
-				isDataStale: true
+				isDataStale: false
 			})
 		}
 	})
@@ -145,7 +147,7 @@ describe('stablecoin chart series builders', () => {
 		} satisfies IBuildStablecoinChartDataParams
 		const topToken = { symbol: 'USDT', mcap: 125 }
 		expect(
-			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, {
+			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, NOW, {
 				selectedNames: ['USDT']
 			}).dataset.source
 		).toEqual([
@@ -153,7 +155,7 @@ describe('stablecoin chart series builders', () => {
 			[1_660_086_400_000, 125]
 		])
 		expect(
-			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, {
+			buildStablecoinOverviewPayload(selectionParams, 'tokenMcaps', topToken, NOW, {
 				selectedNames: ['USDC']
 			}).dataset.source
 		).toEqual([
@@ -174,14 +176,9 @@ describe('stablecoin chart series builders', () => {
 			issuanceType: 'mcap',
 			selectedChain: 'All'
 		} satisfies IBuildStablecoinChartDataParams
-		const payload = buildStablecoinOverviewPayload(
-			euroParams,
-			'tokenMcaps',
-			{ symbol: 'EURC', mcap: 125 },
-			{
-				selectedNames: ['USDT']
-			}
-		)
+		const payload = buildStablecoinOverviewPayload(euroParams, 'tokenMcaps', { symbol: 'EURC', mcap: 125 }, NOW, {
+			selectedNames: ['USDT']
+		})
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'EURC', 'EURS'])
 		expect(payload.dataset.source).toEqual([
 			[1_660_000_000_000, 100, 50],
@@ -198,12 +195,9 @@ describe('stablecoin chart series builders', () => {
 			issuanceType: 'mcap',
 			selectedChain: 'All'
 		} satisfies IBuildStablecoinChartDataParams
-		const payload = buildStablecoinOverviewPayload(
-			onlyUsdt,
-			'tokenMcaps',
-			{ symbol: 'USDT', mcap: 100 },
-			{ excludedNames: ['USDT'] }
-		)
+		const payload = buildStablecoinOverviewPayload(onlyUsdt, 'tokenMcaps', { symbol: 'USDT', mcap: 100 }, NOW, {
+			excludedNames: ['USDT']
+		})
 		expect(payload.dataset).toEqual({ dimensions: ['timestamp', 'USDT'], source: [[1_660_000_000_000, 100]] })
 	})
 
@@ -237,15 +231,18 @@ describe('stablecoin chart series builders', () => {
 	})
 
 	test('derives the summary top token from the latest chronological row', () => {
-		const summary = buildStablecoinMcapSummary({
-			chartDataByAssetOrChain: [
-				[{ date: 1_660_000_000, mcap: { peggedUSD: 1000 } }],
-				[{ date: 1_660_086_400, mcap: { peggedUSD: 10 } }]
-			],
-			assetsOrChainsList: ['Stale Large', 'Current Small'],
-			issuanceType: 'mcap',
-			selectedChain: 'All'
-		})
+		const summary = buildStablecoinMcapSummary(
+			{
+				chartDataByAssetOrChain: [
+					[{ date: 1_660_000_000, mcap: { peggedUSD: 1000 } }],
+					[{ date: 1_660_086_400, mcap: { peggedUSD: 10 } }]
+				],
+				assetsOrChainsList: ['Stale Large', 'Current Small'],
+				issuanceType: 'mcap',
+				selectedChain: 'All'
+			},
+			NOW
+		)
 
 		expect(summary.topToken).toEqual({ symbol: 'Current Small', mcap: 10 })
 		expect(summary.mcapStats.totalMcapCurrent).toBe(10)
@@ -366,15 +363,21 @@ describe('stablecoin chart series builders', () => {
 		// A double-counted asset has no share of the aggregate market, so dominance does not offer it.
 		expect(dominance.availableSeries).toEqual(['Base', 'Other'])
 
-		const inflows = buildStablecoinOverviewPayload(doublecountedParams, 'tokenInflows', summaryTopToken, {
+		const inflows = buildStablecoinOverviewPayload(doublecountedParams, 'tokenInflows', summaryTopToken, NOW, {
 			seriesLimit: 1
 		})
 		expect(inflows.defaultSeries).toEqual(['Base', 'Other'])
 		expect(datasetValue(inflows.dataset, 0, 'Others')).toBe(10)
-		const selectedDoubleInflows = buildStablecoinOverviewPayload(doublecountedParams, 'tokenInflows', summaryTopToken, {
-			selectedNames: ['Double'],
-			seriesLimit: 1
-		})
+		const selectedDoubleInflows = buildStablecoinOverviewPayload(
+			doublecountedParams,
+			'tokenInflows',
+			summaryTopToken,
+			NOW,
+			{
+				selectedNames: ['Double'],
+				seriesLimit: 1
+			}
+		)
 		expect(selectedDoubleInflows.dataset.source).toEqual([[firstDay * 1e3, 10]])
 	})
 
@@ -454,7 +457,7 @@ describe('stablecoin chart series builders', () => {
 			[1_660_086_400_000, undefined, 25],
 			[1_660_172_800_000, undefined, 30]
 		])
-		const inflows = buildStablecoinOverviewPayload(producerData, 'tokenInflows', summaryTopToken)
+		const inflows = buildStablecoinOverviewPayload(producerData, 'tokenInflows', summaryTopToken, NOW)
 		expect(inflows.dataset.dimensions).toEqual(['timestamp', 'Current'])
 		expect(inflows.dataset.source).toEqual([
 			[1_660_000_000_000, 5],
@@ -499,7 +502,8 @@ describe('stablecoin chart series builders', () => {
 				selectedChain: 'All'
 			},
 			'tokenInflows',
-			summaryTopToken
+			summaryTopToken,
+			NOW
 		)
 
 		expect(tokenInflows.dataset.source).toEqual([
@@ -537,7 +541,7 @@ describe('stablecoin chart series builders', () => {
 	})
 
 	test('draws cumulative token inflows as stacked lines', () => {
-		const payload = buildStablecoinOverviewPayload(params, 'tokenInflows', summaryTopToken)
+		const payload = buildStablecoinOverviewPayload(params, 'tokenInflows', summaryTopToken, NOW)
 
 		const cumulative = groupStablecoinBarChartPayload(payload, 'cumulative')
 		expect(cumulative.charts.every((chart) => chart.type === 'line' && chart.stack === 'tokenInflows')).toBe(true)
@@ -590,7 +594,7 @@ describe('stablecoin chart series builders', () => {
 		expect(datasetValue(dominance.dataset, 1, 'Token12')).toBe(14.46)
 		expect(datasetValue(dominance.dataset, 1, 'Others')).toBeCloseTo(9.65)
 		expect(dominance.dataset.source[1]?.slice(1).reduce<number>((sum, value) => sum + (value ?? 0), 0)).toBe(100)
-		const tokenInflows = buildStablecoinOverviewPayload(largeParams, 'tokenInflows', summaryTopToken, {
+		const tokenInflows = buildStablecoinOverviewPayload(largeParams, 'tokenInflows', summaryTopToken, NOW, {
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
 		expect(tokenInflows.defaultSeries).toEqual(names.slice(0, -1).reverse())

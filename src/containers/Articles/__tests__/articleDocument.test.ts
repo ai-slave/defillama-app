@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { normalizeLocalArticleDocument } from '../document'
 
+const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
+
 const now = '2026-05-01T10:00:00.000Z'
 
 describe('local article documents', () => {
@@ -66,13 +68,17 @@ describe('local article documents', () => {
 	})
 
 	test('rejects dashboard embed nodes', () => {
-		const result = normalizeLocalArticleDocument({
-			title: 'Dashboard embed',
-			contentJson: {
-				type: 'doc',
-				content: [{ type: 'dashboardEmbed', attrs: { items: [] } }]
-			}
-		})
+		const result = normalizeLocalArticleDocument(
+			{
+				title: 'Dashboard embed',
+				contentJson: {
+					type: 'doc',
+					content: [{ type: 'dashboardEmbed', attrs: { items: [] } }]
+				}
+			},
+			null,
+			ARTICLE_NOW
+		)
 
 		expect(result.ok).toBe(false)
 	})
@@ -103,48 +109,52 @@ describe('local article documents', () => {
 	})
 
 	test('flattens nested Q&A blocks while normalizing article content', () => {
-		const result = normalizeLocalArticleDocument({
-			title: 'Nested interview',
-			contentJson: {
-				type: 'doc',
-				content: [
-					{
-						type: 'qa',
-						content: [
-							{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question one?' }] },
-							{
-								type: 'qaAnswer',
-								content: [
-									{ type: 'paragraph', content: [{ type: 'text', text: 'Answer one.' }] },
-									{
-										type: 'qa',
-										content: [
-											{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question two?' }] },
-											{
-												type: 'qaAnswer',
-												content: [
-													{ type: 'paragraph', content: [{ type: 'text', text: 'Answer two.' }] },
-													{
-														type: 'qa',
-														content: [
-															{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question three?' }] },
-															{
-																type: 'qaAnswer',
-																content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Answer three.' }] }]
-															}
-														]
-													}
-												]
-											}
-										]
-									}
-								]
-							}
-						]
-					}
-				]
-			}
-		})
+		const result = normalizeLocalArticleDocument(
+			{
+				title: 'Nested interview',
+				contentJson: {
+					type: 'doc',
+					content: [
+						{
+							type: 'qa',
+							content: [
+								{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question one?' }] },
+								{
+									type: 'qaAnswer',
+									content: [
+										{ type: 'paragraph', content: [{ type: 'text', text: 'Answer one.' }] },
+										{
+											type: 'qa',
+											content: [
+												{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question two?' }] },
+												{
+													type: 'qaAnswer',
+													content: [
+														{ type: 'paragraph', content: [{ type: 'text', text: 'Answer two.' }] },
+														{
+															type: 'qa',
+															content: [
+																{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question three?' }] },
+																{
+																	type: 'qaAnswer',
+																	content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Answer three.' }] }]
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			},
+			null,
+			ARTICLE_NOW
+		)
 
 		expect(result.ok).toBe(true)
 		if (!result.ok) return

@@ -10,7 +10,8 @@ export type ResolvedAnnouncement =
 
 export interface ResolveAnnouncementInput {
 	registry: AnnouncementRegistry
-	now: number
+	/** Whether the registry's launch window is open now. */
+	launchOpen: boolean
 	/** `null` while the profile is unknown: signed out, still loading, or failed. Only the launch and fallback apply then. */
 	profile: UserInterestsResponse | null
 	hasActiveSubscription: boolean
@@ -26,7 +27,7 @@ export interface ResolveAnnouncementInput {
  */
 export function resolveAnnouncement({
 	registry,
-	now,
+	launchOpen,
 	profile,
 	hasActiveSubscription,
 	dismissedTokens
@@ -38,7 +39,7 @@ export function resolveAnnouncement({
 	}
 
 	const launch = registry.launch
-	if (launch && now < Date.parse(launch.until) && isEligible(launch)) {
+	if (launch && launchOpen && isEligible(launch)) {
 		return { kind: 'launch', banner: launch }
 	}
 

@@ -827,14 +827,14 @@ export function getProtocolCategoryPresentation({
 	isTagPage = false,
 	chain,
 	protocolCount,
-	year = new Date().getUTCFullYear()
+	year
 }: {
 	label: string
 	effectiveCategory: string | null
 	isTagPage?: boolean
 	chain?: string
 	protocolCount?: number
-	year?: number
+	year: number
 }) {
 	const config = effectiveCategory ? protocolCategoryConfig[effectiveCategory] : null
 

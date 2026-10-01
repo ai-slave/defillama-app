@@ -6,19 +6,21 @@ import { fetchPoolDetailHistory } from './fetch'
 import type { PoolHistory, PoolHistoryRange } from './types'
 
 // Range refetches for the pool charts. Subscribers use the private route (the proxy is redacted for
-// everyone); the query cache collapses the three panels' identical requests into one.
+// everyone); the query cache collapses the three panels' identical requests into one. `updatedAtMs` is
+// when that history was read, which may predate the call by up to the stale time.
 export function useVerifiedHistoryFetcher(poolId: string): {
-	fetchHistory: (range: PoolHistoryRange) => Promise<PoolHistory>
+	fetchHistory: (range: PoolHistoryRange) => Promise<{ history: PoolHistory; updatedAtMs: number }>
 	isPending: boolean
 } {
 	const { authorizedFetch, hasAccess: paid, isPending, status } = useVerifiedAccess()
 	const queryClient = useQueryClient()
 
 	const fetchHistory = useCallback(
-		(range: PoolHistoryRange) =>
-			queryClient.fetchQuery({
-				// Tier in the key: a lapsed subscription must not read the paid entry.
-				queryKey: ['yields-pool-history', poolId, range, status],
+		async (range: PoolHistoryRange) => {
+			// Tier in the key: a lapsed subscription must not read the paid entry.
+			const queryKey = ['yields-pool-history', poolId, range, status]
+			const history = await queryClient.fetchQuery({
+				queryKey,
 				staleTime: 5 * 60 * 1000,
 				queryFn: async () => {
 					if (isPending) throw new Error('Subscription status is still loading')
@@ -31,7 +33,9 @@ export function useVerifiedHistoryFetcher(poolId: string): {
 					const body = (await handleSimpleFetchResponse(res).then((r) => r.json())) as { data: PoolHistory }
 					return body.data
 				}
-			}),
+			})
+			return { history, updatedAtMs: queryClient.getQueryState(queryKey)!.dataUpdatedAt }
+		},
 		[authorizedFetch, isPending, paid, poolId, queryClient, status]
 	)
 

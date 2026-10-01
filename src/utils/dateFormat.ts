@@ -6,7 +6,7 @@ type NumericDateOptions = { input: TimestampInput }
 type DateTimeOptions = { timeZone: 'UTC' } | { timeZone: 'local'; timeZoneName?: 'short' }
 type NumericDateTimeOptions = NumericDateOptions & DateTimeOptions
 // pastLabel replaces "… ago" for scheduled times, where a time already reached is still pending.
-type RelativeTimeOptions = { now?: Date; pastLabel?: string }
+type RelativeTimeOptions = { now: Date; pastLabel?: string }
 type NumericRelativeTimeOptions = NumericDateOptions & RelativeTimeOptions
 type DateValue = string | number | Date | null | undefined
 type NonNumericDateValue = string | Date | null | undefined
@@ -152,16 +152,16 @@ export function formatMonthYear(value: DateValue, options?: NumericDateOptions) 
 }
 
 /** Formats freshness as compact relative text. Exact instants should remain available to the user separately. */
-export function formatRelativeTime(value: NonNumericDateValue, options?: RelativeTimeOptions): string | null
+export function formatRelativeTime(value: NonNumericDateValue, options: RelativeTimeOptions): string | null
 export function formatRelativeTime(value: NumericDateValue, options: NumericRelativeTimeOptions): string | null
-export function formatRelativeTime(value: DateValue, options?: RelativeTimeOptions | NumericRelativeTimeOptions) {
-	const date = parseInstant(value, options && 'input' in options ? options.input : undefined)
+export function formatRelativeTime(value: DateValue, options: RelativeTimeOptions | NumericRelativeTimeOptions) {
+	const date = parseInstant(value, 'input' in options ? options.input : undefined)
 	if (!date) return null
 
-	const now = options?.now?.getTime() ?? Date.now()
+	const now = options.now.getTime()
 	if (!Number.isFinite(now)) return null
 	const diffMs = date.getTime() - now
-	if (diffMs <= 0 && options?.pastLabel) return options.pastLabel
+	if (diffMs <= 0 && options.pastLabel) return options.pastLabel
 	const absoluteMs = Math.abs(diffMs)
 	if (absoluteMs < 5000) return 'just now'
 	if (absoluteMs >= 604_800_000) return UTC_DATE_FORMATTER.format(date)

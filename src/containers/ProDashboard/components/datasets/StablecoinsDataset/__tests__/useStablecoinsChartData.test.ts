@@ -22,10 +22,11 @@ const params = {
 	selectedChain: 'All'
 }
 const topToken = getTopStablecoinFromLatestPoints(params)
+const FETCHED_AT = Date.parse('2026-07-22T12:00:00Z')
 
 describe('buildProStablecoinOverviewPayload', () => {
 	test('bounds the default null selection and aggregates the remaining assets', () => {
-		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, null)
+		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, FETCHED_AT, null)
 
 		expect(result.defaultSeries).toEqual(assetNames)
 		expect(result.charts.map((chart) => chart.name)).toEqual([
@@ -37,7 +38,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 
 	test('keeps every asset addressable without showing unselected peers as Others', () => {
 		const selectedName = assetNames.at(-1)!
-		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, [selectedName])
+		const result = buildProStablecoinOverviewPayload(params, 'tokenMcaps', topToken, FETCHED_AT, [selectedName])
 
 		expect(result.availableSeries).toContain(selectedName)
 		expect(result.defaultSeries).toEqual(assetNames)
@@ -56,7 +57,8 @@ describe('buildProStablecoinOverviewPayload', () => {
 				pieAssets: []
 			},
 			chain: 'All',
-			chartType: 'tokenMcaps'
+			chartType: 'tokenMcaps',
+			currentTimeMs: FETCHED_AT
 		})
 		const result = buildProStablecoinChartPresentationFromCollection(collection)
 
@@ -90,7 +92,12 @@ describe('buildProStablecoinOverviewPayload', () => {
 			pieAssets: []
 		}
 
-		const collection = collectProStablecoinChart({ rawData, chain: 'All', chartType: 'tokenMcaps' })
+		const collection = collectProStablecoinChart({
+			rawData,
+			chain: 'All',
+			chartType: 'tokenMcaps',
+			currentTimeMs: FETCHED_AT
+		})
 		expect(reads).toBe(4)
 
 		const presentation = buildProStablecoinChartPresentationFromCollection(collection)
@@ -135,7 +142,12 @@ describe('buildProStablecoinOverviewPayload', () => {
 			doublecountedIds: [],
 			pieAssets: []
 		}
-		const collection = collectProStablecoinChart({ rawData, chain: 'All', chartType: 'tokenMcaps' })
+		const collection = collectProStablecoinChart({
+			rawData,
+			chain: 'All',
+			chartType: 'tokenMcaps',
+			currentTimeMs: FETCHED_AT
+		})
 		const result = buildProStablecoinChartPresentationFromCollection(collection).chartPayload
 
 		expect(result.availableSeries).toEqual(['USDT', 'USDC'])
@@ -145,7 +157,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 	})
 
 	test('constructs the Pro USD inflow label without projecting the positional rows', () => {
-		const result = buildProStablecoinOverviewPayload(params, 'usdInflows', topToken, null)
+		const result = buildProStablecoinOverviewPayload(params, 'usdInflows', topToken, FETCHED_AT, null)
 
 		expect(result.dataset.dimensions).toEqual(['timestamp', 'USD Inflows'])
 		expect(result.charts).toMatchObject([{ name: 'USD Inflows', encode: { x: 0, y: 1 } }])
@@ -168,7 +180,8 @@ describe('buildProStablecoinOverviewPayload', () => {
 					pieAssets
 				},
 				chain: 'All',
-				chartType: 'pie'
+				chartType: 'pie',
+				currentTimeMs: FETCHED_AT
 			})
 		)
 
@@ -193,7 +206,8 @@ describe('buildProStablecoinOverviewPayload', () => {
 					pieAssets: [{ symbol: 'DOUBLE', mcap: 10, aggregateIncluded: false }]
 				},
 				chain: 'All',
-				chartType: 'pie'
+				chartType: 'pie',
+				currentTimeMs: FETCHED_AT
 			})
 		)
 

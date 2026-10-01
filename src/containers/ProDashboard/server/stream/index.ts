@@ -1002,7 +1002,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							const data = buildStablecoinsTableData({
 								baseline,
 								chainData,
-								chain
+								chain,
+								currentTimeMs: Date.now()
 							})
 							await writeLine({
 								type: 'stablecoinsTableData',

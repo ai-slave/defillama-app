@@ -530,7 +530,8 @@ export function PoolLiquidityChart({
 		initialRange,
 		model,
 		range,
-		(next) => fetchHistory(next).then((history) => buildLiquidityChart(history, { decimals, symbol: model.symbol })),
+		(next) =>
+			fetchHistory(next).then(({ history }) => buildLiquidityChart(history, { decimals, symbol: model.symbol })),
 		!historyAccessPending
 	)
 	// A live queue has no instant lane by design, so the chart shows deposits alone even where the

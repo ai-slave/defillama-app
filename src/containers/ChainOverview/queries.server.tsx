@@ -50,18 +50,22 @@ function emptyLiteChart(): ChainChartResponse {
 	}
 }
 
-function computeTvlChartSummary(chart: Array<[number, number]>): {
+function computeTvlChartSummary(
+	chart: Array<[number, number]>,
+	nowMs: number
+): {
 	totalValueUSD: number | null
 	tvlPrevDay: number | null
 	valueChange24hUSD: number | null
 	change24h: number | null
+	computedAtMs: number
 } {
-	const lastValue = getPrevTvlFromChart(chart, 0)
-	const tvlPrevDay = getPrevTvlFromChart(chart, 1)
+	const lastValue = getPrevTvlFromChart(chart, 0, nowMs)
+	const tvlPrevDay = getPrevTvlFromChart(chart, 1, nowMs)
 	const valueChange24hUSD = lastValue != null && tvlPrevDay != null ? lastValue - tvlPrevDay : null
 	const change24h = lastValue != null && tvlPrevDay != null ? getPercentChange(lastValue, tvlPrevDay) : null
 
-	return { totalValueUSD: lastValue, tvlPrevDay, valueChange24hUSD, change24h }
+	return { totalValueUSD: lastValue, tvlPrevDay, valueChange24hUSD, change24h, computedAtMs: nowMs }
 }
 
 function formatExtraTvlChart(chart: ChainChartResponse['tvl']): Record<string, number> {
@@ -558,7 +562,7 @@ export async function getChainOverviewData({
 		}
 
 		// Pre-compute TVL summary to avoid client-side iteration
-		const tvlChartSummary = computeTvlChartSummary(tvlChart)
+		const tvlChartSummary = computeTvlChartSummary(tvlChart, Date.now())
 
 		const chainRaises =
 			raisesData?.raises?.filter((r) => r.defillamaId === `chain#${currentChainMetadata.name.toLowerCase()}`) ?? null

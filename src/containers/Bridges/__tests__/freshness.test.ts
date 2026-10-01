@@ -93,7 +93,8 @@ describe('bridge volume freshness', () => {
 		const rows = formatChainsData({
 			chains: [{ name: 'Test Chain' }],
 			chartDataByChain: [[{ date: '1', depositUSD: 10, withdrawUSD: null }]],
-			chainToChartDataIndex: { 'Test Chain': 0 }
+			chainToChartDataIndex: { 'Test Chain': 0 },
+			currentTimeMs: NOW
 		})
 
 		expect(rows).toEqual([

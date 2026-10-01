@@ -13,12 +13,22 @@ function addKnownBridgeProtocolLeg(left: number | null, right: number | null): n
 
 export function getBridgeProtocolCompletedDayVolumes(
 	volumeChartDataByChain: Array<BridgeVolumeChartPoint> | null | undefined,
-	currentTimeMs: number = Date.now()
+	nowSec: number
 ): { current: BridgeVolumeChartPoint; previous: BridgeVolumeChartPoint } | null {
 	return getTimeSeriesPeriodPair(volumeChartDataByChain, 1, (point) => point.date, {
-		currentTimeMs,
+		currentTimeMs: nowSec * 1e3,
 		currentDayOffset: 1
 	})
+}
+
+/** The rolling 24h totals count only while they were computed during the current UTC day. */
+export function hasFreshBridgeRollingStats(dataTimestamp: number | undefined, nowSec: number): boolean {
+	return (
+		dataTimestamp != null &&
+		getFreshTimeSeriesCurrentPoint([{ date: dataTimestamp }], (point) => point.date, {
+			currentTimeMs: nowSec * 1e3
+		}) != null
+	)
 }
 
 export function buildBridgeProtocolAllChainsVolumeData({
@@ -63,24 +73,21 @@ export function getBridgeProtocolPrevDayVolumeValue({
 	totalDepositedUSD,
 	totalWithdrawnUSD,
 	dataTimestamp,
-	currentTimeMs = Date.now()
+	nowSec
 }: {
 	isAllChains: boolean
 	volumeChartDataByChain: Array<BridgeVolumeChartPoint> | null | undefined
 	totalDepositedUSD: number | null | undefined
 	totalWithdrawnUSD: number | null | undefined
 	dataTimestamp?: number
-	currentTimeMs?: number
+	nowSec: number
 }) {
 	if (!isAllChains) return null
-	const hasFreshRollingStats =
-		dataTimestamp != null &&
-		getFreshTimeSeriesCurrentPoint([{ date: dataTimestamp }], (point) => point.date, { currentTimeMs }) != null
-	if (hasFreshRollingStats) {
+	if (hasFreshBridgeRollingStats(dataTimestamp, nowSec)) {
 		return totalDepositedUSD == null || totalWithdrawnUSD == null ? null : (totalDepositedUSD + totalWithdrawnUSD) / 2
 	}
 	const completedDay = getFreshTimeSeriesCurrentPoint(volumeChartDataByChain, (point) => point.date, {
-		currentTimeMs,
+		currentTimeMs: nowSec * 1e3,
 		currentDayOffset: 1
 	})
 	return completedDay ? getBridgeProtocolVolume(completedDay) : null

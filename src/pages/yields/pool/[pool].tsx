@@ -293,7 +293,8 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		history,
 		fullHistory,
 		sourceVerified,
-		sourceHistory
+		sourceHistory,
+		now: Date.now()
 	})
 	const supplyChart = history?.length
 		? buildSupplyChart(history, usesSupplyLabel ? 'Total supplied' : 'TVL', intrinsicApy)

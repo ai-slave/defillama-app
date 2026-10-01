@@ -3,8 +3,9 @@ export const DEFAULT_TIME_SERIES_TOLERANCE_MS = 2 * 60 * 60 * 1000
 
 type TimestampValue = string | number
 
+/** The clock is required: a lookup of the current day over static data must say whose day it means. */
 export type TimeSeriesLookupOptions = {
-	currentTimeMs?: number
+	currentTimeMs: number
 	currentDayOffset?: number
 	toleranceMs?: number
 }
@@ -52,11 +53,11 @@ export function findTimeSeriesPointNear<T>(
 export function getFreshTimeSeriesCurrentPoint<T>(
 	series: ReadonlyArray<T> | null | undefined,
 	getTimestamp: (point: T) => TimestampValue,
-	options: TimeSeriesLookupOptions = {}
+	options: TimeSeriesLookupOptions
 ): T | null {
 	if (!series?.length) return null
 
-	const currentTimeMs = options.currentTimeMs ?? Date.now()
+	const currentTimeMs = options.currentTimeMs
 	const currentDayOffset = options.currentDayOffset ?? 0
 	const expectedDayStart = getUtcStartOfDay(currentTimeMs) - currentDayOffset * DAY_MS
 	const expectedDayEnd = expectedDayStart + DAY_MS
@@ -79,7 +80,7 @@ export function getTimeSeriesPeriodPair<T>(
 	series: ReadonlyArray<T> | null | undefined,
 	daysBefore: number,
 	getTimestamp: (point: T) => TimestampValue,
-	options: TimeSeriesLookupOptions = {}
+	options: TimeSeriesLookupOptions
 ): { current: T; previous: T } | null {
 	if (!Number.isFinite(daysBefore) || daysBefore <= 0) return null
 
@@ -102,7 +103,7 @@ export function getCompleteTimeSeriesDailyWindow<T>(
 	series: ReadonlyArray<T> | null | undefined,
 	days: number,
 	getTimestamp: (point: T) => TimestampValue,
-	options: TimeSeriesLookupOptions = {}
+	options: TimeSeriesLookupOptions
 ): Array<T> | null {
 	if (!Number.isInteger(days) || days <= 0) return null
 

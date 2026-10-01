@@ -667,11 +667,14 @@ export const getTopStablecoinFromLatestPoints = ({
 	return { symbol: topSymbol, mcap: topMcap }
 }
 
+/** The summary's changes describe the period ending at `currentTimeMs`, the time its data was read. */
+export type StablecoinSummaryInput = { topToken: { symbol: string; mcap: number }; currentTimeMs: number }
+
 export const buildStablecoinChartSummary = (
 	peggedAreaTotalData: Array<StablecoinMcapPoint>,
-	topToken: { symbol: string; mcap: number }
+	{ topToken, currentTimeMs }: StablecoinSummaryInput
 ): StablecoinChartSummary => {
-	const stats = getStablecoinMcapStatsFromTotals(peggedAreaTotalData)
+	const stats = getStablecoinMcapStatsFromTotals(peggedAreaTotalData, currentTimeMs)
 	return {
 		totalMcapCurrent: stats.totalMcapCurrent,
 		change1d: stats.change1d,
@@ -687,7 +690,7 @@ export const buildStablecoinChartSummary = (
 	}
 }
 
-export const buildStablecoinMcapSummary = (params: IBuildStablecoinChartDataParams) => {
+export const buildStablecoinMcapSummary = (params: IBuildStablecoinChartDataParams, currentTimeMs: number) => {
 	const collected = collectCanonicalStablecoinArea(params, { includeSummary: true, seriesMode: 'latest' })
 	const latestTimestamp = collected.timestamps[collected.timestamps.length - 1]
 	let topToken = { symbol: 'USDT', mcap: 0 }
@@ -696,7 +699,7 @@ export const buildStablecoinMcapSummary = (params: IBuildStablecoinChartDataPara
 		topToken = { symbol: series.name, mcap: series.latestVisibleValue }
 	}
 	return {
-		mcapStats: getStablecoinMcapStatsFromTotals(collected.totalPoints),
+		mcapStats: getStablecoinMcapStatsFromTotals(collected.totalPoints, currentTimeMs),
 		topToken
 	}
 }
@@ -705,7 +708,7 @@ export const buildTotalMcapPayload = (
 	params: IBuildStablecoinChartDataParams,
 	options?: {
 		totalName?: string
-		summaryTopToken?: { symbol: string; mcap: number }
+		summary?: StablecoinSummaryInput
 		includeUnreleased?: boolean
 		valueSymbol?: string
 	}
@@ -713,7 +716,7 @@ export const buildTotalMcapPayload = (
 	const totalName = options?.totalName ?? 'Mcap'
 	const collected = collectCanonicalStablecoinArea(params, {
 		totalName,
-		includeSummary: options?.summaryTopToken != null,
+		includeSummary: options?.summary != null,
 		...(options?.includeUnreleased !== undefined ? { includeUnreleased: options.includeUnreleased } : {})
 	})
 	const payload: StablecoinChartSeriesPayload = {
@@ -726,8 +729,8 @@ export const buildTotalMcapPayload = (
 		stacked: false,
 		showTotalInTooltip: false
 	}
-	if (options?.summaryTopToken) {
-		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summaryTopToken)
+	if (options?.summary) {
+		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summary)
 	}
 	return payload
 }
@@ -738,8 +741,7 @@ type StablecoinAreaPayloadOptions = {
 	stackName: string
 	stacked?: boolean
 	valueSymbol?: string
-	summary?: boolean
-	summaryTopToken?: { symbol: string; mcap: number }
+	summary?: StablecoinSummaryInput
 } & StablecoinBreakdownSelectionOptions
 
 export const buildAreaPayloadFromCollection = (
@@ -768,8 +770,8 @@ export const buildAreaPayloadFromCollection = (
 		valueSymbol: options.valueSymbol ?? '$',
 		showTotalInTooltip: stacked
 	}
-	if (options.summary || options.summaryTopToken) {
-		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summaryTopToken ?? collected.topToken)
+	if (options.summary) {
+		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summary)
 	}
 	return payload
 }
@@ -779,7 +781,7 @@ export const buildAreaPayload = (
 	options: StablecoinAreaPayloadOptions
 ): StablecoinChartSeriesPayload => {
 	const collected = collectCanonicalStablecoinArea(params, {
-		includeSummary: Boolean(options.summary || options.summaryTopToken),
+		includeSummary: options.summary != null,
 		seriesMode: 'history'
 	})
 	return buildAreaPayloadFromCollection(collected, options)
@@ -789,7 +791,7 @@ type StablecoinDominancePayloadOptions = {
 	chartNames?: Array<string>
 	includeUnreleased?: boolean
 	stackName?: string
-	summaryTopToken?: { symbol: string; mcap: number }
+	summary?: StablecoinSummaryInput
 } & StablecoinBreakdownSelectionOptions
 
 export const buildDominancePayloadFromCollection = (
@@ -853,8 +855,8 @@ export const buildDominancePayloadFromCollection = (
 		valueSymbol: '%',
 		showTotalInTooltip: false
 	}
-	if (options?.summaryTopToken) {
-		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summaryTopToken)
+	if (options?.summary) {
+		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summary)
 	}
 	return payload
 }
@@ -864,7 +866,7 @@ export const buildDominancePayload = (
 	options?: StablecoinDominancePayloadOptions
 ): StablecoinChartSeriesPayload => {
 	const collected = collectCanonicalStablecoinArea(params, {
-		includeSummary: options?.summaryTopToken != null,
+		includeSummary: options?.summary != null,
 		...(options?.includeUnreleased !== undefined ? { includeUnreleased: options.includeUnreleased } : {}),
 		seriesMode: 'history'
 	})
@@ -873,7 +875,7 @@ export const buildDominancePayload = (
 
 const buildUsdInflowsPayloadFromCollection = (
 	collected: StablecoinCanonicalHistory,
-	options?: { summaryTopToken?: { symbol: string; mcap: number }; seriesName?: string }
+	options?: { summary?: StablecoinSummaryInput; seriesName?: string }
 ): StablecoinChartSeriesPayload => {
 	const seriesName = options?.seriesName ?? 'Inflows'
 	const useFallback = collected.timestamps.length === 0 || collected.totals.every((value) => value === 0)
@@ -887,25 +889,25 @@ const buildUsdInflowsPayloadFromCollection = (
 		stacked: false,
 		showTotalInTooltip: false
 	}
-	if (options?.summaryTopToken) {
-		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summaryTopToken)
+	if (options?.summary) {
+		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summary)
 	}
 	return payload
 }
 
 export const buildUsdInflowsPayload = (
 	params: IBuildStablecoinChartDataParams,
-	options?: { summaryTopToken?: { symbol: string; mcap: number }; seriesName?: string }
+	options?: { summary?: StablecoinSummaryInput; seriesName?: string }
 ): StablecoinChartSeriesPayload => {
 	return buildUsdInflowsPayloadFromCollection(
-		collectCanonicalStablecoinInflowHistory(params, options?.summaryTopToken != null),
+		collectCanonicalStablecoinInflowHistory(params, options?.summary != null),
 		options
 	)
 }
 
 const buildTokenInflowsPayloadFromCollection = (
 	inputCollection: StablecoinCanonicalHistory,
-	options?: StablecoinBreakdownSelectionOptions & { summaryTopToken?: { symbol: string; mcap: number } }
+	options?: StablecoinBreakdownSelectionOptions & { summary?: StablecoinSummaryInput }
 ): StablecoinChartSeriesPayload => {
 	let collected = inputCollection
 	if (collected.series.length === 0) {
@@ -947,8 +949,8 @@ const buildTokenInflowsPayloadFromCollection = (
 		stacked: true,
 		showTotalInTooltip: true
 	}
-	if (options?.summaryTopToken) {
-		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summaryTopToken)
+	if (options?.summary) {
+		payload.summary = buildStablecoinChartSummary(collected.totalPoints, options.summary)
 	}
 	return payload
 }
@@ -978,25 +980,27 @@ export const collectStablecoinOverviewChart = (
 
 export const buildStablecoinOverviewPayloadFromCollection = (
 	collection: StablecoinOverviewChartCollection,
+	currentTimeMs: number,
 	selectionOptions?: StablecoinBreakdownSelectionOptions
 ): StablecoinChartSeriesPayload => {
+	const summary = { topToken: collection.topToken, currentTimeMs }
 	if (collection.chart === 'tokenMcaps') {
 		return buildAreaPayloadFromCollection(collection.history, {
 			stackName: 'tokenMcaps',
 			...selectionOptions,
-			summaryTopToken: collection.topToken
+			summary
 		})
 	}
 	if (collection.chart === 'dominance') {
 		return buildDominancePayloadFromCollection(collection.history, {
 			stackName: 'dominance',
 			...selectionOptions,
-			summaryTopToken: collection.topToken
+			summary
 		})
 	}
 	return buildTokenInflowsPayloadFromCollection(collection.history, {
 		...selectionOptions,
-		summaryTopToken: collection.topToken
+		summary
 	})
 }
 
@@ -1004,19 +1008,21 @@ export const buildStablecoinOverviewPayload = (
 	params: IBuildStablecoinChartDataParams,
 	chart: StablecoinOverviewChartType,
 	topToken: { symbol: string; mcap: number },
+	currentTimeMs: number,
 	selectionOptions?: StablecoinBreakdownSelectionOptions & { usdInflowsName?: string }
 ): StablecoinChartSeriesPayload => {
 	if (chart === 'totalMcap') {
-		return buildTotalMcapPayload(params, { summaryTopToken: topToken })
+		return buildTotalMcapPayload(params, { summary: { topToken, currentTimeMs } })
 	}
 	if (chart === 'usdInflows') {
 		return buildUsdInflowsPayload(params, {
-			summaryTopToken: topToken,
+			summary: { topToken, currentTimeMs },
 			...(selectionOptions?.usdInflowsName !== undefined ? { seriesName: selectionOptions.usdInflowsName } : {})
 		})
 	}
 	return buildStablecoinOverviewPayloadFromCollection(
 		collectStablecoinOverviewChart(params, chart, topToken),
+		currentTimeMs,
 		selectionOptions
 	)
 }

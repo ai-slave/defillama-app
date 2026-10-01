@@ -20,8 +20,6 @@ const registry: AnnouncementRegistry = {
 	fallback: banner('default')
 }
 
-const duringLaunch = Date.parse('2026-09-20')
-const afterLaunch = Date.parse('2026-10-05')
 const dismissed = (id: string) => createAnnouncementDismissalToken(id, 'v1')
 const profile = (...categories: Array<'protocols' | 'chains' | 'yields' | 'llamaai' | 'fees'>) => ({
 	interests: categories.map((category, index) => ({ category, score: 1 - index / 10 })),
@@ -31,7 +29,7 @@ const profile = (...categories: Array<'protocols' | 'chains' | 'yields' | 'llama
 const resolve = (overrides: Partial<Parameters<typeof resolveAnnouncement>[0]>) =>
 	resolveAnnouncement({
 		registry,
-		now: afterLaunch,
+		launchOpen: false,
 		profile: null,
 		hasActiveSubscription: false,
 		dismissedTokens: [],
@@ -40,15 +38,15 @@ const resolve = (overrides: Partial<Parameters<typeof resolveAnnouncement>[0]>) 
 
 describe('resolveAnnouncement', () => {
 	test('an open launch window beats targeting for everyone', () => {
-		expect(resolve({ now: duringLaunch, profile: profile('yields') })?.banner.id).toBe('launch')
+		expect(resolve({ launchOpen: true, profile: profile('yields') })?.banner.id).toBe('launch')
 	})
 
-	test('the launch expires on its end date and targeting takes over', () => {
-		expect(resolve({ now: Date.parse('2026-10-01'), profile: profile('yields') })?.banner.id).toBe('verified-apy')
+	test('once the launch window closes, targeting takes over', () => {
+		expect(resolve({ launchOpen: false, profile: profile('yields') })?.banner.id).toBe('verified-apy')
 	})
 
 	test('a dismissed launch falls through to targeting even inside the window', () => {
-		const result = resolve({ now: duringLaunch, profile: profile('llamaai'), dismissedTokens: [dismissed('launch')] })
+		const result = resolve({ launchOpen: true, profile: profile('llamaai'), dismissedTokens: [dismissed('launch')] })
 		expect(result).toMatchObject({ kind: 'targeted', category: 'llamaai' })
 	})
 

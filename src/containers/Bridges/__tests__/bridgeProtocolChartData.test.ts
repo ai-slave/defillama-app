@@ -4,10 +4,11 @@ import {
 	buildBridgeProtocolAllChainsVolumeData,
 	buildBridgeProtocolInflowsData,
 	getBridgeProtocolCompletedDayVolumes,
-	getBridgeProtocolPrevDayVolumeValue
+	getBridgeProtocolPrevDayVolumeValue,
+	hasFreshBridgeRollingStats
 } from '../bridgeProtocolChartData'
 
-const NOW = Date.parse('2026-07-14T12:00:00Z')
+const NOW_SEC = Date.parse('2026-07-14T12:00:00Z') / 1e3
 const toSeconds = (date: string) => Date.parse(`${date}T00:00:00Z`) / 1e3
 
 describe('bridge protocol chart data helpers', () => {
@@ -43,7 +44,7 @@ describe('bridge protocol chart data helpers', () => {
 				totalDepositedUSD: 50,
 				totalWithdrawnUSD: 10,
 				dataTimestamp: toSeconds('2026-07-14'),
-				currentTimeMs: NOW
+				nowSec: NOW_SEC
 			})
 		).toBe(30)
 
@@ -57,7 +58,7 @@ describe('bridge protocol chart data helpers', () => {
 				],
 				totalDepositedUSD: undefined,
 				totalWithdrawnUSD: undefined,
-				currentTimeMs: NOW
+				nowSec: NOW_SEC
 			})
 		).toBe(20)
 
@@ -68,7 +69,7 @@ describe('bridge protocol chart data helpers', () => {
 				totalDepositedUSD: 50,
 				totalWithdrawnUSD: undefined,
 				dataTimestamp: toSeconds('2026-07-14'),
-				currentTimeMs: NOW
+				nowSec: NOW_SEC
 			})
 		).toBeNull()
 
@@ -79,7 +80,7 @@ describe('bridge protocol chart data helpers', () => {
 				totalDepositedUSD: null,
 				totalWithdrawnUSD: 10,
 				dataTimestamp: toSeconds('2026-07-14'),
-				currentTimeMs: NOW
+				nowSec: NOW_SEC
 			})
 		).toBeNull()
 
@@ -90,7 +91,7 @@ describe('bridge protocol chart data helpers', () => {
 				totalDepositedUSD: null,
 				totalWithdrawnUSD: null,
 				dataTimestamp: toSeconds('2026-07-14'),
-				currentTimeMs: NOW
+				nowSec: NOW_SEC
 			})
 		).toBeNull()
 	})
@@ -101,7 +102,7 @@ describe('bridge protocol chart data helpers', () => {
 			{ date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 },
 			{ date: toSeconds('2026-07-14'), Deposited: 12, Withdrawn: -4 }
 		]
-		expect(getBridgeProtocolCompletedDayVolumes(complete, NOW)).toEqual({
+		expect(getBridgeProtocolCompletedDayVolumes(complete, NOW_SEC)).toEqual({
 			current: { date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 },
 			previous: { date: toSeconds('2026-07-12'), Deposited: 5, Withdrawn: -2 }
 		})
@@ -112,9 +113,26 @@ describe('bridge protocol chart data helpers', () => {
 					{ date: toSeconds('2026-07-11'), Deposited: 5, Withdrawn: -2 },
 					{ date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 }
 				],
-				NOW
+				NOW_SEC
 			)
 		).toBeNull()
+	})
+
+	test('moves the completed day and drops same-day rolling stats at UTC midnight', () => {
+		const volumes = [
+			{ date: toSeconds('2026-07-12'), Deposited: 5, Withdrawn: -2 },
+			{ date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 },
+			{ date: toSeconds('2026-07-14'), Deposited: 12, Withdrawn: -4 }
+		]
+		const lastSecond = Date.parse('2026-07-14T23:59:59Z') / 1e3
+		const midnight = Date.parse('2026-07-15T00:00:00Z') / 1e3
+
+		expect(getBridgeProtocolCompletedDayVolumes(volumes, lastSecond)?.current.date).toBe(toSeconds('2026-07-13'))
+		expect(getBridgeProtocolCompletedDayVolumes(volumes, midnight)?.current.date).toBe(toSeconds('2026-07-14'))
+
+		const statsTimestamp = Date.parse('2026-07-14T08:00:00Z') / 1e3
+		expect(hasFreshBridgeRollingStats(statsTimestamp, lastSecond)).toBe(true)
+		expect(hasFreshBridgeRollingStats(statsTimestamp, midnight)).toBe(false)
 	})
 
 	test('builds non-all-chain inflow datasets without leaking all-chain volume data', () => {

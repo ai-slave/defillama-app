@@ -3,7 +3,7 @@ import { getTimeSeriesPeriodPair } from './timeSeries'
 export function getPrevTvlFromChart(
 	chart: Array<[number, number]> | null | undefined,
 	daysBefore: number,
-	currentTimeMs: number = Date.now()
+	currentTimeMs: number
 ): number | null {
 	if (!chart?.length) return null
 

@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { UserInterestsResponse } from '~/api/users.types'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { ANNOUNCEMENT_DISMISSALS_COOKIE_NAME } from '~/utils/cookies'
 import pb from '~/utils/pocketbase'
@@ -11,6 +12,7 @@ import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { ANNOUNCEMENT_REGISTRY } from '../registry'
 import { TargetedAnnouncement } from '../TargetedAnnouncement'
 
 const route = { asPath: '/chain/ethereum', pathname: '/chain/[chain]' }
@@ -39,9 +41,11 @@ describe('TargetedAnnouncement', () => {
 	async function render() {
 		await act(async () =>
 			root.render(
-				<session.Wrapper>
-					<TargetedAnnouncement />
-				</session.Wrapper>
+				<PageClockProvider pageClockSec={Math.floor(Date.now() / 1000)}>
+					<session.Wrapper>
+						<TargetedAnnouncement />
+					</session.Wrapper>
+				</PageClockProvider>
 			)
 		)
 	}
@@ -199,5 +203,37 @@ describe('TargetedAnnouncement', () => {
 		})
 		expect(impressions()).toHaveLength(1)
 		expect(impressions()[0][1]).toMatchObject({ kind: 'fallback' })
+	})
+
+	describe('while the launch window is open', () => {
+		const launchEndMs = Date.parse(ANNOUNCEMENT_REGISTRY.launch!.until)
+
+		beforeEach(() => {
+			// The page clock ticks on an interval, so these tests drive it along with the date.
+			vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+		})
+
+		test('the launch banner gives way to the reader’s banner when the window closes while the page is open', async () => {
+			vi.setSystemTime(launchEndMs - 10_000)
+			serveInterests({ interests: [{ category: 'llamaai', score: 0.9 }], segments: [] })
+			await render()
+			await waitForImpression()
+			expect(text()).toContain('Universal Token Rating')
+			expect(impressions()[0][1]).toMatchObject({ kind: 'launch' })
+
+			await act(async () => vi.advanceTimersByTime(30_000))
+			expect(text()).toContain('LlamaAI is now in the DefiLlama app.')
+		})
+
+		test('clock ticks inside the window keep the banner and count one impression', async () => {
+			vi.setSystemTime(launchEndMs - 10 * 60_000)
+			pb.authStore.clear()
+			await render()
+			await waitForImpression()
+
+			await act(async () => vi.advanceTimersByTime(90_000))
+			expect(text()).toContain('Universal Token Rating')
+			expect(impressions()).toHaveLength(1)
+		})
 	})
 })

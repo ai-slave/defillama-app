@@ -13,6 +13,8 @@ import { createEmptyLocalArticle } from '../../document'
 import type { ArticleCollaborator, ArticleDocument, ArticleSnapshotPayload } from '../../types'
 import { ArticleEditorClient } from '../ArticleEditorClient'
 
+const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
+
 const toasts = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
 const router = vi.hoisted(() => ({
 	query: {},
@@ -51,7 +53,7 @@ let publishWrite: () => Response | Promise<Response>
 beforeEach(() => {
 	vi.resetAllMocks()
 	article = {
-		...createEmptyLocalArticle(),
+		...createEmptyLocalArticle(ARTICLE_NOW),
 		id: 'test-article',
 		title: 'Saved headline',
 		slug: 'test-article',

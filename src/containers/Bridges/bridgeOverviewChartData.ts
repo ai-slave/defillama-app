@@ -42,19 +42,19 @@ export function getBridgeOverviewSummaryTotals({
 	selectedChain,
 	bridges,
 	chainVolumeData,
-	currentTimeMs
+	nowSec
 }: {
 	selectedChain: string
 	bridges: Array<BridgeOverviewSummaryRow> | null | undefined
 	chainVolumeData: Array<BridgeOverviewVolumeChartPoint>
-	currentTimeMs?: number
+	nowSec: number
 }): BridgeOverviewSummaryTotals {
 	if (selectedChain !== 'All') {
 		const aggregateTotals = getCompletedBridgeVolumeTotals(
 			chainVolumeData,
 			BRIDGE_OVERVIEW_SUMMARY_PERIODS.map((period) => period.days),
 			true,
-			currentTimeMs
+			nowSec * 1e3
 		)
 		const chainTotals: BridgeOverviewSummaryTotals = {
 			dayTotalVolume: null,

@@ -18,6 +18,7 @@ import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
@@ -28,12 +29,12 @@ import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getPercentChange, slug } from '~/utils'
 import { formatUsd, formatPercentChange } from '~/utils/numberFormat'
-import { getFreshTimeSeriesCurrentPoint } from '~/utils/timeSeries'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
 	buildBridgeProtocolInflowsData,
 	getBridgeProtocolCompletedDayVolumes,
-	getBridgeProtocolPrevDayVolumeValue
+	getBridgeProtocolPrevDayVolumeValue,
+	hasFreshBridgeRollingStats
 } from './bridgeProtocolChartData'
 import type { BridgePageData, BridgeTableData } from './types'
 
@@ -98,6 +99,8 @@ export function BridgeInfo({
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmGrouping>('daily')
 	const [currentChain, setCurrentChain] = React.useState(defaultChain)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	// The completed days are the data's, so they follow the clock the props were built with, not the visitor's.
+	const nowSec = usePageClockSec()
 
 	// Read through rather than destructured from a fallback object: a fresh literal there makes every
 	// value taken out of it look mutable to the compiler, which then refuses to preserve the
@@ -112,10 +115,9 @@ export function BridgeInfo({
 	const dataTimestamp = currentTableData?.dataTimestamp
 
 	const volumeChartDataByChain = volumeDataByChain[currentChain]
-	const completedDayVolumes = getBridgeProtocolCompletedDayVolumes(volumeChartDataByChain)
+	const completedDayVolumes = getBridgeProtocolCompletedDayVolumes(volumeChartDataByChain, nowSec)
 	const prevDayChart = completedDayVolumes?.current
-	const hasFreshRollingStats =
-		dataTimestamp != null && getFreshTimeSeriesCurrentPoint([{ date: dataTimestamp }], (point) => point.date) != null
+	const hasFreshRollingStats = hasFreshBridgeRollingStats(dataTimestamp, nowSec)
 	const currentDepositsUSD = hasFreshRollingStats ? (totalDepositedUSD ?? null) : (prevDayChart?.Deposited ?? null)
 	const currentWithdrawalsUSD = hasFreshRollingStats
 		? (totalWithdrawnUSD ?? null)
@@ -149,9 +151,10 @@ export function BridgeInfo({
 			volumeChartDataByChain,
 			totalDepositedUSD,
 			totalWithdrawnUSD,
-			...(dataTimestamp !== undefined ? { dataTimestamp } : {})
+			...(dataTimestamp !== undefined ? { dataTimestamp } : {}),
+			nowSec
 		})
-	}, [isAllChains, volumeChartDataByChain, totalDepositedUSD, totalWithdrawnUSD, dataTimestamp])
+	}, [isAllChains, volumeChartDataByChain, totalDepositedUSD, totalWithdrawnUSD, dataTimestamp, nowSec])
 
 	const chartTypes = (
 		isAllChains ? (['Volume', 'Tokens To', 'Tokens From'] as const) : (['Inflows', 'Tokens To', 'Tokens From'] as const)
@@ -260,11 +263,15 @@ export function BridgeInfo({
 						<StatItem
 							label={<>Total Volume ({windowLabel})</>}
 							tooltip="Volume equals (Deposited + Withdrawn)/2 over the same rolling window used by the bridges overview."
-							value={formatUsd(prevDayVolumeValue, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
+							value={
+								prevDayVolumeValue == null
+									? 'N/A'
+									: formatUsd(prevDayVolumeValue, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})
+							}
 						/>
 					) : (
 						<>

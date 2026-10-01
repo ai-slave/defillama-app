@@ -16,6 +16,8 @@ export type PoolVerifiedNotice = 'offer' | 'unavailable' | null
 /**
  * Chooses the measured sections a reader sees: the page's seeded props while they are still
  * entitled, otherwise the paid fetch, and which notice stands in when neither has a measurement.
+ * Each chosen section comes with the clock of the data it came from (the page's build or the paid
+ * fetch), which is what "current" and "today's partial reading" are judged against.
  */
 export function resolvePoolVerifiedView({
 	access,
@@ -23,7 +25,9 @@ export function resolvePoolVerifiedView({
 	locked,
 	paid,
 	paidLoading,
-	fromProps
+	fromProps,
+	pageClockMs,
+	paidUpdatedAtMs
 }: {
 	access: { hasAccess: boolean; isDenied: boolean }
 	verifiedLocked: boolean | null | undefined
@@ -31,11 +35,14 @@ export function resolvePoolVerifiedView({
 	paid: PoolVerifiedProps
 	paidLoading: boolean
 	fromProps: PoolVerifiedProps
-}): PoolVerifiedProps & { notice: PoolVerifiedNotice } {
+	pageClockMs: number
+	paidUpdatedAtMs: number
+}): PoolVerifiedProps & { notice: PoolVerifiedNotice; verifiedClockMs: number; supplyChartClockMs: number } {
 	// A subscriber's page carries its measured props; they stand only while the reader is still
 	// entitled, as the table's seed does, so a lapsed or ended session drops them without a reload.
 	const seeded = !access.isDenied
-	const verified = (seeded ? fromProps.verified : null) ?? paid.verified
+	const verifiedFromSeed = seeded && fromProps.verified != null
+	const verified = verifiedFromSeed ? fromProps.verified : paid.verified
 
 	// The measured rebuild defaults its TVL label, which depends on protocol meta only the page
 	// resolves. The page's own chart holds the right one, so it is carried across.
@@ -73,6 +80,8 @@ export function resolvePoolVerifiedView({
 		exitReliability: (seeded ? fromProps.exitReliability : null) ?? paid.exitReliability,
 		apy: (seeded ? fromProps.apy : null) ?? paid.apy,
 		supplyChart,
-		notice
+		notice,
+		verifiedClockMs: verifiedFromSeed ? pageClockMs : paidUpdatedAtMs,
+		supplyChartClockMs: paid.supplyChart ? paidUpdatedAtMs : pageClockMs
 	}
 }

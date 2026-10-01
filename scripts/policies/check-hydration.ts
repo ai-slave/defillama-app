@@ -10,12 +10,14 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * hydration", states the rules; this script enforces the mechanical ones:
  *
  * 1. `suppressHydrationWarning` lives only in src/ui/StaleText.tsx, whose children are text.
- * 2. The clock is read through `useNowSeconds` (seeded by the page clock), never `Date.now()`, `new Date()` or
- *    `dayjs()` on a render path: a component or hook body, a callback React runs during render, a default
- *    parameter value (its caller inherits the read), or a same-file helper a render path calls. Effects, handlers,
- *    query functions and data functions may read the clock. A helper in another module is not traced; keep clock
- *    reads out of helpers that render code imports.
- * 3. Date arithmetic and field reads use the UTC methods. Local-zone methods are for the few places that
+ * 2. Render code reads the clock through `usePageClockSec` (the period the page data describes) or `useNowSeconds`
+ *    (values about now), never `Date.now()`, `new Date()` or `dayjs()` on a render path: a component or hook body,
+ *    a callback React runs during render, or a same-file helper a render path calls. Effects, handlers, query
+ *    functions and data functions may read the clock.
+ * 3. No helper hides a clock its caller did not pass: no `Date.now()` as a parameter default, destructured or not,
+ *    and no `param ?? Date.now()` fallback. A helper in another module is not traced, so the caller must hand it
+ *    the clock it means, and a render caller then gets it from one of the two hooks.
+ * 4. Date arithmetic and field reads use the UTC methods. Local-zone methods are for the few places that
  *    deliberately work in the visitor's zone, listed below with their reason.
  */
 
@@ -46,24 +48,6 @@ const SERVER_ONLY_PATTERNS = [
 	/^src\/utils\/metadata\//,
 	/^src\/containers\/NarrativeTracker\/queries\.tsx$/
 ]
-
-/**
- * Helpers that still default a clock parameter. Server builders pass their own clock; a render caller must pass
- * one from useNowSeconds, which this policy cannot see across modules. Migrate a helper by dropping the default and
- * removing it here.
- */
-const clockDefaultedHelpers = new Map<string, string>([
-	['src/utils/tvlChart.ts', 'chain and protocol TVL builders; render callers pass nowMs'],
-	['src/utils/unlocks/historicalPriceRequests.ts', 'unlock price requests built in getStaticProps'],
-	['src/containers/Bridges/bridgeProtocolChartData.ts', 'bridge chart builders called from getStaticProps'],
-	['src/containers/Bridges/utils.ts', 'bridge table builders called from getStaticProps'],
-	['src/containers/Bridges/bridgeVolumeData.ts', 'bridge volume chart data; the client caller memoizes it'],
-	['src/containers/Stablecoins/utils.ts', 'stablecoin totals built in getStaticProps and pro dashboards'],
-	['src/containers/Yields/poolDetail/poolCharts.ts', 'pool chart builders; the SSR page passes its clock'],
-	['src/containers/Yields/data/apy.ts', 'APY resolution shared by the earn table and its server builder'],
-	['src/containers/Yields/domain/verifiedFreshness.ts', 'verified age check shared by table cells and server code'],
-	['src/containers/Articles/document.ts', 'article document builders; the editor and the API pass their own clock']
-])
 
 /** Modules that work in the visitor's local zone on purpose. */
 const localZoneDateFiles = new Map<string, string>([
@@ -172,14 +156,72 @@ function isRenderPath(node: ts.Node, relative: string): boolean {
 	return false
 }
 
-/** True when the node sits in a parameter's default value: `(now = Date.now())`. */
+/** True when the node sits in a parameter's default value: `(now = Date.now())` or `({ now = Date.now() })`. */
 function isDefaultParameterValue(node: ts.Node): boolean {
 	let current: ts.Node = node
 	while (current.parent && !isFunctionNode(current.parent)) {
-		if (ts.isParameter(current.parent) && current.parent.initializer === current) return true
-		current = current.parent
+		const parent = current.parent
+		if ((ts.isParameter(parent) || ts.isBindingElement(parent)) && parent.initializer === current) {
+			if (ts.isParameter(parent)) return true
+			// A destructured default counts when its pattern is a parameter's.
+			let pattern: ts.Node = parent.parent
+			while (ts.isBindingElement(pattern.parent) || ts.isObjectBindingPattern(pattern.parent)) pattern = pattern.parent
+			if (ts.isParameter(pattern.parent)) return true
+		}
+		current = parent
 	}
 	return false
+}
+
+function isParameterName(name: string, fn: FunctionNode | undefined): boolean {
+	for (let current = fn; current; current = nearestFunction(current)) {
+		for (const parameter of current.parameters) {
+			if (bindingNames(parameter.name).has(name)) return true
+		}
+	}
+	return false
+}
+
+function bindingNames(name: ts.BindingName, names = new Set<string>()): Set<string> {
+	if (ts.isIdentifier(name)) names.add(name.text)
+	else for (const element of name.elements) if (!ts.isOmittedExpression(element)) bindingNames(element.name, names)
+	return names
+}
+
+const ARITHMETIC_OPERATORS = new Set([
+	ts.SyntaxKind.SlashToken,
+	ts.SyntaxKind.AsteriskToken,
+	ts.SyntaxKind.MinusToken,
+	ts.SyntaxKind.PlusToken,
+	ts.SyntaxKind.PercentToken
+])
+
+/** True for `param ?? Date.now()` and `param.at || Date.now() / 1000`: the clock stands in for an argument left out. */
+function isParameterFallback(node: ts.Node, bindings: ReadonlySet<string>): boolean {
+	// Climb out of parentheses and arithmetic such as `Date.now() / 1000` to the value the fallback supplies.
+	let value: ts.Node = node
+	while (
+		ts.isParenthesizedExpression(value.parent) ||
+		(ts.isBinaryExpression(value.parent) && ARITHMETIC_OPERATORS.has(value.parent.operatorToken.kind))
+	) {
+		value = value.parent
+	}
+	const fallback = value.parent
+	if (!ts.isBinaryExpression(fallback) || fallback.right !== value) return false
+	const operator = fallback.operatorToken.kind
+	if (operator !== ts.SyntaxKind.QuestionQuestionToken && operator !== ts.SyntaxKind.BarBarToken) return false
+	if (clockReadKind(fallback.left, bindings)) return false
+	let base: ts.Expression = fallback.left
+	while (
+		ts.isPropertyAccessExpression(base) ||
+		ts.isElementAccessExpression(base) ||
+		ts.isCallExpression(base) ||
+		ts.isNonNullExpression(base) ||
+		ts.isParenthesizedExpression(base)
+	) {
+		base = base.expression
+	}
+	return ts.isIdentifier(base) && isParameterName(base.text, nearestFunction(fallback))
 }
 
 function isTestFile(relative: string) {
@@ -273,12 +315,17 @@ export function scanSource(relative: string, file: string, source: string): Arra
 
 		const clockRead = clockReadKind(node, dayjsBindings)
 		if (clockRead && isRenderPath(node, relative)) {
-			report(node, `reads ${clockRead} while rendering; read the clock through useNowSeconds so it hydrates`)
-		} else if (clockRead && isDefaultParameterValue(node) && !clockDefaultedHelpers.has(relative)) {
+			report(
+				node,
+				`reads ${clockRead} while rendering; use usePageClockSec for the data's period or useNowSeconds for now`
+			)
+		} else if (clockRead && isDefaultParameterValue(node)) {
 			report(
 				node,
 				`reads ${clockRead} as a default parameter; callers in render inherit it, so take the clock as an argument`
 			)
+		} else if (clockRead && isParameterFallback(node, dayjsBindings)) {
+			report(node, `falls back to ${clockRead} when the caller passes no clock; make the clock a required argument`)
 		}
 
 		if (
@@ -289,7 +336,7 @@ export function scanSource(relative: string, file: string, source: string): Arra
 		) {
 			report(
 				node,
-				`calls ${node.expression.text}() while rendering, and it reads the clock; pass it a value from useNowSeconds`
+				`calls ${node.expression.text}() while rendering, and it reads the clock; pass it usePageClockSec or useNowSeconds`
 			)
 		}
 
@@ -369,6 +416,31 @@ if (process.argv.includes('--self-test')) {
 			relative: 'src/containers/Thing/metrics.ts',
 			source: 'export function metrics(rows, now = Date.now()) { return rows.filter((r) => r < now) }',
 			violation: true
+		},
+		{
+			name: 'destructured default parameter clock',
+			relative: 'src/containers/Thing/metrics.ts',
+			source: 'export function metrics({ rows, now = Date.now() }) { return rows.filter((r) => r < now) }',
+			violation: true
+		},
+		{
+			name: 'parameter fallback clock',
+			relative: 'src/containers/Thing/metrics.ts',
+			source: 'export function metrics(rows, options) { const now = options.now ?? Date.now(); return now }',
+			violation: true
+		},
+		{
+			name: 'scaled parameter fallback clock',
+			relative: 'src/containers/Thing/metrics.ts',
+			source: 'export function metrics(context) { return context.nowSeconds ?? Date.now() / 1000 }',
+			violation: true
+		},
+		{
+			name: 'data fallback in a data function',
+			relative: 'src/pages/thing.tsx',
+			source:
+				'export const getServerSideProps = async () => { const at = snapshot?.generatedAt ?? Date.now(); return { props: { at } } }',
+			violation: false
 		},
 		{
 			name: 'helper read outside render',

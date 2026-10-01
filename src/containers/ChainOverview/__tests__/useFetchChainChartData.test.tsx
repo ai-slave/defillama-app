@@ -43,7 +43,13 @@ test('each toggled chain chart shows the response of its own endpoint', async ()
 			denomination: 'USD',
 			selectedChain: 'Base',
 			tvlChart: [],
-			tvlChartSummary: { totalValueUSD: null, tvlPrevDay: null, valueChange24hUSD: null, change24h: null },
+			tvlChartSummary: {
+				totalValueUSD: null,
+				tvlPrevDay: null,
+				valueChange24hUSD: null,
+				change24h: null,
+				computedAtMs: daySec * 1000
+			},
 			extraTvlCharts: {},
 			tvlSettings: {},
 			chainGeckoId: null,

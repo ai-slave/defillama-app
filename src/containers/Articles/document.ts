@@ -361,8 +361,8 @@ export function normalizeArticleContentJson(value: unknown): TiptapJson {
 
 export function normalizeLocalArticleDocument(
 	input: unknown,
-	existing?: LocalArticleDocument | null,
-	now = new Date().toISOString()
+	existing: LocalArticleDocument | null,
+	now: string
 ): ValidationResult<LocalArticleDocument> {
 	if (!isRecord(input)) return { ok: false, error: 'Article payload must be an object' }
 
@@ -538,7 +538,7 @@ export function applyPendingToLocalArticle(
 	return merged
 }
 
-export function createEmptyLocalArticle(now = new Date().toISOString()): LocalArticleDocument {
+export function createEmptyLocalArticle(now: string): LocalArticleDocument {
 	const normalized = normalizeLocalArticleDocument(
 		{
 			title: 'Untitled research',

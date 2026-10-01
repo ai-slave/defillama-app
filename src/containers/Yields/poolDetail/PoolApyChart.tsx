@@ -10,7 +10,6 @@ import type {
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -95,14 +94,13 @@ function buildChartInputs(
 	apyWindow: PoolChartWindow,
 	range: PoolHistoryRange,
 	isDark: boolean,
-	nowMs: number
+	today: number
 ): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; hasData: boolean } {
 	const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const standIn = model.bars.find((b) => enabled[b.key] === true && b.replaces != null)
 	const renderedBars = model.bars.filter((b) => enabled[b.key] === true && b.key !== standIn?.replaces)
 	// The verified view spans the measured days only: from the first reading to yesterday, since the
 	// days before have no base to draw and today's reading only completes at the next anchor.
-	const today = nowMs - (nowMs % 86_400_000)
 	const total = model.dates.length - (standIn && model.dates[model.dates.length - 1]! >= today ? 1 : 0)
 	const measuredFrom = standIn ? standIn.values.findIndex((value) => value != null) : 0
 	const start = Math.min(total, Math.max(total - rangeCount(range, total), measuredFrom))
@@ -258,6 +256,7 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 
 export function PoolApyChart({
 	model,
+	modelClockMs,
 	poolId,
 	kind,
 	initialRange = 'max',
@@ -265,6 +264,8 @@ export function PoolApyChart({
 	lockedVerifiedApy = false
 }: {
 	model: PoolChartModel
+	/** When the model's history was read: its last day is still partial on that UTC day. */
+	modelClockMs: number
 	poolId: string
 	kind: 'supply' | 'borrow'
 	initialRange?: PoolHistoryRange
@@ -279,22 +280,30 @@ export function PoolApyChart({
 	const range = getPoolRange(router.query, kind)
 	const { fetchHistory, isPending: historyAccessPending } = useVerifiedHistoryFetcher(poolId)
 	// Safe to slice narrower views locally because the 7d/30d averages are precomputed per point.
+	// A wider range swaps in another read of the history, so its clock travels with it.
 	const {
-		model: currentModel,
+		model: { chart: currentModel, clockMs },
 		loading,
 		error
 	} = useWidestHistory(
 		initialRange,
-		model,
+		{ chart: model, clockMs: modelClockMs },
 		range,
 		(next) => {
 			const tvlLabel = model.lines.find((line) => line.unit === 'usd')?.label ?? 'TVL'
 			return kind === 'supply'
-				? fetchHistory(next).then((h) => buildSupplyChart(h, tvlLabel, intrinsicApy))
-				: fetchBorrowMarketDetailHistory(poolId, next).then((h) => buildBorrowChart(h))
+				? fetchHistory(next).then(({ history, updatedAtMs }) => {
+						const chart = buildSupplyChart(history, tvlLabel, intrinsicApy)
+						return chart && { chart, clockMs: updatedAtMs }
+					})
+				: fetchBorrowMarketDetailHistory(poolId, next).then((history) => {
+						const chart = buildBorrowChart(history)
+						return chart && { chart, clockMs: Date.now() }
+					})
 		},
 		kind === 'borrow' || !historyAccessPending
 	)
+	const today = clockMs - (clockMs % 86_400_000)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Old links may carry the retired additive avg toggles; map them to the nearest window.
@@ -318,7 +327,7 @@ export function PoolApyChart({
 			})
 		}
 		// A stand-in with no drawable day yet leaves the default with the bar it replaces.
-		const drawable = (bar: PoolChartBar) => !bar.replaces || hasDrawableDay(bar, currentModel.dates)
+		const drawable = (bar: PoolChartBar) => !bar.replaces || hasDrawableDay(bar, currentModel.dates, today)
 		const replaced = new Set(currentModel.bars.flatMap((bar) => (bar.replaces && drawable(bar) ? [bar.replaces] : [])))
 		for (const bar of currentModel.bars) {
 			defs.push({
@@ -341,11 +350,10 @@ export function PoolApyChart({
 			})
 		}
 		return defs
-	}, [currentModel])
+	}, [currentModel, today])
 
 	// MultiSeriesChart reapplies its ECharts model when these input references change, so keep
 	// the history transform and chart props stable across unrelated renders.
-	const nowMs = useNowSecondsOnce() * 1000
 	const { enabled, dataset, charts, hasData } = useMemo(() => {
 		const enabled: Record<string, boolean> = {}
 		for (const def of seriesDefs) {
@@ -353,9 +361,9 @@ export function PoolApyChart({
 		}
 		return {
 			enabled,
-			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark, nowMs)
+			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark, today)
 		}
-	}, [apyWindow, currentModel, isDark, kind, nowMs, range, router.query, seriesDefs])
+	}, [apyWindow, currentModel, isDark, kind, range, router.query, seriesDefs, today])
 	const chartOptions = useMemo(
 		() => ({ tooltip: { formatter: buildTooltipFormatter(currentModel, apyWindow) } }),
 		[apyWindow, currentModel]

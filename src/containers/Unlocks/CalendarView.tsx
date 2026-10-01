@@ -309,7 +309,7 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 
 			{viewMode === 'TreeMap' ? (
 				<Suspense fallback={<div className="min-h-[600px]" />}>
-					<UnlocksTreemapChart unlocksData={unlocksData} height="600px" filterYear={currentDate.year()} />
+					<UnlocksTreemapChart unlocksData={unlocksData} height="600px" calendarDate={currentDate} />
 				</Suspense>
 			) : viewMode === 'Month' ? (
 				<>

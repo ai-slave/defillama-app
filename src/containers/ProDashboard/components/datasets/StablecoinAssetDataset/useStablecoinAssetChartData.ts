@@ -110,12 +110,10 @@ export function buildStablecoinAssetPresentation(
 		}
 	}
 	if (chartType === 'chainMcaps') {
-		const history =
-			canonicalHistory ?? collectCanonicalStablecoinArea(params, { includeSummary: true, seriesMode: 'history' })
+		const history = canonicalHistory ?? collectCanonicalStablecoinArea(params, { seriesMode: 'history' })
 		const payload = buildAreaPayloadFromCollection(history, {
 			stackName: 'chainMcaps',
 			valueSymbol: rawData.stablecoinSymbol,
-			summary: true,
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT,
 			...selectionOptions
 		})
@@ -125,7 +123,7 @@ export function buildStablecoinAssetPresentation(
 			dataset,
 			charts: payload.charts,
 			availableSeries: payload.availableSeries ?? [],
-			totalCirculating: payload.summary?.totalMcapCurrent ?? null
+			totalCirculating: history.totals.at(-1) ?? null
 		}
 	}
 	if (chartType === 'chainDominance') {
@@ -243,10 +241,7 @@ export function useStablecoinAssetChartData(
 	})
 	const canonicalHistory = useMemo(() => {
 		if (!rawData || (chartType !== 'chainMcaps' && chartType !== 'chainDominance')) return null
-		return collectCanonicalStablecoinArea(getStablecoinAssetChartParams(rawData), {
-			includeSummary: chartType === 'chainMcaps',
-			seriesMode: 'history'
-		})
+		return collectCanonicalStablecoinArea(getStablecoinAssetChartParams(rawData), { seriesMode: 'history' })
 	}, [chartType, rawData])
 
 	const presentation = useMemo(

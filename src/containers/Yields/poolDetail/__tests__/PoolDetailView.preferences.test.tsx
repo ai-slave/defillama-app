@@ -82,11 +82,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 test.each([true, false])('never renders default charts before resolving preferences (saved: %s)', async (saved) => {
-	const page = (
+	const clockedPage = () => (
 		<PageClockProvider pageClockSec={1_700_000_000}>
 			<Page />
 		</PageClockProvider>
 	)
+	const page = clockedPage()
 	const html = renderToString(page)
 	expect(html).toContain('Pool summary')
 	expect(html).toContain('Loading chart')
@@ -113,7 +114,7 @@ test.each([true, false])('never renders default charts before resolving preferen
 		)
 		if (saved) {
 			mocks.router = { ...mocks.router, query: destinations[0] }
-			await act(async () => root!.render(<Page />))
+			await act(async () => root!.render(clockedPage()))
 		}
 		// Both charts mount; saved preferences mount them on the restored range and window.
 		expect(container.textContent).toContain(saved ? 'supply:90d:7d' : 'supply:')

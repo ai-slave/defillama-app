@@ -5,6 +5,7 @@ import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
 import { ProtocolTaxonomyPage } from '~/containers/ProtocolTaxonomy'
 import { getProtocolCategoryPresentation } from '~/containers/ProtocolTaxonomy/constants'
 import { getProtocolTaxonomyPageData } from '~/containers/ProtocolTaxonomy/queries'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import Layout from '~/layout'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -65,7 +66,7 @@ export const getStaticProps = withPerformanceLogging(
 			}
 
 		return {
-			props: { ...props, year: new Date().getUTCFullYear() },
+			props,
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -89,13 +90,15 @@ const toggleOptions = tvlOptions.filter((option) => isProtocolListTvlKey(option.
 
 export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const categoryLabel = props.category ?? props.tag ?? ''
+	const pageClockSec = usePageClockSec()
 	const presentation = getProtocolCategoryPresentation({
 		label: categoryLabel,
 		effectiveCategory: props.effectiveCategory,
 		isTagPage: !!props.tag && !props.category,
 		chain: props.chain,
 		protocolCount: props.protocols.length,
-		year: props.year
+		// The SEO title names the year the page was built in.
+		year: new Date(pageClockSec * 1000).getUTCFullYear()
 	})
 	const title = presentation.seoTitle
 	const description = presentation.seoDescription

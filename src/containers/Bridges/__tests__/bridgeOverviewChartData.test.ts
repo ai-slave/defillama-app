@@ -40,7 +40,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 	})
 
 	test('sums the completed bridge rows for global summary totals', () => {
-		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
+		const nowSec = Date.parse('2026-07-14T12:00:00Z') / 1e3
 		const aggregate = Array.from({ length: 30 }, (_, index) => ({
 			date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
 			volume: index + 1,
@@ -55,7 +55,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 					{ lastDailyVolume: 2, weeklyVolume: 20, monthlyVolume: 200 }
 				],
 				chainVolumeData: aggregate,
-				currentTimeMs
+				nowSec
 			})
 		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 50, monthTotalVolume: 500 })
 	})
@@ -69,13 +69,13 @@ describe('buildBridgeOverviewActiveChart', () => {
 					{ lastDailyVolume: 0, weeklyVolume: 0, monthlyVolume: 0 }
 				],
 				chainVolumeData: [],
-				currentTimeMs: Date.parse('2026-07-14T12:00:00Z')
+				nowSec: Date.parse('2026-07-14T12:00:00Z') / 1e3
 			})
 		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 20, monthTotalVolume: 80 })
 	})
 
 	test('uses normalized chain-wide aggregate totals on a chain overview', () => {
-		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
+		const nowSec = Date.parse('2026-07-14T12:00:00Z') / 1e3
 		const aggregate = Array.from({ length: 30 }, (_, index) => ({
 			date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
 			Deposits: 10,
@@ -87,9 +87,26 @@ describe('buildBridgeOverviewActiveChart', () => {
 				selectedChain: 'Ethereum',
 				bridges: [{ lastDailyVolume: 3 }, { lastDailyVolume: 2 }],
 				chainVolumeData: aggregate,
-				currentTimeMs
+				nowSec
 			})
 		).toEqual({ dayTotalVolume: 6, weekTotalVolume: 42, monthTotalVolume: 180 })
+	})
+
+	test('moves the chain overview day total to the next completed day at UTC midnight', () => {
+		const volumes = [
+			{ date: Date.parse('2026-07-13T00:00:00Z') / 1e3, Deposits: 10, Withdrawals: -2 },
+			{ date: Date.parse('2026-07-14T00:00:00Z') / 1e3, Deposits: 40, Withdrawals: -20 }
+		]
+		const dayTotalAt = (iso: string) =>
+			getBridgeOverviewSummaryTotals({
+				selectedChain: 'Ethereum',
+				bridges: [],
+				chainVolumeData: volumes,
+				nowSec: Date.parse(iso) / 1e3
+			}).dayTotalVolume
+
+		expect(dayTotalAt('2026-07-14T23:59:59Z')).toBe(6)
+		expect(dayTotalAt('2026-07-15T00:00:00Z')).toBe(30)
 	})
 
 	test('skips derived construction for overview and raw volume views', () => {

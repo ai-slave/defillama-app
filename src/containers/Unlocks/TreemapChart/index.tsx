@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import type { EChartsOption } from 'echarts'
 import { TreemapChart as EChartTreemap } from 'echarts/charts'
 import { TitleComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
@@ -10,7 +10,6 @@ import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelCon
 import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -22,7 +21,8 @@ echarts.use([TreemapLabelContrast, TitleComponent, TooltipComponent, ToolboxComp
 interface UnlocksTreemapProps {
 	unlocksData: UnlocksData
 	height?: string
-	filterYear?: number
+	/** The day the calendar shows: the year views read its year, and the month view opens on its month. */
+	calendarDate: Dayjs
 }
 
 const TREEMAP_CHART_INSET_PX = 8
@@ -32,29 +32,27 @@ interface UnlocksTreemapTooltipParams {
 	treePathInfo?: Array<{ name?: string }>
 }
 
-export default function UnlocksTreemapChart({ unlocksData, height = '600px', filterYear }: UnlocksTreemapProps) {
+export default function UnlocksTreemapChart({ unlocksData, height = '600px', calendarDate }: UnlocksTreemapProps) {
 	const [isDark] = useDarkModeManager()
 	const [timeView, setTimeView] = useState<UnlocksTreemapTimeView>('Current Year')
-	const nowSec = useNowSecondsOnce()
-	const [selectedDate, setSelectedDate] = useState(() => dayjs.unix(nowSec))
+	// Only a month the reader stepped to is kept; until then the month view follows the calendar's day.
+	const [pickedMonth, setPickedMonth] = useState<Dayjs | null>(null)
+	const selectedDate = pickedMonth ?? calendarDate
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, containerRef)
 
-	const currentYear = filterYear ?? dayjs.unix(nowSec).year()
+	const currentYear = calendarDate.year()
 
+	// The calendar's day is a new object on every clock tick; keying on its text keeps the chart, and the reader's
+	// zoom in it, until the month itself changes.
+	const selectedYear = selectedDate.format('YYYY')
+	const selectedMonth = selectedDate.format('MM')
 	const chartDataTree = useMemo(() => {
-		return buildUnlocksTreemapTreeData({
-			unlocksData,
-			timeView,
-			currentYear,
-			selectedYear: selectedDate.format('YYYY'),
-			selectedMonth: selectedDate.format('MM'),
-			isDark
-		})
-	}, [unlocksData, currentYear, timeView, isDark, selectedDate])
+		return buildUnlocksTreemapTreeData({ unlocksData, timeView, currentYear, selectedYear, selectedMonth, isDark })
+	}, [unlocksData, currentYear, timeView, isDark, selectedYear, selectedMonth])
 
 	useEffect(() => {
 		const el = containerRef.current
@@ -224,8 +222,8 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 		instance.setOption(option, { notMerge: true })
 	}, [chartDataTree, isDark, timeView])
 
-	const goToPrevMonth = () => setSelectedDate((d) => d.subtract(1, 'month'))
-	const goToNextMonth = () => setSelectedDate((d) => d.add(1, 'month'))
+	const goToPrevMonth = () => setPickedMonth(selectedDate.subtract(1, 'month'))
+	const goToNextMonth = () => setPickedMonth(selectedDate.add(1, 'month'))
 
 	return (
 		<div className="flex flex-col gap-3">

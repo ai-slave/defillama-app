@@ -58,11 +58,7 @@ export function buildIntrinsicApySeries(history: PoolHistory | null | undefined)
  * none yet (today's reading completes at the next anchor), so defaulting to it would open the chart on
  * nothing instead of the reported history.
  */
-export function hasDrawableDay(
-	bar: PoolChartBar,
-	dates: Array<number>,
-	today: number = Date.now() - (Date.now() % 86_400_000)
-): boolean {
+export function hasDrawableDay(bar: PoolChartBar, dates: Array<number>, today: number): boolean {
 	return bar.values.some((value, index) => value != null && dates[index]! < today)
 }
 

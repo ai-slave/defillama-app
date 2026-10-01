@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
-import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -163,7 +163,12 @@ export function PoolDetailView({
 	const { hasAccess, isDenied } = useVerifiedAccess()
 	const locked = isPoolVerifiedLocked(verifiedLocked, isDenied, verifiedFromProps)
 	// The page's props are redacted for everyone else; a subscriber's measured sections arrive here.
-	const { props: paid, isLoading: paidLoading } = usePoolVerifiedProps({
+	const pageClockMs = usePageClockSec() * 1000
+	const {
+		props: paid,
+		isLoading: paidLoading,
+		updatedAtMs: paidUpdatedAtMs
+	} = usePoolVerifiedProps({
 		poolId,
 		range: initialRange,
 		locked
@@ -179,7 +184,9 @@ export function PoolDetailView({
 		exitReliability,
 		supplyChart,
 		apy: measuredApy,
-		notice
+		notice,
+		verifiedClockMs,
+		supplyChartClockMs
 	} = useMemo(
 		() =>
 			resolvePoolVerifiedView({
@@ -199,7 +206,9 @@ export function PoolDetailView({
 					liquidityDecimals: liquidityDecimalsFromProps,
 					exitReliability: exitReliabilityFromProps,
 					supplyChart: supplyChartFromProps
-				}
+				},
+				pageClockMs,
+				paidUpdatedAtMs
 			}),
 		[
 			hasAccess,
@@ -217,12 +226,14 @@ export function PoolDetailView({
 			liquidityChartFromProps,
 			liquidityDecimalsFromProps,
 			exitReliabilityFromProps,
-			supplyChartFromProps
+			supplyChartFromProps,
+			pageClockMs,
+			paidUpdatedAtMs
 		]
 	)
-	// The page clock on the first render, so "verified within a day" reads the same on the server and the client.
-	const nowMs = useNowSecondsOnce() * 1000
-	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows, nowMs) : null
+	// "Verified within a day" is judged when the measurement was read, as the server judged the measured APY, so the
+	// hero never flips once the page is old.
+	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows, verifiedClockMs) : null
 	// The table cell's split: only when a leg was substituted and there is more than the base to show.
 	let composition: MeasuredComposition | null = null
 	if (
@@ -352,6 +363,7 @@ export function PoolDetailView({
 							<PoolApyChart
 								key={`${poolId}:supply:${paid.supplyChart ? 'measured' : 'reported'}`}
 								model={supplyChart}
+								modelClockMs={supplyChartClockMs}
 								poolId={poolId}
 								kind="supply"
 								initialRange={initialRange}
@@ -367,6 +379,7 @@ export function PoolDetailView({
 							<PoolApyChart
 								key={`${poolId}:borrow`}
 								model={borrowChart}
+								modelClockMs={pageClockMs}
 								poolId={poolId}
 								kind="borrow"
 								initialRange={initialBorrowRange ?? initialRange}

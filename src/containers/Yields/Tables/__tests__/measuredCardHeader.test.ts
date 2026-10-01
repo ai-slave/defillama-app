@@ -19,10 +19,11 @@ function verified(apy: VerifiedBlock['apy'], apyAsOf: string | null, exitAsOf: s
 describe('getMeasuredCardHeader', () => {
 	test('names a fresh refused substitution', () => {
 		const header = getMeasuredCardHeader({
-			verified: verified({ avg_1d: 5.68, avg_7d: null, avg_30d: null }, new Date().toISOString()),
+			verified: verified({ avg_1d: 5.68, avg_7d: null, avg_30d: null }, NOW),
 			measured: false,
 			unsubstitutedMeasured: true,
-			window: 'current'
+			window: 'current',
+			now: Date.parse(NOW)
 		})
 		expect(header).toMatchObject({
 			title: 'Verified APY · not included in total',
@@ -37,7 +38,8 @@ describe('getMeasuredCardHeader', () => {
 			verified: verified({ avg_1d: null, avg_7d: 99.6, avg_30d: null }, THREE_DAYS_AGO, NOW),
 			measured: false,
 			unsubstitutedMeasured: false,
-			window: 'current'
+			window: 'current',
+			now: Date.parse(NOW)
 		})
 		expect(header).toEqual({
 			title: 'Verified APY',
@@ -49,12 +51,13 @@ describe('getMeasuredCardHeader', () => {
 	})
 
 	test('says the figure is reported when the pool is measured for exits only', () => {
-		const exitAsOf = new Date().toISOString()
+		const exitAsOf = NOW
 		const header = getMeasuredCardHeader({
 			verified: verified({ avg_1d: null, avg_7d: null, avg_30d: null }, null, exitAsOf),
 			measured: false,
 			unsubstitutedMeasured: false,
-			window: 'current'
+			window: 'current',
+			now: Date.parse(NOW)
 		})
 		expect(header).toEqual({
 			title: 'Verified exit',
@@ -66,12 +69,13 @@ describe('getMeasuredCardHeader', () => {
 	})
 
 	test('names the window a young measurement has not reached', () => {
-		const apyAsOf = new Date().toISOString()
+		const apyAsOf = NOW
 		const header = getMeasuredCardHeader({
 			verified: verified({ avg_1d: 3.1, avg_7d: null, avg_30d: null }, apyAsOf, apyAsOf),
 			measured: false,
 			unsubstitutedMeasured: false,
-			window: 'avg_7d'
+			window: 'avg_7d',
+			now: Date.parse(NOW)
 		})
 		expect(header).toEqual({
 			title: 'Verified APY',

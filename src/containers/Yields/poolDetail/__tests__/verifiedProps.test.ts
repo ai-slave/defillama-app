@@ -16,6 +16,8 @@ const POOL = {
 	}
 } as unknown as PoolDetail
 
+const NOW = Date.parse('2026-08-27T12:00:00Z')
+
 const HISTORY = [
 	{
 		date: '2026-08-27',
@@ -37,7 +39,7 @@ const HISTORY = [
 
 describe('buildPoolVerifiedProps', () => {
 	test('carries the denomination decimals alongside the liquidity chart', () => {
-		const props = buildPoolVerifiedProps({ pool: POOL, history: HISTORY, fullHistory: HISTORY })
+		const props = buildPoolVerifiedProps({ pool: POOL, history: HISTORY, fullHistory: HISTORY, now: NOW })
 
 		// The liquidity panel renders only when BOTH are present, so a chart without its decimals
 		// is the same as no chart at all.
@@ -49,7 +51,8 @@ describe('buildPoolVerifiedProps', () => {
 		const props = buildPoolVerifiedProps({
 			pool: lockPoolDetail(POOL),
 			history: lockPoolHistory(HISTORY),
-			fullHistory: lockPoolHistory(HISTORY)
+			fullHistory: lockPoolHistory(HISTORY),
+			now: NOW
 		})
 
 		expect(props).toEqual(EMPTY_POOL_VERIFIED_PROPS)

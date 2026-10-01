@@ -9,10 +9,10 @@ import {
 	getFreshStablecoinCurrentPoint,
 	getStablecoinDominance,
 	getStablecoinMcapStatsFromTotals,
+	getStablecoinValueFromPoint,
 	isInactiveStablecoin,
 	type IBuildStablecoinChartDataParams,
-	type StablecoinChartDataPoint,
-	type StablecoinIssuanceType
+	type StablecoinChartDataPoint
 } from '~/containers/Stablecoins/utils'
 import { cachedResult } from '~/server/api/resultCache'
 import { getPercentChange, slug } from '~/utils'
@@ -37,7 +37,6 @@ import type {
 	StablecoinChainBalanceToken,
 	StablecoinChartPoint,
 	StablecoinListAsset,
-	StablecoinPegType,
 	StablecoinRawBridgeBreakdown
 } from './api.types'
 import {
@@ -168,15 +167,6 @@ const normalizeStablecoinSeries = (
 	return normalized
 }
 
-const readStablecoinNumericFromChart = (
-	chart: Array<StablecoinChartDataPoint> | null | undefined,
-	daysBefore: number,
-	issuanceType: StablecoinIssuanceType,
-	pegType?: StablecoinPegType
-): number | null => {
-	return getPrevStablecoinTotalFromChart(chart, daysBefore, issuanceType, pegType)
-}
-
 export const normalizeStablecoinBridges = (value: StablecoinRawBridgeBreakdown | null): StablecoinBridges => {
 	if (!value) return null
 	const normalized: NonNullable<StablecoinBridges> = {}
@@ -211,14 +201,6 @@ export const normalizeStablecoinBridges = (value: StablecoinRawBridgeBreakdown |
 	}
 
 	return hasBridges ? normalized : null
-}
-
-const readStablecoinBridgesFromChart = (
-	chart: Array<StablecoinChartDataPoint> | null | undefined,
-	daysBefore: number
-): StablecoinBridges => {
-	const bridges = getStablecoinBridgesFromChart(chart, daysBefore)
-	return normalizeStablecoinBridges(bridges)
 }
 
 export const buildOverviewChartInputs = ({
@@ -378,7 +360,8 @@ const getStablecoinsOverviewSource = async (chain: string | null): Promise<Stabl
 					...(rateData ? { rateData } : {}),
 					peggedAssetIdToChartDataIndex: chartSource.peggedAssetIdToChartDataIndex,
 					doublecountedIndexes: chartSource.doublecountedIds,
-					...(chain ? { chain } : {})
+					...(chain ? { chain } : {}),
+					currentTimeMs: Date.now()
 				})
 			}
 		})
@@ -392,13 +375,15 @@ const buildStablecoinOverviewChartSeries = (
 		filters = {},
 		seriesLimit,
 		selectedNames,
-		excludedNames
+		excludedNames,
+		currentTimeMs
 	}: {
 		chart: StablecoinOverviewChartType
 		filters?: StablecoinFilterQuery
 		seriesLimit?: number
 		selectedNames?: Array<string> | null
 		excludedNames?: Array<string> | null
+		currentTimeMs: number
 	}
 ): StablecoinChartSeriesPayload => {
 	const filterState = resolveStablecoinFilterState(filters)
@@ -424,6 +409,7 @@ const buildStablecoinOverviewChartSeries = (
 		const collection = getStablecoinOverviewChartCollection({ source, chart, filteredIndexes, params: baseParams })
 		return buildStablecoinOverviewPayloadFromCollection(
 			collection,
+			currentTimeMs,
 			getStablecoinSelectionOptions(seriesLimit, selectedNames, excludedNames)
 		)
 	}
@@ -432,6 +418,7 @@ const buildStablecoinOverviewChartSeries = (
 		baseParams,
 		chart,
 		topToken,
+		currentTimeMs,
 		getStablecoinSelectionOptions(seriesLimit, selectedNames, excludedNames)
 	)
 }
@@ -456,7 +443,8 @@ export const getStablecoinOverviewChartSeries = async ({
 	return buildStablecoinOverviewChartSeries(source, {
 		chart,
 		filters,
-		...getStablecoinSelectionOptions(seriesLimit, selectedNames, excludedNames)
+		...getStablecoinSelectionOptions(seriesLimit, selectedNames, excludedNames),
+		currentTimeMs: Date.now()
 	})
 }
 
@@ -482,7 +470,7 @@ export async function getStablecoinChainMcapSummary(chain: string | null): Promi
 			selectedChain: chain ?? 'All',
 			doublecountedIds
 		}
-		const { mcapStats, topToken } = buildStablecoinMcapSummary(chartParams)
+		const { mcapStats, topToken } = buildStablecoinMcapSummary(chartParams, Date.now())
 		const dominanceValue = getStablecoinDominance(topToken, mcapStats.totalMcapCurrent)
 		const dominance = dominanceValue == null ? null : String(dominanceValue)
 
@@ -499,7 +487,7 @@ export async function getStablecoinChainMcapSummary(chain: string | null): Promi
 
 export async function getStablecoinsByChainPageData(chain: string | null): Promise<PeggedOverviewPageData> {
 	const source = await getStablecoinsOverviewSource(chain)
-	const defaultChartData = buildStablecoinOverviewChartSeries(source, { chart: 'totalMcap' })
+	const defaultChartData = buildStablecoinOverviewChartSeries(source, { chart: 'totalMcap', currentTimeMs: Date.now() })
 	return {
 		chains: source.chains,
 		filteredPeggedAssets: source.filteredPeggedAssets,
@@ -519,7 +507,7 @@ const toSignedChangeLabel = (value: string | null): string | null => {
 
 export const buildStablecoinChainsPageSummary = (
 	raw: StablecoinChainsPageInput,
-	{ chainMetadata, currentTimeMs = Date.now() }: StablecoinChainsPageSummaryOptions
+	{ chainMetadata, currentTimeMs }: StablecoinChainsPageSummaryOptions
 ): PeggedChainsPageData => {
 	const { chainList } = fetchGlobalData(raw)
 	const chainsGroupbyParent: Record<string, Record<string, Array<string>>> = {}
@@ -600,7 +588,7 @@ const isStablecoinTimestampFresh = (timestamp: number, currentTimeMs: number): b
 
 export const revalidateStablecoinChainsPageData = (
 	{ pageData, latestChainTimestamps }: StablecoinChainsPageCacheEntry,
-	currentTimeMs = Date.now()
+	currentTimeMs: number
 ): PeggedChainsPageData => {
 	// Copy-on-write: the list is cloned once, only if a stale chain needs its deltas cleared.
 	let updated: typeof pageData.chainCirculatings | null = null
@@ -694,7 +682,7 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 				dominanceMap,
 				chainChartMap
 			},
-			{ chainMetadata: metadataCache.chainMetadata }
+			{ chainMetadata: metadataCache.chainMetadata, currentTimeMs: Date.now() }
 		)
 		const latestChainTimestamps: Record<string, number | null> = {}
 		for (const chain of pageData.chainList) {
@@ -704,7 +692,8 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 		}
 		return { pageData, latestChainTimestamps }
 	})
-	return revalidateStablecoinChainsPageData(cacheEntry)
+	// The stored entry was summarized when it was cached; serving it re-checks its freshness against now.
+	return revalidateStablecoinChainsPageData(cacheEntry, Date.now())
 }
 
 export const buildStablecoinChainsChartSource = (raw: StablecoinChainsChartInput): StablecoinChainsChartSource => {
@@ -918,16 +907,16 @@ export const getStablecoinAssetPageData = async (
 	if (!source) return null
 	return withStablecoinsCache(`asset-v2:${source.peggedID}`, async () => {
 		const { res, chainCoingeckoIds, recentCoinsData, bridgeInfo, blockExplorersData } = source
+		const currentTimeMs = Date.now()
 
 		const peggedChart: Array<StablecoinChartDataPoint> | undefined = recentCoinsData[source.peggedID]
 		const pegType = res.pegType
 		const isInactive = isInactiveStablecoin(res)
 
-		const totalCirculating = isInactive
-			? null
-			: readStablecoinNumericFromChart(peggedChart, 0, 'totalCirculating', pegType)
-		const unreleased = isInactive ? null : readStablecoinNumericFromChart(peggedChart, 0, 'totalUnreleased', pegType)
-		const mcap = isInactive ? null : readStablecoinNumericFromChart(peggedChart, 0, 'totalCirculatingUSD', pegType)
+		const latestPoint = peggedChart?.at(-1)
+		const totalCirculating = isInactive ? null : getStablecoinValueFromPoint(latestPoint, 'totalCirculating', pegType)
+		const unreleased = isInactive ? null : getStablecoinValueFromPoint(latestPoint, 'totalUnreleased', pegType)
+		const mcap = isInactive ? null : getStablecoinValueFromPoint(latestPoint, 'totalCirculatingUSD', pegType)
 
 		const chainsUnique: Array<string> = []
 		const chainCirculatings: PeggedAssetPageProps['chainCirculatings'] = []
@@ -936,14 +925,19 @@ export const getStablecoinAssetPageData = async (
 			if (!balance) continue
 			const { tokens } = balance
 			chainsUnique.push(chainName)
-			const circulating = isInactive ? null : readStablecoinNumericFromChart(tokens, 0, 'circulating', pegType)
-			const chainUnreleased = isInactive ? null : readStablecoinNumericFromChart(tokens, 0, 'unreleased', pegType)
-			const bridgedTo = isInactive ? null : readStablecoinNumericFromChart(tokens, 0, 'bridgedTo', pegType)
-			const circulatingPrevDay = isInactive ? null : readStablecoinNumericFromChart(tokens, 1, 'circulating', pegType)
-			const circulatingPrevWeek = isInactive ? null : readStablecoinNumericFromChart(tokens, 7, 'circulating', pegType)
+			const latestToken = tokens.at(-1)
+			const circulating = isInactive ? null : getStablecoinValueFromPoint(latestToken, 'circulating', pegType)
+			const chainUnreleased = isInactive ? null : getStablecoinValueFromPoint(latestToken, 'unreleased', pegType)
+			const bridgedTo = isInactive ? null : getStablecoinValueFromPoint(latestToken, 'bridgedTo', pegType)
+			const circulatingPrevDay = isInactive
+				? null
+				: getPrevStablecoinTotalFromChart(tokens, 1, 'circulating', pegType, { currentTimeMs })
+			const circulatingPrevWeek = isInactive
+				? null
+				: getPrevStablecoinTotalFromChart(tokens, 7, 'circulating', pegType, { currentTimeMs })
 			const circulatingPrevMonth = isInactive
 				? null
-				: readStablecoinNumericFromChart(tokens, 30, 'circulating', pegType)
+				: getPrevStablecoinTotalFromChart(tokens, 30, 'circulating', pegType, { currentTimeMs })
 			chainCirculatings.push({
 				circulating,
 				unreleased: chainUnreleased,
@@ -954,7 +948,7 @@ export const getStablecoinAssetPageData = async (
 				circulatingPrevWeek,
 				circulatingPrevMonth,
 				bridgedAmount: bridgedTo,
-				bridges: isInactive ? null : readStablecoinBridgesFromChart(tokens, 0),
+				bridges: isInactive ? null : normalizeStablecoinBridges(getStablecoinBridgesFromChart(tokens)),
 				name: chainName,
 				symbol: chainCoingeckoIds[chainName]?.symbol ?? '-'
 			})

@@ -87,7 +87,7 @@ export function applyMeasuredBase(
 	verified: VerifiedBlock | null | undefined,
 	window: ApyWindow,
 	hasRewardTokens: boolean,
-	now: number = Date.now()
+	now: number
 ): MeasuredApy {
 	const measured = resolveVerifiedApy(verified, window)
 	// No base slot in the reported composition — the protocol served one unattributable number.
@@ -129,7 +129,7 @@ export function applyMeasuredIntrinsic(
 	resolved: MeasuredApy,
 	sourceVerified: VerifiedBlock | null | undefined,
 	window: ApyWindow,
-	now: number = Date.now()
+	now: number
 ): MeasuredApy {
 	const measured = resolveVerifiedApy(sourceVerified, window)
 	// No leg in view (toggle off, or none reported) leaves nothing to substitute into.

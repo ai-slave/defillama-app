@@ -26,7 +26,8 @@ const statsProps = {
 		totalValueUSD: null,
 		tvlPrevDay: null,
 		valueChange24hUSD: null,
-		change24h: null
+		change24h: null,
+		computedAtMs: 1_700_000_000_000
 	},
 	extraTvlCharts: {
 		staking: {},
@@ -90,7 +91,8 @@ describe('ChainOverview Stats header', () => {
 				totalValueUSD: 53_488_000_000,
 				tvlPrevDay: 53_637_460_000,
 				valueChange24hUSD: -149_460_000,
-				change24h: -0.28
+				change24h: -0.28,
+				computedAtMs: 1_700_000_000_000
 			}
 		} as unknown as IChainOverviewData
 		try {

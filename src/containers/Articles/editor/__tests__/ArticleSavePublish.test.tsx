@@ -11,6 +11,8 @@ import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, LocalArticleDocument } from '../../types'
 import { ArticleEditorClient } from '../ArticleEditorClient'
 
+const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
+
 const api = vi.hoisted(() => ({ save: vi.fn(), publish: vi.fn(), error: vi.fn(), upload: vi.fn() }))
 const router = {
 	query: {},
@@ -30,7 +32,7 @@ let container: HTMLDivElement
 beforeEach(() => {
 	vi.resetAllMocks()
 	article = {
-		...createEmptyLocalArticle(),
+		...createEmptyLocalArticle(ARTICLE_NOW),
 		id: 'test-article',
 		title: 'Saved headline',
 		slug: 'test-article',

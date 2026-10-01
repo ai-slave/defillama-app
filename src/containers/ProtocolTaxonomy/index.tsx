@@ -21,6 +21,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -73,14 +74,16 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 	const namePrefix = name ? `${name}-` : ''
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>('daily')
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const year = new Date(usePageClockSec() * 1000).getUTCFullYear()
 	const categoryPresentation = useMemo(
 		() =>
 			getProtocolCategoryPresentation({
 				label: name,
 				effectiveCategory: props.effectiveCategory,
-				isTagPage: !!props.tag && !props.category
+				isTagPage: !!props.tag && !props.category,
+				year
 			}),
-		[name, props.effectiveCategory, props.tag, props.category]
+		[name, props.effectiveCategory, props.tag, props.category, year]
 	)
 
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')

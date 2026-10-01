@@ -202,22 +202,22 @@ interface IFormatPeggedAssetsDataParams {
 	rateData?: Array<IRateChartPoint>
 	peggedAssetIdToChartDataIndex?: Record<string, number>
 	doublecountedIndexes?: Array<number>
-	currentTimeMs?: number
+	currentTimeMs: number
 }
 
 interface IFormatPeggedChainsDataParams {
 	chainList?: Array<string>
 	peggedChartDataByChain?: Array<Array<StablecoinChartPoint> | null>
 	chainDominances?: Record<string, { symbol: string; mcap: number }>
-	currentTimeMs?: number
+	currentTimeMs: number
 }
 
-type StablecoinChartLookupOptions = { currentTimeMs?: number }
+type StablecoinChartLookupOptions = { currentTimeMs: number }
 
 export function getFreshStablecoinCurrentPoint<T>(
 	series: ReadonlyArray<T> | null | undefined,
 	getTimestamp: (point: T) => string | number,
-	currentTimeMs: number = Date.now()
+	currentTimeMs: number
 ): T | null {
 	// Daily stablecoin snapshots can finish after UTC midnight, so the completed prior day remains fresh until today arrives.
 	return (
@@ -230,7 +230,7 @@ function findStablecoinPeriodPreviousPoint<T>(
 	series: ReadonlyArray<T> | null | undefined,
 	daysBefore: number,
 	getTimestamp: (point: T) => string | number,
-	currentTimeMs?: number
+	currentTimeMs: number
 ): T | null {
 	if (daysBefore <= 0) return null
 
@@ -254,30 +254,23 @@ export function getPrevStablecoinTotalFromChart(
 	chart: Array<StablecoinChartDataPoint> | null | undefined,
 	daysBefore: number,
 	issuanceType: StablecoinIssuanceType,
-	pegType?: StablecoinPegType,
-	options?: StablecoinChartLookupOptions
+	pegType: StablecoinPegType | undefined,
+	options: StablecoinChartLookupOptions
 ): number | null {
 	if (!chart?.length) return null
-	const prevChart =
-		daysBefore === 0
-			? chart[chart.length - 1]
-			: findStablecoinPeriodPreviousPoint(
-					chart.filter((point) => point.isSynthetic !== true),
-					daysBefore,
-					(point) => point.date,
-					options?.currentTimeMs
-				)
+	const prevChart = findStablecoinPeriodPreviousPoint(
+		chart.filter((point) => point.isSynthetic !== true),
+		daysBefore,
+		(point) => point.date,
+		options.currentTimeMs
+	)
 	return getStablecoinValueFromPoint(prevChart, issuanceType, pegType)
 }
 
 export const getStablecoinBridgesFromChart = (
-	chart: Array<StablecoinChartDataPoint> | null | undefined,
-	daysBefore: number
+	chart: Array<StablecoinChartDataPoint> | null | undefined
 ): StablecoinRawBridgeBreakdown | null => {
-	if (!chart?.length) return null
-	const point =
-		daysBefore === 0 ? chart[chart.length - 1] : findStablecoinPeriodPreviousPoint(chart, daysBefore, (row) => row.date)
-	const bridgedTo = point?.bridgedTo
+	const bridgedTo = chart?.at(-1)?.bridgedTo
 	return bridgedTo && typeof bridgedTo !== 'number' ? (bridgedTo.bridges ?? null) : null
 }
 
@@ -332,7 +325,7 @@ export const getStablecoinDominance = (
 
 export const getStablecoinMcapStatsFromTotals = (
 	peggedAreaTotalData: ReadonlyArray<StablecoinMcapPoint> | null | undefined,
-	currentTimeMs: number = Date.now()
+	currentTimeMs: number
 ): IStablecoinMcapStats => {
 	const totalMcapCurrent = peggedAreaTotalData?.[peggedAreaTotalData.length - 1]?.Mcap ?? null
 	const realTotals = peggedAreaTotalData?.filter((point) => point.isSynthetic !== true)
@@ -429,7 +422,7 @@ export const formatPeggedAssetsData = ({
 	rateData = [],
 	peggedAssetIdToChartDataIndex = {},
 	doublecountedIndexes = [],
-	currentTimeMs = Date.now()
+	currentTimeMs
 }: IFormatPeggedAssetsDataParams): Array<FormattedStablecoinAsset> => {
 	const chartLabels = buildUniqueStablecoinChartLabels(peggedAssets, 'symbol')
 	const doublecountedIndexSet = new Set(doublecountedIndexes)
@@ -456,7 +449,7 @@ export const formatPeggedAssetsData = ({
 			: (pegged.circulatingPrevMonth[pegType] ?? null)
 		const chartIndex = peggedAssetIdToChartDataIndex[pegged.id]
 		const chart = chartIndex === undefined ? null : (chartDataByPeggedAsset[chartIndex] ?? null)
-		const mcap = isInactiveStablecoin(pegged) ? null : getPrevStablecoinTotalFromChart(chart, 0, 'mcap')
+		const mcap = isInactiveStablecoin(pegged) ? null : getStablecoinValueFromPoint(chart?.at(-1), 'mcap')
 		const mcapPrevDay = getPrevStablecoinTotalFromChart(chart, 1, 'mcap', undefined, { currentTimeMs }) ?? null
 		const mcapPrevWeek = getPrevStablecoinTotalFromChart(chart, 7, 'mcap', undefined, { currentTimeMs }) ?? null
 		const mcapPrevMonth = getPrevStablecoinTotalFromChart(chart, 30, 'mcap', undefined, { currentTimeMs }) ?? null
@@ -591,23 +584,23 @@ export const formatPeggedChainsData = ({
 	chainList = [],
 	peggedChartDataByChain = [],
 	chainDominances = {},
-	currentTimeMs = Date.now()
+	currentTimeMs
 }: IFormatPeggedChainsDataParams): Array<IFormattedStablecoinChainRow> => {
 	const formattedStablecoinChains: Array<IFormattedStablecoinChainRow> = []
 	for (const [i, chainName] of chainList.entries()) {
 		const chart = peggedChartDataByChain[i] ?? null
 		const chainDominance = chainDominances[chainName] ?? null
 
-		const mcap = getPrevStablecoinTotalFromChart(chart, 0, 'totalCirculatingUSD')
+		const mcap = getStablecoinValueFromPoint(chart?.at(-1), 'totalCirculatingUSD')
 		const mcapPrevDay = getPrevStablecoinTotalFromChart(chart, 1, 'totalCirculatingUSD', undefined, { currentTimeMs })
 		const mcapPrevWeek = getPrevStablecoinTotalFromChart(chart, 7, 'totalCirculatingUSD', undefined, { currentTimeMs })
 		const mcapPrevMonth = getPrevStablecoinTotalFromChart(chart, 30, 'totalCirculatingUSD', undefined, {
 			currentTimeMs
 		})
-		const circulating = getPrevStablecoinTotalFromChart(chart, 0, 'totalCirculating')
-		const unreleased = getPrevStablecoinTotalFromChart(chart, 0, 'totalUnreleased')
-		const bridgedTo = getPrevStablecoinTotalFromChart(chart, 0, 'totalBridgedToUSD')
-		const minted = getPrevStablecoinTotalFromChart(chart, 0, 'totalMintedUSD')
+		const circulating = getStablecoinValueFromPoint(chart?.at(-1), 'totalCirculating')
+		const unreleased = getStablecoinValueFromPoint(chart?.at(-1), 'totalUnreleased')
+		const bridgedTo = getStablecoinValueFromPoint(chart?.at(-1), 'totalBridgedToUSD')
+		const minted = getStablecoinValueFromPoint(chart?.at(-1), 'totalMintedUSD')
 		const dominance = chainDominance
 			? {
 					name: chainDominance.symbol,

@@ -16,11 +16,11 @@ export function usePoolVerifiedProps({
 	poolId: string
 	range: PoolHistoryRange
 	locked: boolean
-}): { props: PoolVerifiedProps; isLoading: boolean } {
+}): { props: PoolVerifiedProps; isLoading: boolean; updatedAtMs: number } {
 	const { authorizedFetch, hasAccess: paid } = useVerifiedAccess()
 	const enabled = locked && paid
 
-	const { data, isLoading } = useQuery<PoolVerifiedProps>({
+	const { data, isLoading, dataUpdatedAt } = useQuery<PoolVerifiedProps>({
 		// Tier in the key: a lapsed subscription must not read the paid entry.
 		queryKey: ['yields-verified-pool', poolId, range, paid],
 		queryFn: async () => {
@@ -38,5 +38,10 @@ export function usePoolVerifiedProps({
 	})
 
 	// `enabled: false` still hands back cached data, so entitlement is re-checked on every render.
-	return { props: enabled && data ? data : EMPTY_POOL_VERIFIED_PROPS, isLoading: enabled && isLoading }
+	// Never seeded, so `dataUpdatedAt` is this fetch's own time and only ever describes client-rendered data.
+	return {
+		props: enabled && data ? data : EMPTY_POOL_VERIFIED_PROPS,
+		isLoading: enabled && isLoading,
+		updatedAtMs: dataUpdatedAt
+	}
 }

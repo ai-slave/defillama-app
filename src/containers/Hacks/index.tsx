@@ -13,7 +13,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
@@ -96,18 +96,18 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 
 const chartTypeList = ['Monthly Sum', 'Total Hacked by Technique']
 
-const getTimeSinceSeconds = (timeQuery: string | undefined, nowSec: number): number | null => {
+const getTimeSinceSeconds = (timeQuery: string | undefined, endSec: number): number | null => {
 	if (typeof timeQuery !== 'string') return null
 
 	switch (timeQuery) {
 		case '7d':
-			return nowSec - 7 * 24 * 60 * 60
+			return endSec - 7 * 24 * 60 * 60
 		case '30d':
-			return nowSec - 30 * 24 * 60 * 60
+			return endSec - 30 * 24 * 60 * 60
 		case '90d':
-			return nowSec - 90 * 24 * 60 * 60
+			return endSec - 90 * 24 * 60 * 60
 		case '1y':
-			return nowSec - 365 * 24 * 60 * 60
+			return endSec - 365 * 24 * 60 * 60
 		default:
 			return null
 	}
@@ -125,7 +125,8 @@ export function HacksContainer({
 	classificationOptions
 }: IHacksPageData) {
 	const [chartType, setChartType] = React.useState('Monthly Sum')
-	const nowSec = useNowSeconds()
+	// The time filter's window ends where the hacks list ends: the page clock it was built at.
+	const pageClockSec = usePageClockSec()
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const router = useRouter()
 	const { time: timeQ, minLost, maxLost } = router.query
@@ -142,11 +143,11 @@ export function HacksContainer({
 			chains: pick('chain', 'excludeChain', chainOptions),
 			techniques: pick('tech', 'excludeTech', techniqueOptions),
 			classifications: pick('class', 'excludeClass', classificationOptions),
-			since: getTimeSinceSeconds(typeof timeQ === 'string' ? timeQ : undefined, nowSec),
+			since: getTimeSinceSeconds(typeof timeQ === 'string' ? timeQ : undefined, pageClockSec),
 			minLost: minLostVal,
 			maxLost: maxLostVal
 		}
-	}, [router.query, chainOptions, techniqueOptions, classificationOptions, timeQ, nowSec, minLostVal, maxLostVal])
+	}, [router.query, chainOptions, techniqueOptions, classificationOptions, timeQ, pageClockSec, minLostVal, maxLostVal])
 
 	const hasActiveFilters =
 		filters.chains !== null ||

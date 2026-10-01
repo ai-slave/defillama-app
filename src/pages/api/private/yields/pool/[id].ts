@@ -49,7 +49,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 	return res
 		.status(200)
-		.json(buildPoolVerifiedProps({ pool, history, fullHistory: maxHistory, sourceVerified, sourceHistory }))
+		.json(
+			buildPoolVerifiedProps({ pool, history, fullHistory: maxHistory, sourceVerified, sourceHistory, now: Date.now() })
+		)
 }
 
 export default withSubscriptionJsonRoute({

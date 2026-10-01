@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { buildHacksPageSummary } from '../data'
 import { HacksContainer } from '../index'
 import type { IHackRow } from '../types'
@@ -49,7 +50,13 @@ afterEach(async () => {
 
 test('Reset filters clears a chain the user deselected', async () => {
 	router.query = { excludeChain: 'Base' }
-	await act(async () => root.render(<HacksContainer data={DATA} {...buildHacksPageSummary(DATA)} />))
+	await act(async () =>
+		root.render(
+			<PageClockProvider pageClockSec={1_704_067_200}>
+				<HacksContainer data={DATA} {...buildHacksPageSummary(DATA)} />
+			</PageClockProvider>
+		)
+	)
 
 	const reset = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Reset filters')!
 	expect(reset.disabled).toBe(false)

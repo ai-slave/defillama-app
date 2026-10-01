@@ -49,6 +49,8 @@ export interface IChainOverviewData {
 		tvlPrevDay: number | null
 		valueChange24hUSD: number | null
 		change24h: number | null
+		/** The clock the 24h change was measured at; a client recomputation with TVL settings uses the same day. */
+		computedAtMs: number
 	}
 	extraTvlCharts: {
 		staking: Record<string, number>

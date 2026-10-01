@@ -589,7 +589,7 @@ export function PoolGrowthChart({
 		initialRange,
 		model,
 		range,
-		(next) => fetchHistory(next).then((history) => buildGrowthChart(history, intrinsicSeries)),
+		(next) => fetchHistory(next).then(({ history }) => buildGrowthChart(history, intrinsicSeries)),
 		!historyAccessPending
 	)
 	const [instance, setInstance] = useState<echarts.ECharts | null>(null)

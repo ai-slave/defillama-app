@@ -328,8 +328,9 @@ export async function getExtraTvlByChain({
 
 	const latestChartPoint = chart.at(-1)
 	if (latestChartPoint === undefined) return null
-	const totalValue = getPrevTvlFromChart(chart, 0) ?? latestChartPoint[1]
-	const previousDayValue = getPrevTvlFromChart(chart, 1)
+	const nowMs = Date.now()
+	const totalValue = getPrevTvlFromChart(chart, 0, nowMs) ?? latestChartPoint[1]
+	const previousDayValue = getPrevTvlFromChart(chart, 1, nowMs)
 	const change24hPct = getPercentChange(totalValue, previousDayValue)
 	const change24h = change24hPct == null || !Number.isFinite(change24hPct) ? null : roundNumber(change24hPct, 2)
 	const chartColor = CHART_COLORS[0]

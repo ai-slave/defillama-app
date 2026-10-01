@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { applyMeasuredBase, resolveVerifiedApy } from '../apy'
 import type { ApyTriple, ResolvedApy, VerifiedBlock } from '../types'
 
@@ -44,8 +44,7 @@ describe('resolveVerifiedApy', () => {
 
 describe('applyMeasuredBase', () => {
 	// The fixture reading is dated 2026-08-10; the table would judge it the morning after.
-	beforeAll(() => vi.setSystemTime(new Date('2026-08-11T06:00:00Z')))
-	afterAll(() => vi.useRealTimers())
+	const NOW = Date.parse('2026-08-11T06:00:00Z')
 
 	const triple = (over: Partial<ApyTriple> = {}): ApyTriple => ({ base: 2.38, reward: 0.45, total: 2.83, ...over })
 	const resolved = (over: Partial<ResolvedApy> = {}): ResolvedApy => ({
@@ -62,7 +61,8 @@ describe('applyMeasuredBase', () => {
 			triple(),
 			verified({ apy: { avg_1d: 2.58, avg_7d: 0, avg_30d: 0 } }),
 			'current',
-			true
+			true,
+			NOW
 		)
 
 		expect(out.base).toBe(2.58)
@@ -81,7 +81,8 @@ describe('applyMeasuredBase', () => {
 			triple({ reward: null, total: null }),
 			verified({ apy: { avg_1d: 0.00003, avg_7d: 0, avg_30d: 0 } }),
 			'current',
-			false
+			false,
+			NOW
 		)
 
 		expect(out.total).toBeCloseTo(2.44314, 10)
@@ -96,7 +97,8 @@ describe('applyMeasuredBase', () => {
 			triple({ reward: null }),
 			verified({ apy: { avg_1d: 0, avg_7d: 0, avg_30d: 0 } }),
 			'current',
-			false
+			false,
+			NOW
 		)
 
 		expect(out.total).toBe(0)
@@ -106,7 +108,7 @@ describe('applyMeasuredBase', () => {
 
 	test('passes the reported composition through when the pool is unmeasured', () => {
 		const view = resolved()
-		const out = applyMeasuredBase(view, triple(), null, 'current', true)
+		const out = applyMeasuredBase(view, triple(), null, 'current', true, NOW)
 
 		expect(out).toEqual({
 			...view,
@@ -129,7 +131,8 @@ describe('applyMeasuredBase', () => {
 			triple({ base: null, reward: null, total: 4.52 }),
 			block,
 			'current',
-			false
+			false,
+			NOW
 		)
 		expect(swapped.total).toBe(5.68)
 		expect(swapped.reported).toBe(4.52)
@@ -139,7 +142,8 @@ describe('applyMeasuredBase', () => {
 			triple({ base: null, reward: null, total: 4.52 }),
 			block,
 			'current',
-			true
+			true,
+			NOW
 		)
 		expect(refused.total).toBe(4.52)
 		expect(refused.measured).toBeNull()

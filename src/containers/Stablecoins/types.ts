@@ -68,7 +68,7 @@ export interface StablecoinChainsChartInput {
 
 export interface StablecoinChainsPageSummaryOptions {
 	chainMetadata: Record<string, IChainMetadata>
-	currentTimeMs?: number
+	currentTimeMs: number
 }
 
 export interface StablecoinChainsChartSource {

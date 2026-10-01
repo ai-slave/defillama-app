@@ -68,7 +68,7 @@ function buildVerifiedWindows(pool: PoolDetail): Array<VerifiedWindowRow> {
 
 const SUPPLY_APY_COMPONENTS: Array<ApyComponent> = ['base', 'reward', 'intrinsic']
 
-function buildMeasuredApy(pool: PoolDetail, sourceVerified: VerifiedBlock | null): MeasuredApy | null {
+function buildMeasuredApy(pool: PoolDetail, sourceVerified: VerifiedBlock | null, now: number): MeasuredApy | null {
 	if (!pool.verified) return null
 	const reported = resolveApy(pool.apy, pool.intrinsic, 'current', SUPPLY_APY_COMPONENTS)
 	const measured = applyMeasuredBase(
@@ -76,9 +76,10 @@ function buildMeasuredApy(pool: PoolDetail, sourceVerified: VerifiedBlock | null
 		pool.apy.current,
 		pool.verified,
 		'current',
-		pool.reward_tokens.length > 0
+		pool.reward_tokens.length > 0,
+		now
 	)
-	return applyMeasuredIntrinsic(measured, sourceVerified, 'current')
+	return applyMeasuredIntrinsic(measured, sourceVerified, 'current', now)
 }
 
 export function buildPoolVerifiedProps({
@@ -86,7 +87,8 @@ export function buildPoolVerifiedProps({
 	history,
 	fullHistory,
 	sourceVerified = null,
-	sourceHistory = null
+	sourceHistory = null,
+	now
 }: {
 	pool: PoolDetail
 	history: PoolHistory | null
@@ -96,12 +98,14 @@ export function buildPoolVerifiedProps({
 	sourceVerified?: VerifiedBlock | null
 	/** That pool's measured history, which the growth chart rebases the asset band on. */
 	sourceHistory?: PoolHistory | null
+	/** The request's clock, which judges whether the measured readings are still current. */
+	now: number
 }): PoolVerifiedProps {
 	const intrinsicSeries = buildIntrinsicSeries(sourceHistory)
 	const intrinsicApy = buildIntrinsicApySeries(sourceHistory)
 	return {
 		verified: pool.verified ?? null,
-		apy: buildMeasuredApy(pool, sourceVerified),
+		apy: buildMeasuredApy(pool, sourceVerified, now),
 		verifiedWindows: buildVerifiedWindows(pool),
 		growthChart: history?.length ? buildGrowthChart(history, intrinsicSeries) : null,
 		intrinsicSeries,

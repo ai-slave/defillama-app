@@ -4,27 +4,33 @@ import { describe, expect, test } from 'vitest'
 import { normalizeLocalArticleDocument } from '../document'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 
+const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
+
 describe('ArticleRenderer', () => {
 	test('renders visible co-authors in the article byline', () => {
-		const normalized = normalizeLocalArticleDocument({
-			title: 'Aave fees after the exploit',
-			status: 'published',
-			author: 'Jane Doe',
-			authorProfile: {
-				id: 'profile-1',
-				pbUserId: 'pb-user-1',
-				slug: 'jane-doe',
-				displayName: 'Jane Doe',
-				socials: {},
-				createdAt: '2026-01-01T00:00:00.000Z',
-				updatedAt: '2026-01-01T00:00:00.000Z'
+		const normalized = normalizeLocalArticleDocument(
+			{
+				title: 'Aave fees after the exploit',
+				status: 'published',
+				author: 'Jane Doe',
+				authorProfile: {
+					id: 'profile-1',
+					pbUserId: 'pb-user-1',
+					slug: 'jane-doe',
+					displayName: 'Jane Doe',
+					socials: {},
+					createdAt: '2026-01-01T00:00:00.000Z',
+					updatedAt: '2026-01-01T00:00:00.000Z'
+				},
+				section: 'report',
+				contentJson: {
+					type: 'doc',
+					content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text.' }] }]
+				}
 			},
-			section: 'report',
-			contentJson: {
-				type: 'doc',
-				content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text.' }] }]
-			}
-		})
+			null,
+			ARTICLE_NOW
+		)
 
 		expect(normalized.ok).toBe(true)
 		if (!normalized.ok) return
@@ -55,17 +61,21 @@ describe('ArticleRenderer', () => {
 	})
 
 	test('links the DefiLlama Research brand byline to the research author page', () => {
-		const normalized = normalizeLocalArticleDocument({
-			title: 'Market structure report',
-			status: 'published',
-			author: 'DefiLlama Research',
-			brandByline: true,
-			section: 'interview',
-			contentJson: {
-				type: 'doc',
-				content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text.' }] }]
-			}
-		})
+		const normalized = normalizeLocalArticleDocument(
+			{
+				title: 'Market structure report',
+				status: 'published',
+				author: 'DefiLlama Research',
+				brandByline: true,
+				section: 'interview',
+				contentJson: {
+					type: 'doc',
+					content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text.' }] }]
+				}
+			},
+			null,
+			ARTICLE_NOW
+		)
 
 		expect(normalized.ok).toBe(true)
 		if (!normalized.ok) return
@@ -83,47 +93,51 @@ describe('ArticleRenderer', () => {
 	})
 
 	test('renders custom article primitives without the editor', () => {
-		const normalized = normalizeLocalArticleDocument({
-			title: 'Aave fees after the exploit',
-			subtitle: 'A local research draft',
-			status: 'draft',
-			contentJson: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [{ type: 'text', text: 'Fees moved' }]
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Aave',
-								marks: [{ type: 'entityLink', attrs: { entityType: 'protocol', slug: 'aave' } }]
-							},
-							{ type: 'text', text: ' became more expensive ' },
-							{ type: 'citation', attrs: { id: '1', label: '1', url: 'https://example.com' } }
-						]
-					},
-					{
-						type: 'callout',
-						attrs: { tone: 'data' },
-						content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Watch the revenue line.' }] }]
-					},
-					{
-						type: 'defillamaChart',
-						attrs: {
-							config: {
-								entities: [{ entityType: 'protocol', slug: 'compound', name: 'Compound' }],
-								chartType: 'fees'
+		const normalized = normalizeLocalArticleDocument(
+			{
+				title: 'Aave fees after the exploit',
+				subtitle: 'A local research draft',
+				status: 'draft',
+				contentJson: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'Fees moved' }]
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Aave',
+									marks: [{ type: 'entityLink', attrs: { entityType: 'protocol', slug: 'aave' } }]
+								},
+								{ type: 'text', text: ' became more expensive ' },
+								{ type: 'citation', attrs: { id: '1', label: '1', url: 'https://example.com' } }
+							]
+						},
+						{
+							type: 'callout',
+							attrs: { tone: 'data' },
+							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Watch the revenue line.' }] }]
+						},
+						{
+							type: 'defillamaChart',
+							attrs: {
+								config: {
+									entities: [{ entityType: 'protocol', slug: 'compound', name: 'Compound' }],
+									chartType: 'fees'
+								}
 							}
 						}
-					}
-				]
-			}
-		})
+					]
+				}
+			},
+			null,
+			ARTICLE_NOW
+		)
 
 		expect(normalized.ok).toBe(true)
 		if (!normalized.ok) return
@@ -141,27 +155,31 @@ describe('ArticleRenderer', () => {
 	})
 
 	test('renders an editor-defined Q&A question number', () => {
-		const normalized = normalizeLocalArticleDocument({
-			id: 'custom-question-number',
-			title: 'Numbered interview',
-			status: 'published',
-			contentJson: {
-				type: 'doc',
-				content: [
-					{
-						type: 'qa',
-						attrs: { questionNumber: '07' },
-						content: [
-							{ type: 'qaQuestion', content: [{ type: 'text', text: 'Why seven?' }] },
-							{
-								type: 'qaAnswer',
-								content: [{ type: 'paragraph', content: [{ type: 'text', text: 'It is intentional.' }] }]
-							}
-						]
-					}
-				]
-			}
-		})
+		const normalized = normalizeLocalArticleDocument(
+			{
+				id: 'custom-question-number',
+				title: 'Numbered interview',
+				status: 'published',
+				contentJson: {
+					type: 'doc',
+					content: [
+						{
+							type: 'qa',
+							attrs: { questionNumber: '07' },
+							content: [
+								{ type: 'qaQuestion', content: [{ type: 'text', text: 'Why seven?' }] },
+								{
+									type: 'qaAnswer',
+									content: [{ type: 'paragraph', content: [{ type: 'text', text: 'It is intentional.' }] }]
+								}
+							]
+						}
+					]
+				}
+			},
+			null,
+			ARTICLE_NOW
+		)
 
 		expect(normalized.ok).toBe(true)
 		if (!normalized.ok) return

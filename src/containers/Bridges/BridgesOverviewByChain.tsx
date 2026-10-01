@@ -10,6 +10,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import {
@@ -287,10 +288,12 @@ export function BridgesOverviewByChain({
 		return filteredBridges
 	}, [activeTab, includeMessaging, filteredBridges, messagingProtocols])
 
+	// The completed days are the data's, so they follow the clock the props were built with, not the visitor's.
+	const nowSec = usePageClockSec()
 	const { dayTotalVolume, weekTotalVolume, monthTotalVolume } = React.useMemo(() => {
 		const bridgesToCalculate = activeTab === 'bridges' ? bridgesTableData : messagingProtocols
-		return getBridgeOverviewSummaryTotals({ selectedChain, bridges: bridgesToCalculate, chainVolumeData })
-	}, [chainVolumeData, selectedChain, bridgesTableData, messagingProtocols, activeTab])
+		return getBridgeOverviewSummaryTotals({ selectedChain, bridges: bridgesToCalculate, chainVolumeData, nowSec })
+	}, [chainVolumeData, selectedChain, bridgesTableData, messagingProtocols, activeTab, nowSec])
 
 	const prepareActiveTabCsv = React.useCallback(() => {
 		if (activeTab === 'largeTxs') {

@@ -2,8 +2,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
-import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
-import { usePageClockSec } from '~/hooks/usePageClock'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { getDismissedAnnouncements } from '~/utils/cookies'
 import { ANNOUNCEMENT_REGISTRY } from './registry'
@@ -33,11 +32,12 @@ function PageViewAnnouncement({ page }: { page: string }) {
 	// worse than a moment of the fallback.
 	const canTarget = isClient && interests.status !== 'loading' && !loaders.subscriptionInitialCheck
 	const profile = canTarget && interests.status === 'ready' ? interests.profile : null
-	// The launch window is judged at the page clock, so the HTML and the hydrating client agree. A page without a
-	// data function has no clock; there the launch banner waits for mount instead of guessing.
-	const pageClockSec = usePageClockSec()
-	const nowSec = useNowSecondsOnce(pageClockSec ?? 0)
-	const now = pageClockSec !== null || isClient ? nowSec * 1000 : Number.POSITIVE_INFINITY
+	// The HTML and the hydrating client judge the launch window at the page clock; after that it can close while
+	// the page stays open. Only the open/closed answer feeds the choice, so a clock tick inside the window keeps the
+	// same banner and does not count a second impression.
+	const nowSec = useNowSeconds()
+	const launch = ANNOUNCEMENT_REGISTRY.launch
+	const launchOpen = launch !== null && nowSec * 1000 < Date.parse(launch.until)
 	// Closing any banner empties the slot for the rest of this page view, even if the profile arrives
 	// afterwards and would have picked a different one.
 	const [dismissedThisView, setDismissedThisView] = React.useState(false)
@@ -47,12 +47,12 @@ function PageViewAnnouncement({ page }: { page: string }) {
 		() =>
 			resolveAnnouncement({
 				registry: ANNOUNCEMENT_REGISTRY,
-				now,
+				launchOpen,
 				profile,
 				hasActiveSubscription,
 				dismissedTokens: isClient ? getDismissedAnnouncements() : []
 			}),
-		[isClient, profile, hasActiveSubscription, now]
+		[isClient, profile, hasActiveSubscription, launchOpen]
 	)
 
 	if (dismissedThisView || !resolved) return null

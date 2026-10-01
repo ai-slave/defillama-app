@@ -16,7 +16,7 @@ export function verifiedAgeDays(asOf: string | null | undefined, now: number): n
 	return Math.floor(now / DAY_MS) - Math.floor(stamp / DAY_MS)
 }
 
-export function isVerifiedCurrent(asOf: string | null | undefined, now: number = Date.now()): boolean {
+export function isVerifiedCurrent(asOf: string | null | undefined, now: number): boolean {
 	const age = verifiedAgeDays(asOf, now)
 	return age != null && age <= 1
 }
