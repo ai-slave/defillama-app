@@ -393,6 +393,15 @@ const RULES = [
 		match: matchChartToolbarAutoMargin
 	},
 	{
+		id: 'raw-echarts-init',
+		description:
+			'echarts.init outside the shared renderers — draw the chart with the src/components/ECharts component for its shape (design.md → Charts → Renderers); MultiSeriesChart covers time and category axes',
+		pattern: /\becharts(?:Core)?\.init\(/g,
+		// The shared renderers and the PNG exporter own chart instances.
+		ownedBy: ['src/components/ECharts/', 'src/components/ChartExport/'],
+		skipTests: true
+	},
+	{
 		id: 'conflicting-named-typography',
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',
@@ -447,6 +456,7 @@ for (const file of files) {
 		)
 			continue
 		if (rule.uiOwned && file.startsWith('src/ui/')) continue
+		if (rule.ownedBy?.some((prefix) => file.startsWith(prefix))) continue
 		if (rule.skipTests && /(?:^|\/)__tests__\/|\.test\.tsx?$/.test(file)) continue
 		if (
 			rule.productLeak &&

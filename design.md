@@ -277,6 +277,21 @@ These recipes are the shared component vocabulary established from the reviewed 
 
 ## Charts
 
+Chart **renderers** live in [`src/components/ECharts`](src/components/ECharts); pick the component for the chart's shape and pass it data and options:
+
+| Shape                                                                         | Component                                                                                            |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Lines, areas or vertical bars over time                                       | `MultiSeriesChart` with `createTimeSeriesChartOptions`                                               |
+| Lines or vertical bars over categories (proposals, months as labels, buckets) | `MultiSeriesChart` with `createCategoryChartOptions`: the dataset's first dimension holds the labels |
+| Horizontal bars, ranked lists                                                 | `HBarChart`                                                                                          |
+| Pie or donut                                                                  | `PieChart`                                                                                           |
+| Scatter or bubble, linear or log axes                                         | `ScatterChart`                                                                                       |
+| Treemap                                                                       | `TreemapChart`                                                                                       |
+| OHLC                                                                          | `CandlestickChart`                                                                                   |
+| Flows between nodes                                                           | `SankeyChart`                                                                                        |
+
+They own the instance lifecycle, resize, theme, tooltip surface, grid geometry and export, so a page never calls `echarts.init`. When no renderer fits, extend the closest one (a variant or an option) instead of drawing a one-off; the `raw-echarts-init` rule in `check-design-tokens.mjs` counts the remaining direct instances (radar, the Unlocks and token-rating charts, the Sonic FeeM treemap, server and capture renderers).
+
 Chart **series** colors come from `CHART_COLORS` + `getNDistinctColors` (golden-angle generator) in code — they are intentionally _not_ design tokens and must not be bulk-changed; the Figma library has no N-series concept.
 
 Chart **canvas chrome** (axis labels, gridlines, legends, dataZoom, PNG-export framing, and candlestick direction colors) uses the `--chart-*` tokens in `semantics.css`. The chart-theme pass established these as the current visual baseline: axis labels use the tertiary tier, gridlines share the low-alpha chart stroke, and candlesticks use the chart direction tokens. ECharts HTML tooltips are DOM surfaces instead: options set transparent native chrome and the shared `.defillama-echarts-tooltip` recipe in `tailwind.css` applies the overlay, border, text, radius, and shadow tokens. Chart tokens remain separate from series palettes so later semantic-token changes cannot silently recolor chart data.

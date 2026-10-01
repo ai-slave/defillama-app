@@ -22,6 +22,7 @@
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
 		"chart-toolbar-auto-margin": 0,
+		"raw-echarts-init": 3,
 		"conflicting-named-typography": 30,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0
@@ -49,6 +50,7 @@
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
 		"chart-toolbar-auto-margin": 0,
+		"raw-echarts-init": 5,
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0

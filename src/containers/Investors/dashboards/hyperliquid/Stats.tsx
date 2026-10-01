@@ -9,16 +9,12 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
-import type { EChartsOption } from 'echarts'
-import { BarChart, PieChart as EPieChart, ScatterChart as EScatterChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
-import * as echarts from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { lazy, useEffect, useMemo, useRef, useState } from 'react'
+import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
+import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import type { IScatterChartProps, ScatterChartPoint } from '~/components/ECharts/ScatterChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
-import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
@@ -38,46 +34,17 @@ const tableFeaturesConfig = tableFeatures({
 	paginatedRowModel: createPaginatedRowModel()
 })
 
-echarts.use([CanvasRenderer, BarChart, EPieChart, EScatterChart, GridComponent, TooltipComponent])
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
+const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
+const ScatterChart = lazy(() => import('~/components/ECharts/ScatterChart')) as React.FC<IScatterChartProps>
 
 const ALL_MIDS_SUB: Array<WsSubscription> = [{ type: 'allMids' }]
 const TICKER_SPEED_PX_PER_SEC = 52
 const PAGE_SIZE = 10
 
-const CHART_COLORS = {
-	light: { axisLabel: '#555962', splitLine: 'rgba(0,0,0,0.06)', label: '#1a1d23', labelLine: 'rgba(0,0,0,0.15)' },
-	dark: {
-		axisLabel: '#6e727c',
-		splitLine: 'rgba(255,255,255,0.04)',
-		label: '#cdd0d5',
-		labelLine: 'rgba(255,255,255,0.2)'
-	}
-}
-
-function usePersistentChart(enabled: boolean) {
-	const containerRef = useRef<HTMLDivElement>(null)
-	const chartRef = useRef<echarts.ECharts | null>(null)
-
-	useEffect(() => {
-		if (!enabled) return
-		const container = containerRef.current
-		if (!container) return
-		const instance = echarts.init(container)
-		chartRef.current = instance
-		const observer = new ResizeObserver(() => {
-			if (!instance.isDisposed()) instance.resize()
-		})
-		observer.observe(container)
-
-		return () => {
-			observer.disconnect()
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [enabled])
-
-	return { containerRef, chartRef }
-}
+const FUNDING_UP_COLOR = '#10b981'
+const FUNDING_DOWN_COLOR = '#ef4444'
+const OI_COLORS = ['#2172e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#94a3b8']
 
 function formatPct(value: number | null | undefined) {
 	if (value == null) return '—'
@@ -244,65 +211,20 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 }
 
 function FundingChart({ data }: { data: Array<{ name: string; value: number }> }) {
-	const [isDark] = useDarkModeManager()
-	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
-	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
-
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-
-		const sorted = data.toSorted((a, b) => a.value - b.value)
-
-		const option: EChartsOption = {
-			grid: { left: 70, right: 16, top: 8, bottom: 8, containLabel: false },
-			tooltip: {
-				trigger: 'axis',
-				axisPointer: { type: 'shadow' },
-				formatter: (rawParams: unknown) => {
-					const item = normalizeTooltipItems(rawParams)[0]
-					if (!item) return ''
-					const rawValue = getTooltipRawYValue(item, item.seriesName ?? '')
-					const value = typeof rawValue === 'number' ? rawValue : Number(rawValue)
-					if (!Number.isFinite(value)) return ''
-					return `<b>${item.name ?? ''}</b><br/>Funding (ann.): ${value >= 0 ? '+' : ''}${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-				}
-			},
-			xAxis: {
-				type: 'value',
-				axisLabel: { formatter: '{value}%', color: c.axisLabel, fontSize: 11 },
-				splitLine: { lineStyle: { color: c.splitLine } }
-			},
-			yAxis: {
-				type: 'category',
-				data: sorted.map((d) => d.name),
-				axisLabel: { color: c.label, fontSize: 11 },
-				axisLine: { show: false },
-				axisTick: { show: false }
-			},
-			series: [
-				{
-					type: 'bar',
-					data: sorted.map((d) => ({
-						value: d.value,
-						itemStyle: {
-							color: d.value >= 0 ? '#10b981' : '#ef4444'
-						}
-					})),
-					barMaxWidth: 18
-				}
-			],
-			animation: false
-		}
-		instance.setOption(option, { notMerge: true })
-	}, [data, c, chartRef])
-
 	if (data.length === 0) return null
+
+	const sorted = data.toSorted((a, b) => b.value - a.value)
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Funding Rates (Annualized) — Top 20 by OI</h3>
-			<div ref={containerRef} style={{ width: '100%', height: `${Math.max(300, data.length * 28)}px` }} />
+			<HBarChart
+				categories={sorted.map((d) => d.name)}
+				values={sorted.map((d) => d.value)}
+				colors={sorted.map((d) => (d.value >= 0 ? FUNDING_UP_COLOR : FUNDING_DOWN_COLOR))}
+				valueSymbol="%"
+				height={`${Math.max(300, data.length * 28)}px`}
+			/>
 		</div>
 	)
 }
@@ -539,135 +461,51 @@ const predictedFundingColumns: Array<ColumnDef<typeof tableFeaturesConfig, Predi
 ]
 
 function OIDistributionChart({ data }: { data: Array<{ name: string; value: number }> }) {
-	const [isDark] = useDarkModeManager()
-	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
-	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
-
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-
-		const colors = ['#2172e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#94a3b8']
-
-		const option: EChartsOption = {
-			tooltip: {
-				trigger: 'item',
-				formatter: (rawParams: unknown) => {
-					const item = normalizeTooltipItems(rawParams)[0]
-					const value = typeof item?.value === 'number' ? item.value : Number(item?.value)
-					const percent = item && 'percent' in item && typeof item.percent === 'number' ? item.percent : 0
-					return `<b>${item?.name ?? ''}</b><br/>OI: ${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>${formatPercent(percent, { input: 'percent' })}`
-				}
-			},
-			series: [
-				{
-					type: 'pie',
-					radius: ['45%', '70%'],
-					center: ['50%', '50%'],
-					data: data.map((d, i) => ({
-						name: d.name,
-						value: d.value,
-						itemStyle: { color: colors[i % colors.length] }
-					})),
-					label: { color: c.label, fontSize: 11, formatter: '{b}: {d}%' },
-					labelLine: { lineStyle: { color: c.labelLine } },
-					emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
-				}
-			],
-			animation: false
-		}
-		instance.setOption(option, { notMerge: true })
-	}, [data, c, chartRef])
-
 	if (data.length === 0) return null
+
+	const stackColors: Record<string, string> = {}
+	for (let index = 0; index < data.length; index++) stackColors[data[index].name] = OI_COLORS[index % OI_COLORS.length]
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Open Interest Distribution</h3>
-			<div ref={containerRef} style={{ width: '100%', height: '400px' }} />
+			<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
 		</div>
 	)
 }
 
+// Bubble size and colour both encode the market's annualized funding, so the funding rides
+// along as the fourth value for the tooltip.
 function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
-	const [isDark] = useDarkModeManager()
-	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
-	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
-
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-
-		const option: EChartsOption = {
-			grid: { left: 80, right: 30, top: 20, bottom: 50, containLabel: false },
-			tooltip: {
-				trigger: 'item',
-				formatter: (rawParams: unknown) => {
-					const item = normalizeTooltipItems(rawParams)[0]
-					const d = Array.isArray(item?.data) ? item.data : Array.isArray(item?.value) ? item.value : []
-					if (
-						typeof d[0] !== 'number' ||
-						typeof d[1] !== 'number' ||
-						typeof d[2] !== 'number' ||
-						typeof d[3] !== 'string'
-					)
-						return ''
-					return `<b>${d[3]}</b><br/>Volume: ${formatUsd(d[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(d[1], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${formatPercent(d[2], { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-				}
-			},
-			xAxis: {
-				type: 'log',
-				name: '24h Volume ($)',
-				nameLocation: 'center',
-				nameGap: 30,
-				nameTextStyle: { color: c.axisLabel, fontSize: 11 },
-				axisLabel: { color: c.axisLabel, fontSize: 11 },
-				splitLine: { lineStyle: { color: c.splitLine } }
-			},
-			yAxis: {
-				type: 'log',
-				name: 'Open Interest ($)',
-				nameLocation: 'center',
-				nameGap: 55,
-				nameTextStyle: { color: c.axisLabel, fontSize: 11 },
-				axisLabel: { color: c.axisLabel, fontSize: 11 },
-				splitLine: { lineStyle: { color: c.splitLine } }
-			},
-			series: [
-				{
-					type: 'scatter',
-					data: (() => {
-						const points: Array<[number, number, number, string]> = []
-						for (const market of data) {
-							if (market.dayNtlVlm > 0 && market.openInterest > 0) {
-								points.push([market.dayNtlVlm, market.openInterest, market.fundingAnnualized, market.name])
-							}
-						}
-						return points
-					})(),
-					symbolSize: (val: Array<number>) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
-					itemStyle: {
-						color: (params) =>
-							Array.isArray(params.data) && typeof params.data[2] === 'number' && params.data[2] >= 0
-								? '#10b981'
-								: '#ef4444',
-						opacity: 0.75
-					}
-				}
-			],
-			animation: false
-		}
-		instance.setOption(option, { notMerge: true })
-	}, [data, c, chartRef])
-
-	if (data.length === 0) return null
+	const points: Array<ScatterChartPoint> = []
+	for (const market of data) {
+		if (!(market.dayNtlVlm > 0 && market.openInterest > 0)) continue
+		const positive = market.fundingAnnualized >= 0
+		points.push({
+			value: [market.dayNtlVlm, market.openInterest, market.name, market.fundingAnnualized],
+			seriesName: positive ? 'Positive funding' : 'Negative funding',
+			groupColor: positive ? FUNDING_UP_COLOR : FUNDING_DOWN_COLOR,
+			symbolSize: Math.max(6, Math.min(24, Math.abs(market.fundingAnnualized) * 2))
+		})
+	}
+	if (points.length === 0) return null
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">
 				Volume vs Open Interest (bubble size = funding magnitude)
 			</h3>
-			<div ref={containerRef} style={{ width: '100%', height: '450px' }} />
+			<ScatterChart
+				chartData={points}
+				xAxisLabel="24h Volume ($)"
+				yAxisLabel="Open Interest ($)"
+				valueSymbol="$"
+				logScale
+				height="450px"
+				tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
+					`<b>${name}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
+				}
+			/>
 		</div>
 	)
 }

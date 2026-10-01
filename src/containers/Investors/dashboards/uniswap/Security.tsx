@@ -1,17 +1,14 @@
-import type { EChartsOption } from 'echarts'
-import { BarChart } from 'echarts/charts'
-import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
-import * as echarts from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import { Fragment, useEffect, useRef } from 'react'
-import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
-import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Fragment, lazy, useMemo } from 'react'
+import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
+import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
+import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { BarListCard, ChartCard, KpiGrid, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
-echarts.use([CanvasRenderer, BarChart, GridComponent, LegendComponent, TooltipComponent])
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 interface AuditReport {
 	repo: string
@@ -42,99 +39,74 @@ interface SecurityData {
 
 const VOTE_COLORS: Record<string, string> = { For: '#40B66B', Against: '#FF5F52', Abstain: '#9ca3af' }
 
-function escapeHtml(text: string): string {
-	return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
 // Proposal titles from the governance data sometimes carry the proposal body's
 // markdown; keep just the headline.
 function proposalTitle(title: string): string {
 	return title.split('#')[0]?.trim().slice(0, 90) ?? ''
 }
 
-// Stacked For/Against/Abstain bars per proposal. MultiSeriesChart is time-axis only and
-// proposals are sparse discrete events, so this renders on a category axis directly.
+// Stacked For/Against/Abstain bars per proposal. Proposals are discrete events, so they sit on a
+// category axis; the tooltip looks each one up by its axis label to show the proposal itself.
 function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
-	const [isDark] = useDarkModeManager()
-	const theme = useChartTheme(isDark)
-	const containerRef = useRef<HTMLDivElement>(null)
-	const chartRef = useRef<echarts.ECharts | null>(null)
-
-	useEffect(() => {
-		const container = containerRef.current
-		if (!container) return
-		const instance = echarts.init(container)
-		chartRef.current = instance
-		const observer = new ResizeObserver(() => {
-			if (!instance.isDisposed()) instance.resize()
-		})
-		observer.observe(container)
-		return () => {
-			observer.disconnect()
-			chartRef.current = null
-			instance.dispose()
+	const { dataset, charts, chartOptions } = useMemo(() => {
+		const source: Array<Array<string | number>> = []
+		const proposalByLabel = new Map<string, VoteTurnoutData['rows'][number]>()
+		for (let index = 0; index < chart.labels.length; index++) {
+			const label = chart.labels[index]!
+			const row: Array<string | number> = [label]
+			for (const series of chart.series) row.push(series.data[index] ?? 0)
+			source.push(row)
+			proposalByLabel.set(label, chart.rows[index]!)
 		}
-	}, [])
-
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance || instance.isDisposed()) return
-
-		const option: EChartsOption = {
-			grid: { left: 12, right: 12, top: 36, bottom: 8, outerBoundsMode: 'same', outerBoundsContain: 'axisLabel' },
-			legend: { top: 0, textStyle: { color: theme.text } },
-			xAxis: {
-				type: 'category',
-				data: chart.labels,
-				axisLabel: { color: theme.axisLabel },
-				axisLine: { lineStyle: { color: theme.ink(0.15) } },
-				axisTick: { show: false }
-			},
-			yAxis: {
-				type: 'value',
-				axisLabel: { color: theme.axisLabel, formatter: (value: number) => formatUsd(value, { compact: true }) },
-				splitLine: { lineStyle: { color: theme.gridline } }
-			},
-			tooltip: {
-				trigger: 'axis',
-				backgroundColor: isDark ? '#16101f' : '#ffffff',
-				borderColor: theme.ink(0.1),
-				textStyle: { color: theme.text },
-				formatter: (params: unknown) => {
-					const items = (Array.isArray(params) ? params : [params]) as Array<{
-						dataIndex: number
-						seriesName?: string
-						value?: number
-						color?: string
-					}>
-					const first = items[0]
-					if (!first) return ''
-					const row = chart.rows[first.dataIndex]
-					if (!row) return ''
-					const total = items.reduce((sum, item) => sum + (item.value || 0), 0)
-					let html = `<b>#${row.id} ${escapeHtml(proposalTitle(row.title))}</b><br/>`
-					html += `<span style="opacity:.7">${escapeHtml(row.date)} &middot; ${row.voters} voters</span><br/>`
-					html += `<b>Turnout: ${formatUsd(total, { compact: true })}</b><br/>`
-					for (const item of items) {
-						if (!item.value) continue
-						html += `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${item.color};margin-right:6px"></span>${item.seriesName}: ${formatUsd(item.value, { compact: true })}<br/>`
-					}
-					return html
-				}
-			},
-			series: chart.series.map((series) => ({
+		return {
+			dataset: { source, dimensions: ['Proposal', ...chart.series.map((series) => series.name)] },
+			charts: chart.series.map((series): MultiSeriesChartSeriesConfig => ({
+				type: 'bar',
 				name: series.name,
-				type: 'bar' as const,
+				encode: { x: 'Proposal', y: series.name },
 				stack: 'total',
-				data: series.data,
 				color: VOTE_COLORS[series.name],
 				barMaxWidth: 14
-			}))
+			})),
+			chartOptions: {
+				...createCategoryChartOptions('$'),
+				tooltip: {
+					formatter: (params: unknown) => {
+						const items = normalizeTooltipItems(params)
+						const proposal = proposalByLabel.get(String(items[0]?.axisValue))
+						if (!proposal) return ''
+						let total = 0
+						let rows = ''
+						for (const item of items) {
+							const name = item.seriesName ?? ''
+							const value = Number(getTooltipRawYValue(item, name) ?? 0)
+							if (!value) continue
+							total += value
+							rows += `${item.marker ?? ''}${escapeHtml(name)}: ${formatUsd(value, { compact: true })}<br/>`
+						}
+						return (
+							`<b>#${proposal.id} ${escapeHtml(proposalTitle(proposal.title))}</b><br/>` +
+							`<span style="opacity:.7">${escapeHtml(proposal.date)} &middot; ${proposal.voters} voters</span><br/>` +
+							`<b>Turnout: ${formatUsd(total, { compact: true })}</b><br/>${rows}`
+						)
+					}
+				}
+			}
 		}
-		instance.setOption(option)
-	}, [chart, theme, isDark])
+	}, [chart])
 
-	return <div ref={containerRef} style={{ height: '360px' }} />
+	return (
+		<MultiSeriesChart
+			dataset={dataset}
+			charts={charts}
+			valueSymbol="$"
+			title=""
+			height="360px"
+			hideDefaultLegend={false}
+			exportButtons="hidden"
+			chartOptions={chartOptions}
+		/>
+	)
 }
 
 // Version per report: the payload's v4 flag wins (it also marks the v4-integrated

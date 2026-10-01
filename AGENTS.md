@@ -88,6 +88,7 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 
 ## Chart Data Readers
 
+- Draw every chart with the shared renderer for its shape, listed in `design.md` → Charts; `MultiSeriesChart` handles category axes as well as time. Never call `echarts.init` in a page or container. If no renderer fits, extend one.
 - ECharts tooltip formatters read series values and timestamps through `src/components/ECharts/shared/tooltip.ts` (`getTooltipRawYValue`, `getTooltipAxisValue`). Do not index `params.value` or `params.data` by position or by series name.
 - Formatter params are typed `unknown`, so type errors do not reveal readers that a chart data layout change breaks. Before changing a chart dataset's row layout, search for every reader of the old layout (for example `data[seriesName]`, `seriesName in data`, `.value[1]`). Migrate each reader or confirm it is unaffected before the change is done.
 - Test a custom formatter with real builder output that has at least two series with different values, and confirm the test fails without the fix.
