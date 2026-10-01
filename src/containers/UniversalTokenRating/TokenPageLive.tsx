@@ -2,8 +2,8 @@ import { useState, type ReactNode } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS, oldBlue } from '~/constants/colors'
 import { AccentBadge, SecondaryBadge, StatusBadge } from '~/containers/MarketMakers/badges'
-import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { Button } from '~/ui/Button'
+import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -207,7 +207,6 @@ function AboutDrawer({
 	open: boolean
 	onClose: () => void
 }) {
-	if (!open) return null
 	const description = defillamaDescription?.trim() || asset.description?.trim() || null
 	const matrixRow: UtrLeaderboardRow = {
 		asset: asset.coingeckoId ?? asset.arcticId,
@@ -239,20 +238,21 @@ function AboutDrawer({
 		asset.overallPercentile ??
 		(asset.rank == null || !asset.ratedCount ? null : ((asset.ratedCount - asset.rank + 1) / asset.ratedCount) * 100)
 	return (
-		<Drawer open onClose={onClose} title={`About ${asset.projectName}`}>
-			<div className="flex min-h-full flex-col gap-4 bg-(--bg-page) p-4">
+		<SideSheet size="md" canvas open={open} onClose={onClose} portal unmountOnHide>
+			<DialogHeader title={`About ${asset.projectName}`} />
+			<DialogBody>
 				{description ? (
 					<div className="flex flex-col gap-2">
 						<h4 className="label-lg">Project description</h4>
-						<p className="body-lg text-secondary">{description}</p>
+						<p className="body-md text-secondary">{description}</p>
 					</div>
 				) : null}
 				<div className="flex flex-wrap items-center gap-2">
-					<SecondaryBadge className="h-8 px-3">
+					<SecondaryBadge className="min-h-6">
 						Status: {asset.tgeStatus === 'post' ? 'Listed' : 'Pre-TGE'}
 					</SecondaryBadge>
-					{asset.sector ? <SecondaryBadge className="h-8 px-3">{asset.sector}</SecondaryBadge> : null}
-					{asset.chain ? <SecondaryBadge className="h-8 px-3">{asset.chain}</SecondaryBadge> : null}
+					{asset.sector ? <SecondaryBadge className="min-h-6">{asset.sector}</SecondaryBadge> : null}
+					{asset.chain ? <SecondaryBadge className="min-h-6">{asset.chain}</SecondaryBadge> : null}
 				</div>
 				{asset.websiteUrl ? (
 					<Button as="a" href={asset.websiteUrl} target="_blank" rel="noreferrer" size="md" className="w-fit">
@@ -268,7 +268,7 @@ function AboutDrawer({
 						gradingScale={scoringConfig?.grading.overall.scale}
 					/>
 					<span className="flex flex-col gap-0.5">
-						<span className="body-sm text-tertiary">Overall Score</span>
+						<span className="body-sm text-tertiary">Overall score</span>
 						<span className="flex items-center gap-2">
 							<span className="mono-md tabular-nums">
 								{asset.overallScore == null ? 'N/A' : formatNumber(asset.overallScore, NUMBER_OPTIONS)}
@@ -305,7 +305,7 @@ function AboutDrawer({
 				</div>
 				<div className="flex items-center gap-2">
 					<h4 className="label-lg">Performance</h4>
-					<AccentBadge className="h-6">Last 30-day</AccentBadge>
+					<AccentBadge className="min-h-6">Last 30 days</AccentBadge>
 				</div>
 				<div className="rounded-lg border border-subtle bg-surface">
 					<PerformanceMatrix rows={[matrixRow]} grading={scoringConfig?.grading} className="h-[320px] w-full" />
@@ -327,8 +327,8 @@ function AboutDrawer({
 				<VenueList title="CEX where listed" venues={cexVenues} />
 				{cexVenues.length > 0 && dexVenues.length > 0 ? <div className="border-t border-subtle" /> : null}
 				<VenueList title="DEX where listed" venues={dexVenues} />
-			</div>
-		</Drawer>
+			</DialogBody>
+		</SideSheet>
 	)
 }
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Drawer } from '~/containers/MarketMakers/Drawer'
+import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { UTR_GRADE_COLORS, type UtrGradeLabel } from './gradeBands'
 import type { UtrScoringConfig } from './types'
 import {
@@ -48,7 +48,7 @@ function GradeCell({ value }: { value: string }) {
 function DocList({ ordered, items }: { ordered: boolean; items: Array<UtrDocListItem> }) {
 	const List = ordered ? 'ol' : 'ul'
 	return (
-		<List className={`flex flex-col gap-1 pl-6 body-lg text-secondary ${ordered ? 'list-decimal' : 'list-disc'}`}>
+		<List className={`flex flex-col gap-1 pl-6 body-md text-secondary ${ordered ? 'list-decimal' : 'list-disc'}`}>
 			{items.map((item) => (
 				<li key={item.text} className={item.strong ? 'font-semibold text-primary' : undefined}>
 					{item.text}
@@ -132,20 +132,20 @@ function DocBlock({ block, chapterId }: { block: UtrDocBlock; chapterId: string 
 			return (
 				<h3
 					id={`utr-docs-${chapterId}-${slugify(block.text)}`}
-					className={`scroll-mt-4 text-base font-semibold ${chapterId === 'glossary' ? 'mt-2' : ''}`}
+					className={`scroll-mt-4 label-md text-primary ${chapterId === 'glossary' ? 'mt-2' : ''}`}
 				>
 					{block.text}
 				</h3>
 			)
 		case 'paragraph':
 			return (
-				<p className={`body-lg text-secondary ${block.strong ? 'font-semibold text-primary' : ''}`}>
+				<p className={`body-md text-secondary ${block.strong ? 'font-semibold text-primary' : ''}`}>
 					{block.lead ? <strong className="font-semibold text-primary">{block.lead} </strong> : null}
 					{block.text}
 				</p>
 			)
 		case 'formula':
-			return <p className="font-jetbrains text-base text-secondary italic">{block.text}</p>
+			return <p className="mono-md text-secondary italic">{block.text}</p>
 		case 'bullets':
 			return <DocList ordered={false} items={block.items} />
 		case 'numbered':
@@ -166,12 +166,15 @@ export function UtrDocsDrawer({
 	initialChapterId?: string
 	scoringConfig?: UtrScoringConfig | null
 }) {
-	// The body is a child of the drawer, which unmounts it when closed, so each open starts on the
+	// The body is a child of the sheet, which unmounts it when closed, so each open starts on the
 	// requested chapter instead of being reset into place afterwards.
 	return (
-		<Drawer open={open} onClose={onClose} title={UTR_DOCS_TITLE} widthClassName="sm:max-w-2xl lg:max-w-[1110px]">
-			<UtrDocsDrawerBody initialChapterId={initialChapterId} scoringConfig={scoringConfig} />
-		</Drawer>
+		<SideSheet size="lg" open={open} onClose={onClose} portal unmountOnHide>
+			<DialogHeader title={UTR_DOCS_TITLE} />
+			<DialogBody kind="flush">
+				<UtrDocsDrawerBody initialChapterId={initialChapterId} scoringConfig={scoringConfig} />
+			</DialogBody>
+		</SideSheet>
 	)
 }
 
@@ -209,12 +212,7 @@ function UtrDocsDrawerBody({
 				.map((subsection) => document.getElementById(subsection.id))
 			return [section, ...headings].filter((el): el is HTMLElement => el != null)
 		})
-		let root: HTMLElement | null = sections
-		while (root && root !== document.body) {
-			const overflowY = getComputedStyle(root).overflowY
-			if (overflowY === 'auto' || overflowY === 'scroll') break
-			root = root.parentElement
-		}
+		const root = sections.closest<HTMLElement>('[data-sheet]')
 		const observer = new IntersectionObserver(
 			(entries) => {
 				const visible = entries
@@ -236,11 +234,14 @@ function UtrDocsDrawerBody({
 	}
 
 	return (
-		<div className="flex flex-col gap-4 md:flex-row md:gap-6">
-			<nav className="md:w-[290px] md:shrink-0 md:self-stretch md:border-r md:border-subtle">
+		<div className="flex flex-col md:flex-row">
+			<nav
+				aria-label="Chapters"
+				className="border-b border-subtle md:w-[290px] md:shrink-0 md:self-stretch md:border-r md:border-b-0"
+			>
 				<div className="md:sticky md:top-0">
-					<p className="border-b border-subtle px-5 py-4 heading-xs">Chapters</p>
-					<ul className="flex flex-col gap-4 border-b border-subtle px-4 py-6">
+					<h3 className="px-4 pt-4 pb-2 label-md text-secondary">Chapters</h3>
+					<ul className="flex flex-col gap-1 px-2 pb-3">
 						{chapters.map((chapter) => {
 							const active = chapter.id === activeId
 							return (
@@ -253,8 +254,8 @@ function UtrDocsDrawerBody({
 											setActiveSubId(null)
 											scrollToId(`utr-docs-${chapter.id}`)
 										}}
-										className={`flex w-full cursor-pointer border-l-2 pl-3 text-left text-base whitespace-nowrap ${
-											active ? 'border-brand font-medium text-link' : 'border-transparent text-primary hover:text-link'
+										className={`flex min-h-11 w-full cursor-pointer items-center border-l-2 px-3 text-left body-md md:min-h-9 ${
+											active ? 'border-brand text-link' : 'border-transparent text-secondary hover:text-primary'
 										}`}
 									>
 										{chapter.label}
@@ -264,7 +265,7 @@ function UtrDocsDrawerBody({
 						})}
 					</ul>
 					{subsections.length > 0 ? (
-						<ul className="flex flex-col gap-3 px-4 py-5">
+						<ul aria-label="Sections in this chapter" className="flex flex-col gap-1 border-t border-subtle px-2 py-3">
 							{subsections.map((subsection) => {
 								const active = activeSubId === subsection.id || (activeSubId == null && subsection.label === '1. Intro')
 								return (
@@ -275,8 +276,9 @@ function UtrDocsDrawerBody({
 												setActiveSubId(subsection.id)
 												scrollToId(subsection.id)
 											}}
-											className={`flex w-full cursor-pointer pl-3 text-left text-base ${
-												active ? 'text-link' : 'text-primary hover:text-link'
+											aria-current={active ? 'location' : undefined}
+											className={`flex min-h-11 w-full cursor-pointer items-center px-3 text-left body-sm md:min-h-8 ${
+												active ? 'text-link' : 'text-secondary hover:text-primary'
 											}`}
 										>
 											{subsection.label}
@@ -289,7 +291,7 @@ function UtrDocsDrawerBody({
 				</div>
 			</nav>
 
-			<div ref={spyChapters} className="flex min-w-0 flex-1 flex-col gap-8 p-4">
+			<div ref={spyChapters} className="flex min-w-0 flex-1 flex-col gap-8 p-4 md:p-6">
 				{chapters.map((chapter) => (
 					<section
 						key={chapter.id}
@@ -297,7 +299,7 @@ function UtrDocsDrawerBody({
 						ref={chapter.id === initialChapterId ? scrollToStartOnMount : undefined}
 						className={`flex scroll-mt-4 flex-col ${chapter.id === 'glossary' ? 'gap-2' : 'gap-5'}`}
 					>
-						<h2 className="heading-xs">{chapter.label}</h2>
+						<h2 className="label-lg text-primary">{chapter.label}</h2>
 						{chapter.blocks.map((block, index) => (
 							// oxlint-disable-next-line react/no-array-index-key -- Documentation snapshots have positional blocks/cells and repeated content.
 							<DocBlock key={index} block={block} chapterId={chapter.id} />

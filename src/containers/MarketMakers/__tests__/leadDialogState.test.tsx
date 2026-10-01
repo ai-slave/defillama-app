@@ -123,4 +123,39 @@ describe('claim form submission', () => {
 		await click(buttonByText('Done')!)
 		expect(onClose).toHaveBeenCalledOnce()
 	})
+
+	test('stays open while the claim is sending, so the reader sees whether it went through', async () => {
+		let answer!: () => void
+		http.serve({
+			'/api/public/market-makers/lead/claim': () =>
+				new Promise((resolve) => {
+					answer = () => resolve({ status: 'ok', request_id: 'req-1' })
+				})
+		})
+		const onClose = vi.fn()
+		await render(<ClaimDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await type(inputByLabel('Position at organization')!, 'CEO')
+		await type(inputByLabel('Your full name')!, 'Ada Lovelace')
+		await type(inputByLabel('Your LinkedIn or X profile')!, 'linkedin.com/in/ada')
+		await type(inputByLabel('Your organization email address')!, 'ada@acme.com')
+		for (const checkbox of document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[type="checkbox"]')) {
+			await click(checkbox)
+		}
+
+		await click(buttonByText('Submit claim request')!)
+		await waitForUi(() => expect(http.urls().some((url) => url.includes('/lead/claim'))).toBe(true))
+		const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+		await act(async () => {
+			dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		})
+		await click(buttonByText('Cancel')!)
+		await click(dialog.querySelector<HTMLElement>('[aria-label="Close dialog"]')!)
+		expect(onClose).not.toHaveBeenCalled()
+		expect(buttonByText('Cancel')!.getAttribute('aria-disabled')).toBe('true')
+
+		await act(async () => answer())
+		await waitForUi(() =>
+			expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Claim request received')
+		)
+	})
 })

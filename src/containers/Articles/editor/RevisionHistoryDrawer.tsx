@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { DialogBackButton, DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
+import { DialogBackButton, DialogBody, DialogHeader, SideSheet, switchSheetPane } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -515,7 +515,18 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				leading={
 					narrowPane === 'detail' ? (
 						<div className="flex md:hidden">
-							<DialogBackButton label="Back to revisions" onClick={() => setNarrowPane('list')} />
+							<DialogBackButton
+								label="Back to revisions"
+								onClick={() =>
+									switchSheetPane(
+										() => setNarrowPane('list'),
+										() =>
+											listRef.current?.querySelector<HTMLElement>(
+												`[data-revision-id="${selectedId}"] button[aria-current="true"]`
+											)
+									)
+								}
+							/>
 						</div>
 					) : null
 				}
@@ -589,10 +600,15 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 														>
 															<button
 																type="button"
-																onClick={() => {
-																	setSelectedIdState(entry.id)
-																	setNarrowPane('detail')
-																}}
+																onClick={() =>
+																	switchSheetPane(
+																		() => {
+																			setSelectedIdState(entry.id)
+																			setNarrowPane('detail')
+																		},
+																		() => previewRef.current
+																	)
+																}
 																aria-current={isSelected}
 																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
 																	isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'

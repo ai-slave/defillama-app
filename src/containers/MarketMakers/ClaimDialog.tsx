@@ -1,15 +1,16 @@
+import * as Ariakit from '@ariakit/react'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
-import { DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from './ClaimTurnstile'
 import { useSubmitLead } from './client'
-import { LeadCancelButton, LeadDialog, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
+import { LeadField, LeadHoneypot, LeadSuccess } from './LeadForm'
 import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from './leadShared'
 
 const CONTACT_OPTIONS = [
@@ -30,21 +31,44 @@ export function ClaimDialog({
 	/** Recorded by the click that opened this form; null until that request answers, or if it failed. */
 	clickId: string | null
 }) {
-	// The form is a child of the dialog, which Ariakit unmounts when it closes, so every open starts from a
-	// fresh form, mutation and captcha instead of resetting a dozen fields by hand.
+	// One session per opening: a new opening starts a new request, and the dialog locks while one runs.
+	const key = useOpeningKey(open)
+	return <ClaimSession key={key} open={open} onClose={onClose} {...form} />
+}
+
+function ClaimSession({
+	open,
+	onClose,
+	...form
+}: {
+	open: boolean
+	onClose: () => void
+} & Omit<Parameters<typeof ClaimDialogForm>[0], 'submit'>) {
+	const submit = useSubmitLead('claim')
 	return (
-		<LeadDialog open={open} onClose={onClose}>
-			<ClaimDialogForm {...form} />
-		</LeadDialog>
+		<Dialog
+			size="md"
+			open={open}
+			onClose={onClose}
+			pending={submit.isPending}
+			// A tap outside would discard a half-filled form.
+			hideOnInteractOutside={false}
+			portal
+			unmountOnHide
+		>
+			<ClaimDialogForm {...form} submit={submit} />
+		</Dialog>
 	)
 }
 
 function ClaimDialogForm({
+	submit,
 	marketMakerId,
 	marketMakerName,
 	marketMakerLogo,
 	clickId
 }: {
+	submit: ReturnType<typeof useSubmitLead>
 	marketMakerId: string | null
 	marketMakerName: string
 	marketMakerLogo?: string | null
@@ -64,7 +88,6 @@ function ClaimDialogForm({
 	const [touched, setTouched] = useState<Record<string, boolean>>({})
 	const [submitAttempted, setSubmitAttempted] = useState(false)
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
-	const submit = useSubmitLead('claim')
 	const captchaEnabled = isClaimTurnstileEnabled()
 
 	const errors: Record<string, string | null> = {
@@ -261,7 +284,17 @@ function ClaimDialogForm({
 				) : null}
 				{submit.isError ? <InlineStatus variant="error">{submit.error.message}</InlineStatus> : null}
 			</DialogBody>
-			<DialogFooter dismiss={<LeadCancelButton />}>
+			<DialogFooter
+				dismiss={
+					<Ariakit.DialogDismiss
+						disabled={submit.isPending}
+						accessibleWhenDisabled
+						render={<Button type="button" size="md" />}
+					>
+						Cancel
+					</Ariakit.DialogDismiss>
+				}
+			>
 				<Button
 					type="button"
 					variant="primary"

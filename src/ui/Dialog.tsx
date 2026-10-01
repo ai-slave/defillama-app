@@ -8,6 +8,7 @@ import {
 	type ComponentPropsWithoutRef,
 	type ReactNode
 } from 'react'
+import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
@@ -276,6 +277,16 @@ export function DialogBackButton({ label, onClick }: { label: string; onClick: (
 			<Icon name="arrow-left" className="size-4" aria-hidden="true" />
 		</Ariakit.Button>
 	)
+}
+
+/** Switches the pane of a two-pane sheet. Below md one pane shows at a time, so the control that switched it is
+    hidden (a list row) or gone (the back button), and focus would fall to the page. After the switch commits,
+    focus moves to `target()` unless the control that had it is still on screen, as it is when both panes show. */
+export function switchSheetPane(commit: () => void, target: () => HTMLElement | null | undefined) {
+	const from = document.activeElement
+	flushSync(commit)
+	if (from instanceof HTMLElement && from.isConnected && from.checkVisibility()) return
+	target()?.focus()
 }
 
 type DialogFooterProps = {

@@ -2,13 +2,13 @@ import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation } from '@tanstack/react-query'
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
-import { LeadError } from '~/containers/MarketMakers/LeadDialog'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
 import {
@@ -728,9 +728,9 @@ export function ClaimTokenProfile({
 
 					{submit.isError ? (
 						<div data-utr-claim-error>
-							<LeadError
-								message={submit.error instanceof Error ? submit.error.message : 'Failed to submit the claim request'}
-							/>
+							<InlineStatus variant="error">
+								{submit.error instanceof Error ? submit.error.message : "Couldn't submit the claim request. Try again."}
+							</InlineStatus>
 						</div>
 					) : null}
 					<Button

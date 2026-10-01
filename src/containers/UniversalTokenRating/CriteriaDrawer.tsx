@@ -1,5 +1,5 @@
-import { SecondaryBadge } from '~/containers/MarketMakers/badges'
-import { Drawer } from '~/containers/MarketMakers/Drawer'
+import { useRef, useState } from 'react'
+import { DialogBackButton, DialogBody, DialogHeader, SideSheet, switchSheetPane, useOpeningKey } from '~/ui/Dialog'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getCriterionDrawerCopy, MARKET_MAKER_MATURITY_EXCEPTION } from './criterionDrawerCopy'
@@ -40,15 +40,7 @@ function RubricValueBadge({ value }: { value: number }) {
 	)
 }
 
-export function CriteriaDrawer({
-	state,
-	assetLabel,
-	lastEditedAt,
-	disclosures,
-	grading,
-	onSelect,
-	onClose
-}: {
+type CriteriaDrawerProps = {
 	state: CriteriaDrawerState | null
 	assetLabel?: string
 	lastEditedAt?: string | null
@@ -56,145 +48,209 @@ export function CriteriaDrawer({
 	grading?: UtrGradingConfig | null
 	onSelect: (key: string) => void
 	onClose: () => void
-}) {
-	if (!state || state.criteria.length === 0) return null
+}
+
+export function CriteriaDrawer({ state, ...props }: CriteriaDrawerProps) {
+	// The sheet keeps showing the last criteria while it slides out after `state` clears.
+	const [last, setLast] = useState(state)
+	if (state && state !== last) setLast(state)
+	const shown = state ?? last
+	const key = useOpeningKey(state != null)
+	if (!shown || shown.criteria.length === 0) return null
+	return (
+		<SideSheet size="lg" canvas open={state != null} onClose={props.onClose} portal unmountOnHide>
+			<CriteriaSheetContent key={key} state={shown} {...props} />
+		</SideSheet>
+	)
+}
+
+function CriteriaSheetContent({
+	state,
+	assetLabel,
+	lastEditedAt,
+	disclosures,
+	grading,
+	onSelect
+}: Omit<CriteriaDrawerProps, 'state' | 'onClose'> & { state: CriteriaDrawerState }) {
+	// Below md one pane shows at a time. Opening from a criterion lands on its detail.
+	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>(state.activeKey ? 'detail' : 'list')
+	const navRef = useRef<HTMLElement>(null)
+	const detailRef = useRef<HTMLElement>(null)
 	const active = state.criteria.find((criterion) => criterion.key === state.activeKey) ?? state.criteria[0]
 	const activeIndex = state.criteria.indexOf(active)
 	const doc = state.docs.find((entry) => entry.key === active.key) ?? null
 	const activeCopy = getCriterionDrawerCopy(state.axis, active.key, active.label, doc?.definition)
+	const subtitle =
+		state.axis === 'performance'
+			? 'Auto-graded from market data'
+			: lastEditedAt
+				? `Last edited ${lastEditedAt.slice(0, 10)}`
+				: null
 
 	return (
-		<Drawer
-			open
-			onClose={onClose}
-			title={state.title}
-			widthClassName="sm:max-w-[1110px]"
-			headerExtra={
-				state.axis === 'performance' ? (
-					<SecondaryBadge>Auto-graded</SecondaryBadge>
-				) : lastEditedAt ? (
-					<SecondaryBadge>{`Last edited: ${lastEditedAt.slice(0, 10)}`}</SecondaryBadge>
-				) : null
-			}
-		>
-			<div className="flex min-h-0 flex-1 flex-col bg-(--bg-page) sm:flex-row">
-				<nav className="flex shrink-0 flex-col gap-1 border-b border-subtle p-2 sm:w-[290px] sm:border-r sm:border-b-0">
-					{state.criteria.map((criterion, index) => (
-						<button
-							key={criterion.key}
-							type="button"
-							onClick={() => onSelect(criterion.key)}
-							className={`cursor-pointer rounded-md px-3 py-2 text-left body-sm hover:bg-hover-row ${
-								criterion.key === active.key ? 'bg-surface-elevated-1 text-primary' : 'text-secondary'
-							}`}
-						>
-							{index + 1}.{' '}
-							{
-								getCriterionDrawerCopy(
-									state.axis,
-									criterion.key,
-									criterion.label,
-									state.docs.find((entry) => entry.key === criterion.key)?.definition
-								).navigationLabel
-							}
-						</button>
-					))}
-				</nav>
-				<div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-					<h3 className="heading-xs">
-						{activeIndex + 1}. {activeCopy.heading}
-					</h3>
-					{activeCopy.definition ? <p className="body-lg text-secondary">{activeCopy.definition}</p> : null}
-					{activeCopy.showMarketMakerMaturityException ? (
-						<div className="flex max-w-[75ch] flex-col gap-3 body-lg text-secondary">
-							<p>
-								{state.axis === 'disclosure'
-									? MARKET_MAKER_MATURITY_EXCEPTION.disclosureNote
-									: MARKET_MAKER_MATURITY_EXCEPTION.performanceNote}
-							</p>
-							<p>{MARKET_MAKER_MATURITY_EXCEPTION.intro}</p>
-							<ul className="list-disc space-y-1 pl-6">
-								{MARKET_MAKER_MATURITY_EXCEPTION.criteria.map((criterion) => (
-									<li key={criterion}>{criterion}</li>
-								))}
-							</ul>
-							<p>{MARKET_MAKER_MATURITY_EXCEPTION.outro}</p>
-						</div>
-					) : null}
-					{state.axis === 'performance' && assetLabel ? (
-						<p className="label-lg">
-							{assetLabel} was calculated as &quot;{active.raw == null ? 'N/A' : formatNumber(active.raw)}&quot; for
-							this metric.
-						</p>
-					) : null}
-					<div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-4 py-3">
-						<span className="flex flex-col gap-1">
-							<span className="body-sm text-tertiary">Grade</span>
-							<GradeBadge
-								score={active.score}
-								scale={10}
-								grade={active.grade}
-								gradingScale={grading?.[state.axis].scale}
+		<>
+			<DialogHeader
+				title={state.title}
+				subtitle={subtitle}
+				leading={
+					narrowPane === 'detail' ? (
+						<div className="flex md:hidden">
+							<DialogBackButton
+								label="Back to criteria"
+								onClick={() =>
+									switchSheetPane(
+										() => setNarrowPane('list'),
+										() => navRef.current?.querySelector<HTMLElement>('[aria-current="true"]')
+									)
+								}
 							/>
-						</span>
-						<span className="flex flex-col gap-1">
-							<span className="body-sm text-tertiary">Score</span>
-							<span className="flex items-center gap-2">
-								<ScoreBar
+						</div>
+					) : null
+				}
+			/>
+			<DialogBody kind="flush">
+				<div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[290px_minmax(0,1fr)]">
+					<nav
+						ref={navRef}
+						aria-label="Criteria"
+						className={`flex min-h-0 flex-col gap-1 overflow-y-auto p-2 md:border-r md:border-subtle ${
+							narrowPane === 'detail' ? 'max-md:hidden' : ''
+						}`}
+					>
+						{state.criteria.map((criterion, index) => {
+							const current = criterion.key === active.key
+							return (
+								<button
+									key={criterion.key}
+									type="button"
+									aria-current={current ? 'true' : undefined}
+									onClick={() =>
+										switchSheetPane(
+											() => {
+												onSelect(criterion.key)
+												setNarrowPane('detail')
+											},
+											() => detailRef.current
+										)
+									}
+									className={`hover-wash flex min-h-11 cursor-pointer items-center rounded-md px-3 py-2 text-left body-md md:min-h-9 md:body-sm ${
+										current ? 'bg-surface text-primary' : 'text-secondary'
+									}`}
+								>
+									{index + 1}.{' '}
+									{
+										getCriterionDrawerCopy(
+											state.axis,
+											criterion.key,
+											criterion.label,
+											state.docs.find((entry) => entry.key === criterion.key)?.definition
+										).navigationLabel
+									}
+								</button>
+							)
+						})}
+					</nav>
+					<section
+						ref={detailRef}
+						tabIndex={-1}
+						aria-label={activeCopy.heading}
+						className={`flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto p-4 ${narrowPane === 'list' ? 'max-md:hidden' : ''}`}
+					>
+						<h3 className="label-lg text-primary">
+							{activeIndex + 1}. {activeCopy.heading}
+						</h3>
+						{activeCopy.definition ? <p className="body-md text-secondary">{activeCopy.definition}</p> : null}
+						{activeCopy.showMarketMakerMaturityException ? (
+							<div className="flex max-w-[75ch] flex-col gap-3 body-md text-secondary">
+								<p>
+									{state.axis === 'disclosure'
+										? MARKET_MAKER_MATURITY_EXCEPTION.disclosureNote
+										: MARKET_MAKER_MATURITY_EXCEPTION.performanceNote}
+								</p>
+								<p>{MARKET_MAKER_MATURITY_EXCEPTION.intro}</p>
+								<ul className="list-disc space-y-1 pl-6">
+									{MARKET_MAKER_MATURITY_EXCEPTION.criteria.map((criterion) => (
+										<li key={criterion}>{criterion}</li>
+									))}
+								</ul>
+								<p>{MARKET_MAKER_MATURITY_EXCEPTION.outro}</p>
+							</div>
+						) : null}
+						{state.axis === 'performance' && assetLabel ? (
+							<p className="body-md text-primary">
+								{assetLabel} was calculated as &quot;{active.raw == null ? 'N/A' : formatNumber(active.raw)}&quot; for
+								this metric.
+							</p>
+						) : null}
+						<div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-subtle bg-surface px-4 py-3">
+							<span className="flex flex-col gap-1">
+								<span className="body-sm text-tertiary">Grade</span>
+								<GradeBadge
 									score={active.score}
 									scale={10}
 									grade={active.grade}
 									gradingScale={grading?.[state.axis].scale}
 								/>
-								<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
 							</span>
-						</span>
-						<span className="flex flex-col gap-1">
-							<span className="body-sm text-tertiary">Percentile</span>
-							<span className="mono-md tabular-nums">
-								{active.percentile == null
-									? 'N/A'
-									: formatPercent(active.percentile, {
-											input: 'percent',
-											minimumFractionDigits: 2,
-											maximumFractionDigits: 2,
-											smallValueDisplay: 'rounded',
-											useGrouping: false
-										})}
+							<span className="flex flex-col gap-1">
+								<span className="body-sm text-tertiary">Score</span>
+								<span className="flex items-center gap-2">
+									<ScoreBar
+										score={active.score}
+										scale={10}
+										grade={active.grade}
+										gradingScale={grading?.[state.axis].scale}
+									/>
+									<QuestionHelper text="Scored on the standardized 0–10 scale against the published rubric." />
+								</span>
 							</span>
-						</span>
-						<span className="flex flex-col gap-1">
-							<span className="body-sm text-tertiary">Weight</span>
-							<span className="mono-md tabular-nums">{Math.round(active.weight * 100)}%</span>
-						</span>
-					</div>
-					{active.note ? <p className="body-lg text-secondary">{active.note}</p> : null}
-					{state.axis === 'disclosure' && disclosures ? (
-						<DisclosureDetails criterionKey={active.key} disclosures={disclosures} />
-					) : null}
-					{doc?.rubric.length ? (
-						<div className="flex flex-col gap-2">
-							<h4 className="label-lg">Scoring rubric</h4>
-							<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
-								<div className="flex items-center justify-between gap-3 bg-brand px-4 py-2 label-sm text-on-brand">
-									<span className="flex-1 text-center">Rubric</span>
-									<span>Value (/10)</span>
-								</div>
-								{doc.rubric.map((text, index) => (
-									<div
-										// oxlint-disable-next-line react/no-array-index-key -- Rubric position identifies the score band (10 - index), not its prose.
-										key={`${active.key}-${index}`}
-										className="flex items-center justify-between gap-3 border-t border-subtle px-4 py-2"
-									>
-										<span className="body-sm text-primary">{text}</span>
-										<RubricValueBadge value={10 - index} />
-									</div>
-								))}
-							</div>
+							<span className="flex flex-col gap-1">
+								<span className="body-sm text-tertiary">Percentile</span>
+								<span className="mono-md tabular-nums">
+									{active.percentile == null
+										? 'N/A'
+										: formatPercent(active.percentile, {
+												input: 'percent',
+												minimumFractionDigits: 2,
+												maximumFractionDigits: 2,
+												smallValueDisplay: 'rounded',
+												useGrouping: false
+											})}
+								</span>
+							</span>
+							<span className="flex flex-col gap-1">
+								<span className="body-sm text-tertiary">Weight</span>
+								<span className="mono-md tabular-nums">{Math.round(active.weight * 100)}%</span>
+							</span>
 						</div>
-					) : null}
+						{active.note ? <p className="body-md text-secondary">{active.note}</p> : null}
+						{state.axis === 'disclosure' && disclosures ? (
+							<DisclosureDetails criterionKey={active.key} disclosures={disclosures} />
+						) : null}
+						{doc?.rubric.length ? (
+							<div className="flex flex-col gap-2">
+								<h4 className="label-md text-primary">Scoring rubric</h4>
+								<div className="overflow-hidden rounded-lg border border-subtle bg-surface">
+									<div className="flex items-center justify-between gap-3 bg-brand px-4 py-2 label-sm text-on-brand">
+										<span className="flex-1 text-center">Rubric</span>
+										<span>Value (/10)</span>
+									</div>
+									{doc.rubric.map((text, index) => (
+										<div
+											// oxlint-disable-next-line react/no-array-index-key -- Rubric position identifies the score band (10 - index), not its prose.
+											key={`${active.key}-${index}`}
+											className="flex items-center justify-between gap-3 border-t border-subtle px-4 py-2"
+										>
+											<span className="body-sm text-primary">{text}</span>
+											<RubricValueBadge value={10 - index} />
+										</div>
+									))}
+								</div>
+							</div>
+						) : null}
+					</section>
 				</div>
-			</div>
-		</Drawer>
+			</DialogBody>
+		</>
 	)
 }

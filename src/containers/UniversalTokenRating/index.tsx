@@ -300,6 +300,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				setListingStatuses={setListingStatuses}
 				sort={sort}
 				setSort={(next) => setSort(next)}
+				canReset={activeFilterCount > 0 || sort.desc}
 				onReset={resetFilters}
 			/>
 		</div>

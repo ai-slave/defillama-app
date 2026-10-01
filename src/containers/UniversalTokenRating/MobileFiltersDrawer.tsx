@@ -1,5 +1,6 @@
-import { Drawer } from '~/containers/MarketMakers/Drawer'
+import * as Ariakit from '@ariakit/react'
 import { Button } from '~/ui/Button'
+import { DialogBody, DialogFooter, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { UTR_SORT_OPTIONS, type UtrSort, type UtrSortKey } from './Leaderboard'
 
@@ -21,25 +22,26 @@ function FilterSection({
 	onToggle: (key: string) => void
 }) {
 	return (
-		<div className="flex flex-col gap-1">
-			<h4 className="px-1 label-md">{title}</h4>
-			<div className="rounded-lg border border-subtle">
+		<section className="flex flex-col gap-2">
+			<h3 className="label-md text-primary">{title}</h3>
+			<div role="group" aria-label={title} className="overflow-hidden rounded-lg border border-subtle">
 				{options.map((option) => {
 					const active = selected.includes(option.key)
 					return (
 						<button
 							key={option.key}
 							type="button"
+							aria-pressed={active}
 							onClick={() => onToggle(option.key)}
-							className="flex w-full cursor-pointer items-center justify-between gap-3 border-b border-subtle px-3 py-2.5 text-left body-sm last:border-b-0 hover:bg-hover-row"
+							className="hover-wash flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 border-b border-subtle px-3 py-2 text-left body-md last:border-b-0 sm:min-h-9 sm:body-sm"
 						>
 							<span className={active ? 'text-primary' : 'text-secondary'}>{option.name}</span>
-							{active ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
+							{active ? <Icon name="check" height={16} width={16} className="shrink-0 text-link" aria-hidden /> : null}
 						</button>
 					)
 				})}
 			</div>
-		</div>
+		</section>
 	)
 }
 
@@ -57,6 +59,7 @@ export function MobileFiltersDrawer({
 	setListingStatuses,
 	sort,
 	setSort,
+	canReset,
 	onReset
 }: {
 	open: boolean
@@ -72,12 +75,15 @@ export function MobileFiltersDrawer({
 	setListingStatuses: (values: Array<string>) => void
 	sort: UtrSort
 	setSort: (sort: UtrSort) => void
+	/** False while every filter and the sort are at their defaults. */
+	canReset: boolean
 	onReset: () => void
 }) {
-	if (!open) return null
+	// Every choice applies as it is made, so Done only closes the sheet.
 	return (
-		<Drawer open onClose={onClose} title="Filters & sorting">
-			<div className="flex flex-col gap-4 p-4">
+		<SideSheet size="sm" open={open} onClose={onClose} portal unmountOnHide>
+			<DialogHeader title="Filters and sorting" />
+			<DialogBody>
 				<FilterSection
 					title="FDV range"
 					options={fdvOptions}
@@ -102,15 +108,18 @@ export function MobileFiltersDrawer({
 					selected={[sort.key]}
 					onToggle={(key) => setSort({ key: key as UtrSortKey, desc: key !== 'rank' })}
 				/>
-				<div className="flex gap-3">
-					<Button type="button" size="md" className="flex-1 justify-center" onClick={onReset}>
+			</DialogBody>
+			<DialogFooter
+				leading={
+					<Button type="button" size="md" disabled={!canReset} onClick={onReset}>
 						Reset
 					</Button>
-					<Button type="button" variant="primary" size="md" className="flex-1 justify-center" onClick={onClose}>
-						Apply
-					</Button>
-				</div>
-			</div>
-		</Drawer>
+				}
+			>
+				<Ariakit.DialogDismiss render={<Button type="button" variant="primary" size="md" />}>
+					Done
+				</Ariakit.DialogDismiss>
+			</DialogFooter>
+		</SideSheet>
 	)
 }

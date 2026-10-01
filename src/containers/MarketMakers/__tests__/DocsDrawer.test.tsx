@@ -31,7 +31,7 @@ test('navigates each contents entry to its section and lets the reader close the
 			}
 		})
 		expect(destinations.size).toBe(entries.length)
-		await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click())
+		await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click())
 		expect(onClose).toHaveBeenCalledOnce()
 	} finally {
 		await act(async () => root.unmount())

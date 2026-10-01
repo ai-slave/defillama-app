@@ -6,7 +6,7 @@ import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
-import { DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -14,7 +14,7 @@ import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { useSubmitLead } from './client'
-import { LeadCancelButton, LeadDialog, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
+import { LeadField, LeadHoneypot, LeadSuccess } from './LeadForm'
 import { EMAIL_PATTERN } from './leadShared'
 
 const INTEREST_OPTIONS = [
@@ -157,20 +157,43 @@ export function ConnectDialog({
 	/** Recorded by the click that opened this form; null until that request answers, or if it failed. */
 	clickId: string | null
 }) {
-	// The form is a child of the dialog, which Ariakit unmounts when it closes, so every open starts from a
-	// fresh form and mutation instead of resetting a dozen fields by hand.
+	// One session per opening: a new opening starts a new request, and the dialog locks while one runs.
+	const key = useOpeningKey(open)
+	return <ConnectSession key={key} open={open} onClose={onClose} {...form} />
+}
+
+function ConnectSession({
+	open,
+	onClose,
+	...form
+}: {
+	open: boolean
+	onClose: () => void
+} & Omit<Parameters<typeof ConnectDialogForm>[0], 'submit'>) {
+	const submit = useSubmitLead('connect')
 	return (
-		<LeadDialog open={open} onClose={onClose}>
-			<ConnectDialogForm {...form} />
-		</LeadDialog>
+		<Dialog
+			size="md"
+			open={open}
+			onClose={onClose}
+			pending={submit.isPending}
+			// A tap outside would discard a half-filled form.
+			hideOnInteractOutside={false}
+			portal
+			unmountOnHide
+		>
+			<ConnectDialogForm {...form} submit={submit} />
+		</Dialog>
 	)
 }
 
 function ConnectDialogForm({
+	submit,
 	marketMakerId,
 	marketMakerName,
 	clickId
 }: {
+	submit: ReturnType<typeof useSubmitLead>
 	marketMakerId: string | null
 	marketMakerName: string
 	clickId: string | null
@@ -186,7 +209,6 @@ function ConnectDialogForm({
 	const [honeypot, setHoneypot] = useState('')
 	const [touched, setTouched] = useState<Record<string, boolean>>({})
 	const [submitAttempted, setSubmitAttempted] = useState(false)
-	const submit = useSubmitLead('connect')
 
 	const hasToken = tokenStatus !== 'no-token'
 	const listedToken = tokenStatus === 'listed' ? selectedToken : null
@@ -363,7 +385,17 @@ function ConnectDialogForm({
 				<LeadHoneypot value={honeypot} onChange={setHoneypot} />
 				{submit.isError ? <InlineStatus variant="error">{submit.error.message}</InlineStatus> : null}
 			</DialogBody>
-			<DialogFooter dismiss={<LeadCancelButton />}>
+			<DialogFooter
+				dismiss={
+					<Ariakit.DialogDismiss
+						disabled={submit.isPending}
+						accessibleWhenDisabled
+						render={<Button type="button" size="md" />}
+					>
+						Cancel
+					</Ariakit.DialogDismiss>
+				}
+			>
 				<Button
 					type="button"
 					variant="primary"
