@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { Button } from '~/ui/Button'
@@ -10,7 +11,7 @@ import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
 import { filterUtrRows, readUtrFilters, UTR_FILTER_KEYS } from './filters'
-import { Leaderboard, type UtrSort } from './Leaderboard'
+import { Leaderboard, scrollToLeaderboardRow, type UtrSort } from './Leaderboard'
 import { MobileFiltersDrawer } from './MobileFiltersDrawer'
 import { findUtrSearchMatch, type UtrFocusRequest } from './navigation'
 import { PerformanceMatrix } from './PerformanceMatrix'
@@ -27,6 +28,14 @@ export type UniversalTokenRatingProps = {
 
 const FDV_OPTIONS = FDV_RANGES.map((range) => ({ key: range.key, name: range.label }))
 const STATUS_OPTIONS = Object.entries(LISTING_STATUS_LABELS).map(([key, name]) => ({ key, name }))
+
+const SEARCH_INPUT_ID = 'utr-search-input'
+
+function readPreHydrationSearch() {
+	if (typeof window === 'undefined') return ''
+	const input = document.getElementById(SEARCH_INPUT_ID)
+	return input instanceof HTMLInputElement ? input.value : ''
+}
 
 export function UniversalTokenRating({ universe, topMovers, scoringConfig }: UniversalTokenRatingProps) {
 	const router = useRouter()
@@ -57,7 +66,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		updateQueryFromSelected(router, listingKeys.include, listingKeys.exclude, [...listingKeys.all], values)
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
-	const [searchQuery, setSearchQuery] = useState('')
+	// The search is not a form, so nothing submits natively before hydration, and text typed before then is kept,
+	// as the site search does.
+	const [searchQuery, setSearchQuery] = useState(readPreHydrationSearch)
 	const [searchError, setSearchError] = useState<string | null>(null)
 	const [focusRequest, setFocusRequest] = useState<UtrFocusRequest | null>(null)
 
@@ -68,7 +79,8 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		(sort.key === 'rank' ? 0 : 1)
 
 	const resetFilters = () => {
-		void pushShallowQuery(router, {
+		setSort({ key: 'rank', desc: false })
+		return pushShallowQuery(router, {
 			[fdvKeys.include]: undefined,
 			[fdvKeys.exclude]: undefined,
 			[sectorKeys.include]: undefined,
@@ -76,7 +88,6 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			[listingKeys.include]: undefined,
 			[listingKeys.exclude]: undefined
 		})
-		setSort({ key: 'rank', desc: false })
 	}
 
 	const searchProject = () => {
@@ -85,9 +96,16 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			setSearchError(searchQuery.trim() ? 'No matching token found' : 'Enter a token name or ticker')
 			return
 		}
-		resetFilters()
 		setSearchError(null)
-		setFocusRequest((current) => ({ asset: match.asset, nonce: (current?.nonce ?? 0) + 1 }))
+		// The reset reaches the rows only once the push resolves; a focus request made earlier pages against the
+		// filtered rows, and the reset that lands after it returns the leaderboard to page one. Waiting also lets
+		// the filter chips collapse before the row scrolls into view.
+		void resetFilters().then((navigated) => {
+			// A later navigation cancelled this one, so the filters were not reset.
+			if (!navigated) return
+			flushSync(() => setFocusRequest((current) => ({ asset: match.asset, nonce: (current?.nonce ?? 0) + 1 })))
+			scrollToLeaderboardRow(match.asset)
+		})
 	}
 
 	const filterChips: Array<{ key: string; label: string; onRemove: () => void }> = []
@@ -138,21 +156,21 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			<TopMovers movers={topMovers} />
 
 			<div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-surface p-2">
-				<form
-					className="flex min-w-0 flex-1 items-center gap-2 lg:max-w-[360px]"
-					onSubmit={(event) => {
-						event.preventDefault()
-						searchProject()
-					}}
-				>
+				<div role="search" className="flex min-w-0 flex-1 items-center gap-2 max-lg:basis-full lg:max-w-[360px]">
 					<label className="min-w-0 flex-1">
 						<span className="sr-only">Search tokens</span>
 						<Input
+							id={SEARCH_INPUT_ID}
 							list="utr-project-options"
 							value={searchQuery}
 							onChange={(event) => {
 								setSearchQuery(event.target.value)
 								setSearchError(null)
+							}}
+							onKeyDown={(event) => {
+								if (event.key !== 'Enter' || event.nativeEvent.isComposing) return
+								event.preventDefault()
+								searchProject()
 							}}
 							placeholder="Search token or ticker"
 							aria-invalid={searchError ? true : undefined}
@@ -165,10 +183,10 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 							))}
 						</datalist>
 					</label>
-					<Button type="submit" size="md" square aria-label="Find token in leaderboard">
+					<Button type="button" size="md" square aria-label="Find token in leaderboard" onClick={searchProject}>
 						<Icon name="search" height={14} width={14} />
 					</Button>
-				</form>
+				</div>
 				{searchError ? (
 					<span id="utr-search-error" role="alert" className="w-full body-sm text-error lg:order-last">
 						{searchError}
@@ -207,22 +225,15 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 						size="md"
 					/>
 				</span>
-				<Button
-					type="button"
-					size="md"
-					onClick={() => setFiltersOpen(true)}
-					className="flex-1 justify-center lg:hidden"
-				>
+				<Button type="button" size="md" onClick={() => setFiltersOpen(true)} className="ml-auto lg:hidden">
 					Filter
 					{activeFilterCount ? <span className="label-sm text-link">({activeFilterCount})</span> : null}
 					<Icon name="settings" height={14} width={14} />
 				</Button>
-				<span className="ml-auto max-lg:ml-0 max-lg:flex-1">
-					<Button type="button" size="md" onClick={() => setDocsOpen(true)} className="w-full justify-center">
-						Documentation
-						<Icon name="file-text" height={14} width={14} />
-					</Button>
-				</span>
+				<Button type="button" size="md" onClick={() => setDocsOpen(true)} className="lg:ml-auto">
+					Documentation
+					<Icon name="file-text" height={14} width={14} />
+				</Button>
 			</div>
 			{filterChips.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-1.5 lg:hidden">

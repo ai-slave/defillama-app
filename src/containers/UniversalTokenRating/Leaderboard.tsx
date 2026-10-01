@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { BasicLink } from '~/components/Link'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -246,6 +246,13 @@ function stickyStyle(index: 0 | 1): CSSProperties {
 	}
 }
 
+const rowId = (asset: string) => `utr-row-${asset}`
+
+/** Call after the focus request for `asset` has rendered, so its row is on the current page. */
+export function scrollToLeaderboardRow(asset: string) {
+	document.getElementById(rowId(asset))!.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
 export function Leaderboard({
 	rows,
 	grading,
@@ -305,23 +312,6 @@ export function Leaderboard({
 		(currentPage + 1) * UTR_LEADERBOARD_PAGE_SIZE
 	)
 
-	useEffect(() => {
-		if (!focusRequest || typeof window === 'undefined') return
-		let secondFrame = 0
-		const firstFrame = window.requestAnimationFrame(() => {
-			secondFrame = window.requestAnimationFrame(() => {
-				document.getElementById(`utr-row-${focusRequest.asset}`)?.scrollIntoView({
-					behavior: 'smooth',
-					block: 'center'
-				})
-			})
-		})
-		return () => {
-			window.cancelAnimationFrame(firstFrame)
-			if (secondFrame) window.cancelAnimationFrame(secondFrame)
-		}
-	}, [focusRequest])
-
 	const toggleSort = (key: UtrSortKey) =>
 		setSort((prev) => (prev.key === key ? { key, desc: !prev.desc } : { key, desc: key !== 'rank' }))
 
@@ -368,7 +358,7 @@ export function Leaderboard({
 						return (
 							<Fragment key={row.asset}>
 								<tr
-									id={`utr-row-${row.asset}`}
+									id={rowId(row.asset)}
 									className="cursor-pointer hover:bg-hover-row"
 									onClick={(event) => {
 										if ((event.target as HTMLElement).closest('a, button')) return

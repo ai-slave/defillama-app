@@ -524,8 +524,15 @@ test.each([
 	expect(document.activeElement).not.toBe(document.querySelector('[role="alert"]'))
 	const codeInput = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
 	await act(async () => codeInput.focus())
+	// The clock ticks once a second from when the sheet opened, and the answer can land between ticks (waitFor
+	// advances fake time while it polls). So the lock lifts on the first tick at or past the deadline: still held a
+	// second before it, gone a second after.
 	await act(async () => {
-		vi.advanceTimersByTime(8000)
+		vi.advanceTimersByTime(7000)
+	})
+	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(expires)
+	await act(async () => {
+		vi.advanceTimersByTime(2000)
 	})
 	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(false)
 	expect(document.activeElement).toBe(codeInput)

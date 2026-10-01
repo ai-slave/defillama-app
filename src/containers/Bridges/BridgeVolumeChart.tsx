@@ -5,6 +5,7 @@ import {
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -47,7 +48,8 @@ export function BridgeVolumeChart({
 		return { ...buildBridgeVolumeChartData({ data, timePeriod, metricType, viewType }), groupBy: timePeriod }
 	}, [data, metricType, timePeriod, viewType])
 	const deferredChartData = useDeferredValue(volumeChartData)
-	const staleDataTimestamp = useMemo(() => getStaleBridgeVolumeTimestamp(data), [data])
+	const nowSec = useNowSeconds()
+	const staleDataTimestamp = useMemo(() => getStaleBridgeVolumeTimestamp(data, nowSec), [data, nowSec])
 
 	return (
 		<>

@@ -104,19 +104,15 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 	})
 
-	test('reports the last chart date only when bridge volume data is stale', () => {
-		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
-		const point = (date: string) => ({
-			date: Date.parse(`${date}T00:00:00Z`) / 1e3,
-			depositUSD: 1,
-			withdrawUSD: 1,
-			depositTxs: 1,
-			withdrawTxs: 1
-		})
+	test('reports the last chart date once the clock passes the UTC day after it', () => {
+		const lastDaySec = Date.parse('2026-07-13T00:00:00Z') / 1e3
+		const data = [
+			{ date: lastDaySec - 86_400, depositUSD: 1, withdrawUSD: 1, depositTxs: 1, withdrawTxs: 1 },
+			{ date: lastDaySec, depositUSD: 1, withdrawUSD: 1, depositTxs: 1, withdrawTxs: 1 }
+		]
 
-		expect(getStaleBridgeVolumeTimestamp([point('2026-07-13')], currentTimeMs)).toBeNull()
-		expect(getStaleBridgeVolumeTimestamp([point('2026-05-15')], currentTimeMs)).toBe(
-			Date.parse('2026-05-15T00:00:00Z') / 1e3
-		)
+		// The day after the last point is still a completed-day gap the API has not filled yet.
+		expect(getStaleBridgeVolumeTimestamp(data, Date.parse('2026-07-14T23:59:59Z') / 1e3)).toBeNull()
+		expect(getStaleBridgeVolumeTimestamp(data, Date.parse('2026-07-15T00:00:00Z') / 1e3)).toBe(lastDaySec)
 	})
 })

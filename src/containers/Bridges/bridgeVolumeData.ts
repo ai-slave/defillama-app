@@ -11,8 +11,9 @@ export type BridgeVolumeMetricType = (typeof BRIDGE_VOLUME_METRIC_TYPES)[number]
 
 export function getStaleBridgeVolumeTimestamp(
 	data: Array<BridgeVolumePoint> | null | undefined,
-	currentTimeMs: number = Date.now()
+	nowSec: number
 ): number | null {
+	const currentTimeMs = nowSec * 1e3
 	const hasCurrentOrCompletedDay =
 		getFreshTimeSeriesCurrentPoint(data, (point) => point.date, { currentTimeMs }) != null ||
 		getFreshTimeSeriesCurrentPoint(data, (point) => point.date, { currentTimeMs, currentDayOffset: 1 }) != null
