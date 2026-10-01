@@ -32,7 +32,7 @@ import {
 } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
-import { PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { InlineStatus, PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
@@ -256,7 +256,7 @@ export function PortfolioNotifications({
 	const dialogStore = Ariakit.useDialogStore()
 	const isClient = useIsClient()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
-	const { preferences, isLoading, savePreferences, updateStatus, deletePreferences } =
+	const { preferences, isLoading, error, refetch, savePreferences, updateStatus, deletePreferences } =
 		useEmailNotifications(selectedPortfolio)
 	const isChangingPreferences = savePreferences.isPending || updateStatus.isPending || deletePreferences.isPending
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)
@@ -419,32 +419,49 @@ export function PortfolioNotifications({
 			<Card padding="sm">
 				<div className="mb-2">
 					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
-					<p className="body-sm text-secondary">
-						{preferences ? (
-							preferences.active ? (
-								<span className="flex items-center gap-2">
-									<Icon name="check-circle" height={14} width={14} className="text-data-up" />
-									<span>
-										Weekly email notifications are <strong className="text-data-up">active</strong> for "
-										{selectedPortfolio}" portfolio
-									</span>
+					{/* A failed read is unknown, not "none": offering setup would POST over the saved preferences. */}
+					{error ? (
+						<InlineStatus variant="error">
+							<div className="flex flex-wrap items-center justify-between gap-2">
+								<span>
+									Couldn&apos;t load the email notifications for the &quot;{selectedPortfolio}&quot; portfolio
+									{selectedPortfolio === DEFAULT_PORTFOLIO_NAME
+										? ", so they can't be changed yet."
+										: ", so they can't be changed and the portfolio can't be deleted yet."}
 								</span>
+								<Button type="button" size="sm" onClick={() => void refetch()}>
+									Try again
+								</Button>
+							</div>
+						</InlineStatus>
+					) : (
+						<p className="body-sm text-secondary">
+							{preferences ? (
+								preferences.active ? (
+									<span className="flex items-center gap-2">
+										<Icon name="check-circle" height={14} width={14} className="text-data-up" />
+										<span>
+											Weekly email notifications are <strong className="text-data-up">active</strong> for "
+											{selectedPortfolio}" portfolio
+										</span>
+									</span>
+								) : (
+									<span className="flex items-center gap-2">
+										<Icon name="pause" height={14} width={14} className="text-secondary" />
+										<span>
+											Weekly email notifications are <strong className="text-secondary">disabled</strong> for "
+											{selectedPortfolio}" portfolio
+										</span>
+									</span>
+								)
 							) : (
-								<span className="flex items-center gap-2">
-									<Icon name="pause" height={14} width={14} className="text-secondary" />
-									<span>
-										Weekly email notifications are <strong className="text-secondary">disabled</strong> for "
-										{selectedPortfolio}" portfolio
-									</span>
-								</span>
-							)
-						) : (
-							<span>Set up weekly email notifications for the "{selectedPortfolio}" portfolio</span>
-						)}
-					</p>
+								<span>Set up weekly email notifications for the "{selectedPortfolio}" portfolio</span>
+							)}
+						</p>
+					)}
 				</div>
 
-				{preferences?.settings ? (
+				{error ? null : preferences?.settings ? (
 					<div className="mb-3 rounded-lg bg-surface-elevated-1 p-3">
 						<div className="space-y-1 body-xs text-secondary">
 							{protocolsCount > 0 ? (
@@ -469,59 +486,61 @@ export function PortfolioNotifications({
 					</div>
 				) : null}
 
-				<div className="flex flex-wrap items-center gap-2">
-					<Button
-						size="md"
-						type="button"
-						onClick={handleNotificationsButtonClick}
-						disabled={loaders.userLoading || isLoading}
-					>
-						<Icon name="mail" height={16} width={16} />
-						<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
-					</Button>
+				{error ? null : (
+					<div className="flex flex-wrap items-center gap-2">
+						<Button
+							size="md"
+							type="button"
+							onClick={handleNotificationsButtonClick}
+							disabled={loaders.userLoading || isLoading}
+						>
+							<Icon name="mail" height={16} width={16} />
+							<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
+						</Button>
 
-					{preferences ? (
-						<>
-							{preferences.active ? (
+						{preferences ? (
+							<>
+								{preferences.active ? (
+									<Button
+										size="md"
+										type="button"
+										onClick={handleDisableNotifications}
+										disabled={loaders.userLoading || isChangingPreferences}
+										title="Temporarily disable notifications"
+									>
+										<Icon name="pause" height={16} width={16} />
+										<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
+									</Button>
+								) : null}
+								{!preferences.active ? (
+									<button
+										type="button"
+										onClick={() => {
+											updateStatus.mutate({ portfolioName: selectedPortfolio, active: true })
+										}}
+										disabled={loaders.userLoading || isChangingPreferences}
+										className={positiveActionButtonClassName}
+										title="Re-enable notifications"
+									>
+										<Icon name="check-circle" height={16} width={16} />
+										<span>{updateStatus.isPending ? 'Enabling...' : 'Enable'}</span>
+									</button>
+								) : null}
 								<Button
+									variant="destructive"
 									size="md"
 									type="button"
-									onClick={handleDisableNotifications}
+									onClick={handleDeleteNotifications}
 									disabled={loaders.userLoading || isChangingPreferences}
-									title="Temporarily disable notifications"
+									title="Permanently delete notification preferences"
 								>
-									<Icon name="pause" height={16} width={16} />
-									<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
+									<Icon name="trash-2" height={16} width={16} />
+									<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
 								</Button>
-							) : null}
-							{!preferences.active ? (
-								<button
-									type="button"
-									onClick={() => {
-										updateStatus.mutate({ portfolioName: selectedPortfolio, active: true })
-									}}
-									disabled={loaders.userLoading || isChangingPreferences}
-									className={positiveActionButtonClassName}
-									title="Re-enable notifications"
-								>
-									<Icon name="check-circle" height={16} width={16} />
-									<span>{updateStatus.isPending ? 'Enabling...' : 'Enable'}</span>
-								</button>
-							) : null}
-							<Button
-								variant="destructive"
-								size="md"
-								type="button"
-								onClick={handleDeleteNotifications}
-								disabled={loaders.userLoading || isChangingPreferences}
-								title="Permanently delete notification preferences"
-							>
-								<Icon name="trash-2" height={16} width={16} />
-								<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
-							</Button>
-						</>
-					) : null}
-				</div>
+							</>
+						) : null}
+					</div>
+				)}
 			</Card>
 			{shouldRenderModal ? (
 				<Suspense fallback={null}>
@@ -684,6 +703,7 @@ function PortfolioSelection() {
 	const {
 		preferences: notificationPreferences,
 		isLoading: isLoadingNotificationPreferences,
+		error: notificationPreferencesError,
 		deletePreferences: deleteNotificationPreferences
 	} = useEmailNotifications(selectedPortfolio)
 
@@ -704,8 +724,9 @@ function PortfolioSelection() {
 
 	const handleRemovePortfolio = () => {
 		// Only portfolios with saved notifications have server preferences, and the server refuses to delete
-		// them without an active subscription (its email job skips those accounts too).
-		if (!notificationPreferences || !hasActiveSubscription) return removeSelectedPortfolio()
+		// them without an active subscription (its email job skips those accounts too). A failed subscription
+		// read is not a lapse: userLoading stays on until a read succeeds, and the server decides instead.
+		if (!notificationPreferences || (!hasActiveSubscription && !loaders.userLoading)) return removeSelectedPortfolio()
 		// Keep the portfolio until the server delete succeeds: once it is gone, nothing in the UI can stop its emails.
 		deleteNotificationPreferences.mutate({ portfolioName: selectedPortfolio }, { onSuccess: removeSelectedPortfolio })
 	}
@@ -738,9 +759,12 @@ function PortfolioSelection() {
 						size="md"
 						type="button"
 						onClick={handleRemovePortfolio}
+						// A failed read is unknown, not "no notifications": deleting locally could leave their emails running.
+						// The notifications card below says so and offers the retry.
 						disabled={
 							loaders.subscriptionInitialCheck ||
 							isLoadingNotificationPreferences ||
+							notificationPreferencesError != null ||
 							deleteNotificationPreferences.isPending
 						}
 						title="Delete current portfolio"

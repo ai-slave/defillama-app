@@ -428,7 +428,7 @@ function ProDashboardAPIProviderInner({
 	const queryClient = useQueryClient()
 
 	const { isAuthenticated, user } = useAuthContext()
-	const { canCreateDashboard, isFreeUser } = useFreeTierStatus()
+	const { checkCanCreateDashboard, isFreeUser } = useFreeTierStatus()
 
 	const dashboardQueryKey = useMemo(
 		() => ['pro-dashboard', 'dashboard', initialDashboardId, isAuthenticated, user?.id],
@@ -873,7 +873,7 @@ function ProDashboardAPIProviderInner({
 			aiGenerated?: AIGeneratedData | null
 			teamId?: string
 		}) => {
-			if (!canCreateDashboard) {
+			if (!(await checkCanCreateDashboard())) {
 				throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
 			}
 
@@ -894,7 +894,7 @@ function ProDashboardAPIProviderInner({
 
 			return createDashboard(dashboardData)
 		},
-		[createDashboard, canCreateDashboard, isFreeUser]
+		[createDashboard, checkCanCreateDashboard, isFreeUser]
 	)
 
 	const handleGenerateDashboard = useCallback(
@@ -1104,7 +1104,7 @@ function ProDashboardAPIProviderInner({
 			throw new Error('Please sign in to copy dashboards')
 		}
 
-		if (!canCreateDashboard) {
+		if (!(await checkCanCreateDashboard())) {
 			throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
 		}
 
@@ -1138,7 +1138,7 @@ function ProDashboardAPIProviderInner({
 		annotations,
 		isAuthenticated,
 		createDashboard,
-		canCreateDashboard,
+		checkCanCreateDashboard,
 		isFreeUser,
 		dashboardVisibility,
 		dashboardId

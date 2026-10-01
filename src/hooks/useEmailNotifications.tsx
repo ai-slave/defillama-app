@@ -62,7 +62,8 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		data: preferences,
 		isLoading,
 		isFetching,
-		error
+		error,
+		refetch
 	} = useQuery<NotificationPreference | null>({
 		queryKey: ['notifications', 'preferences', pb.authStore.record?.id, portfolioName],
 		queryFn: async () => {
@@ -206,6 +207,7 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		isLoading,
 		isFetching,
 		error,
+		refetch,
 		savePreferences,
 		updateStatus,
 		deletePreferences

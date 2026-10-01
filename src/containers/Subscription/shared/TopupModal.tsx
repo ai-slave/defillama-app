@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useCallback, useId, useState } from 'react'
+import { lazy, Suspense, useCallback, useId, useRef, useState } from 'react'
 import { useCreateTopup, TOPUP_CONFIG } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBackButton, DialogBody, DialogHeader } from '~/ui/Dialog'
@@ -41,7 +41,13 @@ export function TopupForm({
 	const [amount, setAmount] = useState('10')
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
 	const [isRedirecting, setIsRedirecting] = useState(false)
-	const topupMutation = useCreateTopup()
+	const errorSlotRef = useRef<HTMLDivElement>(null)
+	// The form is on screen while its error slot is mounted and its dialog has not started closing (the leave
+	// animation keeps it mounted). Outcomes after that are the user's to miss: no redirect, a toast for an error.
+	// While mounted, the form shows the pending request's error itself: nothing resets the mutation while it is
+	// pending (Back waits, and both pay buttons are disabled), so the observer always receives that error.
+	const isOnScreen = () => errorSlotRef.current != null && (!dialog || dialog.getState().open)
+	const topupMutation = useCreateTopup(isOnScreen)
 
 	const parsedAmount = parseFloat(amount)
 	const isValidAmount =
@@ -75,9 +81,9 @@ export function TopupForm({
 			{ amount: parsedAmount, provider: 'llamapay', redirectUrl, cancelUrl },
 			{
 				// Closing the dialog cancels the redirect: mutate() callbacks are dropped once the form unmounts,
-				// and the open check covers the dialog's leave animation before that.
+				// and the on-screen check covers the dialog's leave animation before that.
 				onSuccess: (result) => {
-					if (dialog && !dialog.getState().open) return
+					if (!isOnScreen()) return
 					if (result.provider === 'llamapay') window.location.href = result.checkoutUrl
 				},
 				onError: () => setIsRedirecting(false)
@@ -200,7 +206,9 @@ export function TopupForm({
 					<TopupStripeCheckout fetchClientSecret={fetchClientSecret} isPending={topupMutation.isPending} />
 				</Suspense>
 			)}
-			{errorMessage ? <InlineStatus variant="error">{errorMessage}</InlineStatus> : null}
+			<div ref={errorSlotRef} className="empty:hidden">
+				{errorMessage ? <InlineStatus variant="error">{errorMessage}</InlineStatus> : null}
+			</div>
 		</>
 	)
 
@@ -208,7 +216,11 @@ export function TopupForm({
 		return (
 			<>
 				<DialogHeader
-					leading={step === 'stripe' ? <DialogBackButton label="Back to amount" onClick={goBack} /> : null}
+					leading={
+						step === 'stripe' ? (
+							<DialogBackButton label="Back to amount" onClick={goBack} disabled={topupMutation.isPending} />
+						) : null
+					}
 					title={step === 'stripe' ? 'Complete payment' : 'Top up balance'}
 					subtitle={
 						<Ariakit.DialogDescription render={<span />}>
@@ -227,7 +239,14 @@ export function TopupForm({
 			    icon-only back beside the host dialog's own header. */}
 			<header className="flex flex-col items-start gap-3">
 				{step === 'stripe' ? (
-					<Button type="button" variant="ghost" size="sm" className="-ml-2" onClick={goBack}>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						className="-ml-2"
+						onClick={goBack}
+						disabled={topupMutation.isPending}
+					>
 						<Icon name="arrow-left" className="size-3.5" aria-hidden="true" />
 						Back to amount
 					</Button>

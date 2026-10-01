@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
@@ -15,7 +16,17 @@ vi.mock('../TopupStripeCheckout', async () => {
 	await new Promise<void>((resolve) => {
 		cardCheckout.resolve = resolve
 	})
-	return { default: () => <div>Card checkout</div> }
+	// Stripe asks for the client secret itself; the stub does it on a click so tests choose when.
+	return {
+		default: ({ fetchClientSecret }: { fetchClientSecret: () => Promise<string> }) => (
+			<div>
+				Card checkout
+				<button type="button" onClick={() => void fetchClientSecret().catch(() => {})}>
+					Start card session
+				</button>
+			</div>
+		)
+	}
 })
 
 const session = installSubscriberSession('buyer')
@@ -39,6 +50,7 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	host.remove()
+	toast.remove()
 })
 
 function button(name: string) {
@@ -59,6 +71,7 @@ async function mount() {
 		const [open, setOpen] = useState(false)
 		return (
 			<>
+				<Toaster />
 				<button type="button" onClick={() => setOpen(true)}>
 					Open balance
 				</button>
@@ -200,4 +213,52 @@ test.each([
 	for (let tick = 0; tick < 5; tick++) await act(async () => {})
 	expect(window.location.hash).toBe(hash)
 	window.location.hash = ''
+})
+
+test('a crypto checkout that fails after the dialog closes says so outside it', async () => {
+	const request = Promise.withResolvers<Response>()
+	topupReplies.push(request.promise)
+	await mount()
+	await click('Pay with crypto')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+	await click('Close dialog')
+	await act(async () => request.resolve(unavailable()))
+
+	await waitForUi(() => expect(document.body.textContent).toContain('Top-up failed: Checkout unavailable'))
+	expect(document.querySelector('[role="dialog"]')).toBeNull()
+	expect(topups()).toHaveLength(1)
+})
+
+test('a crypto checkout that fails while the dialog is open shows the error only in the dialog', async () => {
+	topupReplies.push(unavailable())
+	await mount()
+	await click('Pay with crypto')
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
+	// Settle the toast store too, so a toast fired with the error would be on screen by now.
+	for (let tick = 0; tick < 5; tick++) await act(async () => {})
+	expect(document.body.textContent).not.toContain('Top-up failed')
+})
+
+test('a card checkout keeps its pending creation until it settles, so its failure shows in the dialog', async () => {
+	const request = Promise.withResolvers<Response>()
+	topupReplies.push(request.promise)
+	await mount()
+	await click('Pay with card')
+	await act(async () => cardCheckout.resolve())
+	await waitForUi(() => expect(button('Start card session')).toBeDefined())
+	await click('Start card session')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+
+	await click('Back to amount')
+	await act(async () => request.resolve(unavailable()))
+
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Complete payment')
+	expect(topups()).toEqual([expect.objectContaining({ amount: 10, provider: 'stripe' })])
+
+	// Once settled, Back starts over: the next card attempt does not inherit the failure.
+	await click('Back to amount')
+	await click('Pay with card')
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Card checkout')
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 })

@@ -80,3 +80,34 @@ test.each([
 	await act(async () => writes[1]!.resolve(new Response(null, { status: 204 })))
 	await waitFor(() => expect(document.body.textContent).toContain(success))
 })
+
+test('a failed read offers no setup over the saved preferences, and a retry shows them', async () => {
+	let readsFail = true
+	session.serve({
+		'/watchlist/preferences': () =>
+			readsFail ? new Response('Service unavailable', { status: 503 }) : Response.json({ preferences })
+	})
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<PortfolioNotifications selectedPortfolio="QA" filteredProtocols={[{ slug: 'aave' }]} />
+			</session.Wrapper>
+		)
+	)
+	// The read has settled once setup is offered or the card says why it is not.
+	await waitFor(() =>
+		expect(button('Set up notifications')?.disabled === false || button('Try again') !== undefined).toBe(true)
+	)
+
+	expect(button('Set up notifications')).toBeUndefined()
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+		"Couldn't load the email notifications for the \"QA\" portfolio, so they can't be changed and the portfolio can't be deleted yet.Try again"
+	)
+
+	readsFail = false
+	await act(async () => button('Try again')!.click())
+	await waitFor(() => expect(document.body.textContent).toContain('Tracking 1 protocol(s) - tvl'))
+	expect(document.body.textContent).toContain('Weekly email notifications are active for "QA" portfolio')
+	expect(button('Update settings')?.disabled).toBe(false)
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+})

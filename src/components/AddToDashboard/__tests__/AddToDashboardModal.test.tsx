@@ -92,3 +92,51 @@ test('a failed create shows its error inside the open dialog, not as a toast', a
 	const toasts = [...document.querySelectorAll('[role="status"]')].map((el) => el.textContent)
 	expect(toasts).not.toContain('Dashboard limit reached')
 })
+
+test('a failed dashboard list keeps the saved dashboards, and its retry loads the current list', async () => {
+	localStorage.setItem('lite-dashboards', JSON.stringify([{ id: 'saved', name: 'Saved research' }]))
+	session.serve({ '/lite/dashboards': fixtureStatus(500, { message: 'Server error' }) })
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<OpenModal />
+			</session.Wrapper>
+		)
+	)
+
+	await waitForUi(() =>
+		expect(dialog().querySelector('[role="alert"]')?.textContent).toBe("Couldn't refresh your dashboards.Try again")
+	)
+	expect(dialog().textContent).toContain('Saved research')
+	expect(localStorage.getItem('lite-dashboards')).toBe(JSON.stringify([{ id: 'saved', name: 'Saved research' }]))
+
+	session.serve({
+		'/lite/dashboards': {
+			items: [
+				{ id: 'saved', name: 'Saved research' },
+				{ id: 'second', name: 'Second research' }
+			]
+		}
+	})
+	await act(async () => button('Try again').click())
+
+	await waitForUi(() => expect(dialog().querySelector('[role="alert"]')).toBeNull())
+	// The retry button is gone, so focus lands on the list it loaded.
+	expect(document.activeElement?.textContent).toBe('Saved researchSecond research')
+})
+
+test('a failed dashboard list with nothing saved says so instead of claiming there are no dashboards', async () => {
+	session.serve({ '/lite/dashboards': fixtureStatus(500, { message: 'Server error' }) })
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<OpenModal />
+			</session.Wrapper>
+		)
+	)
+
+	await waitForUi(() =>
+		expect(dialog().querySelector('[role="alert"]')?.textContent).toBe("Couldn't load your dashboards.Try again")
+	)
+	expect(dialog().textContent).not.toContain('No dashboards yet')
+})

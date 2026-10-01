@@ -150,6 +150,64 @@ describe('subscriber', () => {
 	})
 })
 
+describe('subscriber whose notification read fails', () => {
+	const session = installSubscriberSession('user', { resolved: true })
+
+	test('a failed notification read keeps the portfolio and offers a retry, then deletes on the server', async () => {
+		let readsFail = true
+		session.serve({
+			'/watchlist/preferences': (url: URL, init?: RequestInit) =>
+				init?.method === 'DELETE'
+					? new Response(null, { status: 204 })
+					: readsFail && url.searchParams.get('portfolioName') === 'Research'
+						? new Response('Service unavailable', { status: 503 })
+						: { preferences: savedPreferences }
+		})
+		await createPortfolio(session, 'Research')
+		// The read has settled once Delete is enabled or the page says why it is not.
+		await waitFor(() =>
+			expect(!deletePortfolioButton()!.disabled || document.querySelector('[role="alert"]') != null).toBe(true)
+		)
+		await act(async () => deletePortfolioButton()!.click())
+
+		// Another observer mounting may read again, so the failure can show twice before it stays.
+		await waitFor(() =>
+			expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+				"Couldn't load the email notifications for the \"Research\" portfolio, so they can't be changed and the portfolio can't be deleted yet.Try again"
+			)
+		)
+		expect(portfolioToolbar()).toContain('Research')
+		expect(preferenceDeletes(session)).toEqual([])
+
+		readsFail = false
+		await act(async () => button('Try again')!.click())
+		await deletePortfolio()
+		await waitFor(() => expect(portfolioToolbar()).not.toContain('Research'))
+		expect(preferenceDeletes(session)).toEqual(['Research'])
+		expect(document.querySelector('[role="alert"]')).toBeNull()
+	})
+})
+
+describe('subscriber whose subscription check fails', () => {
+	const session = installSubscriberSession('user')
+
+	// The subscription read retries twice (250ms, then 500ms) before it settles as failed.
+	test(
+		'deleting a portfolio with saved notifications still deletes them on the server',
+		{ timeout: 3000 },
+		async () => {
+			session.serve({ '/subscription/status': fixtureStatus(503, { error: 'Unavailable' }) })
+			servePreferences(session, savedPreferences, () => new Response(null, { status: 204 }))
+			await createPortfolio(session, 'Research')
+			await waitForUi(() => expect(deletePortfolioButton()!.disabled).toBe(false), { timeout: 2000 })
+			await act(async () => deletePortfolioButton()!.click())
+
+			await waitFor(() => expect(portfolioToolbar()).not.toContain('Research'))
+			expect(preferenceDeletes(session)).toEqual(['Research'])
+		}
+	)
+})
+
 describe('lapsed subscriber', () => {
 	const session = installSubscriberSession('user', { account: 'free', resolved: true })
 

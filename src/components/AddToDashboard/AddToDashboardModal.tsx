@@ -2,7 +2,16 @@ import * as Ariakit from '@ariakit/react'
 import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { startTransition, type KeyboardEvent, useCallback, useDeferredValue, useId, useMemo, useState } from 'react'
+import {
+	startTransition,
+	type KeyboardEvent,
+	useCallback,
+	useDeferredValue,
+	useId,
+	useMemo,
+	useRef,
+	useState
+} from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import {
@@ -18,7 +27,7 @@ import {
 import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
-import { dashboardAPI, type LiteDashboardSummary } from '~/containers/ProDashboard/services/DashboardAPI'
+import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
@@ -30,7 +39,6 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 
-const EMPTY_DASHBOARDS: Array<LiteDashboardSummary> = []
 const EMPTY_UNSUPPORTED_METRICS: Array<string> = []
 type AddToDashboardSubmitType = 'new-dashboard' | 'existing-dashboard'
 
@@ -276,8 +284,19 @@ export function AddToDashboardModal({
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const [repairTarget, setRepairTarget] = useState<ChartRepairTarget | null>(() => readChartRepairTarget())
-	const { data: dashboardsData, isLoading: isLoadingDashboards } = useGetLiteDashboards()
-	const dashboards = dashboardsData ?? EMPTY_DASHBOARDS
+	const {
+		data: dashboards,
+		isLoading: isLoadingDashboards,
+		error: dashboardsError,
+		isFetching: isFetchingDashboards,
+		refetch: refetchDashboards
+	} = useGetLiteDashboards()
+	const dashboardListRef = useRef<HTMLDivElement>(null)
+	// A successful retry removes its own button, so focus moves to the list it loaded.
+	const retryDashboards = async () => {
+		const result = await refetchDashboards()
+		if (result.isSuccess) dashboardListRef.current?.focus()
+	}
 
 	const configName = getConfigName(chartConfig, llamaAIChart)
 	const [search, setSearch] = useState('')
@@ -419,15 +438,17 @@ export function AddToDashboardModal({
 						</label>
 					) : null}
 
-					<div className="max-h-56 overflow-y-auto overscroll-contain">
+					<div ref={dashboardListRef} tabIndex={-1} className="max-h-56 overflow-y-auto overscroll-contain">
 						{isLoadingDashboards ? (
 							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
 								<LoadingIndicator label="Loading dashboards" />
 							</div>
 						) : filteredDashboards.length === 0 && !search.trim() ? (
-							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
-								No dashboards yet
-							</p>
+							dashboardsError ? null : (
+								<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
+									No dashboards yet
+								</p>
+							)
 						) : filteredDashboards.length === 0 ? (
 							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
 								No matches found
@@ -459,6 +480,24 @@ export function AddToDashboardModal({
 							</div>
 						)}
 					</div>
+
+					{dashboardsError ? (
+						<InlineStatus variant="error">
+							<div className="flex flex-wrap items-center justify-between gap-2">
+								<span>
+									{dashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
+								</span>
+								<Button
+									type="button"
+									size="sm"
+									onClick={() => void retryDashboards()}
+									pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
+								>
+									Try again
+								</Button>
+							</div>
+						</InlineStatus>
+					) : null}
 
 					{!repairTarget ? (
 						<div>

@@ -255,7 +255,7 @@ function ProContent({
 	}
 	const { deleteDashboard, handleCreateDashboard, handleGenerateDashboard } = useProDashboardDashboard()
 	const { createDashboardDialogStore, showGenerateDashboardModal, setShowGenerateDashboardModal } = useProDashboardUI()
-	const { canCreateDashboard } = useFreeTierStatus()
+	const { isAtDashboardLimit } = useFreeTierStatus()
 	const createDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
 
 	const selectedPage =
@@ -403,9 +403,9 @@ function ProContent({
 							onClick={
 								!isAuthenticated
 									? () => router.push('/pro/preview')
-									: canCreateDashboard
-										? () => createDashboardDialogStore.show()
-										: () => showPaywall('dashboard-limit')
+									: isAtDashboardLimit
+										? () => showPaywall('dashboard-limit')
+										: () => createDashboardDialogStore.show()
 							}
 							data-umami-event="dashboard-create"
 						>

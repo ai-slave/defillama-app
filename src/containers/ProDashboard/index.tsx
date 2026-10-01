@@ -250,7 +250,7 @@ function ProDashboardContent() {
 	} | null>(null)
 	const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false)
 	const { authorizedFetch, isAuthenticated, hasActiveSubscription, user } = useAuthContext()
-	const { canCreateDashboard, isFreeUser } = useFreeTierStatus()
+	const { isAtDashboardLimit, isFreeUser } = useFreeTierStatus()
 	const [paywallState, setPaywallState] = useState<{ open: boolean; reason: PaywallReason }>({
 		open: false,
 		reason: 'pro-feature'
@@ -629,14 +629,14 @@ function ProDashboardContent() {
 					<DashboardOverflowMenu
 						{...(!isReadOnly && dashboardId ? { onOpenSettings: openDashboardSettings } : {})}
 						{...(isAuthenticated && dashboardId ? { onDuplicate: copyDashboard } : {})}
-						{...(isAuthenticated && dashboardId && !canCreateDashboard
+						{...(isAuthenticated && dashboardId && isAtDashboardLimit
 							? { onDuplicateBlocked: () => showPaywall('dashboard-limit') }
 							: {})}
 						{...(isAuthenticated
 							? {
 									onNewDashboard: () => {
-										if (canCreateDashboard) createDashboardDialogStore.show()
-										else showPaywall('dashboard-limit')
+										if (isAtDashboardLimit) showPaywall('dashboard-limit')
+										else createDashboardDialogStore.show()
 									}
 								}
 							: {})}
@@ -678,7 +678,7 @@ function ProDashboardContent() {
 								<CopyDashboardButton
 									key={`copy-${dashboardId}`}
 									onCopy={copyDashboard}
-									onLimitReached={canCreateDashboard ? undefined : () => showPaywall('dashboard-limit')}
+									onLimitReached={isAtDashboardLimit ? () => showPaywall('dashboard-limit') : undefined}
 								/>
 							) : null}
 						</>

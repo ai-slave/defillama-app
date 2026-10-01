@@ -97,15 +97,10 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	)
 	// The free-tier limit is refused before the request, so its message is the only thing that tells the
 	// user why; a retry cannot succeed, so it offers the upgrade instead of keeping the draft for one.
-	const { canCreateDashboard } = useFreeTierStatus()
+	const { isAtDashboardLimit } = useFreeTierStatus()
 	const creationFeedback = creation.isError ? (
 		<InlineStatus variant="error">
-			{canCreateDashboard ? (
-				<>
-					{creation.error.message}
-					<span className="block">Your choices are still here.</span>
-				</>
-			) : (
+			{isAtDashboardLimit ? (
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<span>{creation.error.message}</span>
 					<Button
@@ -118,6 +113,11 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						Upgrade to Pro
 					</Button>
 				</div>
+			) : (
+				<>
+					{creation.error.message}
+					<span className="block">Your choices are still here.</span>
+				</>
 			)}
 		</InlineStatus>
 	) : null

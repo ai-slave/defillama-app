@@ -3,6 +3,7 @@ import { act, useEffect, useState, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterAll, beforeEach, expect, test, vi } from 'vitest'
 import type { Subscription } from '~/auth/subscriptionStatus'
+import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -459,6 +460,85 @@ test.each([
 		}
 	}
 )
+
+// Another tab can sign in as someone else while this click's checkout waits on its lock or the earlier payment.
+const otherAccountToken = `e30.${btoa(JSON.stringify({ id: 'other-user', exp: 4_102_444_800 }))}.signature`
+const switchAccount = () => {
+	const record = { ...session.record, id: 'other-user' }
+	session.serve({ '/api/collections/users/auth-refresh': { token: otherAccountToken, record } })
+	return act(async () => pb.authStore.save(otherAccountToken, record))
+}
+
+test('an account switched while the earlier payment is checked creates no checkout for the new account', async () => {
+	localStorage.setItem(pendingKey, earlierIntent({ createdAt: Date.now() }))
+	session.serve({ '/subscription/create': paidUpgrade })
+	let answerStatus!: () => void
+	stripe.retrievePaymentIntent.mockReturnValue(
+		new Promise((resolve) => {
+			answerStatus = () => resolve({ paymentIntent: { status: 'canceled' } })
+		})
+	)
+	const caller = await mountCaller(upgrade)
+	try {
+		await switchAccount()
+		await act(async () => answerStatus())
+		await waitForUi(() => expect(dialog()!.textContent).toContain('The signed-in account changed'))
+		expect(creates()).toBe(0)
+		expect(localStorage.getItem('pending-upgrade:other-user')).toBeNull()
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test.each([
+	['switches to another account', () => switchAccount()],
+	['signs out', () => act(async () => pb.authStore.clear())]
+])('a reader who %s while an earlier upgrade is checked never gets its payment form', async (_case, leave) => {
+	const record = earlierIntent({ createdAt: Date.now() })
+	localStorage.setItem(pendingKey, record)
+	session.serve({ '/subscription/create': paidUpgrade })
+	let answerStatus!: () => void
+	stripe.retrievePaymentIntent.mockReturnValue(
+		new Promise((resolve) => {
+			answerStatus = () => resolve({ paymentIntent: { status: 'requires_payment_method' } })
+		})
+	)
+	const caller = await mountCaller(upgrade)
+	try {
+		await leave()
+		await act(async () => answerStatus())
+		await waitForUi(() => expect(dialog()!.textContent).toContain('The signed-in account changed'))
+		expect(buttonNamed('Complete upgrade')).toBeUndefined()
+		expect(creates()).toBe(0)
+		// The payment is still the clicking account's to resume.
+		expect(localStorage.getItem(pendingKey)).toBe(record)
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('an account switched after the checkout was created keeps the payment with the account that clicked', async () => {
+	let answerCreate!: () => void
+	const created = new Promise<void>((resolve) => {
+		answerCreate = resolve
+	})
+	session.serve({ '/subscription/create': () => created.then(() => paidUpgrade) })
+	const caller = await mountCaller(upgrade)
+	try {
+		await waitForUi(() => expect(creates()).toBe(1))
+		const createRequest = session.requests.find((request) => request.url.href.endsWith('/subscription/create'))!
+		expect(new Headers(createRequest.init!.headers).get('Authorization')).toBe(session.token)
+		await switchAccount()
+		await act(async () => answerCreate())
+		await waitForUi(() => expect(dialog()!.textContent).toContain('The signed-in account changed'))
+		expect(buttonNamed('Complete upgrade')).toBeUndefined()
+		// The intent is the clicking account's, so its next opening resumes it instead of creating another.
+		expect(JSON.parse(localStorage.getItem(pendingKey)!)).toMatchObject({ clientSecret: paidUpgrade.clientSecret })
+		expect(localStorage.getItem('pending-upgrade:other-user')).toBeNull()
+	} finally {
+		await caller.cleanup()
+	}
+})
 
 // Web Locks is a browser API happy-dom leaves out. Like the real one, a request waits for the one before it.
 function installWebLocks() {

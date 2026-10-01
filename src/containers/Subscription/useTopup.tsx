@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -68,7 +69,8 @@ export const useAiBalance = () => {
 	return { balance, totalAvailable, isLoading, isError, refetch }
 }
 
-export const useCreateTopup = () => {
+/** `isErrorShown` says whether the form that started the top-up still shows its error inline. */
+export const useCreateTopup = (isErrorShown: () => boolean) => {
 	const { isAuthenticated, authorizedFetch } = useAuthContext()!
 	const queryClient = useQueryClient()
 
@@ -102,6 +104,10 @@ export const useCreateTopup = () => {
 		},
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: [AI_BALANCE_QUERY_KEY] })
+		},
+		// Hook-level, so it still runs after the form unmounts. A payment write is never retried for the user.
+		onError: (error) => {
+			if (!isErrorShown()) toast.error(`Top-up failed: ${error.message}`)
 		}
 	})
 }

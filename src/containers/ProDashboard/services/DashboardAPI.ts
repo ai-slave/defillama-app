@@ -153,12 +153,6 @@ class DashboardAPIService {
 		return response.json()
 	}
 
-	async listDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<Array<Dashboard>> {
-		const response = await requireAuthorizedResponse(authorizedFetch, `${FEATURES_SERVER}/dashboards?_=${Date.now()}`)
-		const data = await this.handleResponse<{ items: Array<PersistedDashboard> }>(response)
-		return data.items.map(migrateDashboardConfig)
-	}
-
 	async listLiteDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<Array<LiteDashboardSummary>> {
 		const response = await requireAuthorizedResponse(
 			authorizedFetch,

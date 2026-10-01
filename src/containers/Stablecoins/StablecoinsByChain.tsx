@@ -346,20 +346,62 @@ export function StablecoinsByChain({
 		[chartType, selectedChartData, volumeGroupBy]
 	)
 
-	// Each grouping is deferred with its rows, so labels never pair old rows with a new grouping.
-	const selectedChartSnapshot = React.useMemo(
-		() => ({ data: groupedSelectedChartData, groupBy: chartType === 'inflows' ? volumeGroupBy : undefined }),
-		[chartType, groupedSelectedChartData, volumeGroupBy]
-	)
+	// Each grouping and export request is deferred with its rows, so labels and the CSV never pair old rows with a
+	// new grouping or chart.
+	const selectedChartSnapshot = React.useMemo(() => {
+		const groupBy = chartType === 'inflows' ? volumeGroupBy : undefined
+		return {
+			data: groupedSelectedChartData,
+			groupBy,
+			selectionIntent,
+			prepareCsv:
+				overviewChartType == null
+					? null
+					: () =>
+							fetchStablecoinSeriesCsvDataset(
+								{
+									scope: 'overview',
+									chain: selectedChain,
+									chart: overviewChartType,
+									selectionIntent,
+									filters: stablecoinFilterQuery
+								},
+								groupBy ?? null
+							)
+		}
+	}, [
+		chartType,
+		groupedSelectedChartData,
+		overviewChartType,
+		selectedChain,
+		selectionIntent,
+		stablecoinFilterQuery,
+		volumeGroupBy
+	])
 	const volumeChartSnapshot = React.useMemo(
-		() => ({ data: groupedVolumeChartData, groupBy: volumeGroupBy }),
-		[groupedVolumeChartData, volumeGroupBy]
+		() => ({
+			data: groupedVolumeChartData,
+			groupBy: volumeGroupBy,
+			selectionIntent,
+			prepareCsv:
+				volumeChartKind == null
+					? null
+					: () =>
+							fetchStablecoinVolumeCsvDataset(
+								selectedChain === 'All'
+									? { scope: 'global', chart: volumeChartKind, selectionIntent }
+									: { scope: 'chain', chain: selectedChain, chart: volumeChartKind, selectionIntent },
+								volumeGroupBy
+							)
+		}),
+		[groupedVolumeChartData, selectedChain, selectionIntent, volumeChartKind, volumeGroupBy]
 	)
 	const deferredSelectedChart = React.useDeferredValue(selectedChartSnapshot)
 	const deferredVolumeChart = React.useDeferredValue(volumeChartSnapshot)
 	const deferredSelectedChartData = deferredSelectedChart.data
 	const deferredVolumeChartData = deferredVolumeChart.data
-	const renderedGroupBy = isVolumeChart ? deferredVolumeChart.groupBy : deferredSelectedChart.groupBy
+	const renderedChart = isVolumeChart ? deferredVolumeChart : deferredSelectedChart
+	const renderedGroupBy = renderedChart.groupBy
 	const isVolumeChartLoading =
 		deferredVolumeChartData == null &&
 		(volumeChartQuery.isLoading || volumeChartQuery.isFetching || volumeChartQuery.data != null)
@@ -400,9 +442,16 @@ export function StablecoinsByChain({
 				: null,
 		[marketCapSeries, renderedCharts]
 	)
+	// The chart's rows were fetched for the rendered intent, so it draws that selection; the picker shows the live one.
+	const { renderedCharts: chartRenderedCharts } = useStablecoinChartSelection({
+		marketCapSeries,
+		runtimeSeries,
+		selectionIntent: renderedChart.selectionIntent,
+		setSelectionIntent
+	})
 	const selectedChartsWithHelpers = React.useMemo(
-		() => new Set([...renderedCharts, ...runtimeSeries.alwaysVisibleSeries]),
-		[renderedCharts, runtimeSeries.alwaysVisibleSeries]
+		() => new Set([...chartRenderedCharts, ...runtimeSeries.alwaysVisibleSeries]),
+		[chartRenderedCharts, runtimeSeries.alwaysVisibleSeries]
 	)
 	const activeSelectedCharts =
 		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
@@ -422,35 +471,11 @@ export function StablecoinsByChain({
 				type: 'dataset',
 				prepare: () => buildStablecoinMarketCapCsvDataset({ series: marketCapSeries, selectedSeries: renderedCharts })
 			}
-		: activeSelectedCharts && volumeChartKind != null
-			? {
-					type: 'dataset',
-					prepare: () =>
-						fetchStablecoinVolumeCsvDataset(
-							selectedChain === 'All'
-								? { scope: 'global', chart: volumeChartKind, selectionIntent }
-								: { scope: 'chain', chain: selectedChain, chart: volumeChartKind, selectionIntent },
-							volumeGroupBy
-						)
-				}
-			: activeSelectedCharts && overviewChartType != null
-				? {
-						type: 'dataset',
-						prepare: () =>
-							fetchStablecoinSeriesCsvDataset(
-								{
-									scope: 'overview',
-									chain: selectedChain,
-									chart: overviewChartType,
-									selectionIntent,
-									filters: stablecoinFilterQuery
-								},
-								chartType === 'inflows' ? volumeGroupBy : null
-							)
-					}
-				: activeChartData
-					? { type: 'dataset', prepare: () => activeChartData.dataset }
-					: null
+		: activeSelectedCharts && renderedChart.prepareCsv
+			? { type: 'dataset', prepare: renderedChart.prepareCsv }
+			: activeChartData
+				? { type: 'dataset', prepare: () => activeChartData.dataset }
+				: null
 
 	return (
 		<>

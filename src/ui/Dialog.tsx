@@ -264,11 +264,20 @@ export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...pr
 }
 
 /** The header's back control, mirroring DialogCloseButton on the left: its icon sits on the content edge. */
-export function DialogBackButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function DialogBackButton({
+	label,
+	onClick,
+	disabled = false
+}: {
+	label: string
+	onClick: () => void
+	/** For a step whose own request is pending while the dialog itself stays closable. */
+	disabled?: boolean
+}) {
 	const pending = useContext(DialogPendingContext)
 	return (
 		<Ariakit.Button
-			disabled={pending}
+			disabled={pending || disabled}
 			accessibleWhenDisabled
 			render={<Button type="button" variant="ghost" size="md" square className="-ml-2" />}
 			aria-label={label}

@@ -85,17 +85,20 @@ export function TextSelectionPopup({
 		setSelectionRange(null)
 		window.getSelection()?.removeAllRanges()
 	}
+	// Dismiss before handing the text on: clearing the page selection resets the caret of a field the callback has
+	// just focused, so a quote would leave the composer's caret at the start of its draft.
 	const handleClick = () => {
 		if (!selectionRange) return
-		onSelect(selectionRange.toString().trim().slice(0, 2000))
+		const text = selectionRange.toString().trim().slice(0, 2000)
 		dismiss()
+		onSelect(text)
 	}
 	const handleAddToArticle = () => {
 		if (!onAddToArticle || !selectionRange) return
 		const container = document.createElement('div')
 		container.appendChild(selectionRange.cloneContents())
-		onAddToArticle(container.innerHTML)
 		dismiss()
+		onAddToArticle(container.innerHTML)
 	}
 	const anchor = selectionRange
 		? getElementFromNode(selectionRange.endContainer)?.closest<HTMLElement>(

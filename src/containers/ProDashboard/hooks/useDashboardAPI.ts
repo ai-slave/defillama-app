@@ -1,4 +1,11 @@
-import { type MutationState, type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+	type MutationState,
+	type QueryClient,
+	queryOptions,
+	useMutation,
+	useQuery,
+	useQueryClient
+} from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import toast from 'react-hot-toast'
@@ -9,6 +16,7 @@ import {
 	DashboardError,
 	dashboardAPI,
 	dashboardUrlKey,
+	type DashboardAuthorizedFetch,
 	type DashboardSavePayload,
 	type LiteDashboardSummary
 } from '../services/DashboardAPI'
@@ -18,8 +26,6 @@ import {
 	toDashboardSavePayload,
 	toPersistedDashboardItems
 } from '../utils/dashboardUtils'
-
-const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
 function parseStoredLiteDashboards(value: string): Array<LiteDashboardSummary> {
 	let parsed: unknown
@@ -43,6 +49,20 @@ function parseStoredLiteDashboards(value: string): Array<LiteDashboardSummary> {
 	return dashboards
 }
 
+export function liteDashboardsQuery(authorizedFetch: DashboardAuthorizedFetch, userId: string | undefined) {
+	return queryOptions({
+		queryKey: ['pro-dashboard', 'lite-dashboards', userId],
+		queryFn: async () => {
+			const data = await dashboardAPI.listLiteDashboards(authorizedFetch)
+			// Storage keeps the last list the server returned; a failed read leaves it, so it is never an empty account.
+			setStorageItem('lite-dashboards', JSON.stringify(data))
+			return data
+		},
+		staleTime: 24 * 60 * 60 * 1000, // 24 hours
+		refetchOnWindowFocus: false
+	})
+}
+
 export function useGetLiteDashboards() {
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 
@@ -50,30 +70,17 @@ export function useGetLiteDashboards() {
 
 	const liteDashboards = parseStoredLiteDashboards(liteDashboardsInStorage)
 
-	const { isLoading, error } = useQuery({
-		queryKey: ['pro-dashboard', 'lite-dashboards', user?.id],
-		queryFn: async () => {
-			if (!isAuthenticated) return []
-			try {
-				const data = await dashboardAPI.listLiteDashboards(authorizedFetch)
-				setStorageItem('lite-dashboards', JSON.stringify(data))
-				return data
-			} catch (listError) {
-				console.log('Failed to load lite dashboards:', listError)
-				setStorageItem('lite-dashboards', '[]')
-
-				return []
-			}
-		},
-		staleTime: 24 * 60 * 60 * 1000, // 24 hours
-		refetchOnWindowFocus: false,
+	const { isLoading, error, isFetching, refetch } = useQuery({
+		...liteDashboardsQuery(authorizedFetch, user?.id),
 		enabled: isAuthenticated && !!user?.id
 	})
 
 	return {
 		data: liteDashboards,
 		isLoading: liteDashboards.length === 0 && isLoading,
-		error
+		error,
+		isFetching,
+		refetch
 	}
 }
 
@@ -81,27 +88,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 	const router = useRouter()
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
-
-	// Query for fetching dashboards list
-	const {
-		data: dashboardsData,
-		isLoading: isLoadingDashboards,
-		error: dashboardsError
-	} = useQuery({
-		queryKey: ['pro-dashboard', 'dashboards', user?.id],
-		queryFn: async () => {
-			if (!isAuthenticated) return []
-			try {
-				return await dashboardAPI.listDashboards(authorizedFetch)
-			} catch (error) {
-				console.log('Failed to load dashboards:', error)
-				return []
-			}
-		},
-		staleTime: 1000 * 60 * 5,
-		enabled: isAuthenticated && !!user?.id
-	})
-	const dashboards = dashboardsData ?? EMPTY_DASHBOARDS
 
 	const createDashboardMutation = useMutation({
 		mutationFn: async (data: DashboardSavePayload) => {
@@ -112,7 +98,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 				['pro-dashboard', 'dashboard', dashboardUrlKey(dashboard), isAuthenticated, user?.id],
 				dashboard
 			)
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
@@ -127,7 +112,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 			return await dashboardAPI.moveDashboardTeam(id, teamId, authorizedFetch)
 		},
 		onSuccess: (dashboard) => {
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
@@ -164,7 +148,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 			if (deleted.slug) {
 				queryClient.removeQueries({ queryKey: ['pro-dashboard', 'dashboard', deleted.slug] })
 			}
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
@@ -209,11 +192,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 	)
 
 	return {
-		// Data
-		dashboards,
-		isLoadingDashboards,
-		dashboardsError,
-
 		// Mutations
 		createDashboard: createDashboardMutation,
 		updateDashboard: updateDashboardMutation,
@@ -306,7 +284,6 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 				{ queryKey: ['pro-dashboard', 'dashboard'], exact: false },
 				(oldData: Dashboard | undefined) => (oldData?.id === dashboard.id ? dashboard : oldData)
 			)
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })

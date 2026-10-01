@@ -5,6 +5,7 @@ import { getReferrer } from '~/auth/referrer'
 import { fetchSubscriptionStatus } from '~/auth/subscriptionStatus'
 import { AUTH_SERVER, STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
+import pb from '~/utils/pocketbase'
 import {
 	decideEarlierUpgrade,
 	forgetPendingUpgrade,
@@ -44,6 +45,8 @@ export function checkoutReturnPath(request: CheckoutRequest) {
 	returnUrl.searchParams.set('interval', request.billingInterval)
 	return `${returnUrl.pathname}${returnUrl.search}`
 }
+
+const ACCOUNT_SWITCHED = 'The signed-in account changed while the checkout was starting. Try again.'
 
 async function readPaymentStatus(clientSecret: string) {
 	const { loadStripe } = await import('@stripe/stripe-js')
@@ -90,6 +93,11 @@ export function useStripeCheckout() {
 			const userId = user.id
 			const createSession = async (): Promise<CheckoutSession> => {
 				const earlier = await checkEarlierUpgrade(userId, authToken!)
+				// The checkout belongs to the account that clicked. The lock and the earlier-payment check are awaited, and
+				// another tab can sign in as someone else or sign out meanwhile. Every branch below hands out that
+				// account's payment or creates one, so none runs once another account is signed in. Nothing below awaits
+				// before the create request, and authorizedFetch reads its token synchronously.
+				if (pb.authStore.record?.id !== userId) throw new Error(ACCOUNT_SWITCHED)
 				if (earlier) {
 					const { record } = earlier
 					const decision = decideEarlierUpgrade(
@@ -153,7 +161,8 @@ export function useStripeCheckout() {
 						}
 					}
 
-					// Recorded as soon as it exists, so another tab or a reload resumes this intent instead of creating one.
+					// Recorded as soon as it exists, so another tab or a reload resumes this intent instead of creating one. It
+					// is the clicking account's intent even if the session changed while it was created.
 					savePendingUpgrade(userId, {
 						plan: request.type,
 						interval: request.billingInterval,
@@ -161,10 +170,12 @@ export function useStripeCheckout() {
 						pricing,
 						createdAt: Date.now()
 					})
+					if (pb.authStore.record?.id !== userId) throw new Error(ACCOUNT_SWITCHED)
 					return { kind: 'paidUpgrade', clientSecret: data.clientSecret, pricing, awaitingVerification: false }
 				}
 
 				if (!data.clientSecret) throw new Error('No client secret returned from server')
+				if (pb.authStore.record?.id !== userId) throw new Error(ACCOUNT_SWITCHED)
 				return { kind: 'checkout', clientSecret: data.clientSecret }
 			}
 			// Two first openings cannot both find no record and each create an intent.

@@ -219,27 +219,20 @@ export function BreakdownChartCard({
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const activeCsvSource = React.useMemo(
-		() =>
-			view === 'table'
-				? buildSnapshotCsvSource(tableRows, seriesLabel, shareHeader)
-				: dominance
-					? dominance.csvSource
-					: csvSource,
-		[csvSource, dominance, seriesLabel, shareHeader, tableRows, view]
-	)
 	const chartSnapshot = React.useMemo(
 		() => ({
 			dataset: dominance?.dataset ?? dataset,
 			charts: dominance?.charts ?? charts,
 			selectedCharts,
 			isDominance,
-			csvSource: activeCsvSource
+			csvSource: dominance?.csvSource ?? csvSource
 		}),
-		[activeCsvSource, charts, dataset, dominance, isDominance, selectedCharts]
+		[charts, csvSource, dataset, dominance, isDominance, selectedCharts]
 	)
 	// Deferred together with the rows, so the chart and its export never pair old rows with a new selection or view.
+	// The table renders live rows, so its export does too.
 	const deferredChart = React.useDeferredValue(chartSnapshot)
+	const exportsDominance = view !== 'table' && deferredChart.isDominance
 
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
@@ -268,10 +261,12 @@ export function BreakdownChartCard({
 				) : null}
 				<ChartExportButtons
 					chartInstance={chartInstance}
-					filename={deferredChart.isDominance ? `${exportFilenameBase}-dominance` : exportFilenameBase}
-					title={deferredChart.isDominance ? `${exportTitle} (Dominance)` : exportTitle}
+					filename={exportsDominance ? `${exportFilenameBase}-dominance` : exportFilenameBase}
+					title={exportsDominance ? `${exportTitle} (Dominance)` : exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={deferredChart.csvSource}
+					csvSource={
+						view === 'table' ? buildSnapshotCsvSource(tableRows, seriesLabel, shareHeader) : deferredChart.csvSource
+					}
 					showPng={view !== 'table'}
 				/>
 			</ChartPanelToolbar>
@@ -321,14 +316,12 @@ export function TokensBreakdownPieChartCard({
 		selectedCharts,
 		setSelectedSeries: setSelectedTokens
 	} = useLocalSelection({ scope: exportFilenameBase, allowEmptySelection: true, availableSeries: selectableSeries })
-	const presentation = React.useMemo(
-		() =>
-			buildRuntimePieChartPresentation({
-				series: tokenBreakdownPieSeries,
-				selectedSeries: selectedCharts
-			}),
-		[selectedCharts, tokenBreakdownPieSeries]
-	)
+	const presentation = React.useMemo(() => {
+		const selection = { series: tokenBreakdownPieSeries, selectedSeries: selectedCharts }
+		const csvSource: ChartCsvSource = { type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(selection) }
+		return { ...buildRuntimePieChartPresentation(selection), csvSource }
+	}, [selectedCharts, tokenBreakdownPieSeries])
+	// The export is deferred with the slices, so the CSV never pairs a new selection with the pie still on screen.
 	const deferredPresentation = React.useDeferredValue(presentation)
 	const [view, setView] = React.useState<TokensBreakdownView>('pie')
 	const tableRows = React.useMemo(
@@ -373,16 +366,7 @@ export function TokensBreakdownPieChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 					csvSource={
-						view === 'table'
-							? buildSnapshotCsvSource(tableRows, 'Token', shareHeader)
-							: {
-									type: 'dataset',
-									prepare: () =>
-										buildRuntimePieChartCsvDataset({
-											series: tokenBreakdownPieSeries,
-											selectedSeries: selectedCharts
-										})
-								}
+						view === 'table' ? buildSnapshotCsvSource(tableRows, 'Token', shareHeader) : deferredPresentation.csvSource
 					}
 					showPng={view !== 'table'}
 				/>
