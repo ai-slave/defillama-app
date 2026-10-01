@@ -1,5 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import { createColumnHelper, useTable, type ExpandedState, type SortingState } from '@tanstack/react-table'
+import {
+	createColumnHelper,
+	functionalUpdate,
+	useTable,
+	type ExpandedState,
+	type SortingState
+} from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -296,6 +302,8 @@ function ChainProtocolsTableInner({
 		[presetSortId, pickedSort]
 	)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
+	// Rows the user opened or closed during the current search; null until they toggle one.
+	const [searchExpandedPick, setSearchExpandedPick] = useState<ExpandedState | null>(null)
 	const userReplacementPendingRef = useRef(false)
 	const chainQuery = router.query.chain
 	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
@@ -454,13 +462,17 @@ function ChainProtocolsTableInner({
 		]
 	}, [customColumns])
 
+	// A remote search opens the parents it reached through their children until the user toggles a row.
+	const searchExpanded = remoteEnabled ? remoteRankings.searchExpanded : null
+	const tableExpanded = searchExpanded ? (searchExpandedPick ?? searchExpanded) : expanded
+
 	const instance = useTable({
 		features: tableFeaturesConfig,
 		data: finalProtocols,
 		columns: allColumns,
 		state: {
 			sorting,
-			expanded: (remoteEnabled ? remoteRankings.searchExpanded : null) ?? expanded,
+			expanded: tableExpanded,
 			columnVisibility,
 			columnFilters
 		},
@@ -469,7 +481,13 @@ function ChainProtocolsTableInner({
 		},
 		enableSortingRemoval: false,
 		filterFromLeafRows: true,
-		onExpandedChange: (updater) => startTransition(() => setExpanded(updater)),
+		// Row ids are stable across pages and searches, so new rows must not collapse what the user opened; Reset clears it.
+		autoResetExpanded: false,
+		onExpandedChange: (updater) =>
+			startTransition(() => {
+				if (!searchExpanded) return setExpanded(updater)
+				setSearchExpandedPick((pick) => functionalUpdate(updater, pick ?? searchExpanded))
+			}),
 		getSubRows: (row: IProtocol) => row.childProtocols,
 		getRowId: (row, index, parent) => row.id ?? `${parent?.id ?? 'root'}:${row.slug || index}`,
 		onSortingChange: (updater) => {
@@ -520,6 +538,7 @@ function ChainProtocolsTableInner({
 		}
 		setNameSearch('')
 		setExpanded({})
+		setSearchExpandedPick(null)
 		setPickedSort({ presetSortId, sorting: [{ id: 'tvl', desc: true }] })
 		for (const key of PROTOCOL_RANKING_RESET_STORAGE_KEYS) removeStorageItem(key)
 		setIgnoreTvlRangeDuringReset(true)
@@ -538,6 +557,8 @@ function ChainProtocolsTableInner({
 					onChange={(event) => {
 						userReplacementPendingRef.current = true
 						setNameSearch(event.currentTarget.value)
+						// Each edit starts a fresh search, which opens its own parents even when the text repeats an earlier one.
+						setSearchExpandedPick(null)
 					}}
 					placeholder="Search protocols..."
 					autoComplete="off"

@@ -718,7 +718,11 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 					<input
 						type="text"
 						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						onChange={(e) => {
+							setSearch(e.target.value)
+							// Each new query reveals all of its matches; the user can still collapse a category afterwards.
+							if (e.target.value) expandAllCategories()
+						}}
 						placeholder="Search filters..."
 						aria-label="Search filters"
 						className="h-8 w-full rounded-md border border-pro-cards-border bg-(--cards-bg2) pr-8 pl-8 text-xs text-pro-text-primary outline-hidden transition-colors focus:border-brand"
@@ -735,7 +739,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 				</div>
 				<div className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto pr-1">
 					{filteredCategories.map(({ category, label, filters: categoryFilters }) => {
-						const isExpanded = expandedCategories.has(category) || search.length > 0
+						const isExpanded = expandedCategories.has(category)
 						const availableFilters = categoryFilters.filter((f) => !activeFilterIds.has(f.id))
 						const badgeColor = CATEGORY_BADGE_COLORS[category]
 
@@ -745,6 +749,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 							<div key={category} className="rounded-md border border-pro-cards-border bg-(--cards-bg2)">
 								<button
 									type="button"
+									aria-expanded={isExpanded}
 									onClick={() => toggleCategory(category)}
 									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-pro-cards-border/30"
 								>

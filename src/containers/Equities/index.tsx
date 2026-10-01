@@ -856,7 +856,8 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 		enabled: view === 'table'
 	})
 	const filters = useMemo(() => parseEquityFiltersQuery(filtersQueryParam), [filtersQueryParam])
-	const [isMorePresetsManuallyOpen, setIsMorePresetsManuallyOpen] = useState(false)
+	// The static page reads `rankBy` only after hydration, so a hidden preset opens the row until the user toggles it.
+	const [morePresetsOpen, setMorePresetsOpen] = useState<boolean | null>(null)
 
 	// A preset change resets any hand-picked sort back to the preset's own, as the remount did before.
 	const selectPreset = useCallback(
@@ -904,7 +905,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 	)
 
 	const isMorePresetActive = EQUITIES_MORE_PRESETS.some((preset) => preset === selectedPreset)
-	const showMorePresets = isMorePresetActive || isMorePresetsManuallyOpen
+	const showMorePresets = morePresetsOpen ?? isMorePresetActive
 
 	const renderPreset = (preset: EquitiesPreset) => (
 		<Button
@@ -967,26 +968,18 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 				{showMorePresets ? (
 					<>
 						{EQUITIES_MORE_PRESETS.map(renderPreset)}
-						{isMorePresetsManuallyOpen && !isMorePresetActive ? (
-							<Button
-								type="button"
-								aria-expanded
-								onClick={() => setIsMorePresetsManuallyOpen(false)}
-								variant="secondary"
-								size="md"
-							>
-								<Icon name="minus" height={14} width={14} />
-								Less
-							</Button>
-						) : null}
+						<Button type="button" aria-expanded onClick={() => setMorePresetsOpen(false)} variant="secondary" size="md">
+							<Icon name="minus" height={14} width={14} />
+							Less
+						</Button>
 					</>
 				) : (
 					<Button
 						type="button"
 						aria-expanded={false}
 						data-active={isMorePresetActive}
-						onClick={() => setIsMorePresetsManuallyOpen(true)}
-						variant="secondary"
+						onClick={() => setMorePresetsOpen(true)}
+						variant="toggle"
 						size="md"
 					>
 						+ More
