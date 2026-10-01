@@ -92,7 +92,10 @@ describe('standalone IR server pages', () => {
 		expect(await project(opaque('odyssey-ecosystem'))).toEqual({
 			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem', customServerData: {} }
 		})
-		for (const protocol of ['kpk', 'uniswap', 'unknown']) {
+		expect(await project(opaque('kpk'))).toEqual({
+			props: { investorsSiteId: 'investors', protocol: 'kpk', customServerData: {} }
+		})
+		for (const protocol of ['uniswap', 'unknown']) {
 			expect(await project(opaque(protocol))).toEqual({ notFound: true })
 		}
 	})
@@ -121,7 +124,6 @@ describe('standalone IR server pages', () => {
 		const requests = [
 			['investors.defillama.com', 'odyssey-ecosystem'],
 			['enterprise.defillama.com', 'thorchain'],
-			['investors.defillama.com', 'kpk'],
 			['investors.defillama.com', 'uniswap'],
 			['enterprise.defillama.com', 'kpk'],
 			['investors.defillama.com', 'unknown']
@@ -160,9 +162,6 @@ describe('standalone IR server pages', () => {
 	test('preview env enables direct IR project requests but not enterprise access', async () => {
 		vi.stubEnv('NEXT_PUBLIC_INVESTORS_PREVIEW', 'true')
 		const { project } = await loadPages([])
-		expect(await project(context('investors.defillama.com', 'kpk'))).toEqual({
-			props: { investorsSiteId: 'investors', protocol: 'kpk', customServerData: {} }
-		})
 		expect(await project(context('investors.defillama.com', 'uniswap'))).toEqual({
 			props: {
 				investorsSiteId: 'investors',

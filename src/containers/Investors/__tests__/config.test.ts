@@ -70,7 +70,8 @@ describe('investor site configuration', () => {
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', 'app-origin.example')?.id).toBe('investors')
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'spark')?.id).toBe('investors')
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'odyssey-ecosystem')?.id).toBe('enterprise')
-		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'kpk')).toBeNull()
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'kpk')?.id).toBe('investors')
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'uniswap')).toBeNull()
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', 'enterprise.defillama.com', 'spark')?.id).toBe(
 			'enterprise'
 		)

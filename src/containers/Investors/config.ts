@@ -21,10 +21,10 @@ const INVESTORS_LIVE_PROJECT_IDS = [
 	'sonic',
 	'near',
 	'thorchain',
-	'flare'
+	'flare',
+	'kpk'
 ] as const satisfies ReadonlyArray<InvestorsProjectId>
-const INVESTORS_PREVIEW_PROJECT_IDS = ['kpk', 'uniswap'] as const satisfies ReadonlyArray<InvestorsProjectId>
-const INVESTORS_COMING_SOON_PROJECT_IDS = ['kpk'] as const satisfies ReadonlyArray<InvestorsProjectId>
+const INVESTORS_PREVIEW_PROJECT_IDS = ['uniswap'] as const satisfies ReadonlyArray<InvestorsProjectId>
 const INVESTORS_PREVIEW_ENABLED = process.env.NEXT_PUBLIC_INVESTORS_PREVIEW === 'true'
 const INVESTORS_DOMAIN_PROJECT_IDS = [
 	...INVESTORS_LIVE_PROJECT_IDS,
@@ -52,7 +52,7 @@ export const INVESTORS_SITES: Readonly<Record<InvestorsSiteId, InvestorsSite>> =
 		projectIds: INVESTORS_DOMAIN_PROJECT_IDS,
 		landingProjectIds: INVESTORS_LIVE_PROJECT_IDS,
 		defaultProjectId: 'spark',
-		comingSoonProjectIds: INVESTORS_COMING_SOON_PROJECT_IDS,
+		comingSoonProjectIds: [],
 		umamiWebsiteId: '11de15eb-61d0-41c5-9e73-0bf496cc653c',
 		umamiDomains: ['investors.defillama.com']
 	},

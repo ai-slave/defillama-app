@@ -392,12 +392,18 @@ const PROJECT_CARD_CONTENT = {
 		tags: ['Liquidity', 'Swaps', 'Fees', 'Revenue'],
 		accent: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
 		hoverClass: 'hover:border-[#23DCC8]/20 hover:shadow-lg hover:shadow-[#23DCC8]/[0.04]'
+	},
+	kpk: {
+		icon: <KpkIcon />,
+		description: 'Treasury mandates, vault performance, and assets under management for KPK.',
+		tags: ['Treasury', 'Vaults', 'AUM', 'Performance'],
+		accent: 'linear-gradient(90deg, #007556, #00af82)',
+		hoverClass: 'hover:border-[#00af82]/20 hover:shadow-lg hover:shadow-[#00af82]/[0.04]'
 	}
 } satisfies Partial<Record<InvestorsProjectId, LandingCardContent>>
 
 const COMING_SOON_ICONS: Partial<Record<InvestorsProjectId, ReactNode>> = {
 	flare: <FlareIcon />,
-	kpk: <KpkIcon />,
 	thorchain: <ThorchainIcon />
 }
 

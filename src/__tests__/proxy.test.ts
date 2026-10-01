@@ -197,7 +197,7 @@ describe('investors proxy routing', () => {
 			['investors', '/flare', '/investors/flare'],
 			['enterprise', '/flare', '/404'],
 			['enterprise', '/thorchain', '/404'],
-			['investors', '/kpk', '/404'],
+			['investors', '/kpk', '/investors/kpk'],
 			['investors', '/uniswap', '/404'],
 			['enterprise', '/kpk', '/404'],
 			['investors', '/etherfi', '/404'],
@@ -269,7 +269,8 @@ describe('investors proxy routing', () => {
 			['/spark', '/investors/spark'],
 			['/odyssey-ecosystem', '/investors/odyssey-ecosystem'],
 			['/all', '/investors/all'],
-			['/kpk', null],
+			['/kpk', '/investors/kpk'],
+			['/uniswap', null],
 			['/', null],
 			['/_next/data/build-id/spark.json', '/_next/data/build-id/investors/spark.json']
 		] as const
@@ -294,7 +295,7 @@ describe('investors proxy routing', () => {
 
 	test('enables preview projects only on the investors host', async () => {
 		const { proxy } = await loadProxy('', 'true')
-		for (const project of ['kpk', 'uniswap']) {
+		for (const project of ['uniswap']) {
 			expect(rewriteUrl(proxy(pageRequest(`https://investors.defillama.com/${project}`)))).toBe(
 				`https://investors.defillama.com/investors/${project}`
 			)
