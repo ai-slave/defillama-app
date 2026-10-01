@@ -426,8 +426,10 @@ const RULES = [
 	}
 ]
 
+// Mid-merge, a conflicted file sits in the index once per stage; --deduplicate
+// lists it once so its matches are not counted three times.
 const files = execSync(
-	'git ls-files --cached --others --exclude-standard -- "src/**/*.tsx" "src/**/*.ts" "src/*.css" "src/**/*.css" "public/**/*.svg"',
+	'git ls-files --cached --others --exclude-standard --deduplicate -- "src/**/*.tsx" "src/**/*.ts" "src/*.css" "src/**/*.css" "public/**/*.svg"',
 	{ cwd: ROOT, encoding: 'utf8' }
 )
 	.split('\n')
