@@ -199,16 +199,10 @@ export function PeggedAssetInfo({
 		[router]
 	)
 
-	// Static pages do not receive query parameters during SSR, so defer this URL-driven state until after hydration.
-	const [includeUnreleased, setIncludeUnreleased] = React.useState(false)
-	React.useEffect(() => {
-		// The query is only readable once the router is ready, which Next.js documents as effect-only.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		if (router.isReady) setIncludeUnreleased(isTruthyQueryParam(router.query[UNRELEASED_QUERY_KEY]))
-	}, [router.isReady, router.query])
+	// A static page's query holds only route params until hydration, so the server and hydration renders exclude it.
+	const includeUnreleased = isTruthyQueryParam(router.query[UNRELEASED_QUERY_KEY])
 	const onUnreleasedToggle = React.useCallback(() => {
 		const nextValue = !includeUnreleased
-		setIncludeUnreleased(nextValue)
 		const nextQuery: Record<string, string | Array<string>> = {}
 		for (const key in router.query) {
 			const value = router.query[key]

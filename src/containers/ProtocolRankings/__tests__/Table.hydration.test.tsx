@@ -151,6 +151,21 @@ describe('Protocol Rankings hydration', () => {
 		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
 	})
 
+	test('a persisted preset sorts by its column after hydration, and picking a period sorts by that period', async () => {
+		await hydrateTable()
+		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
+		expect(new URL(String(vi.mocked(fetch).mock.calls[0][0]), 'http://localhost').searchParams.get('sort')).toBe(
+			'fees_7d'
+		)
+
+		const period1m = container.querySelector<HTMLInputElement>('input[type="radio"][value="1m"]')!
+		await act(async () => period1m.click())
+		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(2))
+		expect(new URL(String(vi.mocked(fetch).mock.calls[1][0]), 'http://localhost').searchParams.get('sort')).toBe(
+			'fees_30d'
+		)
+	})
+
 	test('does not toast when an automatic persisted-preset request fails', async () => {
 		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
 

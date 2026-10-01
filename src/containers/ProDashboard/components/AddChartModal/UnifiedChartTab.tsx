@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Icon } from '~/ui/Icon'
 import type { SegmentedControlOption } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -278,19 +278,6 @@ export function UnifiedChartTab({
 		}
 		return firstType
 	}, [composerItems])
-	const defaultChartType = useMemo(() => {
-		if (composerItems.length === 0) return 'tvl'
-		const matchingItem = composerItems.find((item) => item.subjectType === selectedChartTab)
-		return (matchingItem || composerItems[0])?.type || 'tvl'
-	}, [composerItems, selectedChartTab])
-
-	useEffect(() => {
-		if (!manualFormOpen) return
-		if (selectedChartTab !== 'chain' && selectedChartTab !== 'protocol') return
-		if (selectedChartTypes.length > 0) return
-		onChartTypesChange([defaultChartType])
-	}, [manualFormOpen, selectedChartTab, selectedChartTypes.length, defaultChartType, onChartTypesChange])
-
 	const selectedEntitiesForCurrentType = useMemo(() => {
 		if (!selectedChartTypeSingle) return []
 		const entities: Array<string> = []

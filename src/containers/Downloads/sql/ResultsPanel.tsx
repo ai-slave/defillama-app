@@ -5,7 +5,8 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import { FormatSplitButton } from '../FormatSplitButton'
-import type { ChartConfig } from './chartConfig'
+import { defaultChartConfig, type ChartConfig } from './chartConfig'
+import { classifyColumns } from './columnKind'
 import { exportQueryResult, type QueryResult } from './exportResults'
 import { formatSqlDuration } from './format'
 import { ResultsChart } from './ResultsChart'
@@ -43,7 +44,12 @@ export function ResultsPanel({
 	const [internalView, setInternalView] = useState<ResultsView>(preferredView ?? 'table')
 	const isControlled = controlledView !== undefined
 	const view = isControlled ? controlledView : internalView
-	const setView = isControlled ? (onViewChange ?? (() => {})) : setInternalView
+	const setViewState = isControlled ? (onViewChange ?? (() => {})) : setInternalView
+	const setView = (next: ResultsView) => {
+		// Picking the chart view stores its default config, so a share link made from it opens on the chart.
+		if (next === 'chart' && !chartConfig && result) onChartConfigChange(defaultChartConfig(classifyColumns(result)))
+		setViewState(next)
+	}
 
 	const resultId = result ? `${result.columns.map((c) => c.name).join('|')}:${result.rows.length}` : ''
 	const [prevResultId, setPrevResultId] = useState(resultId)

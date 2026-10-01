@@ -154,3 +154,35 @@ test('initializes a single chart edit with one composer item in separate mode', 
 	expect(modalReducer(state, { type: 'SET_MANUAL_FORM_OPEN', payload: false }).manualFormOpen).toBe(false)
 	expect(modalReducer(state, { type: 'SET_MANUAL_FORM_OPEN', payload: true })).toBe(state)
 })
+
+test('editing a multi-chart opens the manual form with its items’ chart type picked', () => {
+	const state = initializeFromEditItem({
+		id: 'multi',
+		kind: 'multi',
+		name: 'Fees',
+		items: [
+			{ id: 'a', kind: 'chart', subjectType: 'protocol', protocol: 'aave', type: 'fees' },
+			{ id: 'b', kind: 'chart', subjectType: 'protocol', protocol: 'uniswap', type: 'fees' }
+		]
+	})
+	expect([state.selectedChartTab, state.selectedChartTypes]).toEqual(['protocol', ['fees']])
+})
+
+const openManualForm = () => modalReducer(initializeFromEditItem(null), { type: 'SET_MANUAL_FORM_OPEN', payload: true })
+
+test('returning to the charts tab with the manual form open picks tvl', () => {
+	const away = modalReducer(modalReducer(openManualForm(), { type: 'SET_SELECTED_MAIN_TAB', payload: 'metric' }), {
+		type: 'SET_SELECTED_CHART_TYPES',
+		payload: []
+	})
+	expect(modalReducer(away, { type: 'SET_SELECTED_MAIN_TAB', payload: 'charts' }).selectedChartTypes).toEqual(['tvl'])
+})
+
+test('a closed manual form or builder mode leaves the chart types empty', () => {
+	const closed = initializeFromEditItem(null)
+	expect(modalReducer(closed, { type: 'SET_SELECTED_CHART_TYPES', payload: [] }).selectedChartTypes).toEqual([])
+	expect(
+		modalReducer({ ...openManualForm(), chartMode: 'builder' }, { type: 'SET_SELECTED_CHART_TYPES', payload: [] })
+			.selectedChartTypes
+	).toEqual([])
+})

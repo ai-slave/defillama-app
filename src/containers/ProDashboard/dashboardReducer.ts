@@ -21,7 +21,6 @@ export interface DashboardState {
 	customTimePeriod: CustomTimePeriod | null
 	variables: Array<DashboardVariable>
 	annotations: Array<DashboardAnnotation>
-	variableOverrides: Record<string, string>
 	history: DashboardHistory
 	dashboardName: string
 	dashboardId: string | null
@@ -35,7 +34,7 @@ export interface DashboardState {
 
 export type DashboardSaveBaseline = Omit<
 	DashboardState,
-	'currentDashboard' | 'showGenerateDashboardModal' | 'showIterateDashboardModal' | 'variableOverrides' | 'history'
+	'currentDashboard' | 'showGenerateDashboardModal' | 'showIterateDashboardModal' | 'history'
 >
 
 export type DashboardAction =
@@ -46,7 +45,6 @@ export type DashboardAction =
 			skipHistory?: boolean
 	  }
 	| { type: 'SET_VARIABLES'; payload: Array<DashboardVariable>; skipHistory?: boolean }
-	| { type: 'SET_VARIABLE_OVERRIDES'; payload: Record<string, string> }
 	| { type: 'SET_ANNOTATIONS'; payload: Array<DashboardAnnotation> }
 	| { type: 'UNDO' }
 	| { type: 'REDO' }
@@ -71,7 +69,6 @@ const INITIAL_DASHBOARD_STATE: DashboardState = {
 	customTimePeriod: null,
 	variables: [],
 	annotations: [],
-	variableOverrides: {},
 	history: EMPTY_HISTORY,
 	dashboardName: 'My Dashboard',
 	dashboardId: null,
@@ -184,12 +181,6 @@ function reconcileDashboard(
 	}
 }
 
-function areVariableOverridesEqual(a: Record<string, string>, b: Record<string, string>): boolean {
-	const aKeys = Object.keys(a)
-	if (aKeys.length !== Object.keys(b).length) return false
-	return aKeys.every((key) => a[key] === b[key])
-}
-
 export function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
 	switch (action.type) {
 		case 'SET_ITEMS': {
@@ -210,10 +201,6 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 				variables: action.payload,
 				history: action.skipHistory ? state.history : pushHistory(state.history, historySnapshot(state))
 			}
-
-		case 'SET_VARIABLE_OVERRIDES':
-			if (areVariableOverridesEqual(state.variableOverrides, action.payload)) return state
-			return { ...state, variableOverrides: action.payload }
 
 		case 'SET_ANNOTATIONS':
 			return { ...state, annotations: action.payload }
@@ -277,7 +264,6 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 			}
 			return {
 				...stateFromDashboard(dashboard),
-				variableOverrides: state.variableOverrides,
 				showGenerateDashboardModal: state.showGenerateDashboardModal,
 				showIterateDashboardModal: state.showIterateDashboardModal
 			}

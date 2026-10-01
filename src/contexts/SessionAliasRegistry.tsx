@@ -1,4 +1,4 @@
-import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useRef } from 'react'
+import { createContext, type PropsWithChildren, useContext, useMemo, useState } from 'react'
 
 interface SessionAliasRegistry {
 	resolve: (id: string) => string
@@ -9,24 +9,24 @@ interface SessionAliasRegistry {
 const SessionAliasContext = createContext<SessionAliasRegistry | null>(null)
 
 export function SessionAliasProvider({ userId, children }: PropsWithChildren<{ userId: string | null }>) {
-	const aliasesRef = useRef(new Map<string, string>())
+	// Aliases belong to one signed-in user: the next user starts with an empty map in the same render, before any
+	// child resolves or registers against it. A key would remount the whole chat page, so the map is swapped here.
+	const [session, setSession] = useState(() => ({ userId, aliases: new Map<string, string>() }))
+	if (session.userId !== userId) setSession({ userId, aliases: new Map() })
+	const { aliases } = session
 
-	useEffect(() => {
-		aliasesRef.current = new Map()
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- userId is the trigger: aliases from the previous session must not resolve for the next one.
-	}, [userId])
-
+	// The map is mutated in place: registering an alias must not re-render the chat.
 	const value = useMemo<SessionAliasRegistry>(
 		() => ({
-			resolve: (id) => aliasesRef.current.get(id) ?? id,
+			resolve: (id) => aliases.get(id) ?? id,
 			register: (fakeId, realId) => {
-				aliasesRef.current.set(fakeId, realId)
+				aliases.set(fakeId, realId)
 			},
 			clear: () => {
-				aliasesRef.current.clear()
+				aliases.clear()
 			}
 		}),
-		[]
+		[aliases]
 	)
 
 	return <SessionAliasContext.Provider value={value}>{children}</SessionAliasContext.Provider>

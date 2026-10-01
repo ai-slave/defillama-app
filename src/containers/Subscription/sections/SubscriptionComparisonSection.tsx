@@ -1,4 +1,4 @@
-import { type UIEvent, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type UIEvent, useRef } from 'react'
 import { ComparisonCell, SELECTED_COLUMN_HIGHLIGHT } from '~/containers/Subscription/components'
 import { PLAN_META_BY_CYCLE } from '~/containers/Subscription/data'
 import type { BillingCycle, ComparisonSection, PlanKey } from '~/containers/Subscription/types'
@@ -16,30 +16,24 @@ const planHeadButtonStyles = {
 		'border-sub-border-slate-100 bg-white text-sub-heading dark:border-sub-border-strong dark:bg-transparent dark:text-sub-text-primary md:border-sub-border-muted md:text-sub-text-primary dark:md:border-sub-border-strong dark:md:bg-transparent'
 }
 
-function SelectedColumnRails({
-	left,
-	width,
-	roundBottom = false
-}: {
-	left: number
-	width: number
-	roundBottom?: boolean
-}) {
+// Placed from the table's fixed column widths (label 233px, plan 132px; 400px and 146px from md), so CSS
+// resolves the breakpoint and the overlays are in the server HTML.
+function SelectedColumnRails({ index, roundBottom = false }: { index: number; roundBottom?: boolean }) {
 	return (
 		<div
 			aria-hidden="true"
-			className={`pointer-events-none absolute -top-px bottom-0 z-20 border-x border-sub-brand-primary ${roundBottom ? 'rounded-b-[16px] border-b' : ''}`}
-			style={{ left: `${left}px`, width: `${width}px` }}
+			className={`pointer-events-none absolute -top-px bottom-0 left-[calc(233px+var(--plan-index)*132px)] z-20 w-[132px] border-x border-sub-brand-primary md:left-[calc(400px+var(--plan-index)*146px)] md:w-[146px] ${roundBottom ? 'rounded-b-[16px] border-b' : ''}`}
+			style={{ '--plan-index': index } as CSSProperties}
 		/>
 	)
 }
 
-function PlanGridBottomOutline({ left, width }: { left: number; width: number }) {
+function PlanGridBottomOutline({ count }: { count: number }) {
 	return (
 		<div
 			aria-hidden="true"
-			className="pointer-events-none absolute bottom-0 z-0 h-[41px] rounded-br-[16px] rounded-bl-[16px] border-b border-sub-mobile-table-border md:h-[36px] md:rounded-br-[24px] md:rounded-bl-[24px] md:border-sub-desktop-table-border"
-			style={{ left: `${left}px`, width: `${width}px` }}
+			className="pointer-events-none absolute bottom-0 left-[233px] z-0 h-[41px] w-[calc(var(--plan-count)*132px)] rounded-br-[16px] rounded-bl-[16px] border-b border-sub-mobile-table-border md:left-[400px] md:h-[36px] md:w-[calc(var(--plan-count)*146px)] md:rounded-br-[24px] md:rounded-bl-[24px] md:border-sub-desktop-table-border"
+			style={{ '--plan-count': count } as CSSProperties}
 		/>
 	)
 }
@@ -121,25 +115,6 @@ function ComparisonPlanHead({
 	)
 }
 
-/* ── Overlay metrics from known column widths ─────────────────────── */
-
-const LABEL_W = { mobile: 233, desktop: 400 }
-const PLAN_W = { mobile: 132, desktop: 146 }
-
-function computeOverlayMetrics(planOrder: Array<PlanKey>, selectedPlan: PlanKey) {
-	const isMd = window.matchMedia('(min-width: 768px)').matches
-	const labelW = isMd ? LABEL_W.desktop : LABEL_W.mobile
-	const planW = isMd ? PLAN_W.desktop : PLAN_W.mobile
-	const selectedIndex = planOrder.indexOf(selectedPlan)
-
-	return {
-		selectedLeft: labelW + selectedIndex * planW,
-		selectedWidth: planW,
-		planGridLeft: labelW,
-		planGridWidth: planOrder.length * planW
-	}
-}
-
 /* ── SubscriptionComparisonSection ─────────────────────────────────── */
 
 export function SubscriptionComparisonSection({
@@ -161,26 +136,7 @@ export function SubscriptionComparisonSection({
 	onPlanAction?: (plan: PlanKey) => void
 }) {
 	const headerPlanTrackRef = useRef<HTMLDivElement>(null)
-
-	const [overlayMetrics, setOverlayMetrics] = useState<{
-		selectedLeft: number
-		selectedWidth: number
-		planGridLeft: number
-		planGridWidth: number
-	} | null>(null)
-
-	/* ── Compute overlay metrics from known widths ── */
-	useEffect(() => {
-		const update = () => setOverlayMetrics(computeOverlayMetrics(planOrder, selectedPlan))
-		update()
-
-		const mq = window.matchMedia('(min-width: 768px)')
-		mq.addEventListener('change', update)
-
-		return () => {
-			mq.removeEventListener('change', update)
-		}
-	}, [selectedPlan, planOrder])
+	const selectedIndex = planOrder.indexOf(selectedPlan)
 
 	/* ── Sync horizontal scroll: body → header track ── */
 	// The browser fires scroll when a narrower table clamps scrollLeft, so this also covers plan and billing switches.
@@ -319,16 +275,8 @@ export function SubscriptionComparisonSection({
 											)
 										})}
 
-										{isLastSection && overlayMetrics && !hasWrappedLastRow ? (
-											<PlanGridBottomOutline left={overlayMetrics.planGridLeft} width={overlayMetrics.planGridWidth} />
-										) : null}
-										{overlayMetrics ? (
-											<SelectedColumnRails
-												left={overlayMetrics.selectedLeft}
-												width={overlayMetrics.selectedWidth}
-												roundBottom={isLastSection}
-											/>
-										) : null}
+										{isLastSection && !hasWrappedLastRow ? <PlanGridBottomOutline count={planOrder.length} /> : null}
+										<SelectedColumnRails index={selectedIndex} roundBottom={isLastSection} />
 									</div>
 								)
 							})}

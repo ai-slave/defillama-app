@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import {
 	getGeckoIdFromSearchId,
@@ -128,25 +128,25 @@ function buildTokenOptionMap(tokens: Array<TokenSearchResult>): Record<string, T
 
 export default function Correlations({ initialTokenOptions }: CorrelationsProps) {
 	const router = useRouter()
-	const { isReady, pathname, replace } = router
-	const getLatestQuery = useEffectEvent(() => router.query)
+	const { isReady } = router
 	const [tokenOptionsById, setTokenOptionsById] = useState<Record<string, TokenSearchResult>>(() =>
 		buildTokenOptionMap(initialTokenOptions)
 	)
 	const queryCoins = useMemo<Array<string>>(() => {
+		// A static page's query is empty until hydration, so nothing is selected before the router is ready.
+		if (!isReady) return []
 		const coinQuery = router.query.coin
-		if (!coinQuery) return []
-		const coins = Array.isArray(coinQuery) ? coinQuery : coinQuery.split(',')
-		return coins.filter(Boolean).map(getGeckoIdFromSearchId)
-	}, [router.query.coin])
+		const coins = (Array.isArray(coinQuery) ? coinQuery : (coinQuery ?? '').split(',')).filter(Boolean)
+		// No coin in the URL, including after removing the last one, shows the default set.
+		return coins.length > 0 ? coins.map(getGeckoIdFromSearchId) : DEFAULT_QUERY_COINS
+	}, [isReady, router.query.coin])
 	const missingQueryCoinIds = useMemo(() => {
-		if (!isReady || queryCoins.length === 0) return []
 		const missingIds: Array<string> = []
 		for (const coinId of queryCoins) {
 			if (!tokenOptionsById[coinId]) missingIds.push(coinId)
 		}
 		return missingIds
-	}, [isReady, queryCoins, tokenOptionsById])
+	}, [queryCoins, tokenOptionsById])
 	const hydratedTokenOptions = useQuery({
 		queryKey: ['token-search-options-by-ids', missingQueryCoinIds],
 		queryFn: () => hydrateTokenSearchOptionsByIds(missingQueryCoinIds),
@@ -270,23 +270,6 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 			returnPointCounts: returnCountResult
 		}
 	}, [isLoading, period, coins, priceChart, minReturnPoints])
-
-	useEffect(() => {
-		if (!isReady) return
-		if (queryCoins.length > 0) return
-
-		void replace(
-			{
-				pathname,
-				query: {
-					...getLatestQuery(),
-					coin: DEFAULT_QUERY_COINS
-				}
-			},
-			undefined,
-			{ shallow: true }
-		)
-	}, [queryCoins.length, isReady, pathname, replace])
 
 	const dialogStore = Ariakit.useDialogStore()
 

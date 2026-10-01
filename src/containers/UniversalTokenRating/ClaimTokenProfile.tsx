@@ -1,6 +1,7 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation } from '@tanstack/react-query'
-import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useRouter } from 'next/router'
+import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -10,6 +11,7 @@ import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
+import { readSingleQueryValue } from '~/utils/routerQuery'
 import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
 import {
 	CLAIM_BLOCKS,
@@ -372,7 +374,17 @@ export function ClaimTokenProfile({
 	marketMakerOptions?: Array<UtrClaimMarketMakerOption>
 	scoringConfig?: UtrScoringConfig | null
 }) {
-	const [token, setToken] = useState<string>(variant === 'claim' ? (projects[0]?.arcticId ?? '') : '')
+	const router = useRouter()
+	// Null until the reader picks or types a token. A claim link's ?token= preselects its project, which a static
+	// page's query holds only after hydration, so the server and hydration renders show the first project.
+	const [pickedToken, setToken] = useState<string | null>(null)
+	const token =
+		variant === 'claim'
+			? (pickedToken ??
+				resolveRequestedProjectId(projects, readSingleQueryValue(router.query.token)) ??
+				projects[0]?.arcticId ??
+				'')
+			: (pickedToken ?? '')
 	const [firstName, setFirstName] = useState('')
 	const [lastName, setLastName] = useState('')
 	const [position, setPosition] = useState('')
@@ -385,14 +397,6 @@ export function ClaimTokenProfile({
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const captchaEnabled = isClaimTurnstileEnabled()
 
-	useEffect(() => {
-		if (variant !== 'claim' || typeof window === 'undefined') return
-		const requested = new URL(window.location.href).searchParams.get('token')
-		const projectId = resolveRequestedProjectId(projects, requested)
-		// Preselects from the ?token= param once the project list has loaded, so it waits for async data.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		if (projectId) setToken(projectId)
-	}, [projects, variant])
 	const [verifyMmEngagements, setVerifyMmEngagements] = useState(true)
 	const [rows, setRows] = useState<ClaimDraftRows>(
 		() => Object.fromEntries(CLAIM_DISCLOSURE_SECTIONS.map((section) => [section.id, []])) as ClaimDraftRows

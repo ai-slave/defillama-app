@@ -134,12 +134,13 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	const [slugEditing, setSlugEditing] = useState(false)
 	const [slugDraft, setSlugDraft] = useState('')
 	const [publishErrors, setPublishErrors] = useState<Record<string, string>>({})
-	const [viewMode, setViewMode] = useState<ArticleEditorViewMode>('write')
+	// `/research/mine` links drafts with `?view=preview`; after the first render the reader's toggle wins. The edit
+	// page renders this only once `router.query.id` exists, so the query is already readable here.
+	const [viewMode, setViewMode] = useState<ArticleEditorViewMode>(() => (routeView === 'preview' ? 'preview' : 'write'))
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const autoCreatingRef = useRef(false)
 	const autoRedirectingRef = useRef(false)
 	const hydratedArticleIdRef = useRef<string | null>(null)
-	const routeViewModeHandledRef = useRef<string | null>(null)
 
 	const { uploadFile: uploadInlineImageRaw } = useImageUpload({
 		scope: 'article-inline',
@@ -862,16 +863,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		[buildPreviewArticle, viewMode]
 	)
 	const handleViewModeChange = useCallback((mode: ArticleEditorViewMode) => setViewMode(mode), [])
-
-	useEffect(() => {
-		if (!router.isReady) return
-		const routeMode: ArticleEditorViewMode = routeView === 'preview' ? 'preview' : 'write'
-		const routeModeKey = `${articleId ?? 'new'}:${routeMode}`
-		if (routeViewModeHandledRef.current === routeModeKey) return
-		routeViewModeHandledRef.current = routeModeKey
-		// oxlint-disable-next-line react/set-state-in-effect -- the route query is only readable once router.isReady, which Next.js documents as effect-only.
-		setViewMode(routeMode)
-	}, [articleId, routeView, router.isReady])
 
 	if (isLoading) {
 		return <ResearchLoader />

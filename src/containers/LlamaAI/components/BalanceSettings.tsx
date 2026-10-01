@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import type { TopupResult } from '~/containers/LlamaAI/utils/settingsIntent'
@@ -11,16 +11,16 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 	const { hasActiveSubscription } = useAuthContext()
 	const { balance, totalAvailable, isLoading, isError, refetch } = useAiBalance()
 	// The balance the payment is measured against: the one at checkout start when the return URL carries it,
-	// else the first read after return, which may already include the credit.
-	const initialBalance = useRef<number | null>(balanceBefore ?? (balance ? totalAvailable : null))
+	// else the first read after return, which may already include the credit. That first read is memory, kept the
+	// render it arrives in.
+	const [firstRead, setFirstRead] = useState<number | null>(balance ? totalAvailable : null)
+	if (result === 'success' && firstRead === null && balance) setFirstRead(totalAvailable)
+	const baseline = balanceBefore ?? firstRead
+	// The payment's outcome only moves forward: seeing the credit completes it for good, so credits spent later never
+	// reopen it, and a late credit still completes a payment whose polls ran out.
 	const [returnState, setReturnState] = useState<'pending' | 'exhausted' | 'updated' | 'hidden'>('pending')
-	useEffect(() => {
-		if (!balance || result !== 'success') return
-		if (initialBalance.current === null) initialBalance.current = totalAvailable
-		else if (totalAvailable > initialBalance.current && (returnState === 'pending' || returnState === 'exhausted')) {
-			setReturnState('updated')
-		}
-	}, [balance, totalAvailable, result, returnState])
+	const credited = result === 'success' && !!balance && baseline !== null && totalAvailable > baseline
+	if (credited && (returnState === 'pending' || returnState === 'exhausted')) setReturnState('updated')
 	useEffect(() => {
 		if (returnState !== 'updated') return
 		const timer = window.setTimeout(() => setReturnState('hidden'), 5000)

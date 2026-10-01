@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
@@ -50,12 +50,13 @@ import {
 	formatSignedRWAFlow,
 	getRWAFlowModeQueryValue,
 	getRWAFlowTextClass,
+	getRWAFlowVisibleRange,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowQueryState,
 	RWA_FLOW_GROUPING_OPTIONS,
 	type RWAFlowChartSelection,
 	type RWAFlowGrouping,
-	type RWAFlowVisibleRange
+	type RWAFlowZoom
 } from './flows'
 import { useRWAAssetFlows, useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms } from './grouping'
@@ -397,14 +398,7 @@ export function RWAAssetPage({
 	const { chartInstance: assetChartInstance, handleChartReady: onAssetChartReady } = useGetChartInstance()
 	const { data: flowSummary, isLoading: isLoadingFlowSummary, isError: isFlowSummaryError } = useRWAFlowSummary()
 	const { data: assetFlows, isLoading: isLoadingFlows, error: flowError } = useRWAAssetFlows(asset.id, isFlowChart)
-	const [flowVisibleRange, setFlowVisibleRange] = useState<RWAFlowVisibleRange | null>(null)
-	const handleFlowVisibleRangeChange = useCallback((range: RWAFlowVisibleRange | null) => {
-		setFlowVisibleRange((previous) => {
-			const sameStart = previous?.start === range?.start
-			const sameEnd = previous?.end === range?.end
-			return sameStart && sameEnd ? previous : range
-		})
-	}, [])
+	const [flowZoom, setFlowZoom] = useState<RWAFlowZoom | null>(null)
 
 	const nativeYieldExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-native-yield`
 	const nativeYieldExportTitle = `${asset.ticker ?? asset.assetName ?? 'Asset'} Native Yield`
@@ -477,6 +471,7 @@ export function RWAAssetPage({
 					}
 		return buildRWAFlowChart({ points: assetFlows.data, selection })
 	}, [assetFlows, chartMetric, flowGroupBy, isFlowChart, showMcapOverlay])
+	const flowVisibleRange = flowChart ? getRWAFlowVisibleRange(flowChart, flowZoom, undefined) : null
 	const flowVsPriceSummary = useMemo(
 		() => (chartMetric === 'flowVsPrice' && flowChart ? getRWAFlowVsPriceSummary(flowChart, flowVisibleRange) : null),
 		[chartMetric, flowChart, flowVisibleRange]
@@ -573,7 +568,7 @@ export function RWAAssetPage({
 								<Suspense fallback={<ChartPanelBodyFallback />}>
 									<RWAFlowsChart
 										chart={flowChart}
-										onVisibleRangeChange={handleFlowVisibleRangeChange}
+										onVisibleRangeChange={(range) => setFlowZoom({ source: flowChart.dataset.source, range })}
 										onReady={onAssetChartReady}
 									/>
 								</Suspense>

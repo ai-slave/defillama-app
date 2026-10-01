@@ -258,7 +258,12 @@ function SectionArticleContent({
 				initialData={initialBanners}
 			/>
 			<AppMetadataProvider>
-				<ArticleRenderer article={article} sidePanelAction={<ResearchSearchDialog variant="article" />} />
+				{/* Next keeps this page mounted between articles; each article starts with its own contents, embeds and scroll state. */}
+				<ArticleRenderer
+					key={article.id}
+					article={article}
+					sidePanelAction={<ResearchSearchDialog variant="article" />}
+				/>
 				<OwnerEditChip article={article} />
 			</AppMetadataProvider>
 			<ResearchFooter maxWidthClassName="max-w-[1300px]" />

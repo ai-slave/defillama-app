@@ -45,7 +45,6 @@ export interface MetricWithAvailability {
 
 export type WizardAction =
 	| { type: 'SET_STEP'; step: WizardStep }
-	| { type: 'APPLY_PRESET'; comparisonType: ComparisonType; items: Array<string>; step: WizardStep }
 	| { type: 'SET_COMPARISON_TYPE'; comparisonType: ComparisonType }
 	| { type: 'SET_SELECTED_ITEMS'; items: Array<string> }
 	| { type: 'TOGGLE_SELECTED_ITEM'; item: string; maxItems?: number }
@@ -64,7 +63,6 @@ export type WizardAction =
 	| { type: 'SET_GROUPING'; grouping: DashboardGrouping }
 	| { type: 'SET_DISPLAY_MODE'; displayMode: DisplayMode }
 	| { type: 'SET_INCLUDE_TABLE'; include: boolean }
-	| { type: 'RESET'; hasActiveSubscription: boolean }
 
 export const WIZARD_STEPS: Array<WizardStep> = ['select-type', 'select-items', 'select-metrics', 'preview']
 

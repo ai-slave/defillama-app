@@ -9,6 +9,7 @@ import {
 	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowOverlayOptions,
+	getRWAFlowVisibleRange,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowGrouping,
@@ -174,6 +175,34 @@ describe('RWA flow chart data', () => {
 		const points = [aggregatePoint(day(2025, 0, 1), 1), aggregatePoint(latest, 2)]
 		expect(getRWAFlowDefaultStartTimestamp(points, 365)).toBe(latest - 365 * 86_400_000)
 		expect(getRWAFlowDefaultStartTimestamp(points, undefined)).toBeUndefined()
+	})
+
+	test('a flow chart shows its default range until the reader zooms, and a rebuilt chart starts from its default', () => {
+		const points = [
+			aggregatePoint(day(2026, 0, 1), 1),
+			aggregatePoint(day(2026, 0, 2), 2),
+			aggregatePoint(day(2026, 0, 3), 3)
+		]
+		const selection = { view: 'netFlows', groupBy: 'daily', overlays: [] } as const
+		const chart = buildRWAFlowChart({ points, selection })
+
+		expect(getRWAFlowVisibleRange(chart, null, day(2026, 0, 2))).toEqual({
+			start: day(2026, 0, 2),
+			end: day(2026, 0, 3)
+		})
+		expect(getRWAFlowVisibleRange(chart, null, undefined)).toEqual({ start: day(2026, 0, 1), end: day(2026, 0, 3) })
+
+		const zoom = { source: chart.dataset.source, range: { start: day(2026, 0, 1), end: day(2026, 0, 2) } }
+		expect(getRWAFlowVisibleRange(chart, zoom, day(2026, 0, 2))).toEqual({
+			start: day(2026, 0, 1),
+			end: day(2026, 0, 2)
+		})
+
+		const rebuilt = buildRWAFlowChart({ points, selection })
+		expect(getRWAFlowVisibleRange(rebuilt, zoom, day(2026, 0, 2))).toEqual({
+			start: day(2026, 0, 2),
+			end: day(2026, 0, 3)
+		})
 	})
 
 	test('carries the cumulative total across days with missing flow coverage', () => {

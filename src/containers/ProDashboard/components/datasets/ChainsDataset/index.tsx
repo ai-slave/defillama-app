@@ -6,7 +6,6 @@ import {
 	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
-	type ColumnSizingState,
 	type ColumnVisibilityState,
 	type PaginationState,
 	type SortingState
@@ -105,6 +104,24 @@ function getChainColumnPreset(preset: string): Array<string> | undefined {
 	}
 }
 
+const CHAIN_COLUMN_IDS = [
+	...chainsDatasetColumns.map((column) => column.id!),
+	...CHAIN_SHARE_METRICS.map((metric) => `${metric.key}_share`)
+]
+
+function presetVisibility(presetColumns: Array<string>): ColumnVisibilityState {
+	const visibility: ColumnVisibilityState = {}
+	for (const id of CHAIN_COLUMN_IDS) visibility[id] = presetColumns.includes(id)
+	return visibility
+}
+
+type ChainColumns = { order: ColumnOrderState; visibility: ColumnVisibilityState }
+const ESSENTIAL_COLUMNS: ChainColumns = {
+	order: CHAIN_COLUMN_PRESETS.essential,
+	visibility: presetVisibility(CHAIN_COLUMN_PRESETS.essential)
+}
+const ALL_COLUMNS: ChainColumns = { order: CHAIN_COLUMN_IDS, visibility: {} }
+
 interface ChainsDatasetProps {
 	category?: string
 	columnOrder?: Array<string>
@@ -119,10 +136,22 @@ export function ChainsDataset({
 	onColumnsChange
 }: ChainsDatasetProps) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'tvl', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
+	// An editable card draws the saved columns, so dashboard undo and redo redraw the table, and a card with
+	// nothing saved shows the essential preset. A read-only card cannot save, so a viewer's own change wins there.
+	const [viewerColumns, setViewerColumns] = React.useState<ChainColumns | null>(null)
+	const ownColumns = onColumnsChange ? null : viewerColumns
+	const fallbackColumns = savedColumnOrder || savedColumnVisibility ? ALL_COLUMNS : ESSENTIAL_COLUMNS
+	const columnOrder = ownColumns?.order ?? (savedColumnOrder?.length ? savedColumnOrder : fallbackColumns.order)
+	const columnVisibility =
+		ownColumns?.visibility ??
+		(savedColumnVisibility && Object.keys(savedColumnVisibility).length > 0
+			? savedColumnVisibility
+			: fallbackColumns.visibility)
+	const writeColumns = (order: ColumnOrderState, visibility: ColumnVisibilityState) => {
+		if (onColumnsChange) onColumnsChange(order, visibility)
+		else setViewerColumns({ order, visibility })
+	}
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>({})
 	const [pagination, setPagination] = React.useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 10
@@ -179,17 +208,13 @@ export function ChainsDataset({
 		state: {
 			sorting,
 			columnOrder,
-			columnSizing,
 			columnFilters,
 			columnVisibility,
 			pagination
 		},
 		onSortingChange: setSorting,
 		enableSortingRemoval: false,
-		onColumnOrderChange: setColumnOrder,
-		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
-		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: setPagination,
 		autoResetPageIndex: true
 	})
@@ -197,128 +222,28 @@ export function ChainsDataset({
 	const applyPreset = (preset: string) => {
 		const presetColumns = getChainColumnPreset(preset)
 		if (presetColumns) {
-			const tableColumns = instance.getAllColumns()
-			const newVisibility: Record<string, boolean> = {}
-
-			for (const column of tableColumns) {
-				newVisibility[column.id] = presetColumns.includes(column.id)
-			}
-
-			instance.setColumnVisibility(newVisibility)
-			instance.setColumnOrder(presetColumns)
-			setColumnVisibility(newVisibility)
-			setColumnOrder(presetColumns)
 			setSelectedPreset(preset)
-
-			onColumnsChange?.(presetColumns, newVisibility)
+			writeColumns(presetColumns, presetVisibility(presetColumns))
 		}
 	}
 
 	const toggleColumnVisibility = (columnId: string) => {
-		const column = instance.getColumn(columnId)
-		if (column) {
-			column.toggleVisibility()
-			setSelectedPreset(null)
-
-			const newVisibility = { ...columnVisibility, [columnId]: !columnVisibility[columnId] }
-			setColumnVisibility(newVisibility)
-
-			if (newVisibility[columnId] !== false && !columnOrder.includes(columnId)) {
-				const leafColumnIds = instance.getAllLeafColumns().map((d) => d.id)
-				const originalIndex = leafColumnIds.indexOf(columnId)
-
-				const newOrder = [...columnOrder]
-				let insertIndex = newOrder.length
-
-				for (let i = originalIndex + 1; i < leafColumnIds.length; i++) {
-					const colId = leafColumnIds[i]
-					if (!colId) continue
-					const orderIndex = newOrder.indexOf(colId)
-					if (orderIndex !== -1) {
-						insertIndex = orderIndex
-						break
-					}
-				}
-
-				newOrder.splice(insertIndex, 0, columnId)
-				setColumnOrder(newOrder)
-
-				onColumnsChange?.(newOrder, newVisibility)
-			} else {
-				onColumnsChange?.(columnOrder, newVisibility)
-			}
-		}
+		setSelectedPreset(null)
+		// A column missing from the map is drawn, so toggling it hides it.
+		const newVisibility = { ...columnVisibility, [columnId]: columnVisibility[columnId] === false }
+		// A newly shown column joins the end of the order.
+		const shownNow = newVisibility[columnId] !== false && !columnOrder.includes(columnId)
+		writeColumns(shownNow ? [...columnOrder, columnId] : columnOrder, newVisibility)
 	}
 
-	const onSyncInitialColumns = React.useEffectEvent(
-		(nextColumnOrder: ColumnOrderState | undefined, nextColumnVisibility: ColumnVisibilityState | undefined) => {
-			const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-			const defaultSizing = {
-				name: 200,
-				protocols: 100,
-				users: 130,
-				change_1d: 90,
-				change_7d: 90,
-				change_1m: 90,
-				tvl: 140,
-				bridgedTvl: 120,
-				stablesMcap: 120,
-				totalVolume24h: 150,
-				totalVolume30d: 150,
-				totalFees24h: 130,
-				totalFees30d: 130,
-				totalAppRevenue24h: 120,
-				totalAppRevenue30d: 140,
-				totalRevenue30d: 140,
-				mcaptvl: 120,
-				mcap: 140
-			}
-
-			instance.setColumnSizing(defaultSizing)
-
-			if (nextColumnOrder && nextColumnOrder.length > 0) {
-				setColumnOrder(nextColumnOrder)
-				instance.setColumnOrder(nextColumnOrder)
-			} else if (columnOrder.length === 0) {
-				setColumnOrder(defaultOrder)
-				instance.setColumnOrder(defaultOrder)
-			}
-
-			let hasSavedVisibility = false
-			if (nextColumnVisibility) {
-				for (const _ in nextColumnVisibility) {
-					hasSavedVisibility = true
-					break
-				}
-			}
-			let hasCurrentVisibility = false
-			for (const _ in columnVisibility) {
-				hasCurrentVisibility = true
-				break
-			}
-			if (nextColumnVisibility && hasSavedVisibility) {
-				setColumnVisibility(nextColumnVisibility)
-				instance.setColumnVisibility(nextColumnVisibility)
-			} else if (!hasCurrentVisibility && selectedPreset === 'essential') {
-				const presetColumns = CHAIN_COLUMN_PRESETS.essential
-				if (presetColumns) {
-					const tableColumns = instance.getAllColumns()
-					const newVisibility: Record<string, boolean> = {}
-					for (const column of tableColumns) {
-						newVisibility[column.id] = presetColumns.includes(column.id)
-					}
-					setColumnVisibility(newVisibility)
-					setColumnOrder(presetColumns)
-					instance.setColumnVisibility(newVisibility)
-					instance.setColumnOrder(presetColumns)
-				}
-			}
-		}
-	)
-
-	React.useEffect(() => {
-		React.startTransition(() => onSyncInitialColumns(savedColumnOrder, savedColumnVisibility))
-	}, [savedColumnOrder, savedColumnVisibility])
+	// Show All appends the newly shown columns to the order; Hide All keeps the chain name.
+	const setAllColumnsVisible = (visible: boolean) => {
+		setSelectedPreset(null)
+		const newVisibility: ColumnVisibilityState = {}
+		for (const id of CHAIN_COLUMN_IDS) newVisibility[id] = visible || id === 'name'
+		const hidden = visible ? CHAIN_COLUMN_IDS.filter((id) => !columnOrder.includes(id)) : []
+		writeColumns([...columnOrder, ...hidden], newVisibility)
+	}
 
 	const handleExportCSV = () => {
 		const headers = instance
@@ -360,8 +285,7 @@ export function ChainsDataset({
 			if (!column) return
 			currentOrder.splice(index, 1)
 			currentOrder.splice(index - 1, 0, column)
-			setColumnOrder(currentOrder)
-			onColumnsChange?.(currentOrder, columnVisibility)
+			writeColumns(currentOrder, columnVisibility)
 		}
 	}
 
@@ -373,8 +297,7 @@ export function ChainsDataset({
 			if (!column) return
 			currentOrder.splice(index, 1)
 			currentOrder.splice(index + 1, 0, column)
-			setColumnOrder(currentOrder)
-			onColumnsChange?.(currentOrder, columnVisibility)
+			writeColumns(currentOrder, columnVisibility)
 		}
 	}
 
@@ -432,6 +355,7 @@ export function ChainsDataset({
 				columnVisibility={columnVisibility}
 				columnOrder={columnOrder}
 				toggleColumnVisibility={toggleColumnVisibility}
+				setAllColumnsVisible={setAllColumnsVisible}
 				moveColumnUp={moveColumnUp}
 				moveColumnDown={moveColumnDown}
 			/>

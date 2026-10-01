@@ -251,7 +251,6 @@ type ProDashboardEditorActionsContextType = Omit<
 	| 'setShowIterateDashboardModal'
 	| 'setItems'
 	| 'setVariables'
-	| 'setVariableOverrides'
 	| 'setAnnotations'
 	| 'dispatchItemsWithVariablesAndSave'
 	| 'undo'
@@ -459,19 +458,12 @@ function ProDashboardAPIProviderInner({
 			: initial
 	})
 
-	useEffect(() => {
-		if (!initialDashboard && initialItems && initialItems.length > 0) {
-			dispatch({ type: 'SET_ITEMS', payload: initialItems, skipHistory: true })
-		}
-	}, [initialDashboard, initialItems])
-
 	const {
 		items,
 		timePeriod,
 		customTimePeriod,
 		variables,
 		annotations,
-		variableOverrides,
 		history,
 		dashboardName,
 		dashboardId,
@@ -644,17 +636,19 @@ function ProDashboardAPIProviderInner({
 		setShowIterateDashboardModal,
 		setItems,
 		setVariables,
-		setVariableOverrides,
 		setAnnotations,
 		dispatchItemsWithVariablesAndSave,
 		undo,
 		redo
 	} = actions
 
-	useEffect(() => {
-		const overrides = readVariableOverridesFromQuery(routerQuery as Record<string, string | Array<string> | undefined>)
-		dispatch({ type: 'SET_VARIABLE_OVERRIDES', payload: overrides })
-	}, [routerQuery])
+	// The `var-*` params are the viewer's overrides; setVariableValue writes them. Keyed on their text, so a
+	// tab switch or another query write keeps the same object, and the resolved items with it.
+	const variableOverridesKey = JSON.stringify(readVariableOverridesFromQuery(routerQuery))
+	const variableOverrides = useMemo<Record<string, string>>(
+		() => JSON.parse(variableOverridesKey),
+		[variableOverridesKey]
+	)
 
 	const getCurrentRatingSession = useCallback(() => {
 		if (!isAuthenticated || !currentDashboard?.aiGenerated || !user?.id) return null
@@ -1163,26 +1157,15 @@ function ProDashboardAPIProviderInner({
 				const nextItems = applyVariableValuesToItems(items, nextVariables, variableCatalog)
 				dispatchItemsWithVariablesAndSave(nextItems, nextVariables)
 				if (variableOverrides[variableId] !== undefined) {
-					const rest = Object.fromEntries(Object.entries(variableOverrides).filter(([id]) => id !== variableId))
-					setVariableOverrides(rest)
-					replaceVariableQuery(rest)
+					replaceVariableQuery(
+						Object.fromEntries(Object.entries(variableOverrides).filter(([id]) => id !== variableId))
+					)
 				}
 				return
 			}
-			const nextOverrides = { ...variableOverrides, [variableId]: value }
-			setVariableOverrides(nextOverrides)
-			replaceVariableQuery(nextOverrides)
+			replaceVariableQuery({ ...variableOverrides, [variableId]: value })
 		},
-		[
-			canEditVariables,
-			variables,
-			items,
-			variableCatalog,
-			variableOverrides,
-			dispatchItemsWithVariablesAndSave,
-			setVariableOverrides,
-			router
-		]
+		[canEditVariables, variables, items, variableCatalog, variableOverrides, dispatchItemsWithVariablesAndSave, router]
 	)
 	const addVariable = useCallback(
 		(variable: DashboardVariable, bindTargets: ReadonlyArray<VariableBindingTarget>) => {

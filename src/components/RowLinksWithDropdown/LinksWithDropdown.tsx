@@ -27,12 +27,15 @@ interface OverflowState {
 	renderMenuOnly: boolean
 	firstOverflowIndex: number | null
 	isMeasuring: boolean
+	/** The link labels the last measurement saw; a different set needs measuring before it renders. */
+	measuredSignature: string | null
 }
 
 const INITIAL_OVERFLOW_STATE: OverflowState = {
 	renderMenuOnly: false,
 	firstOverflowIndex: null,
-	isMeasuring: true
+	isMeasuring: true,
+	measuredSignature: null
 }
 
 interface CachedLayout {
@@ -46,36 +49,42 @@ type OverflowResult = { renderMenuOnly: boolean; firstOverflowIndex: number | nu
 type OverflowAction =
 	| { type: 'REQUEST_MEASURE' }
 	| { type: 'AWAIT_CONTAINER' }
-	| { type: 'MEASURED'; result: OverflowResult }
+	| { type: 'MEASURED'; result: OverflowResult; signature: string }
 	| { type: 'RESIZED'; result: OverflowResult }
 
 function assertUnreachable(action: never): never {
 	throw new Error(`Unhandled OverflowAction: ${JSON.stringify(action)}`)
 }
 
-function overflowReducer(state: OverflowState, action: OverflowAction): OverflowState {
+export function overflowReducer(state: OverflowState, action: OverflowAction): OverflowState {
 	switch (action.type) {
 		case 'REQUEST_MEASURE':
 			return state.isMeasuring ? state : { ...state, isMeasuring: true }
 		case 'AWAIT_CONTAINER':
-			return { renderMenuOnly: false, firstOverflowIndex: null, isMeasuring: true }
+			return { ...state, renderMenuOnly: false, firstOverflowIndex: null, isMeasuring: true }
 		case 'MEASURED': {
-			const { result } = action
+			const { result, signature } = action
 			const didChange =
 				state.renderMenuOnly !== result.renderMenuOnly ||
 				state.firstOverflowIndex !== result.firstOverflowIndex ||
-				state.isMeasuring
-			return didChange ? { ...result, isMeasuring: false } : state
+				state.isMeasuring ||
+				state.measuredSignature !== signature
+			return didChange ? { ...result, isMeasuring: false, measuredSignature: signature } : state
 		}
 		case 'RESIZED': {
 			const { result } = action
 			const didChange =
 				state.renderMenuOnly !== result.renderMenuOnly || state.firstOverflowIndex !== result.firstOverflowIndex
-			return didChange ? { ...result, isMeasuring: false } : state
+			return didChange ? { ...state, ...result, isMeasuring: false } : state
 		}
 		default:
 			return assertUnreachable(action)
 	}
+}
+
+/** A link set the last measurement did not see renders every link for measuring, in the same render it arrives. */
+export function needsMeasuring(state: OverflowState, linksLayoutSignature: string): boolean {
+	return state.isMeasuring || state.measuredSignature !== linksLayoutSignature
 }
 
 function finiteOr(...values: Array<number>): number {
@@ -177,17 +186,14 @@ export function LinksWithDropdown({
 		dispatch({ type: 'RESIZED', result: recalculateFromCache(containerWidth, cached, links.length) })
 	})
 
-	// Invalidate cache and trigger full re-measurement when links change
-	useEffect(() => {
-		cachedRef.current = null
-		dispatch({ type: 'REQUEST_MEASURE' })
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- these are the triggers: a different link set invalidates the cached measurement, which the effect body does not read.
-	}, [links.length, linksLayoutSignature])
+	// A new link set measures in the commit it arrives in, before paint. The cached widths need no reset: the
+	// resize path only reads them through a mounted row, and the row's measurement rewrites them first.
+	const isMeasuring = needsMeasuring(overflowState, linksLayoutSignature)
 
 	// Full measurement: runs synchronously before paint when isMeasuring is true.
 	// Deferred until isClient so we measure all links, not just the SSR-limited subset.
 	useIsomorphicLayoutEffect(() => {
-		if (!isClient || !overflowState.isMeasuring) return
+		if (!isClient || !isMeasuring) return
 
 		const priorityNav = priorityNavRef.current
 		const result = measureOverflow(links.length, priorityNav, cachedRef)
@@ -199,8 +205,8 @@ export function LinksWithDropdown({
 			return
 		}
 
-		dispatch({ type: 'MEASURED', result })
-	}, [isClient, overflowState.isMeasuring, overflowState.renderMenuOnly, links.length])
+		dispatch({ type: 'MEASURED', result, signature: linksLayoutSignature })
+	}, [isClient, isMeasuring, overflowState.renderMenuOnly, links.length, linksLayoutSignature])
 
 	// Resize listeners — fast cached recalculation, no two-phase render needed
 	useEffect(() => {
@@ -234,7 +240,7 @@ export function LinksWithDropdown({
 	const isLinkInDropdown = overflowIndex !== null && activeLinkIndex >= overflowIndex
 
 	// During measurement: render all links (CSS hides overflow). After: only visible links in DOM.
-	const visibleLinks = overflowState.isMeasuring
+	const visibleLinks = isMeasuring
 		? isClient
 			? links
 			: links.slice(0, SSR_LINK_LIMIT)
@@ -271,7 +277,7 @@ export function LinksWithDropdown({
 			{/* Render during measurement so the flex-1 container measures at the correct
 			   narrower width (OtherLinks takes space as a flex sibling). useLayoutEffect
 			   runs before paint so the user never sees the sentinel. */}
-			{overflowState.isMeasuring || hasOverflow ? (
+			{isMeasuring || hasOverflow ? (
 				<OtherLinks
 					heading={heading}
 					name={

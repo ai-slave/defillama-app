@@ -23,6 +23,7 @@ const renderChange = (value: number | null) => (
 export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, ChainsDatasetRow>> = [
 	{
 		header: 'Chain',
+		id: 'name',
 		accessorKey: 'name',
 		size: 200,
 		cell: ({ row }) => {

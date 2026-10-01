@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
-import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
 import { ProSegmented, proInputStyles } from '../ui'
 import {
@@ -10,8 +8,6 @@ import {
 	type MyDashboardsSort,
 	type MyDashboardsVisibility
 } from './myDashboardsControls.utils'
-
-const SEARCH_DEBOUNCE_MS = 200
 
 interface MyDashboardsControlsProps {
 	query: string
@@ -30,32 +26,6 @@ export function MyDashboardsControls({
 	onSortChange,
 	onVisibilityChange
 }: MyDashboardsControlsProps) {
-	const [draft, setDraft] = useState(query)
-	const publishedRef = useRef(query)
-
-	useEffect(() => {
-		if (query === publishedRef.current) return
-		publishedRef.current = query
-		setDraft(query)
-	}, [query])
-
-	const publish = (value: string) => {
-		publishedRef.current = value
-		onQueryChange(value)
-	}
-	const publishTyped = useDebouncedCallback(publish, SEARCH_DEBOUNCE_MS)
-
-	const handleChange = (value: string) => {
-		setDraft(value)
-		publishTyped(value)
-	}
-
-	const handleClear = () => {
-		setDraft('')
-		publishTyped.cancel()
-		publish('')
-	}
-
 	const selectedSort = MY_DASHBOARDS_SORT_OPTIONS.find((option) => option.key === sort) ?? MY_DASHBOARDS_SORT_OPTIONS[0]
 
 	return (
@@ -70,15 +40,15 @@ export function MyDashboardsControls({
 				<input
 					type="text"
 					aria-label="Search my dashboards"
-					value={draft}
-					onChange={(event) => handleChange(event.target.value)}
+					value={query}
+					onChange={(event) => onQueryChange(event.target.value)}
 					placeholder="Search my dashboards…"
 					className={`${proInputStyles} pr-8 pl-8`}
 				/>
-				{draft ? (
+				{query ? (
 					<button
 						type="button"
-						onClick={handleClear}
+						onClick={() => onQueryChange('')}
 						className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-pro-hover-fill hover:text-pro-text-primary"
 					>
 						<Icon name="x" height={12} width={12} />

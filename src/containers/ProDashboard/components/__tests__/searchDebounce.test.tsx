@@ -3,7 +3,6 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DashboardSearch } from '../DashboardSearch'
-import { MyDashboardsControls } from '../MyDashboardsControls'
 
 const router = vi.hoisted(() => ({
 	pathname: '/pro',
@@ -58,36 +57,5 @@ describe('dashboard search', () => {
 		clickClear()
 		act(() => vi.advanceTimersByTime(1000))
 		expect(pushedQueries()).toEqual([undefined])
-	})
-})
-
-describe('my dashboards search', () => {
-	// Ariakit settles the sort and visibility controls after a microtask.
-	async function renderControls(onQueryChange: (query: string) => void) {
-		await act(async () =>
-			root.render(
-				<MyDashboardsControls
-					query=""
-					sort="recent"
-					visibility="all"
-					onQueryChange={onQueryChange}
-					onSortChange={() => {}}
-					onVisibilityChange={() => {}}
-				/>
-			)
-		)
-	}
-
-	test('publishes the typed query after the pause and clearing cancels a pending one', async () => {
-		const onQueryChange = vi.fn()
-		await renderControls(onQueryChange)
-		type('lend')
-		act(() => vi.advanceTimersByTime(200))
-		expect(onQueryChange.mock.calls).toEqual([['lend']])
-
-		type('lending')
-		clickClear()
-		act(() => vi.advanceTimersByTime(1000))
-		expect(onQueryChange.mock.calls).toEqual([['lend'], ['']])
 	})
 })

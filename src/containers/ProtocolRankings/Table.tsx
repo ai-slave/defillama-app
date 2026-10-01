@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { createColumnHelper, useTable, type ExpandedState, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -285,23 +285,16 @@ function ChainProtocolsTableInner({
 		setStorageItem(tableColumnOptionsKey, JSON.stringify(ops))
 	}
 
-	const [sorting, setSorting] = useState<SortingState>([
-		{
-			desc: true,
-			id: selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
-		}
-	])
-	// Persisted presets become available only after hydration; reconcile the SSR-safe TVL sort
-	// without remounting the table and losing search, expansion, or loaded-page state.
-	useEffect(() => {
-		if (!selectedMetricPreset && !selectedPeriod) return
-		const id = selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
-		startTransition(() =>
-			setSorting((current) =>
-				current.length === 1 && current[0]?.id === id && current[0]?.desc ? current : [{ id, desc: true }]
-			)
-		)
-	}, [getMainColumnForPreset, selectedMetricPreset, selectedPeriod])
+	// The table sorts by the preset's main column. A sort the reader picks (a header, a preset, Reset) lasts while
+	// that main column stays the one it was picked under. Persisted presets arrive after hydration and re-sort the
+	// SSR-safe TVL table without remounting it, so search, expansion and loaded pages survive. Storage writes reach
+	// the preset a task later, so a preset pick or Reset sets its sort here at once, in the same request.
+	const presetSortId = selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
+	const [pickedSort, setPickedSort] = useState<{ presetSortId: string; sorting: SortingState } | null>(null)
+	const sorting = useMemo<SortingState>(
+		() => (pickedSort?.presetSortId === presetSortId ? pickedSort.sorting : [{ id: presetSortId, desc: true }]),
+		[presetSortId, pickedSort]
+	)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const userReplacementPendingRef = useRef(false)
 	const chainQuery = router.query.chain
@@ -481,7 +474,7 @@ function ChainProtocolsTableInner({
 		getRowId: (row, index, parent) => row.id ?? `${parent?.id ?? 'root'}:${row.slug || index}`,
 		onSortingChange: (updater) => {
 			userReplacementPendingRef.current = true
-			setSorting(updater)
+			setPickedSort({ presetSortId, sorting: typeof updater === 'function' ? updater(sorting) : updater })
 		},
 		manualSorting: remoteEnabled,
 		manualFiltering: remoteEnabled
@@ -494,7 +487,7 @@ function ChainProtocolsTableInner({
 		if (sorting.length !== 1 || sorting[0]?.id !== id || !sorting[0].desc) {
 			userReplacementPendingRef.current = true
 		}
-		setSorting([{ id, desc: true }])
+		setPickedSort({ presetSortId, sorting: [{ id, desc: true }] })
 	}
 	const setMetricPreset = (metricPreset: TablePreset) => {
 		removeStorageItem(legacyTableFilterStateKey)
@@ -527,7 +520,7 @@ function ChainProtocolsTableInner({
 		}
 		setNameSearch('')
 		setExpanded({})
-		setSorting([{ id: 'tvl', desc: true }])
+		setPickedSort({ presetSortId, sorting: [{ id: 'tvl', desc: true }] })
 		for (const key of PROTOCOL_RANKING_RESET_STORAGE_KEYS) removeStorageItem(key)
 		setIgnoreTvlRangeDuringReset(true)
 		void Promise.resolve(pushShallowQuery(router, PROTOCOL_RANKING_RESET_QUERY)).catch(() =>

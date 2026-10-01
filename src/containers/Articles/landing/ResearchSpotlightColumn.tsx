@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import type { CSSProperties } from 'react'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
 import { useSharedHeight } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
@@ -17,14 +17,6 @@ const DEFAULT_CONTAINER_HEIGHT = 'h-[calc(105px_*_4_+_12px_*_3)]'
 const DEFAULT_DESKTOP_HEIGHT = 'lg:h-[calc(93px_*_5_+_24px_*_4)]'
 
 export function ResearchSpotlightColumn({ title, articles, sharedHeight }: ResearchSpotlightColumnProps) {
-	const containerRef = useRef<HTMLDivElement>(null)
-
-	useEffect(() => {
-		if (containerRef.current && sharedHeight) {
-			containerRef.current.style.setProperty('--shared-height', `${sharedHeight}px`)
-		}
-	}, [sharedHeight])
-
 	const containerHeight = sharedHeight
 		? `${DEFAULT_CONTAINER_HEIGHT} lg:h-(--shared-height,_calc(93px_*_5_+_24px_*_4))`
 		: `${DEFAULT_CONTAINER_HEIGHT} ${DEFAULT_DESKTOP_HEIGHT}`
@@ -39,7 +31,10 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 				</div>
 				<div className="flex flex-col gap-y-16">
 					<div>
-						<div ref={containerRef} className={`overflow-y-auto ${containerHeight}`}>
+						<div
+							className={`overflow-y-auto ${containerHeight}`}
+							style={sharedHeight ? ({ '--shared-height': `${sharedHeight}px` } as CSSProperties) : undefined}
+						>
 							<div className="flex flex-col gap-y-6">
 								{articles.map((article, i) => (
 									<Link
@@ -97,8 +92,7 @@ interface ResearchSpotlightColumnWithHeightProps {
 }
 
 export function ResearchSpotlightColumnWithHeight({ title, articles }: ResearchSpotlightColumnWithHeightProps) {
-	const context = useSharedHeight()
-	const height = context?.height
+	const { height } = useSharedHeight()
 
 	return <ResearchSpotlightColumn title={title} articles={articles} sharedHeight={height} />
 }

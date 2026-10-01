@@ -1,12 +1,11 @@
 import Link from 'next/link'
-import { useLayoutEffect, useRef } from 'react'
+import { type CSSProperties, useCallback } from 'react'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
 import { useSharedHeight } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref, formatDate } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
-import { useScrollerHeightFromFirstItem } from '~/hooks/useScrollerHeightFromFirstItem'
 
 interface ResearchGridWithScrollbarProps {
 	id: string
@@ -16,9 +15,6 @@ interface ResearchGridWithScrollbarProps {
 }
 
 export function ResearchGridWithScrollbar({ id, title, articles, pageWidget }: ResearchGridWithScrollbarProps) {
-	const context = useSharedHeight()
-	const setHeight = context?.setHeight
-
 	if (articles.length === 0) return null
 
 	return (
@@ -27,7 +23,7 @@ export function ResearchGridWithScrollbar({ id, title, articles, pageWidget }: R
 				<div className="mb-6.5">
 					<TitleLine title={title} />
 				</div>
-				<ResearchGridWithScrollbarScroller articles={articles} pageWidget={pageWidget} onHeightChange={setHeight} />
+				<ResearchGridWithScrollbarScroller articles={articles} pageWidget={pageWidget} />
 
 				<div className="mt-auto shrink-0 pt-4.5 text-right">
 					<ReadMoreLink url="/research?section=report" title="View all reports" />
@@ -37,37 +33,36 @@ export function ResearchGridWithScrollbar({ id, title, articles, pageWidget }: R
 	)
 }
 
-interface ResearchGridScrollerProps {
+function ResearchGridWithScrollbarScroller({
+	articles,
+	pageWidget
+}: {
 	articles: Array<ArticleDocument>
 	pageWidget: string
-	onHeightChange?: (height: number) => void
-}
-
-function ResearchGridWithScrollbarScroller({ articles, pageWidget, onHeightChange }: ResearchGridScrollerProps) {
-	const gridRef = useRef<HTMLDivElement>(null)
-	const containerRef = useRef<HTMLDivElement>(null)
-	const remeasureKey = articles.map((a) => a.id).join(',')
-
-	const firstItemHeightPx = useScrollerHeightFromFirstItem({
-		containerRef: gridRef,
-		itemSelector: 'a.group',
-		remeasureKey
-	})
-
-	useLayoutEffect(() => {
-		if (!containerRef.current || firstItemHeightPx == null) return
-		const calculatedHeight = firstItemHeightPx * 2 + 32
-		containerRef.current.style.setProperty('--scroller-height', `${calculatedHeight}px`)
-		onHeightChange?.(calculatedHeight)
-	}, [firstItemHeightPx, onHeightChange])
+}) {
+	// The scroller shows two rows, measured from the first card; the spotlight column beside it shares the height.
+	const { height, setHeight } = useSharedHeight()
+	// Runs in the commit, so the first paint already has the height. A new first article is a new element and
+	// measures again; the observer follows the card's own size, which also changes with the viewport.
+	const measureFirstCard = useCallback(
+		(card: HTMLAnchorElement) => {
+			const measure = () => setHeight(card.offsetHeight * 2 + 32)
+			measure()
+			const observer = new ResizeObserver(measure)
+			observer.observe(card)
+			return () => observer.disconnect()
+		},
+		[setHeight]
+	)
 
 	return (
-		<div ref={containerRef}>
+		<div style={height ? ({ '--scroller-height': `${height}px` } as CSSProperties) : undefined}>
 			<div className="h-[calc(160px_*_2_+_32px_*_1)] overflow-y-auto sm:h-(--scroller-height,_calc(288px_*_2_+_32px_*_1))">
-				<div ref={gridRef} className="grid grid-cols-2 gap-8 pr-4">
+				<div className="grid grid-cols-2 gap-8 pr-4">
 					{articles.map((article, i) => (
 						<Link
 							key={article.id}
+							ref={i === 0 ? measureFirstCard : undefined}
 							className="group relative top-0 overflow-hidden rounded-lg transition-all duration-200 ease-out hover:top-[-4px]"
 							href={articleHref(article)}
 							onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}

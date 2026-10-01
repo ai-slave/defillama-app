@@ -1,7 +1,7 @@
 import type { InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import Router, { useRouter } from 'next/router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import ProDashboard from '~/containers/ProDashboard'
@@ -116,7 +116,6 @@ function DashboardPageContent({
 		currentDashboard,
 		dashboardName
 	} = useProDashboardDashboard()
-	const [isValidating, setIsValidating] = useState(!initialDashboard)
 	const { trackView } = useDashboardEngagement(currentDashboard?.id ?? null)
 	const hasTrackedView = useRef(false)
 	const hasRedirectedRef = useRef(false)
@@ -151,21 +150,6 @@ function DashboardPageContent({
 	}, [dashboardId, isEditing, currentDashboard?.slug, routeDashboardId, routeAsPath])
 
 	useEffect(() => {
-		if (dashboardId === 'new') {
-			queueMicrotask(() => {
-				setIsValidating(false)
-			})
-			return
-		}
-
-		if (!isLoadingDashboard && (currentDashboard || streamHasResolved)) {
-			queueMicrotask(() => {
-				setIsValidating(false)
-			})
-		}
-	}, [dashboardId, isLoadingDashboard, currentDashboard, streamHasResolved])
-
-	useEffect(() => {
 		if (
 			!isEditing &&
 			dashboardId &&
@@ -179,6 +163,10 @@ function DashboardPageContent({
 		}
 	}, [isEditing, dashboardId, dashboardVisibility, isLoadingDashboard, trackView])
 
+	// Without a server payload the page waits for the stream. A new dashboard waits for the client: the server's
+	// auth snapshot is signed out and would offer "Sign In Required" to a signed-in visitor.
+	const isValidating =
+		!initialDashboard && (dashboardId === 'new' ? !isClient : !currentDashboard && !streamHasResolved)
 	const isAccountLoading = loaders.userLoading
 	const isLoading = (isEditing && !isClient) || isAccountLoading || isValidating || isLoadingDashboard
 	const initialSeoSummary =

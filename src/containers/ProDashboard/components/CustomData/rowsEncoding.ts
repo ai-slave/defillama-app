@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
 	type CustomDataEncodedRows,
 	type CustomDataRows,
@@ -80,4 +81,36 @@ export function decodeRows(rows: CustomDataRows): Promise<Array<Array<SqlSnapsho
 	const pending = gzipBase64Decode(rows.data).then(parseDecodedRows)
 	decodedRowsCache.set(rows, pending)
 	return pending
+}
+
+export type DecodedRowsState =
+	| { status: 'idle' }
+	| { status: 'ready'; rows: Array<Array<SqlSnapshotValue>> }
+	| { status: 'error' }
+
+const IDLE: DecodedRowsState = { status: 'idle' }
+
+// Plain rows are ready on the first render. Encoded rows decode after it, and the result is tagged with the data
+// it came from: changed rows never draw the previous ones while they decode, and a refetch of the same data
+// (a new object after a dashboard reload) keeps drawing without a loader.
+export function useDecodedRows(rows: CustomDataRows | undefined): DecodedRowsState {
+	const [decoded, setDecoded] = useState<{ source: CustomDataEncodedRows; state: DecodedRowsState } | null>(null)
+	useEffect(() => {
+		if (rows === undefined || !isCustomDataEncodedRows(rows)) return
+		let cancelled = false
+		decodeRows(rows).then(
+			(decodedRows) => {
+				if (!cancelled) setDecoded({ source: rows, state: { status: 'ready', rows: decodedRows } })
+			},
+			() => {
+				if (!cancelled) setDecoded({ source: rows, state: { status: 'error' } })
+			}
+		)
+		return () => {
+			cancelled = true
+		}
+	}, [rows])
+	if (rows === undefined) return IDLE
+	if (!isCustomDataEncodedRows(rows)) return { status: 'ready', rows }
+	return decoded?.source.data === rows.data ? decoded.state : IDLE
 }

@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/shared/formatters'
@@ -265,33 +265,19 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
-	const { startDate, endDate, dateError, handleStartDateChange, handleEndDateChange, validateDateRange } =
-		useDateRangeValidation({
-			defaultStartDate: unixToDateString(maxSelectableDateUnix - 7 * 24 * 60 * 60),
-			defaultEndDate: unixToDateString(maxSelectableDateUnix)
-		})
-
-	useEffect(() => {
-		if (router.isReady) {
-			const startParam = isValidDate(router.query.start) ? unixToDateString(Number(router.query.start)) : null
-			const endParam = isValidDate(router.query.end) ? unixToDateString(Number(router.query.end)) : null
-
-			if (startParam != null && startParam !== startDate) {
-				handleStartDateChange(startParam)
-			}
-			if (endParam != null && endParam !== endDate) {
-				handleEndDateChange(endParam)
-			}
-		}
-	}, [
-		router.isReady,
-		router.query.start,
-		router.query.end,
-		startDate,
-		endDate,
-		handleStartDateChange,
-		handleEndDateChange
-	])
+	// The URL holds the picked dates; the defaults fill whatever it lacks and follow the clock. A static page's query
+	// is empty until hydration, so the server and hydration renders show the defaults.
+	const startParam = router.query.start
+	const endParam = router.query.end
+	const startDate =
+		router.isReady && isValidDate(startParam)
+			? unixToDateString(Number(startParam))
+			: unixToDateString(maxSelectableDateUnix - 7 * 24 * 60 * 60)
+	const endDate =
+		router.isReady && isValidDate(endParam)
+			? unixToDateString(Number(endParam))
+			: unixToDateString(maxSelectableDateUnix)
+	const { dateError, validateDateRange } = useDateRangeValidation()
 
 	const [quantityInput, setQuantityInput] = useState('')
 
@@ -454,11 +440,6 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 		const nextEnd = isStart ? endDate : value
 		if (!nextStart || !nextEnd) return
 		if (!validateDateRange(nextStart, nextEnd)) return
-		if (isStart) {
-			handleStartDateChange(value)
-		} else {
-			handleEndDateChange(value)
-		}
 		const unixValue = dateStringToUnix(value)
 		const bound = isStart ? 'start' : 'end'
 		void pushShallowQuery(router, { [bound]: unixValue ?? undefined })

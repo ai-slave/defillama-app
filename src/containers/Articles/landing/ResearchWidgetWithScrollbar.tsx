@@ -1,8 +1,6 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
-import { useEffect } from 'react'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
-import { useSharedHeight } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -11,14 +9,14 @@ interface ResearchWidgetWithScrollbarProps {
 	id: string
 	title: string
 	articles: Array<ArticleDocument>
-	onHeightChange?: (height: number) => void
 }
 
 const DEFAULT_CONTAINER_HEIGHT = 'h-[calc(65px_*_6_+_12px_*_5)]'
 const DESKTOP_CONTAINER_HEIGHT = 'lg:h-(--container-height)'
-const CONTAINER_HEIGHT_VALUE = 70 * 5 + 24 * 4
+/** The scroller's desktop height, five rows; a column beside the widget can match it. */
+export const RESEARCH_WIDGET_SCROLLER_HEIGHT = 70 * 5 + 24 * 4
 
-export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChange }: ResearchWidgetWithScrollbarProps) {
+export function ResearchWidgetWithScrollbar({ id, title, articles }: ResearchWidgetWithScrollbarProps) {
 	if (articles.length === 0) return null
 
 	return (
@@ -28,7 +26,7 @@ export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChang
 			</div>
 			<div className="flex flex-col gap-y-16">
 				<div>
-					<ResearchWidgetWithScrollbarScroller articles={articles} onHeightChange={onHeightChange} />
+					<ResearchWidgetWithScrollbarScroller articles={articles} />
 					<div className="mt-auto shrink-0 pt-4.5 text-right">
 						<ReadMoreLink url="/research#collections" title="Explore more" />
 					</div>
@@ -38,18 +36,9 @@ export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChang
 	)
 }
 
-interface ResearchWidgetWithScrollbarScrollerProps {
-	articles: Array<ArticleDocument>
-	onHeightChange?: (height: number) => void
-}
-
-function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: ResearchWidgetWithScrollbarScrollerProps) {
-	useEffect(() => {
-		onHeightChange?.(CONTAINER_HEIGHT_VALUE)
-	}, [onHeightChange])
-
+function ResearchWidgetWithScrollbarScroller({ articles }: { articles: Array<ArticleDocument> }) {
 	const containerHeight = `${DEFAULT_CONTAINER_HEIGHT} ${DESKTOP_CONTAINER_HEIGHT}`
-	const style = { '--container-height': `${CONTAINER_HEIGHT_VALUE}px` } as CSSProperties
+	const style = { '--container-height': `${RESEARCH_WIDGET_SCROLLER_HEIGHT}px` } as CSSProperties
 
 	return (
 		<div style={style}>
@@ -84,21 +73,4 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 			</div>
 		</div>
 	)
-}
-
-interface ResearchWidgetWithScrollbarWithHeightProps {
-	id: string
-	title: string
-	articles: Array<ArticleDocument>
-}
-
-export function ResearchWidgetWithScrollbarWithHeight({
-	id,
-	title,
-	articles
-}: ResearchWidgetWithScrollbarWithHeightProps) {
-	const context = useSharedHeight()
-	const setHeight = context?.setHeight
-
-	return <ResearchWidgetWithScrollbar id={id} title={title} articles={articles} onHeightChange={setHeight} />
 }

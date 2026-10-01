@@ -57,13 +57,14 @@ import {
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowOverlayOptions,
 	getRWAFlowVsPriceAssetSummaries,
+	getRWAFlowVisibleRange,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowOverlayMetrics,
 	RWA_FLOW_GROUPING_OPTIONS,
 	type RWAFlowChartSelection,
 	type RWAFlowGrouping,
 	type RWAFlowOverlay,
-	type RWAFlowVisibleRange
+	type RWAFlowZoom
 } from './flows'
 import { type RWAFlowScope, useRWAFlowSeries } from './flows.hooks'
 import { sumRwaFlowSplit } from './flowSplit'
@@ -98,11 +99,6 @@ export type RWAOverviewChartPanelProps = {
 	activeFilters: boolean
 	/** A filter from the Filters dialog is active; a server split cannot follow it. */
 	activeAttributeFilters: boolean
-}
-
-function isSameFlowVisibleRange(a: RWAFlowVisibleRange | null, b: RWAFlowVisibleRange | null): boolean {
-	if (a == null || b == null) return a === b
-	return a.start === b.start && a.end === b.end
 }
 
 /**
@@ -152,10 +148,7 @@ export function RWAOverviewChartPanel({
 	})
 	const isFlowVsPrice = flowQueryState.view === 'flowVsPrice'
 	const perpsChartSource = getRwaPerpsChartSource(groupBy)
-	const [flowVisibleRange, setFlowVisibleRange] = useState<RWAFlowVisibleRange | null>(null)
-	const handleFlowVisibleRangeChange = useCallback((range: RWAFlowVisibleRange | null) => {
-		setFlowVisibleRange((previous) => (isSameFlowVisibleRange(previous, range) ? previous : range))
-	}, [])
+	const [flowZoom, setFlowZoom] = useState<RWAFlowZoom | null>(null)
 	const isFlowMetric = flowQueryState.view != null
 	const chartTypeKey = chartState.metric
 	const chartViewOptions = getRwaChartViewOptions(selectedChartMetric)
@@ -371,6 +364,7 @@ export function RWAOverviewChartPanel({
 	)
 	const flowDefaultStartTimestamp =
 		flowGroupBy === 'daily' && flowData ? getRWAFlowDefaultStartTimestamp(flowData.series, 365) : undefined
+	const flowVisibleRange = flowChart ? getRWAFlowVisibleRange(flowChart, flowZoom, flowDefaultStartTimestamp) : null
 	const flowVsPriceSummary = useMemo(
 		() => (isFlowVsPrice && flowChart ? getRWAFlowVsPriceSummary(flowChart, flowVisibleRange) : null),
 		[flowChart, flowVisibleRange, isFlowVsPrice]
@@ -594,7 +588,7 @@ export function RWAOverviewChartPanel({
 									{...(flowDefaultStartTimestamp !== undefined
 										? { defaultStartTimestamp: flowDefaultStartTimestamp }
 										: {})}
-									onVisibleRangeChange={handleFlowVisibleRangeChange}
+									onVisibleRangeChange={(range) => setFlowZoom({ source: flowChart.dataset.source, range })}
 									onReady={handleMultiSeriesChartReady}
 								/>
 							</Suspense>

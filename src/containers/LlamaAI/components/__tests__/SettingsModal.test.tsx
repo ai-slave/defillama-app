@@ -481,6 +481,60 @@ describe('SettingsModal instructions', () => {
 		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(2)
 	})
 
+	test('a saved draft stays until settings report it, and the field then follows later refreshes', async () => {
+		await act(async () => change('Lead with numbers'))
+		await act(async () => buttonNamed('Save')!.click())
+		// The settings prop reports a save a task later; the field keeps the saved text meanwhile.
+		expect(textarea().value).toBe('Lead with numbers')
+		expect(buttonNamed('Save')).toBeUndefined()
+
+		await act(async () =>
+			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Lead with numbers' }} />)
+		)
+		await act(async () =>
+			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Set on another device' }} />)
+		)
+		expect(textarea().value).toBe('Set on another device')
+	})
+
+	test('an older save of the same text never clears a newer draft', async () => {
+		const resolvers: Array<(accepted: boolean) => void> = []
+		setCustomInstructions.mockImplementation(() => new Promise<boolean>((resolve) => resolvers.push(resolve)))
+		await act(async () => change('Lead with numbers'))
+		await act(async () => buttonNamed('Save')!.click())
+		await act(async () => change('Lead with charts'))
+		await act(async () => textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+		// The reader goes back to the first text and keeps editing without submitting it.
+		await act(async () => change('Lead with numbers'))
+
+		await act(async () => resolvers[0](true))
+		await act(async () =>
+			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Lead with numbers' }} />)
+		)
+		await act(async () => resolvers[1](true))
+		await act(async () =>
+			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Lead with charts' }} />)
+		)
+
+		expect(setCustomInstructions.mock.calls).toEqual([['Lead with numbers'], ['Lead with charts']])
+		expect(textarea().value).toBe('Lead with numbers')
+		expect(buttonNamed('Save')).toBeDefined()
+	})
+
+	test('the spend cap follows a settings refresh until the reader types one', async () => {
+		await act(async () => buttonNamed('Capabilities')!.click())
+		const input = () => document.querySelector<HTMLInputElement>('#llamaai-spend-cap')!
+		await act(async () => root.render(<Harness currentSettings={{ ...settings, spendCapPerMessage: 0.75 }} />))
+		expect(input().value).toBe('0.75')
+
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input(), '1.2')
+			input().dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await act(async () => root.render(<Harness currentSettings={{ ...settings, spendCapPerMessage: 0.9 }} />))
+		expect(input().value).toBe('1.2')
+	})
+
 	test('restores the spend cap after a failed save', async () => {
 		actions.setSpendCapPerMessage = vi.fn(async () => false)
 		const capabilitiesTab = Array.from(document.querySelectorAll('button')).find(
@@ -498,6 +552,7 @@ describe('SettingsModal instructions', () => {
 		})
 
 		expect(input.value).toBe('0.50')
+		expect(alertText()).toBe("Couldn't save your spend cap. Try again.")
 	})
 })
 

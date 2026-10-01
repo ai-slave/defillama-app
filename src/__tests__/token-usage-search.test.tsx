@@ -88,6 +88,38 @@ describe('TokenUsageSearch', () => {
 		expect(container.querySelector('input')?.value).toBe('ETH')
 	})
 
+	async function type(value: string) {
+		const input = container.querySelector('input')!
+		await act(async () => {
+			input.focus()
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+	}
+
+	test('shows the URL symbol of a later navigation until the reader types', async () => {
+		mocks.router.isReady = true
+		root = createRoot(container)
+		await renderSearch()
+		expect(container.querySelector('input')?.value).toBe('ETH')
+
+		mocks.router.query = { token: 'SOL' }
+		await renderSearch()
+		expect(container.querySelector('input')?.value).toBe('SOL')
+	})
+
+	test('a field the reader cleared stays empty when the URL symbol changes', async () => {
+		mocks.router.isReady = true
+		root = createRoot(container)
+		await renderSearch()
+
+		await type('')
+		mocks.router.query = { token: 'SOL' }
+		await renderSearch()
+
+		expect(container.querySelector('input')?.value).toBe('')
+	})
+
 	test('writes the selected token symbol to the URL', async () => {
 		mocks.router.isReady = true
 		mocks.router.query = {}

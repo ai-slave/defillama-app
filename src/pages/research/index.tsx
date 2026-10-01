@@ -12,14 +12,17 @@ import { ResearchInterviews } from '~/containers/Articles/landing/ResearchInterv
 import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
 import { ResearchNewsletters } from '~/containers/Articles/landing/ResearchNewsletters'
 import { ResearchPromoBanner } from '~/containers/Articles/landing/ResearchPromoBanner'
-import { ResearchReportHighlightWithHeight } from '~/containers/Articles/landing/ResearchReportHighlight'
+import { ResearchReportHighlight } from '~/containers/Articles/landing/ResearchReportHighlight'
 import ResearchSearch from '~/containers/Articles/landing/ResearchSearch'
 import { ResearchSectionWithSharedHeightProvider } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
 import { ResearchSocialMediaMentions } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import { ResearchSpotlight } from '~/containers/Articles/landing/ResearchSpotlight'
 import { ResearchSpotlightColumnWithHeight } from '~/containers/Articles/landing/ResearchSpotlightColumn'
 import { ResearchTrustedByCarousel } from '~/containers/Articles/landing/ResearchTrustedByCarousel'
-import { ResearchWidgetWithScrollbarWithHeight } from '~/containers/Articles/landing/ResearchWidgetWithScrollbar'
+import {
+	RESEARCH_WIDGET_SCROLLER_HEIGHT,
+	ResearchWidgetWithScrollbar
+} from '~/containers/Articles/landing/ResearchWidgetWithScrollbar'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { useResearchSearchParams } from '~/containers/Articles/landing/useResearchSearchParams'
 import {
@@ -240,18 +243,15 @@ function ArticlesLandingInner({
 
 					<div id="reports">
 						{(landingData?.highlight ?? []).length > 0 ? (
-							<ResearchSectionWithSharedHeightProvider>
-								<div className="grid grid-cols-1 gap-9 lg:grid-cols-[725fr_403fr]">
-									<ResearchReportHighlightWithHeight highlight={(landingData?.highlight ?? [])[0]} />
-									<div className="flex flex-col gap-y-16">
-										<ResearchWidgetWithScrollbarWithHeight
-											id="insights"
-											title="Insights"
-											articles={landingData?.insights ?? []}
-										/>
-									</div>
+							<div className="grid grid-cols-1 gap-9 lg:grid-cols-[725fr_403fr]">
+								<ResearchReportHighlight
+									highlight={(landingData?.highlight ?? [])[0]}
+									sharedHeight={(landingData?.insights ?? []).length > 0 ? RESEARCH_WIDGET_SCROLLER_HEIGHT : undefined}
+								/>
+								<div className="flex flex-col gap-y-16">
+									<ResearchWidgetWithScrollbar id="insights" title="Insights" articles={landingData?.insights ?? []} />
 								</div>
-							</ResearchSectionWithSharedHeightProvider>
+							</div>
 						) : null}
 					</div>
 

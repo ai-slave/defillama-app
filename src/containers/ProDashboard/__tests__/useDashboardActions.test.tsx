@@ -68,7 +68,6 @@ function dashboardState(overrides: Partial<DashboardState> = {}): DashboardState
 		customTimePeriod: null,
 		variables: [],
 		annotations: [],
-		variableOverrides: {},
 		history: { past: [], future: [] },
 		dashboardName: 'Dashboard',
 		dashboardId: 'dashboard',

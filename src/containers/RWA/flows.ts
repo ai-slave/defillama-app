@@ -162,6 +162,27 @@ export type RWAFlowChart = {
 	groupBy: RWAFlowGrouping
 }
 
+export function getRWAFlowTimestampExtent(source: RWAFlowChartSource): RWAFlowVisibleRange | null {
+	const firstRow = source[0]
+	const lastRow = source[source.length - 1]
+	return firstRow && lastRow ? { start: firstRow[0], end: lastRow[0] } : null
+}
+
+/** The range the reader zoomed to on one chart source. A rebuilt source starts from its default range again. */
+export type RWAFlowZoom = { source: RWAFlowChartSource; range: RWAFlowVisibleRange | null }
+
+/** The range a flow chart shows: the reader's zoom on this source, else the default the chart opens with. */
+export function getRWAFlowVisibleRange(
+	chart: RWAFlowChart,
+	zoom: RWAFlowZoom | null,
+	defaultStartTimestamp: number | undefined
+): RWAFlowVisibleRange | null {
+	const source = chart.dataset.source
+	if (zoom?.source === source) return zoom.range
+	const extent = getRWAFlowTimestampExtent(source)
+	return extent ? { start: Math.max(extent.start, defaultStartTimestamp ?? extent.start), end: extent.end } : null
+}
+
 export type RWAFlowVsPriceSummary = {
 	mcapChange: number
 	netCapital: number

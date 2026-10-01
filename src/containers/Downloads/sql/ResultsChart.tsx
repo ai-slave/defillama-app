@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { Icon } from '~/ui/Icon'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
@@ -21,25 +21,14 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 	}, [])
 	const getChartInstance = useCallback(() => chartInstanceRef.current, [])
 	const classified = useMemo(() => classifyColumns(result), [result])
-	const resultKey = useMemo(() => classified.map((c) => `${c.name}:${c.fine}`).join('|'), [classified])
 
+	// The stored config is the reader's last edit; the chart shows it fitted to this result's columns. Nothing writes
+	// the fitted config back: the next edit stores it, and every reader of a stored config (share links, saved
+	// queries, notebook cells) fits it to its own result the same way.
 	const resolvedConfig = useMemo<ChartConfig>(() => {
 		if (!chartConfig) return defaultChartConfig(classified)
 		return migrateChartConfig(chartConfig, classified)
 	}, [chartConfig, classified])
-
-	const migrateResultConfig = useEffectEvent(() => {
-		if (!chartConfig) {
-			onChartConfigChange(defaultChartConfig(classified))
-			return
-		}
-		const migrated = migrateChartConfig(chartConfig, classified)
-		if (migrated !== chartConfig) onChartConfigChange(migrated)
-	})
-	useEffect(() => {
-		migrateResultConfig()
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- resultKey intentionally triggers migration on column-signature changes without being read here.
-	}, [resultKey])
 
 	const hasNumeric = classified.some((c) => c.coarse === 'number')
 	if (!hasNumeric) {

@@ -206,10 +206,9 @@ test('reconcile keeps locally edited variables and annotations and adopts unchan
 	expect(dashboardReducer(equalCopy, { type: 'APPLY_DASHBOARD', payload: original }).variables).toEqual([])
 })
 
-test('applying a different dashboard carries viewer overrides and resets history', () => {
+test('applying a different dashboard keeps the open modals and resets history', () => {
 	let state = initDashboardState({ dashboard: original })
 	state = dashboardReducer(state, { type: 'SET_ITEMS', payload: [text('a')] })
-	state = dashboardReducer(state, { type: 'SET_VARIABLE_OVERRIDES', payload: { chain: 'Solana' } })
 	state = dashboardReducer(state, { type: 'SET_SHOW_GENERATE_DASHBOARD_MODAL', payload: true })
 	expect(state.history.past).toHaveLength(1)
 	const another = {
@@ -228,7 +227,6 @@ test('applying a different dashboard carries viewer overrides and resets history
 	expect(next.items).toEqual([text('other')])
 	expect(next.variables).toEqual([chainVariable('Base')])
 	expect(next.annotations).toEqual([{ id: 'note', date: '2026-03-03', label: 'Launch' }])
-	expect(next.variableOverrides).toEqual({ chain: 'Solana' })
 	expect(next.history).toEqual({ past: [], future: [] })
 	expect(next.showGenerateDashboardModal).toBe(true)
 	expect(dashboardReducer(next, { type: 'UNDO' })).toBe(next)

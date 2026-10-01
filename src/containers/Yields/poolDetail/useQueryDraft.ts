@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 type QueryDraftFocus = { onFocus: () => void; onBlur: () => void }
 
@@ -12,24 +12,21 @@ export function useQueryDraft(
 	parse: (text: string) => number
 ): [string, (text: string) => void, QueryDraftFocus] {
 	const [text, setText] = useState(() => String(committed))
-	const previousCommitted = useRef(committed)
-	const focused = useRef(false)
-
-	useEffect(() => {
-		if (previousCommitted.current === committed) return
-		previousCommitted.current = committed
-		if (focused.current) return
+	const [focused, setFocused] = useState(false)
+	// Each URL change is handled once, when it lands: one that arrives while the field is focused is
+	// dropped, not re-applied on blur. That is memory of the change, so it adjusts state during render.
+	const [seenCommitted, setSeenCommitted] = useState(committed)
+	if (seenCommitted !== committed) {
+		setSeenCommitted(committed)
 		// Preserve the user's spelling when this is the debounced commit of their own draft; replace
 		// it only when the URL moved to a genuinely different value.
-		setText((current) => (parse(current) === committed ? current : String(committed)))
-	}, [committed, parse])
+		if (!focused && parse(text) !== committed) setText(String(committed))
+	}
 
-	const onFocus = useCallback(() => {
-		focused.current = true
-	}, [])
-	const onBlur = useCallback(() => {
-		focused.current = false
+	const onFocus = () => setFocused(true)
+	const onBlur = () => {
+		setFocused(false)
 		setText((current) => String(parse(current)))
-	}, [parse])
+	}
 	return [text, setText, { onFocus, onBlur }]
 }

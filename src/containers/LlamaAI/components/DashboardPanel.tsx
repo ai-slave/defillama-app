@@ -184,7 +184,9 @@ function DashboardPanelInner({
 
 					<div className="flex-1 overflow-y-auto overscroll-contain p-2.5 *:gap-2.5">
 						<AppMetadataProvider>
-							<ProDashboardAPIProvider key={config.id} initialItems={enrichedItems}>
+							{/* The provider seeds its items once. Versions only append, so a version's place in the history
+							    names it; versions of one artifact share its id. */}
+							<ProDashboardAPIProvider key={`${config.id}:${versions.indexOf(config)}`} initialItems={enrichedItems}>
 								<ChartGrid onAddChartClick={NOOP} />
 							</ProDashboardAPIProvider>
 						</AppMetadataProvider>

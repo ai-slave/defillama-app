@@ -42,6 +42,7 @@ import {
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import { ProButton, ProDialogFallback, ProMeta, proPanelStyles, proTabStyles } from '~/containers/ProDashboard/ui'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
@@ -60,6 +61,7 @@ const GenerateDashboardModal = lazy(() =>
 const PUBLIC_PRO_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
 const PRIVATE_PRO_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
 const DISCOVERY_FETCH_TIMEOUT_MS = 3000
+const MY_DASHBOARDS_SEARCH_DEBOUNCE_MS = 200
 
 type ProPageProps = {
 	initialDiscoveryCategories: DiscoveryCategoriesInitialData
@@ -261,6 +263,24 @@ function ProContent({
 			? parseInt(router.query.page, 10)
 			: 1
 	const [myDashboardsControls, setMyDashboardsControls] = useState(DEFAULT_MY_DASHBOARDS_CONTROLS)
+	// The box shows every keystroke. The list filters on its text once typing pauses, and on an emptied box at once.
+	const [myDashboardsSearch, setMyDashboardsSearch] = useState(DEFAULT_MY_DASHBOARDS_CONTROLS.query)
+	const setMyDashboardsQuery = (query: string) => setMyDashboardsControls((previous) => ({ ...previous, query }))
+	const publishMyDashboardsSearch = useDebouncedCallback(setMyDashboardsQuery, MY_DASHBOARDS_SEARCH_DEBOUNCE_MS)
+	const changeMyDashboardsSearch = (search: string) => {
+		setMyDashboardsSearch(search)
+		if (search) {
+			publishMyDashboardsSearch(search)
+			return
+		}
+		publishMyDashboardsSearch.cancel()
+		setMyDashboardsQuery('')
+	}
+	const clearMyDashboardsControls = () => {
+		publishMyDashboardsSearch.cancel()
+		setMyDashboardsSearch(DEFAULT_MY_DASHBOARDS_CONTROLS.query)
+		setMyDashboardsControls(DEFAULT_MY_DASHBOARDS_CONTROLS)
+	}
 	const myDashboardsControlsActive = areMyDashboardsControlsActive(myDashboardsControls)
 	const {
 		dashboards: myDashboards,
@@ -405,10 +425,10 @@ function ProContent({
 						<AuthorProfileStrip />
 
 						<MyDashboardsControls
-							query={myDashboardsControls.query}
+							query={myDashboardsSearch}
 							sort={myDashboardsControls.sort}
 							visibility={myDashboardsControls.visibility}
-							onQueryChange={(query) => setMyDashboardsControls((previous) => ({ ...previous, query }))}
+							onQueryChange={changeMyDashboardsSearch}
 							onSortChange={(sort) => setMyDashboardsControls((previous) => ({ ...previous, sort }))}
 							onVisibilityChange={(visibility) => setMyDashboardsControls((previous) => ({ ...previous, visibility }))}
 						/>
@@ -442,7 +462,7 @@ function ProContent({
 												title: myDashboardsControls.query.trim()
 													? `No dashboards match “${myDashboardsControls.query.trim()}”`
 													: 'No dashboards match these filters',
-												onClearFilters: () => setMyDashboardsControls(DEFAULT_MY_DASHBOARDS_CONTROLS)
+												onClearFilters: clearMyDashboardsControls
 											}
 										}
 									: {})}

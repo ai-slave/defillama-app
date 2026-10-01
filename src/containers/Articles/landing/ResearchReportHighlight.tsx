@@ -1,7 +1,6 @@
 import React, { type CSSProperties } from 'react'
 import { DownloadPdfLink } from '~/containers/Articles/landing/DownloadPdfLink'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
-import { useSharedHeight } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
 import { SponsoredByBadge } from '~/containers/Articles/landing/SponsoredByBadge'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
@@ -10,10 +9,6 @@ import type { ArticleDocument } from '~/containers/Articles/types'
 interface ResearchReportHighlightProps {
 	highlight: ArticleDocument
 	sharedHeight?: number
-}
-
-interface ResearchReportHighlightWithHeightProps {
-	highlight: ArticleDocument
 }
 
 export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchReportHighlightProps) {
@@ -80,11 +75,4 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 			</div>
 		</div>
 	)
-}
-
-export function ResearchReportHighlightWithHeight({ highlight }: ResearchReportHighlightWithHeightProps) {
-	const context = useSharedHeight()
-	const height = context?.height
-
-	return <ResearchReportHighlight highlight={highlight} sharedHeight={height} />
 }

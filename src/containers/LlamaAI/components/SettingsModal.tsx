@@ -80,6 +80,17 @@ function isEffortAvailableForModel(effort: string, model: string) {
 	return true
 }
 
+// The spend cap commits on blur, so Enter only leaves the field.
+function handleSpendCapKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+	if (e.key === 'Enter') {
+		e.preventDefault()
+		e.currentTarget.blur()
+	}
+}
+
+// The reader's instructions text; `saved` is the value a save accepted for it, until settings report that value.
+type InstructionsDraft = { text: string; saved: string | null }
+
 interface SettingsModalProps {
 	dialogStore: Ariakit.DialogStore
 	settings: LlamaAISettings
@@ -150,44 +161,53 @@ export const SettingsModal = memo(function SettingsModal({
 	const panelRef = useRef<HTMLDivElement>(null)
 	const removeMemoryDialog = Ariakit.useDialogStore()
 	const [memoryRemoval, setMemoryRemoval] = useState<MemoryRemoval>({ kind: 'all', target: 'user' })
-	const initialInstructions = settings.customInstructions
-	const [instructionsDraft, setInstructionsDraft] = useState(() => ({
-		value: initialInstructions,
-		savedValue: initialInstructions.trim()
-	}))
-	const acceptedInstructionsRef = useRef(initialInstructions.trim())
-	const lastSubmittedInstructionsRef = useRef(initialInstructions.trim())
-	const pendingInstructionsSavesRef = useRef(0)
-	const instructionsDirty = instructionsDraft.value.trim() !== instructionsDraft.savedValue
+	// The reader's text, or null while the field shows the saved instructions, so a refresh reaches a clean field and
+	// never a typed one. `saved` marks text a save accepted: the settings prop reports it a task later (through
+	// storage), and the draft gives way then. Dropping it when the save resolves would flash the old value first.
+	const [instructionsDraft, setInstructionsDraft] = useState<InstructionsDraft | null>(null)
+	const savedInstructions = settings.customInstructions.trim()
+	if (instructionsDraft?.saved != null && instructionsDraft.saved === savedInstructions) setInstructionsDraft(null)
+	const instructionsValue = instructionsDraft?.text ?? settings.customInstructions
+	const instructionsDirty =
+		instructionsDraft !== null &&
+		instructionsDraft.saved === null &&
+		instructionsDraft.text.trim() !== savedInstructions
+	// Blur, Save, ⌘↵ and closing can all commit the same text; while it is in flight they share its request.
+	const instructionsSaveRef = useRef<{ value: string; request: Promise<boolean> } | null>(null)
 
-	// Value passed in rather than defaulted from the draft: a member expression in a default parameter is
-	// one the compiler cannot reorder. Resolves false only when this save was refused; a draft already
-	// submitted counts as saved.
-	const commitDraft = async (value: string) => {
-		const nextValue = value.trim()
-		if (nextValue === lastSubmittedInstructionsRef.current) return true
+	// Resolves false only when this save was refused. A save answers for the draft it was given: any later edit,
+	// even one back to the same text, is a new draft and stays one.
+	const commitDraft = async (draft: InstructionsDraft | null) => {
+		if (draft === null || draft.saved !== null) return true
+		const nextValue = draft.text.trim()
+		const inFlight = instructionsSaveRef.current
+		if (!inFlight && nextValue === savedInstructions) {
+			setInstructionsDraft((current) => (current === draft ? null : current))
+			return true
+		}
 
-		lastSubmittedInstructionsRef.current = nextValue
-		pendingInstructionsSavesRef.current += 1
-		trackUmamiEvent('llamaai-custom-instructions-save')
-		const accepted = await save(
-			'persona',
-			"Couldn't save your instructions. Try again.",
-			actions.setCustomInstructions(nextValue).catch(() => false)
-		)
-		pendingInstructionsSavesRef.current -= 1
+		let request = inFlight?.value === nextValue ? inFlight.request : null
+		if (!request) {
+			trackUmamiEvent('llamaai-custom-instructions-save')
+			request = save(
+				'persona',
+				"Couldn't save your instructions. Try again.",
+				actions.setCustomInstructions(nextValue).catch(() => false)
+			)
+			instructionsSaveRef.current = { value: nextValue, request }
+		}
+		const accepted = await request
+		if (instructionsSaveRef.current?.request === request) instructionsSaveRef.current = null
+		// A refused save keeps the draft, so the reader can retry it.
 		if (accepted) {
-			acceptedInstructionsRef.current = nextValue
-			setInstructionsDraft((current) => ({ ...current, savedValue: nextValue }))
-		} else if (lastSubmittedInstructionsRef.current === nextValue) {
-			lastSubmittedInstructionsRef.current = acceptedInstructionsRef.current
+			setInstructionsDraft((current) => (current === draft ? { text: draft.text, saved: nextValue } : current))
 		}
 		return accepted
 	}
 
 	const handleSaveInstructions = () => {
 		setSavingInstructions(true)
-		void commitDraft(instructionsDraft.value).then((saved) => {
+		void commitDraft(instructionsDraft).then((saved) => {
 			setSavingInstructions(false)
 			// A saved draft hides the Save button, so focus returns to the field instead of dropping to the page.
 			if (saved) instructionsRef.current?.focus()
@@ -195,28 +215,13 @@ export const SettingsModal = memo(function SettingsModal({
 	}
 
 	useEffect(() => {
-		const nextValue = settings.customInstructions
-		const nextSavedValue = nextValue.trim()
-		const previousAcceptedValue = acceptedInstructionsRef.current
-		acceptedInstructionsRef.current = nextSavedValue
-		if (pendingInstructionsSavesRef.current === 0 && lastSubmittedInstructionsRef.current === previousAcceptedValue) {
-			lastSubmittedInstructionsRef.current = nextSavedValue
-		}
-		setInstructionsDraft((current) => {
-			if (current.savedValue === nextSavedValue) return current
-			const wasDirty = current.value.trim() !== current.savedValue
-			const preserveDraft = wasDirty || pendingInstructionsSavesRef.current > 0
-			return { value: preserveDraft ? current.value : nextValue, savedValue: nextSavedValue }
-		})
-	}, [settings.customInstructions])
-
-	useEffect(() => {
 		if (isOpen) trackUmamiEvent('llamaai-settings-open')
 	}, [isOpen])
 
 	const handleClear = () => {
-		setInstructionsDraft((current) => ({ ...current, value: '' }))
-		void commitDraft('')
+		const cleared = { text: '', saved: null }
+		setInstructionsDraft(cleared)
+		void commitDraft(cleared)
 	}
 
 	const saveSetting = (tab: TabId, request: Promise<boolean>) =>
@@ -269,46 +274,23 @@ export const SettingsModal = memo(function SettingsModal({
 		saveSetting('balance', actions.setShowBalanceInSidebar(!settings.showBalanceInSidebar))
 	}
 
-	const [spendCapDraft, setSpendCapDraft] = useState<string>(() => formatFixedNumber(settings.spendCapPerMessage, 2))
-	const latestSpendCapRef = useRef(settings.spendCapPerMessage)
-	const lastSubmittedSpendCapRef = useRef(settings.spendCapPerMessage)
-	const pendingSpendCapSavesRef = useRef(0)
-
-	useEffect(() => {
-		latestSpendCapRef.current = settings.spendCapPerMessage
-		if (pendingSpendCapSavesRef.current > 0 && settings.spendCapPerMessage !== lastSubmittedSpendCapRef.current) return
-		lastSubmittedSpendCapRef.current = settings.spendCapPerMessage
-		setSpendCapDraft(formatFixedNumber(settings.spendCapPerMessage, 2))
-	}, [settings.spendCapPerMessage])
+	// The reader's text, or null while the field shows the saved cap. A committed cap shows until its save settles;
+	// the save updates the cap at once and rolls it back if refused, so the field then shows whichever stands.
+	const [spendCapEdit, setSpendCapEdit] = useState<string | null>(null)
+	const spendCapValue = spendCapEdit ?? formatFixedNumber(settings.spendCapPerMessage, 2)
 
 	const commitSpendCap = (raw: string) => {
 		const parsed = Number(raw)
-		if (!Number.isFinite(parsed) || parsed < 0) {
-			setSpendCapDraft(formatFixedNumber(latestSpendCapRef.current, 2))
+		if (!Number.isFinite(parsed) || parsed < 0 || parsed === settings.spendCapPerMessage) {
+			setSpendCapEdit(null)
 			return
 		}
-		setSpendCapDraft(formatFixedNumber(parsed, 2))
-		if (parsed === lastSubmittedSpendCapRef.current) return
-		lastSubmittedSpendCapRef.current = parsed
-		pendingSpendCapSavesRef.current += 1
+		const shown = formatFixedNumber(parsed, 2)
+		setSpendCapEdit(shown)
 		trackUmamiEvent('llamaai-spend-cap-change')
 		void save('capabilities', "Couldn't save your spend cap. Try again.", actions.setSpendCapPerMessage(parsed)).then(
-			(accepted) => {
-				pendingSpendCapSavesRef.current -= 1
-				if (!accepted && lastSubmittedSpendCapRef.current === parsed) {
-					lastSubmittedSpendCapRef.current = latestSpendCapRef.current
-					setSpendCapDraft(formatFixedNumber(latestSpendCapRef.current, 2))
-				}
-			}
+			() => setSpendCapEdit((edit) => (edit === shown ? null : edit))
 		)
-	}
-
-	const handleSpendCapKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-			commitSpendCap(e.currentTarget.value)
-			e.currentTarget.blur()
-		}
 	}
 
 	const handleNotifToggle = () => {
@@ -358,7 +340,7 @@ export const SettingsModal = memo(function SettingsModal({
 		memoryRemoval.kind === 'entry' ? agentHome.deleteMemoryMutation : agentHome.clearMemoriesMutation
 	const visibleSaveError = saveError?.tab === activeTab ? saveError : null
 
-	const showClear = instructionsDirty || instructionsDraft.savedValue.length > 0
+	const showClear = instructionsDirty || savedInstructions.length > 0
 	const notifSupported = notifPermission !== 'unsupported'
 
 	const tabs: Array<{
@@ -449,7 +431,7 @@ export const SettingsModal = memo(function SettingsModal({
 			store={dialogStore}
 			onClose={() => {
 				setAppliedInitialState(null)
-				void commitDraft(instructionsDraft.value)
+				void commitDraft(instructionsDraft)
 			}}
 			portal
 			unmountOnHide
@@ -521,7 +503,7 @@ export const SettingsModal = memo(function SettingsModal({
 												if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
 													return
 												}
-												void commitDraft(instructionsDraft.value)
+												void commitDraft(instructionsDraft)
 											}}
 										>
 											<div className="relative">
@@ -529,16 +511,14 @@ export const SettingsModal = memo(function SettingsModal({
 													ref={instructionsRef}
 													id="llamaai-custom-instructions"
 													aria-label="Custom instructions"
-													value={instructionsDraft.value}
+													value={instructionsValue}
 													maxLength={MAX_LENGTH}
-													onChange={(event) =>
-														setInstructionsDraft((current) => ({ ...current, value: event.target.value }))
-													}
+													onChange={(event) => setInstructionsDraft({ text: event.target.value, saved: null })}
 													onKeyDown={(e) => {
 														if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
 															e.preventDefault()
 															// A refused save keeps the dialog open, where its error shows.
-															void commitDraft(instructionsDraft.value).then((saved) => {
+															void commitDraft(instructionsDraft).then((saved) => {
 																if (saved) dialogStore.hide()
 															})
 														}
@@ -561,7 +541,7 @@ export const SettingsModal = memo(function SettingsModal({
 											</div>
 											<div className="flex min-h-6 items-center justify-between gap-3 mono-sm text-tertiary">
 												<span>
-													{instructionsDraft.value.length}/{MAX_LENGTH}
+													{instructionsValue.length}/{MAX_LENGTH}
 												</span>
 												<div className="flex items-center gap-3">
 													<span className="hidden sm:inline">⌘↵ to save & close</span>
@@ -674,8 +654,8 @@ export const SettingsModal = memo(function SettingsModal({
 															inputMode="decimal"
 															min={0}
 															step={0.05}
-															value={spendCapDraft}
-															onChange={(e) => setSpendCapDraft(e.target.value)}
+															value={spendCapValue}
+															onChange={(e) => setSpendCapEdit(e.target.value)}
 															onBlur={(e) => commitSpendCap(e.target.value)}
 															onKeyDown={handleSpendCapKeyDown}
 															className="w-full pl-7 font-mono"

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { ChartToolbar } from '~/containers/Downloads/sql/chart/ChartToolbar'
@@ -10,7 +10,7 @@ import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
 import { assertCustomDataSizeAllowed, CustomDataParseError, parseCustomDataCsv } from '../CustomData/parseCustomDataCsv'
-import { CustomDataTooLargeError, decodeRows, encodeRows } from '../CustomData/rowsEncoding'
+import { CustomDataTooLargeError, encodeRows, useDecodedRows } from '../CustomData/rowsEncoding'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 import type { CustomDataModalState } from './types'
 
@@ -63,26 +63,9 @@ function CustomDataForm({
 	onDisplayModeChange
 }: CustomDataTabProps) {
 	const encodeToken = useRef(0)
-	const [decoded, setDecoded] = useState<{ source: CustomDataRows; rows: Array<Array<SqlSnapshotValue>> } | null>(null)
-
-	const storedRows = customData.storedRows
-	useEffect(() => {
-		if (customData.previewRows || !storedRows) return
-		let cancelled = false
-		decodeRows(storedRows).then(
-			(rows) => {
-				if (!cancelled) setDecoded({ source: storedRows, rows })
-			},
-			() => {
-				if (!cancelled) setDecoded(null)
-			}
-		)
-		return () => {
-			cancelled = true
-		}
-	}, [customData.previewRows, storedRows])
-
-	const rows = customData.previewRows ?? (decoded && decoded.source === customData.storedRows ? decoded.rows : null)
+	// A fresh CSV preview replaces the stored rows, so those only decode while there is no preview.
+	const stored = useDecodedRows(customData.previewRows || !customData.storedRows ? undefined : customData.storedRows)
+	const rows = customData.previewRows ?? (stored.status === 'ready' ? stored.rows : null)
 
 	const result = useMemo<QueryResult | null>(
 		() => (rows ? { columns: customData.columns, rows } : null),

@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import type { ChartConfig } from '../chartConfig'
 import type { QueryResult } from '../exportResults'
 import { ResultsPanel } from '../ResultsPanel'
 
@@ -101,4 +102,54 @@ test('Results keyboard focus does not activate charts and multiple panels remain
 	await press(tabs[0], 'Enter')
 	expect(container.textContent).not.toContain('Chart content')
 	expect(document.getElementById(tabs[0].getAttribute('aria-controls')!)!.textContent).toBe('Table content')
+})
+
+test('picking the chart view stores its default configuration for share links, and keeps one already stored', async () => {
+	const result: QueryResult = {
+		columns: [
+			{ name: 'chain', type: 'VARCHAR' },
+			{ name: 'tvl', type: 'DOUBLE' }
+		],
+		rows: [['Ethereum', 100]]
+	}
+	let stored: ChartConfig | undefined
+	function Tab({ initial }: { initial: ChartConfig | undefined }) {
+		const [config, setConfig] = useState(initial)
+		stored = config
+		return (
+			<ResultsPanel
+				result={result}
+				running={false}
+				chartConfig={config}
+				onChartConfigChange={(next) => setConfig(next ?? undefined)}
+			/>
+		)
+	}
+	const pickChart = () =>
+		act(async () => [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')].at(-1)!.click())
+
+	await act(async () => root.render(<Tab initial={undefined} />))
+	expect(stored).toBeUndefined()
+	await pickChart()
+	expect(stored).toEqual({
+		chartType: 'bar',
+		xCol: 'chain',
+		yCols: ['tvl'],
+		splitByCol: null,
+		stackMode: 'off',
+		rightAxisCols: [],
+		seriesKinds: {},
+		seriesColors: {},
+		numberFormat: 'auto',
+		candlestick: undefined,
+		bubble: undefined,
+		histogram: undefined
+	})
+
+	await act(async () => root.unmount())
+	root = createRoot(container)
+	const edited = { ...stored!, numberFormat: 'currency' as const }
+	await act(async () => root.render(<Tab initial={edited} />))
+	await pickChart()
+	expect(stored).toBe(edited)
 })

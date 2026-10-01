@@ -3,6 +3,7 @@ import { useAuthContext } from '~/auth'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import type { DashboardGrouping } from '../../../types'
 import type {
+	ComparisonPreset,
 	ComparisonType,
 	ComparisonWizardState,
 	DisplayMode,
@@ -32,23 +33,32 @@ const WIZARD_DEFAULTS: Omit<ComparisonWizardState, 'visibility'> = {
 	includeTable: true
 }
 
-export function createInitialWizardState(hasActiveSubscription: boolean): ComparisonWizardState {
-	return { ...WIZARD_DEFAULTS, visibility: hasActiveSubscription ? 'private' : 'public' }
+export function createInitialWizardState({
+	hasActiveSubscription,
+	comparisonPreset
+}: {
+	hasActiveSubscription: boolean
+	comparisonPreset: ComparisonPreset | undefined
+}): ComparisonWizardState {
+	const state: ComparisonWizardState = { ...WIZARD_DEFAULTS, visibility: hasActiveSubscription ? 'private' : 'public' }
+	if (!comparisonPreset) return state
+	const items = comparisonPreset.items
+		.map((item) => item.trim())
+		.filter(Boolean)
+		.slice(0, 10)
+	// A preset with items skips straight to metrics; one without still skips the type step.
+	return {
+		...state,
+		comparisonType: comparisonPreset.comparisonType,
+		selectedItems: items,
+		step: items.length > 0 ? 'select-metrics' : 'select-items'
+	}
 }
 
 function reducer(state: ComparisonWizardState, action: WizardAction): ComparisonWizardState {
 	switch (action.type) {
 		case 'SET_STEP':
 			return { ...state, step: action.step }
-		case 'APPLY_PRESET':
-			return {
-				...state,
-				step: action.step,
-				comparisonType: action.comparisonType,
-				selectedItems: action.items,
-				selectedMetrics: [],
-				metricsForCards: []
-			}
 		case 'SET_COMPARISON_TYPE':
 			return {
 				...state,
@@ -126,25 +136,18 @@ function reducer(state: ComparisonWizardState, action: WizardAction): Comparison
 			return { ...state, displayMode: action.displayMode }
 		case 'SET_INCLUDE_TABLE':
 			return { ...state, includeTable: action.include }
-		case 'RESET':
-			return createInitialWizardState(action.hasActiveSubscription)
 		default:
 			return state
 	}
 }
 
-export function useComparisonWizard() {
+// The preset seeds the first state only; the picker remounts the wizard for each opening.
+export function useComparisonWizard(comparisonPreset: ComparisonPreset | undefined) {
 	const { hasActiveSubscription } = useAuthContext()
-	const [state, dispatch] = useReducer(reducer, hasActiveSubscription, createInitialWizardState)
+	const [state, dispatch] = useReducer(reducer, { hasActiveSubscription, comparisonPreset }, createInitialWizardState)
 	const { getProtocolInfo } = useProDashboardCatalog()
 
 	const setStep = useCallback((step: WizardStep) => dispatch({ type: 'SET_STEP', step }), [])
-
-	const applyPreset = useCallback(
-		(comparisonType: ComparisonType, items: Array<string>, step: WizardStep) =>
-			dispatch({ type: 'APPLY_PRESET', comparisonType, items, step }),
-		[]
-	)
 
 	const setComparisonType = useCallback(
 		(comparisonType: ComparisonType) => dispatch({ type: 'SET_COMPARISON_TYPE', comparisonType }),
@@ -203,8 +206,6 @@ export function useComparisonWizard() {
 	)
 
 	const setIncludeTable = useCallback((include: boolean) => dispatch({ type: 'SET_INCLUDE_TABLE', include }), [])
-
-	const reset = useCallback(() => dispatch({ type: 'RESET', hasActiveSubscription }), [hasActiveSubscription])
 
 	const goToNextStep = useCallback(() => {
 		const next = getNextStep(state.step)
@@ -270,7 +271,6 @@ export function useComparisonWizard() {
 		state,
 		actions: {
 			setStep,
-			applyPreset,
 			setComparisonType,
 			setSelectedItems,
 			toggleSelectedItem,
@@ -289,7 +289,6 @@ export function useComparisonWizard() {
 			setGrouping,
 			setDisplayMode,
 			setIncludeTable,
-			reset,
 			goToNextStep,
 			goToPrevStep
 		},

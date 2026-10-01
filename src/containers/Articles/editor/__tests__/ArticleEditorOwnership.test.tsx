@@ -14,7 +14,8 @@ import { ArticleEditorClient } from '../ArticleEditorClient'
 const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
 
 const router = vi.hoisted(() => ({
-	query: {},
+	query: {} as Record<string, string>,
+	isReady: true,
 	asPath: '/research/edit/article-a',
 	replace: vi.fn(),
 	events: { on: vi.fn(), off: vi.fn() }
@@ -65,6 +66,7 @@ beforeEach(() => {
 	heldSave = null
 	heldRestore = null
 	heldRead = null
+	router.query = {}
 	session.client.setDefaultOptions({ queries: { retry: false } })
 	session.serve({
 		[`${FEATURES_SERVER}/articles/`]: async (url: URL, init?: RequestInit) => {
@@ -89,8 +91,8 @@ beforeEach(() => {
 			articles[id] = saved
 			return { article: saved }
 		},
-		// The revision preview shows the article's promo placements.
-		[`${FEATURES_SERVER}/banners/lookup/all-articles`]: {}
+		// The revision preview and the editor preview show the article's promo placements.
+		[`${FEATURES_SERVER}/banners/lookup/`]: {}
 	})
 	container = document.createElement('div')
 	document.body.append(container)
@@ -106,8 +108,9 @@ async function settle() {
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
 }
 
-async function open(articleId: string) {
+async function open(articleId: string, view?: 'preview') {
 	router.asPath = `/research/edit/${articleId}`
+	router.query = view ? { id: articleId, view } : { id: articleId }
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -249,4 +252,20 @@ test('a read answered before a restore but arriving after it does not bring the 
 	await open('article-b')
 	await open('article-a')
 	expect(title().value).toBe('Restored headline')
+})
+
+const modeButton = (label: string) => container.querySelector<HTMLButtonElement>(`button[title="${label}"]`)!
+
+test('an article linked with ?view=preview opens in the preview, the Write toggle then wins, and the next article opens to write', async () => {
+	await open('article-a', 'preview')
+	expect(modeButton('Preview').getAttribute('aria-pressed')).toBe('true')
+	expect(container.textContent).toContain('Rendered proof')
+	expect(title()).toBeNull()
+
+	await click(modeButton('Write'))
+	expect(title().value).toBe('Headline A')
+
+	await open('article-b')
+	expect(modeButton('Write').getAttribute('aria-pressed')).toBe('true')
+	expect(title().value).toBe('Headline B')
 })

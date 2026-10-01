@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { ChartConfig } from '../chartConfig'
 import type { QueryResult } from '../exportResults'
 import { ResultsChart } from '../ResultsChart'
 
-// Chart rendering is independent of the stored-configuration migration contract.
+// The toolbar shows the chart configuration; drawing the chart is not under test.
 vi.mock('../chart', () => ({ ChartRouter: () => null }))
 vi.mock('../chart/ChartExportButton', () => ({ ChartExportButton: () => null }))
 
@@ -18,19 +18,32 @@ const result: QueryResult = {
 	],
 	rows: [['Ethereum', 100]]
 }
-const initialConfig: ChartConfig = {
-	chartType: 'bar',
-	xCol: 'chain',
-	yCols: ['tvl'],
-	splitByCol: null,
-	stackMode: 'off',
-	rightAxisCols: [],
-	seriesKinds: {},
-	seriesColors: {},
-	numberFormat: 'auto'
-}
+
 let container: HTMLDivElement
 let root: Root
+let stored: ChartConfig | undefined
+
+/** Holds the chart configuration the way a workspace tab does. */
+function Tab({ shown }: { shown: QueryResult }) {
+	const [config, setConfig] = useState<ChartConfig | undefined>(undefined)
+	stored = config
+	return (
+		<ResultsChart result={shown} chartConfig={config} onChartConfigChange={(next) => setConfig(next ?? undefined)} />
+	)
+}
+
+const render = (next: QueryResult) => act(async () => root.render(<Tab shown={next} />))
+const xColumn = () => container.querySelector('[aria-label="x"]')?.textContent
+const numberFormat = () =>
+	container.querySelector<HTMLInputElement>('[aria-label="Number format"] input:checked')?.parentElement?.textContent
+const pickNumberFormat = (label: string) =>
+	act(async () =>
+		[...container.querySelectorAll<HTMLLabelElement>('[aria-label="Number format"] label')]
+			.find((option) => option.textContent === label)!
+			.querySelector('input')!
+			.click()
+	)
+
 beforeEach(() => {
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -41,55 +54,25 @@ afterEach(async () => {
 	container.remove()
 })
 
-test('initializes a chart configuration and leaves subsequent user edits alone for the same columns', async () => {
-	const onChange = vi.fn()
-	await act(async () =>
-		root.render(<ResultsChart result={result} chartConfig={undefined} onChartConfigChange={onChange} />)
-	)
-	expect(onChange).toHaveBeenCalledExactlyOnceWith({
-		...initialConfig,
-		candlestick: undefined,
-		bubble: undefined,
-		histogram: undefined
-	})
-	const onEdit = vi.fn()
-	await act(async () =>
-		root.render(
-			<ResultsChart
-				result={{ ...result, rows: [['Ethereum', 200]] }}
-				chartConfig={{ ...initialConfig, numberFormat: 'currency' }}
-				onChartConfigChange={onEdit}
-			/>
-		)
-	)
-	expect(onEdit).not.toHaveBeenCalled()
-	expect(onChange).toHaveBeenCalledTimes(1)
+test('a result without a stored configuration charts its default columns and stores nothing until an edit', async () => {
+	await render(result)
+
+	expect(xColumn()).toBe('chain')
+	expect(container.textContent).toContain('tvl')
+	expect(numberFormat()).toBe('auto')
+	expect(stored).toBeUndefined()
 })
 
-test('migrates changed columns using the latest configuration and callback', async () => {
-	const onChange = vi.fn()
-	await act(async () =>
-		root.render(<ResultsChart result={result} chartConfig={initialConfig} onChartConfigChange={onChange} />)
-	)
-	const latestCallback = vi.fn()
-	const latestConfig: ChartConfig = { ...initialConfig, numberFormat: 'currency', seriesColors: { tvl: '#ff0000' } }
-	await act(async () =>
-		root.render(<ResultsChart result={result} chartConfig={latestConfig} onChartConfigChange={latestCallback} />)
-	)
-	const nextResult: QueryResult = {
-		columns: [...result.columns, { name: 'fees', type: 'DOUBLE' }],
-		rows: [['Ethereum', 100, 5]]
-	}
-	await act(async () =>
-		root.render(<ResultsChart result={nextResult} chartConfig={latestConfig} onChartConfigChange={latestCallback} />)
-	)
-	expect(latestCallback).toHaveBeenCalledExactlyOnceWith({
-		...initialConfig,
-		numberFormat: 'currency',
-		seriesColors: { tvl: '#ff0000' },
-		candlestick: undefined,
-		bubble: undefined,
-		histogram: undefined
-	})
-	expect(onChange).toHaveBeenCalledTimes(1)
+test('an edit is stored and survives new rows and new columns', async () => {
+	await render(result)
+	await pickNumberFormat('$')
+	expect(numberFormat()).toBe('$')
+	expect(stored?.numberFormat).toBe('currency')
+
+	await render({ ...result, rows: [['Ethereum', 200]] })
+	expect(numberFormat()).toBe('$')
+
+	await render({ columns: [...result.columns, { name: 'fees', type: 'DOUBLE' }], rows: [['Ethereum', 100, 5]] })
+	expect(numberFormat()).toBe('$')
+	expect(xColumn()).toBe('chain')
 })

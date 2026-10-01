@@ -157,3 +157,30 @@ test('an increased balance resolves the notice and then dismisses it', async () 
 	expect(host.textContent).not.toContain('Balance updated')
 	expect(host.textContent).not.toContain('Checking your payment')
 })
+
+test('credits spent after the payment arrived never reopen its notice', async () => {
+	vi.useFakeTimers({ shouldAdvanceTime: true })
+	balance = { ...balance, toppedUpBalance: '17' }
+	await draw(<BalanceSettings result="success" balanceBefore={10} />)
+	await settle(() => expect(host.textContent).toContain('Balance updated'))
+	await advance(5000)
+	expect(host.textContent).not.toContain('Balance updated')
+	// The reader spends credits before the last poll reads the balance.
+	balance = { ...balance, toppedUpBalance: '5' }
+	await advance(7000)
+	await settle(() => expect(host.textContent).toContain('$8.00'))
+	expect(host.textContent).not.toContain('Checking your payment')
+	expect(host.textContent).not.toContain('Still waiting')
+})
+
+test('a credit that arrives after the polls ran out completes the payment on refresh', async () => {
+	vi.useFakeTimers({ shouldAdvanceTime: true })
+	await draw(<BalanceSettings result="success" balanceBefore={10} />)
+	await settle(() => expect(host.textContent).toContain('$10.00'))
+	await advance(12_000)
+	await settle(() => expect(host.textContent).toContain('Still waiting'))
+	balance = { ...balance, toppedUpBalance: '17' }
+	await act(async () => button('Refresh balance')!.click())
+	await settle(() => expect(host.textContent).toContain('Balance updated'))
+	expect(host.textContent).toContain('Your current balance is $20.00')
+})

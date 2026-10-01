@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { lazy, startTransition, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, startTransition, Suspense, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
@@ -39,7 +39,7 @@ import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
-import { pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 const tableFeaturesConfig = displayTableFeatures
 
@@ -332,14 +332,11 @@ function getPreHydrationTokenSearchValue() {
 export function TokenUsageSearch() {
 	const router = useRouter()
 
-	const [searchValue, setSearchValue] = useState(getPreHydrationTokenSearchValue)
-	useEffect(() => {
-		if (!router.isReady) return
-		const token = Array.isArray(router.query.token) ? router.query.token[0] : router.query.token
-		// The query is only readable once the router is ready, which Next.js documents as effect-only.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setSearchValue((currentValue) => currentValue || token?.toUpperCase() || '')
-	}, [router.isReady, router.query.token])
+	// Null until the reader types, including text typed before hydration; until then the URL token shows, which a
+	// static page's query holds only once the router is ready. Clearing the field stores '' and keeps it empty.
+	const [typedValue, setTypedValue] = useState<string | null>(() => getPreHydrationTokenSearchValue() || null)
+	const urlToken = router.isReady ? readSingleQueryValue(router.query.token) : undefined
+	const searchValue = typedValue ?? urlToken?.toUpperCase() ?? ''
 
 	const debouncedSearchValue = useDebouncedValue(searchValue, 200)
 	const { data, isLoading, error } = useQuery({
@@ -358,7 +355,7 @@ export function TokenUsageSearch() {
 			inputValue={searchValue}
 			setInputValue={(nextValue) => {
 				startTransition(() => {
-					setSearchValue(nextValue)
+					setTypedValue(nextValue)
 				})
 			}}
 			open={open}

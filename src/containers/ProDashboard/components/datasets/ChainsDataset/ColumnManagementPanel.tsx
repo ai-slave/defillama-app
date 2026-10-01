@@ -14,6 +14,7 @@ interface ColumnManagementPanelProps {
 	columnVisibility: Record<string, boolean>
 	columnOrder: Array<string>
 	toggleColumnVisibility: (columnId: string) => void
+	setAllColumnsVisible: (visible: boolean) => void
 	moveColumnUp?: (columnId: string) => void
 	moveColumnDown?: (columnId: string) => void
 }
@@ -25,6 +26,7 @@ export function ColumnManagementPanel({
 	columnVisibility,
 	columnOrder,
 	toggleColumnVisibility,
+	setAllColumnsVisible,
 	moveColumnUp,
 	moveColumnDown
 }: ColumnManagementPanelProps) {
@@ -75,26 +77,14 @@ export function ColumnManagementPanel({
 				<div className="flex items-center gap-2">
 					<button
 						type="button"
-						onClick={() => {
-							for (const col of columns) {
-								if (columnVisibility[col.id] === false) {
-									toggleColumnVisibility(col.id)
-								}
-							}
-						}}
+						onClick={() => setAllColumnsVisible(true)}
 						className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
 					>
 						Show All
 					</button>
 					<button
 						type="button"
-						onClick={() => {
-							for (const col of columns) {
-								if (col.id !== 'name' && columnVisibility[col.id] !== false) {
-									toggleColumnVisibility(col.id)
-								}
-							}
-						}}
+						onClick={() => setAllColumnsVisible(false)}
 						className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
 					>
 						Hide All
@@ -173,6 +163,7 @@ export function ColumnManagementPanel({
 											onClick={() => toggleColumnVisibility(columnId)}
 											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 											disabled={columnId === 'name'}
+											aria-label={`Hide ${column.name}`}
 										>
 											<Icon name="x" height={12} width={12} />
 										</button>

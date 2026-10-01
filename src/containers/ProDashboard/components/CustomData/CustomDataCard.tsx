@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useMemo, useRef } from 'react'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { SQL_CHART_BASE_HEIGHT } from '~/containers/Downloads/sql/chart/chartLayout'
 import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
@@ -10,56 +10,17 @@ import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { formatNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import { StreamDoneContext } from '../../queries'
-import {
-	type CustomDataConfig,
-	getCustomDataRowCount,
-	isCustomDataEncodedRows,
-	type SqlSnapshotValue
-} from '../../types'
+import { type CustomDataConfig, getCustomDataRowCount } from '../../types'
 import { ProMeta } from '../../ui'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
 import { useDashboardCardContext } from '../DashboardCardContext'
 import { ProCardHeader } from '../ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading } from '../ProCardStatus'
-import { decodeRows } from './rowsEncoding'
+import { useDecodedRows } from './rowsEncoding'
 
 interface CustomDataCardProps {
 	config: CustomDataConfig
-}
-
-type DecodedRowsState =
-	| { status: 'idle' }
-	| { status: 'ready'; rows: Array<Array<SqlSnapshotValue>> }
-	| { status: 'error'; message: string }
-
-function useDecodedRows(rows: CustomDataConfig['rows']): DecodedRowsState {
-	const [state, setState] = useState<DecodedRowsState>(() =>
-		rows !== undefined && !isCustomDataEncodedRows(rows) ? { status: 'ready', rows } : { status: 'idle' }
-	)
-	useEffect(() => {
-		if (rows === undefined) return
-		if (!isCustomDataEncodedRows(rows)) {
-			// oxlint-disable-next-line react/set-state-in-effect
-			setState({ status: 'ready', rows })
-			return
-		}
-		let cancelled = false
-		decodeRows(rows).then(
-			(decoded) => {
-				if (!cancelled) setState({ status: 'ready', rows: decoded })
-			},
-			(error: unknown) => {
-				if (!cancelled) {
-					setState({ status: 'error', message: error instanceof Error ? error.message : 'Could not read stored rows' })
-				}
-			}
-		)
-		return () => {
-			cancelled = true
-		}
-	}, [rows])
-	return state
 }
 
 export function CustomDataCard({ config }: CustomDataCardProps) {
@@ -69,15 +30,16 @@ export function CustomDataCard({ config }: CustomDataCardProps) {
 	const streamDone = useContext(StreamDoneContext)
 	const cardHeightScale = useCardHeightScale()
 	const decoded = useDecodedRows(config.rows)
+	const decodedRows = decoded.status === 'ready' ? decoded.rows : null
 	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
 	const getChartInstance = useCallback(() => chartInstanceRef.current, [])
 
 	const result = useMemo<QueryResult | null>(
 		() =>
-			decoded.status === 'ready'
-				? normalizeSqlResultRows({ columns: config.columns, rows: decoded.rows.map((row) => [...row]) })
+			decodedRows
+				? normalizeSqlResultRows({ columns: config.columns, rows: decodedRows.map((row) => [...row]) })
 				: null,
-		[decoded, config.columns]
+		[decodedRows, config.columns]
 	)
 	const classified = useMemo(() => (result ? classifyColumns(result) : []), [result])
 	const resolvedConfig = useMemo(
@@ -123,7 +85,8 @@ export function CustomDataCard({ config }: CustomDataCardProps) {
 						{...(onEditCard ? { action: { label: 'Edit card', onClick: onEditCard } } : {})}
 					/>
 				) : !result ? (
-					config.rows === undefined && !streamDone ? (
+					// Without a result, stored rows are still decoding.
+					config.rows !== undefined || !streamDone ? (
 						<ProCardLoading variant="table" />
 					) : (
 						<ProCardEmpty message="No rows stored." />

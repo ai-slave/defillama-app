@@ -154,7 +154,8 @@ export function BridgesTable({
 	ref
 }: BridgesTableProps & { ref?: Ref<BridgesTableHandle> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'lastDailyVolume', desc: true }])
-	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+	// The search prop is this table's only filter; no column UI writes one.
+	const columnFilters: ColumnFiltersState = searchValue ? [{ id: 'displayName', value: searchValue }] : []
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const instance = useTable({
 		features: tableFeaturesConfig,
@@ -170,15 +171,8 @@ export function BridgesTable({
 		},
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater))
 	})
-
-	React.useEffect(() => {
-		React.startTransition(() => {
-			instance.getColumn('displayName')?.setFilterValue(searchValue)
-		})
-	}, [searchValue, instance])
 
 	useSortColumnOrders({
 		instance,

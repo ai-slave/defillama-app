@@ -93,7 +93,7 @@ async function mount() {
 				<AuthProvider>
 					<ProDashboardAPIProvider>
 						<AppMetadataProvider>
-							<ComparisonWizardProvider>
+							<ComparisonWizardProvider comparisonPreset={undefined}>
 								<Harness />
 							</ComparisonWizardProvider>
 						</AppMetadataProvider>

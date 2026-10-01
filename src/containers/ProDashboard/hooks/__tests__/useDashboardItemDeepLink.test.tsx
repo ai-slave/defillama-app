@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act, useState } from 'react'
+import { act, StrictMode, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -255,4 +255,61 @@ test('a second reveal clears the highlight from the item it leaves behind', asyn
 	const second = document.getElementById('item-two')!
 	expect(second.dataset.arrived).toBe('true')
 	expect(first.dataset.arrived).toBeUndefined()
+})
+
+test('a newer reveal replaces one still waiting for its item to appear', async () => {
+	function LateItem({ showFirst }: { showFirst: boolean }) {
+		useDashboardItemDeepLink({ layout, setActiveTab: noop, enabled: true })
+		return (
+			<div>
+				<div id="item-one" hidden={!showFirst}>
+					one
+				</div>
+				<div id="item-two">two</div>
+			</div>
+		)
+	}
+	await act(async () => root.render(<LateItem showFirst={false} />))
+	await act(async () => requestDashboardItemReveal('one'))
+	await flushFrames(3)
+	expect(scrollIntoView).not.toHaveBeenCalled()
+
+	await act(async () => requestDashboardItemReveal('two'))
+	await flushFrames(3)
+	await act(async () => root.render(<LateItem showFirst />))
+	await flushFrames(10)
+	expect(scrollIntoView.mock.contexts.map((element) => (element as HTMLElement).id)).toEqual(['item-two'])
+	expect(document.getElementById('item-one')!.dataset.arrived).toBeUndefined()
+})
+
+test('a hash reveal survives Strict Mode rehearsing an unmount', async () => {
+	window.location.hash = '#item=text-b'
+	await act(async () =>
+		root.render(
+			<StrictMode>
+				<Harness />
+			</StrictMode>
+		)
+	)
+	await flushFrames(3)
+	expect(scrollIntoView).toHaveBeenCalledOnce()
+	expect((scrollIntoView.mock.contexts[0] as HTMLElement).id).toBe('item-text-b')
+})
+
+test('unmounting while a reveal waits for its item stops the reveal', async () => {
+	function Listener() {
+		useDashboardItemDeepLink({ layout, setActiveTab: noop, enabled: true })
+		return null
+	}
+	const item = document.createElement('div')
+	item.id = 'item-late'
+	await act(async () => root.render(<Listener />))
+	await act(async () => requestDashboardItemReveal('late'))
+	await act(async () => root.unmount())
+	root = createRoot(container)
+	document.body.append(item)
+	await flushFrames(10)
+	expect(scrollIntoView).not.toHaveBeenCalled()
+	expect(item.dataset.arrived).toBeUndefined()
+	item.remove()
 })

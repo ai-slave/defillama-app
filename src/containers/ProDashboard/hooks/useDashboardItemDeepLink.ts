@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { prefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { type DashboardLayout, findTabForItem } from '../dashboardLayout/buildDashboardLayout'
 
 export const DASHBOARD_ITEM_HASH_PREFIX = '#item='
@@ -67,77 +68,28 @@ export function useDashboardItemDeepLink({
 	revealItem,
 	onRevealRequest
 }: UseDashboardItemDeepLinkOptions) {
-	const requestCounterRef = useRef(0)
-	const revealItemRef = useRef(revealItem)
-	const onRevealRequestRef = useRef(onRevealRequest)
-	const layoutRef = useRef(layout)
-	const setActiveTabRef = useRef(setActiveTab)
-	const consumedRequestRef = useRef(0)
+	// Set by the first reveal of this mount, so a reveal missed before it mounted never overrides one it handled.
+	const hasRevealedRef = useRef(false)
+	const frameRef = useRef(0)
+	// A lookup checks this each frame instead of being cancelled on unmount: Strict Mode's rehearsal unmount is
+	// followed by a remount that must still finish the reveal, and a real unmount must stop it.
+	const mountedRef = useRef(false)
 	const handledHashRef = useRef<string | null>(null)
 	const highlightedRef = useRef<HTMLElement | null>(null)
 	const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const followObserverRef = useRef<ResizeObserver | null>(null)
 	const followTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const [pendingRequest, setPendingRequest] = useState<{
-		itemId: string
-		token: number
-		options: DashboardItemRevealOptions
-	} | null>(null)
 
-	useEffect(() => {
-		revealItemRef.current = revealItem
-		onRevealRequestRef.current = onRevealRequest
-		layoutRef.current = layout
-		setActiveTabRef.current = setActiveTab
-	})
-
-	useEffect(() => {
-		if (!enabled) return
-		const readHash = () => {
-			const hash = window.location.hash
-			if (hash === handledHashRef.current) return
-			handledHashRef.current = hash
-			const itemId = readDashboardItemIdFromHash(hash)
-			if (!itemId) return
-			requestCounterRef.current += 1
-			setPendingRequest({ itemId, token: requestCounterRef.current, options: {} })
-		}
-		readHash()
-		window.addEventListener('hashchange', readHash)
-		return () => window.removeEventListener('hashchange', readHash)
-	}, [enabled])
-
-	useEffect(() => {
-		if (!enabled) return
-		const queueReveal = (itemId: string, options: DashboardItemRevealOptions) => {
-			requestCounterRef.current += 1
-			setPendingRequest({ itemId, token: requestCounterRef.current, options })
-		}
-		const readRevealEvent = (event: Event) => {
-			const detail = (event as CustomEvent<{ itemId?: string } & DashboardItemRevealOptions>).detail
-			if (!detail?.itemId) return
-			event.preventDefault()
-			queueReveal(detail.itemId, {
-				...(detail.focusTitle === undefined ? {} : { focusTitle: detail.focusTitle }),
-				...(detail.scroll === undefined ? {} : { scroll: detail.scroll })
-			})
-		}
-		window.addEventListener(DASHBOARD_ITEM_REVEAL_EVENT, readRevealEvent)
-		const missed = takePendingReveal()
-		const missedIsFresh = missed !== null && Date.now() - missed.requestedAt < PENDING_REVEAL_TTL_MS
-		if (missed && missedIsFresh && requestCounterRef.current === 0) queueReveal(missed.itemId, missed.options)
-		return () => window.removeEventListener(DASHBOARD_ITEM_REVEAL_EVENT, readRevealEvent)
-	}, [enabled])
-
-	useEffect(() => {
-		if (!enabled || !pendingRequest || consumedRequestRef.current === pendingRequest.token) return
-		const { itemId, token, options } = pendingRequest
+	// Called from the hash and reveal-event listeners. The lookup polls frames until the item mounts, so the
+	// tab switch needs no commit before it starts; a newer reveal cancels the lookup still in flight.
+	const reveal = useStableCallback((itemId: string, options: DashboardItemRevealOptions) => {
+		hasRevealedRef.current = true
 		const block = options.scroll ?? 'center'
-		const tab = findTabForItem(layoutRef.current, itemId)
-		if (tab) setActiveTabRef.current(tab.id)
-		revealItemRef.current?.(itemId)
-		onRevealRequestRef.current?.(itemId, options)
+		const tab = findTabForItem(layout, itemId)
+		if (tab) setActiveTab(tab.id)
+		revealItem?.(itemId)
+		onRevealRequest?.(itemId, options)
 
 		const releaseHighlighted = () => {
 			const element = highlightedRef.current
@@ -174,14 +126,13 @@ export function useDashboardItemDeepLink({
 			followObserverRef.current = observer
 			followTimeoutRef.current = setTimeout(stopFollowing, FOLLOW_LAYOUT_SHIFT_MS)
 		}
-		let frame = 0
 		const lookup = (attempt: number) => {
+			if (!mountedRef.current) return
 			const element = attempt >= MOUNT_SETTLE_FRAMES ? document.getElementById(dashboardItemElementId(itemId)) : null
 			if (!element || element.closest('[hidden]')) {
-				if (attempt < MAX_LOOKUP_FRAMES) frame = requestAnimationFrame(() => lookup(attempt + 1))
+				if (attempt < MAX_LOOKUP_FRAMES) frameRef.current = requestAnimationFrame(() => lookup(attempt + 1))
 				return
 			}
-			consumedRequestRef.current = token
 			element.scrollIntoView({ block, ...(prefersReducedMotion() ? {} : { behavior: 'smooth' }) })
 			followLayoutShifts(element)
 			const previous = releaseHighlighted()
@@ -196,12 +147,46 @@ export function useDashboardItemDeepLink({
 			highlightedRef.current = element
 			highlightTimeoutRef.current = setTimeout(fadeOutHighlight, HIGHLIGHT_DURATION_MS)
 		}
-		frame = requestAnimationFrame(() => lookup(1))
-		return () => cancelAnimationFrame(frame)
-	}, [enabled, pendingRequest])
+		cancelAnimationFrame(frameRef.current)
+		frameRef.current = requestAnimationFrame(() => lookup(1))
+	})
 
 	useEffect(() => {
+		if (!enabled) return
+		const readHash = () => {
+			const hash = window.location.hash
+			if (hash === handledHashRef.current) return
+			handledHashRef.current = hash
+			const itemId = readDashboardItemIdFromHash(hash)
+			if (itemId) reveal(itemId, {})
+		}
+		readHash()
+		window.addEventListener('hashchange', readHash)
+		return () => window.removeEventListener('hashchange', readHash)
+	}, [enabled, reveal])
+
+	useEffect(() => {
+		if (!enabled) return
+		const readRevealEvent = (event: Event) => {
+			const detail = (event as CustomEvent<{ itemId?: string } & DashboardItemRevealOptions>).detail
+			if (!detail?.itemId) return
+			event.preventDefault()
+			reveal(detail.itemId, {
+				...(detail.focusTitle === undefined ? {} : { focusTitle: detail.focusTitle }),
+				...(detail.scroll === undefined ? {} : { scroll: detail.scroll })
+			})
+		}
+		window.addEventListener(DASHBOARD_ITEM_REVEAL_EVENT, readRevealEvent)
+		const missed = takePendingReveal()
+		const missedIsFresh = missed !== null && Date.now() - missed.requestedAt < PENDING_REVEAL_TTL_MS
+		if (missed && missedIsFresh && !hasRevealedRef.current) reveal(missed.itemId, missed.options)
+		return () => window.removeEventListener(DASHBOARD_ITEM_REVEAL_EVENT, readRevealEvent)
+	}, [enabled, reveal])
+
+	useEffect(() => {
+		mountedRef.current = true
 		return () => {
+			mountedRef.current = false
 			const element = highlightedRef.current
 			if (element) {
 				element.classList.remove(...HIGHLIGHT_RING_CLASSES, ...HIGHLIGHT_TRANSITION_CLASSES)

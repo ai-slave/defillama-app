@@ -670,19 +670,25 @@ function CompactTocBar({
 function ArticleToc({ toc, compactMode = false }: { toc: Array<TocEntry>; compactMode?: boolean }) {
 	const [active, setActive] = useActiveHeading(toc)
 	const groups = useMemo(() => groupToc(toc), [toc])
-	const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(groups.map((g) => g.id)))
-	const prevCompactRef = useRef(compactMode)
-
-	useEffect(() => {
-		if (prevCompactRef.current && !compactMode) {
-			setCollapsed(new Set(groups.map((g) => g.id)))
-		}
-		prevCompactRef.current = compactMode
-	}, [compactMode, groups])
 
 	if (compactMode) {
 		return <CompactTocBar toc={toc} groups={groups} active={active} />
 	}
+
+	// The full list unmounts while compact, so scrolling back above the header shows every group collapsed again.
+	return <TocList groups={groups} active={active} setActive={setActive} />
+}
+
+function TocList({
+	groups,
+	active,
+	setActive
+}: {
+	groups: Array<TocGroup>
+	active: string | null
+	setActive: (id: string) => void
+}) {
+	const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(groups.map((g) => g.id)))
 
 	const toggle = (id: string) => {
 		setCollapsed((prev) => {

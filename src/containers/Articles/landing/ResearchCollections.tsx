@@ -1,11 +1,10 @@
 import Link from 'next/link'
-import React, { useMemo, useRef } from 'react'
+import { type CSSProperties, useCallback, useState } from 'react'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument } from '~/containers/Articles/types'
-import { useScrollerHeightFromFirstItem } from '~/hooks/useScrollerHeightFromFirstItem'
 
 interface ResearchCollectionsProps {
 	title: string
@@ -14,32 +13,23 @@ interface ResearchCollectionsProps {
 
 const pageWidget = 'DefiLlama Research Collections widget'
 
-const COLLECTIONS_ITEM_SELECTOR = '[data-collections-item]'
-
-/** Set on the scroller; use in `calc()` with breakpoint-specific row counts and gaps. */
-export const RESEARCH_COLLECTIONS_ITEM_HEIGHT_VAR = '--research-collections-item-h'
-
-/** Uses `RESEARCH_COLLECTIONS_ITEM_HEIGHT_VAR`: 4 rows @ max-lg, 5 @ lg (gaps 12px between rows). */
-export const RESEARCH_COLLECTIONS_SCROLLER_HEIGHT_CLASSES =
-	'h-[calc((var(--research-collections-item-h,65px)_*_4)_+_(12px_*_3))] lg:h-[calc((var(--research-collections-item-h,65px)_*_5)_+_(12px_*_4))] overflow-y-auto' as const
+/** 4 rows below lg, 5 at lg, 12px gaps; each row is the first card's height, measured. */
+const SCROLLER_HEIGHT_CLASSES =
+	'h-[calc((var(--research-collections-item-h,65px)_*_4)_+_(12px_*_3))] lg:h-[calc((var(--research-collections-item-h,65px)_*_5)_+_(12px_*_4))] overflow-y-auto'
 
 export function ResearchCollections({ title, articles }: ResearchCollectionsProps) {
-	const gridRef = useRef<HTMLDivElement>(null)
-	const remeasureKey = useMemo(() => articles.map((a) => a.id).join(','), [articles])
-
-	const collectionsItemHeightPx = useScrollerHeightFromFirstItem({
-		containerRef: gridRef,
-		itemSelector: COLLECTIONS_ITEM_SELECTOR,
-		remeasureKey,
-		enabled: articles.length > 0
-	})
+	const [itemHeight, setItemHeight] = useState<number | null>(null)
+	// Runs in the commit, so the first paint already has the height. A new first article is a new element and
+	// measures again; the observer follows the card's own size, which also changes with the viewport.
+	const measureFirstCard = useCallback((card: HTMLAnchorElement) => {
+		const measure = () => setItemHeight(card.offsetHeight)
+		measure()
+		const observer = new ResizeObserver(measure)
+		observer.observe(card)
+		return () => observer.disconnect()
+	}, [])
 
 	if (articles.length === 0) return null
-
-	const scrollerStyle =
-		collectionsItemHeightPx != null
-			? ({ [RESEARCH_COLLECTIONS_ITEM_HEIGHT_VAR]: `${collectionsItemHeightPx}px` } as React.CSSProperties)
-			: undefined
 
 	return (
 		<div id="collections">
@@ -47,12 +37,17 @@ export function ResearchCollections({ title, articles }: ResearchCollectionsProp
 				<TitleLine title={title} />
 			</div>
 			<div className="overflow-x-auto pb-2 lg:overflow-x-visible lg:pb-0">
-				<div className={`min-w-min ${RESEARCH_COLLECTIONS_SCROLLER_HEIGHT_CLASSES}`} style={scrollerStyle}>
-					<div ref={gridRef} className="flex grid min-w-min grid-cols-1 gap-3 lg:min-w-0 lg:grid-cols-3">
+				<div
+					className={`min-w-min ${SCROLLER_HEIGHT_CLASSES}`}
+					style={
+						itemHeight == null ? undefined : ({ '--research-collections-item-h': `${itemHeight}px` } as CSSProperties)
+					}
+				>
+					<div className="flex grid min-w-min grid-cols-1 gap-3 lg:min-w-0 lg:grid-cols-3">
 						{articles.map((article, i) => (
 							<Link
 								key={article.id}
-								data-collections-item
+								ref={i === 0 ? measureFirstCard : undefined}
 								className="group relative top-0 flex w-full shrink-0 overflow-hidden transition-all duration-200 ease-out hover:top-[-4px] lg:w-auto"
 								href={articleHref(article)}
 								onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}

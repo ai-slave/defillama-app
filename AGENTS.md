@@ -113,6 +113,7 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 - An effect synchronizes with something outside React: a subscription, a timer, the DOM, a widget, the network. Work caused by a user action runs in that action's handler or mutation callback, and state computed from other state is derived during render.
 - Never infer that an element exists, a dialog opened, or a request settled from a data flag. Attach work to the element through a callback ref (`useHorizontalOverflow`), use the library's own callback (Ariakit `autoFocusOnShow`, `initialFocus`, `setMounted`), or settle the state where the request ends. An effect keyed on `hasData`, `isPending` or `open` runs when the flag flips, which is not when the thing it stands for happens.
 - A query or mutation error renders where its data would be, never as a toast from an effect watching `.error`. See design.md → Status states.
+- Before writing or removing an effect, read `docs/effects.md`: where each kind of work goes instead, the checks before deleting an effect that looks derived, and the effects that stay.
 
 ## Local User Instructions
 

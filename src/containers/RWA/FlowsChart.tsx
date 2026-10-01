@@ -1,8 +1,8 @@
 import type * as echarts from 'echarts/core'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
 import { useStableCallback } from '~/hooks/useStableCallback'
-import { getRWAFlowChartOptions, type RWAFlowChart, type RWAFlowVisibleRange } from './flows'
+import { getRWAFlowChartOptions, getRWAFlowTimestampExtent, type RWAFlowChart, type RWAFlowVisibleRange } from './flows'
 
 type DataZoomPayload = {
 	start?: number
@@ -12,17 +12,11 @@ type DataZoomPayload = {
 	batch?: Array<DataZoomPayload>
 }
 
-function getTimestampExtent(source: RWAFlowChart['dataset']['source']): RWAFlowVisibleRange | null {
-	const firstRow = source[0]
-	const lastRow = source[source.length - 1]
-	return firstRow && lastRow ? { start: firstRow[0], end: lastRow[0] } : null
-}
-
 function getVisibleRangeFromZoom(
 	source: RWAFlowChart['dataset']['source'],
 	event: DataZoomPayload
 ): RWAFlowVisibleRange | null {
-	const extent = getTimestampExtent(source)
+	const extent = getRWAFlowTimestampExtent(source)
 	if (!extent) return null
 	const zoom = event.batch?.[0] ?? event
 	const span = extent.end - extent.start
@@ -49,6 +43,7 @@ export function RWAFlowsChart({
 	/** Lets the chart fill a flex panel instead of its fixed height. */
 	containerClassName?: string
 	onReady?: (instance: echarts.ECharts | null) => void
+	/** Reports the reader's zooms; the default range is the parent's to derive (`getRWAFlowVisibleRange`). */
 	onVisibleRangeChange?: (range: RWAFlowVisibleRange | null) => void
 }) {
 	const hasSecondaryAxis = chart.charts.some((series) => series.yAxisIndex === 1)
@@ -62,9 +57,7 @@ export function RWAFlowsChart({
 		[defaultStartTimestamp, hasSecondaryAxis]
 	)
 	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
-	// ECharts and the range effect below call these outside render; each reads the latest data and callbacks.
-	const reportVisibleRange = useStableCallback((range: RWAFlowVisibleRange | null) => onVisibleRangeChange?.(range))
-
+	// ECharts calls these outside render; each reads the latest data and callbacks.
 	// Keep visible-range tracking local to RWA flows instead of expanding the shared
 	// MultiSeriesChart API. Other charts retain their existing lifecycle and zoom behavior.
 	const handleDataZoom = useStableCallback((...args: Array<unknown>) => {
@@ -79,18 +72,6 @@ export function RWAFlowsChart({
 		instance?.on('datazoom', handleDataZoom)
 		onReady?.(instance)
 	})
-
-	useEffect(() => {
-		const extent = getTimestampExtent(chart.dataset.source)
-		reportVisibleRange(
-			extent
-				? {
-						start: Math.max(extent.start, defaultStartTimestamp ?? extent.start),
-						end: extent.end
-					}
-				: null
-		)
-	}, [chart.dataset.source, defaultStartTimestamp, reportVisibleRange])
 
 	return (
 		<MultiSeriesChart

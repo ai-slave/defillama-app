@@ -1,5 +1,5 @@
 import type { MutationStatus } from '@tanstack/react-query'
-import { useEffect, useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { DialogBody, DialogToolbar } from '~/ui/Dialog'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
@@ -35,26 +35,12 @@ interface ComparisonWizardProps {
 function ComparisonWizardContent({
 	onComplete,
 	onExit,
-	comparisonPreset,
 	creationStatus,
 	feedback
-}: ComparisonWizardProps) {
+}: Omit<ComparisonWizardProps, 'comparisonPreset'>) {
 	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const { chainsByName } = useAppMetadata()
-	const { applyPreset } = actions
-	const appliedPresetRef = useRef(false)
-
-	useEffect(() => {
-		if (!comparisonPreset || appliedPresetRef.current) return
-		const items = comparisonPreset.items
-			.map((item) => item.trim())
-			.filter(Boolean)
-			.slice(0, 10)
-		const step = items.length > 0 ? 'select-metrics' : 'select-items'
-		applyPreset(comparisonPreset.comparisonType, items, step)
-		appliedPresetRef.current = true
-	}, [comparisonPreset, applyPreset])
 
 	const generateComparisonCharts = (): Array<MultiChartConfig> => {
 		const { selectedItems, selectedMetrics, comparisonType } = state
@@ -262,13 +248,12 @@ export function ComparisonWizard({
 	feedback
 }: ComparisonWizardProps) {
 	return (
-		<ComparisonWizardProvider>
+		<ComparisonWizardProvider comparisonPreset={comparisonPreset}>
 			<ComparisonWizardContent
 				creationStatus={creationStatus}
 				feedback={feedback}
 				onComplete={onComplete}
 				onExit={onExit}
-				{...(comparisonPreset !== undefined ? { comparisonPreset } : {})}
 			/>
 		</ComparisonWizardProvider>
 	)

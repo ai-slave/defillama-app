@@ -178,6 +178,37 @@ test('decodes compressed rows lazily before rendering them', async () => {
 	)
 })
 
+test('replacing compressed rows shows a loader, not the previous rows, while the new ones decode', async () => {
+	const encoded = async (rows: Array<[string, number]>) => ({
+		encoding: 'gzip-base64' as const,
+		data: await gzipBase64Encode(JSON.stringify(rows)),
+		rowCount: rows.length
+	})
+	const first = await encoded([['2026-01-01', 111]])
+	const second = await encoded([
+		['2026-01-01', 111],
+		['2026-01-02', 222]
+	])
+	await render({ ...base, rows: first })
+	await waitForUi(() => expect(container.textContent).toContain('grid rows: 1'))
+	await render({ ...base, rows: second })
+	const duringDecode = container.textContent
+	await waitForUi(() => expect(container.textContent).toContain('grid rows: 2'))
+
+	expect(duringDecode).toContain('Loading')
+	expect(duringDecode).not.toContain('grid rows: 1')
+})
+
+test('the same compressed rows arriving again as a new object keep drawing without a loader', async () => {
+	const rows = [['2026-01-01', 111]]
+	const data = await gzipBase64Encode(JSON.stringify(rows))
+	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1 } })
+	await waitForUi(() => expect(container.textContent).toContain('grid rows: 1'))
+	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1 } })
+
+	expect(container.textContent).toContain('grid rows: 1')
+})
+
 test('shows a loader while rows are still streaming and an empty state once the stream is done', async () => {
 	const { rows: _rows, ...withoutRows } = base
 	await render(withoutRows, { streamDone: false })

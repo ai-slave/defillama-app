@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import {
 	ArticleApiError,
@@ -92,18 +92,19 @@ function ByLine({ article }: { article: ArticleDocument }) {
 
 function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuery; routePath: string }) {
 	const router = useRouter()
-	const queryInputRef = useRef<HTMLInputElement>(null)
 	const { query, tag, section } = searchQuery
-
-	useEffect(() => {
-		if (queryInputRef.current && document.activeElement !== queryInputRef.current) {
-			queryInputRef.current.value = query
-		}
-	}, [query])
+	const [draft, setDraft] = useState(query)
+	// Every new URL query (a submit, a section or tag link, Back/Forward) replaces the draft. Keying the draft by the
+	// query it was typed against would bring a discarded draft back when the reader returns to that query.
+	const [draftQuery, setDraftQuery] = useState(query)
+	if (draftQuery !== query) {
+		setDraftQuery(query)
+		setDraft(query)
+	}
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		const nextQuery = queryInputRef.current?.value.trim() ?? ''
+		const nextQuery = draft.trim()
 		const href = buildSearchUrl(routePath, { q: nextQuery, tag, section })
 		router.push(href, undefined, { shallow: false, scroll: false })
 	}
@@ -123,9 +124,9 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 			<label className="flex-1">
 				<span className="sr-only">Search research</span>
 				<input
-					ref={queryInputRef}
 					name="q"
-					defaultValue={query}
+					value={draft}
+					onChange={(e) => setDraft(e.target.value)}
 					placeholder="Search reports, interviews, spotlights…"
 					className="w-full bg-transparent py-2.5 text-sm text-research-heading placeholder:text-research-heading/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
 				/>

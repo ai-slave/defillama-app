@@ -2,8 +2,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import { ClaimTokenProfile } from '../ClaimTokenProfile'
+
+vi.mock('next/router', () => ({ useRouter: () => ({ isReady: true, query: {} }) }))
 
 test('keeps blank draft rows distinct through edits and deletion', async () => {
 	const container = document.createElement('div')

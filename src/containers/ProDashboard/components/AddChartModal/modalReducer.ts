@@ -264,6 +264,24 @@ export function initializeFromEditItem(
 	editItem: DashboardItemConfig | null | undefined,
 	preferredChartMode = DEFAULT_CHART_MODE
 ): ModalState {
+	return withDefaultChartTypes(stateFromEditItem(editItem, preferredChartMode))
+}
+
+// The open manual chain or protocol form always has a chart type picked: the type of the first composer item
+// for that subject, else the first composer item's, else tvl. Applied after every action, so a multi-chart edit,
+// a return to the charts tab or a switch back to manual mode starts with one picked.
+function withDefaultChartTypes(state: ModalState): ModalState {
+	if (!state.manualFormOpen || state.selectedMainTab !== 'charts' || state.chartMode !== 'manual') return state
+	if (state.selectedChartTab !== 'chain' && state.selectedChartTab !== 'protocol') return state
+	if (state.selectedChartTypes.length > 0) return state
+	const item = state.composerItems.find((i) => i.subjectType === state.selectedChartTab) ?? state.composerItems[0]
+	return { ...state, selectedChartTypes: [item?.type ?? 'tvl'] }
+}
+
+function stateFromEditItem(
+	editItem: DashboardItemConfig | null | undefined,
+	preferredChartMode: ChartModeType
+): ModalState {
 	if (!editItem) {
 		return {
 			...INITIAL_MODAL_STATE,
@@ -581,6 +599,10 @@ function clearItemBinding(state: ModalState, field: DashboardBindableField): Mod
 }
 
 export function modalReducer(state: ModalState, action: ModalAction): ModalState {
+	return withDefaultChartTypes(reduceModalAction(state, action))
+}
+
+function reduceModalAction(state: ModalState, action: ModalAction): ModalState {
 	switch (action.type) {
 		case 'SET_SELECTED_MAIN_TAB':
 			if (action.payload === state.selectedMainTab) return state

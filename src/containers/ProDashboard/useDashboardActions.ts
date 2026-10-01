@@ -193,13 +193,6 @@ export function useDashboardActions(
 		[dispatch, autoSave, isReadOnlyUntilDashboardLoaded]
 	)
 
-	const setVariableOverrides = useCallback(
-		(overrides: Record<string, string>) => {
-			dispatch({ type: 'SET_VARIABLE_OVERRIDES', payload: overrides })
-		},
-		[dispatch]
-	)
-
 	const setAnnotations = useCallback(
 		(nextAnnotations: Array<DashboardAnnotation>) => {
 			if (!hasHydratedRef.current || isReadOnlyUntilDashboardLoaded) return
@@ -682,7 +675,6 @@ export function useDashboardActions(
 			dispatchItemsAndSave,
 			dispatchItemsWithVariablesAndSave,
 			setVariables,
-			setVariableOverrides,
 			setAnnotations,
 			undo,
 			redo
@@ -719,7 +711,6 @@ export function useDashboardActions(
 			dispatchItemsAndSave,
 			dispatchItemsWithVariablesAndSave,
 			setVariables,
-			setVariableOverrides,
 			setAnnotations,
 			undo,
 			redo
