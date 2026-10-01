@@ -936,6 +936,53 @@ test('a pending invite shows its expiry date as text', async () => {
 	expect(container.querySelector('[title]')).toBeNull()
 })
 
+test('a resent invite counts down a minute before it can be resent again', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	onTestFinished(() => {
+		vi.useRealTimers()
+	})
+	team.pendingInvites = [
+		{
+			id: 'invite',
+			email: 'invite@example.com',
+			status: 'pending',
+			createdAt: '2099-01-01T00:00:00Z',
+			expiresAt: '2099-01-08T18:00:00Z'
+		}
+	]
+	await mount(<TeamInvitesCard />)
+	await click('Resend')
+	await waitForUi(() => expect(button('Resend in 60s').disabled).toBe(true))
+	await act(async () => vi.advanceTimersByTime(59_000))
+	expect(button('Resend in 1s').disabled).toBe(true)
+	await act(async () => vi.advanceTimersByTime(1000))
+	expect(button('Resend').disabled).toBe(false)
+	expect(posts()).toHaveLength(1)
+})
+
+test('an expired invite offers only Revoke, from its first render', async () => {
+	team.pendingInvites = [
+		{
+			id: 'invite',
+			email: 'invite@example.com',
+			status: 'pending',
+			createdAt: '2020-01-01T00:00:00Z',
+			expiresAt: '2020-01-08T18:00:00Z'
+		}
+	]
+	const withdrawn: Array<string> = []
+	const observer = new MutationObserver((records) => {
+		for (const record of records) for (const node of record.removedNodes) withdrawn.push(node.textContent ?? '')
+	})
+	observer.observe(container, { subtree: true, childList: true })
+	await mount(<TeamInvitesCard />)
+	observer.disconnect()
+	expect(container.textContent).toContain('Expired — revoke this invite and send a new one')
+	expect(button('Resend')).toBeUndefined()
+	// A Resend button painted as if the invite were live, then withdrawn, would show here.
+	expect(withdrawn.join('|')).not.toContain('Resend')
+})
+
 test('revoking an invite keeps its row until confirmed and returns focus to Invite Member', async () => {
 	team.pendingInvites = [
 		{

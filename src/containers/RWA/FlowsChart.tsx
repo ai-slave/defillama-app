@@ -1,6 +1,7 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import MultiSeriesChart from '~/components/ECharts/MultiSeriesChart'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { getRWAFlowChartOptions, type RWAFlowChart, type RWAFlowVisibleRange } from './flows'
 
 type DataZoomPayload = {
@@ -60,39 +61,28 @@ export function RWAFlowsChart({
 			}),
 		[defaultStartTimestamp, hasSecondaryAxis]
 	)
-	const sourceRef = useRef(chart.dataset.source)
-	const onReadyRef = useRef(onReady)
-	const onVisibleRangeChangeRef = useRef(onVisibleRangeChange)
 	const chartInstanceRef = useRef<echarts.ECharts | null>(null)
-	// Read by the ECharts datazoom and ready callbacks, which run outside render.
-	useLayoutEffect(() => {
-		sourceRef.current = chart.dataset.source
-		onReadyRef.current = onReady
-		onVisibleRangeChangeRef.current = onVisibleRangeChange
-	})
+	// ECharts and the range effect below call these outside render; each reads the latest data and callbacks.
+	const reportVisibleRange = useStableCallback((range: RWAFlowVisibleRange | null) => onVisibleRangeChange?.(range))
 
 	// Keep visible-range tracking local to RWA flows instead of expanding the shared
 	// MultiSeriesChart API. Other charts retain their existing lifecycle and zoom behavior.
-	const handleDataZoom = useCallback((...args: Array<unknown>) => {
+	const handleDataZoom = useStableCallback((...args: Array<unknown>) => {
 		// ECharts types custom event payloads as unknown; the datazoom event has this documented shape.
-		const event = args[0] as DataZoomPayload
-		onVisibleRangeChangeRef.current?.(getVisibleRangeFromZoom(sourceRef.current, event))
-	}, [])
+		onVisibleRangeChange?.(getVisibleRangeFromZoom(chart.dataset.source, args[0] as DataZoomPayload))
+	})
 
-	const handleReady = useCallback(
-		(instance: echarts.ECharts | null) => {
-			const previousInstance = chartInstanceRef.current
-			if (previousInstance && !previousInstance.isDisposed()) previousInstance.off('datazoom', handleDataZoom)
-			chartInstanceRef.current = instance
-			instance?.on('datazoom', handleDataZoom)
-			onReadyRef.current?.(instance)
-		},
-		[handleDataZoom]
-	)
+	const handleReady = useStableCallback((instance: echarts.ECharts | null) => {
+		const previousInstance = chartInstanceRef.current
+		if (previousInstance && !previousInstance.isDisposed()) previousInstance.off('datazoom', handleDataZoom)
+		chartInstanceRef.current = instance
+		instance?.on('datazoom', handleDataZoom)
+		onReady?.(instance)
+	})
 
 	useEffect(() => {
 		const extent = getTimestampExtent(chart.dataset.source)
-		onVisibleRangeChangeRef.current?.(
+		reportVisibleRange(
 			extent
 				? {
 						start: Math.max(extent.start, defaultStartTimestamp ?? extent.start),
@@ -100,7 +90,7 @@ export function RWAFlowsChart({
 					}
 				: null
 		)
-	}, [chart.dataset.source, defaultStartTimestamp])
+	}, [chart.dataset.source, defaultStartTimestamp, reportVisibleRange])
 
 	return (
 		<MultiSeriesChart

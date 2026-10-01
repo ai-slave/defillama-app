@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Select } from '~/components/Select/Select'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
 import { ProSegmented, proInputStyles } from '../ui'
 import {
@@ -31,7 +32,6 @@ export function MyDashboardsControls({
 }: MyDashboardsControlsProps) {
 	const [draft, setDraft] = useState(query)
 	const publishedRef = useRef(query)
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	useEffect(() => {
 		if (query === publishedRef.current) return
@@ -39,26 +39,20 @@ export function MyDashboardsControls({
 		setDraft(query)
 	}, [query])
 
-	useEffect(() => {
-		return () => {
-			if (timeoutRef.current) clearTimeout(timeoutRef.current)
-		}
-	}, [])
-
 	const publish = (value: string) => {
 		publishedRef.current = value
 		onQueryChange(value)
 	}
+	const publishTyped = useDebouncedCallback(publish, SEARCH_DEBOUNCE_MS)
 
 	const handleChange = (value: string) => {
 		setDraft(value)
-		if (timeoutRef.current) clearTimeout(timeoutRef.current)
-		timeoutRef.current = setTimeout(() => publish(value), SEARCH_DEBOUNCE_MS)
+		publishTyped(value)
 	}
 
 	const handleClear = () => {
 		setDraft('')
-		if (timeoutRef.current) clearTimeout(timeoutRef.current)
+		publishTyped.cancel()
 		publish('')
 	}
 

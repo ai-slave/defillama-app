@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as echarts from 'echarts/core'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -13,11 +14,14 @@ import HBarChart from '../HBarChart'
 import ScatterChart from '../ScatterChart'
 import { SparklineChart } from '../SparklineChart'
 import TreemapChart from '../TreemapChart'
+import BuilderTreemapChart from '../TreemapChart/Builder'
 import MarketTreemapChart from '../TreemapChart/Market'
 import type { MarketTreemapLeaf } from '../TreemapChart/Market/types'
 
 let container: HTMLDivElement
 let root: Root
+// Charts probe their icons through React Query.
+const client = new QueryClient()
 
 beforeEach(() => {
 	document.cookie = 'defillama-theme=dark'
@@ -30,11 +34,13 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	client.clear()
 	document.cookie = 'defillama-theme=; Max-Age=0'
 	vi.restoreAllMocks()
 })
 
-const render = (node: ReactNode) => act(async () => root.render(node))
+const render = (node: ReactNode) =>
+	act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
 
 function mountedChart() {
 	const element = container.querySelector<HTMLElement>('[_echarts_instance_]')
@@ -117,6 +123,60 @@ describe('persistent ECharts instances', () => {
 
 		expect(onReady.mock.calls).toEqual([[instance], [null]])
 	})
+
+	const treemapLeaf: MarketTreemapLeaf = {
+		name: 'A',
+		value: [1, 1],
+		iconKey: 1,
+		iconUrl: '',
+		itemStyle: { color: '#269f3c' },
+		companyName: 'A Corp',
+		marketCap: 1
+	}
+	test.each([
+		{
+			name: 'treemap',
+			render: (onReady: (instance: echarts.ECharts | null) => void) => (
+				<TreemapChart
+					treeData={[{ name: 'Asset', path: 'Group/Asset', value: [1, null, null] }]}
+					variant="rwa"
+					onReady={onReady}
+				/>
+			)
+		},
+		{
+			name: 'builder treemap',
+			render: (onReady: (instance: echarts.ECharts | null) => void) => (
+				<BuilderTreemapChart data={[{ name: 'A', value: 1 }]} onReady={onReady} />
+			)
+		},
+		{
+			name: 'market treemap',
+			render: (onReady: (instance: echarts.ECharts | null) => void) => (
+				<MarketTreemapChart
+					treeData={[treemapLeaf]}
+					leaves={[treemapLeaf]}
+					sizeLabel="Market Cap"
+					colorLabel="Change"
+					onReady={onReady}
+				/>
+			)
+		}
+	])(
+		'hands the $name chart to its ready callback and takes it back through the latest one',
+		async ({ render: chartFor }) => {
+			const first = vi.fn()
+			const latest = vi.fn()
+			await render(chartFor(first))
+			const instance = chart()
+			await render(chartFor(latest))
+
+			await act(async () => root.unmount())
+
+			expect(first.mock.calls).toEqual([[instance]])
+			expect(latest.mock.calls).toEqual([[null]])
+		}
+	)
 
 	test.each([
 		{ name: 'line', render: (data: Array<[number, number]>) => <SparklineChart data={data} areaColor="#269f3c" /> },

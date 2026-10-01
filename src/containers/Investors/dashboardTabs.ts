@@ -1,6 +1,17 @@
+import { queryOptions } from '@tanstack/react-query'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
+import { getDashboardModule } from './registry'
 
 export const DEFAULT_TABS: Array<DashboardTabConfig> = [{ id: 'dashboard', label: 'Overview' }]
+
+/** A dashboard's module, loaded once per page: its bundle cannot change while the page is open. Null when unregistered. */
+export function dashboardModuleQuery(dashboardId: string) {
+	return queryOptions({
+		queryKey: ['investors', 'dashboard-module', dashboardId],
+		queryFn: async () => getDashboardModule(dashboardId),
+		staleTime: Infinity
+	})
+}
 
 /** The selected tab while `tabs` still has it, otherwise the first tab. */
 export function resolveActiveTab(tabs: Array<DashboardTabConfig>, selectedTab: string | null): string {

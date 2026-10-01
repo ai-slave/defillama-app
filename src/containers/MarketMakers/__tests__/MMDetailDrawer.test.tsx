@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act } from 'react'
+import { act, StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
@@ -133,4 +133,59 @@ test('Try again reloads the market maker after a failed request and moves focus 
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('9.50/10.00'))
 	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
 	expect(document.activeElement?.textContent).toContain('About Lhava')
+})
+
+test('the click that opens a lead form records one click id, and the sent lead carries it', async () => {
+	vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', '')
+	onTestFinished(() => {
+		vi.unstubAllEnvs()
+	})
+	http.serve({
+		'/api/public/market-makers/performance': [{ ...performance, integrationStatus: 'none' }],
+		'/api/public/market-makers/cta': { clickId: 'click-1' },
+		'/api/public/market-makers/lead/claim': { status: 'ok', request_id: 'req-1' }
+	})
+	// StrictMode mounts the form twice; the click, not the mount, records the id.
+	await act(async () =>
+		root.render(
+			<StrictMode>
+				<QueryClientProvider client={client}>
+					<MMDetailDrawer open onClose={vi.fn()} marketMakerId="lhava" range={{}} badge="Last 30-day" />
+				</QueryClientProvider>
+			</StrictMode>
+		)
+	)
+	const buttonNamed = (name: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
+	await waitForUi(() => expect(buttonNamed('Claim organization')).toBeDefined())
+	await act(async () => buttonNamed('Claim organization').click())
+	const ctaPosts = () => http.requests.filter((request) => request.url.pathname === '/api/public/market-makers/cta')
+	await waitForUi(() => expect(ctaPosts()).toHaveLength(1))
+	expect(JSON.parse(String(ctaPosts()[0].init?.body))).toMatchObject({ kind: 'claim', market_maker_id: 'lhava' })
+
+	const field = (label: string) =>
+		[...document.querySelectorAll('label')]
+			.find((element) => element.textContent?.includes(label))!
+			.querySelector('input')!
+	const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+	for (const [label, value] of [
+		['Position at organization', 'CEO'],
+		['Your full name', 'Ada Lovelace'],
+		['Your LinkedIn or X profile', 'linkedin.com/in/ada'],
+		['Your organization email address', 'ada@acme.com']
+	]) {
+		await act(async () => {
+			setValue.call(field(label), value)
+			field(label).dispatchEvent(new Event('input', { bubbles: true }))
+		})
+	}
+	const leadDialog = [...document.querySelectorAll('[role="dialog"]')].at(-1)!
+	for (const checkbox of leadDialog.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {
+		await act(async () => checkbox.click())
+	}
+	await act(async () => buttonNamed('Submit claim request').click())
+	const lead = () => http.requests.find((request) => request.url.pathname === '/api/public/market-makers/lead/claim')
+	await waitForUi(() => expect(lead()).toBeDefined())
+	expect(JSON.parse(String(lead()!.init?.body))).toMatchObject({ click_id: 'click-1', market_maker_id: 'lhava' })
+	expect(ctaPosts()).toHaveLength(1)
 })

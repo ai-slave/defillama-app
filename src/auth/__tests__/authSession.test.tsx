@@ -287,6 +287,48 @@ test('continues unverified email sign-in in a dismissible sheet and retains the 
 	expect(sessionView.isAuthenticated).toBe(true)
 })
 
+test('sends the first code when a signed-in account opens the sheet, and again for a different account', async () => {
+	pb.authStore.save(token('account-a'), { ...record('account-a'), email: 'a@example.com', verified: false })
+	await render()
+	await act(async () => sessionView.promptVerifyEmail('account-a'))
+	expect(otpCalls.map((call) => call.authorization)).toEqual([`Bearer ${token('account-a')}`])
+	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
+	await settle()
+	await act(async () => button('Verify later').click())
+	await act(async () => sessionView.promptVerifyEmail('account-a'))
+	await settle()
+	expect(otpCalls).toHaveLength(1)
+
+	await act(async () =>
+		pb.authStore.save(token('account-b'), { ...record('account-b'), email: 'b@example.com', verified: false })
+	)
+	await act(async () => sessionView.promptVerifyEmail('account-b'))
+	expect(otpCalls.map((call) => call.authorization)).toEqual([
+		`Bearer ${token('account-a')}`,
+		`Bearer ${token('account-b')}`
+	])
+	expect(document.body.textContent).toContain('b@example.com')
+})
+
+test('shows the resend countdown in the first render after a rate limit arrives', async () => {
+	await render()
+	await emailLogin()
+	const labels: Array<string> = []
+	const observer = new MutationObserver((records) => {
+		for (const mutation of records) if (mutation.type === 'characterData') labels.push(mutation.oldValue ?? '')
+	})
+	observer.observe(document.body, { subtree: true, characterData: true, characterDataOldValue: true })
+	otpCalls[0].resolve(jsonResponse({ error: 'Please wait', details: { retryAfterSeconds: 30 } }, 429))
+	await waitForUi(async () => {
+		await settle()
+		expect(button('Resend code').textContent).toContain('30s')
+	})
+	observer.disconnect()
+	// An uncounted, enabled "Resend code" would have been painted before the countdown caught up.
+	expect(labels).not.toContain('Resend code')
+	expect(button('Resend code').disabled).toBe(true)
+})
+
 test.each(['verified', 'invite'] as const)('does not interrupt the %s sign-in handoff with OTP', async (mode) => {
 	loginVerified = mode === 'verified'
 	await render()

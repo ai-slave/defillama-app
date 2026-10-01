@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 
 // Shared motion utilities: everything is in-view triggered and honors
 // prefers-reduced-motion by never firing — the resting state is always complete.
@@ -14,24 +14,21 @@ function prefersReducedMotion(): boolean {
 // under reduced motion.
 export function useInViewOnce<T extends HTMLElement>(onVisible: (el: T) => void): React.RefObject<T | null> {
 	const ref = useRef<T>(null)
-	// Read by the observer callback, which fires on scroll, never during render.
-	const cb = useRef(onVisible)
-	useLayoutEffect(() => {
-		cb.current = onVisible
-	})
+	// Called from the observer the effect owns, so it reads the latest committed callback when the element shows.
+	const fireVisible = useEffectEvent(onVisible)
 
 	useEffect(() => {
 		const el = ref.current
 		if (!el || prefersReducedMotion()) return
 		if (typeof IntersectionObserver === 'undefined') {
-			cb.current(el)
+			fireVisible(el)
 			return
 		}
 		const io = new IntersectionObserver(
 			(entries) => {
 				if (entries.some((e) => e.isIntersecting)) {
 					io.disconnect()
-					cb.current(el)
+					fireVisible(el)
 				}
 			},
 			{ threshold: 0.2 }

@@ -1,9 +1,10 @@
 import { TabProvider, TabList, Tab, TabPanel } from '@ariakit/react'
 import Head from 'next/head'
 import Image from 'next/image'
-import { type ReactNode, type RefObject, useEffect, useId, useRef, useState } from 'react'
+import { type ReactNode, type RefObject, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { Button } from '~/ui/Button'
 import { StaleText } from '~/ui/StaleText'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
@@ -1136,16 +1137,28 @@ function SourceRegister({
 	)
 }
 
+const subscribeToDocumentVisibility = (onChange: () => void) => {
+	document.addEventListener('visibilitychange', onChange)
+	return () => document.removeEventListener('visibilitychange', onChange)
+}
+const isDocumentVisibleNow = () => document.visibilityState === 'visible'
+// The server has no tab; the slideshow starts as if visible, as the reader almost always finds it.
+const isDocumentVisibleOnServer = () => true
+
 function PublicProofSection() {
 	const [proofState, setProofState] = useState<ProofState>('verified')
 	const [isPlaying, setIsPlaying] = useState(true)
 	const [isInView, setIsInView] = useState(false)
-	const [isDocumentVisible, setIsDocumentVisible] = useState(true)
+	const isDocumentVisible = useSyncExternalStore(
+		subscribeToDocumentVisibility,
+		isDocumentVisibleNow,
+		isDocumentVisibleOnServer
+	)
 	const [isHoverPaused, setIsHoverPaused] = useState(false)
 	const [isKeyboardPaused, setIsKeyboardPaused] = useState(false)
 	const [isManualPaused, setIsManualPaused] = useState(false)
 	const [manualPauseVersion, setManualPauseVersion] = useState(0)
-	const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+	const prefersReducedMotion = usePrefersReducedMotion()
 	const [manualAnnouncement, setManualAnnouncement] = useState('')
 	const sectionRef = useRef<HTMLElement>(null)
 	const keyboardNavigationRef = useRef(false)
@@ -1171,21 +1184,6 @@ function PublicProofSection() {
 		})
 		observer.observe(section)
 		return () => observer.disconnect()
-	}, [])
-
-	useEffect(() => {
-		const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-		const updatePreference = () => setPrefersReducedMotion(media.matches)
-		updatePreference()
-		media.addEventListener('change', updatePreference)
-		return () => media.removeEventListener('change', updatePreference)
-	}, [])
-
-	useEffect(() => {
-		const updateVisibility = () => setIsDocumentVisible(document.visibilityState === 'visible')
-		updateVisibility()
-		document.addEventListener('visibilitychange', updateVisibility)
-		return () => document.removeEventListener('visibilitychange', updateVisibility)
 	}, [])
 
 	useEffect(() => {

@@ -6,6 +6,7 @@ import { type ChartConfig as DownloadChartConfig, defaultChartConfig } from '~/c
 import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
 import { assertCustomDataSizeAllowed, CustomDataParseError, parseCustomDataCsv } from '../CustomData/parseCustomDataCsv'
@@ -62,13 +63,6 @@ function CustomDataForm({
 	onDisplayModeChange
 }: CustomDataTabProps) {
 	const encodeToken = useRef(0)
-	const parseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-	useEffect(
-		() => () => {
-			if (parseTimer.current) clearTimeout(parseTimer.current)
-		},
-		[]
-	)
 	const [decoded, setDecoded] = useState<{ source: CustomDataRows; rows: Array<Array<SqlSnapshotValue>> } | null>(null)
 
 	const storedRows = customData.storedRows
@@ -124,19 +118,21 @@ function CustomDataForm({
 		)
 	}
 
+	const applyTypedCsv = useDebouncedCallback(applyCsv, TYPED_CSV_PARSE_DELAY_MS)
+
 	const handleTextChange = (text: string) => {
 		onTextChange(text)
-		if (parseTimer.current) clearTimeout(parseTimer.current)
 		if (!text.trim()) {
+			applyTypedCsv.cancel()
 			onStoredRowsChange(null)
 			return
 		}
-		parseTimer.current = setTimeout(() => applyCsv(text, customData.sourceName), TYPED_CSV_PARSE_DELAY_MS)
+		applyTypedCsv(text, customData.sourceName)
 	}
 
 	const handleFile = (file: File | undefined) => {
 		if (!file) return
-		if (parseTimer.current) clearTimeout(parseTimer.current)
+		applyTypedCsv.cancel()
 		try {
 			assertCustomDataSizeAllowed(file.size)
 		} catch (error) {

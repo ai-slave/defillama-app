@@ -3,7 +3,7 @@ import { TreemapChart as EChartTreemap } from 'echarts/charts'
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -45,9 +45,8 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const persistentLifecycle = usePersistentEChartsLifecycle()
-	const onReadyRef = useRef(onReady)
-	useEffect(() => {
-		onReadyRef.current = onReady
+	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+		onReady?.(instance)
 	})
 
 	// Stable resize listener - never re-attaches when dependencies change
@@ -60,7 +59,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 		const instance = echarts.init(container, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		persistentLifecycle.restore(instance)
-		onReadyRef.current?.(instance)
+		emitReady(instance)
 		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
@@ -68,7 +67,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 			unregisterTreemapFocus()
 			instance.dispose()
 			chartRef.current = null
-			onReadyRef.current?.(null)
+			emitReady(null)
 		}
 	}, [persistentLifecycle])
 

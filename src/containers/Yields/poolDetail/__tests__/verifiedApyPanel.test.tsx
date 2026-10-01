@@ -2,6 +2,7 @@
 
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import type { VerifiedBlock } from '../../data/types'
 import { describeCall, VerifiedApyPanel } from '../VerifiedApyPanel'
 
@@ -36,7 +37,11 @@ describe('VerifiedApyPanel', () => {
 			tvl: { amount: '1', usd: 1, as_of: '2026-09-07' },
 			methods: ['balanceOf(holder) — position size', 'Pool.withdraw(u, max, holder) — EXECUTED as the holder']
 		}
-		const html = renderToStaticMarkup(<VerifiedApyPanel verified={verified} measuredSince="2023-02-06" />)
+		const html = renderToStaticMarkup(
+			<PageClockProvider pageClockSec={1_790_000_000}>
+				<VerifiedApyPanel verified={verified} measuredSince="2023-02-06" />
+			</PageClockProvider>
+		)
 
 		const body = new DOMParser().parseFromString(html, 'text/html').body
 		const text = body.textContent

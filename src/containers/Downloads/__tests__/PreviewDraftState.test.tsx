@@ -2,14 +2,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ChartDatasetDefinition } from '../chart-datasets'
 import { ChartDatasetModal } from '../ChartDatasetModal'
 import { DatasetPreviewModal } from '../DatasetPreviewModal'
 import type { DatasetDefinition } from '../datasets'
-import type { ChartSavedConfig, DatasetSavedConfig, SavedDownloadInput } from '../savedDownloads'
+import { MultiMetricModal } from '../MultiMetricModal'
+import type {
+	ChartSavedConfig,
+	DatasetSavedConfig,
+	MultiMetricSavedConfig,
+	SavedDownloadInput
+} from '../savedDownloads'
 import { decodeDownloadConfig } from '../urlState'
 
 const chart: ChartDatasetDefinition = {
@@ -72,14 +77,7 @@ afterEach(async () => {
 	localStorage.clear()
 })
 async function render(node: ReactNode) {
-	await act(async () =>
-		root.render(
-			<QueryClientProvider client={client}>
-				{node}
-				<Toaster />
-			</QueryClientProvider>
-		)
-	)
+	await act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
 }
 const missingColumnNotices = () =>
 	document.body.textContent!.split('1 saved column no longer available: missing').length - 1
@@ -144,6 +142,31 @@ test('late options and CSV initialize saved selections once, preserving edits an
 	expect(selectedColumns()).toEqual([])
 	await click(column('other'))
 	expect(selectedColumns()).toEqual(['other'])
+})
+
+test('a chart preset lists the saved protocols and columns it lost, except in category mode', async () => {
+	const lost = 'Saved sort column "value" no longer available'
+	fetchCsv.mockImplementation(async () => new Response('date,other\n2026-09-01,3'))
+	await renderChart(options, { ...config, params: ['alpha', 'retired'] })
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
+	const notice = document.querySelector('[role="status"] ul')
+	expect([...notice!.querySelectorAll('li')].map((item) => item.textContent)).toEqual([
+		'1 saved protocol no longer available',
+		lost
+	])
+
+	await act(async () => root.unmount())
+	root = createRoot(container)
+	fetchCsv.mockImplementation(async () => new Response('date,Alpha\n2026-09-01,20'))
+	await renderChart(options, {
+		...config,
+		params: ['retired'],
+		columns: undefined,
+		categoryBreakdown: { category: 'Lending' }
+	})
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date', 'Alpha']))
+	expect(document.body.textContent).not.toContain('saved protocol')
+	expect(document.body.textContent).toContain(lost)
 })
 
 test('switching or removing the active preview and toggling sum reset table controls but retain dates', async () => {
@@ -220,4 +243,35 @@ test('dataset default sort initializes without a preset and remains user-editabl
 	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 	await refreshCsv(`${csv}\n2026-09-03,50,2`)
 	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
+})
+
+test('a multi-metric preset seeds its param and metrics once options load and says which metric is gone', async () => {
+	const saved: MultiMetricSavedConfig = {
+		id: 'saved',
+		createdAt: 1,
+		name: 'Saved',
+		kind: 'multiMetric',
+		paramType: 'protocol',
+		param: 'alpha',
+		paramLabel: 'Alpha',
+		metrics: ['protocol-tvl-chart', 'retired-metric']
+	}
+	const renderMultiMetric = (chartOptionsMap: Record<string, typeof options>) =>
+		render(
+			<MultiMetricModal
+				chartOptionsMap={chartOptionsMap}
+				authorizedFetch={fetchCsv}
+				onClose={() => {}}
+				isPreview={false}
+				initialConfig={saved}
+			/>
+		)
+	const gone = () => document.body.textContent!.split('1 saved metric no longer available').length - 1
+
+	await renderMultiMetric({})
+	expect(gone()).toBe(0)
+	await renderMultiMetric({ 'protocol-tvl-chart': options })
+	await settle()
+	expect(await sharedLink()).toMatchObject({ kind: 'multiMetric', param: 'alpha', metrics: ['protocol-tvl-chart'] })
+	expect(gone()).toBe(1)
 })

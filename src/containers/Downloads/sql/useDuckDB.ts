@@ -1,40 +1,30 @@
-import type { AsyncDuckDB, AsyncDuckDBConnection } from '@duckdb/duckdb-wasm'
-import { useEffect, useState } from 'react'
+import type { AsyncDuckDBConnection } from '@duckdb/duckdb-wasm'
+import { useQuery } from '@tanstack/react-query'
 import { getDuckDB } from './duckdb'
 
 export type DuckDBStatus = 'loading' | 'ready' | 'error'
 
 export interface UseDuckDBResult {
-	db: AsyncDuckDB | null
 	conn: AsyncDuckDBConnection | null
 	status: DuckDBStatus
 	error: string | null
 }
 
+// One engine per page: the handle never goes stale or leaves the cache. A failed load loads again the next time
+// a SQL surface mounts (getDuckDB forgets a failed attempt), not in a retry loop that would hold the error back.
+const duckDBQuery = {
+	queryKey: ['duckdb'],
+	queryFn: getDuckDB,
+	staleTime: Infinity,
+	gcTime: Infinity,
+	retry: false
+} as const
+
 export function useDuckDB(): UseDuckDBResult {
-	const [db, setDb] = useState<AsyncDuckDB | null>(null)
-	const [conn, setConn] = useState<AsyncDuckDBConnection | null>(null)
-	const [status, setStatus] = useState<DuckDBStatus>('loading')
-	const [error, setError] = useState<string | null>(null)
-
-	useEffect(() => {
-		let cancelled = false
-		getDuckDB()
-			.then((handle) => {
-				if (cancelled) return
-				setDb(handle.db)
-				setConn(handle.conn)
-				setStatus('ready')
-			})
-			.catch((initError: unknown) => {
-				if (cancelled) return
-				setStatus('error')
-				setError(initError instanceof Error ? initError.message : String(initError))
-			})
-		return () => {
-			cancelled = true
-		}
-	}, [])
-
-	return { db, conn, status, error }
+	const { data, error } = useQuery(duckDBQuery)
+	return {
+		conn: data?.conn ?? null,
+		status: error ? 'error' : data ? 'ready' : 'loading',
+		error: error ? error.message : null
+	}
 }

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 
 interface IdleChartComputationOptions<I, T> {
 	enabled: boolean
@@ -21,10 +21,7 @@ export function useIdleChartComputation<I, T>({
 	compute,
 	emptyValue
 }: IdleChartComputationOptions<I, T>) {
-	const latestRef = useRef({ input, compute })
-	useLayoutEffect(() => {
-		latestRef.current = { input, compute }
-	})
+	const runLatest = useEffectEvent(() => compute(input))
 	const [computed, setComputed] = useState<{ signature: string; value: T }>({ signature: '', value: emptyValue })
 
 	useEffect(() => {
@@ -33,8 +30,7 @@ export function useIdleChartComputation<I, T>({
 		let cancelled = false
 		const runComputation = () => {
 			if (cancelled) return
-			const latest = latestRef.current
-			const value = latest.compute(latest.input)
+			const value = runLatest()
 			if (!cancelled) setComputed({ signature, value })
 		}
 

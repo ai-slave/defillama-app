@@ -3,7 +3,9 @@ import type { NextRouter } from 'next/router'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { useAuthContext } from '~/auth'
 import Subscription from '~/pages/subscription'
+import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { getReturnIntentAction, ReturnModal, withoutReturnUrl } from '../ReturnModal'
@@ -103,33 +105,88 @@ describe('ReturnModal', () => {
 	})
 })
 
-test('the subscription page asks a signed-in visitor whether to return to their destination', async () => {
-	router.current = {
-		pathname: '/subscription',
-		asPath: `/subscription?returnUrl=${encodeURIComponent(destination)}`,
-		isReady: true,
-		query: { returnUrl: destination },
-		replace: vi.fn(async () => true)
+describe('the subscription page', () => {
+	let root: Root
+	let container: HTMLDivElement
+	let auth: ReturnType<typeof useAuthContext>
+	function AuthProbe() {
+		auth = useAuthContext()
+		return null
 	}
-	session.serve({ '/subscription/trial-available': { trialAvailable: false } })
-	const container = document.createElement('div')
-	document.body.append(container)
-	const root = createRoot(container)
-	try {
-		await act(async () =>
-			root.render(
-				<session.Wrapper>
-					<Subscription />
-				</session.Wrapper>
-			)
-		)
+	const page = (
+		<session.Wrapper>
+			<Subscription />
+			<AuthProbe />
+		</session.Wrapper>
+	)
+
+	beforeEach(() => {
+		router.current = {
+			pathname: '/subscription',
+			asPath: `/subscription?returnUrl=${encodeURIComponent(destination)}`,
+			isReady: true,
+			query: { returnUrl: destination },
+			replace: vi.fn(async () => true)
+		}
+		session.serve({ '/subscription/trial-available': { trialAvailable: false } })
+		container = document.createElement('div')
+		document.body.append(container)
+		root = createRoot(container)
+	})
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+	})
+
+	test('asks a signed-in visitor whether to return to their destination', async () => {
+		await act(async () => root.render(page))
 		await waitForUi(async () => {
 			await act(async () => {})
 			expect(document.querySelector('[role="dialog"] a')?.getAttribute('href')).toBe(destination)
 		})
 		expect(router.current.replace).not.toHaveBeenCalled()
-	} finally {
-		await act(async () => root.unmount())
-		container.remove()
-	}
+	})
+
+	test('does not ask again after the visitor stays, even before the URL drops the destination', async () => {
+		await act(async () => root.render(page))
+		await waitForUi(async () => {
+			await act(async () => {})
+			expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+		})
+		const stay = [...document.querySelectorAll('[role="dialog"] button')].find(
+			(button) => button.textContent === 'Stay on this page'
+		) as HTMLButtonElement
+		await act(async () => stay.click())
+		await act(async () => root.render(page))
+		await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	})
+
+	test('drops the destination without asking right after signup', async () => {
+		const { token, record } = session
+		await act(async () => pb.authStore.clear())
+		session.serve({ '/auth/signup': { token, user: record } })
+		await act(async () => root.render(page))
+		await act(async () => {
+			await auth.signup({
+				email: record.email,
+				password: 'password123',
+				passwordConfirm: 'password123',
+				turnstileToken: 'fixture-token',
+				promotionalEmails: 'off',
+				signal: new AbortController().signal,
+				canAccept: () => true
+			})
+		})
+		await waitForUi(async () => {
+			await act(async () => {})
+			expect(router.current.replace).toHaveBeenCalledWith({ pathname: '/subscription', query: {} }, undefined, {
+				shallow: true
+			})
+		})
+		await waitForUi(async () => {
+			await act(async () => {})
+			expect(auth.isNewSignup).toBe(false)
+		})
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+	})
 })

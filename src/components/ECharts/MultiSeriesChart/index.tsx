@@ -18,7 +18,7 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
@@ -43,7 +43,7 @@ import {
 	chartLegendScrollStyle
 } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
-import { validateIconUrl } from '../shared/icon'
+import { useLoadedIconUrls } from '../shared/icon'
 import { mergeDeep } from '../shared/merge'
 import {
 	buildDefaultChartSettings,
@@ -139,7 +139,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const [managedIsThemeDark] = useDarkModeManager()
 	const isThemeDark = isThemeDarkOverride ?? managedIsThemeDark
 	// Legend icons render only once their image URL has been probed, so the probe result is series input.
-	const [validLegendIcons, setValidLegendIcons] = useState<ReadonlySet<string>>(() => new Set())
 	const chartTheme = useChartTheme(isThemeDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const chartDomRef = useRef<HTMLDivElement>(null)
@@ -180,22 +179,11 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const datasetDimensions = dataset.dimensions
 	const inferredCharts = useMemo(() => inferMultiSeriesCharts(datasetDimensions, stacked), [datasetDimensions, stacked])
 	const effectiveCharts = charts && charts.length > 0 ? charts : inferredCharts
-	useEffect(() => {
-		const urls = effectiveCharts.map((chart) => chart.legendIconUrl).filter((url): url is string => !!url)
-		if (urls.length === 0) return
-		let cancelled = false
-		Promise.all(urls.map(validateIconUrl)).then((results) => {
-			if (cancelled) return
-			const valid = new Set<string>()
-			for (let index = 0; index < urls.length; index++) {
-				if (results[index]) valid.add(urls[index])
-			}
-			setValidLegendIcons(valid)
-		})
-		return () => {
-			cancelled = true
-		}
-	}, [effectiveCharts])
+	const legendIconUrls: Array<string> = []
+	for (const chart of effectiveCharts) {
+		if (chart.legendIconUrl) legendIconUrls.push(chart.legendIconUrl)
+	}
+	const validLegendIcons = useLoadedIconUrls(legendIconUrls)
 	const displayedCharts = useMemo(
 		() => (selectedCharts ? effectiveCharts.filter((chart) => selectedCharts.has(chart.name)) : effectiveCharts),
 		[effectiveCharts, selectedCharts]

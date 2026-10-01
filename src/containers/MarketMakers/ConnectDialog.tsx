@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
@@ -13,7 +13,7 @@ import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
-import { requestLeadClickId, useSubmitLead } from './client'
+import { useSubmitLead } from './client'
 import { LeadCancelButton, LeadDialog, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
 import { EMAIL_PATTERN } from './leadShared'
 
@@ -154,6 +154,8 @@ export function ConnectDialog({
 	onClose: () => void
 	marketMakerId: string | null
 	marketMakerName: string
+	/** Recorded by the click that opened this form; null until that request answers, or if it failed. */
+	clickId: string | null
 }) {
 	// The form is a child of the dialog, which Ariakit unmounts when it closes, so every open starts from a
 	// fresh form and mutation instead of resetting a dozen fields by hand.
@@ -166,10 +168,12 @@ export function ConnectDialog({
 
 function ConnectDialogForm({
 	marketMakerId,
-	marketMakerName
+	marketMakerName,
+	clickId
 }: {
 	marketMakerId: string | null
 	marketMakerName: string
+	clickId: string | null
 }) {
 	const [interest, setInterest] = useState('')
 	const [tokenStatus, setTokenStatus] = useState<TokenStatus>('pre-tge')
@@ -182,19 +186,7 @@ function ConnectDialogForm({
 	const [honeypot, setHoneypot] = useState('')
 	const [touched, setTouched] = useState<Record<string, boolean>>({})
 	const [submitAttempted, setSubmitAttempted] = useState(false)
-	const clickIdRef = useRef<string | null>(null)
 	const submit = useSubmitLead('connect')
-
-	// One click id per opened form; the ref is only read when the form is submitted.
-	useEffect(() => {
-		let superseded = false
-		requestLeadClickId('connect', marketMakerId).then((clickId) => {
-			if (!superseded) clickIdRef.current = clickId
-		})
-		return () => {
-			superseded = true
-		}
-	}, [marketMakerId])
 
 	const hasToken = tokenStatus !== 'no-token'
 	const listedToken = tokenStatus === 'listed' ? selectedToken : null
@@ -236,7 +228,7 @@ function ConnectDialogForm({
 			email: email.trim(),
 			market_maker_id: marketMakerId,
 			market_maker_name: marketMakerName,
-			click_id: clickIdRef.current,
+			click_id: clickId,
 			source_url: typeof window === 'undefined' ? null : window.location.href,
 			hp: honeypot
 		})

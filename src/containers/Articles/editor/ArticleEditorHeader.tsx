@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Icon as SharedIcon } from '~/ui/Icon'
+import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
 import type { SavePillState } from './ArticleEditorTypes'
@@ -9,9 +10,19 @@ import { formatArticleDate } from './ArticleEditorUtils'
 
 export type ArticleEditorViewMode = 'write' | 'preview'
 
+const PILL_DOT: Record<SavePillState, string> = {
+	saving: 'bg-secondary animate-pulse',
+	saved: 'bg-success',
+	unsaved: 'bg-warning',
+	error: 'bg-error',
+	idle: 'bg-tertiary/50'
+}
+
 type ArticleEditorHeaderProps = {
 	article: LocalArticleDocument
 	articleIsScheduled: boolean
+	/** The editor's clock, which also decides `articleIsScheduled`. */
+	nowSec: number
 	articleViewHref: string
 	deletePending: boolean
 	hasPendingEdits: boolean
@@ -19,11 +30,8 @@ type ArticleEditorHeaderProps = {
 	isOwner: boolean
 	isPublished: boolean
 	isPublishing: boolean
-	pillDot: string
-	pillLabel: string
 	pillState: SavePillState
-	savedLabel: string | null
-	savedExactLabel: string | null
+	savedAt: string | null
 	slugDraft: string
 	slugEditing: boolean
 	viewMode: ArticleEditorViewMode
@@ -44,6 +52,7 @@ type ArticleEditorHeaderProps = {
 export function ArticleEditorHeader({
 	article,
 	articleIsScheduled,
+	nowSec,
 	articleViewHref,
 	beginSlugEdit,
 	cancelSlugEdit,
@@ -60,18 +69,24 @@ export function ArticleEditorHeader({
 	isPublishing,
 	onOpenHistory,
 	onOpenMeta,
-	pillDot,
-	pillLabel,
 	pillState,
 	saveArticle,
-	savedLabel,
-	savedExactLabel,
+	savedAt,
 	setSlugDraft,
 	slugDraft,
 	slugEditing,
 	viewMode,
 	onViewModeChange
 }: ArticleEditorHeaderProps) {
+	const savedLabel = savedAt ? formatRelativeTime(savedAt, { now: new Date(nowSec * 1000) }) : null
+	const savedExactLabel = savedAt ? formatDateTime(savedAt, { timeZone: 'local' }) : null
+	const pillText: Record<SavePillState, string> = {
+		saving: 'Saving…',
+		saved: savedLabel ? `Saved ${savedLabel}` : 'Saved',
+		unsaved: 'Save',
+		error: 'Save failed · Retry',
+		idle: 'Ready'
+	}
 	return (
 		<header
 			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-[170px] xl:px-4 ${
@@ -172,10 +187,8 @@ export function ArticleEditorHeader({
 								: 'border-transparent text-secondary hover:border-medium hover:bg-research-tint-hover disabled:hover:border-transparent disabled:hover:bg-transparent'
 					}`}
 				>
-					<span aria-hidden className={`size-1.5 rounded-full ${pillDot}`} />
-					<span className="tabular-nums">
-						{pillState === 'error' ? 'Save failed · Retry' : pillState === 'unsaved' ? 'Save' : pillLabel}
-					</span>
+					<span aria-hidden className={`size-1.5 rounded-full ${PILL_DOT[pillState]}`} />
+					<span className="tabular-nums">{pillText[pillState]}</span>
 					{pillState === 'unsaved' || pillState === 'error' ? (
 						<kbd
 							aria-hidden

@@ -9,6 +9,7 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import type { SqlChartConfig, SqlSnapshot } from '../../../types'
 import { scaledPx } from '../../cardHeightContext'
 import { SqlChartCard, sqlCardBody } from '../SqlChartCard'
+import { getSqlRefreshProgress, refreshAllSqlCharts } from '../sqlRefreshBus'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, asPath: '/pro/d1', push: vi.fn() }) }))
 
@@ -94,4 +95,27 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql',
 		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql&refresh=1'
 	])
+})
+
+test('refresh all re-runs the card on the server and counts the failure its answer reports', async () => {
+	const failedRun = Promise.withResolvers<SqlSnapshot & { error: string }>()
+	session.serveInOrder('/api/private/pro-dashboard/sql-run', [stored, () => failedRun.promise])
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<DashboardTestProvider dashboard={{ dashboardId: 'd1' }}>
+					<SqlChartCard config={item} />
+				</DashboardTestProvider>
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 0, failed: 0 }))
+
+	await act(async () => refreshAllSqlCharts())
+	expect(session.urls().at(-1)).toBe(
+		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql&refresh=1'
+	)
+	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 1, total: 1, bulk: true }))
+	await act(async () => failedRun.resolve({ ...stored, error: 'SQL run failed' }))
+	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 0, total: 1, failed: 1 }))
 })

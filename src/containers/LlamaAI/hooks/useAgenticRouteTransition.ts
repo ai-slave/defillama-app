@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffectEvent, useLayoutEffect, useMemo, useRef } from 'react'
 import {
 	isSameAgenticRouteTransition,
 	shouldSkipCurrentSessionRouteRestore,
@@ -28,19 +28,6 @@ export function useAgenticRouteTransition({
 	onOpenSession,
 	onClearChat
 }: UseAgenticRouteTransitionOptions) {
-	const onNewChatRef = useRef(onNewChat)
-	const onOpenSessionRef = useRef(onOpenSession)
-	const onClearChatRef = useRef(onClearChat)
-	const getCurrentSessionIdRef = useRef(getCurrentSessionId)
-	// Written after commit rather than during render: a render-phase ref write costs the hook its
-	// compiler optimization, and every reader here runs from a handler or an effect, after commit.
-	useLayoutEffect(() => {
-		onNewChatRef.current = onNewChat
-		onOpenSessionRef.current = onOpenSession
-		onClearChatRef.current = onClearChat
-		getCurrentSessionIdRef.current = getCurrentSessionId
-	})
-
 	const previousRouteTransitionRef = useRef<AgenticRouteTransition | null>(null)
 
 	const routeTransition = useMemo(() => {
@@ -54,44 +41,46 @@ export function useAgenticRouteTransition({
 		}
 	}, [])
 
+	// Runs inside the route effect only, so it reads the latest chat callbacks without making them triggers.
+	const applyTransition = useEffectEvent(
+		(transition: AgenticRouteTransition, previousTransition: AgenticRouteTransition | null) => {
+			switch (transition.kind) {
+				case 'new-chat':
+					onNewChat()
+					return
+				case 'session': {
+					if (
+						shouldSkipCurrentSessionRouteRestore(
+							transition,
+							previousTransition?.kind === 'session'
+								? { ...previousTransition, sessionId: resolveSessionAlias(previousTransition.sessionId) }
+								: previousTransition,
+							getCurrentSessionId()
+						)
+					) {
+						return
+					}
+					void onOpenSession(transition.sessionId, transition.aroundMessageId)
+					return
+				}
+				case 'project-list':
+				case 'project':
+					onClearChat()
+					return
+				default: {
+					const _exhaustive: never = transition
+					return _exhaustive
+				}
+			}
+		}
+	)
+
 	useLayoutEffect(() => {
 		if (!routeTransition) return
 
 		const previousTransition = previousRouteTransitionRef.current
 		if (previousTransition && isSameAgenticRouteTransition(previousTransition, routeTransition)) return
 		previousRouteTransitionRef.current = routeTransition
-
-		const transition = async () => {
-			switch (routeTransition.kind) {
-				case 'new-chat':
-					onNewChatRef.current()
-					return
-				case 'session': {
-					if (
-						shouldSkipCurrentSessionRouteRestore(
-							routeTransition,
-							previousTransition?.kind === 'session'
-								? { ...previousTransition, sessionId: resolveSessionAlias(previousTransition.sessionId) }
-								: previousTransition,
-							getCurrentSessionIdRef.current()
-						)
-					) {
-						return
-					}
-					await onOpenSessionRef.current(routeTransition.sessionId, routeTransition.aroundMessageId)
-					return
-				}
-				case 'project-list':
-				case 'project':
-					onClearChatRef.current()
-					return
-				default: {
-					const _exhaustive: never = routeTransition
-					return _exhaustive
-				}
-			}
-		}
-
-		void transition()
-	}, [routeTransition, resolveSessionAlias])
+		applyTransition(routeTransition, previousTransition)
+	}, [routeTransition])
 }

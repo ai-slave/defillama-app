@@ -8,9 +8,9 @@ import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { InlineStatus, PanelStatus } from '~/ui/Status'
-import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import {
 	ArticleApiError,
 	createArticle,
@@ -49,7 +49,6 @@ import {
 	cacheWrittenArticle,
 	sanitizeLinkHref,
 	slugFromTitle,
-	useTicker,
 	formatArticleDate
 } from './ArticleEditorUtils'
 import { ArticleMetaDialog } from './ArticleMetaDialog'
@@ -185,8 +184,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			void saveRef.current({ silent: true })
 		}, 1500)
 	}, [getArticleId])
-
-	useTicker()
 
 	const editor = useEditor({
 		extensions,
@@ -644,7 +641,10 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		}
 	})
 	const isPublishing = publishMutation.isPending || unpublishMutation.isPending
-	const articleIsScheduled = isScheduled(article)
+	// The editor renders on the client only. The scheduled badge and controls follow the clock, so an article whose
+	// go-live time passes while it is open stops reading as scheduled.
+	const nowSec = useNowSeconds()
+	const articleIsScheduled = isScheduled(article, nowSec * 1000)
 	const isDiscarding = discardPendingMutation.isPending
 	const collaborators = useArticleCollaborators({
 		articleId: article.id,
@@ -690,7 +690,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		setArticle(merged)
 		setSavedAt(merged.updatedAt)
 		revalidateLanding()
-		if (isScheduled(merged)) return { ok: true, message: `Scheduled for ${formatArticleDate(merged.goLiveAt)}` }
+		if (isScheduled(merged, Date.now()))
+			return { ok: true, message: `Scheduled for ${formatArticleDate(merged.goLiveAt)}` }
 		return { ok: true, message: merged.status === 'published' ? publishedMessage : 'Saved' }
 	}
 
@@ -917,8 +918,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		)
 	}
 
-	const savedLabel = savedAt ? formatRelativeTime(savedAt) : null
-	const savedExactLabel = savedAt ? formatDateTime(savedAt, { timeZone: 'local' }) : null
 	const readMins = Math.max(1, Math.ceil(wordCount / 220))
 
 	const markButtons: Array<MarkButton> = editor
@@ -990,34 +989,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				: savedAt
 					? 'saved'
 					: 'idle'
-	const pillLabel = (() => {
-		switch (pillState) {
-			case 'saving':
-				return 'Saving…'
-			case 'saved':
-				return savedLabel ? `Saved ${savedLabel}` : 'Saved'
-			case 'unsaved':
-				return 'Unsaved'
-			case 'error':
-				return 'Offline — typing locally'
-			default:
-				return 'Ready'
-		}
-	})()
-	const pillDot = (() => {
-		switch (pillState) {
-			case 'saving':
-				return 'bg-secondary animate-pulse'
-			case 'saved':
-				return 'bg-success'
-			case 'unsaved':
-				return 'bg-warning'
-			case 'error':
-				return 'bg-error'
-			default:
-				return 'bg-tertiary/50'
-		}
-	})()
 	const articleViewHref = article.section
 		? `/research/${ARTICLE_SECTION_SLUGS[article.section]}/${article.slug}`
 		: '/research'
@@ -1029,6 +1000,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			<ArticleEditorHeader
 				article={article}
 				articleIsScheduled={articleIsScheduled}
+				nowSec={nowSec}
 				articleViewHref={articleViewHref}
 				beginSlugEdit={beginSlugEdit}
 				cancelSlugEdit={cancelSlugEdit}
@@ -1045,12 +1017,9 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				isPublishing={isPublishing}
 				onOpenHistory={() => setHistoryOpen(true)}
 				onOpenMeta={openMeta}
-				pillDot={pillDot}
-				pillLabel={pillLabel}
 				pillState={pillState}
 				saveArticle={saveArticle}
-				savedLabel={savedLabel}
-				savedExactLabel={savedExactLabel}
+				savedAt={savedAt}
 				setSlugDraft={setSlugDraft}
 				slugDraft={slugDraft}
 				slugEditing={slugEditing}

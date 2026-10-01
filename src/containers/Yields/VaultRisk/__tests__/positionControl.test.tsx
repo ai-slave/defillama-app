@@ -3,7 +3,9 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { PositionControl } from '../components/PositionControl'
+import { renderHydrated } from '~/utils/testing/hydration'
+import { waitForUi } from '~/utils/testing/waitForUi'
+import { PositionControl, PositionProvider, usePositionUsd } from '../components/PositionControl'
 
 describe('PositionControl deposit input', () => {
 	let container: HTMLDivElement
@@ -58,5 +60,62 @@ describe('PositionControl deposit input', () => {
 		await type('250')
 		await render(10_000)
 		expect(input().value).toBe('10,000')
+	})
+})
+
+describe('the deposit amount shared by the risk section', () => {
+	const STORAGE_KEY = 'llama-risk-position-usd'
+
+	function Control() {
+		const [position, setPosition] = usePositionUsd()
+		return <PositionControl position={position} onChange={setPosition} />
+	}
+	function Readout() {
+		const [position] = usePositionUsd()
+		return <output>{position ?? 'pool'}</output>
+	}
+	const section = (
+		<PositionProvider>
+			<Control />
+			<Readout />
+		</PositionProvider>
+	)
+	const readout = (container: HTMLElement) => container.querySelector('output')!.textContent
+
+	afterEach(() => {
+		localStorage.clear()
+		vi.restoreAllMocks()
+	})
+
+	test('hydrates in pool mode, then shows the stored amount', async () => {
+		localStorage.setItem(STORAGE_KEY, '25000')
+		const page = await renderHydrated(section, { pageClockSec: 1_790_000_000 })
+		expect(page.serverHtml).toContain('<output>pool</output>')
+		expect(page.errors).toEqual([])
+		expect(readout(page.container)).toBe('25000')
+		await page.unmount()
+	})
+
+	test('follows an amount saved in another tab', async () => {
+		const page = await renderHydrated(section, { pageClockSec: 1_790_000_000 })
+		expect(readout(page.container)).toBe('pool')
+		localStorage.setItem(STORAGE_KEY, '5000')
+		await act(async () =>
+			window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, storageArea: localStorage }))
+		)
+		await waitForUi(() => expect(readout(page.container)).toBe('5000'))
+		await page.unmount()
+	})
+
+	test('keeps a chosen amount for the visit when storage refuses to save it', async () => {
+		vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+			throw new DOMException('Blocked', 'SecurityError')
+		})
+		const page = await renderHydrated(section, { pageClockSec: 1_790_000_000 })
+		const preset = [...page.container.querySelectorAll('button')].find((button) => button.textContent === '$10k')!
+		await act(async () => preset.click())
+		expect(readout(page.container)).toBe('10000')
+		expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+		await page.unmount()
 	})
 })

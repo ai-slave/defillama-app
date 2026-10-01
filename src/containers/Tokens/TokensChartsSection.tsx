@@ -6,6 +6,7 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -268,10 +269,10 @@ function MoversChart({
 	entries: Array<TokensMoverEntry>
 	color: string
 }) {
-	// Read by the chart's click handler, which echarts calls on user interaction, never during render.
-	const entriesRef = React.useRef(entries)
-	React.useLayoutEffect(() => {
-		entriesRef.current = entries
+	// ECharts calls this on a bar click, so it reads the bars shown now, after any filter change.
+	const openEntry = useStableCallback((dataIndex: number) => {
+		const href = entries[dataIndex]?.href
+		if (href) void Router.push(href)
 	})
 	const chartData = React.useMemo(() => {
 		const categories: Array<string> = []
@@ -285,14 +286,14 @@ function MoversChart({
 		return { categories, values, logos }
 	}, [entries])
 
-	const handleReady = React.useCallback((instance: echarts.ECharts | null) => {
-		if (!instance) return
-		instance.off('click')
-		instance.on('click', (params) => {
-			const href = entriesRef.current[params.dataIndex]?.href
-			if (href) void Router.push(href)
-		})
-	}, [])
+	const handleReady = React.useCallback(
+		(instance: echarts.ECharts | null) => {
+			if (!instance) return
+			instance.off('click')
+			instance.on('click', (params) => openEntry(params.dataIndex))
+		},
+		[openEntry]
+	)
 
 	return (
 		<div className={`flex min-w-0 flex-col ${className ?? ''}`.trim()}>

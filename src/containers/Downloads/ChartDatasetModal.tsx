@@ -1,17 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import {
-	type CSSProperties,
-	lazy,
-	Suspense,
-	useCallback,
-	useDeferredValue,
-	useEffect,
-	useMemo,
-	useRef,
-	useState
-} from 'react'
+import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
@@ -48,8 +38,11 @@ import {
 	defaultPresetName,
 	extractChartConfig,
 	generatePresetId,
+	missingColumnNotices,
+	missingSavedItemsNotice,
 	type SavedDownloadInput
 } from './savedDownloads'
+import { SavedPresetNotice } from './SavedPresetNotice'
 import { sumCsvColumnsToTotal } from './sumCsvColumns'
 import { buildShareUrl } from './urlState'
 
@@ -250,13 +243,6 @@ export function ChartDatasetModal({
 		}
 	}
 
-	useEffect(() => {
-		if (!appliedInitialParams || appliedInitialParams.missingParams.length === 0) return
-		if (initialConfig?.categoryBreakdown && supportsBreakdown) return
-		const count = appliedInitialParams.missingParams.length
-		toast(`${count} saved ${dataset.paramLabel.toLowerCase()}${count === 1 ? '' : 's'} no longer available`)
-	}, [appliedInitialParams, initialConfig?.categoryBreakdown, supportsBreakdown, dataset.paramLabel])
-
 	const protocolCategories = useMemo(() => {
 		if (!supportsBreakdown) return []
 		const cats = new Map<string, number>()
@@ -418,16 +404,16 @@ export function ChartDatasetModal({
 		}
 	}
 
-	useEffect(() => {
-		if (!appliedInitialColumns) return
-		const { missingColumns, missingSortColumn } = appliedInitialColumns
-		if (missingColumns.length > 0) {
-			toast(
-				`${missingColumns.length} saved column${missingColumns.length === 1 ? '' : 's'} no longer available: ${missingColumns.slice(0, 3).join(', ')}${missingColumns.length > 3 ? '…' : ''}`
-			)
-		}
-		if (missingSortColumn) toast(`Saved sort column "${missingSortColumn}" no longer available`)
-	}, [appliedInitialColumns])
+	// A preset opened in category mode takes its protocols from the category CSV, so none of its saved ones went missing.
+	const missingParamCount =
+		initialConfig?.categoryBreakdown && supportsBreakdown ? 0 : (appliedInitialParams?.missingParams.length ?? 0)
+	const savedPresetNotices =
+		missingParamCount > 0
+			? [
+					missingSavedItemsNotice(missingParamCount, dataset.paramLabel.toLowerCase()),
+					...missingColumnNotices(appliedInitialColumns)
+				]
+			: missingColumnNotices(appliedInitialColumns)
 
 	const cols = selectedColumns ?? EMPTY_SELECTION
 
@@ -1286,6 +1272,7 @@ export function ChartDatasetModal({
 								<p className="text-xs text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
 							) : null}
 						</div>
+						<SavedPresetNotice notices={savedPresetNotices} />
 					</div>
 
 					<div className="flex min-h-0 flex-1">

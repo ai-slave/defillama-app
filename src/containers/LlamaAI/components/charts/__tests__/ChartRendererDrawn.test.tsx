@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as echarts from 'echarts/core'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
@@ -54,6 +55,10 @@ const rows = [
 
 let container: HTMLDivElement
 let root: Root
+// Charts probe their icons through React Query.
+const client = new QueryClient()
+const render = (node: ReactNode) =>
+	act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
 
 // ChartRenderer lazy-loads the chart; load it once so every test draws without waiting on the import.
 beforeAll(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -69,6 +74,7 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	client.clear()
 	vi.restoreAllMocks()
 })
 
@@ -94,13 +100,11 @@ async function clickButton(text: string) {
 }
 
 test('each tab draws its own persisted dataset', async () => {
-	await act(async () =>
-		root.render(
-			<ChartRenderer
-				charts={[revenueChart('a', 'dataset-a'), revenueChart('b', 'dataset-b')]}
-				chartData={{ 'dataset-a': [rows[0]], 'dataset-b': [rows[1]] }}
-			/>
-		)
+	await render(
+		<ChartRenderer
+			charts={[revenueChart('a', 'dataset-a'), revenueChart('b', 'dataset-b')]}
+			chartData={{ 'dataset-a': [rows[0]], 'dataset-b': [rows[1]] }}
+		/>
 	)
 	const drawnValues = () =>
 		drawnOptions().map((option) => option.dataset[0].source.map((row: Array<unknown>) => row.slice(1)))
@@ -111,11 +115,7 @@ test('each tab draws its own persisted dataset', async () => {
 })
 
 test('previewing an area series redraws only the preview, as a line', async () => {
-	await act(async () =>
-		root.render(
-			<ChartRenderer charts={[revenueChart('revenue')]} chartData={rows} onLocalStyleSave={() => undefined} />
-		)
-	)
+	await render(<ChartRenderer charts={[revenueChart('revenue')]} chartData={rows} onLocalStyleSave={() => undefined} />)
 	await clickButton('Edit chart style')
 	const seriesType = document.querySelector<HTMLSelectElement>('[aria-label="Series 2 type"]')!
 	await act(async () => {
@@ -132,11 +132,7 @@ test('previewing an area series redraws only the preview, as a line', async () =
 })
 
 test('a draft annotation is drawn in the preview but not on the applied chart', async () => {
-	await act(async () =>
-		root.render(
-			<ChartRenderer charts={[revenueChart('revenue')]} chartData={rows} onLocalStyleSave={() => undefined} />
-		)
-	)
+	await render(<ChartRenderer charts={[revenueChart('revenue')]} chartData={rows} onLocalStyleSave={() => undefined} />)
 	await clickButton('Edit chart style')
 	await clickButton('+ Add annotation')
 	const label = document.querySelector<HTMLInputElement>('[aria-label="Annotation 1 label"]')!

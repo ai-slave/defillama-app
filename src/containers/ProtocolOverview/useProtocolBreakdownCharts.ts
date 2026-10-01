@@ -4,6 +4,7 @@ import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/tim
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import type { IProtocolValueChart, ProtocolTreasuryKey } from './api.types'
 import { useFetchProtocolChartsByKeys, type IFetchProtocolChartsByKeysParams } from './queries.client'
 import type { ProtocolExtraTvlKey } from './tvlChart'
@@ -890,26 +891,19 @@ export function useProtocolBreakdownCharts(
 		tokenPieMinimumValue
 	})
 
-	const latestComputeInputRef = React.useRef<{
-		tvlCharts: Array<IProtocolValueChart | null | undefined>
-		chainBreakdownCharts: Array<ProtocolBreakdownChart | null | undefined>
-		tokenBreakdownUsdCharts: Array<ProtocolBreakdownChart | null | undefined>
-		tokenBreakdownRawCharts: Array<ProtocolBreakdownChart | null | undefined>
-	}>({
-		tvlCharts: [],
-		chainBreakdownCharts: [],
-		tokenBreakdownUsdCharts: [],
-		tokenBreakdownRawCharts: []
-	})
-	// Written after commit and read only by the scheduled computation, never during render.
-	React.useLayoutEffect(() => {
-		latestComputeInputRef.current = {
+	// The scheduled computation calls this after commit, so it reads the latest query data.
+	const computeLatest = useStableCallback(() =>
+		buildComputedBreakdownResult({
 			tvlCharts: selectComputableCharts(tvlChartQueries),
 			chainBreakdownCharts: selectComputableCharts(chainBreakdownChartQueries),
 			tokenBreakdownUsdCharts: selectComputableCharts(tokenBreakdownUsdQueries),
-			tokenBreakdownRawCharts: selectComputableCharts(tokenBreakdownRawQueries)
-		}
-	})
+			tokenBreakdownRawCharts: selectComputableCharts(tokenBreakdownRawQueries),
+			valueSeriesName: source === 'treasury' ? 'Treasury' : 'Total',
+			inflows,
+			computeInflows,
+			tokenPieMinimumValue
+		})
+	)
 
 	const [computed, setComputed] = React.useState<{
 		protocol: string
@@ -928,13 +922,7 @@ export function useProtocolBreakdownCharts(
 		const runComputation = () => {
 			if (cancelled || runId !== computeRunIdRef.current) return
 
-			const next = buildComputedBreakdownResult({
-				...latestComputeInputRef.current,
-				valueSeriesName: source === 'treasury' ? 'Treasury' : 'Total',
-				inflows,
-				computeInflows,
-				tokenPieMinimumValue
-			})
+			const next = computeLatest()
 
 			if (cancelled || runId !== computeRunIdRef.current) return
 			setComputed({ protocol: computedProtocol, result: next })
@@ -962,8 +950,8 @@ export function useProtocolBreakdownCharts(
 				window.clearTimeout(timeoutId)
 			}
 		}
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- computeSignature is the trigger: the computation reads its inputs from the ref, so the signature is what says they changed.
-	}, [isNetworkLoading, computeSignature, protocol, source, inflows, computeInflows, tokenPieMinimumValue])
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- computeSignature is the trigger: computeLatest reads the inputs, and the signature is what says they changed.
+	}, [isNetworkLoading, computeSignature, protocol, computeLatest])
 
 	const errors = React.useMemo(
 		() =>

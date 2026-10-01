@@ -334,6 +334,28 @@ export function applyChartColumnsAndSort(
 	return { selectedColumns, sort, missingColumns, missingSortColumn }
 }
 
+/** "2 saved metrics no longer available": a saved preset names something today's data no longer offers. */
+export function missingSavedItemsNotice(count: number, noun: string): string {
+	return `${count} saved ${noun}${count === 1 ? '' : 's'} no longer available`
+}
+
+/** What applying a saved preset to the loaded CSV headers dropped, as the sentences its modal shows. */
+export function missingColumnNotices(
+	applied: { missingColumns: Array<string>; missingSortColumn: string | null } | null
+): Array<string> {
+	if (!applied) return []
+	const notices: Array<string> = []
+	const { missingColumns, missingSortColumn } = applied
+	if (missingColumns.length > 0) {
+		const listed = missingColumns.slice(0, 3).join(', ')
+		notices.push(
+			`${missingSavedItemsNotice(missingColumns.length, 'column')}: ${listed}${missingColumns.length > 3 ? '…' : ''}`
+		)
+	}
+	if (missingSortColumn) notices.push(`Saved sort column "${missingSortColumn}" no longer available`)
+	return notices
+}
+
 export interface AppliedMultiMetricConfig {
 	paramType: SavedParamType
 	param: { label: string; value: string } | null
@@ -361,6 +383,17 @@ export function applyMultiMetricConfig(
 		missingParam: !opt,
 		missingMetrics
 	}
+}
+
+/** What applying a saved multi-metric preset dropped. A missing param drops the whole preset, so it is the only notice. */
+export function missingMultiMetricNotices(
+	config: MultiMetricSavedConfig,
+	applied: AppliedMultiMetricConfig
+): Array<string> {
+	if (applied.missingParam) {
+		return [`Saved ${config.paramType} "${config.paramLabel ?? config.param}" no longer available`]
+	}
+	return applied.missingMetrics.length > 0 ? [missingSavedItemsNotice(applied.missingMetrics.length, 'metric')] : []
 }
 
 // --- Naming and display ---

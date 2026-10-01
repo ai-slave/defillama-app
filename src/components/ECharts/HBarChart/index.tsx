@@ -3,7 +3,7 @@ import { BarChart } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
@@ -11,6 +11,7 @@ import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { formatTooltipValue } from '../shared/formatters'
+import { useLoadedIconUrls } from '../shared/icon'
 import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { formatHBarTooltip } from './tooltip'
 import type { IHBarChartProps } from './types'
@@ -69,33 +70,10 @@ function HBarChart({
 	})
 
 	// All-or-nothing logos: sparse icons (some 404) look worse than none and throw off left-margin
-	// alignment between sibling charts. Preload every logo and only enable the overlay if ALL load.
+	// alignment between sibling charts. Probe every logo and only enable the overlay if ALL load.
 	const complete = !!logos && logos.length === categories.length && logos.every(Boolean)
-	// The logo set that finished preloading, so the overlay switches off for a new set without an extra
-	// render: `hasLogos` is false again until that exact set reports back.
-	const [preloadedLogos, setPreloadedLogos] = useState<Array<string | null> | null>(null)
-	useEffect(() => {
-		if (!complete) return
-		let cancelled = false
-		Promise.all(
-			logos!.map(
-				(url) =>
-					new Promise<boolean>((resolve) => {
-						const img = new Image()
-						img.addEventListener('load', () => resolve(true), { once: true })
-						img.addEventListener('error', () => resolve(false), { once: true })
-						img.src = url
-					})
-			)
-		).then((results) => {
-			if (!cancelled && results.every(Boolean)) setPreloadedLogos(logos!)
-		})
-		return () => {
-			cancelled = true
-		}
-	}, [logos, complete])
-
-	const hasLogos = complete && preloadedLogos === logos
+	const loadedLogos = useLoadedIconUrls(complete ? logos : [])
+	const hasLogos = complete && logos.every((url) => loadedLogos.has(url))
 	const textColor = chartTheme.axisLabel
 	let overlayLabelWidth = 0
 	if (hasLogos) {

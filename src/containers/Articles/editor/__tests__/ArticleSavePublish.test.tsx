@@ -301,3 +301,31 @@ test('does not apply an old cover upload to a different article', async () => {
 	await save()
 	expect(JSON.parse(api.save.mock.calls.at(-1)![1].body as string).coverImage.url).toBe('/retry.png')
 })
+
+test('the save button counts the time since the last save', async () => {
+	// Only the wall clock and intervals are fake; settle() still needs a real setTimeout.
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'], now: new Date('2026-09-30T12:00:00Z') })
+	try {
+		await mount()
+		await typeTitle('Timed headline')
+		await save()
+		expect(button('Saved just now — save again')).toBeTruthy()
+		await act(async () => vi.advanceTimersByTime(120_000))
+		expect(button('Saved 2min ago — save again')).toBeTruthy()
+	} finally {
+		vi.useRealTimers()
+	}
+})
+
+test('a scheduled draft stops reading as scheduled once its go-live time passes while it is open', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'], now: new Date('2026-09-30T12:00:00Z') })
+	try {
+		article = { ...article, status: 'draft', goLiveAt: '2026-09-30T12:00:20Z' }
+		await mount()
+		expect(container.textContent).toContain('draft · scheduled')
+		await act(async () => vi.advanceTimersByTime(60_000))
+		expect(container.textContent).not.toContain('draft · scheduled')
+	} finally {
+		vi.useRealTimers()
+	}
+})

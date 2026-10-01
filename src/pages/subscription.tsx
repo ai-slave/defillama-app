@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
@@ -85,34 +85,25 @@ function SubscriptionContent() {
 	}, [router.isReady, router.query])
 
 	/* ── Return modal (redirect after sign-in) ────────────────────────── */
-	const [showReturnModal, setShowReturnModal] = useState(false)
-	const handledReturnUrlRef = useRef<string | undefined>(undefined)
+	// The return URL the reader dismissed, or that a new signup dropped. Either way it is not offered again.
+	const [handledReturnUrl, setHandledReturnUrl] = useState<string>()
+	const returnIntent = getReturnIntentAction({
+		isAuthenticated,
+		userLoading: loaders.userLoading,
+		isNewSignup,
+		returnUrl,
+		handledReturnUrl
+	})
 
+	// Right after signup, onboarding takes over: the destination leaves the URL, and only then does the signup
+	// outcome end, so no render offers the return in between.
 	useEffect(() => {
-		let cancelled = false
-		const action = getReturnIntentAction({
-			isAuthenticated,
-			userLoading: loaders.userLoading,
-			isNewSignup,
-			returnUrl,
-			handledReturnUrl: handledReturnUrlRef.current
-		})
-		if (action === 'consume') {
-			handledReturnUrlRef.current = returnUrl
-			void replace({ pathname, query: withoutReturnUrl(query) }, undefined, { shallow: true })
+		if (returnIntent !== 'consume') return
+		void replace({ pathname, query: withoutReturnUrl(query) }, undefined, { shallow: true }).then(() => {
+			setHandledReturnUrl(returnUrl)
 			consumeSignupOutcome()
-		} else if (action === 'prompt') {
-			queueMicrotask(() => {
-				if (cancelled) return
-				handledReturnUrlRef.current = returnUrl
-				setShowReturnModal(true)
-			})
-		}
-
-		return () => {
-			cancelled = true
-		}
-	}, [isAuthenticated, returnUrl, loaders.userLoading, isNewSignup, consumeSignupOutcome, pathname, query, replace])
+		})
+	}, [returnIntent, returnUrl, consumeSignupOutcome, pathname, query, replace])
 
 	/* ── Helpers ───────────────────────────────────────────────────────── */
 	// Reverting a scheduled cancellation happens in the Stripe billing portal.
@@ -308,7 +299,11 @@ function SubscriptionContent() {
 
 			{/* Return modal (post sign-in redirect) */}
 			{returnUrl ? (
-				<ReturnModal isOpen={showReturnModal} onClose={() => setShowReturnModal(false)} returnUrl={returnUrl} />
+				<ReturnModal
+					isOpen={returnIntent === 'prompt'}
+					onClose={() => setHandledReturnUrl(returnUrl)}
+					returnUrl={returnUrl}
+				/>
 			) : null}
 
 			<Toast />

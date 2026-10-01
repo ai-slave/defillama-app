@@ -1,6 +1,7 @@
 import MonacoEditor, { loader } from '@monaco-editor/react'
 import type { Ref } from 'react'
-import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../chartConfig'
 import { ErrorBanner, replaceIdentifier } from '../ErrorBanner'
@@ -44,7 +45,9 @@ export function SqlCell({
 	onPreferredViewChange,
 	ref
 }: SqlCellProps & { ref?: Ref<SqlCellHandle> }) {
-	const [theme, setTheme] = useState<string>(() => computeTheme())
+	// The theme store, not the <html> class: the class flips in an effect after the toggle renders.
+	const [isDarkMode] = useDarkModeManager()
+	const theme = isDarkMode ? DARK_THEME_ID : LIGHT_THEME_ID
 	const editorInstanceRef = useRef<any>(null)
 
 	const onRunRef = useRef(onRun)
@@ -53,14 +56,6 @@ export function SqlCell({
 		onRunRef.current = onRun
 		onRunAndAdvanceRef.current = onRunAndAdvance
 	}, [onRun, onRunAndAdvance])
-
-	useEffect(() => {
-		const root = typeof document !== 'undefined' ? document.documentElement : null
-		if (!root) return
-		const observer = new MutationObserver(() => setTheme(computeTheme()))
-		observer.observe(root, { attributes: true, attributeFilter: ['class', 'data-theme'] })
-		return () => observer.disconnect()
-	}, [])
 
 	useImperativeHandle(
 		ref,
@@ -170,16 +165,6 @@ export function SqlCell({
 			/>
 		</div>
 	)
-}
-
-function computeTheme(): string {
-	if (typeof document === 'undefined') return DARK_THEME_ID
-	const root = document.documentElement
-	if (root.classList.contains('light')) return LIGHT_THEME_ID
-	if (root.classList.contains('dark')) return DARK_THEME_ID
-	if (root.getAttribute('data-theme') === 'light') return LIGHT_THEME_ID
-	if (root.getAttribute('data-theme') === 'dark') return DARK_THEME_ID
-	return DARK_THEME_ID
 }
 
 const llamaSqlDark = {

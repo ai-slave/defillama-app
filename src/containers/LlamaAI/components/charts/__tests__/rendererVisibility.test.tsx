@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as echarts from 'echarts/core'
 import { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -13,6 +14,7 @@ import { installChartCanvas } from '~/utils/testing/chartCanvas'
 afterEach(() => {
 	vi.restoreAllMocks()
 	document.body.replaceChildren()
+	client.clear()
 })
 
 // Stable data, as the chat message holds it: a new array would redraw the chart and reset its zoom.
@@ -22,16 +24,21 @@ const candles: Array<CandlestickPoint> = [
 	[2, 12, 11, 10, 14, 120]
 ]
 
+// Charts probe their icons through React Query.
+const client = new QueryClient()
+
 function Harness({ visible }: { visible: boolean }) {
 	const [view, setView] = useState('chart')
 	return (
-		<EChartsRenderVisibilityProvider visible={visible}>
-			<button type="button" onClick={() => setView('table')}>
-				{view}
-			</button>
-			<ScatterChart chartData={scatterData} />
-			<CandlestickChart data={candles} />
-		</EChartsRenderVisibilityProvider>
+		<QueryClientProvider client={client}>
+			<EChartsRenderVisibilityProvider visible={visible}>
+				<button type="button" onClick={() => setView('table')}>
+					{view}
+				</button>
+				<ScatterChart chartData={scatterData} />
+				<CandlestickChart data={candles} />
+			</EChartsRenderVisibilityProvider>
+		</QueryClientProvider>
 	)
 }
 

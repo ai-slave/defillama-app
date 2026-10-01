@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { formatDate, formatDateTime, formatRelativeTime, type TimestampInput } from '~/utils/dateFormat'
 
 type RelativeTimeProps = {
@@ -11,17 +11,10 @@ type RelativeTimeProps = {
 	className?: string
 }
 
-/** Hydration-safe freshness label with a ticking relative value and an exact timestamp tooltip. */
+/** Freshness label that ticks each minute, with an exact timestamp tooltip. The server and the hydrating client
+    measure it from the page clock, then it follows the visitor's clock. */
 export function RelativeTime({ value, input, prefix, pastLabel, fallback = '-', className }: RelativeTimeProps) {
-	const [now, setNow] = useState<Date | null>(null)
-
-	useEffect(() => {
-		// The clock starts on the client only: rendering a time during SSR would not match hydration.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setNow(new Date())
-		const timer = window.setInterval(() => setNow(new Date()), 60_000)
-		return () => window.clearInterval(timer)
-	}, [])
+	const now = new Date(useNowSeconds(undefined, 60_000) * 1000)
 
 	const exact =
 		typeof value === 'number'
@@ -30,13 +23,12 @@ export function RelativeTime({ value, input, prefix, pastLabel, fallback = '-', 
 				: null
 			: formatDateTime(value, { timeZone: 'UTC' })
 	const absolute = typeof value === 'number' ? (input ? formatDate(value, { input }) : null) : formatDate(value)
-	const relative = now
-		? typeof value === 'number'
+	const relative =
+		typeof value === 'number'
 			? input
 				? formatRelativeTime(value, { input, now, pastLabel })
 				: null
 			: formatRelativeTime(value, { now, pastLabel })
-		: null
 	const label = relative ?? absolute ?? fallback
 
 	return (

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useEditorState, type Editor } from '@tiptap/react'
-import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, type ReactNode } from 'react'
 import {
 	headingAbove,
 	readColumnWidths,
@@ -9,6 +9,7 @@ import {
 	useTableImageWatermark
 } from '~/components/TableImage/TableImageButtons'
 import { Icon } from './ArticleEditorIcon'
+import { useArticleEditable } from './useArticleEditable'
 
 export function RailButton({
 	active,
@@ -74,26 +75,19 @@ function TableRailButton({
 }
 
 export function TableControlsOverlay({ editor }: { editor: Editor }) {
-	const [target, setTarget] = useState<HTMLElement | null>(null)
-	useEffect(() => {
-		const sync = () => {
-			if (!editor.isEditable || !editor.isActive('table')) {
-				setTarget(null)
-				return
-			}
-			const { from } = editor.state.selection
-			const node = editor.view.domAtPos(from).node
+	// setEditable emits no transaction, so editability comes from its own subscription.
+	const editable = useArticleEditable(editor)
+	const target = useEditorState({
+		editor,
+		selector: ({ editor: e }) => {
+			if (!editable || !e.isActive('table')) return null
+			const node = e.view.domAtPos(e.state.selection.from).node
 			const element = node.nodeType === 1 ? (node as HTMLElement) : node.parentElement
-			setTarget(element?.closest('table') ?? null)
-		}
-		editor.on('update', sync)
-		editor.on('transaction', sync)
-		sync()
-		return () => {
-			editor.off('update', sync)
-			editor.off('transaction', sync)
-		}
-	}, [editor])
+			return element?.closest('table') ?? null
+		},
+		// The default deep equality would walk the DOM node and ProseMirror's view tree hanging off it.
+		equalityFn: (a, b) => a === b
+	})
 	return target ? <TableToolbar editor={editor} target={target} /> : null
 }
 

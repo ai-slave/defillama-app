@@ -70,7 +70,7 @@ const directRelativeTimeFiles = new Set([
 	canonicalFormatter,
 	relativeTimeComponent,
 	'src/containers/Account/Team/TeamInvitesCard.tsx',
-	'src/containers/Articles/editor/ArticleEditorClient.tsx'
+	'src/containers/Articles/editor/ArticleEditorHeader.tsx'
 ])
 
 /**

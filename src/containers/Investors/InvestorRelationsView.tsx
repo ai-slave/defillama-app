@@ -1,10 +1,12 @@
-import { Suspense, useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Suspense, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
-import { resolveEmbeddedDashboardTabs } from './dashboardTabs'
+import { dashboardModuleQuery, resolveEmbeddedDashboardTabs } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
-import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
-import { getDashboardModule, isDashboardRegistered } from './registry'
+import type { DashboardTabConfig } from './dashboardTypes'
+import { isDashboardRegistered } from './registry'
+import { TabStatus } from './TabStatus'
 
 function PillStrip({
 	tabs,
@@ -88,9 +90,10 @@ export function InvestorRelationsView({
 	customServerData?: Record<string, unknown>
 	activeTab?: string
 }) {
-	// The loaded module is remembered with the dashboard it belongs to, so a dashboard switch shows the
-	// skeleton again instead of the previous dashboard's tabs, and the tab choice starts over.
-	const [loaded, setLoaded] = useState<{ dashboardId: string; dashboardModule: DashboardModule | null } | null>(null)
+	// The module query is keyed by dashboard, so a dashboard switch shows the skeleton again instead of the
+	// previous dashboard's tabs; the tab choice starts over with it.
+	const registered = isDashboardRegistered(dashboardId)
+	const moduleQuery = useQuery({ ...dashboardModuleQuery(dashboardId), enabled: registered })
 	const [selectedTab, setSelectedTab] = useState<string | null>(null)
 	const [syncedDashboardId, setSyncedDashboardId] = useState(dashboardId)
 	if (dashboardId !== syncedDashboardId) {
@@ -98,26 +101,14 @@ export function InvestorRelationsView({
 		setSelectedTab(null)
 	}
 	const isControlled = activeTab !== undefined
-	const loadedModule = loaded?.dashboardId === dashboardId ? loaded.dashboardModule : undefined
+	const loadedModule = moduleQuery.data
 	const { tabs, activeTab: resolvedTab } = resolveEmbeddedDashboardTabs({
-		registered: isDashboardRegistered(dashboardId),
+		registered,
 		loadedModule,
 		selectedTab,
 		controlledTab: activeTab
 	})
 	const HeaderComponent = loadedModule?.header ?? null
-
-	useEffect(() => {
-		const loader = getDashboardModule(dashboardId)
-		if (!loader) return
-		let cancelled = false
-		loader.then((mod) => {
-			if (!cancelled) setLoaded({ dashboardId, dashboardModule: mod ?? null })
-		})
-		return () => {
-			cancelled = true
-		}
-	}, [dashboardId])
 
 	return (
 		<AppMetadataProvider>
@@ -128,7 +119,9 @@ export function InvestorRelationsView({
 							<HeaderComponent />
 						</Suspense>
 					) : null}
-					{tabs == null ? (
+					{moduleQuery.isError ? (
+						<TabStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</TabStatus>
+					) : tabs == null ? (
 						<SkeletonTable />
 					) : (
 						<>

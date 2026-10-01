@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
@@ -390,21 +390,13 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 
 	const selectedIndex = useMemo(() => filtered.findIndex((entry) => entry.id === selectedId), [filtered, selectedId])
 
-	const moveSelection = useCallback(
-		(delta: number) => {
-			if (filtered.length === 0) return
-			const nextIndex = Math.min(filtered.length - 1, Math.max(0, selectedIndex + delta))
-			const next = filtered[nextIndex]
-			if (next) setSelectedIdState(next.id)
-		},
-		[filtered, selectedIndex]
-	)
-
-	useEffect(() => {
-		if (!selectedId || !listRef.current) return
-		const node = listRef.current.querySelector<HTMLElement>(`[data-revision-id="${selectedId}"]`)
-		if (node) node.scrollIntoView({ block: 'nearest' })
-	}, [selectedId])
+	// The next row is already rendered, so the keyboard move scrolls it into view without waiting for the commit.
+	const moveSelection = (delta: number) => {
+		if (filtered.length === 0) return
+		const next = filtered[Math.min(filtered.length - 1, Math.max(0, selectedIndex + delta))]
+		setSelectedIdState(next.id)
+		listRef.current?.querySelector<HTMLElement>(`[data-revision-id="${next.id}"]`)?.scrollIntoView({ block: 'nearest' })
+	}
 
 	const previewArticle = useMemo<LocalArticleDocument | null>(() => {
 		if (!selectedRevision) return null

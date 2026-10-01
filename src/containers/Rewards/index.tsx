@@ -12,10 +12,11 @@ import {
 	type PaginationState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { useEffect, useEffectEvent, useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
@@ -69,14 +70,15 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 })
 	const view = useMemo(() => getRewardsView(orderedPrograms, { ...query, search }), [orderedPrograms, query, search])
 	const searchTerm = search.trim().toLowerCase()
-	const trackSearch = useEffectEvent(() => {
+	// Reports the term once typing settles, with the result count the reader sees by then.
+	const trackSearch = useDebouncedCallback(() => {
 		trackRewardsEvent(REWARDS_EVENTS.SEARCH, { variant, term: searchTerm, results: view.rows.length })
-	})
-	useEffect(() => {
-		if (!search.trim()) return
-		const timer = setTimeout(trackSearch, 600)
-		return () => clearTimeout(timer)
-	}, [search])
+	}, 600)
+	const changeSearch = (value: string) => {
+		setSearch(value)
+		if (value.trim()) trackSearch()
+		else trackSearch.cancel()
+	}
 	function updateQuery(patch: Partial<typeof query>) {
 		if (patch.lifecycle !== undefined) {
 			trackRewardsEvent(REWARDS_EVENTS.FILTER_STATUS, { variant, value: patch.lifecycle })
@@ -148,7 +150,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 						<Input
 							type="search"
 							value={search}
-							onChange={(event) => setSearch(event.currentTarget.value)}
+							onChange={(event) => changeSearch(event.currentTarget.value)}
 							placeholder="Search protocols or programs..."
 							className={searchFieldInputPlacementStyles}
 						/>
@@ -167,7 +169,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 						type="button"
 						size="md"
 						onClick={() => {
-							setSearch('')
+							changeSearch('')
 							trackRewardsEvent(REWARDS_EVENTS.FILTER_RESET, { variant })
 							void pushShallowQuery(router, serializeRewardsQuery(readRewardsQuery({})))
 							setPagination({ pageIndex: 0, pageSize: 50 })

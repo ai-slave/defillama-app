@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
-import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
+import { type ChartOptionsMap, fetchAllChartOptions } from '~/containers/Downloads/chart-datasets'
 import {
 	defaultPresetName,
 	extractQueryConfig,
@@ -28,7 +29,6 @@ import type { SqlChartConfig } from '../../types'
 import { ProButton } from '../../ui'
 import type { DashboardItemPlacement } from '../../useDashboardActions'
 import { buildSqlChartConfig } from './buildSqlChartConfig'
-import { loadChartOptions } from './chartOptions'
 import { SqlChartModalSidebar } from './SqlChartModalSidebar'
 import {
 	collectLoadedTables,
@@ -49,6 +49,16 @@ interface SqlChartModalProps {
 	onClosed?: () => void
 	onSaved?: () => void
 }
+
+const NO_CHART_OPTIONS: ChartOptionsMap = {}
+// Chart dataset options name the `chart_*` tables a query can read. They are the same for every card, so one
+// load serves the page, as the module promise it replaces did.
+const chartOptionsQuery = {
+	queryKey: ['sql-chart-options'],
+	queryFn: fetchAllChartOptions,
+	staleTime: Infinity,
+	gcTime: Infinity
+} as const
 
 type RunOutcome = { result: QueryResult; chartConfig: ChartConfig; tables: Array<RegisteredTable> }
 
@@ -79,7 +89,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		[savedDownloads]
 	)
 
-	const [chartOptionsMap, setChartOptionsMap] = useState<ChartOptionsMap>({})
+	const { data: chartOptionsMap = NO_CHART_OPTIONS } = useQuery(chartOptionsQuery)
 	const [sql, setSql] = useState(editItem?.query.sql ?? '')
 	const [name, setName] = useState(editItem?.name ?? '')
 	const [displayMode, setDisplayMode] = useState<'chart' | 'table'>(editItem?.displayMode ?? 'chart')
@@ -93,16 +103,6 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 	useLayoutEffect(() => {
 		chartConfigRef.current = chartConfig
 	})
-
-	useEffect(() => {
-		let active = true
-		loadChartOptions().then((m) => {
-			if (active) setChartOptionsMap(m)
-		})
-		return () => {
-			active = false
-		}
-	}, [])
 
 	useEffect(
 		() => () => {

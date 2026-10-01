@@ -1,38 +1,20 @@
 import { useRouter } from 'next/router'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 	const router = useRouter()
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [inputValue, setInputValue] = useState(defaultValue ?? '')
-
-	useEffect(() => {
-		return () => {
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current)
-			}
-		}
-	}, [])
+	const pushQuery = useDebouncedCallback((value: string) => {
+		void pushShallowQuery(router, { page: undefined, query: value || undefined }, '/pro')
+	}, 300)
 
 	const handleChange = (value: string) => {
 		setInputValue(value)
-
-		if (timeoutRef.current) {
-			clearTimeout(timeoutRef.current)
-		}
-		timeoutRef.current = setTimeout(() => {
-			void pushShallowQuery(
-				router,
-				{
-					page: undefined,
-					query: value || undefined
-				},
-				'/pro'
-			)
-		}, 300)
+		pushQuery(value)
 	}
 
 	const handleClear = () => {
@@ -40,9 +22,7 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 		if (inputRef.current) {
 			inputRef.current.focus()
 		}
-		if (timeoutRef.current) {
-			clearTimeout(timeoutRef.current)
-		}
+		pushQuery.cancel()
 		void pushShallowQuery(
 			router,
 			{

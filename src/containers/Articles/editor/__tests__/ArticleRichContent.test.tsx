@@ -159,6 +159,16 @@ test('table actions follow the selected table and undo restores its rows', async
 	expect(document.querySelector('[aria-label="Table controls"]')).toBeNull()
 })
 
+test('table actions show for a table that holds the caret when the editor opens, and never read-only', async () => {
+	// A new editor places the caret at the start of the document, inside a leading table, before any transaction.
+	await mount({ type: 'doc', content: [table('first'), { type: 'paragraph' }] })
+	expect(document.querySelector('[aria-label="Table controls"]')).not.toBeNull()
+	await act(async () => root.unmount())
+	container.remove()
+	await mount({ type: 'doc', content: [table('first'), { type: 'paragraph' }] }, false)
+	expect(document.querySelector('[aria-label="Table controls"]')).toBeNull()
+})
+
 test('read-only rich content exposes its text without edit controls', async () => {
 	await mount(
 		{

@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -11,15 +12,6 @@ import type { PageAssetSearchHit } from '../pageAssetMarket'
 import type { ArticlePageAsset } from '../types'
 
 const MAX_PAGE_ASSETS = 12
-
-function useDebouncedValue<T>(value: T, delay: number): T {
-	const [debounced, setDebounced] = useState(value)
-	useEffect(() => {
-		const id = setTimeout(() => setDebounced(value), delay)
-		return () => clearTimeout(id)
-	}, [value, delay])
-	return debounced
-}
 
 export function ArticlePageAssetPicker({
 	value,

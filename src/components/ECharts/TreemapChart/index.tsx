@@ -3,7 +3,7 @@ import { TreemapChart as EChartTreemap, type TreemapSeriesOption } from 'echarts
 import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -81,9 +81,8 @@ function TreemapChart({
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const persistentLifecycle = usePersistentEChartsLifecycle()
-	const onReadyRef = useRef(onReady)
-	useEffect(() => {
-		onReadyRef.current = onReady
+	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+		onReady?.(instance)
 	})
 
 	// Observes the container, so a new height resizes the chart too
@@ -111,7 +110,7 @@ function TreemapChart({
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		persistentLifecycle.restore(instance)
-		onReadyRef.current?.(instance)
+		emitReady(instance)
 
 		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
@@ -119,7 +118,7 @@ function TreemapChart({
 			persistentLifecycle.capture(instance)
 			unregisterTreemapFocus()
 			chartRef.current = null
-			onReadyRef.current?.(null)
+			emitReady(null)
 			instance.dispose()
 		}
 	}, [persistentLifecycle])

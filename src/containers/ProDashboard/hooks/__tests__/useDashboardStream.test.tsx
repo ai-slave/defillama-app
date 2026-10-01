@@ -4,10 +4,12 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { DashboardStreamChunk } from '../../dashboardStreamContract'
+import type { Dashboard } from '../../dashboardTypes'
 import {
 	buildStreamRequest,
 	type DashboardStreamRequestOptions,
 	type DashboardStreamState,
+	type DashboardStreamViewer,
 	useDashboardStream
 } from '../useDashboardStream'
 
@@ -17,8 +19,18 @@ let container: HTMLDivElement
 let queryClient: QueryClient
 let streamState: DashboardStreamState | undefined
 
-function Harness({ options }: { options?: DashboardStreamRequestOptions }) {
-	streamState = useDashboardStream('dashboard-1', null, true, options)
+const ANONYMOUS: DashboardStreamViewer = { authToken: null, isAuthenticated: false, userId: undefined }
+
+function Harness({
+	dashboardId = 'dashboard-1',
+	viewer = ANONYMOUS,
+	options
+}: {
+	dashboardId?: string
+	viewer?: DashboardStreamViewer
+	options?: DashboardStreamRequestOptions
+}) {
+	streamState = useDashboardStream(dashboardId, viewer, true, options)
 	return null
 }
 
@@ -37,11 +49,14 @@ function createStreamBody() {
 	}
 }
 
-async function mount(options?: DashboardStreamRequestOptions) {
+async function mount(
+	options?: DashboardStreamRequestOptions,
+	route?: { dashboardId: string; viewer: DashboardStreamViewer }
+) {
 	await act(async () => {
 		root.render(
 			<QueryClientProvider client={queryClient}>
-				<Harness {...(options ? { options } : {})} />
+				<Harness {...(options ? { options } : {})} {...route} />
 			</QueryClientProvider>
 		)
 	})
@@ -163,5 +178,42 @@ describe('useDashboardStream', () => {
 		expect(queryClient.getQueryData(queryKey)).toEqual([[1_700_000_000, 1]])
 		await deliver(() => stream.close())
 		expect(streamState?.isDone).toBe(true)
+	})
+
+	describe('a dashboard opened by its slug', () => {
+		const owner: DashboardStreamViewer = { authToken: 'token', isAuthenticated: true, userId: 'u1' }
+		const dashboard: Dashboard = {
+			id: 'dash-1',
+			slug: 'lending-watch',
+			data: { items: [], dashboardName: 'Lending watch' },
+			created: '2026-09-01',
+			updated: '2026-09-02'
+		}
+
+		test('caches the streamed dashboard for its viewer under both the slug and the id', async () => {
+			const stream = createStreamBody()
+			fetchMock.mockResolvedValue(stream.response)
+			await mount(undefined, { dashboardId: 'lending-watch', viewer: owner })
+
+			await deliver(() => stream.push({ type: 'dashboard', data: dashboard }))
+
+			expect(queryClient.getQueryData(['pro-dashboard', 'dashboard', 'lending-watch', true, 'u1'])).toEqual(dashboard)
+			expect(queryClient.getQueryData(['pro-dashboard', 'dashboard', 'dash-1', true, 'u1'])).toEqual(dashboard)
+			await deliver(() => stream.close())
+		})
+
+		test('does not cache a dashboard the viewer deleted while it streamed', async () => {
+			const stream = createStreamBody()
+			fetchMock.mockResolvedValue(stream.response)
+			await mount(undefined, { dashboardId: 'lending-watch', viewer: owner })
+			queryClient.setQueryData(['pro-dashboard-deleted', 'dash-1', 'u1'], true)
+
+			await deliver(() => stream.push({ type: 'dashboard', data: dashboard }))
+
+			expect(streamState?.dashboard).toEqual(dashboard)
+			expect(queryClient.getQueryData(['pro-dashboard', 'dashboard', 'lending-watch', true, 'u1'])).toBeUndefined()
+			expect(queryClient.getQueryData(['pro-dashboard', 'dashboard', 'dash-1', true, 'u1'])).toBeUndefined()
+			await deliver(() => stream.close())
+		})
 	})
 })

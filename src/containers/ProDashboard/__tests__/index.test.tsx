@@ -63,7 +63,8 @@ type ViewState = {
 	mode?: 'view' | 'edit'
 	loading?: boolean
 	tags?: Array<string>
-	owned?: { slug?: string; visibility?: 'private' | 'public' }
+	owned?: { slug?: string; visibility?: 'private' | 'public'; user?: string }
+	readOnlyReason?: 'subscription'
 	save?: DashboardTestState['save']
 	createDialog?: Ariakit.DialogStore
 }
@@ -91,11 +92,19 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function renderDashboard({ items, mode = 'view', loading = false, tags = [], owned, save }: ViewState) {
+async function renderDashboard({
+	items,
+	mode = 'view',
+	loading = false,
+	tags = [],
+	owned,
+	readOnlyReason,
+	save
+}: ViewState) {
 	const currentDashboard = owned
 		? ({
 				id: 'fixture',
-				user: 'owner',
+				user: owned.user ?? 'owner',
 				data: { items, dashboardName: 'Fixture' },
 				created: '',
 				updated: '',
@@ -115,7 +124,7 @@ async function renderDashboard({ items, mode = 'view', loading = false, tags = [
 								canDelete: !!owned,
 								canMove: !!owned,
 								isReadOnly: mode === 'view' || loading,
-								reason: loading ? 'dashboard-loading' : mode === 'view' ? 'view-mode' : null
+								reason: readOnlyReason ?? (loading ? 'dashboard-loading' : mode === 'view' ? 'view-mode' : null)
 							}}
 							dashboard={{
 								dashboardName: 'Fixture',
@@ -255,6 +264,30 @@ describe('a visitor', () => {
 		const heading = container.querySelector('h1')!
 		expect(heading.textContent).toBe('Fixture')
 		expect(heading.querySelector('button')).toBeNull()
+	})
+})
+
+describe('an owner whose subscription ended', () => {
+	signInAs('free')
+	const notice = 'Your subscription has ended, so this dashboard is view-only.'
+
+	test('sees an inline notice with a link to renew', async () => {
+		await renderDashboard({ items: [note], owned: {}, readOnlyReason: 'subscription' })
+		const status = Array.from(container.querySelectorAll('[role="status"]')).find((node) =>
+			node.textContent?.startsWith(notice)
+		)
+		expect(status?.textContent).toBe(`${notice} Renew`)
+		expect(status?.querySelector('a')?.getAttribute('href')).toBe('/subscription')
+	})
+
+	test('a visitor to someone else’s read-only dashboard sees no renewal notice', async () => {
+		await renderDashboard({
+			items: [note],
+			owned: { user: 'someone-else' },
+			readOnlyReason: 'subscription'
+		})
+		expect(container.textContent).toContain('Note')
+		expect(container.textContent).not.toContain(notice)
 	})
 })
 

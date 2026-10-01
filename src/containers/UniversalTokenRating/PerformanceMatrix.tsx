@@ -1,9 +1,10 @@
+import { useQueries, type QueryObserverResult } from '@tanstack/react-query'
 import type { EChartsOption } from 'echarts'
 import { ScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -16,51 +17,49 @@ import type { UtrGradingConfig, UtrLeaderboardRow } from './types'
 
 echarts.use([ScatterChart, GridComponent, TooltipComponent, CanvasRenderer])
 
-const circularIconCache = new Map<string, Promise<string | null>>()
-
+/** A logo cropped to a circle, or null when it cannot load or be drawn. It never rejects. */
 function circularIcon(url: string): Promise<string | null> {
-	let cached = circularIconCache.get(url)
-	if (!cached) {
-		cached = new Promise<string | null>((resolve) => {
-			const image = new Image()
-			image.decoding = 'sync'
-			image.crossOrigin = 'anonymous'
-			image.addEventListener(
-				'load',
-				() => {
-					try {
-						const size = 48
-						const canvas = document.createElement('canvas')
-						canvas.width = size
-						canvas.height = size
-						const context = canvas.getContext('2d')
-						if (!context) {
-							resolve(null)
-							return
-						}
-						context.beginPath()
-						context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
-						context.clip()
-						context.drawImage(image, 0, 0, size, size)
-						const dataUrl = canvas.toDataURL()
-						const decodedIcon = new Image()
-						decodedIcon.decoding = 'sync'
-						decodedIcon.addEventListener('load', () => resolve(dataUrl), { once: true })
-						decodedIcon.addEventListener('error', () => resolve(null), { once: true })
-						decodedIcon.src = dataUrl
-					} catch {
+	return new Promise<string | null>((resolve) => {
+		const image = new Image()
+		image.decoding = 'sync'
+		image.crossOrigin = 'anonymous'
+		image.addEventListener(
+			'load',
+			() => {
+				try {
+					const size = 48
+					const canvas = document.createElement('canvas')
+					canvas.width = size
+					canvas.height = size
+					const context = canvas.getContext('2d')
+					if (!context) {
 						resolve(null)
+						return
 					}
-				},
-				{ once: true }
-			)
-			image.addEventListener('error', () => resolve(null), { once: true })
-			image.src = url
-		})
-		circularIconCache.set(url, cached)
-	}
-	return cached
+					context.beginPath()
+					context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+					context.clip()
+					context.drawImage(image, 0, 0, size, size)
+					const dataUrl = canvas.toDataURL()
+					const decodedIcon = new Image()
+					decodedIcon.decoding = 'sync'
+					decodedIcon.addEventListener('load', () => resolve(dataUrl), { once: true })
+					decodedIcon.addEventListener('error', () => resolve(null), { once: true })
+					decodedIcon.src = dataUrl
+				} catch {
+					resolve(null)
+				}
+			},
+			{ once: true }
+		)
+		image.addEventListener('error', () => resolve(null), { once: true })
+		image.src = url
+	})
 }
+
+// Each token's logo is loaded and cropped once per session and shared by every row set that shows it, so a filter change
+// that keeps the same logos draws at once. Pending logos stay undefined; a failed one is null.
+const readIconResults = (results: Array<QueryObserverResult<string | null>>) => results.map((result) => result.data)
 
 function escapeHtml(value: string): string {
 	return value
@@ -219,7 +218,24 @@ export function PerformanceMatrix({
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const cleanupChartEventsRef = useRef<(() => void) | null>(null)
 	const pinnedDataIndexRef = useRef<number | null>(null)
-	const [icons, setIcons] = useState<MatrixIconMap>({})
+	const iconRows = useMemo(() => rows.filter((row) => row.iconDataUrl), [rows])
+	const iconData = useQueries({
+		queries: iconRows.map((row) => ({
+			// Keyed by the token: the data URL is the logo's whole image, too large to hash on every render.
+			queryKey: ['utr-matrix-icon', row.asset],
+			queryFn: () => circularIcon(row.iconDataUrl!),
+			staleTime: Infinity,
+			gcTime: Infinity
+		})),
+		combine: readIconResults
+	})
+	const icons = useMemo(() => {
+		const loaded: MatrixIconMap = {}
+		for (const [index, row] of iconRows.entries()) {
+			if (iconData[index] !== undefined) loaded[row.asset] = iconData[index]
+		}
+		return loaded
+	}, [iconRows, iconData])
 	const [chartReady, setChartReady] = useState(false)
 	const iconsReady = areMatrixIconsReady(rows, icons)
 	const showLoadingState = !iconsReady || !chartReady
@@ -289,22 +305,6 @@ export function PerformanceMatrix({
 			if (isVisible) initializeChart()
 		}
 	})
-
-	useEffect(() => {
-		let cancelled = false
-		const pending = rows.filter((row) => row.iconDataUrl)
-		if (pending.length === 0) return
-		Promise.all(pending.map(async (row) => [row.asset, await circularIcon(row.iconDataUrl!)] as const)).then(
-			(entries) => {
-				if (cancelled) return
-				const loaded = Object.fromEntries(entries)
-				setIcons((current) => ({ ...current, ...loaded }))
-			}
-		)
-		return () => {
-			cancelled = true
-		}
-	}, [rows])
 
 	useEffect(() => {
 		const instance = chartRef.current

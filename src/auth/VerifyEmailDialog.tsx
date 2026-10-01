@@ -1,8 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { useMutation } from '@tanstack/react-query'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useMutation, type UseMutationResult } from '@tanstack/react-query'
+import { useId, useRef, useState } from 'react'
 import { AuthDialogHeader, authInputStyles } from '~/auth/AuthDialog'
-import { OtpRequestError, sendVerificationCode, verifyEmailCode } from '~/auth/emailVerification'
+import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody } from '~/ui/Dialog'
 import { InlineStatus } from '~/ui/Status'
@@ -11,40 +12,26 @@ export function VerifyEmailDialog({
 	accountId,
 	isOpen,
 	email,
+	send,
 	onClose
 }: {
 	accountId: string
 	isOpen: boolean
 	email?: string
+	/** The provider sends the first code when it opens the sheet for an account; the sheet only resends. */
+	send: UseMutationResult<number, Error, string>
 	onClose: () => void
 }) {
-	// The challenge survives closing the sheet. Reopening must not silently replace
-	// the code in the user's inbox or restart the server's resend cooldown.
 	const [otp, setOtp] = useState('')
-	const [cooldownSeconds, setCooldownSeconds] = useState(0)
-	const autoSent = useRef(false)
 	const codeRef = useRef<HTMLInputElement>(null)
 	const errorId = useId()
-	const send = useMutation({
-		mutationFn: () => sendVerificationCode(accountId),
-		onSuccess: () => setOtp('')
-	})
 	const verify = useMutation({ mutationFn: (code: string) => verifyEmailCode(accountId, code) })
-	const { mutate: sendCode } = send
-	useEffect(() => {
-		if (!isOpen || autoSent.current) return
-		autoSent.current = true
-		sendCode()
-	}, [isOpen, sendCode])
 
 	const retryAt = send.error instanceof OtpRequestError ? send.error.retryAt : (send.data ?? 0)
-	useEffect(() => {
-		const update = () => setCooldownSeconds(Math.max(0, Math.ceil((retryAt - Date.now()) / 1000)))
-		update()
-		if (!retryAt || !isOpen) return
-		const interval = window.setInterval(update, 1000)
-		return () => window.clearInterval(interval)
-	}, [isOpen, retryAt])
+	// The sheet only mounts after an opener, never while hydrating. The provider re-reads the clock as each send
+	// settles, so a new retryAt is measured against the current second, then counted down every second while open.
+	const nowSeconds = useNowSeconds(undefined, isOpen ? 1000 : 30_000)
+	const cooldownSeconds = Math.max(0, Math.floor(retryAt / 1000) - nowSeconds)
 
 	const pending = send.isPending || verify.isPending
 	// A rate-limit message expires with its cooldown; other request errors do not.
@@ -55,7 +42,7 @@ export function VerifyEmailDialog({
 	const deliveryFailed = sendFailure !== null && !verify.error && cooldownSeconds === 0
 	const resend = () => {
 		verify.reset()
-		sendCode()
+		send.mutate(accountId, { onSuccess: () => setOtp('') })
 	}
 	// Try again replaces itself with the sending state, so focus moves on to the field the new code goes in.
 	const retryDelivery = () => {

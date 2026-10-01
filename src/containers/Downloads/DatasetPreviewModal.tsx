@@ -1,17 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import {
-	type CSSProperties,
-	lazy,
-	Suspense,
-	useCallback,
-	useDeferredValue,
-	useEffect,
-	useMemo,
-	useRef,
-	useState
-} from 'react'
+import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
@@ -42,8 +32,10 @@ import {
 	type DatasetSavedConfig,
 	extractDatasetConfig,
 	generatePresetId,
+	missingColumnNotices,
 	type SavedDownloadInput
 } from './savedDownloads'
+import { SavedPresetNotice } from './SavedPresetNotice'
 import { buildShareUrl } from './urlState'
 
 const SubscribeProModal = lazy(() =>
@@ -282,17 +274,6 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 			}
 		}
 	}
-
-	useEffect(() => {
-		if (!appliedInitialConfig) return
-		const { missingColumns, missingSortColumn } = appliedInitialConfig
-		if (missingColumns.length > 0) {
-			toast(
-				`${missingColumns.length} saved column${missingColumns.length === 1 ? '' : 's'} no longer available: ${missingColumns.slice(0, 3).join(', ')}${missingColumns.length > 3 ? '…' : ''}`
-			)
-		}
-		if (missingSortColumn) toast(`Saved sort column "${missingSortColumn}" no longer available`)
-	}, [appliedInitialConfig])
 
 	const cols = selectedColumns ?? EMPTY_SELECTION
 
@@ -732,6 +713,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 								)}
 							</div>
 						) : null}
+						<SavedPresetNotice notices={missingColumnNotices(appliedInitialConfig)} />
 					</div>
 
 					{loading ? (

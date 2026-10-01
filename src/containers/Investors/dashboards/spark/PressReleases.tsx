@@ -14,13 +14,6 @@ export interface ParagraphPost {
 	categories?: Array<string>
 }
 
-function isWithinLastThreeMonths(timestamp: string): boolean {
-	const date = new Date(parseInt(timestamp, 10))
-	const now = new Date()
-	const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
-	return date >= threeMonthsAgo
-}
-
 function isFinancialReport(post: ParagraphPost): boolean {
 	// Regex patterns for financial reports
 	const quarterlyPattern = /\bq[1-4]\b.*\b(financial|report|results?|earnings?)\b/i
@@ -42,15 +35,20 @@ function isFinancialReport(post: ParagraphPost): boolean {
 	return titleMatch || slugMatch || categoryMatch
 }
 
-function dedupePosts(posts: Array<ParagraphPost>): Array<ParagraphPost> {
+/** Drops repeated posts, then lists every financial report and only the press releases from the last three months. */
+export function splitSparkPosts(posts: Array<ParagraphPost>, now: Date) {
+	const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).getTime()
 	const seen = new Set<string>()
-
-	return posts.filter((post) => {
+	const financialReports: Array<ParagraphPost> = []
+	const pressReleases: Array<ParagraphPost> = []
+	for (const post of posts) {
 		const key = (post.slug || post.title).trim().toLowerCase()
-		if (seen.has(key)) return false
+		if (seen.has(key)) continue
 		seen.add(key)
-		return true
-	})
+		if (isFinancialReport(post)) financialReports.push(post)
+		else if (parseInt(post.publishedAt, 10) >= threeMonthsAgo) pressReleases.push(post)
+	}
+	return { financialReports, pressReleases }
 }
 
 function renderPressReleaseCards(posts: Array<ParagraphPost>) {
@@ -121,17 +119,7 @@ export default function PressReleases() {
 			const response = await fetch('/api/public/spark/reports')
 			if (!response.ok) throw new Error(`Spark reports API error: ${response.status}`)
 			const apiData = await readInvestorApiJson<{ items?: Array<ParagraphPost> }>(response)
-			const financialReports: Array<ParagraphPost> = []
-			const pressReleases: Array<ParagraphPost> = []
-			for (const post of dedupePosts(apiData.items || [])) {
-				if (isFinancialReport(post)) {
-					financialReports.push(post)
-				} else if (isWithinLastThreeMonths(post.publishedAt)) {
-					// Only include press releases from the last 3 months
-					pressReleases.push(post)
-				}
-			}
-			return { financialReports, pressReleases }
+			return splitSparkPosts(apiData.items || [], new Date())
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as echarts from 'echarts/core'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -18,6 +19,8 @@ const dataset = (...values: Array<number>): MultiSeriesChartDataset => ({
 
 let container: HTMLDivElement
 let root: Root
+// Charts probe their icons through React Query.
+const client = new QueryClient()
 
 beforeEach(() => {
 	installChartCanvas()
@@ -29,10 +32,12 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	client.clear()
 	vi.restoreAllMocks()
 })
 
-const render = (node: ReactNode) => act(async () => root.render(node))
+const render = (node: ReactNode) =>
+	act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
 
 function chart() {
 	const element = container.querySelector<HTMLElement>('[_echarts_instance_]')

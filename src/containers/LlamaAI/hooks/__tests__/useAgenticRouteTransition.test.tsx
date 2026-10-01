@@ -86,6 +86,21 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onOpenSession).toHaveBeenCalledOnce()
 	})
 
+	test('a route change reaches the chat callbacks passed in the same render', async () => {
+		const previous = mocksApi.onOpenSession
+		const latest = vi.fn()
+		mocksApi.onOpenSession = latest
+		try {
+			mocks.route = { kind: 'chat-session', sessionId: 'session-2' }
+			await rerender()
+
+			expect(latest).toHaveBeenCalledWith('session-2', undefined)
+			expect(previous).not.toHaveBeenCalled()
+		} finally {
+			mocksApi.onOpenSession = previous
+		}
+	})
+
 	test('passes a message anchor when opening a session', async () => {
 		mocks.route = { kind: 'chat-session', sessionId: 'session-1', aroundMessageId: 'message-a' }
 		await rerender()

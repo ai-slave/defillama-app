@@ -1,6 +1,7 @@
 import { type AnchorHTMLAttributes, useEffect, useLayoutEffect, useMemo, useReducer, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { useIsClient } from '~/hooks/useIsClient'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { OtherLinks } from './OtherLinks'
 
 interface ILink {
@@ -156,9 +157,24 @@ export function LinksWithDropdown({
 	const linksLayoutSignature = useMemo(() => links.map((link) => link.label).join('\u0001'), [links])
 	const isClient = useIsClient()
 	const cachedRef = useRef<CachedLayout | null>(null)
-	const linksRef = useRef(links)
-	useEffect(() => {
-		linksRef.current = links
+	// The resize listeners below call this after their debounce, so it reads the current link count. A stable
+	// callback rather than an effect event: it escapes into a timer and a ResizeObserver.
+	const recalculateAfterResize = useStableCallback(() => {
+		const cached = cachedRef.current
+		if (!cached) {
+			dispatch({ type: 'REQUEST_MEASURE' })
+			return
+		}
+
+		const nav = priorityNavRef.current
+		if (!nav) {
+			if (links.length > 2 && window.innerWidth <= 640) return
+			dispatch({ type: 'REQUEST_MEASURE' })
+			return
+		}
+
+		const containerWidth = nav.getBoundingClientRect().width
+		dispatch({ type: 'RESIZED', result: recalculateFromCache(containerWidth, cached, links.length) })
 	})
 
 	// Invalidate cache and trigger full re-measurement when links change
@@ -193,24 +209,7 @@ export function LinksWithDropdown({
 
 		const handleResize = () => {
 			clearTimeout(timeoutId)
-			timeoutId = setTimeout(() => {
-				const cached = cachedRef.current
-				if (!cached) {
-					dispatch({ type: 'REQUEST_MEASURE' })
-					return
-				}
-
-				const nav = priorityNavRef.current
-				if (!nav) {
-					if (linksRef.current.length > 2 && window.innerWidth <= 640) return
-					dispatch({ type: 'REQUEST_MEASURE' })
-					return
-				}
-
-				const containerWidth = nav.getBoundingClientRect().width
-				const result = recalculateFromCache(containerWidth, cached, linksRef.current.length)
-				dispatch({ type: 'RESIZED', result })
-			}, RESIZE_DEBOUNCE_MS)
+			timeoutId = setTimeout(recalculateAfterResize, RESIZE_DEBOUNCE_MS)
 		}
 
 		window.addEventListener('resize', handleResize, { passive: true })
@@ -225,7 +224,7 @@ export function LinksWithDropdown({
 			resizeObserver?.disconnect()
 		}
 		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the trigger: switching to menu-only changes which element the listeners must observe.
-	}, [overflowState.renderMenuOnly])
+	}, [overflowState.renderMenuOnly, recalculateAfterResize])
 
 	const activeLinkIndex = activeLink ? links.findIndex((link) => link.label === activeLink) : -1
 	const isActiveLinkInList = activeLinkIndex >= 0

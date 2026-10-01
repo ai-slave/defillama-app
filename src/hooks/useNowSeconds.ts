@@ -26,6 +26,15 @@ const syncNowSecondsSnapshot = () => {
 	}
 }
 
+/**
+ * Re-reads the second now, for a caller that just learned a deadline from `Date.now()` (a response's retry time) and
+ * must measure it against the same second, not one the last tick left up to a second behind.
+ */
+export function refreshNowSeconds() {
+	if (typeof window === 'undefined') return
+	syncNowSecondsSnapshot()
+}
+
 const restartClock = () => {
 	if (typeof window === 'undefined') return
 	let fastest: number | null = null

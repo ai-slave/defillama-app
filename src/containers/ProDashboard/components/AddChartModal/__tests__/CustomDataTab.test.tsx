@@ -147,6 +147,16 @@ describe('a subscriber', () => {
 		])
 	})
 
+	test('clearing the CSV before the parse runs drops the pending parse', async () => {
+		await renderTab()
+		parsedCount = 0
+		await typeCsv(CSV)
+		await typeCsv('')
+		await waitForTypedParse()
+		expect(parsedCount).toBe(0)
+		expect(latest?.customData.storedRows).toBeNull()
+	})
+
 	test('reports a malformed CSV as plain text without storing rows', async () => {
 		await renderTab()
 		await pasteCsv('day,value\n2026-01-01')

@@ -16,7 +16,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { isMacPlatform } from '~/utils/platform'
@@ -387,22 +387,8 @@ function ProDashboardContent() {
 		refetchOnWindowFocus: false
 	})
 
-	const subscriptionNoticeRef = useRef<string | null>(null)
-	useEffect(() => {
-		if (readOnlyReason !== 'subscription' || !dashboardId) return
-		if (!currentDashboard || currentDashboard.user !== user?.id) return
-		if (subscriptionNoticeRef.current === dashboardId) return
-		subscriptionNoticeRef.current = dashboardId
-		toast.error(
-			<span>
-				Your subscription has ended, so this dashboard is view-only.{' '}
-				<a href="/subscription" className="font-medium underline">
-					Renew
-				</a>
-			</span>,
-			{ id: 'subscription-readonly', duration: 12_000 }
-		)
-	}, [readOnlyReason, dashboardId, currentDashboard, user?.id])
+	// Speaks to the creator, whose own subscription lapsing is what made the dashboard read-only.
+	const showSubscriptionEndedNotice = readOnlyReason === 'subscription' && isDashboardOwner
 
 	const timePeriods: Array<{ value: TimePeriod; label: string }> = [
 		{ value: '30d', label: '30d' },
@@ -775,6 +761,14 @@ function ProDashboardContent() {
 							{currentDashboard.copiedFrom.name}
 						</BasicLink>
 					</p>
+				) : null}
+				{showSubscriptionEndedNotice ? (
+					<InlineStatus variant="warning">
+						Your subscription has ended, so this dashboard is view-only.{' '}
+						<BasicLink href="/subscription" className="font-medium underline">
+							Renew
+						</BasicLink>
+					</InlineStatus>
 				) : null}
 				{shouldShowAuthorProfileSetup ? <AuthorProfileSetupNotice /> : null}
 				{dashboardTags.length > 0 ? (

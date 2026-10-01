@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { SQL_CHART_BASE_HEIGHT } from '~/containers/Downloads/sql/chart/chartLayout'
 import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
@@ -51,22 +51,18 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 	const [cardView, setCardView] = useState<'output' | 'query'>('output')
 	const cardHeightScale = useCardHeightScale()
 
-	// Latest refresh and error for the refresh-all subscription and the unmount report, which run outside render.
-	const refreshRef = useRef(refresh)
-	const errorRef = useRef(error)
-	useLayoutEffect(() => {
-		refreshRef.current = refresh
-		errorRef.current = error
-	})
+	// Read when a refresh-all arrives and when a refresh ends, so neither effect resubscribes on every render.
+	const onRefreshAll = useEffectEvent(() => refresh())
+	const refreshSucceeded = useEffectEvent(() => !error)
 	useEffect(() => {
 		if (!canRefresh) return
-		return subscribeSqlRefreshAll(() => refreshRef.current())
+		return subscribeSqlRefreshAll(() => onRefreshAll())
 	}, [canRefresh])
 
 	useEffect(() => {
 		if (!isRefreshing) return
 		reportSqlRefreshStart(config.id)
-		return () => reportSqlRefreshEnd(config.id, !errorRef.current)
+		return () => reportSqlRefreshEnd(config.id, refreshSucceeded())
 	}, [isRefreshing, config.id])
 
 	const chartInstanceRef = useRef<echarts.ECharts | null>(null)

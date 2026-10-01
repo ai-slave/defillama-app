@@ -48,7 +48,6 @@ function click(el: HTMLElement) {
 beforeEach(() => {
 	client = new QueryClient()
 	vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', '')
-	http.serve({ '/api/public/market-makers/cta': { clickId: 'click-1' } })
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -64,25 +63,29 @@ afterEach(async () => {
 
 describe('lead dialogs start from a fresh form on each open', () => {
 	test('the claim form does not keep what was typed before it was closed', async () => {
-		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		const fullName = inputByLabel('Your full name')!
 		expect(fullName.value).toBe('')
 		await type(fullName, 'Ada Lovelace')
 		expect(inputByLabel('Your full name')!.value).toBe('Ada Lovelace')
 
-		await render(<ClaimDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await render(
+			<ClaimDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />
+		)
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		expect(inputByLabel('Your full name')!.value).toBe('')
 	})
 
 	test('the connect form does not keep what was typed before it was closed', async () => {
-		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		const fullName = inputByLabel('Full name')!
 		await type(fullName, 'Ada Lovelace')
 		expect(inputByLabel('Full name')!.value).toBe('Ada Lovelace')
 
-		await render(<ConnectDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await render(
+			<ConnectDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />
+		)
+		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		expect(inputByLabel('Full name')!.value).toBe('')
 	})
 })
@@ -90,7 +93,7 @@ describe('lead dialogs start from a fresh form on each open', () => {
 describe('claim form submission', () => {
 	test('asks for the verification check when Submit is pressed before it passes', async () => {
 		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', 'claim-site-key')
-		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 
 		await click(buttonByText('Submit claim request')!)
 
@@ -103,7 +106,7 @@ describe('claim form submission', () => {
 	test('names the outcome in the header after a claim is sent, and Done closes the dialog', async () => {
 		http.serve({ '/api/public/market-makers/lead/claim': { status: 'ok', request_id: 'req-1' } })
 		const onClose = vi.fn()
-		await render(<ClaimDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await render(<ClaimDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		await type(inputByLabel('Position at organization')!, 'CEO')
 		await type(inputByLabel('Your full name')!, 'Ada Lovelace')
 		await type(inputByLabel('Your LinkedIn or X profile')!, 'linkedin.com/in/ada')

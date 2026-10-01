@@ -4,11 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { InvestorsSiteId } from '../config'
 import { InvestorsSiteProvider } from '../SiteContext'
 
 // The registry is the dynamic-import seam: the real one loads every project's dashboard bundle.
 // Each fixture module has an Overview and a Metrics tab that name their project.
+// Projects named here fail to load, as a chunk does right after a deploy.
+const { failing } = vi.hoisted(() => ({ failing: new Set<string>() }))
 vi.mock('../registry', async () => {
 	const { ALL_INVESTORS_PROJECTS } = await import('../config')
 	const tab = (id: string, label: string, project: string) => ({
@@ -19,6 +22,7 @@ vi.mock('../registry', async () => {
 	return {
 		getDashboardModule: async (dashboardId: string) => {
 			const project = ALL_INVESTORS_PROJECTS.find((p) => p.dashboardId === dashboardId)!.name
+			if (failing.has(project)) throw new Error('ChunkLoadError')
 			return { tabs: [tab('overview', 'Overview', project), tab('metrics', 'Metrics', project)] }
 		}
 	}
@@ -33,8 +37,8 @@ describe('standalone IR shell', () => {
 	let root: Root
 	let client: QueryClient
 
-	function render(siteId: InvestorsSiteId) {
-		return act(async () =>
+	async function render(siteId: InvestorsSiteId) {
+		await act(async () =>
 			root.render(
 				<QueryClientProvider client={client}>
 					<InvestorsSiteProvider siteId={siteId}>
@@ -43,6 +47,8 @@ describe('standalone IR shell', () => {
 				</QueryClientProvider>
 			)
 		)
+		// The shell hears about the loaded modules on a later task, so wait until nothing is loading.
+		await waitForUi(() => expect(client.isFetching()).toBe(0))
 	}
 
 	function navButtons() {
@@ -70,6 +76,7 @@ describe('standalone IR shell', () => {
 		await act(async () => root.unmount())
 		container.remove()
 		client.clear()
+		failing.clear()
 		vi.restoreAllMocks()
 	})
 
@@ -98,5 +105,16 @@ describe('standalone IR shell', () => {
 		await click('NEAR')
 		expect(shownContent()).toBe('NEAR Overview')
 		expect(scroll).toHaveBeenCalledTimes(2)
+	})
+
+	test('a project whose dashboard fails to load says so instead of an empty page', async () => {
+		client.setDefaultOptions({ queries: { retry: false } })
+		failing.add('Spark')
+		await render('investors')
+		expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+			"Couldn't load this dashboard. Reload the page to try again."
+		)
+		await click('NEAR')
+		expect(shownContent()).toBe('NEAR Overview')
 	})
 })

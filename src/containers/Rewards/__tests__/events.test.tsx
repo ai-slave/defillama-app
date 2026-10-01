@@ -201,6 +201,16 @@ describe('Rewards interaction events', () => {
 		expect(events('rewards-search')).toHaveLength(2)
 	})
 
+	test('Reset drops a search that has not settled yet', async () => {
+		vi.useFakeTimers()
+		await render()
+		await search('Exa')
+		await act(async () => vi.advanceTimersByTime(300))
+		await click('button', 'Reset')
+		await act(async () => vi.advanceTimersByTime(1000))
+		expect(events('rewards-search')).toEqual([])
+	})
+
 	test('tracks sorting in both directions and clearing, but not initial render', async () => {
 		await render()
 		expect(events('rewards-table-sort')).toEqual([])

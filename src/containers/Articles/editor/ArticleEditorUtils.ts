@@ -1,5 +1,4 @@
 import type { QueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
 import type { ArticleDocument } from '../types'
 
 const SAFE_LINK_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:'])
@@ -47,14 +46,6 @@ export function formatArticleDate(iso: string | null | undefined): string {
 	const date = new Date(iso)
 	if (Number.isNaN(date.getTime())) return ''
 	return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-export function useTicker(intervalMs = 30_000) {
-	const [, set] = useState(0)
-	useEffect(() => {
-		const id = setInterval(() => set((c) => c + 1), intervalMs)
-		return () => clearInterval(id)
-	}, [intervalMs])
 }
 
 export function articleQueryKey(articleId: string | undefined) {

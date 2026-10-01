@@ -4,6 +4,7 @@ import { act } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import {
 	protocolListRequestQuery,
 	protocolListSort,
@@ -110,10 +111,13 @@ describe('RecentlyListedProtocolsTable', () => {
 	})
 
 	const requestedUrl = () => new URL(String(fetchMock.mock.lastCall?.[0]), 'http://localhost')
+	// The page's data function stamps the clock its listed-at labels are measured from.
 	const table = () => (
-		<QueryClientProvider client={client}>
-			<RecentlyListedProtocolsTable {...props} />
-		</QueryClientProvider>
+		<PageClockProvider pageClockSec={1_790_000_000}>
+			<QueryClientProvider client={client}>
+				<RecentlyListedProtocolsTable {...props} />
+			</QueryClientProvider>
+		</PageClockProvider>
 	)
 	async function hydrate() {
 		container.innerHTML = renderToString(table())

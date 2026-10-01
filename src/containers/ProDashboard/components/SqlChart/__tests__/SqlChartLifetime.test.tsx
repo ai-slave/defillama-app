@@ -13,10 +13,8 @@ import type { SqlChartConfig } from '../../../types'
 import { SqlChartModal } from '../SqlChartModal'
 
 // DuckDB runs as WebAssembly in a browser worker; the test answers its connection instead.
-const engine = vi.hoisted(() => ({ send: vi.fn(), cancelSent: vi.fn() }))
-vi.mock('~/containers/Downloads/sql/duckdb', () => ({
-	getDuckDB: async () => ({ db: {}, conn: { send: engine.send, cancelSent: engine.cancelSent } })
-}))
+const engine = vi.hoisted(() => ({ send: vi.fn(), cancelSent: vi.fn(), load: vi.fn() }))
+vi.mock('~/containers/Downloads/sql/duckdb', () => ({ getDuckDB: engine.load }))
 // Monaco cannot run in happy-dom, and no assertion reads the editor.
 vi.mock('~/containers/Downloads/sql/Editor', () => ({ Editor: () => null }))
 
@@ -27,6 +25,7 @@ let container: HTMLDivElement
 beforeEach(() => {
 	engine.send.mockReset()
 	engine.cancelSent.mockReset().mockResolvedValue(true)
+	engine.load.mockReset().mockResolvedValue({ db: {}, conn: { send: engine.send, cancelSent: engine.cancelSent } })
 	onEdit.mockReset()
 	localStorage.clear()
 	// Chart dataset options only fill the sidebar catalog.
@@ -139,6 +138,20 @@ test('Save keeps focus while it becomes Stop query, and Stop returns an editable
 	expect(onEdit.mock.calls[0][1]).toMatchObject({ query: { sql: 'SELECT 1 AS value' }, snapshot: { rows: [[1]] } })
 	expect(savedNames()).toBe('Query')
 	expect(document.body.textContent).toContain('Reopen')
+})
+
+test('an engine that failed to load says so, and reopening the editor loads it again', async () => {
+	engine.load.mockRejectedValueOnce(new Error('WebAssembly blocked'))
+	engine.send.mockResolvedValueOnce(valueTable(3))
+	await mount()
+	const failure = () => [...document.querySelectorAll('[role="alert"]')].map((node) => node.textContent)
+	expect(failure()).toContain('SQL engine failed to load: WebAssembly blocked.')
+
+	await click('Cancel')
+	await click('Reopen')
+	expect(failure()).toEqual([])
+	await click('Save changes')
+	expect(onEdit.mock.calls[0][1]).toMatchObject({ snapshot: { rows: [[3]] } })
 })
 
 test('Cancel during Save stops the query, and its late answer never reaches the reopened editor or the saved list', async () => {

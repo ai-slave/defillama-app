@@ -4,7 +4,7 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -293,9 +293,8 @@ export default function MarketTreemapChart({
 	const [isDark] = useDarkModeManager()
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
-	const onReadyRef = useRef(onReady)
-	useEffect(() => {
-		onReadyRef.current = onReady
+	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+		onReady?.(instance)
 	})
 
 	useChartResize(chartRef, containerRef)
@@ -362,14 +361,14 @@ export default function MarketTreemapChart({
 		if (!el) return
 		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
-		onReadyRef.current?.(instance)
+		emitReady(instance)
 		const unregisterTreemapFocus = registerTreemapFocusTracking(instance)
 
 		return () => {
 			unregisterTreemapFocus()
 			applyOptionRef.current = null
 			chartRef.current = null
-			onReadyRef.current?.(null)
+			emitReady(null)
 			instance.dispose()
 		}
 	}, [])

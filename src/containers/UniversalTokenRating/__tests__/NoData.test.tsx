@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -59,34 +60,36 @@ describe('UTR empty states', () => {
 
 	test('uses the API scored count instead of the number of rendered rows', () => {
 		const html = renderToStaticMarkup(
-			<UniversalTokenRating
-				universe={{
-					scoredCount: 128,
-					totalCount: 139,
-					rows: [
-						{
-							asset: 'example',
-							name: 'Example',
-							symbol: 'EXP',
-							sector: 'DeFi',
-							listingStatus: 'listed',
-							disclosureLevel: 'full',
-							claimed: false,
-							fdvUsd: null,
-							scores: {
-								overall: null,
-								overallMomChangePct: null,
-								disclosure: null,
-								performance: null,
-								rank: null,
-								disclosureRubrics: [],
-								performanceRubrics: []
+			<QueryClientProvider client={new QueryClient()}>
+				<UniversalTokenRating
+					universe={{
+						scoredCount: 128,
+						totalCount: 139,
+						rows: [
+							{
+								asset: 'example',
+								name: 'Example',
+								symbol: 'EXP',
+								sector: 'DeFi',
+								listingStatus: 'listed',
+								disclosureLevel: 'full',
+								claimed: false,
+								fdvUsd: null,
+								scores: {
+									overall: null,
+									overallMomChangePct: null,
+									disclosure: null,
+									performance: null,
+									rank: null,
+									disclosureRubrics: [],
+									performanceRubrics: []
+								}
 							}
-						}
-					]
-				}}
-				topMovers={[]}
-			/>
+						]
+					}}
+					topMovers={[]}
+				/>
+			</QueryClientProvider>
 		)
 
 		expect(html.replace(/<[^>]*>/g, '')).toContain('128 of 139 tokens scored')

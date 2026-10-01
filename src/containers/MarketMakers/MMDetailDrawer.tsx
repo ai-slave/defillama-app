@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { type ComponentProps, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
@@ -12,6 +13,8 @@ import { BreakdownTables } from './BreakdownTable'
 import { ClaimDialog } from './ClaimDialog'
 import {
 	type LeaderboardRange,
+	type LeadKind,
+	requestLeadClickId,
 	useMarketMakerBreakdown,
 	useMarketMakerDetail,
 	useMarketMakerPerformance
@@ -424,7 +427,17 @@ export function MMDetailDrawer({
 	const title = asStr(asDict(detail.data).name) ?? name ?? id ?? 'Market maker'
 	const logo = asStr(asDict(detail.data).imageUrl)
 
-	const [leadDialog, setLeadDialog] = useState<'connect' | 'claim' | null>(null)
+	const [leadDialog, setLeadDialog] = useState<LeadKind | null>(null)
+	// The click that opens a lead form records one click id for that opening, sent or not.
+	const leadClick = useMutation({
+		mutationFn: (lead: { kind: LeadKind; marketMakerId: string | null }) =>
+			requestLeadClickId(lead.kind, lead.marketMakerId)
+	})
+	const openLead = (kind: LeadKind) => {
+		setLeadDialog(kind)
+		leadClick.mutate({ kind, marketMakerId: id })
+	}
+	const clickId = leadClick.data ?? null
 	// Closing the drawer closes whatever lead dialog it opened.
 	const [wasOpen, setWasOpen] = useState(open)
 	if (open !== wasOpen) {
@@ -453,7 +466,7 @@ export function MMDetailDrawer({
 						range={range}
 						badge={badge}
 						fallbackName={name}
-						onOpenLead={setLeadDialog}
+						onOpenLead={openLead}
 					/>
 				</DialogBody>
 			</SideSheet>
@@ -462,6 +475,7 @@ export function MMDetailDrawer({
 				onClose={() => setLeadDialog(null)}
 				marketMakerId={id}
 				marketMakerName={title}
+				clickId={clickId}
 			/>
 			<ClaimDialog
 				open={leadDialog === 'claim'}
@@ -469,6 +483,7 @@ export function MMDetailDrawer({
 				marketMakerId={id}
 				marketMakerName={title}
 				marketMakerLogo={logo}
+				clickId={clickId}
 			/>
 		</>
 	)

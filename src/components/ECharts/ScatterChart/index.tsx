@@ -13,7 +13,7 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -21,7 +21,7 @@ import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/u
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
-import { isIconUrlValid, validateIconUrl } from '../shared/icon'
+import { useLoadedIconUrls } from '../shared/icon'
 import type {
 	IScatterChartProps,
 	ScatterChartDatum,
@@ -99,32 +99,20 @@ function ScatterChart({
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
-	const [iconRevision, setIconRevision] = useState(0)
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, containerRef)
 
-	useEffect(() => {
-		if (!showLabels) return
-		const slugs = new Set<string>()
+	const iconUrls = new Set<string>()
+	if (showLabels) {
 		for (const point of chartData) {
 			if (isScatterChartPoint(point) && point.showLabel === false) continue
 			const slug = (isScatterChartPoint(point) ? point.entitySlug : undefined) ?? getPointValue(point)[3]
-			if (slug && typeof slug === 'string' && slug.toLowerCase() !== 'unknown') slugs.add(slug)
+			if (slug && typeof slug === 'string' && slug.toLowerCase() !== 'unknown')
+				iconUrls.add(getEntityIcon(entityType, slug))
 		}
-		const pending: Array<Promise<boolean>> = []
-		for (const slug of slugs) {
-			pending.push(validateIconUrl(getEntityIcon(entityType, slug)))
-		}
-		if (pending.length === 0) return
-		let cancelled = false
-		Promise.all(pending).then(() => {
-			if (!cancelled) setIconRevision((v) => v + 1)
-		})
-		return () => {
-			cancelled = true
-		}
-	}, [chartData, entityType, showLabels])
+	}
+	const loadedIcons = useLoadedIconUrls([...iconUrls])
 
 	useEffect(() => {
 		const chartDom = containerRef.current
@@ -186,7 +174,7 @@ function ScatterChart({
 						const slug = normalizedPoint.entitySlug ?? normalizedPoint.value[3] ?? ''
 						if (typeof slug === 'string' && slug && slug.toLowerCase() !== 'unknown') {
 							const url = getEntityIcon(entityType, slug)
-							if (isIconUrlValid(url)) {
+							if (loadedIcons.has(url)) {
 								point = {
 									...normalizedPoint,
 									symbol: `image://${url}`,
@@ -438,8 +426,7 @@ function ScatterChart({
 		showLabels,
 		entityType,
 		logScale,
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- iconRevision is the trigger that re-applies the option once entity icons finish loading.
-		iconRevision
+		loadedIcons
 	])
 
 	return (

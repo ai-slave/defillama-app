@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import Link from 'next/link'
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
@@ -18,14 +18,17 @@ import { DateRangePicker } from './DateRangePicker'
 import { FormatSplitButton } from './FormatSplitButton'
 import { SavePresetDialog } from './PresetDialogs'
 import {
+	type AppliedMultiMetricConfig,
 	applyMultiMetricConfig,
 	type DateRangeConfig,
 	defaultPresetName,
 	extractMultiMetricConfig,
 	generatePresetId,
+	missingMultiMetricNotices,
 	type MultiMetricSavedConfig,
 	type SavedDownloadInput
 } from './savedDownloads'
+import { SavedPresetNotice } from './SavedPresetNotice'
 import { buildShareUrl } from './urlState'
 
 const SubscribeProModal = lazy(() =>
@@ -151,38 +154,24 @@ export function MultiMetricModal({
 	const [activeMetric, setActiveMetric] = useState<string | null>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
-	const initialAppliedRef = useRef(false)
+	const [appliedInitial, setAppliedInitial] = useState<AppliedMultiMetricConfig | null>(null)
 
 	const protocolOptions = chartOptionsMap['protocol-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
 	const chainOptions = chartOptionsMap['chain-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
 	const paramOptions = paramType === 'protocol' ? protocolOptions : chainOptions
 
-	// Apply initial config once options are loaded.
-	useEffect(() => {
-		if (!initialConfig || initialAppliedRef.current) return
-		const opts = initialConfig.paramType === 'protocol' ? protocolOptions : chainOptions
-		if (opts.length === 0) return
-		const validSlugs = new Set(chartDatasets.map((d) => d.slug))
-		const applied = applyMultiMetricConfig(initialConfig, opts, validSlugs)
-		if (applied.missingParam) {
-			toast(`Saved ${initialConfig.paramType} "${initialConfig.paramLabel ?? initialConfig.param}" no longer available`)
-			initialAppliedRef.current = true
-			return
+	// Seed the saved param and metrics once the option list for the saved param type has loaded.
+	const initialOptions = initialConfig?.paramType === 'protocol' ? protocolOptions : chainOptions
+	if (initialConfig && appliedInitial === null && initialOptions.length > 0) {
+		const applied = applyMultiMetricConfig(initialConfig, initialOptions, new Set(chartDatasets.map((d) => d.slug)))
+		setAppliedInitial(applied)
+		if (!applied.missingParam) {
+			setParam(applied.param)
+			setSelectedMetrics(applied.metrics)
 		}
-		// Initialization from data that arrives asynchronously: the saved config can only be applied once
-		// the option lists for its param type have loaded, so this cannot move into render.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setParam(applied.param)
-		setSelectedMetrics(applied.metrics)
-		initialAppliedRef.current = true
-		if (applied.missingMetrics.length > 0) {
-			toast(
-				`${applied.missingMetrics.length} saved metric${
-					applied.missingMetrics.length === 1 ? '' : 's'
-				} no longer available`
-			)
-		}
-	}, [initialConfig, protocolOptions, chainOptions])
+	}
+	const savedPresetNotices =
+		initialConfig && appliedInitial ? missingMultiMetricNotices(initialConfig, appliedInitial) : []
 
 	const availableMetrics = useMemo(() => {
 		if (!param) return []
@@ -635,6 +624,7 @@ export function MultiMetricModal({
 
 							{isPreview ? <p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p> : null}
 						</div>
+						<SavedPresetNotice notices={savedPresetNotices} />
 					</div>
 
 					<div className="flex min-h-0 flex-1 flex-col sm:flex-row">

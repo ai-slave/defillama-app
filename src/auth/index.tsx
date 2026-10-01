@@ -7,7 +7,7 @@ import { type AuthRequest, runAuthRequest } from '~/auth/authRequest'
 import { getAuthStoreSnapshot, getServerSnapshot, refreshSession, subscribeToAuthStore } from '~/auth/authStore'
 import { signInWithPassword } from '~/auth/emailSignIn'
 import { signupWithEmail, type SignupRequest } from '~/auth/emailSignup'
-import { OtpRequestError } from '~/auth/emailVerification'
+import { OtpRequestError, sendVerificationCode } from '~/auth/emailVerification'
 import { authenticateGithub } from '~/auth/githubAuth'
 import { readGoogleAuthResult, type GoogleAuthResult, type GoogleAuthSession } from '~/auth/googleAuth'
 import { rememberSignIn } from '~/auth/lastSignIn'
@@ -21,6 +21,8 @@ import { clearPersistedSubscriptionStatus, subscriptionStatusQueryOptions } from
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { AUTH_SERVER } from '~/constants'
 import { clearPersistedUserInterests } from '~/containers/Announcements/userInterestsStorage'
+import { refreshNowSeconds } from '~/hooks/useNowSeconds'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'
 
@@ -177,11 +179,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setOauthWelcomeAccountId(accountId)
 	}
 
-	const promptVerifyEmail = useCallback((accountId: string | undefined) => {
-		if (accountId && pb.authStore.record?.id === accountId) {
-			setVerifyEmailPrompt({ accountId, email: pb.authStore.record.email, isOpen: true })
-		}
-	}, [])
+	// The send's answer sets the resend deadline from Date.now(), so the sheet's countdown clock re-reads the second
+	// before it renders that answer.
+	const sendVerifyCode = useMutation({ mutationFn: sendVerificationCode, onSettled: refreshNowSeconds })
+	// Opening the sheet for an account sends its first code. Reopening the same account's sheet must not replace
+	// the code already in the inbox or restart the server's resend cooldown. Callers save the session first:
+	// the send checks it owns the account.
+	const openVerifyEmail = useStableCallback((accountId: string, email: string | undefined) => {
+		if (verifyEmailPrompt?.accountId !== accountId) sendVerifyCode.mutate(accountId)
+		setVerifyEmailPrompt({ accountId, email, isOpen: true })
+	})
+
+	const promptVerifyEmail = useCallback(
+		(accountId: string | undefined) => {
+			if (accountId && pb.authStore.record?.id === accountId) openVerifyEmail(accountId, pb.authStore.record.email)
+		},
+		[openVerifyEmail]
+	)
 
 	// Derive isAuthenticated from authStoreState
 	const isAuthenticated = authStoreState.isValid && !!authStoreState.token
@@ -241,11 +255,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			const record = await signInWithPassword(request)
 			if (record) setSignupAccountId(null)
 			if (record && !record.verified && !suppressVerifyEmailPrompt && pb.authStore.record?.id === record.id) {
-				setVerifyEmailPrompt({ accountId: record.id, email: record.email, isOpen: true })
+				openVerifyEmail(record.id, record.email)
 			}
 			return record
 		},
-		[]
+		[openVerifyEmail]
 	)
 
 	// Close when the owning account cannot be confirmed, including a token-only replacement.
@@ -257,15 +271,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setVerifyEmailPrompt(null)
 	}
 
-	const signup = useCallback(({ suppressVerifyEmailPrompt, ...request }: Parameters<AuthContextType['signup']>[0]) => {
-		return signupWithEmail(request, (record) => {
-			clearSignupSource()
-			setSignupAccountId(record.id)
-			if (!record.verified && !suppressVerifyEmailPrompt) {
-				setVerifyEmailPrompt({ accountId: record.id, email: record.email, isOpen: true })
+	const signup = useCallback(
+		async ({ suppressVerifyEmailPrompt, ...request }: Parameters<AuthContextType['signup']>[0]) => {
+			const record = await signupWithEmail(request, (record) => {
+				clearSignupSource()
+				setSignupAccountId(record.id)
+			})
+			if (record && !record.verified && !suppressVerifyEmailPrompt && pb.authStore.record?.id === record.id) {
+				openVerifyEmail(record.id, record.email)
 			}
-		})
-	}, [])
+			return record
+		},
+		[openVerifyEmail]
+	)
 
 	const logoutMutation = useMutation({
 		mutationFn: () => {
@@ -331,10 +349,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					openOauthWelcome(result.record.id)
 					attributeSignup(result.token, 'github', source, referrer)
 				}
-				if (result.record.email && !result.record.verified && !request.suppressVerifyEmailPrompt)
-					setVerifyEmailPrompt({ accountId: result.record.id, email: result.record.email, isOpen: true })
 				clearSignupSource()
 				pb.authStore.save(result.token, result.record)
+				if (result.record.email && !result.record.verified && !request.suppressVerifyEmailPrompt)
+					openVerifyEmail(result.record.id, result.record.email)
 				rememberSignIn({ method: 'github' })
 				request.onAuthenticated?.()
 			}
@@ -635,6 +653,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					accountId={verifyEmailPrompt.accountId}
 					isOpen={verifyEmailPrompt.isOpen}
 					email={verifyEmailPrompt.email}
+					send={sendVerifyCode}
 					onClose={() => setVerifyEmailPrompt((prompt) => (prompt ? { ...prompt, isOpen: false } : null))}
 				/>
 			) : null}

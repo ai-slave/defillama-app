@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
@@ -254,9 +254,7 @@ function ProContent({
 	const { deleteDashboard, handleCreateDashboard, handleGenerateDashboard } = useProDashboardDashboard()
 	const { createDashboardDialogStore, showGenerateDashboardModal, setShowGenerateDashboardModal } = useProDashboardUI()
 	const { canCreateDashboard } = useFreeTierStatus()
-	const [comparisonPreset, setComparisonPreset] = useState<ComparisonPreset | null>(null)
 	const createDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
-	const dialogWasOpenRef = useRef(false)
 
 	const selectedPage =
 		typeof router.query.page === 'string' && !Number.isNaN(Number(router.query.page))
@@ -296,54 +294,31 @@ function ProContent({
 	const myDashboardsFailed = !!myDashboardsError && myDashboards.length === 0
 	const teamDashboardsFailed = !!teamDashboardsError && teamDashboards.length === 0
 
-	useEffect(() => {
-		if (createDialogOpen && !dialogWasOpenRef.current) {
-			dialogWasOpenRef.current = true
-			return
-		}
-		if (!createDialogOpen && dialogWasOpenRef.current) {
-			let cancelled = false
-			queueMicrotask(() => {
-				if (cancelled) return
-				setComparisonPreset(null)
-			})
-			dialogWasOpenRef.current = false
-
-			return () => {
-				cancelled = true
-			}
-		}
-	}, [createDialogOpen])
-
 	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
 	// so these are the values that actually change.
 	const routerIsReady = router.isReady
 	const routerQuery = router.query
-	useEffect(() => {
-		if (!routerIsReady) return
-		const comparison = routerQuery.comparison
-		const items = routerQuery.items
-		if (comparison !== 'protocols' || typeof items !== 'string') return
-		if (comparisonPreset) return
-		const parsedItems = items.split(',').flatMap((item) => {
-			const trimmed = item.trim()
-			return trimmed ? [trimmed] : []
-		})
-		const { comparison: _comparison, items: _items, step: _step, ...rest } = routerQuery
-		let cancelled = false
-		if (parsedItems.length > 0) {
-			queueMicrotask(() => {
-				if (cancelled) return
-				setComparisonPreset({ comparisonType: 'protocols', items: parsedItems })
-			})
+	// A `?comparison` link opens the picker on its preset. The URL holds that opening, so a reload keeps it, and
+	// closing drops the link's params. It has its own dialog, so Create elsewhere always opens the blank picker.
+	const linkItemsParam =
+		routerIsReady && routerQuery.comparison === 'protocols' && typeof routerQuery.items === 'string'
+			? routerQuery.items
+			: null
+	const isComparisonLink = linkItemsParam !== null
+	const linkItems = (linkItemsParam ?? '').split(',').flatMap((item) => {
+		const trimmed = item.trim()
+		return trimmed ? [trimmed] : []
+	})
+	const comparisonLinkPreset: ComparisonPreset | null =
+		linkItems.length > 0 ? { comparisonType: 'protocols', items: linkItems } : null
+	const comparisonLinkDialogStore = Ariakit.useDialogStore({
+		open: isComparisonLink,
+		setOpen: (open) => {
+			if (open) return
+			const { comparison: _comparison, items: _items, step: _step, ...rest } = routerQuery
+			void router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
 		}
-		createDashboardDialogStore.show()
-		void router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
-
-		return () => {
-			cancelled = true
-		}
-	}, [comparisonPreset, createDashboardDialogStore, router, routerIsReady, routerQuery])
+	})
 
 	return (
 		<Tabs value={activeTab} onValueChange={switchTab} values={availableTabs}>
@@ -611,7 +586,15 @@ function ProContent({
 					<CreateDashboardPicker
 						dialogStore={createDashboardDialogStore}
 						onCreate={handleCreateDashboard}
-						comparisonPreset={comparisonPreset}
+						team={myTeam}
+					/>
+				</Suspense>
+
+				<Suspense fallback={isComparisonLink ? <ProDialogFallback width="lg" /> : null}>
+					<CreateDashboardPicker
+						dialogStore={comparisonLinkDialogStore}
+						onCreate={handleCreateDashboard}
+						comparisonPreset={comparisonLinkPreset}
 						team={myTeam}
 					/>
 				</Suspense>

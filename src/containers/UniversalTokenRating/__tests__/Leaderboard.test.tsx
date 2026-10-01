@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, test } from 'vitest'
@@ -72,17 +73,20 @@ describe('Leaderboard', () => {
 		container = document.createElement('div')
 		document.body.append(container)
 		root = createRoot(container)
+		// An expanded row draws its matrix, which loads the token's logo through the query client.
 		await act(async () =>
 			root!.render(
-				<Leaderboard
-					rows={[{ ...row, grade: 'CCC' }]}
-					grading={grading}
-					sort={{ key: 'rank', desc: false }}
-					setSort={() => undefined}
-					fdvRanges={[]}
-					sectors={[]}
-					listingStatuses={[]}
-				/>
+				<QueryClientProvider client={new QueryClient()}>
+					<Leaderboard
+						rows={[{ ...row, grade: 'CCC' }]}
+						grading={grading}
+						sort={{ key: 'rank', desc: false }}
+						setSort={() => undefined}
+						fdvRanges={[]}
+						sectors={[]}
+						listingStatuses={[]}
+					/>
+				</QueryClientProvider>
 			)
 		)
 

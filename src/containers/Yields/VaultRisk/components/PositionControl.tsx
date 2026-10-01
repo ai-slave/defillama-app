@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -30,38 +31,23 @@ export function parseAmount(raw: string): number | null {
 
 type PositionState = [number | null, (v: number | null) => void]
 
-// Reading storage owns the try/catch: the compiler cannot lower the validity test inside one, and a
-// plain module function is not compiled at all.
-function readStoredPosition(): number | null {
-	try {
-		const raw = localStorage.getItem(STORAGE_KEY)
-		if (!raw) return null
-		const value = Number(raw)
-		return Number.isFinite(value) && value > 0 ? value : null
-	} catch {
-		return null // storage unavailable → stay in pool mode
-	}
+function parseStoredPosition(raw: string | null): number | null {
+	const value = Number(raw)
+	return raw && Number.isFinite(value) && value > 0 ? value : null
 }
 
 function usePositionUsdState(): PositionState {
-	const [position, setPosition] = useState<number | null>(null)
-
-	// Load after mount so SSR and the first client render agree (pool mode).
-	useEffect(() => {
-		const stored = readStoredPosition()
-		// Read after mount so SSR and the first client render agree.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		if (stored !== null) setPosition(stored)
-	}, [])
+	// The server and the hydrating render read no storage, so both start in pool mode.
+	const stored = parseStoredPosition(useStorageItem(STORAGE_KEY, null))
+	// The amount the reader set on this visit. It wins over storage, so the control still works where storage is
+	// blocked and the write is dropped.
+	const [chosen, setChosen] = useState<{ value: number | null } | null>(null)
+	const position = chosen ? chosen.value : stored
 
 	const set = useCallback((v: number | null) => {
-		setPosition(v)
-		try {
-			if (v) localStorage.setItem(STORAGE_KEY, String(v))
-			else localStorage.removeItem(STORAGE_KEY)
-		} catch {
-			/* non-persistent is fine */
-		}
+		setChosen({ value: v })
+		if (v) setStorageItem(STORAGE_KEY, String(v))
+		else removeStorageItem(STORAGE_KEY)
 	}, [])
 	// Stable tuple so the context value only changes when the amount does.
 	return useMemo<PositionState>(() => [position, set], [position, set])

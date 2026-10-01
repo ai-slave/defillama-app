@@ -1,15 +1,15 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { getInvestorsProjects, type InvestorsSite } from './config'
 import { CustomServerDataContext } from './CustomServerDataContext'
-import { DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
+import { dashboardModuleQuery, DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
-import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { Logo } from './Logo'
-import { getDashboardModule } from './registry'
 import { scrollToPageTop } from './scrollToPageTop'
 import { useInvestorsSite } from './SiteContext'
+import { TabStatus } from './TabStatus'
 
 type ShellProject = {
 	name: string
@@ -32,48 +32,6 @@ function ProjectComingSoon() {
 			</div>
 		</div>
 	)
-}
-
-function useProjectModules(projects: Array<ShellProject>) {
-	const [tabsByProject, setTabsByProject] = useState<Record<string, Array<DashboardTabConfig>>>({})
-	const [headersByProject, setHeadersByProject] = useState<Record<string, DashboardModule['header']>>({})
-	const [loadingProjects, setLoadingProjects] = useState<Set<string>>(
-		() => new Set(projects.filter((p) => p.dashboardId && !p.comingSoon).map((p) => p.id))
-	)
-
-	useEffect(() => {
-		let cancelled = false
-		for (const project of projects) {
-			if (!project.dashboardId || project.comingSoon) continue
-			const loader = getDashboardModule(project.dashboardId)
-			if (loader) {
-				// oxlint-disable-next-line no-loop-func -- the closure reads the cancellation flag that the effect cleanup sets.
-				loader.then((mod) => {
-					if (!cancelled && mod?.tabs) {
-						setTabsByProject((prev) => (prev[project.id] === mod.tabs ? prev : { ...prev, [project.id]: mod.tabs }))
-					}
-					if (!cancelled && mod?.header) {
-						setHeadersByProject((prev) =>
-							prev[project.id] === mod.header ? prev : { ...prev, [project.id]: mod.header }
-						)
-					}
-					if (!cancelled) {
-						setLoadingProjects((prev) => {
-							if (!prev.has(project.id)) return prev
-							const next = new Set(prev)
-							next.delete(project.id)
-							return next
-						})
-					}
-				})
-			}
-		}
-		return () => {
-			cancelled = true
-		}
-	}, [projects])
-
-	return { tabsByProject, headersByProject, loadingProjects }
 }
 
 function InvestorsShell({
@@ -103,7 +61,13 @@ function InvestorsShell({
 	)
 	const defaultProject = visibleProjects[0]?.id ?? site.defaultProjectId
 
-	const { tabsByProject, headersByProject, loadingProjects } = useProjectModules(visibleProjects)
+	// One module query per project, in visibleProjects order.
+	const moduleQueries = useQueries({
+		queries: visibleProjects.map((project) => ({
+			...dashboardModuleQuery(project.dashboardId),
+			enabled: !project.comingSoon
+		}))
+	})
 	const [activeTab, setActiveTab] = useState<string | null>(null)
 	const [activeProject, setActiveProject] = useState(defaultProject)
 	const [expandedProject, setExpandedProject] = useState<string | null>(defaultProject)
@@ -111,11 +75,13 @@ function InvestorsShell({
 
 	const closeSidebar = useCallback(() => setSidebarOpen(false), [])
 
-	const activeProjectConfig = visibleProjects.find((p) => p.id === activeProject)
+	const activeIndex = visibleProjects.findIndex((p) => p.id === activeProject)
+	const activeProjectConfig = visibleProjects[activeIndex]
+	const activeModule = moduleQueries[activeIndex]
 	const dashboardId = activeProjectConfig?.dashboardId ?? visibleProjects[0]?.dashboardId ?? ''
 	const displayName = activeProjectConfig?.name ?? 'Dashboard'
-	const tabs = tabsByProject[activeProject] ?? DEFAULT_TABS
-	const HeaderComponent = headersByProject[activeProject]
+	const tabs = activeModule?.data?.tabs ?? DEFAULT_TABS
+	const HeaderComponent = activeModule?.data?.header
 	const resolvedTab = resolveActiveTab(tabs, activeTab)
 
 	return (
@@ -148,7 +114,7 @@ function InvestorsShell({
 					<div className="mb-3 hidden h-px bg-sl-divider md:block" />
 
 					<nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
-						{visibleProjects.map((project) => {
+						{visibleProjects.map((project, index) => {
 							const isActive = activeProject === project.id
 							const isExpanded = isSingleProtocol || (expandedProject === project.id && !project.comingSoon)
 
@@ -165,8 +131,7 @@ function InvestorsShell({
 												setActiveProject(project.id)
 												setExpandedProject(project.comingSoon ? expandedProject : project.id)
 												if (!project.comingSoon) {
-													const projectTabs = tabsByProject[project.id]
-													setActiveTab(projectTabs?.[0]?.id ?? 'dashboard')
+													setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
 												}
 												closeSidebar()
 											}
@@ -204,7 +169,7 @@ function InvestorsShell({
 
 									{isExpanded && (
 										<div className="ml-3 flex flex-col gap-0.5 border-l border-sl-divider pt-1 pl-2">
-											{(tabsByProject[project.id] ?? DEFAULT_TABS).map((tab, idx, arr) => {
+											{(moduleQueries[index].data?.tabs ?? DEFAULT_TABS).map((tab, idx, arr) => {
 												const isNewGroup = tab.group && (idx === 0 || arr[idx - 1]?.group !== tab.group)
 												const isSoloGroup = isNewGroup && arr.filter((t) => t.group === tab.group).length === 1
 
@@ -316,7 +281,9 @@ function InvestorsShell({
 							hasCustomHeader={!!HeaderComponent}
 							hideDuplicateButton
 						/>
-					) : loadingProjects.has(activeProject) ? null : (
+					) : activeModule?.isError ? (
+						<TabStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</TabStatus>
+					) : activeModule?.isLoading ? null : (
 						<InvestorsContent
 							tabs={tabs}
 							activeTab={resolvedTab}

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
@@ -14,23 +15,14 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 	const { revokeInviteMutation, resendInviteMutation } = useTeam()
 	const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
 	const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
-	const [now, setNow] = useState<number | null>(null)
-
-	useEffect(() => {
-		const tick = () => {
-			const currentTime = Date.now()
-			setNow(currentTime)
-			if (cooldownUntil && currentTime >= cooldownUntil) setCooldownUntil(null)
-		}
-		tick()
-		const id = window.setInterval(tick, cooldownUntil ? 1000 : 60_000)
-		return () => window.clearInterval(id)
-	}, [cooldownUntil])
-
-	const remainingMs = cooldownUntil && now != null ? Math.max(0, cooldownUntil - now) : 0
-	const remainingSeconds = Math.ceil(remainingMs / 1000)
-	const onCooldown = remainingMs > 0
 	const isResending = resendInviteMutation.isPending && resendInviteMutation.variables?.inviteId === invite.id
+	// The account page renders on the client only, so no page clock is needed. A resend switches the clock to
+	// seconds while it runs, so the cooldown starts against a current second.
+	const nowSeconds = useNowSeconds(undefined, isResending || cooldownUntil !== null ? 1000 : 60_000)
+	const remainingSeconds = cooldownUntil === null ? 0 : Math.max(0, Math.floor(cooldownUntil / 1000) - nowSeconds)
+	const onCooldown = remainingSeconds > 0
+	// An elapsed cooldown lets the clock slow down again.
+	if (cooldownUntil !== null && !onCooldown) setCooldownUntil(null)
 
 	const handleResend = () => {
 		if (onCooldown || isResending) return
@@ -41,7 +33,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 	}
 
 	const expiresAt = parseDateTimestamp(invite.expiresAt)
-	const isExpired = now != null && expiresAt != null && expiresAt <= now
+	const isExpired = expiresAt != null && expiresAt <= nowSeconds * 1000
 
 	return (
 		<>

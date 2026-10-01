@@ -1,10 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Turnstile } from '~/containers/Subscription/Turnstile'
 import { useStorageItem } from '~/contexts/localStorageStore'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
@@ -64,14 +65,12 @@ export function InviteBanner({ protocol, name, website }: InviteBannerProps) {
 function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps & { onAssigned: () => void }) {
 	const [token, setToken] = useState('')
 	const [verificationError, setVerificationError] = useState(false)
-	const [now, setNow] = useState(Date.now)
 	const turnstile = useRef<TurnstileInstance>(undefined)
 	const claim = useMutation({
 		mutationFn: revealInvite,
 		retry: false,
 		onSuccess: (result) => {
 			setToken('')
-			setNow(Date.now())
 			const nextAttemptAt =
 				result.status === 'assigned' ? result.refreshAt : result.status === 'cooldown' ? result.retryAt : null
 			// An existing assignment can already be eligible for refresh, leaving the widget mounted.
@@ -85,13 +84,10 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 	const result = claim.data
 	const retryAt =
 		result?.status === 'assigned' ? result.refreshAt : result?.status === 'cooldown' ? result.retryAt : null
-	const minutesLeft = retryAt ? Math.max(0, Math.ceil((Date.parse(retryAt) - now) / 60_000)) : 0
-
-	useEffect(() => {
-		if (!retryAt) return
-		const timer = setInterval(() => setNow(Date.now()), 1000)
-		return () => clearInterval(timer)
-	}, [retryAt])
+	// The dialog body mounts only after the visitor opens it, never while hydrating. The clock ticks every second
+	// from the claim on, so a new retry time is measured against a current second.
+	const nowSeconds = useNowSeconds(undefined, claim.isPending || retryAt ? 1000 : 30_000)
+	const minutesLeft = retryAt ? Math.max(0, Math.ceil((Math.floor(Date.parse(retryAt) / 1000) - nowSeconds) / 60)) : 0
 
 	const submit = () => {
 		if (!token || claim.isPending || minutesLeft > 0) return

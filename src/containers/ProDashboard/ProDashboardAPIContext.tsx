@@ -346,7 +346,7 @@ export function ProDashboardAPIProvider({
 	mode?: DashboardMode
 	streamItemId?: string
 }) {
-	const { authToken, hasActiveSubscription, loaders } = useAuthContext()
+	const { authToken, isAuthenticated, user, hasActiveSubscription, loaders } = useAuthContext()
 	const hasMounted = useClientReady()
 	const hasStoredToken = typeof window !== 'undefined' && pb.authStore.isValid && !!pb.authStore.token
 	const authReady = hasMounted && !loaders.userLoading && (!hasStoredToken || !!authToken)
@@ -360,7 +360,12 @@ export function ProDashboardAPIProvider({
 		}),
 		[streamVariableOverrides, streamItemId, initialDashboardEditedAt]
 	)
-	const stream = useDashboardStream(initialDashboardId, authToken, authReady, streamOptions)
+	const stream = useDashboardStream(
+		initialDashboardId,
+		{ authToken, isAuthenticated, userId: user?.id },
+		authReady,
+		streamOptions
+	)
 	const hasInitialDashboard = matchesDashboardKey(initialDashboard, initialDashboardId)
 	const { dashboardReady, streamDone, streamHasResolved, shouldFetchTrustedDashboardFallback } =
 		getDashboardHydrationState({
@@ -430,21 +435,6 @@ function ProDashboardAPIProviderInner({
 		() => ['pro-dashboard', 'dashboard', initialDashboardId, isAuthenticated, user?.id],
 		[initialDashboardId, isAuthenticated, user?.id]
 	)
-	useEffect(() => {
-		if (stream.dashboard && !wasDashboardDeleted(queryClient, stream.dashboard.id, user?.id)) {
-			queryClient.setQueryData(dashboardQueryKey, stream.dashboard, {
-				updatedAt: Date.now()
-			})
-			// Slug routes and mutation scopes must share the same confirmed snapshot by dashboard id.
-			if (stream.dashboard.id !== initialDashboardId) {
-				queryClient.setQueryData(
-					['pro-dashboard', 'dashboard', stream.dashboard.id, isAuthenticated, user?.id],
-					stream.dashboard
-				)
-			}
-		}
-	}, [stream.dashboard, queryClient, dashboardQueryKey, initialDashboardId, isAuthenticated, user?.id])
-
 	const initArg = initialDashboard
 		? { dashboard: initialDashboard }
 		: initialItems?.length

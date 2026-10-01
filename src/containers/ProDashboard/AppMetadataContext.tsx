@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
 import { getDisplayAliases } from '~/utils/chainNormalizer'
 import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
@@ -70,7 +70,10 @@ type AppMetadataContextType = {
 	availableChainChartTypes: (chainName: string, opts?: { hasGeckoId?: boolean }) => Array<ChainChartType>
 }
 
-type AppMetadataContextValue = AppMetadataContextType & { requestMetadata: () => void }
+// Whether the whole dashboard has finished streaming, read where the provider sits. Cards re-provide
+// StreamDoneContext with their own readiness, so a consumer inside a ready card must not read it there: the stream
+// may still be seeding this metadata.
+type AppMetadataContextValue = AppMetadataContextType & { dashboardStreamDone: boolean }
 
 const AppMetadataContext = createContext<AppMetadataContextValue | undefined>(undefined)
 
@@ -147,29 +150,26 @@ const fetchPfPs = async (): Promise<{ pf: Array<string>; ps: Array<string> }> =>
 	}
 }
 
-export function AppMetadataProvider({ children }: { children: React.ReactNode }) {
-	const streamDone = useContext(StreamDoneContext)
-	const [metadataRequested, setMetadataRequested] = useState(false)
-	const requestMetadata = useCallback(() => setMetadataRequested(true), [])
-	const {
-		data: rawData,
-		isLoading: loading,
-		error: queryError,
-		refetch
-	} = useQuery({
-		queryKey: ['pro-dashboard', 'app-metadata'],
-		queryFn: async () => {
-			const [protocols, chains, pfPs] = await Promise.all([
-				fetchJson<Record<string, IProtocolMetadata>>('https://api.llama.fi/config/smol/appMetadata-protocols.json'),
-				fetchJson<Record<string, IChainMetadata>>('https://api.llama.fi/config/smol/appMetadata-chains.json'),
-				fetchPfPs()
-			])
+// The dashboard stream seeds this key. Only a mounted consumer enables a fetch, and only once the stream is done,
+// so a dashboard without metadata-driven cards never downloads it.
+const appMetadataQuery = {
+	queryKey: ['pro-dashboard', 'app-metadata'],
+	queryFn: async () => {
+		const [protocols, chains, pfPs] = await Promise.all([
+			fetchJson<Record<string, IProtocolMetadata>>('https://api.llama.fi/config/smol/appMetadata-protocols.json'),
+			fetchJson<Record<string, IChainMetadata>>('https://api.llama.fi/config/smol/appMetadata-chains.json'),
+			fetchPfPs()
+		])
 
-			return { protocols, chains, pfPs }
-		},
-		staleTime: Infinity,
-		enabled: streamDone && metadataRequested
-	})
+		return { protocols, chains, pfPs }
+	},
+	staleTime: Infinity
+} as const
+
+export function AppMetadataProvider({ children }: { children: React.ReactNode }) {
+	// Reads the cache and owns the derived indexes and retry; consumers decide whether to fetch.
+	const { data: rawData, error: queryError, refetch } = useQuery({ ...appMetadataQuery, enabled: false })
+	const dashboardStreamDone = useContext(StreamDoneContext)
 
 	const error = queryError ? String(queryError.message) : undefined
 	const protocolsRaw = rawData?.protocols ?? null
@@ -276,28 +276,26 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 
 	const value: AppMetadataContextValue = useMemo(
 		() => ({
-			loading: !metadataRequested || loading || (!streamDone && rawData === undefined),
+			dashboardStreamDone,
+			loading: rawData === undefined && !queryError,
 			error,
 			protocolsBySlug,
 			hasProtocolBuilderMetric,
 			availableProtocolChartTypes,
 			chainsByName,
 			availableChainChartTypes,
-			requestMetadata,
 			retry: () => void refetch()
 		}),
 		[
-			metadataRequested,
-			loading,
-			streamDone,
+			dashboardStreamDone,
 			rawData,
+			queryError,
 			error,
 			protocolsBySlug,
 			chainsByName,
 			availableProtocolChartTypes,
 			availableChainChartTypes,
 			hasProtocolBuilderMetric,
-			requestMetadata,
 			refetch
 		]
 	)
@@ -307,8 +305,7 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 
 export function useAppMetadata(): AppMetadataContextType {
 	const ctx = useContext(AppMetadataContext)
-	const requestMetadata = ctx?.requestMetadata
-	useEffect(() => requestMetadata?.(), [requestMetadata])
+	useQuery({ ...appMetadataQuery, enabled: ctx?.dashboardStreamDone ?? false })
 	if (!ctx) throw new Error('useAppMetadata must be used within an AppMetadataProvider')
 	return ctx
 }

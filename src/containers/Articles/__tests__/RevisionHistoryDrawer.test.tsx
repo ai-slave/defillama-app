@@ -311,6 +311,25 @@ describe('RevisionHistoryDrawer', () => {
 		expect(sheetText()).not.toContain("The live revision can't be deleted.")
 	})
 
+	test('moving the selection with the keyboard scrolls the newly selected revision into view', async () => {
+		// happy-dom has no layout, so record which row asked to be scrolled.
+		const scrolled: Array<string | null> = []
+		const scrollIntoView = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(function (
+			this: HTMLElement
+		) {
+			scrolled.push(this.getAttribute('data-revision-id'))
+		})
+		await renderDrawer()
+		await waitForUi(() => expect(sheetText()).toContain('Revision 4'))
+		scrolled.length = 0
+		await act(async () =>
+			sheet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+		)
+		await flush()
+		expect(scrolled).toEqual(['rev-3'])
+		scrollIntoView.mockRestore()
+	})
+
 	test('history owns focus and shortcuts; Escape closes the confirmation before the drawer', async () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		const onClose = vi.fn()

@@ -1,10 +1,4 @@
-import {
-	createColumnHelper,
-	functionalUpdate,
-	tableFeatures,
-	useTable,
-	type ColumnVisibilityState
-} from '@tanstack/react-table'
+import { createColumnHelper, tableFeatures, useTable, type ColumnVisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
@@ -34,6 +28,7 @@ import {
 	TOKENS_HIDEABLE_COLUMNS_WIDTH,
 	type TokensColumnSpec
 } from './columnSpecs'
+import { useTokensColumnVisibility } from './columnVisibility'
 import { prepareTokensCsv } from './csv'
 import {
 	buildTokensFiltersQueryUpdate,
@@ -545,34 +540,8 @@ function TokensSharedControls({
 	)
 }
 
-const TOKENS_COLUMN_VISIBILITY_STORAGE_KEY = 'tokens-table-column-visibility-v2'
 const HIDEABLE_COLUMNS = TOKENS_HIDEABLE_COLUMN_SPECS
 const COLUMN_PICKER_OPTIONS = HIDEABLE_COLUMNS.map((column) => ({ key: column.id, name: column.header }))
-
-const DEFAULT_VISIBLE_COLUMN_IDS = new Set([
-	'price',
-	'priceChange24h',
-	'priceChange7d',
-	'priceChange30d',
-	'marketCap',
-	'fdv',
-	'spotVolume24h',
-	'revenue24h'
-])
-
-const DEFAULT_COLUMN_VISIBILITY: ColumnVisibilityState = Object.fromEntries(
-	HIDEABLE_COLUMNS.map((column) => [column.id, DEFAULT_VISIBLE_COLUMN_IDS.has(column.id)])
-)
-
-function readStoredColumnVisibility(): ColumnVisibilityState | null {
-	try {
-		const stored = window.localStorage.getItem(TOKENS_COLUMN_VISIBILITY_STORAGE_KEY)
-		const parsed = stored ? JSON.parse(stored) : null
-		return parsed && typeof parsed === 'object' ? parsed : null
-	} catch {
-		return null
-	}
-}
 
 export default function TokensPage({ initialData }: TokensPageProps) {
 	const router = useRouter()
@@ -626,7 +595,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		[hasChainFilter, router]
 	)
 	const rankColumnWidth = getRankColumnWidth(serverTable.rows)
-	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(DEFAULT_COLUMN_VISIBILITY)
+	const [columnVisibility, handleColumnVisibilityChange] = useTokensColumnVisibility()
 	const effectiveColumnVisibility = React.useMemo(() => {
 		const next = { ...columnVisibility }
 		for (const filter of filters) {
@@ -642,24 +611,6 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		'--tokens-rank-column-width': `${rankColumnWidth}px`,
 		'--tokens-table-min-width': `${visibleColumnsWidth}px`
 	}
-	React.useEffect(() => {
-		const stored = readStoredColumnVisibility()
-		if (stored) React.startTransition(() => setColumnVisibility(stored))
-	}, [])
-	const handleColumnVisibilityChange = React.useCallback(
-		(updater: ColumnVisibilityState | ((old: ColumnVisibilityState) => ColumnVisibilityState)) => {
-			setColumnVisibility((old) => {
-				const next = functionalUpdate(updater, old)
-				try {
-					window.localStorage.setItem(TOKENS_COLUMN_VISIBILITY_STORAGE_KEY, JSON.stringify(next))
-				} catch {
-					// Storage can be unavailable or full; the feature degrades silently.
-				}
-				return next
-			})
-		},
-		[]
-	)
 	const table = useTable({
 		features: tableFeaturesConfig,
 		data: serverTable.rows,

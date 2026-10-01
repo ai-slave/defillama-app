@@ -1,5 +1,5 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
@@ -8,7 +8,7 @@ import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from './ClaimTurnstile'
-import { requestLeadClickId, useSubmitLead } from './client'
+import { useSubmitLead } from './client'
 import { LeadCancelButton, LeadDialog, LeadField, LeadHoneypot, LeadSuccess } from './LeadDialog'
 import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from './leadShared'
 
@@ -27,6 +27,8 @@ export function ClaimDialog({
 	marketMakerId: string | null
 	marketMakerName: string
 	marketMakerLogo?: string | null
+	/** Recorded by the click that opened this form; null until that request answers, or if it failed. */
+	clickId: string | null
 }) {
 	// The form is a child of the dialog, which Ariakit unmounts when it closes, so every open starts from a
 	// fresh form, mutation and captcha instead of resetting a dozen fields by hand.
@@ -40,11 +42,13 @@ export function ClaimDialog({
 function ClaimDialogForm({
 	marketMakerId,
 	marketMakerName,
-	marketMakerLogo
+	marketMakerLogo,
+	clickId
 }: {
 	marketMakerId: string | null
 	marketMakerName: string
 	marketMakerLogo?: string | null
+	clickId: string | null
 }) {
 	const [position, setPosition] = useState('')
 	const [hasContact, setHasContact] = useState<'yes' | 'no'>('no')
@@ -59,21 +63,9 @@ function ClaimDialogForm({
 	const [turnstileToken, setTurnstileToken] = useState('')
 	const [touched, setTouched] = useState<Record<string, boolean>>({})
 	const [submitAttempted, setSubmitAttempted] = useState(false)
-	const clickIdRef = useRef<string | null>(null)
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const submit = useSubmitLead('claim')
 	const captchaEnabled = isClaimTurnstileEnabled()
-
-	// One click id per opened form; the ref is only read when the form is submitted.
-	useEffect(() => {
-		let superseded = false
-		requestLeadClickId('claim', marketMakerId).then((clickId) => {
-			if (!superseded) clickIdRef.current = clickId
-		})
-		return () => {
-			superseded = true
-		}
-	}, [marketMakerId])
 
 	const errors: Record<string, string | null> = {
 		position: position.trim() === '' ? 'Position is required' : null,
@@ -113,7 +105,7 @@ function ClaimDialogForm({
 				terms_consent: termsConsent,
 				market_maker_id: marketMakerId,
 				market_maker_name: marketMakerName,
-				click_id: clickIdRef.current,
+				click_id: clickId,
 				source_url: typeof window === 'undefined' ? null : window.location.href,
 				hp: honeypot,
 				turnstile_token: turnstileToken

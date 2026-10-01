@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import { prerenderToNodeStream } from 'react-dom/static.node'
 import { describe, expect, test } from 'vitest'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { CollateralView } from '../components/CollateralView'
 import { ScenarioDetailContent } from '../components/ScenarioDetailPanel'
 import { TrustPanel } from '../components/TrustPanel'
@@ -24,9 +25,12 @@ import {
 	makeVaultRoles
 } from './factories'
 
-// prerenderToNodeStream fully resolves Suspense (lazy ECharts), unlike sync renderToStaticMarkup.
+// prerenderToNodeStream fully resolves Suspense (lazy ECharts), unlike sync renderToStaticMarkup. The page stamps a
+// clock in its props, as every server-rendered page does.
 async function render(el: ReactElement): Promise<string> {
-	const { prelude } = await prerenderToNodeStream(el)
+	const { prelude } = await prerenderToNodeStream(
+		<PageClockProvider pageClockSec={1_790_000_000}>{el}</PageClockProvider>
+	)
 	const chunks: Array<Buffer> = []
 	for await (const chunk of prelude) chunks.push(Buffer.from(chunk))
 	return Buffer.concat(chunks).toString('utf8')

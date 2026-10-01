@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
@@ -10,6 +10,8 @@ import { isScheduled } from '~/containers/Articles/articleSchedule'
 import { formatArticleDate } from '~/containers/Articles/editor/ArticleEditorUtils'
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
+import { useDebouncedValue } from '~/hooks/useDebounce'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
@@ -36,15 +38,6 @@ function wordCount(text: string | undefined): number {
 	return trimmed ? trimmed.split(/\s+/).length : 0
 }
 
-function useDebounced<T>(value: T, delay = 200): T {
-	const [debounced, setDebounced] = useState(value)
-	useEffect(() => {
-		const id = window.setTimeout(() => setDebounced(value), delay)
-		return () => window.clearTimeout(id)
-	}, [value, delay])
-	return debounced
-}
-
 function StatusDot({ status }: { status: ArticleDocument['status'] }) {
 	const isPublished = status === 'published'
 	return (
@@ -67,7 +60,7 @@ function MyArticlesContent() {
 	const [sortKey, setSortKey] = useState<SortKey>('updated')
 	const [searchInput, setSearchInput] = useState('')
 	const [page, setPage] = useState(1)
-	const search = useDebounced(searchInput, 200).trim().toLowerCase()
+	const search = useDebouncedValue(searchInput, 200).trim().toLowerCase()
 
 	const myArticlesQueryKey = ['research', 'my-articles'] as const
 	const { data, isLoading, error } = useQuery({
@@ -88,10 +81,12 @@ function MyArticlesContent() {
 	})
 
 	const allArticles = data?.items ?? EMPTY_ARTICLES
-	const scheduledCount = useMemo(() => allArticles.filter((a) => isScheduled(a)).length, [allArticles])
+	// The access gate renders this list after hydration only, so the clock reads the browser from the first render.
+	const nowMs = useNowSeconds() * 1000
+	const scheduledCount = useMemo(() => allArticles.filter((a) => isScheduled(a, nowMs)).length, [allArticles, nowMs])
 	const draftCount = useMemo(
-		() => allArticles.filter((a) => a.status === 'draft' && !isScheduled(a)).length,
-		[allArticles]
+		() => allArticles.filter((a) => a.status === 'draft' && !isScheduled(a, nowMs)).length,
+		[allArticles, nowMs]
 	)
 	const publishedCount = allArticles.filter((a) => a.status === 'published').length
 	const totalCount = allArticles.length
@@ -351,7 +346,7 @@ function MyArticlesContent() {
 							const words = wordCount(article.plainText) || wordCount(article.excerpt)
 							const minutes = words > 0 ? Math.max(1, Math.ceil(words / 220)) : 0
 							const isDeleting = deleteArticleMutation.variables === article.id && deleteArticleMutation.isPending
-							const scheduled = isScheduled(article)
+							const scheduled = isScheduled(article, nowMs)
 							return (
 								<li
 									key={article.id}

@@ -13,6 +13,7 @@ import {
 	PRO_RWA_ASSETS_TABLE_QUERY_KEY,
 	PRO_RWA_CHAINS_TABLE_QUERY_KEY
 } from '../tableQueryKeys'
+import { wasDashboardDeleted } from './useDashboardAPI'
 
 export interface DashboardStreamState {
 	isStreaming: boolean
@@ -100,12 +101,20 @@ function usableStreamBody(response: Response) {
 	return response.ok ? response.body : null
 }
 
+/** Who the stream reads as. The dashboard query key is scoped by the same fields. */
+export interface DashboardStreamViewer {
+	authToken: string | null
+	isAuthenticated: boolean
+	userId: string | undefined
+}
+
 export function useDashboardStream(
 	dashboardId: string | undefined,
-	authToken?: string | null,
+	viewer: DashboardStreamViewer,
 	enabled = true,
 	options: DashboardStreamRequestOptions = {}
 ): DashboardStreamState {
+	const { authToken, isAuthenticated, userId } = viewer
 	const queryClient = useQueryClient()
 	const [state, setState] = useState<DashboardStreamState>({
 		isStreaming: false,
@@ -128,7 +137,21 @@ export function useDashboardStream(
 			const now = Date.now()
 			switch (chunk.type) {
 				case 'dashboard':
-					// Dashboard is seeded into cache by the provider (needs auth-aware key)
+					if (chunk.data && dashboardId && !wasDashboardDeleted(queryClient, chunk.data.id, userId)) {
+						queryClient.setQueryData(['pro-dashboard', 'dashboard', dashboardId, isAuthenticated, userId], chunk.data, {
+							updatedAt: now
+						})
+						// Slug routes and mutation scopes must share the same confirmed snapshot by dashboard id.
+						if (chunk.data.id !== dashboardId) {
+							queryClient.setQueryData(
+								['pro-dashboard', 'dashboard', chunk.data.id, isAuthenticated, userId],
+								chunk.data,
+								{
+									updatedAt: now
+								}
+							)
+						}
+					}
 					setState((previousState) => ({
 						...previousState,
 						dashboard: chunk.data
@@ -222,7 +245,7 @@ export function useDashboardStream(
 					break
 			}
 		},
-		[queryClient]
+		[queryClient, dashboardId, isAuthenticated, userId]
 	)
 
 	// A new stream target (dashboard, token or enabled flag) starts a fresh streaming state in the same render
@@ -232,7 +255,7 @@ export function useDashboardStream(
 	const versionKey = options.version ?? ''
 	const streamKey =
 		dashboardId && dashboardId !== 'new' && enabled
-			? `${dashboardId}|${authToken ?? ''}|${overridesKey}|${itemKey}|${versionKey}`
+			? `${dashboardId}|${authToken ?? ''}|${isAuthenticated}|${userId ?? ''}|${overridesKey}|${itemKey}|${versionKey}`
 			: null
 	const [syncedStreamKey, setSyncedStreamKey] = useState<string | null>(null)
 	if (streamKey !== syncedStreamKey) {
