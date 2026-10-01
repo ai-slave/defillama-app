@@ -1,22 +1,12 @@
-// "Add Metrics" picker: a disclosure button, grouped option chips in a dialog, and the
-// selected series as removable chips beside it. Option counts are small, so no search box.
-import * as Ariakit from '@ariakit/react'
-import { Button, buttonStyles } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles, DialogFooter } from '~/ui/Dialog'
+// "Add Metrics" picker: the shared metrics dialog, and the selected series as removable chips beside it.
+import { ChartMetricsDialog, type ChartMetricOption as SharedChartMetricOption } from '~/components/ChartMetricsDialog'
 import { Icon } from '~/ui/Icon'
-import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { metricChipStyles } from '~/ui/MetricChip'
 import { SealGlyph } from '../Tables/Measured'
 
-export interface ChartMetricOption {
-	key: string
-	label: string
-	/** Series color resolved for the active theme; borders the chips. */
-	color: string
-	active: boolean
+export interface ChartMetricOption extends SharedChartMetricOption {
 	/** The series default, so removing a metric clears the URL override instead of pinning one. */
 	defaultEnabled: boolean
-	/** Measured for this pool but withheld from this reader: listed greyed with a PRO badge, and a click opens the upgrade modal instead of toggling. */
-	locked?: boolean
 	/** Marks our own measurement with the seal. */
 	verified?: boolean
 }
@@ -36,96 +26,23 @@ export function ChartMetricsPicker({
 	/** Opens the upgrade path for a locked option. */
 	onUnlock?: () => void
 }) {
-	const dialogStore = Ariakit.useDialogStore()
 	const options = groups.flatMap((group) => group.options)
 	if (options.length === 0) return null
-	// A locked option is never selectable, so it stays out of the count.
-	const selectable = options.filter((option) => !option.locked)
-	const selected = selectable.filter((option) => option.active)
+	const selected = options.filter((option) => option.active && !option.locked)
 
 	return (
 		<>
-			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
-					<span>Add Metrics</span>
-					<Icon name="plus" className="size-3.5" />
-				</Ariakit.DialogDisclosure>
-				<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:480px]`} unmountOnHide portal>
-					<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-						<div className="flex items-baseline gap-2.5">
-							<DialogHeading>Chart metrics</DialogHeading>
-							<span className="body-sm text-tertiary">
-								{selected.length}/{selectable.length}
-							</span>
-						</div>
-						<DialogCloseButton />
-					</div>
-
-					<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">
-						{groups
-							.filter((group) => group.options.length > 0)
-							.map((group) => (
-								<section key={group.label} className="flex flex-col gap-2">
-									<span className="label-xs tracking-wide text-tertiary uppercase">{group.label}</span>
-									<div className="flex flex-wrap gap-1">
-										{group.options.map((option) =>
-											option.locked ? (
-												<button
-													key={option.key}
-													type="button"
-													onClick={() => {
-														dialogStore.hide()
-														onUnlock?.()
-													}}
-													className={metricOptionChipStyles}
-													aria-label={`${option.label}, available on Pro`}
-												>
-													<Icon name="lock" className="size-3 text-tertiary" />
-													<span className="text-tertiary">{option.label}</span>
-													<span className="rounded-md bg-brand-muted px-1 py-px label-xs tracking-widest text-link">
-														PRO
-													</span>
-												</button>
-											) : (
-												<button
-													key={option.key}
-													type="button"
-													onClick={() => onToggle(option)}
-													aria-pressed={option.active}
-													data-active={option.active}
-													className={metricOptionChipStyles}
-												>
-													{option.active ? (
-														<span
-															aria-hidden
-															className="size-1.5 rounded-full"
-															style={{
-																backgroundColor: `color-mix(in oklch, ${option.color} 75%, var(--text-secondary))`
-															}}
-														/>
-													) : (
-														<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-													)}
-													{option.verified ? <SealGlyph size={12} /> : null}
-													<span>{option.label}</span>
-													{option.active ? (
-														<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-													) : null}
-												</button>
-											)
-										)}
-									</div>
-								</section>
-							))}
-					</div>
-
-					<DialogFooter>
-						<Button type="button" variant="primary" size="md" onClick={() => dialogStore.hide()}>
-							Done
-						</Button>
-					</DialogFooter>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+			<ChartMetricsDialog
+				groups={groups.map((group) => ({
+					label: group.label,
+					options: group.options.map((option) => ({
+						...option,
+						leading: option.verified ? <SealGlyph size={12} /> : null
+					}))
+				}))}
+				onToggle={onToggle}
+				onUnlock={onUnlock}
+			/>
 
 			{selected.map((option) => (
 				<button

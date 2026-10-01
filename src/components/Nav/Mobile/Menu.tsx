@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { lazy, Suspense, useState } from 'react'
+import { DialogCloseButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
@@ -35,15 +36,13 @@ export function Menu({
 			</Ariakit.DialogDisclosure>
 
 			<Ariakit.Dialog
+				aria-label="Navigation menu"
 				// Keep expanded navigation sections and the scroll position when reopening.
 				unmountOnHide={false}
 				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-surface p-4 pl-5 text-primary"
 			>
 				<nav className="flex flex-1 flex-col">
-					<Ariakit.DialogDismiss className="ml-auto">
-						<span className="sr-only">Close Navigation Menu</span>
-						<Icon name="x" height={20} width={20} strokeWidth="4px" />
-					</Ariakit.DialogDismiss>
+					<DialogCloseButton className="ml-auto" ariaLabel="Close navigation menu" />
 
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">

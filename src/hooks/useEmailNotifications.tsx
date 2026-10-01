@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -44,7 +43,9 @@ const parseJsonSafely = async <T = unknown,>(response: Response): Promise<T | nu
 	return parsed as T | null
 }
 
-const getUserFacingErrorMessage = (error: unknown, fallbackMessage: string): string => {
+/** The server's reason when it gave one. The hook only writes the cache: each caller shows the outcome where the
+    action happened, so a dialog never gets a toast over it. */
+export const getUserFacingErrorMessage = (error: unknown, fallbackMessage: string): string => {
 	if (!(error instanceof Error)) return fallbackMessage
 	if (!error.message.startsWith('[HTTP] [error]')) return error.message || fallbackMessage
 	const colonIndex = error.message.indexOf(':')
@@ -129,11 +130,9 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		},
 		onSuccess: (data, variables) => {
 			queryClient.setQueryData(['notifications', 'preferences', pb.authStore.record?.id, variables.portfolioName], data)
-			toast.success('Notification preferences saved successfully')
 		},
 		onError: (err) => {
 			console.error('Error saving notification preferences:', err)
-			toast.error(getUserFacingErrorMessage(err, 'Failed to save notification preferences'))
 		}
 	})
 
@@ -163,11 +162,9 @@ export const useEmailNotifications = (portfolioName?: string) => {
 			void queryClient.invalidateQueries({
 				queryKey: ['notifications', 'preferences', pb.authStore.record?.id, variables.portfolioName]
 			})
-			toast.success(variables.active ? 'Notification preferences enabled' : 'Notification preferences disabled')
 		},
 		onError: (err) => {
 			console.error('Error updating notification status:', err)
-			toast.error(getUserFacingErrorMessage(err, 'Failed to update notification status'))
 		}
 	})
 
@@ -194,11 +191,9 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		},
 		onSuccess: (_, variables) => {
 			queryClient.setQueryData(['notifications', 'preferences', pb.authStore.record?.id, variables.portfolioName], null)
-			toast.success('Notification preferences deleted')
 		},
 		onError: (err) => {
 			console.error('Error deleting notification preferences:', err)
-			toast.error(getUserFacingErrorMessage(err, 'Failed to delete notifications'))
 		}
 	})
 

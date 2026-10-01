@@ -11,9 +11,9 @@ import {
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { DialogForm } from '~/components/DialogForm'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
+import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -256,13 +256,7 @@ function TokensPortfolioSelection() {
 					onItemClick={(value) => setSelectedPortfolio(value)}
 					className={`${selectTriggerStyles('filter', 'md')} min-w-[100px]`}
 				/>
-				<DialogForm
-					title="New portfolio"
-					description="Enter the name of your new portfolio"
-					open={open}
-					setOpen={setOpen}
-					onSubmit={addPortfolio}
-				/>
+				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
 				<Button type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
 					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>

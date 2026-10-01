@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { matchSorter } from 'match-sorter'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { ChartMetricsDialog } from '~/components/ChartMetricsDialog'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -18,11 +18,9 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
-import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { metricChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
@@ -499,9 +497,6 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		() => resolveTokenOverviewCharts({ geckoId, rawChartData: overview.rawChartData, chartQuery: selectedChartsQuery }),
 		[geckoId, overview.rawChartData, selectedChartsQuery]
 	)
-	const metricsDialogStore = Ariakit.useDialogStore()
-	const [metricsSearchValue, setMetricsSearchValue] = useState('')
-	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
 	const { rawChartData, isLoading } = useFetchTokenOverviewChartData({
 		geckoId,
 		overview,
@@ -536,21 +531,6 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 	})
 	const [pendingChart] = pendingCharts
 	const loadingLabel = pendingChart ? getChartLabel(pendingChart, overview.symbol) : `${pendingCharts.length} metrics`
-	const filteredMetricOptions = useMemo(() => {
-		const options = availableCharts.map((chart) => ({
-			id: chart,
-			label: getChartLabel(chart, overview.symbol),
-			active: activeCharts.includes(chart)
-		}))
-
-		if (!deferredMetricsSearchValue) return options
-
-		return matchSorter(options, deferredMetricsSearchValue, {
-			keys: ['label', 'id'],
-			threshold: matchSorter.rankings.CONTAINS
-		})
-	}, [activeCharts, availableCharts, deferredMetricsSearchValue, overview.symbol])
-
 	const setActiveTimeframe = (timeframe: PriceChartTimeframe) => {
 		void pushShallowQuery(router, {
 			[TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY]: timeframe === DEFAULT_PRICE_CHART_TIMEFRAME ? undefined : timeframe
@@ -569,64 +549,25 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 				leading={
 					<>
 						{availableCharts.length > 0 ? (
-							<Ariakit.DialogProvider store={metricsDialogStore}>
-								<Ariakit.DialogDisclosure render={<Button size="md" />}>
-									<span>Add Metrics</span>
-									<Icon name="plus" className="size-3.5" />
-								</Ariakit.DialogDisclosure>
-								<Ariakit.Dialog className={dialogFullSheetSurfaceStyles} unmountOnHide portal>
-									<div className="flex items-center gap-2 border-b border-subtle p-3">
-										<DialogHeading>Add metrics to chart</DialogHeading>
-										<DialogCloseButton className="ml-auto" />
-									</div>
-
-									<div className="flex flex-col gap-3 p-3">
-										<label className="relative">
-											<span className="sr-only">Search metrics</span>
-											<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-											<Input
-												type="text"
-												name="search"
-												inputMode="search"
-												placeholder="Search..."
-												value={metricsSearchValue}
-												className={searchFieldInputPlacementStyles}
-												onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
-											/>
-										</label>
-
-										<div className="flex flex-wrap gap-2">
-											{filteredMetricOptions.map((option) => (
-												<button
-													key={`token-chart-option-${option.id}`}
-													type="button"
-													aria-label={`${option.active ? 'Remove' : 'Add'} ${option.label}`}
-													onClick={() => {
-														setActiveCharts(
-															activeCharts.includes(option.id)
-																? activeCharts.filter((value) => value !== option.id)
-																: [...activeCharts, option.id]
-														)
-														metricsDialogStore.toggle()
-													}}
-													data-active={option.active}
-													className={metricOptionChipStyles}
-												>
-													<span>{option.label}</span>
-													{option.active ? (
-														<Icon name="x" aria-hidden="true" className="size-3.5" />
-													) : (
-														<Icon name="plus" aria-hidden="true" className="size-3.5" />
-													)}
-												</button>
-											))}
-											{filteredMetricOptions.length === 0 ? (
-												<p className="py-2 body-sm text-tertiary">No metrics found.</p>
-											) : null}
-										</div>
-									</div>
-								</Ariakit.Dialog>
-							</Ariakit.DialogProvider>
+							<ChartMetricsDialog
+								groups={[
+									{
+										label: 'Market',
+										options: availableCharts.map((chart) => ({
+											key: chart,
+											label: getChartLabel(chart, overview.symbol),
+											color: TOKEN_OVERVIEW_CHART_COLORS[chart],
+											active: activeCharts.includes(chart)
+										}))
+									}
+								]}
+								onToggle={(option) =>
+									setActiveCharts(
+										option.active ? activeCharts.filter((chart) => chart !== option.key) : [...activeCharts, option.key]
+									)
+								}
+								clear={{ kind: 'clear', onClear: () => setActiveCharts([]) }}
+							/>
 						) : null}
 						{activeCharts.map((chart) => (
 							<button

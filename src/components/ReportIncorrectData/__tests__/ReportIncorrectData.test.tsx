@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
@@ -32,10 +33,9 @@ afterEach(async () => {
 async function openReport(subject: ReportSubject) {
 	await act(async () =>
 		root.render(
-			<>
-				<Toaster />
+			<QueryClientProvider client={new QueryClient()}>
 				<ReportIncorrectData subject={subject} />
-			</>
+			</QueryClientProvider>
 		)
 	)
 	const trigger = Array.from(document.querySelectorAll('button')).find(
@@ -75,7 +75,7 @@ describe('ReportIncorrectData', () => {
 		await openReport({ type: 'protocol', name: 'Aave', isLending: true })
 
 		expect(document.body.textContent).toContain('Protocol')
-		expect(document.body.textContent).toContain("For lending protocols TVL doesn't include active loans by default")
+		expect(document.body.textContent).toContain('For lending protocols, TVL doesn’t include active loans by default.')
 		expect(document.body.textContent).toContain('TVL')
 		const payload = await submitReport('TVL')
 
@@ -83,6 +83,10 @@ describe('ReportIncorrectData', () => {
 		expect(payload).not.toHaveProperty('subject')
 	})
 })
+
+async function waitForPending() {
+	await waitForUi(() => expect(document.querySelector('textarea')?.readOnly).toBe(true))
+}
 
 async function clickReportButton(name: string) {
 	const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
@@ -96,10 +100,10 @@ test('failed reports retain the draft for retry but reopening starts without the
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	await submitReport('TVL')
 	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Something went wrong, couldn't submit report")
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
 	)
 	expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
-	await clickReportButton('Close report dialog')
+	await clickReportButton('Close dialog')
 	await clickReportButton('Report incorrect data')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(document.querySelector('textarea')?.value).toBe('')
@@ -111,41 +115,34 @@ test('failed reports retain the draft for retry but reopening starts without the
 		correctSource: '',
 		contact: ''
 	})
-	await waitForUi(() =>
-		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported successfully')
-	)
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Report sent'))
 })
 
-test.each(['success', 'failure'] as const)('a dismissed report %s leaves the reopened form intact', async (outcome) => {
+test('a pending report locks the dialog until it settles, then shows the outcome step', async () => {
 	const request = Promise.withResolvers<{ message: string }>()
 	mocks.fetchJson.mockReturnValueOnce(request.promise)
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	await submitReport('TVL')
-	await waitForUi(() => expect(document.querySelector('textarea')?.readOnly).toBe(true))
-	await clickReportButton('Close report dialog')
-	await clickReportButton('Report incorrect data')
-	const newForm = document.querySelector('form')!
-	expect(document.querySelector('button[type="submit"]')?.getAttribute('aria-disabled')).toBe('true')
-	await act(async () => newForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
-	expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
-	await act(async () => {
-		if (outcome === 'success') request.resolve({ message: 'success' })
-		else request.reject(new Error('Offline'))
-	})
-	expect(document.querySelector('form')).toBe(newForm)
-	expect(document.querySelector('[role="alert"]')).toBeNull()
-	await waitForUi(() => expect(document.querySelector('textarea')?.readOnly).toBe(false))
-	const [shown, hidden] =
-		outcome === 'success'
-			? ['Report sent successfully', "Something went wrong, couldn't submit report"]
-			: ["Something went wrong, couldn't submit report", 'Report sent successfully']
-	await waitForUi(() => expect(document.body.textContent).toContain(shown), { timeout: 1000 })
-	expect(document.body.textContent).not.toContain(hidden)
-	await submitReport('Revenue')
-	expect(JSON.parse(mocks.fetchJson.mock.calls[1][1].body).dataType).toBe('Revenue')
-	await waitForUi(() =>
-		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported successfully')
+	await waitForPending()
+	const dialog = document.querySelector('[role="dialog"]')!
+
+	await act(async () =>
+		dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
+	expect(document.querySelector('form')).not.toBeNull()
+	await clickReportButton('Close dialog')
+	await clickReportButton('Cancel')
+	expect(document.querySelector('form')).not.toBeNull()
+	expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
+
+	await act(async () => request.resolve({ message: 'success' }))
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Report sent'))
+	expect(document.querySelector('form')).toBeNull()
+
+	await clickReportButton('Done')
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	await clickReportButton('Report incorrect data')
+	expect(document.querySelector('textarea')?.value).toBe('')
 })
 
 test.each(['dataType', 'contact', 'submit-btn'])(
@@ -158,6 +155,7 @@ test.each(['dataType', 'contact', 'submit-btn'])(
 		const focusedControl = form.elements.namedItem(focusedField) as HTMLElement
 		await act(async () => focusedControl.focus())
 		const payload = await submitReport('Fees')
+		await waitForPending()
 
 		expect(payload).toEqual({
 			protocol: 'Aave',
@@ -170,12 +168,40 @@ test.each(['dataType', 'contact', 'submit-btn'])(
 		expect(document.activeElement).toBe(pendingFocus)
 		expect(document.querySelector('button[type="submit"]')?.getAttribute('aria-disabled')).toBe('true')
 		expect(document.querySelector('select')?.disabled).toBe(true)
-		expect(document.querySelector('[role="status"]')?.textContent).toBe('Submitting report')
+		expect(document.querySelector('button[type="submit"]')?.textContent).toContain('Sending…')
 
 		await act(async () => request.reject(new Error('Offline')))
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Something went wrong, couldn't submit report")
+		await waitForUi(() =>
+			expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
+		)
 		expect(document.activeElement).toBe(pendingFocus)
 		expect(document.querySelector('select')?.disabled).toBe(false)
 		expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
 	}
 )
+
+test('a sent report moves focus to Done on the outcome step', async () => {
+	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+	await submitReport('TVL')
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Report sent'))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Done'))
+})
+
+test.each([
+	['success', 'Report sent'],
+	['failure', "Couldn't send the report"]
+] as const)('a report that settles with %s after leaving the page says so in a toast', async (outcome, message) => {
+	const request = Promise.withResolvers<{ message: string }>()
+	mocks.fetchJson.mockReturnValueOnce(request.promise)
+	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+	await submitReport('TVL')
+	await waitForPending()
+
+	// Navigating away unmounts the page and its dialog; the app's toaster stays.
+	await act(async () => root.render(<Toaster />))
+	await act(async () => {
+		if (outcome === 'success') request.resolve({ message: 'success' })
+		else request.reject(new Error('Offline'))
+	})
+	await waitForUi(() => expect(document.body.textContent).toContain(message))
+})

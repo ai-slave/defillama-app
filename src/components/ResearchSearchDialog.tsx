@@ -1,16 +1,18 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRef, useState, type RefObject } from 'react'
+import { useRef, useState } from 'react'
 import { listArticles } from '~/containers/Articles/api'
 import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/landing/utils'
 import { listResearchNewsletterItems, type ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogHeader, DialogToolbar, useOpeningKey } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { LoadingIndicator } from '~/ui/Status'
+import { SearchField } from '~/ui/SearchField'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 
 const RESEARCH_SEARCH_LIMIT = 10
@@ -327,85 +329,7 @@ function SearchDialogTrigger({ variant }: { variant: SearchDialogVariant }) {
 	)
 }
 
-function SearchField({
-	inputRef,
-	query,
-	onChange,
-	onClear
-}: {
-	inputRef: RefObject<HTMLInputElement | null>
-	query: string
-	onChange: (query: string) => void
-	onClear: () => void
-}) {
-	return (
-		<div className="px-4 pb-3">
-			<div className="relative">
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden />
-				<Input
-					ref={inputRef}
-					type="text"
-					role="searchbox"
-					inputMode="search"
-					enterKeyHint="search"
-					aria-label="Search Research and newsletters"
-					value={query}
-					onChange={(event) => onChange(event.currentTarget.value)}
-					placeholder="Search topics, protocols, or titles…"
-					className={`${searchFieldInputPlacementStyles} ${query ? 'pr-9' : ''}`}
-				/>
-				{query ? (
-					<button
-						type="button"
-						onClick={onClear}
-						aria-label="Clear search"
-						className="absolute top-0 right-1 bottom-0 my-auto grid size-7 place-items-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary"
-					>
-						<Icon name="x" className="size-4" aria-hidden />
-					</button>
-				) : null}
-			</div>
-		</div>
-	)
-}
-
-function SearchTypeFilters({
-	section,
-	onChange
-}: {
-	section: SearchContentType | null
-	onChange: (section: SearchContentType | null) => void
-}) {
-	return (
-		<nav className="border-t border-subtle px-4 py-3" aria-label="Research and newsletter content types">
-			<p className="mb-2 label-sm text-secondary">Browse by format</p>
-			<Ariakit.RadioProvider
-				value={section ?? 'all'}
-				setValue={(value) => onChange(value === 'all' ? null : (value as SearchContentType))}
-			>
-				<Ariakit.RadioGroup
-					aria-label="Content type"
-					className="flex scrollbar-none touch-pan-x gap-1 overflow-x-auto rounded-lg bg-surface-elevated-1 p-1 [-webkit-overflow-scrolling:touch]"
-				>
-					{SECTION_FILTERS.map((filter) => {
-						const active = filter.value === section
-						return (
-							<label
-								key={filter.label}
-								className={`relative shrink-0 cursor-pointer rounded-md px-2.5 py-1.5 label-sm transition-colors has-focus-visible:focus-ring ${
-									active ? 'bg-brand text-on-brand' : 'text-secondary hover:bg-hover-row hover:text-primary'
-								}`}
-							>
-								<Ariakit.Radio value={filter.value ?? 'all'} className="sr-only" />
-								{filter.label}
-							</label>
-						)
-					})}
-				</Ariakit.RadioGroup>
-			</Ariakit.RadioProvider>
-		</nav>
-	)
-}
+const SECTION_OPTIONS = SECTION_FILTERS.map((filter) => ({ value: filter.value ?? 'all', label: filter.label }))
 
 function SearchResultsHeader({
 	data,
@@ -426,7 +350,7 @@ function SearchResultsHeader({
 	}
 
 	return (
-		<div className="flex items-center justify-between gap-3 border-t border-subtle px-4 py-2">
+		<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-2">
 			<p className="label-sm text-secondary">
 				{query ? 'Search results' : section ? activeSection?.label : 'Featured & latest'}
 			</p>
@@ -445,11 +369,13 @@ function SearchResults({
 	section,
 	activeSection,
 	onSelectTopic,
-	onSelectResult
+	onSelectResult,
+	onRetry
 }: {
 	data: ResearchSearchResponse | undefined
 	isLoading: boolean
 	error: Error | null
+	onRetry: () => void
 	query: string
 	section: SearchContentType | null
 	activeSection: SectionFilter | undefined
@@ -466,10 +392,15 @@ function SearchResults({
 
 	if (error) {
 		return (
-			<div className="flex min-h-64 items-center justify-center px-6 text-center">
-				<p role="alert" className="body-sm text-data-down">
-					Couldn&apos;t load search results. Please try again.
-				</p>
+			<div className="p-2">
+				<InlineStatus variant="error">
+					<span className="flex flex-wrap items-center justify-between gap-2">
+						Couldn&rsquo;t load search results.
+						<Button type="button" size="sm" onClick={onRetry}>
+							Try again
+						</Button>
+					</span>
+				</InlineStatus>
 			</div>
 		)
 	}
@@ -499,6 +430,19 @@ function SearchResults({
 
 export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant }) {
 	const [open, setOpen] = useState(false)
+	const opening = useOpeningKey(open)
+	return (
+		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
+			<SearchDialogTrigger variant={variant} />
+			<Dialog size="md" fullSheet portal unmountOnHide>
+				<ResearchSearch key={opening} onSelectResult={() => setOpen(false)} />
+			</Dialog>
+		</Ariakit.DialogProvider>
+	)
+}
+
+/** One opening's search: the query and format start empty each time the dialog opens. */
+function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 	const [query, setQuery] = useState('')
 	const [section, setSection] = useState<SearchContentType | null>(null)
 	const inputRef = useRef<HTMLInputElement>(null)
@@ -506,72 +450,54 @@ export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant
 	const resultLimit = debouncedQuery ? RESEARCH_SEARCH_LIMIT : LATEST_RESEARCH_LIMIT
 	const activeSection = SECTION_FILTERS.find((filter) => filter.value === section)
 
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['research', 'search-dialog', debouncedQuery, section, resultLimit],
 		queryFn: () => searchResearchContent(debouncedQuery, section, resultLimit),
-		enabled: open,
 		retry: false,
 		staleTime: 60_000
 	})
 
-	const handleOpenChange = (nextOpen: boolean) => {
-		setOpen(nextOpen)
-		if (!nextOpen) {
-			setQuery('')
-			setSection(null)
-		}
-	}
-
-	const selectTopic = (nextQuery: string) => {
-		setQuery(nextQuery)
-		requestAnimationFrame(() => inputRef.current?.focus())
-	}
-
 	return (
-		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
-			<SearchDialogTrigger variant={variant} />
-
-			<Ariakit.Dialog
-				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:700px]`}
-				backdrop={<div className="fixed inset-0 z-50 bg-screen-dim" />}
-				initialFocus={inputRef}
-				portal
-			>
-				<div className="flex items-start gap-3 px-4 pt-4 pb-3">
-					<div className="min-w-0">
-						<DialogHeading>Search Research &amp; newsletters</DialogHeading>
-						<p className="mt-0.5 body-sm text-tertiary">Find published analysis and Research Notes.</p>
-					</div>
-					<DialogCloseButton className="-mt-1 ml-auto" ariaLabel="Close Research search" />
-				</div>
-
-				<SearchField
-					inputRef={inputRef}
-					query={query}
-					onChange={setQuery}
-					onClear={() => {
-						setQuery('')
-						inputRef.current?.focus()
-					}}
-				/>
-
-				<SearchTypeFilters section={section} onChange={setSection} />
-
-				<SearchResultsHeader data={data} query={debouncedQuery} section={section} activeSection={activeSection} />
-
-				<div className={`${dialogScrollableBodyStyles} min-h-64 border-t border-subtle p-2`}>
-					<SearchResults
-						data={data}
-						isLoading={isLoading}
-						error={error}
-						query={debouncedQuery}
-						section={section}
-						activeSection={activeSection}
-						onSelectTopic={selectTopic}
-						onSelectResult={() => handleOpenChange(false)}
+		<>
+			<DialogHeader title="Search Research & newsletters" subtitle="Find published analysis and Research Notes." />
+			<DialogToolbar>
+				<div className="flex flex-col gap-3">
+					{/* Opening the search means typing, so the field takes focus on phones too. */}
+					<SearchField
+						ref={inputRef}
+						autoFocus
+						label="Search Research and newsletters"
+						placeholder="Search topics, protocols, or titles…"
+						value={query}
+						onChange={setQuery}
+					/>
+					<SegmentedControl
+						label="Content type"
+						variant="chips"
+						size="md"
+						options={SECTION_OPTIONS}
+						value={section ?? 'all'}
+						onValueChange={(value) => setSection(value === 'all' ? null : (value as SearchContentType))}
 					/>
 				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+			</DialogToolbar>
+			<SearchResultsHeader data={data} query={debouncedQuery} section={section} activeSection={activeSection} />
+			<DialogBody kind="list">
+				<SearchResults
+					data={data}
+					isLoading={isLoading}
+					error={error}
+					query={debouncedQuery}
+					section={section}
+					activeSection={activeSection}
+					onSelectTopic={(nextQuery) => {
+						setQuery(nextQuery)
+						inputRef.current?.focus()
+					}}
+					onSelectResult={onSelectResult}
+					onRetry={() => void refetch()}
+				/>
+			</DialogBody>
+		</>
 	)
 }

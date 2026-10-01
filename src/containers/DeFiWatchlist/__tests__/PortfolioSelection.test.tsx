@@ -64,9 +64,11 @@ async function createPortfolio(session: Session, name: string) {
 	await act(async () => button('New')!.click())
 	await waitFor(() => expect(document.querySelector('input[name="name"]')).not.toBeNull())
 	await act(async () => {
-		document.querySelector<HTMLInputElement>('input[name="name"]')!.value = name
-		button('Save')!.click()
+		const input = document.querySelector<HTMLInputElement>('input[name="name"]')!
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, name)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
+	await act(async () => button('Create')!.click())
 	await waitFor(() => expect(portfolioToolbar()).toContain(name))
 }
 

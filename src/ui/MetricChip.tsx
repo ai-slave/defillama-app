@@ -17,7 +17,8 @@ import { tw } from './tw'
 
 export const metricChipStyles = tw`flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-0.5 rounded-full border px-2 py-1.5 label-sm whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row`
 
-export const metricOptionChipStyles = tw`hover-wash group flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-2 py-0.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint`
+/** In a phone sheet's rows the option chip grows to the md chip's 32px, a tap target the wrapped rows can afford. */
+export const metricOptionChipStyles = tw`hover-wash group flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-2 py-0.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint sheet:min-h-8 sheet:px-3 sheet:py-1.5`
 
 export const metricOptionChipMdStyles = tw`hover-wash group flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint`
 

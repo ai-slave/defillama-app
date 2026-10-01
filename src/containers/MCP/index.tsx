@@ -5,7 +5,7 @@ import { SubscribeAPICard } from '~/containers/Subscription/shared/SubscribeCard
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { DialogCloseButton, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const toolCategories = [
@@ -584,16 +584,12 @@ export default function MCPContainer() {
 
 			{/* API Subscribe Modal */}
 			<ClientOnly>
-				<Ariakit.DialogProvider store={dialog}>
-					<Ariakit.Dialog className={`${dialogSurfaceStyles} text-primary [--dialog-width:448px]`} portal unmountOnHide>
-						<div className="mx-auto flex size-full max-w-[440px] flex-col overflow-hidden p-3">
-							<DialogCloseButton className="ml-auto shrink-0" />
-							<div className="min-h-0 flex-1 overflow-y-auto">
-								<SubscribeAPICard />
-							</div>
-						</div>
-					</Ariakit.Dialog>
-				</Ariakit.DialogProvider>
+				<Dialog size="sm" store={dialog} portal unmountOnHide>
+					<DialogHeader title="Get an API plan" subtitle="MCP uses the same credits as your API key." />
+					<DialogBody>
+						<SubscribeAPICard />
+					</DialogBody>
+				</Dialog>
 			</ClientOnly>
 		</>
 	)

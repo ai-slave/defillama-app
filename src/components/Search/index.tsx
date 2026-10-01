@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { multiSearchApi, searchApi } from '~/api'
@@ -9,12 +9,14 @@ import { BasicLink } from '~/components/Link'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Button } from '~/ui/Button'
+import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
+import { NoResults } from '~/ui/NoResults'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
 
@@ -56,7 +58,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
 
-	const siteSearch = useSiteSearchDialog()
+	const siteSearchStore = Ariakit.useDialogStore()
 
 	return (
 		<>
@@ -72,71 +74,53 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 				<span className="sr-only">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
 			</BasicLink>
 			{searchTrigger ?? (
-				<Ariakit.DialogProvider store={siteSearch.store}>
+				<Ariakit.DialogProvider store={siteSearchStore}>
 					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden">
 						<span className="sr-only">Search</span>
 						<Icon name="search" height={16} width={16} />
 					</Ariakit.DialogDisclosure>
 
-					<SiteSearchDialog {...siteSearch} />
+					<SiteSearchDialog store={siteSearchStore} />
 				</Ariakit.DialogProvider>
 			)}
 		</>
 	)
 }
 
-function useSiteSearchDialog() {
-	const [searchValue, setSearchValue] = useState('')
-	const [mounted, setMounted] = useState(false)
-	const store = Ariakit.useDialogStore({
-		setMounted(value) {
-			setMounted(value)
-			if (!value) {
-				setSearchValue('')
-			}
-		}
-	})
-	return { store, searchValue, setSearchValue, mounted }
+function SiteSearchDialog({ store }: { store: Ariakit.DialogStore }) {
+	return (
+		<Dialog store={store} size="md" fullSheet unmountOnHide portal>
+			<SiteSearchPalette onSelect={() => store.setOpen(false)} />
+		</Dialog>
+	)
 }
 
-function SiteSearchDialog({ store, searchValue, setSearchValue, mounted }: ReturnType<typeof useSiteSearchDialog>) {
+/** Mounts with each opening, so every search starts empty. */
+function SiteSearchPalette({ onSelect }: { onSelect: () => void }) {
+	const [searchValue, setSearchValue] = useState('')
 	return (
-		<Ariakit.Dialog
-			store={store}
-			unmountOnHide
-			className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:640px]`}
-			hideOnInteractOutside
-			portal
+		<Ariakit.ComboboxProvider
+			inputValue={searchValue}
+			setInputValue={(value) => {
+				startTransition(() => {
+					setSearchValue(value)
+				})
+			}}
 		>
-			<Ariakit.ComboboxProvider
-				inputValue={searchValue}
-				setInputValue={(value) => {
-					startTransition(() => {
-						setSearchValue(value)
-					})
-				}}
-			>
-				<div className="flex min-h-0 flex-1 flex-col p-2">
-					<span className="relative isolate flex w-full items-center justify-between gap-2">
-						<DialogHeading className="sr-only">Search</DialogHeading>
-						<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
-						<DialogCloseButton className="shrink-0" ariaLabel="Close search" />
-					</span>
-
-					<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} flex flex-col gap-1`} alwaysVisible>
-						{mounted ? <MobileSearchResults searchValue={searchValue} onSelect={() => store.setOpen(false)} /> : null}
-					</Ariakit.ComboboxList>
-				</div>
-			</Ariakit.ComboboxProvider>
-		</Ariakit.Dialog>
+			<DialogSearchHeader title="Search">
+				<Ariakit.Combobox placeholder="Search..." aria-label="Search" className={inputStyles} />
+			</DialogSearchHeader>
+			<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} p-2`} alwaysVisible>
+				<SearchResults searchValue={searchValue} onSelect={onSelect} />
+			</Ariakit.ComboboxList>
+		</Ariakit.ComboboxProvider>
 	)
 }
 
 const isSearchHotkey = (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.code === 'KeyK'
 
 export function SiteSearchHotkey() {
-	const siteSearch = useSiteSearchDialog()
-	const { store } = siteSearch
+	const store = Ariakit.useDialogStore()
 	useEffect(() => {
 		function openSearch(e: KeyboardEvent) {
 			if (!isSearchHotkey(e)) return
@@ -147,80 +131,72 @@ export function SiteSearchHotkey() {
 		return () => window.removeEventListener('keydown', openSearch)
 	}, [store])
 
-	return <SiteSearchDialog {...siteSearch} />
+	return <SiteSearchDialog store={store} />
 }
 
-function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; onSelect: () => void }) {
+/** Results for a query, or the recent and default lists before one. Shared by the desktop popover and the
+    phone dialog. */
+function SearchResults({ searchValue, onSelect }: { searchValue: string; onSelect?: () => void }) {
 	const debouncedSearchValue = useDebouncedValue(searchValue, 200)
-	const { data, isLoading, error, hasNextPage, isFetchingNextPage, fetchNextPage } = useSearch(debouncedSearchValue)
-	const { defaultSearchList, recentSearchList, isLoadingDefaultSearchList, errorDefaultSearchList } =
-		useDefaultSearchList()
+	const search = useSearch(debouncedSearchValue)
+	const defaults = useDefaultSearchList()
 
 	if (debouncedSearchValue) {
-		if (isLoading) {
-			return (
-				<p role="status" className="flex justify-center p-4">
-					<LoadingIndicator />
-				</p>
-			)
-		}
-		if (error) {
-			return (
-				<p
-					role="alert"
-					className="flex items-center justify-center p-4 body-sm text-data-down"
-				>{`Error: ${error.message}`}</p>
-			)
-		}
-		if (data.length === 0) {
-			return (
-				<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
-					No results found
-				</p>
-			)
-		}
+		if (search.isLoading) return <SearchLoading />
+		if (search.error) return <SearchError onRetry={() => void search.refetch()} />
+		if (search.data.length === 0) return <NoResults />
 		return (
 			<>
-				{data.map((route: ISearchItem) => (
-					<SearchItem key={`m-srch-data-${route.name}-${route.route}`} route={route} onSelect={onSelect} />
+				{search.data.map((route) => (
+					<SearchItem key={`${route.name}-${route.route}-${route.subName}`} route={route} onSelect={onSelect} />
 				))}
-				{hasNextPage ? <SeeMoreButton isLoading={isFetchingNextPage} onClick={() => fetchNextPage()} /> : null}
+				{search.hasNextPage ? (
+					<SeeMoreButton isLoading={search.isFetchingNextPage} onClick={() => search.fetchNextPage()} />
+				) : null}
 			</>
 		)
 	}
 
-	if (isLoadingDefaultSearchList) {
-		return (
-			<p role="status" className="flex justify-center p-4">
-				<LoadingIndicator />
-			</p>
-		)
-	}
-	if (errorDefaultSearchList) {
-		return (
-			<p
-				role="alert"
-				className="flex items-center justify-center p-4 body-sm text-data-down"
-			>{`Error: ${errorDefaultSearchList.message}`}</p>
-		)
-	}
-	if (!defaultSearchList?.length) {
-		return (
-			<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
-				No results found
-			</p>
-		)
-	}
-
+	if (defaults.isLoading) return <SearchLoading />
+	if (defaults.error) return <SearchError onRetry={() => void defaults.refetch()} />
+	if (defaults.defaultSearchList.length === 0) return <NoResults />
 	return (
 		<>
-			{recentSearchList.map((route: ISearchItem) => (
-				<SearchItem key={`m-search-rct-${route.name}-${route.route}`} route={route} recent onSelect={onSelect} />
+			{defaults.recentSearchList.map((route) => (
+				<SearchItem
+					key={`recent-${route.name}-${route.route}-${route.subName}`}
+					route={route}
+					recent
+					onSelect={onSelect}
+				/>
 			))}
-			{defaultSearchList.map((route: ISearchItem) => (
-				<SearchItem key={`m-search-dl-${route.name}-${route.route}`} route={route} onSelect={onSelect} />
+			{defaults.defaultSearchList.map((route) => (
+				<SearchItem key={`${route.name}-${route.route}-${route.subName}`} route={route} onSelect={onSelect} />
 			))}
 		</>
+	)
+}
+
+function SearchLoading() {
+	return (
+		<p role="status" className="flex justify-center p-4">
+			<LoadingIndicator />
+		</p>
+	)
+}
+
+function SearchError({ onRetry }: { onRetry: () => void }) {
+	return (
+		<div className="p-2">
+			<InlineStatus variant="error">
+				<span className="flex flex-wrap items-center justify-between gap-2">
+					Couldn&rsquo;t load search results.
+					<Button type="button" size="sm" onClick={onRetry}>
+						Try again
+					</Button>
+				</span>
+			</InlineStatus>
+		</div>
 	)
 }
 
@@ -253,11 +229,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 		return () => window.removeEventListener('keydown', focusSearchBar)
 	}, [setOpen])
 
-	const { defaultSearchList, recentSearchList, isLoadingDefaultSearchList, errorDefaultSearchList } =
-		useDefaultSearchList()
-	const debouncedSearchValue = useDebouncedValue(searchValue, 200)
-	const { data, isLoading, error, hasNextPage, isFetchingNextPage, fetchNextPage } = useSearch(debouncedSearchValue)
-
+	const queryClient = useQueryClient()
 	return (
 		<>
 			<Ariakit.ComboboxProvider
@@ -296,7 +268,10 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					<Ariakit.Combobox
 						id="desktop-search-input"
 						placeholder="Search..."
+						aria-label="Search"
 						ref={inputField}
+						// The default list loads with the popover; starting it on focus has it ready by the first open.
+						onFocus={() => void queryClient.prefetchQuery(defaultSearchListQuery)}
 						className={`${inputStyles} w-full pr-14 pl-8`}
 					/>
 					<span className="absolute top-0 right-1.5 bottom-0 my-auto flex h-5 items-center justify-center rounded-md bg-brand-muted px-1.5 label-xs text-link">
@@ -312,53 +287,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					portal
 				>
 					<Ariakit.ComboboxList alwaysVisible>
-						{debouncedSearchValue ? (
-							isLoading ? (
-								<p role="status" className="flex justify-center p-4">
-									<LoadingIndicator />
-								</p>
-							) : error ? (
-								<p
-									role="alert"
-									className="flex items-center justify-center p-4 body-sm text-data-down"
-								>{`Error: ${error.message}`}</p>
-							) : data.length === 0 ? (
-								<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
-									No results found
-								</p>
-							) : (
-								<>
-									{data.map((route: ISearchItem) => (
-										<SearchItem key={`gs-${route.name}-${route.route}-${route.subName}`} route={route} />
-									))}
-									{hasNextPage ? (
-										<SeeMoreButton isLoading={isFetchingNextPage} onClick={() => fetchNextPage()} />
-									) : null}
-								</>
-							)
-						) : isLoadingDefaultSearchList ? (
-							<p role="status" className="flex justify-center p-4">
-								<LoadingIndicator />
-							</p>
-						) : errorDefaultSearchList ? (
-							<p
-								role="alert"
-								className="flex items-center justify-center p-4 body-sm text-data-down"
-							>{`Error: ${errorDefaultSearchList.message}`}</p>
-						) : !defaultSearchList?.length ? (
-							<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
-								No results found
-							</p>
-						) : (
-							<>
-								{recentSearchList.map((route: ISearchItem) => (
-									<SearchItem key={`gs-r-${route.name}-${route.route}-${route.subName}`} route={route} recent />
-								))}
-								{defaultSearchList.map((route: ISearchItem) => (
-									<SearchItem key={`gs-dl-${route.name}-${route.route}-${route.subName}`} route={route} />
-								))}
-							</>
-						)}
+						<SearchResults searchValue={searchValue} />
 					</Ariakit.ComboboxList>
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
@@ -463,11 +392,15 @@ const setRecentSearch = (route: ISearchItem) => {
 	)
 }
 
-const useDefaultSearchList = () => {
-	const { data, isLoading, error } = useQuery({
-		queryKey: ['search', 'default-list'],
-		queryFn: getDefaultSearchList,
-		staleTime: 1000 * 60 * 60,
+const defaultSearchListQuery = {
+	queryKey: ['search', 'default-list'],
+	queryFn: getDefaultSearchList,
+	staleTime: 1000 * 60 * 60
+}
+
+function useDefaultSearchList() {
+	const { data, isLoading, error, refetch } = useQuery({
+		...defaultSearchListQuery,
 		refetchOnMount: false,
 		refetchOnWindowFocus: false
 	})
@@ -475,24 +408,20 @@ const useDefaultSearchList = () => {
 	const recentSearch = useStorageItem('recentSearch', '[]')
 
 	const { defaultSearchList, recentSearchList } = useMemo(() => {
-		if (!data || data.length === 0) return { defaultSearchList: [], recentSearchList: [] }
+		if (!data || data.length === 0)
+			return { defaultSearchList: EMPTY_SEARCH_ITEMS, recentSearchList: EMPTY_SEARCH_ITEMS }
 
-		const recentSearchArray = JSON.parse(recentSearch)
+		const recentSearchArray: Array<ISearchItem> = JSON.parse(recentSearch)
 
 		return {
-			defaultSearchList:
-				data?.filter((route: ISearchItem) => !recentSearchArray.some((r: ISearchItem) => r.route === route.route)) ??
-				[],
-			recentSearchList: recentSearchArray ?? []
+			defaultSearchList: data.filter(
+				(route: ISearchItem) => !recentSearchArray.some((r: ISearchItem) => r.route === route.route)
+			),
+			recentSearchList: recentSearchArray
 		}
 	}, [data, recentSearch])
 
-	return {
-		defaultSearchList,
-		recentSearchList,
-		isLoadingDefaultSearchList: isLoading,
-		errorDefaultSearchList: error
-	}
+	return { defaultSearchList, recentSearchList, isLoading, error, refetch }
 }
 
 function useSearch(searchValue: string) {
@@ -515,6 +444,7 @@ function useSearch(searchValue: string) {
 		error: query.error,
 		hasNextPage: query.hasNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
-		fetchNextPage: query.fetchNextPage
+		fetchNextPage: query.fetchNextPage,
+		refetch: query.refetch
 	}
 }

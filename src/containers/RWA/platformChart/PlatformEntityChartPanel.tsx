@@ -1,20 +1,17 @@
-import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
+import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { ChartMetricsDialog } from '~/components/ChartMetricsDialog'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
-import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { metricChipStyles } from '~/ui/MetricChip'
 import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from '../api.types'
@@ -103,7 +100,7 @@ export function RWAPlatformEntityChartPanel({
 				title={meta.name}
 				chartInstance={chartInstance}
 				onToggle={toggle}
-				onClear={() => setSelected([])}
+				onReset={() => setSelected([])}
 				onPeriodChange={(next) =>
 					void pushShallowQuery(router, { [RWA_PLATFORM_CHART_PERIOD_QUERY_KEY]: next === 'daily' ? undefined : next })
 				}
@@ -144,7 +141,7 @@ function EntityChartToolbar({
 	title,
 	chartInstance,
 	onToggle,
-	onClear,
+	onReset,
 	onPeriodChange
 }: {
 	selected: ReadonlyArray<RWAPlatformChartMetricKey>
@@ -155,7 +152,7 @@ function EntityChartToolbar({
 	title: string
 	chartInstance: () => echarts.ECharts | null
 	onToggle: (key: RWAPlatformChartMetricKey) => void
-	onClear: () => void
+	onReset: () => void
 	onPeriodChange: (period: RWAPlatformChartPeriod) => void
 }) {
 	const colorByName = new Map(chart.series.map((entry) => [entry.name, entry.color]))
@@ -163,7 +160,24 @@ function EntityChartToolbar({
 		<ChartPanelToolbar
 			leading={
 				<>
-					<MetricsDialog selected={selected} onToggle={onToggle} onClear={onClear} />
+					<ChartMetricsDialog
+						groups={GROUP_ORDER.map((group) => ({
+							label: group,
+							options: RWA_PLATFORM_CHART_METRICS.filter((metric) => metric.group === group).map((metric) => ({
+								key: metric.key,
+								label: metric.label,
+								description: metric.description,
+								color: colorByName.get(metric.label) ?? 'var(--text-tertiary)',
+								active: selected.includes(metric.key)
+							}))
+						}))}
+						onToggle={(option) => onToggle(option.key)}
+						clear={{
+							kind: 'reset',
+							atDefault: getRwaPlatformChartMetricsQuery(selected) === undefined,
+							onReset
+						}}
+					/>
 					{RWA_PLATFORM_CHART_METRICS.filter((metric) => selected.includes(metric.key)).map((metric) => (
 						<label key={metric.key} className="relative flex cursor-pointer flex-nowrap items-center gap-1">
 							<input
@@ -196,107 +210,5 @@ function EntityChartToolbar({
 			/>
 			<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />
 		</ChartPanelToolbar>
-	)
-}
-
-/** The protocol page's Chart metrics dialog over the platform's catalogue: grouped chips, a search, clear all, done. */
-function MetricsDialog({
-	selected,
-	onToggle,
-	onClear
-}: {
-	selected: ReadonlyArray<RWAPlatformChartMetricKey>
-	onToggle: (key: RWAPlatformChartMetricKey) => void
-	onClear: () => void
-}) {
-	const store = Ariakit.useDialogStore()
-	const [search, setSearch] = useState('')
-	const matches = RWA_PLATFORM_CHART_METRICS.filter((metric) =>
-		metric.label.toLowerCase().includes(search.trim().toLowerCase())
-	)
-	return (
-		<Ariakit.DialogProvider store={store}>
-			<Ariakit.DialogDisclosure render={<Button size="md" />}>
-				<span>Add Metrics</span>
-				<Icon name="plus" className="size-3.5" />
-			</Ariakit.DialogDisclosure>
-			<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:600px]`} unmountOnHide portal>
-				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<div className="flex items-baseline gap-2.5">
-						<DialogHeading>Chart metrics</DialogHeading>
-						<span className="body-sm text-tertiary">
-							{selected.length}/{RWA_PLATFORM_CHART_METRICS.length}
-						</span>
-					</div>
-					<DialogCloseButton className="-mr-1" />
-				</div>
-				<div className="border-b border-subtle px-4 py-3">
-					<label className="relative block">
-						<span className="sr-only">Search metrics</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<Input
-							type="text"
-							name="search"
-							inputMode="search"
-							placeholder={`Search ${RWA_PLATFORM_CHART_METRICS.length} metrics...`}
-							autoFocus
-							value={search}
-							className="w-full pl-8"
-							onChange={(event) => setSearch(event.currentTarget.value)}
-						/>
-					</label>
-				</div>
-				<div className="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
-					{GROUP_ORDER.map((group) => {
-						const options = matches.filter((metric) => metric.group === group)
-						if (options.length === 0) return null
-						return (
-							<section key={group} className="flex flex-col gap-2">
-								<div className="flex items-baseline gap-1.5">
-									<span className="label-xs tracking-wide text-tertiary uppercase">{group}</span>
-									<span className="body-xs text-tertiary/70">
-										&middot; {options.filter((metric) => selected.includes(metric.key)).length}/{options.length}
-									</span>
-								</div>
-								<div className="flex flex-wrap gap-1">
-									{options.map((metric) => {
-										const active = selected.includes(metric.key)
-										return (
-											<button
-												key={metric.key}
-												type="button"
-												title={metric.description}
-												onClick={() => onToggle(metric.key)}
-												data-active={active}
-												className={metricOptionChipStyles}
-											>
-												{active ? (
-													<span aria-hidden className="size-1.5 rounded-full bg-brand" />
-												) : (
-													<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-												)}
-												<span>{metric.label}</span>
-												{active ? <Icon name="x" className="size-3 text-secondary group-hover:text-primary" /> : null}
-											</button>
-										)
-									})}
-								</div>
-							</section>
-						)
-					})}
-				</div>
-				<DialogFooter
-					leading={
-						<Button type="button" variant="ghost" size="md" onClick={onClear}>
-							Reset
-						</Button>
-					}
-				>
-					<Button type="button" variant="primary" size="md" onClick={() => store.hide()}>
-						Done
-					</Button>
-				</DialogFooter>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
 	)
 }

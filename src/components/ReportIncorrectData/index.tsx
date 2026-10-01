@@ -1,12 +1,13 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useId, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles, textareaStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 
@@ -61,183 +62,176 @@ export function ReportIncorrectData({
 	dataType?: string
 	className?: string
 }) {
-	const [status, setStatus] = useState<'idle' | 'pending' | 'error'>('idle')
-	const dialogStore = Ariakit.useDialogStore({
-		setOpen: () => {
-			// Closing must not release a pending request and allow duplicate submissions.
-			setStatus((current) => (current === 'pending' ? current : 'idle'))
-		}
-	})
-	const successDialogStore = Ariakit.useDialogStore()
-	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
-	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
-
-	const onSubmit = (event: FormSubmitEvent) => {
-		event.preventDefault()
-		if (status === 'pending') return
-		const form = event.currentTarget
-		const values = new FormData(form)
-		// A select cannot stay read-only; preserve focus before disabling it.
-		if (document.activeElement === form.elements.namedItem('dataType')) {
-			form.querySelector<HTMLButtonElement>('button[type="submit"]')!.focus()
-		}
-		setStatus('pending')
-		const finish = (success: boolean) => {
-			// Dialog contents unmount on close; the submitted form identifies its opening.
-			setStatus(success || !form.isConnected ? 'idle' : 'error')
-			if (!form.isConnected) {
-				if (success) toast.success('Report sent successfully')
-				else toast.error("Something went wrong, couldn't submit report")
-				return
-			}
-			if (success) {
-				form.reset()
-				dialogStore.hide()
-				successDialogStore.show()
-			}
-		}
-		const subjectPayload = subject.type === 'exchange' ? { subject } : { protocol: subject.name }
-		void fetchJson('https://api.llama.fi/reportError', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				...subjectPayload,
-				dataType: dataType ?? values.get('dataType'),
-				message: values.get('message'),
-				correctSource: values.get('correctSource'),
-				contact: values.get('contact')
-			})
-		}).then(
-			(data) => finish(data?.message === 'success'),
-			() => finish(false)
-		)
-	}
-
+	const [open, setOpen] = useState(false)
+	const opening = useOpeningKey(open)
 	return (
 		<>
 			{dataType ? (
 				<Tooltip
 					content="Report incorrect data"
 					render={<button type="button" />}
-					onClick={dialogStore.toggle}
+					onClick={() => setOpen(true)}
 					className={className}
 				>
 					<Icon name="flag" height={14} width={14} />
 					<span className="sr-only">{`Report incorrect ${dataType} data`}</span>
 				</Tooltip>
 			) : (
-				<Button type="button" size="md" className="mt-auto mr-auto" onClick={dialogStore.toggle}>
+				<Button type="button" size="md" className="mt-auto mr-auto" onClick={() => setOpen(true)}>
 					Report incorrect data
 				</Button>
 			)}
+			<ReportSession key={opening} open={open} onClose={() => setOpen(false)} subject={subject} dataType={dataType} />
+		</>
+	)
+}
 
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:520px]`}
-				unmountOnHide
-				store={dialogStore}
-				portal
-			>
+/** One opening's report. The request lives here, above the dialog, so the dialog can lock while it runs and a
+    reopened dialog starts with an empty form. */
+function ReportSession({
+	open,
+	onClose,
+	subject,
+	dataType
+}: {
+	open: boolean
+	onClose: () => void
+	subject: ReportSubject
+	dataType?: string
+}) {
+	const report = useMutation({
+		mutationFn: async (body: Record<string, unknown>) => {
+			const data = await fetchJson('https://api.llama.fi/reportError', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body)
+			})
+			if (data?.message !== 'success') throw new Error('Report failed')
+		}
+	})
+	const pending = report.isPending
+	const messageId = useId()
+	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
+	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
+
+	const onSubmit = (event: FormSubmitEvent) => {
+		event.preventDefault()
+		if (pending) return
+		const form = event.currentTarget
+		const values = new FormData(form)
+		// A select cannot stay read-only; preserve focus before disabling it.
+		if (document.activeElement === form.elements.namedItem('dataType')) {
+			form.querySelector<HTMLButtonElement>('button[type="submit"]')!.focus()
+		}
+		const subjectPayload = subject.type === 'exchange' ? { subject } : { protocol: subject.name }
+		// The dialog locks while the report sends, but leaving the page still unmounts it. The promise settles either
+		// way, so a form that is gone by then reports the outcome as a toast.
+		report
+			.mutateAsync({
+				...subjectPayload,
+				dataType: dataType ?? values.get('dataType'),
+				message: values.get('message'),
+				correctSource: values.get('correctSource'),
+				contact: values.get('contact')
+			})
+			.then(
+				() => {
+					if (!form.isConnected) toast.success('Report sent')
+				},
+				() => {
+					if (!form.isConnected) toast.error("Couldn't send the report")
+				}
+			)
+	}
+
+	return (
+		<Dialog size="sm" open={open} onClose={onClose} pending={pending} unmountOnHide portal>
+			{report.isSuccess ? (
+				<>
+					<DialogHeader title="Report sent" subtitle="Thanks for helping keep the data accurate." />
+					<DialogFooter>
+						{/* Send report left with the form; focus moves to the step's one action. */}
+						<Ariakit.DialogDismiss autoFocus render={<Button type="button" variant="primary" size="md" />}>
+							Done
+						</Ariakit.DialogDismiss>
+					</DialogFooter>
+				</>
+			) : (
 				<form onSubmit={onSubmit} className="flex min-h-0 flex-auto flex-col">
-					<div className="flex items-center gap-2 border-b border-subtle p-3">
-						<DialogHeading>Report incorrect data</DialogHeading>
-						<DialogCloseButton className="ml-auto" ariaLabel="Close report dialog" />
-					</div>
-					<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-3">
+					<DialogHeader
+						title="Report incorrect data"
+						subtitle={`${subjectLabel}: ${subject.name}${dataType ? ` · ${dataType}` : ''}`}
+					/>
+					<DialogBody>
 						{subject.type === 'protocol' && subject.isLending ? (
-							<p className="text-center body-sm text-warning">
-								For lending protocols TVL doesn't include active loans by default
-							</p>
+							<InlineStatus variant="warning">
+								For lending protocols, TVL doesn&rsquo;t include active loans by default.
+							</InlineStatus>
 						) : null}
-						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>{subjectLabel}</span>
-							<input name="subject" value={subject.name} disabled className={`${inputStyles} disabled:opacity-50`} />
-						</label>
-						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>Data type</span>
-							{dataType ? (
-								<input name="dataType" value={dataType} disabled className={`${inputStyles} disabled:opacity-50`} />
-							) : (
-								<select
-									disabled={status === 'pending'}
-									name="dataType"
-									className={`${inputStyles} disabled:opacity-50`}
-								>
+						{dataType ? null : (
+							<label className="flex flex-col gap-1 label-sm text-secondary">
+								<span>Data type</span>
+								<select disabled={pending} name="dataType" className={inputStyles}>
 									{dataTypes.map((option) => (
 										<option key={option} value={option}>
 											{option}
 										</option>
 									))}
 								</select>
-							)}
-						</label>
-						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>What's wrong about it?</span>
-							<textarea
-								readOnly={status === 'pending'}
-								name="message"
-								required
-								className={`${textareaStyles} min-h-24 resize-y read-only:opacity-50`}
+							</label>
+						)}
+						<div className="flex flex-col gap-1">
+							<label htmlFor={messageId} className="label-sm text-secondary">
+								What&rsquo;s wrong about it?
+							</label>
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<textarea
+										id={messageId}
+										readOnly={pending}
+										name="message"
+										required
+										className={`${textareaStyles} min-h-24 resize-y`}
+									/>
+								}
 							/>
-						</label>
+						</div>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
 							<span>Where can we find correct information? (optional)</span>
-							<textarea
-								readOnly={status === 'pending'}
-								name="correctSource"
-								className={`${textareaStyles} min-h-24 resize-y read-only:opacity-50`}
-							/>
+							<textarea readOnly={pending} name="correctSource" className={`${textareaStyles} min-h-24 resize-y`} />
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
 							<span>How can we contact you? (optional)</span>
-							<input
-								readOnly={status === 'pending'}
-								name="contact"
-								placeholder="Email address"
-								className={`${inputStyles} read-only:opacity-50`}
-							/>
+							<input readOnly={pending} name="contact" placeholder="Email address" className={inputStyles} />
 						</label>
-						{status === 'error' ? (
-							<p className="text-center body-sm text-data-down" role="alert">
-								Something went wrong, couldn't submit report
-							</p>
+						{report.isError ? (
+							<InlineStatus variant="error">Couldn&rsquo;t send the report. Try again.</InlineStatus>
 						) : null}
-					</div>
-					<div className="border-t border-subtle p-3">
-						<Ariakit.Button
+					</DialogBody>
+					<DialogFooter
+						dismiss={
+							<Ariakit.DialogDismiss
+								disabled={pending}
+								accessibleWhenDisabled
+								render={<Button type="button" size="md" />}
+							>
+								Cancel
+							</Ariakit.DialogDismiss>
+						}
+					>
+						<Button
 							type="submit"
 							name="submit-btn"
-							accessibleWhenDisabled
-							disabled={status === 'pending'}
-							render={<Button variant="primary" size="md" className="w-full aria-disabled:opacity-50" />}
+							variant="primary"
+							size="md"
+							pendingLabel={pending ? 'Sending…' : null}
 						>
-							{status === 'pending' ? (
-								<>
-									<LoadingSpinner size={16} />
-									<span>Submitting...</span>
-								</>
-							) : (
-								'Report'
-							)}
-						</Ariakit.Button>
-						<span role="status" className="sr-only">
-							{status === 'pending' ? 'Submitting report' : ''}
-						</span>
-					</div>
+							Send report
+						</Button>
+					</DialogFooter>
 				</form>
-			</Ariakit.Dialog>
-
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:360px]`}
-				unmountOnHide
-				store={successDialogStore}
-				portal
-			>
-				<div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-					<Icon name="check-circle" height={64} width={64} strokeWidth={0.75} className="text-data-up" />
-					<DialogHeading>Reported successfully</DialogHeading>
-					<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Close</Ariakit.DialogDismiss>
-				</div>
-			</Ariakit.Dialog>
-		</>
+			)}
+		</Dialog>
 	)
 }

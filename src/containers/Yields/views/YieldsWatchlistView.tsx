@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { DialogForm } from '~/components/DialogForm'
 import { Menu } from '~/components/Menu'
+import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -65,13 +65,7 @@ export function YieldsWatchlistContainer() {
 						className={`${buttonStyles({ variant: 'secondary', size: 'md' })} min-w-[100px] justify-between`}
 						data-umami-event="yields-watchlist-portfolio-switch"
 					/>
-					<DialogForm
-						title="New portfolio"
-						description="Enter the name of your new portfolio"
-						open={open}
-						setOpen={setOpen}
-						onSubmit={addPortfolio}
-					/>
+					<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
 					<Button
 						onClick={() => setOpen(true)}
 						variant="secondary"

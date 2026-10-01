@@ -5,9 +5,9 @@ import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { DialogForm } from '~/components/DialogForm'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
+import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -19,17 +19,18 @@ import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
-import { useEmailNotifications, type NotificationSettings } from '~/hooks/useEmailNotifications'
+import {
+	getUserFacingErrorMessage,
+	useEmailNotifications,
+	type MetricType,
+	type NotificationSettings
+} from '~/hooks/useEmailNotifications'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import {
-	DialogCloseButton,
-	DialogHeading,
-	DialogFooter,
-	dialogScrollableBodyStyles,
-	dialogSurfaceStyles
-} from '~/ui/Dialog'
+import { Checkbox } from '~/ui/Checkbox'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { InlineStatus, PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -240,9 +241,6 @@ export function DefiWatchlistContainer({
 
 const EMPTY_ARRAY: Array<any> = []
 const portfolioActionButtonClassName = buttonStyles({ size: 'md' })
-const smallToneActionButtonBaseClassName =
-	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border px-3 py-1.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
-const positiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-up text-data-up hover:bg-hover-row focus-visible:bg-hover-row`
 
 export function PortfolioNotifications({
 	selectedPortfolio,
@@ -253,7 +251,9 @@ export function PortfolioNotifications({
 	filteredProtocols?: Array<any>
 	filteredChains?: Array<any>
 }) {
-	const dialogStore = Ariakit.useDialogStore()
+	const [settingsOpen, setSettingsOpen] = useState(false)
+	const [confirmingDelete, setConfirmingDelete] = useState(false)
+	const settingsOpening = useOpeningKey(settingsOpen)
 	const isClient = useIsClient()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const { preferences, isLoading, error, refetch, savePreferences, updateStatus, deletePreferences } =
@@ -261,6 +261,7 @@ export function PortfolioNotifications({
 	const isChangingPreferences = savePreferences.isPending || updateStatus.isPending || deletePreferences.isPending
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)
 	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
+	const hasWatchlist = filteredProtocols.length > 0 || filteredChains.length > 0
 
 	const { protocolsCount, protocolsFirstMetrics, chainsCount, chainsFirstMetrics } = useMemo(() => {
 		const protocols = preferences?.settings?.protocols
@@ -292,130 +293,28 @@ export function PortfolioNotifications({
 		}
 	}, [preferences?.settings?.protocols, preferences?.settings?.chains])
 
-	const formStore = Ariakit.useFormStore({
-		defaultValues: {
-			protocolMetrics: [] as Array<string>,
-			chainMetrics: [] as Array<string>
-		}
-	})
-
 	const handleNotificationsButtonClick = () => {
 		if (!isClient || loaders.userLoading) return
-
-		if (filteredProtocols.length === 0 && filteredChains.length === 0) {
-			toast.error('Please add protocols or chains to your watchlist first')
-			return
-		}
-
 		if (!isAuthenticated || !hasActiveSubscription) {
 			setSignupSource('watchlist')
 			subscribeModalStore.show()
-		} else {
-			dialogStore.toggle()
-
-			if (preferences?.settings) {
-				// Load protocol metrics
-				if (preferences.settings.protocols) {
-					const allProtocolEntries = Object.entries(preferences.settings.protocols)
-					if (allProtocolEntries.length > 0) {
-						const [_protocolId, firstMetrics] = allProtocolEntries[0]
-
-						if (Array.isArray(firstMetrics)) {
-							const uiMetrics = firstMetrics.map(mapAPIMetricToUI)
-							formStore.setValue('protocolMetrics', uiMetrics)
-						}
-					}
-				} else {
-					formStore.setValue('protocolMetrics', [])
-				}
-
-				// Load chain metrics
-				if (preferences.settings.chains) {
-					const allChainEntries = Object.entries(preferences.settings.chains)
-					if (allChainEntries.length > 0) {
-						const [_chainName, firstMetrics] = allChainEntries[0]
-
-						if (Array.isArray(firstMetrics)) {
-							const uiMetrics = firstMetrics.map(mapAPIMetricToUI)
-							formStore.setValue('chainMetrics', uiMetrics)
-						}
-					}
-				} else {
-					formStore.setValue('chainMetrics', [])
-				}
-			} else {
-				formStore.setValue('protocolMetrics', [])
-				formStore.setValue('chainMetrics', [])
-			}
-		}
-	}
-
-	const handleFormSubmit = () => {
-		if (isChangingPreferences) return
-		const values = formStore.getState().values
-		const selectedProtocolMetrics = values.protocolMetrics
-		const selectedChainMetrics = values.chainMetrics
-
-		const settings: NotificationSettings = {}
-
-		if (selectedProtocolMetrics.length > 0 && filteredProtocols.length > 0) {
-			const mappedProtocolMetrics = selectedProtocolMetrics.map(mapUIMetricToAPI)
-			const protocolsMap: NotificationSettings['protocols'] = {}
-			let protocolCount = 0
-			for (const protocol of filteredProtocols) {
-				const identifier = protocol.slug
-				if (!identifier) continue
-				protocolsMap[identifier] = mappedProtocolMetrics
-				protocolCount++
-			}
-			if (protocolCount > 0) {
-				settings.protocols = protocolsMap
-			}
-		}
-
-		if (selectedChainMetrics.length > 0 && filteredChains.length > 0) {
-			const mappedChainMetrics = selectedChainMetrics.map(mapUIMetricToAPI)
-			const chainsMap: NotificationSettings['chains'] = {}
-			let chainCount = 0
-			for (const chain of filteredChains) {
-				if (!chain.name) continue
-				chainsMap[chain.name] = mappedChainMetrics
-				chainCount++
-			}
-			if (chainCount > 0) {
-				settings.chains = chainsMap
-			}
-		}
-
-		const hasProtocols = settings.protocols != null
-		const hasChains = settings.chains != null
-		if (!hasProtocols && !hasChains) {
-			toast.error('Unable to save: no valid settings configured')
 			return
 		}
+		setSettingsOpen(true)
+	}
 
-		savePreferences.mutate(
-			{
-				portfolioName: selectedPortfolio,
-				settings,
-				frequency: 'weekly'
-			},
-			{ onSuccess: () => dialogStore.hide() }
+	// Page actions: the card shows the new status, and a toast says what happened or why it failed.
+	const setActive = (active: boolean) => {
+		if (isChangingPreferences) return
+		// The toasts hang on the promise, not on mutate's callbacks, so they still show after the reader leaves the page.
+		updateStatus.mutateAsync({ portfolioName: selectedPortfolio, active }).then(
+			() => toast.success(active ? 'Notification preferences enabled' : 'Notification preferences disabled'),
+			(statusError) => toast.error(getUserFacingErrorMessage(statusError, 'Failed to update notification status'))
 		)
 	}
 
-	const handleDisableNotifications = () => {
-		if (isChangingPreferences) return
-		updateStatus.mutate({ portfolioName: selectedPortfolio, active: false }, { onSuccess: () => dialogStore.hide() })
-	}
-
-	const handleDeleteNotifications = () => {
-		if (isChangingPreferences) return
-		deletePreferences.mutate({ portfolioName: selectedPortfolio }, { onSuccess: () => dialogStore.hide() })
-	}
-
 	return (
-		<Ariakit.DialogProvider store={dialogStore}>
+		<>
 			<Card padding="sm">
 				<div className="mb-2">
 					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
@@ -492,7 +391,7 @@ export function PortfolioNotifications({
 							size="md"
 							type="button"
 							onClick={handleNotificationsButtonClick}
-							disabled={loaders.userLoading || isLoading}
+							disabled={loaders.userLoading || isLoading || !hasWatchlist}
 						>
 							<Icon name="mail" height={16} width={16} />
 							<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
@@ -500,45 +399,33 @@ export function PortfolioNotifications({
 
 						{preferences ? (
 							<>
-								{preferences.active ? (
-									<Button
-										size="md"
-										type="button"
-										onClick={handleDisableNotifications}
-										disabled={loaders.userLoading || isChangingPreferences}
-										title="Temporarily disable notifications"
-									>
-										<Icon name="pause" height={16} width={16} />
-										<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
-									</Button>
-								) : null}
-								{!preferences.active ? (
-									<button
-										type="button"
-										onClick={() => {
-											updateStatus.mutate({ portfolioName: selectedPortfolio, active: true })
-										}}
-										disabled={loaders.userLoading || isChangingPreferences}
-										className={positiveActionButtonClassName}
-										title="Re-enable notifications"
-									>
-										<Icon name="check-circle" height={16} width={16} />
-										<span>{updateStatus.isPending ? 'Enabling...' : 'Enable'}</span>
-									</button>
-								) : null}
+								<Button
+									size="md"
+									type="button"
+									onClick={() => setActive(!preferences.active)}
+									disabled={loaders.userLoading || isChangingPreferences}
+									pendingLabel={updateStatus.isPending ? (preferences.active ? 'Disabling...' : 'Enabling...') : null}
+								>
+									<Icon name={preferences.active ? 'pause' : 'check-circle'} height={16} width={16} />
+									<span>{preferences.active ? 'Disable' : 'Enable'}</span>
+								</Button>
 								<Button
 									variant="destructive"
 									size="md"
 									type="button"
-									onClick={handleDeleteNotifications}
+									onClick={() => setConfirmingDelete(true)}
 									disabled={loaders.userLoading || isChangingPreferences}
-									title="Permanently delete notification preferences"
 								>
 									<Icon name="trash-2" height={16} width={16} />
-									<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
+									<span>Delete</span>
 								</Button>
 							</>
 						) : null}
+						{hasWatchlist ? null : (
+							<p className="body-sm text-tertiary">
+								Add protocols or chains to your watchlist to set up notifications.
+							</p>
+						)}
 					</div>
 				)}
 			</Card>
@@ -547,150 +434,219 @@ export function PortfolioNotifications({
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}
-
-			<Ariakit.Dialog
-				store={dialogStore}
-				className={`${dialogSurfaceStyles} [--dialog-width:672px]`}
+			{confirmingDelete ? (
+				<ConfirmActionDialog
+					title="Delete email notifications?"
+					description={`Weekly emails for the "${selectedPortfolio}" portfolio stop, and its notification settings are removed.`}
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deletePreferences}
+					variables={{ portfolioName: selectedPortfolio }}
+					onClose={() => setConfirmingDelete(false)}
+					onSuccess={() => toast.success('Notification preferences deleted')}
+				/>
+			) : null}
+			<Dialog
+				size="md"
+				open={settingsOpen}
+				onClose={() => setSettingsOpen(false)}
+				pending={savePreferences.isPending}
 				unmountOnHide
 				portal
 			>
-				<div className="flex items-start gap-3 border-b border-subtle px-4 py-3">
-					<div className="min-w-0">
-						<div className="flex flex-wrap items-center gap-2">
-							<DialogHeading>Email notification settings</DialogHeading>
-							{preferences ? (
-								preferences.active ? (
-									<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-xs text-data-up">
-										<Icon name="check" height={12} width={12} />
-										Active
-									</span>
-								) : (
-									<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-xs text-secondary">
-										<Icon name="pause" height={12} width={12} />
-										Disabled
-									</span>
-								)
-							) : null}
-						</div>
-						<p className="mt-1 body-sm text-secondary">
-							Configure weekly email alerts for "{selectedPortfolio}" portfolio
-						</p>
-					</div>
-					<DialogCloseButton className="ml-auto" />
-				</div>
-
-				<Ariakit.Form
-					store={formStore}
-					onSubmit={(e) => {
-						e.preventDefault()
-						handleFormSubmit()
+				<NotificationSettingsForm
+					key={settingsOpening}
+					selectedPortfolio={selectedPortfolio}
+					savedSettings={preferences?.settings}
+					filteredProtocols={filteredProtocols}
+					filteredChains={filteredChains}
+					save={savePreferences}
+					onSaved={() => {
+						setSettingsOpen(false)
+						toast.success('Notification preferences saved')
 					}}
-					className="flex min-h-0 flex-auto flex-col"
-				>
-					{/* The body scrolls and the footer stays pinned below it. */}
-					<div className={dialogScrollableBodyStyles}>
-						<div className="border-b border-subtle px-4 py-3">
-							<h3 className="mb-2 label-md text-primary">Protocol metrics</h3>
-							{filteredProtocols.length > 0 ? (
-								<>
-									<p className="mb-3 body-sm text-secondary">
-										Select which metrics you want to receive notifications for your {filteredProtocols.length}{' '}
-										watchlisted protocol{filteredProtocols.length === 1 ? '' : 's'}.
-									</p>
-									<div className="flex max-h-60 flex-wrap gap-3 overflow-y-auto">
-										{protocolMetrics.map((metric) => (
-											<label key={metric.key} className="flex cursor-pointer items-center gap-2">
-												<Ariakit.FormCheckbox
-													name="protocolMetrics"
-													value={metric.key}
-													className="size-3.5 rounded-[4px] border border-strong accent-brand"
-												/>
-												<span className="body-sm text-primary">{metric.name}</span>
-											</label>
-										))}
-									</div>
-								</>
-							) : (
-								<div className="py-6 text-center">
-									<Icon name="bookmark" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
-									<p className="body-sm text-tertiary">No protocols in your watchlist</p>
-									<p className="mt-1 body-sm text-tertiary">Add protocols to your watchlist to set up notifications</p>
-								</div>
-							)}
-						</div>
+				/>
+			</Dialog>
+		</>
+	)
+}
 
-						<div className="px-4 py-3">
-							<h3 className="mb-2 label-md text-primary">Chain metrics</h3>
-							{filteredChains.length > 0 ? (
-								<>
-									<p className="mb-3 body-sm text-secondary">
-										Select which metrics you want to receive notifications for your {filteredChains.length} watchlisted
-										chain{filteredChains.length === 1 ? '' : 's'}.
-									</p>
-									<div className="flex max-h-60 flex-wrap gap-3 overflow-y-auto">
-										{chainMetrics.map((metric) => (
-											<label key={metric.key} className="flex cursor-pointer items-center gap-2">
-												<Ariakit.FormCheckbox
-													name="chainMetrics"
-													value={metric.key}
-													className="size-3.5 rounded-[4px] border border-strong accent-brand"
-												/>
-												<span className="body-sm text-primary">{metric.name}</span>
-											</label>
-										))}
-									</div>
-								</>
-							) : (
-								<div className="py-6 text-center">
-									<Icon name="map" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
-									<p className="body-sm text-tertiary">No chains in your watchlist</p>
-									<p className="mt-1 body-sm text-tertiary">Add chains to your watchlist to set up notifications</p>
-								</div>
-							)}
-						</div>
-					</div>
-					<DialogFooter
-						dismiss={<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>}
-						leading={
-							preferences ? (
-								<>
-									{preferences.active ? (
-										<Button
-											size="md"
-											type="button"
-											onClick={handleDisableNotifications}
-											disabled={isChangingPreferences}
-										>
-											<Icon name="pause" height={16} width={16} />
-											<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
-										</Button>
-									) : null}
-									<Button
-										variant="destructive"
-										size="md"
-										type="button"
-										onClick={handleDeleteNotifications}
-										disabled={isChangingPreferences}
-									>
-										<Icon name="trash-2" height={16} width={16} />
-										<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
-									</Button>
-								</>
-							) : (
-								<div className="body-sm text-secondary">Configure notification settings for your portfolio</div>
-							)
-						}
+/** The metrics saved for the first protocol and chain stand for all of them: the form applies one choice to every
+    watchlisted protocol and one to every chain. */
+function savedMetrics(entries: Record<string, Array<MetricType>> | undefined): Array<string> {
+	for (const key in entries ?? {}) return entries![key]!.map(mapAPIMetricToUI)
+	return []
+}
+
+/** One choice of metrics for every watchlisted protocol and one for every chain. A side with no picks, or no
+    entities with an id, is left out, so the server keeps no empty map. */
+export function buildNotificationSettings(
+	protocolPicks: Array<string>,
+	protocolSlugs: Array<string | undefined>,
+	chainPicks: Array<string>,
+	chainNames: Array<string | undefined>
+): NotificationSettings {
+	const settings: NotificationSettings = {}
+	const protocols = metricsByEntity(protocolPicks, protocolSlugs)
+	if (protocols) settings.protocols = protocols
+	const chains = metricsByEntity(chainPicks, chainNames)
+	if (chains) settings.chains = chains
+	return settings
+}
+
+function metricsByEntity(picks: Array<string>, ids: Array<string | undefined>) {
+	if (picks.length === 0) return null
+	const metrics = picks.map(mapUIMetricToAPI)
+	const map: Record<string, Array<MetricType>> = {}
+	let count = 0
+	for (const id of ids) {
+		if (!id) continue
+		map[id] = metrics
+		count++
+	}
+	return count > 0 ? map : null
+}
+
+function NotificationSettingsForm({
+	selectedPortfolio,
+	savedSettings,
+	filteredProtocols,
+	filteredChains,
+	save,
+	onSaved
+}: {
+	selectedPortfolio: string
+	savedSettings: NotificationSettings | undefined
+	filteredProtocols: Array<any>
+	filteredChains: Array<any>
+	save: ReturnType<typeof useEmailNotifications>['savePreferences']
+	onSaved: () => void
+}) {
+	const [protocolPicks, setProtocolPicks] = useState(() => savedMetrics(savedSettings?.protocols))
+	const [chainPicks, setChainPicks] = useState(() => savedMetrics(savedSettings?.chains))
+	const [submitted, setSubmitted] = useState(false)
+
+	const settings = buildNotificationSettings(
+		protocolPicks,
+		filteredProtocols.map((protocol) => protocol.slug),
+		chainPicks,
+		filteredChains.map((chain) => chain.name)
+	)
+	const isEmpty = settings.protocols == null && settings.chains == null
+
+	return (
+		<form
+			className="flex min-h-0 flex-auto flex-col"
+			onSubmit={(event) => {
+				event.preventDefault()
+				setSubmitted(true)
+				if (isEmpty || save.isPending) return
+				const form = event.currentTarget
+				// The dialog locks while saving, but leaving the page unmounts it; then only a toast can tell.
+				save.mutateAsync({ portfolioName: selectedPortfolio, settings, frequency: 'weekly' }).then(onSaved, (error) => {
+					if (!form.isConnected)
+						toast.error(getUserFacingErrorMessage(error, 'Failed to save notification preferences'))
+				})
+			}}
+		>
+			<DialogHeader
+				title="Email notification settings"
+				subtitle={`Weekly emails for the "${selectedPortfolio}" portfolio`}
+			/>
+			<DialogBody>
+				<MetricChoices
+					title="Protocol metrics"
+					count={filteredProtocols.length}
+					noun="protocol"
+					metrics={protocolMetrics}
+					picked={protocolPicks}
+					onChange={setProtocolPicks}
+					disabled={save.isPending}
+				/>
+				<MetricChoices
+					title="Chain metrics"
+					count={filteredChains.length}
+					noun="chain"
+					metrics={chainMetrics}
+					picked={chainPicks}
+					onChange={setChainPicks}
+					disabled={save.isPending}
+				/>
+				{submitted && isEmpty ? <InlineStatus variant="error">Pick at least one metric to email.</InlineStatus> : null}
+				{save.error ? (
+					<InlineStatus variant="error">
+						{getUserFacingErrorMessage(save.error, 'Failed to save notification preferences')}
+					</InlineStatus>
+				) : null}
+			</DialogBody>
+			<DialogFooter
+				dismiss={
+					<Ariakit.DialogDismiss
+						disabled={save.isPending}
+						accessibleWhenDisabled
+						render={<Button type="button" size="md" />}
 					>
-						<Ariakit.FormSubmit
-							disabled={isChangingPreferences}
-							render={<Button type="submit" variant="primary" size="md" />}
-						>
-							{savePreferences.isPending ? 'Saving...' : preferences ? 'Update settings' : 'Enable notifications'}
-						</Ariakit.FormSubmit>
-					</DialogFooter>
-				</Ariakit.Form>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						Cancel
+					</Ariakit.DialogDismiss>
+				}
+			>
+				<Button type="submit" variant="primary" size="md" pendingLabel={save.isPending ? 'Saving…' : null}>
+					{savedSettings ? 'Update settings' : 'Enable notifications'}
+				</Button>
+			</DialogFooter>
+		</form>
+	)
+}
+
+function MetricChoices({
+	title,
+	count,
+	noun,
+	metrics,
+	picked,
+	onChange,
+	disabled
+}: {
+	title: string
+	count: number
+	noun: string
+	metrics: ReadonlyArray<{ key: string; name: string }>
+	picked: Array<string>
+	onChange: (picked: Array<string>) => void
+	disabled: boolean
+}) {
+	return (
+		<fieldset className="flex flex-col gap-2" disabled={disabled}>
+			<legend className="mb-2 label-md text-primary">{title}</legend>
+			{count > 0 ? (
+				<>
+					<p className="body-sm text-secondary">
+						Pick the metrics to email for your {count} watchlisted {noun}
+						{count === 1 ? '' : 's'}.
+					</p>
+					<div className="flex flex-wrap gap-x-4 gap-y-2">
+						{metrics.map((metric) => (
+							<Checkbox
+								key={metric.key}
+								variant="inline"
+								checked={picked.includes(metric.key)}
+								onChange={(event) =>
+									onChange(
+										event.target.checked ? picked.concat(metric.key) : picked.filter((key) => key !== metric.key)
+									)
+								}
+							>
+								{metric.name}
+							</Checkbox>
+						))}
+					</div>
+				</>
+			) : (
+				<p className="body-sm text-tertiary">
+					No {noun}s in your watchlist. Add {noun}s to your watchlist to email their metrics.
+				</p>
+			)}
+		</fieldset>
 	)
 }
 
@@ -728,7 +684,14 @@ function PortfolioSelection() {
 		// read is not a lapse: userLoading stays on until a read succeeds, and the server decides instead.
 		if (!notificationPreferences || (!hasActiveSubscription && !loaders.userLoading)) return removeSelectedPortfolio()
 		// Keep the portfolio until the server delete succeeds: once it is gone, nothing in the UI can stop its emails.
-		deleteNotificationPreferences.mutate({ portfolioName: selectedPortfolio }, { onSuccess: removeSelectedPortfolio })
+		// The promise, not mutate's callbacks, so the outcome lands even after the reader leaves the page.
+		deleteNotificationPreferences.mutateAsync({ portfolioName: selectedPortfolio }).then(
+			() => {
+				removeSelectedPortfolio()
+				toast.success('Notification preferences deleted')
+			},
+			(error) => toast.error(getUserFacingErrorMessage(error, 'Failed to delete notifications'))
+		)
 	}
 
 	return (
@@ -742,13 +705,7 @@ function PortfolioSelection() {
 					onItemClick={(value) => handleSelectPortfolio(value)}
 					className={`${portfolioActionButtonClassName} min-w-[100px] justify-between`}
 				/>
-				<DialogForm
-					title="New portfolio"
-					description="Enter the name of your new portfolio"
-					open={open}
-					setOpen={setOpen}
-					onSubmit={handleAddPortfolio}
-				/>
+				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={handleAddPortfolio} />
 				<Button type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
 					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>

@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { PortfolioNotifications } from '../index'
@@ -47,17 +48,12 @@ afterEach(async () => {
 })
 
 function button(name: string) {
-	return [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(element) => element.textContent?.trim() === name
-	)
+	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((element) => accessibleName(element) === name)
 }
 
 const waitFor = (assertion: () => void) => waitForUi(assertion, { timeout: 1000 })
 
-test.each([
-	['Disable', 'Disabling...', 'Notification preferences disabled'],
-	['Delete', 'Deleting...', 'Notification preferences deleted']
-])('%s shows a failure, releases the control, and succeeds on retry', async (action, pending, success) => {
+async function renderCard() {
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -66,19 +62,64 @@ test.each([
 			</session.Wrapper>
 		)
 	)
-	await waitFor(() => expect(button(action)?.disabled).toBe(false))
+}
 
-	await act(async () => button(action)!.click())
-	await waitFor(() => expect(button(pending)?.disabled).toBe(true))
+test('Disable shows a failure, releases the control, and succeeds on retry', async () => {
+	await renderCard()
+	await waitFor(() => expect(button('Disable')?.disabled).toBe(false))
+
+	await act(async () => button('Disable')!.click())
+	await waitFor(() => expect(button('Disabling...')?.getAttribute('aria-busy')).toBe('true'))
 
 	await act(async () => writes[0]!.resolve(new Response('Temporary failure', { status: 503 })))
 	await waitFor(() => expect(document.body.textContent).toContain('Temporary failure'))
-	expect(button(action)?.disabled).toBe(false)
+	expect(button('Disable')?.disabled).toBe(false)
 
-	await act(async () => button(action)!.click())
+	await act(async () => button('Disable')!.click())
 	await waitFor(() => expect(writes).toHaveLength(2))
 	await act(async () => writes[1]!.resolve(new Response(null, { status: 204 })))
-	await waitFor(() => expect(document.body.textContent).toContain(success))
+	await waitFor(() => expect(document.body.textContent).toContain('Notification preferences disabled'))
+})
+
+test('a Disable that fails after leaving the page still says so', async () => {
+	await renderCard()
+	await waitFor(() => expect(button('Disable')?.disabled).toBe(false))
+	await act(async () => button('Disable')!.click())
+	await waitFor(() => expect(writes).toHaveLength(1))
+
+	// Navigating away unmounts the card; the app's toaster stays.
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<Toaster />
+			</session.Wrapper>
+		)
+	)
+	await act(async () => writes[0]!.resolve(new Response('Temporary failure', { status: 503 })))
+	await waitFor(() => expect(document.body.textContent).toContain('Temporary failure'))
+})
+
+test('Delete asks first, shows a failure in the confirmation, and deletes on retry', async () => {
+	await renderCard()
+	await waitFor(() => expect(button('Delete')?.disabled).toBe(false))
+
+	await act(async () => button('Delete')!.click())
+	const confirm = () => document.querySelector('[role="alertdialog"]')
+	expect(confirm()?.textContent).toContain('Delete email notifications?')
+	expect(writes).toHaveLength(0)
+
+	const confirmDelete = () =>
+		[...confirm()!.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent?.trim() === 'Delete')!
+	await act(async () => confirmDelete().click())
+	await waitFor(() => expect(writes).toHaveLength(1))
+	await act(async () => writes[0]!.resolve(new Response('Temporary failure', { status: 503 })))
+	await waitFor(() => expect(confirm()?.querySelector('[role="alert"]')?.textContent).toContain('Temporary failure'))
+
+	await act(async () => confirmDelete().click())
+	await waitFor(() => expect(writes).toHaveLength(2))
+	await act(async () => writes[1]!.resolve(new Response(null, { status: 204 })))
+	await waitFor(() => expect(confirm()).toBeNull())
+	await waitFor(() => expect(document.body.textContent).toContain('Notification preferences deleted'))
 })
 
 test('a failed read offers no setup over the saved preferences, and a retry shows them', async () => {

@@ -13,7 +13,7 @@ const ETHENA_PAY_DOWNLOAD_URL = 'https://pay.ethena.fi/download'
 
 export function EthenaPayInviteDialog() {
 	return (
-		<Dialog size="sm" portal unmountOnHide backdrop={<div className="fixed inset-0 z-50 bg-screen-dim opacity-80" />}>
+		<Dialog size="sm" portal unmountOnHide>
 			<DialogHeader title="Get an Ethena Pay invite code" />
 			<DialogBody>
 				<p className="body-md text-secondary">Copy this code, then enter it when joining Ethena Pay.</p>

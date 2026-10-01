@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useImperativeHandle, useState, type Ref } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { InviteBanner } from '../InviteBanner'
 
@@ -87,9 +88,14 @@ afterEach(async () => {
 })
 
 function button(text: string) {
-	const element = Array.from(document.querySelectorAll('button')).find((element) => element.textContent === text)
+	const element = Array.from(document.querySelectorAll('button')).find((element) => accessibleName(element) === text)
 	expect(element, `Button ${text}`).not.toBeUndefined()
 	return element!
+}
+
+/** Disabled either natively or focusably (aria-disabled), as the request button is so it keeps focus. */
+function isDisabled(element: HTMLButtonElement) {
+	return element.disabled || element.getAttribute('aria-disabled') === 'true'
 }
 
 async function click(text: string) {
@@ -133,9 +139,9 @@ async function waitForText(text: string) {
 test('requires verification and an explicit reveal, then shows the code and destination', async () => {
 	await render()
 	await click('Get invite code')
-	expect(button('Reveal my code').disabled).toBe(true)
+	expect(isDisabled(button('Reveal my code'))).toBe(true)
 	await click('Verify qfex_invite')
-	expect(button('Reveal my code').disabled).toBe(false)
+	expect(isDisabled(button('Reveal my code'))).toBe(false)
 	expect(requests).toEqual([])
 	await click('Reveal my code')
 	await waitForText('ABCD1234')
@@ -152,13 +158,13 @@ test('offers an in-place retry when verification fails to load', async () => {
 	await render()
 	await click('Get invite code')
 	await click('Fail verification')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Verification could not load.')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Verification could not load.Try again')
 	expect(Array.from(document.querySelectorAll('button')).some((b) => b.textContent === 'Reveal my code')).toBe(false)
 	await click('Try again')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	expect(button('Reveal my code').disabled).toBe(true)
+	expect(isDisabled(button('Reveal my code'))).toBe(true)
 	await click('Verify qfex_invite')
-	expect(button('Reveal my code').disabled).toBe(false)
+	expect(isDisabled(button('Reveal my code'))).toBe(false)
 })
 
 test('hides exhausted inventory for new visitors but lets a returning visitor retrieve the same assignment', async () => {
@@ -185,7 +191,7 @@ test('allows an explicit refresh after the cooldown with a fresh verification', 
 	await openAndVerify()
 	await click('Reveal my code')
 	await waitForText('ABCD1234')
-	expect(button('Try another code').disabled).toBe(true)
+	expect(isDisabled(button('Try another code'))).toBe(true)
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification required')
 	await click('Verify qfex_invite')
 	claimResponse = { status: 'assigned', code: 'WXYZ5678', refreshAt: new Date(Date.now() + 3_600_000).toISOString() }
@@ -200,7 +206,7 @@ test('reports an exhausted pool in the open dialog and disables expired verifica
 	await render()
 	await openAndVerify()
 	await click('Expire verification')
-	expect(button('Reveal my code').disabled).toBe(true)
+	expect(isDisabled(button('Reveal my code'))).toBe(true)
 	await click('Verify qfex_invite')
 	await click('Reveal my code')
 	await waitForText('No invite codes available')
@@ -215,7 +221,7 @@ test('preserves the visitor identity after a lost response so a retry retrieves 
 	await click('Reveal my code')
 	await waitForText('Could not retrieve an invite code. Check your connection and try again.')
 	const visitorId = localStorage.getItem('protocol-invite:qfex')
-	expect(button('Try again').disabled).toBe(true)
+	expect(isDisabled(button('Try again'))).toBe(true)
 	await click('Verify qfex_invite')
 	await click('Try again')
 	await waitForText('ABCD1234')
@@ -229,7 +235,7 @@ test('handles a non-JSON service outage and permits retrying after verification'
 	await click('Reveal my code')
 	await waitForText('Invite codes are temporarily unavailable. Please try again later.')
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification required')
-	expect(button('Try again').disabled).toBe(true)
+	expect(isDisabled(button('Try again'))).toBe(true)
 	await click('Verify qfex_invite')
 	await click('Try again')
 	await waitForText('ABCD1234')
@@ -250,7 +256,7 @@ test('blocks new claims during the network cooldown and restores claiming when i
 	const later = Date.now() + 3_600_001
 	vi.spyOn(Date, 'now').mockReturnValue(later)
 	await act(async () => vi.advanceTimersByTime(1000))
-	expect(button('Reveal my code').disabled).toBe(true)
+	expect(isDisabled(button('Reveal my code'))).toBe(true)
 	await click('Verify qfex_invite')
 	claimStatus = 200
 	claimResponse = { status: 'assigned', code: 'NEXT1234', refreshAt: new Date(later + 3_600_000).toISOString() }
@@ -269,9 +275,18 @@ test('keeps verification checked until a pending claim reveals the code', async 
 			})
 	)
 	await click('Reveal my code')
-	expect(button('Getting your code…').disabled).toBe(true)
+	expect(button('Getting your code…').getAttribute('aria-busy')).toBe('true')
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification complete')
 	await act(async () => finish(Response.json(claimResponse)))
 	await waitForText('ABCD1234')
 	expect(document.querySelector('output')?.textContent).toBe('ABCD1234')
+})
+
+test('focus lands on the outcome when the claim removes the button that had it', async () => {
+	await render()
+	await openAndVerify()
+	await act(async () => button('Reveal my code').focus())
+	await click('Reveal my code')
+	await waitForText('ABCD1234')
+	expect(document.activeElement).toBe(document.querySelector('output'))
 })

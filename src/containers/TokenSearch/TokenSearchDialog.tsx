@@ -5,10 +5,13 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
-import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
-import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { LoadingIndicator } from '~/ui/Status'
+import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { NoResults } from '~/ui/NoResults'
+import { popoverRowStyles, popoverSeeMoreStyles } from '~/ui/Popover'
+import { SearchField } from '~/ui/SearchField'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { searchTokens } from './search'
 import { TOKEN_SEARCH_LIMIT, type TokenSearchResult } from './types'
@@ -46,22 +49,33 @@ export function toTokenSearchOption(token: TokenSearchOption): TokenSearchResult
 
 const EMPTY_INITIAL_TOKENS: NonNullable<TokenSearchDialogProps['initialTokens']> = []
 
-export function TokenSearchDialog({
+export function TokenSearchDialog({ dialogStore, ...props }: TokenSearchDialogProps) {
+	return (
+		<Ariakit.DialogProvider store={dialogStore}>
+			<Dialog size="sm" fullSheet unmountOnHide portal>
+				<DialogHeader title="Add token" />
+				<TokenSearch {...props} />
+			</Dialog>
+		</Ariakit.DialogProvider>
+	)
+}
+
+/** Mounts with each opening, so the search starts empty and only searches while the dialog is open. */
+function TokenSearch({
 	initialTokens = EMPTY_INITIAL_TOKENS,
 	coinsData,
 	selectToken,
-	dialogStore,
 	selectedTokens
-}: TokenSearchDialogProps) {
+}: Omit<TokenSearchDialogProps, 'dialogStore'>) {
+	const isSmallScreen = useMedia('(max-width: 639px)')
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
 	const debouncedSearch = useDebouncedValue(search, 200)
-	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 	const tokenSearch = useQuery({
 		queryKey: ['token-search', debouncedSearch, TOKEN_SEARCH_LIMIT],
 		queryFn: () => searchTokens(debouncedSearch, TOKEN_SEARCH_LIMIT),
 		initialData: debouncedSearch === '' && initialTokens.length > 0 ? initialTokens : undefined,
-		enabled: isOpen && !coinsData,
+		enabled: !coinsData,
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
@@ -83,6 +97,7 @@ export function TokenSearchDialog({
 	const [localResultsLength, setLocalResultsLength] = useState(10)
 	const visibleTokens = coinsData ? filteredLocalTokens.slice(0, localResultsLength + 1) : filteredRemoteTokens
 	const isLoading = !coinsData && tokenSearch.isLoading
+	const error = coinsData ? null : tokenSearch.error
 	const hasMoreLocalResults = coinsData ? localResultsLength < filteredLocalTokens.length : false
 
 	const showMoreLocalResults = () => {
@@ -92,63 +107,58 @@ export function TokenSearchDialog({
 	}
 
 	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
-				<div className="flex items-center gap-2 border-b border-subtle px-4 py-3">
-					<DialogHeading>Add token</DialogHeading>
-					<DialogCloseButton className="ml-auto" />
-				</div>
-				<div className="border-b border-subtle px-4 py-3">
-					<label className="relative block">
-						<span className="sr-only">Search token</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<Input
-							value={search}
-							onInput={(e) => setSearch(e.currentTarget.value)}
-							placeholder="Search token..."
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
-				</div>
-
-				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto p-2">
-					{visibleTokens.map((token) => (
-						<button
-							type="button"
-							key={token.id}
-							onClick={() => {
-								selectToken(token)
-								setSearch('')
-							}}
-							className="flex w-full items-center gap-2 rounded-md p-2 text-left body-sm text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
-						>
+		<>
+			<DialogToolbar>
+				{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
+				<SearchField
+					label="Search token"
+					placeholder="Search token..."
+					value={search}
+					onChange={setSearch}
+					autoFocus={!isSmallScreen}
+				/>
+			</DialogToolbar>
+			<DialogBody kind="list">
+				{visibleTokens.map((token) => (
+					<button
+						type="button"
+						key={token.id}
+						onClick={() => {
+							selectToken(token)
+							setSearch('')
+						}}
+						className={`${popoverRowStyles} w-full rounded-md text-left`}
+					>
+						<span className="flex min-w-0 items-center gap-2">
 							<TokenLogo src={getOptionLogo(token)} size={24} />
-							<span>
+							<span className="truncate">
 								{token.name} ({getOptionSymbol(token)})
 							</span>
-						</button>
-					))}
-					{isLoading ? (
-						<p role="status" aria-live="polite" className="p-3">
-							<LoadingIndicator />
-						</p>
-					) : null}
-					{!isLoading && visibleTokens.length === 0 ? (
-						<p role="status" aria-live="polite" className="p-3 body-sm text-tertiary">
-							No tokens found
-						</p>
-					) : null}
-					{hasMoreLocalResults ? (
-						<button
-							type="button"
-							className="w-full rounded-md p-3 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row"
-							onClick={showMoreLocalResults}
-						>
-							See more...
-						</button>
-					) : null}
-				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						</span>
+					</button>
+				))}
+				{isLoading ? (
+					<p role="status" aria-live="polite" className="p-3">
+						<LoadingIndicator />
+					</p>
+				) : error ? (
+					<InlineStatus variant="error">
+						<span className="flex flex-wrap items-center justify-between gap-2">
+							Couldn&rsquo;t search tokens.
+							<Button type="button" size="sm" onClick={() => void tokenSearch.refetch()}>
+								Try again
+							</Button>
+						</span>
+					</InlineStatus>
+				) : visibleTokens.length === 0 ? (
+					<NoResults>No tokens found</NoResults>
+				) : null}
+				{hasMoreLocalResults ? (
+					<button type="button" className={`${popoverSeeMoreStyles} rounded-md`} onClick={showMoreLocalResults}>
+						See more...
+					</button>
+				) : null}
+			</DialogBody>
+		</>
 	)
 }

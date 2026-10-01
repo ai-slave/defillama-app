@@ -1,8 +1,7 @@
-import * as Ariakit from '@ariakit/react'
 import { skipToken, useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type ColumnVisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
@@ -16,6 +15,13 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
+import {
+	ActiveFilterCard,
+	FilterBrowser,
+	FilterBuilderContent,
+	FilterBuilderDialog,
+	NoActiveFilters
+} from '~/components/FilterBuilderDialog'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
@@ -41,7 +47,6 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
-import { DialogCloseButton, DialogHeading, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
@@ -1331,15 +1336,6 @@ function RWAPerpsActiveFilterPills({ pills }: { pills: Array<RWAPerpsActiveFilte
 	)
 }
 
-function DialogPanelSection({ title, children }: { title: string; children: ReactNode }) {
-	return (
-		<section className="flex flex-col gap-2">
-			<h3 className="label-xs tracking-wide text-tertiary uppercase">{title}</h3>
-			{children}
-		</section>
-	)
-}
-
 function RWAPerpsMarketFilters({
 	filters,
 	showForexToggle,
@@ -1370,11 +1366,7 @@ function RWAPerpsMarketFilters({
 				{filters.length > 0 ? (
 					<>
 						<RWAPerpsActiveFilterPills pills={activeFilterPills} />
-						<RWAPerpsFiltersDialog
-							filters={filters}
-							selectedFilterCount={selectedFilterCount}
-							hasActiveFilterPills={activeFilterPills.length > 0}
-						/>
+						<RWAPerpsFiltersDialog filters={filters} selectedFilterCount={selectedFilterCount} />
 					</>
 				) : null}
 				{showForexToggle ? (
@@ -1407,159 +1399,52 @@ function RWAPerpsMarketFilters({
 
 function RWAPerpsFiltersDialog({
 	filters,
-	selectedFilterCount,
-	hasActiveFilterPills
+	selectedFilterCount
 }: {
 	filters: Array<RWAPerpsMarketFilterState>
 	selectedFilterCount: number
-	hasActiveFilterPills: boolean
 }) {
+	return (
+		<FilterBuilderDialog appliedCount={selectedFilterCount}>
+			<RWAPerpsFiltersSession filters={filters} />
+		</FilterBuilderDialog>
+	)
+}
+
+function RWAPerpsFiltersSession({ filters }: { filters: Array<RWAPerpsMarketFilterState> }) {
 	const router = useRouter()
-	const [open, setOpen] = useState(false)
 	const [draft, setDraft] = useState<RWAPerpsFilterDraft>(() => createRWAPerpsFilterDraft(filters))
-	const draftSelectedCount = draft.activeIds.length
-
-	const handleOpenChange = (nextOpen: boolean) => {
-		if (nextOpen) {
-			setDraft(createRWAPerpsFilterDraft(filters))
-		}
-		setOpen(nextOpen)
-	}
-
-	const saveDraft = () => {
-		void pushShallowQuery(router, serializeRWAPerpsFilterDraft(filters, draft))
-		setOpen(false)
-	}
+	const activeIds = new Set(draft.activeIds)
+	const activeFilters = draft.activeIds.map((id) => filters.find((filter) => filter.id === id)!)
 
 	return (
-		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
-			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
-					{selectedFilterCount}
-				</span>
-				<span>{hasActiveFilterPills ? 'Edit' : 'Filters'}</span>
-				<Icon name="pencil" className="size-3 text-tertiary" />
-			</Ariakit.DialogDisclosure>
-			<Ariakit.Dialog
-				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
-				unmountOnHide
-				portal
-			>
-				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<div className="flex items-baseline gap-2.5">
-						<DialogHeading>Filters</DialogHeading>
-						<span className="label-sm text-tertiary">{draftSelectedCount} selected</span>
-					</div>
-					<DialogCloseButton />
-				</div>
-
-				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
-					<RWAPerpsFilterBrowser filters={filters} draft={draft} onDraftChange={setDraft} />
-					<RWAPerpsActiveDraftFilters filters={filters} draft={draft} onDraftChange={setDraft} />
-				</div>
-
-				<DialogFooter
-					dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>}
-					leading={
-						draft.activeIds.length > 0 ? (
-							<Button
-								type="button"
-								variant="ghost"
-								size="md"
-								onClick={() => setDraft((current) => ({ ...current, activeIds: [] }))}
-							>
-								Clear all
-							</Button>
-						) : (
-							<span className="label-sm text-tertiary">No filters selected</span>
+		<FilterBuilderContent
+			draftCount={draft.activeIds.length}
+			browse={
+				<FilterBrowser
+					groups={[{ label: 'Market fields', filters: filters.filter((filter) => !activeIds.has(filter.id)) }]}
+					onAdd={(id) =>
+						setDraft((current) =>
+							addRWAPerpsDraftFilter(
+								current,
+								filters.find((filter) => filter.id === id)!
+							)
 						)
 					}
-				>
-					<Button type="button" variant="primary" size="md" onClick={saveDraft}>
-						Save filters
-					</Button>
-				</DialogFooter>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
-	)
-}
-
-function RWAPerpsFilterBrowser({
-	filters,
-	draft,
-	onDraftChange
-}: {
-	filters: Array<RWAPerpsMarketFilterState>
-	draft: RWAPerpsFilterDraft
-	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
-}) {
-	const activeIds = new Set(draft.activeIds)
-	const availableFilters = filters.filter((filter) => !activeIds.has(filter.id))
-
-	return (
-		<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
-			<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
-				<h3 className="label-sm text-secondary">Browse filters</h3>
-			</div>
-			<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
-				{availableFilters.length > 0 ? (
-					<DialogPanelSection title="Market fields">
-						<div className="flex flex-wrap gap-1">
-							{availableFilters.map((filter) => (
-								<button
-									key={filter.id}
-									type="button"
-									onClick={() => {
-										onDraftChange((current) => addRWAPerpsDraftFilter(current, filter))
-									}}
-									className="group flex items-center gap-1.5 rounded-full border border-subtle bg-transparent px-2.5 py-1 label-sm text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand hover:bg-hover-row focus-visible:border-brand focus-visible:bg-hover-row"
-								>
-									<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-									<span>{filter.label}</span>
-								</button>
-							))}
-						</div>
-					</DialogPanelSection>
-				) : (
-					<div className="rounded-md border border-dashed border-subtle bg-page p-4 body-sm text-tertiary">
-						All filters are active.
-					</div>
-				)}
-			</div>
-		</section>
-	)
-}
-
-function RWAPerpsActiveDraftFilters({
-	filters,
-	draft,
-	onDraftChange
-}: {
-	filters: Array<RWAPerpsMarketFilterState>
-	draft: RWAPerpsFilterDraft
-	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
-}) {
-	const activeFilters = draft.activeIds
-		.map((id) => filters.find((filter) => filter.id === id))
-		.filter((filter): filter is RWAPerpsMarketFilterState => Boolean(filter))
-
-	return (
-		<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
-			<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
-				<h3 className="label-sm text-secondary">Active filters</h3>
-			</div>
-			<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
-				{activeFilters.length > 0 ? (
+				/>
+			}
+			active={
+				activeFilters.length > 0 ? (
 					activeFilters.map((filter) => (
-						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={onDraftChange} />
+						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={setDraft} />
 					))
 				) : (
-					<div className="rounded-md border border-dashed border-subtle bg-page p-4 body-sm text-tertiary">
-						Add filters from the list to narrow the table.
-					</div>
-				)}
-			</div>
-		</section>
+					<NoActiveFilters />
+				)
+			}
+			onClearAll={() => setDraft((current) => ({ ...current, activeIds: [] }))}
+			onApply={() => void pushShallowQuery(router, serializeRWAPerpsFilterDraft(filters, draft))}
+		/>
 	)
 }
 
@@ -1575,25 +1460,11 @@ function RWAPerpsDraftFilterEditor({
 	const selectedValues = draft.selectValues[filter.id] ?? []
 
 	return (
-		<Card padding="sm" className="flex flex-col gap-2">
-			<div className="flex items-center justify-between gap-2">
-				<div className="flex min-w-0 items-center gap-1.5">
-					<span className="truncate label-sm text-primary">{filter.label}</span>
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-sm text-secondary uppercase">
-						Market field
-					</span>
-				</div>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					square
-					onClick={() => onDraftChange((current) => removeRWAPerpsDraftFilter(current, filter.id))}
-				>
-					<Icon name="x" className="size-3.5" />
-					<span className="sr-only">Remove {filter.label} filter</span>
-				</Button>
-			</div>
+		<ActiveFilterCard
+			label={filter.label}
+			category="Market field"
+			onRemove={() => onDraftChange((current) => removeRWAPerpsDraftFilter(current, filter.id))}
+		>
 			<SelectWithCombobox
 				allValues={filter.options}
 				selectedValues={selectedValues}
@@ -1611,10 +1482,10 @@ function RWAPerpsDraftFilterEditor({
 				selectAllScope="matches"
 				searchPlaceholder={`Search ${filter.label.toLowerCase()}...`}
 				emptyLabel="No matches found"
-				popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
+				popoverClassName="z-50"
 				triggerProps={{ 'aria-label': `${filter.label} values` }}
 			/>
-		</Card>
+		</ActiveFilterCard>
 	)
 }
 

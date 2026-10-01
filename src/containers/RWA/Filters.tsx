@@ -1,13 +1,19 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
+import {
+	ActiveFilterCard,
+	FilterBrowser,
+	FilterBuilderContent,
+	FilterBuilderDialog,
+	FilterNumberInput,
+	NoActiveFilters
+} from '~/components/FilterBuilderDialog'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { DialogCloseButton, DialogHeading, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
 import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
@@ -33,9 +39,6 @@ import { RWAListYourAssetsButton } from './links'
 
 /* inputStyles as a label shell: the wrapper carries the field chrome and
    focus-within lights the border while the inner input stays bare. */
-const rangeInputShellStyles =
-	'flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-lg border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand'
-
 const ATTRIBUTE_FILTER_STATE_LABELS: Record<RWAAttributeFilterState, string> = {
 	yes: 'Yes',
 	no: 'No',
@@ -600,139 +603,80 @@ function RWAFiltersDialog({
 	selectedFilterCount,
 	...props
 }: RWAOverviewFiltersProps & { selectedFilterCount: number }) {
+	return (
+		<FilterBuilderDialog appliedCount={selectedFilterCount}>
+			<RWAFiltersSession {...props} />
+		</FilterBuilderDialog>
+	)
+}
+
+function RWAFiltersSession(props: RWAOverviewFiltersProps) {
 	const router = useRouter()
-	const [open, setOpen] = useState(false)
 	const [draft, setDraft] = useState<RWAFilterDraft>(() => createRwaFilterDraft(props))
 	const filterDefinitions = getRwaFilterDefinitions(props)
 	const inclusionFilters = getRwaInclusionFilters(props)
-	const draftSelectedCount =
+	const draftCount =
 		draft.activeIds.length +
 		inclusionFilters.filter((config) => draft.inclusion[config.id] !== config.defaultValue).length
-
-	const handleOpenChange = (nextOpen: boolean) => {
-		if (nextOpen) {
-			setDraft(createRwaFilterDraft(props))
-		}
-		setOpen(nextOpen)
-	}
-
-	const saveDraft = () => {
-		void pushShallowQuery(router, serializeRwaFilterDraft(props, draft))
-		setOpen(false)
-	}
+	const activeIds = new Set(draft.activeIds)
+	const groups = FILTER_GROUPS.map((group) => ({
+		label: group,
+		filters: filterDefinitions.filter((definition) => definition.group === group && !activeIds.has(definition.id))
+	}))
+	const activeDefinitions = draft.activeIds.map((id) => filterDefinitions.find((definition) => definition.id === id)!)
 
 	return (
-		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
-			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
-					{selectedFilterCount}
-				</span>
-				<span>Filters</span>
-				<Icon name="settings" className="size-3 text-tertiary" />
-			</Ariakit.DialogDisclosure>
-			<Ariakit.Dialog
-				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
-				unmountOnHide
-				portal
-			>
-				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<div className="flex items-baseline gap-2.5">
-						<DialogHeading>Filters</DialogHeading>
-						<span className="label-sm text-tertiary">{draftSelectedCount} selected</span>
-					</div>
-					<DialogCloseButton />
-				</div>
-
-				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
-					<RWAFilterBrowser filterDefinitions={filterDefinitions} draft={draft} onDraftChange={setDraft} />
-					<RWAActiveDraftFilters
-						filterDefinitions={filterDefinitions}
-						inclusionFilters={inclusionFilters}
-						draft={draft}
-						onDraftChange={setDraft}
-					/>
-				</div>
-
-				<DialogFooter
-					dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>}
-					leading={
-						draft.activeIds.length > 0 ? (
-							<Button
-								type="button"
-								variant="ghost"
-								size="md"
-								onClick={() => setDraft((current) => ({ ...current, activeIds: [] }))}
-							>
-								Clear all
-							</Button>
-						) : (
-							<span className="label-sm text-tertiary">No filters selected</span>
+		<FilterBuilderContent
+			draftCount={draftCount}
+			browse={
+				<FilterBrowser
+					groups={groups}
+					onAdd={(id) =>
+						setDraft((current) =>
+							addDraftFilter(
+								current,
+								filterDefinitions.find((definition) => definition.id === id)!
+							)
 						)
 					}
-				>
-					<Button type="button" variant="primary" size="md" onClick={saveDraft}>
-						Save filters
-					</Button>
-				</DialogFooter>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+				/>
+			}
+			active={
+				<>
+					<RWAIncludeDraftSection inclusionFilters={inclusionFilters} draft={draft} onDraftChange={setDraft} />
+					{activeDefinitions.length > 0 ? (
+						activeDefinitions.map((definition) => (
+							<RWADraftFilterEditor
+								key={definition.id}
+								definition={definition}
+								draft={draft}
+								onDraftChange={setDraft}
+							/>
+						))
+					) : (
+						<NoActiveFilters />
+					)}
+				</>
+			}
+			onClearAll={() =>
+				setDraft((current) => {
+					const inclusion = { ...current.inclusion }
+					for (const config of inclusionFilters) inclusion[config.id] = config.defaultValue
+					return { ...current, activeIds: [], inclusion }
+				})
+			}
+			onApply={() => void pushShallowQuery(router, serializeRwaFilterDraft(props, draft))}
+		/>
 	)
 }
+
+const FILTER_GROUPS: Array<RWAFilterDefinition['group']> = ['Classification', 'Ratios', 'Attributes']
 
 function DialogPanelSection({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<section className="flex flex-col gap-2">
-			<h3 className="label-xs tracking-wide text-tertiary uppercase">{title}</h3>
+			<h4 className="label-xs tracking-wide text-tertiary uppercase">{title}</h4>
 			{children}
-		</section>
-	)
-}
-
-function RWAFilterBrowser({
-	filterDefinitions,
-	draft,
-	onDraftChange
-}: {
-	filterDefinitions: Array<RWAFilterDefinition>
-	draft: RWAFilterDraft
-	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
-}) {
-	const activeIds = new Set(draft.activeIds)
-	const groups: Array<RWAFilterDefinition['group']> = ['Classification', 'Ratios', 'Attributes']
-
-	return (
-		<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
-			<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
-				<h3 className="label-sm text-secondary">Browse filters</h3>
-			</div>
-			<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
-				{groups.map((group) => {
-					const availableDefinitions = filterDefinitions.filter(
-						(definition) => definition.group === group && !activeIds.has(definition.id)
-					)
-					if (availableDefinitions.length === 0) return null
-
-					return (
-						<DialogPanelSection key={group} title={group}>
-							<div className="flex flex-wrap gap-1">
-								{availableDefinitions.map((definition) => (
-									<button
-										key={definition.id}
-										type="button"
-										onClick={() => {
-											onDraftChange((current) => addDraftFilter(current, definition))
-										}}
-										className="group flex items-center gap-1.5 rounded-full border border-subtle bg-transparent px-2.5 py-1 label-sm text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand hover:bg-hover-row focus-visible:border-brand focus-visible:bg-hover-row"
-									>
-										<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-										<span>{definition.label}</span>
-									</button>
-								))}
-							</div>
-						</DialogPanelSection>
-					)
-				})}
-			</div>
 		</section>
 	)
 }
@@ -772,47 +716,6 @@ function removeDraftFilter(draft: RWAFilterDraft, id: string): RWAFilterDraft {
 	return { ...draft, activeIds: draft.activeIds.filter((activeId) => activeId !== id) }
 }
 
-function RWAActiveDraftFilters({
-	filterDefinitions,
-	inclusionFilters,
-	draft,
-	onDraftChange
-}: {
-	filterDefinitions: Array<RWAFilterDefinition>
-	inclusionFilters: Array<RWAInclusionFilterConfig>
-	draft: RWAFilterDraft
-	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
-}) {
-	const activeDefinitions = draft.activeIds
-		.map((id) => filterDefinitions.find((definition) => definition.id === id))
-		.filter((definition): definition is RWAFilterDefinition => Boolean(definition))
-
-	return (
-		<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
-			<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
-				<h3 className="label-sm text-secondary">Active filters</h3>
-			</div>
-			<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
-				<RWAIncludeDraftSection inclusionFilters={inclusionFilters} draft={draft} onDraftChange={onDraftChange} />
-				{activeDefinitions.length > 0 ? (
-					activeDefinitions.map((definition) => (
-						<RWADraftFilterEditor
-							key={definition.id}
-							definition={definition}
-							draft={draft}
-							onDraftChange={onDraftChange}
-						/>
-					))
-				) : (
-					<div className="rounded-md border border-dashed border-subtle bg-page p-4 body-sm text-tertiary">
-						Add filters from the list to narrow the table.
-					</div>
-				)}
-			</div>
-		</section>
-	)
-}
-
 function RWADraftFilterEditor({
 	definition,
 	draft,
@@ -822,26 +725,12 @@ function RWADraftFilterEditor({
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
-	const remove = () => onDraftChange((current) => removeDraftFilter(current, definition.id))
-
 	return (
-		<Card padding="sm" className="flex flex-col gap-2">
-			<div className="flex items-center justify-between gap-2">
-				<div className="flex min-w-0 items-center gap-1.5">
-					<span className="truncate label-sm text-primary">{definition.label}</span>
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-sm text-secondary uppercase">
-						{definition.group}
-					</span>
-				</div>
-				<button
-					type="button"
-					onClick={remove}
-					className="rounded-sm p-1 text-tertiary hover:bg-hover-row hover:text-primary"
-				>
-					<Icon name="x" className="size-3.5" />
-					<span className="sr-only">Remove {definition.label} filter</span>
-				</button>
-			</div>
+		<ActiveFilterCard
+			label={definition.label}
+			category={definition.group}
+			onRemove={() => onDraftChange((current) => removeDraftFilter(current, definition.id))}
+		>
 			{definition.kind === 'select' ? (
 				<RWASelectDraftEditor definition={definition} draft={draft} onDraftChange={onDraftChange} />
 			) : definition.kind === 'range' ? (
@@ -849,7 +738,7 @@ function RWADraftFilterEditor({
 			) : (
 				<RWAAttributeDraftEditor definition={definition} draft={draft} onDraftChange={onDraftChange} />
 			)}
-		</Card>
+		</ActiveFilterCard>
 	)
 }
 
@@ -882,7 +771,7 @@ function RWASelectDraftEditor({
 			selectAllScope="matches"
 			searchPlaceholder={`Search ${definition.label.toLowerCase()}...`}
 			emptyLabel="No matches found"
-			popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
+			popoverClassName="z-50"
 			triggerProps={{ 'aria-label': `${definition.label} values` }}
 		/>
 	)
@@ -911,28 +800,20 @@ function RWARangeDraftEditor({
 
 	return (
 		<div className="flex items-center gap-2">
-			<label className={rangeInputShellStyles}>
-				<span className="text-tertiary">Min %</span>
-				<input
-					type="number"
-					min={0}
-					step="0.01"
-					value={range.min}
-					onChange={(event) => updateRange('min', event.currentTarget.value)}
-					className="min-w-0 flex-1 bg-transparent text-right outline-hidden placeholder:text-tertiary"
-				/>
-			</label>
-			<label className={rangeInputShellStyles}>
-				<span className="text-tertiary">Max %</span>
-				<input
-					type="number"
-					min={0}
-					step="0.01"
-					value={range.max}
-					onChange={(event) => updateRange('max', event.currentTarget.value)}
-					className="min-w-0 flex-1 bg-transparent text-right outline-hidden placeholder:text-tertiary"
-				/>
-			</label>
+			<FilterNumberInput
+				label={`${definition.label} minimum`}
+				value={range.min}
+				onChange={(value) => updateRange('min', value)}
+				placeholder="Min"
+				suffix="%"
+			/>
+			<FilterNumberInput
+				label={`${definition.label} maximum`}
+				value={range.max}
+				onChange={(value) => updateRange('max', value)}
+				placeholder="Max"
+				suffix="%"
+			/>
 		</div>
 	)
 }
@@ -953,9 +834,11 @@ function RWAAttributeDraftEditor({
 			{RWA_ATTRIBUTE_FILTER_STATES.map((state) => {
 				const isSelected = selectedStates.includes(state)
 				return (
-					<button
+					<Button
 						key={state}
 						type="button"
+						variant="toggle"
+						size="sm"
 						aria-pressed={isSelected}
 						data-active={isSelected}
 						onClick={() =>
@@ -970,10 +853,9 @@ function RWAAttributeDraftEditor({
 								}
 							})
 						}
-						className="hover-wash rounded-full border border-medium px-2.5 py-1 label-sm text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted"
 					>
 						{ATTRIBUTE_FILTER_STATE_LABELS[state]}
-					</button>
+					</Button>
 				)
 			})}
 		</div>

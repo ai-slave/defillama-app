@@ -1,7 +1,7 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartMetricsDialog } from '~/components/ChartMetricsDialog'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,
@@ -10,12 +10,10 @@ import {
 import { BasicLink } from '~/components/Link'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { metricChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { SummaryChange } from '~/ui/SummaryStats'
@@ -266,7 +264,6 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 		const queryString = router.asPath.split('?')[1]?.split('#')[0] ?? ''
 		return new URLSearchParams(queryString)
 	}, [router.asPath])
-	const metricsDialogStore = Ariakit.useDialogStore()
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const groupBy = getRWAPerpsContractChartGroup(searchParams.get('groupBy'))
@@ -294,42 +291,37 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 			<ChartPanelToolbar
 				leading={
 					<>
-						<Ariakit.DialogProvider store={metricsDialogStore}>
-							<Ariakit.DialogDisclosure render={<Button size="md" />}>
-								<span>Add Metrics</span>
-								<Icon name="plus" className="size-3.5" />
-							</Ariakit.DialogDisclosure>
-							<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide portal>
-								<div className="flex items-center gap-2 border-b border-subtle p-2">
-									<DialogHeading>Add metrics to chart</DialogHeading>
-									<DialogCloseButton className="ml-auto" />
-								</div>
-
-								<div className="flex flex-wrap gap-2 p-2">
-									{RWA_PERPS_CONTRACT_CHART_METRICS.map((metric) => {
-										const isActive = enabledMetrics.includes(metric.key)
-										return (
-											<button
-												type="button"
-												key={`add-metric-${metric.key}`}
-												onClick={() => {
-													void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive })).then(
-														() => {
-															metricsDialogStore.toggle()
-														}
-													)
-												}}
-												data-active={isActive}
-												className={metricOptionChipStyles}
-											>
-												<span>{metric.label}</span>
-												{isActive ? <Icon name="x" className="size-3.5" /> : <Icon name="plus" className="size-3.5" />}
-											</button>
-										)
-									})}
-								</div>
-							</Ariakit.Dialog>
-						</Ariakit.DialogProvider>
+						<ChartMetricsDialog
+							groups={[
+								{
+									label: 'Market',
+									options: RWA_PERPS_CONTRACT_CHART_METRICS.map((metric) => ({
+										key: metric.key,
+										label: metric.label,
+										color: metric.color,
+										active: enabledMetrics.includes(metric.key),
+										metric
+									}))
+								}
+							]}
+							onToggle={(option) =>
+								void pushShallowQuery(
+									router,
+									getRWAPerpsContractMetricQueryPatch({ metric: option.metric, isActive: option.active })
+								)
+							}
+							clear={{
+								kind: 'clear',
+								onClear: () => {
+									const patch: Record<string, string | undefined> = {}
+									for (const metric of RWA_PERPS_CONTRACT_CHART_METRICS) {
+										if (enabledMetrics.includes(metric.key))
+											Object.assign(patch, getRWAPerpsContractMetricQueryPatch({ metric, isActive: true }))
+									}
+									void pushShallowQuery(router, patch)
+								}
+							}}
+						/>
 
 						{enabledMetrics.map((metricKey) => {
 							const metric = RWA_PERPS_CONTRACT_CHART_METRICS.find((item) => item.key === metricKey)

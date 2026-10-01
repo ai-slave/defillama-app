@@ -156,6 +156,31 @@ describe('RWAPlatformEntityChartPanel', () => {
 		expect(push.mock.calls).toEqual([shallowPush({ metrics: 'activeMcap,netFlows' })])
 	})
 
+	test('the metrics dialog resets to the default metrics instead of claiming to clear them', async () => {
+		const resetButton = () =>
+			[...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(
+				(button) => button.textContent === 'Reset'
+			)!
+		const openDialog = async () => {
+			const disclosure = [...container.querySelectorAll('button')].find(
+				(button) => button.textContent === 'Add Metrics'
+			)!
+			await act(async () => disclosure.click())
+		}
+
+		await render({})
+		await openDialog()
+		expect(resetButton().getAttribute('aria-disabled')).toBe('true')
+		await act(async () => root.unmount())
+
+		root = createRoot(container)
+		await render({ metrics: 'activeMcap,liveAssets' })
+		await openDialog()
+		expect(resetButton().getAttribute('aria-disabled')).toBeNull()
+		await act(async () => resetButton().click())
+		expect(push.mock.calls).toEqual([shallowPush({})])
+	})
+
 	test('choosing a period writes it to the URL and daily leaves the URL clean', async () => {
 		await render({ chartPeriod: 'weekly' })
 		const periodButton = (label: string) => container.querySelector<HTMLElement>(`[aria-label="${label}"]`)!

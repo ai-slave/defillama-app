@@ -1,9 +1,8 @@
-import * as Ariakit from '@ariakit/react'
-import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useDeferredValue, useMemo } from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { type ChartMetricOption, ChartMetricsDialog } from '~/components/ChartMetricsDialog'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	ChartGroupingSelector,
@@ -16,13 +15,9 @@ import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
-import { useMedia } from '~/hooks/useMedia'
-import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles } from '~/ui/Input'
-import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { metricChipStyles } from '~/ui/MetricChip'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
@@ -35,11 +30,7 @@ import type { ChainOverviewChartData, IChainOverviewData } from './types'
 
 const ChainCoreChart = lazy(() => import('~/containers/ChainOverview/Chart'))
 
-type ChainMetricOption = {
-	id: ChainChartLabels
-	label: string
-	active: boolean
-}
+type ChainMetricOption = ChartMetricOption & { key: ChainChartLabels }
 
 const getChainMetricLabel = (chart: ChainChartLabels, tokenSymbol?: string | null) =>
 	chart.includes('Token') ? chart.replace('Token', tokenSymbol ? `$${tokenSymbol}` : 'Token') : chart
@@ -141,10 +132,6 @@ export function ChainChartPanel({
 
 	const canAddToDashboard = metadata.name !== 'All' && multiChart && toggledCharts.length > 0 && denomination === 'USD'
 
-	const metricsDialogStore = Ariakit.useDialogStore()
-	const isSmallScreen = useMedia('(max-width: 639px)')
-	const [metricsSearchValue, setMetricsSearchValue] = useState('')
-	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
 	const prepareCsv = () => {
 		const csvCharts: Record<string, Array<[number, number | null]>> = {}
 		for (const [label, data] of Object.entries(chartRenderModel.chartData))
@@ -164,57 +151,25 @@ export function ChainChartPanel({
 		void pushShallowQuery(router, { groupBy: newGroupBy })
 	}
 
-	const allMetricOptions = useMemo<Array<ChainMetricOption>>(() => {
-		return charts.map((chart) => ({
-			id: chart,
-			label: getChainMetricLabel(chart, chainTokenInfo?.token_symbol),
-			active: toggledCharts.includes(chart)
-		}))
-	}, [charts, chainTokenInfo?.token_symbol, toggledCharts])
-
-	const filteredMetricOptions = useMemo(() => {
-		if (!deferredMetricsSearchValue) return allMetricOptions
-		return matchSorter(allMetricOptions, deferredMetricsSearchValue, {
-			keys: ['label', 'id'],
-			threshold: matchSorter.rankings.CONTAINS
-		})
-	}, [allMetricOptions, deferredMetricsSearchValue])
-
-	const selectedOptions = useMemo(() => allMetricOptions.filter((option) => option.active), [allMetricOptions])
-
-	const groupedFilteredOptions = useMemo(() => {
-		const groups = new Map<ChainChartCategory | 'Other', Array<ChainMetricOption>>()
-		const order: Array<ChainChartCategory | 'Other'> = [...chainChartCategoryOrder, 'Other']
-		for (const key of order) groups.set(key, [])
-
-		for (const option of filteredMetricOptions) {
-			const category = CHAIN_CATEGORY_BY_METRIC.get(option.id) ?? 'Other'
-			const group = groups.get(category)
-			if (group) {
-				group.push(option)
-			} else {
-				groups.set(category, [option])
-			}
-		}
-
-		return order
-			.map((label) => {
-				const options = groups.get(label) ?? []
-				return {
-					label,
-					options,
-					selectedCount: options.reduce((acc, option) => acc + (option.active ? 1 : 0), 0)
-				}
+	const metricGroups = useMemo(() => {
+		const byCategory = new Map<ChainChartCategory | 'Other', Array<ChainMetricOption>>()
+		for (const category of chainChartCategoryOrder) byCategory.set(category, [])
+		byCategory.set('Other', [])
+		for (const chart of charts) {
+			byCategory.get(CHAIN_CATEGORY_BY_METRIC.get(chart) ?? 'Other')!.push({
+				key: chart,
+				label: getChainMetricLabel(chart, chainTokenInfo?.token_symbol),
+				color: chainOverviewChartColors[chart],
+				active: toggledCharts.includes(chart)
 			})
-			.filter((group) => group.options.length > 0)
-	}, [filteredMetricOptions])
-
-	const getOptionColor = useCallback((option: ChainMetricOption): string => chainOverviewChartColors[option.id], [])
+		}
+		return Array.from(byCategory, ([label, options]) => ({ label, options }))
+	}, [charts, chainTokenInfo?.token_symbol, toggledCharts])
 
 	const handleToggleMetric = useCallback(
 		(option: ChainMetricOption) => {
 			void pushShallowQuery(router, {
-				[chainCharts[option.id]]: option.active ? getQueryValueOnRemove(charts[0] === option.id) : 'true'
+				[chainCharts[option.key]]: option.active ? getQueryValueOnRemove(charts[0] === option.key) : 'true'
 			})
 		},
 		[router, charts]
@@ -244,124 +199,11 @@ export function ChainChartPanel({
 				leading={
 					<>
 						{charts.length > 0 ? (
-							<Ariakit.DialogProvider store={metricsDialogStore}>
-								<Ariakit.DialogDisclosure render={<Button size="md" />}>
-									<span>Add Metrics</span>
-									<Icon name="plus" className="size-3.5" />
-								</Ariakit.DialogDisclosure>
-								<Dialog size="md" fullSheet unmountOnHide portal>
-									<DialogHeader
-										title="Chart metrics"
-										subtitle={`${selectedOptions.length} of ${allMetricOptions.length} selected`}
-									/>
-									<DialogToolbar>
-										<label className="relative block">
-											<span className="sr-only">Search metrics</span>
-											<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-											{/* Ariakit's autoFocus, so the dialog starts on the search instead of the header ×. Phones
-											    skip it: the keyboard would cover the metric list before anyone asked to search. */}
-											<Ariakit.Focusable
-												autoFocus={!isSmallScreen}
-												render={
-													<Input
-														type="text"
-														name="search"
-														inputMode="search"
-														placeholder={`Search ${allMetricOptions.length} metrics...`}
-														value={metricsSearchValue}
-														className="w-full pr-24 pl-8"
-														onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
-													/>
-												}
-											/>
-											{metricsSearchValue ? (
-												<div className="absolute top-0 right-1.5 bottom-0 my-auto flex items-center gap-1">
-													<span className="body-xs text-tertiary">
-														{filteredMetricOptions.length} {filteredMetricOptions.length === 1 ? 'match' : 'matches'}
-													</span>
-													<button
-														type="button"
-														onClick={() => setMetricsSearchValue('')}
-														className="flex size-5 items-center justify-center rounded-sm text-tertiary hover:bg-hover-row hover:text-primary"
-													>
-														<Icon name="x" className="size-3.5" />
-														<span className="sr-only">Clear search</span>
-													</button>
-												</div>
-											) : null}
-										</label>
-									</DialogToolbar>
-
-									<DialogBody>
-										{groupedFilteredOptions.map((group) => (
-											<section key={`chain-chart-category-${group.label}`} className="flex flex-col gap-2">
-												<div className="flex items-baseline gap-1.5">
-													<span className="label-xs tracking-[0.08em] text-tertiary uppercase">{group.label}</span>
-													<span className="body-xs text-tertiary/70">
-														{group.selectedCount}/{group.options.length}
-													</span>
-												</div>
-												<div className="flex flex-wrap gap-1">
-													{group.options.map((option) => {
-														return (
-															<button
-																key={`chain-chart-option-${group.label}-${option.id}`}
-																type="button"
-																onClick={() => handleToggleMetric(option)}
-																data-active={option.active}
-																className={metricOptionChipStyles}
-															>
-																{option.active ? (
-																	<span
-																		aria-hidden
-																		className="size-1.5 rounded-full"
-																		style={{
-																			backgroundColor: `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
-																		}}
-																	/>
-																) : (
-																	<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-																)}
-																<span>{option.label}</span>
-																{option.active ? (
-																	<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-																) : null}
-															</button>
-														)
-													})}
-												</div>
-											</section>
-										))}
-
-										{groupedFilteredOptions.length === 0 ? (
-											<div className="flex flex-col items-center gap-2 py-6 text-center">
-												<p role="status" aria-live="polite" className="body-sm text-tertiary">
-													No metrics match “{deferredMetricsSearchValue}”
-												</p>
-												<Button type="button" variant="ghost" size="sm" onClick={() => setMetricsSearchValue('')}>
-													Clear search
-												</Button>
-											</div>
-										) : null}
-									</DialogBody>
-
-									<DialogFooter
-										leading={
-											selectedOptions.length > 0 ? (
-												<Button type="button" variant="ghost" size="md" onClick={handleClearAll}>
-													Clear all
-												</Button>
-											) : (
-												<span className="label-sm text-tertiary">Pick metrics to plot</span>
-											)
-										}
-									>
-										<Button type="button" variant="primary" size="md" onClick={() => metricsDialogStore.hide()}>
-											Done
-										</Button>
-									</DialogFooter>
-								</Dialog>
-							</Ariakit.DialogProvider>
+							<ChartMetricsDialog
+								groups={metricGroups}
+								onToggle={handleToggleMetric}
+								clear={{ kind: 'clear', onClear: handleClearAll }}
+							/>
 						) : null}
 						{toggledCharts.map((tchart) => (
 							<label

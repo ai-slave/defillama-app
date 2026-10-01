@@ -9,8 +9,9 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { fetchInviteAvailability, revealInvite } from './inviteApi'
 
 type InviteBannerProps = { protocol: string; name: string; website: string | null }
@@ -43,12 +44,7 @@ export function InviteBanner({ protocol, name, website }: InviteBannerProps) {
 					{hasRequestedCode ? 'View your code' : 'Get invite code'}
 				</Ariakit.DialogDisclosure>
 			</Card>
-			{/* The recipe's 40dvh drawer floor leaves a short invite form floating in empty space on phones. */}
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:440px]`}
-				backdrop={<div className="fixed inset-0 z-50 bg-screen-dim" />}
-				unmountOnHide
-			>
+			<Dialog size="sm" unmountOnHide portal>
 				<InviteDialog
 					protocol={protocol}
 					name={name}
@@ -57,9 +53,15 @@ export function InviteBanner({ protocol, name, website }: InviteBannerProps) {
 						void queryClient.invalidateQueries({ queryKey: ['protocol-invites', protocol] })
 					}}
 				/>
-			</Ariakit.Dialog>
+			</Dialog>
 		</Ariakit.DialogProvider>
 	)
+}
+
+/** An outcome can remove the button that had focus. Its message then takes focus, so a keyboard reader lands on what
+    happened instead of the page behind the dialog. */
+function takeLostFocus(node: HTMLElement | null) {
+	if (node && !document.activeElement?.closest('[role="dialog"]')) node.focus()
 }
 
 function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps & { onAssigned: () => void }) {
@@ -89,6 +91,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 	const nowSeconds = useNowSeconds(undefined, claim.isPending || retryAt ? 1000 : 30_000)
 	const minutesLeft = retryAt ? Math.max(0, Math.ceil((Math.floor(Date.parse(retryAt) / 1000) - nowSeconds) / 60)) : 0
 
+	const canRequest = minutesLeft === 0 && result?.status !== 'unavailable' && !verificationError
 	const submit = () => {
 		if (!token || claim.isPending || minutesLeft > 0) return
 		claim.mutate({
@@ -101,34 +104,32 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 
 	return (
 		<>
-			<div className="flex items-center justify-between gap-3 border-b border-subtle p-3">
-				<DialogHeading>
-					{result?.status === 'assigned'
+			<DialogHeader
+				title={
+					result?.status === 'assigned'
 						? `Your ${name} invite`
 						: result?.status === 'cooldown' && minutesLeft > 0
 							? `Try again in ${minutesLeft} min`
 							: result?.status === 'unavailable'
 								? 'No invite codes available'
-								: `Get a ${name} invite code`}
-				</DialogHeading>
-				<DialogCloseButton />
-			</div>
-			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-3`}>
+								: `Get a ${name} invite code`
+				}
+			/>
+			<DialogBody>
 				{result?.status === 'assigned' ? (
 					<>
 						<p className="body-md text-secondary">Copy your code, then enter it when joining {name}.</p>
 						<div className="flex items-center justify-between gap-4 rounded-lg border border-medium bg-surface p-4">
-							<output className="min-w-0 mono-xl tracking-widest break-all text-primary" aria-label="Invite code">
+							<output
+								ref={takeLostFocus}
+								tabIndex={-1}
+								className="min-w-0 mono-xl tracking-widest break-all text-primary outline-hidden"
+								aria-label="Invite code"
+							>
 								{result.code}
 							</output>
 							<CopyHelper toCopy={result.code} size={20} aria-label="Copy invite code" />
 						</div>
-						{website ? (
-							<Button as="a" href={website} target="_blank" rel="noopener noreferrer" variant="primary" size="md">
-								Open {name}
-								<Icon name="arrow-up-right" className="size-4" aria-hidden="true" />
-							</Button>
-						) : null}
 						<p className="body-md text-secondary">
 							{minutesLeft > 0
 								? `Need another code? Try again in ${minutesLeft} min.`
@@ -141,22 +142,18 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 					</p>
 				) : null}
 				{result?.status === 'cooldown' ? (
-					<p role="status" className="body-md text-secondary">
+					<p ref={takeLostFocus} tabIndex={-1} role="status" className="body-md text-secondary outline-hidden">
 						{minutesLeft > 0
 							? 'A code was recently requested on your network.'
 							: 'You can request a code now. Verify below to continue.'}
 					</p>
 				) : null}
 				{result?.status === 'unavailable' ? (
-					<p role="status" className="body-md text-secondary">
+					<p ref={takeLostFocus} tabIndex={-1} role="status" className="body-md text-secondary outline-hidden">
 						Please check back later.
 					</p>
 				) : null}
-				{claim.isError ? (
-					<p role="alert" className="body-sm text-data-down">
-						{claim.error.message}
-					</p>
-				) : null}
+				{claim.isError ? <InlineStatus variant="error">{claim.error.message}</InlineStatus> : null}
 				{minutesLeft === 0 && result?.status !== 'unavailable' ? (
 					<>
 						{claim.isError ? <p className="body-md text-secondary">Verify again, then retry your request.</p> : null}
@@ -174,42 +171,54 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 							}}
 						/>
 						{verificationError ? (
-							<div className="flex items-center justify-between gap-3">
-								<p role="alert" className="body-sm text-data-down">
+							<InlineStatus variant="error">
+								<span className="flex flex-wrap items-center justify-between gap-2">
 									Verification could not load.
-								</p>
+									<Button
+										type="button"
+										size="sm"
+										onClick={() => {
+											setVerificationError(false)
+											turnstile.current?.reset()
+										}}
+									>
+										Try again
+									</Button>
+								</span>
+							</InlineStatus>
+						) : null}
+					</>
+				) : null}
+			</DialogBody>
+			{canRequest || (result?.status === 'assigned' && website) ? (
+				<DialogFooter>
+					{canRequest ? (
+						// Focusable while disabled: a failed claim clears the verification token, which disables the button the
+						// reader just pressed.
+						<Ariakit.Button
+							disabled={!token && !claim.isPending}
+							accessibleWhenDisabled
+							render={
 								<Button
 									type="button"
 									size="md"
-									variant="secondary"
-									onClick={() => {
-										setVerificationError(false)
-										turnstile.current?.reset()
-									}}
-								>
-									Try again
-								</Button>
-							</div>
-						) : (
-							<Button
-								type="button"
-								size="md"
-								variant={result?.status === 'assigned' ? 'secondary' : 'primary'}
-								disabled={!token || claim.isPending}
-								onClick={submit}
-							>
-								{claim.isPending
-									? 'Getting your code…'
-									: result?.status === 'assigned'
-										? 'Try another code'
-										: claim.isError
-											? 'Try again'
-											: 'Reveal my code'}
-							</Button>
-						)}
-					</>
-				) : null}
-			</div>
+									variant={result?.status === 'assigned' ? 'secondary' : 'primary'}
+									pendingLabel={claim.isPending ? 'Getting your code…' : null}
+								/>
+							}
+							onClick={submit}
+						>
+							{result?.status === 'assigned' ? 'Try another code' : claim.isError ? 'Try again' : 'Reveal my code'}
+						</Ariakit.Button>
+					) : null}
+					{result?.status === 'assigned' && website ? (
+						<Button as="a" href={website} target="_blank" rel="noopener noreferrer" variant="primary" size="md">
+							Open {name}
+							<Icon name="arrow-up-right" className="size-4" aria-hidden="true" />
+						</Button>
+					) : null}
+				</DialogFooter>
+			) : null}
 		</>
 	)
 }

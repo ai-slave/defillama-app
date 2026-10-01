@@ -116,7 +116,7 @@ test('arrow selection changes the request, All types restores mixed content, and
 	expect(radio('All types').getAttribute('aria-checked')).toBe('true')
 	await expectResults(['Liquidity report', 'Weekly research notes'])
 	await click(radio('Reports'))
-	await click(document.querySelector<HTMLElement>('[aria-label="Close Research search"]')!)
+	await click(document.querySelector<HTMLElement>('[aria-label="Close dialog"]')!)
 	expect(document.activeElement).toBe(trigger)
 	await click(trigger)
 	expect(radio('All types').getAttribute('aria-checked')).toBe('true')

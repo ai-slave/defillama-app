@@ -407,10 +407,6 @@ export function countActiveEquityFilters(filters: Array<EquityActiveFilter>): nu
 	return filters.length
 }
 
-export function countDraftEquityFilters(filters: Array<EquityDraftFilter>): number {
-	return draftEquityFiltersToActive(filters).length
-}
-
 export function formatEquityFilterValue(value: number, format: EquityFilterFormat): string {
 	const symbol = format === 'currency' ? '$' : format === 'percent' ? '%' : undefined
 	return formatEquitiesCompactValue(value, symbol) ?? String(value)

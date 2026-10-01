@@ -3,12 +3,16 @@ import { matchSorter } from 'match-sorter'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
+import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { metricOptionChipStyles } from '~/ui/MetricChip'
+import { NoResults } from '~/ui/NoResults'
 import { popoverMultiSelectCheckStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
@@ -117,10 +121,8 @@ export function MatchOnControls({ match }: { match: MatchConfig }) {
 					value={match.mode}
 					onValueChange={match.onModeChange}
 					options={TOKEN_MATCHES.map((m) => ({ value: m, label: MATCH_LABELS[m] }))}
-					variant="default"
+					variant="field"
 					size="sm"
-					className="w-full"
-					buttonClassName="flex-1 text-center"
 				/>
 			</div>
 			<div className="flex flex-col gap-1.5">
@@ -133,10 +135,8 @@ export function MatchOnControls({ match }: { match: MatchConfig }) {
 					value={match.on}
 					onValueChange={match.onOnChange}
 					options={TOKEN_ONS.map((o) => ({ value: o, label: ON_LABELS[o] }))}
-					variant="default"
+					variant="field"
 					size="sm"
-					className="w-full"
-					buttonClassName="flex-1 text-center"
 				/>
 			</div>
 		</div>
@@ -190,7 +190,7 @@ function Chip({
 			aria-pressed={remove ? undefined : selected}
 			aria-label={remove ? `Remove ${name}` : undefined}
 			data-active={selected}
-			className="hover-wash flex h-7 items-center gap-1.5 rounded-full border border-medium px-2.5 label-sm text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint"
+			className={metricOptionChipStyles}
 		>
 			<LeadMark value={value} geckoId={geckoId} size={16} />
 			{name}
@@ -355,10 +355,7 @@ function TokenResults({
 			</div>
 
 			{families.length === 0 && assets.length === 0 ? (
-				<div className="flex flex-col items-center gap-1 px-3 py-12 text-center">
-					<span className="body-md text-secondary">No tokens match</span>
-					<span className="body-sm text-tertiary">Try a symbol like USDC, or a group like ETH</span>
-				</div>
+				<NoResults>No tokens match. Try a symbol like USDC, or a group like ETH.</NoResults>
 			) : null}
 		</div>
 	)
@@ -381,6 +378,8 @@ export function TokenSearchDialog({
 	const [activeIndex, setActiveIndex] = useState(-1)
 	const [recent, setRecent] = useState<Array<string>>(readRecent)
 	const inputRef = useRef<HTMLInputElement | null>(null)
+	const selectionRef = useRef<HTMLElement | null>(null)
+	const isSmallScreen = useMedia('(max-width: 639px)')
 
 	const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues])
 	const optionByValue = useMemo(() => new Map(options.map((option) => [option[1], option])), [options])
@@ -452,46 +451,31 @@ export function TokenSearchDialog({
 
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(nextOpen) => (nextOpen ? undefined : onClose())}>
-			<Ariakit.Dialog
-				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:800px]`}
+			<Dialog
+				size="lg"
+				fullSheet
+				// The results change height as the query changes, so the desktop dialog keeps its full height instead of
+				// jumping with every keystroke.
 				style={{ height: '100%' }}
-				initialFocus={inputRef}
 				unmountOnHide
 				portal
 			>
-				<DialogHeading className="sr-only">{title}</DialogHeading>
+				<DialogSearchHeader title={title}>
+					{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
+					<SearchField
+						ref={inputRef}
+						label={title}
+						value={query}
+						onChange={setQueryAndReset}
+						onKeyDown={handleKeyDown}
+						placeholder={placeholder}
+						autoComplete="off"
+						spellCheck={false}
+						autoFocus={!isSmallScreen}
+					/>
+				</DialogSearchHeader>
 				<div className="flex min-h-0 flex-auto flex-col sm:flex-row">
 					<div className="flex min-h-0 flex-auto flex-col">
-						<div className="flex items-center gap-3 border-b border-subtle px-4 py-3">
-							<Icon name="search" className="size-5 shrink-0 text-tertiary" />
-							<input
-								ref={inputRef}
-								type="text"
-								value={query}
-								onChange={(e) => setQueryAndReset(e.target.value)}
-								onKeyDown={handleKeyDown}
-								placeholder={placeholder}
-								aria-label={title}
-								autoComplete="off"
-								spellCheck={false}
-								className="min-w-0 flex-1 bg-transparent py-1 text-base text-primary outline-hidden placeholder:text-tertiary"
-							/>
-							{query ? (
-								<button
-									type="button"
-									onClick={() => {
-										setQueryAndReset('')
-										inputRef.current?.focus()
-									}}
-									aria-label="Clear search"
-									className="hover-wash flex size-8 shrink-0 items-center justify-center rounded-md text-tertiary hover:text-primary"
-								>
-									<Icon name="x" height={16} width={16} />
-								</button>
-							) : null}
-							<DialogCloseButton className="sm:hidden" />
-						</div>
-
 						{showRecent ? <div className="px-4 pt-3 pb-1">{chipRow('Recent', recentShown)}</div> : null}
 
 						<TokenResults
@@ -507,34 +491,48 @@ export function TokenSearchDialog({
 					</div>
 
 					<aside className="flex shrink-0 flex-col gap-5 border-subtle bg-surface-elevated-1 p-4 max-sm:border-t sm:w-64 sm:border-l">
-						<div className="hidden items-center sm:flex">
-							<span className="label-md text-primary">Selected</span>
-							<DialogCloseButton className="ml-auto" />
-						</div>
-						{hasSelection ? (
-							<div className="flex flex-wrap gap-1.5">
-								{selectedValues.map((value) => (
-									<Chip
-										key={value}
-										name={optionByValue.get(value)?.[0] ?? value}
-										value={value}
-										geckoId={optionByValue.get(value)?.[2]}
-										selected
-										remove
-										onClick={() => toggle(value, true)}
-									/>
-								))}
-								<button
-									type="button"
+						<section
+							ref={selectionRef}
+							tabIndex={-1}
+							aria-labelledby="token-search-selected"
+							className="flex flex-col gap-2 outline-hidden"
+						>
+							<div className="flex items-center gap-2">
+								<h3 id="token-search-selected" className="label-md text-primary">
+									Selected
+								</h3>
+								{/* Disabled, not removed, when empty: the button keeps focus after it clears the picks. */}
+								<Ariakit.Button
+									disabled={!hasSelection}
+									accessibleWhenDisabled
+									render={<Button type="button" variant="ghost" size="sm" className="ml-auto" />}
 									onClick={onClear}
-									className="rounded-md px-1.5 py-1 label-sm text-secondary hover:text-primary"
 								>
 									Clear all
-								</button>
+								</Ariakit.Button>
 							</div>
-						) : (
-							<p className="body-sm text-tertiary">Nothing picked yet. Choose a token or a group.</p>
-						)}
+							{hasSelection ? (
+								<div className="flex flex-wrap gap-1.5">
+									{selectedValues.map((value) => (
+										<Chip
+											key={value}
+											name={optionByValue.get(value)?.[0] ?? value}
+											value={value}
+											geckoId={optionByValue.get(value)?.[2]}
+											selected
+											remove
+											onClick={() => {
+												// The chip leaves once the page applies the removal; focus waits on the section instead.
+												selectionRef.current?.focus()
+												toggle(value, true)
+											}}
+										/>
+									))}
+								</div>
+							) : (
+								<p className="body-sm text-tertiary">Nothing picked yet. Choose a token or a group.</p>
+							)}
+						</section>
 						{resultCount != null ? (
 							<div className="flex flex-col">
 								<span className="heading-sm text-primary">{formatNumber(resultCount)}</span>
@@ -549,7 +547,7 @@ export function TokenSearchDialog({
 						</Button>
 					</aside>
 				</div>
-			</Ariakit.Dialog>
+			</Dialog>
 		</Ariakit.DialogProvider>
 	)
 }

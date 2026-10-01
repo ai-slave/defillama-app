@@ -29,7 +29,7 @@ async function exclude() {
 	})
 	await waitForUi(() => expect(document.querySelector<HTMLInputElement>('input[value="exclude"]')!.checked).toBe(true))
 }
-test('mode navigation stays in the dialog draft until Done and cancellation restores the applied mode', async () => {
+test('mode navigation stays in the dialog draft until Apply and cancellation restores the applied mode', async () => {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -51,7 +51,7 @@ test('mode navigation stays in the dialog draft until Done and cancellation rest
 	await click(trigger)
 	expect(document.querySelector<HTMLInputElement>('input[value="include"]')!.checked).toBe(true)
 	await exclude()
-	await click(button('Done'))
+	await click(button('Apply'))
 	expect(change).toHaveBeenCalledExactlyOnceWith([
 		{ kind: 'categorical', id: 'country', mode: 'exclude', values: ['US'] }
 	])

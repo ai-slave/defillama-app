@@ -12,7 +12,7 @@ import { buildTokensSortIndexes, getTokensPageFromRows } from '../utils'
 const fetchJson = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson }))
 // Heavy children the watchlist mounts; nothing below reads their output.
-vi.mock('~/components/DialogForm', () => ({ DialogForm: () => null }))
+vi.mock('~/components/NewPortfolioDialog', () => ({ NewPortfolioDialog: () => null }))
 vi.mock('~/components/Menu', () => ({ Menu: () => null }))
 vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
 vi.mock('~/containers/Yields/views/WatchlistView', () => ({ WatchListTabs: () => null }))
