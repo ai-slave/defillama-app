@@ -81,7 +81,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 		if (!instance || instance.isDisposed()) return
 
 		const option: EChartsOption = {
-			grid: { left: 12, right: 12, top: 36, bottom: 8, containLabel: true },
+			grid: { left: 12, right: 12, top: 36, bottom: 8, outerBoundsMode: 'same', outerBoundsContain: 'axisLabel' },
 			legend: { top: 0, textStyle: { color: theme.text } },
 			xAxis: {
 				type: 'category',

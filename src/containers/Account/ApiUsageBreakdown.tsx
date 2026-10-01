@@ -116,8 +116,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 				top: 10,
 				right: 0,
 				bottom: 0,
-				left: 0,
-				containLabel: true
+				left: 0
 			},
 			xAxis: {
 				axisLabel: { color: activeColors.muted, fontSize: 10 },
