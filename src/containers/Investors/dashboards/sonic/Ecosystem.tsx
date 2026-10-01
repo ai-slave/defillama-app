@@ -1,6 +1,5 @@
 import {
 	columnSizingFeature,
-	columnVisibilityFeature,
 	createColumnHelper,
 	createPaginatedRowModel,
 	createSortedRowModel,
@@ -12,6 +11,7 @@ import {
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatPercent } from '~/utils/numberFormat'

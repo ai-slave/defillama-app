@@ -180,13 +180,15 @@ export function getRwaSelectedColumnIds(
 		.map((leaf) => leaf.id)
 }
 
-/** The visibility a picker selection means: csv-only columns stay visible so the export keeps them. */
+/** The visibility a picker selection means: the name and csv-only columns stay visible, so the export keeps them. */
 export function getRwaColumnVisibilityForSelection(
 	columns: Array<RWATableColumn>,
 	selected: ReadonlySet<string>
 ): Record<string, boolean> {
 	const visibility: Record<string, boolean> = {}
-	for (const leaf of leafColumns(columns)) visibility[leaf.id] = Boolean(leaf.meta?.csvOnly) || selected.has(leaf.id)
+	for (const leaf of leafColumns(columns)) {
+		visibility[leaf.id] = leaf.enableHiding === false || Boolean(leaf.meta?.csvOnly) || selected.has(leaf.id)
+	}
 	return visibility
 }
 

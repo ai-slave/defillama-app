@@ -55,6 +55,9 @@ jobs:
       - name: Check hydration policy
         run: bun scripts/policies/check-hydration.ts --self-test && bun scripts/policies/check-hydration.ts
 
+      - name: Check column picker policy
+        run: bun scripts/policies/check-column-pickers.ts --self-test && bun scripts/policies/check-column-pickers.ts
+
       - name: Check design-token policy
         run: bun scripts/policies/check-design-tokens.mjs
 

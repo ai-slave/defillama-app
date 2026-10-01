@@ -85,6 +85,35 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 	query = {}
+	localStorage.clear()
+})
+
+test('a saved column pick that hid Name still shows Name, and the picker does not offer it', async () => {
+	localStorage.setItem('unlockTable', JSON.stringify({ name: false, tPrice: true, mcap: false, totalLocked: false }))
+	await act(async () => root.render(table()))
+	expect(Array.from(container.querySelectorAll('thead th'), (header) => header.textContent)).toEqual([
+		'Name',
+		'Price',
+		'Prev. Unlock Analysis',
+		'7d Price Change After Unlock',
+		'Next 24h Unlocks',
+		'Next Event'
+	])
+	expect(container.querySelector('tbody')?.textContent).toContain('Alpha')
+
+	await click(document.querySelector<HTMLButtonElement>('button[aria-label="Columns dropdown"]')!)
+	expect(
+		Array.from(document.querySelectorAll('[role="option"]'), (option) => option.firstElementChild?.textContent)
+	).toEqual([
+		'Select all, some selected',
+		'Price',
+		'MCap',
+		'Unlocked Supply',
+		'Prev. Unlock Analysis',
+		'7d Price Change After Unlock',
+		'Next 24h Unlocks',
+		'Next Event'
+	])
 })
 
 test('clearing Select all in the event type picker selects no types and shows no protocols', async () => {

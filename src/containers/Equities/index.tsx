@@ -1,6 +1,5 @@
 import {
 	columnSizingFeature,
-	columnVisibilityFeature,
 	createColumnHelper,
 	functionalUpdate,
 	rowExpandingFeature,
@@ -16,8 +15,10 @@ import { startTransition, useCallback, useMemo, useState, type ReactNode } from 
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
+import { getColumnVisibilityForSelection, getHideableColumns } from '~/components/Table/search/columnSelect'
 import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
@@ -104,6 +105,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListC
 const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyRow>> = columnHelper.columns([
 	columnHelper.accessor('ticker', {
 		header: 'Ticker',
+		enableHiding: false,
 		enableSorting: false,
 		cell: ({ row }) => <EquityTickerCell row={row} />,
 		meta: {
@@ -758,45 +760,34 @@ function EquitiesRankingsTable({
 			startTransition(() => setColumnVisibility((old) => functionalUpdate(updater, old)))
 	})
 
-	const columnOptions = useMemo(() => {
-		const filterColumnIds = new Set<string>()
-		for (const filter of filters) {
-			filterColumnIds.add(filter.id)
-		}
-
-		const options: Array<{ key: string; name: string; help?: string }> = []
-		for (const column of columns) {
-			const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
-			if (!key) continue
-			const name = typeof column.header === 'function' ? key : column.header != null ? String(column.header) : key
-			const helpParts: Array<string> = []
-			if (column.meta?.headerHelperText) helpParts.push(column.meta.headerHelperText)
-			if (filterColumnIds.has(key)) helpParts.push('Visible while this column has an active filter.')
-			const help = helpParts.join(' ') || undefined
-			options.push({ key, name, ...(help === undefined ? {} : { help }) })
-		}
-		return options
-	}, [filters])
+	const leafColumns = table.getAllLeafColumns()
+	const hideableColumns = getHideableColumns(leafColumns)
+	const filterColumnIds = new Set<string>()
+	for (const filter of filters) {
+		filterColumnIds.add(filter.id)
+	}
+	const columnOptions: Array<{ key: string; name: string; help?: string }> = []
+	for (const column of hideableColumns) {
+		const header = column.columnDef.header
+		const name = typeof header === 'function' ? column.id : header != null ? String(header) : column.id
+		const helpParts: Array<string> = []
+		if (column.columnDef.meta?.headerHelperText) helpParts.push(column.columnDef.meta.headerHelperText)
+		if (filterColumnIds.has(column.id)) helpParts.push('Visible while this column has an active filter.')
+		const help = helpParts.join(' ') || undefined
+		columnOptions.push({ key: column.id, name, ...(help === undefined ? {} : { help }) })
+	}
 
 	// The Columns picker reflects and edits the user's persisted intent, not the effective
 	// (filter-forced) visibility — so toggles here always persist and a filtered column shows
 	// unchecked even while it is force-shown in the table.
 	const selectedColumns: Array<string> = []
-	for (const column of table.getAllLeafColumns()) {
+	for (const column of hideableColumns) {
 		if (columnVisibility[column.id] !== false) selectedColumns.push(column.id)
 	}
 
 	const setColumnOptions = (newOptions: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 		const resolvedOptions = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
-		startTransition(() =>
-			setColumnVisibility(() => {
-				const nextVisibility: ColumnVisibilityState = {}
-				for (const column of table.getAllLeafColumns()) {
-					nextVisibility[column.id] = resolvedOptions.includes(column.id)
-				}
-				return nextVisibility
-			})
-		)
+		startTransition(() => setColumnVisibility(getColumnVisibilityForSelection(leafColumns, resolvedOptions)))
 	}
 
 	const prepareCsv = () => {

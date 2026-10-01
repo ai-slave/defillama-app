@@ -1,6 +1,5 @@
 import {
 	columnSizingFeature,
-	columnVisibilityFeature,
 	createPaginatedRowModel,
 	createSortedRowModel,
 	functionalUpdate,
@@ -14,6 +13,7 @@ import {
 import { useRouter } from 'next/router'
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { useDebouncedCallback } from '~/hooks/useDebounce'

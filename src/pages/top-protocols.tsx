@@ -2,7 +2,6 @@ import {
 	columnFilteringFeature,
 	type ColumnFiltersState,
 	columnSizingFeature,
-	columnVisibilityFeature,
 	createColumnHelper,
 	createFilteredRowModel,
 	filterFn_includesString,
@@ -16,6 +15,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'

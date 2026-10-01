@@ -14,6 +14,7 @@ import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
+import { getColumnSelectState, getColumnVisibilityForSelection } from '~/components/Table/search/columnSelect'
 import { useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -38,14 +39,6 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 const tableFeaturesConfig = expandedFilteredTableFeatures
 
 const optionsKey = 'unlockTable'
-
-const setColumnOptions = (newOptions: Array<string>) => {
-	const ops: Record<string, boolean> = {}
-	for (const col of columnOptions) {
-		ops[col.key] = newOptions.includes(col.key)
-	}
-	setStorageItem(optionsKey, JSON.stringify(ops))
-}
 
 interface IUnlocksTableProps {
 	protocols: Array<IEmission>
@@ -234,25 +227,17 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 		})
 	}
 
-	const rawColumnsInStorage = useStorageItem(optionsKey, defaultColumns)
+	const rawColumnsInStorage = useStorageItem(optionsKey, '{}')
 	const columnsInStorage = useDeferredValue(rawColumnsInStorage)
 
-	const { columnVisibility, selectedOptions } = useMemo(() => {
-		const defaultColumnVisibility = Object.fromEntries(columnOptions.map((column) => [column.key, true] as const))
-		let parsedColumnVisibility: Record<string, boolean> = {}
+	// Columns missing from the stored map are visible, so columns added later show up for returning readers.
+	const columnVisibility = useMemo(() => {
 		try {
-			parsedColumnVisibility = JSON.parse(columnsInStorage) as Record<string, boolean>
+			return JSON.parse(columnsInStorage) as Record<string, boolean>
 		} catch {
 			// A corrupt stored value falls back to the defaults.
+			return {}
 		}
-
-		const columnVisibility = {
-			...defaultColumnVisibility,
-			...parsedColumnVisibility
-		}
-		const selectedOptions = columnOptions.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
-
-		return { columnVisibility, selectedOptions }
 	}, [columnsInStorage])
 
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'upcomingEvent', desc: false }])
@@ -304,6 +289,8 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 		onColumnFiltersChange: (updater) => startTransition(() => setColumnFilters(updater)),
 		onExpandedChange: (updater) => startTransition(() => setExpanded(updater))
 	})
+	const leafColumns = instance.getAllLeafColumns()
+	const columnSelect = getColumnSelectState(leafColumns, columnVisibility)
 	const [_projectName, setProjectName] = useTableSearch({
 		instance,
 		columnToSearch: 'name'
@@ -363,12 +350,11 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 				/>
 
 				<SelectWithCombobox
-					allValues={columnOptions}
-					selectedValues={selectedOptions}
-					setSelectedValues={(values: Array<string> | ((prev: Array<string>) => Array<string>)) => {
-						const newValues = typeof values === 'function' ? values(selectedOptions) : values
-						setColumnOptions(newValues)
-					}}
+					allValues={columnSelect.options}
+					selectedValues={columnSelect.selected}
+					setSelectedValues={(selected: Array<string>) =>
+						setStorageItem(optionsKey, JSON.stringify(getColumnVisibilityForSelection(leafColumns, selected)))
+					}
 					nestedMenu={false}
 					label="Columns"
 					labelType="smol"
@@ -392,31 +378,12 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 	)
 }
 
-const columnOptions = [
-	{ name: 'Name', key: 'name' },
-	{ name: 'Price', key: 'tPrice' },
-	{ name: 'Market Cap', key: 'mcap' },
-	{ name: 'Unlocked Supply', key: 'totalLocked' },
-	{ name: 'Prev. Unlock Analysis', key: 'prevUnlock' },
-	{ name: '7d Price Change After Unlock', key: 'postUnlock' },
-	{ name: 'Next 24h Unlocks', key: 'nextEvent' },
-	{ name: 'Next Event', key: 'upcomingEvent' }
-]
-
-// these are missing in emissionsColumns
-// { name: 'Token Symbol', key: 'symbol' },
-// { name: 'Next Unlock Date', key: 'nextUnlockDate' },
-// { name: 'Token Amount', key: 'unlockAmount' },
-// { name: 'Value (USD)', key: 'unlockValue' },
-// { name: '% of Supply', key: 'percSupply' },
-
-const defaultColumns = JSON.stringify(Object.fromEntries(columnOptions.map((column) => [column.key, true])))
-
 export type IEmission = EnrichedProtocolEmission
 
 const emissionsColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
+		enableHiding: false,
 		filterFn: (row, _columnId, filterValue) => {
 			const searchValue = String(filterValue ?? '')
 				.toLowerCase()

@@ -27,6 +27,8 @@ export const YIELDS_COLUMN_IDS = [
 	'ltv'
 ] as const
 export const YIELDS_COLUMN_ID_SET = new Set<string>(YIELDS_COLUMN_IDS)
+/** The column that names each row (`enableHiding: false`): always shown, never removable. */
+export const YIELDS_IDENTITY_COLUMN_ID = 'pool'
 
 export type YieldColumnId = (typeof YIELDS_COLUMN_IDS)[number]
 
@@ -50,6 +52,7 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 		columnHelper.accessor('pool', {
 			header: 'Pool',
 			id: 'pool',
+			enableHiding: false,
 			enableSorting: false,
 			cell: ({ row }) => (
 				<span className="relative flex items-center gap-2 pl-6">

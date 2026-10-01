@@ -9,6 +9,7 @@ export const nameColumn = columnHelper.accessor(
 	(row) => (row.kind === 'group' ? row.label : row.asset.assetName || row.asset.ticker),
 	{
 		id: 'name',
+		enableHiding: false,
 		header: 'Name',
 		enableSorting: false,
 		/* The row state is read here, in the cell function, and handed down as values: a component that read

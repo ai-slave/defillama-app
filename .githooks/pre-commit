@@ -76,6 +76,11 @@ if [ -s "$staged_files" ]; then
 		echo "Checking hydration policy on staged files..."
 		xargs -0 bun scripts/policies/check-hydration.ts < "$policy_files" || status=$?
 	fi
+
+	if [ "$status" -eq 0 ] && [ -s "$policy_files" ]; then
+		echo "Checking column picker policy on staged files..."
+		xargs -0 bun scripts/policies/check-column-pickers.ts < "$policy_files" || status=$?
+	fi
 else
 	echo "No staged source files to format or lint."
 fi

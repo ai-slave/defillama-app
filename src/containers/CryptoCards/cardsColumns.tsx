@@ -235,6 +235,7 @@ export function buildCardsColumns(
 	return [
 		columnHelper.accessor((row) => `${row.cardName} ${row.tierName} ${row.cardId}`, {
 			id: 'name',
+			enableHiding: false,
 			header: 'Card',
 			enableSorting: false,
 			cell: ({ row }) => {

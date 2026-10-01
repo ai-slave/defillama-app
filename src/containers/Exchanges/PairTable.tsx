@@ -127,6 +127,7 @@ export function buildPairColumns(
 		}),
 		columnHelper.accessor('symbol', {
 			id: 'pair',
+			enableHiding: false,
 			header: definitions.pair.label,
 			enableSorting: false,
 			cell: ({ row, getValue }) => (

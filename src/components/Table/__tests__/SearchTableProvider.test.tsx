@@ -325,13 +325,7 @@ async function press(element: HTMLElement) {
 	})
 }
 
-// The multi-select stays open after a toggle, so only open it when the option is not shown.
-async function toggleColumnFromSelect(name: string) {
-	if (!columnOption(name)) await press(document.querySelector<HTMLElement>('[aria-label="Columns dropdown"]')!)
-	await press(columnOption(name)!)
-}
-
-test('Hacks keeps search and CSV working when Name is hidden and restored', async () => {
+test('Hacks keeps the Name column when "Only" picks one metric', async () => {
 	const container = document.createElement('div')
 	document.body.append(container)
 	const root = createRoot(container)
@@ -346,27 +340,27 @@ test('Hacks keeps search and CSV working when Name is hidden and restored', asyn
 				/>
 			)
 		)
-		await toggleColumnFromSelect('Name')
-		expect(container.querySelector('thead')?.textContent).not.toContain('Name')
-		const input = container.querySelector('input')!
-		await act(async () => {
-			input.value = 'Beta'
-			input.dispatchEvent(new Event('input', { bubbles: true }))
-		})
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
+		await press(document.querySelector<HTMLElement>('[aria-label="Columns dropdown"]')!)
+		const pickerOptions = Array.from(
+			document.querySelectorAll('[role="option"]'),
+			(option) => option.firstElementChild?.textContent
+		)
+		expect(pickerOptions).toEqual(['Select all, all selected', 'Total Hacked', 'Returned Funds', 'Net User Loss'])
+		const onlyButton = Array.from(columnOption('Net User Loss')!.querySelectorAll('button')).find(
+			(button) => button.textContent === 'Only'
+		)!
+		await act(async () => onlyButton.click())
+		expect(Array.from(container.querySelectorAll('thead th'), (header) => header.textContent)).toEqual([
+			'Name',
+			'Net User Loss'
+		])
+		expect(container.querySelector('tbody tr')?.textContent).toContain('Alpha')
 		await click(container, 'Export')
 		expect(csvRows).toHaveBeenLastCalledWith([
-			['Total Hacked', 'Returned Funds', 'Net User Loss'],
-			[10, 2, 8]
+			['Name', 'Net User Loss'],
+			['Alpha', 15],
+			['Beta', 8]
 		])
-		await toggleColumnFromSelect('Name')
-		expect(container.querySelector('tbody')?.textContent).toContain('Beta')
-		await act(async () => {
-			input.value = ''
-			input.dispatchEvent(new Event('input', { bubbles: true }))
-		})
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
-		expect(container.querySelector('tbody tr')?.textContent).toContain('Alpha')
 	} finally {
 		await act(async () => root.unmount())
 		container.remove()

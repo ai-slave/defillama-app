@@ -1,6 +1,7 @@
 import { useDeferredValue, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { getHideableColumns } from '~/components/Table/search/columnSelect'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { Icon } from '~/ui/Icon'
@@ -83,9 +84,10 @@ function RWATableView({
 		preset
 	})
 
-	const columnOptions = getRwaColumnOptions(columns, groupBy)
+	const hideableIds = new Set(getHideableColumns(instance.getAllLeafColumns()).map((column) => column.id))
+	const columnOptions = getRwaColumnOptions(columns, groupBy).filter((option) => hideableIds.has(option.key))
 	/* Read from the visibility state, not the instance: the instance keeps its identity across changes. */
-	const selectedColumns = getRwaSelectedColumnIds(columns, columnVisibility)
+	const selectedColumns = getRwaSelectedColumnIds(columns, columnVisibility).filter((id) => hideableIds.has(id))
 	const setSelectedColumns = (next: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 		const resolved = new Set(Array.isArray(next) ? next : next(selectedColumns))
 		instance.setColumnVisibility(getRwaColumnVisibilityForSelection(columns, resolved))

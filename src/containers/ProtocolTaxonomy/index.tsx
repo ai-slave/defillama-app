@@ -344,6 +344,7 @@ const perpVolumeCell = (info: CellContext<SearchTableFeatures, ProtocolRow, numb
 const COLUMN_REGISTRY = {
 	name: columnHelper.accessor('name', {
 		id: 'name',
+		enableHiding: false,
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {

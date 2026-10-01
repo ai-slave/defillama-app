@@ -36,6 +36,7 @@ const definitions = exchangeDefinitions.directory
 const TOKEN_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('token', {
 		id: 'token',
+		enableHiding: false,
 		header: 'Token',
 		enableSorting: false,
 		cell: ({ row, getValue }) => {

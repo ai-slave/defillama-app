@@ -17,6 +17,7 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
+import { getHideableColumns } from '~/components/Table/search/columnSelect'
 import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -276,6 +277,8 @@ function ChainProtocolsTableInner({
 		for (const column of columnOptions) {
 			if (column.extended && !availableColumnOptions.includes(column)) columnVisibility[column.key] = false
 		}
+		// Name is the identity column, which the table always shows; the remote CSV reads this map, so it keeps it too.
+		columnVisibility.name = true
 		const selectedColumns = mergedColumns.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
 
 		return { mergedColumns, columnVisibility, selectedColumns }
@@ -497,6 +500,9 @@ function ChainProtocolsTableInner({
 		manualSorting: remoteEnabled,
 		manualFiltering: remoteEnabled
 	})
+	const hideableIds = new Set(getHideableColumns(instance.getAllLeafColumns()).map((column) => column.id))
+	const pickerColumns = mergedColumns.filter((column) => hideableIds.has(column.key))
+	const pickerSelectedColumns = selectedColumns.filter((key) => hideableIds.has(key))
 
 	const setSortingForPresetSelection = (selection: TablePresetSelection) => {
 		const metricPreset = selection.type === 'period' ? null : selection.metric
@@ -575,8 +581,8 @@ function ChainProtocolsTableInner({
 			/>
 
 			<SelectWithCombobox
-				allValues={mergedColumns}
-				selectedValues={selectedColumns}
+				allValues={pickerColumns}
+				selectedValues={pickerSelectedColumns}
 				setSelectedValues={setColumnOptions}
 				nestedMenu={false}
 				label="Columns"
@@ -1225,6 +1231,7 @@ const activityMetricColumnsByGroup = (group: TABLE_COLUMN_GROUPS) =>
 const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		id: 'name',
+		enableHiding: false,
 		header: 'Name',
 		enableSorting: false,
 		filterFn: 'includesString',

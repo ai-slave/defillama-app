@@ -17,6 +17,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { searchTableFeatures } from '~/components/Table/features/search'
+import { getColumnVisibilityForSelection, getHideableColumns } from '~/components/Table/search/columnSelect'
 import {
 	prepareTableCsv,
 	useSortColumnOrders,
@@ -125,7 +126,6 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 				? CHAIN_EARNINGS_COLUMNS
 				: PROTOCOL_EARNINGS_COLUMNS
 			: COLUMNS_BY_TYPE[props.type]
-	const columnsOptions = useMemo(() => getColumnsOptions(props.type, tableColumns), [props.type, tableColumns])
 
 	const protocols = useMemo(
 		() => filterProtocolsByCategoryQuery(props.protocols, props.categories, router.query),
@@ -188,19 +188,18 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const metricName = props.type === 'Options' ? 'Options Premium Volume' : props.type
 	const columnsKey = `columns-${props.type}`
 
+	const leafColumns = instance.getAllLeafColumns()
+	const hideableColumns = getHideableColumns(leafColumns)
+	const columnsOptions = getColumnsOptions(props.type, hideableColumns)
 	const setColumnOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (newOptions) => {
 		const options = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
-		const optionsSet = new Set(options)
-		const ops: Record<string, boolean> = {}
-		for (const col of instance.getAllLeafColumns()) {
-			ops[col.id] = optionsSet.has(col.id)
-		}
+		const ops = getColumnVisibilityForSelection(leafColumns, options)
 		setStorageItem(columnsKey, JSON.stringify(ops))
 		instance.setColumnVisibility(ops)
 	}
 
 	const selectedColumns: Array<string> = []
-	for (const col of instance.getAllLeafColumns()) {
+	for (const col of hideableColumns) {
 		if (col.getIsVisible()) selectedColumns.push(col.id)
 	}
 	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(props.type)
@@ -459,10 +458,14 @@ const chainChartsKeys: Partial<Record<IProps['type'], (typeof chainCharts)[keyof
 	'Perp Volume': 'perpsVolume'
 }
 
-const getColumnsOptions = <T extends { id?: string; header?: unknown }>(type: IProps['type'], columns: Array<T>) =>
+const getColumnsOptions = <T extends { id: string; columnDef: { header?: unknown } }>(
+	type: IProps['type'],
+	columns: Array<T>
+) =>
 	columns.map((column) => {
+		const header = column.columnDef.header
 		let headerName: string
-		if (typeof column.header === 'function') {
+		if (typeof header === 'function') {
 			switch (column.id) {
 				case 'total24h':
 					if (type === 'Perp Aggregator Volume') {
@@ -501,10 +504,10 @@ const getColumnsOptions = <T extends { id?: string; header?: unknown }>(type: IP
 					headerName = column.id ?? ''
 			}
 		} else {
-			headerName = typeof column.header === 'string' ? column.header : ''
+			headerName = typeof header === 'string' ? header : ''
 		}
 
-		return { name: headerName, key: column.id ?? '' }
+		return { name: headerName, key: column.id }
 	})
 
 type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
@@ -515,6 +518,7 @@ const NameColumn = (type: IProps['type']) => {
 	const showsTokenBadges = TOKEN_BADGE_PAGE_TYPES.has(type)
 	return columnHelper.accessor('name', {
 		id: 'name',
+		enableHiding: false,
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {

@@ -387,6 +387,7 @@ export function buildDirectoryColumns(
 	const columns = columnHelper.columns([
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
+			enableHiding: false,
 			header: definitions.name.label,
 			// Sorts on the ranking the rows arrive in, not the name: it is the only way back
 			// to the default order once a reader has sorted by some other column.

@@ -1,5 +1,11 @@
-import { FlexRender, Subscribe, type Cell, type Row, type RowData } from '@tanstack/react-table'
-import { column_getIsVisible } from '@tanstack/react-table/static-functions'
+import {
+	FlexRender,
+	Subscribe,
+	type Cell,
+	type Column_ColumnVisibility,
+	type Row,
+	type RowData
+} from '@tanstack/react-table'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 import type { TableCssVars } from './types'
 
@@ -49,8 +55,11 @@ export function TableRow<F extends SortingFeatures & VisibilityFeatures, T exten
 					data-depth={rowToRender.depth}
 					className="vf-row"
 				>
+					{/* The generic features hide the visibility API; the prototype method keeps identity columns visible. */}
 					{cells
-						.filter((cell) => column_getIsVisible(cell.column) && !cell.column.columnDef.meta?.hidden)
+						.filter(
+							(cell) => (cell.column as Column_ColumnVisibility).getIsVisible() && !cell.column.columnDef.meta?.hidden
+						)
 						.map((cell) => {
 							const textAlign = cell.column.columnDef.meta?.align ?? 'start'
 							const isSticky = cell.column.id === firstColumnId

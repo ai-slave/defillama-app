@@ -1,7 +1,6 @@
 import {
 	type ColumnFiltersState,
 	createColumnHelper,
-	type ColumnDef,
 	type ExpandedState,
 	type SortingState,
 	useTable
@@ -14,6 +13,7 @@ import { TVLRange } from '~/components/Filters/TVLRange'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { searchTableFeatures } from '~/components/Table/features/search'
+import { getColumnSelectState, getColumnVisibilityForSelection } from '~/components/Table/search/columnSelect'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -51,11 +51,6 @@ function hasChainAssetTableValue(value: number | undefined): value is number {
 
 const optionsKey = 'chains-overview-table-columns'
 
-const setColumnOptions = (newOptions: Array<string>) => {
-	const ops = Object.fromEntries(columnOptions.map((col) => [col.key, newOptions.includes(col.key)]))
-	setStorageItem(optionsKey, JSON.stringify(ops))
-}
-
 export function ChainsByCategoryTable({
 	data,
 	useStickyHeader = true,
@@ -67,21 +62,16 @@ export function ChainsByCategoryTable({
 	borderless?: boolean
 	showByGroup: boolean
 }) {
-	const rawColumnsInStorage = useStorageItem(optionsKey, defaultColumns)
+	const rawColumnsInStorage = useStorageItem(optionsKey, '{}')
 	const columnsInStorage = React.useDeferredValue(rawColumnsInStorage)
-	const { columnVisibility, selectedColumns } = React.useMemo(() => {
-		const defaultColumnVisibility = Object.fromEntries(columnOptions.map((column) => [column.key, true] as const))
-		let parsedColumnVisibility: Record<string, boolean> = {}
+	// Columns missing from the stored map are visible, so columns added later show up for returning readers.
+	const columnVisibility = React.useMemo(() => {
 		try {
-			parsedColumnVisibility = JSON.parse(columnsInStorage) as Record<string, boolean>
+			return JSON.parse(columnsInStorage) as Record<string, boolean>
 		} catch {
 			// A corrupt stored value falls back to the defaults.
+			return {}
 		}
-
-		const columnVisibility = { ...defaultColumnVisibility, ...parsedColumnVisibility }
-		const selectedColumns = columnOptions.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))
-
-		return { columnVisibility, selectedColumns }
 	}, [columnsInStorage])
 
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -113,6 +103,9 @@ export function ChainsByCategoryTable({
 		instance,
 		columnOrders: chainsTableColumnOrders
 	})
+
+	const leafColumns = instance.getAllLeafColumns()
+	const columnSelect = getColumnSelectState(leafColumns, columnVisibility)
 
 	const [groupTvls, updater] = useLocalStorageSettingsManager('tvl_chains')
 
@@ -159,9 +152,11 @@ export function ChainsByCategoryTable({
 					/>
 				) : null}
 				<SelectWithCombobox
-					allValues={columnOptions}
-					selectedValues={selectedColumns}
-					setSelectedValues={setColumnOptions}
+					allValues={columnSelect.options}
+					selectedValues={columnSelect.selected}
+					setSelectedValues={(selected: Array<string>) =>
+						setStorageItem(optionsKey, JSON.stringify(getColumnVisibilityForSelection(leafColumns, selected)))
+					}
 					nestedMenu={false}
 					label="Columns"
 					labelType="smol"
@@ -256,6 +251,7 @@ const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IFormattedDa
 const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
+		enableHiding: false,
 		enableSorting: true,
 		cell: ({ getValue, row }) => {
 			const value = getValue()
@@ -485,15 +481,3 @@ const columns = columnHelper.columns([
 		}
 	})
 ])
-
-const getColumnKey = (column: ColumnDef<typeof tableFeaturesConfig, IFormattedDataWithExtraTvl>) =>
-	column.id ?? ('accessorKey' in column ? column.accessorKey : '')
-
-const columnOptions = columns
-	.map((column) => ({
-		name: typeof column.header === 'string' ? column.header : getColumnKey(column),
-		key: getColumnKey(column)
-	}))
-	.filter((c) => c.key !== '')
-
-const defaultColumns = JSON.stringify(Object.fromEntries(columnOptions.map((c) => [c.key, true])))

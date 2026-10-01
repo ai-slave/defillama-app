@@ -269,6 +269,7 @@ const venueColumnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsVenue
 const overviewColumns = overviewColumnHelper.columns([
 	overviewColumnHelper.accessor((row) => row.contract, {
 		id: 'contract',
+		enableHiding: false,
 		header: d.contract.label,
 		enableSorting: false,
 		cell: (info) => (
@@ -738,6 +739,7 @@ const overviewColumns = overviewColumnHelper.columns([
 const venueColumns = venueColumnHelper.columns([
 	venueColumnHelper.accessor((row) => row.contract, {
 		id: 'contract',
+		enableHiding: false,
 		header: d.contract.label,
 		enableSorting: false,
 		cell: (info) => (

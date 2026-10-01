@@ -35,6 +35,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 		(row) => `${row.name} ${row.exchange} ${row.micaMemberState ?? ''} ${row.micaRegulator ?? ''}`,
 		{
 			id: 'name',
+			enableHiding: false,
 			header: 'Exchange',
 			enableSorting: false,
 			cell: ({ row }) => {

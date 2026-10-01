@@ -1,11 +1,11 @@
 import {
 	columnSizingFeature,
-	columnVisibilityFeature,
 	rowExpandingFeature,
 	rowPaginationFeature,
 	tableFeatures,
 	type TableFeatures
 } from '@tanstack/react-table'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 
 export const tokenTableFeatures = tableFeatures({

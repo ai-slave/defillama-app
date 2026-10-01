@@ -2,7 +2,6 @@ import {
 	columnFilteringFeature,
 	columnOrderingFeature,
 	columnSizingFeature,
-	columnVisibilityFeature,
 	createFilteredRowModel,
 	createPaginatedRowModel,
 	createSortedRowModel,
@@ -19,12 +18,19 @@ import {
 	type SortingState
 } from '@tanstack/react-table'
 import * as React from 'react'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { useTableSearch } from '~/components/Table/utils'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import type { ProYieldRow } from '../../../yieldData'
-import { YIELDS_COLUMN_ID_SET, YIELDS_COLUMN_IDS, yieldsDatasetColumns, type YieldColumnId } from './columns'
+import {
+	YIELDS_COLUMN_ID_SET,
+	YIELDS_COLUMN_IDS,
+	YIELDS_IDENTITY_COLUMN_ID,
+	yieldsDatasetColumns,
+	type YieldColumnId
+} from './columns'
 import { buildYieldsFilterOptions } from './options'
 
 export const tableFeaturesConfig = tableFeatures({
@@ -123,6 +129,39 @@ function getYieldColumnPreset(name: string): ReadonlyArray<YieldColumnId> | unde
 	}
 }
 
+/**
+ * The columns a saved dashboard opens with; one saved before Pool became the identity column may have removed it,
+ * so Pool comes back visible and first in the order, where every preset puts it. The table, the column panel and
+ * the CSV all read these two states.
+ */
+export function restoreYieldColumns(
+	initialColumnOrder: Array<string> | undefined,
+	initialColumnVisibility: Record<string, boolean> | undefined
+): { columnVisibility: ColumnVisibilityState; columnOrder: Array<string>; preset: string | null } {
+	let hasInitialVisibility = false
+	for (const id of YIELDS_COLUMN_IDS) {
+		if (initialColumnVisibility?.[id] != null) {
+			hasInitialVisibility = true
+			break
+		}
+	}
+	if (!hasInitialVisibility) {
+		const columnVisibility: ColumnVisibilityState = {}
+		for (const id of YIELDS_COLUMN_IDS) columnVisibility[id] = ESSENTIAL_YIELDS_COLUMNS.includes(id)
+		return { columnVisibility, columnOrder: [...ESSENTIAL_YIELDS_COLUMNS], preset: 'essential' }
+	}
+
+	const columnVisibility: ColumnVisibilityState = {}
+	for (const id of YIELDS_COLUMN_IDS) {
+		columnVisibility[id] = id === YIELDS_IDENTITY_COLUMN_ID || initialColumnVisibility?.[id] !== false
+	}
+	const savedOrder = (initialColumnOrder ?? []).filter(isYieldColumnId)
+	const columnOrder: Array<string> =
+		savedOrder.length > 0 ? savedOrder : YIELDS_COLUMN_IDS.filter((id) => columnVisibility[id])
+	if (!columnOrder.includes(YIELDS_IDENTITY_COLUMN_ID)) columnOrder.unshift(YIELDS_IDENTITY_COLUMN_ID)
+	return { columnVisibility, columnOrder, preset: null }
+}
+
 export function useYieldsTable({
 	data,
 	initialColumnOrder,
@@ -132,30 +171,11 @@ export function useYieldsTable({
 	onFiltersChange
 }: UseYieldsTableOptions) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'tvl', desc: true }])
-	let hasInitialVisibility = false
-	for (const id of YIELDS_COLUMN_IDS) {
-		if (initialColumnVisibility?.[id] != null) {
-			hasInitialVisibility = true
-			break
-		}
-	}
-	const initialPreset = hasInitialVisibility ? null : 'essential'
-	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(() => {
-		const visibility: ColumnVisibilityState = {}
-		for (const id of YIELDS_COLUMN_IDS) {
-			visibility[id] = hasInitialVisibility
-				? initialColumnVisibility?.[id] !== false
-				: ESSENTIAL_YIELDS_COLUMNS.includes(id)
-		}
-		return visibility
-	})
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(() => {
-		const savedOrder = (initialColumnOrder ?? []).filter(isYieldColumnId)
-		if (savedOrder.length > 0 && hasInitialVisibility) return savedOrder
-		return hasInitialVisibility
-			? YIELDS_COLUMN_IDS.filter((id) => columnVisibility[id] !== false)
-			: [...ESSENTIAL_YIELDS_COLUMNS]
-	})
+	const [restoredColumns] = React.useState(() => restoreYieldColumns(initialColumnOrder, initialColumnVisibility))
+	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(
+		restoredColumns.columnVisibility
+	)
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(restoredColumns.columnOrder)
 	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = React.useState<PaginationState>({
@@ -164,7 +184,7 @@ export function useYieldsTable({
 	})
 	const [showColumnPanel, setShowColumnPanel] = React.useState(false)
 	const [searchTerm, setSearchTerm] = React.useState('')
-	const [selectedPreset, setSelectedPreset] = React.useState<string | null>(initialPreset)
+	const [selectedPreset, setSelectedPreset] = React.useState<string | null>(restoredColumns.preset)
 	const [showFiltersPanel, setShowFiltersPanel] = React.useState(false)
 	const [filters, setFilters] = React.useState<YieldsFilters>(initialFilters ?? {})
 

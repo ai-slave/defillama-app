@@ -1,7 +1,6 @@
 import {
 	columnOrderingFeature,
 	columnSizingFeature,
-	columnVisibilityFeature,
 	createExpandedRowModel,
 	createPaginatedRowModel,
 	createSortedRowModel,
@@ -17,6 +16,7 @@ import {
 	type SortingState
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
+import { columnVisibilityFeature } from '~/components/Table/features/display'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
 import {

@@ -21,6 +21,7 @@ const DEFAULT_SORTING_STATE = [{ id: 'Net User Loss', desc: true }]
 const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.name, {
 		id: 'Name',
+		enableHiding: false,
 		header: 'Name',
 		cell: ({ row, getValue }) => {
 			const name = getValue()

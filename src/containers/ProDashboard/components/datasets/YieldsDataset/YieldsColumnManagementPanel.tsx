@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Icon } from '~/ui/Icon'
-import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, type YieldColumnId } from './columns'
+import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, YIELDS_IDENTITY_COLUMN_ID, type YieldColumnId } from './columns'
 
 const yieldsColumnMetadata: Record<YieldColumnId, { name: string; description: string }> = {
 	pool: { name: 'Pool', description: 'The pool or strategy name' },
@@ -91,14 +91,16 @@ function ColumnButton(props: ColumnButtonProps) {
 						<Icon name="chevron-down" className="size-2.5" />
 					</button>
 				) : null}
-				<button
-					type="button"
-					onClick={() => toggleColumnVisibility(columnKey, false)}
-					className="p-1 text-tertiary hover:text-primary"
-					title="Remove column"
-				>
-					<Icon name="x" className="size-3" />
-				</button>
+				{columnKey === YIELDS_IDENTITY_COLUMN_ID ? null : (
+					<button
+						type="button"
+						onClick={() => toggleColumnVisibility(columnKey, false)}
+						className="p-1 text-tertiary hover:text-primary"
+						title="Remove column"
+					>
+						<Icon name="x" className="size-3" />
+					</button>
+				)}
 			</div>
 		</div>
 	) : (

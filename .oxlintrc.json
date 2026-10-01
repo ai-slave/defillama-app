@@ -32,7 +32,19 @@
 		"eslint/no-restricted-imports": [
 			"error",
 			{
-				"paths": [{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." }],
+				"paths": [
+					{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." },
+					{
+						"name": "@tanstack/react-table",
+						"importNames": ["columnVisibilityFeature"],
+						"message": "Use columnVisibilityFeature from ~/components/Table/features/display, which keeps identity columns (enableHiding: false) visible."
+					},
+					{
+						"name": "@tanstack/react-table/static-functions",
+						"importNames": ["column_getIsVisible"],
+						"message": "Call column.getIsVisible(): the static function skips the identity-column rule in ~/components/Table/features/display."
+					}
+				],
 				"patterns": [
 					{
 						"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
@@ -288,7 +300,19 @@
 				"eslint/no-restricted-imports": [
 					"error",
 					{
-						"paths": [{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." }],
+						"paths": [
+							{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." },
+							{
+								"name": "@tanstack/react-table",
+								"importNames": ["columnVisibilityFeature"],
+								"message": "Use columnVisibilityFeature from ~/components/Table/features/display, which keeps identity columns (enableHiding: false) visible."
+							},
+							{
+								"name": "@tanstack/react-table/static-functions",
+								"importNames": ["column_getIsVisible"],
+								"message": "Call column.getIsVisible(): the static function skips the identity-column rule in ~/components/Table/features/display."
+							}
+						],
 						"patterns": [
 							{
 								"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],
@@ -311,7 +335,19 @@
 				"eslint/no-restricted-imports": [
 					"error",
 					{
-						"paths": [{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." }],
+						"paths": [
+							{ "name": "server-only", "message": "App Router marker; this app runs on the Pages Router." },
+							{
+								"name": "@tanstack/react-table",
+								"importNames": ["columnVisibilityFeature"],
+								"message": "Use columnVisibilityFeature from ~/components/Table/features/display, which keeps identity columns (enableHiding: false) visible."
+							},
+							{
+								"name": "@tanstack/react-table/static-functions",
+								"importNames": ["column_getIsVisible"],
+								"message": "Call column.getIsVisible(): the static function skips the identity-column rule in ~/components/Table/features/display."
+							}
+						],
 						"patterns": [
 							{
 								"group": ["**/.cache/app-metadata", "**/.cache/app-metadata/**"],

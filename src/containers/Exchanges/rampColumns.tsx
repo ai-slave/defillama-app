@@ -29,6 +29,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 	return columnHelper.columns([
 		columnHelper.accessor((row) => `${row.name} ${row.exchange} ${row.variant.regulator ?? ''}`, {
 			id: 'name',
+			enableHiding: false,
 			header: 'Exchange',
 			enableSorting: false,
 			cell: ({ row }) => {
