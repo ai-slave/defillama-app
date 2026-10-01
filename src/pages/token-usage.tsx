@@ -307,8 +307,7 @@ const columns = columnHelper.columns([
 		header: 'Category',
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[140px]',
-			align: 'end'
+			headerClassName: 'w-[140px]'
 		}
 	}),
 	columnHelper.accessor((row) => row.amountUsd ?? undefined, {

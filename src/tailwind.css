@@ -278,9 +278,11 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	}
 }
 
+/* Tabular digits keep ranks with the same digit count equally wide, so the logo or pie after them lines up. */
 @utility vf-row-index {
 	display: inline-block;
 	text-align: left;
+	font-variant-numeric: tabular-nums;
 	&::before {
 		content: var(--vf-subrow-index, counter(vf-row));
 	}

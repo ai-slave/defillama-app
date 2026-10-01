@@ -201,8 +201,7 @@ function defaultColumns(type: TokenMetricType) {
 				)
 			},
 			meta: {
-				headerClassName: 'w-[128px]',
-				align: 'end'
+				headerClassName: 'w-[128px]'
 			}
 		})
 	])

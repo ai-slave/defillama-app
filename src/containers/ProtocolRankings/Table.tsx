@@ -1287,8 +1287,7 @@ const columns = columnHelper.columns([
 			)
 		},
 		meta: {
-			headerClassName: 'w-[139px] min-w-[139px]',
-			align: 'end'
+			headerClassName: 'w-[139px] min-w-[139px]'
 		}
 	}),
 	columnHelper.group({

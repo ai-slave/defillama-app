@@ -74,10 +74,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor('category', {
 		header: 'Category',
-		enableSorting: false,
-		meta: {
-			align: 'center'
-		}
+		enableSorting: false
 	}),
 	columnHelper.accessor((row) => row.amountUsd ?? undefined, {
 		id: 'amountUsd',
