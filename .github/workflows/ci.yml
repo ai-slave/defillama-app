@@ -58,6 +58,9 @@ jobs:
       - name: Check column picker policy
         run: bun scripts/policies/check-column-pickers.ts --self-test && bun scripts/policies/check-column-pickers.ts
 
+      - name: Check focus handoff policy
+        run: bun scripts/policies/check-focus-handoff.ts --self-test && bun scripts/policies/check-focus-handoff.ts
+
       - name: Check design-token policy
         run: bun scripts/policies/check-design-tokens.mjs
 

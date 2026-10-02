@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRef, useState, type RefObject } from 'react'
@@ -19,7 +18,6 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
@@ -284,15 +282,16 @@ function SponsorPageEditor({ sponsor, onSaved }: { sponsor: ResearchSponsorAdmin
 				</label>
 				<SponsorEntityPicker inputId={`replacement-${sponsor.id}`} value={replacement} onChange={setReplacement} />
 			</fieldset>
-			<Ariakit.Button
-				render={<Button size="md" variant="primary" type="submit" />}
+			<Button
+				size="md"
+				variant="primary"
+				type="submit"
 				className="justify-self-start"
-				accessibleWhenDisabled={update.isPending}
-				disabled={!replacement || update.isPending}
+				disabled={!replacement}
+				pendingLabel={update.isPending ? 'Saving…' : null}
 			>
-				{update.isPending ? <LoadingSpinner size={14} /> : null}
-				{update.isPending ? 'Saving…' : 'Save page'}
-			</Ariakit.Button>
+				Save page
+			</Button>
 			{update.error ? (
 				<p role="alert" className="body-sm text-data-down">
 					{mutationMessage(update.error, 'Failed to update sponsor page')}

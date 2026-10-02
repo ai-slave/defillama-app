@@ -13,7 +13,6 @@ import {
 	useState,
 	useSyncExternalStore
 } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import pb from '~/utils/pocketbase'
 import type { ChartDataPrerequisite } from './chartRuntime'
@@ -64,7 +63,13 @@ import {
 import { isDashboardWidget } from './dashboardWidgets'
 import { notifyForcedPublicVisibility } from './freeTierNotice'
 import { useAutoSave } from './hooks/useAutoSave'
-import { getUnsavedDashboardChanges, useDashboardAPI, wasDashboardDeleted } from './hooks/useDashboardAPI'
+import {
+	type DashboardSaveNotices,
+	getUnsavedDashboardChanges,
+	showDashboardSaveNotices,
+	useDashboardAPI,
+	wasDashboardDeleted
+} from './hooks/useDashboardAPI'
 import { useDashboardConfigFallback } from './hooks/useDashboardConfigFallback'
 import { useDashboardPermissions, type DashboardReadOnlyReason } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
@@ -126,6 +131,16 @@ function getLatestPendingRating(
 
 type DialogStore = ReturnType<typeof Ariakit.useDialogStore>
 
+type DashboardSaveOverrides = {
+	dashboardName?: string
+	visibility?: 'private' | 'public'
+	tags?: Array<string>
+	description?: string
+	aiGenerated?: AIGeneratedData | null
+	items?: Array<DashboardItemConfig>
+	aiUndoState?: AIUndoState | null
+}
+
 interface ProDashboardTimeContextType {
 	timePeriod: TimePeriod
 	customTimePeriod: CustomTimePeriod | null
@@ -186,15 +201,9 @@ interface ProDashboardDashboardContextType {
 	setDashboardTags: (tags: Array<string>) => void
 	setDashboardDescription: (description: string) => void
 	deleteDashboard: (id: string) => Promise<void>
-	saveDashboard: (overrides?: {
-		dashboardName?: string
-		visibility?: 'private' | 'public'
-		tags?: Array<string>
-		description?: string
-		aiGenerated?: AIGeneratedData | null
-		items?: Array<DashboardItemConfig>
-		aiUndoState?: AIUndoState | null
-	}) => Promise<void>
+	saveDashboard: (overrides?: DashboardSaveOverrides) => Promise<void>
+	/** For a dialog: saves without showing the save's notices, so it can show them once it has closed. */
+	saveDashboardWithNotices: (overrides?: DashboardSaveOverrides) => Promise<DashboardSaveNotices>
 	moveDashboardTeam: (teamId: string | null) => Promise<void>
 	publishDashboard: () => Promise<void>
 	copyDashboard: () => Promise<Dashboard>
@@ -731,19 +740,11 @@ function ProDashboardAPIProviderInner({
 	)
 
 	// Save dashboard
-	const saveDashboard = useCallback(
+	const saveDashboardWithNotices = useCallback(
 		async (
-			overrides?: {
-				dashboardName?: string
-				visibility?: 'private' | 'public'
-				tags?: Array<string>
-				description?: string
-				aiGenerated?: AIGeneratedData | null
-				items?: Array<DashboardItemConfig>
-				aiUndoState?: AIUndoState | null
-			},
+			overrides?: DashboardSaveOverrides,
 			options?: { allowOwnerInViewMode?: boolean }
-		) => {
+		): Promise<DashboardSaveNotices> => {
 			if (!isAuthenticated) {
 				throw new Error('Please sign in to save dashboards')
 			}
@@ -790,7 +791,7 @@ function ProDashboardAPIProviderInner({
 			if (dashboardId) {
 				// Queue existing item edits first; this action owns only its explicit changes and local drafts.
 				const flushedAutosave = flush()
-				const savedDashboard = await updateDashboard({
+				const { mergeNotice, ...savedDashboard } = await updateDashboard({
 					id: dashboardId,
 					data,
 					changes: {
@@ -806,24 +807,15 @@ function ProDashboardAPIProviderInner({
 						...(isFreeUser ? { visibility: 'public' as const } : {})
 					}
 				})
-				if (savedDashboard) {
-					acknowledge(flushedAutosave)
-					dispatch({ type: 'SAVE_DASHBOARD', payload: savedDashboard, submitted })
-					if (savedDashboard.artifactActivationPending) {
-						toast.error('Dashboard saved, but chart refresh setup is pending.')
-					}
-				}
-			} else {
-				const newDashboard = await createDashboard(data, {
-					onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
-				})
-				if (newDashboard) {
-					dispatch({ type: 'SAVE_DASHBOARD', payload: newDashboard, submitted })
-					if (newDashboard.artifactActivationPending) {
-						toast.error('Dashboard saved, but chart refresh setup is pending.')
-					}
-				}
+				acknowledge(flushedAutosave)
+				dispatch({ type: 'SAVE_DASHBOARD', payload: savedDashboard, submitted })
+				return { mergeNotice, refreshPending: !!savedDashboard.artifactActivationPending }
 			}
+			const newDashboard = await createDashboard(data, {
+				onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
+			})
+			dispatch({ type: 'SAVE_DASHBOARD', payload: newDashboard, submitted })
+			return { refreshPending: !!newDashboard.artifactActivationPending }
 		},
 		[
 			items,
@@ -847,6 +839,12 @@ function ProDashboardAPIProviderInner({
 			createDashboard,
 			navigateToDashboard
 		]
+	)
+
+	const saveDashboard = useCallback(
+		async (overrides?: DashboardSaveOverrides, options?: { allowOwnerInViewMode?: boolean }) =>
+			showDashboardSaveNotices(await saveDashboardWithNotices(overrides, options)),
+		[saveDashboardWithNotices]
 	)
 
 	const publishDashboard = useCallback(async () => {
@@ -1334,6 +1332,7 @@ function ProDashboardAPIProviderInner({
 			setDashboardDescription,
 			deleteDashboard,
 			saveDashboard,
+			saveDashboardWithNotices,
 			moveDashboardTeam,
 			publishDashboard,
 			copyDashboard,
@@ -1362,6 +1361,7 @@ function ProDashboardAPIProviderInner({
 			setDashboardDescription,
 			deleteDashboard,
 			saveDashboard,
+			saveDashboardWithNotices,
 			moveDashboardTeam,
 			publishDashboard,
 			copyDashboard,

@@ -175,7 +175,7 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	await click('Pay with crypto')
 	const input = document.querySelector('input')!
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Redirecting…')
-	expect(input.disabled).toBe(true)
+	expect(input.readOnly).toBe(true)
 	expect(button('$5').disabled).toBe(true)
 	expect(button('Pay with card').disabled).toBe(true)
 	await click('Redirecting…')
@@ -261,4 +261,42 @@ test('a card checkout keeps its pending creation until it settles, so its failur
 	await click('Pay with card')
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Card checkout')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
+})
+
+test('once a card session exists, Escape and Back ask before leaving, and Leave runs the step they asked for', async () => {
+	topupReplies.push(Response.json({ provider: 'stripe', clientSecret: 'cs_topup' }))
+	await mount()
+	await click('Pay with card')
+	await act(async () => cardCheckout.resolve())
+	await waitForUi(() => expect(button('Start card session')).toBeDefined())
+	await click('Start card session')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+
+	const dialog = () => document.querySelector('[role="dialog"]')
+	await act(async () =>
+		dialog()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+	)
+	await waitForUi(() => expect(document.body.textContent).toContain('Leave checkout?'))
+	await click('Keep paying')
+	await waitForUi(() => expect(document.body.textContent).not.toContain('Leave checkout?'))
+	expect(dialog()?.textContent).toContain('Card checkout')
+
+	await click('Back to amount')
+	await waitForUi(() => expect(document.body.textContent).toContain('Leave checkout?'))
+	expect(dialog()?.textContent).toContain('Card checkout')
+	await click('Leave')
+	await waitForUi(() => expect(document.querySelector('input')?.value).toBe('10'))
+	expect(dialog()?.textContent).toContain('Top up balance')
+})
+
+test('Pay with card hands focus to the card step Back, and Back hands it to the amount field', async () => {
+	await mount()
+	await act(async () => button('Pay with card').focus())
+	await click('Pay with card')
+	// The dialog's net hands the removed button's focus to its first control, the header's Back.
+	await waitForUi(() => expect(document.activeElement).toBe(button('Back to amount')))
+
+	await act(async () => button('Back to amount').focus())
+	await click('Back to amount')
+	expect(document.activeElement).toBe(document.querySelector('input'))
 })

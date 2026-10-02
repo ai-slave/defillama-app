@@ -39,6 +39,7 @@ import {
 } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 
 function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
@@ -735,13 +736,17 @@ export function BannerForm({ banner }: Props) {
 								Delete
 							</button>
 						) : null}
-						<button
+						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+						<Button
+							variant="primary"
+							size="md"
+							pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 							type="submit"
-							disabled={hasError || saveMutation.isPending || (!dirty && !!banner)}
-							className="rounded-md bg-link px-4 py-2 text-sm font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+							disabled={hasError || (!dirty && !!banner)}
+							accessibleWhenDisabled
 						>
-							{saveMutation.isPending ? 'Saving…' : banner ? 'Save changes' : 'Create banner'}
-						</button>
+							{banner ? 'Save changes' : 'Create banner'}
+						</Button>
 					</div>
 				</div>
 			</div>

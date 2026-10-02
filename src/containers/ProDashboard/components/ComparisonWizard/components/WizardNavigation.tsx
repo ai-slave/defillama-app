@@ -80,7 +80,7 @@ export function WizardNavigation({
 		<DialogFooter
 			leading={
 				<>
-					<Button type="button" size="md" onClick={onBack}>
+					<Button type="button" size="md" onClick={onBack} disabled={creationStatus === 'pending'}>
 						<Icon name="arrow-left" height={14} width={14} />
 						Back
 					</Button>

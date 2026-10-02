@@ -2,6 +2,7 @@
 import * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
@@ -32,9 +33,11 @@ const alert: Alert = {
 const alertRequests = () => session.requests.filter((request) => request.url.href.startsWith(ALERTS_URL))
 let root: Root
 let container: HTMLDivElement
+let dialogStore: Ariakit.DialogStore
 
 function Harness() {
 	const store = Ariakit.useDialogStore({ defaultOpen: true })
+	dialogStore = store
 	return (
 		<session.Wrapper>
 			<AlertsModal dialogStore={store} />
@@ -57,15 +60,15 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	// react-hot-toast keeps toasts in a module store that outlives the Toaster.
+	toast.remove()
 })
 
 async function render() {
 	await act(async () => root.render(<Harness />))
 }
 async function settle(assertion: () => void) {
-	await act(async () => {
-		await waitForUi(assertion)
-	})
+	await waitForUi(assertion)
 }
 function toggle() {
 	return document.querySelector<HTMLInputElement>('[role="switch"]')!
@@ -262,4 +265,160 @@ test('a price alert saved with its name cleared takes the name a new alert of th
 	const patch = alertRequests().find((request) => request.init?.method === 'PATCH')!
 	expect(JSON.parse(patch.init!.body as string)).toMatchObject({ title: 'BITCOIN above $100,000' })
 	expect(name.placeholder).toBe('BITCOIN above $100,000')
+})
+
+async function press(button: HTMLElement) {
+	await act(async () => {
+		button.focus()
+		button.click()
+	})
+}
+// The dialog's first control, where its net puts focus that has nowhere better to go.
+const closeButton = () => buttonNamed(document, 'Close dialog')
+
+test('deleting an alert moves focus to the next alert', async () => {
+	let list = reports
+	session.serve({
+		[ALERTS_URL]: () => Response.json({ alerts: list }),
+		[`${ALERTS_URL}/0`]: () => {
+			list = [reports[1]]
+			return new Response(null, { status: 204 })
+		}
+	})
+	await render()
+	await settle(() => expect(checked()).toEqual(['true', 'true']))
+	await press(buttonNamed(document, 'Delete'))
+	await press([...document.querySelectorAll('button')].findLast((b) => accessibleName(b) === 'Delete')!)
+	await settle(() => expect(document.querySelectorAll('h3')).toHaveLength(1))
+	await settle(() => expect(document.activeElement).toBe(toggle()))
+	expect(document.querySelector('h3')?.textContent).toBe('Second report')
+})
+
+test.each(['Save', 'Cancel'])('closing the alert editor with %s returns focus to Edit', async (action) => {
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert`]: () => Response.json({})
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit'))
+	await press(buttonNamed(document, action))
+	await settle(() => expect(document.querySelector('form')).toBeNull())
+	expect(document.activeElement).toBe(buttonNamed(document, 'Edit'))
+})
+
+test('re-arming a fired price alert moves focus to the editor it opens', async () => {
+	const fired: Alert = {
+		...alert,
+		enabled: false,
+		trigger: { type: 'price', token_nk: 'coingecko:bitcoin', op: 'above', value: 100_000, recurring: false }
+	}
+	session.serve({
+		[ALERTS_URL]: { alerts: [fired] },
+		[`${ALERTS_URL}/alert`]: () => new Promise<Response>(() => {})
+	})
+	await render()
+	await settle(() => expect(buttonNamed(document, 'Re-arm')).toBeDefined())
+	await press(buttonNamed(document, 'Re-arm'))
+	expect(document.activeElement).toBe(document.querySelector('input[name="title"]'))
+	await settle(() => expect(buttonNamed(document, 'Re-arm')).toBeUndefined())
+	expect(document.activeElement).toBe(document.querySelector('input[name="title"]'))
+})
+
+test('a run opened from history keeps focus while it loads, on its detail, and back on its row', async () => {
+	const detail = Promise.withResolvers<Response>()
+	const run = { id: 'run', executed_at: '2026-09-10T09:00:00Z', status: 'success', duration_ms: 1200, chart_count: 0 }
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert/executions`]: { executions: [run] },
+		[`${ALERTS_URL}/alert/executions/run`]: () => detail.promise
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'View history'))
+	await settle(() => expect(document.getElementById('alert-run-run')).not.toBeNull())
+	const row = document.getElementById('alert-run-run')!
+	await press(row)
+	await settle(() => expect(row.getAttribute('aria-disabled')).toBe('true'))
+	expect(row.hasAttribute('disabled')).toBe(false)
+	expect(document.activeElement).toBe(row)
+	await act(async () =>
+		detail.resolve(
+			Response.json({ ...run, alertTitle: alert.title, generated_summary: 'All good', generated_charts: [] })
+		)
+	)
+	await settle(() => expect(document.activeElement).toBe(buttonNamed(document, 'Back to history')))
+	await press(buttonNamed(document, 'Back to history'))
+	expect(document.activeElement).toBe(document.getElementById('alert-run-run'))
+})
+
+test('a pause that fails after the Alerts dialog closes says so in a toast', async () => {
+	const patch = Promise.withResolvers<Response>()
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert`]: (_url: URL, init?: RequestInit) =>
+			init?.method === 'PATCH' ? patch.promise : Response.json(alert)
+	})
+	await render()
+	await settle(() => expect(toggle()).not.toBeNull())
+	await act(async () => toggle().click())
+	await settle(() => expect(toggle().getAttribute('aria-busy')).toBe('true'))
+	await act(async () => dialogStore.hide())
+	await settle(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	const toasts = createRoot(document.body.appendChild(document.createElement('div')))
+	await act(async () => toasts.render(<Toaster />))
+	await act(async () => patch.resolve(new Response('nope', { status: 500 })))
+	await settle(() => expect(document.body.textContent).toContain("Couldn't pause “Weekly yields”. Try again."))
+	await act(async () => toasts.unmount())
+})
+
+test('an edit that fails after the Alerts dialog closes says so in a toast', async () => {
+	const patch = Promise.withResolvers<Response>()
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert`]: (_url: URL, init?: RequestInit) =>
+			init?.method === 'PATCH' ? patch.promise : Response.json(alert)
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit'))
+	await press(buttonNamed(document, 'Save'))
+	await settle(() => expect(alertRequests().some((request) => request.init?.method === 'PATCH')).toBe(true))
+	await act(async () => dialogStore.hide())
+	await settle(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	const toasts = createRoot(document.body.appendChild(document.createElement('div')))
+	await act(async () => toasts.render(<Toaster />))
+	await act(async () => patch.resolve(new Response('nope', { status: 500 })))
+	await settle(() =>
+		expect(document.body.textContent).toContain("Couldn't save your changes to “Weekly yields”. Try again.")
+	)
+	await act(async () => toasts.unmount())
+})
+
+test('a retry that clears the list notice leaves focus in the dialog', async () => {
+	let online = false
+	session.serve({
+		[ALERTS_URL]: () => (online ? Response.json({ alerts: [alert] }) : new Response('offline', { status: 503 }))
+	})
+	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [alert])
+	await render()
+	await settle(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	online = true
+	await press(buttonNamed(document, 'Try again'))
+	await settle(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+	await settle(() => expect(document.activeElement).toBe(closeButton()))
+})
+
+test('a retry that loads the alerts in place of the error leaves focus in the dialog', async () => {
+	let online = false
+	session.serve({
+		[ALERTS_URL]: () => (online ? Response.json({ alerts: [alert] }) : new Response('offline', { status: 503 }))
+	})
+	await render()
+	await settle(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
+	expect(document.body.textContent).not.toContain('Weekly yields')
+	online = true
+	await press(buttonNamed(document, 'Try again'))
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await settle(() => expect(document.activeElement).toBe(closeButton()))
 })

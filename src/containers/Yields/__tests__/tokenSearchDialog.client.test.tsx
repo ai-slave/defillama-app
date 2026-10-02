@@ -83,3 +83,36 @@ test('query resets only results, retaining search focus and scroll position on s
 	expect(virtual.getScrollElement()!.scrollTop).toBe(0)
 	expect(document.activeElement).toBe(input)
 })
+
+async function renderSelection(selectedValues: Array<string>) {
+	await act(async () =>
+		root.render(
+			<TokenSearchDialog
+				open
+				onClose={() => {}}
+				title="Tokens"
+				options={options}
+				selectedValues={selectedValues}
+				multiple
+				onToggle={() => {}}
+				onClear={() => {}}
+			/>
+		)
+	)
+}
+const removeChip = (name: string) => document.querySelector<HTMLButtonElement>(`[aria-label="Remove ${name}"]`)!
+
+test('a removed pick hands focus to the next pick, else the previous one, else the search field', async () => {
+	// The page applies a removal by passing the shorter selection back, as the URL-backed filters do.
+	await renderSelection(['ETH', 'USDC', 'family:eth'])
+	await act(async () => removeChip('USD Coin').focus())
+	expect(document.activeElement).toBe(removeChip('USD Coin'))
+	await renderSelection(['ETH', 'family:eth'])
+	expect(document.activeElement).toBe(removeChip('Ether family'))
+
+	await renderSelection(['ETH'])
+	expect(document.activeElement).toBe(removeChip('Ethereum'))
+
+	await renderSelection([])
+	expect(document.activeElement).toBe(document.querySelector('input'))
+})

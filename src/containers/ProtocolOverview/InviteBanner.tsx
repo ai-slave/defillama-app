@@ -10,6 +10,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { fetchInviteAvailability, revealInvite } from './inviteApi'
@@ -56,12 +57,6 @@ export function InviteBanner({ protocol, name, website }: InviteBannerProps) {
 			</Dialog>
 		</Ariakit.DialogProvider>
 	)
-}
-
-/** An outcome can remove the button that had focus. Its message then takes focus, so a keyboard reader lands on what
-    happened instead of the page behind the dialog. */
-function takeLostFocus(node: HTMLElement | null) {
-	if (node && !document.activeElement?.closest('[role="dialog"]')) node.focus()
 }
 
 function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps & { onAssigned: () => void }) {
@@ -123,7 +118,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 							<output
 								ref={takeLostFocus}
 								tabIndex={-1}
-								className="min-w-0 mono-xl tracking-widest break-all text-primary outline-hidden"
+								className="min-w-0 mono-xl tracking-widest break-all text-primary"
 								aria-label="Invite code"
 							>
 								{result.code}
@@ -142,14 +137,14 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 					</p>
 				) : null}
 				{result?.status === 'cooldown' ? (
-					<p ref={takeLostFocus} tabIndex={-1} role="status" className="body-md text-secondary outline-hidden">
+					<p role="status" className="body-md text-secondary">
 						{minutesLeft > 0
 							? 'A code was recently requested on your network.'
 							: 'You can request a code now. Verify below to continue.'}
 					</p>
 				) : null}
 				{result?.status === 'unavailable' ? (
-					<p ref={takeLostFocus} tabIndex={-1} role="status" className="body-md text-secondary outline-hidden">
+					<p role="status" className="body-md text-secondary">
 						Please check back later.
 					</p>
 				) : null}
@@ -195,21 +190,17 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 					{canRequest ? (
 						// Focusable while disabled: a failed claim clears the verification token, which disables the button the
 						// reader just pressed.
-						<Ariakit.Button
+						<Button
+							type="button"
+							size="md"
+							variant={result?.status === 'assigned' ? 'secondary' : 'primary'}
+							pendingLabel={claim.isPending ? 'Getting your code…' : null}
 							disabled={!token && !claim.isPending}
 							accessibleWhenDisabled
-							render={
-								<Button
-									type="button"
-									size="md"
-									variant={result?.status === 'assigned' ? 'secondary' : 'primary'}
-									pendingLabel={claim.isPending ? 'Getting your code…' : null}
-								/>
-							}
 							onClick={submit}
 						>
 							{result?.status === 'assigned' ? 'Try another code' : claim.isError ? 'Try again' : 'Reveal my code'}
-						</Ariakit.Button>
+						</Button>
 					) : null}
 					{result?.status === 'assigned' && website ? (
 						<Button as="a" href={website} target="_blank" rel="noopener noreferrer" variant="primary" size="md">

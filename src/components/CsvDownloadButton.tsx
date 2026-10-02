@@ -157,18 +157,32 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 
 	return (
 		<>
-			<Ariakit.Button
-				render={replaceClassName ? undefined : <Button size={size} />}
-				type="button"
-				data-umami-event="export-csv"
-				data-umami-event-page={router.pathname}
-				className={`${className ?? ''} aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
-				onClick={handleButtonClick}
-				disabled={disabled || !isClient || isLoading}
-				accessibleWhenDisabled={csv.status === 'pending' || props.isLoading}
-			>
-				{buttonContent}
-			</Ariakit.Button>
+			{replaceClassName ? (
+				// A caller that styles the control itself (a menu row) gets the behaviour without Button's look.
+				<Ariakit.Button
+					type="button"
+					data-umami-event="export-csv"
+					data-umami-event-page={router.pathname}
+					className={`${className ?? ''} aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
+					onClick={handleButtonClick}
+					disabled={disabled || !isClient || isLoading}
+					accessibleWhenDisabled={csv.status === 'pending' || props.isLoading}
+				>
+					{buttonContent}
+				</Ariakit.Button>
+			) : (
+				<Button
+					size={size}
+					data-umami-event="export-csv"
+					data-umami-event-page={router.pathname}
+					className={className}
+					onClick={handleButtonClick}
+					disabled={disabled || !isClient || isLoading}
+					accessibleWhenDisabled={csv.status === 'pending' || props.isLoading}
+				>
+					{buttonContent}
+				</Button>
+			)}
 			<span role="status" className="sr-only">
 				{csv.status === 'pending' ? 'Preparing CSV download' : ''}
 			</span>

@@ -31,7 +31,8 @@ import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -274,7 +275,13 @@ async function submitAddToDashboard({
 	}
 }
 
-export function AddToDashboardModal({
+export function AddToDashboardModal(props: AddToDashboardModalProps) {
+	// The store outlives the dialog, so each opening remounts the draft: search, pick and new name start empty.
+	const openingKey = useOpeningKey(Ariakit.useStoreState(props.dialogStore, 'open'))
+	return <AddToDashboardDialog key={openingKey} {...props} />
+}
+
+function AddToDashboardDialog({
 	dialogStore,
 	chartConfig,
 	llamaAIChart,
@@ -291,12 +298,6 @@ export function AddToDashboardModal({
 		isFetching: isFetchingDashboards,
 		refetch: refetchDashboards
 	} = useGetLiteDashboards()
-	const dashboardListRef = useRef<HTMLDivElement>(null)
-	// A successful retry removes its own button, so focus moves to the list it loaded.
-	const retryDashboards = async () => {
-		const result = await refetchDashboards()
-		if (result.isSuccess) dashboardListRef.current?.focus()
-	}
 
 	const configName = getConfigName(chartConfig, llamaAIChart)
 	const [search, setSearch] = useState('')
@@ -331,11 +332,17 @@ export function AddToDashboardModal({
 		})
 	}, [])
 
-	const handleCreateNew = useCallback(() => {
-		setIsCreatingNew(true)
-		startTransition(() => setSelectedDashboardId(null))
-		setNewDashboardNameInput('')
-	}, [])
+	const newDashboardNameRef = useRef<HTMLInputElement>(null)
+	// The button gives way to the name field it asks for.
+	const handleCreateNew = () =>
+		keepFocus(
+			() => {
+				setIsCreatingNew(true)
+				startTransition(() => setSelectedDashboardId(null))
+				setNewDashboardNameInput('')
+			},
+			() => newDashboardNameRef.current
+		)
 
 	const handleSearchKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === 'Enter') {
@@ -347,8 +354,7 @@ export function AddToDashboardModal({
 		mutate: submitAddToDashboardMutation,
 		isPending: isSubmitting,
 		error: submitError,
-		variables: submitVariables,
-		reset: resetSubmit
+		variables: submitVariables
 	} = useMutation({
 		mutationFn: async (variables: AddToDashboardMutationVariables) => {
 			return submitAddToDashboard({
@@ -416,7 +422,7 @@ export function AddToDashboardModal({
 	if (!isCreatingNew && selectedDashboardId === null) blockedReason = 'Pick a dashboard or create a new one'
 
 	return (
-		<Dialog size="sm" fullSheet store={dialogStore} pending={isSubmitting} onClose={resetSubmit} unmountOnHide portal>
+		<Dialog size="sm" fullSheet store={dialogStore} pending={isSubmitting} unmountOnHide portal>
 			<form onSubmit={handleAdd} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={repairTarget ? 'Replace dashboard chart' : 'Add to dashboard'} />
 
@@ -438,7 +444,7 @@ export function AddToDashboardModal({
 						</label>
 					) : null}
 
-					<div ref={dashboardListRef} tabIndex={-1} className="max-h-56 overflow-y-auto overscroll-contain">
+					<div className="max-h-56 overflow-y-auto overscroll-contain">
 						{isLoadingDashboards ? (
 							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
 								<LoadingIndicator label="Loading dashboards" />
@@ -490,7 +496,7 @@ export function AddToDashboardModal({
 								<Button
 									type="button"
 									size="sm"
-									onClick={() => void retryDashboards()}
+									onClick={() => void refetchDashboards()}
 									pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
 								>
 									Try again
@@ -503,6 +509,7 @@ export function AddToDashboardModal({
 						<div>
 							{isCreatingNew ? (
 								<Input
+									ref={newDashboardNameRef}
 									type="text"
 									name="newDashboardName"
 									required={isCreatingNew}

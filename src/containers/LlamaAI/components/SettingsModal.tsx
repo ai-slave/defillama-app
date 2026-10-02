@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { memo, useEffect, useId, useRef, useState } from 'react'
+import { memo, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { flushSync } from 'react-dom'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
@@ -30,7 +31,8 @@ import {
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBody, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from '~/ui/Dialog'
+import { neighbourRowControl, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -158,7 +160,6 @@ export const SettingsModal = memo(function SettingsModal({
 	}
 	const [savingInstructions, setSavingInstructions] = useState(false)
 	const instructionsRef = useRef<HTMLTextAreaElement>(null)
-	const panelRef = useRef<HTMLDivElement>(null)
 	const removeMemoryDialog = Ariakit.useDialogStore()
 	const [memoryRemoval, setMemoryRemoval] = useState<MemoryRemoval>({ kind: 'all', target: 'user' })
 	// The reader's text, or null while the field shows the saved instructions, so a refresh reaches a clean field and
@@ -222,6 +223,8 @@ export const SettingsModal = memo(function SettingsModal({
 		const cleared = { text: '', saved: null }
 		setInstructionsDraft(cleared)
 		void commitDraft(cleared)
+		// Clear leaves once nothing is saved or typed; the emptied field keeps focus.
+		instructionsRef.current?.focus()
 	}
 
 	const saveSetting = (tab: TabId, request: Promise<boolean>) =>
@@ -330,9 +333,29 @@ export const SettingsModal = memo(function SettingsModal({
 
 	const closeMemoryRemoval = () => removeMemoryDialog.hide()
 	const confirmMemoryRemoval = () => {
-		if (memoryRemoval.kind === 'entry')
-			agentHome.deleteMemoryMutation.mutate(memoryRemoval.id, { onSuccess: closeMemoryRemoval })
-		else agentHome.clearMemoriesMutation.mutate(memoryRemoval.target, { onSuccess: closeMemoryRemoval })
+		// A cleared list leaves Clear all nothing to hand focus to; the dialog's net takes it once the refetch lands.
+		if (memoryRemoval.kind === 'all') {
+			agentHome.clearMemoriesMutation.mutate(memoryRemoval.target, { onSuccess: closeMemoryRemoval })
+			return
+		}
+		// The confirmation closes before the refetch that removes the entry's row lands, so it closes onto the next
+		// entry's Delete, else the previous one's, instead of the doomed one. The last entry leaves it to the net.
+		const next = neighbourRowControl(removeMemoryDialog.getState().disclosureElement)
+		agentHome.deleteMemoryMutation.mutate(memoryRemoval.id, {
+			onSuccess: () => {
+				flushSync(closeMemoryRemoval)
+				next?.focus()
+			}
+		})
+	}
+	// An archived or restored skill leaves its list once the skills refetch, and its button hands focus on first.
+	const moveSkill = (mutation: typeof agentHome.archiveSkillMutation, name: string, button: HTMLButtonElement) => {
+		const next = neighbourRowControl(button)
+		mutation.mutate(name, {
+			onSuccess: () => {
+				if (document.activeElement === button) next?.focus()
+			}
+		})
 	}
 
 	const memoryRemovalCopy = MEMORY_REMOVAL_COPY[memoryRemoval.kind === 'entry' ? 'entry' : memoryRemoval.target]
@@ -399,21 +422,24 @@ export const SettingsModal = memo(function SettingsModal({
 				mobileNotificationRow = (
 					<>
 						<RowDivider />
-						<ToggleRow
-							label="Mobile notifications"
-							description={
-								setMobileNotificationEnabled?.error
-									? "Couldn't update mobile notifications. Try again."
-									: setMobileNotificationEnabled?.isPending
-										? 'Updating your mobile notification preference…'
-										: mobileNotificationPreference.enabled
-											? 'Notify your phone when you leave a web chat before LlamaAI finishes.'
-											: 'Get notified on your phone when a web response finishes after you leave.'
-							}
-							checked={mobileNotificationPreference.enabled}
-							onClick={handleMobileNotificationToggle}
-							interactive={!!setMobileNotificationEnabled && !setMobileNotificationEnabled.isPending}
-						/>
+						{/* Replaces the error row whose Try again had focus. */}
+						<div ref={focusSwitchIfLost}>
+							<ToggleRow
+								label="Mobile notifications"
+								description={
+									setMobileNotificationEnabled?.error
+										? "Couldn't update mobile notifications. Try again."
+										: setMobileNotificationEnabled?.isPending
+											? 'Updating your mobile notification preference…'
+											: mobileNotificationPreference.enabled
+												? 'Notify your phone when you leave a web chat before LlamaAI finishes.'
+												: 'Get notified on your phone when a web response finishes after you leave.'
+								}
+								checked={mobileNotificationPreference.enabled}
+								onClick={handleMobileNotificationToggle}
+								interactive={!!setMobileNotificationEnabled && !setMobileNotificationEnabled.isPending}
+							/>
+						</div>
 					</>
 				)
 				break
@@ -437,7 +463,7 @@ export const SettingsModal = memo(function SettingsModal({
 			unmountOnHide
 		>
 			<DialogHeader title="Settings" subtitle="Tune how LlamaAI works for you" />
-			<Tabs<TabId>
+			<SettingsTabs
 				value={activeTab}
 				onValueChange={setSelectedTab}
 				values={tabs.map((tab) => tab.id)}
@@ -473,7 +499,7 @@ export const SettingsModal = memo(function SettingsModal({
 							</Ariakit.TabList>
 						</div>
 
-						<TabPanel ref={panelRef} value={activeTab} className="flex min-w-0 flex-1 flex-col gap-4 p-4">
+						<TabPanel value={activeTab} className="flex min-w-0 flex-1 flex-col gap-4 p-4">
 							{activeTab === 'balance' && (
 								<div className="space-y-6">
 									<BalanceSettings
@@ -871,42 +897,48 @@ export const SettingsModal = memo(function SettingsModal({
 																<p className="px-4 py-3.5 body-sm text-secondary">No skills yet.</p>
 															) : null
 														) : (
-															agentHome.skills.data!.active.map((skill, i) => (
-																<div key={skill.name}>
-																	{i > 0 ? <RowDivider /> : null}
-																	<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-																		<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-																			<p className="m-0 flex items-center gap-2 label-md text-primary">
-																				{skill.name}
-																				<span className="rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary">
-																					{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
-																				</span>
-																			</p>
-																			<p className="m-0 body-sm text-secondary">{skill.description}</p>
+															<ul>
+																{agentHome.skills.data!.active.map((skill, i) => (
+																	<li key={skill.name}>
+																		{i > 0 ? <RowDivider /> : null}
+																		<div className="flex items-start justify-between gap-4 px-4 py-3.5">
+																			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+																				<p className="m-0 flex items-center gap-2 label-md text-primary">
+																					{skill.name}
+																					<span className="rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary">
+																						{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
+																					</span>
+																				</p>
+																				<p className="m-0 body-sm text-secondary">{skill.description}</p>
+																			</div>
+																			{skill.pinned ? (
+																				<span className="shrink-0 px-2 py-1 body-sm text-tertiary">Pinned</span>
+																			) : (
+																				<Button
+																					type="button"
+																					size="sm"
+																					variant="ghost"
+																					onClick={(event) =>
+																						moveSkill(agentHome.archiveSkillMutation, skill.name, event.currentTarget)
+																					}
+																					// Focusable while another skill archives: the archived row hands focus to it.
+																					disabled={agentHome.archiveSkillMutation.isPending}
+																					accessibleWhenDisabled
+																					pendingLabel={
+																						agentHome.archiveSkillMutation.isPending &&
+																						agentHome.archiveSkillMutation.variables === skill.name
+																							? 'Archiving…'
+																							: null
+																					}
+																					className="shrink-0"
+																				>
+																					Archive
+																				</Button>
+																			)}
 																		</div>
-																		{skill.pinned ? (
-																			<span className="shrink-0 px-2 py-1 body-sm text-tertiary">Pinned</span>
-																		) : (
-																			<Button
-																				type="button"
-																				size="sm"
-																				variant="ghost"
-																				onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
-																				disabled={agentHome.archiveSkillMutation.isPending}
-																				pendingLabel={
-																					agentHome.archiveSkillMutation.isPending &&
-																					agentHome.archiveSkillMutation.variables === skill.name
-																						? 'Archiving…'
-																						: null
-																				}
-																				className="shrink-0"
-																			>
-																				Archive
-																			</Button>
-																		)}
-																	</div>
-																</div>
-															))
+																	</li>
+																))}
+															</ul>
 														)}
 													</SettingsCard>
 												) : null}
@@ -915,16 +947,20 @@ export const SettingsModal = memo(function SettingsModal({
 														<summary className="cursor-pointer text-tertiary">
 															Archived ({agentHome.skills.data!.archived.length})
 														</summary>
-														<div className="mt-2 space-y-2">
+														<ul className="mt-2 space-y-2">
 															{agentHome.skills.data!.archived.map((skill) => (
-																<div key={skill.name} className="flex items-center justify-between gap-4">
+																<li key={skill.name} className="flex items-center justify-between gap-4">
 																	<span className="min-w-0 flex-1 truncate text-secondary">{skill.name}</span>
 																	<Button
 																		type="button"
 																		size="sm"
 																		variant="ghost"
-																		onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
+																		onClick={(event) =>
+																			moveSkill(agentHome.restoreSkillMutation, skill.name, event.currentTarget)
+																		}
+																		// Focusable while another skill restores: the restored row hands focus to it.
 																		disabled={agentHome.restoreSkillMutation.isPending}
+																		accessibleWhenDisabled
 																		pendingLabel={
 																			agentHome.restoreSkillMutation.isPending &&
 																			agentHome.restoreSkillMutation.variables === skill.name
@@ -935,9 +971,9 @@ export const SettingsModal = memo(function SettingsModal({
 																	>
 																		Restore
 																	</Button>
-																</div>
+																</li>
 															))}
-														</div>
+														</ul>
 													</details>
 												) : null}
 											</div>
@@ -947,12 +983,6 @@ export const SettingsModal = memo(function SettingsModal({
 										store={removeMemoryDialog}
 										portal
 										unmountOnHide
-										autoFocusOnHide={(element) => {
-											// A removal takes its Delete or Clear all button with it; focus the section instead.
-											if (element?.isConnected) return true
-											panelRef.current?.focus()
-											return false
-										}}
 										title={memoryRemovalCopy.title}
 										description={memoryRemovalCopy.description}
 										confirmLabel={memoryRemovalCopy.confirmLabel}
@@ -1004,7 +1034,7 @@ export const SettingsModal = memo(function SettingsModal({
 						</TabPanel>
 					</div>
 				</DialogBody>
-			</Tabs>
+			</SettingsTabs>
 		</Dialog>
 	)
 })
@@ -1025,6 +1055,9 @@ function SettingsCard({ children }: { children: React.ReactNode }) {
 function RowDivider() {
 	return <div className="mx-4 border-t border-subtle" />
 }
+
+// A stable ref, so it runs only when the row mounts in place of the error row whose Try again had focus.
+const focusSwitchIfLost = (row: HTMLDivElement | null) => takeLostFocus(row?.querySelector('input') ?? null)
 
 function MemoryList({
 	entries,
@@ -1049,17 +1082,19 @@ function MemoryList({
 			) : (entries?.length ?? 0) === 0 ? (
 				<p className="px-4 py-3.5 body-sm text-secondary">{emptyText}</p>
 			) : (
-				entries!.map((entry, i) => (
-					<div key={entry.id}>
-						{i > 0 ? <RowDivider /> : null}
-						<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-							<p className="m-0 min-w-0 flex-1 body-md whitespace-pre-wrap text-primary">{entry.text}</p>
-							<Button type="button" size="sm" variant="ghost" onClick={() => onDelete(entry.id)} className="shrink-0">
-								Delete
-							</Button>
-						</div>
-					</div>
-				))
+				<ul>
+					{entries!.map((entry, i) => (
+						<li key={entry.id}>
+							{i > 0 ? <RowDivider /> : null}
+							<div className="flex items-start justify-between gap-4 px-4 py-3.5">
+								<p className="m-0 min-w-0 flex-1 body-md whitespace-pre-wrap text-primary">{entry.text}</p>
+								<Button type="button" size="sm" variant="ghost" onClick={() => onDelete(entry.id)} className="shrink-0">
+									Delete
+								</Button>
+							</div>
+						</li>
+					))}
+				</ul>
 			)}
 		</SettingsCard>
 	)
@@ -1130,4 +1165,20 @@ function SelectField({
 			</div>
 		</div>
 	)
+}
+
+/** Switching tabs leaves the current one. Inside a guarded step, such as a top-up payment on the Balance tab, the
+    guard asks first. */
+function SettingsTabs({
+	onValueChange,
+	...props
+}: {
+	value: TabId
+	onValueChange: (tab: TabId) => void
+	values: ReadonlyArray<TabId>
+	orientation: 'both'
+	children: ReactNode
+}) {
+	const leave = useDialogLeave()
+	return <Tabs<TabId> {...props} onValueChange={(tab) => leave(() => onValueChange(tab))} />
 }

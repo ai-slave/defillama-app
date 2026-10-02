@@ -389,6 +389,8 @@ function GenerateDashboardModalInner({
 								onClick={() => {
 									generation.reset()
 									save.reset()
+									// This button leaves with the result; the prompt it unlocks is what the reader edits next.
+									document.getElementById(`${id}-prompt`)?.focus()
 								}}
 							>
 								Edit prompt and regenerate

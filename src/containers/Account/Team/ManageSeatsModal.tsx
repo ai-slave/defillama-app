@@ -127,13 +127,15 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 							New seat count
 						</label>
 						<div className="flex items-center gap-2">
+							{/* Focusable at the floor: the press that reaches it keeps focus, and the hint below says why. */}
 							<Button
 								type="button"
 								aria-label="Decrease seats"
-								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
-								disabled={decrementDisabled || !canChangeTeamBilling}
 								size="md"
 								square
+								disabled={decrementDisabled || !canChangeTeamBilling}
+								accessibleWhenDisabled
+								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
 							>
 								<Icon name="minus" className="size-4" aria-hidden="true" />
 							</Button>

@@ -3,8 +3,9 @@ import { useRef, useState, type RefObject } from 'react'
 import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurrentSecond'
 import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -27,10 +28,10 @@ const PAUSED_REASONS = new Set<QueueNotSentReason>([
 	'quota_exceeded',
 	'server_restarted'
 ])
-const primaryButtonClass = buttonStyles({ variant: 'primary', size: 'sm' })
-const secondaryButtonClass = buttonStyles({ size: 'sm' })
-const iconButtonClass = buttonStyles({ variant: 'ghost', size: 'sm', square: true })
 const ROW = 'flex items-center gap-2 rounded-lg border border-subtle bg-surface px-3 py-2'
+// A row's controls change with its state; when the ones that had focus leave (a saved edit, a retried send), the row
+// itself holds focus. Rows take tabIndex -1 for it.
+const focusRowOnLeave = passFocusOnLeave((controls) => controls.closest('li'))
 
 function formatResetIn(resetTime: string | null | undefined, now: number): string | null {
 	if (!resetTime) return null
@@ -61,6 +62,7 @@ function QueueChipEditor({
 	const busy = status?.action === 'saving_edit' || status?.action === 'canceling_edit'
 	return (
 		<form
+			ref={focusRowOnLeave}
 			className="flex min-w-0 flex-1 flex-col gap-1.5"
 			onSubmit={(event) => {
 				event.preventDefault()
@@ -80,12 +82,12 @@ function QueueChipEditor({
 			{status?.error ? <p className="m-0 body-sm text-error">{status.error}</p> : null}
 			{paused && !status?.error ? <p className="m-0 body-sm text-tertiary">Queue paused while you edit</p> : null}
 			<div className="flex items-center gap-1.5">
-				<button type="submit" aria-label="Save" disabled={busy} className={primaryButtonClass}>
+				<Button type="submit" aria-label="Save" accessibleWhenDisabled disabled={busy} variant="primary" size="sm">
 					{status?.action === 'saving_edit' ? <LoadingSpinner size={12} /> : 'Save'}
-				</button>
-				<button type="button" aria-label="Cancel" disabled={busy} className={secondaryButtonClass} onClick={onCancel}>
+				</Button>
+				<Button type="button" aria-label="Cancel" accessibleWhenDisabled disabled={busy} size="sm" onClick={onCancel}>
 					{status?.action === 'canceling_edit' ? <LoadingSpinner size={12} /> : 'Cancel'}
-				</button>
+				</Button>
 			</div>
 		</form>
 	)
@@ -142,11 +144,16 @@ export function QueueChips({
 		(item.kind === 'local' ? item.state !== 'failed' : item.state === 'pending' || item.state === 'firing')
 	let foldedCount = 0
 	for (let index = 0; index < rows.length; index++) if (isFolded(rows[index], index)) foldedCount++
+	// A row that leaves with focus (dismissed, sent) hands it to the next row, else the one before, else the composer.
+	const focusNeighbourOnLeave = passFocusOnLeave(
+		(row) => (row.nextElementSibling ?? row.previousElementSibling ?? promptInputRef?.current) as HTMLElement | null
+	)
 
 	return (
 		<div className="flex flex-col gap-1.5">
 			{showQueueActions ? (
-				<div className="flex items-center justify-between gap-2">
+				// Continuing the queue removes this bar with its focused button; the composer takes focus.
+				<div ref={passFocusOnLeave(() => promptInputRef?.current)} className="flex items-center justify-between gap-2">
 					<p className="m-0 body-sm text-tertiary">{isPaused ? 'Queue paused' : 'Clear was not confirmed'}</p>
 					<div className="flex items-center gap-1.5">
 						{isPaused ? (
@@ -208,7 +215,7 @@ export function QueueChips({
 						const adding = item.state === 'adding'
 						const failed = item.state === 'failed'
 						return (
-							<li key={rowKey} className={ROW}>
+							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
 								{adding ? (
 									<span aria-label="Adding to queue" role="status" className="shrink-0 text-tertiary">
 										<LoadingSpinner size={14} />
@@ -228,25 +235,22 @@ export function QueueChips({
 									</p>
 								</div>
 								{!adding ? (
-									<div className="flex shrink-0 items-center gap-1">
+									<div ref={focusRowOnLeave} className="flex shrink-0 items-center gap-1">
 										{failed ? (
-											<button
-												type="button"
-												aria-label="Retry"
-												className={secondaryButtonClass}
-												onClick={() => onRetry(item.id)}
-											>
+											<Button type="button" aria-label="Retry" size="sm" onClick={() => onRetry(item.id)}>
 												Retry
-											</button>
+											</Button>
 										) : null}
-										<button
+										<Button
 											type="button"
 											aria-label="Dismiss"
-											className={iconButtonClass}
+											variant="ghost"
+											size="sm"
+											square
 											onClick={() => onDismiss(item.id)}
 										>
 											<Icon name="x" height={14} width={14} />
-										</button>
+										</Button>
 									</div>
 								) : null}
 							</li>
@@ -257,7 +261,7 @@ export function QueueChips({
 					const message = status?.unsavedDraft ?? item.displayMessage ?? item.message
 					if (item.state === 'firing') {
 						return (
-							<li key={rowKey} className={ROW}>
+							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
 								<span aria-label="Sending" role="status" className="shrink-0 text-tertiary">
 									<LoadingSpinner size={14} />
 								</span>
@@ -268,7 +272,7 @@ export function QueueChips({
 
 					if (item.state === 'editing') {
 						return (
-							<li key={rowKey} className={`${ROW} items-start`}>
+							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
 								{ownedEditId === item.id ? (
 									<QueueChipEditor
 										id={item.id}
@@ -306,7 +310,7 @@ export function QueueChips({
 					if (item.state === 'pending') {
 						const busy = status?.action !== null && status?.action !== undefined
 						return (
-							<li key={rowKey} className={ROW}>
+							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
 								<Icon name="clock" height={14} width={14} className="shrink-0 text-tertiary" />
 								<div className="min-w-0 flex-1">
 									<p className="m-0 truncate body-sm text-primary">{message}</p>
@@ -316,11 +320,14 @@ export function QueueChips({
 									<RowError status={status} />
 								</div>
 								<div className="flex shrink-0 items-center gap-1">
-									<button
+									<Button
 										type="button"
 										aria-label="Edit"
+										accessibleWhenDisabled
 										disabled={busy}
-										className={iconButtonClass}
+										variant="ghost"
+										size="sm"
+										square
 										onClick={() => onEditStart(item.id)}
 									>
 										{status?.action === 'opening_edit' ? (
@@ -328,12 +335,15 @@ export function QueueChips({
 										) : (
 											<Icon name="pencil" height={16} width={16} />
 										)}
-									</button>
-									<button
+									</Button>
+									<Button
 										type="button"
 										aria-label="Dismiss"
+										accessibleWhenDisabled
 										disabled={busy}
-										className={iconButtonClass}
+										variant="ghost"
+										size="sm"
+										square
 										onClick={() => onDismiss(item.id)}
 									>
 										{status?.action === 'dismissing' ? (
@@ -341,7 +351,7 @@ export function QueueChips({
 										) : (
 											<Icon name="x" height={14} width={14} />
 										)}
-									</button>
+									</Button>
 								</div>
 							</li>
 						)
@@ -352,7 +362,7 @@ export function QueueChips({
 					const resetCopy = item.reason === 'quota_exceeded' ? formatResetIn(quotaResetTime, now) : null
 					const busy = status?.action !== null && status?.action !== undefined
 					return (
-						<li key={rowKey} className={`${ROW} items-start`}>
+						<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={`${ROW} items-start`}>
 							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
 							<div className="min-w-0 flex-1">
 								<p
@@ -371,12 +381,14 @@ export function QueueChips({
 							</div>
 							<div className="flex shrink-0 items-center gap-1.5">
 								{canRetry ? (
-									<button
+									<Button
 										type="button"
 										aria-label="Retry"
 										data-primary={retryPrimary ? 'true' : undefined}
+										accessibleWhenDisabled
 										disabled={busy || !!status?.unsavedDraft}
-										className={retryPrimary ? primaryButtonClass : secondaryButtonClass}
+										variant={retryPrimary ? 'primary' : 'secondary'}
+										size="sm"
 										onClick={() => onRetry(item.id)}
 									>
 										{status?.action === 'retrying' ? (
@@ -384,13 +396,16 @@ export function QueueChips({
 										) : (
 											<Icon name="repeat" height={16} width={16} />
 										)}
-									</button>
+									</Button>
 								) : null}
-								<button
+								<Button
 									type="button"
 									aria-label="Dismiss"
+									accessibleWhenDisabled
 									disabled={busy}
-									className={iconButtonClass}
+									variant="ghost"
+									size="sm"
+									square
 									onClick={() => onDismiss(item.id)}
 								>
 									{status?.action === 'dismissing' ? (
@@ -398,7 +413,7 @@ export function QueueChips({
 									) : (
 										<Icon name="x" height={14} width={14} />
 									)}
-								</button>
+								</Button>
 							</div>
 						</li>
 					)

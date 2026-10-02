@@ -892,12 +892,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 					onDragEnd={handleDragEnd}
 				>
 					<SortableContext items={sortableItemIds} strategy={rectSortingStrategy}>
-						<div
-							ref={gridRef}
-							tabIndex={-1}
-							className="flex flex-col gap-3 outline-hidden"
-							data-testid="dashboard-grid"
-						>
+						<div ref={gridRef} tabIndex={-1} className="flex flex-col gap-3" data-testid="dashboard-grid">
 							{layout.tabs === null ? (
 								renderGroups(layout.shared, { withAddTile: !isReadOnly, startsGrid: true })
 							) : layout.shared.length > 0 ? (

@@ -330,6 +330,7 @@ function ProDashboardContent() {
 		dashboardName,
 		dashboardId,
 		saveDashboard,
+		saveDashboardWithNotices,
 		moveDashboardTeam,
 		publishDashboard,
 		copyDashboard,
@@ -933,7 +934,7 @@ function ProDashboardContent() {
 					visibility={dashboardVisibility}
 					tags={dashboardTags}
 					dashboardId={dashboardId}
-					onSave={saveDashboard}
+					onSave={saveDashboardWithNotices}
 					{...(canDeleteDashboard ? { onDelete: deleteDashboard } : {})}
 					myTeam={myTeam}
 					team={dashboardTeam}

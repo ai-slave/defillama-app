@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { memo, useMemo, useRef, useState } from 'react'
+import { memo, useMemo, useRef, useState, type Ref } from 'react'
+import { flushSync } from 'react-dom'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import {
@@ -68,6 +70,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -236,8 +239,12 @@ interface AlertRowProps {
 	alert: Alert
 }
 
-function AlertCard({ children }: { children: React.ReactNode }) {
-	return <div className="rounded-lg border border-subtle bg-surface px-4 py-3.5">{children}</div>
+function AlertCard({ ref, children }: { ref: Ref<HTMLDivElement>; children: React.ReactNode }) {
+	return (
+		<div ref={ref} className="rounded-lg border border-subtle bg-surface px-4 py-3.5">
+			{children}
+		</div>
+	)
 }
 
 const formatExecDate = (iso: string) => {
@@ -274,6 +281,10 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const [slackChannelId, setSlackChannelId] = useState<string>(alert.slack_channel_id ?? '')
 	const titleInputRef = useRef<HTMLInputElement>(null)
 	const focusChannelsOnLoadRef = useRef(false)
+	// Gone once the Alerts dialog closes: a request that fails after that can only report itself in a toast.
+	const cardRef = useRef<HTMLDivElement>(null)
+	const editButtonRef = useRef<HTMLButtonElement>(null)
+	const actionsMenuButtonRef = useRef<HTMLButtonElement>(null)
 	const [mode, setMode] = useState<'view' | 'editing' | 'deleting'>('view')
 	const [showRearmNote, setShowRearmNote] = useState(false)
 	const [showExecutions, setShowExecutions] = useState(false)
@@ -369,7 +380,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			})
 			return { previousEnabled: previous?.find((item) => item.id === alertId)?.enabled }
 		},
-		onError: (_error, { alertId }, context) => {
+		onError: (_error, { alertId, enabled }, context) => {
+			if (!cardRef.current?.isConnected)
+				toast.error(`Couldn't ${enabled ? 'resume' : 'pause'} “${alert.title}”. Try again.`)
 			const previousEnabled = context?.previousEnabled
 			if (previousEnabled === undefined) return
 			// A failed toggle must not roll back changes to other alert rows.
@@ -416,7 +429,10 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				if (!old) return []
 				return applyAlertUpdateToList(old, input, conditionUpdate)
 			})
-			switchMode('view')
+			closeEditor()
+		},
+		onError: () => {
+			if (!cardRef.current?.isConnected) toast.error(`Couldn't save your changes to “${alert.title}”. Try again.`)
 		},
 		onSettled: () => {
 			void queryClient.invalidateQueries({ queryKey: [ALERTS_QUERY_KEY] })
@@ -434,6 +450,13 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		setShowRearmNote(false)
 		setMode(next)
 	}
+
+	// Closing the editor removes the control that had focus; the row's Edit toggle, or its actions menu on phones, takes it.
+	const closeEditor = () =>
+		keepFocus(
+			() => switchMode('view'),
+			() => (editButtonRef.current?.checkVisibility() ? editButtonRef.current : actionsMenuButtonRef.current)
+		)
 
 	const handleRearm = () => {
 		if (toggleAlertMutation.isPending) return
@@ -582,10 +605,18 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	if (selectedExec) {
 		const charts = selectedExec.generated_charts || []
 		return (
-			<AlertCard>
+			<AlertCard ref={cardRef}>
 				<button
+					// Replaces the history row that opened it.
+					autoFocus
 					type="button"
-					onClick={() => setSelectedExecId(null)}
+					// The run's row comes back with the history it was opened from.
+					onClick={() =>
+						keepFocus(
+							() => setSelectedExecId(null),
+							() => document.getElementById(`alert-run-${selectedExecId}`)
+						)
+					}
 					className="mb-3 flex items-center gap-1 text-xs font-medium text-link not-disabled:not-aria-disabled:hover:underline"
 				>
 					<Icon name="arrow-left" className="size-3" />
@@ -637,7 +668,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			: 'bg-link/10 text-link'
 
 	return (
-		<AlertCard>
+		<AlertCard ref={cardRef}>
 			<div className="flex items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-start gap-3">
 					<div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${typeTileClass}`}>
@@ -677,7 +708,11 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					{isFiredOneTimePriceAlert(alert) ? (
 						<button
 							type="button"
-							onClick={handleRearm}
+							onClick={() => {
+								// The button leaves once the alert re-arms; the editor it opens takes focus now.
+								flushSync(handleRearm)
+								titleInputRef.current?.focus()
+							}}
 							className="mr-1 hidden items-center gap-1 rounded-lg bg-warning/10 px-2 py-1 text-xs font-medium text-warning not-disabled:not-aria-disabled:hover:bg-warning/20 sm:flex"
 						>
 							<Icon name="repeat" className="size-3" />
@@ -706,6 +741,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							content="Edit"
 							render={
 								<button
+									ref={editButtonRef}
 									type="button"
 									onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
 									aria-pressed={mode === 'editing'}
@@ -727,6 +763,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					</div>
 					<Ariakit.MenuProvider placement="bottom-end">
 						<Ariakit.MenuButton
+							ref={actionsMenuButtonRef}
 							aria-label={`Actions for alert ${alert.title}`}
 							render={<Button type="button" size="md" variant="ghost" square className="sm:hidden" />}
 							data-active={showExecutions || mode === 'editing'}
@@ -789,7 +826,21 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					confirmLabel="Delete"
 					pendingLabel={deleteAlertMutation.isPending ? 'Deleting…' : null}
 					error={deleteAlertMutation.isError ? "Couldn't delete the alert. Try again." : null}
-					onConfirm={() => deleteAlertMutation.mutate(alert.id)}
+					onConfirm={() => {
+						// A deleted row takes this confirmation and its trigger with it. The confirmation closes first, onto a
+						// neighbouring row's switch; once no row is left, the dialog's net takes focus.
+						const card = cardRef.current!
+						const next =
+							card.nextElementSibling?.querySelector<HTMLElement>('[role="switch"]') ??
+							card.previousElementSibling?.querySelector<HTMLElement>('[role="switch"]')
+						deleteAlertMutation.mutate(alert.id, {
+							onSuccess: () =>
+								keepFocus(
+									() => switchMode('view'),
+									() => next
+								)
+						})
+					}}
 				/>
 			) : null}
 
@@ -811,10 +862,11 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					) : (
 						<div className="flex flex-col">
 							{executionsQuery.data.map((exec) => (
-								<button
-									type="button"
+								<Ariakit.Button
 									key={exec.id}
+									id={`alert-run-${exec.id}`}
 									onClick={() => setSelectedExecId(exec.id)}
+									accessibleWhenDisabled
 									disabled={execDetailQuery.isLoading}
 									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
@@ -825,7 +877,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 									<StatusChip tone={execChipTone(exec.status, !!exec.error_message)}>
 										{execChipLabel(exec.status)}
 									</StatusChip>
-								</button>
+								</Ariakit.Button>
 							))}
 						</div>
 					)}
@@ -856,7 +908,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						isSaving={updateAlertMutation.isPending}
 						blockReason={deliveryBlockReason}
 						errorMessage={updateErrorMessage}
-						onCancel={() => switchMode('view')}
+						onCancel={closeEditor}
 						onSave={(trigger) => {
 							trackUmamiEvent('llamaai-alert-edit')
 							const channelName =
@@ -972,7 +1024,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					{updateErrorMessage ? <InlineStatus variant="error">{updateErrorMessage}</InlineStatus> : null}
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						{deliveryBlockReason ? <p className="mr-auto body-sm text-secondary">{deliveryBlockReason}</p> : null}
-						<Button type="button" size="md" disabled={updateAlertMutation.isPending} onClick={() => switchMode('view')}>
+						<Button type="button" size="md" disabled={updateAlertMutation.isPending} onClick={closeEditor}>
 							Cancel
 						</Button>
 						<Button

@@ -620,18 +620,15 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 						className="cursor-pointer dark:scheme-dark"
 					/>
 				</label>
-				<Button type="submit" variant="primary" size="md" disabled={isPending || !selectedBridge}>
-					{isPending ? (
-						<>
-							Fetching
-							<LoadingDots />
-						</>
-					) : (
-						<>
-							<Icon name="search" height={14} width={14} />
-							Fetch Transactions
-						</>
-					)}
+				<Button
+					type="submit"
+					variant="primary"
+					size="md"
+					disabled={!selectedBridge}
+					pendingLabel={isPending ? 'Fetching…' : null}
+				>
+					<Icon name="search" height={14} width={14} />
+					Fetch Transactions
 				</Button>
 
 				{formError ? (
@@ -930,15 +927,17 @@ function PagerButton({
 	onClick: React.MouseEventHandler<HTMLButtonElement>
 	'aria-label': string
 }) {
+	// A pager button disables itself at the first or last page; it stays focusable so focus does not drop to the page.
 	return (
 		<Button
 			type="button"
 			variant="secondary"
 			size="md"
-			onClick={onClick}
-			disabled={disabled}
-			aria-label={ariaLabel}
 			square
+			accessibleWhenDisabled
+			disabled={disabled}
+			onClick={onClick}
+			aria-label={ariaLabel}
 		>
 			{children}
 		</Button>

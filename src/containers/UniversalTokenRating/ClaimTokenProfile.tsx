@@ -6,6 +6,7 @@ import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMake
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
+import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -165,6 +166,17 @@ function InlineTableSection({
 	error: string | null
 	onChange: (rows: Array<ClaimDraftRow>) => void
 }) {
+	const tbodyRef = useRef<HTMLTableSectionElement>(null)
+	const addRef = useRef<HTMLButtonElement>(null)
+	// A deleted row's button hands focus to the delete button that takes its place, the one above, or Add More.
+	const deleteRow = (rowIndex: number) =>
+		keepFocus(
+			() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex)),
+			() => {
+				const deleteButtons = tbodyRef.current?.querySelectorAll<HTMLElement>('[data-row-delete]') ?? []
+				return deleteButtons[Math.min(rowIndex, deleteButtons.length - 1)] ?? addRef.current
+			}
+		)
 	return (
 		<div className="flex flex-col gap-3">
 			<h3 className="heading-xs">{section.title}</h3>
@@ -182,7 +194,7 @@ function InlineTableSection({
 								<th aria-label="Row actions" />
 							</tr>
 						</thead>
-						<tbody>
+						<tbody ref={tbodyRef}>
 							{rows.map((row, rowIndex) => (
 								<tr key={row.id} className="border-b border-subtle last:border-b-0">
 									{section.columns.map((column) => (
@@ -218,7 +230,8 @@ function InlineTableSection({
 											size="sm"
 											square
 											aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
-											onClick={() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex))}
+											data-row-delete
+											onClick={() => deleteRow(rowIndex)}
 										>
 											<Icon name="trash-2" height={14} width={14} />
 										</Button>
@@ -235,9 +248,12 @@ function InlineTableSection({
 				</span>
 			) : null}
 			<span>
+				{/* Add More disables itself at the row limit; it stays focusable so focus does not drop to the page. */}
 				<Button
 					type="button"
 					size="md"
+					ref={addRef}
+					accessibleWhenDisabled
 					disabled={rows.length >= 100}
 					onClick={() => onChange([...rows, { id: crypto.randomUUID(), values: {} }])}
 				>
@@ -264,24 +280,40 @@ function AttachDocuments({
 	onRemove: (index: number) => void
 	onClearError: () => void
 }) {
+	const unavailable = status.pending || receipts.length >= 10
+	const inputRef = useRef<HTMLInputElement>(null)
+	const chipsRef = useRef<HTMLDivElement>(null)
+	// A removed file's × hands focus to the × that takes its place, the one before it, or the attach control.
+	const removeReceipt = (index: number) =>
+		keepFocus(
+			() => onRemove(index),
+			() => {
+				const removeButtons = chipsRef.current?.querySelectorAll<HTMLElement>('button') ?? []
+				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? inputRef.current
+			}
+		)
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center gap-3">
 				<label
 					htmlFor={id}
 					className={`flex items-center gap-1.5 rounded-lg border border-medium px-3 py-1.5 label-md text-primary ${
-						status.pending || receipts.length >= 10
-							? 'cursor-not-allowed opacity-60'
-							: 'cursor-pointer hover:bg-hover-row'
+						unavailable ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-hover-row'
 					}`}
 				>
+					{/* A file input cannot be read-only, and a disabled one drops the focus it holds while the upload it
+					    started runs. It stays enabled and refuses to open the picker instead. */}
 					<input
+						ref={inputRef}
 						id={id}
 						type="file"
 						multiple
 						accept={UTR_CLAIM_FILE_ACCEPT}
 						className="sr-only"
-						disabled={status.pending || receipts.length >= 10}
+						aria-disabled={unavailable || undefined}
+						onClick={(event) => {
+							if (unavailable) event.preventDefault()
+						}}
 						onChange={(event) => {
 							const files = Array.from(event.target.files ?? [])
 							event.target.value = ''
@@ -294,7 +326,7 @@ function AttachDocuments({
 				<span className="body-sm text-tertiary">{ATTACH_HINT}</span>
 			</div>
 			{receipts.length > 0 ? (
-				<div className="flex flex-wrap gap-2">
+				<div ref={chipsRef} className="flex flex-wrap gap-2">
 					{keyedOccurrences(receipts, (receipt) => receipt.key).map(({ item: receipt, key }, index) => (
 						<span
 							key={key}
@@ -305,7 +337,7 @@ function AttachDocuments({
 								type="button"
 								aria-label={`Remove ${receipt.fileName}`}
 								className="cursor-pointer text-secondary hover:text-primary"
-								onClick={() => onRemove(index)}
+								onClick={() => removeReceipt(index)}
 							>
 								<Icon name="x" height={12} width={12} />
 							</button>
@@ -316,7 +348,7 @@ function AttachDocuments({
 			{status.error ? (
 				<div data-utr-claim-error className="flex items-center gap-2 body-sm text-error">
 					<span>{status.error}</span>
-					<button type="button" className="underline" onClick={onClearError}>
+					<button type="button" className="underline" onClick={() => keepFocus(onClearError, () => inputRef.current)}>
 						Dismiss
 					</button>
 				</div>
@@ -331,7 +363,10 @@ function ClaimConfirmation() {
 			<span className="flex size-16 items-center justify-center rounded-full border-2 border-success">
 				<Icon name="check" height={28} width={28} className="text-success" />
 			</span>
-			<h2 className="heading-lg">Request received</h2>
+			{/* Replaces the form whose Submit had focus. */}
+			<h2 ref={takeLostFocus} tabIndex={-1} className="heading-lg">
+				Request received
+			</h2>
 			<p className="body-lg text-secondary">
 				Our team will review the details of your request, and will reach out via the provided contact information
 				shortly with next steps.
@@ -737,15 +772,19 @@ export function ClaimTokenProfile({
 							</InlineStatus>
 						</div>
 					) : null}
+					{/* Focusable while disabled: a failed submit resets the verification check, which disables the pressed
+					    button until it passes again. */}
 					<Button
 						type="button"
 						variant="primary"
 						size="md"
 						className="w-full justify-center"
-						disabled={submit.isPending || hasPendingUpload || hasUploadError || (captchaEnabled && !turnstileToken)}
+						pendingLabel={submit.isPending ? 'Submitting…' : null}
+						accessibleWhenDisabled
+						disabled={hasPendingUpload || hasUploadError || (captchaEnabled && !turnstileToken)}
 						onClick={onSubmit}
 					>
-						{submit.isPending ? 'Submitting…' : 'Submit Disclosure Details'}
+						Submit Disclosure Details
 						<Icon name="arrow-up-right" height={14} width={14} />
 					</Button>
 				</div>

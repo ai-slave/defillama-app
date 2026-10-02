@@ -244,8 +244,10 @@ describe('QueueChips', () => {
 		expect(firstDismiss).toBeDefined()
 		expect(secondDismiss).toBeDefined()
 		if (!firstDismiss || !secondDismiss) throw new Error('Missing dismiss buttons')
-		expect(firstDismiss.disabled).toBe(true)
-		expect(secondDismiss.disabled).toBe(false)
+		// Unavailable while busy, yet still focusable, so a pressed button keeps focus while its request runs.
+		expect(firstDismiss.getAttribute('aria-disabled')).toBe('true')
+		expect(firstDismiss.disabled).toBe(false)
+		expect(secondDismiss.getAttribute('aria-disabled')).toBeNull()
 	})
 
 	test('retries expired image prompts without the old image-loss warning', async () => {
@@ -285,7 +287,7 @@ describe('QueueChips', () => {
 		expect(container.textContent).toContain('unsaved edit')
 		expect(container.textContent).not.toContain('original text')
 		expect(container.textContent).toContain('Copy the unsaved edit')
-		expect((container.querySelector('[aria-label="Retry"]') as HTMLButtonElement).disabled).toBe(true)
+		expect(container.querySelector('[aria-label="Retry"]')!.getAttribute('aria-disabled')).toBe('true')
 	})
 
 	test('unblocks the paused queue when the quota reset time arrives', async () => {
@@ -348,5 +350,60 @@ describe('QueueChips', () => {
 		expect(
 			[...container.querySelectorAll('button')].some((button) => button.textContent?.includes('more queued'))
 		).toBe(false)
+	})
+	function renderWithComposer(queueSurface: QueueSurface) {
+		return act(async () =>
+			root.render(
+				<>
+					<textarea aria-label="Composer" ref={composerRef} />
+					<QueueChips surface={queueSurface} promptInputRef={composerRef} />
+				</>
+			)
+		)
+	}
+	const composerRef = { current: null as HTMLTextAreaElement | null }
+	const rowNamed = (text: string) =>
+		[...container.querySelectorAll('li')].find((row) => row.textContent?.includes(text))!
+
+	test('a dismissed row hands focus to the next row, and the last one to the composer', async () => {
+		const first = pending({ id: 'q1', message: 'First prompt' })
+		const second = pending({ id: 'q2', message: 'Second prompt' })
+		await renderWithComposer(surface({ rows: [first, second] }))
+		const dismiss = rowNamed('First prompt').querySelector<HTMLElement>('[aria-label="Dismiss"]')!
+		await act(async () => dismiss.focus())
+		await renderWithComposer(
+			surface({ rows: [first, second], rowStatus: { q1: { action: 'dismissing', error: null } } })
+		)
+		expect(dismiss.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(dismiss)
+		await renderWithComposer(surface({ rows: [second] }))
+		expect(document.activeElement).toBe(rowNamed('Second prompt'))
+		await renderWithComposer(surface({ rows: [] }))
+		expect(document.activeElement).toBe(composerRef.current)
+	})
+
+	test('a saved edit leaves focus on its row', async () => {
+		const editing = pending({ state: 'editing', editLeaseId: 'lease-1', editExpiresAt: 'later' })
+		await renderWithComposer(surface({ ownedEditId: 'q1', rows: [editing] }))
+		const save = container.querySelector<HTMLElement>('[aria-label="Save"]')!
+		await act(async () => save.focus())
+		await renderWithComposer(
+			surface({ ownedEditId: 'q1', rows: [editing], rowStatus: { q1: { action: 'saving_edit', error: null } } })
+		)
+		expect(save.getAttribute('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(save)
+		await renderWithComposer(surface({ rows: [pending({ message: 'Edited prompt' })] }))
+		expect(document.activeElement).toBe(rowNamed('Edited prompt'))
+	})
+
+	test('continuing a paused queue hands focus to the composer', async () => {
+		const paused = surface({ rows: [pending({ state: 'not_sent', reason: 'execution_failed' })] })
+		await renderWithComposer(paused)
+		const resume = [...container.querySelectorAll('button')].find(
+			(button) => accessibleName(button) === 'Continue queue'
+		)!
+		await act(async () => resume.focus())
+		await renderWithComposer(surface({ rows: [pending()] }))
+		expect(document.activeElement).toBe(composerRef.current)
 	})
 })

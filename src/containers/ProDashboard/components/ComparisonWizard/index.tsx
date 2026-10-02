@@ -219,14 +219,17 @@ function ComparisonWizardContent({
 	// Rendered straight into the dialog surface: the steps band, the scrolling step, and the navigation footer.
 	return (
 		<>
-			<DialogToolbar>
-				<WizardSteps currentStep={state.step} />
-			</DialogToolbar>
-			<DialogBody>
-				{/* A floor on the step height keeps the dialog from jumping between steps on desktop. */}
-				<div className="sm:min-h-88">{stepContent}</div>
-				{feedback}
-			</DialogBody>
+			{/* Creating locks the steps, but not the footer: the pending Create keeps focus and its "Creating…" label. */}
+			<fieldset disabled={creationStatus === 'pending'} className="contents">
+				<DialogToolbar>
+					<WizardSteps currentStep={state.step} />
+				</DialogToolbar>
+				<DialogBody>
+					{/* A floor on the step height keeps the dialog from jumping between steps on desktop. */}
+					<div className="sm:min-h-88">{stepContent}</div>
+					{feedback}
+				</DialogBody>
+			</fieldset>
 			<WizardNavigation
 				currentStep={state.step}
 				comparisonType={state.comparisonType}

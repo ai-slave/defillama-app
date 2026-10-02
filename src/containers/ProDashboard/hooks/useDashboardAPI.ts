@@ -212,6 +212,20 @@ export interface DashboardUpdate {
 	changes?: Partial<DashboardSavePayload>
 }
 
+/** A saved dashboard. `mergeNotice` is set when the save collided with other edits and merged them. */
+export type SavedDashboard = Dashboard & { mergeNotice?: string }
+
+/** What a save has to tell the reader beyond its success. */
+export type DashboardSaveNotices = { mergeNotice?: string; refreshPending: boolean }
+
+/** Shown by whoever reports the save: a page action right away, a dialog once it has closed. */
+export function showDashboardSaveNotices({ mergeNotice, refreshPending }: DashboardSaveNotices) {
+	if (mergeNotice) {
+		toast(mergeNotice, { id: 'dashboard-merged', duration: 8000, ariaProps: { role: 'status', 'aria-live': 'polite' } })
+	}
+	if (refreshPending) toast.error('Dashboard saved, but chart refresh setup is pending.')
+}
+
 export function useUpdateDashboard(dashboardId: string | null, source: 'manual' | 'autosave') {
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
@@ -232,7 +246,7 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 		},
 		// Settings and page remounts must not let an older save overtake a newer save.
 		scope: { id: `pro-dashboard-update:${dashboardId}` },
-		mutationFn: async ({ id, data, changes }: DashboardUpdate) => {
+		mutationFn: async ({ id, data, changes }: DashboardUpdate): Promise<SavedDashboard> => {
 			if (wasDashboardDeleted(queryClient, id, user?.id)) throw new DashboardError('Dashboard has been deleted', 404)
 			// The scope orders requests, but payloads must also preserve fields saved while waiting.
 			const latest = cachedDashboard(queryClient, id, isAuthenticated, user?.id)
@@ -260,24 +274,21 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 					authorizedFetch,
 					server.editedAt
 				)
-				if (items !== payload.items) {
-					// On a team dashboard the last editor is most likely a teammate; personal ones are another tab.
-					const editor = server.team ? server.editedBy?.displayName : undefined
-					toast(
-						editor
-							? `${editor} changed this dashboard while you were editing. Your edits were merged.`
-							: 'This dashboard was changed in another tab or session. Your edits were merged.',
-						{
-							id: 'dashboard-merged',
-							duration: 8000,
-							ariaProps: { role: 'status', 'aria-live': 'polite' }
-						}
-					)
+				if (items === payload.items) return merged
+				// On a team dashboard the last editor is most likely a teammate; personal ones are another tab.
+				const editor = server.team ? server.editedBy?.displayName : undefined
+				return {
+					...merged,
+					mergeNotice: editor
+						? `${editor} changed this dashboard while you were editing. Your edits were merged.`
+						: 'This dashboard was changed in another tab or session. Your edits were merged.'
 				}
-				return merged
 			}
 		},
-		onSuccess: (dashboard: Dashboard) => {
+		onSuccess: ({ mergeNotice, ...dashboard }: SavedDashboard) => {
+			// Autosave runs in the background and reports its own merge; a manual save leaves it to its caller, which may
+			// still have a dialog open.
+			if (source === 'autosave' && mergeNotice) showDashboardSaveNotices({ mergeNotice, refreshPending: false })
 			if (wasDashboardDeleted(queryClient, dashboard.id, user?.id)) return
 			queryClient.setQueryData(['pro-dashboard', 'dashboard', dashboard.id, isAuthenticated, user?.id], dashboard)
 			queryClient.setQueriesData(

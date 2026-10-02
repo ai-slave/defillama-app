@@ -1,11 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import type { DownloadFormat } from '~/utils/download'
+import { ConfirmableContent } from './ActionFeedback'
 
 interface FormatSplitButtonProps {
 	onDownload: (format: DownloadFormat) => void
 	disabled?: boolean
 	label?: string
+	/** The last download just finished: the button says so in place of a toast. */
+	confirmed?: boolean
 }
 
 const DOWNLOAD_FORMATS = ['csv', 'json'] as const
@@ -15,7 +18,12 @@ const FORMAT_LABELS: Record<DownloadFormat, string> = {
 	json: 'JSON'
 }
 
-export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: FormatSplitButtonProps) {
+export function FormatSplitButton({
+	onDownload,
+	disabled,
+	label = 'Download',
+	confirmed = false
+}: FormatSplitButtonProps) {
 	const menu = Ariakit.useMenuStore<{ format: DownloadFormat }>({ defaultValues: { format: 'csv' } })
 	const { format } = Ariakit.useStoreState(menu, 'values')
 
@@ -28,10 +36,23 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 				disabled={disabled}
 				className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-black/10 disabled:opacity-40"
 			>
-				<Icon name="download-cloud" className="size-3.5" />
-				<span className="hidden sm:inline">
-					{label} {FORMAT_LABELS[format]}
-				</span>
+				<ConfirmableContent
+					confirmed={confirmed}
+					idle={
+						<>
+							<Icon name="download-cloud" className="size-3.5" />
+							<span className="hidden sm:inline">
+								{label} {FORMAT_LABELS[format]}
+							</span>
+						</>
+					}
+					done={
+						<>
+							<Icon name="check" className="size-3.5" />
+							<span className="hidden sm:inline">Downloaded</span>
+						</>
+					}
+				/>
 			</button>
 			<Ariakit.MenuProvider store={menu}>
 				<Ariakit.MenuButton

@@ -2,9 +2,10 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
+import { getTelegramStatusQueryKey } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -37,6 +38,7 @@ beforeEach(async () => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	vi.restoreAllMocks()
 })
 
 const button = (name: string, within: ParentNode = document) =>
@@ -70,4 +72,72 @@ test('Disconnect asks first, keeps its progress and error in the confirmation, a
 	await waitForUi(() => expect(confirmation()).toBeNull())
 	expect(button('Connect')).toBeDefined()
 	expect(unlinkRequests()).toBe(2)
+})
+
+const TELEGRAM = 'https://ai.llama.fi/telegram'
+const unlinked: TelegramStatus = { link: { state: 'unlinked' }, pending: null }
+async function press(element: HTMLElement) {
+	await act(async () => {
+		element.focus()
+		element.click()
+	})
+}
+async function renderRow(props: { initialStatus: TelegramStatus; initialTgloginToken?: string }) {
+	session.client.setQueryData(getTelegramStatusQueryKey('reader'), props.initialStatus)
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<IntegrationRow kind="telegram" title="Telegram" description="Chat in Telegram." {...props} />
+			</session.Wrapper>
+		)
+	)
+}
+
+test('a confirmed disconnect hands focus to Connect', async () => {
+	session.serve({ [TELEGRAM_LINK]: () => Response.json({ unlinked: true }) })
+	await press(button('Disconnect')!)
+	await waitForUi(() => expect(confirmation()).not.toBeNull())
+	await press(button('Disconnect', confirmation()!)!)
+	await waitForUi(() => expect(confirmation()).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Connect')))
+})
+
+test('Connect hands focus to the Telegram link that replaces it', async () => {
+	vi.spyOn(window, 'open').mockReturnValue(null)
+	session.serve({
+		[`${TELEGRAM}/status`]: unlinked,
+		[`${TELEGRAM}/link/start`]: {
+			state: 'pending',
+			token: 'token',
+			deepLink: 'https://t.me/llama_bot?start=token',
+			expiresAt: '2100-01-01T00:00:00.000Z'
+		}
+	})
+	await renderRow({ initialStatus: unlinked })
+	await press(button('Connect')!)
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('DM /start to the bot'))
+})
+
+test('the code and switch prompts hand focus to the control of the step that replaces them', async () => {
+	const confirms: Array<Response> = [
+		Response.json({
+			status: 'requires_switch_confirmation',
+			currentTelegramUsername: 'oldllama',
+			expiresAt: '2100-01-01'
+		})
+	]
+	session.serve({ [`${TELEGRAM}/status`]: unlinked, [`${TELEGRAM}/link/confirm`]: () => confirms.shift()! })
+	await renderRow({ initialStatus: unlinked, initialTgloginToken: 'token' })
+	const code = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(code, '123456')
+		code.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await press(button('Confirm')!)
+	await waitForUi(() => expect(document.activeElement).toBe(button('Yes, switch')))
+	// Without a parent to consume the login token, cancelling the switch returns to its code prompt.
+	await press(button('Cancel')!)
+	await waitForUi(() =>
+		expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))
+	)
 })

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useEffect, useEffectEvent } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
@@ -47,6 +47,7 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 	const { isAuthenticated } = useAuthContext()
 	const { isTrialAvailable: isTrialAvailableFromApi } = useSubscribe()
 	const signInDialogStore = Ariakit.useDialogStore()
+	const unlockRef = useRef<HTMLAnchorElement>(null)
 
 	const isTrialAvailable = isAuthenticated ? isTrialAvailableFromApi : true
 
@@ -114,6 +115,7 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 				>
 					<Button
 						as={BasicLink}
+						ref={unlockRef}
 						variant="primary"
 						size="md"
 						href="/subscription"
@@ -123,7 +125,11 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 					</Button>
 				</DialogFooter>
 			</Dialog>
-			<SignInModal store={signInDialogStore} />
+			<SignInModal
+				store={signInDialogStore}
+				// Signing in removes the sign-in button this dialog returns focus to; the plan's action takes it.
+				onAuthenticated={() => signInDialogStore.setDisclosureElement(unlockRef.current)}
+			/>
 		</ClientOnly>
 	)
 }

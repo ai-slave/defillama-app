@@ -1,12 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { type RefObject, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -69,10 +70,12 @@ function InterestSelect({
 }
 
 function TokenCombobox({
+	inputRef,
 	invalid,
 	onSelect,
 	onManual
 }: {
+	inputRef: RefObject<HTMLInputElement | null>
 	invalid: boolean
 	onSelect: (token: TokenSearchResult) => void
 	onManual: () => void
@@ -91,6 +94,7 @@ function TokenCombobox({
 	return (
 		<Ariakit.ComboboxProvider inputValue={query} setInputValue={setQuery}>
 			<Ariakit.Combobox
+				ref={inputRef}
 				placeholder="Search your token by name or ticker"
 				autoSelect
 				aria-invalid={invalid}
@@ -209,6 +213,10 @@ function ConnectDialogForm({
 	const [honeypot, setHoneypot] = useState('')
 	const [touched, setTouched] = useState<Record<string, boolean>>({})
 	const [submitAttempted, setSubmitAttempted] = useState(false)
+	// Each token step replaces the control that was used: focus moves to the one that takes its place.
+	const tokenSearchRef = useRef<HTMLInputElement>(null)
+	const changeTokenRef = useRef<HTMLButtonElement>(null)
+	const projectNameRef = useRef<HTMLInputElement>(null)
 
 	const hasToken = tokenStatus !== 'no-token'
 	const listedToken = tokenStatus === 'listed' ? selectedToken : null
@@ -305,8 +313,14 @@ function ConnectDialogForm({
 									<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
 								</span>
 								<button
+									ref={changeTokenRef}
 									type="button"
-									onClick={() => setSelectedToken(null)}
+									onClick={() =>
+										keepFocus(
+											() => setSelectedToken(null),
+											() => tokenSearchRef.current
+										)
+									}
 									aria-label="Change token"
 									className="shrink-0 text-secondary hover:text-primary"
 								>
@@ -315,9 +329,20 @@ function ConnectDialogForm({
 							</div>
 						) : (
 							<TokenCombobox
+								inputRef={tokenSearchRef}
 								invalid={showError('token') != null}
-								onSelect={setSelectedToken}
-								onManual={() => setManualToken(true)}
+								onSelect={(token) =>
+									keepFocus(
+										() => setSelectedToken(token),
+										() => changeTokenRef.current
+									)
+								}
+								onManual={() =>
+									keepFocus(
+										() => setManualToken(true),
+										() => projectNameRef.current
+									)
+								}
 							/>
 						)}
 						{showError('token') ? <span className="body-sm text-error">{showError('token')}</span> : null}
@@ -327,6 +352,7 @@ function ConnectDialogForm({
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<LeadField label="Project name" error={showError('projectName')}>
 							<Input
+								ref={projectNameRef}
 								value={projectName}
 								onChange={(e) => setProjectName(e.target.value)}
 								onBlur={markTouched('projectName')}
@@ -350,7 +376,12 @@ function ConnectDialogForm({
 				{tokenStatus === 'listed' && manualToken ? (
 					<button
 						type="button"
-						onClick={() => setManualToken(false)}
+						onClick={() =>
+							keepFocus(
+								() => setManualToken(false),
+								() => tokenSearchRef.current
+							)
+						}
 						className="w-fit body-sm text-link hover:underline"
 					>
 						Back to token search

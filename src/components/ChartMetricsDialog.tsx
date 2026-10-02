@@ -156,14 +156,16 @@ function MetricsDialog<O extends ChartMetricOption>({
 				leading={
 					clear ? (
 						// Disabled, not removed, when there is nothing to undo: the button keeps focus after it acts.
-						<Ariakit.Button
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
 							disabled={clear.kind === 'clear' ? picked === 0 : clear.atDefault}
 							accessibleWhenDisabled
-							render={<Button type="button" variant="ghost" size="md" />}
 							onClick={clear.kind === 'clear' ? clear.onClear : clear.onReset}
 						>
 							{clear.kind === 'clear' ? 'Clear all' : 'Reset'}
-						</Ariakit.Button>
+						</Button>
 					) : null
 				}
 			>

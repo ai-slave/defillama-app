@@ -218,19 +218,20 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
 					className={`${inputStyles} min-w-0 flex-1 truncate`}
-					disabled={updateTitle.isPending}
+					// Read-only, not disabled, while saving: a disabled field drops focus to the page, and the rename could no
+					// longer hand it back to its button.
+					readOnly={updateTitle.isPending}
 				/>
 				<div className="flex items-center justify-center gap-1">
-					<Ariakit.Button
-						accessibleWhenDisabled
+					<Button
+						size="sm"
+						variant="primary"
 						type="submit"
 						aria-label={updateTitle.isPending ? 'Saving session title' : 'Save session title'}
-						render={<Button size="sm" variant="primary" />}
-						disabled={updateTitle.isPending}
+						pendingLabel={updateTitle.isPending ? 'Saving…' : null}
 					>
-						{updateTitle.isPending ? <LoadingSpinner size={12} /> : null}
-						{updateTitle.isPending ? 'Saving…' : 'Save'}
-					</Ariakit.Button>
+						Save
+					</Button>
 					<Button
 						type="button"
 						size="sm"

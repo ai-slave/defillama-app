@@ -121,7 +121,7 @@ const dialogTitled = (title: string) =>
 		(element) => document.getElementById(element.getAttribute('aria-labelledby')!)?.textContent === title
 	)
 const buttonNamed = (name: string) =>
-	[...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(
+	[...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button, [role="alertdialog"] button')].find(
 		(button) => accessibleName(button) === name
 	)
 const pay = () => act(async () => buttonNamed('Complete upgrade')!.click())
@@ -158,11 +158,33 @@ test('closing and opening again starts a fresh checkout session', async () => {
 	try {
 		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
 		await act(async () => buttonNamed('Close dialog')!.click())
+		await act(async () => buttonNamed('Leave')!.click())
 		await waitForUi(() => expect(dialog()).toBeNull())
 		expect(creates()).toBe(1)
 		await caller.subscribe()
 		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
 		expect(creates()).toBe(2)
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('closing an open checkout asks first; Keep paying keeps it, and an outside tap does nothing', async () => {
+	session.serve({ '/subscription/create': { clientSecret: 'cs_first' } })
+	const caller = await mountCaller()
+	try {
+		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
+		await act(async () =>
+			dialog()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		)
+		expect(document.body.textContent).toContain('Leave checkout?')
+		await act(async () => buttonNamed('Keep paying')!.click())
+		await waitForUi(() => expect(document.body.textContent).not.toContain('Leave checkout?'))
+		expect(dialog()?.textContent).toContain('Payment fields')
+
+		await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })))
+		await act(async () => document.body.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		expect(dialog()?.textContent).toContain('Payment fields')
 	} finally {
 		await caller.cleanup()
 	}
@@ -207,6 +229,24 @@ test('offers a retry when the checkout session fails to load, then loads a fresh
 		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
 		expect(dialog()!.querySelector('[role="alert"]')).toBeNull()
 		expect(creates()).toBe(2)
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('Try again hands its focus to the dialog when the checkout replaces it', async () => {
+	session.serveInOrder('/subscription/create', [
+		fixtureStatus(500, { error: 'Checkout unavailable' }),
+		{ clientSecret: 'cs_fixture' }
+	])
+	const caller = await mountCaller()
+	try {
+		await waitForUi(() => expect(buttonNamed('Try again')).toBeTruthy())
+		await act(async () => buttonNamed('Try again')!.focus())
+		await act(async () => buttonNamed('Try again')!.click())
+		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
+		// The dialog's net hands the removed button's focus to its first control, the header close button.
+		await waitForUi(() => expect(document.activeElement).toBe(buttonNamed('Close dialog')))
 	} finally {
 		await caller.cleanup()
 	}

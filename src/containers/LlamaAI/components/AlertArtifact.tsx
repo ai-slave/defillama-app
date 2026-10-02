@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
@@ -43,6 +43,7 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { keepFocus, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
@@ -107,6 +108,7 @@ export function AlertArtifact({
 	const [hasRetriedTest, setHasRetriedTest] = useState(false)
 	const [testResult, setTestResult] = useState<TestSentState>(null)
 	const [promptExpanded, setPromptExpanded] = useState(false)
+	const savedStatusRef = useRef<HTMLParagraphElement>(null)
 
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alertIntent.deliveryChannel || 'email')
 	const isSlack = deliveryChannel === 'slack'
@@ -182,9 +184,15 @@ export function AlertArtifact({
 		},
 		onSuccess: (data: any) => {
 			trackUmamiEvent('llamaai-alert-created', { type: isPriceAlert ? 'price' : 'schedule', source: 'artifact' })
-			setSavedDbId(data.id)
 			const nextRunAt = data.nextRunAt ?? data.next_run_at
-			if (typeof nextRunAt === 'string' && nextRunAt) setSavedNextRunAt(nextRunAt)
+			// The saved card replaces the form and its Save button; its status line takes focus.
+			keepFocus(
+				() => {
+					setSavedDbId(data.id)
+					if (typeof nextRunAt === 'string' && nextRunAt) setSavedNextRunAt(nextRunAt)
+				},
+				() => savedStatusRef.current
+			)
 		}
 	})
 
@@ -299,7 +307,7 @@ export function AlertArtifact({
 
 			{isSaved ? (
 				<>
-					<p className="m-0 flex items-center gap-1.5 text-xs text-success">
+					<p ref={savedStatusRef} tabIndex={-1} className="m-0 flex items-center gap-1.5 text-xs text-success">
 						<Icon name="check" className="size-3.5 shrink-0" />
 						{isPriceAlert
 							? 'Watching continuously — fires within seconds of crossing'
@@ -336,15 +344,25 @@ export function AlertArtifact({
 						</Button>
 					) : null}
 
+					{/* Each step of a test send replaces the control or line that had focus, so the next one takes it. The server's
+					    record of an earlier test shows on load, where taking focus would pull the page to this card. */}
 					{testSent === 'already' && !testMutation.isPending ? (
-						<p className="flex items-center justify-center gap-1.5 body-sm text-secondary">
+						<p
+							ref={testResult ? takeLostFocus : undefined}
+							tabIndex={-1}
+							className="flex items-center justify-center gap-1.5 body-sm text-secondary"
+						>
 							<Icon name="check" className="size-3.5" />
 							Test already sent for this alert
 						</p>
 					) : null}
 
 					{testSent === 'sent' && !testMutation.isPending ? (
-						<p className="flex items-center justify-center gap-1.5 text-xs text-success">
+						<p
+							ref={takeLostFocus}
+							tabIndex={-1}
+							className="flex items-center justify-center gap-1.5 text-xs text-success"
+						>
 							<Icon name="check" className="size-3.5" />
 							{deliveryChannel === 'slack'
 								? slackChannelName
@@ -357,7 +375,12 @@ export function AlertArtifact({
 					) : null}
 
 					{testMutation.isPending ? (
-						<p role="status" className="flex items-center justify-center gap-1.5 text-xs text-tertiary">
+						<p
+							ref={takeLostFocus}
+							tabIndex={-1}
+							role="status"
+							className="flex items-center justify-center gap-1.5 text-xs text-tertiary"
+						>
 							<LoadingSpinner size={12} />
 							Sending test alert…
 						</p>
@@ -366,14 +389,16 @@ export function AlertArtifact({
 					{testMutation.isError && !hasRetriedTest ? (
 						<div className="flex flex-col items-center gap-1.5">
 							<p className="body-sm text-error">{testMutation.error.message}</p>
-							<Button type="button" size="sm" onClick={handleTest}>
+							<Button ref={takeLostFocus} type="button" size="sm" onClick={handleTest}>
 								Retry
 							</Button>
 						</div>
 					) : null}
 
 					{testMutation.isError && hasRetriedTest ? (
-						<p className="text-center body-sm text-error">{testMutation.error.message}</p>
+						<p ref={takeLostFocus} tabIndex={-1} className="text-center body-sm text-error">
+							{testMutation.error.message}
+						</p>
 					) : null}
 
 					{openAlertsModal ? (
@@ -554,11 +579,12 @@ export function AlertArtifact({
 						size="md"
 						variant="primary"
 						onClick={handleSave}
-						disabled={!messageId || isSaving || !!saveBlockReason}
+						disabled={!messageId || !!saveBlockReason}
+						pendingLabel={isSaving ? 'Saving…' : null}
 						className="w-full"
 					>
-						{isSaving ? <LoadingSpinner size={14} /> : <Icon name="calendar-plus" className="size-3.5" />}
-						{isSaving ? 'Saving…' : 'Save alert'}
+						<Icon name="calendar-plus" className="size-3.5" />
+						Save alert
 					</Button>
 
 					{saveError ? (

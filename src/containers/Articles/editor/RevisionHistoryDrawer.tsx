@@ -1,10 +1,10 @@
-import * as Ariakit from '@ariakit/react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { DialogBackButton, DialogBody, DialogHeader, SideSheet, switchSheetPane } from '~/ui/Dialog'
+import { DialogBackButton, DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -262,12 +262,6 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	)
 }
 
-// A retry that succeeds replaces its button, so focus moves to the pane that now holds the content.
-async function retryInto(retry: () => Promise<{ isError: boolean }>, pane: RefObject<HTMLDivElement | null>) {
-	const result = await retry()
-	if (!result.isError) pane.current?.focus()
-}
-
 export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onRestored }: Props) {
 	const [selectedIdState, setSelectedIdState] = useState<string | null>(null)
 	const [filter, setFilter] = useState<FilterKey>('all')
@@ -277,7 +271,6 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	// Below md one pane shows at a time: the list, or the picked revision with a back button.
 	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>('list')
 	const listRef = useRef<HTMLDivElement | null>(null)
-	const previewRef = useRef<HTMLDivElement | null>(null)
 	const restoreRef = useRef<HTMLButtonElement | null>(null)
 	const deleteRef = useRef<HTMLButtonElement | null>(null)
 	const queryClient = useQueryClient()
@@ -518,7 +511,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 							<DialogBackButton
 								label="Back to revisions"
 								onClick={() =>
-									switchSheetPane(
+									keepFocus(
 										() => setNarrowPane('list'),
 										() =>
 											listRef.current?.querySelector<HTMLElement>(
@@ -565,14 +558,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 							/>
 						</div>
 
-						<div ref={listRef} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto">
+						<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
 							{revisionsQuery.isLoading ? (
 								<SurfaceBodyLoadingStatus label="Loading revisions" />
 							) : revisionsQuery.isLoadingError ? (
 								<LoadError
 									message="Couldn't load the revision history."
 									retrying={revisionsQuery.isFetching}
-									onRetry={() => void retryInto(revisionsQuery.refetch, listRef)}
+									onRetry={() => void revisionsQuery.refetch()}
 								/>
 							) : grouped.length === 0 ? (
 								<SurfaceBodyStatus variant="empty">
@@ -600,15 +593,10 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 														>
 															<button
 																type="button"
-																onClick={() =>
-																	switchSheetPane(
-																		() => {
-																			setSelectedIdState(entry.id)
-																			setNarrowPane('detail')
-																		},
-																		() => previewRef.current
-																	)
-																}
+																onClick={() => {
+																	setSelectedIdState(entry.id)
+																	setNarrowPane('detail')
+																}}
 																aria-current={isSelected}
 																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
 																	isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
@@ -707,14 +695,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 								diffStats={diff?.stats ?? null}
 							/>
 						) : null}
-						<div ref={previewRef} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto">
+						<div className="min-h-0 flex-1 overflow-y-auto">
 							{revisionsQuery.isLoading || selectedRevisionQuery.isLoading ? (
 								<SurfaceBodyLoadingStatus label="Loading revision" />
 							) : selectedRevisionQuery.isLoadingError ? (
 								<LoadError
 									message="Couldn't load this revision."
 									retrying={selectedRevisionQuery.isFetching}
-									onRetry={() => void retryInto(selectedRevisionQuery.refetch, previewRef)}
+									onRetry={() => void selectedRevisionQuery.refetch()}
 								/>
 							) : !previewArticle ? (
 								<SurfaceBodyStatus variant="empty">No revision selected.</SurfaceBodyStatus>
@@ -727,7 +715,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 									<LoadError
 										message="Couldn't load the revision to compare against."
 										retrying={baseRevisionQuery.isFetching}
-										onRetry={() => void retryInto(baseRevisionQuery.refetch, previewRef)}
+										onRetry={() => void baseRevisionQuery.refetch()}
 									/>
 								) : diff ? (
 									<DiffPane diff={diff} />
@@ -899,16 +887,18 @@ function PreviewSpecimenHeader({
 							Restore as pending
 						</Button>
 						{/* Stays focusable while unavailable, so a closing delete confirmation can hand focus back to it. */}
-						<Ariakit.Button
+						<Button
+							type="button"
+							size="md"
+							variant="destructive"
 							ref={deleteRef}
 							disabled={!revision || isLive}
 							accessibleWhenDisabled
 							onClick={onAskDelete}
-							render={<Button type="button" size="md" variant="destructive" />}
 						>
 							<Icon name="trash-2" className="size-3.5" aria-hidden="true" />
 							Delete
-						</Ariakit.Button>
+						</Button>
 					</div>
 					{isLive ? <p className="body-sm text-tertiary">The live revision can't be deleted.</p> : null}
 				</div>

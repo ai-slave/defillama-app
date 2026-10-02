@@ -1,8 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import * as Ariakit from '@ariakit/react'
+import { useRef, useState, type ReactNode, type Ref } from 'react'
 import type { SlackLink } from '~/containers/LlamaAI/api/slack'
 import { useSlackIntegrationLink } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { takeLostFocus } from '~/ui/focus'
 import { InlineStatus } from '~/ui/Status'
 
 type Props = {
@@ -12,16 +14,34 @@ type Props = {
 }
 
 // Slack's own button colour is a third-party brand mark; it takes Button md geometry and the shared
-// disabled idiom so it lines up with every other control in the row.
+// disabled idiom so it lines up with every other control in the row. Disabled is aria-disabled, so a pressed
+// button keeps focus while the link starts.
 const SLACK_BUTTON =
-	'inline-flex min-h-8 shrink-0 items-center justify-center gap-1 rounded-lg bg-ai-slack px-3 py-1.5 label-sm whitespace-nowrap text-on-brand not-disabled:not-aria-disabled:hover:bg-ai-slack-deep disabled:cursor-not-allowed disabled:opacity-60'
+	'inline-flex min-h-8 shrink-0 items-center justify-center gap-1 rounded-lg bg-ai-slack px-3 py-1.5 label-sm whitespace-nowrap text-on-brand not-disabled:not-aria-disabled:hover:bg-ai-slack-deep aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
 
-function ConnectButton({ onClick, disabled, label }: { onClick: () => void; disabled?: boolean; label: string }) {
+function ConnectButton({
+	ref,
+	onClick,
+	disabled,
+	label
+}: {
+	ref?: Ref<HTMLButtonElement>
+	onClick: () => void
+	disabled?: boolean
+	label: string
+}) {
 	return (
-		<button type="button" onClick={onClick} disabled={disabled} className={SLACK_BUTTON}>
+		<Ariakit.Button
+			ref={ref}
+			type="button"
+			onClick={onClick}
+			accessibleWhenDisabled
+			disabled={disabled}
+			className={SLACK_BUTTON}
+		>
 			<SlackLogo />
 			{label}
-		</button>
+		</Ariakit.Button>
 	)
 }
 
@@ -101,9 +121,10 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 		link.state.status === 'linked' &&
 		link.state.workspaces.some((w) => w.team_id === disconnectTarget.team_id)
 	if (disconnectTarget && !targetListed) setDisconnectTarget(null)
+	const rowRef = useRef<HTMLDivElement>(null)
 
 	return (
-		<div className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
+		<div ref={rowRef} className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
@@ -114,6 +135,8 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 				</div>
 				{(link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading') && (
 					<ConnectButton
+						// Cancelling a pending link removes the block that held focus.
+						ref={takeLostFocus}
 						onClick={() => link.connect()}
 						disabled={link.state.status === 'starting' || link.state.status === 'loading'}
 						label={
@@ -134,9 +157,15 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						here.
 					</div>
 					<div className="mt-3 flex flex-wrap gap-2">
-						<button type="button" onClick={() => link.connect()} disabled={link.isStarting} className={SLACK_BUTTON}>
+						<Ariakit.Button
+							type="button"
+							onClick={() => link.connect()}
+							accessibleWhenDisabled
+							disabled={link.isStarting}
+							className={SLACK_BUTTON}
+						>
 							{link.isStarting ? 'Opening…' : 'Start over'}
-						</button>
+						</Ariakit.Button>
 						<Button
 							type="button"
 							size="md"
@@ -178,6 +207,13 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 				onClose={() => setDisconnectTarget(null)}
 				portal
 				unmountOnHide
+				autoFocusOnHide={(element) => {
+					// The workspace leaves with its Disconnect button; the row's first control takes focus: the next workspace,
+					// or Add to Slack once none is left.
+					if (element) return true
+					rowRef.current?.querySelector('button')?.focus()
+					return false
+				}}
 				title="Disconnect Slack workspace?"
 				description={`${disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts targeting this workspace will be paused.`}
 				confirmLabel="Disconnect"

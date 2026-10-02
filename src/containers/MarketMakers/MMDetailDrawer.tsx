@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
-import { type ComponentProps, useRef, useState } from 'react'
+import { type ComponentProps, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
@@ -259,20 +259,10 @@ function DrawerBody({
 	const isPending = detail.isPending || breakdown.isPending || performance.isPending
 	// Any one of the three missing would show fallbacks and 0.00 scores as if they were this market maker's data.
 	const isError = detail.isError || breakdown.isError || performance.isError
-	// Try again gives way to the loading screen, then the content; the content takes focus as it mounts.
-	const focusAfterRetryRef = useRef(false)
-	// The content mounts once its data is in, first or after Try again.
-	const setBody = (node: HTMLDivElement | null) => {
-		if (!node || !focusAfterRetryRef.current) return
-		focusAfterRetryRef.current = false
-		node.focus()
-	}
-
 	if (isPending) return <SurfaceBodyLoadingStatus />
 	if (isError) {
 		const queries = [detail, breakdown, performance]
 		const retry = () => {
-			focusAfterRetryRef.current = true
 			for (const query of queries) if (query.isError) void query.refetch()
 		}
 		return (
@@ -305,7 +295,7 @@ function DrawerBody({
 	const b = asDict(breakdown.data)
 
 	return (
-		<div ref={setBody} tabIndex={-1} className="flex flex-col gap-6 p-4">
+		<div className="flex flex-col gap-6 p-4">
 			<section className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					{logo ? <TokenLogo src={logo} size={28} alt={name} /> : null}

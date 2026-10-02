@@ -194,6 +194,23 @@ describe('a subscriber editing a dashboard', () => {
 		expect(saves[1]).toMatchObject({ dashboardName: 'Renamed', tags: ['Research'], items: laterItems })
 	})
 
+	test('a page save shows the pending chart refresh setup; a dialog save hands it back instead', async () => {
+		const pendingSetup = async (payload: DashboardSavePayload) => ({
+			...(await storeAsSent(payload)),
+			artifactActivationPending: true
+		})
+		replies.push(pendingSetup, pendingSetup)
+		await act(async () => dashboard.saveDashboard({ dashboardName: 'Renamed' }))
+		expect(toastMock.error.mock.calls).toEqual([['Dashboard saved, but chart refresh setup is pending.']])
+
+		let notices: Awaited<ReturnType<typeof dashboard.saveDashboardWithNotices>> | undefined
+		await act(async () => {
+			notices = await dashboard.saveDashboardWithNotices({ tags: ['Research'] })
+		})
+		expect(notices).toEqual({ mergeNotice: undefined, refreshPending: true })
+		expect(toastMock.error).toHaveBeenCalledOnce()
+	})
+
 	test('item edits made while a rating save is pending preserve the saved rating and Undo', async () => {
 		const pending = Promise.withResolvers<Dashboard>()
 		replies.push(() => pending.promise)

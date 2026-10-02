@@ -16,6 +16,7 @@ beforeEach(async () => {
 	root = createRoot(container)
 	await act(async () => root.render(<Harness />))
 })
+let dashboardOpen = false
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
@@ -31,7 +32,7 @@ function Harness() {
 				Second citation
 			</button>
 			<button type="button">Outside</button>
-			<CitationDetailPanel advancedProvenance={false} />
+			<CitationDetailPanel advancedProvenance={false} onBackToDashboard={dashboardOpen ? sheet.close : undefined} />
 		</CitationSheetProvider>
 	)
 }
@@ -70,4 +71,16 @@ test('Escape outside the nonmodal panel preserves the panel and focus', async ()
 	await escape('Outside')
 	expect(container.querySelector('[role="region"]')).not.toBeNull()
 	expect(document.activeElement).toBe(button('Outside'))
+})
+test('going back to the dashboard returns focus to the citation that opened the panel', async () => {
+	dashboardOpen = true
+	try {
+		await act(async () => root.render(<Harness />))
+		await click('First citation')
+		await click('Dashboard')
+		expect(container.querySelector('[role="region"]')).toBeNull()
+		expect(document.activeElement).toBe(button('First citation'))
+	} finally {
+		dashboardOpen = false
+	}
 })

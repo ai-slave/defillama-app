@@ -225,23 +225,19 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 				{sessionId ? (
 					// Focusable while disabled: the retry above hands focus to it. Without a link, or without clipboard
 					// access, the error above says why it is unavailable.
-					<Ariakit.Button
+					<Button
 						ref={primaryRef}
 						type="button"
+						size="md"
+						variant="primary"
+						pendingLabel={creation.isPending ? 'Creating…' : copy.isPending ? 'Copying…' : null}
 						onClick={() => copyLink(shareLink)}
 						disabled={!shareLink || copy.error?.message === CLIPBOARD_UNAVAILABLE}
 						accessibleWhenDisabled
-						render={
-							<Button
-								size="md"
-								variant="primary"
-								pendingLabel={creation.isPending ? 'Creating…' : copy.isPending ? 'Copying…' : null}
-							/>
-						}
 					>
 						<Icon name={copy.isSuccess ? 'check-circle' : 'copy'} height={14} width={14} />
 						{copy.isSuccess ? 'Copied' : 'Copy link'}
-					</Ariakit.Button>
+					</Button>
 				) : null}
 			</DialogFooter>
 			{/* Also how a late failure tells whether this opening is still on screen. */}

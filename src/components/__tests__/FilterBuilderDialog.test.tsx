@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import {
+	ActiveFilterCard,
+	FilterBrowser,
+	FilterBuilderContent,
+	FilterBuilderDialog
+} from '~/components/FilterBuilderDialog'
 import { TokensFiltersDialog } from '~/containers/Tokens/TokensFiltersDialog'
 import { accessibleName } from '~/utils/testing/accessibleName'
 
@@ -53,13 +59,59 @@ test('adding a filter keeps focus in the list, its fields are named, and Apply w
 	expect(change).toHaveBeenCalledExactlyOnceWith([{ id: 'rank', min: 10, max: null }])
 })
 
-test('removing a filter moves focus to the active filters instead of the page', async () => {
-	await act(async () =>
-		root.render(<TokensFiltersDialog filters={[{ id: 'rank', min: 1, max: 100 }]} onFiltersChange={() => {}} />)
-	)
-	await click(control('Filters, 1 applied'))
-	await click(control('Remove MCap Rank filter'))
+const FILTERS = [
+	{ id: 'price', label: 'Price' },
+	{ id: 'volume', label: 'Volume' },
+	{ id: 'holders', label: 'Holders' }
+] as const
+type FilterId = (typeof FILTERS)[number]['id']
 
-	expect(control('Remove MCap Rank filter')).toBeUndefined()
-	expect(document.activeElement?.getAttribute('aria-labelledby')).toBe('filter-builder-active')
+// A caller session as the table pages write one: the draft lists the added filters, each with its card.
+function Session({ initial }: { initial: Array<FilterId> }) {
+	const [draft, setDraft] = useState(initial)
+	return (
+		<FilterBuilderContent
+			draftCount={draft.length}
+			browse={
+				<FilterBrowser
+					groups={[{ label: 'Market', filters: FILTERS.filter((filter) => !draft.includes(filter.id)) }]}
+					onAdd={(id) => setDraft([...draft, id])}
+				/>
+			}
+			active={draft.map((id) => (
+				<ActiveFilterCard
+					key={id}
+					label={FILTERS.find((filter) => filter.id === id)!.label}
+					category="Market"
+					onRemove={() => setDraft(draft.filter((other) => other !== id))}
+				>
+					{null}
+				</ActiveFilterCard>
+			))}
+			onClearAll={() => setDraft([])}
+			onApply={() => {}}
+		/>
+	)
+}
+
+test('removing a filter hands focus to the next card, else the previous one, else the first filter to add', async () => {
+	await act(async () =>
+		root.render(
+			<FilterBuilderDialog appliedCount={3}>
+				<Session initial={['price', 'volume', 'holders']} />
+			</FilterBuilderDialog>
+		)
+	)
+	await click(control('Filters, 3 applied'))
+
+	await click(control('Remove Volume filter'))
+	expect(control('Remove Volume filter')).toBeUndefined()
+	expect(document.activeElement).toBe(control('Remove Holders filter'))
+
+	await click(control('Remove Holders filter'))
+	expect(document.activeElement).toBe(control('Remove Price filter'))
+
+	await click(control('Remove Price filter'))
+	expect(document.activeElement).toBe(chips()[0])
+	expect(accessibleName(chips()[0])).toBe('Price')
 })

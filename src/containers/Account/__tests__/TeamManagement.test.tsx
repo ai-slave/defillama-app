@@ -9,6 +9,7 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
+import { CreateTeamCard } from '../Team/CreateTeamCard'
 import { InviteMemberModal } from '../Team/InviteMemberModal'
 import { ManageSeatsModal } from '../Team/ManageSeatsModal'
 import {
@@ -358,9 +359,26 @@ test('seat form says why Update Seats and Decrease seats are disabled', async ()
 	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '2')
 	expect(button('Update seats').disabled).toBe(false)
 	expect(dialog().textContent).not.toContain('Change the seat count to update')
-	expect(button('Decrease seats').disabled).toBe(true)
+	expect(button('Decrease seats').getAttribute('aria-disabled')).toBe('true')
 	expect(dialog().textContent).toContain("You can't reduce below 2 seats")
 })
+
+// happy-dom keeps focus on a natively disabled button, so these assert that the button never becomes one.
+test.each(['manage', 'purchase'] as const)(
+	'Decrease seats keeps focus when its press reaches the %s floor',
+	async (kind) => {
+		await mount(<Harness kind={kind} />)
+		// Manage seats stops at the 2 occupied seats; a purchase stops at 1.
+		await change(document.querySelector<HTMLInputElement>('input[type=number]')!, kind === 'manage' ? '3' : '2')
+		const decrease = button('Decrease seats')
+		await act(async () => decrease.focus())
+		await act(async () => decrease.click())
+		expect(document.querySelector<HTMLInputElement>('input[type=number]')!.value).toBe(kind === 'manage' ? '2' : '1')
+		expect(decrease.getAttribute('aria-disabled')).toBe('true')
+		expect(decrease.disabled).toBe(false)
+		expect(document.activeElement).toBe(decrease)
+	}
+)
 
 test('an upgrade confirmation waits in its button while another team update runs and sends nothing', async () => {
 	const other = Promise.withResolvers<Response>()
@@ -434,7 +452,7 @@ test('scheduled cancellation locks the current-seat floor and an increase retain
 	team.subscriptions[0].effectiveAt = 1_800_000_000
 	await mount(<Harness kind="manage" />)
 	const input = document.querySelector<HTMLInputElement>('input[type=number]')!
-	expect(button('Decrease seats').disabled).toBe(true)
+	expect(button('Decrease seats').getAttribute('aria-disabled')).toBe('true')
 	expect(button('Cancel subscription')).toBeUndefined()
 	await change(input, '2')
 	await click('Update seats')
@@ -491,6 +509,20 @@ const teamReads = () => api.fetch.mock.calls.filter(([url, options]) => url.ends
 function confirmButton(title: string, name: string) {
 	return [...namedDialog(title).querySelectorAll('button')].find((b) => accessibleName(b) === name)!
 }
+
+test('the seat checkout hands the focus of the Purchase seats button it replaces to the dialog', async () => {
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST'
+			? Response.json({ action: 'checkout_created', clientSecret: 'test-secret' })
+			: Response.json({ team })
+	)
+	await mount(<Harness kind="purchase" />)
+	await act(async () => button('Purchase seats').focus())
+	await click('Purchase seats')
+	await waitForUi(() => expect(namedDialog('Complete payment')).toBeTruthy())
+	// The submit leaves with the form; the dialog's net hands its focus to the first control, the header close button.
+	await waitForUi(() => expect(document.activeElement).toBe(confirmButton('Complete payment', 'Close dialog')))
+})
 
 test('closing the seat checkout asks first, and Keep paying keeps the same checkout', async () => {
 	await openSeatCheckout()
@@ -678,7 +710,7 @@ test('managing seats on a plan set to end shows its end date from cancelsAt', as
 	team.subscriptions[0].cancelsAt = '2099-03-14 08:24:42.000Z'
 	await mount(<Harness kind="manage" />)
 	expect(dialog().textContent).toContain('This subscription is scheduled to cancel on Mar 14, 2099.')
-	expect(button('Decrease seats').disabled).toBe(true)
+	expect(button('Decrease seats').getAttribute('aria-disabled')).toBe('true')
 })
 
 test.each([
@@ -952,12 +984,31 @@ test('a resent invite counts down a minute before it can be resent again', async
 	]
 	await mount(<TeamInvitesCard />)
 	await click('Resend')
-	await waitForUi(() => expect(button('Resend in 60s').disabled).toBe(true))
+	await waitForUi(() => expect(button('Resend in 60s').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => vi.advanceTimersByTime(59_000))
-	expect(button('Resend in 1s').disabled).toBe(true)
+	await click('Resend in 1s')
 	await act(async () => vi.advanceTimersByTime(1000))
-	expect(button('Resend').disabled).toBe(false)
+	expect(button('Resend').hasAttribute('aria-disabled')).toBe(false)
 	expect(posts()).toHaveLength(1)
+})
+
+test('a resent invite keeps focus on its Resend button through the cooldown', async () => {
+	team.pendingInvites = [
+		{
+			id: 'invite',
+			email: 'invite@example.com',
+			status: 'pending',
+			createdAt: '2099-01-01T00:00:00Z',
+			expiresAt: '2099-01-08T18:00:00Z'
+		}
+	]
+	await mount(<TeamInvitesCard />)
+	const resend = button('Resend')
+	await act(async () => resend.focus())
+	await act(async () => resend.click())
+	await waitForUi(() => expect(accessibleName(resend)).toBe('Resend in 60s'))
+	expect(resend.disabled).toBe(false)
+	expect(document.activeElement).toBe(resend)
 })
 
 test('an expired invite offers only Revoke, from its first render', async () => {
@@ -1172,4 +1223,12 @@ test('a replayed acceptance of the same invite still confirms the join', async (
 test('manage seats opens on the seat count', async () => {
 	await mount(<Harness kind="manage" />)
 	await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('input[type=number]')))
+})
+
+test('cancelling team creation returns focus to Create Team', async () => {
+	await mount(<CreateTeamCard />)
+	await click('Create Team')
+	await act(async () => button('Cancel').focus())
+	await click('Cancel')
+	expect(document.activeElement).toBe(button('Create Team'))
 })

@@ -4,6 +4,7 @@ import { useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -50,9 +51,18 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		})
 	}
 
-	const removeItem = (idx: number) => {
-		setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== idx)))
-	}
+	const peopleRef = useRef<HTMLDivElement>(null)
+	const addPersonRef = useRef<HTMLButtonElement>(null)
+	// The removed row's × hands focus to the × that takes its place or the one above; with one person left,
+	// nothing more can go, so Add person takes it.
+	const removeItem = (idx: number) =>
+		keepFocus(
+			() => setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))),
+			() => {
+				const removeButtons = peopleRef.current!.querySelectorAll<HTMLElement>('[data-person-remove]')
+				return removeButtons.length > 1 ? removeButtons[Math.min(idx, removeButtons.length - 1)] : addPersonRef.current
+			}
+		)
 
 	const addItem = () => {
 		setItems((prev) => [...prev, { id: crypto.randomUUID(), item: makeEmptyPeoplePanelItem() }])
@@ -115,7 +125,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						<Input id={labelId} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Moderated by:" />
 					</div>
 
-					<div className="flex flex-col gap-3">
+					<div ref={peopleRef} className="flex flex-col gap-3">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="label-sm text-secondary">People</h3>
 							<span className="body-sm text-tertiary tabular-nums">
@@ -137,7 +147,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 								onMove={(dir) => moveItem(idx, dir)}
 							/>
 						))}
-						<Button type="button" size="md" onClick={addItem} className="w-full">
+						<Button ref={addPersonRef} type="button" size="md" onClick={addItem} className="w-full">
 							<Icon name="plus" className="size-3.5" aria-hidden="true" />
 							Add person
 						</Button>
@@ -210,6 +220,16 @@ function PersonRow({
 
 	const imageError = errorMessage ?? (showErrors && !item.src ? 'An image is required for each person.' : null)
 	const person = idx + 1
+	const upRef = useRef<HTMLButtonElement>(null)
+	const downRef = useRef<HTMLButtonElement>(null)
+	// React re-inserts a moved row's nodes, which drops focus. The arrow follows its row, or hands focus to the other
+	// arrow once the row reaches the end.
+	const move = (direction: -1 | 1) => {
+		flushSync(() => onMove(direction))
+		const atEnd = direction === -1 ? idx - 1 === 0 : idx + 1 === total - 1
+		const [sameArrow, otherArrow] = direction === -1 ? [upRef, downRef] : [downRef, upRef]
+		;(atEnd ? otherArrow : sameArrow).current?.focus()
+	}
 
 	return (
 		<fieldset className="grid grid-cols-[80px_minmax(0,1fr)] gap-3 rounded-lg border border-subtle p-3 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:gap-4">
@@ -303,6 +323,7 @@ function PersonRow({
 
 			{/* 12px between the buttons keeps their 44px touch targets apart on desktop, where they draw at 32px. */}
 			<div className="col-start-2 row-start-1 flex items-start justify-end gap-3 sm:col-start-3 sm:flex-col sm:justify-start">
+				{/* The arrows and × disable themselves at the ends; they stay focusable so focus never drops to the page. */}
 				<Tooltip
 					content="Move up"
 					render={
@@ -311,8 +332,10 @@ function PersonRow({
 							variant="ghost"
 							size="md"
 							square
-							onClick={() => onMove(-1)}
+							ref={upRef}
+							accessibleWhenDisabled
 							disabled={idx === 0}
+							onClick={() => move(-1)}
 							aria-label={`Move person ${person} up`}
 						/>
 					}
@@ -327,8 +350,10 @@ function PersonRow({
 							variant="ghost"
 							size="md"
 							square
-							onClick={() => onMove(1)}
+							ref={downRef}
+							accessibleWhenDisabled
 							disabled={idx === total - 1}
+							onClick={() => move(1)}
 							aria-label={`Move person ${person} down`}
 						/>
 					}
@@ -343,9 +368,11 @@ function PersonRow({
 							variant="ghost"
 							size="md"
 							square
-							onClick={onRemove}
+							accessibleWhenDisabled
 							disabled={total === 1}
+							onClick={onRemove}
 							aria-label={`Remove person ${person}`}
+							data-person-remove
 						/>
 					}
 				>

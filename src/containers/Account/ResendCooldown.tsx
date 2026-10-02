@@ -19,13 +19,15 @@ export function ResendCooldown({ sentAtSeconds, onResend, disabled, pending }: R
 	return (
 		<div className="flex items-center gap-1 body-sm text-secondary">
 			<span>Didn't receive the code?</span>
+			{/* Focusable through the countdown: a sent code starts it while the button still has focus. */}
 			<Button
 				type="button"
 				variant="ghost"
 				size="sm"
-				onClick={onResend}
-				disabled={!pending && (disabled || secondsLeft > 0)}
 				pendingLabel={pending ? 'Sending code…' : null}
+				disabled={disabled || secondsLeft > 0}
+				accessibleWhenDisabled
+				onClick={onResend}
 			>
 				{secondsLeft > 0 ? `Resend code (${secondsLeft}s)` : 'Resend code'}
 			</Button>

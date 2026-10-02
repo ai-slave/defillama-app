@@ -1,19 +1,30 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
-import { toast } from 'react-hot-toast'
+import {
+	type CSSProperties,
+	lazy,
+	type RefObject,
+	Suspense,
+	useCallback,
+	useDeferredValue,
+	useMemo,
+	useRef,
+	useState
+} from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { catchLostFocus, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
+import { ActionFeedbackStatus, ConfirmableContent, useActionFeedback } from './ActionFeedback'
 import type { ChartDatasetDefinition } from './chart-datasets'
 import { combineCsvsWide } from './combineCsvsWide'
 import { filterParsedRowsByDateRange } from './csvDateFilter'
@@ -199,8 +210,14 @@ export function ChartDatasetModal({
 	const [selectedColumns, setSelectedColumns] = useState<Set<number> | null>(null)
 	const [search, setSearch] = useState('')
 	const [sortState, setSortState] = useState<SortState | null>(null)
+	const dateRangeTriggerRef = useRef<HTMLButtonElement>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
+	const { outcome, report, confirmed } = useActionFeedback()
+	// Where focus goes when the control that had it leaves with the last selected item.
+	const paramPickerRef = useRef<HTMLButtonElement>(null)
+	const categoryPickerRef = useRef<HTMLButtonElement>(null)
+	const pickerTrigger = () => paramPickerRef.current ?? categoryPickerRef.current
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 	const [sumMode, setSumMode] = useState(false)
 	const [appliedInitialParams, setAppliedInitialParams] = useState<ReturnType<typeof applyChartParams> | null>(null)
@@ -598,10 +615,8 @@ export function ChartDatasetModal({
 				handleRemoveParam(opt.value)
 				return
 			}
-			if (selectedParams.length >= maxSelections) {
-				toast.error(`Max ${maxSelections} items — remove one first`)
-				return
-			}
+			// The picker disables options past the cap and says why in its header.
+			if (selectedParams.length >= maxSelections) return
 			setSelectedParams((prev) => [...prev, opt])
 			if (isCategoryMode) {
 				const idx = findBreakdownColumnIndex(opt.value)
@@ -639,10 +654,8 @@ export function ChartDatasetModal({
 				const existing = new Set(prev.map((p) => p.value))
 				const toAdd = opts.filter((o) => !existing.has(o.value))
 				const combined = [...prev, ...toAdd]
-				if (combined.length > maxSelections) {
-					toast.error(`Can only add ${maxSelections - prev.length} more (max ${maxSelections})`)
-					return [...prev, ...toAdd.slice(0, maxSelections - prev.length)]
-				}
+				// The picker offers Add all only while everything in view fits under the cap.
+				if (combined.length > maxSelections) return [...prev, ...toAdd.slice(0, maxSelections - prev.length)]
 				return combined
 			})
 		},
@@ -662,20 +675,20 @@ export function ChartDatasetModal({
 	)
 
 	const handleDownloadCombined = useCallback(
-		(format: DownloadFormat = 'csv') => {
+		(format: DownloadFormat, action: string) => {
 			if (isCategoryMode) {
 				if (selectedCount === 0) {
-					toast.error('Select at least one column')
+					report(action, false, 'Select at least one column')
 					return
 				}
 				const csvRows = buildSelectedCsvRows(columnMeta, cols, sortedRows)
 				if (csvRows.length <= 1) {
-					toast.error('No rows to download')
+					report(action, false, 'No rows to download')
 					return
 				}
 				const filename = `${dataset.slug}_${toSlug(selectedCategory!)}.${format}`
 				downloadTabular(format, filename, csvRows, { addTimestamp: false })
-				toast.success(`Downloaded ${filename}`)
+				report(action, true, `Downloaded ${filename}`)
 
 				const configBase = extractChartConfig({
 					slug: dataset.slug,
@@ -709,22 +722,24 @@ export function ChartDatasetModal({
 				if (err) failed.push(p)
 			}
 			if (ready.length === 0) {
-				toast.error('No data available to download')
+				report(action, false, 'No data available to download')
 				return
 			}
 			const merged = combineCsvsWide(ready, dateRange)
 			if (merged.length <= 1) {
-				toast.error('No rows to download')
+				report(action, false, 'No rows to download')
 				return
 			}
 			const filename = `${dataset.slug}_combined.${format}`
 			downloadTabular(format, filename, merged, { addTimestamp: true })
 			if (failed.length > 0) {
-				toast.success(
+				report(
+					action,
+					true,
 					`Downloaded ${filename} — skipped ${failed.length} failed (${failed.map((f) => f.label).join(', ')})`
 				)
 			} else {
-				toast.success(`Downloaded ${filename}`)
+				report(action, true, `Downloaded ${filename}`)
 			}
 
 			const configBase = extractChartConfig({
@@ -756,22 +771,23 @@ export function ChartDatasetModal({
 			cols,
 			sortState,
 			dateRange,
-			recordRecent
+			recordRecent,
+			report
 		]
 	)
 
 	const handleDownloadSingle = useCallback(
-		(param: ParamOption, format: DownloadFormat = 'csv') => {
+		(param: ParamOption, format: DownloadFormat, action: string) => {
 			if (isCategoryMode) {
 				if (!csvText) {
-					toast.error('Data not loaded yet')
+					report(action, false, 'Data not loaded yet')
 					return
 				}
 				const parsed = parseCsv(csvText)
 				const parsedDateIdx = parsed.headers.indexOf('date')
 				const parsedColIdx = parsed.headers.findIndex((h, i) => i !== parsedDateIdx && toSlug(h) === param.value)
 				if (parsedColIdx < 0) {
-					toast.error(`No data for ${param.label}`)
+					report(action, false, `No data for ${param.label}`)
 					return
 				}
 				const rowsForDownload = filterParsedRowsByDateRange(parsed.rows, parsedDateIdx, dateRange)
@@ -784,12 +800,12 @@ export function ChartDatasetModal({
 					allRows.push([date, value])
 				}
 				if (allRows.length <= 1) {
-					toast.error('No rows to download')
+					report(action, false, 'No rows to download')
 					return
 				}
 				const filename = `${dataset.slug}_${param.value}.${format}`
 				downloadTabular(format, filename, allRows, { addTimestamp: false })
-				toast.success(`Downloaded ${filename}`)
+				report(action, true, `Downloaded ${filename}`)
 
 				const configBase = extractChartConfig({
 					slug: dataset.slug,
@@ -812,7 +828,7 @@ export function ChartDatasetModal({
 			if (idx < 0) return
 			const query = csvQueries[idx]
 			if (!query || typeof query.data !== 'string') {
-				toast.error('Data not loaded yet')
+				report(action, false, 'Data not loaded yet')
 				return
 			}
 			const filename = `${dataset.slug}_${param.value}.${format}`
@@ -825,7 +841,7 @@ export function ChartDatasetModal({
 				const csvRows = buildSelectedCsvRows(columnMeta, cols, sortedRows)
 				if (csvRows.length > 1) {
 					downloadTabular(format, filename, csvRows, { addTimestamp: false })
-					toast.success(`Downloaded ${filename}`)
+					report(action, true, `Downloaded ${filename}`)
 					downloadedHeaders = headers
 					downloadedCols = cols
 					downloadedSort = sortState
@@ -836,7 +852,7 @@ export function ChartDatasetModal({
 				const parsedDateIdx = parsed.headers.indexOf('date')
 				const rowsForDownload = filterParsedRowsByDateRange(parsed.rows, parsedDateIdx, dateRange)
 				if (rowsForDownload.length === 0) {
-					toast.error('No rows to download')
+					report(action, false, 'No rows to download')
 					return
 				}
 				const allRows: Array<Array<string>> = [
@@ -844,7 +860,7 @@ export function ChartDatasetModal({
 					...rowsForDownload.map((r) => parsed.headers.map((_, i) => r.values[i] ?? ''))
 				]
 				downloadTabular(format, filename, allRows, { addTimestamp: false })
-				toast.success(`Downloaded ${filename}`)
+				report(action, true, `Downloaded ${filename}`)
 				downloadedHeaders = parsed.headers
 			}
 
@@ -879,31 +895,32 @@ export function ChartDatasetModal({
 			dateRange,
 			dataset.slug,
 			dataset.name,
-			recordRecent
+			recordRecent,
+			report
 		]
 	)
 
 	const handleDownload = useCallback(
 		(format: DownloadFormat = 'csv') => {
 			if (isCategoryMode) {
-				handleDownloadCombined(format)
+				handleDownloadCombined(format, 'download')
 				return
 			}
 			if (selectedParams.length === 0) return
 			if (selectedParams.length === 1) {
 				if (!selectedParam) return
 				if (selectedCount === 0) {
-					toast.error('Select at least one column')
+					report('download', false, 'Select at least one column')
 					return
 				}
 				const csvRows = buildSelectedCsvRows(columnMeta, cols, sortedRows)
 				if (csvRows.length <= 1) {
-					toast.error('No rows to download')
+					report('download', false, 'No rows to download')
 					return
 				}
 				const filename = `${dataset.slug}_${selectedParam.value}.${format}`
 				downloadTabular(format, filename, csvRows, { addTimestamp: false })
-				toast.success(`Downloaded ${filename}`)
+				report('download', true, `Downloaded ${filename}`)
 
 				const configBase = extractChartConfig({
 					slug: dataset.slug,
@@ -921,7 +938,7 @@ export function ChartDatasetModal({
 				})
 				return
 			}
-			handleDownloadCombined(format)
+			handleDownloadCombined(format, 'download')
 		},
 		[
 			isCategoryMode,
@@ -937,7 +954,8 @@ export function ChartDatasetModal({
 			sortState,
 			dateRange,
 			recordRecent,
-			handleDownloadCombined
+			handleDownloadCombined,
+			report
 		]
 	)
 
@@ -962,9 +980,20 @@ export function ChartDatasetModal({
 				{ replaceByName: replaceExisting }
 			)
 			setShowSaveDialog(false)
-			toast.success(`Saved preset "${name}"`)
+			report('save-preset', true, `Saved preset "${name}"`)
 		},
-		[dataset.slug, headers, selectedParams, cols, sortState, dateRange, isCategoryMode, selectedCategory, saveDownload]
+		[
+			dataset.slug,
+			headers,
+			selectedParams,
+			cols,
+			sortState,
+			dateRange,
+			isCategoryMode,
+			selectedCategory,
+			saveDownload,
+			report
+		]
 	)
 
 	const currentConfig = useMemo<SavedDownloadInput | null>(() => {
@@ -982,25 +1011,25 @@ export function ChartDatasetModal({
 
 	const handleCopyLink = useCallback(async () => {
 		if (!currentConfig) {
-			toast.error('Nothing to share yet')
+			report('copy-link', false, 'Nothing to share yet')
 			return
 		}
 		if (typeof window === 'undefined' || !navigator.clipboard) {
-			toast.error('Clipboard not available')
+			report('copy-link', false, 'Clipboard not available')
 			return
 		}
 		try {
 			const url = buildShareUrl(window.location.origin, '/downloads', currentConfig)
 			if (url.length > 2000) {
-				toast.error('Config too large to share — save as preset instead')
+				report('copy-link', false, 'Config too large to share — save as preset instead')
 				return
 			}
 			await navigator.clipboard.writeText(url)
-			toast.success('Link copied')
+			report('copy-link', true, 'Link copied')
 		} catch {
-			toast.error('Failed to copy link')
+			report('copy-link', false, 'Failed to copy link')
 		}
-	}, [currentConfig])
+	}, [currentConfig, report])
 
 	const suggestedPresetName = useMemo(() => {
 		if (!currentConfig) return ''
@@ -1011,21 +1040,21 @@ export function ChartDatasetModal({
 
 	const handleCopy = useCallback(async () => {
 		if (selectedCount === 0) {
-			toast.error('Select at least one column')
+			report('copy', false, 'Select at least one column')
 			return
 		}
 		const tsv = buildTsvString(columnMeta, cols, sortedRows)
 		if (!tsv) {
-			toast.error('No data to copy')
+			report('copy', false, 'No data to copy')
 			return
 		}
 		try {
 			await navigator.clipboard.writeText(tsv)
-			toast.success('Copied to clipboard (paste into spreadsheets)')
+			report('copy', true, 'Copied to clipboard (paste into spreadsheets)')
 		} catch {
-			toast.error('Failed to copy')
+			report('copy', false, 'Failed to copy')
 		}
-	}, [columnMeta, cols, sortedRows, selectedCount])
+	}, [columnMeta, cols, sortedRows, selectedCount, report])
 
 	const activeSortDirection = sortState ? sortState.direction : false
 	const allSelected = headers.length > 0 && cols.size === headers.length
@@ -1088,6 +1117,7 @@ export function ChartDatasetModal({
 				}}
 			>
 				<Ariakit.Dialog
+					ref={catchLostFocus}
 					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 					portal
 					unmountOnHide
@@ -1111,8 +1141,21 @@ export function ChartDatasetModal({
 											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 											title="Copy selected columns as TSV"
 										>
-											<Icon name="clipboard" className="size-3.5" />
-											<span className="hidden lg:inline">Copy</span>
+											<ConfirmableContent
+												confirmed={confirmed('copy')}
+												idle={
+													<>
+														<Icon name="clipboard" className="size-3.5" />
+														<span className="hidden lg:inline">Copy</span>
+													</>
+												}
+												done={
+													<>
+														<Icon name="check" className="size-3.5" />
+														<span className="hidden lg:inline">Copied</span>
+													</>
+												}
+											/>
 										</button>
 									) : null}
 
@@ -1124,8 +1167,21 @@ export function ChartDatasetModal({
 											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 											title="Save as preset"
 										>
-											<Icon name="bookmark" className="size-3.5" />
-											<span className="hidden lg:inline">Save preset</span>
+											<ConfirmableContent
+												confirmed={confirmed('save-preset')}
+												idle={
+													<>
+														<Icon name="bookmark" className="size-3.5" />
+														<span className="hidden lg:inline">Save preset</span>
+													</>
+												}
+												done={
+													<>
+														<Icon name="check" className="size-3.5" />
+														<span className="hidden lg:inline">Saved</span>
+													</>
+												}
+											/>
 										</button>
 									) : null}
 
@@ -1137,7 +1193,11 @@ export function ChartDatasetModal({
 											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 											title="Copy shareable link"
 										>
-											<Icon name="link" className="size-3.5" />
+											<ConfirmableContent
+												confirmed={confirmed('copy-link')}
+												idle={<Icon name="link" className="size-3.5" />}
+												done={<Icon name="check" className="size-3.5" />}
+											/>
 										</button>
 									) : null}
 
@@ -1158,6 +1218,7 @@ export function ChartDatasetModal({
 											onDownload={(fmt) => handleDownload(fmt)}
 											disabled={topBarDownloadDisabled}
 											label={downloadLabel}
+											confirmed={confirmed('download')}
 										/>
 									)}
 								</>
@@ -1176,6 +1237,7 @@ export function ChartDatasetModal({
 						<div className="flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-2">
 							{protocolCategories.length > 0 ? (
 								<CategoryPickerPopover
+									triggerRef={categoryPickerRef}
 									categories={protocolCategories}
 									selected={selectedCategory}
 									onSelect={handleSelectCategory}
@@ -1183,6 +1245,7 @@ export function ChartDatasetModal({
 							) : null}
 							{!isCategoryMode ? (
 								<MultiOptionPickerPopover
+									triggerRef={paramPickerRef}
 									label={dataset.paramLabel}
 									options={filteredOptions}
 									selected={selectedParams}
@@ -1225,6 +1288,7 @@ export function ChartDatasetModal({
 
 							{hasSelection && !isPreview ? (
 								<DateRangePicker
+									triggerRef={dateRangeTriggerRef}
 									value={dateRange}
 									onChange={setDateRange}
 									minDate={dateBounds.min}
@@ -1265,7 +1329,11 @@ export function ChartDatasetModal({
 										className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:hidden"
 										title="Copy selected columns as TSV"
 									>
-										<Icon name="clipboard" className="size-3.5" />
+										<ConfirmableContent
+											confirmed={confirmed('copy')}
+											idle={<Icon name="clipboard" className="size-3.5" />}
+											done={<Icon name="check" className="size-3.5" />}
+										/>
 									</button>
 								</>
 							) : hasData && isPreview ? (
@@ -1273,6 +1341,7 @@ export function ChartDatasetModal({
 							) : null}
 						</div>
 						<SavedPresetNotice notices={savedPresetNotices} />
+						<ActionFeedbackStatus outcome={outcome} />
 					</div>
 
 					<div className="flex min-h-0 flex-1">
@@ -1323,7 +1392,13 @@ export function ChartDatasetModal({
 										{dateRange && rows.length > 0 ? (
 											<button
 												type="button"
-												onClick={() => setDateRange(null)}
+												// Clearing removes this button; focus returns to the range picker it cleared.
+												onClick={() =>
+													keepFocus(
+														() => setDateRange(null),
+														() => dateRangeTriggerRef.current
+													)
+												}
 												className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 											>
 												Clear date range
@@ -1505,9 +1580,11 @@ export function ChartDatasetModal({
 								csvQueries={csvQueries}
 								onSelectActive={handleSetActive}
 								onRemove={handleRemoveParam}
-								onClearAll={handleClearParams}
-								onDownloadSingle={handleDownloadSingle}
-								onDownloadCombined={handleDownloadCombined}
+								onClearAll={() => keepFocus(handleClearParams, pickerTrigger)}
+								onDownloadSingle={(param) => handleDownloadSingle(param, 'csv', `download:${param.value}`)}
+								onDownloadCombined={() => handleDownloadCombined('csv', 'download-combined')}
+								confirmed={confirmed}
+								pickerTrigger={pickerTrigger}
 								isPreview={!!isPreview}
 								onSubscribeClick={() => {
 									setSignupSource('downloads')
@@ -1593,15 +1670,16 @@ function PlaceholderRows({
 }
 
 function CategoryPickerPopover({
+	triggerRef,
 	categories,
 	selected,
 	onSelect
 }: {
+	triggerRef: RefObject<HTMLButtonElement | null>
 	categories: Array<[string, number]>
 	selected: string | null
 	onSelect: (cat: string | null) => void
 }) {
-	const disclosureRef = useRef<HTMLButtonElement>(null)
 	const [search, setSearch] = useState('')
 	const deferred = useDeferredValue(search.trim().toLowerCase())
 
@@ -1614,7 +1692,7 @@ function CategoryPickerPopover({
 		<Ariakit.PopoverProvider>
 			<div className="relative">
 				<Ariakit.PopoverDisclosure
-					ref={disclosureRef}
+					ref={triggerRef}
 					className={`flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary ${selected ? 'pr-8' : ''}`}
 				>
 					<Icon name="tag" className="size-3.5" />
@@ -1625,7 +1703,7 @@ function CategoryPickerPopover({
 						type="button"
 						aria-label="Clear category"
 						onClick={() => {
-							disclosureRef.current?.focus()
+							triggerRef.current?.focus()
 							onSelect(null)
 						}}
 						className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 hover:bg-hover-row"
@@ -1682,6 +1760,7 @@ function CategoryPickerPopover({
 }
 
 function MultiOptionPickerPopover({
+	triggerRef,
 	label,
 	options,
 	selected,
@@ -1690,6 +1769,7 @@ function MultiOptionPickerPopover({
 	onAddMultiple,
 	maxSelections
 }: {
+	triggerRef: RefObject<HTMLButtonElement | null>
 	label: string
 	options: Array<ParamOption>
 	selected: Array<ParamOption>
@@ -1700,6 +1780,7 @@ function MultiOptionPickerPopover({
 }) {
 	const popoverStore = Ariakit.usePopoverStore()
 	const [optionSearch, setOptionSearch] = useState('')
+	const searchRef = useRef<HTMLInputElement>(null)
 	const deferredOptionSearch = useDeferredValue(optionSearch.trim().toLowerCase())
 
 	const selectedValues = useMemo(() => new Set(selected.map((s) => s.value)), [selected])
@@ -1724,7 +1805,10 @@ function MultiOptionPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
+			<Ariakit.PopoverDisclosure
+				ref={triggerRef}
+				className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+			>
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerText}</span>
 				{selected.length > 0 ? (
@@ -1740,21 +1824,31 @@ function MultiOptionPickerPopover({
 				<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
 					<span className="text-xs font-medium text-pro-text-secondary">
 						{Number.isFinite(maxSelections)
-							? `${selected.length}/${maxSelections} selected`
+							? `${selected.length}/${maxSelections} selected${capHit ? ' · remove one to add more' : ''}`
 							: `${selected.length} selected`}
 					</span>
 					<div className="flex items-center gap-2">
 						{canAddAll ? (
 							<button
 								type="button"
-								onClick={() => onAddMultiple(unselectedInView)}
+								// Add all and Clear all leave once used; the search field stays.
+								onClick={() =>
+									keepFocus(
+										() => onAddMultiple(unselectedInView),
+										() => searchRef.current
+									)
+								}
 								className="text-xs text-brand hover:underline"
 							>
 								Add all ({unselectedInView.length})
 							</button>
 						) : null}
 						{selected.length > 0 ? (
-							<button type="button" onClick={onClearAll} className="text-xs text-brand hover:underline">
+							<button
+								type="button"
+								onClick={() => keepFocus(onClearAll, () => searchRef.current)}
+								className="text-xs text-brand hover:underline"
+							>
 								Clear all
 							</button>
 						) : null}
@@ -1762,9 +1856,10 @@ function MultiOptionPickerPopover({
 				</div>
 				<div className="border-b border-subtle px-3 py-2">
 					<input
+						ref={searchRef}
 						value={optionSearch}
 						onChange={(e) => setOptionSearch(e.currentTarget.value)}
-						placeholder={`Search ${label.toLowerCase()}...`}
+						placeholder={`Search ${label.toLowerCase()}…`}
 						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
 						autoFocus
 					/>
@@ -1889,6 +1984,10 @@ interface BulkPreviewSidebarProps {
 	onClearAll: () => void
 	onDownloadSingle: (param: ParamOption) => void
 	onDownloadCombined: () => void
+	/** Whether a download button shows its confirmation now. */
+	confirmed: (action: string) => boolean
+	/** Takes focus when the last row leaves. */
+	pickerTrigger: () => HTMLElement | null
 	isPreview: boolean
 	onSubscribeClick: () => void
 	readyCount: number
@@ -1905,12 +2004,24 @@ function BulkPreviewSidebar({
 	onClearAll,
 	onDownloadSingle,
 	onDownloadCombined,
+	confirmed,
+	pickerTrigger,
 	isPreview,
 	onSubscribeClick,
 	readyCount,
 	loadingCount
 }: BulkPreviewSidebarProps) {
 	const combinedDisabled = loadingCount > 0 || readyCount === 0
+	const listRef = useRef<HTMLDivElement>(null)
+	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
+	const removeRow = (value: string, index: number) =>
+		keepFocus(
+			() => onRemove(value),
+			() => {
+				const removeButtons = listRef.current?.querySelectorAll<HTMLElement>('[data-row-remove]') ?? []
+				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? pickerTrigger()
+			}
+		)
 	return (
 		<aside className="hidden w-72 shrink-0 flex-col border-l border-subtle sm:flex">
 			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
@@ -1934,7 +2045,7 @@ function BulkPreviewSidebar({
 					</button>
 				) : null}
 			</div>
-			<div className="flex-1 overflow-auto">
+			<div ref={listRef} className="flex-1 overflow-auto">
 				{selectedParams.map((param, i) => {
 					const query = csvQueries[i]
 					const isActive = param.value === activePreviewValue
@@ -1978,11 +2089,16 @@ function BulkPreviewSidebar({
 								aria-label={`Download ${param.label} CSV`}
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
 							>
-								<Icon name="download-cloud" className="size-3.5" />
+								<ConfirmableContent
+									confirmed={confirmed(`download:${param.value}`)}
+									idle={<Icon name="download-cloud" className="size-3.5" />}
+									done={<Icon name="check" className="size-3.5" />}
+								/>
 							</button>
 							<button
 								type="button"
-								onClick={() => onRemove(param.value)}
+								onClick={() => removeRow(param.value, i)}
+								data-row-remove
 								title="Remove"
 								aria-label={`Remove ${param.label}`}
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"
@@ -2011,8 +2127,21 @@ function BulkPreviewSidebar({
 							disabled={combinedDisabled}
 							className="flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
 						>
-							<Icon name="download-cloud" className="size-3.5" />
-							Download combined CSV
+							<ConfirmableContent
+								confirmed={confirmed('download-combined')}
+								idle={
+									<>
+										<Icon name="download-cloud" className="size-3.5" />
+										Download combined CSV
+									</>
+								}
+								done={
+									<>
+										<Icon name="check" className="size-3.5" />
+										Downloaded
+									</>
+								}
+							/>
 						</button>
 						<p className="mt-1.5 text-center text-[10px] text-pro-text-tertiary">
 							Wide format — each {dataset.paramLabel.toLowerCase()} becomes a column

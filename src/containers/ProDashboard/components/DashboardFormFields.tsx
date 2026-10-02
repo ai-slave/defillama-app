@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -138,7 +139,14 @@ export function TagsField({
 								square
 								disabled={disabled}
 								aria-label={`Remove tag ${tag}`}
-								onClick={() => onChange(tags.filter((t) => t !== tag))}
+								onClick={(event) => {
+									// The removed tag takes its button with it: the next tag's takes focus, else the field.
+									const next = neighbourRowControl(event.currentTarget)
+									keepFocus(
+										() => onChange(tags.filter((t) => t !== tag)),
+										() => next ?? inputRef.current
+									)
+								}}
 							>
 								<Icon name="x" height={12} width={12} />
 							</Button>

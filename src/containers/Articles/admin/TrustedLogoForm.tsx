@@ -7,6 +7,7 @@ import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useR
 import { ArticleApiError, createTrustedLogo, listTrustedLogos, updateTrustedLogo } from '~/containers/Articles/api'
 import type { TrustedLogo, TrustedLogoPayload } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
+import { Button } from '~/ui/Button'
 
 type FormState = {
 	name: string
@@ -165,13 +166,17 @@ export function TrustedLogoForm({ logoId }: Props) {
 						/>
 						{dirty ? 'Unsaved changes' : logo ? 'All changes saved' : 'New logo'}
 					</span>
-					<button
+					{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+					<Button
+						variant="primary"
+						size="md"
+						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 						type="submit"
-						disabled={hasError || saveMutation.isPending || (!dirty && !!logo)}
-						className="rounded-md bg-link px-4 py-2 text-sm font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+						disabled={hasError || (!dirty && !!logo)}
+						accessibleWhenDisabled
 					>
-						{saveMutation.isPending ? 'Saving…' : logo ? 'Save changes' : 'Create logo'}
-					</button>
+						{logo ? 'Save changes' : 'Create logo'}
+					</Button>
 				</div>
 			</div>
 		</form>

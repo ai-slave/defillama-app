@@ -74,8 +74,8 @@ export function FilterBuilderContent({
 				<div className="flex flex-col sm:grid sm:min-h-full sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
 					<section
 						aria-labelledby="filter-builder-active"
-						tabIndex={-1}
-						className="flex flex-col gap-2 p-4 outline-hidden sm:order-2 sm:border-l sm:border-subtle"
+						data-filter-pane="active"
+						className="flex flex-col gap-2 p-4 sm:order-2 sm:border-l sm:border-subtle"
 					>
 						<h3 id="filter-builder-active" className="label-sm text-secondary">
 							Active filters
@@ -84,8 +84,8 @@ export function FilterBuilderContent({
 					</section>
 					<section
 						aria-labelledby="filter-builder-browse"
-						tabIndex={-1}
-						className="flex flex-col gap-3 border-t border-subtle p-4 outline-hidden sm:order-1 sm:border-t-0"
+						data-filter-pane="browse"
+						className="flex flex-col gap-3 border-t border-subtle p-4 sm:order-1 sm:border-t-0"
 					>
 						<h3 id="filter-builder-browse" className="label-sm text-secondary">
 							Add filters
@@ -97,14 +97,16 @@ export function FilterBuilderContent({
 			<DialogFooter
 				leading={
 					// Disabled, not removed, at zero: the button keeps focus after it clears the draft.
-					<Ariakit.Button
+					<Button
+						type="button"
+						variant="ghost"
+						size="md"
 						disabled={draftCount === 0}
 						accessibleWhenDisabled
-						render={<Button type="button" variant="ghost" size="md" />}
 						onClick={onClearAll}
 					>
 						Clear all
-					</Ariakit.Button>
+					</Button>
 				}
 				dismiss={<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>}
 			>
@@ -192,13 +194,13 @@ export function FilterBrowser<I extends string>({
 									type="button"
 									onClick={(event) => {
 										// The chip leaves the list once its filter is added. Focus moves to the chip that takes its
-										// place, so a keyboard can add several in a row.
-										const pane = event.currentTarget.closest('section[tabindex]') as HTMLElement
+										// place, so a keyboard can add several in a row; with no chip left, the dialog's net takes it.
+										const pane = event.currentTarget.closest('[data-filter-pane]')!
 										const chips = [...pane.querySelectorAll<HTMLElement>('[data-filter-chip]')]
 										const index = chips.indexOf(event.currentTarget)
 										flushSync(() => onAdd(filter.id))
 										const next = [...pane.querySelectorAll<HTMLElement>('[data-filter-chip]')]
-										;(next[index] ?? next[index - 1] ?? pane).focus()
+										;(next[index] ?? next[index - 1])?.focus()
 									}}
 									data-filter-chip
 									className={metricOptionChipStyles}
@@ -243,11 +245,19 @@ export function ActiveFilterCard({
 					square
 					aria-label={`Remove ${label} filter`}
 					onClick={(event) => {
-						// The card leaves with its button, so focus moves to the active pane instead of the page.
-						const pane = event.currentTarget.closest('section[tabindex]') as HTMLElement
+						// The card leaves with its button. Focus moves to the next card's remove button, else the previous
+						// card's, else the first control that adds a filter back.
+						const pane = event.currentTarget.closest('[data-filter-pane]')!
+						const removes = [...pane.querySelectorAll<HTMLElement>('[data-filter-remove]')]
+						const index = removes.indexOf(event.currentTarget)
 						flushSync(onRemove)
-						pane.focus()
+						const next = [...pane.querySelectorAll<HTMLElement>('[data-filter-remove]')]
+						const browse = pane.parentElement!.querySelector<HTMLElement>(
+							'[data-filter-pane="browse"] input, [data-filter-pane="browse"] [data-filter-chip]'
+						)
+						;(next[index] ?? next[index - 1] ?? browse)?.focus()
 					}}
+					data-filter-remove
 					className="ml-auto"
 				>
 					<Icon name="x" className="size-3.5" aria-hidden="true" />

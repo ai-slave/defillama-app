@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
-import { act, useState } from 'react'
+import { act, useState, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSettingsModal } from '~/containers/ProDashboard/components/DashboardSettingsModal'
+import type { DashboardSaveNotices } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -14,7 +15,7 @@ vi.mock('~/containers/Subscription/components', () => ({ PricingCard: () => null
 const session = installSubscriberSession('owner')
 let root: Root
 let container: HTMLDivElement
-const save = vi.fn()
+const save = vi.fn<ComponentProps<typeof DashboardSettingsModal>['onSave']>(async () => ({ refreshPending: false }))
 const close = vi.fn()
 const remove = vi.fn()
 beforeEach(() => {
@@ -124,13 +125,8 @@ test('billing arrows change the selected cycle once without a mount callback', a
 })
 
 test('keeps dashboard settings after save failure and closes only after retry succeeds', async () => {
-	let finish!: () => void
-	save.mockRejectedValueOnce(new Error('Offline')).mockImplementationOnce(
-		() =>
-			new Promise<void>((resolve) => {
-				finish = resolve
-			})
-	)
+	const retry = Promise.withResolvers<DashboardSaveNotices>()
+	save.mockRejectedValueOnce(new Error('Offline')).mockReturnValueOnce(retry.promise)
 	await dashboard(true)
 	await press(radio('public'), 'ArrowRight')
 	const submit = async () => {
@@ -148,7 +144,7 @@ test('keeps dashboard settings after save failure and closes only after retry su
 	await submit()
 	expect(save).toHaveBeenCalledTimes(2)
 	await act(async () => {
-		finish()
+		retry.resolve({ refreshPending: false })
 		await new Promise((resolve) => setTimeout(resolve, 20))
 	})
 	expect(close).toHaveBeenCalledOnce()

@@ -1,5 +1,6 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { useTeam } from './useTeam'
@@ -8,6 +9,7 @@ export function CreateTeamCard() {
 	const { createTeamMutation } = useTeam()
 	const [isCreating, setIsCreating] = useState(false)
 	const [teamName, setTeamName] = useState('')
+	const createTeamButtonRef = useRef<HTMLButtonElement>(null)
 	const pending = createTeamMutation.isPending
 
 	const handleCreate = (event: FormEvent<HTMLFormElement>) => {
@@ -62,11 +64,17 @@ export function CreateTeamCard() {
 							size="md"
 							className="flex-1"
 							disabled={pending}
-							onClick={() => {
-								createTeamMutation.reset()
-								setIsCreating(false)
-								setTeamName('')
-							}}
+							onClick={() =>
+								// The form gives way to the Create Team button that opened it, which takes focus back.
+								keepFocus(
+									() => {
+										createTeamMutation.reset()
+										setIsCreating(false)
+										setTeamName('')
+									},
+									() => createTeamButtonRef.current
+								)
+							}
 						>
 							Cancel
 						</Button>
@@ -83,7 +91,7 @@ export function CreateTeamCard() {
 					</div>
 				</form>
 			) : (
-				<Button type="button" variant="primary" size="md" onClick={() => setIsCreating(true)}>
+				<Button type="button" variant="primary" size="md" ref={createTeamButtonRef} onClick={() => setIsCreating(true)}>
 					<Icon name="plus" height={16} width={16} />
 					Create Team
 				</Button>

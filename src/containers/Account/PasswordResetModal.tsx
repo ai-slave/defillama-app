@@ -9,7 +9,6 @@ interface PasswordResetModalProps {
 	isOpen: boolean
 	onClose: () => void
 	email: string
-	sent: boolean
 	onSend: (turnstileToken: string) => void
 	isPending: boolean
 	cooldownMessage: string
@@ -20,17 +19,9 @@ export function PasswordResetModal(props: PasswordResetModalProps) {
 	return <PasswordResetDialog key={useOpeningKey(props.isOpen)} {...props} />
 }
 
-function PasswordResetDialog({
-	isOpen,
-	onClose,
-	email,
-	sent,
-	onSend,
-	isPending,
-	cooldownMessage
-}: PasswordResetModalProps) {
+function PasswordResetDialog({ isOpen, onClose, email, onSend, isPending, cooldownMessage }: PasswordResetModalProps) {
 	// The caller runs the request and clears its result when it opens the dialog; the result is read from the
-	// shared mutation.
+	// shared mutation, so each opening starts on the form while the caller's cooldown carries over.
 	const { resetPasswordMutation } = useAuthContext()
 	// The send button stays disabled until Turnstile hands over a token.
 	const [turnstileToken, setTurnstileToken] = useState('')
@@ -40,7 +31,7 @@ function PasswordResetDialog({
 	const [resendRequested, setResendRequested] = useState(false)
 	const newLinkSent = resendRequested && resetPasswordMutation.isSuccess
 	// The sent step is an outcome: no security check or send button until another link is requested.
-	const showForm = !sent || (resendRequested && !resetPasswordMutation.isSuccess)
+	const showForm = !resetPasswordMutation.isSuccess
 
 	const handleClose = () => {
 		if (isPending) return
@@ -111,7 +102,9 @@ function PasswordResetDialog({
 						</Button>
 					}
 				>
-					<Button type="button" variant="primary" size="md" onClick={handleClose}>
+					{/* A sent link replaces the form and its focused send button, so the step's action takes the focus. The
+					    keys keep Done and Send reset link apart: in one slot, React would reuse the node and skip autoFocus. */}
+					<Button key="done" autoFocus type="button" variant="primary" size="md" onClick={handleClose}>
 						Done
 					</Button>
 				</DialogFooter>
@@ -123,12 +116,17 @@ function PasswordResetDialog({
 						</Button>
 					}
 				>
+					{/* Focusable while it waits for a token: a send clears the token and keeps focus here. After Send
+					    another link it replaces that button, so it takes the focus that button had. */}
 					<Button
+						key="send"
+						autoFocus={resendRequested}
 						type="button"
 						variant="primary"
 						size="md"
-						disabled={!isPending && !turnstileToken}
 						pendingLabel={isPending ? 'Sending…' : null}
+						disabled={!turnstileToken}
+						accessibleWhenDisabled
 						onClick={handleSend}
 					>
 						Send reset link

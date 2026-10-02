@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import type { Dashboard } from '../../dashboardTypes'
-import { useUpdateDashboard } from '../useDashboardAPI'
+import { type SavedDashboard, useUpdateDashboard } from '../useDashboardAPI'
 
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock }))
@@ -39,17 +39,17 @@ let root: Root
 let container: HTMLDivElement
 let update: ReturnType<typeof useUpdateDashboard>
 
-function Harness() {
-	update = useUpdateDashboard('dashboard', 'manual')
+function Harness({ source = 'manual' }: { source?: 'manual' | 'autosave' }) {
+	update = useUpdateDashboard('dashboard', source)
 	return null
 }
 
-async function mount() {
+async function mount(source?: 'manual' | 'autosave') {
 	session.client.setQueryData(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'], cached)
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
-				<Harness />
+				<Harness source={source} />
 			</session.Wrapper>
 		)
 	)
@@ -98,10 +98,10 @@ test('saves without a conflict baseline when no dashboard is cached', async () =
 	expect(reads()).toHaveLength(0)
 })
 
-test('a conflict re-reads the dashboard, merges items and retries once against the fresh revision', async () => {
+test('a conflict re-reads the dashboard, merges items, retries once and hands the merge notice to the caller', async () => {
 	saveReplies.push(conflict())
 	await mount()
-	let result!: Dashboard
+	let result!: SavedDashboard
 	await act(async () => {
 		result = await save()
 	})
@@ -109,10 +109,20 @@ test('a conflict re-reads the dashboard, merges items and retries once against t
 	expect(saves()).toHaveLength(2)
 	expect(saves()[1].data.items).toEqual([a, c, b])
 	expect(saves()[1].baseEditedAt).toBe('v2')
-	expect(result.data.items).toEqual([a, c, b])
+	const { mergeNotice, ...dashboard } = result
+	expect(dashboard.data.items).toEqual([a, c, b])
+	expect(mergeNotice).toBe('This dashboard was changed in another tab or session. Your edits were merged.')
 	expect(session.client.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'])).toEqual(
-		result
+		dashboard
 	)
+	// The caller may still have a dialog open; it shows the notice when it reports the save.
+	expect(toastMock).not.toHaveBeenCalled()
+})
+
+test('an autosave that merges shows the merge notice itself', async () => {
+	saveReplies.push(conflict())
+	await mount('autosave')
+	await act(async () => save())
 	expect(toastMock).toHaveBeenCalledWith(
 		'This dashboard was changed in another tab or session. Your edits were merged.',
 		expect.objectContaining({ id: 'dashboard-merged' })

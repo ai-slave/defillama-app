@@ -187,7 +187,9 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 					<p className="body-sm text-secondary">
 						Sign a free message to prove you own this wallet. No transaction, gas fee or network switch.
 					</p>
+					{/* The review replaces the wait for the wallet, so its next step takes focus when it appears. */}
 					<Button
+						autoFocus
 						type="button"
 						variant="primary"
 						size="md"
@@ -219,14 +221,15 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 						</p>
 					) : null}
 					{selected && connectMutation.isPending ? (
-						<div role="status" aria-live="polite" className="flex flex-col gap-1">
+						// Keyed apart from the list, so the two never share a node that focus could stay on.
+						<div key="waiting" role="status" aria-live="polite" className="flex flex-col gap-1">
 							<LoadingIndicator label={`Waiting for ${selected.name}`} />
 							<p className="body-sm text-secondary">
 								Approve the connection in your wallet. Connecting won’t sign you in.
 							</p>
 						</div>
 					) : (
-						<div className="flex flex-col gap-3">
+						<div role="group" aria-label="Wallets" className="flex flex-col gap-3">
 							{available.map((connector) => {
 								const icon = connector.icon ?? walletIcons[connector.id]
 								return (

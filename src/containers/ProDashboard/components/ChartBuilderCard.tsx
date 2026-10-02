@@ -530,11 +530,13 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0 disabled:cursor-not-allowed"
 										aria-label={`Select color for ${series.name}`}
 									/>
+									{/* Reset disables itself once used; it stays focusable so focus does not drop to the page. */}
 									<ProButton
 										size="sm"
 										variant="ghost"
-										onClick={() => handleSeriesColorReset(series.name)}
+										accessibleWhenDisabled
 										disabled={isReadOnly || !hasOverride}
+										onClick={() => handleSeriesColorReset(series.name)}
 									>
 										Reset
 									</ProButton>
@@ -544,8 +546,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						<ProButton
 							size="sm"
 							variant="secondary"
-							onClick={handleResetAllSeriesColors}
+							accessibleWhenDisabled
 							disabled={isReadOnly || !hasCustomSeriesColors}
+							onClick={handleResetAllSeriesColors}
 						>
 							Reset All
 						</ProButton>

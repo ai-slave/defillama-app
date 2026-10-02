@@ -228,16 +228,17 @@ function CapabilityRow({
 
 function SetAlertChip({ onOpenAlerts }: { onOpenAlerts: () => void }) {
 	return (
-		<Ariakit.Button
+		<Button
+			type="button"
+			size="md"
 			onClick={() => {
 				trackUmamiEvent('llamaai-alerts-open', { source: 'landing' })
 				onOpenAlerts()
 			}}
-			render={<Button type="button" size="md" />}
 		>
 			<Icon name="calendar-plus" height={14} width={14} className="text-warning" />
 			Set an alert
-		</Ariakit.Button>
+		</Button>
 	)
 }
 

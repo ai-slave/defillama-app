@@ -322,7 +322,17 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 						</div>
 
 						<div className="flex shrink-0 flex-wrap items-center gap-3">
-							<Ariakit.Button
+							<ProButton
+								variant="primary"
+								icon={
+									running ? (
+										<LoadingSpinner size={14} />
+									) : (
+										<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+											<path d="M8 5v14l11-7z" />
+										</svg>
+									)
+								}
 								type="button"
 								onClick={() => (running ? stopQuery() : void run(sql))}
 								disabled={controls.run.disabled}
@@ -330,20 +340,6 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 								{...(engineLoading
 									? { title: 'The in-browser SQL engine is still loading, this takes a few seconds the first time.' }
 									: {})}
-								render={
-									<ProButton
-										variant="primary"
-										icon={
-											running ? (
-												<LoadingSpinner size={14} />
-											) : (
-												<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-													<path d="M8 5v14l11-7z" />
-												</svg>
-											)
-										}
-									/>
-								}
 							>
 								{controls.run.label}
 								{!running ? (
@@ -352,7 +348,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 										<Keycap muted>↵</Keycap>
 									</span>
 								) : null}
-							</Ariakit.Button>
+							</ProButton>
 							{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
 							{engineLoading ? (
 								<span className="text-xs text-pro-text-tertiary">
@@ -463,15 +459,16 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 						<ProButton type="button" variant="secondary" onClick={handleClose}>
 							Cancel
 						</ProButton>
-						<Ariakit.Button
+						<ProButton
+							variant="primary"
+							{...(savePending ? { icon: <LoadingSpinner size={14} /> } : {})}
 							type="button"
 							onClick={() => (savePending ? stopQuery() : void handleSave())}
 							accessibleWhenDisabled
 							disabled={controls.save.disabled}
-							render={<ProButton variant="primary" {...(savePending ? { icon: <LoadingSpinner size={14} /> } : {})} />}
 						>
 							{controls.save.label}
-						</Ariakit.Button>
+						</ProButton>
 					</div>
 				</div>
 			</Ariakit.Dialog>

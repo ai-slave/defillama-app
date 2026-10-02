@@ -2,16 +2,17 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
-import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
+import { ActionFeedbackStatus, ConfirmableContent, useActionFeedback } from './ActionFeedback'
 import { parseCsv } from './csvParse'
 import type { DatasetDefinition, DatasetExcludeToggle } from './datasets'
 import { FormatSplitButton } from './FormatSplitButton'
@@ -192,6 +193,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 		return initial
 	})
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
+	const { outcome, report, confirmed } = useActionFeedback()
 	const [appliedInitialConfig, setAppliedInitialConfig] = useState<ReturnType<typeof applyDatasetConfig> | null>(null)
 	const tableContainerRef = useRef<HTMLDivElement>(null)
 	const { ref: attachOverflow, canScrollLeft, canScrollRight } = useHorizontalOverflow()
@@ -413,17 +415,17 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	const handleDownload = useCallback(
 		(format: DownloadFormat = 'csv') => {
 			if (selectedCount === 0) {
-				toast.error('Select at least one column')
+				report('download', false, 'Select at least one column')
 				return
 			}
 			const csvRows = buildSelectedCsvRows(columnMeta, cols, displayedRows)
 			if (csvRows.length <= 1) {
-				toast.error('No rows to download')
+				report('download', false, 'No rows to download')
 				return
 			}
 			const extension = format === 'json' ? 'json' : 'csv'
 			downloadTabular(format, `${dataset.slug}.${extension}`, csvRows, { addTimestamp: false })
-			toast.success(`Downloaded ${dataset.slug}.${extension}`)
+			report('download', true, `Downloaded ${dataset.slug}.${extension}`)
 
 			const configBase = extractDatasetConfig({
 				slug: dataset.slug,
@@ -453,7 +455,8 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 			selectedChain,
 			excludeState,
 			rowLimit,
-			recordRecent
+			recordRecent,
+			report
 		]
 	)
 
@@ -478,9 +481,9 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 				{ replaceByName: replaceExisting }
 			)
 			setShowSaveDialog(false)
-			toast.success(`Saved preset "${name}"`)
+			report('save-preset', true, `Saved preset "${name}"`)
 		},
-		[dataset.slug, headers, cols, sortState, selectedChain, excludeState, rowLimit, saveDownload]
+		[dataset.slug, headers, cols, sortState, selectedChain, excludeState, rowLimit, saveDownload, report]
 	)
 
 	const currentConfig = useMemo<SavedDownloadInput | null>(() => {
@@ -498,25 +501,25 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 
 	const handleCopyLink = useCallback(async () => {
 		if (!currentConfig) {
-			toast.error('Nothing to share yet')
+			report('copy-link', false, 'Nothing to share yet')
 			return
 		}
 		if (typeof window === 'undefined' || !navigator.clipboard) {
-			toast.error('Clipboard not available')
+			report('copy-link', false, 'Clipboard not available')
 			return
 		}
 		try {
 			const url = buildShareUrl(window.location.origin, '/downloads', currentConfig)
 			if (url.length > 2000) {
-				toast.error('Config too large to share — save as preset instead')
+				report('copy-link', false, 'Config too large to share — save as preset instead')
 				return
 			}
 			await navigator.clipboard.writeText(url)
-			toast.success('Link copied')
+			report('copy-link', true, 'Link copied')
 		} catch {
-			toast.error('Failed to copy link')
+			report('copy-link', false, 'Failed to copy link')
 		}
-	}, [currentConfig])
+	}, [currentConfig, report])
 
 	const suggestedPresetName = useMemo(() => {
 		if (!currentConfig) return ''
@@ -527,21 +530,21 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 
 	const handleCopy = useCallback(async () => {
 		if (selectedCount === 0) {
-			toast.error('Select at least one column')
+			report('copy', false, 'Select at least one column')
 			return
 		}
 		const tsv = buildTsvString(columnMeta, cols, displayedRows)
 		if (!tsv) {
-			toast.error('No data to copy')
+			report('copy', false, 'No data to copy')
 			return
 		}
 		try {
 			await navigator.clipboard.writeText(tsv)
-			toast.success('Copied to clipboard (paste into spreadsheets)')
+			report('copy', true, 'Copied to clipboard (paste into spreadsheets)')
 		} catch {
-			toast.error('Failed to copy')
+			report('copy', false, 'Failed to copy')
 		}
-	}, [columnMeta, cols, displayedRows, selectedCount])
+	}, [columnMeta, cols, displayedRows, selectedCount, report])
 
 	const activeSortDirection = sortState ? sortState.direction : false
 	const allSelected = headers.length > 0 && cols.size === headers.length
@@ -555,6 +558,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 				}}
 			>
 				<Ariakit.Dialog
+					ref={catchLostFocus}
 					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 					portal
 					unmountOnHide
@@ -590,8 +594,21 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 										className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 										title="Copy selected columns as TSV"
 									>
-										<Icon name="clipboard" className="size-3.5" />
-										<span className="hidden lg:inline">Copy</span>
+										<ConfirmableContent
+											confirmed={confirmed('copy')}
+											idle={
+												<>
+													<Icon name="clipboard" className="size-3.5" />
+													<span className="hidden lg:inline">Copy</span>
+												</>
+											}
+											done={
+												<>
+													<Icon name="check" className="size-3.5" />
+													<span className="hidden lg:inline">Copied</span>
+												</>
+											}
+										/>
 									</button>
 
 									{!isPreview ? (
@@ -602,8 +619,21 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 											title="Save as preset"
 										>
-											<Icon name="bookmark" className="size-3.5" />
-											<span className="hidden lg:inline">Save preset</span>
+											<ConfirmableContent
+												confirmed={confirmed('save-preset')}
+												idle={
+													<>
+														<Icon name="bookmark" className="size-3.5" />
+														<span className="hidden lg:inline">Save preset</span>
+													</>
+												}
+												done={
+													<>
+														<Icon name="check" className="size-3.5" />
+														<span className="hidden lg:inline">Saved</span>
+													</>
+												}
+											/>
 										</button>
 									) : null}
 
@@ -615,7 +645,11 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 											title="Copy shareable link"
 										>
-											<Icon name="link" className="size-3.5" />
+											<ConfirmableContent
+												confirmed={confirmed('copy-link')}
+												idle={<Icon name="link" className="size-3.5" />}
+												done={<Icon name="check" className="size-3.5" />}
+											/>
 										</button>
 									) : null}
 
@@ -632,7 +666,11 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 											<span className="hidden sm:inline">Download</span>
 										</button>
 									) : (
-										<FormatSplitButton onDownload={(fmt) => handleDownload(fmt)} disabled={selectedCount === 0} />
+										<FormatSplitButton
+											onDownload={(fmt) => handleDownload(fmt)}
+											disabled={selectedCount === 0}
+											confirmed={confirmed('download')}
+										/>
 									)}
 								</>
 							) : null}
@@ -705,7 +743,11 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 											className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:hidden"
 											title="Copy selected columns as TSV"
 										>
-											<Icon name="clipboard" className="size-3.5" />
+											<ConfirmableContent
+												confirmed={confirmed('copy')}
+												idle={<Icon name="clipboard" className="size-3.5" />}
+												done={<Icon name="check" className="size-3.5" />}
+											/>
 										</button>
 									</>
 								) : (
@@ -714,6 +756,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 							</div>
 						) : null}
 						<SavedPresetNotice notices={missingColumnNotices(appliedInitialConfig)} />
+						<ActionFeedbackStatus outcome={outcome} />
 					</div>
 
 					{loading ? (

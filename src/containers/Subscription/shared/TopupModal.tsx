@@ -2,7 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useCallback, useId, useRef, useState } from 'react'
 import { useCreateTopup, TOPUP_CONFIG } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBackButton, DialogBody, DialogHeader } from '~/ui/Dialog'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { Dialog, DialogBackButton, DialogBody, DialogCloseGuard, DialogHeader } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -41,7 +43,11 @@ export function TopupForm({
 	const [amount, setAmount] = useState('10')
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
 	const [isRedirecting, setIsRedirecting] = useState(false)
+	// Set while the reader confirms leaving the card step: the step that leaving would take (close, a tab, Back).
+	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
 	const errorSlotRef = useRef<HTMLDivElement>(null)
+	// Back replaces the card step along with itself, so it hands focus to the amount field the reader returns to.
+	const amountInputRef = useRef<HTMLInputElement>(null)
 	// The form is on screen while its error slot is mounted and its dialog has not started closing (the leave
 	// animation keeps it mounted). Outcomes after that are the user's to miss: no redirect, a toast for an error.
 	// While mounted, the form shows the pending request's error itself: nothing resets the mutation while it is
@@ -99,10 +105,14 @@ export function TopupForm({
 		setAmount(cleaned)
 	}
 
-	const goBack = () => {
-		setStep('select')
-		topupMutation.reset()
-	}
+	const goBack = () =>
+		keepFocus(
+			() => {
+				setStep('select')
+				topupMutation.reset()
+			},
+			() => amountInputRef.current
+		)
 
 	const errorMessage = topupMutation.error?.message ?? null
 	const stripeDescription = (
@@ -115,8 +125,36 @@ export function TopupForm({
 		</>
 	)
 
+	// Once Stripe holds a checkout session it may already be charging the card, so leaving the card step asks
+	// first. Before that, while the checkout loads, nothing can be paid and Back and close stay direct.
+	const hasCheckoutSession = step === 'stripe' && topupMutation.data?.provider === 'stripe'
+	const askBeforeLeaving = (proceed: () => void) => (hasCheckoutSession ? setPendingLeave(() => proceed) : proceed())
+	const leaveGuard = hasCheckoutSession ? (
+		<>
+			<DialogCloseGuard onAttemptLeave={askBeforeLeaving} />
+			<ConfirmDialog
+				open={pendingLeave !== null}
+				onClose={() => setPendingLeave(null)}
+				portal
+				unmountOnHide
+				title="Leave checkout?"
+				description="Your balance isn't topped up until the payment finishes. Leaving closes this checkout."
+				cancelLabel="Keep paying"
+				confirmLabel="Leave"
+				pendingLabel={null}
+				error={null}
+				onConfirm={() => {
+					const proceed = pendingLeave!
+					setPendingLeave(null)
+					proceed()
+				}}
+			/>
+		</>
+	) : null
+
 	const content = (
 		<>
+			{leaveGuard}
 			{step === 'select' ? (
 				<>
 					<div className="flex flex-col gap-2">
@@ -136,13 +174,14 @@ export function TopupForm({
 								autoFocus={inDialog}
 								render={
 									<Input
+										ref={amountInputRef}
 										id={amountId}
 										type="text"
 										inputMode="decimal"
 										value={amount}
 										onChange={(e) => handleAmountInput(e.target.value)}
 										placeholder="0.00"
-										disabled={isPaymentPending}
+										readOnly={isPaymentPending}
 										aria-invalid={hasAmountError || undefined}
 										aria-describedby={isValidAmount ? undefined : amountMessageId}
 										className="w-full pl-7"
@@ -218,7 +257,11 @@ export function TopupForm({
 				<DialogHeader
 					leading={
 						step === 'stripe' ? (
-							<DialogBackButton label="Back to amount" onClick={goBack} disabled={topupMutation.isPending} />
+							<DialogBackButton
+								label="Back to amount"
+								onClick={() => askBeforeLeaving(goBack)}
+								disabled={topupMutation.isPending}
+							/>
 						) : null
 					}
 					title={step === 'stripe' ? 'Complete payment' : 'Top up balance'}
@@ -244,7 +287,7 @@ export function TopupForm({
 						variant="ghost"
 						size="sm"
 						className="-ml-2"
-						onClick={goBack}
+						onClick={() => askBeforeLeaving(goBack)}
 						disabled={topupMutation.isPending}
 					>
 						<Icon name="arrow-left" className="size-3.5" aria-hidden="true" />

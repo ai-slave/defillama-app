@@ -143,7 +143,7 @@ test('resending the code labels only the resend as pending and confirms the new 
 	pb.authStore.save(token('wallet-user'), record('wallet-user'))
 	await renderModalAtCodeStep()
 	// The countdown starts with the first code, even though the code step mounts after it was sent.
-	expect(button('Resend code (60s)')!.disabled).toBe(true)
+	expect(button('Resend code (60s)')!.getAttribute('aria-disabled')).toBe('true')
 	await act(async () => vi.advanceTimersByTime(60_000))
 
 	const resend = Promise.withResolvers<Response>()
@@ -157,7 +157,29 @@ test('resending the code labels only the resend as pending and confirms the new 
 	await settle()
 
 	expect(document.querySelector('[role=dialog] [role=status]')?.textContent).toBe('Code sent. Check your inbox.')
-	expect(button('Resend code (60s)')!.disabled).toBe(true)
+	expect(button('Resend code (60s)')!.getAttribute('aria-disabled')).toBe('true')
+})
+
+test('the resend button keeps focus through the countdown its sent code starts', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	await act(async () => vi.advanceTimersByTime(60_000))
+	const resend = button('Resend code')!
+	await act(async () => resend.focus())
+	await act(async () => resend.click())
+	await settle()
+
+	expect(accessibleName(resend)).toBe('Resend code (60s)')
+	// happy-dom keeps focus on a natively disabled button, so the contract is that the button never becomes one.
+	expect(resend.disabled).toBe(false)
+	expect(document.activeElement).toBe(resend)
+})
+
+test('the code step opens on its verification code field', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	expect(document.activeElement).toBe(document.querySelector('input[placeholder="000000"]'))
 })
 
 test('a failed code request shows its reason inside the dialog', async () => {

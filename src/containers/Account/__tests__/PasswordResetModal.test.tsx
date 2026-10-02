@@ -107,3 +107,59 @@ test('a reopened dialog starts from the send step without the last failure', asy
 	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
 	expect(document.querySelector('[role=dialog] [role=alert]')).toBeNull()
 })
+
+test('a reopened dialog after a sent link starts on the form, and the resend cooldown still applies', async () => {
+	session.serve({ [RESET]: {} })
+	await openAndSend()
+	await waitForUi(() => expect(dialogText()).toContain('We sent a password reset link to subscriber@example.com.'))
+	await act(async () => button('Done').click())
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')).toBeNull())
+
+	await act(async () => button('Change Password').click())
+	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
+	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Change password')
+	await act(async () => button('Test CAPTCHA').click())
+	await act(async () => button('Send reset link').click())
+	await waitForUi(() => expect(dialogText()).toMatch(/Wait \d+s before resending\./))
+})
+
+test('Send another link hands focus to the send button that replaces it', async () => {
+	session.serve({ [RESET]: {} })
+	await openAndSend()
+	await waitForUi(() => expect(dialogText()).toContain('We sent a password reset link to subscriber@example.com.'))
+	await act(async () => button('Send another link').focus())
+	await act(async () => button('Send another link').click())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Send reset link')))
+})
+
+test('a sent link hands focus from the send button to Done on the step that replaces the form', async () => {
+	session.serve({ [RESET]: {} })
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<AuthenticationCard />
+			</session.Wrapper>
+		)
+	)
+	await act(async () => button('Change Password').click())
+	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
+	await act(async () => button('Test CAPTCHA').click())
+	await act(async () => {
+		button('Send reset link').focus()
+		button('Send reset link').click()
+	})
+	await waitForUi(() => expect(dialogText()).toContain('We sent a password reset link to subscriber@example.com.'))
+	expect(document.activeElement).toBe(button('Done'))
+})
+
+test('the send button keeps focus when a send spends its security token', async () => {
+	session.serve({ [RESET]: fixtureStatus(429, { error: 'rate limited' }) })
+	await openAndSend()
+	await waitForUi(() => expect(document.querySelector('[role=dialog] [role=alert]')).not.toBeNull())
+	const send = button('Send reset link')
+	await act(async () => send.focus())
+	// No token until the check runs again: the button says so without leaving the tab order.
+	expect(send.disabled).toBe(false)
+	expect(send.getAttribute('aria-disabled')).toBe('true')
+	expect(document.activeElement).toBe(send)
+})

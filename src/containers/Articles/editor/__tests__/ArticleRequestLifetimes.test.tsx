@@ -104,6 +104,32 @@ test('an in-flight upload of a removed person does not block saving the remainin
 	await click('Update panel')
 	expect(submit.mock.calls[0][0].items).toMatchObject([{ name: 'Bob', src: '/Bob.png' }])
 })
+async function press(name: string) {
+	const button = findButton(name)!
+	await act(async () => {
+		button.focus()
+		button.click()
+	})
+}
+test('a moved person keeps focus on its arrows, and the end arrows stay focusable', async () => {
+	await mountPanel()
+	expect(findButton('Move person 1 up')!.disabled).toBe(false)
+	expect(findButton('Move person 1 up')!.getAttribute('aria-disabled')).toBe('true')
+	await press('Move person 1 down')
+	// Alice is now last, so her down arrow is spent; her up arrow takes focus.
+	expect(accessibleName(document.activeElement!)).toBe('Move person 2 up')
+	expect(
+		document.activeElement!.closest('fieldset')!.querySelector<HTMLInputElement>('input[id$="-name"]')!.value
+	).toBe('Alice')
+})
+test("removing a person hands focus to the next person's ×, then to Add person once one is left", async () => {
+	await mountPanel({ ...peopleConfig, items: [...peopleConfig.items, { ...peopleConfig.items[0], name: 'Carol' }] })
+	await press('Remove person 1')
+	expect(accessibleName(document.activeElement!)).toBe('Remove person 1')
+	await press('Remove person 1')
+	expect(accessibleName(document.activeElement!)).toBe('Add person')
+	expect(findButton('Remove person 1')!.getAttribute('aria-disabled')).toBe('true')
+})
 test('inserting a panel with a person missing an image shows the error on that row and focuses its image', async () => {
 	const submit = await mountPanel(null)
 	await click('Insert panel')

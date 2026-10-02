@@ -23,6 +23,7 @@ import { AUTH_SERVER } from '~/constants'
 import { clearPersistedUserInterests } from '~/containers/Announcements/userInterestsStorage'
 import { refreshNowSeconds } from '~/hooks/useNowSeconds'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { useOpeningKey } from '~/ui/Dialog'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'
 
@@ -171,6 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		isOpen: boolean
 		email?: string
 	} | null>(null)
+	// Each opening of the sheet starts without the last opening's typed code and verify error; the send, and with it
+	// the resend cooldown, lives here and carries over.
+	const verifyEmailOpening = useOpeningKey(verifyEmailPrompt?.isOpen ?? false)
 	const [oauthWelcomeAccountId, setOauthWelcomeAccountId] = useState<string | null>(null)
 	const [signupAccountId, setSignupAccountId] = useState<string | null>(null)
 	const consumeSignupOutcome = useCallback(() => setSignupAccountId(null), [])
@@ -649,7 +653,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 			{verifyEmailPrompt && !oauthWelcomeAccountId ? (
 				<VerifyEmailDialog
-					key={verifyEmailPrompt.accountId}
+					key={`${verifyEmailPrompt.accountId}:${verifyEmailOpening}`}
 					accountId={verifyEmailPrompt.accountId}
 					isOpen={verifyEmailPrompt.isOpen}
 					email={verifyEmailPrompt.email}

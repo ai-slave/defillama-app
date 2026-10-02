@@ -14,6 +14,8 @@ import { ChartBuilderCard } from '../ChartBuilderCard'
 const http = installFixtureFetch()
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
+// The chart itself is not under test here; its canvas cannot run in happy-dom.
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
 
 const config: ChartBuilderConfig['config'] = {
 	categories: [],
@@ -105,4 +107,31 @@ describe('ChartBuilderCard streamed loading state', () => {
 		await act(async () => root.unmount())
 		container.remove()
 	})
+})
+
+test('series color Reset buttons stay focusable while there is no override to reset', async () => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	const queryClient = new QueryClient()
+	const day = Math.floor(Date.now() / 1000 / 86_400) * 86_400
+	queryClient.setQueryData(queryKey, { series: [{ name: 'Aave', data: [[day * 1000, 5]], color: '#123456' }] })
+	const container = document.createElement('div')
+	document.body.appendChild(container)
+	const root = createRoot(container)
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={queryClient}>
+				<DashboardTestProvider mode="edit" time={{ timePeriod: 'all' }}>
+					<ChartBuilderCard builder={builder} />
+				</DashboardTestProvider>
+			</QueryClientProvider>
+		)
+	)
+	const button = (label: string) => [...container.querySelectorAll('button')].find((el) => el.textContent === label)!
+	await act(async () => button('Colors').click())
+	for (const label of ['Reset', 'Reset All']) {
+		expect(button(label).disabled).toBe(false)
+		expect(button(label).getAttribute('aria-disabled')).toBe('true')
+	}
+	await act(async () => root.unmount())
+	container.remove()
 })

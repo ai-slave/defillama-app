@@ -38,11 +38,17 @@ export function ProjectsGrid() {
 	const createRef = useRef<HTMLButtonElement>(null)
 	const renameRef = useRef<HTMLButtonElement>(null)
 	const deleteRef = useRef<HTMLButtonElement>(null)
+	const searchRef = useRef<HTMLInputElement>(null)
 	const createStore = Ariakit.useDialogStore()
 	const renameStore = Ariakit.useDialogStore()
 	const deleteStore = Ariakit.useDialogStore()
 	const { data, isLoading, error, refetch } = useProjectList(!isLocked)
 	const [query, setQuery] = useState('')
+	// Both clear controls leave once the search is empty; the search field takes focus.
+	const clearSearch = () => {
+		setQuery('')
+		searchRef.current?.focus()
+	}
 	const [sortBy, setSortBy] = useState<SortBy>('updated')
 	const [projectToRename, setProjectToRename] = useState<ProjectWithStats | null>(null)
 	const [projectToDelete, setProjectToDelete] = useState<ProjectWithStats | null>(null)
@@ -153,6 +159,7 @@ export function ProjectsGrid() {
 				<div className={searchFieldFlexibleWrapperStyles}>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Input
+						ref={searchRef}
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						aria-label="Search projects"
@@ -166,7 +173,7 @@ export function ProjectsGrid() {
 							size="sm"
 							square
 							aria-label="Clear project search"
-							onClick={() => setQuery('')}
+							onClick={clearSearch}
 							className="absolute top-0 right-1 bottom-0 my-auto"
 						>
 							<Icon name="x" height={14} width={14} />
@@ -201,7 +208,7 @@ export function ProjectsGrid() {
 					<Icon name="search" height={24} width={24} className="text-tertiary" />
 					<p>No projects match &ldquo;{deferredQuery.trim()}&rdquo;.</p>
 					{hasSearchQuery ? (
-						<Button type="button" size="md" onClick={() => setQuery('')}>
+						<Button type="button" size="md" onClick={clearSearch}>
 							Clear search
 						</Button>
 					) : null}

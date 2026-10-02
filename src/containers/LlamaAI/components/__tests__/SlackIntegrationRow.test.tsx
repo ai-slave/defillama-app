@@ -93,3 +93,60 @@ test('a refused disconnect keeps the workspace and says so in the confirmation, 
 	expect(confirmation()!.textContent).not.toContain("Couldn't disconnect")
 	expect(document.body.textContent).toContain('Llama Research')
 })
+
+async function press(element: HTMLElement) {
+	await act(async () => {
+		element.focus()
+		element.click()
+	})
+}
+async function renderRow() {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<SlackIntegrationRow title="Slack" description="Alerts in Slack." />
+			</session.Wrapper>
+		)
+	)
+}
+
+test('a disconnected workspace hands focus to the next workspace', async () => {
+	const second: SlackLink = { ...workspace, team_id: 'T2', team_name: 'Llama Ops' }
+	session.serve({
+		'https://ai.llama.fi/slack/status': { links: [workspace, second], pending: null },
+		'https://ai.llama.fi/slack/links/T1': { unlinked: true }
+	})
+	await renderRow()
+	await waitForUi(() => expect(document.body.textContent).toContain('Llama Ops'))
+	await press(button('Disconnect')!)
+	await waitForUi(() => expect(confirmation()).not.toBeNull())
+	await press(button('Disconnect', confirmation()!)!)
+	await waitForUi(() => expect(document.body.textContent).not.toContain('Llama Research'))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Disconnect')))
+})
+
+test('Add to Slack keeps focus while it starts the link', async () => {
+	session.serve({
+		'https://ai.llama.fi/slack/status': { links: [], pending: null },
+		'https://ai.llama.fi/slack/link/start': () => new Promise<Response>(() => {})
+	})
+	await renderRow()
+	await waitForUi(() => expect(button('Add to Slack')).toBeDefined())
+	const add = button('Add to Slack')!
+	await press(add)
+	await waitForUi(() => expect(add.textContent).toBe('Opening…'))
+	expect(add.disabled).toBe(false)
+	expect(add.getAttribute('aria-disabled')).toBe('true')
+	expect(document.activeElement).toBe(add)
+})
+
+test('cancelling a pending link hands focus to Add to Slack', async () => {
+	session.serve({
+		'https://ai.llama.fi/slack/status': { links: [], pending: { expiresAt: '2100-01-01T00:00:00.000Z' } },
+		'https://ai.llama.fi/slack/link/cancel': { cancelled: true }
+	})
+	await renderRow()
+	await waitForUi(() => expect(button('Cancel')).toBeDefined())
+	await press(button('Cancel')!)
+	await waitForUi(() => expect(document.activeElement).toBe(button('Add to Slack')))
+})

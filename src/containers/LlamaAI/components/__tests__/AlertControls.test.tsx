@@ -182,6 +182,22 @@ test('a created alert shows its outcome in the dialog until Done closes it', asy
 	expect(alertCreations()).toHaveLength(1)
 })
 
+test('an alert refused at the plan cap moves focus to the upgrade step', async () => {
+	session.serve({ [`${AI}/alerts`]: () => Response.json({ error: 'alert_cap_reached' }, { status: 403 }) })
+	await mountModal({
+		prefill: { token_nk: 'coingecko:bitcoin', symbol: 'btc', value: 50_000, op: 'below' }
+	})
+	await act(async () => {
+		const submit = document.querySelector<HTMLButtonElement>('button[type="submit"]')!
+		submit.focus()
+		submit.click()
+		await settle()
+	})
+	const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+	expect(dialog.querySelector('h2')?.textContent).toBe('Alert limit reached')
+	expect(document.activeElement?.textContent).toBe('Upgrade to Pro')
+})
+
 test('while an alert is being created its fields cannot change what the outcome describes', async () => {
 	const created = Promise.withResolvers<Response>()
 	session.serve({ [`${AI}/alerts`]: () => created.promise })

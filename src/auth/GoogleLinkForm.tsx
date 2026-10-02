@@ -1,4 +1,4 @@
-import type { DialogStore } from '@ariakit/react'
+import type * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useCallback, useId, useSyncExternalStore } from 'react'
 import { useAuthContext } from '~/auth'
@@ -30,7 +30,7 @@ export function GoogleLinkForm({
 	store,
 	onVerified
 }: {
-	dialogStore: DialogStore
+	dialogStore: Ariakit.DialogStore
 	challenge: GoogleLinkChallenge
 	error?: string
 	store: SignInFlowStore
@@ -131,7 +131,8 @@ export function GoogleLinkForm({
 				<input
 					type="text"
 					name="code"
-					disabled={pending}
+					// Read-only rather than disabled while a request runs, so the field keeps focus.
+					readOnly={pending}
 					aria-describedby={error ? errorId : undefined}
 					inputMode="numeric"
 					autoComplete="one-time-code"
@@ -162,13 +163,15 @@ export function GoogleLinkForm({
 				</div>
 			) : null}
 			<div className="flex flex-col items-center gap-3">
+				{/* Focusable while it waits: a sent code starts the wait while the button still has focus. */}
 				<Button
 					type="button"
 					variant="ghost"
 					size="sm"
-					onClick={(event) => void handleResend(event.currentTarget.form!)}
-					disabled={!resendGoogleLinkMutation.isPending && (!canResend || pending)}
 					pendingLabel={resendGoogleLinkMutation.isPending ? 'Sending code…' : null}
+					disabled={!canResend || pending}
+					accessibleWhenDisabled
+					onClick={(event) => void handleResend(event.currentTarget.form!)}
 				>
 					{canResend ? 'Resend code' : 'Resend available shortly'}
 				</Button>

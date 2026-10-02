@@ -261,13 +261,15 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									Number of seats
 								</label>
 								<div className="flex items-center gap-2">
+									{/* Focusable at 1 seat: the press that reaches it keeps focus. */}
 									<Button
 										type="button"
 										aria-label="Decrease seats"
-										onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
-										disabled={seatCount <= 1 || !canChangeTeamBilling}
 										size="md"
 										square
+										disabled={seatCount <= 1 || !canChangeTeamBilling}
+										accessibleWhenDisabled
+										onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
 									>
 										<Icon name="minus" className="size-4" aria-hidden="true" />
 									</Button>

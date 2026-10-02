@@ -5,6 +5,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { DialogBody, DialogFooter, DialogHeader, SideSheet } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
@@ -117,11 +118,21 @@ export function ArticleMetaDialog({
 		setGuestRows(next)
 		commitGuestAuthors(next)
 	}
-	const removeGuestAuthor = (index: number) => {
-		const next = guestRows.filter((_, i) => i !== index)
-		setGuestRows(next)
-		commitGuestAuthors(next)
-	}
+	const guestListRef = useRef<HTMLUListElement>(null)
+	const addGuestRef = useRef<HTMLButtonElement>(null)
+	// The removed row's × hands focus to the × that takes its place, the one above, or Add guest co-author.
+	const removeGuestAuthor = (index: number) =>
+		keepFocus(
+			() => {
+				const next = guestRows.filter((_, i) => i !== index)
+				setGuestRows(next)
+				commitGuestAuthors(next)
+			},
+			() => {
+				const removeButtons = guestListRef.current?.querySelectorAll<HTMLElement>('[data-guest-remove]')
+				return removeButtons?.[Math.min(index, removeButtons.length - 1)] ?? addGuestRef.current
+			}
+		)
 
 	const updatePageAssets = (rows: Array<ArticlePageAsset>) => {
 		setAssetRows(rows)
@@ -151,9 +162,23 @@ export function ArticleMetaDialog({
 	const runAuthorAction = async (source: 'add' | 'list', request: Promise<string | null>) => {
 		setAuthorError(null)
 		const message = await request
-		if (!message) return
+		if (!message) return true
 		if (sheetOnScreen()) setAuthorError({ source, message })
 		else toast.error(message)
+		return false
+	}
+	const authorListRef = useRef<HTMLUListElement>(null)
+	// A removed co-author's row leaves once the list reloads. While its Remove still holds focus, focus moves on to
+	// the next co-author's Remove, the previous one's, or the add field.
+	const removeCollaborator = async (remove: HTMLButtonElement, pbUserId: string) => {
+		const row = remove.closest('li')!
+		if (!(await runAuthorAction('list', handleRemoveCollaborator(pbUserId)))) return
+		if (document.activeElement !== remove) return
+		const neighbour =
+			row.nextElementSibling?.querySelector<HTMLElement>('[data-author-remove]') ??
+			row.previousElementSibling?.querySelector<HTMLElement>('[data-author-remove]') ??
+			document.getElementById(`${id}-collaborator`)
+		neighbour?.focus()
 	}
 	const addError = authorError?.source === 'add' ? authorError.message : null
 
@@ -625,7 +650,7 @@ export function ArticleMetaDialog({
 							</InlineStatus>
 						) : null}
 						{authors.length > 0 ? (
-							<ul className="flex flex-col gap-2">
+							<ul ref={authorListRef} tabIndex={-1} aria-label="Authors" className="flex flex-col gap-2">
 								{authors.map((entry) => (
 									<li
 										key={entry.pbUserId}
@@ -685,8 +710,9 @@ export function ArticleMetaDialog({
 													size="sm"
 													variant="ghost"
 													aria-label={`Remove ${entry.profile.displayName}`}
+													data-author-remove
 													pendingLabel={collaboratorRemovingId === entry.pbUserId ? 'Removing…' : null}
-													onClick={() => void runAuthorAction('list', handleRemoveCollaborator(entry.pbUserId))}
+													onClick={(event) => void removeCollaborator(event.currentTarget, entry.pbUserId)}
 												>
 													Remove
 												</Button>
@@ -751,7 +777,7 @@ export function ArticleMetaDialog({
 							shown on the article page.
 						</p>
 						{guestRows.length > 0 ? (
-							<ul className="flex flex-col gap-2">
+							<ul ref={guestListRef} className="flex flex-col gap-2">
 								{guestRows.map((guest, index) => (
 									<li
 										key={guest.id}
@@ -782,6 +808,7 @@ export function ArticleMetaDialog({
 												square
 												className="ml-auto"
 												aria-label={`Remove guest co-author ${index + 1}`}
+												data-guest-remove
 												onClick={() => removeGuestAuthor(index)}
 											>
 												<Icon name="x" className="size-3.5" />
@@ -814,7 +841,7 @@ export function ArticleMetaDialog({
 								))}
 							</ul>
 						) : null}
-						<Button type="button" size="sm" className="w-fit" onClick={addGuestAuthor}>
+						<Button ref={addGuestRef} type="button" size="sm" className="w-fit" onClick={addGuestAuthor}>
 							<Icon name="plus" className="size-3.5" />
 							Add guest co-author
 						</Button>
@@ -911,6 +938,13 @@ export function ArticleMetaDialog({
 				confirmLabel="Make owner"
 				tone="primary"
 				pendingLabel={transferringOwnership ? 'Transferring…' : null}
+				// A transfer takes the owner controls away, Make owner included; the authors list showing the new owner
+				// takes focus then.
+				autoFocusOnHide={(trigger) => {
+					if (trigger?.isConnected) return true
+					authorListRef.current?.focus()
+					return false
+				}}
 				error={transferOwnershipFailed ? "Couldn't transfer ownership. Try again." : null}
 				onConfirm={() => {
 					if (!transferTarget) return

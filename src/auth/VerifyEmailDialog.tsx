@@ -127,12 +127,14 @@ export function VerifyEmailDialog({
 					) : null}
 					<div className="flex flex-col items-center gap-3">
 						{deliveryFailed ? null : (
+							// Focusable through the countdown: a sent code starts it while the button still has focus.
 							<Button
 								type="button"
 								variant="ghost"
 								size="sm"
-								disabled={!send.isPending && (pending || cooldownSeconds > 0)}
 								pendingLabel={send.isPending ? 'Sending code…' : null}
+								disabled={pending || cooldownSeconds > 0}
+								accessibleWhenDisabled
 								onClick={resend}
 							>
 								{cooldownSeconds > 0 ? `Resend code (${cooldownSeconds}s)` : 'Resend code'}

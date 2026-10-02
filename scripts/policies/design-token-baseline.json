@@ -30,7 +30,7 @@
 	"product": {
 		"hex-in-classname": 24,
 		"dark-hex-variant": 8,
-		"arbitrary-font-size": 565,
+		"arbitrary-font-size": 562,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
@@ -45,7 +45,7 @@
 		"deprecated-tailwind-spelling": 0,
 		"raw-popover-surface": 45,
 		"hand-rolled-spinner": 20,
-		"ascii-ellipsis": 121,
+		"ascii-ellipsis": 119,
 		"raw-scope-note": 0,
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,

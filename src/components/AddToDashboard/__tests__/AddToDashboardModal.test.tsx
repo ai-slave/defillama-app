@@ -36,8 +36,10 @@ afterEach(async () => {
 	container.remove()
 })
 
+let store: Ariakit.DialogStore
 function OpenModal() {
 	const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
+	store = dialogStore
 	return <AddToDashboardModal dialogStore={dialogStore} chartConfig={chart} />
 }
 
@@ -82,6 +84,30 @@ test('submit says why it is disabled until a dashboard is picked or named', asyn
 	expect(footerText()).toBe('CancelAdd to dashboard')
 })
 
+test('Create new dashboard hands focus to the name field that replaces it', async () => {
+	await renderModal()
+	const create = button('Create new dashboard')
+	await act(async () => {
+		create.focus()
+		create.click()
+	})
+	expect(document.activeElement).toBe(dialog().querySelector('input[name="newDashboardName"]'))
+})
+
+test('each opening starts without the last search or new dashboard draft', async () => {
+	await renderModal()
+	await type(dialog().querySelector<HTMLInputElement>('input[placeholder="Search dashboards…"]')!, 'zzz')
+	await waitForUi(() => expect(dialog().textContent).toContain('No matches found'))
+	await act(async () => button('Create new dashboard').click())
+	await type(dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!, 'Research')
+	await act(async () => store.hide())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	await act(async () => store.show())
+	await waitForUi(() => expect(dialog().textContent).toContain('No dashboards yet'))
+	expect(dialog().querySelector('input[name="newDashboardName"]')).toBeNull()
+	expect(footerText()).toBe('Pick a dashboard or create a new oneCancelAdd to dashboard')
+})
+
 test('a failed create shows its error inside the open dialog, not as a toast', async () => {
 	await renderModal()
 	await act(async () => button('Create new dashboard').click())
@@ -118,11 +144,15 @@ test('a failed dashboard list keeps the saved dashboards, and its retry loads th
 			]
 		}
 	})
-	await act(async () => button('Try again').click())
+	await act(async () => {
+		button('Try again').focus()
+		button('Try again').click()
+	})
 
 	await waitForUi(() => expect(dialog().querySelector('[role="alert"]')).toBeNull())
-	// The retry button is gone, so focus lands on the list it loaded.
-	expect(document.activeElement?.textContent).toBe('Saved researchSecond research')
+	expect(dialog().textContent).toContain('Second research')
+	// The retry button is gone, so the dialog's net hands focus to its first control instead of the page.
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Close dialog'))
 })
 
 test('a failed dashboard list with nothing saved says so instead of claiming there are no dashboards', async () => {

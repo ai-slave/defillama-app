@@ -4,8 +4,8 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import type { DashboardRatingDecision } from '../dashboardTypes'
+import { ProButton } from '../ui/ProButton'
 
 interface RatingProps {
 	sessionId: string
@@ -28,6 +28,8 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 			if (!formRef.current?.isConnected) toast.error(error.message)
 		}
 	})
+	const skipping = submission.isPending && 'skipped' in submission.variables
+	const saving = submission.isPending && !skipping
 	const bannerFeedbackId = `${sessionId}-rating-feedback-banner`
 	const inlineFeedbackId = `${sessionId}-rating-feedback-inline`
 
@@ -68,16 +70,17 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 				<div className="flex flex-wrap items-center gap-4">
 					<h3 className="text-lg font-semibold">{currentTexts.title}</h3>
 					<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} size={20} />
-					<Ariakit.Button
-						accessibleWhenDisabled
+					<ProButton
 						type="button"
+						variant="ghost"
+						square
+						className="ml-auto"
 						onClick={handleSkip}
-						className="ml-auto rounded-md p-2 hover:bg-error/10 hover:text-error aria-disabled:opacity-50"
 						disabled={submission.isPending}
+						accessibleWhenDisabled
 						aria-label="Dismiss rating"
-					>
-						<Icon name="x" height={16} width={16} />
-					</Ariakit.Button>
+						icon={<Icon name="x" height={16} width={16} />}
+					/>
 				</div>
 
 				<p className="text-sm text-pro-text-label">{currentTexts.subtitle}</p>
@@ -109,31 +112,20 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 				) : null}
 
 				<div className="mt-6 flex items-center justify-center gap-3">
-					<Ariakit.Button
-						accessibleWhenDisabled
-						type="button"
-						onClick={handleSkip}
-						disabled={submission.isPending}
-						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link aria-disabled:opacity-50"
-					>
-						{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
+					<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
 						Skip
-					</Ariakit.Button>
+					</ProButton>
 
 					{rating > 0 ? (
-						<Ariakit.Button
-							accessibleWhenDisabled
+						<ProButton
 							type="submit"
-							disabled={submission.isPending}
-							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand aria-disabled:opacity-50"
+							variant="primary"
+							loading={saving}
+							disabled={skipping}
+							icon={<Icon name="sparkles" height={14} width={14} />}
 						>
-							{submission.isPending && !('skipped' in submission.variables) ? (
-								<LoadingSpinner size={16} />
-							) : (
-								<Icon name="sparkles" height={16} width={16} />
-							)}
 							Submit Rating
-						</Ariakit.Button>
+						</ProButton>
 					) : null}
 				</div>
 				<span role="status" className="sr-only">
@@ -184,45 +176,27 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 					</div>
 
 					<div className="flex items-center justify-center gap-3">
-						<Ariakit.Button
-							accessibleWhenDisabled
-							type="button"
-							onClick={handleSkip}
-							disabled={submission.isPending}
-							className="flex items-center gap-2 px-4 py-2 text-sm text-pro-text-form hover:text-link aria-disabled:opacity-50"
-						>
-							{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
+						<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
 							Skip
-						</Ariakit.Button>
-						<Ariakit.Button
-							accessibleWhenDisabled
+						</ProButton>
+						<ProButton
 							type="submit"
-							disabled={submission.isPending}
-							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand aria-disabled:opacity-50"
+							variant="primary"
+							loading={saving}
+							disabled={skipping}
+							icon={<Icon name="sparkles" height={14} width={14} />}
 						>
-							{submission.isPending && !('skipped' in submission.variables) ? (
-								<LoadingSpinner size={16} />
-							) : (
-								<Icon name="sparkles" height={16} width={16} />
-							)}
 							Submit Rating
-						</Ariakit.Button>
+						</ProButton>
 					</div>
 				</div>
 			) : (
 				<>
 					<p className="-mt-5 text-center text-xs text-pro-text-form">Click the stars above to rate your experience</p>
 
-					<Ariakit.Button
-						accessibleWhenDisabled
-						type="button"
-						onClick={handleSkip}
-						disabled={submission.isPending}
-						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link aria-disabled:opacity-50"
-					>
-						{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
+					<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
 						Skip
-					</Ariakit.Button>
+					</ProButton>
 				</>
 			)}
 			<span role="status" className="sr-only">

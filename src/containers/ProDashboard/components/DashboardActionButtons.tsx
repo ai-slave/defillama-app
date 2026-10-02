@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
@@ -15,21 +14,17 @@ export function EditDashboardButton({ href }: { href: string }) {
 	const navigation = useMutation({ mutationFn: () => router.push(href, undefined, { shallow: true }) })
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<Ariakit.Button
+			<ProButton
+				type="button"
+				variant="primary"
+				icon={<Icon name="pencil" height={16} width={16} />}
+				loading={navigation.isPending}
 				accessibleWhenDisabled
 				disabled={navigation.isPending}
 				onClick={() => navigation.mutate()}
-				render={
-					<ProButton
-						type="button"
-						variant="primary"
-						icon={<Icon name="pencil" height={16} width={16} />}
-						{...(navigation.isPending ? { loading: true } : {})}
-					/>
-				}
 			>
 				{navigation.isPending ? 'Opening editor…' : 'Edit'}
-			</Ariakit.Button>
+			</ProButton>
 			{navigation.isError ? (
 				<p role="alert" className="text-sm text-error">
 					Could not open the editor. Please try again.
@@ -56,7 +51,9 @@ export function CopyDashboardButton({
 	})
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<Ariakit.Button
+			<ProButton
+				type="button"
+				variant="primary"
 				ref={buttonRef}
 				accessibleWhenDisabled
 				disabled={copy.isPending || copy.isSuccess}
@@ -71,7 +68,6 @@ export function CopyDashboardButton({
 						}
 					})
 				}}
-				render={<ProButton type="button" variant="primary" />}
 			>
 				{copy.isPending ? (
 					<LoadingSpinner size={16} />
@@ -79,7 +75,7 @@ export function CopyDashboardButton({
 					<Icon name={copy.isSuccess ? 'check' : 'copy'} height={16} width={16} />
 				)}
 				{copy.isPending ? 'Copying…' : copy.isSuccess ? 'Copied' : 'Copy Dashboard'}
-			</Ariakit.Button>
+			</ProButton>
 			<span role="status" className="sr-only">
 				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}
 			</span>
@@ -107,25 +103,21 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 	})
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<Ariakit.Button
+			<ProButton
+				type="button"
+				variant="secondary"
+				icon={<Icon name="arrow-left" height={16} width={16} />}
+				loading={undo.isPending}
 				ref={buttonRef}
 				accessibleWhenDisabled
 				disabled={undo.isPending}
 				onClick={() => {
 					if (!undo.isPending) undo.mutate()
 				}}
-				render={
-					<ProButton
-						type="button"
-						variant="secondary"
-						icon={<Icon name="arrow-left" height={16} width={16} />}
-						{...(undo.isPending ? { loading: true } : {})}
-					/>
-				}
 				aria-label="Undo AI changes"
 			>
 				{undo.isPending ? 'Undoing…' : 'Undo AI changes'}
-			</Ariakit.Button>
+			</ProButton>
 			<span role="status" className="sr-only">
 				{undo.isPending ? 'Undoing AI changes' : ''}
 			</span>

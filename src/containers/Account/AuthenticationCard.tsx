@@ -15,7 +15,6 @@ export function AuthenticationCard() {
 	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 	const [isSwitchToEmailModalOpen, setIsSwitchToEmailModalOpen] = useState(false)
 	const [passwordCooldownMsg, setPasswordCooldownMsg] = useState('')
-	const [isPasswordResetSent, setIsPasswordResetSent] = useState(false)
 	const passwordResetSentAt = useRef(0)
 	const PASSWORD_COOLDOWN_MS = 60_000
 
@@ -51,7 +50,6 @@ export function AuthenticationCard() {
 			{
 				onSuccess: () => {
 					passwordResetSentAt.current = Date.now()
-					setIsPasswordResetSent(true)
 				}
 			}
 		)
@@ -156,7 +154,6 @@ export function AuthenticationCard() {
 				isOpen={isPasswordModalOpen}
 				onClose={() => setIsPasswordModalOpen(false)}
 				email={user?.email ?? ''}
-				sent={isPasswordResetSent}
 				onSend={handleSendPasswordReset}
 				isPending={resetPasswordMutation.isPending}
 				cooldownMessage={passwordCooldownMsg}

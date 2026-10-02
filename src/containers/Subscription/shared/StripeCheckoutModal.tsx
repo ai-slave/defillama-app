@@ -16,6 +16,7 @@ import { scheduleConfirmationReads } from '~/containers/Account/utils'
 import { usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
@@ -172,9 +173,31 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 		)
 	}
 
+	return <SessionCheckoutDialog isOpen={isOpen} close={close} retry={retry} session={session} />
+}
+
+function SessionCheckoutDialog({
+	isOpen,
+	close,
+	retry,
+	session
+}: Pick<StripeCheckout, 'isOpen' | 'close' | 'retry' | 'session'>) {
+	const [confirmLeave, setConfirmLeave] = useState(false)
+	const result = session.data
+	const paying = result?.kind === 'checkout'
 	// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height.
 	return (
-		<Dialog size="md" fullSheet open={isOpen} onClose={close} portal unmountOnHide>
+		<Dialog
+			size="md"
+			fullSheet
+			open={isOpen}
+			// Closing mid-payment asks first: Stripe may already be taking the payment, and leaving drops its outcome.
+			onClose={paying ? () => setConfirmLeave(true) : close}
+			// Stripe owns the payment's submit state, so a stray tap outside must not drop a payment mid-submit.
+			hideOnInteractOutside={!paying}
+			portal
+			unmountOnHide
+		>
 			<DialogHeader title="Complete your purchase" />
 			{session.isError ? (
 				<>
@@ -201,6 +224,22 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 					</div>
 				</DialogBody>
 			)}
+			<ConfirmDialog
+				open={confirmLeave}
+				onClose={() => setConfirmLeave(false)}
+				portal
+				unmountOnHide
+				title="Leave checkout?"
+				description="Your plan isn't active until the payment finishes. Leaving closes this checkout."
+				cancelLabel="Keep paying"
+				confirmLabel="Leave"
+				pendingLabel={null}
+				error={null}
+				onConfirm={() => {
+					setConfirmLeave(false)
+					close()
+				}}
+			/>
 		</Dialog>
 	)
 }

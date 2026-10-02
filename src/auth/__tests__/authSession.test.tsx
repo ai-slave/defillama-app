@@ -254,6 +254,8 @@ async function emailLogin(suppressVerifyEmailPrompt = false) {
 function button(label: string) {
 	return Array.from(document.querySelectorAll('button')).find((element) => element.textContent?.includes(label))!
 }
+/** A locked button stays focusable and says it is unavailable, instead of leaving the tab order. */
+const locked = (element: HTMLButtonElement) => element.getAttribute('aria-disabled') === 'true' && !element.disabled
 
 test('continues unverified email sign-in in a dismissible sheet and retains the code on reopen', async () => {
 	await render()
@@ -270,7 +272,7 @@ test('continues unverified email sign-in in a dismissible sheet and retains the 
 	await act(async () => sessionView.promptVerifyEmail('email-user'))
 	await settle()
 	expect(otpCalls).toHaveLength(1)
-	expect(button('Resend code').disabled).toBe(true)
+	expect(locked(button('Resend code'))).toBe(true)
 
 	const input = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
 	await act(async () => {
@@ -326,7 +328,7 @@ test('shows the resend countdown in the first render after a rate limit arrives'
 	observer.disconnect()
 	// An uncounted, enabled "Resend code" would have been painted before the countdown caught up.
 	expect(labels).not.toContain('Resend code')
-	expect(button('Resend code').disabled).toBe(true)
+	expect(locked(button('Resend code'))).toBe(true)
 })
 
 test.each(['verified', 'invite'] as const)('does not interrupt the %s sign-in handoff with OTP', async (mode) => {
@@ -356,8 +358,61 @@ test('shows delivery failures inline and respects the server resend delay on ret
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Wait before requesting another code.')
 	})
-	expect(button('Resend code').disabled).toBe(true)
+	expect(locked(button('Resend code'))).toBe(true)
 	expect(button('Resend code').textContent).toContain('120s')
+})
+
+test('a reopened sheet starts without the last typed code and verify error', async () => {
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
+	await settle()
+	const codeInput = () => document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(codeInput(), '123456')
+		codeInput().dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await act(async () => codeInput().form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await settle()
+	otpCalls[1].resolve(jsonResponse({ error: 'Invalid code' }, 400))
+	await waitForUi(async () => {
+		await settle()
+		expect(document.querySelector('[role="dialog"] [role="alert"]')).not.toBeNull()
+	})
+	await act(async () => button('Verify later').click())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+
+	await act(async () => sessionView.promptVerifyEmail('email-user'))
+	await settle()
+	expect(codeInput().value).toBe('')
+	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
+	// The code already sent still holds its cooldown.
+	expect(otpCalls).toHaveLength(2)
+	expect(locked(button('Resend code'))).toBe(true)
+})
+
+test('the resend button keeps focus through the countdown its sent code starts', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ error: 'Please wait', details: { retryAfterSeconds: 2 } }, 429))
+	await waitForUi(async () => {
+		await settle()
+		expect(button('Resend code').textContent).toContain('s)')
+	})
+	await act(async () => {
+		vi.advanceTimersByTime(3000)
+	})
+	const resend = button('Resend code')
+	await act(async () => resend.focus())
+	await act(async () => resend.click())
+	otpCalls[1].resolve(jsonResponse({ message: 'OTP sent' }))
+	await waitForUi(async () => {
+		await settle()
+		expect(resend.textContent).toContain('s)')
+	})
+	expect(locked(resend)).toBe(true)
+	expect(document.activeElement).toBe(resend)
 })
 
 test('Try again after a delivery failure moves focus to the code field', async () => {
@@ -405,7 +460,7 @@ test.each([
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Wait before requesting another code.')
 	})
-	expect(button('Resend code').disabled).toBe(true)
+	expect(locked(button('Resend code'))).toBe(true)
 	expect(button('Resend code').textContent).toContain(`${seconds}s`)
 })
 
@@ -520,7 +575,7 @@ test.each([
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain(message)
 	})
-	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(expires)
+	expect(locked(button(expires ? 'Resend code' : 'Try again'))).toBe(expires)
 	expect(document.activeElement).not.toBe(document.querySelector('[role="alert"]'))
 	const codeInput = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
 	await act(async () => codeInput.focus())
@@ -530,11 +585,11 @@ test.each([
 	await act(async () => {
 		vi.advanceTimersByTime(7000)
 	})
-	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(expires)
+	expect(locked(button(expires ? 'Resend code' : 'Try again'))).toBe(expires)
 	await act(async () => {
 		vi.advanceTimersByTime(2000)
 	})
-	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(false)
+	expect(locked(button(expires ? 'Resend code' : 'Try again'))).toBe(false)
 	expect(document.activeElement).toBe(codeInput)
 	expect(document.querySelector('[role="alert"]')?.textContent?.includes(message) ?? null).toBe(expires ? null : true)
 	expect(otpCalls).toHaveLength(1)

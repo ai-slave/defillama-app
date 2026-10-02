@@ -48,7 +48,8 @@ const coAuthor: ArticleCollaborator = {
 let article: ArticleDocument
 let root: Root
 let container: HTMLDivElement
-let articleWrite: () => Response | ArticleDocument | Promise<Response>
+let collaborators: Array<ArticleCollaborator>
+let articleWrite: () => Response | ArticleDocument | Promise<Response> | object
 let publishWrite: () => Response | Promise<Response>
 beforeEach(() => {
 	vi.resetAllMocks()
@@ -64,13 +65,14 @@ beforeEach(() => {
 		coverImage: { url: '/cover.png', caption: 'Cover', copyright: 'Author', credit: 'Author' },
 		authorProfile: { slug: 'author', displayName: 'Author', socials: {}, createdAt: '', updatedAt: '' }
 	}
+	collaborators = [coAuthor]
 	articleWrite = fixtureStatus(500, { error: 'Server unavailable' })
 	publishWrite = fixtureStatus(500, { error: 'Publish unavailable' })
 	session.client.setDefaultOptions({ queries: { retry: false } })
 	session.serve({
 		[`${FEATURES_SERVER}/articles/`]: (url: URL) => {
 			if (url.pathname.endsWith('/edit')) return { article }
-			if (url.pathname.endsWith('/collaborators')) return { collaborators: [coAuthor] }
+			if (url.pathname.endsWith('/collaborators')) return { collaborators }
 			return articleWrite()
 		},
 		'http://localhost:3000/api/private/research/articles/': () => publishWrite(),
@@ -113,6 +115,13 @@ function openDialog(title: string) {
 }
 async function click(target: HTMLElement) {
 	await act(async () => target.click())
+}
+/** Clicks as a keyboard or pointer user does: the control takes focus first. */
+async function press(target: HTMLElement) {
+	await act(async () => {
+		target.focus()
+		target.click()
+	})
 }
 test('a failed delete keeps its confirm open with the error, and no toast', async () => {
 	await mount()
@@ -188,6 +197,44 @@ test('making a co-author the owner asks first and shows a failed transfer in the
 	)
 	expect(openDialog('Review & publish')).toBeTruthy()
 	expect(toasts.error).not.toHaveBeenCalled()
+})
+
+test('a made owner closes the confirm onto the authors list, since the Make owner control is gone', async () => {
+	articleWrite = () => ({ article: { ...article, viewerRole: 'collaborator' } })
+	await mount()
+	await click(button('Publish'))
+	await waitForUi(() => expect(button('Make owner')).toBeTruthy())
+	await press(button('Make owner'))
+	await waitForUi(() => expect(openDialog('Make Sam the owner?')).toBeTruthy())
+	await click(button('Make owner', openDialog('Make Sam the owner?')))
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Authors'))
+	expect(openDialog('Review & publish').querySelector('[aria-label="Remove Sam"]')).toBeNull()
+})
+
+test('removing the only co-author hands focus to the add field once the request succeeds', async () => {
+	articleWrite = () => {
+		collaborators = []
+		return {}
+	}
+	await mount()
+	await click(button('Publish'))
+	await waitForUi(() => expect(button('Remove Sam')).toBeTruthy())
+	await press(button('Remove Sam'))
+	const review = openDialog('Review & publish')
+	await waitForUi(() => expect(review.querySelector('[aria-label="Remove Sam"]')).toBeNull())
+	expect(document.activeElement).toBe(review.querySelector('input[type="email"]'))
+})
+
+test('removing a guest co-author hands focus to the row that takes its place, then to Add guest co-author', async () => {
+	await mount()
+	await click(button('Publish'))
+	const review = openDialog('Review & publish')
+	await click(button('Add guest co-author', review))
+	await click(button('Add guest co-author', review))
+	await press(button('Remove guest co-author 1', review))
+	expect(document.activeElement).toBe(button('Remove guest co-author 1', review))
+	await press(button('Remove guest co-author 1', review))
+	expect(document.activeElement).toBe(button('Add guest co-author', review))
 })
 
 test('publishing from the page with a missing field opens the review that marks it', async () => {

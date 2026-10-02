@@ -13,6 +13,7 @@ import {
 } from '~/containers/Articles/api'
 import type { MentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import type { SocialMention, SocialMentionPayload } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
 
 type FormState = {
 	quote: string
@@ -225,13 +226,17 @@ export function SocialMentionForm({ mentionId }: Props) {
 						/>
 						{dirty ? 'Unsaved changes' : mention ? 'All changes saved' : 'New mention'}
 					</span>
-					<button
+					{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+					<Button
+						variant="primary"
+						size="md"
+						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 						type="submit"
-						disabled={!submittable || saveMutation.isPending || (!dirty && !!mention)}
-						className="rounded-md bg-link px-4 py-2 text-sm font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+						disabled={!submittable || (!dirty && !!mention)}
+						accessibleWhenDisabled
 					>
-						{saveMutation.isPending ? 'Saving…' : mention ? 'Save changes' : 'Create mention'}
-					</button>
+						{mention ? 'Save changes' : 'Create mention'}
+					</Button>
 				</div>
 			</div>
 		</form>

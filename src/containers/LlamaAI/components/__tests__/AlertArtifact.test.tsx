@@ -1,0 +1,113 @@
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import type { AlertIntent } from '~/containers/LlamaAI/types'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
+import { AlertArtifact } from '../AlertArtifact'
+
+const session = installSubscriberSession('reader', { resolved: true })
+const AI = 'https://ai.llama.fi'
+const intent: AlertIntent = {
+	detected: true,
+	frequency: 'daily',
+	hour: 9,
+	deliveryChannel: 'email',
+	toolExecutions: []
+}
+let root: Root
+let container: HTMLDivElement
+
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
+	session.serve({
+		[`${AI}/telegram/status`]: { link: { state: 'unlinked' }, pending: null },
+		[`${AI}/slack/workspaces`]: { workspaces: [] }
+	})
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+
+async function render(savedAlertIds?: Array<string>) {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<AlertArtifact
+					alertId="alert"
+					alertIntent={intent}
+					messageId="message"
+					savedAlertIds={savedAlertIds}
+					defaultTitle="Daily TVL"
+				/>
+			</session.Wrapper>
+		)
+	)
+}
+const buttonNamed = (name: string) =>
+	[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)
+async function press(button: HTMLElement) {
+	await act(async () => {
+		button.focus()
+		button.click()
+	})
+}
+
+test('Save alert keeps focus while it saves, then hands it to the saved status', async () => {
+	const saved = Promise.withResolvers<Response>()
+	session.serve({
+		[`${AI}/alerts`]: () => saved.promise,
+		[`${AI}/alerts/alert`]: { alert: { test_sent: false } }
+	})
+	await render()
+	await press(buttonNamed('Save alert')!)
+	await waitForUi(() => expect(buttonNamed('Saving…')).toBeDefined())
+	const save = buttonNamed('Saving…')!
+	expect(save.disabled).toBe(false)
+	expect(save.getAttribute('aria-disabled')).toBe('true')
+	expect(document.activeElement).toBe(save)
+	await act(async () => saved.resolve(Response.json({ id: 'alert', nextRunAt: null })))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Alert saved'))
+})
+
+test('a test send hands focus from its button to its progress, then to the outcome', async () => {
+	const sent = Promise.withResolvers<Response>()
+	session.serve({
+		[`${AI}/alerts/alert/test`]: () => sent.promise,
+		[`${AI}/alerts/alert`]: { alert: { test_sent: false } }
+	})
+	await render(['alert'])
+	await waitForUi(() => expect(buttonNamed('Send test alert')?.disabled).toBe(false))
+	await press(buttonNamed('Send test alert')!)
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Sending test alert…'))
+	await act(async () => sent.resolve(Response.json({ success: true })))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Test sent! Check your inbox'))
+})
+
+test('a failed test send focuses Retry, and a failed retry focuses its error', async () => {
+	session.serve({
+		[`${AI}/alerts/alert/test`]: () => new Response(null, { status: 500 }),
+		[`${AI}/alerts/alert`]: { alert: { test_sent: false } }
+	})
+	await render(['alert'])
+	await waitForUi(() => expect(buttonNamed('Send test alert')?.disabled).toBe(false))
+	await press(buttonNamed('Send test alert')!)
+	await waitForUi(() => expect(document.activeElement).toBe(buttonNamed('Retry')))
+	await press(buttonNamed('Retry')!)
+	await waitForUi(() => expect(buttonNamed('Retry')).toBeUndefined())
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Test failed: 500'))
+})
+
+test('a card saved in an earlier visit shows its earlier test without taking focus', async () => {
+	session.serve({ [`${AI}/alerts/alert`]: { alert: { test_sent: true } } })
+	await render(['alert'])
+	await waitForUi(() => expect(document.body.textContent).toContain('Test already sent for this alert'))
+	expect(document.activeElement).toBe(document.body)
+})

@@ -29,6 +29,7 @@ import { setStorageItem } from '~/contexts/localStorageStore'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -201,6 +202,7 @@ function SidebarPanel({
 	const showsFullscreen = isFullscreen || fullscreenLocked
 	const newChatRef = useRef<HTMLButtonElement>(null)
 	const sidebarRef = useRef<HTMLDivElement>(null)
+	const searchToggleRef = useRef<HTMLButtonElement>(null)
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const projectsSectionRef = useRef<HTMLDivElement>(null)
 	const [projectsSectionHeight, setProjectsSectionHeight] = useState(0)
@@ -254,6 +256,8 @@ function SidebarPanel({
 		setSelectedSessionIds(new Set())
 		onSearchOpenChange?.(false)
 	}
+	// Clearing from the field (× or Escape) removes the field with its focus; the search toggle takes it.
+	const clearSearchField = () => keepFocus(closeSearch, () => searchToggleRef.current)
 
 	const filteredSessions = useMemo(() => {
 		if (!trimmedSearchQuery) return shownSessions
@@ -404,6 +408,7 @@ function SidebarPanel({
 							folded={false}
 							searchOpen={isSearchShown}
 							onSearch={isSearchShown ? closeSearch : openSearch}
+							searchRef={searchToggleRef}
 						/>
 						<Tooltip
 							content={
@@ -414,22 +419,18 @@ function SidebarPanel({
 										: 'Enter fullscreen'
 							}
 							render={
-								<Ariakit.Button
+								<Button
 									type="button"
+									size="md"
+									variant="ghost"
+									square
+									className="ml-auto max-lg:hidden"
 									accessibleWhenDisabled
 									disabled={fullscreenLocked}
 									onClick={toggleFullscreen}
 									data-umami-event="llamaai-fullscreen-toggle"
 									data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
 									data-umami-event-source="sidebar_header"
-									render={
-										<Button
-											size="md"
-											variant="ghost"
-											square
-											className="ml-auto aria-disabled:cursor-not-allowed aria-disabled:opacity-60 max-lg:hidden"
-										/>
-									}
 								/>
 							}
 						>
@@ -453,7 +454,7 @@ function SidebarPanel({
 								onKeyDown={(e) => {
 									if (e.key !== 'Escape') return
 									e.stopPropagation()
-									closeSearch()
+									clearSearchField()
 								}}
 								aria-label="Search sessions"
 								placeholder="Search"
@@ -472,7 +473,7 @@ function SidebarPanel({
 										size="sm"
 										square
 										aria-label="Clear session search"
-										onClick={closeSearch}
+										onClick={clearSearchField}
 									>
 										<Icon name="x" height={14} width={14} />
 									</Button>
@@ -710,6 +711,7 @@ function SidebarItem({
 	className = '',
 	...buttonProps
 }: {
+	ref?: Ref<HTMLButtonElement>
 	folded: boolean
 	label: string
 	tooltip?: string
@@ -767,11 +769,13 @@ function SidebarItem({
 function SidebarToggles({
 	folded,
 	searchOpen,
-	onSearch
+	onSearch,
+	searchRef
 }: {
 	folded: boolean
 	searchOpen: boolean
 	onSearch: () => void
+	searchRef?: Ref<HTMLButtonElement>
 }) {
 	const { toggleSidebar } = useLlamaAIChrome()
 	return (
@@ -787,6 +791,7 @@ function SidebarToggles({
 				data-umami-event-source={folded ? 'sidebar_rail' : 'sidebar_header'}
 			/>
 			<SidebarItem
+				ref={searchRef}
 				folded
 				label="Search chats"
 				icon={<Icon name="search" height={16} width={16} />}

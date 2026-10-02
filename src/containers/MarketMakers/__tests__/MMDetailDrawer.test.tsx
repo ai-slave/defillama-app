@@ -116,7 +116,7 @@ test('says the market maker failed to load instead of showing zero scores when a
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('/10.00')
 })
 
-test('Try again reloads the market maker after a failed request and moves focus to it', async () => {
+test('Try again reloads the market maker after a failed request and keeps focus in the drawer', async () => {
 	http.serve({ '/api/public/market-makers/performance': fixtureStatus(404) })
 	await mount()
 	const tryAgain = () =>
@@ -127,12 +127,18 @@ test('Try again reloads the market maker after a failed request and moves focus 
 	http.serve({
 		'/api/public/market-makers/performance': () => new Promise((resolve) => (respond = () => resolve([performance])))
 	})
-	await act(async () => (tryAgain() as HTMLButtonElement).click())
+	await act(async () => {
+		const button = tryAgain() as HTMLButtonElement
+		button.focus()
+		button.click()
+	})
 	await waitForUi(() => expect(tryAgain()).toBeUndefined())
 	await act(async () => respond())
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('9.50/10.00'))
 	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
-	expect(document.activeElement?.textContent).toContain('About Lhava')
+	expect(document.activeElement).toBe(
+		[...document.querySelectorAll('[role="dialog"] button')].find((button) => accessibleName(button) === 'Close dialog')
+	)
 })
 
 test('the click that opens a lead form records one click id, and the sent lead carries it', async () => {

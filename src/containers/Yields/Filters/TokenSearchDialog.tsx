@@ -1,12 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
@@ -174,7 +175,8 @@ function Chip({
 	geckoId,
 	selected,
 	onClick,
-	remove
+	remove,
+	ref
 }: {
 	name: string
 	value: string
@@ -182,9 +184,11 @@ function Chip({
 	selected: boolean
 	onClick: () => void
 	remove?: boolean
+	ref?: Ref<HTMLButtonElement>
 }) {
 	return (
 		<button
+			ref={ref}
 			type="button"
 			onClick={onClick}
 			aria-pressed={remove ? undefined : selected}
@@ -378,7 +382,6 @@ export function TokenSearchDialog({
 	const [activeIndex, setActiveIndex] = useState(-1)
 	const [recent, setRecent] = useState<Array<string>>(readRecent)
 	const inputRef = useRef<HTMLInputElement | null>(null)
-	const selectionRef = useRef<HTMLElement | null>(null)
 	const isSmallScreen = useMedia('(max-width: 639px)')
 
 	const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues])
@@ -491,25 +494,23 @@ export function TokenSearchDialog({
 					</div>
 
 					<aside className="flex shrink-0 flex-col gap-5 border-subtle bg-surface-elevated-1 p-4 max-sm:border-t sm:w-64 sm:border-l">
-						<section
-							ref={selectionRef}
-							tabIndex={-1}
-							aria-labelledby="token-search-selected"
-							className="flex flex-col gap-2 outline-hidden"
-						>
+						<section aria-labelledby="token-search-selected" className="flex flex-col gap-2">
 							<div className="flex items-center gap-2">
 								<h3 id="token-search-selected" className="label-md text-primary">
 									Selected
 								</h3>
 								{/* Disabled, not removed, when empty: the button keeps focus after it clears the picks. */}
-								<Ariakit.Button
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									className="ml-auto"
 									disabled={!hasSelection}
 									accessibleWhenDisabled
-									render={<Button type="button" variant="ghost" size="sm" className="ml-auto" />}
 									onClick={onClear}
 								>
 									Clear all
-								</Ariakit.Button>
+								</Button>
 							</div>
 							{hasSelection ? (
 								<div className="flex flex-wrap gap-1.5">
@@ -521,11 +522,15 @@ export function TokenSearchDialog({
 											geckoId={optionByValue.get(value)?.[2]}
 											selected
 											remove
-											onClick={() => {
-												// The chip leaves once the page applies the removal; focus waits on the section instead.
-												selectionRef.current?.focus()
-												toggle(value, true)
-											}}
+											// The chip leaves once the page applies the removal. It hands focus to the next chip, else the
+											// previous one, else the search field.
+											ref={passFocusOnLeave(
+												(node) =>
+													(node.nextElementSibling ??
+														node.previousElementSibling ??
+														inputRef.current) as HTMLElement | null
+											)}
+											onClick={() => toggle(value, true)}
 										/>
 									))}
 								</div>

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { DialogBackButton, DialogBody, DialogHeader, SideSheet, switchSheetPane, useOpeningKey } from '~/ui/Dialog'
+import { DialogBackButton, DialogBody, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getCriterionDrawerCopy, MARKET_MAKER_MATURITY_EXCEPTION } from './criterionDrawerCopy'
@@ -75,7 +76,6 @@ function CriteriaSheetContent({
 	// Below md one pane shows at a time. Opening from a criterion lands on its detail.
 	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>(state.activeKey ? 'detail' : 'list')
 	const navRef = useRef<HTMLElement>(null)
-	const detailRef = useRef<HTMLElement>(null)
 	const active = state.criteria.find((criterion) => criterion.key === state.activeKey) ?? state.criteria[0]
 	const activeIndex = state.criteria.indexOf(active)
 	const doc = state.docs.find((entry) => entry.key === active.key) ?? null
@@ -98,7 +98,7 @@ function CriteriaSheetContent({
 							<DialogBackButton
 								label="Back to criteria"
 								onClick={() =>
-									switchSheetPane(
+									keepFocus(
 										() => setNarrowPane('list'),
 										() => navRef.current?.querySelector<HTMLElement>('[aria-current="true"]')
 									)
@@ -124,15 +124,10 @@ function CriteriaSheetContent({
 									key={criterion.key}
 									type="button"
 									aria-current={current ? 'true' : undefined}
-									onClick={() =>
-										switchSheetPane(
-											() => {
-												onSelect(criterion.key)
-												setNarrowPane('detail')
-											},
-											() => detailRef.current
-										)
-									}
+									onClick={() => {
+										onSelect(criterion.key)
+										setNarrowPane('detail')
+									}}
 									className={`hover-wash flex min-h-11 cursor-pointer items-center rounded-md px-3 py-2 text-left body-md md:min-h-9 md:body-sm ${
 										current ? 'bg-surface text-primary' : 'text-secondary'
 									}`}
@@ -151,8 +146,6 @@ function CriteriaSheetContent({
 						})}
 					</nav>
 					<section
-						ref={detailRef}
-						tabIndex={-1}
 						aria-label={activeCopy.heading}
 						className={`flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto p-4 ${narrowPane === 'list' ? 'max-md:hidden' : ''}`}
 					>

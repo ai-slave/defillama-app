@@ -39,10 +39,7 @@ beforeEach(() => {
 	})
 })
 
-const settle = (assertion: () => void) =>
-	act(async () => {
-		await waitForUi(assertion)
-	})
+const settle = (assertion: () => void) => waitForUi(assertion)
 const buttonNamed = (name: string, within: ParentNode = document) =>
 	[...within.querySelectorAll<HTMLButtonElement>('button')].find((node) => accessibleName(node) === name)
 const confirmation = () => document.querySelector<HTMLElement>('[role="alertdialog"]')
@@ -230,6 +227,105 @@ describe('SettingsModal instructions', () => {
 		expect(document.body.textContent).toContain('Nothing remembered yet.')
 		expect(document.querySelector('[role="alert"]')).toBeNull()
 	})
+	const research = {
+		name: 'Research',
+		description: 'Saved workflow',
+		source: 'user' as const,
+		createdBy: 'user' as const,
+		useCount: 1,
+		pinned: false,
+		lastUsedAt: null,
+		referencedSkills: []
+	}
+	// The dialog's first control, where its net puts focus that has nowhere better to go.
+	const closeButton = () => buttonNamed('Close dialog')
+	const deleteButtons = () =>
+		[...document.querySelectorAll<HTMLButtonElement>('[role="tabpanel"] button')].filter(
+			(b) => b.textContent === 'Delete'
+		)
+	async function press(button: HTMLElement) {
+		await act(async () => {
+			button.focus()
+			button.click()
+		})
+	}
+	test('a retry that clears the memories notice leaves focus in the dialog', async () => {
+		session.client.setQueryData(AGENT_HOME_MEMORIES_KEY, {
+			...emptyMemories,
+			user: [{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 }]
+		})
+		let online = false
+		session.serve({ [`${AGENT_HOME}/memories`]: () => (online ? Response.json(emptyMemories) : offline()) })
+		await openMemory()
+		await settle(() => expect(alertText()).toContain("Couldn't load memories."))
+		online = true
+		await press(buttonNamed('Try again')!)
+		await settle(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+		await settle(() => expect(document.activeElement).toBe(closeButton()))
+	})
+	test('cancelling a memory deletion returns focus to Delete; deleting hands it to the next entry, the last to the dialog', async () => {
+		const deleted = new Set<string>()
+		const entries = [
+			{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 },
+			{ id: 'memory-2', text: 'Trades on Arbitrum', chars: 18 }
+		]
+		session.serve({
+			[`${AGENT_HOME}/memories`]: () =>
+				Response.json({ ...emptyMemories, user: entries.filter((entry) => !deleted.has(entry.id)) }),
+			[`${AGENT_HOME}/memories/memory-1`]: () => {
+				deleted.add('memory-1')
+				return Response.json({ deleted: true })
+			},
+			[`${AGENT_HOME}/memories/memory-2`]: () => {
+				deleted.add('memory-2')
+				return Response.json({ deleted: true })
+			}
+		})
+		await openMemory()
+		await settle(() => expect(deleteButtons()).toHaveLength(2))
+		const [first, second] = deleteButtons()
+		await press(first)
+		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		// Cancel keeps the row, so focus goes back to its Delete.
+		await act(async () => buttonNamed('Cancel', confirmation()!)!.click())
+		await settle(() => expect(document.activeElement).toBe(first))
+		await press(first)
+		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
+		await settle(() => expect(document.body.textContent).not.toContain('Prefer concise answers'))
+		await settle(() => expect(document.activeElement).toBe(second))
+		// The last entry has no neighbour left.
+		await press(second)
+		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
+		await settle(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
+		await settle(() => expect(document.activeElement).toBe(closeButton()))
+	})
+	test('archiving a skill hands focus to the next skill once it moves to Archived', async () => {
+		const notes = { ...research, name: 'Notes' }
+		const archive = Promise.withResolvers<Response>()
+		let archived = false
+		session.serve({
+			[`${AGENT_HOME}/skills`]: () =>
+				Response.json(
+					archived
+						? { ...emptySkills, active: [notes], archived: [research] }
+						: { ...emptySkills, active: [research, notes] }
+				),
+			[`${AGENT_HOME}/skills/Research`]: () => archive.promise
+		})
+		await openMemory()
+		await settle(() => expect(document.body.textContent).toContain('Notes'))
+		const [first, next] = [...document.querySelectorAll('button')].filter((b) => b.textContent === 'Archive')
+		await press(first)
+		// The next skill's Archive waits while this one archives, and stays focusable for the handoff.
+		await settle(() => expect(first.getAttribute('aria-busy')).toBe('true'))
+		expect(next.getAttribute('aria-disabled')).toBe('true')
+		archived = true
+		await act(async () => archive.resolve(Response.json({ message: 'archived' })))
+		await settle(() => expect(document.body.textContent).toContain('Archived (1)'))
+		await settle(() => expect(document.activeElement).toBe(next))
+	})
 	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
 		await act(async () => change('Keep this draft'))
 		const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
@@ -324,6 +420,14 @@ describe('SettingsModal instructions', () => {
 		expect(setCustomInstructions).toHaveBeenCalledTimes(2)
 	})
 
+	test('clearing a draft that leaves nothing to clear returns focus to the field', async () => {
+		await act(async () => root.render(<Harness currentSettings={{ ...settings, customInstructions: '' }} />))
+		await act(async () => change('Typed, never saved'))
+		await press(buttonNamed('Clear')!)
+		expect(buttonNamed('Clear')).toBeUndefined()
+		expect(document.activeElement).toBe(textarea())
+	})
+
 	test('clears without first saving the focused draft', async () => {
 		await act(async () => {
 			textarea().focus()
@@ -412,6 +516,25 @@ describe('SettingsModal instructions', () => {
 		expect(retry).toHaveBeenCalledOnce()
 	})
 
+	test('the mobile notification row that replaces a retried error takes focus', async () => {
+		await act(async () =>
+			root.render(
+				<Harness mobileNotificationPreference={{ kind: 'error', message: 'Network unavailable', retry: () => {} }} />
+			)
+		)
+		await act(async () =>
+			[...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+				.find((tab) => tab.textContent === 'App')!
+				.click()
+		)
+		await press(buttonNamed('Try again')!)
+		await act(async () =>
+			root.render(<Harness mobileNotificationPreference={{ kind: 'known', available: true, enabled: false }} />)
+		)
+		expect(document.activeElement?.getAttribute('role')).toBe('switch')
+		expect(document.activeElement?.getAttribute('aria-label')).toBe('Mobile notifications')
+	})
+
 	test('a refused setting save says so inside the dialog', async () => {
 		actions.setEnterToSend = vi.fn(async () => false)
 		await act(async () => buttonNamed('App')!.click())
@@ -465,7 +588,7 @@ describe('SettingsModal instructions', () => {
 		await openMemory()
 		await settle(() => expect(document.body.textContent).toContain('Prefers ETH pairs'))
 
-		await act(async () => buttonNamed('Clear all')!.click())
+		await press(buttonNamed('Clear all')!)
 		await settle(() => expect(confirmation()?.textContent).toContain('Clear everything about you?'))
 		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(0)
 
@@ -479,6 +602,8 @@ describe('SettingsModal instructions', () => {
 		await settle(() => expect(confirmation()).toBeNull())
 		expect(document.body.textContent).toContain('Nothing remembered yet.')
 		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(2)
+		// A cleared list leaves no row to hand focus to.
+		await settle(() => expect(document.activeElement).toBe(closeButton()))
 	})
 
 	test('a saved draft stays until settings report it, and the field then follows later refreshes', async () => {

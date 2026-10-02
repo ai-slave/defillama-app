@@ -29,11 +29,16 @@ export function CitationDetailPanel({
 	const { activeRef, close, restoreFocus } = useCitationSheet()
 	const isMobile = useMedia('(max-width: 1023px)')
 	const panelRef = useRef<HTMLDivElement>(null)
-	const closeDesktopPanel = useCallback(() => {
-		// Closing a nonmodal panel must not move focus away from another part of the page.
-		if (panelRef.current?.contains(document.activeElement)) restoreFocus()
-		close()
-	}, [close, restoreFocus])
+	// Leaving the panel, by closing it or going back to the dashboard, removes the control that had focus; the citation
+	// that opened it takes focus. A nonmodal panel must not move focus away from another part of the page.
+	const leaveDesktopPanel = useCallback(
+		(leave: () => void) => {
+			if (panelRef.current?.contains(document.activeElement)) restoreFocus()
+			leave()
+		},
+		[restoreFocus]
+	)
+	const closeDesktopPanel = useCallback(() => leaveDesktopPanel(close), [leaveDesktopPanel, close])
 	useEffect(() => {
 		if (isMobile || !activeRef) return
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -141,7 +146,7 @@ export function CitationDetailPanel({
 					{summary}
 					<div className="flex shrink-0 items-center gap-1">
 						{onBackToDashboard ? (
-							<Button type="button" variant="ghost" size="sm" onClick={onBackToDashboard}>
+							<Button type="button" variant="ghost" size="sm" onClick={() => leaveDesktopPanel(onBackToDashboard)}>
 								<Icon name="chevron-left" height={14} width={14} />
 								Dashboard
 							</Button>

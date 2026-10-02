@@ -8,6 +8,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import type { DashboardTeam } from '../dashboardTypes'
+import { type DashboardSaveNotices, showDashboardSaveNotices } from '../hooks/useDashboardAPI'
 import { ConfirmationModal } from './ConfirmationModal'
 import { dashboardFieldHintStyles, TagsField, VisibilityField } from './DashboardFormFields'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
@@ -19,7 +20,8 @@ interface DashboardSettingsModalProps {
 	visibility: 'private' | 'public'
 	tags: Array<string>
 	dashboardId: string | null
-	onSave: (overrides?: { visibility?: 'private' | 'public'; tags?: Array<string> }) => Promise<void>
+	/** Resolves with the save's notices; the modal shows them once it has closed. */
+	onSave: (overrides?: { visibility?: 'private' | 'public'; tags?: Array<string> }) => Promise<DashboardSaveNotices>
 	onDelete?: (dashboardId: string) => Promise<void>
 	/** The viewer's team. The sharing switch renders only when present. */
 	myTeam?: DashboardTeam | null
@@ -56,10 +58,11 @@ function DashboardSettingsModalInner({
 	const save = useMutation({
 		mutationFn: async (overrides: Parameters<typeof onSave>[0]) => {
 			// The document fields save first: an admin moving a dashboard out loses access to it afterwards.
-			await onSave(overrides)
+			const notices = await onSave(overrides)
 			if (showTeamSwitch && canMove && myTeam && onMoveTeam && localSharedWithTeam !== sharedWithTeam) {
 				await onMoveTeam(localSharedWithTeam ? myTeam.id : null)
 			}
+			return notices
 		},
 		onError: (error) => {
 			if (!formRef.current?.isConnected) toast.error(error.message)
@@ -80,10 +83,11 @@ function DashboardSettingsModalInner({
 		save.mutate(
 			{ visibility: localVisibility, tags: localTags },
 			{
-				// Confirm only once the dialog is gone, so the toast never sits over it.
-				onSuccess: () => {
+				// Confirm only once the dialog is gone, so the toasts never sit over it.
+				onSuccess: (notices) => {
 					onClose()
 					toast.success('Settings saved', statusToastOptions('dashboard-settings-saved', TOAST_DURATION_SHORT))
+					showDashboardSaveNotices(notices)
 				}
 			}
 		)

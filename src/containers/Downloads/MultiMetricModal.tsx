@@ -1,15 +1,16 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import Link from 'next/link'
-import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
-import { toast } from 'react-hot-toast'
+import { lazy, type RefObject, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { catchLostFocus, keepFocus } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
+import { ActionFeedbackStatus, ConfirmableContent, useActionFeedback } from './ActionFeedback'
 import { chartDatasets, chartDatasetsBySlug, type ChartDatasetDefinition, type ChartOptionsMap } from './chart-datasets'
 import { combineCsvsWide, type CsvItem } from './combineCsvsWide'
 import { filterCsvByDateRange, filterParsedRowsByDateRange } from './csvDateFilter'
@@ -152,8 +153,12 @@ export function MultiMetricModal({
 	const [param, setParam] = useState<ParamOption | null>(null)
 	const [selectedMetrics, setSelectedMetrics] = useState<Array<string>>([])
 	const [activeMetric, setActiveMetric] = useState<string | null>(null)
+	const dateRangeTriggerRef = useRef<HTMLButtonElement>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
+	const { outcome, report, confirmed } = useActionFeedback()
+	// Takes focus when the control that had it leaves with the last selected metric.
+	const metricPickerRef = useRef<HTMLButtonElement>(null)
 	const [appliedInitial, setAppliedInitial] = useState<AppliedMultiMetricConfig | null>(null)
 
 	const protocolOptions = chartOptionsMap['protocol-tvl-chart'] ?? EMPTY_PARAM_OPTIONS
@@ -263,10 +268,8 @@ export function MultiMetricModal({
 	const handleToggleMetric = useCallback((slug: string) => {
 		setSelectedMetrics((prev) => {
 			if (prev.includes(slug)) return prev.filter((s) => s !== slug)
-			if (prev.length >= MAX_METRICS) {
-				toast.error(`Max ${MAX_METRICS} metrics`)
-				return prev
-			}
+			// The picker disables metrics past the cap and says why in its header.
+			if (prev.length >= MAX_METRICS) return prev
 			return [...prev, slug]
 		})
 	}, [])
@@ -298,7 +301,7 @@ export function MultiMetricModal({
 	}, [])
 
 	const handleDownloadCombined = useCallback(
-		(format: DownloadFormat = 'csv') => {
+		(format: DownloadFormat, action: string) => {
 			if (!param) return
 			const readyWithSlug: Array<CsvItem & { slug: string }> = []
 			const failed: Array<{ slug: string; name: string }> = []
@@ -316,22 +319,26 @@ export function MultiMetricModal({
 				if (err) failed.push({ slug, name: dataset.name })
 			}
 			if (readyWithSlug.length === 0) {
-				toast.error('No data ready to download')
+				report(action, false, 'No data ready to download')
 				return
 			}
 			readyWithSlug.sort((a, b) => metricSortWeight(a.slug) - metricSortWeight(b.slug))
 			const ready: Array<CsvItem> = readyWithSlug
 			const merged = combineCsvsWide(ready, dateRange)
 			if (merged.length <= 1) {
-				toast.error('No rows to download')
+				report(action, false, 'No rows to download')
 				return
 			}
 			const filename = `${paramSlugForFilename(param.value)}_metrics.${format}`
 			downloadTabular(format, filename, merged, { addTimestamp: true })
 			if (failed.length > 0) {
-				toast.success(`Downloaded ${filename} — skipped ${failed.length} (${failed.map((f) => f.name).join(', ')})`)
+				report(
+					action,
+					true,
+					`Downloaded ${filename} — skipped ${failed.length} (${failed.map((f) => f.name).join(', ')})`
+				)
 			} else {
-				toast.success(`Downloaded ${filename}`)
+				report(action, true, `Downloaded ${filename}`)
 			}
 
 			const configBase = extractMultiMetricConfig({
@@ -348,18 +355,18 @@ export function MultiMetricModal({
 				createdAt: Date.now()
 			})
 		},
-		[csvQueries, selectedMetrics, param, paramType, dateRange, recordRecent]
+		[csvQueries, selectedMetrics, param, paramType, dateRange, recordRecent, report]
 	)
 
 	const handleDownloadSingle = useCallback(
-		(slug: string, format: DownloadFormat = 'csv') => {
+		(slug: string, format: DownloadFormat, action: string) => {
 			if (!param) return
 			const idx = selectedMetrics.findIndex((s) => s === slug)
 			if (idx < 0) return
 			const query = csvQueries[idx]
 			const data = query?.data as unknown
 			if (typeof data !== 'string' || !data) {
-				toast.error('Not ready yet')
+				report(action, false, 'Not ready yet')
 				return
 			}
 			const dataset = chartDatasetsBySlug.get(slug)
@@ -370,7 +377,7 @@ export function MultiMetricModal({
 			const parsed = parseCsv(payload)
 			const rows2D: Array<Array<string>> = [parsed.headers, ...parsed.rows.map((r) => r.values)]
 			downloadTabular(format, filename, rows2D, { addTimestamp: true })
-			toast.success(`Downloaded ${filename}`)
+			report(action, true, `Downloaded ${filename}`)
 
 			const configBase = extractMultiMetricConfig({
 				paramType,
@@ -386,7 +393,7 @@ export function MultiMetricModal({
 				createdAt: Date.now()
 			})
 		},
-		[csvQueries, selectedMetrics, param, paramType, dateRange, recordRecent]
+		[csvQueries, selectedMetrics, param, paramType, dateRange, recordRecent, report]
 	)
 
 	const handleSubscribeClick = useCallback(() => {
@@ -414,9 +421,9 @@ export function MultiMetricModal({
 				{ replaceByName: replaceExisting }
 			)
 			setShowSaveDialog(false)
-			toast.success(`Saved preset "${name}"`)
+			report('save-preset', true, `Saved preset "${name}"`)
 		},
-		[param, paramType, selectedMetrics, dateRange, saveDownload]
+		[param, paramType, selectedMetrics, dateRange, saveDownload, report]
 	)
 
 	const currentConfig = useMemo<SavedDownloadInput | null>(() => {
@@ -432,25 +439,25 @@ export function MultiMetricModal({
 
 	const handleCopyLink = useCallback(async () => {
 		if (!currentConfig) {
-			toast.error('Nothing to share yet')
+			report('copy-link', false, 'Nothing to share yet')
 			return
 		}
 		if (typeof window === 'undefined' || !navigator.clipboard) {
-			toast.error('Clipboard not available')
+			report('copy-link', false, 'Clipboard not available')
 			return
 		}
 		try {
 			const url = buildShareUrl(window.location.origin, '/downloads', currentConfig)
 			if (url.length > 2000) {
-				toast.error('Config too large to share — save as preset instead')
+				report('copy-link', false, 'Config too large to share — save as preset instead')
 				return
 			}
 			await navigator.clipboard.writeText(url)
-			toast.success('Link copied')
+			report('copy-link', true, 'Link copied')
 		} catch {
-			toast.error('Failed to copy link')
+			report('copy-link', false, 'Failed to copy link')
 		}
-	}, [currentConfig])
+	}, [currentConfig, report])
 
 	const suggestedPresetName = useMemo(() => {
 		if (!currentConfig) return ''
@@ -466,9 +473,9 @@ export function MultiMetricModal({
 				return
 			}
 			if (selectedMetrics.length === 1) {
-				handleDownloadSingle(selectedMetrics[0], format)
+				handleDownloadSingle(selectedMetrics[0], format, 'download')
 			} else {
-				handleDownloadCombined(format)
+				handleDownloadCombined(format, 'download')
 			}
 		},
 		[isPreview, selectedMetrics, handleSubscribeClick, handleDownloadSingle, handleDownloadCombined]
@@ -521,6 +528,7 @@ export function MultiMetricModal({
 				}}
 			>
 				<Ariakit.Dialog
+					ref={catchLostFocus}
 					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 					portal
 					unmountOnHide
@@ -530,7 +538,10 @@ export function MultiMetricModal({
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
 								<div className="flex items-center gap-2">
-									<h2 className="truncate heading-xs">{param ? param.label : 'Combined report'}</h2>
+									<Ariakit.DialogHeading
+										render={<h2>{param ? param.label : 'Combined report'}</h2>}
+										className="truncate heading-xs"
+									/>
 									<span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-brand uppercase">
 										Combined
 									</span>
@@ -545,8 +556,21 @@ export function MultiMetricModal({
 									className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary sm:flex"
 									title="Save as preset"
 								>
-									<Icon name="bookmark" className="size-3.5" />
-									<span className="hidden lg:inline">Save preset</span>
+									<ConfirmableContent
+										confirmed={confirmed('save-preset')}
+										idle={
+											<>
+												<Icon name="bookmark" className="size-3.5" />
+												<span className="hidden lg:inline">Save preset</span>
+											</>
+										}
+										done={
+											<>
+												<Icon name="check" className="size-3.5" />
+												<span className="hidden lg:inline">Saved</span>
+											</>
+										}
+									/>
 								</button>
 							) : null}
 
@@ -558,7 +582,11 @@ export function MultiMetricModal({
 									className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
 									title="Copy shareable link"
 								>
-									<Icon name="link" className="size-3.5" />
+									<ConfirmableContent
+										confirmed={confirmed('copy-link')}
+										idle={<Icon name="link" className="size-3.5" />}
+										done={<Icon name="check" className="size-3.5" />}
+									/>
 								</button>
 							) : null}
 
@@ -578,6 +606,7 @@ export function MultiMetricModal({
 										onDownload={(fmt) => handleTopBarDownload(fmt)}
 										disabled={topBarDownloadDisabled}
 										label={downloadLabel}
+										confirmed={confirmed('download')}
 									/>
 								)
 							) : null}
@@ -604,17 +633,19 @@ export function MultiMetricModal({
 
 							{param ? (
 								<MetricMultiPickerPopover
+									triggerRef={metricPickerRef}
 									metrics={availableMetrics}
 									selected={selectedMetrics}
 									onToggle={handleToggleMetric}
 									onClearAll={handleClearMetrics}
-									onSelectAll={handleSelectAll}
+									onSelectAll={() => keepFocus(handleSelectAll, () => metricPickerRef.current)}
 									maxSelections={MAX_METRICS}
 								/>
 							) : null}
 
 							{param && hasSelection && !isPreview ? (
 								<DateRangePicker
+									triggerRef={dateRangeTriggerRef}
 									value={dateRange}
 									onChange={setDateRange}
 									minDate={dateBounds.min}
@@ -625,6 +656,7 @@ export function MultiMetricModal({
 							{isPreview ? <p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p> : null}
 						</div>
 						<SavedPresetNotice notices={savedPresetNotices} />
+						<ActionFeedbackStatus outcome={outcome} />
 					</div>
 
 					<div className="flex min-h-0 flex-1 flex-col sm:flex-row">
@@ -641,7 +673,11 @@ export function MultiMetricModal({
 								<EmptyState
 									paramType={paramType}
 									availableCount={availableMetrics.length}
-									onSelectAll={availableMetrics.length > 0 ? handleSelectAll : undefined}
+									onSelectAll={
+										availableMetrics.length > 0
+											? () => keepFocus(handleSelectAll, () => metricPickerRef.current)
+											: undefined
+									}
 								/>
 							) : !activeMetric ? (
 								<CenteredHint icon="search" text="Pick a metric to preview" />
@@ -658,7 +694,13 @@ export function MultiMetricModal({
 										<p className="text-sm text-pro-text-secondary">No rows in selected date range</p>
 										<button
 											type="button"
-											onClick={() => setDateRange(null)}
+											// Clearing removes this button; focus returns to the range picker it cleared.
+											onClick={() =>
+												keepFocus(
+													() => setDateRange(null),
+													() => dateRangeTriggerRef.current
+												)
+											}
 											className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 										>
 											Clear date range
@@ -679,9 +721,11 @@ export function MultiMetricModal({
 								activeMetric={activeMetric}
 								onSetActive={handleSetActive}
 								onRemove={handleRemoveMetric}
-								onClearAll={handleClearMetrics}
-								onDownloadSingle={handleDownloadSingle}
-								onDownloadCombined={handleDownloadCombined}
+								onClearAll={() => keepFocus(handleClearMetrics, () => metricPickerRef.current)}
+								onDownloadSingle={(slug) => handleDownloadSingle(slug, 'csv', `download:${slug}`)}
+								onDownloadCombined={() => handleDownloadCombined('csv', 'download-combined')}
+								confirmed={confirmed}
+								pickerTriggerRef={metricPickerRef}
 								isPreview={isPreview}
 								onSubscribeClick={handleSubscribeClick}
 								readyCount={readyCount}
@@ -1040,6 +1084,10 @@ interface MetricsSidebarProps {
 	onClearAll: () => void
 	onDownloadSingle: (slug: string) => void
 	onDownloadCombined: () => void
+	/** Whether a download button shows its confirmation now. */
+	confirmed: (action: string) => boolean
+	/** Takes focus when the last row leaves. */
+	pickerTriggerRef: RefObject<HTMLButtonElement | null>
 	isPreview: boolean
 	onSubscribeClick: () => void
 	readyCount: number
@@ -1055,12 +1103,24 @@ function MetricsSidebar({
 	onClearAll,
 	onDownloadSingle,
 	onDownloadCombined,
+	confirmed,
+	pickerTriggerRef,
 	isPreview,
 	onSubscribeClick,
 	readyCount,
 	loadingCount
 }: MetricsSidebarProps) {
 	const combinedDisabled = loadingCount > 0 || readyCount === 0
+	const listRef = useRef<HTMLDivElement>(null)
+	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
+	const removeRow = (slug: string, index: number) =>
+		keepFocus(
+			() => onRemove(slug),
+			() => {
+				const removeButtons = listRef.current?.querySelectorAll<HTMLElement>('[data-row-remove]') ?? []
+				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? pickerTriggerRef.current
+			}
+		)
 	return (
 		<aside className="hidden w-72 shrink-0 flex-col border-l border-subtle sm:flex">
 			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
@@ -1082,7 +1142,7 @@ function MetricsSidebar({
 					</button>
 				) : null}
 			</div>
-			<div className="flex-1 overflow-auto">
+			<div ref={listRef} className="flex-1 overflow-auto">
 				{selectedMetrics.map((metric, i) => {
 					const query = csvQueries[i]
 					const isActive = metric.slug === activeMetric
@@ -1124,11 +1184,16 @@ function MetricsSidebar({
 								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
 							>
-								<Icon name="download-cloud" className="size-3.5" />
+								<ConfirmableContent
+									confirmed={confirmed(`download:${metric.slug}`)}
+									idle={<Icon name="download-cloud" className="size-3.5" />}
+									done={<Icon name="check" className="size-3.5" />}
+								/>
 							</button>
 							<button
 								type="button"
-								onClick={() => onRemove(metric.slug)}
+								onClick={() => removeRow(metric.slug, i)}
+								data-row-remove
 								title="Remove"
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"
 							>
@@ -1156,8 +1221,21 @@ function MetricsSidebar({
 							disabled={combinedDisabled}
 							className="flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
 						>
-							<Icon name="download-cloud" className="size-3.5" />
-							Download combined CSV
+							<ConfirmableContent
+								confirmed={confirmed('download-combined')}
+								idle={
+									<>
+										<Icon name="download-cloud" className="size-3.5" />
+										Download combined CSV
+									</>
+								}
+								done={
+									<>
+										<Icon name="check" className="size-3.5" />
+										Downloaded
+									</>
+								}
+							/>
 						</button>
 						<p className="mt-1.5 text-center text-[10px] text-pro-text-tertiary">
 							Wide format — each metric becomes a column
@@ -1273,6 +1351,7 @@ function ParamPickerPopover({
 }
 
 function MetricMultiPickerPopover({
+	triggerRef,
 	metrics,
 	selected,
 	onToggle,
@@ -1280,6 +1359,7 @@ function MetricMultiPickerPopover({
 	onSelectAll,
 	maxSelections
 }: {
+	triggerRef: RefObject<HTMLButtonElement | null>
 	metrics: Array<ChartDatasetDefinition>
 	selected: Array<string>
 	onToggle: (slug: string) => void
@@ -1315,7 +1395,10 @@ function MetricMultiPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
+			<Ariakit.PopoverDisclosure
+				ref={triggerRef}
+				className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+			>
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerLabel}</span>
 				{selected.length > 0 ? (
@@ -1330,7 +1413,7 @@ function MetricMultiPickerPopover({
 			>
 				<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
 					<span className="text-xs font-medium text-pro-text-secondary">
-						{selected.length}/{maxSelections} selected
+						{selected.length}/{maxSelections} selected{capHit ? ' · remove one to add more' : ''}
 					</span>
 					<button
 						type="button"

@@ -111,7 +111,8 @@ export function MobileFiltersDrawer({
 			</DialogBody>
 			<DialogFooter
 				leading={
-					<Button type="button" size="md" disabled={!canReset} onClick={onReset}>
+					// Reset disables itself once used; it stays focusable so focus does not drop to the page.
+					<Button type="button" size="md" accessibleWhenDisabled disabled={!canReset} onClick={onReset}>
 						Reset
 					</Button>
 				}

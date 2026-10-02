@@ -241,6 +241,24 @@ test('failed rename preserves the entered title for retry', async () => {
 	await waitForUi(() => expect(container.querySelector('[aria-label="Rename QA renamed"]')).not.toBeNull())
 })
 
+test('a saving rename keeps focus in its field, then returns it to the rename button', async () => {
+	const saved = Promise.withResolvers<Response>()
+	auth.serve({ [`${AI}/user/sessions/chat/title`]: () => saved.promise })
+	await mountManaged()
+	await click('Rename chat')
+	const input = document.querySelector<HTMLInputElement>('input[name="newTitle"]')!
+	await act(async () => {
+		input.focus()
+		input.value = 'QA renamed'
+		input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	})
+	await waitForUi(() => expect(input.readOnly).toBe(true))
+	expect(input.disabled).toBe(false)
+	expect(document.activeElement).toBe(input)
+	await act(async () => saved.resolve(Response.json({})))
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Rename QA renamed'))
+})
+
 test('a failed pin does not undo another row pin that has succeeded', async () => {
 	const first = Promise.withResolvers<Response>()
 	auth.serve({

@@ -199,7 +199,7 @@ function PasswordField({
 	action,
 	error,
 	minLength,
-	disabled,
+	readOnly,
 	autoComplete
 }: {
 	name: string
@@ -208,7 +208,7 @@ function PasswordField({
 	action?: ReactNode
 	error: string
 	minLength?: number
-	disabled?: boolean
+	readOnly: boolean
 	autoComplete?: string
 }) {
 	const [visible, setVisible] = useState(false)
@@ -224,7 +224,7 @@ function PasswordField({
 					type={visible ? 'text' : 'password'}
 					name={name}
 					required
-					disabled={disabled}
+					readOnly={readOnly}
 					autoComplete={autoComplete}
 					minLength={minLength}
 					className={`${inputCls} pr-10`}
@@ -422,7 +422,7 @@ function AuthScreen({
 						<input
 							type="email"
 							autoComplete="username"
-							disabled={isPending}
+							readOnly={isPending}
 							name="email"
 							required
 							className={inputCls}
@@ -434,7 +434,7 @@ function AuthScreen({
 						label="Password"
 						error="Password must be at least 8 characters."
 						minLength={8}
-						disabled={isPending}
+						readOnly={isPending}
 						autoComplete="new-password"
 					/>
 					<label className="flex flex-col">
@@ -444,7 +444,7 @@ function AuthScreen({
 							name="passwordConfirm"
 							required
 							minLength={8}
-							disabled={isPending}
+							readOnly={isPending}
 							autoComplete="new-password"
 							className={inputCls}
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
@@ -517,7 +517,7 @@ function AuthScreen({
 						<input
 							type="email"
 							autoComplete="username"
-							disabled={isPending}
+							readOnly={isPending}
 							name="email"
 							required
 							className={inputCls}
@@ -528,7 +528,7 @@ function AuthScreen({
 						name="password"
 						label="Password"
 						error="Enter your password."
-						disabled={isPending}
+						readOnly={isPending}
 						autoComplete="current-password"
 						action={
 							<button
@@ -724,7 +724,7 @@ function ForgotPasswordScreen({
 							autoComplete="email"
 							defaultValue={initialEmail}
 							required
-							disabled={reset.isPending}
+							readOnly={reset.isPending}
 							className={inputCls}
 						/>
 						<FieldError>Enter a valid email address.</FieldError>

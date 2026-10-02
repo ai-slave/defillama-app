@@ -113,7 +113,7 @@ test('copy reports success only after the clipboard accepts the key and retries 
 	copy.mockReturnValueOnce(request.promise).mockResolvedValueOnce(undefined)
 	await mount(<ApiHarness />)
 	await click('Copy')
-	await waitForUi(() => expect(button('Copying…').disabled).toBe(true))
+	await waitForUi(() => expect(button('Copying…').getAttribute('aria-disabled')).toBe('true'))
 	expect(container.textContent).not.toContain('Copied')
 	await act(async () => request.reject(new Error('Permission denied')))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy'))
@@ -187,6 +187,20 @@ test('first key generation needs no destructive confirmation and exposes retry f
 	expect(dialog()).toBeUndefined()
 	await click('Generate API Key')
 	await waitForUi(() => expect(button('Show API key')).toBeDefined())
+})
+test('first key generation keeps focus on Generate while it runs, then hands it to the new key', async () => {
+	const request = Promise.withResolvers<string>()
+	regenerate.mockReturnValueOnce(request.promise)
+	await mount(<ApiHarness initialKey={null} />)
+	const generate = button('Generate API Key')
+	await act(async () => generate.focus())
+	await act(async () => generate.click())
+	await waitForUi(() => expect(accessibleName(generate)).toBe('Generating…'))
+	// happy-dom keeps focus on a natively disabled button, so the contract is that the button never becomes one.
+	expect(generate.disabled).toBe(false)
+	expect(document.activeElement).toBe(generate)
+	await act(async () => request.resolve('first-test-key'))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Show API key')))
 })
 async function selectReplacement(sponsorId: string, slug: string) {
 	const input = document.querySelector<HTMLInputElement>(`#replacement-${sponsorId}`)!

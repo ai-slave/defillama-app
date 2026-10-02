@@ -58,3 +58,24 @@ test('project cards have a real link with separate rename and delete controls', 
 	await waitForUi(() => expect(openDialog()?.textContent).toContain('Research'))
 	expect(push).not.toHaveBeenCalled()
 })
+
+test.each(['Clear project search', 'Clear search'])('%s returns focus to the search field', async (name) => {
+	await waitForUi(() => expect(container.querySelector('a[href="/ai/projects/research"]')).not.toBeNull())
+	const search = container.querySelector<HTMLInputElement>('input[aria-label="Search projects"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'nothing matches')
+		search.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	const clear = () =>
+		[...container.querySelectorAll('button')].find(
+			(button) => button.getAttribute('aria-label') === name || button.textContent === name
+		)
+	await waitForUi(() => expect(clear()).toBeDefined())
+	await act(async () => {
+		clear()!.focus()
+		clear()!.click()
+	})
+	await waitForUi(() => expect(clear()).toBeUndefined())
+	expect(search.value).toBe('')
+	expect(document.activeElement).toBe(search)
+})

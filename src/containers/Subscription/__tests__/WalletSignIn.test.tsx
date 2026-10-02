@@ -13,6 +13,7 @@ import { AuthProvider } from '~/auth'
 import { AuthDialogHeader } from '~/auth/AuthDialog'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import { createSignInFlowStore } from '~/auth/signInFlowStore'
+import { Dialog } from '~/ui/Dialog'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -118,14 +119,15 @@ beforeEach(async () => {
 		const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
 		const state = useSyncExternalStore(store.subscribe, store.getSnapshot)
 		return state.kind === 'wallet' ? (
-			<Ariakit.DialogProvider store={dialogStore}>
+			// The real surface, so a step that drops focus meets the dialog's net as it does in the sign-in dialog.
+			<Dialog size="sm" store={dialogStore} portal={false}>
 				<AuthDialogHeader
 					title="Sign in with a wallet"
 					closable={false}
 					onBack={() => store.dispatch({ kind: 'navigate', screen: 'signin' })}
 				/>
 				<WalletSignInForm dialogStore={dialogStore} store={store} onAuthenticated={onAuthenticated} />
-			</Ariakit.DialogProvider>
+			</Dialog>
 		) : (
 			<p>Email sign-in</p>
 		)
@@ -246,7 +248,7 @@ test('keeps the address during disconnect, then reopens on the picker', async ()
 	})
 	await click('Disconnect')
 	expect(container.textContent).toContain(first)
-	expect(button('Disconnecting…').getAttribute('aria-disabled')).toBe('true')
+	await waitForUi(() => expect(button('Disconnecting…').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => finishDisconnect())
 	expect(button('Fixture wallet').disabled).toBe(false)
 	await act(async () => store.dispatch({ kind: 'navigate', screen: 'signin' }))
@@ -295,6 +297,39 @@ test('declining a connection quietly returns to the picker', async () => {
 	await waitForUi(() => expect(button('Fixture wallet')?.disabled).toBe(false))
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(requestedSignatures).not.toHaveBeenCalled()
+})
+
+test('choosing a wallet hands focus to the dialog during the wait, then to Sign in on the review', async () => {
+	let finishConnect!: () => void
+	pendingConnect = new Promise((resolve) => {
+		finishConnect = resolve
+	})
+	await act(async () => button('Fixture wallet').focus())
+	await click('Fixture wallet')
+	await waitForUi(() => expect(container.textContent).toContain('Waiting for Fixture wallet'))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Back to sign in')))
+	await act(async () => finishConnect())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Sign in')))
+})
+
+test('declining a connection keeps focus in the dialog instead of the page', async () => {
+	let failConnect!: (error: Error) => void
+	pendingConnect = new Promise((_resolve, reject) => {
+		failConnect = reject
+	})
+	await act(async () => button('Fixture wallet').focus())
+	await click('Fixture wallet')
+	await act(async () => failConnect(new UserRejectedRequestError(new Error('Rejected'))))
+	await waitForUi(() => expect(button('Fixture wallet')).toBeTruthy())
+	expect(document.activeElement).toBe(button('Back to sign in'))
+})
+
+test('Disconnect hands focus to the dialog when the wallet list replaces the review', async () => {
+	await choose()
+	await act(async () => button('Disconnect').focus())
+	await click('Disconnect')
+	await waitForUi(() => expect(button('Fixture wallet')).toBeTruthy())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Back to sign in')))
 })
 
 test('preserves the backend explanation when the signed wallet has no account', async () => {

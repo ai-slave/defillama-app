@@ -216,25 +216,23 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 			>
 				{/* The footer's Back leads out of the wizard from its first step, so the header has no second back. */}
 				<DialogHeader title="Create comparison dashboard" />
-				<fieldset disabled={locked} className="contents">
-					<Suspense
-						fallback={
-							<DialogBody>
-								<div role="status" aria-live="polite" className="flex h-96 items-center justify-center">
-									<LoadingIndicator label="Loading comparison builder" />
-								</div>
-							</DialogBody>
-						}
-					>
-						<ComparisonWizard
-							creationStatus={creation.status}
-							onComplete={submitCreation}
-							onExit={handleBackToPicker}
-							feedback={creationFeedback}
-							{...(comparisonPreset !== null ? { comparisonPreset } : {})}
-						/>
-					</Suspense>
-				</fieldset>
+				<Suspense
+					fallback={
+						<DialogBody>
+							<div role="status" aria-live="polite" className="flex h-96 items-center justify-center">
+								<LoadingIndicator label="Loading comparison builder" />
+							</div>
+						</DialogBody>
+					}
+				>
+					<ComparisonWizard
+						creationStatus={creation.status}
+						onComplete={submitCreation}
+						onExit={handleBackToPicker}
+						feedback={creationFeedback}
+						{...(comparisonPreset !== null ? { comparisonPreset } : {})}
+					/>
+				</Suspense>
 				{announcement}
 			</Dialog>
 		)
@@ -316,7 +314,6 @@ function DashboardTemplates({
 	onCreate: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => void
 }) {
 	const id = useId()
-	const listRef = useRef<HTMLDivElement>(null)
 	const { hasActiveSubscription } = useAuthContext()
 	const { protocols, chains, protocolCatalog } = useProDashboardCatalog()
 	const categories = useQuery({
@@ -371,8 +368,6 @@ function DashboardTemplates({
 		for (const query of sourceQueries) {
 			if (query.data === undefined && query.isError) void query.refetch()
 		}
-		// The notice leaves while the data reloads, so focus moves to the templates that replace it.
-		listRef.current?.focus()
 	}
 
 	return (
@@ -387,13 +382,7 @@ function DashboardTemplates({
 					</div>
 				</InlineStatus>
 			) : null}
-			<div
-				ref={listRef}
-				role="group"
-				aria-label="Templates"
-				tabIndex={-1}
-				className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
-			>
+			<div role="group" aria-label="Templates" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 				{cards.map(({ template, selection, failed, loading, empty }) => {
 					const creating = pendingName === template.name
 					const unavailable = pendingName !== null || failed || loading || empty
@@ -485,6 +474,8 @@ function CreateDashboardModalContent({
 			return
 		}
 
+		// The fields lock while creating; the footer's submit, outside them, holds focus and its "Creating…" label.
+		;(e.nativeEvent as SubmitEvent).submitter?.focus()
 		onCreate({
 			dashboardName,
 			visibility,

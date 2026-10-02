@@ -5,7 +5,7 @@ import * as Ariakit from '@ariakit/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useEffect, useState, useSyncExternalStore } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import pb from '~/utils/pocketbase'
@@ -135,8 +135,8 @@ const success = () =>
 
 test('keeps credentials on network failure, shows it inline, and allows a successful retry', async () => {
 	await submit()
-	expect(input('email').disabled).toBe(true)
-	expect(input('password').disabled).toBe(true)
+	expect(input('email').readOnly).toBe(true)
+	expect(input('password').readOnly).toBe(true)
 	expect(container.textContent).toContain('Signing in…')
 	requests[0].reject(new TypeError('Failed to fetch'))
 	await settle()
@@ -144,7 +144,7 @@ test('keeps credentials on network failure, shows it inline, and allows a succes
 	expect(document.activeElement).not.toBe(container.querySelector('[role="alert"]'))
 	expect(input('email').value).toBe('person@example.com')
 	expect(input('password').value).toBe('correct horse battery staple')
-	expect(input('password').disabled).toBe(false)
+	expect(input('password').readOnly).toBe(false)
 	expect(localStorage.getItem('last-sign-in')).toBeNull()
 	await submit()
 	requests[1].resolve(success())
@@ -203,7 +203,7 @@ test('preserves signup fields after failure and disables submit until a fresh CA
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
 	await settle()
-	expect(input('email').disabled).toBe(true)
+	expect(input('email').readOnly).toBe(true)
 	expect(container.textContent).toContain('CAPTCHA complete')
 	requests[0].resolve(new Response(JSON.stringify({ error: 'User with this email already exists' }), { status: 400 }))
 	await waitForUi(async () => {
@@ -284,7 +284,7 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
 	await settle()
-	expect(input('email').disabled).toBe(true)
+	expect(input('email').readOnly).toBe(true)
 	requests[0].reject(new TypeError('Offline'))
 	await waitForUi(async () => {
 		await settle()
@@ -355,7 +355,7 @@ const googleExchange = () => requests.find((request) => request.url.endsWith('/a
 test.each(['close', 'navigate'])('ignores a Google challenge returned after %s', async (exit) => {
 	await act(async () => buttonNamed('Continue with Google').click())
 	await settle()
-	expect(input('email').disabled).toBe(true)
+	expect(input('email').readOnly).toBe(true)
 	expect(JSON.parse(String(googleExchange().init?.body))).toMatchObject({ code: GOOGLE_CODE })
 	const signal = googleExchange().init!.signal!
 	if (exit === 'close') await act(async () => root.render(null))
@@ -372,6 +372,64 @@ test.each(['close', 'navigate'])('ignores a Google challenge returned after %s',
 	await settle()
 	expect(container.textContent).not.toContain('Confirm your email')
 	expect(onAuthenticated).not.toHaveBeenCalled()
+})
+
+async function openGoogleLink() {
+	// The flow keeps an open link challenge for the tab; the next test starts without it.
+	onTestFinished(() => sessionStorage.clear())
+	await act(async () => buttonNamed('Continue with Google').click())
+	await settle()
+	googleExchange().resolve(
+		Response.json({
+			kind: 'link_verification_required',
+			challengeToken: 'challenge',
+			expiresAt: new Date(Date.now() + 600_000).toISOString(),
+			resendAfter: new Date(Date.now() - 1000).toISOString()
+		})
+	)
+	await waitForUi(async () => {
+		await settle()
+		expect(container.querySelector('h2')?.textContent).toBe('Confirm your email')
+	})
+}
+
+// happy-dom keeps focus on a natively disabled control, so these assert that the control never becomes one.
+test('the Google link code field stays focusable while its code is checked', async () => {
+	await openGoogleLink()
+	const code = input('code')
+	code.value = '123456'
+	await act(async () => code.focus())
+	await act(async () => code.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await settle()
+	expect(container.textContent).toContain('Verifying…')
+	expect(code.readOnly).toBe(true)
+	expect(code.disabled).toBe(false)
+	expect(document.activeElement).toBe(code)
+})
+
+test('the Google link Resend keeps focus through the wait its sent code starts', async () => {
+	await openGoogleLink()
+	const resend = buttonNamed('Resend code')
+	await act(async () => resend.focus())
+	await act(async () => resend.click())
+	await settle()
+	requests
+		.find((request) => request.url.endsWith('/auth/social-link/resend'))!
+		.resolve(
+			Response.json({
+				kind: 'link_verification_required',
+				challengeToken: 'challenge-2',
+				expiresAt: new Date(Date.now() + 600_000).toISOString(),
+				resendAfter: new Date(Date.now() + 60_000).toISOString()
+			})
+		)
+	await waitForUi(async () => {
+		await settle()
+		expect(resend.textContent).toBe('Resend available shortly')
+	})
+	expect(resend.getAttribute('aria-disabled')).toBe('true')
+	expect(resend.disabled).toBe(false)
+	expect(document.activeElement).toBe(resend)
 })
 
 test('keeps other sign-in methods available when the GitHub popup is blocked', async () => {
@@ -419,7 +477,7 @@ test('stops waiting for GitHub and offers a retry when the person closes its pop
 	await oauth.github.waitForPopup()
 	await settle()
 	expect(container.textContent).toContain('Waiting for GitHub…')
-	expect(input('email').disabled).toBe(true)
+	expect(input('email').readOnly).toBe(true)
 	oauth.popup!.closed = true
 	// GitHub sign-in polls the popup every 300ms.
 	await waitForUi(
@@ -547,8 +605,8 @@ async function startOnSignup(label: string) {
 }
 async function returnToSignIn() {
 	await settle()
-	expect(input('email').disabled).toBe(true)
-	expect(input('password').disabled).toBe(true)
+	expect(input('email').readOnly).toBe(true)
+	expect(input('password').readOnly).toBe(true)
 	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
 	await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Back to sign in"]')!.click())
 }

@@ -90,6 +90,33 @@ describe('lead dialogs start from a fresh form on each open', () => {
 	})
 })
 
+describe('connect form token steps', () => {
+	test('each token step hands focus to the control that replaces the one used', async () => {
+		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await click(document.querySelector<HTMLInputElement>('input[type="radio"][value="listed"]')!)
+		const search = document.querySelector<HTMLInputElement>('input[placeholder="Search your token by name or ticker"]')!
+		await act(async () => search.focus())
+		await type(search, 'zz')
+		const manual = await waitForUi(() => {
+			const item = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(
+				(el) => el.textContent === 'My token does not appear in this list'
+			)
+			expect(item).toBeDefined()
+			return item!
+		})
+		await click(manual)
+		expect(document.activeElement).toBe(inputByLabel('Project name'))
+		const back = buttonByText('Back to token search')!
+		await act(async () => {
+			back.focus()
+			back.click()
+		})
+		expect(document.activeElement).toBe(
+			document.querySelector('input[placeholder="Search your token by name or ticker"]')
+		)
+	})
+})
+
 describe('claim form submission', () => {
 	test('asks for the verification check when Submit is pressed before it passes', async () => {
 		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', 'claim-site-key')

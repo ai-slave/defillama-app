@@ -199,18 +199,23 @@ test('an iteration keeps custom data rows out of the request and restores what t
 	expect(save.mock.calls[0][0].items).toEqual([section, customData])
 })
 
-test('editing the prompt explicitly discards the generated result before generating another', async () => {
+test('editing the prompt discards the generated result, hands focus to the prompt and generates again', async () => {
 	save.mockRejectedValueOnce(new Error('Save unavailable')).mockResolvedValueOnce(dashboard)
 	await render()
 	draft()
 	await submit()
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 	expect(document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.readOnly).toBe(true)
-	await act(async () =>
-		[...document.querySelectorAll('button')].find((el) => accessibleName(el) === 'Edit prompt and regenerate')!.click()
-	)
+	const edit = [...document.querySelectorAll('button')].find(
+		(el) => accessibleName(el) === 'Edit prompt and regenerate'
+	)!
+	await act(async () => {
+		edit.focus()
+		edit.click()
+	})
 	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
 	await waitForUi(() => expect(prompt.readOnly).toBe(false))
+	expect(document.activeElement).toBe(prompt)
 	prompt.value = 'Compare stablecoin supplies instead of fees and TVL'
 	await submit()
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())

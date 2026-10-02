@@ -52,6 +52,7 @@ import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrati
 import { useTokenSearch } from '~/containers/ProDashboard/components/datasets/TokenUsageDataset/useTokenSearch'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -280,6 +281,8 @@ function CreateAlertModalForm({
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		if (submitBlockReason || isPending) return
+		// The fields lock while creating; the footer's submit, outside them, holds focus and its "Creating…" label.
+		;(e.nativeEvent as SubmitEvent).submitter?.focus()
 		const titleValue = new FormData(e.currentTarget).get('title')
 		const slackChannelName = slackChannels?.find((c) => c.id === slackChannelId)?.name ?? null
 		const body = buildCreateAlertBody({
@@ -362,6 +365,8 @@ function CreateAlertModalForm({
 					}
 				>
 					<Button
+						// A server cap swaps the form, and the Create button with it, for this step. React's autoFocus skips links.
+						ref={takeLostFocus}
 						as={BasicLink}
 						variant="primary"
 						size="md"

@@ -2,14 +2,16 @@ import * as Ariakit from '@ariakit/react'
 import {
 	Children,
 	createContext,
+	useCallback,
 	useContext,
+	useRef,
 	useState,
 	type ComponentProps,
 	type ComponentPropsWithoutRef,
 	type ReactNode
 } from 'react'
-import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
+import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
 
@@ -77,7 +79,99 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
    · <DialogBody> · optional <DialogFooter>.
 ---------------------------------------------------------------------------- */
 
-const DialogPendingContext = createContext(false)
+/** A leave prompt: it receives the step that leaving would take (close the dialog, switch a tab) and runs it if
+    the reader confirms. */
+type LeaveGuard = (proceed: () => void) => void
+
+/** The surface's lock (`pending`) and its leave guard, read by the ×, the back control and guarded tabs. */
+const DialogSurfaceContext = createContext<{
+	pending: boolean
+	setGuard: (guard: LeaveGuard | null) => void
+	/** Hands `proceed` to the guard and returns true when one is mounted; otherwise returns false. */
+	attemptLeave: (proceed: () => void) => boolean
+}>({ pending: false, setGuard: () => {}, attemptLeave: () => false })
+
+type SurfaceDismissProps = Pick<SurfaceProps, 'pending' | 'hideOnEscape' | 'hideOnInteractOutside'>
+
+/** The dismissal shared by Dialog and SideSheet: `pending` stops Escape, outside taps and the ×; a mounted
+    DialogCloseGuard turns Escape and the × into its own prompt and ignores outside taps. The guard is read when the
+    event happens, so it needs no render of the surface. */
+function SurfaceDialog({
+	pending = false,
+	hideOnEscape = true,
+	hideOnInteractOutside = true,
+	ref,
+	...props
+}: SurfaceDismissProps & Omit<ComponentProps<typeof Ariakit.Dialog>, 'hideOnEscape' | 'hideOnInteractOutside'>) {
+	const guardRef = useRef<LeaveGuard | null>(null)
+	// Stable, so a render never resets the net in the commit that removes the focused control.
+	const surfaceRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			const release = catchLostFocus(node)
+			if (typeof ref === 'function') ref(node)
+			else if (ref) ref.current = node
+			return () => {
+				release?.()
+				if (typeof ref === 'function') ref(null)
+				else if (ref) ref.current = null
+			}
+		},
+		[ref]
+	)
+	const surface = {
+		pending,
+		setGuard: (guard: LeaveGuard | null) => {
+			guardRef.current = guard
+		},
+		attemptLeave: (proceed: () => void) => {
+			if (!guardRef.current) return false
+			guardRef.current(proceed)
+			return true
+		}
+	}
+	return (
+		<DialogSurfaceContext value={surface}>
+			<Ariakit.Dialog
+				hideOnEscape={(event) => {
+					// Leaving closes the way Escape would: through the caller's store, or its onClose for a controlled dialog.
+					if (surface.attemptLeave(() => (props.store ? props.store.hide() : props.onClose?.(new Event('close')))))
+						return false
+					return !pending && (typeof hideOnEscape === 'function' ? hideOnEscape(event) : hideOnEscape)
+				}}
+				hideOnInteractOutside={(event) =>
+					!guardRef.current &&
+					!pending &&
+					(typeof hideOnInteractOutside === 'function' ? hideOnInteractOutside(event) : hideOnInteractOutside)
+				}
+				{...props}
+				ref={surfaceRef}
+			/>
+		</DialogSurfaceContext>
+	)
+}
+
+export function DialogCloseGuard({ onAttemptLeave }: { onAttemptLeave: LeaveGuard }) {
+	const { setGuard } = useContext(DialogSurfaceContext)
+	return (
+		<span
+			hidden
+			ref={(node) => {
+				if (!node) return
+				setGuard(onAttemptLeave)
+				return () => setGuard(null)
+			}}
+		/>
+	)
+}
+
+/** For a control inside a guarded dialog that leaves the current step, such as a tab: run `proceed` directly, or hand
+    it to the mounted DialogCloseGuard to confirm first. */
+export function useDialogLeave() {
+	const { attemptLeave } = useContext(DialogSurfaceContext)
+	return (proceed: () => void) => {
+		if (!attemptLeave(proceed)) proceed()
+	}
+}
 
 export type DialogSize = 'sm' | 'md' | 'lg'
 
@@ -99,20 +193,13 @@ export function Dialog({
 	size,
 	fullSheet = false,
 	scope,
-	pending = false,
-	hideOnEscape = true,
-	hideOnInteractOutside = true,
 	...props
 }: SurfaceProps & { size: DialogSize; fullSheet?: boolean; scope?: keyof typeof DIALOG_SCOPE }) {
 	return (
-		<DialogPendingContext value={pending}>
-			<Ariakit.Dialog
-				hideOnEscape={!pending && hideOnEscape}
-				hideOnInteractOutside={!pending && hideOnInteractOutside}
-				className={`${fullSheet ? dialogFullSheetSurfaceStyles : dialogSurfaceStyles} ${dialogWidthStyles[size]} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
-				{...props}
-			/>
-		</DialogPendingContext>
+		<SurfaceDialog
+			className={`${fullSheet ? dialogFullSheetSurfaceStyles : dialogSurfaceStyles} ${dialogWidthStyles[size]} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
+			{...props}
+		/>
 	)
 }
 
@@ -139,9 +226,6 @@ const sideSheetStyles =
 export function SideSheet({
 	size,
 	canvas = false,
-	pending = false,
-	hideOnEscape = true,
-	hideOnInteractOutside = true,
 	...props
 }: SurfaceProps & {
 	size: DialogSize
@@ -149,14 +233,10 @@ export function SideSheet({
 	canvas?: boolean
 }) {
 	return (
-		<DialogPendingContext value={pending}>
-			<Ariakit.Dialog
-				hideOnEscape={!pending && hideOnEscape}
-				hideOnInteractOutside={!pending && hideOnInteractOutside}
-				className={`${sideSheetStyles} ${canvas ? 'bg-surface-elevated-1' : 'bg-overlay'} ${SIDE_SHEET_WIDTH[size]}`}
-				{...props}
-			/>
-		</DialogPendingContext>
+		<SurfaceDialog
+			className={`${sideSheetStyles} ${canvas ? 'bg-surface-elevated-1' : 'bg-overlay'} ${SIDE_SHEET_WIDTH[size]}`}
+			{...props}
+		/>
 	)
 }
 
@@ -249,9 +329,14 @@ type DialogCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof Ariakit.Dialo
 }
 
 export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...props }: DialogCloseButtonProps) {
-	const pending = useContext(DialogPendingContext)
+	const { pending, attemptLeave } = useContext(DialogSurfaceContext)
+	const store = Ariakit.useDialogContext()!
 	return (
 		<Ariakit.DialogDismiss
+			onClick={(event) => {
+				// DialogDismiss skips its hide when the click is already handled; the guard hides once confirmed.
+				if (attemptLeave(() => store.hide())) event.preventDefault()
+			}}
 			disabled={pending}
 			accessibleWhenDisabled
 			render={<Button type="button" variant="ghost" size="md" square className={`-mr-2 ${className ?? ''}`.trim()} />}
@@ -274,28 +359,21 @@ export function DialogBackButton({
 	/** For a step whose own request is pending while the dialog itself stays closable. */
 	disabled?: boolean
 }) {
-	const pending = useContext(DialogPendingContext)
+	const { pending } = useContext(DialogSurfaceContext)
 	return (
-		<Ariakit.Button
+		<Button
+			variant="ghost"
+			size="md"
+			square
+			className="-ml-2"
 			disabled={pending || disabled}
 			accessibleWhenDisabled
-			render={<Button type="button" variant="ghost" size="md" square className="-ml-2" />}
 			aria-label={label}
 			onClick={onClick}
 		>
 			<Icon name="arrow-left" className="size-4" aria-hidden="true" />
-		</Ariakit.Button>
+		</Button>
 	)
-}
-
-/** Switches the pane of a two-pane sheet. Below md one pane shows at a time, so the control that switched it is
-    hidden (a list row) or gone (the back button), and focus would fall to the page. After the switch commits,
-    focus moves to `target()` unless the control that had it is still on screen, as it is when both panes show. */
-export function switchSheetPane(commit: () => void, target: () => HTMLElement | null | undefined) {
-	const from = document.activeElement
-	flushSync(commit)
-	if (from instanceof HTMLElement && from.isConnected && from.checkVisibility()) return
-	target()?.focus()
 }
 
 type DialogFooterProps = {

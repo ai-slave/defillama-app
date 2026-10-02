@@ -1,8 +1,9 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { takeLostFocus } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
@@ -54,11 +55,14 @@ export function IntegrationRow({
 	const [confirming, setConfirming] = useState<'code' | 'switch' | null>(null)
 	const linkedHandle = link.state.status === 'linked' ? formatHandle(link.state.username) : ''
 	const [disconnectHandle, setDisconnectHandle] = useState<string | null>(null)
+	const rowRef = useRef<HTMLDivElement>(null)
 	// Once unlinked there is nothing left to confirm.
 	if (disconnectHandle !== null && link.state.status !== 'linked') setDisconnectHandle(null)
 
+	// Each step replaces the controls of the one before, including the one that had focus, so each step's own control
+	// takes focus as it mounts (takeLostFocus). A step with no control of its own leaves it to the Settings dialog's net.
 	return (
-		<div className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
+		<div ref={rowRef} className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
@@ -88,6 +92,7 @@ export function IntegrationRow({
 					</div>
 				) : link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading' ? (
 					<Button
+						ref={takeLostFocus}
 						type="button"
 						size="md"
 						variant="primary"
@@ -106,7 +111,7 @@ export function IntegrationRow({
 					Waiting for confirmation in Telegram…
 					<div className="mt-2">
 						Didn&apos;t see Telegram open?{' '}
-						<a href={link.state.deepLink} target="_blank" rel="noopener" className="underline">
+						<a ref={takeLostFocus} href={link.state.deepLink} target="_blank" rel="noopener" className="underline">
 							DM /start to the bot
 						</a>
 						.
@@ -135,6 +140,7 @@ export function IntegrationRow({
 					</label>
 					<div className="flex gap-2">
 						<Input
+							ref={takeLostFocus}
 							id={codeId}
 							value={codeDraft}
 							onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -177,6 +183,7 @@ export function IntegrationRow({
 					</InlineStatus>
 					<div className="flex gap-2">
 						<Button
+							ref={takeLostFocus}
 							type="button"
 							size="md"
 							variant="primary"
@@ -217,6 +224,12 @@ export function IntegrationRow({
 				onClose={() => setDisconnectHandle(null)}
 				portal
 				unmountOnHide
+				autoFocusOnHide={(element) => {
+					// Unlinking takes the Disconnect button with it; the row's first control, Connect, takes focus.
+					if (element) return true
+					rowRef.current?.querySelector('button')?.focus()
+					return false
+				}}
 				title="Disconnect Telegram?"
 				description={`LlamaAI stops chatting with ${disconnectHandle ?? 'your account'} and sending alerts there.`}
 				confirmLabel="Disconnect"

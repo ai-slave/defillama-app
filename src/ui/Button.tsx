@@ -1,4 +1,5 @@
-import type { ComponentPropsWithRef, ElementType, MouseEvent } from 'react'
+import * as Ariakit from '@ariakit/react'
+import type { ComponentPropsWithRef, ElementType, MouseEvent, ReactNode } from 'react'
 import { LoadingSpinner } from './Loaders'
 
 /* ----------------------------------------------------------------------------
@@ -22,12 +23,21 @@ import { LoadingSpinner } from './Loaders'
    same contract as Card. If you need different colors/spacing, that is a
    new variant to agree on in design.md, not a className override.
 
-   `pendingLabel` is the pending state: while an action runs, pass its label
-   ("Saving…") and the button shows a spinner and that label, stays focusable
-   (aria-disabled, announced as busy) and ignores clicks, so a form cannot
-   submit twice through Enter either. It keeps full colour, unlike a disabled
-   button, so it reads as working, even when a disabled <fieldset> around it
-   also disables it (the `not-aria-busy` guards). Pass null once the action settles.
+   The button is Ariakit's Button, so a disabled button keeps React Aria's
+   model: `disabled` takes it out of the tab order, and two states keep it
+   focusable (aria-disabled) while swallowing presses:
+   - `pendingLabel`: while an action runs, pass its label ("Saving…"). The
+     button shows a spinner and that label and is announced as busy, so it
+     keeps focus and a form cannot submit twice through Enter either. It keeps
+     full colour, unlike a disabled button, so it reads as working, even when
+     a disabled <fieldset> around it also disables it (the `not-aria-busy`
+     guards). Pass null once the action settles.
+   - `accessibleWhenDisabled`: a control that disables itself when pressed (a
+     stepper at its limit, Resend during its cooldown, a pager at its end).
+   Like Ariakit's, the button is type="button" unless it says otherwise: a
+   submit button passes type="submit", so no other button submits by accident.
+   Inside a dialog, any other focused control that disappears hands focus to
+   the dialog's first control (catchLostFocus in src/ui/focus.ts).
 
    For Ariakit hosts, prefer composing the component itself:
    <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
@@ -101,12 +111,19 @@ export function buttonStyles({
 }
 
 type ButtonProps<T extends ElementType> = {
+	/** A link or other host keeps its own element and role; only the default button takes button behaviour. */
 	as?: T
 	variant?: ButtonVariant
 	size: ButtonSize
 	square?: boolean
-	/** Set while the button's action runs; the button shows a spinner and this label and ignores clicks. */
+	/** Set while the button's action runs; the button shows a spinner and this label, keeps focus and ignores presses. */
 	pendingLabel?: string | null
+	/** For a control that disables itself when pressed (a stepper at its limit, Resend during its cooldown): it keeps
+	    focus while disabled, so pressing it never drops focus to the page. Other disabled buttons leave the tab order. */
+	accessibleWhenDisabled?: boolean
+	'aria-disabled'?: boolean | 'true' | 'false'
+	/** The selected state of ghost, filter and toggle buttons. */
+	'data-active'?: boolean | string
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
 	className?: string | undefined
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
@@ -117,40 +134,77 @@ export function Button<T extends ElementType = 'button'>({
 	size,
 	square = false,
 	pendingLabel = null,
+	accessibleWhenDisabled = false,
+	'data-active': dataActive,
+	'aria-disabled': ariaDisabled,
 	className,
 	...props
 }: ButtonProps<T>) {
-	const Component = (as ?? 'button') as ElementType
 	const classes = `${buttonStyles({ variant, size, square })} ${className ?? ''}`.trim()
-	if (pendingLabel === null) return <Component className={classes} {...props} />
+	const pending = pendingLabel !== null
+	const children = pending ? (
+		<PendingContent square={square} label={pendingLabel} idle={props.children} />
+	) : (
+		props.children
+	)
+	if (as) {
+		const Component = as as ElementType
+		// A pending link keeps its role, so it is marked busy and swallows its own click instead.
+		return (
+			<Component
+				className={classes}
+				data-active={dataActive}
+				aria-disabled={pending || ariaDisabled}
+				aria-busy={pending || undefined}
+				{...props}
+				{...(pending ? { onClick: (event: MouseEvent) => event.preventDefault() } : {})}
+			>
+				{children}
+			</Component>
+		)
+	}
 	return (
-		<Component
+		<Ariakit.Button
 			className={classes}
 			{...props}
-			aria-disabled
-			aria-busy
-			// A pending button swallows clicks, including the one a form's Enter key sends to its submit button.
-			onClick={(event: MouseEvent) => event.preventDefault()}
+			// Ariakit marks a press with data-active; here it means selected, so only the caller sets it.
+			data-active={dataActive}
+			aria-disabled={ariaDisabled}
+			disabled={pending || props.disabled}
+			// Ariakit keeps a disabled button focusable with aria-disabled and swallows its presses, including the click a
+			// form's Enter key sends to its submit button, so a pending button holds focus and cannot submit twice.
+			// An Ariakit host that renders this button (render={<Button />}) marks "disabled but focusable" with
+			// aria-disabled alone, and a truly disabled one with both.
+			accessibleWhenDisabled={
+				pending || accessibleWhenDisabled || (!props.disabled && (ariaDisabled === true || ariaDisabled === 'true'))
+			}
+			aria-busy={pending || undefined}
 		>
-			{square ? (
-				// An icon-only button has no room for a label: the spinner replaces the icon, the label is announced.
-				<>
-					<LoadingSpinner size={14} />
-					<span className="sr-only">{pendingLabel}</span>
-				</>
-			) : (
-				// The idle content stays in the same grid cell, invisible and hidden from assistive tech, so the button
-				// keeps the wider of its two widths and the row around it does not reflow while the action runs.
-				<span className="grid">
-					<span aria-hidden className="invisible col-start-1 row-start-1 flex items-center justify-center gap-1">
-						{props.children}
-					</span>
-					<span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
-						<LoadingSpinner size={14} />
-						{pendingLabel}
-					</span>
-				</span>
-			)}
-		</Component>
+			{children}
+		</Ariakit.Button>
+	)
+}
+
+function PendingContent({ square, label, idle }: { square: boolean; label: string; idle: ReactNode }) {
+	// An icon-only button has no room for a label: the spinner replaces the icon, the label is announced.
+	if (square)
+		return (
+			<>
+				<LoadingSpinner size={14} />
+				<span className="sr-only">{label}</span>
+			</>
+		)
+	// The idle content stays in the same grid cell, invisible and hidden from assistive tech, so the button keeps the
+	// wider of its two widths and the row around it does not reflow while the action runs.
+	return (
+		<span className="grid">
+			<span aria-hidden className="invisible col-start-1 row-start-1 flex items-center justify-center gap-1">
+				{idle}
+			</span>
+			<span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
+				<LoadingSpinner size={14} />
+				{label}
+			</span>
+		</span>
 	)
 }

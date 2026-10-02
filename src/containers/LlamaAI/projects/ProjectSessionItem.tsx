@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
@@ -74,16 +73,17 @@ export function ProjectSessionItem({
 						}}
 						className={`${inputStyles} min-w-0 flex-1`}
 					/>
-					<Ariakit.Button
+					<Button
+						size="md"
+						variant="primary"
 						accessibleWhenDisabled
 						type="submit"
 						disabled={isBusy}
-						render={<Button size="md" variant="primary" />}
 						aria-label={updateTitle.isPending ? 'Saving title' : 'Save title'}
 					>
 						{updateTitle.isPending ? <LoadingSpinner size={14} /> : null}
 						{updateTitle.isPending ? 'Saving…' : 'Save'}
-					</Ariakit.Button>
+					</Button>
 					<Button
 						type="button"
 						size="md"

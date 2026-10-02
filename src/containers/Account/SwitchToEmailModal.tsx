@@ -280,22 +280,28 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							<label htmlFor={`${fieldId}-otp`} className="label-sm text-secondary">
 								Verification code
 							</label>
-							<Input
-								type="text"
-								inputMode="numeric"
-								id={`${fieldId}-otp`}
-								maxLength={6}
-								required
-								readOnly={isLoading}
-								value={otp}
-								aria-invalid={error?.field === 'otp' || undefined}
-								aria-describedby={error?.field === 'otp' ? `${fieldId}-otp-error` : undefined}
-								onChange={(e) => {
-									setOtp(e.target.value.replace(/\D/g, ''))
-									clearError()
-								}}
-								placeholder="000000"
-								className="w-full tracking-widest"
+							{/* The step replaces the email form and its focused submit, so the code field takes focus. */}
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										type="text"
+										inputMode="numeric"
+										id={`${fieldId}-otp`}
+										maxLength={6}
+										required
+										readOnly={isLoading}
+										value={otp}
+										aria-invalid={error?.field === 'otp' || undefined}
+										aria-describedby={error?.field === 'otp' ? `${fieldId}-otp-error` : undefined}
+										onChange={(e) => {
+											setOtp(e.target.value.replace(/\D/g, ''))
+											clearError()
+										}}
+										placeholder="000000"
+										className="w-full tracking-widest"
+									/>
+								}
 							/>
 							{error?.field === 'otp' ? (
 								<p id={`${fieldId}-otp-error`} role="alert" className="body-sm text-data-down">

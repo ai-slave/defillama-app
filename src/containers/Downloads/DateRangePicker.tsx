@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
-import { useId, useState } from 'react'
+import { useId, useState, type Ref } from 'react'
 import { Icon } from '~/ui/Icon'
 import { type DateRangeConfig, type DateRangePreset, formatDateRangeLong } from './savedDownloads'
 
@@ -19,9 +19,11 @@ interface DateRangePickerProps {
 	minDate?: string
 	maxDate?: string
 	disabled?: boolean
+	/** For a control elsewhere that clears the range and hands focus back here. */
+	triggerRef?: Ref<HTMLButtonElement>
 }
 
-export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }: DateRangePickerProps) {
+export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, triggerRef }: DateRangePickerProps) {
 	const id = useId()
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
 	const today = dayjs().toISOString().slice(0, 10) // the UTC day, as rows are keyed by UTC date
@@ -77,7 +79,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<div className="inline-flex items-stretch">
-				<Ariakit.PopoverDisclosure disabled={disabled} className={triggerClass}>
+				<Ariakit.PopoverDisclosure ref={triggerRef} disabled={disabled} className={triggerClass}>
 					<Icon name="calendar" className="size-3.5" />
 					<span className="max-w-[160px] truncate">{triggerLabel}</span>
 					<Icon name="chevron-down" className="size-3" />

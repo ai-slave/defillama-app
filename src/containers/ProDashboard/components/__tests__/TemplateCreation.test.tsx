@@ -185,13 +185,17 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 		expect(api.create).not.toHaveBeenCalled()
 		const response = Promise.withResolvers<unknown>()
 		api[source].mockReturnValue(response.promise)
-		await click('Try again')
+		const retry = button('Try again')
+		await act(async () => {
+			retry.focus()
+			retry.click()
+		})
 		// The notice leaves once the refetch starts, which React Query reports on its next notify tick.
 		await act(async () => {
 			await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
 		})
-		// The notice left while the data reloads, so focus lands on the templates instead of the page.
-		expect(document.activeElement).toBe(document.querySelector('[role="group"][aria-label="Templates"]'))
+		// The notice took its Try again with it, so the dialog hands focus to its first control instead of the page.
+		expect(document.activeElement).toBe(button('Close dialog'))
 		await act(async () =>
 			response.resolve(
 				source === 'catalog'

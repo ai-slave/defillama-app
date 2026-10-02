@@ -43,6 +43,7 @@ function Harness({ open }: { open: boolean }) {
 					id: 'dashboard',
 					data: { items: [], dashboardName: 'Original', ...overrides }
 				})
+				return { refreshPending: false }
 			}}
 		/>
 	)

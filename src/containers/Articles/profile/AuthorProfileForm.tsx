@@ -12,6 +12,7 @@ import {
 import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
@@ -536,13 +537,17 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						>
 							Discard
 						</button>
-						<button
+						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+						<Button
+							variant="primary"
+							size="md"
+							pendingLabel={updateProfileMutation.isPending ? 'Saving…' : null}
 							type="submit"
-							disabled={!dirty || hasError || updateProfileMutation.isPending}
-							className="rounded-md bg-link px-4 py-2 text-sm font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+							disabled={!dirty || hasError}
+							accessibleWhenDisabled
 						>
-							{updateProfileMutation.isPending ? 'Saving…' : 'Save changes'}
-						</button>
+							Save changes
+						</Button>
 					</div>
 				</div>
 			</div>

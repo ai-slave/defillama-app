@@ -57,13 +57,15 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 				</div>
 				<div className="flex gap-2 max-sm:*:flex-1">
 					{!isExpired && (
+						// The cooldown label says why it is disabled. It starts while the button has focus, so the button
+						// stays focusable.
 						<Button
 							type="button"
 							size="md"
-							onClick={handleResend}
-							// The cooldown label says why it is disabled.
-							disabled={onCooldown}
 							pendingLabel={isResending ? 'Sending…' : null}
+							disabled={onCooldown}
+							accessibleWhenDisabled
+							onClick={handleResend}
 						>
 							<Icon name="mail" height={14} width={14} />
 							{onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}

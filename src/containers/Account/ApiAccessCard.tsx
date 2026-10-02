@@ -1,6 +1,8 @@
 import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { formatNumber, formatFixedNumber, formatPercent } from '~/utils/numberFormat'
 import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
@@ -66,17 +68,15 @@ export function ApiAccessCard({
 					<p className="max-w-sm text-sm text-sub-text-muted">
 						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
 					</p>
-					<button
-						type="button"
-						onClick={() => {
-							generateNewKeyMutation.mutate()
-						}}
-						disabled={generateNewKeyMutation.isPending}
-						className="flex h-11 items-center gap-2 rounded-lg bg-sub-brand-primary px-6 text-sm font-medium text-on-brand disabled:opacity-50"
+					<Button
+						variant="primary"
+						size="md"
+						onClick={() => generateNewKeyMutation.mutate()}
+						pendingLabel={generateNewKeyMutation.isPending ? 'Generating…' : null}
 					>
-						<Icon name="key" height={16} width={16} />
-						{generateNewKeyMutation.isPending ? 'Generating...' : 'Generate API Key'}
-					</button>
+						<Icon name="key" height={14} width={14} />
+						Generate API Key
+					</Button>
 					{generateNewKeyMutation.error ? (
 						<p role="alert" className="text-sm text-error">
 							{generateNewKeyMutation.error.message}
@@ -97,39 +97,34 @@ export function ApiAccessCard({
 
 			{/* API Key Section */}
 			<div className="flex flex-col gap-3">
-				<div className="flex items-center justify-between">
+				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 					<span className="text-sm text-sub-text-primary">Your API Key</span>
-					<div className="flex gap-2">
-						<button
-							type="button"
+					<div className="flex flex-wrap gap-2">
+						<Button
+							// A key generated here replaces the Generate button, so its first control takes that focus.
+							ref={generateNewKeyMutation.isSuccess ? takeLostFocus : undefined}
+							size="sm"
 							onClick={() => setShowKey((v) => !v)}
-							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
 							aria-label={showKey ? 'Hide API key' : 'Show API key'}
 						>
-							<Icon name={showKey ? 'eye-off' : 'eye'} height={12} width={12} />
+							<Icon name={showKey ? 'eye-off' : 'eye'} height={14} width={14} />
 							{showKey ? 'Hide' : 'Show'}
-						</button>
-						<button
-							type="button"
-							onClick={() => copy.mutate()}
-							disabled={copy.isPending}
-							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
-						>
-							<Icon name="copy" height={12} width={12} />
-							{copy.isPending ? 'Copying…' : copy.isSuccess && copy.data === apiKey ? 'Copied' : 'Copy'}
-						</button>
-						<button
-							type="button"
+						</Button>
+						<Button size="sm" onClick={() => copy.mutate()} pendingLabel={copy.isPending ? 'Copying…' : null}>
+							<Icon name="copy" height={14} width={14} />
+							{copy.isSuccess && copy.data === apiKey ? 'Copied' : 'Copy'}
+						</Button>
+						<Button
+							size="sm"
 							onClick={() => {
 								generateNewKeyMutation.reset()
 								setConfirmRegenerate(true)
 							}}
-							disabled={generateNewKeyMutation.isPending}
-							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
+							pendingLabel={generateNewKeyMutation.isPending ? 'Regenerating…' : null}
 						>
-							<Icon name="repeat" height={12} width={12} />
-							{generateNewKeyMutation.isPending ? 'Regenerating...' : 'Regenerate'}
-						</button>
+							<Icon name="repeat" height={14} width={14} />
+							Regenerate
+						</Button>
 					</div>
 				</div>
 				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
