@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
 	EARN_NO_COLUMNS,
-	NO_DEFAULT_EARN_COLUMNS,
 	PAID_DEFAULT_EARN_COLUMNS,
 	parseSelectedEarnColumns,
 	resolveEarnColumnAccess
@@ -21,15 +20,6 @@ describe('resolveEarnColumnAccess', () => {
 			defaultColumns: PAID_DEFAULT_EARN_COLUMNS
 		})
 		expect(resolveEarnColumnAccess({ hasAccess: false, initialVerifiedAccess: true, isDenied: true })).toEqual({
-			verifiedAccess: false,
-			defaultColumns: NO_DEFAULT_EARN_COLUMNS
-		})
-	})
-
-	test('shows the paid columns to a locked reader while the Verified filter is on', () => {
-		expect(
-			resolveEarnColumnAccess({ hasAccess: false, initialVerifiedAccess: false, isDenied: true, verifiedFilter: true })
-		).toEqual({
 			verifiedAccess: false,
 			defaultColumns: PAID_DEFAULT_EARN_COLUMNS
 		})

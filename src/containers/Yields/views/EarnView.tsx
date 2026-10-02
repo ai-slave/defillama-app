@@ -82,8 +82,7 @@ function EarnView({
 	const { verifiedAccess: effectiveVerifiedAccess, defaultColumns } = resolveEarnColumnAccess({
 		hasAccess: paidYields,
 		initialVerifiedAccess: initialEarnPageVerifiedAccess,
-		isDenied,
-		verifiedFilter: attributeSet.has('verified')
+		isDenied
 	})
 	// 'Single asset' → singleAssetExposure=true; 'Multi asset' → =false. Both selected
 	// sends both values, which the tri-state server AND-s to zero rows.

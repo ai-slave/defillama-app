@@ -205,6 +205,7 @@ function ProtocolYieldsTab({
 					tvlRangeLabel="TVL"
 					apyRange
 					showColumns
+					defaultColumns={defaultColumns}
 					apyControls={<ApyViewControls ready={preferencesReady} />}
 					saveView={false}
 					resetFilters

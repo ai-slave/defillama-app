@@ -184,7 +184,7 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	// Filled seal = measured; muted = this window isn't; padlock = measured but withheld. The mark
 	// trails the figure; an unmarked row keeps the slot so every figure shares one right edge.
 	const glyph = locked ? (
-		<MeasuredLock size={13} />
+		<MeasuredLock size={13} className="opacity-60" />
 	) : row.verified || measuredIntrinsic != null ? (
 		<MeasuredSeal muted={!headlineMeasured} />
 	) : (
@@ -287,7 +287,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 					>
 						<span className="flex items-center gap-1.5 text-secondary">
 							<span className="underline decoration-dotted">•••</span>
-							<MeasuredLock size={13} />
+							<MeasuredLock size={13} className="opacity-60" />
 						</span>
 					</Hovercard>
 				)}

@@ -9,8 +9,6 @@ export const EARN_COLUMN_DEFS = {
 	apyMean30d: { key: 'apyMean30d', name: '30d Avg APY' },
 	top10Pct: { key: 'top10Pct', name: 'Holders: Top 10 %' },
 	avgPositionUsd: { key: 'avgPositionUsd', name: 'Holders: Avg Position' },
-	// Default only for the measured tier (see PAID_DEFAULT_EARN_COLUMNS): public rows carry no exit
-	// outcome, so for everyone else the column would be blank and does not earn a default slot.
 	exitStatus: { key: 'exitStatus', name: 'Exit Status' }
 } as const satisfies Record<string, { key: string; name: string }>
 
@@ -38,32 +36,25 @@ export const EARN_COLUMN_OPTION_KEYS = new Set(EARN_COLUMN_OPTIONS.map((option) 
 /** Explicit "no optional columns", so a reader whose default set is non-empty can still clear it. */
 export const EARN_NO_COLUMNS = 'none'
 
-/** Only measured-tier rows carry an exit outcome, so only that tier gets the column by default. */
+/** On for every reader, so one without access sees what the paid column offers. */
 export const PAID_DEFAULT_EARN_COLUMNS: ReadonlyArray<string> = [EARN_COLUMN_DEFS.exitStatus.key]
 export const NO_DEFAULT_EARN_COLUMNS: ReadonlyArray<string> = []
 
 /**
  * Keep the server-selected paid tier through the client entitlement handshake. A confirmed denial
- * always wins, while a confirmed grant does not depend on how the page was seeded. The Verified
- * filter also brings the paid defaults: every row it shows is measured, so for a reader without
- * access the column fills with locks instead of the blanks it would show on the full table.
+ * always wins, while a confirmed grant does not depend on how the page was seeded.
  */
 export function resolveEarnColumnAccess({
 	hasAccess,
 	initialVerifiedAccess,
-	isDenied,
-	verifiedFilter = false
+	isDenied
 }: {
 	hasAccess: boolean
 	initialVerifiedAccess: boolean
 	isDenied: boolean
-	verifiedFilter?: boolean
 }): { verifiedAccess: boolean; defaultColumns: ReadonlyArray<string> } {
 	const verifiedAccess = hasAccess || (initialVerifiedAccess && !isDenied)
-	return {
-		verifiedAccess,
-		defaultColumns: verifiedAccess || verifiedFilter ? PAID_DEFAULT_EARN_COLUMNS : NO_DEFAULT_EARN_COLUMNS
-	}
+	return { verifiedAccess, defaultColumns: PAID_DEFAULT_EARN_COLUMNS }
 }
 
 /**
