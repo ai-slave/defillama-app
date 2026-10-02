@@ -51,10 +51,7 @@ const columns = columnHelper.columns([
 		enableSorting: false,
 		cell: ({ getValue }) => {
 			return (
-				<BasicLink
-					href={`/raises/${slug(getValue())}`}
-					className="truncate text-sm font-medium text-link hover:underline"
-				>
+				<BasicLink href={`/raises/${slug(getValue())}`} className="truncate label-md text-link hover:underline">
 					{getValue()}
 				</BasicLink>
 			)

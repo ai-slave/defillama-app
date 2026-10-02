@@ -194,16 +194,13 @@ const protocolsColumns = columnHelper.columns([
 						{row.original?.deprecated ? (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
+								className="flex items-center gap-1 truncate label-md text-link hover:underline"
 							>
 								<span className="truncate hover:underline">{value}</span>
 								<DeprecatedProtocolMarker />
 							</BasicLink>
 						) : (
-							<BasicLink
-								href={`/protocol/${slug(value)}`}
-								className="truncate text-sm font-medium text-link hover:underline"
-							>
+							<BasicLink href={`/protocol/${slug(value)}`} className="truncate label-md text-link hover:underline">
 								{`${value}`}
 							</BasicLink>
 						)}
@@ -227,7 +224,10 @@ const protocolsColumns = columnHelper.columns([
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return value ? (
-				<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium whitespace-nowrap text-link">
+				<BasicLink
+					href={getCategoryRoute(slug(value))}
+					className="label-md whitespace-nowrap text-link hover:underline"
+				>
 					{value}
 				</BasicLink>
 			) : (

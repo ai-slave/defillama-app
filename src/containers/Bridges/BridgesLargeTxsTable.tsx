@@ -88,7 +88,7 @@ export function BridgesLargeTxsTable({
 						const value = getValue()
 						const linkValue = slug(value)
 						return (
-							<BasicLink href={`/bridge/${linkValue}`} className="truncate text-sm font-medium text-link">
+							<BasicLink href={`/bridge/${linkValue}`} className="truncate label-md text-link hover:underline">
 								{value}
 							</BasicLink>
 						)

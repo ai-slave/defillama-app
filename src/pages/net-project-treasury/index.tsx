@@ -75,7 +75,7 @@ const columns = columnHelper.columns([
 					<span className="-my-2 flex flex-col">
 						<BasicLink
 							href={`/protocol/treasury/${row.original.slug}`}
-							className="truncate text-sm font-medium text-link hover:underline"
+							className="truncate label-md text-link hover:underline"
 						>
 							{value}
 						</BasicLink>

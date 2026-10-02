@@ -191,7 +191,7 @@ const calendarColumns = columnHelper.columns([
 					{row.original.type === 'Unlock' ? (
 						<BasicLink
 							href={`/unlocks/${slug(row.original.link)}`}
-							className="truncate text-sm font-medium text-link hover:underline"
+							className="truncate label-md text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>

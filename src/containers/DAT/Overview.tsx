@@ -160,7 +160,7 @@ const overviewColumns = columnHelper.columns([
 					<BasicLink
 						href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
 						title={name}
-						className="truncate text-sm font-medium text-link"
+						className="truncate label-md text-link hover:underline"
 					>
 						{name}
 					</BasicLink>

@@ -43,10 +43,10 @@ export function UnlocksListView({ events }: UnlocksListViewProps) {
 		<div className="flex flex-col gap-2">
 			{groupedEventsEntries.map(([dateStr, dailyEvents]) => (
 				<Card key={dateStr} padding="sm" className="flex flex-col gap-2">
-					<h3 className="font-semibold">
+					<h3 className="title-md">
 						{dayjs(dateStr).format('dddd, MMMM D, YYYY')}
 						{isClient && dayjs(dateStr).isSame(dayjs.unix(nowSec), 'day') ? (
-							<span className="ml-2 text-xs font-normal text-link">(Today)</span>
+							<span className="ml-2 body-sm text-link">(Today)</span>
 						) : null}
 					</h3>
 					<div className="flex flex-col gap-1">
@@ -57,7 +57,7 @@ export function UnlocksListView({ events }: UnlocksListViewProps) {
 								target="_blank"
 							>
 								<div className="flex items-center justify-between gap-2 rounded-md border border-medium p-2 hover:bg-hover-row">
-									<span className="flex items-center gap-2 text-sm font-medium">
+									<span className="flex items-center gap-2 label-md">
 										<TokenLogo
 											name={event.protocol}
 											kind="token"
@@ -67,7 +67,7 @@ export function UnlocksListView({ events }: UnlocksListViewProps) {
 										/>
 										{event.protocol}
 									</span>
-									<span className="text-sm font-medium text-secondary">
+									<span className="label-md text-secondary">
 										{formatUsd(event.value, {
 											compact: true,
 											minimumCompactValue: 1_000_000,

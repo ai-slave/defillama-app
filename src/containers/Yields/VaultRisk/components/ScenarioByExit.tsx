@@ -299,7 +299,7 @@ export function ScenarioByExit({
 							<col className="w-32" />
 							<col className="w-8" />
 						</colgroup>
-						<thead className="bg-surface text-sm font-medium text-secondary">
+						<thead className="bg-surface table-header text-secondary">
 							<tr>
 								<SortHeader k="title" label="Scenario" sort={sortKey} dir={sortDir} onSort={onSort} />
 								<SortHeader

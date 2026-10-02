@@ -289,7 +289,7 @@ const columns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
 					<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
-					<BasicLink href={`/chain/${slug(value)}`} className="truncate text-sm font-medium text-link hover:underline">
+					<BasicLink href={`/chain/${slug(value)}`} className="truncate label-md text-link hover:underline">
 						{value}
 					</BasicLink>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}

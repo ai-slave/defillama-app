@@ -80,10 +80,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 						<>
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={value} kind="chain" data-lgonly alt={`Logo of ${value}`} />
-							<BasicLink
-								href={`/stablecoins/${slug(value)}`}
-								className="truncate text-sm font-medium text-link hover:underline"
-							>
+							<BasicLink href={`/stablecoins/${slug(value)}`} className="truncate label-md text-link hover:underline">
 								{value}
 							</BasicLink>
 							{deprecatedChains[value] ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}

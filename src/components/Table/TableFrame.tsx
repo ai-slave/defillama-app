@@ -327,7 +327,7 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 									>
 										{isRepeatedLeafHeader ? null : (
 											<span
-												className="relative flex w-full flex-nowrap items-center justify-start gap-1 font-medium *:whitespace-nowrap data-[align=center]:justify-center data-[align=end]:justify-end"
+												className="relative flex w-full flex-nowrap items-center justify-start gap-1 table-header *:whitespace-nowrap data-[align=center]:justify-center data-[align=end]:justify-end"
 												data-align={meta?.align ?? (isTopGroupedHeader && !isLeafHeader ? 'center' : 'start')}
 											>
 												<HeaderWithTooltip

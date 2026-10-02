@@ -410,7 +410,7 @@ const emissionsColumns = columnHelper.columns([
 						/>
 						<BasicLink
 							href={`/unlocks/${slug(protocolName)}`}
-							className="min-w-0 truncate text-sm font-medium text-link hover:underline"
+							className="min-w-0 truncate label-md text-link hover:underline"
 						>
 							{protocolName}
 						</BasicLink>

@@ -119,7 +119,7 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 	const { name, symbol, logo, href, id } = row.original
 	const label = (
 		<span className="min-w-0">
-			<span className="block truncate text-sm font-medium">{name}</span>
+			<span className="block truncate label-md">{name}</span>
 			<span className="block label-sm text-secondary">{symbol}</span>
 		</span>
 	)

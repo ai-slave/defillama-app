@@ -130,7 +130,7 @@ export function CollateralView({
 				/>
 
 				<div
-					className={`hidden items-end gap-6 border-b border-subtle bg-surface px-3 py-2 text-sm font-medium text-secondary sm:grid ${cols}`}
+					className={`hidden items-end gap-6 border-b border-subtle bg-surface px-3 py-2 table-header text-secondary sm:grid ${cols}`}
 				>
 					<span>Collateral</span>
 					{alloc ? (

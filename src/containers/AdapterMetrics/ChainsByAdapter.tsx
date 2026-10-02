@@ -141,7 +141,7 @@ const NameColumn = (route: string) =>
 
 					<BasicLink
 						href={route ? `/${route}/chain/${slug(value)}` : `/chain/${slug(value)}`}
-						className="truncate text-sm font-medium text-link hover:underline"
+						className="truncate label-md text-link hover:underline"
 					>
 						{value}
 					</BasicLink>

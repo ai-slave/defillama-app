@@ -79,7 +79,10 @@ const stablecoinsByChainColumns = columnHelper.columns([
 						<>
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={row.original.name} kind="chain" data-lgonly alt={`Logo of ${row.original.name}`} />
-							<BasicLink href={`/stablecoins/${row.original.name}`} className="truncate text-sm font-medium text-link">
+							<BasicLink
+								href={`/stablecoins/${row.original.name}`}
+								className="truncate label-md text-link hover:underline"
+							>
 								{getValue()}
 							</BasicLink>
 						</>
@@ -100,7 +103,7 @@ const stablecoinsByChainColumns = columnHelper.columns([
 			return (
 				<>
 					{value.link ? (
-						<BasicLink href={value.link} className="text-sm font-medium text-link">
+						<BasicLink href={value.link} className="label-md text-link hover:underline">
 							{value.name}
 						</BasicLink>
 					) : (

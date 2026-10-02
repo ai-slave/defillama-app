@@ -59,7 +59,7 @@ const buildSnapshotNameColumn = (nameHeader: 'Chain' | 'Token') =>
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={name} kind="chain" size={20} alt={`Logo of ${name}`} />
-					<BasicLink href={`/chain/${slug(name)}`} className="truncate text-sm font-medium text-link hover:underline">
+					<BasicLink href={`/chain/${slug(name)}`} className="truncate label-md text-link hover:underline">
 						{name}
 					</BasicLink>
 				</span>

@@ -163,7 +163,7 @@ const columns = columnHelper.columns([
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
-					<BasicLink href={row.original.url} className="truncate text-sm font-medium text-link hover:underline">
+					<BasicLink href={row.original.url} className="truncate label-md text-link hover:underline">
 						{getValue()}
 					</BasicLink>
 				</span>

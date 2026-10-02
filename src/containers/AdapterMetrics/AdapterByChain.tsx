@@ -588,7 +588,7 @@ const NameColumn = (type: IProps['type']) => {
 						<span className="flex min-w-0 items-center gap-1">
 							<BasicLink
 								href={`/${basePath}/${row.original.slug}${chartKey ? `?tvl=false&events=false&${chartKey}=true` : ''}`}
-								className="min-w-0 truncate text-sm font-medium text-link hover:underline"
+								className="min-w-0 truncate label-md text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -626,7 +626,7 @@ const categoryColumn = (align?: 'center') =>
 		enableSorting: false,
 		cell: ({ getValue }) =>
 			getValue() ? (
-				<BasicLink href={getCategoryRoute(slug(getValue()))} className="text-sm font-medium text-link">
+				<BasicLink href={getCategoryRoute(slug(getValue()))} className="label-md text-link hover:underline">
 					{getValue()}
 				</BasicLink>
 			) : (

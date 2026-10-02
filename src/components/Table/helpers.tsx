@@ -68,7 +68,7 @@ export function TokenPageTableHeaderCell({
 	return (
 		<th
 			className={clsx(
-				'px-3 py-2 text-sm font-medium whitespace-nowrap text-secondary',
+				'px-3 py-2 table-header whitespace-nowrap text-secondary',
 				getTableTextAlignClass(textAlign),
 				className
 			)}

@@ -23,12 +23,18 @@ export function WeekDayColumn({ dayInfo, unlocksData, isToday }: WeekDayColumnPr
 			key={dateStr}
 			className={`flex min-h-48 flex-col bg-surface p-3 ${isToday ? 'ring-1 ring-brand ring-inset' : ''}`}
 		>
-			<div className="mb-2 flex items-center justify-between border-b border-medium pb-2 text-sm font-medium">
-				<span>
-					<span className="mr-1.5 text-secondary">{dayInfo.date?.format('ddd')}</span>
-					<span className={isToday ? 'font-bold text-link' : ''}>{dayInfo.date?.date()}</span>
+			<div className="mb-2 flex items-center justify-between border-b border-medium pb-2 label-md">
+				<span className="flex items-center gap-1.5">
+					<span className="text-secondary">{dayInfo.date?.format('ddd')}</span>
+					{/* Today is the brand disc the month view uses. */}
+					<span
+						aria-current={isToday ? 'date' : undefined}
+						className={`-my-0.5 flex size-6 items-center justify-center rounded-full ${isToday ? 'bg-brand text-on-brand' : ''}`}
+					>
+						{dayInfo.date?.date()}
+					</span>
 				</span>
-				{isToday ? <span className="text-xs font-normal text-link">(Today)</span> : null}
+				{isToday ? <span className="body-sm text-link">(Today)</span> : null}
 			</div>
 			<div className="flex grow flex-col gap-1.5 overflow-y-auto">
 				{hasUnlocks ? (

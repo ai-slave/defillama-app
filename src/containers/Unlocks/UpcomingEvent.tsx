@@ -565,7 +565,7 @@ export function UpcomingEvent({
 														compactSuffix: 'lowercase'
 													})
 												: '-'}
-											{summary.displayUnit ? <span className="text-xs font-normal text-tertiary">/ week</span> : null}
+											{summary.displayUnit ? <span className="body-sm text-tertiary">/ week</span> : null}
 										</span>
 									</span>
 									<span className="flex items-center justify-between gap-2 text-xs text-tertiary">

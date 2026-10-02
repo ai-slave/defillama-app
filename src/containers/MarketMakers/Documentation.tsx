@@ -408,10 +408,8 @@ function TocList({ active, onNavigate }: { active: string; onNavigate?: () => vo
 						href={`#${item.id}`}
 						onClick={onNavigate}
 						aria-current={isActive ? 'true' : undefined}
-						className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-							isActive
-								? 'bg-hover-row font-medium text-primary'
-								: 'text-secondary hover:bg-hover-row hover:text-primary'
+						className={`rounded-md px-3 py-1.5 label-md transition-colors ${
+							isActive ? 'bg-hover-row text-primary' : 'text-secondary hover:bg-hover-row hover:text-primary'
 						}`}
 					>
 						{item.label}

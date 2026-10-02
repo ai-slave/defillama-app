@@ -290,11 +290,11 @@ const columns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={row.original.slug ?? value} kind="token" data-lgonly alt={`Logo of ${value}`} />
 					{href ? (
-						<BasicLink href={href} className="truncate text-sm font-medium text-link hover:underline">
+						<BasicLink href={href} className="truncate label-md text-link hover:underline">
 							{value}
 						</BasicLink>
 					) : (
-						<span className="truncate text-sm font-medium">{value}</span>
+						<span className="truncate label-md">{value}</span>
 					)}
 				</span>
 			)

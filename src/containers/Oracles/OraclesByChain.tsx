@@ -235,7 +235,7 @@ const columns = columnHelper.columns([
 			const name = getValue()
 			return (
 				<span className="relative flex items-center gap-2">
-					<BasicLink href={`/oracles/${slug(name)}`} className="truncate text-sm font-medium text-link">
+					<BasicLink href={`/oracles/${slug(name)}`} className="truncate label-md text-link hover:underline">
 						{name}
 					</BasicLink>
 				</span>

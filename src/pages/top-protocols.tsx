@@ -127,10 +127,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						<span className="flex items-center gap-2">
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={chain} kind="chain" alt={`Logo of ${chain}`} />
-							<BasicLink
-								href={`/chain/${slug(chain)}`}
-								className="truncate text-sm font-medium text-link hover:underline"
-							>
+							<BasicLink href={`/chain/${slug(chain)}`} className="truncate label-md text-link hover:underline">
 								{chain}
 							</BasicLink>
 						</span>
@@ -153,7 +150,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 					const deprecated = info.row.original[`${cat}Deprecated`] === true
 					return (
 						<span className="flex items-center gap-1">
-							<BasicLink href={`/protocol/${slug(protocolName)}`} className="text-sm font-medium text-link">
+							<BasicLink href={`/protocol/${slug(protocolName)}`} className="label-md text-link hover:underline">
 								{protocolName}
 							</BasicLink>
 							{deprecated ? <DeprecatedProtocolMarker /> : null}

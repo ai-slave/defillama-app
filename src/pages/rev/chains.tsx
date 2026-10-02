@@ -78,10 +78,7 @@ const columns = columnHelper.columns([
 					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
 
 					<span className="-my-2 flex flex-col">
-						<BasicLink
-							href={`/chain/${row.original.slug}`}
-							className="truncate text-sm font-medium text-link hover:underline"
-						>
+						<BasicLink href={`/chain/${row.original.slug}`} className="truncate label-md text-link hover:underline">
 							{value}
 						</BasicLink>
 					</span>

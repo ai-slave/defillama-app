@@ -84,7 +84,7 @@ const stablecoinsColumns = columnHelper.columns([
 					<TokenLogo name={row.original.name} kind="pegged" alt={`Logo of ${row.original.name}`} data-lgonly />
 					<BasicLink
 						href={`/stablecoin/${slug(row.original.name)}`}
-						className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
+						className="flex items-center gap-1 truncate label-md text-link hover:underline"
 					>
 						<span className="truncate">{getValue()}</span>
 						{lifecycleStatus ? <DeprecatedEntityMarker content={lifecycleStatus} /> : null}

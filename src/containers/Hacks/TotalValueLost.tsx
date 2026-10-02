@@ -32,11 +32,11 @@ const columns = columnHelper.columns([
 					<TokenLogo name={row.original.slug} kind="token" data-lgonly alt={`Logo of ${row.original.slug}`} />
 
 					{row.original.route ? (
-						<BasicLink href={row.original.route} className="truncate text-sm font-medium text-link hover:underline">
+						<BasicLink href={row.original.route} className="truncate label-md text-link hover:underline">
 							{name}
 						</BasicLink>
 					) : (
-						<span className="truncate text-sm font-medium">{name}</span>
+						<span className="truncate label-md">{name}</span>
 					)}
 				</span>
 			)

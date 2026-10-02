@@ -76,6 +76,15 @@
 	font-weight: 600;
 }
 
+/* The table header contract: label-md's weight on the table's 14/20 line box,
+   so a header row stays as tall as the body text it heads. */
+@utility table-header {
+	font-family: var(--font-inter);
+	font-size: 0.875rem;
+	line-height: calc(20 / 14); /* accepted app value; not Figma-verified */
+	font-weight: 500;
+}
+
 @utility label-xl {
 	font-family: var(--font-inter);
 	font-size: 1.125rem;

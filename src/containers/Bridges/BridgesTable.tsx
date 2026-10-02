@@ -69,7 +69,7 @@ const BRIDGES_COLUMNS = columnHelper.columns([
 							data-lgonly
 						/>
 					) : null}
-					<BasicLink href={`/bridge/${linkValue}`} className="truncate text-sm font-medium text-link">
+					<BasicLink href={`/bridge/${linkValue}`} className="truncate label-md text-link hover:underline">
 						{value}
 					</BasicLink>
 				</span>

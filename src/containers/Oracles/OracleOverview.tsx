@@ -105,7 +105,7 @@ export function OracleOverview({
 								<span className="flex items-center gap-1 overflow-hidden">
 									<BasicLink
 										href={`/protocol/${slug(name)}`}
-										className="min-w-0 truncate text-sm font-medium text-link"
+										className="min-w-0 truncate label-md text-link hover:underline"
 									>
 										{name}
 									</BasicLink>

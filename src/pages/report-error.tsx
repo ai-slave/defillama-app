@@ -80,9 +80,7 @@ function ReportError() {
 					{error ? <small className="text-center text-error">{error.message}</small> : null}
 				</Card>
 				<Card padding="sm" className="flex w-full flex-col gap-4">
-					<p className="text-center text-base font-medium">
-						Please submit a report if you notice any of the following:
-					</p>
+					<p className="text-center body-lg">Please submit a report if you notice any of the following:</p>
 					<ul className="flex list-disc flex-col gap-1 pl-4">
 						<li>
 							Inconsistencies in our methodology (eg in protocol A we apply a different methodology for their metrics

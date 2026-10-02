@@ -231,7 +231,7 @@ function OracleDrainTable({ scenario }: { scenario: ScenarioVM }) {
 		<div className="flex flex-col gap-2">
 			<TokenPageTableShell>
 				<table className="w-full">
-					<thead className="bg-surface text-sm font-medium text-secondary">
+					<thead className="bg-surface table-header text-secondary">
 						<tr>
 							<th className="px-3 py-2 text-left">Collateral</th>
 							<th className="px-3 py-2 text-right">Drainable now</th>
@@ -281,7 +281,7 @@ function PerAssetTable({ scenario, supplyUsd }: { scenario: ScenarioVM; supplyUs
 	return (
 		<TokenPageTableShell>
 			<table className="w-full">
-				<thead className="bg-surface text-sm font-medium text-secondary">
+				<thead className="bg-surface table-header text-secondary">
 					<tr>
 						<th className="px-3 py-2 text-left">Asset</th>
 						<th className="px-3 py-2 text-left">Oracle</th>

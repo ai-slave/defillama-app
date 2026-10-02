@@ -24,6 +24,7 @@ import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/M
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
+import { StatItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
@@ -965,14 +966,21 @@ export function RWAAssetPage({
 						<ChartPanel className="overflow-hidden">
 							<div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#cc3e82] to-transparent" />
 							<ChartPanelToolbar className="items-start">
-								<div className="mr-auto flex flex-col gap-1">
-									<h2 className="heading-xs">Native Yield</h2>
-									{asset.nativeYieldCurrent != null ? (
-										<p className="mono-xl text-[#cc3e82]">
-											{formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
-										</p>
-									) : null}
-								</div>
+								{/* A headline stat like the summary cards': a secondary label over the mono-xl value. */}
+								{asset.nativeYieldCurrent != null ? (
+									<StatItem
+										label="Native Yield"
+										labelAs="h2"
+										className="mr-auto"
+										value={
+											<span className="text-[#cc3e82]">
+												{formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
+											</span>
+										}
+									/>
+								) : (
+									<h2 className="mr-auto text-secondary">Native Yield</h2>
+								)}
 								<ChartExportButtons
 									chartInstance={nativeYieldChartInstance}
 									filename={nativeYieldExportFilename}

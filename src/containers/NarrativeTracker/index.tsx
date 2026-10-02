@@ -376,7 +376,7 @@ const CoinPerformanceColumn = columnHelper.columns([
 					<BasicLink
 						href={`https://www.coingecko.com/en/coins/${row.original.id}`}
 						target="_blank"
-						className="truncate text-sm font-medium text-link hover:underline"
+						className="truncate label-md text-link hover:underline"
 					>
 						{getValue()}
 					</BasicLink>
@@ -439,14 +439,14 @@ const CategoryPerformanceColumn = columnHelper.columns([
 						<BasicLink
 							href={`https://www.coingecko.com/en/coins/${row.original.id}`}
 							target="_blank"
-							className="truncate text-sm font-medium text-link hover:underline"
+							className="truncate label-md text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>
 					) : (
 						<BasicLink
 							href={`/narrative-tracker/${row.original.id}`}
-							className="truncate text-sm font-medium text-link hover:underline"
+							className="truncate label-md text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>

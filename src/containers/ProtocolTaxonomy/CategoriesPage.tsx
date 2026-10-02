@@ -76,7 +76,7 @@ const categoriesColumns = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<BasicLink
 						href={getCategoryRoute(slug(categoryName))}
-						className="truncate text-sm font-medium text-link hover:underline"
+						className="truncate label-md text-link hover:underline"
 					>
 						{categoryName}
 					</BasicLink>

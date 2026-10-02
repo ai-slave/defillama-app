@@ -1276,7 +1276,7 @@ const columns = columnHelper.columns([
 						<span className="flex items-center gap-1 overflow-hidden">
 							<BasicLink
 								href={`/protocol/${row.original.slug}`}
-								className="min-w-0 truncate text-sm font-medium text-link hover:underline"
+								className="min-w-0 truncate label-md text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -1309,7 +1309,7 @@ const columns = columnHelper.columns([
 			const href = getCategoryRoute(slug(category))
 
 			return (
-				<BasicLink href={href} className="text-sm font-medium text-link">
+				<BasicLink href={href} className="label-md text-link hover:underline">
 					{category}
 				</BasicLink>
 			)

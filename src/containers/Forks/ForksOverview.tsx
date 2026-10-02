@@ -50,10 +50,7 @@ const forksColumn = columnHelper.columns([
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					<span className="flex items-center gap-1 overflow-hidden">
-						<BasicLink
-							href={`/forks/${slug(name)}`}
-							className="min-w-0 truncate text-sm font-medium text-link hover:underline"
-						>
+						<BasicLink href={`/forks/${slug(name)}`} className="min-w-0 truncate label-md text-link hover:underline">
 							{name}
 						</BasicLink>
 						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}

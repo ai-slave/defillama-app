@@ -160,7 +160,7 @@ function createColumns(metric: ExtraTvlMetric) {
 							<span className="flex items-center gap-1 overflow-hidden">
 								<BasicLink
 									href={`/protocol/${row.original.slug}?${chartParam}`}
-									className="min-w-0 truncate text-sm font-medium text-link hover:underline"
+									className="min-w-0 truncate label-md text-link hover:underline"
 								>
 									{value}
 								</BasicLink>
@@ -184,7 +184,7 @@ function createColumns(metric: ExtraTvlMetric) {
 				const value = getValue()
 				if (!value) return null
 				return (
-					<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-link">
+					<BasicLink href={getCategoryRoute(slug(value))} className="label-md text-link hover:underline">
 						{value}
 					</BasicLink>
 				)

@@ -153,12 +153,12 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 						content={`REAL score: a composite of the weighted Reserves, Execution, Activity and Liquidity pillars on a 0 to 100 scale.${quality.generatedAt ? ` Last computed ${quality.generatedAt}.` : ''}`}
 						className="w-fit"
 					>
-						<span className="flex items-end gap-3">
+						<span className="flex items-baseline gap-3">
 							<TierBadge tier={quality.tier} />
 							<span className="mono-xl">
 								{formatNumber(quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
 							</span>
-							<span className="pb-0.5 body-sm text-secondary">/ 100</span>
+							<span className="body-sm text-secondary">/ 100</span>
 						</span>
 					</Tooltip>
 					<TierScale score={quality.score} tier={quality.tier} />

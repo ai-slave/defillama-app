@@ -285,12 +285,7 @@ function TokenHeader({
 						})}
 					</span>
 					{percentChange !== null ? (
-						<span
-							className="text-sm font-medium"
-							style={{
-								color: percentChange > 0 ? 'rgba(18, 182, 0, 0.7)' : 'rgba(211, 0, 0, 0.7)'
-							}}
-						>
+						<span className={`mono-md ${percentChange > 0 ? 'text-data-up' : 'text-data-down'}`}>
 							{formatPercentChange(percentChange)}
 						</span>
 					) : null}

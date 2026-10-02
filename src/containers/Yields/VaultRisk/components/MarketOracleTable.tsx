@@ -42,7 +42,7 @@ export function MarketOracleTable({
 			<div className="overflow-x-auto border-t border-subtle">
 				<table className="w-full">
 					<thead>
-						<tr className="text-left text-sm font-medium text-secondary uppercase">
+						<tr className="text-left table-header text-secondary uppercase">
 							<th className="px-3 py-2">Collateral → Loan</th>
 							<th className="px-3 py-2 text-right">LLTV</th>
 							<th className="px-3 py-2">Oracle</th>

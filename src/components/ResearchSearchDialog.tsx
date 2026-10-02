@@ -52,7 +52,7 @@ const SEARCH_TRIGGER_STYLES: Record<SearchDialogVariant, string> = {
 	article:
 		'hidden h-11 min-w-[113px] items-center justify-center gap-2 rounded-full border border-medium bg-surface px-4 label-md text-primary transition-colors hover:border-brand hover:text-link lg:inline-flex',
 	desktop:
-		'inline-flex h-[45px] min-w-[113px] items-center justify-center gap-2 rounded-full bg-research-white px-4 text-base font-medium text-research-heading transition-colors hover:bg-research-black hover:text-research-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-white'
+		'inline-flex h-[45px] min-w-[113px] items-center justify-center gap-2 rounded-full bg-research-white px-4 label-lg text-research-heading transition-colors hover:bg-research-black hover:text-research-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-white'
 }
 
 const RESEARCH_TOPICS = [
