@@ -42,6 +42,119 @@ export interface IEquitiesCompanyApiItem {
 	employeeCount: number | null
 	sector: string
 	industry: string
+	sectorSlug?: string
+	industrySlug?: string
+}
+
+export interface IEquitiesAggregateHolding {
+	ticker: string
+	name: string
+	marketCap: number | null
+	sectorWeight: number | null
+	priceChangePercentage1d: number | null
+}
+
+export interface IEquitiesAggregateReturns {
+	priceChangePercentage1d: number | null
+	priceChangePercentage7d: number | null
+	priceChangePercentage1m: number | null
+	priceChangePercentage3m: number | null
+	priceChangePercentage6m: number | null
+	priceChangePercentageYtd: number | null
+	priceChangePercentage1y: number | null
+}
+
+export interface IEquitiesAggregateValuation {
+	trailingPE: number | null
+	priceToRevenue: number | null
+	priceToBook: number | null
+	enterpriseValueToEbitda: number | null
+	operatingProfitMarginTTM: number | null
+	dividendYield: number | null
+	earningsYield: number | null
+	medianTrailingPE?: number | null
+	medianPriceToRevenue?: number | null
+	medianEnterpriseValueToEbitda?: number | null
+	medianOperatingProfitMarginTTM?: number | null
+	medianDividendYield?: number | null
+}
+
+export interface IEquitiesAggregateRow extends IEquitiesAggregateReturns, IEquitiesAggregateValuation {
+	rank: number
+	marketCap: number | null
+	marketCapChange1d: number | null
+	dollarVolume24h: number | null
+	dollarVolumeShare24h: number | null
+	revenueTTM: number | null
+	earningsTTM: number | null
+	ebitdaTTM: number | null
+	enterpriseValue: number | null
+	employeeCount: number | null
+	holdersYield: number | null
+	companyCount: number
+	weight: number | null
+	topHoldings: Array<IEquitiesAggregateHolding>
+	coverage: Record<string, number>
+	updatedAt: string
+	volumeAsOf: string
+}
+
+export interface IEquitiesSectorApiItem extends IEquitiesAggregateRow {
+	sector: string
+	sectorSlug: string
+	industryCount: number
+}
+
+export interface IEquitiesIndustryApiItem extends IEquitiesAggregateRow {
+	industry: string
+	industrySlug: string
+	sector: string
+	sectorSlug: string
+	sectorWeight: number | null
+}
+
+export interface IEquitiesSectorOverviewApiResponse extends IEquitiesAggregateReturns, IEquitiesAggregateValuation {
+	marketCap: number | null
+	marketCapChange1d: number | null
+	dollarVolume24h: number | null
+	revenueTTM: number | null
+	earningsTTM: number | null
+	ebitdaTTM: number | null
+	employeeCount: number | null
+	companyCount: number
+	sectorCount: number
+	industryCount: number
+	bestSector1d: Pick<IEquitiesSectorApiItem, 'sector' | 'sectorSlug' | 'priceChangePercentage1d'>
+	worstSector1d: Pick<IEquitiesSectorApiItem, 'sector' | 'sectorSlug' | 'priceChangePercentage1d'>
+	largestSector: Pick<IEquitiesSectorApiItem, 'sector' | 'sectorSlug' | 'weight'>
+}
+
+export interface IEquitiesSectorDetailApiResponse extends IEquitiesSectorApiItem {
+	description: string
+	valuation: IEquitiesAggregateValuation
+	concentration: {
+		top10MarketCapShare: number | null
+		hhi: number | null
+		megaCapCount: number
+		megaCapThreshold: number
+		medianMarketCap: number | null
+	}
+}
+
+export type EquitiesEarningsDateStatus = 'reported' | 'inferred' | 'estimated' | 'confirmed'
+export type EquitiesEarningsReportTime = 'bmo' | 'amc' | 'dmt' | 'unknown'
+
+export interface IEquitiesEarningsCalendarApiItem {
+	ticker: string
+	date_status: EquitiesEarningsDateStatus
+	report_date: string
+	report_time: EquitiesEarningsReportTime
+	max_drift_days: number | null
+	fiscal_year: number
+	fiscal_period: string
+	event_key: string
+	cik: string
+	accession_number: string
 }
 
 export interface IEquitiesCompanyRoute {

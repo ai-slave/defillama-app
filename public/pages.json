@@ -634,6 +634,27 @@
       ]
     },
     {
+      "name": "Equity Sectors",
+      "route": "/equities/sectors",
+      "category": "Equities, ETFs & DATs",
+      "description": "Compare US equity sectors by market capitalization, performance, and valuation",
+      "searchKeywords": ["equity sectors", "stock sectors", "sector performance"]
+    },
+    {
+      "name": "Equity Industries",
+      "route": "/equities/industries",
+      "category": "Equities, ETFs & DATs",
+      "description": "Explore US equity industries, company counts, market capitalization, and performance",
+      "searchKeywords": ["equity industries", "stock industries", "industry performance"]
+    },
+    {
+      "name": "Earnings Calendar",
+      "route": "/equities/earnings-calendar",
+      "category": "Equities, ETFs & DATs",
+      "description": "Browse reported and projected earnings dates for US-listed companies",
+      "searchKeywords": ["company earnings", "earnings dates", "earnings reports"]
+    },
+    {
       "name": "Pre-IPO",
       "route": "/pre-ipo",
       "category": "Equities, ETFs & DATs",
@@ -1077,7 +1098,13 @@
     {
       "name": "Equities",
       "route": "/equities",
-      "icon": "trending-up"
+      "icon": "trending-up",
+      "children": [
+        { "name": "Rankings", "route": "/equities" },
+        { "name": "Sectors", "route": "/equities/sectors" },
+        { "name": "Industries", "route": "/equities/industries" },
+        { "name": "Earnings Calendar", "route": "/equities/earnings-calendar" }
+      ]
     },
     {
       "name": "Pre-IPO",

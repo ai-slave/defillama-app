@@ -5,7 +5,7 @@ import { DialogCloseButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage, navActionStyles, navSummaryStyles } from '../shared'
+import { LinkToPage, navActionStyles, navSummaryStyles, PrimaryNavGroup } from '../shared'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 
 const ReorderablePinnedPages = lazy(() => import('./ReorderablePinnedPages'))
@@ -48,19 +48,31 @@ export function Menu({
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
 							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 label-sm text-secondary">{category}</p>}
 							<hr className="border-subtle" />
-							{pages.map(({ name, route, icon, attention, isNew, umamiEvent }) => (
-								<LinkToPage
-									route={route}
-									name={name}
-									icon={icon}
-									attention={attention}
-									isNew={isNew}
-									key={`mobile-nav-${name}-${route}`}
-									asPath={asPath}
-									onClick={handleClose}
-									umamiEvent={umamiEvent}
-								/>
-							))}
+							{pages.map(({ name, route, icon, attention, isNew, umamiEvent, children }) =>
+								children ? (
+									<PrimaryNavGroup
+										key={`mobile-nav-${name}-${route}`}
+										name={name}
+										route={route}
+										icon={icon}
+										pages={children}
+										asPath={asPath}
+										onClick={handleClose}
+									/>
+								) : (
+									<LinkToPage
+										route={route}
+										name={name}
+										icon={icon}
+										attention={attention}
+										isNew={isNew}
+										key={`mobile-nav-${name}-${route}`}
+										asPath={asPath}
+										onClick={handleClose}
+										umamiEvent={umamiEvent}
+									/>
+								)
+							)}
 						</div>
 					))}
 

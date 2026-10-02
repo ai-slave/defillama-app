@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage, navSummaryStyles, SidebarDivider } from '../shared'
+import { LinkToPage, navSummaryStyles, PrimaryNavGroup, SidebarDivider } from '../shared'
 import { ThemeSwitch } from '../ThemeSwitch'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 import { PinnedPages } from './PinnedPages'
@@ -58,18 +58,29 @@ export function DesktopNav({
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`desktop-nav-${category}`} className="group flex flex-col">
 							{category === 'Premium' ? <PremiumHeader /> : null}
-							{pages.map(({ name, route, icon, attention, isNew, umamiEvent }) => (
-								<LinkToPage
-									key={`desktop-nav-${name}-${route}`}
-									route={route}
-									name={name}
-									icon={icon}
-									attention={attention}
-									isNew={isNew}
-									asPath={asPath}
-									umamiEvent={umamiEvent}
-								/>
-							))}
+							{pages.map(({ name, route, icon, attention, isNew, umamiEvent, children }) =>
+								children ? (
+									<PrimaryNavGroup
+										key={`desktop-nav-${name}-${route}`}
+										name={name}
+										route={route}
+										icon={icon}
+										pages={children}
+										asPath={asPath}
+									/>
+								) : (
+									<LinkToPage
+										key={`desktop-nav-${name}-${route}`}
+										route={route}
+										name={name}
+										icon={icon}
+										attention={attention}
+										isNew={isNew}
+										asPath={asPath}
+										umamiEvent={umamiEvent}
+									/>
+								)
+							)}
 						</div>
 					))}
 

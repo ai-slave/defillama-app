@@ -24,6 +24,7 @@ const intlDateFormatFiles = new Set([
 	'src/containers/Exchanges/DirectoryChart.tsx',
 	'src/containers/Exchanges/ResearchChart.tsx',
 	'src/containers/Exchanges/VenueChart.tsx',
+	'src/containers/Equities/server/marketData.server.ts',
 	'src/containers/LlamaAI/components/alerts/schedule.ts',
 	'src/pages/research/authors/[slug].tsx'
 ])

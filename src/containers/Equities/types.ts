@@ -2,12 +2,17 @@ import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/co
 import type { OffsetTablePage } from '~/server/tablePages/types'
 import type {
 	EquitiesPriceHistory,
+	IEquitiesEarningsCalendarApiItem,
 	IEquitiesCompanyApiItem,
 	IEquitiesDimensionsResponse,
 	IEquitiesFilingApiItem,
+	IEquitiesIndustryApiItem,
 	IEquitiesMetadataResponse,
 	IEquitiesOnchainPerpApiItem,
 	IEquitiesOnchainTokenApiItem,
+	IEquitiesSectorApiItem,
+	IEquitiesSectorDetailApiResponse,
+	IEquitiesSectorOverviewApiResponse,
 	IEquitiesStatementsResponse,
 	IEquitiesSummaryResponse
 } from './api.types'
@@ -76,6 +81,51 @@ export interface EquitiesTreemapResponse {
 export interface IEquitiesListPageProps {
 	initialData: EquitiesTableResponse
 	initialDataGeneratedAt: number
+}
+
+export type EquitiesPageDataState<T> =
+	| { status: 'ready'; data: T; stale: boolean }
+	| { status: 'error'; data: null; stale: false }
+
+export interface IEquitiesSectorsData {
+	overview: IEquitiesSectorOverviewApiResponse
+	sectors: Array<IEquitiesSectorApiItem>
+}
+
+export interface IEquitiesIndustriesData {
+	overview: IEquitiesSectorOverviewApiResponse
+	industries: Array<IEquitiesIndustryApiItem>
+}
+
+export interface IEquitiesSectorPageData {
+	overview: IEquitiesSectorOverviewApiResponse
+	sector: IEquitiesSectorDetailApiResponse
+	industries: Array<IEquitiesIndustryApiItem>
+	companies: Array<IEquitiesCompanyApiItem>
+}
+
+export interface IEquitiesCalendarCompany {
+	ticker: string
+	name: string
+	marketCap: number | null
+	sector: string
+	sectorSlug: string
+	country: string
+}
+
+export interface IEquitiesCalendarRow extends IEquitiesEarningsCalendarApiItem {
+	name: string
+	marketCap: number | null
+	sector: string
+	sectorSlug: string
+	country: string
+	href: string | null
+}
+
+export interface IEquitiesCalendarData {
+	rows: Array<IEquitiesEarningsCalendarApiItem>
+	companies: Array<IEquitiesCalendarCompany>
+	updatedAt: string | null
 }
 
 export interface IEquitiesOnchainMarketRow extends IEquitiesOnchainPerpApiItem {

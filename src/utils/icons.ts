@@ -4,6 +4,12 @@ const STRIP_QUOTES_AND_PARENS = /[()'"]/g
 const WHITESPACE = /\s+/g
 const INVALID_CHARS = /[^\w.!&-]/g
 
+const CURATED_US_EQUITY_ICONS: Record<string, string> = {
+	GOOG: 'alphabet',
+	GOOGL: 'alphabet',
+	META: 'meta'
+}
+
 export function tokenIconUrl(name: string, size = 48): string {
 	const slug = name
 		.trim()
@@ -34,7 +40,15 @@ export function peggedAssetIconUrl(name: string, size = 48): string {
 }
 
 export function equityIconUrl(symbol: string, country: string, size = 48): string {
-	return `${ICONS_CDN}/equities/${encodeURIComponent(country.toUpperCase())}/${encodeURIComponent(symbol.toUpperCase())}?w=${size}&h=${size}`
+	const normalizedCountry = country.toUpperCase()
+	const normalizedSymbol = symbol.toUpperCase()
+	const curatedIcon = normalizedCountry === 'US' ? CURATED_US_EQUITY_ICONS[normalizedSymbol] : undefined
+
+	if (curatedIcon) {
+		return `${ICONS_CDN}/stocks/${curatedIcon}?w=${size}&h=${size}`
+	}
+
+	return `${ICONS_CDN}/equities/${encodeURIComponent(normalizedCountry)}/${encodeURIComponent(normalizedSymbol)}?w=${size}&h=${size}`
 }
 
 export function preIpoIconUrl(companyId: string, size = 48): string {

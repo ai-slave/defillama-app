@@ -6,9 +6,14 @@ import type {
 	IEquitiesCompanyApiItem,
 	IEquitiesCompanyListApiItem,
 	IEquitiesDimensionsResponse,
+	IEquitiesEarningsCalendarApiItem,
 	IEquitiesFilingApiItem,
+	IEquitiesIndustryApiItem,
 	IEquitiesMetadataResponse,
 	IEquitiesOnchainResponse,
+	IEquitiesSectorApiItem,
+	IEquitiesSectorDetailApiResponse,
+	IEquitiesSectorOverviewApiResponse,
 	IEquitiesStatementsResponse,
 	IEquitiesSummaryResponse
 } from './api.types'
@@ -23,10 +28,22 @@ const EQUITIES_METADATA_API = `${EQUITIES_SERVER_URL}/metadata`
 const EQUITIES_FILINGS_API = `${EQUITIES_SERVER_URL}/filings`
 const EQUITIES_DIMENSIONS_API = `${EQUITIES_SERVER_URL}/dimensions`
 const EQUITIES_ONCHAIN_API = `${EQUITIES_SERVER_URL}/onchain`
+const EQUITIES_SECTORS_API = `${EQUITIES_SERVER_URL}/sectors`
+const EQUITIES_SECTORS_OVERVIEW_API = `${EQUITIES_SERVER_URL}/sectors-overview`
+const EQUITIES_SECTOR_API = `${EQUITIES_SERVER_URL}/sector`
+const EQUITIES_INDUSTRIES_API = `${EQUITIES_SERVER_URL}/industries`
+export const EQUITIES_EARNINGS_CALENDAR_API = `${EQUITIES_SERVER_URL}/earnings-calendar`
 
 function createEquitiesUrl(
 	baseUrl: string,
-	params?: { ticker?: string; country?: string; countries?: 'US'; timeframe?: EquitiesPriceHistoryApiTimeframe }
+	params?: {
+		ticker?: string
+		country?: string
+		countries?: 'US'
+		timeframe?: EquitiesPriceHistoryApiTimeframe
+		sector?: string
+		industry?: string
+	}
 ): string {
 	const url = new URL(baseUrl)
 
@@ -45,6 +62,14 @@ function createEquitiesUrl(
 	if (params?.timeframe) {
 		url.searchParams.set('timeframe', params.timeframe)
 	}
+
+	if (params?.sector) {
+		url.searchParams.set('sector', params.sector)
+	}
+
+	if (params?.industry) {
+		url.searchParams.set('industry', params.industry)
+	}
 	url.searchParams.set('cachebust', '091626')
 
 	return url.toString()
@@ -55,6 +80,36 @@ function createEquitiesUrl(
  */
 export async function fetchEquitiesCompanies(): Promise<Array<IEquitiesCompanyApiItem>> {
 	return fetchJson<Array<IEquitiesCompanyApiItem>>(createEquitiesUrl(EQUITIES_COMPANIES_API, { countries: 'US' }))
+}
+
+export async function fetchEquitiesCompaniesByTaxonomy({
+	sector,
+	industry
+}: {
+	sector?: string
+	industry?: string
+}): Promise<Array<IEquitiesCompanyApiItem>> {
+	return fetchJson<Array<IEquitiesCompanyApiItem>>(createEquitiesUrl(EQUITIES_COMPANIES_API, { sector, industry }))
+}
+
+export async function fetchEquitiesSectors(): Promise<Array<IEquitiesSectorApiItem>> {
+	return fetchJson<Array<IEquitiesSectorApiItem>>(createEquitiesUrl(EQUITIES_SECTORS_API))
+}
+
+export async function fetchEquitiesSectorsOverview(): Promise<IEquitiesSectorOverviewApiResponse> {
+	return fetchJson<IEquitiesSectorOverviewApiResponse>(createEquitiesUrl(EQUITIES_SECTORS_OVERVIEW_API))
+}
+
+export async function fetchEquitiesSector(sector: string): Promise<IEquitiesSectorDetailApiResponse> {
+	return fetchJson<IEquitiesSectorDetailApiResponse>(createEquitiesUrl(EQUITIES_SECTOR_API, { sector }))
+}
+
+export async function fetchEquitiesIndustries(sector?: string): Promise<Array<IEquitiesIndustryApiItem>> {
+	return fetchJson<Array<IEquitiesIndustryApiItem>>(createEquitiesUrl(EQUITIES_INDUSTRIES_API, { sector }))
+}
+
+export async function fetchEquitiesEarningsCalendar(): Promise<Array<IEquitiesEarningsCalendarApiItem>> {
+	return fetchJson<Array<IEquitiesEarningsCalendarApiItem>>(createEquitiesUrl(EQUITIES_EARNINGS_CALENDAR_API))
 }
 
 /**

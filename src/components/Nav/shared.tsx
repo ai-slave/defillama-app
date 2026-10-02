@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { UniversalTokenRatingNavIcon } from '~/containers/UniversalTokenRating/NavIcon'
@@ -20,6 +21,50 @@ export const navActionStyles =
 
 export const freeTrialBadgeStyles =
 	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-wide text-warning'
+
+function NavGroupSummary({ name, icon }: { name: string; icon?: NavIconName }) {
+	return (
+		<summary className={navLinkStyles}>
+			<NavItemContent name={name} icon={icon} />
+			<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
+		</summary>
+	)
+}
+
+export function PrimaryNavGroup({
+	name,
+	route,
+	icon,
+	pages,
+	asPath,
+	onClick
+}: {
+	name: string
+	route: string
+	icon?: NavIconName
+	pages: Array<{ name: string; route: string }>
+	asPath: string
+	onClick?: () => void
+}) {
+	const [open, setOpen] = useState(true)
+	return (
+		<details className="group" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
+			<NavGroupSummary name={name} icon={icon} />
+			<div className="border-l border-subtle pl-2">
+				{pages.map((page) => (
+					<LinkToPage
+						key={`${page.name}-${page.route}`}
+						name={page.name}
+						route={page.route}
+						asPath={asPath}
+						onClick={onClick}
+						isOld={page.route === route}
+					/>
+				))}
+			</div>
+		</details>
+	)
+}
 
 export function SidebarDivider({ className = '' }: { className?: string }) {
 	return <hr className={`w-full max-w-53 border-t border-medium ${className}`} />

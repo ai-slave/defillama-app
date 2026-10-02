@@ -3,6 +3,7 @@ import type { IIcon } from '~/ui/Icon'
 export type TNavLink = {
 	name: string
 	route: string
+	children?: Array<{ name: string; route: string }>
 	icon?: IIcon['name']
 	attention?: boolean
 	freeTrial?: boolean

@@ -22,6 +22,7 @@
 	--bg-surface: #ffffff; /* Background/bg-surface */
 	--bg-surface-elevated-1: #eeeeee; /* Background/bg-surface-elevated1 */
 	--bg-surface-elevated-2: #dedede; /* Background/bg-surface-elevated2 */
+	--bg-equity-logo: #ffffff; /* Fixed canvas for company artwork authored for light backgrounds */
 	/* Floating overlays: popovers, menus, tooltips, dialogs, toasts. The
 	   Figma library maps these to bg-surface-elevated1 (#eee), but a
 	   darker-than-surroundings overlay reads recessed in light mode (light
@@ -217,6 +218,7 @@ html.dark {
 	--color-surface: var(--bg-surface);
 	--color-surface-elevated-1: var(--bg-surface-elevated-1);
 	--color-surface-elevated-2: var(--bg-surface-elevated-2);
+	--color-equity-logo: var(--bg-equity-logo);
 	--color-overlay: var(--bg-overlay);
 	--color-brand: var(--bg-brand);
 	--color-brand-muted: var(--bg-brand-muted);

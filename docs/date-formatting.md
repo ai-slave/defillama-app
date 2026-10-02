@@ -112,6 +112,10 @@ one extra day in an inclusive preset.
 
 ## Render clock and hydration
 
+The Equities earnings calendar is the documented exception whose product day is the New York calendar day. Its
+server data layer derives a `YYYY-MM-DD` key with a literal `America/New_York` formatter and sends that key beside
+the cached calendar data; browser rendering and date arithmetic continue to operate on calendar strings.
+
 Most pages are static with a long revalidate, so the HTML a visitor receives was rendered hours earlier. React
 compares that HTML with the first client render; any text derived from the live clock, the visitor's zone or the
 visitor's locale differs, React logs a hydration mismatch and rebuilds the subtree. The rule is:

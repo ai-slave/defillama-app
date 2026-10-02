@@ -1,6 +1,6 @@
 export function SortIcon({ dir }: { dir: string | boolean }) {
 	return (
-		<div className="relative top-px flex shrink-0 flex-col">
+		<div className="relative top-px flex w-2.5 shrink-0 flex-col">
 			<svg
 				viewBox="0 0 1024 1024"
 				width="10px"

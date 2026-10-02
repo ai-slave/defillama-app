@@ -69,6 +69,7 @@ function TreemapChart({
 	colorMode = 'value',
 	height,
 	onReady,
+	showRootLabel = true,
 	valueLabel = 'Market Cap',
 	valueSymbol = '$'
 }: TreemapChartProps) {
@@ -255,16 +256,17 @@ function TreemapChart({
 								gapWidth: 1,
 								...(isRwaVariant ? { color: isDark ? '#374151' : '#e5e7eb' } : {})
 							},
-							upperLabel: isRwaVariant
-								? {
-										show: true,
-										height: 22,
-										padding: [0, 4],
-										formatter: '{b}'
-									}
-								: {
-										show: false
-									}
+							upperLabel:
+								isRwaVariant && showRootLabel
+									? {
+											show: true,
+											height: 22,
+											padding: [0, 4],
+											formatter: '{b}'
+										}
+									: {
+											show: false
+										}
 						},
 						{
 							...(isRwaVariant
@@ -340,6 +342,7 @@ function TreemapChart({
 		isNarrativeVariant,
 		isRwaVariant,
 		rwaRootLabel,
+		showRootLabel,
 		valueLabel,
 		treeData,
 		variant

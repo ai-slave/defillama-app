@@ -18,6 +18,7 @@ export interface TreemapChartProps {
 	colorMode?: 'value' | 'categorical'
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
+	showRootLabel?: boolean
 	valueLabel?: string
 	valueSymbol?: string
 }

@@ -1,10 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchJson } from '~/utils/async'
 import { EQUITIES_TABLE_RESPONSE_SCHEMA_VERSION } from './tableQuery'
-import type { EquitiesTableResponse, EquitiesTreemapResponse } from './types'
+import type { EquitiesTableResponse, EquitiesTreemapResponse, IEquitiesCalendarData } from './types'
 
 export const EQUITIES_API = '/api/public/equities'
 export const EQUITIES_MARKET_MAP_API = '/api/public/equities/market-map'
+export const EQUITIES_EARNINGS_CALENDAR_API = '/api/public/equities/earnings-calendar'
+
+export interface EquitiesCalendarResponse extends IEquitiesCalendarData {
+	generatedAt: number
+	stale: boolean
+	todayET: string
+}
 
 export interface EquitiesTableSeed {
 	initialData: EquitiesTableResponse
@@ -36,5 +43,16 @@ export function useEquitiesTreemapDataset(queryString: string | null) {
 		refetchOnWindowFocus: false,
 		retry: 1,
 		enabled: queryString != null
+	})
+}
+
+export function useEquitiesEarningsCalendar() {
+	return useQuery<EquitiesCalendarResponse>({
+		queryKey: ['equities-earnings-calendar'],
+		queryFn: async ({ signal }) => fetchJson<EquitiesCalendarResponse>(EQUITIES_EARNINGS_CALENDAR_API, { signal }),
+		staleTime: 60 * 60 * 1000,
+		refetchInterval: 30 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 1
 	})
 }

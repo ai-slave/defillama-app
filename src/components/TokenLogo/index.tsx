@@ -45,6 +45,7 @@ export function FallbackLogo({ size = 24, 'data-lgonly': lgonly }: { size?: numb
 export function TokenLogo(props: TokenLogoProps) {
 	const { size = 24, fallbackSrc, alt, title, 'data-lgonly': lgonly, ...rest } = props
 	const resolvedSrc = 'kind' in rest && rest.kind ? resolveLogoUrl(rest) : (rest.src ?? null)
+	const isEquity = 'kind' in rest && rest.kind === 'equities'
 
 	return (
 		<TokenLogoImg
@@ -55,6 +56,7 @@ export function TokenLogo(props: TokenLogoProps) {
 			alt={alt}
 			title={title}
 			data-lgonly={lgonly}
+			isEquity={isEquity}
 		/>
 	)
 }
@@ -65,7 +67,8 @@ function TokenLogoImg({
 	fallbackSrc,
 	alt,
 	title,
-	'data-lgonly': lgonly
+	'data-lgonly': lgonly,
+	isEquity
 }: {
 	resolvedSrc: string | null
 	size?: number
@@ -73,6 +76,7 @@ function TokenLogoImg({
 	alt: string | undefined
 	title?: string | undefined
 	'data-lgonly': boolean | undefined
+	isEquity: boolean
 }) {
 	const placeholderSrc = '/assets/placeholder.png'
 	const sources = [
@@ -82,7 +86,9 @@ function TokenLogoImg({
 	return (
 		<span
 			data-lgonly={lgonly}
-			className="inline-block shrink-0 overflow-hidden rounded-full bg-surface-elevated-2 data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+			className={`inline-block shrink-0 overflow-hidden rounded-full data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block ${
+				isEquity ? 'border border-subtle bg-equity-logo' : 'bg-surface-elevated-2'
+			}`}
 			style={{ height: size, width: size }}
 			title={title}
 		>
@@ -92,7 +98,7 @@ function TokenLogoImg({
 				height={size}
 				width={size}
 				data-logo-source-index="0"
-				className="block size-full object-cover text-transparent"
+				className={`block size-full text-transparent ${isEquity ? 'object-contain' : 'object-cover'}`}
 				loading="lazy"
 				onError={(event) => {
 					const image = event.currentTarget

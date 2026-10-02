@@ -1,6 +1,7 @@
 import { ok, upstreamError } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
+import { getEquitiesCalendarData, getNewYorkCalendarDate } from './marketData.server'
 import { getEquitiesSnapshot, getEquitiesTablePage, getEquitiesTreemapPage } from './tableData.server'
 
 // no-store outside production: cacheable dev responses can poison the browser's HTTP
@@ -30,6 +31,25 @@ export const equitiesMarketMapDataset = defineApiRoute({
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch equities market map data')
+		}
+	}
+})
+
+export const equitiesEarningsCalendarDataset = defineApiRoute({
+	route: '/api/public/equities/earnings-calendar',
+	cacheControl: EQUITIES_DATASET_CACHE_CONTROL,
+	handle: async () => {
+		try {
+			const result = await getEquitiesCalendarData()
+			return ok({
+				...result.snapshot.data,
+				generatedAt: result.snapshot.generatedAt,
+				stale: result.stale,
+				todayET: getNewYorkCalendarDate(Date.now())
+			})
+		} catch (error) {
+			recordRouteRuntimeError(error, 'apiRoute')
+			return upstreamError('Failed to fetch the equities earnings calendar')
 		}
 	}
 })
