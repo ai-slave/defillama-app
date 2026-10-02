@@ -67,7 +67,7 @@ function button(text: string) {
 	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => e.textContent?.trim() === text)!
 }
 const frame = () => new Promise((resolve) => setTimeout(resolve, 20))
-// Waits for the control instead of a fixed delay: only the intro's exit animation (250ms) takes real time.
+// Waits for the control instead of a fixed delay: spotlight steps measure their target on a later frame.
 async function click(text: string) {
 	await waitForUi(() => expect(button(text)).toBeDefined(), { interval: 10 })
 	await act(async () => {
@@ -89,6 +89,11 @@ test('Escape skips the named intro without submitting and returns focus to the p
 	expect(complete).toHaveBeenCalledOnce()
 	expect(submit).not.toHaveBeenCalled()
 	expect(document.activeElement).toBe(container.querySelector('textarea'))
+})
+test('Show me around moves to the next step at once instead of after the intro animation', async () => {
+	await waitForUi(() => expect(button('Show me around')).toBeDefined())
+	await act(async () => button('Show me around').click())
+	expect(document.querySelector('[aria-label="Skip walkthrough"]')).not.toBeNull()
 })
 test('an expanded highlighted popover stays usable and Escape resumes the same tour step', async () => {
 	await click('Show me around')

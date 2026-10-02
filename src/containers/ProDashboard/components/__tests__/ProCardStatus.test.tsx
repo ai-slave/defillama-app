@@ -43,7 +43,9 @@ test('the loading state shows a skeleton for the card shape', async () => {
 
 test('the error state is an alert and calls back from Try again', async () => {
 	const onRetry = vi.fn()
-	await act(async () => root.render(<ProCardError detail="The request failed" onRetry={onRetry} />))
+	await act(async () =>
+		root.render(<ProCardError detail="The request failed" retry={{ run: onRetry, pending: false }} />)
+	)
 	const alert = container.querySelector('[role="alert"]')
 	expect(alert?.textContent).toContain("Couldn't load this card")
 	expect(alert?.textContent).toContain('The request failed')
@@ -101,7 +103,7 @@ test('a permanent configuration error can be announced as a status instead of an
 
 test('a failed refresh warns without hiding the data and retries', async () => {
 	const onRetry = vi.fn()
-	await act(async () => root.render(<ProCardRefreshFailed onRetry={onRetry} />))
+	await act(async () => root.render(<ProCardRefreshFailed retry={{ run: onRetry, pending: false }} />))
 	const status = container.querySelector('[role="status"]')
 	expect(status?.textContent).toContain("Couldn't refresh this card")
 	expect(container.querySelector('[role="alert"]')).toBeNull()

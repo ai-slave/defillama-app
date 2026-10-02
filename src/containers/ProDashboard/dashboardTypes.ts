@@ -24,6 +24,16 @@ export interface AISessionData {
 
 export type AIGeneratedData = Record<string, AISessionData>
 
+/** A LlamaAI generate or edit result, ready for the dashboard to save. */
+export interface GeneratedDashboardInput {
+	dashboardName: string
+	visibility: 'private' | 'public'
+	tags: Array<string>
+	description: string
+	items: Array<DashboardItemConfig>
+	aiGenerationContext?: Pick<AISessionData, 'mode' | 'timestamp' | 'prompt'> & { sessionId: string }
+}
+
 export interface AIUndoState {
 	items: Array<DashboardItemConfig>
 	timestamp: string

@@ -65,7 +65,7 @@ function validateAnnotation(value: unknown): ArticleChartAnnotation | null {
 	return { date: new Date(ts).toISOString(), label: label.slice(0, 80) }
 }
 
-function deriveLegacyEntities(series: Array<ArticleChartSeries>): Array<ArticleChartEntity> {
+export function deriveLegacyEntities(series: Array<ArticleChartSeries>): Array<ArticleChartEntity> {
 	const seen = new Set<string>()
 	const out: Array<ArticleChartEntity> = []
 	for (const s of series) {
@@ -82,7 +82,7 @@ function deriveLegacyEntities(series: Array<ArticleChartSeries>): Array<ArticleC
 	return out
 }
 
-function deriveLegacyChartType(series: Array<ArticleChartSeries>): string {
+export function deriveLegacyChartType(series: Array<ArticleChartSeries>): string {
 	const counts = new Map<string, number>()
 	for (const s of series) counts.set(s.chartType, (counts.get(s.chartType) ?? 0) + 1)
 	let best = series[0].chartType

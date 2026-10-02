@@ -744,6 +744,8 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 				isTable={itemSpansFullRow(rawItem)}
 				data-col={itemColSpan(rawItem)}
 				data-item-id={rawItem.id}
+				// A card control that leaves while it has focus, such as a retry that succeeds, hands focus to its card.
+				tabIndex={-1}
 				style={cardScaleStyle(getDashboardItemHeight(rawItem))}
 				className={`${proCardShellStyles} ${DRAGGING_CARD_CLASS} group/dashboard-card col-span-1 flex flex-col overflow-hidden ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
 			>

@@ -13,7 +13,7 @@ import { Tag } from '~/ui/Tag'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
-import { ActionFeedbackStatus, ConfirmableContent, useActionFeedback } from './ActionFeedback'
+import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import { chartDatasets, chartDatasetsBySlug, type ChartDatasetDefinition, type ChartOptionsMap } from './chart-datasets'
 import { combineCsvsWide, type CsvItem } from './combineCsvsWide'
 import { filterCsvByDateRange, filterParsedRowsByDateRange } from './csvDateFilter'
@@ -33,6 +33,7 @@ import {
 	type SavedDownloadInput
 } from './savedDownloads'
 import { SavedPresetNotice } from './SavedPresetNotice'
+import { type CsvQueryStatus, SelectedListSidebar } from './SelectedListSidebar'
 import { buildShareUrl } from './urlState'
 
 const SubscribeProModal = lazy(() =>
@@ -59,12 +60,6 @@ export type ParamType = 'protocol' | 'chain'
 const PARAM_LABELS: Record<ParamType, { singular: string; verb: string; search: string }> = {
 	protocol: { singular: 'protocol', verb: 'Pick a protocol', search: 'Search protocols...' },
 	chain: { singular: 'chain', verb: 'Pick a chain', search: 'Search chains...' }
-}
-
-interface CsvQueryStatus {
-	data: unknown
-	isLoading: boolean
-	error: unknown
 }
 
 interface MultiMetricModalProps {
@@ -155,7 +150,9 @@ export function MultiMetricModal({
 	const [paramType, setParamType] = useState<ParamType>(initialConfig?.paramType ?? 'protocol')
 	const [param, setParam] = useState<ParamOption | null>(null)
 	const [selectedMetrics, setSelectedMetrics] = useState<Array<string>>([])
-	const [activeMetric, setActiveMetric] = useState<string | null>(null)
+	// The metric the user chose to preview. Removing it forgets it, so re-selecting it later does not silently
+	// bring it back.
+	const [preferredMetric, setPreferredMetric] = useState<string | null>(null)
 	const dateRangeTriggerRef = useRef<HTMLButtonElement>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -202,13 +199,7 @@ export function MultiMetricModal({
 		if (param) setSelectedMetrics((prev) => pruneUnavailableMetrics(prev, availableMetrics))
 	}
 
-	// The highlighted metric survives while it is still selected; otherwise the first one takes over and
-	// the old choice is forgotten, so re-selecting it later does not silently restore it.
-	const [syncedSelectedMetrics, setSyncedSelectedMetrics] = useState(selectedMetrics)
-	if (selectedMetrics !== syncedSelectedMetrics) {
-		setSyncedSelectedMetrics(selectedMetrics)
-		setActiveMetric((cur) => resolveActiveMetric(cur, selectedMetrics))
-	}
+	const activeMetric = resolveActiveMetric(preferredMetric, selectedMetrics)
 
 	const csvQueries = useQueries({
 		queries: selectedMetrics.map((slug) => {
@@ -272,6 +263,9 @@ export function MultiMetricModal({
 	const loadingCount = csvQueries.filter((q) => q.isLoading).length
 
 	const handleToggleMetric = useCallback((slug: string) => {
+		// Either way the toggled metric stops being the preferred one: unpicked it is gone, and picked again it was
+		// dropped meanwhile, so it must not take the preview back.
+		setPreferredMetric((preferred) => (preferred === slug ? null : preferred))
 		setSelectedMetrics((prev) => {
 			if (prev.includes(slug)) return prev.filter((s) => s !== slug)
 			// The picker disables metrics past the cap and says why in its header.
@@ -280,31 +274,38 @@ export function MultiMetricModal({
 		})
 	}, [])
 
-	const handleClearMetrics = useCallback(() => setSelectedMetrics([]), [])
+	const handleClearMetrics = useCallback(() => {
+		setSelectedMetrics([])
+		setPreferredMetric(null)
+	}, [])
 
 	const handleSelectAll = useCallback(() => {
 		setSelectedMetrics(availableMetrics.slice(0, MAX_METRICS).map((m) => m.slug))
-	}, [availableMetrics])
+		// Select all reorders the list; the metric on screen stays while it is still in it.
+		setPreferredMetric(activeMetric)
+	}, [availableMetrics, activeMetric])
 
 	const handleRemoveMetric = useCallback((slug: string) => {
 		setSelectedMetrics((prev) => prev.filter((s) => s !== slug))
+		setPreferredMetric((preferred) => (preferred === slug ? null : preferred))
 	}, [])
 
-	const handleSetActive = useCallback((slug: string) => setActiveMetric(slug), [])
+	const handleSetActive = useCallback((slug: string) => setPreferredMetric(slug), [])
 
 	const handleChangeParam = useCallback((next: ParamOption) => {
 		setParam(next)
 	}, [])
 
-	const handleChangeParamType = useCallback((next: ParamType) => {
-		setParamType((prev) => {
-			if (prev === next) return prev
+	const handleChangeParamType = useCallback(
+		(next: ParamType) => {
+			if (next === paramType) return
+			setParamType(next)
 			setParam(null)
 			setSelectedMetrics([])
-			setActiveMetric(null)
-			return next
-		})
-	}, [])
+			setPreferredMetric(null)
+		},
+		[paramType]
+	)
 
 	const handleDownloadCombined = useCallback(
 		(format: DownloadFormat, action: string) => {
@@ -530,196 +531,188 @@ export function MultiMetricModal({
 
 	return (
 		<>
-			<Ariakit.DialogProvider
-				open
-				setOpen={(open) => {
-					if (!open) onClose()
-				}}
-			>
-				{/* Opens on the metric picker; before a protocol or chain is picked, the empty state's picker takes focus. */}
-				<Dialog size="xl" portal unmountOnHide initialFocus={param ? metricPickerRef : undefined}>
-					<DialogHeader
-						title={
-							<>
-								{param ? (
-									<>
-										{param.label} <Tag className="align-middle">Combined</Tag>
-									</>
-								) : (
-									'Combined report'
-								)}
-							</>
-						}
-						subtitle={headerSubtitle}
-						actions={
-							param && hasSelection ? (
-								isPreview ? (
-									<PreviewHeaderActions
-										mode="preview"
-										confirmed={confirmed}
-										downloadLabel={downloadLabel}
-										copy={null}
-										onSubscribe={handleSubscribeClick}
-									/>
-								) : (
-									<PreviewHeaderActions
-										mode="full"
-										confirmed={confirmed}
-										downloadLabel={downloadLabel}
-										copy={null}
-										savePreset={{ run: () => setShowSaveDialog(true), disabled: false }}
-										copyLink={{ run: () => void handleCopyLink(), disabled: !currentConfig }}
-										onDownload={handleTopBarDownload}
-										downloadDisabled={topBarDownloadDisabled}
-									/>
-								)
-							) : null
-						}
-					/>
-
-					{/* Until a protocol or chain is picked, the empty state below is the picker. */}
-					{param ? (
-						<DialogToolbar>
-							<div className="flex flex-wrap items-center gap-2">
-								<ParamPickerPopover
-									paramType={paramType}
-									value={param}
-									protocolOptions={protocolOptions}
-									chainOptions={chainOptions}
-									onChange={handleChangeParam}
-									onChangeParamType={handleChangeParamType}
+			{/* Opens on the metric picker; before a protocol or chain is picked, the empty state's picker takes focus. */}
+			<Dialog size="xl" workspace open onClose={onClose} initialFocus={param ? metricPickerRef : undefined}>
+				<DialogHeader
+					title={
+						<>
+							{param ? (
+								<>
+									{param.label} <Tag className="align-middle">Combined</Tag>
+								</>
+							) : (
+								'Combined report'
+							)}
+						</>
+					}
+					subtitle={headerSubtitle}
+					actions={
+						param && hasSelection ? (
+							isPreview ? (
+								<PreviewHeaderActions
+									mode="preview"
+									downloadLabel={downloadLabel}
+									copy={false}
+									onSubscribe={handleSubscribeClick}
 								/>
-
-								<MetricMultiPickerPopover
-									triggerRef={metricPickerRef}
-									metrics={availableMetrics}
-									selected={selectedMetrics}
-									onToggle={handleToggleMetric}
-									onClearAll={handleClearMetrics}
-									onSelectAll={() => keepFocus(handleSelectAll, () => metricPickerRef.current)}
-									maxSelections={MAX_METRICS}
-								/>
-
-								{hasSelection && !isPreview ? (
-									<DateRangePicker
-										triggerRef={dateRangeTriggerRef}
-										value={dateRange}
-										onChange={setDateRange}
-										minDate={dateBounds.min}
-										maxDate={dateBounds.max}
-									/>
-								) : null}
-
-								{isBulk ? (
-									<Button
-										variant="filter"
-										size="sm"
-										data-active={showSelected}
-										aria-pressed={showSelected}
-										className="sm:hidden"
-										onClick={() => setShowSelected((shown) => !shown)}
-										ref={selectedToggleRef}
-									>
-										Selected ({selectedMetrics.length})
-									</Button>
-								) : null}
-
-								{isPreview ? (
-									<p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p>
-								) : null}
-							</div>
-						</DialogToolbar>
-					) : null}
-					{/* Each band draws the line under itself, as the toolbar above does. */}
-					<SavedPresetNotice notices={savedPresetNotices} />
-					<ActionFeedbackStatus outcome={outcome} />
-
-					<DialogBody kind="flush">
-						<div className="flex h-full min-h-0">
-							<div className={`min-h-0 min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
-								{!param ? (
-									<ParamPickerEmpty
-										paramType={paramType}
-										onChangeParamType={handleChangeParamType}
-										options={paramOptions}
-										suggestions={suggestions}
-										onSelect={handleChangeParam}
-									/>
-								) : !hasSelection ? (
-									<EmptyState
-										paramType={paramType}
-										availableCount={availableMetrics.length}
-										onSelectAll={
-											availableMetrics.length > 0
-												? () => keepFocus(handleSelectAll, () => metricPickerRef.current)
-												: undefined
-										}
-									/>
-								) : !activeMetric ? (
-									<CenteredHint icon="search" text="Pick a metric to preview" />
-								) : activeLoading ? (
-									<CenteredLoader />
-								) : activeError ? (
-									<CenteredError error={activeError} />
-								) : !parsedActive || parsedActive.rows.length === 0 ? (
-									<CenteredHint icon="eye-off" text="No data" />
-								) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
-									<div className="flex flex-1 items-center justify-center">
-										<div className="flex flex-col items-center gap-2 text-center">
-											<Icon name="search" className="size-6 text-pro-text-tertiary" />
-											<p className="text-sm text-pro-text-secondary">No rows in selected date range</p>
-											<button
-												type="button"
-												// Clearing removes this button; focus returns to the range picker it cleared.
-												onClick={() =>
-													keepFocus(
-														() => setDateRange(null),
-														() => dateRangeTriggerRef.current
-													)
-												}
-												className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-											>
-												Clear date range
-											</button>
-										</div>
-									</div>
-								) : (
-									<PreviewTable parsed={parsedActiveFiltered} isPreview={isPreview} />
-								)}
-							</div>
-
-							{param && isBulk ? (
-								<MetricsSidebar
-									selectedMetrics={selectedMetrics
-										.map((slug) => chartDatasetsBySlug.get(slug))
-										.filter((d): d is ChartDatasetDefinition => !!d)}
-									csvQueries={csvQueries as ReadonlyArray<CsvQueryStatus>}
-									activeMetric={activeMetric}
-									onSetActive={(slug) =>
-										// On a phone, previewing a metric switches to the table; the toggle keeps focus there.
-										keepFocus(
-											() => {
-												handleSetActive(slug)
-												setShowSelected(false)
-											},
-											() => selectedToggleRef.current
-										)
-									}
-									showOnPhone={showingSelected}
-									onRemove={handleRemoveMetric}
-									onClearAll={() => keepFocus(handleClearMetrics, () => metricPickerRef.current)}
-									onDownloadSingle={(slug) => handleDownloadSingle(slug, 'csv', `download:${slug}`)}
+							) : (
+								<PreviewHeaderActions
+									mode="full"
 									confirmed={confirmed}
-									pickerTriggerRef={metricPickerRef}
-									isPreview={isPreview}
-									readyCount={readyCount}
-									loadingCount={loadingCount}
+									downloadLabel={downloadLabel}
+									copy={null}
+									savePreset={{ run: () => setShowSaveDialog(true), disabled: false }}
+									copyLink={{ run: () => void handleCopyLink(), disabled: !currentConfig }}
+									onDownload={handleTopBarDownload}
+									downloadDisabled={topBarDownloadDisabled}
+								/>
+							)
+						) : null
+					}
+				/>
+
+				{/* Until a protocol or chain is picked, the empty state below is the picker. */}
+				{param ? (
+					<DialogToolbar>
+						<div className="flex flex-wrap items-center gap-2">
+							<ParamPickerPopover
+								paramType={paramType}
+								value={param}
+								protocolOptions={protocolOptions}
+								chainOptions={chainOptions}
+								onChange={handleChangeParam}
+								onChangeParamType={handleChangeParamType}
+							/>
+
+							<MetricMultiPickerPopover
+								triggerRef={metricPickerRef}
+								metrics={availableMetrics}
+								selected={selectedMetrics}
+								onToggle={handleToggleMetric}
+								onClearAll={handleClearMetrics}
+								onSelectAll={handleSelectAll}
+								maxSelections={MAX_METRICS}
+							/>
+
+							{hasSelection && !isPreview ? (
+								<DateRangePicker
+									triggerRef={dateRangeTriggerRef}
+									value={dateRange}
+									onChange={setDateRange}
+									minDate={dateBounds.min}
+									maxDate={dateBounds.max}
 								/>
 							) : null}
+
+							{isBulk ? (
+								<Button
+									variant="filter"
+									size="sm"
+									data-active={showSelected}
+									aria-pressed={showSelected}
+									className="sm:hidden"
+									onClick={() => setShowSelected((shown) => !shown)}
+									ref={selectedToggleRef}
+								>
+									Selected ({selectedMetrics.length})
+								</Button>
+							) : null}
+
+							{isPreview ? <p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p> : null}
 						</div>
-					</DialogBody>
-				</Dialog>
-			</Ariakit.DialogProvider>
+					</DialogToolbar>
+				) : null}
+				{/* Each band draws the line under itself, as the toolbar above does. */}
+				<SavedPresetNotice notices={savedPresetNotices} />
+				<ActionFeedbackStatus outcome={outcome} />
+
+				<DialogBody kind="flush">
+					<div className="flex h-full min-h-0">
+						<div className={`min-h-0 min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
+							{!param ? (
+								<ParamPickerEmpty
+									paramType={paramType}
+									onChangeParamType={handleChangeParamType}
+									options={paramOptions}
+									suggestions={suggestions}
+									onSelect={handleChangeParam}
+								/>
+							) : !hasSelection ? (
+								<EmptyState
+									paramType={paramType}
+									availableCount={availableMetrics.length}
+									onSelectAll={
+										availableMetrics.length > 0
+											? () => keepFocus(handleSelectAll, () => metricPickerRef.current)
+											: undefined
+									}
+								/>
+							) : !activeMetric ? (
+								<CenteredHint icon="search" text="Pick a metric to preview" />
+							) : activeLoading ? (
+								<CenteredLoader />
+							) : activeError ? (
+								<CenteredError error={activeError} />
+							) : !parsedActive || parsedActive.rows.length === 0 ? (
+								<CenteredHint icon="eye-off" text="No data" />
+							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
+								<div className="flex flex-1 items-center justify-center">
+									<div className="flex flex-col items-center gap-2 text-center">
+										<Icon name="search" className="size-6 text-pro-text-tertiary" />
+										<p className="text-sm text-pro-text-secondary">No rows in selected date range</p>
+										<button
+											type="button"
+											// Clearing removes this button; focus returns to the range picker it cleared.
+											onClick={() =>
+												keepFocus(
+													() => setDateRange(null),
+													() => dateRangeTriggerRef.current
+												)
+											}
+											className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+										>
+											Clear date range
+										</button>
+									</div>
+								</div>
+							) : (
+								<PreviewTable parsed={parsedActiveFiltered} isPreview={isPreview} />
+							)}
+						</div>
+
+						{param && isBulk ? (
+							<SelectedListSidebar
+								noun="metric"
+								items={selectedMetrics.map((slug) => ({
+									value: slug,
+									label: metricDisplayName(chartDatasetsBySlug.get(slug)!)
+								}))}
+								queries={csvQueries as ReadonlyArray<CsvQueryStatus>}
+								activeValue={activeMetric}
+								onPreview={(slug) =>
+									// On a phone, previewing a metric switches to the table; the toggle keeps focus there.
+									keepFocus(
+										() => {
+											handleSetActive(slug)
+											setShowSelected(false)
+										},
+										() => selectedToggleRef.current
+									)
+								}
+								showOnPhone={showingSelected}
+								onRemove={handleRemoveMetric}
+								onClearAll={handleClearMetrics}
+								onDownload={(metric) => handleDownloadSingle(metric.value, 'csv', `download:${metric.value}`)}
+								confirmed={confirmed}
+								pickerTrigger={() => metricPickerRef.current}
+								isPreview={isPreview}
+								readyCount={readyCount}
+								loadingCount={loadingCount}
+							/>
+						) : null}
+					</div>
+				</DialogBody>
+			</Dialog>
 
 			{isPreview ? (
 				<Suspense fallback={null}>
@@ -1060,146 +1053,6 @@ function PreviewTable({
 				</>
 			) : null}
 		</div>
-	)
-}
-
-interface MetricsSidebarProps {
-	selectedMetrics: Array<ChartDatasetDefinition>
-	csvQueries: ReadonlyArray<CsvQueryStatus>
-	activeMetric: string | null
-	onSetActive: (slug: string) => void
-	/** Below sm the list replaces the table instead of sitting beside it. */
-	showOnPhone: boolean
-	onRemove: (slug: string) => void
-	onClearAll: () => void
-	onDownloadSingle: (slug: string) => void
-	/** Whether a download button shows its confirmation now. */
-	confirmed: (action: string) => boolean
-	/** Takes focus when the last row leaves. */
-	pickerTriggerRef: RefObject<HTMLButtonElement | null>
-	/** A preview downloads nothing: the header Download opens the subscribe prompt. */
-	isPreview: boolean
-	readyCount: number
-	loadingCount: number
-}
-
-function MetricsSidebar({
-	selectedMetrics,
-	csvQueries,
-	activeMetric,
-	onSetActive,
-	showOnPhone,
-	onRemove,
-	onClearAll,
-	onDownloadSingle,
-	confirmed,
-	pickerTriggerRef,
-	isPreview,
-	readyCount,
-	loadingCount
-}: MetricsSidebarProps) {
-	const listRef = useRef<HTMLDivElement>(null)
-	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
-	const removeRow = (slug: string, index: number) =>
-		keepFocus(
-			() => onRemove(slug),
-			() => {
-				const removeButtons = listRef.current?.querySelectorAll<HTMLElement>('[data-row-remove]') ?? []
-				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? pickerTriggerRef.current
-			}
-		)
-	return (
-		<aside
-			className={`w-full shrink-0 flex-col border-subtle sm:flex sm:w-72 sm:border-l ${showOnPhone ? 'flex' : 'hidden'}`}
-		>
-			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
-				<div className="min-w-0">
-					<p className="text-xs font-semibold text-pro-text-primary">Selected metrics ({selectedMetrics.length})</p>
-					{loadingCount > 0 ? (
-						<p className="text-[10px] text-pro-text-tertiary">
-							Ready {readyCount}/{selectedMetrics.length}
-						</p>
-					) : null}
-				</div>
-				{selectedMetrics.length > 0 ? (
-					<button
-						type="button"
-						onClick={onClearAll}
-						className="shrink-0 text-[11px] text-pro-text-tertiary hover:text-pro-text-primary hover:underline"
-					>
-						Clear all
-					</button>
-				) : null}
-			</div>
-			<div ref={listRef} className="flex-1 overflow-auto">
-				{selectedMetrics.map((metric, i) => {
-					const query = csvQueries[i]
-					const isActive = metric.slug === activeMetric
-					const isReady = typeof query?.data === 'string'
-					const isQueryLoading = !!query?.isLoading
-					const hasError = !!query?.error
-					return (
-						<div
-							key={metric.slug}
-							className={`flex items-center gap-1.5 border-b border-subtle px-2.5 py-2 text-xs transition-colors ${
-								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
-							}`}
-						>
-							<button
-								type="button"
-								onClick={() => onSetActive(metric.slug)}
-								className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
-								title={`Preview ${metric.name}`}
-							>
-								<span className="flex size-4 shrink-0 items-center justify-center">
-									{isQueryLoading ? (
-										<LoadingSpinner size={12} />
-									) : hasError ? (
-										<Icon name="alert-triangle" className="size-3.5 text-error" />
-									) : isReady ? (
-										<Icon name="check" className="size-3.5 text-success" />
-									) : null}
-								</span>
-								<span
-									className={`truncate ${isActive ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'}`}
-								>
-									{metricDisplayName(metric)}
-								</span>
-							</button>
-							{isPreview ? null : (
-								<button
-									type="button"
-									onClick={() => onDownloadSingle(metric.slug)}
-									disabled={!isReady}
-									aria-label={`Download ${metricDisplayName(metric)} CSV`}
-									className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
-								>
-									<ConfirmableContent
-										confirmed={confirmed(`download:${metric.slug}`)}
-										idle={<Icon name="download-cloud" className="size-3.5" />}
-										done={<Icon name="check" className="size-3.5" />}
-									/>
-								</button>
-							)}
-							<button
-								type="button"
-								onClick={() => removeRow(metric.slug, i)}
-								data-row-remove
-								title="Remove"
-								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"
-							>
-								<Icon name="x" className="size-3.5" />
-							</button>
-						</div>
-					)
-				})}
-			</div>
-			{isPreview ? null : (
-				<p className="border-t border-subtle p-3 text-center text-[10px] text-pro-text-tertiary">
-					Download combined puts each metric in its own column
-				</p>
-			)}
-		</aside>
 	)
 }
 

@@ -406,7 +406,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 						onClick={() => trackDialogOpen('browse-search')}
 					>
 						<Icon name="search" height={12} width={12} />
-						<span className="hidden sm:block">Click to browse & search</span>
+						<span className="max-sm:sr-only">Click to browse & search</span>
 					</Ariakit.DialogDisclosure>
 				</div>
 				{/* Right decorative dot pattern */}
@@ -450,6 +450,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 			</div>
 			<Dialog
 				size="xl"
+				workspace
 				canvas
 				// Keep the selected tab, search query, and category scroll position when reopening.
 				unmountOnHide={false}

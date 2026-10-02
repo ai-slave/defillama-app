@@ -5,12 +5,17 @@ describe('classic chart runtime state', () => {
 	test('waits for streamed data before reporting a load failure', () => {
 		const refetch = vi.fn()
 		expect(
-			toChartRuntimeState({ data: undefined, isLoading: false, isError: false, refetch }, false, { status: 'ready' })
+			toChartRuntimeState(
+				{ data: undefined, isLoading: false, isFetching: false, errorUpdatedAt: 0, dataUpdatedAt: 0, refetch },
+				false,
+				{ status: 'ready' }
+			)
 		).toEqual({
 			data: [],
 			isLoading: true,
 			hasError: false,
 			canRetry: false,
+			isFetching: false,
 			refetch
 		})
 	})
@@ -18,11 +23,18 @@ describe('classic chart runtime state', () => {
 	test('keeps stale chart data visible after a background refetch fails', () => {
 		const refetch = vi.fn()
 		const data: Array<[number, number]> = [[1_700_000_000, 42]]
-		expect(toChartRuntimeState({ data, isLoading: false, isError: true, refetch }, true, { status: 'ready' })).toEqual({
+		expect(
+			toChartRuntimeState(
+				{ data, isLoading: false, isFetching: false, errorUpdatedAt: 2000, dataUpdatedAt: 1000, refetch },
+				true,
+				{ status: 'ready' }
+			)
+		).toEqual({
 			data,
 			isLoading: false,
 			hasError: false,
 			canRetry: false,
+			isFetching: false,
 			refetch
 		})
 	})
@@ -30,7 +42,7 @@ describe('classic chart runtime state', () => {
 	test('waits for the protocol catalog and retries its failure before starting a chart source', () => {
 		const refetch = vi.fn()
 		const retryCatalog = vi.fn()
-		const query = { data: undefined, isLoading: false, isError: false, refetch }
+		const query = { data: undefined, isLoading: false, isFetching: false, errorUpdatedAt: 0, dataUpdatedAt: 0, refetch }
 
 		expect(toChartRuntimeState(query, true, { status: 'loading' })).toMatchObject({
 			isLoading: true,
@@ -41,6 +53,7 @@ describe('classic chart runtime state', () => {
 			isLoading: false,
 			hasError: true,
 			canRetry: true,
+			isFetching: false,
 			refetch: retryCatalog
 		})
 	})
@@ -58,12 +71,17 @@ describe('classic chart runtime state', () => {
 
 		expect(prerequisite).toEqual({ status: 'unavailable' })
 		expect(
-			toChartRuntimeState({ data: undefined, isLoading: false, isError: false, refetch }, true, prerequisite)
+			toChartRuntimeState(
+				{ data: undefined, isLoading: false, isFetching: false, errorUpdatedAt: 0, dataUpdatedAt: 0, refetch },
+				true,
+				prerequisite
+			)
 		).toEqual({
 			data: [],
 			isLoading: false,
 			hasError: false,
 			canRetry: false,
+			isFetching: false,
 			refetch
 		})
 	})

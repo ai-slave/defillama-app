@@ -136,6 +136,77 @@ function matchImplicitBorderColor(content) {
 	return found.length > 0 ? found : null
 }
 
+// The index of the `>` that ends the tag opened at `from`: the first `>` outside braces and quotes, so
+// `onClick={() => a > b}` and multi-line props stay inside the tag.
+function tagEnd(content, from) {
+	let depth = 0
+	let quote = null
+	for (let i = from; i < content.length; i++) {
+		const char = content[i]
+		if (quote) {
+			if (char === quote && content[i - 1] !== '\\') quote = null
+		} else if (char === '"' || char === "'" || char === '`') quote = char
+		else if (char === '{') depth++
+		else if (char === '}') depth--
+		else if (char === '>' && depth === 0) return i
+	}
+	return -1
+}
+
+// The opening tags `<Name ...>` of the given components, props included.
+function openingTags(content, names) {
+	const tags = []
+	for (const match of content.matchAll(new RegExp(`<(?:${names.join('|')})\\b`, 'g'))) {
+		const end = tagEnd(content, match.index + match[0].length)
+		if (end !== -1) tags.push(content.slice(match.index, end + 1))
+	}
+	return tags
+}
+
+// The source between each <Dialog …> or <SideSheet …> and its closing tag, nested ones included in their parent.
+// A self-closing `<Dialog />` has no body and no closing tag, so it does not open one.
+function dialogBodies(content) {
+	const bodies = []
+	for (const name of ['Dialog', 'SideSheet']) {
+		const tag = new RegExp(`<(/?)${name}\\b`, 'g')
+		let depth = 0
+		let start = 0
+		for (const match of content.matchAll(tag)) {
+			if (match[1] === '') {
+				if (content[tagEnd(content, match.index + match[0].length) - 1] === '/') continue
+				if (depth === 0) start = match.index
+				depth++
+			} else if (depth > 0 && --depth === 0) bodies.push(content.slice(start, match.index))
+		}
+	}
+	return bodies
+}
+
+// A shared popover surface stacks under the dialog that hosts it unless it passes z-50 (design.md → Popover
+// surface). Counts surfaces written inside a dialog's JSX; one in a component the dialog renders is not seen.
+function matchDialogPopoverWithoutZ(content) {
+	const found = []
+	for (const body of dialogBodies(content)) {
+		for (const tag of openingTags(body, ['MenuSurface', 'PopoverSurface', 'ComboboxSurface'])) {
+			if (!/\bz-50\b/.test(tag)) found.push(tag.split(/\s/)[0])
+		}
+	}
+	return found.length > 0 ? found : null
+}
+
+// Buttons in a dialog grow to 44px in phone sheets through their recipe; a pinned h-* or size-* stops that
+// (design.md → Control heights). Counts buttons written inside a dialog's JSX.
+function matchPinnedButtonHeightInDialog(content) {
+	const found = []
+	for (const body of dialogBodies(content)) {
+		for (const tag of openingTags(body, ['Button', 'ProButton'])) {
+			const pinned = tag.match(/(?<![\w-])(?:max-sm:|sm:|sheet:)?(?:h|size)-(?:\d+(?:\.\d+)?|\[[^\]]+\])(?![\w-])/g)
+			if (pinned) found.push(...pinned)
+		}
+	}
+	return found.length > 0 ? found : null
+}
+
 // Tailwind v3-era spellings that v4 only supports as deprecated compatibility.
 // Modern forms: trailing important (px-1!), rounded-sm, outline-hidden,
 // x-(--var), bg-linear-to-*, shrink-*/grow-*. Scans class-list string literals
@@ -407,7 +478,7 @@ const RULES = [
 	{
 		id: 'raw-dialog-surface',
 		description:
-			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net); the tracked exceptions are the mobile nav sheet, the image lightbox, the onboarding tour, the fullscreen chat table, the chat history drawer and the mobile-app gate',
+			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net); the tracked exceptions are the mobile nav sheet, the image lightbox, the onboarding tour, the chat history drawer and the mobile-app gate',
 		pattern: /<Ariakit\.Dialog\b/g,
 		uiOwned: true,
 		// A test may host a component in a plain Ariakit dialog.
@@ -419,6 +490,22 @@ const RULES = [
 			'hand-set --dialog-width — pick a Dialog size (sm 448, md 600, lg 880, xl workspace) or a SideSheet size instead',
 		pattern: /\[--dialog-width:/g,
 		uiOwned: true
+	},
+	{
+		id: 'dialog-popover-without-z',
+		description:
+			'MenuSurface/PopoverSurface/ComboboxSurface written inside a Dialog or SideSheet without z-50 — the surface opens under the dialog',
+		match: matchDialogPopoverWithoutZ,
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'dialog-button-pinned-height',
+		description:
+			'Button or ProButton with h-* or size-* inside a Dialog or SideSheet — the recipe sets control heights, and a pinned one stays 32px in a phone sheet where its row is 44px',
+		match: matchPinnedButtonHeightInDialog,
+		uiOwned: true,
+		skipTests: true
 	},
 	{
 		id: 'hand-rolled-spinner',

@@ -133,6 +133,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 	const retryFailedItems = useCallback(() => {
 		for (const retry of failedItemRetries) retry()
 	}, [failedItemRetries])
+	const retryingFailedItems = failedItems.some((item) => item.isFetching)
 
 	const baseSeries = useMemo(
 		() =>
@@ -397,7 +398,9 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				{hasAnyData && failedItems.length > 0 ? (
 					<ProCardNotice
 						tone="warning"
-						{...(failedItemRetries.length > 0 ? { action: { label: 'Try again', onClick: retryFailedItems } } : {})}
+						{...(failedItemRetries.length > 0
+							? { retry: { run: retryFailedItems, pending: retryingFailedItems } }
+							: {})}
 					>
 						{failedItems.length} {failedItems.length === 1 ? 'series is' : 'series are'} unavailable.
 					</ProCardNotice>
@@ -419,7 +422,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						<ProCardError
 							title="Failed to load chart data"
 							detail={`${failedItems.length} of ${limitedItems.length} charts failed`}
-							onRetry={retryFailedItems}
+							retry={{ run: retryFailedItems, pending: retryingFailedItems }}
 						/>
 					) : (
 						<ProCardEmpty message="No chart data available" />

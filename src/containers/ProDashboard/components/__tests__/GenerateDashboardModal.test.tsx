@@ -12,7 +12,7 @@ import type { Dashboard } from '../../dashboardTypes'
 import { GenerateDashboardModal } from '../GenerateDashboardModal'
 const mocks = vi.hoisted(() => ({ creator: vi.fn(), push: vi.fn() }))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: mocks.push }) }))
-vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
+vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn() }) }))
 const session = installSubscriberSession('owner', { resolved: true })
 let root: Root
 let container: HTMLDivElement
@@ -65,8 +65,8 @@ afterEach(async () => {
 	container.remove()
 })
 test('generation waits for persistence, retains a failed draft, and navigates only after a successful retry', async () => {
-	const pending = Promise.withResolvers<Dashboard>()
-	save.mockReturnValueOnce(pending.promise).mockResolvedValueOnce(dashboard)
+	const pending = Promise.withResolvers<{ created: Dashboard }>()
+	save.mockReturnValueOnce(pending.promise).mockResolvedValueOnce({ created: dashboard })
 	await render()
 	draft()
 	await submit()
@@ -89,7 +89,7 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 test.each(['success', 'failure'] as const)(
 	'a generation finishing with %s after unmount cannot affect another opening',
 	async (outcome) => {
-		const pending = Promise.withResolvers<Dashboard>()
+		const pending = Promise.withResolvers<{ created: Dashboard }>()
 		save.mockReturnValueOnce(pending.promise)
 		await render()
 		draft()
@@ -98,7 +98,7 @@ test.each(['success', 'failure'] as const)(
 		await render(false)
 		await render()
 		await act(async () => {
-			if (outcome === 'success') pending.resolve(dashboard)
+			if (outcome === 'success') pending.resolve({ created: dashboard })
 			else pending.reject(new Error('Earlier generation failed'))
 		})
 		await waitForUi(() => expect(session.client.isMutating()).toBe(0))
@@ -135,7 +135,7 @@ test.each([
 test('iteration preserves existing metadata, awaits saving, and closes without creation navigation', async () => {
 	const response = Promise.withResolvers<Response>()
 	mocks.creator.mockReturnValueOnce(response.promise)
-	const pending = Promise.withResolvers<void>()
+	const pending = Promise.withResolvers<{ notices: { refreshPending: boolean } }>()
 	save.mockReturnValueOnce(pending.promise)
 	await render(true, 'iterate')
 	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
@@ -163,9 +163,36 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 		items: []
 	})
 	expect(close).not.toHaveBeenCalled()
-	await act(async () => pending.resolve())
+	await act(async () => pending.resolve({ notices: { refreshPending: false } }))
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).not.toHaveBeenCalled()
+})
+
+test('the notices from saving an edit toast only once the dialog has closed', async () => {
+	const order: Array<string> = []
+	close.mockImplementationOnce(() => order.push('closed'))
+	vi.mocked(toast).mockImplementationOnce((message) => {
+		order.push(`toast: ${String(message)}`)
+		return ''
+	})
+	vi.mocked(toast.error).mockImplementationOnce((message) => {
+		order.push(`error: ${String(message)}`)
+		return ''
+	})
+	save.mockResolvedValueOnce({
+		notices: { mergeNotice: 'This dashboard was changed in another tab or session.', refreshPending: true }
+	})
+	await render(true, 'iterate')
+	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
+		'Add a fees comparison to this dashboard'
+	await submit()
+
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
+	expect(order).toEqual([
+		'closed',
+		'toast: This dashboard was changed in another tab or session.',
+		'error: Dashboard saved, but chart refresh setup is pending.'
+	])
 })
 
 test('an iteration keeps custom data rows out of the request and restores what the model dropped', async () => {
@@ -179,7 +206,7 @@ test('an iteration keeps custom data rows out of the request and restores what t
 		chart: { type: 'line' },
 		displayMode: 'table'
 	} as unknown as DashboardItemConfig
-	save.mockResolvedValueOnce(undefined)
+	save.mockResolvedValueOnce({ notices: { refreshPending: false } })
 	await render(true, 'iterate', [section, customData])
 	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
 		'Add a fees comparison to this dashboard'
@@ -200,7 +227,7 @@ test('an iteration keeps custom data rows out of the request and restores what t
 })
 
 test('editing the prompt discards the generated result, hands focus to the prompt and generates again', async () => {
-	save.mockRejectedValueOnce(new Error('Save unavailable')).mockResolvedValueOnce(dashboard)
+	save.mockRejectedValueOnce(new Error('Save unavailable')).mockResolvedValueOnce({ created: dashboard })
 	await render()
 	draft()
 	await submit()

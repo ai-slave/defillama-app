@@ -11,12 +11,13 @@ export interface LlamaAIChartOwnerStatus {
 
 const readableCode = (value: string) => value.replaceAll('_', ' ')
 
+/** What a manual refresh may charge, for the owner to accept first; null when it is free. */
 export function getLlamaAIChartRefreshConfirmation(config: LlamaAIChartConfig): string | null {
 	if (!config.artifactContainsPremium) return null
 	const maxCostUsd = config.artifactEstimatedMaxCostUsd
-	return typeof maxCostUsd === 'number' && Number.isFinite(maxCostUsd) && maxCostUsd > 0
-		? `This refresh may charge up to ${formatUsd(maxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} to your External Data Balance. Continue?`
-		: 'This refresh uses premium data and may charge your External Data Balance. Continue?'
+	return typeof maxCostUsd === 'number' && maxCostUsd > 0
+		? `This refresh may charge up to ${formatUsd(maxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} to your External Data Balance.`
+		: 'This refresh uses premium data and may charge your External Data Balance.'
 }
 
 export function getLlamaAIChartOwnerNotice(
@@ -33,13 +34,6 @@ export function getLlamaAIChartOwnerNotice(
 		return `Refresh paused: ${detail || 'Refresh requires attention'}. Resolve ${reason}, then use Refresh to retry.`
 	}
 	return detail ? `Couldn't refresh: ${detail}. Use Refresh to retry.` : null
-}
-
-export function isLlamaAIChartRepairNeeded(
-	storedStatus: LlamaAIChartConfig['artifactStatus'],
-	readStatus: string | undefined
-): boolean {
-	return storedStatus === 'needs-repair' || readStatus === 'needs-repair'
 }
 
 export function getLlamaAIChartSource(

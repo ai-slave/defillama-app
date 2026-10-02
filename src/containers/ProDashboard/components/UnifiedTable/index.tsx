@@ -410,16 +410,11 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	}, [onEdit])
 
 	const canCustomizeColumns = Boolean(!isReadOnly && onEdit)
+	const retryRows = { run: () => void unifiedTable.refetch(), pending: unifiedTable.isFetching }
 
 	return (
 		<div className="flex h-full w-full flex-col overflow-hidden p-0">
-			{unifiedTable.loadError === 'refresh' ? (
-				<ProCardRefreshFailed
-					onRetry={() => {
-						void unifiedTable.refetch()
-					}}
-				/>
-			) : null}
+			{unifiedTable.loadError === 'refresh' ? <ProCardRefreshFailed retry={retryRows} /> : null}
 			<UnifiedTableHeader
 				title={title}
 				titleBadge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
@@ -444,18 +439,13 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				onGroupingChange={canEditGrouping ? handleGroupingChange : undefined}
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
-				{unifiedTable.isLoading ? (
+				{unifiedTable.loadError === 'initial' ? (
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+						<ProCardError title="Couldn't load this table" retry={retryRows} />
+					</div>
+				) : unifiedTable.isLoading ? (
 					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 						<ProCardLoading variant="table" />
-					</div>
-				) : unifiedTable.loadError === 'initial' ? (
-					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
-						<ProCardError
-							title="Couldn't load this table"
-							onRetry={() => {
-								void unifiedTable.refetch()
-							}}
-						/>
 					</div>
 				) : (
 					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">

@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { getUnsavedDashboardChanges, type DashboardUpdate } from '~/containers/ProDashboard/hooks/useDashboardAPI'
+import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { getDashboardRecovery, type DashboardSaveAttempt } from '../dashboardRecovery'
@@ -92,10 +93,10 @@ function warns() {
 	return event.defaultPrevented
 }
 
-async function failDraft() {
+async function failDraft(userId = 'owner') {
 	const client = session.client
 	const mutation = client.getMutationCache().build(client, {
-		mutationKey: ['pro-dashboard-update', request.id, 'owner'],
+		mutationKey: ['pro-dashboard-update', request.id, userId],
 		mutationFn: async (_request: DashboardUpdate) => {
 			throw new Error('Offline')
 		},
@@ -156,4 +157,100 @@ test('a failed draft on another page can be reopened, kept, or explicitly discar
 	expect(warns()).toBe(false)
 	// The notice and its trigger are gone, so focus returns to the page content.
 	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('main')))
+})
+
+async function startNewerSave() {
+	const client = session.client
+	const settle = Promise.withResolvers<void>()
+	const mutation = client.getMutationCache().build(client, {
+		mutationKey: ['pro-dashboard-update', request.id, 'owner'],
+		mutationFn: async (_request: DashboardUpdate) => settle.promise,
+		gcTime: Infinity
+	})
+	const newer: DashboardUpdate = { ...request, changes: { items: [{ id: 'text', kind: 'text', content: 'Newer' }] } }
+	let done: Promise<unknown> = Promise.resolve()
+	await act(async () => {
+		done = mutation.execute(newer).catch(() => {})
+	})
+	return {
+		fail: () =>
+			act(async () => {
+				settle.reject(new Error('Offline'))
+				await done
+			}),
+		succeed: () =>
+			act(async () => {
+				settle.resolve()
+				await done
+			})
+	}
+}
+
+async function openDiscardConfirm() {
+	await failDraft()
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<DashboardSaveGuard />
+				<main tabIndex={-1}>Yields page</main>
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(button('Discard draft…')).toBeDefined(), { timeout: 1000 })
+	await act(async () => button('Discard draft…').click())
+	await waitForUi(() => expect(confirm()?.textContent).toContain('Discard unsaved dashboard changes?'))
+}
+
+const confirm = () => document.querySelector<HTMLElement>('[role="alertdialog"]')
+const confirmButton = () => [...confirm()!.querySelectorAll('button')].at(-1)!
+
+test('the discard question stays open while a newer save hides its notice, and discards once that save fails', async () => {
+	const client = session.client
+	await openDiscardConfirm()
+	const save = await startNewerSave()
+
+	// The notice hides while the newer save runs; the reader's open question does not.
+	await waitForUi(() => expect(container.querySelector('section')).toBeNull())
+	expect(confirm()?.textContent).toContain('This discards the unsaved draft for Research dashboard.')
+	expect(confirmButton().getAttribute('aria-busy')).toBe('true')
+	expect(confirmButton().textContent).toContain('Waiting for save…')
+
+	await save.fail()
+	await waitForUi(() => expect(confirmButton().getAttribute('aria-busy')).toBeNull())
+	await act(async () => confirmButton().click())
+	await waitForUi(() => expect(confirm()).toBeNull())
+	expect(getUnsavedDashboardChanges(client, 'draft', 'owner')).toBeUndefined()
+	expect(container.querySelector('section')).toBeNull()
+	expect(warns()).toBe(false)
+})
+
+test('when a newer save lands while the discard question is open, the question says there is nothing left to discard', async () => {
+	await openDiscardConfirm()
+	const save = await startNewerSave()
+	await save.succeed()
+
+	await waitForUi(() =>
+		expect(confirm()?.textContent).toContain(
+			'There is no unsaved draft for Research dashboard any more, so there is nothing to discard.'
+		)
+	)
+	expect(confirmButton().disabled).toBe(true)
+	await act(async () => button('Close').click())
+	await waitForUi(() => expect(confirm()).toBeNull())
+	expect(document.activeElement).toBe(container.querySelector('main'))
+})
+
+test('switching accounts closes the open discard question instead of discarding the new account’s draft', async () => {
+	const client = session.client
+	await failDraft('other')
+	await openDiscardConfirm()
+	const other = { ...session.record, id: 'other' }
+	session.serve({ '/api/collections/users/auth-refresh': { token: session.token, record: other } })
+
+	await act(async () => pb.authStore.save(session.token, other))
+
+	await waitForUi(() => expect(confirm()).toBeNull())
+	expect(container.querySelector('section')?.getAttribute('aria-label')).toBe('Unsaved dashboard: Research dashboard')
+	expect(getUnsavedDashboardChanges(client, 'draft', 'owner')).toEqual(request.changes)
+	expect(getUnsavedDashboardChanges(client, 'draft', 'other')).toEqual(request.changes)
 })

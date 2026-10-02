@@ -129,7 +129,7 @@ afterEach(async () => {
 test.each(['undo', 'iterate'] as const)('%s merges saved items with edits made while saving', async (action) => {
 	const pending = Promise.withResolvers<Dashboard>()
 	replies.push(() => pending.promise)
-	let completion: Promise<void>
+	let completion: Promise<unknown>
 	await act(async () => {
 		completion =
 			action === 'undo'
@@ -151,6 +151,21 @@ test.each(['undo', 'iterate'] as const)('%s merges saved items with edits made w
 	// The saved result adds a different item; accepting it must retain the concurrent local edit.
 	expect(items).toEqual([...laterItems, ...oldItems])
 	expect(dashboard.currentDashboard?.data.items).toEqual(oldItems)
+})
+
+test('an iteration hands its save notices back, so the dialog that started it shows them once closed', async () => {
+	replies.push(async (payload) => ({ ...(await storeAsSent(payload)), artifactActivationPending: true }))
+	let outcome: unknown
+	await act(async () => {
+		outcome = await dashboard.handleIterateDashboard({
+			dashboardName: 'Analysis',
+			visibility: 'public',
+			tags: [],
+			description: '',
+			items: oldItems
+		})
+	})
+	expect(outcome).toEqual({ notices: { refreshPending: true } })
 })
 
 test('undo restores the previous items when no newer edit exists and removes the undo action', async () => {

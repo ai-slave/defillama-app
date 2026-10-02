@@ -49,7 +49,6 @@ import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransf
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button, buttonStyles } from '~/ui/Button'
-import { Dialog, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -339,6 +338,7 @@ function tryBuildPresentation(
 }
 
 interface ChartEditorSessionProps {
+	chartTitle?: string
 	config: ChartConfiguration
 	original: ChartConfiguration
 	data: ChartDataSeries
@@ -352,6 +352,7 @@ interface ChartEditorSessionProps {
 }
 
 function ChartEditorSession({
+	chartTitle,
 	config,
 	original,
 	data,
@@ -399,6 +400,7 @@ function ChartEditorSession({
 
 	return (
 		<ChartStyleEditor
+			chartTitle={chartTitle}
 			config={config}
 			original={original}
 			caps={previewControls}
@@ -762,39 +764,28 @@ function ActiveSingleChart({
 			</ChartControls>
 			{chartContent}
 			{editing && canEdit ? (
-				<ChartEditorModal title={chartTitle} onClose={handleCancelStyleEditor}>
-					<ChartEditorSession
-						config={config}
-						original={baseConfig}
-						data={data}
-						// Keep raw view intent so capabilities introduced by a draft (such as the first
-						// annotation) can become active. The preview pipeline normalizes it per draft.
-						initialViewIntent={chartState}
-						resetView={{
-							logScale: baseConfig.displayOptions?.defaultLogScale ?? false,
-							stacked: baseConfig.displayOptions?.defaultStacked ?? false,
-							showLabels: baseConfig.displayOptions?.showLabels ?? false,
-							percentage: baseConfig.displayOptions?.defaultPercentage ?? false
-						}}
-						initialBase={basePresentation}
-						initialControls={renderPlan.controls}
-						categories={editorCategories}
-						onSave={handleSaveStyle}
-						onCancel={handleCancelStyleEditor}
-					/>
-				</ChartEditorModal>
+				<ChartEditorSession
+					chartTitle={chartTitle}
+					config={config}
+					original={baseConfig}
+					data={data}
+					// Keep raw view intent so capabilities introduced by a draft (such as the first
+					// annotation) can become active. The preview pipeline normalizes it per draft.
+					initialViewIntent={chartState}
+					resetView={{
+						logScale: baseConfig.displayOptions?.defaultLogScale ?? false,
+						stacked: baseConfig.displayOptions?.defaultStacked ?? false,
+						showLabels: baseConfig.displayOptions?.showLabels ?? false,
+						percentage: baseConfig.displayOptions?.defaultPercentage ?? false
+					}}
+					initialBase={basePresentation}
+					initialControls={renderPlan.controls}
+					categories={editorCategories}
+					onSave={handleSaveStyle}
+					onCancel={handleCancelStyleEditor}
+				/>
 			) : null}
 		</div>
-	)
-}
-
-function ChartEditorModal({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
-	return (
-		// An outside tap never drops the draft; the editor asks before × or Escape discards edits.
-		<Dialog size="xl" open onClose={onClose} hideOnInteractOutside={false} portal unmountOnHide>
-			<DialogHeader title="Edit chart" subtitle={title} />
-			{children}
-		</Dialog>
 	)
 }
 

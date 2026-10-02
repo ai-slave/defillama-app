@@ -26,12 +26,13 @@ export function SignInModal({
 	const { isAuthenticated, loaders } = useAuthContext()
 	const shouldRenderTrigger = text !== undefined || className !== undefined
 
-	if (loaders.userLoading) return null
-	if (hideWhenAuthenticated && isAuthenticated) return null
+	// Only the trigger hides; an open dialog stays until it closes, so a sign-in from another tab ends on its own step
+	// instead of vanishing while the new session's user loads.
+	const hideTrigger = loaders.userLoading || (hideWhenAuthenticated && isAuthenticated)
 
 	return (
 		<>
-			{shouldRenderTrigger ? (
+			{shouldRenderTrigger && !hideTrigger ? (
 				<button type="button" className={className} onClick={dialogStore.show}>
 					{text ?? 'Sign In'}
 				</button>

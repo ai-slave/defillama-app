@@ -131,6 +131,8 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 			<div
 				id={dashboardItemElementId(itemId)}
 				data-item-id={itemId}
+				// A card control that leaves while it has focus, such as a retry that succeeds, hands focus to its card.
+				tabIndex={-1}
 				style={cardScaleStyle(getDashboardItemHeight(rawItem))}
 				className="flex flex-1 flex-col rounded-md border border-pro-cards-border bg-pro-cards-bg"
 			>

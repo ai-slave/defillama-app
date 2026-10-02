@@ -33,7 +33,7 @@ import {
 import { ExternalLinkInterstitial } from '~/containers/ProDashboard/components/ExternalLinkInterstitial'
 import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
 import { Button, buttonStyles } from '~/ui/Button'
-import { DialogCloseButton } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
@@ -102,6 +102,28 @@ const LLAMA_PREVIEW_ENTITY_TYPES = {
 	cex: 'cex'
 } satisfies Record<string, ArticleEntityType>
 
+// Decorative: the table and its export carry the content, so the mark has no accessible name.
+function TableWatermark() {
+	return (
+		<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
+			<img
+				src="/assets/defillama-dark-neutral.webp"
+				alt=""
+				height={TABLE_WATERMARK_HEIGHT}
+				width={TABLE_WATERMARK_WIDTH}
+				className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
+			/>
+			<img
+				src="/assets/defillama-light-neutral.webp"
+				alt=""
+				height={TABLE_WATERMARK_HEIGHT}
+				width={TABLE_WATERMARK_WIDTH}
+				className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
+			/>
+		</div>
+	)
+}
+
 function TableWrapper({
 	children,
 	isStreaming = false,
@@ -167,57 +189,28 @@ function TableWrapper({
 
 	return (
 		<div className="flex flex-col gap-2 rounded-lg border border-subtle p-2">
-			<Ariakit.DialogProvider store={fullscreenDialogStore}>
-				<Ariakit.Dialog
-					modal
-					portal
-					unmountOnHide
-					aria-label="Table"
-					className="fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-medium bg-overlay shadow-dialog sm:w-[calc(100vw-2rem)] dark:shadow-dialog-deep"
-				>
-					<div className="flex shrink-0 items-center justify-end gap-2 border-b border-subtle px-2 py-1">
-						<DialogCloseButton ariaLabel="Close fullscreen table" />
+			{/* A viewer workspace, like the Downloads previews: the table gets the full xl surface and scrolls both ways. */}
+			<Dialog size="xl" store={fullscreenDialogStore} portal unmountOnHide>
+				<DialogHeader title="Table" />
+				<DialogBody kind="flush">
+					<div className="relative">
+						<TableWatermark />
+						<table {...tableProps} className={fullscreenTableClassName}>
+							{children}
+						</table>
 					</div>
-					<div className="min-h-0 flex-1 overflow-auto overscroll-contain">
-						<div className="relative">
-							<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
-								<img
-									src="/assets/defillama-dark-neutral.webp"
-									alt=""
-									height={TABLE_WATERMARK_HEIGHT}
-									width={TABLE_WATERMARK_WIDTH}
-									className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
-								/>
-								<img
-									src="/assets/defillama-light-neutral.webp"
-									alt=""
-									height={TABLE_WATERMARK_HEIGHT}
-									width={TABLE_WATERMARK_WIDTH}
-									className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
-								/>
-							</div>
-							<table {...tableProps} className={fullscreenTableClassName}>
-								{children}
-							</table>
-						</div>
-					</div>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+				</DialogBody>
+			</Dialog>
 			<div className="ml-auto flex flex-nowrap items-center justify-end gap-2" id="ai-table-download">
-				{isStreaming ? (
-					<button type="button" className={TABLE_TOOLBAR_ICON_BUTTON} disabled aria-label="View table fullscreen">
-						<Icon name="expand" className="size-4 shrink-0" />
-					</button>
-				) : (
-					<button
-						type="button"
-						onClick={openTableFullscreen}
-						className={TABLE_TOOLBAR_ICON_BUTTON}
-						aria-label="View table fullscreen"
-					>
-						<Icon name="expand" className="size-4 shrink-0" />
-					</button>
-				)}
+				<button
+					type="button"
+					onClick={openTableFullscreen}
+					disabled={isStreaming}
+					className={TABLE_TOOLBAR_ICON_BUTTON}
+					aria-label="View table fullscreen"
+				>
+					<Icon name="expand" className="size-4 shrink-0" />
+				</button>
 				<TableImageButtons
 					getSource={getImageSource}
 					disabled={isStreaming}
@@ -227,22 +220,7 @@ function TableWrapper({
 				/>
 			</div>
 			<div ref={tableRef} className="relative overflow-x-auto">
-				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
-					<img
-						src="/assets/defillama-dark-neutral.webp"
-						alt="defillama"
-						height={TABLE_WATERMARK_HEIGHT}
-						width={TABLE_WATERMARK_WIDTH}
-						className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
-					/>
-					<img
-						src="/assets/defillama-light-neutral.webp"
-						alt="defillama"
-						height={TABLE_WATERMARK_HEIGHT}
-						width={TABLE_WATERMARK_WIDTH}
-						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
-					/>
-				</div>
+				<TableWatermark />
 				<table {...tableProps} className={inlineTableClassName}>
 					{children}
 				</table>

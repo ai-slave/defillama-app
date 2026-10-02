@@ -9,12 +9,13 @@ import {
 	UNIFIED_TABLE_PRESETS_BY_ID
 } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
-import type { UnifiedTableConfig, UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
+import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedTable/config/layoutPolicy'
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { Button } from '~/ui/Button'
-import { DialogFooter } from '~/ui/Dialog'
+import { DialogCancelButton, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import type { DashboardItemConfig } from '../../../dashboardItemConfig'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import { AriakitVirtualizedSelect } from '../../AriakitVirtualizedSelect'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
@@ -42,7 +43,7 @@ import { PresetSelector } from './components/PresetSelector'
 import { SimpleTableConfig } from './components/SimpleTableConfig'
 import { usePresetRecommendations } from './hooks/usePresetRecommendations'
 import type { FilterPreset } from './presets/filterPresets'
-import { UnifiedTableWizardProvider, useUnifiedTableWizardContext } from './WizardContext'
+import { useUnifiedTableWizardContext } from './WizardContext'
 
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
@@ -52,12 +53,9 @@ const SubscribeProModal = lazy(() =>
 
 interface UnifiedTableTabProps {
 	onClose: () => void
-	/** Cancel asks first when the card has work to lose. */
-	onCancel: () => void
 	chainOptions: Array<{ label: string; value: string }>
-	editItem?: UnifiedTableConfig | null | undefined
+	editItem?: DashboardItemConfig | null | undefined
 	initialFocusSection?: UnifiedTableFocusSection | undefined
-	focusedSectionOnly?: 'filters' | 'columns' | undefined
 	selectedTableType: CombinedTableType | null
 	onTableTypeChange: (type: CombinedTableType | null) => void
 	selectedChains: Array<string>
@@ -75,7 +73,6 @@ interface UnifiedTableTabProps {
 	includeCex: boolean
 	onIncludeCexChange: (include: boolean) => void
 	protocolsLoading: boolean
-	isEditingItem?: boolean | undefined
 }
 
 const PROTOCOL_ROW_HEADER_ORDER: Array<UnifiedRowHeaderType> = ['chain', 'category', 'parent-protocol']
@@ -219,13 +216,11 @@ const EQUITIES_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'equities-filings', label: 'Filings' }
 ]
 
-function TabContent({
+export function UnifiedTableTab({
 	onClose,
-	onCancel,
 	chainOptions,
 	editItem,
 	initialFocusSection,
-	focusedSectionOnly,
 	selectedTableType,
 	onTableTypeChange,
 	selectedChains,
@@ -242,8 +237,7 @@ function TabContent({
 	onTokensChange,
 	includeCex,
 	onIncludeCexChange,
-	protocolsLoading,
-	isEditingItem
+	protocolsLoading
 }: UnifiedTableTabProps) {
 	const { handleAddUnifiedTable, handleEditItem } = useProDashboardEditorActions()
 	const chainParameter = useModalFieldBinding('chains', 'chain')
@@ -268,26 +262,16 @@ function TabContent({
 		open: shouldRenderSubscribeModal,
 		setOpen: setShouldRenderSubscribeModal
 	})
-	const isEditing = Boolean(editItem)
-	const isEditingUnifiedTable = editItem?.kind === 'unified-table'
-	const isRwaType = RWA_TABLE_TYPES.has(selectedTableType)
-	const isEquitiesType = EQUITIES_TABLE_TYPES.has(selectedTableType)
-	const [showRwaSelector, setShowRwaSelector] = useState(isEditing && isRwaType)
-	const [showEquitiesSelector, setShowEquitiesSelector] = useState(isEditing && isEquitiesType)
+	// Only a protocols table edits through this tab's wizard; other table cards edit in SimpleTableConfig.
+	const tableEditItem = editItem?.kind === 'unified-table' ? editItem : undefined
+	const [showRwaSelector, setShowRwaSelector] = useState(false)
+	const [showEquitiesSelector, setShowEquitiesSelector] = useState(false)
 	const { options: equitiesTickerOptions, isLoading: equitiesTickerLoading } =
 		useEquitiesTickerOptions(showEquitiesSelector)
 
-	const initialTab: TabKey =
-		focusedSectionOnly === 'filters'
-			? 'filters'
-			: focusedSectionOnly === 'columns'
-				? 'columns'
-				: initialFocusSection === 'filters'
-					? 'filters'
-					: initialFocusSection === 'columns'
-						? 'columns'
-						: 'setup'
-	const [activeTab, setActiveTab] = useState<TabKey>(initialTab)
+	const [activeTab, setActiveTab] = useState<TabKey>(
+		initialFocusSection === 'filters' ? 'filters' : initialFocusSection === 'columns' ? 'columns' : 'setup'
+	)
 
 	const activePreset = UNIFIED_TABLE_PRESETS_BY_ID.get(activePresetId)
 
@@ -423,8 +407,11 @@ function TabContent({
 
 	const handleAdd = () => {
 		const boundVariableId = chainParameter.boundVariable?.id ?? null
-		const written = editItem
-			? handleEditItem(editItem.id, applyUnifiedTableBinding({ ...editItem, ...draftConfig }, boundVariableId))
+		const written = tableEditItem
+			? handleEditItem(
+					tableEditItem.id,
+					applyUnifiedTableBinding({ ...tableEditItem, ...draftConfig }, boundVariableId)
+				)
 			: handleAddUnifiedTable(applyUnifiedTableBinding(draftConfig, boundVariableId))
 		if (written.status === 'refused') {
 			setRefusal({ draft: draftConfig, reason: written.reason })
@@ -506,20 +493,6 @@ function TabContent({
 		],
 		[setupBadge, visibleColumnsCount, totalFilterCount]
 	)
-
-	const availableTabs = useMemo(() => {
-		if (focusedSectionOnly === 'filters') {
-			return tabOptions.filter((tab) => tab.key === 'filters')
-		}
-		if (focusedSectionOnly === 'columns') {
-			return tabOptions.filter((tab) => tab.key === 'columns')
-		}
-		return tabOptions
-	}, [tabOptions, focusedSectionOnly])
-
-	const firstAvailableTab = availableTabs[0]
-	const effectiveActiveTab: TabKey =
-		!firstAvailableTab || availableTabs.some((tab) => tab.key === activeTab) ? activeTab : firstAvailableTab.key
 
 	const tabContent: Record<TabKey, React.ReactNode> = {
 		setup: (
@@ -925,7 +898,7 @@ function TabContent({
 				includeCex={includeCex}
 				onIncludeCexChange={onIncludeCexChange}
 				onBackToTypeSelector={handleBackToTypeSelector}
-				isEditing={isEditingItem}
+				isEditing={Boolean(editItem)}
 			/>
 		)
 	}
@@ -935,7 +908,7 @@ function TabContent({
 		<>
 			<div className="flex min-h-0 flex-1 flex-col px-4 pt-4">
 				<header className="flex shrink-0 flex-col gap-1 pb-3">
-					{!isEditingUnifiedTable ? (
+					{!tableEditItem ? (
 						<button
 							type="button"
 							onClick={handleBackToTypeSelector}
@@ -947,42 +920,40 @@ function TabContent({
 					) : null}
 				</header>
 
-				{availableTabs.length > 0 ? (
-					<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-pro-cards-border p-1 shadow-sm">
-						{availableTabs.map((tab) => {
-							const isActive = tab.key === effectiveActiveTab
-							return (
-								<button
-									key={tab.key}
-									type="button"
-									onClick={() => setActiveTab(tab.key)}
-									className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-										isActive
-											? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
-											: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
-									}`}
-								>
-									<span className="truncate" title={tab.label}>
-										{tab.label}
+				<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-pro-cards-border p-1 shadow-sm">
+					{tabOptions.map((tab) => {
+						const isActive = tab.key === activeTab
+						return (
+							<button
+								key={tab.key}
+								type="button"
+								onClick={() => setActiveTab(tab.key)}
+								className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+									isActive
+										? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
+										: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
+								}`}
+							>
+								<span className="truncate" title={tab.label}>
+									{tab.label}
+								</span>
+								{tab.badge ? (
+									<span
+										className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-xs font-medium ${
+											isActive ? 'bg-brand/20 text-brand' : 'bg-pro-cards-border text-pro-text-tertiary'
+										}`}
+										title={tab.badge?.toString()}
+									>
+										{tab.badge}
 									</span>
-									{tab.badge ? (
-										<span
-											className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-xs font-medium ${
-												isActive ? 'bg-brand/20 text-brand' : 'bg-pro-cards-border text-pro-text-tertiary'
-											}`}
-											title={tab.badge?.toString()}
-										>
-											{tab.badge}
-										</span>
-									) : null}
-								</button>
-							)
-						})}
-					</div>
-				) : null}
+								) : null}
+							</button>
+						)
+					})}
+				</div>
 
 				<div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4" data-unified-table-scroll="true">
-					<div className="flex h-full flex-col gap-3">{tabContent[effectiveActiveTab]}</div>
+					<div className="flex h-full flex-col gap-3">{tabContent[activeTab]}</div>
 				</div>
 			</div>
 
@@ -994,32 +965,12 @@ function TabContent({
 						</p>
 					) : null
 				}
-				dismiss={
-					<Button size="md" onClick={onCancel}>
-						Cancel
-					</Button>
-				}
+				dismiss={<DialogCancelButton />}
 			>
 				<Button variant="primary" size="md" onClick={handleAdd}>
-					{isEditing ? 'Save changes' : 'Add card'}
+					{tableEditItem ? 'Save changes' : 'Add card'}
 				</Button>
 			</DialogFooter>
 		</>
-	)
-}
-
-export function UnifiedTableTab(props: UnifiedTableTabProps) {
-	const { editItem, focusedSectionOnly, initialFocusSection, ...rest } = props
-	const tabResetKey = `${editItem?.id ?? 'new'}-${focusedSectionOnly ?? 'all'}-${initialFocusSection ?? 'default'}`
-	return (
-		<UnifiedTableWizardProvider initialConfig={editItem}>
-			<TabContent
-				key={tabResetKey}
-				{...rest}
-				editItem={editItem}
-				focusedSectionOnly={focusedSectionOnly}
-				initialFocusSection={initialFocusSection}
-			/>
-		</UnifiedTableWizardProvider>
 	)
 }

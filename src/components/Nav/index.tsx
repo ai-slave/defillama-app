@@ -4,6 +4,9 @@ import { useAuthContext } from '~/auth'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
+import { Button } from '~/ui/Button'
+import { takeLostFocus } from '~/ui/focus'
+import { InlineStatus } from '~/ui/Status'
 import { DesktopNav } from './Desktop'
 import { MobileNav } from './Mobile'
 import type { TNavLink, TNavLinks, TOldNavLink } from './types'
@@ -80,11 +83,54 @@ function parsePinnedMetrics(value: string): Array<string> {
 	}
 }
 
+// The retry leaves once the list loads; focus moves to the first dashboard, else on to the next nav section. Outside a
+// dialog nothing else catches it. Unlike passFocusOnLeave, this looks for the target after the commit, because the
+// loaded links mount in the same commit that removes the retry.
+function focusAfterDashboardsRetry(node: HTMLElement | null) {
+	if (!node) return
+	return () => {
+		if (!node.contains(document.activeElement)) return
+		const section = node.closest('[data-nav-dashboards]')
+		const next = section?.nextElementSibling
+		queueMicrotask(() =>
+			takeLostFocus(
+				(section?.isConnected ? section.querySelector<HTMLElement>('a[href]') : null) ??
+					next?.querySelector<HTMLElement>('summary, a[href], button') ??
+					null
+			)
+		)
+	}
+}
+
 export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: string }> }) {
 	const router = useRouter()
 	// A rewritten 404 keeps the requested URL in the browser, unlike its static server render.
 	const asPath = router.pathname === '/404' ? '/404' : router.asPath
-	const { data: liteDashboards } = useGetLiteDashboards()
+	const {
+		data: liteDashboards,
+		failed: dashboardsFailed,
+		isFetching: isFetchingDashboards,
+		refetch: refetchDashboards
+	} = useGetLiteDashboards()
+	// A failed list says so where the list would be; the dashboards saved from the last load stay listed above it.
+	const dashboardsStatus = dashboardsFailed ? (
+		<InlineStatus variant="error">
+			<span className="flex flex-wrap items-center justify-between gap-2">
+				<span>
+					{liteDashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
+				</span>
+				<Button
+					ref={focusAfterDashboardsRetry}
+					type="button"
+					size="sm"
+					onClick={() => void refetchDashboards()}
+					pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
+				>
+					Try again
+				</Button>
+			</span>
+		</InlineStatus>
+	) : null
 
 	const { isAuthenticated, user } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
@@ -106,10 +152,10 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 
 	const userDashboards = useMemo(
 		() =>
-			liteDashboards?.map((dashboard: { id: string; name: string; slug?: string }) => ({
+			liteDashboards.map((dashboard) => ({
 				name: dashboard.name,
 				route: `/pro/${dashboard.slug || dashboard.id}`
-			})) ?? [],
+			})),
 		[liteDashboards]
 	)
 	const pinnedMetrics = useStorageItem('pinned-metrics', '[]')
@@ -132,6 +178,7 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 				mainLinks={mainLinks}
 				pinnedPages={pinnedPages}
 				userDashboards={userDashboards}
+				dashboardsStatus={dashboardsStatus}
 				footerLinks={footerLinks}
 				oldMetricLinks={oldMetricLinks}
 				asPath={asPath}
@@ -140,6 +187,7 @@ export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: st
 				mainLinks={mainLinks}
 				pinnedPages={pinnedPages}
 				userDashboards={userDashboards}
+				dashboardsStatus={dashboardsStatus}
 				footerLinks={footerLinks}
 				tvlOptions={tvlOptions}
 				oldMetricLinks={oldMetricLinks}

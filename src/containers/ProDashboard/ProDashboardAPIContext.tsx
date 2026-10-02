@@ -10,10 +10,10 @@ import {
 	useMemo,
 	useReducer,
 	useRef,
-	useState,
-	useSyncExternalStore
+	useState
 } from 'react'
 import { useAuthContext } from '~/auth'
+import { useIsClient } from '~/hooks/useIsClient'
 import pb from '~/utils/pocketbase'
 import type { ChartDataPrerequisite } from './chartRuntime'
 import {
@@ -39,6 +39,7 @@ import type {
 	DashboardRole,
 	DashboardTeam,
 	DashboardVariable,
+	GeneratedDashboardInput,
 	TimePeriod
 } from './dashboardTypes'
 import { MAX_DASHBOARD_VARIABLES } from './dashboardTypes'
@@ -88,23 +89,12 @@ import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
 const EMPTY_PROTOCOLS: Array<Protocol> = []
 const EMPTY_CHAINS: Array<Chain> = []
-const NOOP = () => {}
-
-function subscribeToClientReady(onStoreChange: () => void) {
-	queueMicrotask(onStoreChange)
-	return NOOP
-}
-
-function getClientReadySnapshot() {
-	return true
-}
-
-function getServerReadySnapshot() {
-	return false
-}
-
-function useClientReady() {
-	return useSyncExternalStore(subscribeToClientReady, getClientReadySnapshot, getServerReadySnapshot)
+function aiSessionEntry(
+	context: NonNullable<GeneratedDashboardInput['aiGenerationContext']>,
+	userId: string
+): AIGeneratedData {
+	const { sessionId, mode, timestamp, prompt } = context
+	return { [sessionId]: { mode, timestamp, prompt, userId, rated: false } }
 }
 
 function isPendingRating(session: AISessionData, userId: string): boolean {
@@ -217,32 +207,9 @@ interface ProDashboardDashboardContextType {
 		aiGenerated?: AIGeneratedData | null
 		teamId?: string
 	}) => Promise<Dashboard>
-	handleGenerateDashboard: (data: {
-		dashboardName: string
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-		items: Array<DashboardItemConfig>
-		aiGenerationContext?: {
-			sessionId: string
-			mode: 'create' | 'iterate'
-			timestamp: string
-			prompt: string
-		}
-	}) => Promise<Dashboard>
-	handleIterateDashboard: (data: {
-		dashboardName: string
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-		items: Array<DashboardItemConfig>
-		aiGenerationContext?: {
-			sessionId: string
-			mode: 'create' | 'iterate'
-			timestamp: string
-			prompt: string
-		}
-	}) => Promise<void>
+	handleGenerateDashboard: (data: GeneratedDashboardInput) => Promise<{ created: Dashboard }>
+	/** Resolves with the save's notices; the dialog that started it shows them once it has closed. */
+	handleIterateDashboard: (data: GeneratedDashboardInput) => Promise<{ notices: DashboardSaveNotices }>
 	submitRating: (sessionId: string, decision: DashboardRatingDecision) => Promise<void>
 	undoAIGeneration: () => Promise<void>
 	canUndo: boolean
@@ -355,7 +322,7 @@ export function ProDashboardAPIProvider({
 	streamItemId?: string
 }) {
 	const { authToken, isAuthenticated, user, hasActiveSubscription, loaders } = useAuthContext()
-	const hasMounted = useClientReady()
+	const hasMounted = useIsClient()
 	const hasStoredToken = typeof window !== 'undefined' && pb.authStore.isValid && !!pb.authStore.token
 	const authReady = hasMounted && !loaders.userLoading && (!hasStoredToken || !!authToken)
 	const streamVariableOverrides = useMemo(() => readInitialVariableOverrides(), [])
@@ -896,71 +863,23 @@ function ProDashboardAPIProviderInner({
 	)
 
 	const handleGenerateDashboard = useCallback(
-		async (data: {
-			dashboardName: string
-			visibility: 'private' | 'public'
-			tags: Array<string>
-			description: string
-			items: Array<DashboardItemConfig>
-			aiGenerationContext?: {
-				sessionId: string
-				mode: 'create' | 'iterate'
-				timestamp: string
-				prompt: string
+		async (data: GeneratedDashboardInput) => {
+			return {
+				created: await handleCreateDashboard({
+					...data,
+					aiGenerated: data.aiGenerationContext && user?.id ? aiSessionEntry(data.aiGenerationContext, user.id) : null
+				})
 			}
-		}) => {
-			let aiGeneratedData: AIGeneratedData | null = null
-			if (data.aiGenerationContext && user?.id) {
-				const { sessionId, mode: aiMode, timestamp, prompt } = data.aiGenerationContext
-				aiGeneratedData = {
-					[sessionId]: {
-						mode: aiMode,
-						timestamp,
-						prompt,
-						userId: user.id,
-						rated: false
-					}
-				}
-			}
-
-			return handleCreateDashboard({
-				...data,
-				aiGenerated: aiGeneratedData
-			})
 		},
 		[handleCreateDashboard, user]
 	)
 
 	const handleIterateDashboard = useCallback(
-		async (data: {
-			dashboardName: string
-			visibility: 'private' | 'public'
-			tags: Array<string>
-			description: string
-			items: Array<DashboardItemConfig>
-			aiGenerationContext?: {
-				sessionId: string
-				mode: 'create' | 'iterate'
-				timestamp: string
-				prompt: string
-			}
-		}) => {
-			let updatedAiGenerated: AIGeneratedData | null = null
-			if (data.aiGenerationContext && user?.id) {
-				const { sessionId, mode: aiMode, timestamp, prompt } = data.aiGenerationContext
-				const currentAiGenerated = currentDashboard?.aiGenerated || {}
-
-				updatedAiGenerated = {
-					...currentAiGenerated,
-					[sessionId]: {
-						mode: aiMode,
-						timestamp,
-						prompt,
-						userId: user.id,
-						rated: false
-					}
-				}
-			}
+		async (data: GeneratedDashboardInput) => {
+			const updatedAiGenerated =
+				data.aiGenerationContext && user?.id
+					? { ...currentDashboard?.aiGenerated, ...aiSessionEntry(data.aiGenerationContext, user.id) }
+					: null
 
 			const restoredItems = restoreItemsAfterIterate(items, data.items)
 			if (dashboardId) {
@@ -972,19 +891,22 @@ function ProDashboardAPIProviderInner({
 						}
 					: undefined
 
-				await saveDashboard({
-					items: restoredItems,
-					visibility: data.visibility,
-					tags: data.tags,
-					description: data.description,
-					...(updatedAiGenerated ? { aiGenerated: updatedAiGenerated } : {}),
-					...(aiUndoState === undefined ? {} : { aiUndoState })
-				})
-			} else {
-				setItems(restoredItems)
+				return {
+					notices: await saveDashboardWithNotices({
+						items: restoredItems,
+						visibility: data.visibility,
+						tags: data.tags,
+						description: data.description,
+						...(updatedAiGenerated ? { aiGenerated: updatedAiGenerated } : {}),
+						...(aiUndoState === undefined ? {} : { aiUndoState })
+					})
+				}
 			}
+			// A dashboard that is not saved yet only takes the items; there is no save to report on.
+			setItems(restoredItems)
+			return { notices: { refreshPending: false } }
 		},
-		[dashboardId, saveDashboard, user, currentDashboard, items, setItems]
+		[dashboardId, saveDashboardWithNotices, user, currentDashboard, items, setItems]
 	)
 
 	const submitRating = useCallback(

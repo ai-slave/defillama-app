@@ -599,8 +599,8 @@ function clearItemBinding(state: ModalState, field: DashboardBindableField): Mod
 }
 
 // Moving between tabs, chart modes and categories, and the chart types a category seeds on entry, change these fields
-// without the reader entering anything. A picked table type is not here: the protocols table keeps its edits in its
-// own provider, so picking it is the work this state can see.
+// without the reader entering anything. A picked table type is not here: for most table types the type is the card.
+// The protocols table's grouping, filters and columns live in its wizard, which Add card compares on its own.
 const NAVIGATION_FIELDS = new Set<keyof ModalState>([
 	'selectedMainTab',
 	'selectedChartTab',

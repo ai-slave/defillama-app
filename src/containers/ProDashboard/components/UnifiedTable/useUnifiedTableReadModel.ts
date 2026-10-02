@@ -52,7 +52,7 @@ export function useUnifiedTableReadModel({
 	const aggregationPlan = getProtocolAggregationPlan(queryIdentity)
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, dataUpdatedAt, isError, isLoading, refetch } = useQuery({
+	const { data, dataUpdatedAt, errorUpdatedAt, isLoading, isFetching, refetch } = useQuery({
 		queryKey,
 		queryFn: () => fetchUnifiedTableRows(config, rowHeaders),
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
@@ -60,6 +60,7 @@ export function useUnifiedTableReadModel({
 		enabled: streamDone
 	})
 
+	const readFailed = errorUpdatedAt > dataUpdatedAt
 	const deferredSearchTerm = useDeferredValue(searchTerm)
 
 	const parentMetrics = data?.parentMetrics ?? EMPTY_PARENT_METRICS
@@ -117,7 +118,8 @@ export function useUnifiedTableReadModel({
 		leaves: readModel.leaves,
 		isLoading: isLoading || (!streamDone && data === undefined),
 		// A failed refetch keeps the cached rows, so it is a refresh failure, not an empty table.
-		loadError: !isError ? null : data === undefined ? ('initial' as const) : ('refresh' as const),
+		loadError: !readFailed ? null : data === undefined ? ('initial' as const) : ('refresh' as const),
+		isFetching,
 		refetch
 	}
 }

@@ -31,12 +31,13 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const includeSupplyMeta = chartType === 'locked-unlocked'
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading, isError, isFetching, refetch } = useQuery({
+	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
 		queryKey: ['pro-dashboard', 'unlocks-pie', protocol, includeSupplyMeta],
 		queryFn: () => getProtocolEmissionsPieData(slug(protocol), includeSupplyMeta),
 		enabled: streamDone && Boolean(protocol),
 		staleTime: 60 * 60 * 1000
 	})
+	const readFailed = errorUpdatedAt > dataUpdatedAt
 
 	const chartData = useMemo(() => {
 		if (chartType === 'allocation') {
@@ -73,9 +74,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(320, cardHeightScale)
 
-	const retryPieData = () => {
-		void refetch()
-	}
+	const retryPieData = { run: () => void refetch(), pending: isFetching }
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
@@ -86,17 +85,17 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 		</div>
 	)
 
+	if (readFailed && data === undefined) {
+		return renderStatusShell(<ProCardError retry={retryPieData} />)
+	}
+
 	if (isLoading || (!streamDone && data === undefined)) {
 		return renderStatusShell(<ProCardLoading variant="pie" />)
 	}
 
-	if (isError && data === undefined) {
-		return renderStatusShell(isFetching ? <ProCardLoading variant="pie" /> : <ProCardError onRetry={retryPieData} />)
-	}
-
 	return (
 		<div className="flex h-full flex-col p-0">
-			{isError ? <ProCardRefreshFailed onRetry={retryPieData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={retryPieData} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTitle}

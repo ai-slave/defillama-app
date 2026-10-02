@@ -7,7 +7,17 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Button } from '../Button'
 import { ConfirmDialog } from '../ConfirmDialog'
-import { Dialog, DialogBackButton, DialogBody, DialogCloseGuard, DialogHeader, useDialogLeave } from '../Dialog'
+import {
+	Dialog,
+	DialogBackButton,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useDialogLeave
+} from '../Dialog'
+import { Tab as TabTrigger, TabPanel, Tabs } from '../Tabs'
 
 let root: Root
 let container: HTMLDivElement
@@ -53,7 +63,7 @@ test('a pending submit button keeps focus, shows its pending label and submits n
 	expect(submit).toHaveBeenCalledOnce()
 })
 
-test('a pending dialog ignores Escape and its close button, then closes again once the request settles', async () => {
+test('a pending dialog ignores Escape, its close button and Cancel without asking, then closes again once the request settles', async () => {
 	function Harness({ pending }: { pending: boolean }) {
 		const [open, setOpen] = useState(true)
 		return (
@@ -64,6 +74,8 @@ test('a pending dialog ignores Escape and its close button, then closes again on
 					<DialogBody>
 						<p>Body</p>
 					</DialogBody>
+					<DialogFooter dismiss={<DialogCancelButton />} />
+					<DialogDiscardGuard when={pending} title="Discard this invite?" description="It is not sent." />
 				</Dialog>
 			</>
 		)
@@ -72,10 +84,16 @@ test('a pending dialog ignores Escape and its close button, then closes again on
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')).not.toBeNull())
 	const dialog = document.querySelector<HTMLElement>('[role=dialog]')!
 	const close = dialog.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!
+	const cancel = [...dialog.querySelectorAll<HTMLButtonElement>('button')].find(
+		(button) => button.textContent === 'Cancel'
+	)!
 	expect(close.getAttribute('aria-disabled')).toBe('true')
+	expect(cancel.getAttribute('aria-disabled')).toBe('true')
 	await act(async () => close.click())
+	await act(async () => cancel.click())
 	await act(async () => dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
 	expect(container.textContent).not.toContain('Closed')
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	await act(async () => root.render(<Harness pending={false} />))
 	await act(async () => dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
 	await waitForUi(() => expect(container.textContent).toContain('Closed'))
@@ -118,9 +136,7 @@ test('the header subtitle is announced as the dialog description', async () => {
 	expect(describedBy && document.getElementById(describedBy)?.textContent).toBe('3 of 40 selected')
 })
 
-test('a close guard turns Escape, the × and guarded steps into its prompt, and outside taps do nothing', async () => {
-	const asked: Array<string> = []
-	let proceedLast: (() => void) | null = null
+test('a discard guard turns Escape, the ×, Cancel and guarded steps into its prompt, and outside taps do nothing', async () => {
 	function Tab() {
 		const leave = useDialogLeave()
 		const [tab, setTab] = useState('Balance')
@@ -139,34 +155,91 @@ test('a close guard turns Escape, the × and guarded steps into its prompt, and 
 					<DialogHeader title="Top up" />
 					<DialogBody>
 						<Tab />
-						<DialogCloseGuard
-							onAttemptLeave={(proceed) => {
-								asked.push('asked')
-								proceedLast = proceed
-							}}
-						/>
+						<DialogDiscardGuard when title="Discard this draft?" description="It is not saved." />
 					</DialogBody>
+					<DialogFooter dismiss={<DialogCancelButton />} />
 				</Dialog>
 			</>
 		)
 	}
 	await act(async () => root.render(<Harness />))
 	const dialog = document.querySelector('[role="dialog"]')!
+	const named = (name: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
+	const keepEditing = async () => {
+		await waitForUi(() =>
+			expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this draft?')
+		)
+		await act(async () => named('Keep editing').click())
+		await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	}
 
 	await act(async () =>
 		dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
-	await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click())
+	await keepEditing()
+	await act(async () => named('Close dialog').click())
+	await keepEditing()
+	await act(async () => named('Cancel').click())
+	await keepEditing()
 	await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })))
 	await act(async () => document.body.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-	await act(async () => [...dialog.querySelectorAll('button')].find((b) => b.textContent === 'Tab Balance')!.click())
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	expect(container.textContent).not.toContain('Closed')
 
-	expect(asked).toEqual(['asked', 'asked', 'asked'])
-	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+	await act(async () => named('Tab Balance').click())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeNull())
 	expect(dialog.textContent).toContain('Tab Balance')
+	await act(async () => named('Discard').click())
+	await waitForUi(() => expect(dialog.textContent).toContain('Tab Memory'))
+	expect(container.textContent).not.toContain('Closed')
 
-	await act(async () => proceedLast!())
-	expect(dialog.textContent).toContain('Tab Memory')
+	await act(async () => named('Cancel').click())
+	await act(async () => named('Discard').click())
+	await waitForUi(() => expect(container.textContent).toContain('Closed'))
+})
+
+test('Cancel inside a tab panel closes the dialog, asking first while a guard is mounted', async () => {
+	function Harness({ guarded }: { guarded: boolean }) {
+		const store = Ariakit.useDialogStore({ defaultOpen: true })
+		const open = Ariakit.useStoreState(store, 'open')
+		const [tab, setTab] = useState('table')
+		return (
+			<>
+				{open ? null : <p>Closed</p>}
+				<Ariakit.DialogProvider store={store}>
+					<Dialog size="sm">
+						<Tabs value={tab} values={['chart', 'table']} onValueChange={setTab}>
+							<DialogHeader title="Add card" />
+							<Ariakit.TabList aria-label="Card type">
+								<TabTrigger value="chart">Chart</TabTrigger>
+								<TabTrigger value="table">Table</TabTrigger>
+							</Ariakit.TabList>
+							<TabPanel value="table">
+								<DialogDiscardGuard when={guarded} title="Discard this card?" description="It is not added." />
+								<DialogFooter dismiss={<DialogCancelButton />} />
+							</TabPanel>
+						</Tabs>
+					</Dialog>
+				</Ariakit.DialogProvider>
+			</>
+		)
+	}
+	const named = (name: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
+
+	await act(async () => root.render(<Harness guarded={false} />))
+	await act(async () => named('Cancel').click())
+	await waitForUi(() => expect(container.textContent).toContain('Closed'))
+
+	await act(async () => root.render(null))
+	await act(async () => root.render(<Harness guarded />))
+	await act(async () => named('Cancel').click())
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this card?')
+	)
+	await act(async () => named('Discard').click())
+	await waitForUi(() => expect(container.textContent).toContain('Closed'))
 })
 
 test('without a guard, a guarded step runs at once', async () => {

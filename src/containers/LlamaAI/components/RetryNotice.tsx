@@ -1,12 +1,5 @@
 import { Button } from '~/ui/Button'
-import { passFocusOnLeave } from '~/ui/focus'
-
-// A retry that succeeds removes the notice with its focused button. Content that loads in its place can take focus
-// (takeLostFocus); otherwise the closest focusable region around the notice does, such as its list or section. Inside a
-// dialog the dialog's own net (catchLostFocus) catches it instead.
-const focusRegionOnLeave = passFocusOnLeave((notice) =>
-	notice.closest('[data-dialog]') ? null : notice.parentElement?.closest<HTMLElement>('[tabindex]')
-)
+import { focusRegionOnLeave } from '~/ui/focus'
 
 export function RetryNotice({
 	message,

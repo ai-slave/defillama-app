@@ -65,7 +65,7 @@ export function useAdvancedTvlChartData({
 	return {
 		data,
 		isLoading: isNetworkLoading || (canCompute && isComputing),
-		isError: enabled && queries.some((query) => query.isError),
+		readFailed: enabled && queries.some((query) => query.errorUpdatedAt > query.dataUpdatedAt),
 		isFetching: enabled && queries.some((query) => query.isFetching),
 		refetch: () => {
 			for (const query of queries) void query.refetch()

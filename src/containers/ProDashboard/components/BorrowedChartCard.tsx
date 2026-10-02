@@ -60,7 +60,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	const {
 		data: borrowedData,
 		isLoading,
-		isError,
+		readFailed,
 		isFetching,
 		refetch,
 		hasSourceData
@@ -171,12 +171,12 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		</div>
 	)
 
-	if (isLoading || (!streamDone && !hasSourceData && !suppressTokenBreakdown)) {
-		return renderStatusShell(<ProCardLoading />)
+	if (readFailed && !hasSourceData) {
+		return renderStatusShell(<ProCardError retry={{ run: refetch, pending: isFetching }} />)
 	}
 
-	if (isError && !hasSourceData) {
-		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={refetch} />)
+	if (isLoading || (!streamDone && !hasSourceData && !suppressTokenBreakdown)) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	const chartContent = (() => {
@@ -257,7 +257,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{isError ? <ProCardRefreshFailed onRetry={refetch} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={{ run: refetch, pending: isFetching }} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

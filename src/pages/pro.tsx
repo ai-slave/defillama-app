@@ -287,7 +287,8 @@ function ProContent({
 		isLoading: isLoadingMyDashboards,
 		totalPages: myDashboardsTotalPages,
 		totalItems: myDashboardsTotalItems,
-		error: myDashboardsError,
+		isFetching: isFetchingMyDashboards,
+		readFailed: myDashboardsReadFailed,
 		refetch: refetchMyDashboards,
 		goToPage
 	} = useMyDashboards({
@@ -302,7 +303,8 @@ function ProContent({
 		isLoading: isLoadingTeamDashboards,
 		totalPages: teamDashboardsTotalPages,
 		totalItems: teamDashboardsTotalItems,
-		error: teamDashboardsError,
+		isFetching: isFetchingTeamDashboards,
+		readFailed: teamDashboardsReadFailed,
 		refetch: refetchTeamDashboards,
 		goToPage: goToTeamPage
 	} = useTeamDashboards({
@@ -311,8 +313,8 @@ function ProContent({
 		enabled: isAuthenticated && !!myTeam
 	})
 	// A failed list load is not an empty list: without this the page offers "Create your first dashboard".
-	const myDashboardsFailed = !!myDashboardsError && myDashboards.length === 0
-	const teamDashboardsFailed = !!teamDashboardsError && teamDashboards.length === 0
+	const myDashboardsFailed = myDashboardsReadFailed && myDashboards.length === 0
+	const teamDashboardsFailed = teamDashboardsReadFailed && teamDashboards.length === 0
 
 	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
 	// so these are the values that actually change.
@@ -446,28 +448,34 @@ function ProContent({
 							/>
 						) : null}
 
-						{myDashboardsFailed ? (
-							<div className={`${proPanelStyles} flex flex-col py-12`}>
-								<ProCardError title="Couldn't load your dashboards." onRetry={() => void refetchMyDashboards()} />
-							</div>
-						) : (
-							<DashboardList
-								dashboards={visibleMyDashboards}
-								isLoading={isLoadingMyDashboards}
-								onCreateNew={() => createDashboardDialogStore.show()}
-								onDeleteDashboard={deleteDashboard}
-								{...(myDashboardsControlsActive && myDashboardsTotalItems > 0
-									? {
-											emptyMessage: {
-												title: myDashboardsControls.query.trim()
-													? `No dashboards match “${myDashboardsControls.query.trim()}”`
-													: 'No dashboards match these filters',
-												onClearFilters: clearMyDashboardsControls
+						{/* The list's region: a Try again that loads the list hands focus here as it leaves. */}
+						<div tabIndex={-1}>
+							{myDashboardsFailed ? (
+								<div className={`${proPanelStyles} flex flex-col py-12`}>
+									<ProCardError
+										title="Couldn't load your dashboards."
+										retry={{ run: () => void refetchMyDashboards(), pending: isFetchingMyDashboards }}
+									/>
+								</div>
+							) : (
+								<DashboardList
+									dashboards={visibleMyDashboards}
+									isLoading={isLoadingMyDashboards}
+									onCreateNew={() => createDashboardDialogStore.show()}
+									onDeleteDashboard={deleteDashboard}
+									{...(myDashboardsControlsActive && myDashboardsTotalItems > 0
+										? {
+												emptyMessage: {
+													title: myDashboardsControls.query.trim()
+														? `No dashboards match “${myDashboardsControls.query.trim()}”`
+														: 'No dashboards match these filters',
+													onClearFilters: clearMyDashboardsControls
+												}
 											}
-										}
-									: {})}
-							/>
-						)}
+										: {})}
+								/>
+							)}
+						</div>
 
 						{!myDashboardsControlsActive && myDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
@@ -549,18 +557,23 @@ function ProContent({
 							/>
 						) : null}
 
-						{teamDashboardsFailed ? (
-							<div className={`${proPanelStyles} flex flex-col py-12`}>
-								<ProCardError title="Couldn't load team dashboards" onRetry={() => void refetchTeamDashboards()} />
-							</div>
-						) : (
-							<DashboardList
-								dashboards={teamDashboards}
-								isLoading={isLoadingTeamDashboards}
-								onCreateNew={() => createDashboardDialogStore.show()}
-								onDeleteDashboard={deleteDashboard}
-							/>
-						)}
+						<div tabIndex={-1}>
+							{teamDashboardsFailed ? (
+								<div className={`${proPanelStyles} flex flex-col py-12`}>
+									<ProCardError
+										title="Couldn't load team dashboards"
+										retry={{ run: () => void refetchTeamDashboards(), pending: isFetchingTeamDashboards }}
+									/>
+								</div>
+							) : (
+								<DashboardList
+									dashboards={teamDashboards}
+									isLoading={isLoadingTeamDashboards}
+									onCreateNew={() => createDashboardDialogStore.show()}
+									onDeleteDashboard={deleteDashboard}
+								/>
+							)}
+						</div>
 
 						{teamDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">

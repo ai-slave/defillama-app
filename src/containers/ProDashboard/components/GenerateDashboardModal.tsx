@@ -14,8 +14,14 @@ import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { createDashboardStreamLineParser } from '../dashboardStreamLines'
-import { DASHBOARD_NAME_MAX_LENGTH, type Dashboard } from '../dashboardTypes'
+import {
+	type AIGeneratedData,
+	DASHBOARD_NAME_MAX_LENGTH,
+	type Dashboard,
+	type GeneratedDashboardInput
+} from '../dashboardTypes'
 import { restoreItemsAfterIterate, stripCustomDataRows } from '../dashboardVariables/resolve'
+import { type DashboardSaveNotices, showDashboardSaveNotices } from '../hooks/useDashboardAPI'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { dashboardFieldHintStyles, dashboardFieldLabelStyles, TagsField, VisibilityField } from './DashboardFormFields'
 
@@ -34,20 +40,6 @@ function asSentence(message: string) {
 	return /[.!?…]$/.test(message) ? message : `${message}.`
 }
 
-type AIGeneratedHistory = Record<
-	string,
-	{
-		mode: 'create' | 'iterate'
-		prompt: string
-		rated: boolean
-		rating?: number
-		feedback?: string
-		skipped?: boolean
-		timestamp: string
-		userId: string
-	}
->
-
 type DashboardCreatorRequest =
 	| { message: string; dashboardName: string }
 	| {
@@ -56,7 +48,7 @@ type DashboardCreatorRequest =
 			existingDashboard: {
 				dashboardName: string
 				items: Array<DashboardItemConfig>
-				aiGenerated?: AIGeneratedHistory
+				aiGenerated?: AIGeneratedData
 			}
 	  }
 
@@ -105,6 +97,9 @@ async function readDashboardCreatorStream(reader: ReadableStreamDefaultReader<Ui
 	}
 }
 
+/** What a finished save reports once the dialog has closed: the created dashboard to open, or an edit's notices. */
+type GenerateDashboardOutcome = { created: Dashboard } | { notices: DashboardSaveNotices }
+
 interface GenerateDashboardModalProps {
 	isOpen: boolean
 	onClose: () => void
@@ -115,21 +110,9 @@ interface GenerateDashboardModalProps {
 		tags: Array<string>
 		description: string
 		items: Array<DashboardItemConfig>
-		aiGenerated?: AIGeneratedHistory
+		aiGenerated?: AIGeneratedData
 	}
-	onGenerate: (data: {
-		dashboardName: string
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-		items: Array<DashboardItemConfig>
-		aiGenerationContext?: {
-			sessionId: string
-			mode: 'create' | 'iterate'
-			timestamp: string
-			prompt: string
-		}
-	}) => Promise<Dashboard | void>
+	onGenerate: (data: GeneratedDashboardInput) => Promise<GenerateDashboardOutcome>
 }
 
 export function GenerateDashboardModal(props: GenerateDashboardModalProps) {
@@ -153,11 +136,13 @@ function GenerateDashboardModalInner({
 			if (!formRef.current?.isConnected) toast.error(asSentence(error.message))
 		}
 	})
-	const saveGeneratedDashboard = (payload: Parameters<GenerateDashboardModalProps['onGenerate']>[0]) => {
+	const saveGeneratedDashboard = (payload: GeneratedDashboardInput) => {
 		save.mutate(payload, {
-			onSuccess: (dashboard) => {
-				if (dashboard) void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
+			// Close first, so the notices never toast over the dialog.
+			onSuccess: (outcome) => {
 				onClose()
+				if ('created' in outcome) void router.push(`/pro/${dashboardUrlKey(outcome.created)}`)
+				else showDashboardSaveNotices(outcome.notices)
 			}
 		})
 	}
@@ -167,7 +152,7 @@ function GenerateDashboardModalInner({
 			payload
 		}: {
 			request: DashboardCreatorRequest
-			payload: Omit<Parameters<GenerateDashboardModalProps['onGenerate']>[0], 'items'>
+			payload: Omit<GeneratedDashboardInput, 'items'>
 		}) => {
 			if (!isAuthenticated || !user?.id) throw new Error('Sign in to generate dashboards.')
 			const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
@@ -210,48 +195,41 @@ function GenerateDashboardModalInner({
 	const error = save.error ?? generation.error
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
 	const [tags, setTags] = useState<Array<string>>([])
-	const charCountRef = useRef<HTMLSpanElement>(null)
+	const [promptLength, setPromptLength] = useState(0)
 
 	const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (pending) return
 		if (generation.data) {
 			saveGeneratedDashboard(generation.data)
 			return
 		}
 
 		const form = e.currentTarget
-		const formData = new FormData(form)
-		const dashboardNameValue = formData.get('dashboardName')
-		const descriptionValue = formData.get('aiDescription')
-		const dashboardName = typeof dashboardNameValue === 'string' ? dashboardNameValue.trim() : ''
-		const aiDescription = typeof descriptionValue === 'string' ? descriptionValue : ''
+		// The name field is only rendered in create mode.
+		const nameInput = form.elements.namedItem('dashboardName') as HTMLInputElement | null
+		const descInput = form.elements.namedItem('aiDescription') as HTMLTextAreaElement
+		const dashboardName = nameInput?.value.trim() ?? ''
+		const aiDescription = descInput.value
 
-		if (mode === 'create') {
-			const nameElement = form.elements.namedItem('dashboardName')
-			const nameInput = nameElement instanceof HTMLInputElement ? nameElement : null
-			if (!dashboardName) {
-				nameInput?.setCustomValidity('Dashboard name is required')
-				nameInput?.reportValidity()
-				return
-			}
+		if (mode === 'create' && !dashboardName) {
+			nameInput?.setCustomValidity('Dashboard name is required')
+			nameInput?.reportValidity()
+			return
 		}
 
-		const descriptionElement = form.elements.namedItem('aiDescription')
-		const descInput = descriptionElement instanceof HTMLTextAreaElement ? descriptionElement : null
 		if (!aiDescription.trim()) {
-			descInput?.setCustomValidity('Description is required')
-			descInput?.reportValidity()
+			descInput.setCustomValidity('Description is required')
+			descInput.reportValidity()
 			return
 		}
 		if (aiDescription.trim().length < 20) {
-			descInput?.setCustomValidity('Description must be at least 20 characters')
-			descInput?.reportValidity()
+			descInput.setCustomValidity('Description must be at least 20 characters')
+			descInput.reportValidity()
 			return
 		}
 		if (aiDescription.length > PROMPT_MAX_LENGTH) {
-			descInput?.setCustomValidity(`Description must be ${PROMPT_MAX_LENGTH} characters or less`)
-			descInput?.reportValidity()
+			descInput.setCustomValidity(`Description must be ${PROMPT_MAX_LENGTH} characters or less`)
+			descInput.reportValidity()
 			return
 		}
 
@@ -328,7 +306,7 @@ function GenerateDashboardModalInner({
 										name="aiDescription"
 										onInput={(e) => {
 											e.currentTarget.setCustomValidity('')
-											if (charCountRef.current) charCountRef.current.textContent = String(e.currentTarget.value.length)
+											setPromptLength(e.currentTarget.value.length)
 										}}
 										placeholder={
 											mode === 'iterate'
@@ -350,7 +328,7 @@ function GenerateDashboardModalInner({
 										: 'Be specific about the data, charts and insights you want to see.'}
 								</span>
 								<span className="shrink-0">
-									<span ref={charCountRef}>0</span>/{PROMPT_MAX_LENGTH}
+									{promptLength}/{PROMPT_MAX_LENGTH}
 								</span>
 							</p>
 						</div>

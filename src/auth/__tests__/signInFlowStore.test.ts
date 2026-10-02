@@ -60,7 +60,7 @@ describe('sign-in flow', () => {
 		store.dispatch({ challenge: challenge(), kind: 'googleLinkRequired' })
 		store.dispatch({ kind: 'authenticated' })
 
-		expect(store.getSnapshot()).toEqual({ kind: 'signin' })
+		expect(store.getSnapshot()).toEqual({ kind: 'signin', finished: true })
 		expect(createSignInFlowStore().getSnapshot()).toEqual({ kind: 'signin' })
 	})
 })

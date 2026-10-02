@@ -35,7 +35,7 @@ interface UseStablecoinsChartDataResult {
 	prepareCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
 	isFetching: boolean
-	error: Error | null
+	readFailed: boolean
 	refetch: () => void
 }
 
@@ -49,7 +49,7 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
 type StablecoinPresentation = Omit<
 	UseStablecoinsChartDataResult,
-	'prepareCsvDataset' | 'isLoading' | 'isFetching' | 'error' | 'refetch'
+	'prepareCsvDataset' | 'isLoading' | 'isFetching' | 'readFailed' | 'refetch'
 >
 
 const EMPTY_STABLECOIN_PRESENTATION: StablecoinPresentation = {
@@ -223,7 +223,7 @@ export function useStablecoinsChartData(
 		data: rawData,
 		isLoading,
 		isFetching,
-		error,
+		errorUpdatedAt,
 		dataUpdatedAt,
 		refetch
 	} = useQuery({
@@ -279,7 +279,7 @@ export function useStablecoinsChartData(
 		prepareCsvDataset,
 		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
 		isFetching,
-		error,
+		readFailed: errorUpdatedAt > dataUpdatedAt,
 		refetch
 	}
 }

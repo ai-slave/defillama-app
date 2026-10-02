@@ -13,9 +13,14 @@ type StandardState = {
 	pendingGoogleLink?: GoogleLinkChallenge
 } & ({ kind: 'signin' } | { kind: 'signup' } | { kind: 'wallet' } | { kind: 'forgot'; email: string })
 
-export type SignInFlowState =
+export type SignInFlowState = (
 	| StandardState
 	| { challenge: GoogleLinkChallenge; error?: SignInError; kind: 'googleLink' }
+) & {
+	/** This flow's own sign-in finished. Set in the same update as the session it saved, so a session the flow did
+	    not finish came from another tab. */
+	finished?: true
+}
 
 export type SignInFlowEvent =
 	| { kind: 'authenticated' }
@@ -85,7 +90,7 @@ function readStoredChallenge() {
 function reduceSignInFlow(state: SignInFlowState, event: SignInFlowEvent): SignInFlowState {
 	switch (event.kind) {
 		case 'authenticated':
-			return { kind: 'signin' }
+			return { kind: 'signin', finished: true }
 		case 'failed':
 			return { ...state, error: event.error ? { message: event.error, method: event.method ?? 'email' } : undefined }
 		case 'googleLinkExpired':

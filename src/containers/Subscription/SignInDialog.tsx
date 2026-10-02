@@ -22,7 +22,8 @@ import { WELCOME_WEEK_ALLOWANCE } from '~/containers/LlamaAI/freePlanCopy'
 import { Turnstile } from '~/containers/Subscription/Turnstile'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
+import { pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -64,7 +65,19 @@ export function SignInDialog({
 	onAuthenticated?: () => void
 }) {
 	return (
-		<Dialog size="sm" store={store} getPersistentElements={() => document.querySelectorAll('w3m-modal')} unmountOnHide>
+		<Dialog
+			size="sm"
+			store={store}
+			getPersistentElements={() => document.querySelectorAll('w3m-modal')}
+			unmountOnHide
+			// Ariakit hands over the trigger only while it is still on the page. A sign-in, here or in another tab, can
+			// remove it (Sign in gives way to the account), so focus goes on to the page content instead of the body.
+			autoFocusOnHide={(trigger) => {
+				if (trigger) return true
+				pageContent()?.focus()
+				return false
+			}}
+		>
 			<SignInFlow
 				dialogStore={store}
 				initialStep={initialStep}
@@ -121,6 +134,7 @@ export function SignInFlow({
 	) : (
 		`Sign in to ask for free: ${quoteQuestion(question)}`
 	)
+	const { isAuthenticated } = useAuthContext()
 
 	// Keyed by title, so each step's title takes focus on mount and a step change is announced.
 	const header = (title: string) => (
@@ -132,6 +146,23 @@ export function SignInFlow({
 			onBack={state.kind !== 'signin' ? () => flowStore.dispatch({ kind: 'navigate', screen: 'signin' }) : undefined}
 		/>
 	)
+
+	// A session this flow never finished came from another tab. The flow says so and finishes the way a sign-in here
+	// does.
+	if (isAuthenticated && !state.finished)
+		return (
+			<>
+				<AuthDialogHeader key="signed-in" title="You're signed in" closable={closeable} />
+				<DialogBody>
+					<p className="body-sm text-secondary">You signed in from another tab.</p>
+				</DialogBody>
+				<DialogFooter>
+					<Button variant="primary" size="md" autoFocus onClick={finishAuthentication}>
+						Continue
+					</Button>
+				</DialogFooter>
+			</>
+		)
 
 	// The reset screen names its own outcome in the header, so it renders the header itself.
 	if (state.kind === 'forgot')

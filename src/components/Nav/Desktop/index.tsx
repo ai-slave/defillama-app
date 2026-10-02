@@ -14,6 +14,7 @@ export function DesktopNav({
 	mainLinks,
 	pinnedPages,
 	userDashboards,
+	dashboardsStatus,
 	footerLinks,
 	oldMetricLinks,
 	asPath
@@ -21,6 +22,8 @@ export function DesktopNav({
 	mainLinks: TNavLinks
 	pinnedPages: Array<TNavLink>
 	userDashboards: Array<TNavLink>
+	/** The dashboards list's load error, shown under the list. */
+	dashboardsStatus: React.ReactNode
 	footerLinks: TNavLinks
 	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
@@ -113,8 +116,8 @@ export function DesktopNav({
 
 					{pinnedPages.length > 0 ? <PinnedPages pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
-					{userDashboards.length > 0 ? (
-						<div className="group">
+					{userDashboards.length > 0 || dashboardsStatus ? (
+						<div className="group" data-nav-dashboards>
 							<p className="flex items-center justify-between gap-3 rounded-md pt-1.5 label-sm text-secondary">
 								Your Dashboards
 							</p>
@@ -123,6 +126,7 @@ export function DesktopNav({
 									<LinkToPage key={`desktop-nav-${name}-${route}`} route={route} name={name} asPath={asPath} />
 								))}
 							</div>
+							{dashboardsStatus ? <div className="py-1 pr-2">{dashboardsStatus}</div> : null}
 						</div>
 					) : null}
 
@@ -133,7 +137,7 @@ export function DesktopNav({
 
 				<div className="sticky bottom-0 flex w-full flex-col gap-2 bg-page">
 					<SidebarDivider className="-ml-1.5 pb-1" />
-					<Account asPath={asPath} />
+					<Account />
 					<ThemeSwitch />
 				</div>
 			</nav>

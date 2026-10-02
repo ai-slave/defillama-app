@@ -25,7 +25,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const { assetId, assetName, metrics } = config
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartDataset, isLoading, isFetching, error, refetch } = useRWAAssetChartData(assetId)
+	const { chartDataset, isLoading, isFetching, readFailed, refetch } = useRWAAssetChartData(assetId)
 
 	const filteredDataset = useMemo(() => {
 		if (!chartDataset) return null
@@ -42,9 +42,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(320, cardHeightScale)
 
-	const retryChartData = () => {
-		void refetch()
-	}
+	const retryChartData = { run: () => void refetch(), pending: isFetching }
 
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
@@ -55,19 +53,19 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 		</div>
 	)
 
-	if (isLoading) {
-		return renderStatusShell(<ProCardLoading />)
+	if (readFailed && chartDataset === null) {
+		return renderStatusShell(<ProCardError retry={retryChartData} />)
 	}
 
-	if (error && chartDataset === null) {
-		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	const hasData = filteredDataset && filteredDataset.source.length > 0
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{error ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={retryChartData} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={assetName}

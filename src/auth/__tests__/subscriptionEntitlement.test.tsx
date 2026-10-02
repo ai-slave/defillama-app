@@ -68,7 +68,7 @@ function Probe() {
 function App() {
 	return (
 		<AuthProvider>
-			<Account asPath="/" />
+			<Account />
 			<PremiumFeatureGate featureName="Premium report">
 				<span>Pro content</span>
 			</PremiumFeatureGate>
@@ -299,7 +299,7 @@ test('keeps cached access visible and warns when background revalidation fails',
 
 	await passRetries()
 	expect(document.body.textContent).toContain('Active Subscription')
-	expect(document.body.textContent).toContain('Subscription unavailable · Retry')
+	expect(document.body.textContent).toContain('Subscription unavailableTry again')
 	expect(document.body.textContent).not.toContain('Upgrade to Pro')
 	expect(sessionView.loaders.userLoading).toBe(false)
 })

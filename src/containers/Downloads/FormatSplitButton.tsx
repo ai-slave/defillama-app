@@ -8,8 +8,8 @@ import { ConfirmableContent } from './ActionFeedback'
 
 interface FormatSplitButtonProps {
 	onDownload: (format: DownloadFormat) => void
-	disabled?: boolean
-	label?: string
+	disabled: boolean
+	label: string
 	/** The last download just finished: the button says so in place of a toast. */
 	confirmed?: boolean
 }
@@ -21,12 +21,7 @@ const FORMAT_LABELS: Record<DownloadFormat, string> = {
 	json: 'JSON'
 }
 
-export function FormatSplitButton({
-	onDownload,
-	disabled,
-	label = 'Download',
-	confirmed = false
-}: FormatSplitButtonProps) {
+export function FormatSplitButton({ onDownload, disabled, label, confirmed = false }: FormatSplitButtonProps) {
 	const menu = Ariakit.useMenuStore<{ format: DownloadFormat }>({ defaultValues: { format: 'csv' } })
 	const { format } = Ariakit.useStoreState(menu, 'values')
 

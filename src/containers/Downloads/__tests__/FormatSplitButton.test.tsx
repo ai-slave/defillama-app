@@ -28,7 +28,7 @@ async function click(name: string) {
 	})
 }
 test('each format activation downloads once, including the already selected format', async () => {
-	await act(async () => root.render(<FormatSplitButton onDownload={download} />))
+	await act(async () => root.render(<FormatSplitButton disabled={false} label="Download" onDownload={download} />))
 	expect(download).not.toHaveBeenCalled()
 	await click('Choose download format')
 	expect(document.querySelector('[role="menuitemradio"][aria-checked="true"]')?.textContent).toBe('CSV')
@@ -45,7 +45,7 @@ test('each format activation downloads once, including the already selected form
 	expect(download).toHaveBeenCalledTimes(4)
 })
 test('disabled downloads cannot open the format menu or run an export', async () => {
-	await act(async () => root.render(<FormatSplitButton disabled onDownload={download} />))
+	await act(async () => root.render(<FormatSplitButton disabled label="Download" onDownload={download} />))
 	await click('Download CSV')
 	await click('Choose download format')
 	expect(download).not.toHaveBeenCalled()

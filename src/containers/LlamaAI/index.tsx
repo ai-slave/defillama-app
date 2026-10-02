@@ -126,6 +126,7 @@ import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
 import { useConstant } from '~/hooks/useConstant'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { getABSeedFromCookie } from '~/utils/abTesting'
@@ -411,8 +412,8 @@ export function AgenticChat({
 	] = useReducer(dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE)
 	const citationSheet = useCitationSheetController(sessionId)
 	const [showTokenLimitModal, setShowTokenLimitModal] = useState(false)
-	const [showShareModal, setShowShareModal] = useState(false)
-	const [shareTargetMessageId, setShareTargetMessageId] = useState<string | null>(null)
+	// null while closed; a null messageId shares the whole conversation.
+	const [shareTarget, setShareTarget] = useState<{ messageId: string | null } | null>(null)
 	const [initialIntegrationsState, setInitialIntegrationsState] = useState<SettingsInitialState | null>(null)
 	const router = useRouter()
 	// A chat link hands over ?prompt and ?shareToken once, and each leaves the URL when the chat takes it: the
@@ -718,10 +719,7 @@ export function AgenticChat({
 		setPromptTransitionMode('idle')
 	}, [clearPromptTransitionTimer])
 
-	const openShareModal = useCallback((messageId?: string) => {
-		setShareTargetMessageId(messageId ?? null)
-		setShowShareModal(true)
-	}, [])
+	const openShareModal = useCallback((messageId?: string) => setShareTarget({ messageId: messageId ?? null }), [])
 
 	const handleFactCheckedGated = useCallback(() => {
 		dispatchStream({
@@ -732,12 +730,7 @@ export function AgenticChat({
 		researchModalStore.show()
 	}, [dispatchStream, researchModalStore])
 
-	const setShareModalOpen = useCallback((nextOpen: boolean) => {
-		setShowShareModal(nextOpen)
-		if (!nextOpen) {
-			setShareTargetMessageId(null)
-		}
-	}, [])
+	const closeShareModal = useCallback(() => setShareTarget(null), [])
 
 	const triggerPromptTransition = useCallback(
 		(nextTransitionMode: PromptTransitionMode) => {
@@ -921,7 +914,7 @@ export function AgenticChat({
 		!isSettingsModalOpen &&
 		!isSubscribeModalOpen &&
 		!showTokenLimitModal &&
-		!showShareModal &&
+		!shareTarget &&
 		!deepLinkConfirmationPrompt
 	const attention = useMemo(
 		() => ({
@@ -1017,7 +1010,7 @@ export function AgenticChat({
 	const historyDrawerChromeValue = useMemo(
 		() => ({
 			...chromeValue,
-			toggleSidebar: () => (isHistoryDrawerOpen ? closeHistoryDrawer() : setHistoryDrawerOpen(true)),
+			toggleSidebar: () => setHistoryDrawerOpen((open) => !open),
 			hideSidebar: closeHistoryDrawer,
 			sidebarVisible: isHistoryDrawerOpen
 		}),
@@ -2944,12 +2937,9 @@ export function AgenticChat({
 												>
 													<TerminalPanel />
 												</Suspense>
+												{/* Only dims: the non-modal drawer already closes on a click outside it. */}
 												{isHistoryDrawerOpen ? (
-													<div
-														aria-hidden="true"
-														onClick={closeHistoryDrawer}
-														className="absolute inset-0 z-10 rounded-lg bg-screen-dim"
-													/>
+													<div aria-hidden="true" className="absolute inset-0 z-10 rounded-lg bg-screen-dim" />
 												) : null}
 												<Ariakit.Dialog
 													open={isHistoryDrawerOpen}
@@ -2958,6 +2948,7 @@ export function AgenticChat({
 													portal={false}
 													unmountOnHide
 													aria-label="LlamaAI sidebar"
+													ref={catchLostFocus}
 													className="absolute inset-y-0 left-0 z-20 flex w-[280px]"
 												>
 													<LlamaAIChromeContext.Provider value={historyDrawerChromeValue}>
@@ -3109,12 +3100,12 @@ export function AgenticChat({
 									{!readOnly ? (
 										<TokenLimitModal isOpen={showTokenLimitModal} onClose={() => setShowTokenLimitModal(false)} />
 									) : null}
-									{!readOnly && showShareModal ? (
+									{!readOnly && shareTarget ? (
 										<ShareModal
 											open
-											setOpen={setShareModalOpen}
+											setOpen={closeShareModal}
 											sessionId={effectiveSessionId}
-											messageId={shareTargetMessageId}
+											messageId={shareTarget.messageId}
 										/>
 									) : null}
 									{!readOnly ? (

@@ -21,7 +21,7 @@ const http = installFixtureFetch()
 vi.mock('../CombinedChartPreview', () => ({ CombinedChartPreview: () => <p>combined chart</p> }))
 vi.mock('../SeparateChartsPreview', () => ({ SeparateChartsPreview: () => <p>separate charts</p> }))
 
-const runtime = { data: [], isLoading: false, hasError: false, canRetry: false, refetch: () => {} }
+const runtime = { data: [], isLoading: false, hasError: false, canRetry: false, isFetching: false, refetch: () => {} }
 const ethereumTvl: ChartRuntimeView = {
 	id: 'ethereum-tvl',
 	kind: 'chart',

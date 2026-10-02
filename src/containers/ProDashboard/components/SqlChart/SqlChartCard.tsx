@@ -143,7 +143,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 					<ProCardNotice
 						tone="error"
 						title={error}
-						{...(canRefresh ? { action: { label: 'Try again', onClick: refresh } } : {})}
+						{...(canRefresh ? { retry: { run: refresh, pending: isRefreshing } } : {})}
 					>
 						Couldn&apos;t refresh this query.
 					</ProCardNotice>

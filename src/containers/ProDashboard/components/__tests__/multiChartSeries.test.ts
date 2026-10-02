@@ -283,6 +283,7 @@ describe('buildMultiChartCardSeries', () => {
 		isLoading: false,
 		hasError: false,
 		canRetry: false,
+		isFetching: false,
 		refetch: () => {}
 	}
 	const loaded = (id: string, type: 'activeUsers' | 'txs' | 'tvl', chain = 'Ethereum'): ChartRuntimeView => ({

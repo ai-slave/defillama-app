@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { MobileSearch } from '~/components/Search'
@@ -9,6 +10,7 @@ export function MobileNav({
 	mainLinks,
 	pinnedPages,
 	userDashboards,
+	dashboardsStatus,
 	footerLinks,
 	tvlOptions,
 	oldMetricLinks,
@@ -17,6 +19,7 @@ export function MobileNav({
 	mainLinks: TNavLinks
 	pinnedPages: Array<TNavLink>
 	userDashboards: Array<TNavLink>
+	dashboardsStatus: ReactNode
 	footerLinks: TNavLinks
 	tvlOptions?: Array<{ name: string; key: string }>
 	oldMetricLinks: Array<TOldNavLink>
@@ -47,6 +50,7 @@ export function MobileNav({
 				mainLinks={mainLinks}
 				pinnedPages={pinnedPages}
 				userDashboards={userDashboards}
+				dashboardsStatus={dashboardsStatus}
 				footerLinks={footerLinks}
 				oldMetricLinks={oldMetricLinks}
 				asPath={asPath}

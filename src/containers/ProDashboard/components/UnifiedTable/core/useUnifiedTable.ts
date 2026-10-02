@@ -157,6 +157,7 @@ export function useUnifiedTable({
 		table,
 		isLoading: readModel.isLoading,
 		loadError: readModel.loadError,
+		isFetching: readModel.isFetching,
 		refetch: readModel.refetch,
 		leafRows: readModel.leaves,
 		rows,

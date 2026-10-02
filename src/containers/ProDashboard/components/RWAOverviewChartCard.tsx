@@ -57,7 +57,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		chartDataset: rawDataset,
 		isLoading,
 		isFetching,
-		error,
+		readFailed,
 		refetch
 	} = useRWABreakdownChartData(breakdown, metric, chain)
 
@@ -104,9 +104,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const chartHeight = scaledPx(320, cardHeightScale)
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
-	const retryChartData = () => {
-		void refetch()
-	}
+	const retryChartData = { run: () => void refetch(), pending: isFetching }
 
 	const title = `RWA ${metricLabel} - ${viewLabel}`
 	const subtitle = <ProMeta items={[chainLabel, chain ? null : `by ${breakdownLabel}`]} />
@@ -120,19 +118,19 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		</div>
 	)
 
-	if (isLoading) {
-		return renderStatusShell(<ProCardLoading />)
+	if (readFailed && rawDataset === null) {
+		return renderStatusShell(<ProCardError retry={retryChartData} />)
 	}
 
-	if (error && rawDataset === null) {
-		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	const hasExportData = hasRwaOverviewChartExportData(chartView, timeSeriesDataset, snapshot)
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{error ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={retryChartData} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={title}

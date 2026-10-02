@@ -15,7 +15,6 @@ import {
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
-import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
@@ -26,7 +25,7 @@ import { slug as toSlug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
-import { ActionFeedbackStatus, ConfirmableContent, useActionFeedback } from './ActionFeedback'
+import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import type { ChartDatasetDefinition } from './chart-datasets'
 import { combineCsvsWide } from './combineCsvsWide'
 import { filterParsedRowsByDateRange } from './csvDateFilter'
@@ -56,8 +55,10 @@ import {
 	type SavedDownloadInput
 } from './savedDownloads'
 import { SavedPresetNotice } from './SavedPresetNotice'
+import { type CsvQueryStatus, SelectedListSidebar } from './SelectedListSidebar'
 import { sumCsvColumnsToTotal } from './sumCsvColumns'
 import { buildShareUrl } from './urlState'
+import { usePreviewTableScroller } from './usePreviewTableScroller'
 
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
@@ -230,26 +231,11 @@ export function ChartDatasetModal({
 		typeof applyChartColumnsAndSort
 	> | null>(null)
 	const [categoryDraft, setCategoryDraft] = useState({ category: selectedCategory, options, aligned: false })
-	const tableContainerRef = useRef<HTMLDivElement>(null)
-	const { ref: attachOverflow, canScrollLeft, canScrollRight } = useHorizontalOverflow()
-	// The virtualizer reads the scroller through tableContainerRef; the overflow hook follows it across the
-	// remount when a search or date range empties the table. Kept stable so React does not detach it every render.
-	const setTableContainer = useCallback(
-		(node: HTMLDivElement) => {
-			tableContainerRef.current = node
-			const detachOverflow = attachOverflow(node)
-			return () => {
-				tableContainerRef.current = null
-				detachOverflow()
-			}
-		},
-		[attachOverflow]
-	)
+	const { scrollerRef, setScroller, canScrollLeft, canScrollRight } = usePreviewTableScroller()
 	const deferredSearch = useDeferredValue(search.trim().toLowerCase())
 
 	const supportsBreakdown = dataset.paramType === 'protocol' && !!dataset.categoryBreakdown
 	const isCategoryMode = supportsBreakdown && selectedCategory !== null
-	const maxSelections = isCategoryMode ? Number.POSITIVE_INFINITY : MAX_PARAMS
 	const activePreviewValue = isCategoryMode
 		? null
 		: (selectedParams.find((param) => param.value === preferredPreviewValue)?.value ?? selectedParams[0]?.value ?? null)
@@ -539,7 +525,7 @@ export function ChartDatasetModal({
 
 	const rowVirtualizer = useVirtualItems({
 		count: sortedRows.length,
-		getScrollElement: () => tableContainerRef.current,
+		getScrollElement: () => scrollerRef.current,
 		estimateSize: () => ROW_HEIGHT,
 		overscan: 10
 	})
@@ -572,18 +558,6 @@ export function ChartDatasetModal({
 		})
 	}, [])
 
-	const findBreakdownColumnIndex = useCallback(
-		(paramValue: string): number => {
-			for (let i = 0; i < headers.length; i++) {
-				const h = headers[i]
-				if (h === 'date') continue
-				if (toSlug(h) === paramValue) return i
-			}
-			return -1
-		},
-		[headers]
-	)
-
 	const handleSetActive = useCallback(
 		(value: string | null) => {
 			if (value === activePreviewValue) return
@@ -595,25 +569,13 @@ export function ChartDatasetModal({
 		[activePreviewValue]
 	)
 
+	// Only the picker and the selected list edit the picks by hand, and neither shows in category mode.
 	const handleRemoveParam = useCallback(
 		(value: string) => {
 			setSelectedParams((prev) => prev.filter((p) => p.value !== value))
-			if (!isCategoryMode && activePreviewValue === value) {
-				handleSetActive(null)
-			}
-			if (isCategoryMode) {
-				const idx = findBreakdownColumnIndex(value)
-				if (idx >= 0) {
-					setSelectedColumns((prev) => {
-						if (!prev) return prev
-						const next = new Set(prev)
-						next.delete(idx)
-						return next
-					})
-				}
-			}
+			if (activePreviewValue === value) handleSetActive(null)
 		},
-		[isCategoryMode, findBreakdownColumnIndex, activePreviewValue, handleSetActive]
+		[activePreviewValue, handleSetActive]
 	)
 
 	const handleToggleParam = useCallback(
@@ -624,51 +586,30 @@ export function ChartDatasetModal({
 				return
 			}
 			// The picker disables options past the cap and says why in its header.
-			if (selectedParams.length >= maxSelections) return
+			if (selectedParams.length >= MAX_PARAMS) return
 			setSelectedParams((prev) => [...prev, opt])
-			if (isCategoryMode) {
-				const idx = findBreakdownColumnIndex(opt.value)
-				if (idx >= 0) {
-					setSelectedColumns((prev) => {
-						if (!prev) return prev
-						const next = new Set(prev)
-						next.add(idx)
-						return next
-					})
-				}
-			}
 		},
-		[selectedParams, isCategoryMode, maxSelections, findBreakdownColumnIndex, handleRemoveParam]
+		[selectedParams, handleRemoveParam]
 	)
 
 	const handleClearParams = useCallback(() => {
-		if (isCategoryMode) {
-			setSelectedParams([])
-			setSelectedColumns(null)
-			setSortState(null)
-			setSelectedCategory(null)
-			return
-		}
 		setSelectedParams([])
 		setActivePreviewValue(null)
 		setSelectedColumns(null)
 		setSortState(null)
 		setSearch('')
-	}, [isCategoryMode])
+	}, [])
 
-	const handleAddMultipleParams = useCallback(
-		(opts: Array<ParamOption>) => {
-			setSelectedParams((prev) => {
-				const existing = new Set(prev.map((p) => p.value))
-				const toAdd = opts.filter((o) => !existing.has(o.value))
-				const combined = [...prev, ...toAdd]
-				// The picker offers Add all only while everything in view fits under the cap.
-				if (combined.length > maxSelections) return [...prev, ...toAdd.slice(0, maxSelections - prev.length)]
-				return combined
-			})
-		},
-		[maxSelections]
-	)
+	const handleAddMultipleParams = useCallback((opts: Array<ParamOption>) => {
+		setSelectedParams((prev) => {
+			const existing = new Set(prev.map((p) => p.value))
+			const toAdd = opts.filter((o) => !existing.has(o.value))
+			const combined = [...prev, ...toAdd]
+			// The picker offers Add all only while everything in view fits under the cap.
+			if (combined.length > MAX_PARAMS) return [...prev, ...toAdd.slice(0, MAX_PARAMS - prev.length)]
+			return combined
+		})
+	}, [])
 
 	const handleSelectCategory = useCallback(
 		(cat: string | null) => {
@@ -784,54 +725,9 @@ export function ChartDatasetModal({
 		]
 	)
 
+	// Only the selected list downloads one pick, and it shows outside category mode.
 	const handleDownloadSingle = useCallback(
 		(param: ParamOption, format: DownloadFormat, action: string) => {
-			if (isCategoryMode) {
-				if (!csvText) {
-					report(action, false, 'Data not loaded yet')
-					return
-				}
-				const parsed = parseCsv(csvText)
-				const parsedDateIdx = parsed.headers.indexOf('date')
-				const parsedColIdx = parsed.headers.findIndex((h, i) => i !== parsedDateIdx && toSlug(h) === param.value)
-				if (parsedColIdx < 0) {
-					report(action, false, `No data for ${param.label}`)
-					return
-				}
-				const rowsForDownload = filterParsedRowsByDateRange(parsed.rows, parsedDateIdx, dateRange)
-				const outHeader = ['date', parsed.headers[parsedColIdx]]
-				const allRows: Array<Array<string>> = [outHeader]
-				for (const r of rowsForDownload) {
-					const date = r.values[parsedDateIdx] ?? ''
-					const value = r.values[parsedColIdx] ?? ''
-					if (!date) continue
-					allRows.push([date, value])
-				}
-				if (allRows.length <= 1) {
-					report(action, false, 'No rows to download')
-					return
-				}
-				const filename = `${dataset.slug}_${param.value}.${format}`
-				downloadTabular(format, filename, allRows, { addTimestamp: false })
-				report(action, true, `Downloaded ${filename}`)
-
-				const configBase = extractChartConfig({
-					slug: dataset.slug,
-					headers: outHeader,
-					selectedParams: [param],
-					selectedColumns: null,
-					sort: null,
-					dateRange
-				})
-				recordRecent({
-					...configBase,
-					id: generatePresetId(),
-					name: defaultPresetName(configBase, dataset.name),
-					createdAt: Date.now()
-				})
-				return
-			}
-
 			const idx = selectedParams.findIndex((p) => p.value === param.value)
 			if (idx < 0) return
 			const query = csvQueries[idx]
@@ -888,8 +784,6 @@ export function ChartDatasetModal({
 			})
 		},
 		[
-			isCategoryMode,
-			csvText,
 			csvQueries,
 			selectedParams,
 			activePreviewValue,
@@ -1123,419 +1017,411 @@ export function ChartDatasetModal({
 
 	return (
 		<>
-			<Ariakit.DialogProvider
+			{/* Opens on the first picker, the field the preview waits on. */}
+			<Dialog
+				size="xl"
+				workspace
 				open
-				setOpen={(open) => {
-					if (!open) onClose()
-				}}
+				onClose={onClose}
+				initialFocus={protocolCategories.length > 0 ? categoryPickerRef : paramPickerRef}
 			>
-				{/* Opens on the first picker, the field the preview waits on. */}
-				<Dialog
-					size="xl"
-					portal
-					unmountOnHide
-					initialFocus={protocolCategories.length > 0 ? categoryPickerRef : paramPickerRef}
-				>
-					<DialogHeader
-						title={dataset.name}
-						subtitle={headerSubtitle}
-						actions={
-							showTopBarActions ? (
-								isPreview ? (
-									<PreviewHeaderActions
-										mode="preview"
-										confirmed={confirmed}
-										downloadLabel={downloadLabel}
-										copy={!isBulk && hasData ? { run: handleSubscribeClick, disabled: false } : null}
-										onSubscribe={handleSubscribeClick}
-									/>
-								) : (
-									<PreviewHeaderActions
-										mode="full"
-										confirmed={confirmed}
-										downloadLabel={downloadLabel}
-										copy={!isBulk && hasData ? { run: () => void handleCopy(), disabled: selectedCount === 0 } : null}
-										savePreset={{ run: () => setShowSaveDialog(true), disabled: !hasSelection }}
-										copyLink={{ run: () => void handleCopyLink(), disabled: !currentConfig }}
-										onDownload={handleDownload}
-										downloadDisabled={topBarDownloadDisabled}
-									/>
-								)
-							) : null
-						}
-					/>
-
-					<DialogToolbar>
-						<div className="flex flex-wrap items-center gap-2">
-							{protocolCategories.length > 0 ? (
-								<CategoryPickerPopover
-									triggerRef={categoryPickerRef}
-									categories={protocolCategories}
-									selected={selectedCategory}
-									onSelect={handleSelectCategory}
-								/>
-							) : null}
-							{!isCategoryMode ? (
-								<MultiOptionPickerPopover
-									triggerRef={paramPickerRef}
-									label={dataset.paramLabel}
-									options={filteredOptions}
-									selected={selectedParams}
-									onToggle={handleToggleParam}
-									onClearAll={handleClearParams}
-									onAddMultiple={handleAddMultipleParams}
-									maxSelections={maxSelections}
+				<DialogHeader
+					title={dataset.name}
+					subtitle={headerSubtitle}
+					actions={
+						showTopBarActions ? (
+							isPreview ? (
+								<PreviewHeaderActions
+									mode="preview"
+									downloadLabel={downloadLabel}
+									copy={!isBulk && hasData}
+									onSubscribe={handleSubscribeClick}
 								/>
 							) : (
-								<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary">
-									<Icon name="layers" className="size-3.5" />
-									{selectedParams.length} protocols
-								</span>
-							)}
-
-							{dataset.sumMode && !isCategoryMode ? (
-								<button
-									type="button"
-									onClick={() => {
-										setSumMode((s) => !s)
-										setSelectedColumns(null)
-										setSortState(null)
-									}}
-									aria-pressed={sumModeActive}
-									title={
-										sumModeActive
-											? `Showing total per date. Click to show each ${dataset.paramLabel.toLowerCase()} as a separate column.`
-											: `Sum all columns into a single total per date`
-									}
-									className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-										sumModeActive
-											? 'border-brand bg-brand text-on-brand'
-											: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-									}`}
-								>
-									<Icon name="plus" className="size-3.5" />
-									<span>Sum all</span>
-								</button>
-							) : null}
-
-							{hasSelection && !isPreview ? (
-								<DateRangePicker
-									triggerRef={dateRangeTriggerRef}
-									value={dateRange}
-									onChange={setDateRange}
-									minDate={dateBounds.min}
-									maxDate={dateBounds.max}
+								<PreviewHeaderActions
+									mode="full"
+									confirmed={confirmed}
+									downloadLabel={downloadLabel}
+									copy={!isBulk && hasData ? { run: () => void handleCopy(), disabled: selectedCount === 0 } : null}
+									savePreset={{ run: () => setShowSaveDialog(true), disabled: !hasSelection }}
+									copyLink={{ run: () => void handleCopyLink(), disabled: !currentConfig }}
+									onDownload={handleDownload}
+									downloadDisabled={topBarDownloadDisabled}
 								/>
-							) : null}
+							)
+						) : null
+					}
+				/>
 
-							{hasData && !isPreview ? (
-								<>
-									<label className="relative min-w-32 flex-1 sm:min-w-48">
-										<Icon
-											name="search"
-											height={14}
-											width={14}
-											className="absolute top-0 bottom-0 left-2.5 my-auto text-pro-text-tertiary"
-										/>
-										<input
-											value={search}
-											onChange={(e) => setSearch(e.currentTarget.value)}
-											aria-label="Filter rows"
-											placeholder="Filter rows..."
-											className="w-full min-w-0 rounded-md border border-subtle bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30 sm:w-48"
-										/>
-									</label>
+				<DialogToolbar>
+					<div className="flex flex-wrap items-center gap-2">
+						{protocolCategories.length > 0 ? (
+							<CategoryPickerPopover
+								triggerRef={categoryPickerRef}
+								categories={protocolCategories}
+								selected={selectedCategory}
+								onSelect={handleSelectCategory}
+							/>
+						) : null}
+						{!isCategoryMode ? (
+							<MultiOptionPickerPopover
+								triggerRef={paramPickerRef}
+								label={dataset.paramLabel}
+								options={filteredOptions}
+								selected={selectedParams}
+								onToggle={handleToggleParam}
+								onClearAll={handleClearParams}
+								onAddMultiple={handleAddMultipleParams}
+							/>
+						) : (
+							<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary">
+								<Icon name="layers" className="size-3.5" />
+								{selectedParams.length} protocols
+							</span>
+						)}
 
-									<ColumnPickerPopover
-										columns={columnMeta}
-										selected={cols}
-										allSelected={allSelected}
-										onToggle={toggleColumn}
-										onToggleAll={toggleAll}
+						{dataset.sumMode && !isCategoryMode ? (
+							<button
+								type="button"
+								onClick={() => {
+									setSumMode((s) => !s)
+									setSelectedColumns(null)
+									setSortState(null)
+								}}
+								aria-pressed={sumModeActive}
+								title={
+									sumModeActive
+										? `Showing total per date. Click to show each ${dataset.paramLabel.toLowerCase()} as a separate column.`
+										: `Sum all columns into a single total per date`
+								}
+								className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+									sumModeActive
+										? 'border-brand bg-brand text-on-brand'
+										: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
+								}`}
+							>
+								<Icon name="plus" className="size-3.5" />
+								<span>Sum all</span>
+							</button>
+						) : null}
+
+						{hasSelection && !isPreview ? (
+							<DateRangePicker
+								triggerRef={dateRangeTriggerRef}
+								value={dateRange}
+								onChange={setDateRange}
+								minDate={dateBounds.min}
+								maxDate={dateBounds.max}
+							/>
+						) : null}
+
+						{hasData && !isPreview ? (
+							<>
+								<label className="relative min-w-32 flex-1 sm:min-w-48">
+									<Icon
+										name="search"
+										height={14}
+										width={14}
+										className="absolute top-0 bottom-0 left-2.5 my-auto text-pro-text-tertiary"
 									/>
-								</>
-							) : hasData && isPreview ? (
-								<p className="text-xs text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
-							) : null}
-							{isBulk ? (
-								<Button
-									variant="filter"
-									size="sm"
-									data-active={showSelected}
-									aria-pressed={showSelected}
-									className="sm:hidden"
-									onClick={() => setShowSelected((shown) => !shown)}
-									ref={selectedToggleRef}
-								>
-									Selected ({selectedParams.length})
-								</Button>
-							) : null}
-						</div>
-					</DialogToolbar>
-					{/* Each band draws the line under itself, as the toolbar above does. */}
-					<SavedPresetNotice notices={savedPresetNotices} />
-					<ActionFeedbackStatus outcome={outcome} />
+									<input
+										value={search}
+										onChange={(e) => setSearch(e.currentTarget.value)}
+										aria-label="Filter rows"
+										placeholder="Filter rows..."
+										className="w-full min-w-0 rounded-md border border-subtle bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30 sm:w-48"
+									/>
+								</label>
 
-					<DialogBody kind="flush">
-						<div className="flex h-full min-h-0">
-							<div className={`relative min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
-								{!hasPreviewTarget ? (
-									<div className="flex flex-1 items-center justify-center">
-										<div className="flex flex-col items-center gap-2 text-center">
-											<Icon name="search" className="size-6 text-pro-text-tertiary" />
-											<p className="text-sm text-pro-text-secondary">
-												Select a {dataset.paramLabel.toLowerCase()} above to load chart data
-											</p>
-										</div>
-									</div>
-								) : dataLoading ? (
-									<div className="flex flex-1 items-center justify-center">
-										<div className="flex flex-col items-center gap-3">
-											<LoadingSpinner size={28} />
-											<p className="text-sm text-pro-text-secondary">Fetching chart data...</p>
-										</div>
-									</div>
-								) : dataError ? (
-									<div className="flex flex-1 items-center justify-center">
-										<div className="flex flex-col items-center gap-2">
-											<Icon name="alert-triangle" className="size-6 text-error" />
-											<p className="text-sm text-error">
-												{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
-											</p>
-										</div>
-									</div>
-								) : columnMeta.length === 0 ? (
-									<div className="flex flex-1 items-center justify-center">
-										<div className="flex flex-col items-center gap-2 text-center">
-											<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
-											<p className="text-sm text-pro-text-secondary">No data</p>
-										</div>
-									</div>
-								) : sortedRows.length === 0 ? (
-									<div className="flex flex-1 items-center justify-center">
-										<div className="flex flex-col items-center gap-2 text-center">
-											<Icon name="search" className="size-6 text-pro-text-tertiary" />
-											<p className="text-sm text-pro-text-secondary">
-												{dateRange && rows.length > 0
-													? 'No rows in selected date range'
-													: deferredSearch.length > 0
-														? 'No rows match your search'
-														: 'No matching rows'}
-											</p>
-											{dateRange && rows.length > 0 ? (
-												<button
-													type="button"
-													// Clearing removes this button; focus returns to the range picker it cleared.
-													onClick={() =>
-														keepFocus(
-															() => setDateRange(null),
-															() => dateRangeTriggerRef.current
-														)
-													}
-													className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-												>
-													Clear date range
-												</button>
-											) : null}
-										</div>
-									</div>
-								) : (
-									<div className="relative min-h-0 flex-1">
-										<div
-											aria-hidden
-											className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 transition-opacity duration-200"
-											style={{
-												opacity: canScrollRight ? 1 : 0,
-												background: 'linear-gradient(to left, var(--bg-overlay) 0%, transparent 100%)'
-											}}
-										/>
-										<div
-											ref={setTableContainer}
-											className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
-											style={
-												{
-													'--sticky-shadow': canScrollLeft ? '4px 0 8px -2px rgba(0,0,0,0.25)' : 'none'
-												} as CSSProperties
-											}
-										>
-											<div className="sticky top-0 z-20 bg-overlay" style={{ minWidth: `${tableWidth}px` }}>
-												<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
-													{columnMeta.map((column, position) => {
-														const isSelected = cols.has(column.index)
-														const isSorted = sortState?.index === column.index ? activeSortDirection : false
-														const isSticky = position === 0
-														return (
-															<div
-																key={column.index}
-																className="border-t border-r border-subtle bg-overlay last:border-r-0"
-																style={{
-																	position: isSticky ? 'sticky' : undefined,
-																	left: isSticky ? 0 : undefined,
-																	zIndex: isSticky ? 30 : undefined,
-																	background: 'var(--bg-overlay)',
-																	boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
-																}}
-															>
-																<div className="flex items-center gap-0.5 p-2">
-																	<input
-																		type="checkbox"
-																		aria-label={`Include ${column.header} column`}
-																		checked={isSelected}
-																		onChange={() => toggleColumn(column.index)}
-																		className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
-																	/>
-																	<button
-																		type="button"
-																		onClick={() => handleSort(column)}
-																		className="flex min-w-0 flex-1 items-center gap-1"
-																	>
-																		<span
-																			className={`truncate text-xs font-medium ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
-																		>
-																			{column.header}
-																		</span>
-																		<SortIcon dir={isSorted} />
-																	</button>
-																</div>
-															</div>
-														)
-													})}
-												</div>
-											</div>
+								<ColumnPickerPopover
+									columns={columnMeta}
+									selected={cols}
+									allSelected={allSelected}
+									onToggle={toggleColumn}
+									onToggleAll={toggleAll}
+								/>
+							</>
+						) : hasData && isPreview ? (
+							<p className="text-xs text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
+						) : null}
+						{isBulk ? (
+							<Button
+								variant="filter"
+								size="sm"
+								data-active={showSelected}
+								aria-pressed={showSelected}
+								className="sm:hidden"
+								onClick={() => setShowSelected((shown) => !shown)}
+								ref={selectedToggleRef}
+							>
+								Selected ({selectedParams.length})
+							</Button>
+						) : null}
+					</div>
+				</DialogToolbar>
+				{/* Each band draws the line under itself, as the toolbar above does. */}
+				<SavedPresetNotice notices={savedPresetNotices} />
+				<ActionFeedbackStatus outcome={outcome} />
 
-											<div
-												style={{
-													height: `${rowVirtualizer.totalSize}px`,
-													minWidth: `${tableWidth}px`,
-													position: 'relative'
-												}}
+				<DialogBody kind="flush">
+					<div className="flex h-full min-h-0">
+						<div className={`relative min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
+							{!hasPreviewTarget ? (
+								<div className="flex flex-1 items-center justify-center">
+									<div className="flex flex-col items-center gap-2 text-center">
+										<Icon name="search" className="size-6 text-pro-text-tertiary" />
+										<p className="text-sm text-pro-text-secondary">
+											Select a {dataset.paramLabel.toLowerCase()} above to load chart data
+										</p>
+									</div>
+								</div>
+							) : dataLoading ? (
+								<div className="flex flex-1 items-center justify-center">
+									<div className="flex flex-col items-center gap-3">
+										<LoadingSpinner size={28} />
+										<p className="text-sm text-pro-text-secondary">Fetching chart data...</p>
+									</div>
+								</div>
+							) : dataError ? (
+								<div className="flex flex-1 items-center justify-center">
+									<div className="flex flex-col items-center gap-2">
+										<Icon name="alert-triangle" className="size-6 text-error" />
+										<p className="text-sm text-error">
+											{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
+										</p>
+									</div>
+								</div>
+							) : columnMeta.length === 0 ? (
+								<div className="flex flex-1 items-center justify-center">
+									<div className="flex flex-col items-center gap-2 text-center">
+										<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
+										<p className="text-sm text-pro-text-secondary">No data</p>
+									</div>
+								</div>
+							) : sortedRows.length === 0 ? (
+								<div className="flex flex-1 items-center justify-center">
+									<div className="flex flex-col items-center gap-2 text-center">
+										<Icon name="search" className="size-6 text-pro-text-tertiary" />
+										<p className="text-sm text-pro-text-secondary">
+											{dateRange && rows.length > 0
+												? 'No rows in selected date range'
+												: deferredSearch.length > 0
+													? 'No rows match your search'
+													: 'No matching rows'}
+										</p>
+										{dateRange && rows.length > 0 ? (
+											<button
+												type="button"
+												// Clearing removes this button; focus returns to the range picker it cleared.
+												onClick={() =>
+													keepFocus(
+														() => setDateRange(null),
+														() => dateRangeTriggerRef.current
+													)
+												}
+												className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 											>
-												{rowVirtualizer.items.map((virtualRow) => {
-													const row = sortedRows[virtualRow.index]
-													const isOdd = virtualRow.index % 2 === 1
+												Clear date range
+											</button>
+										) : null}
+									</div>
+								</div>
+							) : (
+								<div className="relative min-h-0 flex-1">
+									<div
+										aria-hidden
+										className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 transition-opacity duration-200"
+										style={{
+											opacity: canScrollRight ? 1 : 0,
+											background: 'linear-gradient(to left, var(--bg-overlay) 0%, transparent 100%)'
+										}}
+									/>
+									<div
+										ref={setScroller}
+										className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
+										style={
+											{
+												'--sticky-shadow': canScrollLeft ? '4px 0 8px -2px rgba(0,0,0,0.25)' : 'none'
+											} as CSSProperties
+										}
+									>
+										<div className="sticky top-0 z-20 bg-overlay" style={{ minWidth: `${tableWidth}px` }}>
+											<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
+												{columnMeta.map((column, position) => {
+													const isSelected = cols.has(column.index)
+													const isSorted = sortState?.index === column.index ? activeSortDirection : false
+													const isSticky = position === 0
 													return (
 														<div
-															key={row.id}
+															key={column.index}
+															className="border-t border-r border-subtle bg-overlay last:border-r-0"
 															style={{
-																display: 'grid',
-																gridTemplateColumns: gridTemplate,
-																minWidth: `${tableWidth}px`,
-																position: 'absolute',
-																top: 0,
-																left: 0,
-																width: '100%',
-																height: `${virtualRow.size}px`,
-																transform: `translateY(${virtualRow.start}px)`
+																position: isSticky ? 'sticky' : undefined,
+																left: isSticky ? 0 : undefined,
+																zIndex: isSticky ? 30 : undefined,
+																background: 'var(--bg-overlay)',
+																boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 															}}
 														>
-															{columnMeta.map((column, position) => {
-																const rawValue = row.values[column.index] ?? ''
-																const displayValue = formatCellValue(rawValue, column)
-																const isSticky = position === 0
-																const isSelected = cols.has(column.index)
-																const tone = isSelected ? getCellTone(rawValue, column) : ''
-																return (
-																	<div
-																		key={column.index}
-																		title={rawValue || undefined}
-																		className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
-																		style={{
-																			textAlign: column.align,
-																			position: isSticky ? 'sticky' : undefined,
-																			left: isSticky ? 0 : undefined,
-																			zIndex: isSticky ? 1 : undefined,
-																			background: isSticky
-																				? 'var(--bg-overlay)'
-																				: isOdd
-																					? 'var(--bg-primary)'
-																					: undefined,
-																			boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
-																		}}
+															<div className="flex items-center gap-0.5 p-2">
+																<input
+																	type="checkbox"
+																	aria-label={`Include ${column.header} column`}
+																	checked={isSelected}
+																	onChange={() => toggleColumn(column.index)}
+																	className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
+																/>
+																<button
+																	type="button"
+																	onClick={() => handleSort(column)}
+																	className="flex min-w-0 flex-1 items-center gap-1"
+																>
+																	<span
+																		className={`truncate text-xs font-medium ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
 																	>
-																		{displayValue}
-																	</div>
-																)
-															})}
+																		{column.header}
+																	</span>
+																	<SortIcon dir={isSorted} />
+																</button>
+															</div>
 														</div>
 													)
 												})}
 											</div>
-											{isPreview ? (
-												<PlaceholderRows
-													columnMeta={columnMeta}
-													gridTemplate={gridTemplate}
-													tableWidth={tableWidth}
-													rows={sortedRows}
-													cols={cols}
-												/>
-											) : null}
+										</div>
+
+										<div
+											style={{
+												height: `${rowVirtualizer.totalSize}px`,
+												minWidth: `${tableWidth}px`,
+												position: 'relative'
+											}}
+										>
+											{rowVirtualizer.items.map((virtualRow) => {
+												const row = sortedRows[virtualRow.index]
+												const isOdd = virtualRow.index % 2 === 1
+												return (
+													<div
+														key={row.id}
+														style={{
+															display: 'grid',
+															gridTemplateColumns: gridTemplate,
+															minWidth: `${tableWidth}px`,
+															position: 'absolute',
+															top: 0,
+															left: 0,
+															width: '100%',
+															height: `${virtualRow.size}px`,
+															transform: `translateY(${virtualRow.start}px)`
+														}}
+													>
+														{columnMeta.map((column, position) => {
+															const rawValue = row.values[column.index] ?? ''
+															const displayValue = formatCellValue(rawValue, column)
+															const isSticky = position === 0
+															const isSelected = cols.has(column.index)
+															const tone = isSelected ? getCellTone(rawValue, column) : ''
+															return (
+																<div
+																	key={column.index}
+																	title={rawValue || undefined}
+																	className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+																	style={{
+																		textAlign: column.align,
+																		position: isSticky ? 'sticky' : undefined,
+																		left: isSticky ? 0 : undefined,
+																		zIndex: isSticky ? 1 : undefined,
+																		background: isSticky
+																			? 'var(--bg-overlay)'
+																			: isOdd
+																				? 'var(--bg-primary)'
+																				: undefined,
+																		boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
+																	}}
+																>
+																	{displayValue}
+																</div>
+															)
+														})}
+													</div>
+												)
+											})}
 										</div>
 										{isPreview ? (
-											<>
-												<div
-													className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
-													style={{
-														top: '20%',
-														backdropFilter: 'blur(4px)',
-														WebkitBackdropFilter: 'blur(4px)',
-														maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
-														WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
-													}}
-												/>
-												<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
-													<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-														<p className="text-sm font-semibold text-pro-text-primary">
-															This is a preview — subscribe to download full datasets
-														</p>
-														<p className="text-xs text-pro-text-tertiary">
-															Get access to all rows, all columns, and unlimited CSV downloads
-														</p>
-														<Link
-															href="/subscribe"
-															className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
-														>
-															<Icon name="arrow-up-right" className="size-4" />
-															Subscribe
-														</Link>
-													</div>
-												</div>
-											</>
+											<PlaceholderRows
+												columnMeta={columnMeta}
+												gridTemplate={gridTemplate}
+												tableWidth={tableWidth}
+												rows={sortedRows}
+												cols={cols}
+											/>
 										) : null}
 									</div>
-								)}
-							</div>
-
-							{isBulk ? (
-								<BulkPreviewSidebar
-									dataset={dataset}
-									selectedParams={selectedParams}
-									activePreviewValue={activePreviewValue}
-									csvQueries={csvQueries}
-									onSelectActive={(value) =>
-										// On a phone, previewing an item switches to the table; the toggle keeps focus there.
-										keepFocus(
-											() => {
-												handleSetActive(value)
-												setShowSelected(false)
-											},
-											() => selectedToggleRef.current
-										)
-									}
-									showOnPhone={showingSelected}
-									onRemove={handleRemoveParam}
-									onClearAll={() => keepFocus(handleClearParams, pickerTrigger)}
-									onDownloadSingle={(param) => handleDownloadSingle(param, 'csv', `download:${param.value}`)}
-									confirmed={confirmed}
-									pickerTrigger={pickerTrigger}
-									isPreview={!!isPreview}
-									readyCount={readyCount}
-									loadingCount={loadingCount}
-								/>
-							) : null}
+									{isPreview ? (
+										<>
+											<div
+												className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
+												style={{
+													top: '20%',
+													backdropFilter: 'blur(4px)',
+													WebkitBackdropFilter: 'blur(4px)',
+													maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
+													WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
+												}}
+											/>
+											<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
+												<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
+													<p className="text-sm font-semibold text-pro-text-primary">
+														This is a preview — subscribe to download full datasets
+													</p>
+													<p className="text-xs text-pro-text-tertiary">
+														Get access to all rows, all columns, and unlimited CSV downloads
+													</p>
+													<Link
+														href="/subscribe"
+														className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
+													>
+														<Icon name="arrow-up-right" className="size-4" />
+														Subscribe
+													</Link>
+												</div>
+											</div>
+										</>
+									) : null}
+								</div>
+							)}
 						</div>
-					</DialogBody>
-				</Dialog>
-			</Ariakit.DialogProvider>
+
+						{isBulk ? (
+							<SelectedListSidebar
+								noun={dataset.paramLabel.toLowerCase()}
+								items={selectedParams}
+								queries={csvQueries}
+								activeValue={activePreviewValue}
+								onPreview={(value) =>
+									// On a phone, previewing an item switches to the table; the toggle keeps focus there.
+									keepFocus(
+										() => {
+											handleSetActive(value)
+											setShowSelected(false)
+										},
+										() => selectedToggleRef.current
+									)
+								}
+								showOnPhone={showingSelected}
+								onRemove={handleRemoveParam}
+								onClearAll={handleClearParams}
+								onDownload={(param) => handleDownloadSingle(param, 'csv', `download:${param.value}`)}
+								confirmed={confirmed}
+								pickerTrigger={pickerTrigger}
+								isPreview={!!isPreview}
+								readyCount={readyCount}
+								loadingCount={loadingCount}
+							/>
+						) : null}
+					</div>
+				</DialogBody>
+			</Dialog>
 			{isPreview ? (
 				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
@@ -1705,8 +1591,7 @@ function MultiOptionPickerPopover({
 	selected,
 	onToggle,
 	onClearAll,
-	onAddMultiple,
-	maxSelections
+	onAddMultiple
 }: {
 	triggerRef: RefObject<HTMLButtonElement | null>
 	label: string
@@ -1715,7 +1600,6 @@ function MultiOptionPickerPopover({
 	onToggle: (option: ParamOption) => void
 	onClearAll: () => void
 	onAddMultiple: (options: Array<ParamOption>) => void
-	maxSelections: number
 }) {
 	const popoverStore = Ariakit.usePopoverStore()
 	const [optionSearch, setOptionSearch] = useState('')
@@ -1731,13 +1615,13 @@ function MultiOptionPickerPopover({
 		return source.slice(0, 200)
 	}, [options, deferredOptionSearch])
 
-	const capHit = selected.length >= maxSelections
+	const capHit = selected.length >= MAX_PARAMS
 
 	const unselectedInView = useMemo(
 		() => filtered.filter((o) => !selectedValues.has(o.value)),
 		[filtered, selectedValues]
 	)
-	const canAddAll = unselectedInView.length > 0 && selected.length + unselectedInView.length <= maxSelections
+	const canAddAll = unselectedInView.length > 0 && selected.length + unselectedInView.length <= MAX_PARAMS
 
 	// One pick is named; the count of several shows once, in the label.
 	const triggerText =
@@ -1764,9 +1648,7 @@ function MultiOptionPickerPopover({
 			>
 				<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
 					<span className="text-xs font-medium text-pro-text-secondary">
-						{Number.isFinite(maxSelections)
-							? `${selected.length}/${maxSelections} selected${capHit ? ' · remove one to add more' : ''}`
-							: `${selected.length} selected`}
+						{selected.length}/{MAX_PARAMS} selected{capHit ? ' · remove one to add more' : ''}
 					</span>
 					<div className="flex items-center gap-2">
 						{canAddAll ? (
@@ -1818,7 +1700,7 @@ function MultiOptionPickerPopover({
 									type="button"
 									disabled={disabled}
 									onClick={() => onToggle(opt)}
-									title={disabled ? `Max ${maxSelections} items` : undefined}
+									title={disabled ? `Max ${MAX_PARAMS} items` : undefined}
 									className={`flex w-full items-center gap-2.5 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 ${
 										isSelected ? 'text-pro-text-primary' : 'text-pro-text-secondary'
 									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
@@ -1906,157 +1788,5 @@ function ColumnPickerPopover({
 				</div>
 			</Ariakit.Popover>
 		</Ariakit.PopoverProvider>
-	)
-}
-
-interface CsvQueryStatus {
-	data: unknown
-	isLoading: boolean
-	error: unknown
-}
-
-interface BulkPreviewSidebarProps {
-	dataset: ChartDatasetDefinition
-	selectedParams: Array<ParamOption>
-	activePreviewValue: string | null
-	csvQueries: ReadonlyArray<CsvQueryStatus>
-	onSelectActive: (value: string) => void
-	/** Below sm the list replaces the table instead of sitting beside it. */
-	showOnPhone: boolean
-	onRemove: (value: string) => void
-	onClearAll: () => void
-	onDownloadSingle: (param: ParamOption) => void
-	/** Whether a download button shows its confirmation now. */
-	confirmed: (action: string) => boolean
-	/** Takes focus when the last row leaves. */
-	pickerTrigger: () => HTMLElement | null
-	/** A preview downloads nothing: the header Download opens the subscribe prompt. */
-	isPreview: boolean
-	readyCount: number
-	loadingCount: number
-}
-
-function BulkPreviewSidebar({
-	dataset,
-	selectedParams,
-	activePreviewValue,
-	csvQueries,
-	onSelectActive,
-	showOnPhone,
-	onRemove,
-	onClearAll,
-	onDownloadSingle,
-	confirmed,
-	pickerTrigger,
-	isPreview,
-	readyCount,
-	loadingCount
-}: BulkPreviewSidebarProps) {
-	const listRef = useRef<HTMLDivElement>(null)
-	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
-	const removeRow = (value: string, index: number) =>
-		keepFocus(
-			() => onRemove(value),
-			() => {
-				const removeButtons = listRef.current?.querySelectorAll<HTMLElement>('[data-row-remove]') ?? []
-				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? pickerTrigger()
-			}
-		)
-	return (
-		<aside
-			className={`w-full shrink-0 flex-col border-subtle sm:flex sm:w-72 sm:border-l ${showOnPhone ? 'flex' : 'hidden'}`}
-		>
-			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
-				<div className="min-w-0">
-					<p className="text-xs font-semibold text-pro-text-primary">
-						Selected {dataset.paramLabel.toLowerCase()}s ({selectedParams.length})
-					</p>
-					{loadingCount > 0 ? (
-						<p className="text-[10px] text-pro-text-tertiary">
-							Ready {readyCount}/{selectedParams.length}
-						</p>
-					) : null}
-				</div>
-				{selectedParams.length > 0 ? (
-					<button
-						type="button"
-						onClick={onClearAll}
-						className="shrink-0 text-[11px] text-pro-text-tertiary hover:text-pro-text-primary hover:underline"
-					>
-						Clear all
-					</button>
-				) : null}
-			</div>
-			<div ref={listRef} className="flex-1 overflow-auto">
-				{selectedParams.map((param, i) => {
-					const query = csvQueries[i]
-					const isActive = param.value === activePreviewValue
-					const isReady = typeof query?.data === 'string'
-					const isQueryLoading = !!query?.isLoading
-					const hasError = !!query?.error
-					return (
-						<div
-							key={param.value}
-							className={`flex items-center gap-1.5 border-b border-subtle px-2.5 py-2 text-xs transition-colors ${
-								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
-							}`}
-						>
-							<button
-								type="button"
-								onClick={() => onSelectActive(param.value)}
-								className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
-								title={`Preview ${param.label}`}
-								aria-current={isActive ? true : undefined}
-							>
-								<span className="flex size-4 shrink-0 items-center justify-center">
-									{isQueryLoading ? (
-										<LoadingSpinner size={12} />
-									) : hasError ? (
-										<Icon name="alert-triangle" className="size-3.5 text-error" />
-									) : isReady ? (
-										<Icon name="check" className="size-3.5 text-success" />
-									) : null}
-								</span>
-								<span
-									className={`truncate ${isActive ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'}`}
-								>
-									{param.label}
-								</span>
-							</button>
-							{isPreview ? null : (
-								<button
-									type="button"
-									onClick={() => onDownloadSingle(param)}
-									disabled={!isReady}
-									aria-label={`Download ${param.label} CSV`}
-									className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
-								>
-									<ConfirmableContent
-										confirmed={confirmed(`download:${param.value}`)}
-										idle={<Icon name="download-cloud" className="size-3.5" />}
-										done={<Icon name="check" className="size-3.5" />}
-									/>
-								</button>
-							)}
-							<button
-								type="button"
-								onClick={() => removeRow(param.value, i)}
-								data-row-remove
-								title="Remove"
-								aria-label={`Remove ${param.label}`}
-								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"
-							>
-								<Icon name="x" className="size-3.5" />
-							</button>
-						</div>
-					)
-				})}
-			</div>
-			{isPreview ? null : (
-				<p className="border-t border-subtle p-3 text-center text-[10px] text-pro-text-tertiary">
-					Download combined puts each {dataset.paramLabel.toLowerCase()} in its own column
-				</p>
-			)}
-		</aside>
 	)
 }

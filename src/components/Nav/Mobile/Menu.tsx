@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { lazy, Suspense, useState } from 'react'
 import { DialogCloseButton } from '~/ui/Dialog'
+import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
 import { observeMenu, trackMenuClick } from '../menuAnalytics'
@@ -16,6 +17,7 @@ export function Menu({
 	mainLinks,
 	pinnedPages,
 	userDashboards,
+	dashboardsStatus,
 	footerLinks,
 	oldMetricLinks,
 	asPath
@@ -23,6 +25,8 @@ export function Menu({
 	mainLinks: TNavLinks
 	pinnedPages: Array<TNavLink>
 	userDashboards: Array<TNavLink>
+	/** The dashboards list's load error, shown under the list. */
+	dashboardsStatus: React.ReactNode
 	footerLinks: TNavLinks
 	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
@@ -33,12 +37,13 @@ export function Menu({
 	return (
 		<Ariakit.DialogProvider open={show} setOpen={setShow}>
 			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25">
-				<span className="sr-only">Open Navigation Menu</span>
+				<span className="sr-only">Open navigation menu</span>
 				<Icon name="menu" height={16} width={16} />
 			</Ariakit.DialogDisclosure>
 
 			<Ariakit.Dialog
 				aria-label="Navigation menu"
+				ref={catchLostFocus}
 				// Keep expanded navigation sections and the scroll position when reopening.
 				unmountOnHide={false}
 				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-surface p-4 pl-5 text-primary"
@@ -112,8 +117,8 @@ export function Menu({
 						<PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} onClose={handleClose} />
 					) : null}
 
-					{userDashboards.length > 0 ? (
-						<div className="group mb-3 flex flex-col first:mb-auto">
+					{userDashboards.length > 0 || dashboardsStatus ? (
+						<div className="group mb-3 flex flex-col first:mb-auto" data-nav-dashboards>
 							<p className="mb-1 label-sm text-secondary">Your Dashboards</p>
 							<hr className="border-subtle" />
 							{userDashboards.map(({ name, route, icon }) => (
@@ -126,6 +131,7 @@ export function Menu({
 									onClick={handleClose}
 								/>
 							))}
+							{dashboardsStatus ? <div className="pt-2">{dashboardsStatus}</div> : null}
 						</div>
 					) : null}
 
@@ -148,7 +154,7 @@ export function Menu({
 
 					<hr className="my-3 border-subtle" />
 
-					<Account asPath={asPath} />
+					<Account />
 				</nav>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>

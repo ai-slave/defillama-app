@@ -11,7 +11,6 @@ import {
 } from '~/containers/Articles/api'
 import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
-import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatMonthYear } from '~/utils/dateFormat'
@@ -231,19 +230,6 @@ export function AuthorProfileForm() {
 	if (loaders.userLoading || (isAuthenticated && isLoading)) {
 		return (
 			<div className="mx-auto flex max-w-3xl items-center justify-center py-24 text-sm text-tertiary">Loading…</div>
-		)
-	}
-
-	if (!isAuthenticated) {
-		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
-				<h1 className="text-xl font-semibold text-primary">Sign in to edit your profile</h1>
-				<p className="text-sm text-secondary">Your author profile is tied to your DefiLlama account.</p>
-				<SignInModal
-					text="Sign in"
-					className="mr-auto rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand"
-				/>
-			</div>
 		)
 	}
 

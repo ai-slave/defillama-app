@@ -1,9 +1,12 @@
 // @vitest-environment happy-dom
 
-import { act, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, type ReactNode, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartStyleEditor } from '../ChartStyleEditor'
 
 const revenueSeries: ChartConfiguration['series'][number] = {
@@ -41,14 +44,17 @@ const caps = {
 const view = { logScale: false, stacked: false, showLabels: false, percentage: false }
 const resetView = { logScale: false, stacked: true, showLabels: false, percentage: false }
 const PREVIEW_DELAY = 350
+const noop = () => {}
 
 function EditorHarness({
 	onSave,
 	onPreview,
 	editorConfig = config,
-	originalConfig
+	originalConfig,
+	onCancel = noop
 }: {
 	onSave: (config: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
+	onCancel?: () => void
 	onPreview?: (config: ChartConfiguration) => void
 	editorConfig?: ChartConfiguration
 	originalConfig?: ChartConfiguration
@@ -79,7 +85,7 @@ function EditorHarness({
 				resetView={resetView}
 				onPreview={handlePreview}
 				onSave={handleSave}
-				onCancel={vi.fn()}
+				onCancel={onCancel}
 			/>
 		</>
 	)
@@ -88,6 +94,9 @@ function EditorHarness({
 describe('ChartStyleEditor', () => {
 	let container: HTMLDivElement
 	let root: Root
+	// The editor saves through a mutation.
+	const client = new QueryClient()
+	const render = (node: ReactNode) => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>)
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -106,9 +115,9 @@ describe('ChartStyleEditor', () => {
 		vi.useFakeTimers()
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		const onPreview = vi.fn()
-		await act(async () => root.render(<EditorHarness onSave={onSave} onPreview={onPreview} />))
+		await act(async () => render(<EditorHarness onSave={onSave} onPreview={onPreview} />))
 
-		const annotationInput = container.querySelector<HTMLInputElement>('[aria-label="Annotation 1 label"]')
+		const annotationInput = document.querySelector<HTMLInputElement>('[aria-label="Annotation 1 label"]')
 		if (!annotationInput) throw new Error('Expected annotation label input')
 		const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
 		if (!setInputValue) throw new Error('Expected native input value setter')
@@ -119,8 +128,8 @@ describe('ChartStyleEditor', () => {
 			})
 		}
 
-		expect(container.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('Existing note')
-		expect(container.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('Existing note')
+		expect(document.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('Existing note')
+		expect(document.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('Existing note')
 		expect(onPreview).not.toHaveBeenCalled()
 		expect(onSave).not.toHaveBeenCalled()
 
@@ -128,10 +137,10 @@ describe('ChartStyleEditor', () => {
 		expect(onPreview).not.toHaveBeenCalled()
 		await act(async () => vi.advanceTimersByTime(1))
 		expect(onPreview).toHaveBeenCalledOnce()
-		expect(container.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('hello')
-		expect(container.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('Existing note')
+		expect(document.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('hello')
+		expect(document.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('Existing note')
 
-		const saveButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+		const saveButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => button.textContent === 'Save'
 		)
 		if (!saveButton) throw new Error('Expected save button')
@@ -144,14 +153,14 @@ describe('ChartStyleEditor', () => {
 				expect.objectContaining({ hallmarks: [[expect.any(Number), 'hello']] })
 			]
 		])
-		expect(container.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('hello')
+		expect(document.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('hello')
 	})
 
 	test('flushes a pending text preview when the input loses focus', async () => {
 		vi.useFakeTimers()
 		const onPreview = vi.fn()
-		await act(async () => root.render(<EditorHarness onSave={vi.fn(async () => undefined)} onPreview={onPreview} />))
-		const annotationInput = container.querySelector<HTMLInputElement>('[aria-label="Annotation 1 label"]')
+		await act(async () => render(<EditorHarness onSave={vi.fn(async () => undefined)} onPreview={onPreview} />))
+		const annotationInput = document.querySelector<HTMLInputElement>('[aria-label="Annotation 1 label"]')
 		if (!annotationInput) throw new Error('Expected annotation label input')
 		const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
 		if (!setInputValue) throw new Error('Expected native input value setter')
@@ -163,24 +172,24 @@ describe('ChartStyleEditor', () => {
 		})
 
 		expect(onPreview).toHaveBeenCalledOnce()
-		expect(container.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('Updated note')
+		expect(document.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('Updated note')
 	})
 
 	test('previews discrete chart options and added annotations immediately', async () => {
 		const onPreview = vi.fn()
-		await act(async () => root.render(<EditorHarness onSave={vi.fn(async () => undefined)} onPreview={onPreview} />))
-		const barButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+		await act(async () => render(<EditorHarness onSave={vi.fn(async () => undefined)} onPreview={onPreview} />))
+		const barButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => button.textContent === 'bar'
 		)
-		const addAnnotationButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+		const addAnnotationButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => button.textContent === '+ Add annotation'
 		)
 		if (!barButton || !addAnnotationButton) throw new Error('Expected discrete editor actions')
 
 		await act(async () => barButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-		expect(container.querySelector('[data-testid="preview-type"]')?.textContent).toBe('bar')
+		expect(document.querySelector('[data-testid="preview-type"]')?.textContent).toBe('bar')
 		await act(async () => addAnnotationButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-		expect(container.querySelector('[data-testid="preview-annotation-count"]')?.textContent).toBe('2')
+		expect(document.querySelector('[data-testid="preview-annotation-count"]')?.textContent).toBe('2')
 		expect(onPreview).toHaveBeenCalledTimes(2)
 	})
 
@@ -204,19 +213,19 @@ describe('ChartStyleEditor', () => {
 			]
 		} satisfies ChartConfiguration
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
-		await act(async () => root.render(<EditorHarness editorConfig={editorConfig} onSave={onSave} />))
+		await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} />))
 
-		const selects = container.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
+		const selects = document.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
 		expect([...selects].map((select) => select.value)).toEqual(['unknown', 'unknown', 'stock'])
 
 		await act(async () => {
 			selects[0].value = 'flow'
 			selects[0].dispatchEvent(new Event('change', { bubbles: true }))
 		})
-		const after = container.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
+		const after = document.querySelectorAll<HTMLSelectElement>('[aria-label$="aggregation"]')
 		expect([...after].map((select) => select.value)).toEqual(['flow', 'flow', 'stock'])
 
-		const saveButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+		const saveButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => button.textContent === 'Save'
 		)
 		if (!saveButton) throw new Error('Expected save button')
@@ -245,11 +254,9 @@ describe('ChartStyleEditor', () => {
 		} satisfies ChartConfiguration
 		const onPreview = vi.fn()
 		const onSave = vi.fn(async () => undefined)
-		await act(async () =>
-			root.render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />)
-		)
+		await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />))
 
-		const secondName = container.querySelector<HTMLInputElement>('[aria-label="Series 2 name"]')
+		const secondName = document.querySelector<HTMLInputElement>('[aria-label="Series 2 name"]')
 		if (!secondName) throw new Error('Expected second series name input')
 		const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
 		if (!setInputValue) throw new Error('Expected native input value setter')
@@ -260,14 +267,14 @@ describe('ChartStyleEditor', () => {
 			vi.advanceTimersByTime(PREVIEW_DELAY)
 		})
 
-		const saveButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+		const saveButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => button.textContent === 'Save'
 		)
 		if (!saveButton) throw new Error('Expected save button')
 		expect(saveButton.disabled).toBe(true)
-		expect(container.querySelector('footer')?.textContent).toContain('must be unique')
+		expect(document.querySelector('footer')?.textContent).toContain('must be unique')
 		expect(onPreview).not.toHaveBeenCalled()
-		expect(container.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Fees')
+		expect(document.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Fees')
 
 		await act(async () => {
 			setInputValue.call(secondName, 'Net Revenue')
@@ -277,7 +284,7 @@ describe('ChartStyleEditor', () => {
 
 		expect(saveButton.disabled).toBe(false)
 		expect(onPreview).toHaveBeenCalledOnce()
-		expect(container.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Net Revenue')
+		expect(document.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Net Revenue')
 	})
 
 	const bucketSeries = (name: string, yField: string): ChartConfiguration['series'][number] => ({
@@ -300,13 +307,13 @@ describe('ChartStyleEditor', () => {
 
 	const clickButton = async (label: string) => {
 		const button =
-			container.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`) ??
-			[...container.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label)
+			document.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`) ??
+			[...document.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label)
 		if (!button) throw new Error(`Expected button "${label}"`)
 		await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
 
-	const previewNames = () => container.querySelector('[data-testid="preview-series-names"]')?.textContent
+	const previewNames = () => document.querySelector('[data-testid="preview-series-names"]')?.textContent
 
 	test.each(['unknown', 'stock'] as const)(
 		'discards unsaved aggregation changes on reset from %s',
@@ -314,10 +321,8 @@ describe('ChartStyleEditor', () => {
 			const editorConfig = { ...config, series: [{ ...revenueSeries, metricClass }] }
 			const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 			const onPreview = vi.fn((_config: ChartConfiguration) => undefined)
-			await act(async () =>
-				root.render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />)
-			)
-			const select = container.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
+			await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />))
+			const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
 			if (!select) throw new Error('Expected aggregation select')
 			await act(async () => {
 				select.value = 'flow'
@@ -337,11 +342,11 @@ describe('ChartStyleEditor', () => {
 
 	test('moves a series up and saves the permutation in the patch', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
-		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
+		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
-		const secondSeriesInput = container.querySelector('[aria-label="Series 2 name"]')
+		const secondSeriesInput = document.querySelector('[aria-label="Series 2 name"]')
 		await clickButton('Move series 2 up')
-		expect(container.querySelector('[aria-label="Series 1 name"]')).toBe(secondSeriesInput)
+		expect(document.querySelector('[aria-label="Series 1 name"]')).toBe(secondSeriesInput)
 		expect(previewNames()).toBe('2 days|11-20 days|6-10 days|1 day')
 
 		await clickButton('Save')
@@ -355,7 +360,7 @@ describe('ChartStyleEditor', () => {
 
 	test('sorts series naturally with the sort button', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
-		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
+		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
 		await clickButton('Sort series')
 		expect(previewNames()).toBe('1 day|2 days|6-10 days|11-20 days')
@@ -369,7 +374,7 @@ describe('ChartStyleEditor', () => {
 
 	test('omits order from the patch when series were not reordered', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
-		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
+		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
 		await clickButton('Save')
 		const call = onSave.mock.calls[0]
@@ -395,7 +400,7 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		const onPreview = vi.fn((_config: ChartConfiguration) => undefined)
 		await act(async () =>
-			root.render(
+			render(
 				<EditorHarness
 					editorConfig={editorConfig}
 					originalConfig={originalConfig}
@@ -425,24 +430,112 @@ describe('ChartStyleEditor', () => {
 				[1_768_867_200, '']
 			]
 		}
-		await act(async () => root.render(<EditorHarness editorConfig={duplicateConfig} onSave={onSave} />))
-		const surviving = container.querySelector<HTMLInputElement>('[aria-label="Annotation 2 label"]')!
-		surviving.focus()
+		await act(async () => render(<EditorHarness editorConfig={duplicateConfig} onSave={onSave} />))
+		const surviving = document.querySelector<HTMLInputElement>('[aria-label="Annotation 2 label"]')!
+		await act(async () => surviving.focus())
 		await clickButton('Remove annotation')
-		expect(container.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+		expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
 		expect(document.activeElement).toBe(surviving)
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(surviving, 'Edited')
 			surviving.dispatchEvent(new Event('input', { bubbles: true }))
 		})
-		expect(container.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+		expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
 		await clickButton('+ Add annotation')
-		expect(container.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+		expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
 		await clickButton('Save')
 		expect(onSave.mock.calls[0][0].hallmarks).toEqual([
 			[1_768_867_200, 'Edited'],
 			[expect.any(Number), '']
 		])
 		expect(onSave.mock.calls[0][1].hallmarks).toEqual(onSave.mock.calls[0][0].hallmarks)
+	})
+
+	const typeTitle = async (value: string) => {
+		const title = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(title, value)
+			title.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+	}
+	const named = (label: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === label)
+
+	test('a running save keeps Cancel and Escape from asking or closing until it settles', async () => {
+		const saving = Promise.withResolvers<undefined>()
+		const onCancel = vi.fn()
+		await act(async () => render(<EditorHarness onSave={() => saving.promise} onCancel={onCancel} />))
+		await typeTitle('Draft title')
+		await clickButton('Save')
+		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
+		await clickButton('Cancel')
+		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+		const title = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		await act(async () =>
+			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		)
+		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+		expect(onCancel).not.toHaveBeenCalled()
+		expect(named('Cancel')!.getAttribute('aria-disabled')).toBe('true')
+		await act(async () => saving.resolve(undefined))
+		await waitForUi(() => expect(named('Cancel')!.getAttribute('aria-disabled')).toBeNull())
+	})
+
+	test('Reset during a running save keeps the editor locked and the saved title', async () => {
+		const saving = Promise.withResolvers<undefined>()
+		const onSave = vi.fn((_config: ChartConfiguration, _patch: ChartStylePatch) => saving.promise)
+		await act(async () => render(<EditorHarness onSave={onSave} />))
+		await typeTitle('First title')
+		await clickButton('Save')
+		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
+		await clickButton('Reset')
+		expect(named('Cancel')!.getAttribute('aria-disabled')).toBe('true')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!.value).toBe('First title')
+		await act(async () => saving.resolve(undefined))
+		expect(onSave.mock.calls.map(([saved]) => saved.title)).toEqual(['First title'])
+	})
+
+	test('a running save locks every draft field, so no later edit is lost when it lands', async () => {
+		const saving = Promise.withResolvers<undefined>()
+		await act(async () => render(<EditorHarness onSave={() => saving.promise} />))
+		await typeTitle('First title')
+		await clickButton('Save')
+		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
+		const fields = [
+			document.querySelector('[aria-label="Chart title"]')!,
+			document.querySelector('input[type="color"]')!,
+			document.querySelector('[aria-label="Series 1 name"]')!,
+			document.querySelector('[aria-label="Annotation 1 label"]')!,
+			named('bar')!,
+			named('+ Add annotation')!,
+			named('Reset')!
+		]
+		// A browser disables every control inside a disabled fieldset; happy-dom does not compute that, so read it the same way.
+		// Reset stays focusable while locked (aria-disabled), like Cancel and the ×.
+		const disabled = (field: Element) =>
+			field.matches(':disabled, [aria-disabled="true"]') || field.closest('fieldset[disabled]') !== null
+		expect(fields.map(disabled)).toEqual([true, true, true, true, true, true, true])
+		await act(async () => saving.resolve(undefined))
+		await waitForUi(() => expect(fields.map(disabled)).toEqual([false, false, false, false, false, false, false]))
+	})
+
+	test('names each series colour swatch by its series', async () => {
+		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={vi.fn(async () => undefined)} />))
+		expect([...document.querySelectorAll('input[type="color"]')].map(accessibleName)).toEqual([
+			'Series 1 color',
+			'Series 2 color',
+			'Series 3 color',
+			'Series 4 color'
+		])
+	})
+
+	test('an edit typed back to the opened value closes on Cancel without asking', async () => {
+		const onCancel = vi.fn()
+		await act(async () => render(<EditorHarness onSave={vi.fn(async () => undefined)} onCancel={onCancel} />))
+		await typeTitle('Draft title')
+		await typeTitle(config.title)
+		await clickButton('Cancel')
+		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+		expect(onCancel).toHaveBeenCalledOnce()
 	})
 })

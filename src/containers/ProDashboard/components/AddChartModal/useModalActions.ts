@@ -32,16 +32,6 @@ export function useModalActions(
 
 	const { state, actions } = useModalState(editItem, draftItem)
 
-	const selectedProtocolData = useMemo(
-		() => protocols.find((p: Protocol) => p.slug === state.selectedProtocol),
-		[protocols, state.selectedProtocol]
-	)
-
-	const selectedChainData = useMemo(
-		() => chains.find((c: Chain) => c.name === state.selectedChain),
-		[chains, state.selectedChain]
-	)
-
 	const chainOptions = useMemo(
 		() => [
 			{ value: 'All', label: 'All chains' },
@@ -90,40 +80,6 @@ export function useModalActions(
 
 		return options
 	}, [protocols])
-
-	const handleChainChange = useCallback(
-		(option: { value: string }) => {
-			actions.setSelectedChain(option.value)
-			actions.setSelectedProtocol(null)
-			actions.setSelectedProtocols([])
-			actions.setSelectedChartType('tvl')
-		},
-		[actions]
-	)
-
-	const handleChainsChange = useCallback(
-		(values: Array<string>) => {
-			actions.setSelectedChains(values)
-		},
-		[actions]
-	)
-
-	const handleProtocolChange = useCallback(
-		(option: { value: string }) => {
-			actions.setSelectedProtocol(option.value)
-			actions.setSelectedChain(null)
-			actions.setSelectedProtocols([])
-			actions.setSelectedChartType('tvl')
-		},
-		[actions]
-	)
-
-	const handleDatasetChainChange = useCallback(
-		(value: string | null) => {
-			actions.setSelectedDatasetChain(value)
-		},
-		[actions]
-	)
 
 	const handleTokensChange = useCallback(
 		(tokens: Array<string>) => {
@@ -397,10 +353,6 @@ export function useModalActions(
 	const uiActions = useMemo(
 		() => ({
 			...actions,
-			handleChainChange,
-			handleChainsChange,
-			handleProtocolChange,
-			handleDatasetChainChange,
 			handleTokensChange,
 			handleAddToComposer,
 			handleRemoveFromComposer,
@@ -411,15 +363,10 @@ export function useModalActions(
 			handleSelectChartCategory,
 			handleBackToChartCategories,
 			handleSubmit,
-			setChartBuilder: actions.setChartBuilder,
 			updateChartBuilder
 		}),
 		[
 			actions,
-			handleChainChange,
-			handleChainsChange,
-			handleProtocolChange,
-			handleDatasetChainChange,
 			handleTokensChange,
 			handleAddToComposer,
 			handleRemoveFromComposer,
@@ -436,23 +383,13 @@ export function useModalActions(
 
 	const computed = useMemo(
 		() => ({
-			selectedProtocolData,
-			selectedChainData,
 			chainOptions,
 			protocolOptions,
 			protocolsLoading,
 			timePeriod,
 			customTimePeriod
 		}),
-		[
-			selectedProtocolData,
-			selectedChainData,
-			chainOptions,
-			protocolOptions,
-			protocolsLoading,
-			timePeriod,
-			customTimePeriod
-		]
+		[chainOptions, protocolOptions, protocolsLoading, timePeriod, customTimePeriod]
 	)
 
 	return {

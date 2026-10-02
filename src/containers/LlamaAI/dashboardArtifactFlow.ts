@@ -7,10 +7,11 @@ export function canAddChartArtifactToDashboard(artifactRef: ChartArtifactRef | u
 	return !readOnly && !!artifactRef && artifactRef.status !== 'needs-repair'
 }
 
-export function buildLlamaAIChartDashboardItem(
-	input: { chartId: string; title: string; artifactRef: ChartArtifactRef },
-	title?: string
-): DashboardItemConfig {
+export function buildLlamaAIChartDashboardItem(input: {
+	chartId: string
+	title: string
+	artifactRef: ChartArtifactRef
+}): DashboardItemConfig {
 	return {
 		id: crypto.randomUUID(),
 		kind: 'llamaai-chart',
@@ -19,7 +20,7 @@ export function buildLlamaAIChartDashboardItem(
 		artifactStatus: input.artifactRef.status,
 		artifactContainsPremium: input.artifactRef.containsPremium,
 		artifactEstimatedMaxCostUsd: input.artifactRef.estimatedMaxCostUsd,
-		title: title || input.title
+		title: input.title
 	}
 }
 
@@ -149,12 +150,13 @@ export class DashboardArtifactActivationError extends Error {
 	}
 }
 
-export async function activateDashboardArtifactsWithConfirmation(
+/** Starts a stored dashboard's refreshes. When the server needs the account to accept the premium cost first, this
+    returns 'needs-confirmation': ask the reader, then call activateDashboardArtifacts with plan.estimatedMaxCostUsd. */
+export async function tryActivateDashboardArtifacts(
 	authorizedFetch: (url: string, options?: RequestInit) => Promise<Response>,
 	dashboardId: string,
-	plan: ReturnType<typeof prepareStoredDashboardActivation>,
-	confirmPremium: (estimatedMaxCostUsd: number) => boolean
-): Promise<'active' | 'declined' | 'pending'> {
+	plan: ReturnType<typeof prepareStoredDashboardActivation>
+): Promise<'active' | 'pending' | 'needs-confirmation'> {
 	try {
 		await activateDashboardArtifacts(authorizedFetch, dashboardId, plan)
 		return 'active'
@@ -164,13 +166,6 @@ export async function activateDashboardArtifactsWithConfirmation(
 			error instanceof DashboardArtifactActivationError &&
 			error.status === 409 &&
 			error.message.includes('confirmed maximum')
-		if (!needsPremiumConfirmation) return 'pending'
-		if (!confirmPremium(plan.estimatedMaxCostUsd)) return 'declined'
-		try {
-			await activateDashboardArtifacts(authorizedFetch, dashboardId, plan, plan.estimatedMaxCostUsd)
-			return 'active'
-		} catch {
-			return 'pending'
-		}
+		return needsPremiumConfirmation ? 'needs-confirmation' : 'pending'
 	}
 }

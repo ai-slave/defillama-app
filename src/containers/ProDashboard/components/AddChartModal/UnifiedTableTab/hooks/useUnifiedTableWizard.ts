@@ -229,8 +229,10 @@ const reducer = (state: WizardState, action: WizardAction): WizardState => {
 	}
 }
 
-export const useUnifiedTableWizard = (presetId?: string, existingConfig?: UnifiedTableConfig) => {
-	const [state, dispatch] = useReducer(reducer, createWizardState(presetId, existingConfig))
+export const useUnifiedTableWizard = (existingConfig: UnifiedTableConfig | undefined) => {
+	const [state, dispatch] = useReducer(reducer, existingConfig, (config) =>
+		createWizardState(config?.activePresetId, config)
+	)
 
 	const setChains = useCallback((chains: Array<string>) => dispatch({ type: 'SET_CHAINS', chains }), [])
 	const setRowHeaders = useCallback(

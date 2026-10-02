@@ -134,7 +134,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 					<meta name="twitter:card" content="summary_large_image" />
 					<meta name="twitter:image" content={ogImageUrl} />
 				</Head>
-				<LlamaAIMobileAppGate interactive>
+				<LlamaAIMobileAppGate>
 					<LlamaAIAnimationPreloads />
 					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 						<p className="flex items-center gap-1 text-center">
@@ -155,7 +155,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 				canonicalUrl={null}
 				noIndex
 			>
-				<LlamaAIMobileAppGate interactive>
+				<LlamaAIMobileAppGate>
 					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 						<div className="text-center">
 							<div className="mb-2 text-lg text-error">{error?.message ?? 'Conversation not found'}</div>
@@ -174,7 +174,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 				<meta name="twitter:card" content="summary_large_image" />
 				<meta name="twitter:image" content={ogImageUrl} />
 			</Head>
-			<LlamaAIMobileAppGate interactive>
+			<LlamaAIMobileAppGate>
 				<LlamaAIAnimationPreloads />
 				<LlamaAIRouteProvider value={routeOverride}>
 					<AgenticChat

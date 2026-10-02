@@ -870,7 +870,7 @@ function ProDashboardContent() {
 				<SimilarDashboards dashboardId={dashboardId} tags={dashboardTags} />
 			) : null}
 
-			<Suspense fallback={<ProDialogFallback width="xl" />}>
+			<Suspense fallback={<ProDialogFallback width="xl" workspace />}>
 				{addModalSession ? (
 					<AddChartModal
 						key={addModalSession.key}
@@ -899,7 +899,7 @@ function ProDashboardContent() {
 				) : null}
 			</Suspense>
 
-			<Suspense fallback={<ProDialogFallback width="xl" />}>
+			<Suspense fallback={<ProDialogFallback width="xl" workspace />}>
 				{sqlModalSession ? (
 					<SqlChartModal
 						key={sqlModalSession.key}

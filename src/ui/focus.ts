@@ -128,6 +128,21 @@ export function takeLostFocus(node: HTMLElement | null) {
 	if (node && (document.activeElement === null || document.activeElement === document.body)) node.focus()
 }
 
+/** The page's content, for focus whose control left with nothing nearer to take it: a dialog closed after its trigger
+    went, such as a sign-in that removed its Sign in button. */
+export function pageContent() {
+	const main = document.querySelector<HTMLElement>('main')
+	if (main) main.tabIndex = -1
+	return main
+}
+
+/** A ref callback for a retry that data removes once it succeeds, outside a dialog: the closest focusable region
+    around the retry (`tabIndex={-1}`, such as a dashboard card or a list) takes focus, unless content that loaded in
+    its place did. Inside a dialog the dialog's own net (catchLostFocus) catches it instead. */
+export const focusRegionOnLeave = passFocusOnLeave((node) =>
+	node.closest('[data-dialog]') ? null : node.parentElement?.closest<HTMLElement>('[tabindex]')
+)
+
 /** A ref callback for a control that data can remove while it has focus. When it leaves holding focus, `target` takes
     focus, unless content that mounted in the same commit already did (takeLostFocus). `target` runs while the control
     is still on the page, so it can pick a neighbour. */

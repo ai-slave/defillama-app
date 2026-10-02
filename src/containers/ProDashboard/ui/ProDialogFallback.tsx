@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useIsClient } from '~/hooks/useIsClient'
-import { type DialogSize, dialogSurfaceStyles, dialogWidthStyles } from '~/ui/Dialog'
+import { type DialogSize, dialogSurfaceStyles, dialogWidthStyles, dialogWorkspaceStyles } from '~/ui/Dialog'
 import { tw } from '~/ui/tw'
 import { SkeletonShimmer } from '../components/ProCardSkeleton'
 
@@ -12,6 +12,8 @@ const BODY_ROWS = ['w-full', 'w-5/6', 'w-2/3']
 
 type ProDialogFallbackProps = {
 	width?: DialogSize
+	/** The shape of a workspace dialog, which keeps a fixed height. */
+	workspace?: boolean
 }
 
 function BodyRows() {
@@ -25,7 +27,7 @@ function BodyRows() {
 	)
 }
 
-export function ProDialogFallback({ width = 'sm' }: ProDialogFallbackProps) {
+export function ProDialogFallback({ width = 'sm', workspace = false }: ProDialogFallbackProps) {
 	const isClient = useIsClient()
 	if (!isClient) return null
 
@@ -33,7 +35,7 @@ export function ProDialogFallback({ width = 'sm' }: ProDialogFallbackProps) {
 		<div
 			aria-busy="true"
 			data-enter
-			className={`${dialogSurfaceStyles} ${dialogWidthStyles[width]} animate-pro-fade-in pro-dashboard`}
+			className={`${dialogSurfaceStyles} ${dialogWidthStyles[width]} ${workspace ? dialogWorkspaceStyles : ''} animate-pro-fade-in pro-dashboard`}
 			data-testid="pro-dialog-fallback"
 		>
 			{/* The shape of the dialog that loads: DialogHeader's row with its ×, then a p-4 body. */}

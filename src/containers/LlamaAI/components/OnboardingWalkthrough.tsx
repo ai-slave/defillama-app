@@ -2,9 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
-import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
+import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { getExperimentVariant } from '~/utils/analytics/experiment'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -79,7 +79,7 @@ interface SpotlightConfig {
 	position: 'above' | 'below'
 }
 
-const SPOTLIGHT_CONFIGS = {
+const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 	explore: {
 		selectors: ['[data-walkthrough="explore-button"]'],
 		title: 'Explore',
@@ -148,7 +148,7 @@ const SPOTLIGHT_CONFIGS = {
 		tone: 'warning',
 		position: 'above'
 	}
-} satisfies Partial<Record<Step, SpotlightConfig>>
+}
 
 // Spotlight hues as theme colours: the glow, hairline, chip, and icon all derive from one variable.
 const TONE_VAR = {
@@ -177,7 +177,6 @@ export function OnboardingWalkthrough({
 }: OnboardingWalkthroughProps) {
 	const isResearchMode = mode === 'research'
 	const [step, setStep] = useState<Step>('intro')
-	const [introExiting, setIntroExiting] = useState(false)
 	const [spotlight, setSpotlight] = useState<{ step: Step; rect: DOMRect; expanded: boolean } | null>(null)
 	const isMobile = useMedia('(max-width: 639px)')
 
@@ -201,10 +200,8 @@ export function OnboardingWalkthrough({
 	const currentStep = RESEARCH_STEPS.has(step) && isResearchMode ? 'prompts' : step
 	const spotlightRect = spotlight?.step === currentStep ? spotlight.rect : null
 	const targetExpanded = spotlight?.step === currentStep && spotlight.expanded
-	const config = getOwnRegistryValue<SpotlightConfig>(SPOTLIGHT_CONFIGS, currentStep)
-	const isSpotlightStep = !!config
-	const firstSpotlightStep =
-		steps.find((candidate) => getOwnRegistryValue(SPOTLIGHT_CONFIGS, candidate) != null) ?? null
+	const config = SPOTLIGHT_CONFIGS[currentStep]
+	const firstSpotlightStep = steps.find((candidate) => SPOTLIGHT_CONFIGS[candidate]) ?? null
 	const isFirstSpotlight = currentStep === firstSpotlightStep
 
 	const tapOrClick = isMobile ? 'Tap' : 'Click'
@@ -216,7 +213,7 @@ export function OnboardingWalkthrough({
 
 	// Find and measure spotlight target(s)
 	useEffect(() => {
-		if (!isSpotlightStep || !config || isAlertsModalOpen) return
+		if (!config || isAlertsModalOpen) return
 
 		const updateRect = () => {
 			const rects: Array<DOMRect> = []
@@ -269,11 +266,11 @@ export function OnboardingWalkthrough({
 			window.removeEventListener('resize', debouncedUpdateRect)
 			window.removeEventListener('scroll', debouncedUpdateRect, true)
 		}
-	}, [currentStep, isSpotlightStep, config, isAlertsModalOpen])
+	}, [currentStep, config, isAlertsModalOpen])
 
 	// Auto-skip spotlight steps whose target element doesn't exist (e.g. alerts when not available)
 	useEffect(() => {
-		if (!isSpotlightStep || !config || isAlertsModalOpen) return
+		if (!config || isAlertsModalOpen) return
 
 		const timer = setTimeout(() => {
 			const hasTarget = config.selectors.some((sel) => document.querySelector(sel))
@@ -286,7 +283,7 @@ export function OnboardingWalkthrough({
 		}, 600)
 
 		return () => clearTimeout(timer)
-	}, [currentStep, isSpotlightStep, config, steps, isAlertsModalOpen])
+	}, [currentStep, config, steps, isAlertsModalOpen])
 
 	// Manage mobile drawer: open when entering a drawer step, close when leaving all drawer steps
 	useEffect(() => {
@@ -309,17 +306,7 @@ export function OnboardingWalkthrough({
 		if (i < steps.length - 1) {
 			const next = steps[i + 1]
 			trackUmamiEvent('llamaai-walkthrough-step', { from: step, to: next, variant })
-
-			// Animate intro modal out before advancing
-			if (step === 'intro') {
-				setIntroExiting(true)
-				setTimeout(() => {
-					setIntroExiting(false)
-					setStep(next)
-				}, 250)
-			} else {
-				setStep(next)
-			}
+			setStep(next)
 		}
 	}, [step, steps, variant])
 
@@ -335,19 +322,13 @@ export function OnboardingWalkthrough({
 		[handleSubmit, onComplete, isResearchMode, setMode, variant]
 	)
 
-	const handleSkip = useCallback(() => {
-		trackUmamiEvent('llamaai-walkthrough-skip', { step: currentStep, variant })
+	const finish = (event: 'skip' | 'start-chatting') => {
+		if (event === 'skip') trackUmamiEvent('llamaai-walkthrough-skip', { step: currentStep, variant })
+		else trackUmamiEvent('llamaai-walkthrough-complete', { action: 'start-chatting', variant })
 		setMode('research')
 		onComplete()
 		requestAnimationFrame(() => promptInputRef.current?.focus())
-	}, [currentStep, variant, setMode, onComplete, promptInputRef])
-
-	const handleStartChatting = useCallback(() => {
-		trackUmamiEvent('llamaai-walkthrough-complete', { action: 'start-chatting', variant })
-		setMode('research')
-		onComplete()
-		requestAnimationFrame(() => promptInputRef.current?.focus())
-	}, [variant, setMode, onComplete, promptInputRef])
+	}
 
 	if (typeof document === 'undefined' || isAlertsModalOpen) return null
 
@@ -355,7 +336,7 @@ export function OnboardingWalkthrough({
 
 	// Show a plain dark overlay while waiting for spotlight measurement
 	// so there's no flash of bare screen between intro and first spotlight
-	const showGapOverlay = isSpotlightStep && !spotlightRect
+	const showGapOverlay = config && !spotlightRect
 
 	return (
 		<Ariakit.Portal>
@@ -366,80 +347,77 @@ export function OnboardingWalkthrough({
 						type="button"
 						aria-label="Skip walkthrough"
 						className="pointer-events-auto absolute inset-0 bg-screen-dim"
-						onClick={handleSkip}
+						onClick={() => finish('skip')}
 					/>
 				) : null}
 
 				{/* ─── Intro ─── */}
-				{currentStep === 'intro' ? (
-					<Ariakit.Dialog
-						open
-						onClose={handleSkip}
-						autoFocusOnHide={false}
-						backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
-						className={`pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 ${
-							introExiting
-								? 'motion-safe:animate-[intro-exit_0.25s_ease-in_forwards]'
-								: 'motion-safe:animate-[fadein_0.3s_ease-out]'
-						}`}
-					>
-						<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
-							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold/60 to-transparent" />
-							<div className="p-6">
-								<div className="mb-5 flex flex-col items-center gap-3 text-center">
-									<div className="relative">
-										<div
-											className="absolute inset-0 -m-3 rounded-full"
-											style={{
-												background:
-													'radial-gradient(circle, color-mix(in srgb, var(--ai-gold) 20%, transparent) 0%, transparent 70%)',
-												filter: 'blur(10px)'
-											}}
-										/>
-										<img
-											src="/assets/llamaai/llama-ai.svg"
-											alt=""
-											className="relative size-14 object-contain"
-											width={56}
-											height={56}
-										/>
-									</div>
-									<Ariakit.DialogHeading className="text-lg font-bold tracking-tight text-primary">
-										Welcome to LlamaAI
-									</Ariakit.DialogHeading>
-									<p className="text-[13px] leading-relaxed text-secondary">
-										AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
-										all in one conversation.
-									</p>
+				{/* Rendered on every step so Ariakit plays its exit animation before unmounting it; a leaving intro takes no clicks. */}
+				<Ariakit.Dialog
+					open={currentStep === 'intro'}
+					unmountOnHide
+					onClose={() => finish('skip')}
+					autoFocusOnHide={false}
+					ref={catchLostFocus}
+					backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
+					className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 data-leave:pointer-events-none motion-safe:animate-[fadein_0.3s_ease-out] data-leave:motion-safe:animate-[intro-exit_0.25s_ease-in_forwards]"
+				>
+					<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
+						<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold/60 to-transparent" />
+						<div className="p-6">
+							<div className="mb-5 flex flex-col items-center gap-3 text-center">
+								<div className="relative">
+									<div
+										className="absolute inset-0 -m-3 rounded-full"
+										style={{
+											background:
+												'radial-gradient(circle, color-mix(in srgb, var(--ai-gold) 20%, transparent) 0%, transparent 70%)',
+											filter: 'blur(10px)'
+										}}
+									/>
+									<img
+										src="/assets/llamaai/llama-ai.svg"
+										alt=""
+										className="relative size-14 object-contain"
+										width={56}
+										height={56}
+									/>
 								</div>
-
-								<div className="mb-5 flex flex-wrap justify-center gap-1.5">
-									{CAPABILITY_BADGES.map(([icon, label]) => (
-										<span
-											key={label}
-											className="flex items-center gap-1 rounded-md border border-ai-bronze-deep/20 bg-ai-gold-tint px-2 py-0.5 text-[10px] text-ai-bronze-deep"
-										>
-											<Icon name={icon} height={12} width={12} className="opacity-70" />
-											{label}
-										</span>
-									))}
-								</div>
-
-								<button
-									type="button"
-									onClick={nextStep}
-									className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring not-disabled:not-aria-disabled:hover:shadow-ai-gold-ring-hover"
-								>
-									Show me around
-								</button>
-								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
+								<Ariakit.DialogHeading className="text-lg font-bold tracking-tight text-primary">
+									Welcome to LlamaAI
+								</Ariakit.DialogHeading>
+								<p className="text-[13px] leading-relaxed text-secondary">
+									AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
+									all in one conversation.
+								</p>
 							</div>
+
+							<div className="mb-5 flex flex-wrap justify-center gap-1.5">
+								{CAPABILITY_BADGES.map(([icon, label]) => (
+									<span
+										key={label}
+										className="flex items-center gap-1 rounded-md border border-ai-bronze-deep/20 bg-ai-gold-tint px-2 py-0.5 text-[10px] text-ai-bronze-deep"
+									>
+										<Icon name={icon} height={12} width={12} className="opacity-70" />
+										{label}
+									</span>
+								))}
+							</div>
+
+							<button
+								type="button"
+								onClick={nextStep}
+								className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring not-disabled:not-aria-disabled:hover:shadow-ai-gold-ring-hover"
+							>
+								Show me around
+							</button>
+							<ProgressFooter currentStep="intro" steps={steps} onSkip={() => finish('skip')} />
 						</div>
-					</Ariakit.Dialog>
-				) : null}
+					</div>
+				</Ariakit.Dialog>
 
 				{/* ─── Spotlight steps ─── */}
-				{isSpotlightStep && spotlightRect && config && !targetExpanded ? (
+				{config && spotlightRect && !targetExpanded ? (
 					<>
 						{/* Touch-blocking overlay: 4 rects around the spotlight hole */}
 						<div
@@ -492,7 +470,7 @@ export function OnboardingWalkthrough({
 								fitViewport
 								hideOnInteractOutside={false}
 								autoFocusOnHide={false}
-								onClose={handleSkip}
+								onClose={() => finish('skip')}
 								className="pointer-events-auto z-9999 w-[280px] max-w-[calc(100vw-32px)] overflow-y-auto outline-hidden"
 							>
 								<Ariakit.PopoverArrow
@@ -546,7 +524,7 @@ export function OnboardingWalkthrough({
 											</Button>
 										) : null}
 
-										<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
+										<ProgressFooter currentStep={currentStep} steps={steps} onSkip={() => finish('skip')} />
 									</div>
 								</div>
 							</Ariakit.Popover>
@@ -558,8 +536,9 @@ export function OnboardingWalkthrough({
 				{currentStep === 'prompts' ? (
 					<Ariakit.Dialog
 						open
-						onClose={handleSkip}
+						onClose={() => finish('skip')}
 						autoFocusOnHide={false}
+						ref={catchLostFocus}
 						backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
 						className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 motion-safe:animate-ai-fade-in"
 					>
@@ -604,11 +583,11 @@ export function OnboardingWalkthrough({
 
 								<p className="mb-3 text-center body-sm text-secondary">Or type your own question in the input below.</p>
 
-								<Button type="button" size="md" onClick={handleStartChatting} className="w-full">
+								<Button type="button" size="md" onClick={() => finish('start-chatting')} className="w-full">
 									Start chatting
 								</Button>
 
-								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
+								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={() => finish('skip')} />
 							</div>
 						</div>
 					</Ariakit.Dialog>

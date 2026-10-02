@@ -1,11 +1,11 @@
+import { useMutation } from '@tanstack/react-query'
 import { type ReactNode, useMemo, useState } from 'react'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { DialogCloseGuard, DialogFooter, DialogToolbar } from '~/ui/Dialog'
+import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -38,6 +38,8 @@ type EditorCaps = Pick<
 >
 
 interface ChartStyleEditorProps {
+	/** The applied chart's title, shown under the dialog's heading. */
+	chartTitle?: string
 	config: ChartConfiguration
 	original: ChartConfiguration
 	caps: EditorCaps
@@ -46,6 +48,7 @@ interface ChartStyleEditorProps {
 	resetView: ChartStyleEditorView
 	onPreview: (draft: ChartConfiguration, view: ChartStyleEditorView) => void
 	onSave: (draft: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
+	/** Closes the editor without saving. */
 	onCancel: () => void
 	/** The live preview. Beside the fields from md; below md a Preview / Style switch shows one at a time. */
 	preview?: ReactNode
@@ -179,7 +182,8 @@ function updateItemAt<T>(items: Array<T>, targetIndex: number, update: (item: T)
 
 const section = 'flex flex-col gap-2 border-t border-subtle pt-3 first:border-t-0 first:pt-0'
 const sectionLabel = 'label-xs text-tertiary uppercase'
-const swatch = 'size-8 shrink-0 cursor-pointer rounded-lg border border-medium bg-page p-1'
+const swatch =
+	'size-8 shrink-0 cursor-pointer rounded-lg border border-medium bg-page p-1 disabled:cursor-not-allowed disabled:opacity-60'
 const axisTag = 'w-3.5 shrink-0 text-center label-sm text-tertiary'
 const PREVIEW_DEBOUNCE_MS = 350
 
@@ -197,6 +201,7 @@ function getSeriesNameProblem(series: ChartConfiguration['series']): string | nu
 const EMPTY_CATEGORIES: NonNullable<ChartStyleEditorProps['categories']> = []
 
 export function ChartStyleEditor({
+	chartTitle,
 	config,
 	original,
 	caps,
@@ -213,11 +218,13 @@ export function ChartStyleEditor({
 	// Draft render order expressed as indices into `config.series` — what update-chart-style permutes.
 	const [seriesOrder, setSeriesOrder] = useState<Array<number>>(() => identityOrder(config.series?.length ?? 0))
 	const [draftView, setDraftView] = useState<ChartStyleEditorView>(() => ({ ...view }))
-	const [saving, setSaving] = useState(false)
-	const [error, setError] = useState<string | null>(null)
-	// Any edit makes leaving ask first: closing would otherwise drop the draft without a word.
-	const [touched, setTouched] = useState(false)
-	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
+	// The draft as it opened: leaving with the style, view or series order changed asks first.
+	const draftSnapshot = JSON.stringify({ config: draftConfig(draft), view: draftView, order: seriesOrder })
+	const [openedSnapshot] = useState(draftSnapshot)
+	const saveMutation = useMutation({
+		mutationFn: ({ config: saved, patch }: { config: ChartConfiguration; patch: ChartStylePatch }) =>
+			onSave(saved, patch)
+	})
 	const [pane, setPane] = useState<EditorPane>('style')
 	const isCombo = draft.type === 'combo'
 	const debouncedPreview = useDebouncedCallback(onPreview, PREVIEW_DEBOUNCE_MS)
@@ -236,7 +243,6 @@ export function ChartStyleEditor({
 		const next = structuredClone(draft)
 		mutate(next)
 		setDraft(next)
-		setTouched(true)
 		// Invalid display identities make the adapter reject the entire chart. Keep the
 		// last valid preview visible while the user finishes editing the draft.
 		if (getSeriesNameProblem(next.series)) {
@@ -255,7 +261,6 @@ export function ChartStyleEditor({
 		next.series = reorderedSeries
 		setSeriesOrder(reorderedSeriesOrder)
 		setDraft(next)
-		setTouched(true)
 		publishPreview(next, draftView, 'immediate')
 	}
 
@@ -278,7 +283,6 @@ export function ChartStyleEditor({
 	const updateView = (key: ViewKey, value: boolean) => {
 		const nextView = { ...draftView, [key]: value }
 		setDraftView(nextView)
-		setTouched(true)
 		publishPreview(draft, nextView, 'immediate')
 	}
 
@@ -307,21 +311,12 @@ export function ChartStyleEditor({
 		return out
 	}, [draft.series, draft.title, yAxes])
 
-	const save = async () => {
-		for (const problem of problems) {
-			setError(problem)
-			return
-		}
-		setSaving(true)
-		setError(null)
-		try {
-			const savedConfig = draftConfig(draft)
-			await onSave(savedConfig, toPatch(savedConfig, draftView, seriesOrder))
-		} catch (saveError) {
-			setError(saveError instanceof Error ? saveError.message : 'Save failed')
-		}
-		setSaving(false)
+	// Save is disabled while the draft has problems.
+	const save = () => {
+		const savedConfig = draftConfig(draft)
+		saveMutation.mutate({ config: savedConfig, patch: toPatch(savedConfig, draftView, seriesOrder) })
 	}
+	const error = saveMutation.error?.message ?? null
 
 	const reset = () => {
 		const resetDraft = createDraft(original)
@@ -334,8 +329,6 @@ export function ChartStyleEditor({
 		setDraft(resetDraft)
 		setSeriesOrder(resetOrder)
 		setDraftView(nextView)
-		setTouched(true)
-		setError(null)
 		publishPreview(resetDraft, nextView, 'immediate')
 	}
 
@@ -351,10 +344,22 @@ export function ChartStyleEditor({
 	}
 
 	return (
-		<>
-			{touched ? (
-				<DialogCloseGuard onAttemptLeave={(proceed) => (saving ? undefined : setPendingLeave(() => proceed))} />
-			) : null}
+		// An outside tap never drops the draft; ×, Escape and Cancel ask first once it has changed, and wait for a save.
+		<Dialog
+			size="xl"
+			workspace
+			open
+			onClose={onCancel}
+			hideOnInteractOutside={false}
+			portal
+			pending={saveMutation.isPending}
+		>
+			<DialogHeader title="Edit chart" subtitle={chartTitle} />
+			<DialogDiscardGuard
+				when={draftSnapshot !== openedSnapshot}
+				title="Discard chart changes?"
+				description="Your edits to this chart's style are not saved."
+			/>
 			{preview ? (
 				<div className="md:hidden">
 					<DialogToolbar>
@@ -377,7 +382,10 @@ export function ChartStyleEditor({
 						<div className="w-full">{preview}</div>
 					</div>
 				) : null}
-				<div
+				{/* The draft is locked while it saves: the editor closes when that save lands, so a later edit would be
+				    lost. Save sits outside the fieldset, so it keeps focus. */}
+				<fieldset
+					disabled={saveMutation.isPending}
 					className={`min-h-0 w-full flex-col gap-3 overflow-y-auto p-4 text-secondary md:flex ${preview ? 'border-subtle bg-surface-elevated-1 md:w-[340px] md:shrink-0 md:border-l' : ''} ${!preview || pane === 'style' ? 'flex' : 'hidden'}`}
 					onBlurCapture={debouncedPreview.flush}
 				>
@@ -455,6 +463,7 @@ export function ChartStyleEditor({
 												}, 'immediate')
 											}
 											className={swatch}
+											aria-label={`Series ${i + 1} color`}
 										/>
 										<Input
 											className="min-w-48 flex-1"
@@ -740,7 +749,7 @@ export function ChartStyleEditor({
 							</div>
 						</div>
 					) : null}
-				</div>
+				</fieldset>
 			</div>
 			<DialogFooter
 				leading={
@@ -750,45 +759,31 @@ export function ChartStyleEditor({
 							{error ?? problems[0]}
 						</span>
 					) : (
-						<Button type="button" variant="ghost" size="md" onClick={reset}>
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
+							onClick={reset}
+							disabled={saveMutation.isPending}
+							accessibleWhenDisabled
+						>
 							Reset
 						</Button>
 					)
 				}
-				dismiss={
-					<Button type="button" size="md" onClick={() => (touched ? setPendingLeave(() => onCancel) : onCancel())}>
-						Cancel
-					</Button>
-				}
+				dismiss={<DialogCancelButton />}
 			>
 				<Button
 					type="button"
 					variant="primary"
 					size="md"
-					onClick={() => void save()}
+					onClick={save}
 					disabled={problems.length > 0}
-					pendingLabel={saving ? 'Saving…' : null}
+					pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 				>
 					Save
 				</Button>
 			</DialogFooter>
-			<ConfirmDialog
-				open={pendingLeave !== null}
-				onClose={() => setPendingLeave(null)}
-				portal
-				unmountOnHide
-				title="Discard chart changes?"
-				description="Your edits to this chart's style are not saved."
-				confirmLabel="Discard"
-				cancelLabel="Keep editing"
-				pendingLabel={null}
-				error={null}
-				onConfirm={() => {
-					const proceed = pendingLeave!
-					setPendingLeave(null)
-					proceed()
-				}}
-			/>
-		</>
+		</Dialog>
 	)
 }

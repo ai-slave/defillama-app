@@ -642,3 +642,27 @@ test('offers GitHub on signup and closes its popup after returning to sign-in', 
 	expect(oauth.github.listenerClosed).toBe(true)
 	expectSignInRestored()
 })
+
+test('a sign-in from another tab ends on its own step, and Continue finishes it like a sign-in here', async () => {
+	const token = `e30.${btoa(JSON.stringify({ id: 'account-a', exp: 4_102_444_800 }))}.signature`
+	await act(async () => pb.authStore.save(token, { id: 'account-a', verified: true } as never))
+	const proceed = await waitForUi(() => {
+		expect(container.querySelector('h2')?.textContent).toBe("You're signed in")
+		return Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Continue')!
+	})
+	expect(document.activeElement).toBe(proceed)
+	expect(onAuthenticated).not.toHaveBeenCalled()
+	await act(async () => proceed.click())
+	expect(onAuthenticated).toHaveBeenCalledOnce()
+	expect(dialog.getState().open).toBe(false)
+})
+
+test('a sign-in in this tab never shows the signed-in-elsewhere step', async () => {
+	const token = `e30.${btoa(JSON.stringify({ id: 'account-a', exp: 4_102_444_800 }))}.signature`
+	await submit()
+	requests[0].resolve(new Response(JSON.stringify({ token, record: { id: 'account-a', verified: true } })))
+	await settle()
+	expect(onAuthenticated).toHaveBeenCalledOnce()
+	expect(pb.authStore.isValid).toBe(true)
+	expect(container.textContent).not.toContain("You're signed in")
+})

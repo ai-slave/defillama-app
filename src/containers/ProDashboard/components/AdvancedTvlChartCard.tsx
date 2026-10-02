@@ -76,8 +76,9 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const {
 		data: basicTvlDataset,
 		isLoading: isBasicTvlLoading,
-		isError: isBasicTvlError,
 		isFetching: isBasicTvlFetching,
+		errorUpdatedAt,
+		dataUpdatedAt,
 		refetch: refetchBasicTvl
 	} = useQuery({
 		queryKey: buildProtocolValueChartQueryKey({ source: 'tvl', protocol }),
@@ -86,10 +87,11 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		select: selectBasicTvlDataset
 	})
+	const isBasicTvlError = errorUpdatedAt > dataUpdatedAt
 	const {
 		data: advancedData,
 		isLoading: isAdvancedLoading,
-		isError: isAdvancedError,
+		readFailed: isAdvancedError,
 		isFetching: isAdvancedFetching,
 		refetch: refetchAdvanced,
 		hasSourceData: hasAdvancedSourceData
@@ -244,9 +246,12 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const hasError = chartType === 'tvl' ? isBasicTvlError : isAdvancedError
 	const isFetching = chartType === 'tvl' ? isBasicTvlFetching : isAdvancedFetching
 	const hasLoadedData = chartType === 'tvl' ? basicTvlDataset !== undefined : hasAdvancedSourceData
-	const retryChartData = () => {
-		if (chartType === 'tvl') void refetchBasicTvl()
-		else refetchAdvanced()
+	const retryChartData = {
+		run: () => {
+			if (chartType === 'tvl') void refetchBasicTvl()
+			else refetchAdvanced()
+		},
+		pending: isFetching
 	}
 
 	const hallmarks = useDashboardAnnotationHallmarks()
@@ -263,12 +268,12 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		</div>
 	)
 
-	if (isLoading) {
-		return renderStatusShell(<ProCardLoading />)
+	if (hasError && !hasLoadedData) {
+		return renderStatusShell(<ProCardError retry={retryChartData} />)
 	}
 
-	if (hasError && !hasLoadedData) {
-		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	const chartContent =
@@ -307,7 +312,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(402px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(418px*var(--card-scale,1))]">
-			{hasError ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			{hasError ? <ProCardRefreshFailed retry={retryChartData} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

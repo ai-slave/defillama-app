@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 import {
 	activateDashboardArtifacts,
-	activateDashboardArtifactsWithConfirmation,
 	buildLlamaAIChartDashboardItem,
 	canAddChartArtifactToDashboard,
 	prepareDashboardArtifactSave,
-	prepareStoredDashboardActivation
+	prepareStoredDashboardActivation,
+	tryActivateDashboardArtifacts
 } from '../dashboardArtifactFlow'
 
 describe('prepareDashboardArtifactSave', () => {
@@ -24,20 +24,17 @@ describe('prepareDashboardArtifactSave', () => {
 
 	test('builds a direct dashboard item from the durable artifact ref without legacy chart saving', () => {
 		expect(
-			buildLlamaAIChartDashboardItem(
-				{
-					chartId: 'chart-1',
-					title: 'TVL',
-					artifactRef: {
-						artifactId: 'artifact-1',
-						versionId: 'version-1',
-						status: 'live',
-						containsPremium: true,
-						estimatedMaxCostUsd: 0.005
-					}
-				},
-				'Renamed'
-			)
+			buildLlamaAIChartDashboardItem({
+				chartId: 'chart-1',
+				title: 'TVL',
+				artifactRef: {
+					artifactId: 'artifact-1',
+					versionId: 'version-1',
+					status: 'live',
+					containsPremium: true,
+					estimatedMaxCostUsd: 0.005
+				}
+			})
 		).toMatchObject({
 			kind: 'llamaai-chart',
 			artifactId: 'artifact-1',
@@ -45,7 +42,7 @@ describe('prepareDashboardArtifactSave', () => {
 			artifactStatus: 'live',
 			artifactContainsPremium: true,
 			artifactEstimatedMaxCostUsd: 0.005,
-			title: 'Renamed'
+			title: 'TVL'
 		})
 	})
 
@@ -200,7 +197,7 @@ describe('prepareStoredDashboardActivation', () => {
 		)
 	})
 
-	test('confirms and retries with the confirmed ceiling when the server requires one', async () => {
+	test('asks the reader before accepting a premium ceiling, and sends only the ceiling they accepted', async () => {
 		const authorizedFetch = vi
 			.fn()
 			.mockResolvedValueOnce(
@@ -215,44 +212,29 @@ describe('prepareStoredDashboardActivation', () => {
 					headers: { 'Content-Type': 'application/json' }
 				})
 			)
-		const confirmPremium = vi.fn(() => true)
 		const plan = { expectedItemIds: ['item-a'], containsPremium: true, estimatedMaxCostUsd: 0.005 }
 
-		await expect(
-			activateDashboardArtifactsWithConfirmation(authorizedFetch, 'dashboard-1', plan, confirmPremium)
-		).resolves.toBe('active')
-		expect(confirmPremium).toHaveBeenCalledWith(0.005)
-		expect(authorizedFetch).toHaveBeenCalledTimes(2)
-		expect(authorizedFetch.mock.calls[0][1]?.body).toBe(JSON.stringify({ expectedItemIds: ['item-a'] }))
-		expect(authorizedFetch.mock.calls[1][1]?.body).toBe(
-			JSON.stringify({ expectedItemIds: ['item-a'], confirmedMaxCostUsd: 0.005 })
+		await expect(tryActivateDashboardArtifacts(authorizedFetch, 'dashboard-1', plan)).resolves.toBe(
+			'needs-confirmation'
 		)
+		// The reader's answer decides the second request; nothing is accepted on their behalf.
+		expect(authorizedFetch).toHaveBeenCalledTimes(1)
+		await activateDashboardArtifacts(authorizedFetch, 'dashboard-1', plan, plan.estimatedMaxCostUsd)
+		expect(authorizedFetch.mock.calls.map((call) => call[1]?.body)).toEqual([
+			JSON.stringify({ expectedItemIds: ['item-a'] }),
+			JSON.stringify({ expectedItemIds: ['item-a'], confirmedMaxCostUsd: 0.005 })
+		])
 	})
 
-	test('gives up after one confirmed retry when the server still refuses', async () => {
-		const ceilingRequired = () =>
+	test('any other activation failure leaves refresh setup pending instead of asking about cost', async () => {
+		const authorizedFetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ error: 'Premium dashboard refresh requires a confirmed maximum cost' }), {
-				status: 409,
+				status: 503,
 				headers: { 'Content-Type': 'application/json' }
 			})
-		// A third answer succeeds, so a retry loop would report the dashboard active instead of pending.
-		const authorizedFetch = vi
-			.fn()
-			.mockResolvedValueOnce(ceilingRequired())
-			.mockResolvedValueOnce(ceilingRequired())
-			.mockResolvedValueOnce(
-				new Response(JSON.stringify({ outcomes: [{ itemId: 'item-a' }] }), {
-					status: 200,
-					headers: { 'Content-Type': 'application/json' }
-				})
-			)
-		const confirmPremium = vi.fn(() => true)
+		)
 		const plan = { expectedItemIds: ['item-a'], containsPremium: true, estimatedMaxCostUsd: 0.005 }
 
-		await expect(
-			activateDashboardArtifactsWithConfirmation(authorizedFetch, 'dashboard-1', plan, confirmPremium)
-		).resolves.toBe('pending')
-		expect(confirmPremium).toHaveBeenCalledTimes(1)
-		expect(authorizedFetch).toHaveBeenCalledTimes(2)
+		await expect(tryActivateDashboardArtifacts(authorizedFetch, 'dashboard-1', plan)).resolves.toBe('pending')
 	})
 })

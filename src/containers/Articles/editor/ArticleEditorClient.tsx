@@ -7,7 +7,6 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
-import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { InlineStatus, PanelStatus } from '~/ui/Status'
@@ -866,21 +865,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 
 	if (isLoading) {
 		return <ResearchLoader />
-	}
-
-	if (!isAuthenticated) {
-		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
-				<h1 className="text-xl font-semibold text-primary">Sign in to write research</h1>
-				<p className="text-sm text-secondary">
-					Article drafts, revisions, and author profiles are saved to your DefiLlama account.
-				</p>
-				<SignInModal
-					text="Sign in"
-					className="mr-auto rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand"
-				/>
-			</div>
-		)
 	}
 
 	// Without the article there is nothing to edit: an editor here would save as an unrelated new draft.

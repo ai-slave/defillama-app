@@ -1,10 +1,12 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { type ReactNode, useMemo } from 'react'
+import { skipToken, useMutation, useQuery } from '@tanstack/react-query'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { buildChartRepairHref, storeChartRepairTarget } from '~/containers/LlamaAI/chartRepairTarget'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatDate } from '~/utils/dateFormat'
 import { useProDashboardDashboard, useProDashboardPermissions, useProDashboardTime } from '../ProDashboardAPIContext'
@@ -16,11 +18,10 @@ import {
 	getLlamaAIChartOwnerNotice,
 	getLlamaAIChartRefreshConfirmation,
 	getLlamaAIChartRefreshRequest,
-	getLlamaAIChartSource,
-	isLlamaAIChartRepairNeeded
+	getLlamaAIChartSource
 } from './llamaAIChartSource'
 import { ProCardHeader } from './ProCardHeader'
-import { ProCardEmpty, ProCardError, ProCardLoading } from './ProCardStatus'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardNotice, ProCardRefreshFailed } from './ProCardStatus'
 
 interface LlamaAIChartCardProps {
 	config: LlamaAIChartConfig
@@ -36,19 +37,23 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 	const hasInlineData = !!(config.inlineChartConfig && config.inlineChartData)
 	const source = getLlamaAIChartSource(config, dashboardId, AI_SERVER)
 
-	const { data, isLoading, error, refetch } = useQuery({
+	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
 		queryKey: source?.key ?? ['pro-dashboard', 'chart-disabled', config.id],
-		queryFn: async () => {
-			if (!source) throw new Error('Chart source unavailable')
-			const res = user ? await authorizedFetch(source.url) : await fetch(source.url)
-			if (!res?.ok) throw new Error('Failed to load chart')
-			return res.json()
-		},
+		queryFn:
+			source && !loaders.userLoading && !hasInlineData
+				? async () => {
+						const res = user ? await authorizedFetch(source.url) : await fetch(source.url)
+						if (!res?.ok) throw new Error('Failed to load chart')
+						return res.json()
+					}
+				: skipToken,
 		staleTime: 1000 * 60 * 60,
 		refetchOnMount: 'always',
-		refetchInterval: (query) => (query.state.data?.refreshPending ? 5000 : false),
-		enabled: !loaders.userLoading && !!source && !hasInlineData
+		refetchInterval: (query) => (query.state.data?.refreshPending ? 5000 : false)
 	})
+	const readFailed = errorUpdatedAt > dataUpdatedAt
+	// Retrying reads the chart again; it never repeats the refresh request.
+	const retryRead = { run: () => void refetch(), pending: isFetching }
 	const refreshRequest = getLlamaAIChartRefreshRequest(config, dashboardId, AI_SERVER)
 	const isOwner = !!user?.id && user.id === dashboardOwnerId
 	const refreshMutation = useMutation({
@@ -67,27 +72,29 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 		}
 	})
 	const canRefresh = !!refreshRequest && !!data?.refreshAvailable && isOwner
+	// A premium refresh can charge the owner, so it asks first; its pending state and error live in that dialog.
 	const refreshConfirmation = getLlamaAIChartRefreshConfirmation(config)
+	const [confirmingRefresh, setConfirmingRefresh] = useState(false)
 	const ownerNotice = getLlamaAIChartOwnerNotice(data?.ownerStatus, isOwner)
-	const repairNeeded = isLlamaAIChartRepairNeeded(config.artifactStatus, data?.status)
 	const repairHref = buildChartRepairHref(
 		config.title || data?.title || 'this chart',
 		data?.ownerStatus?.errorCode || config.artifactReasonCode
 	)
 	const repairAction =
 		isOwner && dashboardId ? (
-			<a
+			<Button
+				as="a"
 				href={repairHref}
-				className="text-sm text-link hover:underline"
+				size="sm"
 				onClick={() => storeChartRepairTarget({ dashboardId, itemId: config.id })}
 			>
 				Regenerate chart
-			</a>
+			</Button>
 		) : null
 
 	const fetchedChartConfig = data?.chartConfig
 	const charts = useMemo((): Array<ChartConfiguration> => {
-		if (hasInlineData && config.inlineChartConfig) {
+		if (hasInlineData) {
 			return [config.inlineChartConfig]
 		}
 		if (fetchedChartConfig) {
@@ -136,18 +143,13 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 		</div>
 	)
 
-	if (isLoading || loaders.userLoading) {
-		return renderStatusShell(<ProCardLoading />)
+	// A failed read with a chart already loaded keeps that chart, and an open refresh confirmation with it.
+	if (readFailed && !data) {
+		return renderStatusShell(<ProCardError retry={retryRead} />)
 	}
 
-	if (error) {
-		return renderStatusShell(
-			<ProCardError
-				onRetry={() => {
-					void refetch()
-				}}
-			/>
-		)
+	if (isLoading || loaders.userLoading) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	if (!data) {
@@ -179,13 +181,17 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				}
 				controls={
 					canRefresh ? (
+						// Loading keeps focus on the button, also when the confirmation hands it back mid-refresh.
 						<ProButton
 							size="sm"
 							variant="ghost"
-							disabled={data.refreshPending || refreshMutation.isPending}
+							loading={data.refreshPending || refreshMutation.isPending}
 							onClick={() => {
-								if (refreshConfirmation && !window.confirm(refreshConfirmation)) return
-								refreshMutation.mutate()
+								if (refreshConfirmation) {
+									// Each opening starts without the last attempt's error.
+									refreshMutation.reset()
+									setConfirmingRefresh(true)
+								} else refreshMutation.mutate()
 							}}
 						>
 							{data.refreshPending || refreshMutation.isPending ? 'Refreshing…' : 'Refresh'}
@@ -194,21 +200,42 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				}
 			/>
 			<div className="flex flex-col gap-2 px-3 pb-3">
-				{ownerNotice ? <p className="text-xs text-sub-orange">{ownerNotice}</p> : null}
+				{readFailed ? <ProCardRefreshFailed retry={retryRead} /> : null}
+				{ownerNotice ? <ProCardNotice tone="warning">{ownerNotice}</ProCardNotice> : null}
 				{data.refreshError && !ownerNotice ? (
-					<p className="text-xs text-sub-orange">Couldn&apos;t refresh — showing the last published snapshot.</p>
+					<ProCardNotice tone="warning">Couldn&apos;t refresh. Showing the last published snapshot.</ProCardNotice>
 				) : null}
-				{repairNeeded ? (
-					<div className="flex items-center justify-between gap-2 text-xs text-sub-orange">
-						<span>This chart can no longer refresh. The last published snapshot is shown.</span>
-						{repairAction}
-					</div>
+				{/* A stored needs-repair item returned above; this is a failure found after the item was saved. */}
+				{data.status === 'needs-repair' ? (
+					<ProCardNotice tone="warning">
+						<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+							This chart can no longer refresh. The last published snapshot is shown.
+							{repairAction}
+						</span>
+					</ProCardNotice>
 				) : null}
-				{refreshMutation.isError ? (
-					<p className="text-xs text-sub-orange">Couldn&apos;t queue refresh. Try again later.</p>
+				{/* The header's Refresh is the retry: a Try again here would vanish as it starts and drop focus. */}
+				{refreshMutation.isError && !refreshConfirmation ? (
+					<ProCardNotice tone="error">Couldn&apos;t queue the refresh. Use Refresh to try again.</ProCardNotice>
 				) : null}
 				<ChartRenderer charts={charts} chartData={filteredChartData!} height={chartHeight} />
 			</div>
+			{refreshConfirmation ? (
+				<ConfirmDialog
+					open={confirmingRefresh}
+					onClose={() => setConfirmingRefresh(false)}
+					portal
+					unmountOnHide
+					scope="pro"
+					tone="primary"
+					title="Refresh with premium data?"
+					description={refreshConfirmation}
+					confirmLabel="Refresh"
+					pendingLabel={refreshMutation.isPending ? 'Refreshing…' : null}
+					error={refreshMutation.isError ? "Couldn't queue the refresh. Try again." : null}
+					onConfirm={() => refreshMutation.mutate(undefined, { onSuccess: () => setConfirmingRefresh(false) })}
+				/>
+			) : null}
 		</div>
 	)
 }

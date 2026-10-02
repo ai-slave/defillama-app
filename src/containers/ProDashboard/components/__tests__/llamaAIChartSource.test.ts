@@ -3,8 +3,7 @@ import {
 	getLlamaAIChartRefreshConfirmation,
 	getLlamaAIChartOwnerNotice,
 	getLlamaAIChartRefreshRequest,
-	getLlamaAIChartSource,
-	isLlamaAIChartRepairNeeded
+	getLlamaAIChartSource
 } from '../llamaAIChartSource'
 
 describe('getLlamaAIChartRefreshConfirmation', () => {
@@ -16,7 +15,7 @@ describe('getLlamaAIChartRefreshConfirmation', () => {
 				artifactContainsPremium: true,
 				artifactEstimatedMaxCostUsd: 0.005
 			})
-		).toBe('This refresh may charge up to $0.005 to your External Data Balance. Continue?')
+		).toBe('This refresh may charge up to $0.005 to your External Data Balance.')
 	})
 
 	test('does not confirm free refreshes and still warns for older premium metadata without a ceiling', () => {
@@ -25,7 +24,7 @@ describe('getLlamaAIChartRefreshConfirmation', () => {
 		).toBeNull()
 		expect(
 			getLlamaAIChartRefreshConfirmation({ id: 'premium', kind: 'llamaai-chart', artifactContainsPremium: true })
-		).toBe('This refresh uses premium data and may charge your External Data Balance. Continue?')
+		).toBe('This refresh uses premium data and may charge your External Data Balance.')
 	})
 })
 
@@ -150,13 +149,5 @@ describe('getLlamaAIChartOwnerNotice', () => {
 				true
 			)
 		).toBe("Couldn't refresh: source execution failed. Use Refresh to retry.")
-	})
-})
-
-describe('isLlamaAIChartRepairNeeded', () => {
-	test('surfaces permanent failures discovered after the dashboard item was saved', () => {
-		expect(isLlamaAIChartRepairNeeded('live', 'needs-repair')).toBe(true)
-		expect(isLlamaAIChartRepairNeeded('needs-repair', undefined)).toBe(true)
-		expect(isLlamaAIChartRepairNeeded('live', 'live')).toBe(false)
 	})
 })

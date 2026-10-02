@@ -100,6 +100,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		lastUpdatedTs: _lastUpdatedTs,
 		isLoading,
 		isError,
+		isFetching,
 		refetch
 	} = useMetricData(metric)
 
@@ -168,7 +169,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		}
 
 		if (isError) {
-			return <ProCardError onRetry={refetch} />
+			return <ProCardError retry={{ run: refetch, pending: isFetching }} />
 		}
 
 		return (
@@ -204,6 +205,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		change.label,
 		displayValue,
 		isError,
+		isFetching,
 		isLoading,
 		hasSeenLoading,
 		metric.aggregator,

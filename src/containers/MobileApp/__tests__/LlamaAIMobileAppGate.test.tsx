@@ -9,7 +9,7 @@ const viewport = { mobile: true }
 
 let host: HTMLDivElement
 let root: Root
-const render = () => act(async () => root.render(<LlamaAIMobileAppGate interactive>Chat content</LlamaAIMobileAppGate>))
+const render = () => act(async () => root.render(<LlamaAIMobileAppGate>Chat content</LlamaAIMobileAppGate>))
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true

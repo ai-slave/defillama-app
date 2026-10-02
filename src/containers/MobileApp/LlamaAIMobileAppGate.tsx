@@ -3,6 +3,7 @@ import { useSyncExternalStore, type ReactNode } from 'react'
 import { StoreButtons } from '~/containers/MobileApp'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useMedia } from '~/hooks/useMedia'
+import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import {
 	createAnnouncementDismissalToken,
@@ -13,11 +14,14 @@ import {
 
 const promotionDismissalToken = createAnnouncementDismissalToken('llamaai-mobile-app-promotion', '2026-08-03')
 
-function MobileAppPromotion({ onContinue }: { onContinue: () => void }) {
+const continueOnWeb = () => dismissAnnouncement(promotionDismissalToken)
+
+function MobileAppPromotion() {
 	return (
 		<Ariakit.Dialog
 			open
-			onClose={onContinue}
+			onClose={continueOnWeb}
+			ref={catchLostFocus}
 			hideOnInteractOutside={false}
 			portal
 			className="fixed inset-0 z-[100] flex h-dvh w-screen overflow-y-auto bg-sub-surface-page p-[max(20px,env(safe-area-inset-top))_20px_max(20px,env(safe-area-inset-bottom))] text-sub-text-primary outline-hidden dark:bg-sub-dark-page"
@@ -82,12 +86,12 @@ function MobileAppPromotion({ onContinue }: { onContinue: () => void }) {
 
 				{/* Store taps leave the site, so dismiss on any click within the store buttons */}
 				<div className="flex w-full flex-col items-center gap-6">
-					<div className="w-full" onClickCapture={onContinue}>
+					<div className="w-full" onClickCapture={continueOnWeb}>
 						<StoreButtons eventSuffix="llamaai-gate" size="lg" />
 					</div>
 					<button
 						type="button"
-						onClick={onContinue}
+						onClick={continueOnWeb}
 						data-umami-event="mobile-app-llamaai-gate-continue-web"
 						className="flex h-11 w-full max-w-[300px] items-center justify-center rounded-xl border border-sub-border bg-sub-surface-panel px-6 text-sm font-medium text-sub-text-secondary transition-colors hover:border-sub-brand-primary/40 hover:text-sub-text-primary dark:bg-sub-dark-card"
 					>
@@ -98,8 +102,6 @@ function MobileAppPromotion({ onContinue }: { onContinue: () => void }) {
 		</Ariakit.Dialog>
 	)
 }
-
-const continueOnWeb = () => dismissAnnouncement(promotionDismissalToken)
 
 function useMobileAppPromotion() {
 	const isClient = useIsClient()
@@ -115,26 +117,20 @@ function useMobileAppPromotion() {
 
 export function LlamaAIMobileAppPromotion() {
 	const { shouldShow } = useMobileAppPromotion()
-	return shouldShow ? <MobileAppPromotion onContinue={continueOnWeb} /> : null
+	return shouldShow ? <MobileAppPromotion /> : null
 }
 
-export function LlamaAIMobileAppGate({
-	children,
-	interactive = false
-}: {
-	children: ReactNode
-	interactive?: boolean
-}) {
+export function LlamaAIMobileAppGate({ children }: { children: ReactNode }) {
 	const { isClient, shouldShow } = useMobileAppPromotion()
 
-	// Interactive chat must not mount until the viewport is known, otherwise a
+	// Chat must not mount until the viewport is known, otherwise a
 	// queued prompt could submit during mobile hydration behind the promotion.
-	if (!isClient && interactive) {
+	if (!isClient) {
 		return <div className="min-h-dvh flex-1" aria-busy="true" />
 	}
 
 	if (shouldShow) {
-		return <MobileAppPromotion onContinue={continueOnWeb} />
+		return <MobileAppPromotion />
 	}
 
 	return children

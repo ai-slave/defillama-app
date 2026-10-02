@@ -70,15 +70,17 @@ export function useGetLiteDashboards() {
 
 	const liteDashboards = parseStoredLiteDashboards(liteDashboardsInStorage)
 
-	const { isLoading, error, isFetching, refetch } = useQuery({
+	const { isLoading, errorUpdatedAt, dataUpdatedAt, isFetching, refetch } = useQuery({
 		...liteDashboardsQuery(authorizedFetch, user?.id),
 		enabled: isAuthenticated && !!user?.id
 	})
+	// Attempt times, not isError: design.md → Status states.
+	const failed = errorUpdatedAt > dataUpdatedAt
 
 	return {
 		data: liteDashboards,
-		isLoading: liteDashboards.length === 0 && isLoading,
-		error,
+		isLoading: liteDashboards.length === 0 && isLoading && !failed,
+		failed,
 		isFetching,
 		refetch
 	}

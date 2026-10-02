@@ -2,8 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useCallback, useId, useRef, useState } from 'react'
 import { useCreateTopup, TOPUP_CONFIG } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBackButton, DialogBody, DialogCloseGuard, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBackButton, DialogBody, DialogDiscardGuard, DialogHeader, useDialogLeave } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -43,8 +42,7 @@ export function TopupForm({
 	const [amount, setAmount] = useState('10')
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
 	const [isRedirecting, setIsRedirecting] = useState(false)
-	// Set while the reader confirms leaving the card step: the step that leaving would take (close, a tab, Back).
-	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
+	const leave = useDialogLeave()
 	const errorSlotRef = useRef<HTMLDivElement>(null)
 	// Back replaces the card step along with itself, so it hands focus to the amount field the reader returns to.
 	const amountInputRef = useRef<HTMLInputElement>(null)
@@ -128,33 +126,16 @@ export function TopupForm({
 	// Once Stripe holds a checkout session it may already be charging the card, so leaving the card step asks
 	// first. Before that, while the checkout loads, nothing can be paid and Back and close stay direct.
 	const hasCheckoutSession = step === 'stripe' && topupMutation.data?.provider === 'stripe'
-	const askBeforeLeaving = (proceed: () => void) => (hasCheckoutSession ? setPendingLeave(() => proceed) : proceed())
-	const leaveGuard = hasCheckoutSession ? (
+
+	const content = (
 		<>
-			<DialogCloseGuard onAttemptLeave={askBeforeLeaving} />
-			<ConfirmDialog
-				open={pendingLeave !== null}
-				onClose={() => setPendingLeave(null)}
-				portal
-				unmountOnHide
+			<DialogDiscardGuard
+				when={hasCheckoutSession}
 				title="Leave checkout?"
 				description="Your balance isn't topped up until the payment finishes. Leaving closes this checkout."
 				cancelLabel="Keep paying"
 				confirmLabel="Leave"
-				pendingLabel={null}
-				error={null}
-				onConfirm={() => {
-					const proceed = pendingLeave!
-					setPendingLeave(null)
-					proceed()
-				}}
 			/>
-		</>
-	) : null
-
-	const content = (
-		<>
-			{leaveGuard}
 			{step === 'select' ? (
 				<>
 					<div className="flex flex-col gap-2">
@@ -259,7 +240,7 @@ export function TopupForm({
 						step === 'stripe' ? (
 							<DialogBackButton
 								label="Back to amount"
-								onClick={() => askBeforeLeaving(goBack)}
+								onClick={() => leave(goBack)}
 								disabled={topupMutation.isPending}
 							/>
 						) : null
@@ -287,7 +268,7 @@ export function TopupForm({
 						variant="ghost"
 						size="sm"
 						className="-ml-2"
-						onClick={() => askBeforeLeaving(goBack)}
+						onClick={() => leave(goBack)}
 						disabled={topupMutation.isPending}
 					>
 						<Icon name="arrow-left" className="size-3.5" aria-hidden="true" />

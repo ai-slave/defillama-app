@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
-import { lazy, Suspense, useContext, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useContext, useId, useMemo, useRef, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { Select } from '~/components/Select/Select'
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
@@ -18,14 +19,15 @@ import {
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogCloseGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
-import { validateArticleChartConfig } from '../chartAdapters'
+import { deriveLegacyChartType, deriveLegacyEntities, validateArticleChartConfig } from '../chartAdapters'
 import type {
 	ArticleChartAnnotation,
 	ArticleChartConfig,
@@ -57,47 +59,6 @@ const SCALES = [
 	{ value: 'log', label: 'Log' }
 ] as const
 
-function ChartOptionGroup<T extends string>({
-	value,
-	options,
-	onChange,
-	label,
-	className
-}: {
-	value: T
-	options: ReadonlyArray<{ value: T; label: string }>
-	onChange: (value: T) => void
-	label: string
-	className?: string
-}) {
-	return (
-		<Ariakit.RadioProvider
-			value={value}
-			setValue={(next) => {
-				const option = options.find((option) => option.value === next)
-				if (option && option.value !== value) onChange(option.value)
-			}}
-		>
-			<Ariakit.RadioGroup
-				aria-label={label}
-				className={`flex items-center rounded-md border border-medium bg-page p-0.5 text-xs ${className ?? ''}`}
-			>
-				{options.map((option) => (
-					<label
-						key={option.value}
-						className={`relative cursor-pointer rounded-sm px-2.5 py-1 font-medium transition-colors has-focus-visible:focus-ring ${
-							value === option.value ? 'bg-surface text-primary shadow-sm' : 'text-tertiary hover:text-primary'
-						}`}
-					>
-						<Ariakit.Radio value={option.value} aria-label={option.label} className="sr-only" />
-						{option.label}
-					</label>
-				))}
-			</Ariakit.RadioGroup>
-		</Ariakit.RadioProvider>
-	)
-}
-
 type Entity = {
 	entityType: ArticleChartEntityType
 	slug: string
@@ -108,49 +69,6 @@ type Entity = {
 }
 
 const labelFor = (key: string) => CHART_TYPES[key as keyof typeof CHART_TYPES]?.title || key
-
-function ChartTypeSelect({
-	value,
-	options,
-	onChange
-}: {
-	value: string
-	options: Array<string>
-	onChange: (next: string) => void
-}) {
-	return (
-		<Ariakit.ComboboxProvider
-			selectedValue={value}
-			setSelectedValue={(v) => onChange(typeof v === 'string' ? v : v[0])}
-		>
-			<Ariakit.ComboboxSelect
-				className="flex h-7 w-44 items-center justify-between gap-2 rounded-md border border-medium bg-surface px-2.5 text-xs text-primary transition-colors hover:border-tertiary focus-visible:border-link focus-visible:outline-hidden data-[state=open]:border-link"
-				aria-label="Chart type"
-			>
-				<span className="truncate text-left">{labelFor(value)}</span>
-				<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
-			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
-				gutter={4}
-				sameWidth
-				portal
-				unmountOnHide
-				className="z-[90] flex max-h-72 flex-col overflow-auto rounded-md border border-medium bg-surface py-1 text-xs shadow-lg outline-hidden"
-			>
-				{options.map((option) => (
-					<Ariakit.ComboboxItem
-						key={option}
-						value={option}
-						className="flex shrink-0 cursor-pointer items-center justify-between gap-3 px-2.5 py-1.5 text-secondary hover:bg-research-tint-hover hover:text-primary data-active-item:bg-research-tint-hover data-active-item:text-primary"
-					>
-						<span className="truncate">{labelFor(option)}</span>
-						<Ariakit.ComboboxItemCheck className="shrink-0 text-link" />
-					</Ariakit.ComboboxItem>
-				))}
-			</Ariakit.ComboboxPopover>
-		</Ariakit.ComboboxProvider>
-	)
-}
 
 type Props = {
 	store: Ariakit.DialogStore
@@ -248,28 +166,25 @@ function MultiPreview({
 
 	const heightPx = `${height}px`
 
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center text-xs text-tertiary" style={{ height: heightPx }}>
-				Loading chart…
-			</div>
-		)
-	}
+	const loading = (
+		<div role="status" aria-live="polite" className="flex items-center justify-center" style={{ height: heightPx }}>
+			<LoadingIndicator label="Loading chart" />
+		</div>
+	)
+	if (isLoading) return loading
 	if (isError || chartModel.charts.length === 0) {
 		return (
-			<div className="flex items-center justify-center text-xs text-tertiary" style={{ height: heightPx }}>
-				No data available
-			</div>
+			<p
+				role={isError ? 'alert' : 'status'}
+				className={`flex items-center justify-center body-sm ${isError ? 'text-data-down' : 'text-tertiary'}`}
+				style={{ height: heightPx }}
+			>
+				{isError ? 'Could not load chart data' : 'No data available'}
+			</p>
 		)
 	}
 	return (
-		<Suspense
-			fallback={
-				<div className="flex items-center justify-center text-xs text-tertiary" style={{ height: heightPx }}>
-					…
-				</div>
-			}
-		>
+		<Suspense fallback={loading}>
 			<MultiSeriesChart
 				dataset={chartModel.dataset}
 				charts={charts}
@@ -407,45 +322,12 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	}
 
 	const canInsert = series.length > 0
+	// Insert is disabled without a series, and toggling and metric changes keep the series unique.
 	const handleInsert = () => {
-		if (!canInsert) return
-		const seenIds = new Set<string>()
-		const dedupedSeries = series.filter((s) => {
-			const id = seriesId(s)
-			if (seenIds.has(id)) return false
-			seenIds.add(id)
-			return true
-		})
-		const seenEntities = new Set<string>()
-		const entitiesLegacy = dedupedSeries
-			.map((s) => ({
-				entityType: s.entityType,
-				slug: s.slug,
-				name: s.name,
-				...(s.geckoId ? { geckoId: s.geckoId } : {})
-			}))
-			.filter((e) => {
-				const key = `${e.entityType}:${e.slug}`
-				if (seenEntities.has(key)) return false
-				seenEntities.add(key)
-				return true
-			})
-		const counts = new Map<string, number>()
-		for (const s of dedupedSeries) counts.set(s.chartType, (counts.get(s.chartType) ?? 0) + 1)
-		const firstSeries = dedupedSeries[0]
-		if (!firstSeries) return
-		let chartTypeLegacy = firstSeries.chartType
-		let bestCount = 0
-		for (const [type, count] of counts) {
-			if (count > bestCount) {
-				chartTypeLegacy = type
-				bestCount = count
-			}
-		}
 		onInsert({
-			series: dedupedSeries,
-			entities: entitiesLegacy,
-			chartType: chartTypeLegacy,
+			series,
+			entities: deriveLegacyEntities(series),
+			chartType: deriveLegacyChartType(series),
 			...(range !== 'all' ? { range } : {}),
 			...(logScale ? { logScale: true } : {}),
 			...(annotations.length > 0 ? { annotations: annotations.map(({ date, label }) => ({ date, label })) } : {}),
@@ -480,9 +362,9 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	})
 	const [openedSnapshot] = useState(draftSnapshot)
 	const dirty = draftSnapshot !== openedSnapshot
-	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
-	const leave = (proceed: () => void) => (dirty ? setPendingLeave(() => proceed) : proceed())
 	const [pane, setPane] = useState<PickerPane>('series')
+	const rangeLabelId = useId()
+	const scaleLabelId = useId()
 	// Phones skip the search autofocus: the keyboard would cover the list before anyone asked to search.
 	const isSmallScreen = useMedia('(max-width: 639px)')
 
@@ -490,12 +372,17 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		// An outside tap never drops the draft; Cancel, × and Escape ask first once it has changed.
 		<Dialog
 			size="xl"
+			workspace
 			store={store}
 			initialFocus={isSmallScreen ? undefined : searchRef}
 			hideOnInteractOutside={false}
 			portal
 		>
-			{dirty ? <DialogCloseGuard onAttemptLeave={(proceed) => setPendingLeave(() => proceed)} /> : null}
+			<DialogDiscardGuard
+				when={dirty}
+				title="Discard this chart?"
+				description="The series and options you picked are not saved to the article."
+			/>
 			<DialogHeader title={initialConfig ? 'Edit chart' : 'Embed a DefiLlama chart'} />
 			<div className="md:hidden">
 				<DialogToolbar>
@@ -517,20 +404,19 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					className={`min-h-0 flex-col border-medium bg-page/40 md:flex md:border-r ${pane === 'series' ? 'flex' : 'hidden'}`}
 				>
 					<div className="grid gap-2 px-3 pt-3 pb-2">
-						<ChartOptionGroup
+						<SegmentedControl
 							label="Entity type"
-							className="[&_label]:px-3"
 							value={tab}
 							options={ENTITY_TYPES}
-							onChange={(value) => {
+							onValueChange={(value) => {
 								setTab(value)
 								setQuery('')
 							}}
+							variant="field"
+							size="md"
 						/>
 						<div>
-							<span className="mb-1 block text-[10px] font-medium tracking-wide text-tertiary uppercase">
-								Metric to add
-							</span>
+							<span className="mb-1 block label-xs tracking-wide text-tertiary uppercase">Metric to add</span>
 							<ChartTypePills
 								chartTypes={chartTypeOptions}
 								selectedType={currentMetric}
@@ -540,26 +426,26 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							/>
 						</div>
 						<div className="relative">
-							<Icon
-								name="search"
-								aria-hidden
-								className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-tertiary"
-							/>
-							<input
+							<Icon name="search" aria-hidden className={`${searchFieldIconStyles} size-4`} />
+							<Input
 								ref={searchRef}
 								value={query}
 								onChange={(event) => setQuery(event.target.value)}
 								aria-label={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
 								placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
-								className="w-full rounded-md border border-medium bg-surface py-1.5 pr-2 pl-8 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+								className={searchFieldInputPlacementStyles}
 							/>
 						</div>
 					</div>
 					<ul className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
 						{catalogLoading ? (
-							<li className="px-3 py-8 text-center text-xs text-tertiary">Loading…</li>
+							<li role="status" aria-live="polite" className="flex justify-center px-3 py-6">
+								<LoadingIndicator />
+							</li>
 						) : filteredEntities.length === 0 ? (
-							<li className="px-3 py-8 text-center text-xs text-tertiary">No results</li>
+							<li role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
+								No results
+							</li>
 						) : (
 							filteredEntities.map((entity) => {
 								const candidateId = `${entity.entityType}:${entity.slug}:${currentMetric}`
@@ -600,8 +486,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 				<section className={`min-h-0 flex-col overflow-y-auto md:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}>
 					{series.length === 0 ? (
 						<div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-16 text-center">
-							<div className="text-sm font-medium text-primary">Pick up to {MAX_SERIES} series</div>
-							<p className="max-w-sm text-xs leading-relaxed text-tertiary">
+							<div className="label-md text-primary">Pick up to {MAX_SERIES} series</div>
+							<p className="max-w-sm body-sm text-tertiary">
 								Choose a metric from the left, then tick any protocols or chains to add them as series. Switch metric or
 								tab to mix different metrics and entity types on a single chart.
 							</p>
@@ -609,7 +495,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					) : (
 						<>
 							<div className="grid gap-2 px-5 pt-4 pb-3">
-								<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Series</span>
+								<span className="label-xs tracking-wide text-tertiary uppercase">Series</span>
 								<ul className="grid gap-1.5">
 									{series.map((s, i) => {
 										const id = seriesId(s)
@@ -617,7 +503,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										return (
 											<li
 												key={id}
-												className="grid grid-cols-[12px_minmax(0,1fr)_24px] items-center gap-2 rounded-md border border-medium bg-page px-2.5 py-1.5 sm:grid-cols-[12px_minmax(0,1fr)_auto_24px]"
+												className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-medium bg-page px-2.5 py-1.5 sm:grid-cols-[12px_minmax(0,1fr)_auto_auto]"
 											>
 												<span
 													aria-hidden
@@ -634,51 +520,74 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													</span>
 												</span>
 												<div className="col-start-2 row-start-2 sm:col-auto sm:row-auto">
-													<ChartTypeSelect
-														value={s.chartType}
-														options={types}
-														onChange={(next) => updateSeriesChartType(id, next)}
+													<Select
+														heading="Chart type"
+														allValues={types.map((key) => ({ key, name: labelFor(key) }))}
+														selectedValues={s.chartType}
+														setSelectedValues={(next) => updateSeriesChartType(id, next)}
+														label={<span className="truncate">{labelFor(s.chartType)}</span>}
+														labelType="none"
+														variant="input"
+														size="md"
+														className="w-44 justify-between"
+														popoverClassName="z-50"
+														triggerProps={{ 'aria-label': `Chart type for ${s.name}` }}
 													/>
 												</div>
-												<button
-													type="button"
+												<Button
+													variant="ghost"
+													size="md"
+													square
 													onClick={() => removeSeries(id)}
-													aria-label={`Remove ${s.name}`}
-													className="flex size-6 items-center justify-center rounded-sm text-tertiary hover:bg-research-tint-hover hover:text-primary"
+													aria-label={`Remove ${s.name} ${labelFor(s.chartType)}`}
 												>
-													×
-												</button>
+													<Icon name="x" className="size-4" aria-hidden="true" />
+												</Button>
 											</li>
 										)
 									})}
 								</ul>
-								{metaLoading ? <div className="text-[11px] text-tertiary">Loading available chart types…</div> : null}
+								{metaLoading ? (
+									<div role="status" aria-live="polite">
+										<LoadingIndicator label="Loading available chart types" />
+									</div>
+								) : null}
 							</div>
 
 							<div className="flex flex-wrap items-center gap-3 px-5 pb-3">
 								<div className="grid gap-1.5">
-									<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Range</span>
-									<ChartOptionGroup<ArticleChartRange>
+									<span id={rangeLabelId} className="label-xs tracking-wide text-tertiary uppercase">
+										Range
+									</span>
+									<SegmentedControl<ArticleChartRange>
 										label="Range"
+										aria-labelledby={rangeLabelId}
 										value={range}
 										options={RANGES}
-										onChange={setRange}
+										onValueChange={setRange}
+										variant="default"
+										size="md"
 									/>
 								</div>
 								<div className="grid gap-1.5">
-									<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Y-axis</span>
-									<ChartOptionGroup
+									<span id={scaleLabelId} className="label-xs tracking-wide text-tertiary uppercase">
+										Y-axis scale
+									</span>
+									<SegmentedControl
 										label="Y-axis scale"
+										aria-labelledby={scaleLabelId}
 										value={logScale ? 'log' : 'linear'}
 										options={SCALES}
-										onChange={(value) => setLogScale(value === 'log')}
+										onValueChange={(value) => setLogScale(value === 'log')}
+										variant="default"
+										size="md"
 									/>
 								</div>
 							</div>
 
 							<div className="relative shrink-0 grow border-t border-medium bg-page">
 								<div className="pointer-events-none absolute top-3 left-5 z-10 flex items-center gap-2">
-									<span className="rounded-full border border-medium bg-surface/80 px-2 py-0.5 text-[10px] font-medium tracking-wide text-tertiary uppercase backdrop-blur">
+									<span className="rounded-full border border-medium bg-surface/80 px-2 py-0.5 label-xs tracking-wide text-tertiary uppercase backdrop-blur">
 										Preview
 									</span>
 								</div>
@@ -694,31 +603,25 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							</div>
 
 							<label className="grid gap-1 border-t border-medium px-5 py-3">
-								<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">
-									Caption (optional)
-								</span>
-								<input
+								<span className="label-xs tracking-wide text-tertiary uppercase">Caption (optional)</span>
+								<Input
 									value={caption}
 									onChange={(event) => setCaption(event.target.value)}
 									placeholder="Add a one-line caption shown under the chart…"
-									className="w-full rounded-md border border-medium bg-page px-3 py-1.5 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+									className="w-full"
 								/>
 							</label>
 
 							<div className="grid gap-2 border-t border-medium px-5 py-3">
 								<div className="flex items-center justify-between">
-									<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Annotations</span>
-									<button
-										type="button"
-										onClick={addAnnotation}
-										disabled={annotations.length >= MAX_ANNOTATIONS}
-										className="rounded-sm border border-medium px-2 py-0.5 text-[11px] text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-									>
-										+ Add
-									</button>
+									<span className="label-xs tracking-wide text-tertiary uppercase">Annotations</span>
+									<Button size="sm" onClick={addAnnotation} disabled={annotations.length >= MAX_ANNOTATIONS}>
+										<Icon name="plus" className="size-3.5" aria-hidden="true" />
+										Add
+									</Button>
 								</div>
 								{annotations.length === 0 ? (
-									<p className="text-[11px] text-tertiary">
+									<p className="body-sm text-tertiary">
 										Mark a date on the chart with a short label (e.g. "V3 launch", "depeg event").
 									</p>
 								) : (
@@ -726,33 +629,35 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										{annotations.map((annotation, i) => (
 											<li
 												key={annotation.id}
-												className="grid grid-cols-[16px_120px_1fr_24px] items-center gap-2 rounded-md border border-medium bg-page px-2 py-1.5"
+												className="grid grid-cols-[16px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-medium bg-page px-2 py-1.5 sm:grid-cols-[16px_auto_minmax(0,1fr)_auto]"
 											>
 												<span className="font-jetbrains text-[10px] font-bold text-tertiary">
 													{String.fromCharCode(65 + i)}
 												</span>
-												<input
+												<Input
 													type="date"
 													aria-label={`Annotation ${i + 1} date`}
 													value={annotation.date.slice(0, 10)}
 													onChange={(e) => updateAnnotation(i, { date: e.target.value })}
-													className="rounded-sm border border-medium bg-surface px-2 py-1 text-xs text-primary focus:border-link focus:outline-hidden"
+													className="cursor-pointer dark:scheme-dark"
 												/>
-												<input
+												<Input
 													value={annotation.label}
 													onChange={(e) => updateAnnotation(i, { label: e.target.value })}
 													placeholder="Label"
 													aria-label={`Annotation ${i + 1} label`}
-													className="rounded-sm border border-medium bg-surface px-2 py-1 text-xs text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+													// A phone row is too narrow for the date and the label side by side, so the label takes its own line.
+													className="max-sm:col-[2/-1] max-sm:row-start-2"
 												/>
-												<button
-													type="button"
+												<Button
+													variant="ghost"
+													size="md"
+													square
 													onClick={() => removeAnnotation(i)}
-													aria-label="Remove annotation"
-													className="flex size-6 items-center justify-center rounded-sm text-tertiary hover:bg-research-tint-hover hover:text-primary"
+													aria-label={`Remove annotation ${i + 1}`}
 												>
-													×
-												</button>
+													<Icon name="x" className="size-4" aria-hidden="true" />
+												</Button>
 											</li>
 										))}
 									</ul>
@@ -769,33 +674,12 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 						{canInsert ? `${series.length} / ${MAX_SERIES} series` : 'Pick at least one series'}
 					</span>
 				}
-				dismiss={
-					<Button size="md" onClick={() => leave(() => store.hide())}>
-						Cancel
-					</Button>
-				}
+				dismiss={<DialogCancelButton />}
 			>
 				<Button variant="primary" size="md" disabled={!canInsert} onClick={handleInsert}>
 					{initialConfig ? 'Update chart' : 'Insert chart'}
 				</Button>
 			</DialogFooter>
-			<ConfirmDialog
-				open={pendingLeave !== null}
-				onClose={() => setPendingLeave(null)}
-				portal
-				unmountOnHide
-				title="Discard this chart?"
-				description="The series and options you picked are not saved to the article."
-				confirmLabel="Discard"
-				cancelLabel="Keep editing"
-				pendingLabel={null}
-				error={null}
-				onConfirm={() => {
-					const proceed = pendingLeave!
-					setPendingLeave(null)
-					proceed()
-				}}
-			/>
 		</Dialog>
 	)
 }

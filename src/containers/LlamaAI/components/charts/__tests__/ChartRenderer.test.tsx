@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 
 import * as Ariakit from '@ariakit/react'
-import { act } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
@@ -205,6 +206,9 @@ async function toggleCheckbox(scope: ParentNode, label: string) {
 describe('ChartRenderer', () => {
 	let container: HTMLDivElement
 	let root: Root
+	// The editor saves through a mutation.
+	const client = new QueryClient()
+	const render = (node: ReactNode) => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>)
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -235,30 +239,30 @@ describe('ChartRenderer', () => {
 		const chartC = makeChart('c')
 		const getActiveChartId = () => container.querySelector('[data-chart-id]')?.getAttribute('data-chart-id')
 
-		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB, chartC]} chartData={[]} />))
+		await act(async () => render(<ChartRenderer charts={[chartA, chartB, chartC]} chartData={[]} />))
 		const chartCButton = [...container.querySelectorAll('button')].find((button) => button.textContent === 'C')
 		if (!chartCButton) throw new Error('Expected chart C tab')
 		await act(async () => chartCButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 
 		expect(getActiveChartId()).toBe('c')
 
-		await act(async () => root.render(<ChartRenderer charts={[chartC, chartA, chartB]} chartData={[]} />))
+		await act(async () => render(<ChartRenderer charts={[chartC, chartA, chartB]} chartData={[]} />))
 		expect(getActiveChartId()).toBe('c')
 
-		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB]} chartData={[]} />))
+		await act(async () => render(<ChartRenderer charts={[chartA, chartB]} chartData={[]} />))
 		expect(getActiveChartId()).toBe('a')
 
-		await act(async () => root.render(<ChartRenderer charts={[chartB, chartA]} chartData={[]} />))
+		await act(async () => render(<ChartRenderer charts={[chartB, chartA]} chartData={[]} />))
 		expect(getActiveChartId()).toBe('b')
 
-		await act(async () => root.render(<ChartRenderer charts={[chartB, chartC, chartA]} chartData={[]} />))
+		await act(async () => render(<ChartRenderer charts={[chartB, chartC, chartA]} chartData={[]} />))
 		expect(getActiveChartId()).toBe('c')
 	})
 
 	test("switching tabs keeps each chart's view controls", async () => {
 		const chartA = { ...makeCartesianChart('A'), id: 'a' }
 		const chartB = { ...makeCartesianChart('B'), id: 'b' }
-		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB]} chartData={chartData} />))
+		await act(async () => render(<ChartRenderer charts={[chartA, chartB]} chartData={chartData} />))
 		await chooseView(container, 'Scale: Linear', 'Log scale')
 		expect(viewLabels(container)).toContain('Scale: Log')
 
@@ -270,11 +274,11 @@ describe('ChartRenderer', () => {
 
 	test('malformed rows stay inside the chart and a data update recovers it', async () => {
 		const config = makeCartesianChart()
-		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={[null as never]} />))
+		await act(async () => render(<ChartRenderer charts={[config]} chartData={[null as never]} />))
 		expect(container.querySelector('[data-testid="cartesian"]')).toBeNull()
 		expect(container.textContent).toContain('No data available for chart')
 
-		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={chartData} />))
+		await act(async () => render(<ChartRenderer charts={[config]} chartData={chartData} />))
 		expect(container.querySelector('[data-testid="cartesian"]')).not.toBeNull()
 	})
 
@@ -284,7 +288,7 @@ describe('ChartRenderer', () => {
 		config.series[0].metricClass = 'unknown'
 		const rows = chartData.map((row) => ({ ...row, timestamp: new Date(row.timestamp * 1000).toISOString() }))
 		await act(async () =>
-			root.render(<ChartRenderer charts={[config]} chartData={rows} onLocalStyleSave={() => undefined} />)
+			render(<ChartRenderer charts={[config]} chartData={rows} onLocalStyleSave={() => undefined} />)
 		)
 		await click(container, '[title="Edit chart style"]')
 		const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
@@ -307,7 +311,7 @@ describe('ChartRenderer', () => {
 		if (axisType === 'time') config.displayOptions.supportsGrouping = false
 		config.series[0].metricClass = 'unknown'
 		await act(async () =>
-			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+			render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
 		)
 		await click(container, '[title="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
@@ -317,7 +321,7 @@ describe('ChartRenderer', () => {
 	test('keeps editor drafts out of the applied chart and discards them on cancel', async () => {
 		const config = makeCartesianChart()
 		await act(async () =>
-			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+			render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
 		)
 		await chooseView(container, 'Separate', 'Show stacked')
 		expect(viewLabels(container)).toContain('Stacked')
@@ -342,7 +346,7 @@ describe('ChartRenderer', () => {
 		const config = makeCartesianChart()
 		config.displayOptions = { ...config.displayOptions!, defaultStacked: true }
 		await act(async () =>
-			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+			render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
 		)
 		expect(viewLabels(container)).toContain('Stacked')
 
@@ -364,7 +368,7 @@ describe('ChartRenderer', () => {
 		const onLocalStyleSave = vi.fn()
 		const config = makeCartesianChart()
 		await act(async () =>
-			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
+			render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
 		)
 
 		await chooseGrouping(container, 'Month')
@@ -412,9 +416,7 @@ describe('ChartRenderer', () => {
 			}
 		} satisfies ChartConfiguration
 		await act(async () =>
-			root.render(
-				<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />
-			)
+			render(<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
 		)
 		await click(container, '[title="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
@@ -422,7 +424,7 @@ describe('ChartRenderer', () => {
 
 	test('Escape closes an untouched style editor at once, with nothing to confirm', async () => {
 		await act(async () =>
-			root.render(<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={vi.fn()} />)
+			render(<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={vi.fn()} />)
 		)
 		const trigger = document.querySelector<HTMLButtonElement>('[title="Edit chart style"]')!
 		await act(async () => {
@@ -447,7 +449,7 @@ describe('ChartRenderer', () => {
 		const onLocalStyleSave = vi.fn()
 		const onParentClose = vi.fn()
 		await act(async () =>
-			root.render(
+			render(
 				<Ariakit.Dialog open onClose={onParentClose} aria-label="Article editor">
 					<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />
 				</Ariakit.Dialog>

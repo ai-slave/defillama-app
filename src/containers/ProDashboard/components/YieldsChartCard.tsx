@@ -55,8 +55,9 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const {
 		data: chart,
 		isLoading: fetchingChartData,
-		isError: chartError,
 		isFetching: fetchingChart,
+		errorUpdatedAt: supplyErrorAt,
+		dataUpdatedAt: supplyDataAt,
 		refetch: refetchChart
 	} = useQuery({
 		queryKey: ['yield-supply-history', poolConfigId],
@@ -70,12 +71,14 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		retry: 1,
 		enabled: streamDone && needsSupplyData && Boolean(poolConfigId)
 	})
+	const chartError = supplyErrorAt > supplyDataAt
 
 	const {
 		data: borrowChart,
 		isLoading: fetchingBorrowData,
-		isError: borrowError,
 		isFetching: fetchingBorrow,
+		errorUpdatedAt: borrowErrorAt,
+		dataUpdatedAt: borrowDataAt,
 		refetch: refetchBorrowChart
 	} = useQuery({
 		queryKey: ['yield-borrow-history', poolConfigId],
@@ -89,6 +92,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		retry: 1,
 		enabled: streamDone && needsBorrowData && Boolean(poolConfigId)
 	})
+	const borrowError = borrowErrorAt > borrowDataAt
 
 	const { dataset: currentChartDataset, latestData } = useYieldChartTransformations({
 		chartType,
@@ -166,9 +170,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	const hasError = needsBorrowData ? chartError || borrowError : chartError
 	const isFetching = needsBorrowData ? fetchingBorrow || fetchingChart : fetchingChart
-	const retryChartData = () => {
-		if (chartError) void refetchChart()
-		if (borrowError) void refetchBorrowChart()
+	const retryChartData = {
+		run: () => {
+			if (chartError) void refetchChart()
+			if (borrowError) void refetchBorrowChart()
+		},
+		pending: isFetching
 	}
 
 	const hasRequiredData = currentChartDataset.source.length > 0
@@ -186,12 +193,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		</div>
 	)
 
-	if (isLoading) {
-		return renderStatusShell(<ProCardLoading />)
+	if (hasError && selectedData === undefined) {
+		return renderStatusShell(<ProCardError retry={retryChartData} />)
 	}
 
-	if (hasError && selectedData === undefined) {
-		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	if (!hasRequiredData) {
@@ -213,7 +220,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{hasError ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			{hasError ? <ProCardRefreshFailed retry={retryChartData} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={poolName}

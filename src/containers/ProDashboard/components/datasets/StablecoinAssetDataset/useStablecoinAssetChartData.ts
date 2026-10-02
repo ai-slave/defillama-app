@@ -51,7 +51,7 @@ interface UseStablecoinAssetChartDataResult {
 	prepareCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
 	isFetching: boolean
-	error: Error | null
+	readFailed: boolean
 	refetch: () => void
 }
 
@@ -216,7 +216,8 @@ export function useStablecoinAssetChartData(
 		data: rawData,
 		isLoading,
 		isFetching,
-		error,
+		errorUpdatedAt,
+		dataUpdatedAt,
 		refetch
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'stablecoin-asset-chart-data', stablecoinSlug],
@@ -252,6 +253,7 @@ export function useStablecoinAssetChartData(
 		[rawData, chartType, periodBounds, selectionOptions, canonicalHistory]
 	)
 	const isInactive = rawData ? isInactiveStablecoin(rawData.peggedAssetData) : false
+	const readFailed = errorUpdatedAt > dataUpdatedAt
 	const prepareCsvDataset = useCallback(() => {
 		if (!rawData) throw new Error('Stablecoin asset data is unavailable')
 		return buildStablecoinAssetCsvDataset(rawData, chartType, periodBounds, selectionOptions, canonicalHistory)
@@ -267,7 +269,7 @@ export function useStablecoinAssetChartData(
 			prepareCsvDataset,
 			isLoading,
 			isFetching,
-			error,
+			readFailed,
 			refetch
 		}),
 		[
@@ -279,7 +281,7 @@ export function useStablecoinAssetChartData(
 			prepareCsvDataset,
 			isLoading,
 			isFetching,
-			error,
+			readFailed,
 			refetch
 		]
 	)

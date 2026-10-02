@@ -14,15 +14,18 @@ import { FormatSplitButton } from './FormatSplitButton'
 
 type Action = { run: () => void; disabled: boolean }
 
-type PreviewHeaderActionsProps = {
-	confirmed: (action: string) => boolean
-	downloadLabel: string
-	/** Null where the modal has nothing to copy, such as a combined preview. */
-	copy: Action | null
-} & (
-	| { mode: 'preview'; onSubscribe: () => void }
+type PreviewHeaderActionsProps = { downloadLabel: string } & (
+	| {
+			mode: 'preview'
+			/** False where the modal has nothing to copy, such as a combined preview. */
+			copy: boolean
+			onSubscribe: () => void
+	  }
 	| {
 			mode: 'full'
+			confirmed: (action: string) => boolean
+			/** Null where the modal has nothing to copy, such as a combined preview. */
+			copy: Action | null
 			savePreset: Action
 			copyLink: Action
 			onDownload: (format: DownloadFormat) => void
@@ -31,9 +34,12 @@ type PreviewHeaderActionsProps = {
 )
 
 export function PreviewHeaderActions(props: PreviewHeaderActionsProps) {
-	const { confirmed, downloadLabel, copy } = props
+	const { downloadLabel } = props
+	const copy = props.mode === 'full' ? props.copy : props.copy ? { run: props.onSubscribe, disabled: false } : null
 	const savePreset = props.mode === 'full' ? props.savePreset : null
 	const copyLink = props.mode === 'full' ? props.copyLink : null
+	// A preview reports nothing, so its buttons never show a confirmation.
+	const confirmed = (action: string) => props.mode === 'full' && props.confirmed(action)
 	return (
 		<>
 			{copy ? (

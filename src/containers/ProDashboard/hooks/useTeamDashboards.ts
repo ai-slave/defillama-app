@@ -19,7 +19,7 @@ export function useTeamDashboards({ page, limit, enabled = true }: UseTeamDashbo
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 	const router = useRouter()
 
-	const { data, isLoading, error, refetch } = useQuery({
+	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
 		queryKey: ['pro-dashboard', 'team-dashboards', user?.id, page, limit],
 		queryFn: async () => {
 			if (!isAuthenticated) {
@@ -41,7 +41,8 @@ export function useTeamDashboards({ page, limit, enabled = true }: UseTeamDashbo
 	return {
 		dashboards: data?.items ?? EMPTY_DASHBOARDS,
 		isLoading,
-		error,
+		isFetching,
+		readFailed: errorUpdatedAt > dataUpdatedAt,
 		page: data?.page || page,
 		totalPages: data?.totalPages || 1,
 		totalItems: data?.totalItems || 0,

@@ -47,6 +47,7 @@ interface ChartRendererProps {
 	dataset: MultiSeriesChartDataset
 	isLoading: boolean
 	hasError: boolean
+	isFetching: boolean
 	refetch: () => void
 	color: string
 	onChartReady: (instance: echarts.ECharts | null) => void
@@ -64,6 +65,7 @@ function ChartRenderer({
 	dataset,
 	isLoading,
 	hasError,
+	isFetching,
 	refetch,
 	color,
 	onChartReady
@@ -108,8 +110,11 @@ function ChartRenderer({
 	if (hasError) {
 		return (
 			<ProCardError
-				onRetry={() => {
-					refetch()
+				retry={{
+					run: () => {
+						refetch()
+					},
+					pending: isFetching
 				}}
 			/>
 		)
@@ -264,6 +269,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 					dataset={chartDataset}
 					isLoading={chartState.isLoading}
 					hasError={chartState.hasError}
+					isFetching={chartState.isFetching}
 					refetch={chartState.refetch}
 					color={chartColor}
 					onChartReady={handleChartReady}

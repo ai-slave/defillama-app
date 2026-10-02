@@ -45,8 +45,9 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const {
 		data: incomeStatement,
 		isLoading,
-		isError,
 		isFetching,
+		errorUpdatedAt,
+		dataUpdatedAt,
 		refetch
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'income-statement', config.protocol],
@@ -54,6 +55,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 		enabled: streamDone && Boolean(config.protocol && displayName && metadata.fees && metadata.revenue),
 		staleTime: 60 * 60 * 1000
 	})
+	const readFailed = errorUpdatedAt > dataUpdatedAt
 
 	const hasData = useMemo(() => {
 		if (!incomeStatement?.data) return false
@@ -66,13 +68,11 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const iconUrl = getItemIconUrl('protocol', protocolInfo, config.protocol)
 	const queryRequired = Boolean(config.protocol && displayName && metadata.fees && metadata.revenue)
 	const showLoader = metadataLoading || isLoading || (queryRequired && !streamDone && incomeStatement === undefined)
-	const retryIncomeStatement = () => {
-		void refetch()
-	}
+	const retryIncomeStatement = { run: () => void refetch(), pending: isFetching }
 
 	return (
 		<div className="flex min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			{isError && incomeStatement !== undefined ? <ProCardRefreshFailed onRetry={retryIncomeStatement} /> : null}
+			{readFailed && incomeStatement !== undefined ? <ProCardRefreshFailed retry={retryIncomeStatement} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={`${displayName} Income statement`}
@@ -90,14 +90,10 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 				}
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
-				{showLoader ? (
+				{readFailed && incomeStatement === undefined ? (
+					<ProCardError retry={retryIncomeStatement} />
+				) : showLoader ? (
 					<ProCardLoading />
-				) : isError && incomeStatement === undefined ? (
-					isFetching ? (
-						<ProCardLoading />
-					) : (
-						<ProCardError onRetry={retryIncomeStatement} />
-					)
 				) : !incomeStatement || !hasData ? (
 					<ProCardEmpty message="No income statement data available" />
 				) : (

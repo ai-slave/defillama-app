@@ -79,7 +79,13 @@ async function mount(editItem = item) {
 		return (
 			<>
 				{open ? (
-					<SqlChartModal editItem={editItem} onClose={() => setOpen(false)} />
+					<SqlChartModal
+						editItem={editItem}
+						isOpen
+						onClose={() => setOpen(false)}
+						onClosed={() => {}}
+						onSaved={() => setOpen(false)}
+					/>
 				) : (
 					<button type="button" onClick={() => setOpen(true)}>
 						Reopen
@@ -174,6 +180,27 @@ test('Cancel during Save stops the query, and its late answer never reaches the 
 	expect(savedNames()).toBe('')
 })
 
+test('Cancel during Save of a changed query closes without asking, as × and Escape do, and stops the query', async () => {
+	const late = Promise.withResolvers<ReturnType<typeof valueTable>>()
+	engine.send.mockReturnValueOnce(late.promise)
+	await mount()
+	const nameInput = await waitForUi(() => {
+		const input = cardName()
+		expect(input).not.toBeNull()
+		return input!
+	})
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(nameInput, 'Renamed')
+		nameInput.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await click('Save changes')
+	await click('Cancel')
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	expect(button('Reopen')).toBeDefined()
+	expect(engine.cancelSent).toHaveBeenCalledOnce()
+	expect(onEdit).not.toHaveBeenCalled()
+})
+
 test("Stop during a saved query keeps its SQL and name, and Save stores that query's own result instead of the card snapshot", async () => {
 	writeAppStorage({
 		...readAppStorage(),
@@ -228,7 +255,15 @@ test('Cancel reports once that the editor has finished leaving, so its session c
 	const onClosed = vi.fn()
 	function Harness() {
 		const [open, setOpen] = useState(true)
-		return <SqlChartModal editItem={item} isOpen={open} onClose={() => setOpen(false)} onClosed={onClosed} />
+		return (
+			<SqlChartModal
+				editItem={item}
+				isOpen={open}
+				onClose={() => setOpen(false)}
+				onClosed={onClosed}
+				onSaved={() => setOpen(false)}
+			/>
+		)
 	}
 	await act(async () =>
 		root.render(

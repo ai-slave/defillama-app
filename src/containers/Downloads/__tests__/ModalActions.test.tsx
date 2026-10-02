@@ -252,3 +252,52 @@ test('the phone Selected toggle counts the selected metrics and says whether the
 	await press(toggle)
 	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('true')
 })
+
+const listButton = (name: string) =>
+	[...document.querySelectorAll<HTMLButtonElement>('aside button')].find((node) => accessibleName(node) === name)!
+
+test('the selected metrics list marks the metric the table previews', async () => {
+	await renderMetrics()
+	await waitForUi(() => expect(listButton('TVL').getAttribute('aria-current')).toBe('true'))
+	await press(listButton('Active Loans'))
+	expect(listButton('Active Loans').getAttribute('aria-current')).toBe('true')
+	expect(listButton('TVL').hasAttribute('aria-current')).toBe(false)
+})
+
+test('each selected metric has a Remove button named for it', async () => {
+	await renderMetrics()
+	await waitForUi(() =>
+		expect(
+			[...document.querySelectorAll('aside button')].map(accessibleName).filter((name) => name.startsWith('Remove'))
+		).toEqual(['Remove TVL', 'Remove Active Loans'])
+	)
+	await press(button('Remove TVL'))
+	expect(accessibleName(document.activeElement!)).toBe('Protocol Active Loans')
+})
+
+test('a previewed metric that is removed and picked again does not take the preview back', async () => {
+	await renderMetrics()
+	await press(await waitForUi(() => listButton('Active Loans')))
+	await press(button('Remove Active Loans'))
+	await press(button('Protocol TVL'))
+	const option = await waitForUi(() => button('Active Loans'))
+	await press(option)
+	expect(listButton('TVL').getAttribute('aria-current')).toBe('true')
+	expect(listButton('Active Loans').hasAttribute('aria-current')).toBe(false)
+})
+
+test('Select all keeps the metric the table already previews', async () => {
+	await render(
+		<MultiMetricModal
+			chartOptionsMap={{ 'protocol-tvl-chart': options, 'protocol-active-loans-chart': options }}
+			authorizedFetch={fetchCsv}
+			onClose={() => {}}
+			isPreview={false}
+			initialConfig={{ ...metricsConfig, metrics: ['protocol-active-loans-chart'] }}
+		/>
+	)
+	await press(await waitForUi(() => button('Protocol Active Loans')))
+	await press(await waitForUi(() => button('Select all')))
+	await waitForUi(() => expect(listButton('Active Loans').getAttribute('aria-current')).toBe('true'))
+	expect(listButton('TVL').hasAttribute('aria-current')).toBe(false)
+})

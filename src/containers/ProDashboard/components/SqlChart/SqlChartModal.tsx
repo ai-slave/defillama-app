@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { type ChartOptionsMap, fetchAllChartOptions } from '~/containers/Downloads/chart-datasets'
 import {
@@ -20,9 +20,9 @@ import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
 import { useTableRegistry, type RegisteredTable, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogCloseGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
@@ -48,10 +48,10 @@ import {
 interface SqlChartModalProps {
 	editItem?: SqlChartConfig | null
 	placement?: DashboardItemPlacement
-	isOpen?: boolean
+	isOpen: boolean
 	onClose: () => void
-	onClosed?: () => void
-	onSaved?: () => void
+	onClosed: () => void
+	onSaved: () => void
 }
 
 const NO_CHART_OPTIONS: ChartOptionsMap = {}
@@ -83,7 +83,7 @@ const SQL_PANES = [
 	{ value: 'reference', label: 'Reference' }
 ] as const
 
-export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onClosed, onSaved }: SqlChartModalProps) {
+export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, onSaved }: SqlChartModalProps) {
 	const { authorizedFetch } = useAuthContext()
 	const { handleAddSqlChart, handleEditItem } = useProDashboardEditorActions()
 	const duckdb = useDuckDB()
@@ -110,10 +110,6 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 
 	const editorRef = useRef<EditorHandle | null>(null)
 	const runControllerRef = useRef<AbortController | null>(null)
-	const chartConfigRef = useRef(chartConfig)
-	useLayoutEffect(() => {
-		chartConfigRef.current = chartConfig
-	})
 
 	useEffect(
 		() => () => {
@@ -129,6 +125,14 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		dispatch({ type: 'stopRequested' })
 		controller.abort()
 	}
+
+	// Called after the run's await, so it reads the chart setup of the latest render: edits made while the
+	// query ran carry over to its columns.
+	const settle = useStableCallback((res: RunResponse, aborted: boolean, query: string) => {
+		const settlement = settleRun(res, { aborted, sql: query, chartConfig })
+		dispatch({ type: 'runSettled', settlement })
+		return settlement
+	})
 
 	const run = useCallback(
 		async (
@@ -170,17 +174,12 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 			if (runControllerRef.current !== controller) return null
 			// A mounted editor must unlock after Stop, but an aborted result must never reach Save.
 			runControllerRef.current = null
-			const settlement = settleRun(res, {
-				aborted: controller.signal.aborted,
-				sql: trimmed,
-				chartConfig: chartConfigRef.current
-			})
-			dispatch({ type: 'runSettled', settlement })
+			const settlement = settle(res, controller.signal.aborted, trimmed)
 			return settlement.kind === 'completed'
 				? { result: settlement.result, chartConfig: settlement.chartConfig, tables }
 				: null
 		},
-		[duckdb.conn, loadedTables, loadTable, schemaLoading, chartOptionsMap]
+		[duckdb.conn, loadedTables, loadTable, schemaLoading, chartOptionsMap, settle]
 	)
 
 	const applyQuery = useCallback(
@@ -193,19 +192,16 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		[schemaLoading, run]
 	)
 
-	const handleClose = () => {
-		runControllerRef.current?.abort()
-		onClose()
-	}
-
 	const dialogStore = Ariakit.useDialogStore({
 		open: isOpen,
 		setOpen: (open) => {
-			if (!open) handleClose()
+			if (open) return
+			runControllerRef.current?.abort()
+			onClose()
 		},
 		// Ariakit reports mounted = false once the exit transition ends, never on a first render that starts closed.
 		setMounted: (mounted) => {
-			if (!mounted) onClosed?.()
+			if (!mounted) onClosed()
 		}
 	})
 
@@ -268,8 +264,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 			},
 			{ replaceByName: true }
 		)
-		if (onSaved) onSaved()
-		else onClose()
+		onSaved()
 		if (!editItem) requestDashboardItemReveal(config.id)
 	}, [
 		canSave,
@@ -285,7 +280,6 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		handleAddSqlChart,
 		placement,
 		saveDownload,
-		onClose,
 		onSaved
 	])
 
@@ -295,8 +289,6 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 	const refusalReason = refusal?.draft === draftSnapshot ? refusal.reason : null
 	const [openedSnapshot] = useState(draftSnapshot)
 	const dirty = draftSnapshot !== openedSnapshot
-	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
-	const leave = (proceed: () => void) => (dirty ? setPendingLeave(() => proceed) : proceed())
 	// Below lg one pane shows at a time; a run that finishes there brings its results into view.
 	const [pane, setPane] = useState<SqlPane>('query')
 	const isNarrow = useMedia('(max-width: 1023px)')
@@ -308,10 +300,13 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			{/* An outside tap never drops the query; Cancel, × and Escape ask first once it has changed. */}
-			<Dialog size="xl" scope="pro" unmountOnHide portal hideOnInteractOutside={false}>
-				{dirty && !savePending ? (
-					<DialogCloseGuard onAttemptLeave={(proceed) => setPendingLeave(() => proceed)} />
-				) : null}
+			<Dialog size="xl" workspace scope="pro" unmountOnHide portal hideOnInteractOutside={false}>
+				{/* Leaving during Save stops its run instead, so it never asks. */}
+				<DialogDiscardGuard
+					when={dirty && !savePending}
+					title="Discard this SQL chart?"
+					description="Your query and card settings are not saved to the dashboard."
+				/>
 				<DialogHeader
 					title={editItem ? 'Edit SQL chart' : 'New SQL chart'}
 					actions={
@@ -512,11 +507,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 							</span>
 						)
 					}
-					dismiss={
-						<Button size="md" onClick={() => leave(handleClose)}>
-							Cancel
-						</Button>
-					}
+					dismiss={<DialogCancelButton />}
 				>
 					{/* While saving, the same button stops the run that the save started. */}
 					<Button
@@ -530,23 +521,6 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 						{controls.save.label}
 					</Button>
 				</DialogFooter>
-				<ConfirmDialog
-					open={pendingLeave !== null}
-					onClose={() => setPendingLeave(null)}
-					portal
-					unmountOnHide
-					title="Discard this SQL chart?"
-					description="Your query and card settings are not saved to the dashboard."
-					confirmLabel="Discard"
-					cancelLabel="Keep editing"
-					pendingLabel={null}
-					error={null}
-					onConfirm={() => {
-						const proceed = pendingLeave!
-						setPendingLeave(null)
-						proceed()
-					}}
-				/>
 			</Dialog>
 		</Ariakit.DialogProvider>
 	)

@@ -341,6 +341,7 @@ export function useMetricData(metric: MetricConfig) {
 		...result,
 		isLoading: runtime.isLoading,
 		isError: runtime.hasError,
+		isFetching: runtime.isFetching,
 		refetch: runtime.refetch
 	}
 }

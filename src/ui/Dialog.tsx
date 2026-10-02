@@ -11,6 +11,7 @@ import {
 	type ReactNode
 } from 'react'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { catchLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
@@ -66,21 +67,23 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
    arbitrary --dialog-width:
      Dialog     sm 448 (confirms, short forms, lists) · md 600 (forms, pickers)
                 · lg 880 (two-pane filters, rails, settings)
-                · xl workspace: min(1280, 100% − 32) wide and a fixed
-                  min(900, 100dvh − 32) tall, for self-contained editors
-                  whose panes scroll on their own (Add card, SQL editor,
-                  Downloads previews, Metrics). On phones a workspace is
-                  the full sheet and brings its own layout, usually a
-                  switch between its panes in the toolbar band.
+                · xl 1280, up to min(900, 100% − 32) tall, for wide viewers
+                  that fit their content (the fullscreen chat table)
+                · xl + `workspace`: a fixed min(900, 100dvh − 32) tall, for
+                  self-contained editors whose panes scroll on their own
+                  (Add card, SQL editor, Downloads previews, Metrics), so a
+                  pane that changes never resizes the dialog. On phones a
+                  workspace is the full sheet and brings its own layout,
+                  usually a switch between its panes in the toolbar band.
      SideSheet  sm 448 (forms, filters) · md 672 (detail viewers)
                 · lg 1152 (docs with a table of contents, history)
    Below sm both are bottom sheets: a Dialog hugs its content unless
-   `fullSheet` or xl; a SideSheet always keeps the full sheet height.
+   `fullSheet` or a workspace; a SideSheet always keeps the full sheet height.
    `canvas` gives either the elevated-1 fill for a body of bg-surface cards.
 
    `pending` locks the surface while a request that cannot be cancelled runs:
-   Escape, an outside tap and the header × stop closing it. Callers still
-   disable their own Cancel. A request that aborts on close does not need it.
+   Escape, an outside tap, the header × and DialogCancelButton stop closing
+   it. A request that aborts on close does not need it.
 
    Contents: <DialogHeader> · optional <DialogToolbar> (search, tabs, steps)
    · <DialogBody> · optional <DialogFooter>.
@@ -90,18 +93,22 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
     the reader confirms. */
 type LeaveGuard = (proceed: () => void) => void
 
-/** The surface's lock (`pending`) and its leave guard, read by the ×, the back control and guarded tabs. */
+/** The surface's lock (`pending`), its close and its leave guard, read by the ×, Cancel, the back control and guarded
+    tabs. */
 const DialogSurfaceContext = createContext<{
 	pending: boolean
+	/** Closes this surface. Inside a TabPanel the nearest Ariakit dialog context is the panel's own store, so a control
+	    that closes the dialog uses this instead. */
+	close: () => void
 	setGuard: (guard: LeaveGuard | null) => void
 	/** Hands `proceed` to the guard and returns true when one is mounted; otherwise returns false. */
 	attemptLeave: (proceed: () => void) => boolean
-}>({ pending: false, setGuard: () => {}, attemptLeave: () => false })
+}>({ pending: false, close: () => {}, attemptLeave: () => false, setGuard: () => {} })
 
 type SurfaceDismissProps = Pick<SurfaceProps, 'pending' | 'hideOnEscape' | 'hideOnInteractOutside'>
 
 /** The dismissal shared by Dialog and SideSheet: `pending` stops Escape, outside taps and the ×; a mounted
-    DialogCloseGuard turns Escape and the × into its own prompt and ignores outside taps. The guard is read when the
+    DialogDiscardGuard turns Escape and the × into its own prompt and ignores outside taps. The guard is read when the
     event happens, so it needs no render of the surface. */
 function SurfaceDialog({
 	pending = false,
@@ -127,8 +134,17 @@ function SurfaceDialog({
 		},
 		[ref]
 	)
+	// Leaving closes the way Escape would: through the caller's store, its onClose for a controlled dialog, or the
+	// provider's store. onClose comes before the context, so a controlled dialog nested in another dialog's provider
+	// never closes its parent.
+	const close = () => {
+		if (props.store) props.store.hide()
+		else if (props.onClose) props.onClose(new Event('close'))
+		else contextStore?.hide()
+	}
 	const surface = {
 		pending,
+		close,
 		setGuard: (guard: LeaveGuard | null) => {
 			guardRef.current = guard
 		},
@@ -142,18 +158,10 @@ function SurfaceDialog({
 		<DialogSurfaceContext value={surface}>
 			<Ariakit.Dialog
 				hideOnEscape={(event) => {
-					// Leaving closes the way Escape would: through the caller's store, its onClose for a controlled dialog, or
-					// the provider's store. onClose comes before the context, so a controlled dialog nested in another
-					// dialog's provider never closes its parent.
-					if (
-						surface.attemptLeave(() => {
-							if (props.store) props.store.hide()
-							else if (props.onClose) props.onClose(new Event('close'))
-							else contextStore?.hide()
-						})
-					)
-						return false
-					return !pending && (typeof hideOnEscape === 'function' ? hideOnEscape(event) : hideOnEscape)
+					// A locked surface never asks: there is nothing to leave until the request settles.
+					if (pending) return false
+					if (surface.attemptLeave(close)) return false
+					return typeof hideOnEscape === 'function' ? hideOnEscape(event) : hideOnEscape
 				}}
 				hideOnInteractOutside={(event) =>
 					!guardRef.current &&
@@ -167,22 +175,59 @@ function SurfaceDialog({
 	)
 }
 
-export function DialogCloseGuard({ onAttemptLeave }: { onAttemptLeave: LeaveGuard }) {
+/** Asks before the dialog drops work: while `when` holds, Escape, the ×, DialogCancelButton and useDialogLeave steps
+    open a confirmation that runs the step only on its confirm, and an outside tap does nothing. */
+export function DialogDiscardGuard({
+	when,
+	title,
+	description,
+	confirmLabel = 'Discard',
+	cancelLabel = 'Keep editing'
+}: {
+	when: boolean
+	title: string
+	description: ReactNode
+	confirmLabel?: string
+	cancelLabel?: string
+}) {
 	const { setGuard } = useContext(DialogSurfaceContext)
+	// The step that leaving would take (close the dialog, switch a tab), held while the reader confirms it.
+	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
 	return (
-		<span
-			hidden
-			ref={(node) => {
-				if (!node) return
-				setGuard(onAttemptLeave)
-				return () => setGuard(null)
-			}}
-		/>
+		<>
+			{when ? (
+				<span
+					hidden
+					ref={(node) => {
+						if (!node) return
+						setGuard((proceed) => setPendingLeave(() => proceed))
+						return () => setGuard(null)
+					}}
+				/>
+			) : null}
+			<ConfirmDialog
+				open={pendingLeave !== null}
+				onClose={() => setPendingLeave(null)}
+				portal
+				unmountOnHide
+				title={title}
+				description={description}
+				confirmLabel={confirmLabel}
+				cancelLabel={cancelLabel}
+				pendingLabel={null}
+				error={null}
+				onConfirm={() => {
+					const proceed = pendingLeave!
+					setPendingLeave(null)
+					proceed()
+				}}
+			/>
+		</>
 	)
 }
 
 /** For a control inside a guarded dialog that leaves the current step, such as a tab: run `proceed` directly, or hand
-    it to the mounted DialogCloseGuard to confirm first. */
+    it to the mounted DialogDiscardGuard to confirm first. */
 export function useDialogLeave() {
 	const { attemptLeave } = useContext(DialogSurfaceContext)
 	return (proceed: () => void) => {
@@ -193,14 +238,17 @@ export function useDialogLeave() {
 export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
 type SideSheetSize = Exclude<DialogSize, 'xl'>
 
-/** Width (and, for a workspace, height) per size, also for a surface that is not a Dialog itself (a Suspense
-    placeholder shaped like one). */
+/** Width per size, also for a surface that is not a Dialog itself (a Suspense placeholder shaped like one). */
 export const dialogWidthStyles: Record<DialogSize, string> = {
 	sm: '[--dialog-width:448px]',
 	md: '[--dialog-width:600px]',
 	lg: '[--dialog-width:880px]',
-	xl: '[--dialog-width:1280px] [--dialog-height:min(900px,calc(100dvh-32px))] [--dialog-max-height:none] max-sm:h-(--sheet-height)'
+	xl: '[--dialog-width:1280px] [--dialog-max-height:min(900px,calc(100%-32px))]'
 }
+
+/** The workspace height: fixed on desktop and the full sheet on phones, so panes that change never resize it. */
+export const dialogWorkspaceStyles =
+	'[--dialog-height:min(900px,calc(100dvh-32px))] [--dialog-max-height:none] max-sm:h-(--sheet-height)'
 
 type SurfaceProps = {
 	pending?: boolean
@@ -213,11 +261,14 @@ export function Dialog({
 	size,
 	fullSheet = false,
 	canvas = false,
+	workspace = false,
 	scope,
 	...props
 }: SurfaceProps & {
 	size: DialogSize
 	fullSheet?: boolean
+	/** With `xl`: a fixed height for an editor whose panes scroll themselves. */
+	workspace?: boolean
 	/** Only for a body of bg-surface cards, like the Metrics browser. */
 	canvas?: boolean
 	scope?: keyof typeof DIALOG_SCOPE
@@ -229,7 +280,7 @@ export function Dialog({
 			: dialogSurfaceStyles
 	return (
 		<SurfaceDialog
-			className={`${surface} ${dialogWidthStyles[size]} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
+			className={`${surface} ${dialogWidthStyles[size]} ${workspace ? dialogWorkspaceStyles : ''} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
 			{...props}
 		/>
 	)
@@ -381,6 +432,18 @@ export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...pr
 		>
 			<Icon name="x" className="size-4" aria-hidden="true" />
 		</Ariakit.DialogDismiss>
+	)
+}
+
+/** The footer's Cancel: it closes the way the × does, through a mounted DialogDiscardGuard, and is disabled while the
+    surface is pending. */
+export function DialogCancelButton() {
+	const { pending, close } = useContext(DialogSurfaceContext)
+	const leave = useDialogLeave()
+	return (
+		<Button size="md" disabled={pending} accessibleWhenDisabled onClick={() => leave(close)}>
+			Cancel
+		</Button>
 	)
 }
 

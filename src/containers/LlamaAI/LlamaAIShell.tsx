@@ -57,7 +57,7 @@ export function LlamaAIShell({ children }: { children: ReactNode }) {
 	return (
 		<Layout {...seoFromRoute(route)} hideDesktopSearch>
 			<SiteSearchHotkey />
-			<LlamaAIMobileAppGate interactive>
+			<LlamaAIMobileAppGate>
 				<LlamaAIAnimationPreloads />
 				<SessionAliasProvider userId={userId}>
 					<LlamaAIRouteProvider value={route}>

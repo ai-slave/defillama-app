@@ -1,8 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogCloseGuard, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogDiscardGuard, DialogHeader } from '~/ui/Dialog'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
@@ -20,6 +19,8 @@ import { getMainTabEditLabel, MAIN_TAB_VALUES, TabNavigation } from './TabNaviga
 import { TextTab } from './TextTab'
 import type { AddChartModalProps } from './types'
 import { UnifiedTableTab } from './UnifiedTableTab'
+import { useUnifiedTableWizard } from './UnifiedTableTab/hooks/useUnifiedTableWizard'
+import { UnifiedTableWizardContext } from './UnifiedTableTab/WizardContext'
 import { useComposerItemsData } from './useComposerItemsData'
 import { useModalActions } from './useModalActions'
 
@@ -47,11 +48,13 @@ export function AddChartModal({
 	const { state, actions, computed, submitError } = useModalActions(editItem, onClose, placement, draftItem)
 	const { isAllowed: isSqlAllowed, isUnknown: isSqlAccessUnknown, isRetrying, retry } = useIsSqlAllowed()
 
-	// Leaving asks first when it would lose work entered in any tab; browsing tabs, modes and categories never asks.
-	const [openedState] = useState(state)
-	const dirty = hasDraftChanges(state, openedState)
-	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
-	const leave = (proceed: () => void) => (dirty ? setPendingLeave(() => proceed) : proceed())
+	const unifiedEditItem = editItem?.kind === 'unified-table' ? editItem : undefined
+	const tableWizard = useUnifiedTableWizard(unifiedEditItem)
+
+	// Leaving asks first when it would lose work entered in any tab, the protocols table's included; browsing tabs,
+	// modes and categories never asks.
+	const [opened] = useState(() => ({ state, table: JSON.stringify(tableWizard.state) }))
+	const dirty = hasDraftChanges(state, opened.state) || JSON.stringify(tableWizard.state) !== opened.table
 	// The protocols table wizard lays out its own scrolling body and footer.
 	const tableWizardOpen = state.selectedMainTab === 'table' && state.selectedTableType === 'protocols'
 
@@ -132,8 +135,14 @@ export function AddChartModal({
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			{/* An outside tap never drops the card; Cancel, × and Escape ask first once there is work to lose. */}
-			<Dialog size="xl" scope="pro" unmountOnHide portal hideOnInteractOutside={false}>
-				{dirty ? <DialogCloseGuard onAttemptLeave={(proceed) => setPendingLeave(() => proceed)} /> : null}
+			<Dialog size="xl" workspace scope="pro" unmountOnHide portal hideOnInteractOutside={false}>
+				<DialogDiscardGuard
+					when={dirty}
+					title={editItem ? 'Discard your changes?' : 'Discard this card?'}
+					description={
+						editItem ? 'Your edits to this card are not saved.' : 'The card you set up is not added to the dashboard.'
+					}
+				/>
 				<ModalBindingsProvider bindings={state.bindings} setBinding={actions.setItemBinding}>
 					<Tabs value={state.selectedMainTab} values={MAIN_TAB_VALUES} onValueChange={actions.handleMainTabChange}>
 						<DialogHeader title={editItem ? `Edit card · ${getMainTabEditLabel(state.selectedMainTab)}` : 'Add card'} />
@@ -266,31 +275,31 @@ export function AddChartModal({
 							) : null}
 
 							{state.selectedMainTab === 'table' ? (
-								<UnifiedTableTab
-									onClose={onClose}
-									onCancel={() => leave(onClose)}
-									chainOptions={computed.chainOptions ?? EMPTY_CHAIN_OPTIONS}
-									editItem={editItem?.kind === 'unified-table' ? editItem : undefined}
-									initialFocusSection={editItem?.kind === 'unified-table' ? initialUnifiedFocusSection : undefined}
-									selectedTableType={state.selectedTableType}
-									onTableTypeChange={actions.setSelectedTableType}
-									selectedChains={state.selectedChains}
-									onChainsChange={actions.handleChainsChange}
-									selectedDatasetChain={state.selectedDatasetChain}
-									onDatasetChainChange={actions.handleDatasetChainChange}
-									selectedCexAnalyticsView={state.selectedCexAnalyticsView}
-									onCexAnalyticsViewChange={actions.setSelectedCexAnalyticsView}
-									selectedCexAnalyticsMetric={state.selectedCexAnalyticsMetric}
-									onCexAnalyticsMetricChange={actions.setSelectedCexAnalyticsMetric}
-									selectedCexAnalyticsTopN={state.selectedCexAnalyticsTopN}
-									onCexAnalyticsTopNChange={actions.setSelectedCexAnalyticsTopN}
-									selectedTokens={state.selectedTokens}
-									onTokensChange={actions.handleTokensChange}
-									includeCex={state.includeCex}
-									onIncludeCexChange={actions.setIncludeCex}
-									protocolsLoading={computed.protocolsLoading}
-									isEditingItem={Boolean(editItem)}
-								/>
+								<UnifiedTableWizardContext.Provider value={tableWizard}>
+									<UnifiedTableTab
+										onClose={onClose}
+										chainOptions={computed.chainOptions ?? EMPTY_CHAIN_OPTIONS}
+										editItem={editItem}
+										initialFocusSection={unifiedEditItem ? initialUnifiedFocusSection : undefined}
+										selectedTableType={state.selectedTableType}
+										onTableTypeChange={actions.setSelectedTableType}
+										selectedChains={state.selectedChains}
+										onChainsChange={actions.setSelectedChains}
+										selectedDatasetChain={state.selectedDatasetChain}
+										onDatasetChainChange={actions.setSelectedDatasetChain}
+										selectedCexAnalyticsView={state.selectedCexAnalyticsView}
+										onCexAnalyticsViewChange={actions.setSelectedCexAnalyticsView}
+										selectedCexAnalyticsMetric={state.selectedCexAnalyticsMetric}
+										onCexAnalyticsMetricChange={actions.setSelectedCexAnalyticsMetric}
+										selectedCexAnalyticsTopN={state.selectedCexAnalyticsTopN}
+										onCexAnalyticsTopNChange={actions.setSelectedCexAnalyticsTopN}
+										selectedTokens={state.selectedTokens}
+										onTokensChange={actions.handleTokensChange}
+										includeCex={state.includeCex}
+										onIncludeCexChange={actions.setIncludeCex}
+										protocolsLoading={computed.protocolsLoading}
+									/>
+								</UnifiedTableWizardContext.Provider>
 							) : null}
 
 							{state.selectedMainTab === 'text' ? (
@@ -343,30 +352,10 @@ export function AddChartModal({
 								state={state}
 								onSubmit={actions.handleSubmit}
 								submitError={submitError}
-								onCancel={() => leave(onClose)}
 							/>
 						) : null}
 					</Tabs>
 				</ModalBindingsProvider>
-				<ConfirmDialog
-					open={pendingLeave !== null}
-					onClose={() => setPendingLeave(null)}
-					portal
-					unmountOnHide
-					title={editItem ? 'Discard your changes?' : 'Discard this card?'}
-					description={
-						editItem ? 'Your edits to this card are not saved.' : 'The card you set up is not added to the dashboard.'
-					}
-					confirmLabel="Discard"
-					cancelLabel="Keep editing"
-					pendingLabel={null}
-					error={null}
-					onConfirm={() => {
-						const proceed = pendingLeave!
-						setPendingLeave(null)
-						proceed()
-					}}
-				/>
 			</Dialog>
 		</Ariakit.DialogProvider>
 	)

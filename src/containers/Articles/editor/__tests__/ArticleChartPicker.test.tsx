@@ -7,8 +7,10 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ArticleChartConfig } from '../../types'
 import { ArticleChartPickerDialog } from '../ArticleChartPicker'
+vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/research/editor', query: {} }) }))
 const http = installFixtureFetch()
 let root: Root
 let container: HTMLDivElement
@@ -38,6 +40,7 @@ beforeEach(() => {
 		'/config/smol/appMetadata-chains.json': { ethereum: { name: 'Ethereum', id: 'ethereum', tvl: true, fees: true } },
 		'/api/public/pro-dashboard/pf-ps-protocols': { pf: [], ps: [] },
 		[`${V2_SERVER_URL}/chart/tvl/protocol/`]: [],
+		[`${V2_SERVER_URL}/chart/fees/protocol/`]: [],
 		'/lite/charts/Ethereum': []
 	})
 	container = document.createElement('div')
@@ -69,12 +72,15 @@ async function mount(props: Partial<ComponentProps<typeof ArticleChartPickerDial
 		root.render(<Harness />)
 		await settle()
 	})
+	// The protocol rows arrive from the fixture after the first render; under load that takes more than one tick.
+	await waitForUi(() => expect(document.querySelector('[role="checkbox"]')).not.toBeNull())
 	return onInsert
 }
+// A radio is named by the label that wraps it.
 function radio(group: string, label: string) {
-	return document.querySelector<HTMLInputElement>(
-		`[role="radiogroup"][aria-label="${group}"] input[aria-label="${label}"]`
-	)!
+	return [
+		...document.querySelectorAll<HTMLInputElement>(`[role="radiogroup"][aria-label="${group}"] input[type="radio"]`)
+	].find((el) => el.closest('label')!.textContent === label)!
 }
 function entity(name: string) {
 	return [...document.querySelectorAll<HTMLButtonElement>('[role="checkbox"]')].find((el) =>
@@ -143,6 +149,31 @@ test('entity filters clear search while preserving chart settings and selected s
 	)
 })
 
+test('a series takes the chart type picked from its select', async () => {
+	const onInsert = await mount()
+	await click(entity('Aave'))
+	const trigger = () => document.querySelector<HTMLElement>('[aria-label="Chart type for Aave"]')!
+	expect(trigger().textContent).toBe('TVL')
+	await click(trigger())
+	await waitForUi(() => expect(document.querySelector('[role="option"]')).not.toBeNull())
+	const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((el) => el.textContent === 'Fees')!
+	await click(option)
+	expect(trigger().textContent).toBe('Fees')
+	await click(insert())
+	expect(onInsert.mock.calls[0][0].series).toEqual([
+		expect.objectContaining({ slug: 'aave', entityType: 'protocol', chartType: 'fees' })
+	])
+})
+
+test('the range and scale radio groups are named by their visible labels', async () => {
+	await mount()
+	await click(entity('Aave'))
+	const names = [...document.querySelectorAll('[role="radiogroup"][aria-labelledby]')].map(
+		(group) => document.getElementById(group.getAttribute('aria-labelledby')!)!.textContent
+	)
+	expect(names).toEqual(['Range', 'Y-axis scale'])
+})
+
 test('series limit disables additions but selected series remain removable to empty', async () => {
 	await mount()
 	await click(entity('Aave'))
@@ -199,7 +230,7 @@ test('retains a duplicate annotation input after deleting its preceding row', as
 		}
 	})
 	const surviving = document.querySelector<HTMLInputElement>('[aria-label="Annotation 2 label"]')!
-	await click(document.querySelector<HTMLButtonElement>('[aria-label="Remove annotation"]')!)
+	await click(document.querySelector<HTMLButtonElement>('[aria-label="Remove annotation 1"]')!)
 	expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
 	await input(surviving, '')
 	expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
@@ -207,6 +238,48 @@ test('retains a duplicate annotation input after deleting its preceding row', as
 	expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
 	await click(insert())
 	expect(onInsert.mock.calls[0][0].annotations).toEqual([{ date: '2026-01-01T00:00:00.000Z', label: 'Retained' }])
+})
+
+test('a preview whose data fails to load says so as an error, not as missing data', async () => {
+	http.serve({ [`${V2_SERVER_URL}/chart/fees/protocol/`]: () => new Response('down', { status: 500 }) })
+	await mount({
+		initialConfig: {
+			entities: [{ entityType: 'protocol', slug: 'aave', name: 'Aave' }],
+			series: [{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'fees' }],
+			chartType: 'fees'
+		}
+	})
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Could not load chart data'))
+})
+
+test('each remove button names the row it removes', async () => {
+	const onInsert = await mount({
+		initialConfig: {
+			entities: [{ entityType: 'protocol', slug: 'aave', name: 'Aave' }],
+			series: [
+				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' },
+				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'fees' }
+			],
+			chartType: 'tvl',
+			annotations: [
+				{ date: '2026-01-01', label: 'Launch' },
+				{ date: '2026-02-01', label: 'Launch' }
+			]
+		}
+	})
+	const removeNames = () =>
+		[...document.querySelectorAll('button[aria-label^="Remove "]')].map((el) => el.getAttribute('aria-label'))
+	expect(removeNames()).toEqual(['Remove Aave TVL', 'Remove Aave Fees', 'Remove annotation 1', 'Remove annotation 2'])
+	await click(document.querySelector<HTMLButtonElement>('[aria-label="Remove Aave Fees"]')!)
+	await click(document.querySelector<HTMLButtonElement>('[aria-label="Remove annotation 2"]')!)
+	expect(removeNames()).toEqual(['Remove Aave TVL', 'Remove annotation 1'])
+	await click(insert())
+	expect(onInsert.mock.calls[0][0]).toEqual(
+		expect.objectContaining({
+			series: [expect.objectContaining({ slug: 'aave', chartType: 'tvl' })],
+			annotations: [{ date: '2026-01-01T00:00:00.000Z', label: 'Launch' }]
+		})
+	)
 })
 
 test('Cancel closes an untouched picker at once, and asks before it drops picked series', async () => {
