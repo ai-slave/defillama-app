@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { getSelectOptionLabel, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SelectOption } from '~/components/Select/types'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
@@ -65,6 +65,7 @@ export function YieldAttributesSelect({
 			size="sm"
 			allValues={options}
 			selectedValues={selectedAttributes}
+			selectedLabels={selectedAttributes.map((key) => getSelectOptionLabel(options, key))}
 			setSelectedValues={setSelectedValues}
 			label="Attributes"
 			labelType="regular"

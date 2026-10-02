@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { getSelectOptionLabel, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import {
@@ -55,6 +55,7 @@ export function ColumnsSelect({
 			size="sm"
 			allValues={EARN_COLUMN_OPTIONS}
 			selectedValues={selectedColumns}
+			selectedLabels={selectedColumns.map((key) => getSelectOptionLabel(EARN_COLUMN_OPTIONS, key))}
 			setSelectedValues={setSelectedValues}
 			label="Columns"
 			labelType="regular"
