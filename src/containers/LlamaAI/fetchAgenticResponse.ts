@@ -455,6 +455,7 @@ function dashboardItemsHash(items: DashboardArtifact['items']): string {
 }
 
 interface RateLimitErrorDetails {
+	feature?: string
 	period?: string
 	limit?: number
 	resetTime?: string | null
@@ -495,6 +496,7 @@ interface AgenticErrorResponse {
 
 function parseRateLimitErrorDetails(value: unknown): RateLimitErrorDetails | undefined {
 	if (typeof value !== 'object' || value === null) return undefined
+	const feature = 'feature' in value && typeof value.feature === 'string' ? value.feature : undefined
 	const period = 'period' in value && typeof value.period === 'string' ? value.period : undefined
 	const limit = 'limit' in value && typeof value.limit === 'number' ? value.limit : undefined
 	let resetTime: string | null | undefined
@@ -503,8 +505,9 @@ function parseRateLimitErrorDetails(value: unknown): RateLimitErrorDetails | und
 		if (typeof candidate === 'string') resetTime = candidate
 		else if (candidate === null) resetTime = null
 	}
-	if (period === undefined && limit === undefined && resetTime === undefined) return undefined
+	if (feature === undefined && period === undefined && limit === undefined && resetTime === undefined) return undefined
 	return {
+		...(feature === undefined ? {} : { feature }),
 		...(period === undefined ? {} : { period }),
 		...(limit === undefined ? {} : { limit }),
 		...(resetTime === undefined ? {} : { resetTime })

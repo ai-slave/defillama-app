@@ -8,6 +8,7 @@ export function SignInModal({
 	hideWhenAuthenticated = true,
 	store,
 	prompt,
+	question,
 	onAuthenticated
 }: {
 	text?: string
@@ -15,6 +16,7 @@ export function SignInModal({
 	hideWhenAuthenticated?: boolean
 	store?: Ariakit.DialogStore
 	prompt?: string
+	question?: string
 	/** Runs once sign-in succeeds, before this dialog unmounts, such as to choose where focus returns. */
 	onAuthenticated?: () => void
 }) {
@@ -34,7 +36,9 @@ export function SignInModal({
 					{text ?? 'Sign In'}
 				</button>
 			) : null}
-			{isOpen ? <SignInDialog store={dialogStore} prompt={prompt} onAuthenticated={onAuthenticated} /> : null}
+			{isOpen ? (
+				<SignInDialog store={dialogStore} prompt={prompt} question={question} onAuthenticated={onAuthenticated} />
+			) : null}
 		</>
 	)
 }

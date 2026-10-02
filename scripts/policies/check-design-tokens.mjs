@@ -54,8 +54,6 @@ const PRODUCT_SURFACE_PREFIXES = [
 ]
 
 const PRODUCT_SURFACE_FILES = new Set([
-	// The UTR launch banner keeps its product palette while living next to the announcement registry.
-	'src/containers/Announcements/UniversalTokenRatingAnnouncement.tsx',
 	'src/components/StripeCheckoutModal.tsx',
 	'src/components/TopupModal.tsx',
 	'src/pages/account.tsx',

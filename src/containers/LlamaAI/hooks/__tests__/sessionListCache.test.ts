@@ -65,8 +65,27 @@ describe('sessionListCache', () => {
 			usage,
 			factCheckedUsage: null,
 			alertsUsage: null,
+			freeUsage: { typed: null, suggested: null, bonus: null },
 			hasMore: true,
 			nextOffset: 200
+		})
+	})
+
+	test('maps a free user’s typed and suggested questions and welcome bonus from their own fields', () => {
+		const typed = { remaining: 4, limit: 5, period: 'daily', resetTime: '2026-10-02T00:00:00.000Z' }
+		const result = mapSessionListPage({
+			sessions: [],
+			usage: {
+				free_form_question: typed,
+				free_question: { remaining: 2, limit: 3, period: 'daily' },
+				welcome_bonus: { dailyQuestions: 5, endsAt: '2026-10-09T09:00:00.000Z' }
+			}
+		})
+
+		expect(result.freeUsage).toEqual({
+			typed,
+			suggested: { remaining: 2, limit: 3, period: 'daily' },
+			bonus: { dailyQuestions: 5, endsAt: '2026-10-09T09:00:00.000Z' }
 		})
 	})
 

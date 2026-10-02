@@ -17,12 +17,13 @@ import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
+import { FreeUsageNote } from '~/containers/LlamaAI/components/FreeUsageNote'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
 import { SearchResults } from '~/containers/LlamaAI/components/sidebar/SearchResults'
 import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
 import { ProjectsSidebarSection, SIDEBAR_PROJECTS_OPEN_KEY } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
 import { useTerminalEnabled } from '~/containers/LlamaAI/terminal/terminalViewStore'
-import type { ChatSession } from '~/containers/LlamaAI/types'
+import type { ChatSession, FreeUsage } from '~/containers/LlamaAI/types'
 import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { setStorageItem } from '~/contexts/localStorageStore'
@@ -74,6 +75,8 @@ interface AgenticSidebarProps {
 	onSwitchPlace?: () => void
 	searchOpen?: boolean
 	onSearchOpenChange?: (open: boolean) => void
+	emptyHistoryText?: string
+	freeUsage?: FreeUsage | null
 }
 
 function getGroupName(lastActivity: string, now: number) {
@@ -196,7 +199,9 @@ function SidebarPanel({
 	place,
 	onSwitchPlace,
 	searchOpen = false,
-	onSearchOpenChange
+	onSearchOpenChange,
+	emptyHistoryText = "You don't have any chats yet",
+	freeUsage
 }: AgenticSidebarProps & { place: SidebarPlace; alertsCount: number | null }) {
 	const { hideSidebar, isFullscreen, fullscreenLocked, toggleFullscreen } = useLlamaAIChrome()
 	const showsFullscreen = isFullscreen || fullscreenLocked
@@ -537,7 +542,7 @@ function SidebarPanel({
 						) : loadError ? (
 							<InlineStatus variant="error">{loadError}</InlineStatus>
 						) : shownSessions.length === 0 ? (
-							<p className={SIDEBAR_WELL}>You don&apos;t have any chats yet</p>
+							<p className={SIDEBAR_WELL}>{emptyHistoryText}</p>
 						) : !selectMode && trimmedSearchQuery && (searchResults.length > 0 || isSearching || searchFailed) ? (
 							<SearchResults
 								results={searchResults}
@@ -644,29 +649,32 @@ function SidebarPanel({
 						</Button>
 					</footer>
 				) : (
-					<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-subtle">
-						{onOpenSettings ? (
-							<button
-								type="button"
-								onClick={onOpenSettings}
-								className="flex min-w-0 flex-1 items-center gap-1.5 rounded-bl-lg px-4 py-3 text-left body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
+					<>
+						<FreeUsageNote usage={freeUsage} showBonus className="shrink-0 border-t border-subtle px-4 py-2" />
+						<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-subtle">
+							{onOpenSettings ? (
+								<button
+									type="button"
+									onClick={onOpenSettings}
+									className="flex min-w-0 flex-1 items-center gap-1.5 rounded-bl-lg px-4 py-3 text-left body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
+								>
+									<SettingsIcon hasCustomInstructions={hasCustomInstructions} />
+									<span>Settings</span>
+								</button>
+							) : (
+								<span className="flex-1" />
+							)}
+							{showBalance && onOpenBalanceSettings ? <SidebarBalance onOpen={onOpenBalanceSettings} /> : null}
+							<Tooltip
+								content="Get the mobile app · iOS & Android"
+								render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
+								className="flex shrink-0 items-center justify-center rounded-br-lg px-4 text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
 							>
-								<SettingsIcon hasCustomInstructions={hasCustomInstructions} />
-								<span>Settings</span>
-							</button>
-						) : (
-							<span className="flex-1" />
-						)}
-						{showBalance && onOpenBalanceSettings ? <SidebarBalance onOpen={onOpenBalanceSettings} /> : null}
-						<Tooltip
-							content="Get the mobile app · iOS & Android"
-							render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
-							className="flex shrink-0 items-center justify-center rounded-br-lg px-4 text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
-						>
-							<Icon name="download" height={16} width={16} />
-							<span className="sr-only">Get the mobile app</span>
-						</Tooltip>
-					</footer>
+								<Icon name="download" height={16} width={16} />
+								<span className="sr-only">Get the mobile app</span>
+							</Tooltip>
+						</footer>
+					</>
 				)}
 			</aside>
 		</SessionListFocusContext.Provider>

@@ -1,14 +1,25 @@
-import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
 import { SEO } from '~/components/SEO'
 import { AI_SERVER } from '~/constants'
-import { setPendingEntrySource, setPendingPrompt, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
+import {
+	FREE_DAILY_ALLOWANCE,
+	FREE_RESEARCH_ALLOWANCE,
+	WELCOME_WEEK_ALLOWANCE
+} from '~/containers/LlamaAI/freePlanCopy'
+import {
+	hasPendingPrompt,
+	setPendingEntrySource,
+	setPendingPrompt,
+	setPendingSuggestedFlag
+} from '~/containers/LlamaAI/pendingPrompt'
 import { TOOL_ICONS, TOOL_LABELS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/toolMetadata'
 import type { LandingQuestion } from '~/containers/LlamaAI/types'
+import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
 import { StoreButtons } from '~/containers/MobileApp'
 import { LlamaAIMobileAppPromotion } from '~/containers/MobileApp/LlamaAIMobileAppGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
@@ -69,7 +80,9 @@ const FALLBACK_QUESTIONS: Array<LandingQuestion> = [
 function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<LandingQuestion> }) {
 	const router = useRouter()
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
-	const signInDialogStore = Ariakit.useDialogStore()
+	const signIn = useQuestionSignIn(() => {
+		if (hasPendingPrompt()) void router.push('/ai/chat')
+	})
 
 	if (isAuthenticated && hasActiveSubscription) return null
 
@@ -90,7 +103,8 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 			setPendingPrompt(question.text)
 			setPendingSuggestedFlag()
 			setPendingEntrySource('landing')
-			signInDialogStore.show()
+			setSignupSource('llamaai-landing')
+			signIn.open(question.text)
 		}
 	}
 
@@ -100,13 +114,17 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 				<h2 className="mb-2 text-[1.75rem] font-extrabold tracking-[-0.02em] text-primary md:text-[2rem]">
 					Try LlamaAI for free
 				</h2>
+				<p className="text-sm text-secondary">{`New here? ${WELCOME_WEEK_ALLOWANCE}.`}</p>
 				<p className="text-sm text-tertiary">
-					Free mode: 3 suggested questions + 1 free-form question per day, 1 research report every 14 days.{' '}
+					{`After that: ${FREE_DAILY_ALLOWANCE} and ${FREE_RESEARCH_ALLOWANCE}.`}{' '}
 					{isAuthenticated ? null : (
 						<>
 							<button
 								type="button"
-								onClick={() => signInDialogStore.show()}
+								onClick={() => {
+									setSignupSource('llamaai-landing')
+									signIn.open(null)
+								}}
 								className="font-medium text-ai-gold underline decoration-ai-gold/40 transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
 							>
 								Sign in
@@ -157,7 +175,8 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 					} else {
 						setPendingPrompt(value)
 						setPendingEntrySource('landing')
-						signInDialogStore.show()
+						setSignupSource('llamaai-landing')
+						signIn.open(value)
 					}
 				}}
 			>
@@ -184,7 +203,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 				</div>
 			</form>
 
-			<SignInModal store={signInDialogStore} />
+			<SignInModal {...signIn.dialogProps} prompt="Sign in to get your answer — free" />
 		</section>
 	)
 }
@@ -194,8 +213,13 @@ function TrialBadge({ centered = false }: { centered?: boolean }) {
 	if (isAuthenticated && hasActiveSubscription) return null
 
 	return (
-		<p className={clsx('mt-3 text-[13px] text-tertiary', centered ? 'text-center' : 'text-center md:text-left')}>
-			Free to use — 7-day Pro trial available
+		<p
+			className={clsx(
+				'mt-3 text-[13px] text-balance text-tertiary',
+				centered ? 'text-center' : 'text-center md:text-left'
+			)}
+		>
+			{`${WELCOME_WEEK_ALLOWANCE} — 7-day Pro trial available`}
 		</p>
 	)
 }
@@ -918,7 +942,8 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							<FAQ question="Who has access?">
 								<p>
 									LlamaAI is included in all paid subscriptions along with the DefiLlama Pro features. Signed-in users
-									can also try 3 free suggested questions per day.
+									can also use it for free:{' '}
+									{`${WELCOME_WEEK_ALLOWANCE}, then ${FREE_DAILY_ALLOWANCE} and ${FREE_RESEARCH_ALLOWANCE}.`}
 								</p>
 							</FAQ>
 							<FAQ question="What sort of prompts can it answer?">

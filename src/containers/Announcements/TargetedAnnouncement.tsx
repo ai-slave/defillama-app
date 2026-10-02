@@ -6,7 +6,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { getDismissedAnnouncements } from '~/utils/cookies'
 import { ANNOUNCEMENT_REGISTRY } from './registry'
-import { type ResolvedAnnouncement, resolveAnnouncement } from './resolveAnnouncement'
+import { isLaunchOpen, type ResolvedAnnouncement, resolveAnnouncement } from './resolveAnnouncement'
 import { useUserInterests } from './useUserInterests'
 
 /**
@@ -36,8 +36,7 @@ function PageViewAnnouncement({ page }: { page: string }) {
 	// the page stays open. Only the open/closed answer feeds the choice, so a clock tick inside the window keeps the
 	// same banner and does not count a second impression.
 	const nowSec = useNowSeconds()
-	const launch = ANNOUNCEMENT_REGISTRY.launch
-	const launchOpen = launch !== null && nowSec * 1000 < Date.parse(launch.until)
+	const launchOpen = isLaunchOpen(ANNOUNCEMENT_REGISTRY.launch, nowSec * 1000)
 	// Closing any banner empties the slot for the rest of this page view, even if the profile arrives
 	// afterwards and would have picked a different one.
 	const [dismissedThisView, setDismissedThisView] = React.useState(false)

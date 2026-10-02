@@ -7,8 +7,9 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import { TipActionProvider } from '../TipActionContext'
 import { TipOrNotifyBanner } from '../TipOrNotifyBanner'
 
-// Browser notification prompt; these tests read only the low balance notice.
-vi.mock('../NotificationPermissionBanner', () => ({ NotificationPermissionBanner: () => null }))
+vi.mock('../NotificationPermissionBanner', () => ({
+	NotificationPermissionBanner: () => <p>Want to be notified when LlamaAI responds?</p>
+}))
 
 const session = installSubscriberSession('reader')
 let toppedUp = '0.25'
@@ -31,12 +32,12 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	host.remove()
 })
-const render = (id?: string) =>
+const render = (id?: string, answerRunning = false) =>
 	act(async () =>
 		root.render(
 			<session.Wrapper>
 				<TipActionProvider handlers={{ openSettingsModal: openSettings }}>
-					<TipOrNotifyBanner premiumResponseId={id} />
+					<TipOrNotifyBanner premiumResponseId={id} answerRunning={answerRunning} />
 				</TipActionProvider>
 			</session.Wrapper>
 		)
@@ -92,4 +93,18 @@ test('a sufficient balance shows the regular tip instead of a top-up notice', as
 		await new Promise((resolve) => setTimeout(resolve, 20))
 	})
 	expect(host.textContent).not.toContain('balance is low')
+})
+
+test('the notification prompt shows only while an answer is running, not on the empty chat or after a rejected send', async () => {
+	await render()
+	await act(async () => {
+		await waitForUi(() =>
+			expect(session.requests.some((request) => request.url.pathname === '/user-settings')).toBe(true)
+		)
+	})
+	expect(host.textContent).not.toContain('Want to be notified')
+	await render(undefined, true)
+	await waitForUi(() => expect(host.textContent).toContain('Want to be notified when LlamaAI responds?'))
+	await render(undefined, false)
+	expect(host.textContent).not.toContain('Want to be notified')
 })

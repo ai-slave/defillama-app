@@ -72,6 +72,8 @@ describe('useDeepLinkPrompt', () => {
 
 	async function mount() {
 		await act(async () => root.render(<Harness />))
+		// The hook takes the handover one task after mount.
+		await act(async () => new Promise((resolve) => setTimeout(resolve)))
 	}
 
 	test('submits a pending floating-button prompt without opening the modal', async () => {
@@ -80,12 +82,11 @@ describe('useDeepLinkPrompt', () => {
 		setPendingSuggestedFlag()
 		await mount()
 
-		expect(options.submitPrompt).toHaveBeenCalledWith(
-			'from floating button',
-			{ route: '/protocol/aave' },
-			true,
-			undefined
-		)
+		expect(options.submitPrompt).toHaveBeenCalledWith({
+			prompt: 'from floating button',
+			pageContext: { route: '/protocol/aave' },
+			isSuggestedQuestion: true
+		})
 		expect(api.confirmationPrompt).toBeNull()
 	})
 
@@ -98,7 +99,7 @@ describe('useDeepLinkPrompt', () => {
 
 		act(() => api.confirm())
 
-		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl', undefined, undefined, 'deep-link')
+		expect(options.submitPrompt).toHaveBeenCalledWith({ prompt: 'what is tvl', entrySource: 'deep-link' })
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
 		expect(api.confirmationPrompt).toBeNull()
 		expect(track.mock.calls.map(([event]) => event)).toEqual(['llamaai-deeplink-view', 'llamaai-deeplink-run'])
@@ -116,7 +117,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(committed.filter((value) => value !== null)).toEqual([])
 		expect(api.confirmationPrompt).toBeNull()
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
-		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined, undefined)
+		expect(options.submitPrompt).toHaveBeenCalledWith({ prompt: 'from floating button' })
 	})
 
 	// The queue and the link can both arrive after mount, so precedence cannot be settled once at
@@ -131,7 +132,7 @@ describe('useDeepLinkPrompt', () => {
 		await mount()
 
 		expect(committed.filter((value) => value !== null)).toEqual([])
-		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined, undefined)
+		expect(options.submitPrompt).toHaveBeenCalledWith({ prompt: 'from floating button' })
 	})
 
 	test('a pending prompt keeps the entry point it came from, once, so funnels can tell a strip click from a typed question', async () => {
@@ -139,7 +140,7 @@ describe('useDeepLinkPrompt', () => {
 		setPendingEntrySource('entity-strip')
 		await mount()
 
-		expect(options.submitPrompt).toHaveBeenCalledWith('why is aave tvl down', undefined, undefined, 'entity-strip')
+		expect(options.submitPrompt).toHaveBeenCalledWith({ prompt: 'why is aave tvl down', entrySource: 'entity-strip' })
 		expect(localStorage.getItem('llamaai-pending-entry-source')).toBeNull()
 	})
 
@@ -150,7 +151,7 @@ describe('useDeepLinkPrompt', () => {
 
 		act(() => api.confirm())
 
-		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl', undefined, undefined, 'newsletter')
+		expect(options.submitPrompt).toHaveBeenCalledWith({ prompt: 'what is tvl', entrySource: 'newsletter' })
 	})
 
 	test('asks again when the same link comes back after a dismissal', async () => {
@@ -173,7 +174,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(api.confirmationPrompt).toBe('  what is tvl  ')
 
 		act(() => api.confirm())
-		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl', undefined, undefined, 'deep-link')
+		expect(options.submitPrompt).toHaveBeenCalledWith({ prompt: 'what is tvl', entrySource: 'deep-link' })
 		expect(api.confirmationPrompt).toBeNull()
 	})
 

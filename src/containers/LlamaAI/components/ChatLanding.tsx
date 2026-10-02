@@ -3,13 +3,14 @@ import Router from 'next/router'
 import { type RefObject, useCallback, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
+import { FreeUsageNote, getPhonePromptPlaceholder } from '~/containers/LlamaAI/components/FreeUsageNote'
 import { OnboardingWalkthrough } from '~/containers/LlamaAI/components/OnboardingWalkthrough'
 import { PromptInput } from '~/containers/LlamaAI/components/PromptInput'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { TipOrNotifyBanner } from '~/containers/LlamaAI/components/TipOrNotifyBanner'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
-import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
+import type { AgenticAnswerMode, FactCheckedUsage, FreeUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useLlamaAIWelcome } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
@@ -34,7 +35,8 @@ export interface ChatLandingProps {
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
 		images?: Array<OutgoingAttachment>,
 		pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
-		isSuggestedQuestion?: boolean
+		isSuggestedQuestion?: boolean,
+		entrySource?: string
 	) => void | Promise<void> | boolean
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	handleStopRequest: () => void
@@ -46,7 +48,9 @@ export interface ChatLandingProps {
 	setMode: (mode: AgenticAnswerMode) => void
 	researchUsage?: ResearchUsage | null
 	factCheckedUsage?: FactCheckedUsage | null
+	freeUsage?: FreeUsage | null
 	onFactCheckedGated?: () => void
+	onAttachmentsGated?: () => void
 	onOpenAlerts: () => void
 	isAlertsModalOpen: boolean
 	quotedText?: string | null
@@ -70,7 +74,9 @@ export function ChatLanding({
 	setMode,
 	researchUsage,
 	factCheckedUsage,
+	freeUsage,
 	onFactCheckedGated,
+	onAttachmentsGated,
 	onOpenAlerts,
 	isAlertsModalOpen,
 	quotedText,
@@ -79,6 +85,7 @@ export function ChatLanding({
 }: ChatLandingProps) {
 	const { hasActiveSubscription } = useAuthContext()
 	const [hasSeenWelcome, markWelcomeSeen] = useLlamaAIWelcome(hasActiveSubscription)
+	const showWalkthrough = !readOnly && hasActiveSubscription && !hasSeenWelcome
 	const { tip, markSeen, dismissTip, clickTip } = useActiveTip()
 	const tipActions = useTipActions()
 	const greetingTip = !readOnly && !isSharedView && hasSeenWelcome && tip?.placement === 'greeting' ? tip : null
@@ -112,8 +119,10 @@ export function ChatLanding({
 		}
 	}
 
+	// Below lg the composer sits where the conversation's does: at the bottom, in thumb reach and just above an open
+	// keyboard, with the same 10px inset, so the first send does not move it.
 	return (
-		<div className="llamaai-chat-width mx-auto flex h-full w-full flex-col gap-2.5 overflow-hidden px-2.5">
+		<div className="llamaai-chat-width mx-auto flex h-full w-full flex-col gap-2.5 overflow-hidden px-2.5 pb-2.5">
 			<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 lg:mt-25 lg:flex-none lg:justify-start">
 				<img src="/assets/llamaai/llama-ai.svg" alt="LlamaAI" className="object-contain" width={64} height={77} />
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
@@ -150,7 +159,7 @@ export function ChatLanding({
 				) : null}
 				{showBanner ? (
 					<div className="w-full">
-						<TipOrNotifyBanner />
+						<TipOrNotifyBanner answerRunning={false} />
 					</div>
 				) : null}
 			</div>
@@ -169,25 +178,26 @@ export function ChatLanding({
 							restoreRequest={restoreRequest}
 							onRestoreConsumed={onRestoreConsumed}
 							placeholder="Ask LlamaAI&hellip; Type @ to add a protocol, chain or stablecoin, or $ to add a coin"
-							shortPlaceholder="Ask LlamaAI&hellip;"
+							shortPlaceholder={getPhonePromptPlaceholder(freeUsage)}
 							mode={mode}
 							setMode={setMode}
 							researchUsage={researchUsage}
 							factCheckedUsage={factCheckedUsage}
 							onFactCheckedGated={onFactCheckedGated}
+							onAttachmentsGated={onAttachmentsGated}
 							onOpenAlerts={onOpenAlerts}
 							quotedText={quotedText}
 							onClearQuotedText={onClearQuotedText}
 							enterToSend={enterToSend}
-							walkthroughActive={!hasSeenWelcome}
+							walkthroughActive={showWalkthrough}
 						/>
 					</div>
-
+					<FreeUsageNote usage={freeUsage} showBonus={false} className="-mt-1 px-4 lg:hidden" />
 					<CapabilityRow promptInputRef={promptInputRef} onOpenAlerts={onOpenAlerts} />
 				</>
 			) : null}
 
-			{!readOnly && !hasSeenWelcome ? (
+			{showWalkthrough ? (
 				<OnboardingWalkthrough
 					isAlertsModalOpen={isAlertsModalOpen}
 					mode={mode}
@@ -217,11 +227,13 @@ function CapabilityRow({
 	}, [])
 
 	return (
-		<div ref={rowRef} className="flex flex-wrap justify-center gap-2 pt-1 max-sm:hidden">
-			{FEATURED_CAPABILITIES.map((cap) => (
-				<Capability key={cap.key} cap={cap} promptInputRef={promptInputRef} getAnchorRect={getAnchorRect} />
-			))}
-			<SetAlertChip onOpenAlerts={onOpenAlerts} />
+		<div ref={rowRef} className="scrollbar-none shrink-0 overflow-x-auto pt-1 max-sm:hidden">
+			<div className="mx-auto flex w-max gap-1.5">
+				{FEATURED_CAPABILITIES.map((cap) => (
+					<Capability key={cap.key} cap={cap} promptInputRef={promptInputRef} getAnchorRect={getAnchorRect} />
+				))}
+				<SetAlertChip onOpenAlerts={onOpenAlerts} />
+			</div>
 		</div>
 	)
 }

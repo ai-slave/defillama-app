@@ -28,8 +28,10 @@ import {
 	AB_SEED_COOKIE_NAME,
 	AB_VISITOR_COOKIE_NAME,
 	getABClientAssignment,
-	getABGroupFromCookie
+	getABGroupFromCookie,
+	getABSeedFromCookie
 } from '~/utils/abTesting'
+import { getExperimentAttribute, getVariant, VISITOR_EXPERIMENT_IDS } from '~/utils/analytics/experiment'
 import { addABTag, trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 
 type NextPageWithLayout = AppProps['Component'] & {
@@ -66,6 +68,13 @@ function ensureClientABAssignment() {
 		const group = getABGroupFromCookie(document.cookie)
 		if (group) document.documentElement.setAttribute(AB_GROUP_ATTRIBUTE, group)
 		else document.documentElement.removeAttribute(AB_GROUP_ATTRIBUTE)
+
+		const seed = getABSeedFromCookie(document.cookie)
+		if (seed) {
+			for (const id of VISITOR_EXPERIMENT_IDS) {
+				document.documentElement.setAttribute(getExperimentAttribute(id), getVariant(id, seed))
+			}
+		}
 	} catch {
 		// A/B assignment must never prevent the app from loading.
 	}

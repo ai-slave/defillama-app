@@ -18,6 +18,7 @@ import { useLastSignIn } from '~/auth/lastSignIn'
 import { requestPasswordReset } from '~/auth/passwordRecovery'
 import { createSignInFlowStore, type SignInFlowState, type SignInFlowStore } from '~/auth/signInFlowStore'
 import { BasicLink } from '~/components/Link'
+import { WELCOME_WEEK_ALLOWANCE } from '~/containers/LlamaAI/freePlanCopy'
 import { Turnstile } from '~/containers/Subscription/Turnstile'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
@@ -25,10 +26,17 @@ import { Dialog, DialogBody } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { readExperimentVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
 import type { WalletSignInProps } from './WalletSignIn'
 
 const inputCls = authInputStyles
 const fieldLabelCls = 'mb-1.5 label-sm text-secondary'
+
+const OFFER_EXPERIMENT_ID = 'llamaai-signin-offer-v1'
+
+const OFFER_LINE = `New here? ${WELCOME_WEEK_ALLOWANCE}`
+
+const quoteQuestion = (question: string) => `“${question.slice(0, 100)}${question.length > 100 ? '…' : ''}”`
 
 const WalletSignIn = dynamic<WalletSignInProps>(() => import('./WalletSignIn').then((module) => module.WalletSignIn), {
 	ssr: false,
@@ -44,12 +52,15 @@ export function SignInDialog({
 	initialStep,
 	suppressVerifyEmailPrompt,
 	prompt,
+	question,
 	onAuthenticated
 }: {
 	store: Ariakit.DialogStore
 	initialStep?: 'signin' | 'signup'
 	suppressVerifyEmailPrompt?: boolean
 	prompt?: string
+	/** A LlamaAI question waiting for sign-in. The dialog quotes it in place of `prompt`. */
+	question?: string
 	onAuthenticated?: () => void
 }) {
 	return (
@@ -59,6 +70,7 @@ export function SignInDialog({
 				initialStep={initialStep}
 				suppressVerifyEmailPrompt={suppressVerifyEmailPrompt}
 				prompt={prompt}
+				question={question}
 				onAuthenticated={onAuthenticated}
 			/>
 		</Dialog>
@@ -70,6 +82,7 @@ export function SignInFlow({
 	initialStep = 'signin',
 	suppressVerifyEmailPrompt,
 	prompt,
+	question,
 	onAuthenticated,
 	closeable = true
 }: {
@@ -77,24 +90,44 @@ export function SignInFlow({
 	initialStep?: 'signin' | 'signup'
 	suppressVerifyEmailPrompt?: boolean
 	prompt?: string
+	question?: string
 	onAuthenticated?: () => void
 	closeable?: boolean
 }) {
 	const [flowStore] = useState(() => createSignInFlowStore(initialStep))
 	useEffect(() => flowStore.cancelAuthRequest, [flowStore])
 	const state = useSyncExternalStore(flowStore.subscribe, flowStore.getSnapshot, flowStore.getServerSnapshot)
+	const [offerVariant] = useState(() => (question ? readExperimentVariant(OFFER_EXPERIMENT_ID) : null))
+	useEffect(() => {
+		if (offerVariant) trackExperimentExposure(OFFER_EXPERIMENT_ID, offerVariant)
+	}, [offerVariant])
+	const showOffer = offerVariant === 'b'
 	const finishAuthentication = useCallback(() => {
 		flowStore.dispatch({ kind: 'authenticated' })
+		if (offerVariant) trackExperimentAction(OFFER_EXPERIMENT_ID, offerVariant, 'signin-complete')
 		onAuthenticated?.()
 		dialogStore.hide()
-	}, [dialogStore, flowStore, onAuthenticated])
+	}, [dialogStore, flowStore, offerVariant, onAuthenticated])
+	const trackSignupClick = offerVariant
+		? () => trackExperimentAction(OFFER_EXPERIMENT_ID, offerVariant, 'signup-click')
+		: undefined
+	const headerPrompt = !question ? (
+		prompt
+	) : showOffer && (state.kind === 'signin' || state.kind === 'signup') ? (
+		<span className="flex flex-col gap-1">
+			<span className="body-md text-primary">{OFFER_LINE}</span>
+			<span>{quoteQuestion(question)}</span>
+		</span>
+	) : (
+		`Sign in to ask for free: ${quoteQuestion(question)}`
+	)
 
 	// Keyed by title, so each step's title takes focus on mount and a step change is announced.
 	const header = (title: string) => (
 		<AuthDialogHeader
 			key={title}
 			title={title}
-			prompt={prompt}
+			prompt={headerPrompt}
 			closable={closeable}
 			onBack={state.kind !== 'signin' ? () => flowStore.dispatch({ kind: 'navigate', screen: 'signin' }) : undefined}
 		/>
@@ -115,7 +148,9 @@ export function SignInFlow({
 						? 'Confirm your email'
 						: state.kind === 'wallet'
 							? 'Sign in with a wallet'
-							: 'Sign in'
+							: showOffer
+								? 'Get your answer free'
+								: 'Sign in'
 			)}
 			<DialogBody>
 				{state.kind === 'googleLink' ? (
@@ -136,6 +171,8 @@ export function SignInFlow({
 							state={state}
 							store={flowStore}
 							onAuthenticated={finishAuthentication}
+							signupFirst={showOffer}
+							onSignupClick={trackSignupClick}
 						/>
 					</div>
 				)}
@@ -254,13 +291,17 @@ function AuthScreen({
 	state,
 	store,
 	onAuthenticated,
-	suppressVerifyEmailPrompt
+	suppressVerifyEmailPrompt,
+	signupFirst = false,
+	onSignupClick
 }: {
 	dialogStore: Ariakit.DialogStore
 	state: Extract<SignInFlowState, { kind: 'signin' | 'signup' }>
 	store: SignInFlowStore
 	suppressVerifyEmailPrompt?: boolean
 	onAuthenticated: () => void
+	signupFirst?: boolean
+	onSignupClick?: () => void
 }) {
 	const { login, signup, signInWithGithub, signInWithGoogle } = useAuthContext()
 	const signInWithGithubMutation = useMutation({ mutationFn: signInWithGithub })
@@ -400,6 +441,33 @@ function AuthScreen({
 		[dialogStore, isPending, onAuthenticated, signInWithGoogleMutation, store]
 	)
 
+	const signupLayout = signupFirst && !isSignup
+	const navigateToSignup = () => {
+		onSignupClick?.()
+		store.dispatch({ kind: 'navigate', screen: 'signup' })
+	}
+	const googleSignIn = (
+		<div>
+			<GoogleSignInButton
+				loading={signInWithGoogleMutation.isPending}
+				disabled={isPending}
+				lastUsed={lastMethod === 'google'}
+				onStart={() => {
+					onSignupClick?.()
+					store.dispatch({ kind: 'requestStarted' })
+				}}
+				onCode={handleGoogleCode}
+			/>
+
+			{/* GoogleSignInButton places its own load failure the same way. */}
+			{state.error?.method === 'google' ? (
+				<div className="mt-2">
+					<InlineStatus variant="error">{state.error.message}</InlineStatus>
+				</div>
+			) : null}
+		</div>
+	)
+
 	return (
 		<>
 			{state.pendingGoogleLink ? (
@@ -410,6 +478,18 @@ function AuthScreen({
 				>
 					Continue Google email verification
 				</button>
+			) : null}
+			{signupLayout ? (
+				<>
+					<div className="flex flex-col gap-3">
+						{googleSignIn}
+						<button type="button" className={authProviderButtonStyles} onClick={navigateToSignup} disabled={isPending}>
+							Create an account
+						</button>
+					</div>
+					<div className="my-5 border-t border-subtle" aria-hidden />
+					<p className="mb-4 label-md text-primary">Already have an account?</p>
+				</>
 			) : null}
 			{isSignup ? (
 				<form
@@ -573,22 +653,7 @@ function AuthScreen({
 			<div className="my-5 border-t border-subtle" aria-hidden />
 
 			<div className="flex flex-col gap-3">
-				<div>
-					<GoogleSignInButton
-						loading={signInWithGoogleMutation.isPending}
-						disabled={isPending}
-						lastUsed={lastMethod === 'google'}
-						onStart={() => store.dispatch({ kind: 'requestStarted' })}
-						onCode={handleGoogleCode}
-					/>
-
-					{/* GoogleSignInButton places its own load failure the same way. */}
-					{state.error?.method === 'google' ? (
-						<div className="mt-2">
-							<InlineStatus variant="error">{state.error.message}</InlineStatus>
-						</div>
-					) : null}
-				</div>
+				{signupLayout ? null : googleSignIn}
 				<div className="flex flex-col gap-2">
 					<button
 						type="button"
@@ -628,16 +693,18 @@ function AuthScreen({
 					</div>
 				) : null}
 			</div>
-			<p className="mt-5 text-center body-sm text-secondary">
-				{isSignup ? 'Already have an account? ' : 'New to DefiLlama? '}
-				<button
-					type="button"
-					className="text-link"
-					onClick={() => store.dispatch({ kind: 'navigate', screen: isSignup ? 'signin' : 'signup' })}
-				>
-					{isSignup ? 'Sign in' : 'Create an account'}
-				</button>
-			</p>
+			{signupLayout ? null : (
+				<p className="mt-5 text-center body-sm text-secondary">
+					{isSignup ? 'Already have an account? ' : 'New to DefiLlama? '}
+					<button
+						type="button"
+						className="text-link"
+						onClick={isSignup ? () => store.dispatch({ kind: 'navigate', screen: 'signin' }) : navigateToSignup}
+					>
+						{isSignup ? 'Sign in' : 'Create an account'}
+					</button>
+				</p>
+			)}
 		</>
 	)
 }

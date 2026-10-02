@@ -7,20 +7,32 @@ import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
-export function TipOrNotifyBanner({ premiumResponseId }: { premiumResponseId?: string }) {
-	return premiumResponseId ? <LowBalanceTip key={premiumResponseId} /> : <DefaultTip />
+export function TipOrNotifyBanner({
+	premiumResponseId,
+	answerRunning
+}: {
+	premiumResponseId?: string
+	/** The notification prompt shows only while an answer runs, never on the empty chat or after a rejected send. */
+	answerRunning: boolean
+}) {
+	return premiumResponseId ? (
+		<LowBalanceTip key={premiumResponseId} answerRunning={answerRunning} />
+	) : (
+		<DefaultTip answerRunning={answerRunning} />
+	)
 }
 
-function DefaultTip() {
+function DefaultTip({ answerRunning }: { answerRunning: boolean }) {
 	const { tip } = useActiveTip()
-	return tip ? <LlamaAITipBanner /> : <NotificationPermissionBanner />
+	if (tip) return <LlamaAITipBanner />
+	return answerRunning ? <NotificationPermissionBanner /> : null
 }
 
-function LowBalanceTip() {
+function LowBalanceTip({ answerRunning }: { answerRunning: boolean }) {
 	const { balance, totalAvailable } = useAiBalance()
 	const actions = useTipActions()
 	const [dismissed, setDismissed] = useState(false)
-	if (dismissed || !balance || totalAvailable >= 1) return <DefaultTip />
+	if (dismissed || !balance || totalAvailable >= 1) return <DefaultTip answerRunning={answerRunning} />
 	return (
 		<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5">
 			<p className="min-w-0 flex-1 body-sm text-secondary">Your external data balance is low.</p>

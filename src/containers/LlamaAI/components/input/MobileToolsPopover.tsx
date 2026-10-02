@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { BrowserContent } from '~/containers/LlamaAI/components/input/CapabilityBrowser'
+import { ModeUsage } from '~/containers/LlamaAI/components/input/ModeToggle'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -121,11 +122,7 @@ export function MobileToolsPopover({
 					<Icon name="check" height={16} width={16} className="shrink-0 text-secondary" />
 					<span className="flex-1">Fact-checked</span>
 					<span className="flex items-center gap-1.5">
-						{factCheckedUsage && factCheckedUsage.limit > 0 && factCheckedUsage.period !== 'unlimited' ? (
-							<span className="body-sm text-tertiary">
-								{factCheckedUsage.remainingUsage}/{factCheckedUsage.limit}
-							</span>
-						) : null}
+						<ModeUsage usage={factCheckedUsage} feature="fact_checked" />
 						{mode === 'fact_checked' ? (
 							<Icon name="check" height={14} width={14} className="shrink-0 text-brand" />
 						) : null}
@@ -144,11 +141,7 @@ export function MobileToolsPopover({
 					<Icon name="search" height={16} width={16} className="shrink-0 text-secondary" />
 					<span className="flex-1">Research</span>
 					<span className="flex items-center gap-1.5">
-						{researchUsage && researchUsage.limit > 0 && researchUsage.period !== 'unlimited' ? (
-							<span className="body-sm text-tertiary">
-								{researchUsage.remainingUsage}/{researchUsage.limit}
-							</span>
-						) : null}
+						<ModeUsage usage={researchUsage} feature="research" />
 						{mode === 'research' ? <Icon name="check" height={14} width={14} className="shrink-0 text-brand" /> : null}
 					</span>
 				</Ariakit.MenuItemRadio>

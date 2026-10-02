@@ -18,6 +18,11 @@ export interface ResolveAnnouncementInput {
 	dismissedTokens: Array<string>
 }
 
+/** A launch with an end date closes at it (exclusive); one without shows until it is removed from the registry. */
+export function isLaunchOpen(launch: AnnouncementRegistry['launch'], nowMs: number): boolean {
+	return launch !== null && (launch.until === undefined || nowMs < Date.parse(launch.until))
+}
+
 /**
  * Picks the one banner for a page view. Order: page-wide launch, account segment, browsing interest,
  * fallback. A segment banner yields to the interests it lists in `deferTo` when the reader has them and

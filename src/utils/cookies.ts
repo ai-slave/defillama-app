@@ -1,4 +1,10 @@
-import { AB_GROUP_ATTRIBUTE, AB_GROUP_COOKIE_NAME } from '~/utils/abTesting'
+import {
+	AB_GROUP_ATTRIBUTE,
+	AB_GROUP_COOKIE_NAME,
+	AB_SEED_COOKIE_NAME,
+	AB_VISITOR_COOKIE_NAME
+} from '~/utils/abTesting'
+import { getExperimentAttribute, getExperimentVariant, VISITOR_EXPERIMENT_IDS } from '~/utils/analytics/experiment'
 
 export const THEME_COOKIE_NAME = 'defillama-theme'
 export const ANNOUNCEMENT_DISMISSALS_COOKIE_NAME = 'defillama-dismissed-announcements'
@@ -178,6 +184,14 @@ export const getHeadBootstrapScript = (): string => `
 			root.setAttribute('${AB_GROUP_ATTRIBUTE}', abGroup);
 		} else {
 			root.removeAttribute('${AB_GROUP_ATTRIBUTE}');
+		}
+
+		var abSeed = getCookieValue(document.cookie, '${AB_SEED_COOKIE_NAME}') || getCookieValue(document.cookie, '${AB_VISITOR_COOKIE_NAME}');
+		if (abSeed && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(abSeed)) {
+			var experimentVariant = (${getExperimentVariant.toString()});
+			${JSON.stringify(VISITOR_EXPERIMENT_IDS.map((id) => [id, getExperimentAttribute(id)]))}.forEach(function(experiment) {
+				root.setAttribute(experiment[1], experimentVariant(experiment[0], abSeed) === 'A' ? 'a' : 'b');
+			});
 		}
 
 		if (theme === 'light') {

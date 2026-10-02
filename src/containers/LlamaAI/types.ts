@@ -203,6 +203,33 @@ export interface FreeLimitOffer {
 	resetTime?: string | null
 }
 
+export interface FreeQuestionUsage {
+	remaining: number
+	limit: number
+	period: string
+	resetTime?: string
+}
+
+export interface WelcomeBonus {
+	dailyQuestions: number
+	endsAt: string | null
+}
+
+export interface FreeUsage {
+	typed: FreeQuestionUsage | null
+	suggested: FreeQuestionUsage | null
+	bonus: WelcomeBonus | null
+}
+
+export type UsageLimitPeriod = 'daily' | 'biweekly' | 'lifetime' | 'blocked'
+
+export interface UsageLimitOffer {
+	feature: 'research' | 'fact_checked'
+	period: UsageLimitPeriod
+	limit: number
+	resetTime: string | null
+}
+
 export interface Message {
 	role: 'user' | 'assistant'
 	content?: string
@@ -243,6 +270,7 @@ export interface Message {
 	quotedText?: string
 	messageMetadata?: MessageMetadata
 	freeLimitOffer?: FreeLimitOffer
+	usageLimitOffer?: UsageLimitOffer
 	/** On a user message: the answer the server kept for it could not be loaded into the thread. */
 	answerLoadFailed?: true
 }

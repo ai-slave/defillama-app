@@ -102,6 +102,7 @@ export function useSessionList() {
 		researchUsage: data.usage,
 		factCheckedUsage: data.factCheckedUsage,
 		alertsUsage: data.alertsUsage,
+		freeUsage: data.freeUsage,
 		isLoading,
 		error: !isFetchNextPageError && queryError instanceof Error ? queryError.message : null,
 		hasNextPage,

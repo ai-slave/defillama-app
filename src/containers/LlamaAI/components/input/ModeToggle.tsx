@@ -18,7 +18,25 @@ const MODE_EVENTS: Record<AgenticAnswerMode, string> = {
 	research: 'llamaai-research-mode-toggle'
 }
 
-function Usage({ usage }: { usage: ResearchUsage | FactCheckedUsage | null | undefined }) {
+export function ModeUsage({
+	usage,
+	feature
+}: {
+	usage: ResearchUsage | FactCheckedUsage | null | undefined
+	feature: 'fact_checked' | 'research'
+}) {
+	const { isAuthenticated } = useAuthContext()
+	const signedOut = !usage && !isAuthenticated
+	if (feature === 'fact_checked' && (usage?.period === 'blocked' || signedOut)) {
+		return (
+			<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link-on-tint uppercase">
+				Pro
+			</span>
+		)
+	}
+	if (feature === 'research' && (usage?.period === 'biweekly' || signedOut)) {
+		return <span className="body-sm text-tertiary tabular-nums">{usage ? usage.remainingUsage : 1} free</span>
+	}
 	if (!usage || usage.limit <= 0 || usage.period === 'unlimited') return null
 	return (
 		<span className="body-sm text-tertiary tabular-nums">
@@ -76,7 +94,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						<span className="flex items-center gap-1">
 							<Icon name="check" height={14} width={14} />
 							Fact-checked
-							<Usage usage={factCheckedUsage} />
+							<ModeUsage usage={factCheckedUsage} feature="fact_checked" />
 						</span>
 					),
 					tooltip: (
@@ -102,7 +120,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						<span className="flex items-center gap-1">
 							<Icon name="search" height={14} width={14} />
 							Research
-							<Usage usage={researchUsage} />
+							<ModeUsage usage={researchUsage} feature="research" />
 						</span>
 					),
 					tooltip: (
@@ -124,7 +142,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 											: 'Subscribe to Pro to use research'
 										: researchUsage
 											? `${researchUsage.remainingUsage}/${researchUsage.limit} remaining${researchUsage.period === 'daily' ? ' today' : researchUsage.period === 'biweekly' ? ' (every 14 days)' : ''}`
-											: '5 reports/day · Free trial: 3 total'
+											: '5 reports/day on Pro · 3 on trial · Free: 1 every 14 days'
 							}
 						/>
 					)

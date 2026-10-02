@@ -1,5 +1,6 @@
 import type { SponsoredResearchReportSummary } from '~/containers/Articles/types'
 import type { ChainAssetOptionalCategory } from '~/containers/BridgedTVL/api.types'
+import type { DailyBrief } from '~/containers/LlamaAI/dailyBrief/api'
 import type { ProtocolRankingInitialPage } from '~/containers/ProtocolRankings/tableQuery'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { Raise } from '~/containers/Raises/model'
@@ -121,6 +122,7 @@ export interface IChainOverviewData {
 	website: string | null
 	warningBanners?: Array<IChainWarningBanner>
 	entityQuestions?: Array<string>
+	dailyBrief?: DailyBrief | null
 	customServerData?: Record<string, unknown>
 	sponsoredResearchReports?: Array<SponsoredResearchReportSummary>
 	researchSponsorEntitySlug?: string

@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import type { ReactNode } from 'react'
 import { DialogBackButton, DialogHeader } from '~/ui/Dialog'
 
 // Reserve four wallet rows and the helper (two lines on mobile) while the SDK loads.
@@ -24,7 +25,7 @@ export function AuthDialogHeader({
 	closable = true
 }: {
 	title: string
-	prompt?: string
+	prompt?: ReactNode
 	onBack?: () => void
 	closable?: boolean
 }) {

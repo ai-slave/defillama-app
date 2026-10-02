@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
+import { freeBadgeBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { UniversalTokenRatingNavIcon } from '~/containers/UniversalTokenRating/NavIcon'
 import { Icon } from '~/ui/Icon'
@@ -93,6 +94,8 @@ export function LinkToPage({
 	onClick?: () => void
 	isOld?: boolean
 }) {
+	const isLlamaAI = name === 'LlamaAI'
+	const freeLabel = useLlamaAIFreeLabel(isLlamaAI)
 	const cleanAsPath = asPath.split('/?')[0].split('?')[0]
 	const isActive = isOld ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
 	const isExternal = route.startsWith('http')
@@ -105,9 +108,23 @@ export function LinkToPage({
 			target={isExternal ? '_blank' : undefined}
 			rel={isExternal ? 'noopener noreferrer' : undefined}
 			className={navLinkStyles}
-			onClick={onClick}
+			onClick={
+				isLlamaAI
+					? () => {
+							freeLabel.trackEntryClick()
+							onClick?.()
+						}
+					: onClick
+			}
 		>
-			<NavItemContent name={name} icon={icon} attention={attention} freeTrial={freeTrial} isNew={isNew} />
+			<NavItemContent
+				name={name}
+				icon={icon}
+				attention={attention}
+				freeTrial={freeTrial}
+				freeLabel={isLlamaAI && freeLabel.showFree}
+				isNew={isNew}
+			/>
 		</BasicLink>
 	)
 }
@@ -117,12 +134,14 @@ export function NavItemContent({
 	icon,
 	attention,
 	freeTrial,
+	freeLabel,
 	isNew
 }: {
 	name: string
 	icon?: NavIconName
 	attention?: boolean
 	freeTrial?: boolean
+	freeLabel?: boolean
 	isNew?: boolean
 }) {
 	return (
@@ -144,6 +163,7 @@ export function NavItemContent({
 					<span aria-hidden className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-page-ring" />
 				) : null}
 				{freeTrial ? <span className={freeTrialBadgeStyles}>Try free</span> : null}
+				{freeLabel ? <span className={freeBadgeBOnly}>Free</span> : null}
 				{isNew ? (
 					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs text-on-brand">
 						<Icon name="sparkles" height={10} width={10} />

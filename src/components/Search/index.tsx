@@ -6,6 +6,7 @@ import { multiSearchApi, searchApi } from '~/api'
 import { useAuthContext } from '~/auth'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
+import { freeLabelAOnly, freeLabelBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -59,6 +60,8 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 	const shouldSkipLanding = isAuthenticated
 
 	const siteSearchStore = Ariakit.useDialogStore()
+	// Signed in, the button reads Ask LlamaAI in both arms, so the reader is not part of the label test here.
+	const freeLabel = useLlamaAIFreeLabel(!shouldSkipLanding)
 
 	return (
 		<>
@@ -67,11 +70,19 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 				className="llamaai-glow relative -my-0.5 overflow-hidden rounded-md bg-ai-gold-cta p-3 text-black shadow-ai-gold-cta lg:hidden"
 				data-umami-event="llamaai-mobile-nav-link"
 				data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
+				onClick={freeLabel.trackEntryClick}
 			>
 				<svg className="size-4 shrink-0">
 					<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
 				</svg>
-				<span className="sr-only">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
+				{isClient && shouldSkipLanding ? (
+					<span className="sr-only">Ask LlamaAI</span>
+				) : (
+					<span className="sr-only">
+						<span className={freeLabelAOnly}>Try LlamaAI</span>
+						<span className={freeLabelBOnly}>Ask LlamaAI for free</span>
+					</span>
+				)}
 			</BasicLink>
 			{searchTrigger ?? (
 				<Ariakit.DialogProvider store={siteSearchStore}>
@@ -210,6 +221,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 	const isClient = useIsClient()
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
+	const freeLabel = useLlamaAIFreeLabel(!hideLlamaAiCta && !shouldSkipLanding)
 
 	const inputField = useRef<HTMLInputElement>(null)
 
@@ -297,11 +309,19 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-4 py-2 label-sm text-black shadow-ai-gold-cta lg:flex"
 					data-umami-event="llamaai-nav-link"
 					data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
+					onClick={freeLabel.trackEntryClick}
 				>
 					<svg className="size-4 shrink-0">
 						<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
 					</svg>
-					<span className="whitespace-nowrap">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
+					{isClient && shouldSkipLanding ? (
+						<span className="whitespace-nowrap">Ask LlamaAI</span>
+					) : (
+						<>
+							<span className={`whitespace-nowrap ${freeLabelAOnly}`}>Try LlamaAI</span>
+							<span className={`whitespace-nowrap ${freeLabelBOnly}`}>Ask LlamaAI for free</span>
+						</>
+					)}
 				</BasicLink>
 			) : null}
 		</>

@@ -883,6 +883,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 						{!isSharedView && !hasComposerTray ? (
 							<div className="pointer-events-auto w-full">
 								<TipOrNotifyBanner
+									answerRunning={isStreaming}
 									premiumResponseId={
 										!isStreaming && Number(messages.at(-1)?.messageMetadata?.x402CostUsd ?? 0) > 0
 											? messages.at(-1)?.id

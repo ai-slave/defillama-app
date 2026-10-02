@@ -1,13 +1,15 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
+import { freeLabelBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
 import {
 	setPendingEntrySource,
 	setPendingPageContext,
 	setPendingPrompt,
 	setPendingSuggestedFlag
 } from '~/containers/LlamaAI/pendingPrompt'
+import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -33,12 +35,11 @@ const SignInDialog = lazy(() =>
 export function EntityQuestionsStrip({ questions, entitySlug, entityType, entityName, isLoading }: Props) {
 	const router = useRouter()
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
-	const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
-	const [isOpen, setIsOpen] = useState(false)
-	const signInDialogStore = Ariakit.useDialogStore({ open: isOpen, setOpen: setIsOpen })
+	const signIn = useQuestionSignIn(() => void router.push('/ai/chat'))
 	const trackRef = useRef<HTMLDivElement>(null)
 	const [edges, setEdges] = useState({ left: false, right: false })
 	const displayName = entityName || entitySlug
+	const freeLabel = useLlamaAIFreeLabel()
 
 	// Show an arrow only on the side the track can still scroll toward.
 	const observeTrack = useCallback((el: HTMLDivElement | null) => {
@@ -70,6 +71,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 	if (!isLoading && !questions?.length) return null
 
 	const handleClick = (question: string) => {
+		freeLabel.trackEntryClick()
 		trackUmamiEvent('llamaai-entity-question-click', {
 			entitySlug,
 			entityType,
@@ -88,8 +90,8 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 		if (!loaders.userLoading && isAuthenticated) {
 			void router.push('/ai/chat')
 		} else {
-			setPendingQuestion(question)
-			signInDialogStore.show()
+			setSignupSource('entity-questions')
+			signIn.open(question)
 		}
 	}
 
@@ -100,6 +102,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 					<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-4" />
 					<span className="label-sm whitespace-nowrap text-ai-gold-deep dark:text-ai-gold-bright">
 						Ask about {displayName}
+						{freeLabel.showFree ? <span className={freeLabelBOnly}> · free</span> : null}
 					</span>
 				</div>
 				<div className="relative min-w-0 flex-1">
@@ -146,17 +149,9 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 					) : null}
 				</div>
 			</div>
-			{isOpen ? (
+			{signIn.isOpen ? (
 				<Suspense fallback={null}>
-					<SignInDialog
-						store={signInDialogStore}
-						prompt={
-							pendingQuestion
-								? `Sign in for 3 free AI answers per day and ask: “${pendingQuestion.slice(0, 100)}${pendingQuestion.length > 100 ? '…' : ''}”`
-								: 'Sign in to get 3 free AI-answered questions per day'
-						}
-						onAuthenticated={() => void router.push('/ai/chat')}
-					/>
+					<SignInDialog {...signIn.dialogProps} />
 				</Suspense>
 			) : null}
 		</>

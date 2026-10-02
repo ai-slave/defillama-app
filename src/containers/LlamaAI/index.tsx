@@ -21,7 +21,7 @@ import { setSignupSource } from '~/auth/signupSource'
 import { AI_SERVER } from '~/constants'
 import { AbortScope } from '~/containers/LlamaAI/abortScope'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
-import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
+import { chatFrameStyles, LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ArticleExportProvider } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
 import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { AlertsModal } from '~/containers/LlamaAI/components/AlertsModal'
@@ -58,12 +58,12 @@ import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
 import { useComposerPrefill } from '~/containers/LlamaAI/hooks/useComposerPrefill'
-import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
+import { type PendingPromptSubmit, useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
 import { useForegroundRecovery } from '~/containers/LlamaAI/hooks/useForegroundRecovery'
 import { useForkInitialPrompt } from '~/containers/LlamaAI/hooks/useForkInitialPrompt'
 import { useLlamaAISetting, useLlamaAISettings } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import { movePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
-import { useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
+import { SESSIONS_QUERY_KEY, useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useSessionMutations } from '~/containers/LlamaAI/hooks/useSessionMutations'
 import { useSettingsRouteIntent } from '~/containers/LlamaAI/hooks/useSettingsRouteIntent'
 import { useSidebarVisibility } from '~/containers/LlamaAI/hooks/useSidebarVisibility'
@@ -73,6 +73,7 @@ import {
 	useWebMobilePushPreference,
 	WEB_MOBILE_PUSH_QUERY_KEY
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
+import { buildFreeLimitMessage, buildUsageLimitMessage, usageLimitOffer } from '~/containers/LlamaAI/limitMessages'
 import {
 	mapPersistedMessage,
 	mapPersistedMessages,
@@ -111,7 +112,7 @@ import {
 	type ChatPageContext,
 	type StreamBuffer
 } from '~/containers/LlamaAI/streamState'
-import type { AgenticAnswerMode, FreeLimitOffer, Message } from '~/containers/LlamaAI/types'
+import type { AgenticAnswerMode, Message } from '~/containers/LlamaAI/types'
 import { insertAbandonedDuelAnswer } from '~/containers/LlamaAI/utils/abandonedDuel'
 import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import { shouldFocusComposerOnSessionChange } from '~/containers/LlamaAI/utils/composerFocus'
@@ -194,25 +195,16 @@ function trackLimitHit(type: string) {
 	trackUmamiEvent('llamaai-limit-hit', { type })
 }
 
-function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['code'] }): Message {
-	const isDaily = err.code === 'FREE_DAILY_LIMIT'
-	let content = isDaily ? "You've reached today's free question limit." : "You've reached your free question limit."
-	if (err.details?.resetTime) {
-		const resetMs = new Date(err.details.resetTime).getTime() - Date.now()
-		if (resetMs > 0) {
-			const hours = Math.floor(resetMs / 3_600_000)
-			const minutes = Math.floor((resetMs % 3_600_000) / 60_000)
-			const timeStr = hours >= 24 ? `${Math.floor(hours / 24)}d ${hours % 24}h` : `${hours}h ${minutes}m`
-			content += ` Resets in ${timeStr}.`
-		}
-	}
-	return {
-		role: 'assistant',
-		content,
-		freeLimitOffer: {
-			code: err.code,
-			resetTime: err.details?.resetTime ?? null
-		}
+function showResearchDurationHintOnce() {
+	try {
+		if (localStorage.getItem('llamaai-research-duration-toast')) return
+		localStorage.setItem('llamaai-research-duration-toast', '1')
+		toast(
+			'Research reports usually take 10–20 minutes. You can leave this page — the run continues and will be here when you come back.',
+			{ icon: '🔍', duration: 8000 }
+		)
+	} catch {
+		// Storage can be unavailable; the one-time hint is skipped.
 	}
 }
 
@@ -357,6 +349,7 @@ export function AgenticChat({
 		researchUsage,
 		factCheckedUsage,
 		alertsUsage,
+		freeUsage,
 		isLoading: isLoadingSessions,
 		error: sessionListError,
 		hasNextPage: hasMoreSessions,
@@ -463,9 +456,7 @@ export function AgenticChat({
 		setTerminalViewOpen(open, open ? entry.symbol : undefined)
 		if (entry.cleanUrl) void router.replace(entry.cleanUrl, undefined, { shallow: true, scroll: false })
 	}, [router, isLlama, isSharedPage])
-	const submitPendingPromptRef = useRef<
-		(prompt: string, pageContext?: ChatPageContext, isSuggestedQuestion?: boolean, entrySource?: string) => void
-	>(() => {})
+	const submitPendingPromptRef = useRef<PendingPromptSubmit>(() => {})
 	const deepLinkPrompt = route.kind === 'chat-new' ? route.initialPrompt?.trim() || undefined : undefined
 	const deepLinkUtmSource = typeof router.query.utm_source === 'string' ? router.query.utm_source : null
 	const deepLinkUtmCampaign = typeof router.query.utm_campaign === 'string' ? router.query.utm_campaign : null
@@ -482,8 +473,7 @@ export function AgenticChat({
 		clearDeepLinkFromUrl: () => {
 			void router.replace(withTerminalView('/ai/chat'), undefined, { shallow: true })
 		},
-		submitPrompt: (prompt, pageContext, isSuggestedQuestion, entrySource) =>
-			submitPendingPromptRef.current(prompt, pageContext, isSuggestedQuestion, entrySource)
+		submitPrompt: (handoff) => submitPendingPromptRef.current(handoff)
 	})
 	const {
 		settings,
@@ -601,6 +591,8 @@ export function AgenticChat({
 	useEffect(() => {
 		if (wasStreamingRef.current && !isStreaming) {
 			void queryClient.invalidateQueries({ queryKey: [AI_BALANCE_QUERY_KEY] })
+			// The session list carries the free and research allowances the answer may have spent.
+			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
 		}
 		wasStreamingRef.current = isStreaming
 	}, [isStreaming, queryClient])
@@ -1675,20 +1667,6 @@ export function AgenticChat({
 			if (isChatBusy()) return false
 			abortActiveRequest()
 			triggerPromptTransition(shouldShowLanding ? 'landing' : 'conversation')
-			if (effectiveMode === 'research') {
-				try {
-					if (!localStorage.getItem('llamaai-research-duration-toast')) {
-						localStorage.setItem('llamaai-research-duration-toast', '1')
-						toast(
-							'Research reports usually take 10–20 minutes. You can leave this page — the run continues and will be here when you come back.',
-							{ icon: '🔍', duration: 8000 }
-						)
-					}
-				} catch {
-					// Storage can be unavailable; the one-time hint is skipped.
-				}
-			}
-
 			// The prompt joins the thread now, so a branch switch still loading, such as a vote's, would drop it.
 			branchCoordinator.invalidate()
 			if (sessionId) endDuel(sessionId, null)
@@ -1780,6 +1758,7 @@ export function AgenticChat({
 								adoptResponseSession(id)
 							},
 							onUserMessageId: (messageId) => {
+								if (!mutationAccepted && mutation.mode === 'research') showResearchDurationHintOnce()
 								mutationAccepted = true
 								failedRequest = { ...failedRequest, optimisticMessageId: messageId }
 								clearPromptFailure(currentSessionId, mutation.clientMutationId)
@@ -1836,7 +1815,7 @@ export function AgenticChat({
 						}
 						if (kind === 'free-limit' && isFreeLimitError(err)) {
 							trackLimitHit(LIMIT_HIT_TYPE[err.code])
-							appendMessage(buildFreeLimitMessage(err))
+							appendMessage(buildFreeLimitMessage(err, Date.now()))
 							dispatchStream({ type: 'RESET_STREAM' })
 							return
 						}
@@ -1851,23 +1830,20 @@ export function AgenticChat({
 								}
 							})
 							dispatchStream({ type: 'RESET_STREAM' })
-							setLimitModalFeature('fact_checked')
-							researchModalStore.show()
+							appendMessage(
+								buildUsageLimitMessage({ feature: 'fact_checked', period: 'blocked', limit: 0, resetTime: null })
+							)
 							return
 						}
 						if (kind === 'usage-limit') {
-							trackLimitHit(err.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
+							const offer = usageLimitOffer(err.details)
+							trackLimitHit(offer.feature)
 							dispatchStream({
 								type: 'SET_RATE_LIMIT_DETAILS',
-								value: {
-									period: err.details?.period || 'lifetime',
-									limit: err.details?.limit || 0,
-									resetTime: err.details?.resetTime || null
-								}
+								value: { period: offer.period, limit: offer.limit, resetTime: offer.resetTime }
 							})
 							dispatchStream({ type: 'RESET_STREAM' })
-							setLimitModalFeature(err.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
-							researchModalStore.show()
+							appendMessage(buildUsageLimitMessage(offer))
 							return
 						}
 						if (kind === 'temporary-connectivity' && currentSessionId && buffer.executionId) {
@@ -1966,7 +1942,6 @@ export function AgenticChat({
 			createSession,
 			applyServerSessionTitle,
 			moveSessionToTop,
-			researchModalStore,
 			primeAudio,
 			appendMessage,
 			abortActiveRequest,
@@ -2329,7 +2304,7 @@ export function AgenticChat({
 							trackLimitHit(LIMIT_HIT_TYPE[editError.code])
 							setMessages(messagesSnapshot)
 							setActiveLeafMessageId(activeLeafSnapshot)
-							appendMessage(buildFreeLimitMessage(editError))
+							appendMessage(buildFreeLimitMessage(editError, Date.now()))
 							dispatchStream({ type: 'RESET_STREAM' })
 							return
 						}
@@ -2346,25 +2321,22 @@ export function AgenticChat({
 								}
 							})
 							dispatchStream({ type: 'RESET_STREAM' })
-							setLimitModalFeature('fact_checked')
-							researchModalStore.show()
+							appendMessage(
+								buildUsageLimitMessage({ feature: 'fact_checked', period: 'blocked', limit: 0, resetTime: null })
+							)
 							return
 						}
 						if (kind === 'usage-limit') {
-							trackLimitHit(editError.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
+							const offer = usageLimitOffer(editError.details)
+							trackLimitHit(offer.feature)
 							setMessages(messagesSnapshot)
 							setActiveLeafMessageId(activeLeafSnapshot)
 							dispatchStream({
 								type: 'SET_RATE_LIMIT_DETAILS',
-								value: {
-									period: editError.details?.period || 'lifetime',
-									limit: editError.details?.limit || 0,
-									resetTime: editError.details?.resetTime || null
-								}
+								value: { period: offer.period, limit: offer.limit, resetTime: offer.resetTime }
 							})
 							dispatchStream({ type: 'RESET_STREAM' })
-							setLimitModalFeature(editError.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
-							researchModalStore.show()
+							appendMessage(buildUsageLimitMessage(offer))
 							return
 						}
 						setMessages(messagesSnapshot)
@@ -2400,7 +2372,6 @@ export function AgenticChat({
 			isTerminalView,
 			mode,
 			messages,
-			researchModalStore,
 			recoverExecution,
 			sessionId,
 			currentSessionProjectId,
@@ -2532,8 +2503,14 @@ export function AgenticChat({
 	const handleActionClick = useCallback(
 		(message: string) => {
 			if (isStreaming) return
-			if (queueOwnsComposer) void handleQueue(message)
-			else handleSubmit(message, undefined, undefined, undefined, { entrySource: 'follow-up' })
+			const followUp = {
+				isSuggestedQuestion: true,
+				entrySource: 'follow-up',
+				modeOverride: 'quick' as const,
+				quotedTextOverride: null
+			}
+			if (queueOwnsComposer) void handleQueue(message, undefined, undefined, 'quick', null)
+			else handleSubmit(message, undefined, undefined, undefined, followUp)
 		},
 		[isStreaming, queueOwnsComposer, handleQueue, handleSubmit]
 	)
@@ -2585,8 +2562,14 @@ export function AgenticChat({
 	// after commit rather than during render keeps the component optimizable; the only caller is the
 	// hook's own confirm handler, which cannot run before the first commit.
 	useLayoutEffect(() => {
-		submitPendingPromptRef.current = (prompt, pageContext, isSuggestedQuestion, entrySource) => {
-			handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion, entrySource })
+		submitPendingPromptRef.current = ({ prompt, pageContext, isSuggestedQuestion, entrySource, mode: handoffMode }) => {
+			// The composer shows the mode the question was asked in, as it does after any send.
+			if (handoffMode) setMode(handoffMode)
+			handleSubmit(prompt, undefined, undefined, pageContext, {
+				isSuggestedQuestion,
+				entrySource,
+				modeOverride: handoffMode
+			})
 		}
 	})
 
@@ -2645,7 +2628,13 @@ export function AgenticChat({
 				alertsModalStore.show()
 			},
 			toggleResearchMode: () => setMode((current) => (current === 'research' ? 'quick' : 'research')),
-			submitPrompt: (prompt: string) => handleSubmit(prompt, undefined, undefined, undefined, { entrySource: 'tip' })
+			submitPrompt: (prompt: string) =>
+				handleSubmit(prompt, undefined, undefined, undefined, {
+					isSuggestedQuestion: true,
+					entrySource: 'tip',
+					modeOverride: 'quick',
+					quotedTextOverride: null
+				})
 		}),
 		[openSettingsModal, alertsModalStore, setMode, handleSubmit]
 	)
@@ -2662,8 +2651,9 @@ export function AgenticChat({
 			entities?: Array<{ term: string; slug: string; type?: string }>,
 			images?: Array<OutgoingAttachment>,
 			pageContext?: ChatPageContext,
-			isSuggestedQuestion?: boolean
-		) => handleSubmit(prompt, entities, images, pageContext, { isSuggestedQuestion }),
+			isSuggestedQuestion?: boolean,
+			entrySource?: string
+		) => handleSubmit(prompt, entities, images, pageContext, { isSuggestedQuestion, entrySource }),
 		promptInputRef,
 		handleStopRequest,
 		isStreaming,
@@ -2674,6 +2664,7 @@ export function AgenticChat({
 		setMode,
 		researchUsage,
 		factCheckedUsage,
+		freeUsage,
 		onFactCheckedGated: handleFactCheckedGated,
 		onOpenAlerts: alertsModalStore.show,
 		isAlertsModalOpen,
@@ -2885,6 +2876,7 @@ export function AgenticChat({
 		currentProjectId: routeProjectId,
 		currentSessionProjectId: effectiveSessionProjectId,
 		alertsCount: alertsUsage?.count ?? null,
+		freeUsage,
 		onOpenAlerts: alertsModalStore.show,
 		searchOpen: isSidebarSearchOpen,
 		onSearchOpenChange: setSidebarSearchOpen,
@@ -2922,12 +2914,7 @@ export function AgenticChat({
 					<CitationSheetProvider value={citationSheet}>
 						<FileDropProvider>
 							<UploadTargetProvider sessionId={sessionId} projectId={currentSessionProjectId}>
-								<div
-									ref={splitBoundsRef}
-									// On phones the chat ends at the top of the soft keyboard: iOS Safari keeps the layout
-									// viewport under it, and useKeyboardInset publishes the height it covers.
-									className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-(--keyboard-inset,0px) max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-32px)]"
-								>
+								<div ref={splitBoundsRef} className={chatFrameStyles}>
 									{!readOnly && !isTerminalView ? (
 										sidebarVisible ? (
 											<>
@@ -3177,7 +3164,7 @@ export function AgenticChat({
 	)
 }
 
-const ChatControls = memo(function ChatControls({
+export const ChatControls = memo(function ChatControls({
 	handleNewChat,
 	sessionTitle,
 	canShare,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { createAnnouncementDismissalToken } from '~/utils/cookies'
-import type { AnnouncementRegistry, BannerDefinition } from '../registry'
-import { resolveAnnouncement } from '../resolveAnnouncement'
+import { ANNOUNCEMENT_REGISTRY, type AnnouncementRegistry, type BannerDefinition } from '../registry'
+import { isLaunchOpen, resolveAnnouncement } from '../resolveAnnouncement'
 
 const banner = (id: string, extra: Partial<BannerDefinition> = {}): BannerDefinition => ({
 	id,
@@ -119,4 +119,27 @@ describe('resolveAnnouncement', () => {
 		expect(resolve(input)).toMatchObject({ kind: 'fallback' })
 		expect(resolve({ ...input, dismissedTokens: [...input.dismissedTokens, dismissed('default')] })).toBeNull()
 	})
+
+	describe('the live registry', () => {
+		const live = (overrides: Partial<Parameters<typeof resolveAnnouncement>[0]>) =>
+			resolve({ registry: ANNOUNCEMENT_REGISTRY, launchOpen: true, ...overrides })
+		const promoDismissed = [createAnnouncementDismissalToken('llamaai-promo', '2026-10-02')]
+
+		test('every reader gets the LlamaAI promo, with no end date', () => {
+			expect(ANNOUNCEMENT_REGISTRY.launch?.until).toBeUndefined()
+			expect(live({ profile: null })).toMatchObject({ kind: 'launch', banner: { id: 'llamaai-promo' } })
+		})
+
+		test('dismissing the promo also hides the fallback, since they are the same banner', () => {
+			expect(live({ profile: null, dismissedTokens: promoDismissed })).toBeNull()
+		})
+	})
+})
+
+test('a launch closes at its end date, and one without an end date stays open until it is removed', () => {
+	const launch = { ...banner('launch'), until: '2026-10-02' }
+	expect(isLaunchOpen(launch, Date.parse('2026-10-01T23:59:59Z'))).toBe(true)
+	expect(isLaunchOpen(launch, Date.parse('2026-10-02T00:00:00Z'))).toBe(false)
+	expect(isLaunchOpen(banner('promo'), Date.parse('2031-06-01'))).toBe(true)
+	expect(isLaunchOpen(null, Date.parse('2026-10-01'))).toBe(false)
 })

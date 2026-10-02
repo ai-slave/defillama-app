@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import {
 	consumePendingEntrySource,
+	consumePendingMode,
 	consumePendingPageContext,
 	consumePendingPrompt,
 	consumePendingSuggestedFlag,
@@ -9,14 +10,16 @@ import {
 	subscribeToPendingPrompt
 } from '~/containers/LlamaAI/pendingPrompt'
 import type { ChatPageContext } from '~/containers/LlamaAI/streamState'
+import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-export type PendingPromptSubmit = (
-	prompt: string,
-	pageContext?: ChatPageContext,
-	isSuggestedQuestion?: boolean,
+export type PendingPromptSubmit = (handoff: {
+	prompt: string
+	pageContext?: ChatPageContext
+	isSuggestedQuestion?: boolean
 	entrySource?: string
-) => void
+	mode?: AgenticAnswerMode
+}) => void
 
 function deepLinkKey(prompt: string, source: string | null, campaign: string | null) {
 	return `${prompt}\n${source ?? ''}\n${campaign ?? ''}`
@@ -78,28 +81,40 @@ export function useDeepLinkPrompt({
 	useEffect(() => {
 		if (!isNewChat || sharedSession) return
 
-		const pendingPrompt = consumePendingPrompt()
-		const pendingPageContext = consumePendingPageContext()
-		const isSuggested = consumePendingSuggestedFlag()
-		const entrySource = consumePendingEntrySource()
-		if (pendingPrompt) {
-			if (deepLinkPrompt) {
-				// The one write left here. A pending prompt outranks the link, and the banner has to go
-				// before the url change lands, or it flashes over the answer being submitted.
-				// eslint-disable-next-line react/set-state-in-effect -- deliberate, for the reason above
-				setAnsweredKey(deepLinkKey(deepLinkPrompt, utmSource, utmCampaign))
-				clearDeepLinkFromUrlRef.current()
+		// Taken one task later, so a mount that is torn down at once (StrictMode's replay in dev) cancels the
+		// timer and leaves the handover for the mount that stays. Sent from the first mount, the chat's unmount
+		// cleanup would abort the request and the route reset would clear the new conversation.
+		const timer = setTimeout(() => {
+			const pendingPrompt = consumePendingPrompt()
+			const pendingPageContext = consumePendingPageContext()
+			const isSuggested = consumePendingSuggestedFlag()
+			const entrySource = consumePendingEntrySource()
+			const mode = consumePendingMode()
+			if (pendingPrompt) {
+				if (deepLinkPrompt) {
+					// A pending prompt outranks the link, and the banner has to go before the url change lands, or it
+					// flashes over the answer being submitted.
+					setAnsweredKey(deepLinkKey(deepLinkPrompt, utmSource, utmCampaign))
+					clearDeepLinkFromUrlRef.current()
+				}
+				submitPromptRef.current({
+					prompt: pendingPrompt,
+					pageContext: pendingPageContext ?? undefined,
+					isSuggestedQuestion: isSuggested || undefined,
+					entrySource,
+					mode
+				})
+				return
 			}
-			submitPromptRef.current(pendingPrompt, pendingPageContext ?? undefined, isSuggested || undefined, entrySource)
-			return
-		}
 
-		if (deepLinkPrompt) {
-			const nextKey = deepLinkKey(deepLinkPrompt, utmSource, utmCampaign)
-			if (viewedKeyRef.current === nextKey) return
-			viewedKeyRef.current = nextKey
-			trackUmamiEvent('llamaai-deeplink-view', deepLinkEventProps(deepLinkPrompt, utmSource, utmCampaign))
-		}
+			if (deepLinkPrompt) {
+				const nextKey = deepLinkKey(deepLinkPrompt, utmSource, utmCampaign)
+				if (viewedKeyRef.current === nextKey) return
+				viewedKeyRef.current = nextKey
+				trackUmamiEvent('llamaai-deeplink-view', deepLinkEventProps(deepLinkPrompt, utmSource, utmCampaign))
+			}
+		})
+		return () => clearTimeout(timer)
 	}, [isNewChat, deepLinkPrompt, utmSource, utmCampaign, sharedSession])
 
 	const confirm = useCallback(() => {
@@ -110,7 +125,7 @@ export function useDeepLinkPrompt({
 		setAnsweredKey(linkKey)
 		trackUmamiEvent('llamaai-deeplink-run', deepLinkEventProps(prompt, utmSource, utmCampaign))
 		clearDeepLinkFromUrlRef.current()
-		submitPromptRef.current(prompt, undefined, undefined, utmSource ?? 'deep-link')
+		submitPromptRef.current({ prompt, entrySource: utmSource ?? 'deep-link' })
 	}, [confirmationPrompt, linkKey, utmCampaign, utmSource])
 
 	const dismiss = useCallback(() => {

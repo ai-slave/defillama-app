@@ -7,8 +7,7 @@ export const LLAMAAI_MOBILE_APP_ANNOUNCEMENT = { id: 'llamaai-mobile-app', versi
 
 /**
  * Cross-sell for readers who already use LlamaAI on the web: the same assistant in the DefiLlama app.
- * Blue, the palette the app launch banner used before UTR took the slot, so it reads as a different
- * message from the green UTR banner and the gold Verified APY one.
+ * Blue, so it reads as a different message from the cream and gold LlamaAI promo and the gold Verified APY one.
  */
 export function LlamaAIMobileAppAnnouncement() {
 	return (

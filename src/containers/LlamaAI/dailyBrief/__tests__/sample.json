@@ -1,0 +1,33 @@
+{
+	"date": "2026-09-30",
+	"headline": "Sentora TVL Surges $347M While Aave Sheds $596M",
+	"summary": "DeFi TVL slipped 1.8% this week as capital rotated from Aave into Sentora.",
+	"sections": [
+		{
+			"id": "news",
+			"title": "What happened",
+			"bullets": [
+				{ "text": "$387M Bitget hack funds traced", "question": "What is the latest status of the Bitget hack?" }
+			]
+		},
+		{
+			"id": "movers",
+			"title": "Where money moved",
+			"bullets": [
+				{ "text": "+$347M into Sentora", "question": "What's driving Sentora's TVL growth?" },
+				{ "text": "-$570M from Steakhouse", "question": "Why did Steakhouse Financial's TVL drop?" }
+			]
+		},
+		{
+			"id": "market",
+			"title": "Market snapshot",
+			"bullets": [{ "text": "$94.7B global DeFi TVL", "question": "Which chains drive the TVL decline?" }]
+		},
+		{
+			"id": "etfs",
+			"title": "ETF flows",
+			"bullets": [{ "text": "+$66.2M into BTC ETFs", "question": "How do BTC ETF flows compare?" }]
+		}
+	],
+	"generatedAt": "2026-09-30T06:05:00.000Z"
+}

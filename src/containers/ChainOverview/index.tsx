@@ -8,6 +8,7 @@ import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredRes
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
+import { HomeDailyBrief } from '~/containers/LlamaAI/dailyBrief/HomeDailyBrief'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
@@ -99,6 +100,7 @@ export function ChainOverview(props: IChainOverviewData) {
 					</Suspense>
 				) : (
 					<>
+						{props.dailyBrief ? <HomeDailyBrief brief={props.dailyBrief} /> : null}
 						{props.isDataAvailable ? (
 							<>
 								<Stats {...props} />

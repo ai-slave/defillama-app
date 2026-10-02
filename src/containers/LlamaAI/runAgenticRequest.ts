@@ -1,14 +1,14 @@
 import { isTemporaryConnectivityError } from '~/containers/LlamaAI/connectionErrors'
 import type { ExecutionOperation } from '~/containers/LlamaAI/executionCoordinator'
 import type { AgenticSSECallbacks } from '~/containers/LlamaAI/fetchAgenticResponse'
-import type { RateLimitDetails } from '~/containers/LlamaAI/streamState'
 import type { FreeLimitOffer } from '~/containers/LlamaAI/types'
 
 export type AgenticRequestMode = 'prompt' | 'edit' | 'resume' | 'replay'
 
 export interface UsageLimitError extends Error {
 	code?: 'USAGE_LIMIT_EXCEEDED' | 'FACT_CHECKED_REQUIRES_SUBSCRIPTION' | FreeLimitOffer['code']
-	details?: Partial<RateLimitDetails> & { feature?: string }
+	// As the server sent them: read through usageLimitOffer, which maps them to the copy's terms.
+	details?: { feature?: string; period?: string; limit?: number; resetTime?: string | null }
 	upgradeUrl?: string
 }
 

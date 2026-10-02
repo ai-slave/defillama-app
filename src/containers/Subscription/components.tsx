@@ -339,7 +339,7 @@ function PricingCardCta({
 					<div className="rounded-[10px] border border-sub-border-slate-100 px-3 py-2.5 text-xs leading-4 text-sub-text-cool sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[11px] dark:border-sub-border-strong dark:text-sub-text-muted">
 						<p className="font-medium text-success dark:text-success">Free trial differences:</p>
 						<ul className="mt-1 flex flex-col gap-0.5">
-							<li>• 3 deep research questions/day (vs 5)</li>
+							<li>• 3 deep research reports in total (vs 5/day)</li>
 							<li>• No CSV downloads — paid Pro only</li>
 						</ul>
 						<p className="mt-1.5 text-[11px] sm:text-[10px]">

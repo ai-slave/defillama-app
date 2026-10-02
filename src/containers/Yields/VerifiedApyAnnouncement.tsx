@@ -9,7 +9,7 @@ export const VERIFIED_APY_ANNOUNCEMENT = { id: 'verified-apy', version: '2026-09
 /**
  * The strip above the earn table, above a measured pool's page, and in the home slot for a yields
  * reader without a subscription: the claim in one line and one way to buy it. Gold, so it reads as a
- * different message from the green UTR banner and the blue app banner. The explanation only appears
+ * different message from the cream and gold LlamaAI promo and the blue app banner. The explanation only appears
  * on wide screens; on a phone the banner is one row, the headline and a short button. Dismissal rides the site's
  * announcement cookie, so closing it anywhere keeps it closed everywhere; bump `version` to bring it
  * back. A subscriber never sees it.

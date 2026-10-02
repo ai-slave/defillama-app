@@ -10,6 +10,7 @@ import type {
 	GeneratedImage,
 	Message,
 	MessageMetadata,
+	UsageLimitPeriod,
 	SpawnAgentStatus,
 	TodoItem,
 	ToolCall,
@@ -25,7 +26,7 @@ export interface ChatPageContext {
 }
 
 export interface RateLimitDetails {
-	period: string
+	period: UsageLimitPeriod
 	limit: number
 	resetTime: string | null
 }

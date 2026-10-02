@@ -1,3 +1,4 @@
+import { FREE_DAILY_ALLOWANCE, FREE_RESEARCH_ALLOWANCE } from '~/containers/LlamaAI/freePlanCopy'
 import type {
 	BillingCycle,
 	ComparisonSection,
@@ -39,7 +40,7 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 					{ label: 'Stay on top of who\u2019s raising, and how much', availability: 'check' },
 					{ label: 'View custom dashboards built by analysts', availability: 'check' },
 					{
-						label: 'Try LlamaAI free: one daily query and one deep research report every two weeks',
+						label: `Try LlamaAI free: ${FREE_DAILY_ALLOWANCE} and ${FREE_RESEARCH_ALLOWANCE}`,
 						link: '/ai',
 						linkText: 'LlamaAI free',
 						availability: 'check',
@@ -242,7 +243,7 @@ export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 					enterprise: 'check'
 				},
 				tooltips: {
-					free: '1 question per day'
+					free: FREE_DAILY_ALLOWANCE
 				}
 			},
 			{

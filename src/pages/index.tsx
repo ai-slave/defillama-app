@@ -3,6 +3,7 @@ import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
+import { fetchDailyBrief } from '~/containers/LlamaAI/dailyBrief/api'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { createRoutePhaseTimer, withPerformanceLogging } from '~/utils/perf'
@@ -21,20 +22,23 @@ export const getStaticProps = withPerformanceLogging<IChainOverviewData>(
 				metadataModule.refreshMetadataInBackgroundIfStale('homepage')
 			)
 			const metadataCache = metadataModule.default
-			const data = await phaseTimer.time('chain_overview_total', () =>
-				getChainOverviewData({
-					chain: 'All',
-					chainMetadata: metadataCache.chainMetadata,
-					protocolMetadata: metadataCache.protocolMetadata,
-					categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
-					phaseTimer,
-					includeHomepageRwaActiveMcap: true
-				})
-			)
+			const [data, dailyBrief] = await Promise.all([
+				phaseTimer.time('chain_overview_total', () =>
+					getChainOverviewData({
+						chain: 'All',
+						chainMetadata: metadataCache.chainMetadata,
+						protocolMetadata: metadataCache.protocolMetadata,
+						categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
+						phaseTimer,
+						includeHomepageRwaActiveMcap: true
+					})
+				),
+				fetchDailyBrief()
+			])
 			if (!data) throw new Error('Missing homepage chain overview data')
 
 			return {
-				props: data,
+				props: { ...data, dailyBrief },
 				revalidate: maxAgeForNext([22])
 			}
 		} finally {

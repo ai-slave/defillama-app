@@ -1,6 +1,13 @@
 import type { InfiniteData } from '@tanstack/react-query'
 import type { AlertsUsage } from '~/containers/LlamaAI/components/alerts/types'
-import type { ChatSession, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
+import type {
+	ChatSession,
+	FactCheckedUsage,
+	FreeQuestionUsage,
+	FreeUsage,
+	ResearchUsage,
+	WelcomeBonus
+} from '~/containers/LlamaAI/types'
 
 export const SESSIONS_QUERY_KEY = 'llamaai-sessions'
 
@@ -9,6 +16,7 @@ export interface SessionListData {
 	usage: ResearchUsage | null
 	factCheckedUsage: FactCheckedUsage | null
 	alertsUsage: AlertsUsage | null
+	freeUsage: FreeUsage | null
 }
 
 export interface SessionListPage {
@@ -16,6 +24,7 @@ export interface SessionListPage {
 	usage: ResearchUsage | null
 	factCheckedUsage: FactCheckedUsage | null
 	alertsUsage: AlertsUsage | null
+	freeUsage?: FreeUsage | null
 	hasMore: boolean
 	nextOffset?: number
 }
@@ -28,6 +37,9 @@ export interface SessionListResponse {
 		research_report?: ResearchUsage | null
 		fact_checked?: FactCheckedUsage | null
 		alerts?: AlertsUsage | null
+		free_form_question?: FreeQuestionUsage
+		free_question?: FreeQuestionUsage
+		welcome_bonus?: WelcomeBonus
 	}
 }
 
@@ -39,13 +51,18 @@ export function mapSessionListPage(responseData: SessionListResponse): SessionLi
 		usage: responseData.usage?.research_report ?? null,
 		factCheckedUsage: responseData.usage?.fact_checked ?? null,
 		alertsUsage: responseData.usage?.alerts ?? null,
+		freeUsage: {
+			typed: responseData.usage?.free_form_question ?? null,
+			suggested: responseData.usage?.free_question ?? null,
+			bonus: responseData.usage?.welcome_bonus ?? null
+		},
 		hasMore: responseData.hasMore ?? false,
 		nextOffset: responseData.nextOffset
 	}
 }
 
 export function flattenSessionListData(data: SessionListInfiniteData | undefined): SessionListData {
-	if (!data) return { sessions: [], usage: null, factCheckedUsage: null, alertsUsage: null }
+	if (!data) return { sessions: [], usage: null, factCheckedUsage: null, alertsUsage: null, freeUsage: null }
 
 	// Infinite pages can overlap after optimistic inserts, moves, or refetches.
 	// Keep the first copy because page order already encodes recency.
@@ -64,7 +81,8 @@ export function flattenSessionListData(data: SessionListInfiniteData | undefined
 		sessions,
 		usage: data.pages[0]?.usage ?? null,
 		factCheckedUsage: data.pages[0]?.factCheckedUsage ?? null,
-		alertsUsage: data.pages[0]?.alertsUsage ?? null
+		alertsUsage: data.pages[0]?.alertsUsage ?? null,
+		freeUsage: data.pages[0]?.freeUsage ?? null
 	}
 }
 

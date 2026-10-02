@@ -1,4 +1,5 @@
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { CapabilityChips } from '~/containers/LlamaAI/components/input/CapabilityChips'
 import { EntityComboboxPopover } from '~/containers/LlamaAI/components/input/EntityCombobox'
 import { ImageUpload, ImageUploadButton } from '~/containers/LlamaAI/components/input/ImageUpload'
@@ -24,6 +25,7 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { useFileDropTarget } from './FileDrop'
 
 const PASTE_TO_FILE_THRESHOLD = 1500
+const CAPABILITY_PROMPTS = new Set(CAPABILITIES.flatMap((capability) => capability.prompts))
 
 // Browser object URLs are only needed for local previews, so clean them up after use.
 function revokeImageUrls(images: Array<{ url: string }>) {
@@ -72,6 +74,8 @@ interface PromptInputProps {
 	researchUsage?: ResearchUsage | null
 	factCheckedUsage?: FactCheckedUsage | null
 	onFactCheckedGated?: () => void
+	/** Set when attachments cannot be sent yet (signed out): attaching calls this instead of adding a file. */
+	onAttachmentsGated?: () => void
 	onOpenAlerts?: () => void
 	quotedText?: string | null
 	onClearQuotedText?: () => void
@@ -122,6 +126,7 @@ export function PromptInput({
 	researchUsage,
 	factCheckedUsage,
 	onFactCheckedGated,
+	onAttachmentsGated,
 	onOpenAlerts,
 	quotedText,
 	onClearQuotedText,
@@ -135,7 +140,6 @@ export function PromptInput({
 	const inputWrapperRef = useRef<HTMLDivElement>(null)
 	const pendingSelectionRef = useRef<PendingSelection | null>(null)
 	const valueRef = useRef(value)
-	const isSuggestedRef = useRef(false)
 	const shiftHeldRef = useRef(false)
 	const lastRestoreKeyRef = useRef<number | null>(null)
 
@@ -315,8 +319,9 @@ export function PromptInput({
 		const submit = async () => {
 			const finalEntities = entityCombobox.getFinalEntities()
 			const imagesToSend = [...imageUpload.selectedImages]
-			const isSuggested = isSuggestedRef.current
-			isSuggestedRef.current = false
+			// A ready-made prompt sent as written is a suggested question, however it reached the composer; once the
+			// reader edits it, it is their own.
+			const isSuggested = CAPABILITY_PROMPTS.has(promptValue.trim())
 
 			// Send is disabled and the notice with its actions is already on screen.
 			if (submitMode.kind === 'blocked') return
@@ -465,13 +470,19 @@ export function PromptInput({
 		if (!data) return
 
 		const hasFile = Array.from(data.items).some((item) => item.kind === 'file')
+		if (hasFile && onAttachmentsGated) {
+			event.preventDefault()
+			onAttachmentsGated()
+			return
+		}
 		if (hasFile) {
 			imageUpload.handlePaste(event)
 			return
 		}
 
+		// A long paste stays text while attachments are gated, since it would otherwise become a file.
 		const text = data.getData('text/plain')
-		if (!text || text.length < PASTE_TO_FILE_THRESHOLD || shiftHeldRef.current) return
+		if (!text || text.length < PASTE_TO_FILE_THRESHOLD || shiftHeldRef.current || onAttachmentsGated) return
 
 		if (imageUpload.addPastedText(text)) {
 			event.preventDefault()
@@ -580,7 +591,6 @@ export function PromptInput({
 							if (categoryKey === 'research') {
 								setMode('research')
 							}
-							isSuggestedRef.current = true
 							applyPromptEdit({ nextValue: prompt, selectionStart: prompt.length, focus: true })
 						}}
 						isPending={isPending}
@@ -618,10 +628,9 @@ export function PromptInput({
 						if (categoryKey === 'research') {
 							setMode('research')
 						}
-						isSuggestedRef.current = true
 						applyPromptEdit({ nextValue: prompt, selectionStart: prompt.length, focus: true })
 					}}
-					onImageUploadClick={imageUpload.openFilePicker}
+					onImageUploadClick={onAttachmentsGated ?? imageUpload.openFilePicker}
 					isPending={isPending}
 					isStreaming={isStreaming}
 					isStopping={isStopping}
@@ -629,7 +638,7 @@ export function PromptInput({
 				/>
 				<div className="flex shrink-0 items-center gap-2">
 					<span className="@max-sm:hidden" data-walkthrough="image-upload">
-						<ImageUploadButton onClick={imageUpload.openFilePicker} disabled={isStopping} />
+						<ImageUploadButton onClick={onAttachmentsGated ?? imageUpload.openFilePicker} disabled={isStopping} />
 					</span>
 					<SubmitButton
 						mode={

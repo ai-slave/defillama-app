@@ -1,3 +1,4 @@
+import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { notifyKeyChange, subscribeToStorageKey } from '~/contexts/localStorageStore'
 
 // A prompt, page context or project handed from another page to /ai/chat, which consumes it once on arrival.
@@ -54,6 +55,7 @@ export function consumePendingPrompt(): string | null {
 
 const PENDING_SUGGESTED_KEY = 'llamaai-pending-suggested'
 const PENDING_ENTRY_SOURCE_KEY = 'llamaai-pending-entry-source'
+const PENDING_MODE_KEY = 'llamaai-pending-mode'
 
 export function setPendingEntrySource(source: string) {
 	if (typeof window !== 'undefined') {
@@ -106,4 +108,32 @@ export function consumePendingPageContext(): {
 	} catch {
 		return null
 	}
+}
+
+/** The answer mode picked before sign-in, so a Research pick is not sent as a quick question. */
+export function setPendingMode(mode: AgenticAnswerMode) {
+	if (typeof window === 'undefined') return
+	localStorage.setItem(PENDING_MODE_KEY, mode)
+}
+
+export function consumePendingMode(): AgenticAnswerMode | undefined {
+	if (typeof window === 'undefined') return undefined
+	const value = localStorage.getItem(PENDING_MODE_KEY)
+	localStorage.removeItem(PENDING_MODE_KEY)
+	// Storage holds whatever an older build wrote, so only the modes the chat knows are read back.
+	return value === 'quick' || value === 'fact_checked' || value === 'research' ? value : undefined
+}
+
+export function clearPendingPrompt() {
+	if (typeof window === 'undefined') return
+	for (const key of [
+		PENDING_PROMPT_KEY,
+		PENDING_SUGGESTED_KEY,
+		PENDING_ENTRY_SOURCE_KEY,
+		PENDING_PAGE_CONTEXT_KEY,
+		PENDING_MODE_KEY
+	]) {
+		localStorage.removeItem(key)
+	}
+	notifyKeyChange(PENDING_PROMPT_KEY)
 }

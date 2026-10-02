@@ -4,7 +4,7 @@ import { VERIFIED_APY_ANNOUNCEMENT, VerifiedApyAnnouncement } from '../Yields/Ve
 import { ENTERPRISE_DATA_ANNOUNCEMENT, EnterpriseDataAnnouncement } from './EnterpriseDataAnnouncement'
 import { INVESTOR_RELATIONS_ANNOUNCEMENT, InvestorRelationsAnnouncement } from './InvestorRelationsAnnouncement'
 import { LLAMAAI_MOBILE_APP_ANNOUNCEMENT, LlamaAIMobileAppAnnouncement } from './LlamaAIMobileAppAnnouncement'
-import { UTR_ANNOUNCEMENT, UniversalTokenRatingAnnouncement } from './UniversalTokenRatingAnnouncement'
+import { LLAMAAI_PROMO_ANNOUNCEMENT, LlamaAIPromoAnnouncement } from './LlamaAIPromoAnnouncement'
 
 export interface BannerDefinition {
 	/** Stable per product. Together with `version` it forms the dismissal cookie token. */
@@ -25,8 +25,11 @@ export interface SegmentBannerDefinition extends BannerDefinition {
 }
 
 export interface AnnouncementRegistry {
-	/** Shown to everyone while the window is open, ahead of any targeting. `until` is an ISO date, exclusive. */
-	launch: (BannerDefinition & { until: string }) | null
+	/**
+	 * Shown to everyone ahead of any targeting. `until` is an ISO date, exclusive; without it the banner shows
+	 * until it is removed from the registry.
+	 */
+	launch: (BannerDefinition & { until?: string }) | null
 	/** Account segments outrank browsing interests: affiliation is a stronger signal than page views. */
 	segments: Partial<Record<UserSegment, SegmentBannerDefinition>>
 	targeted: Partial<Record<InterestCategory, BannerDefinition>>
@@ -34,10 +37,10 @@ export interface AnnouncementRegistry {
 	fallback: BannerDefinition
 }
 
-const utr: BannerDefinition = { ...UTR_ANNOUNCEMENT, render: () => <UniversalTokenRatingAnnouncement /> }
+const llamaAIPromo: BannerDefinition = { ...LLAMAAI_PROMO_ANNOUNCEMENT, render: () => <LlamaAIPromoAnnouncement /> }
 
 export const ANNOUNCEMENT_REGISTRY: AnnouncementRegistry = {
-	launch: { ...utr, until: '2026-10-02' },
+	launch: llamaAIPromo,
 	segments: {
 		crypto_project: { ...INVESTOR_RELATIONS_ANNOUNCEMENT, render: () => <InvestorRelationsAnnouncement /> },
 		// A fund reading yields is probably providing liquidity, which is what Verified APY is for.
@@ -55,5 +58,5 @@ export const ANNOUNCEMENT_REGISTRY: AnnouncementRegistry = {
 		},
 		llamaai: { ...LLAMAAI_MOBILE_APP_ANNOUNCEMENT, render: () => <LlamaAIMobileAppAnnouncement /> }
 	},
-	fallback: utr
+	fallback: llamaAIPromo
 }

@@ -1,5 +1,5 @@
 /* Home-slot announcement palettes. Each banner gets its own hue so a returning reader notices a
-   change: UTR is green (themes/utr.css), the DefiLlama app is blue, Verified APY is gold, investor
+   change: the LlamaAI promo is cream with a gold button in light and ink in dark (from themes/llamaai.css), the DefiLlama app is blue, Verified APY is gold, investor
    relations is indigo, and API and enterprise data is teal.
 
    Spare palettes for the next banner, reviewed with the owner. Comments are stripped from the
@@ -26,6 +26,25 @@
             link rgb(255 255 255 / 10%); link-hover rgb(255 255 255 / 20%) */
 @layer base {
 	:root {
+		/* Light: a cream invitation whose gold pill matches the header's Try LlamaAI button; dark keeps the ink. */
+		--llamaai-announcement-border: color-mix(in srgb, var(--ai-gold) 40%, var(--ai-white));
+		--llamaai-announcement-bg: linear-gradient(
+			100deg,
+			var(--ai-white) 0%,
+			var(--ai-gold-tint) 55%,
+			var(--ai-gold-soft) 100%
+		);
+		--llamaai-announcement-text: var(--ai-on-gold);
+		--llamaai-announcement-shadow: 0 10px 30px rgb(201 154 74 / 14%);
+		--llamaai-announcement-dismiss: rgb(92 74 31 / 8%);
+		--llamaai-announcement-shimmer: linear-gradient(99.97deg, transparent, rgb(255 255 255 / 55%), transparent);
+		--llamaai-announcement-badge-bg: linear-gradient(var(--ai-gold-deep), var(--ai-gold-deep));
+		--llamaai-announcement-badge-text: var(--ai-white);
+		--llamaai-announcement-link: var(--ai-gold-bright);
+		--llamaai-announcement-link-hover: color-mix(in srgb, var(--ai-gold-bright) 80%, var(--ai-gold));
+		--llamaai-announcement-link-text: var(--ai-on-gold-strong);
+		--llamaai-announcement-ring: rgb(201 154 74 / 45%);
+
 		--app-announcement-border: #1a5cc4;
 		--app-announcement-bg: linear-gradient(100deg, #1f67d2 0%, #2b7de9 45%, #4f9cf9 100%);
 		--app-announcement-text: #ffffff;
@@ -71,6 +90,24 @@
 		--data-announcement-link-hover: rgb(255 255 255 / 25%);
 	}
 	html.dark {
+		--llamaai-announcement-border: rgb(253 224 169 / 30%);
+		--llamaai-announcement-bg: linear-gradient(
+			100deg,
+			var(--ai-ink) 0%,
+			var(--ai-ink-raised) 60%,
+			color-mix(in srgb, var(--ai-ink-raised) 82%, var(--ai-gold-bright)) 100%
+		);
+		--llamaai-announcement-text: var(--ai-gold-soft);
+		--llamaai-announcement-shadow: 0 10px 30px rgb(0 0 0 / 50%);
+		--llamaai-announcement-dismiss: rgb(253 224 169 / 12%);
+		--llamaai-announcement-shimmer: linear-gradient(99.97deg, transparent, rgb(253 224 169 / 14%), transparent);
+		--llamaai-announcement-badge-bg: var(--ai-gold-gradient);
+		--llamaai-announcement-badge-text: var(--ai-on-gold-strong);
+		--llamaai-announcement-link: rgb(253 224 169 / 12%);
+		--llamaai-announcement-link-hover: rgb(253 224 169 / 22%);
+		--llamaai-announcement-link-text: var(--ai-gold-bright);
+		--llamaai-announcement-ring: rgb(253 224 169 / 35%);
+
 		--app-announcement-border: #3d7fe0;
 		--app-announcement-bg: linear-gradient(100deg, #0d2a5c 0%, #154189 50%, #1d5cb8 100%);
 		--app-announcement-text: #eaf3ff;
@@ -117,6 +154,16 @@
 }
 
 @theme inline {
+	--shadow-llamaai-announcement: var(--llamaai-announcement-shadow);
+	--color-llamaai-announcement-border: var(--llamaai-announcement-border);
+	--color-llamaai-announcement-text: var(--llamaai-announcement-text);
+	--color-llamaai-announcement-dismiss: var(--llamaai-announcement-dismiss);
+	--color-llamaai-announcement-badge-text: var(--llamaai-announcement-badge-text);
+	--color-llamaai-announcement-link: var(--llamaai-announcement-link);
+	--color-llamaai-announcement-link-hover: var(--llamaai-announcement-link-hover);
+	--color-llamaai-announcement-link-text: var(--llamaai-announcement-link-text);
+	--color-llamaai-announcement-ring: var(--llamaai-announcement-ring);
+
 	--shadow-app-announcement: var(--app-announcement-shadow);
 	--color-app-announcement-border: var(--app-announcement-border);
 	--color-app-announcement-text: var(--app-announcement-text);
