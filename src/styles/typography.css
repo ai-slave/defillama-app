@@ -17,9 +17,9 @@
    future published library measurement may supersede them explicitly.
 
    Each utility is a small, flat, variant-free declaration set per the
-   @utility policy. heading-*, label-* and body-* set Inter and mono-* sets
-   JetBrains Mono, so words inside a mono value (a unit, "below reported")
-   never inherit the number font.
+   @utility policy. heading-*, title-*, label-* and body-* set Inter and
+   mono-* sets JetBrains Mono, so words inside a mono value (a unit, "below
+   reported") never inherit the number font.
 
    Mono is for figures only: values in a data slot, addresses, code. It has
    two weights. 400 for every figure; 700 (mono-xl, mono-lg, mono-*-bold)
@@ -50,6 +50,16 @@
 	font-family: var(--font-inter);
 	font-size: 1.125rem;
 	line-height: calc(22 / 18); /* Figma Heading/XS 18/22 */
+	font-weight: 600;
+}
+
+/* title-* is the semibold name of a card or block at UI sizes, below the heading
+   ramp. 14/20 is the line box these titles rendered with as text-sm, so moving
+   a title onto the style keeps its row height. */
+@utility title-md {
+	font-family: var(--font-inter);
+	font-size: 0.875rem;
+	line-height: calc(20 / 14); /* accepted app value; not Figma-verified */
 	font-weight: 600;
 }
 

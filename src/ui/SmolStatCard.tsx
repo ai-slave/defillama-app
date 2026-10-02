@@ -36,7 +36,7 @@ export function SmolStatCard({
 }: SmolStatCardProps) {
 	// Tooltip spreads its props over its default <span>, and taps only toggle it without `render`, so pass it only for a link.
 	const heading = (
-		<Tooltip {...(link ? { render: link } : null)} className="text-sm font-semibold" content={tooltip}>
+		<Tooltip {...(link ? { render: link } : null)} className="title-md" content={tooltip}>
 			{title}
 		</Tooltip>
 	)

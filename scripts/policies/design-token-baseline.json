@@ -25,7 +25,8 @@
 		"raw-echarts-init": 3,
 		"conflicting-named-typography": 29,
 		"unknown-named-typography": 0,
-		"off-scale-mono-weight": 0
+		"off-scale-mono-weight": 0,
+		"raw-type-pair": 141
 	},
 	"product": {
 		"hex-in-classname": 24,
@@ -53,6 +54,7 @@
 		"raw-echarts-init": 5,
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
-		"off-scale-mono-weight": 0
+		"off-scale-mono-weight": 0,
+		"raw-type-pair": 1208
 	}
 }

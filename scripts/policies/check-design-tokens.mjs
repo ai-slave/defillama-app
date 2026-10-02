@@ -173,7 +173,7 @@ function matchDeprecatedTailwindSpelling(content) {
 }
 
 const NAMED_TYPOGRAPHY_UTILITY =
-	/^(?:heading-(?:lg|sm|xs)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|lg|md(?:-bold)?|sm(?:-bold)?))$/
+	/^(?:heading-(?:lg|sm|xs)|title-md|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|lg|md(?:-bold)?|sm(?:-bold)?))$/
 // text-[…] counts as typography only when the arbitrary value is not a color
 // (text-[#999], text-[rgba(…)], text-[var(--x)] set color, not size).
 const RAW_TYPOGRAPHY_UTILITY =
@@ -209,7 +209,7 @@ function matchConflictingNamedTypography(content) {
 
 // Tailwind drops a class it does not know without a warning, so a type name off the scale
 // (`heading-md`, `label-2xl`) renders as unstyled body text.
-const TYPOGRAPHY_FAMILY_TOKEN = /^(?:heading|label|body|mono)-[a-z0-9-]+$/
+const TYPOGRAPHY_FAMILY_TOKEN = /^(?:heading|title|label|body|mono)-[a-z0-9-]+$/
 function matchUnknownNamedTypography(content) {
 	const found = []
 	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
@@ -238,6 +238,59 @@ function matchOffScaleMonoWeight(content) {
 		if (MONO_FAMILY.test(body) && OFF_SCALE_MONO_WEIGHT.test(body))
 			found.push(body.match(OFF_SCALE_MONO_WEIGHT)[0].trim())
 	}
+	return found.length > 0 ? found : null
+}
+
+// A raw size and a raw weight on one element are a type style the ramp should name: `text-sm
+// font-semibold` is title-md. Order does not matter, and a variant that changes either one over the
+// base pair (`md:text-base`) is another style. The parts of one clsx() call, and the branches of a
+// template's ${}, land on one element, so each counts as one class set. A bare weight over an
+// inherited size cannot be told apart from emphasis inside a sentence, so recipes and shared
+// components cover those instead.
+const RAW_TYPE_SIZE = /^text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?:\d+(?:\.\d+)?px|0?\.\d+rem)\])(?:\/\S+)?$/
+const RAW_TYPE_WEIGHT = /^font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black)$/
+const STRING_LITERAL_AT = new RegExp(STRING_LITERAL.source, 'y')
+
+function rawTypePairs(classText, found) {
+	const scopes = new Map()
+	for (const token of classText.replace(/\$\{|[{}'"`]|:(?=\s|$)/g, ' ').split(/\s+/)) {
+		const parsed = token.match(VARIANT_UTILITY)
+		if (!parsed) continue
+		const [, variants, utility] = parsed
+		const scope = scopes.get(variants) ?? {}
+		if (RAW_TYPE_SIZE.test(utility)) scope.fontSize = utility
+		else if (RAW_TYPE_WEIGHT.test(utility)) scope.weight = utility
+		scopes.set(variants, scope)
+	}
+	const base = scopes.get('') ?? {}
+	for (const [variants, scope] of scopes) {
+		const fontSize = scope.fontSize ?? base.fontSize
+		const weight = scope.weight ?? base.weight
+		if ((scope.fontSize || scope.weight) && fontSize && weight) found.push(`${variants}${fontSize} ${weight}`)
+	}
+}
+
+function matchRawTypePair(content) {
+	const found = []
+	let source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const call of [...source.matchAll(/\bclsx\(/g)].reverse()) {
+		let depth = 1
+		let i = call.index + call[0].length
+		while (depth > 0 && i < source.length) {
+			STRING_LITERAL_AT.lastIndex = i
+			const literal = /['"`]/.test(source[i]) ? STRING_LITERAL_AT.exec(source) : null
+			if (literal) {
+				i += literal[0].length
+				continue
+			}
+			if (source[i] === '(') depth++
+			else if (source[i] === ')') depth--
+			i++
+		}
+		rawTypePairs(source.slice(call.index + call[0].length, i - 1), found)
+		source = source.slice(0, call.index) + source.slice(i)
+	}
+	for (const [literal] of source.matchAll(STRING_LITERAL)) rawTypePairs(literal.slice(1, -1), found)
 	return found.length > 0 ? found : null
 }
 
@@ -413,7 +466,7 @@ const RULES = [
 	{
 		id: 'unknown-named-typography',
 		description:
-			'a heading-*, label-*, body-* or mono-* class that src/styles/typography.css does not define renders as unstyled text; use one of the named styles in design.md → Typography',
+			'a heading-*, title-*, label-*, body-* or mono-* class that src/styles/typography.css does not define renders as unstyled text; use one of the named styles in design.md → Typography',
 		match: matchUnknownNamedTypography,
 		// Test titles are sentences ("label-level maps"), not class strings.
 		skipTests: true
@@ -423,6 +476,13 @@ const RULES = [
 		description:
 			'mono uses two weights: 400 for figures, 700 for the headline number; use mono-* (mono-xl, mono-lg, mono-*-bold) or font-bold, never medium, semibold or extrabold',
 		match: matchOffScaleMonoWeight
+	},
+	{
+		id: 'raw-type-pair',
+		description:
+			'a raw text-* size with a font-* weight is a type style without a name; use the named style for its role in design.md → Typography (title-md, label-md, body-sm, …)',
+		match: matchRawTypePair,
+		skipTests: true
 	}
 ]
 

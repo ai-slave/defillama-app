@@ -17,7 +17,7 @@ export function KeyMetricsPanel({ id, rowsRef, footer, children }: KeyMetricsPan
 	return (
 		<div className="flex flex-1 flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
-				<h2 className="group relative flex items-center gap-1 font-semibold" id={id}>
+				<h2 className="group relative flex items-center gap-1 title-md" id={id}>
 					Key Metrics
 					{id ? (
 						<>
