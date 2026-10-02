@@ -61,6 +61,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 								render={
 									<button
 										type="button"
+										aria-label="Unpin from navigation"
 										onClick={(e) => {
 											e.preventDefault()
 											e.stopPropagation()

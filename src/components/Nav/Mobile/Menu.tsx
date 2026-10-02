@@ -4,8 +4,10 @@ import { lazy, Suspense, useState } from 'react'
 import { DialogCloseButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
+import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage, navActionStyles, navSummaryStyles, PrimaryNavGroup } from '../shared'
+import { NavItems, PrimaryNavLinks } from '../PrimaryNavLinks'
+import { LinkToPage, navActionStyles, navSummaryStyles } from '../shared'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 
 const ReorderablePinnedPages = lazy(() => import('./ReorderablePinnedPages'))
@@ -41,37 +43,23 @@ export function Menu({
 				unmountOnHide={false}
 				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-surface p-4 pl-5 text-primary"
 			>
-				<nav className="flex flex-1 flex-col">
+				<nav
+					ref={observeMenu}
+					data-menu-layout="mobile"
+					onClickCapture={trackMenuClick}
+					onAuxClickCapture={trackMenuClick}
+					className="flex flex-1 flex-col"
+				>
 					<DialogCloseButton className="ml-auto" ariaLabel="Close navigation menu" />
 
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
 							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 label-sm text-secondary">{category}</p>}
 							<hr className="border-subtle" />
-							{pages.map(({ name, route, icon, attention, isNew, umamiEvent, children }) =>
-								children ? (
-									<PrimaryNavGroup
-										key={`mobile-nav-${name}-${route}`}
-										name={name}
-										route={route}
-										icon={icon}
-										pages={children}
-										asPath={asPath}
-										onClick={handleClose}
-									/>
-								) : (
-									<LinkToPage
-										route={route}
-										name={name}
-										icon={icon}
-										attention={attention}
-										isNew={isNew}
-										key={`mobile-nav-${name}-${route}`}
-										asPath={asPath}
-										onClick={handleClose}
-										umamiEvent={umamiEvent}
-									/>
-								)
+							{category === 'Main' ? (
+								<PrimaryNavLinks pages={pages} asPath={asPath} onClick={handleClose} />
+							) : (
+								<NavItems pages={pages} asPath={asPath} onClick={handleClose} />
 							)}
 						</div>
 					))}

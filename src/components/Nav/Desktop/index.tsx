@@ -2,8 +2,10 @@ import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
+import { observeMenu, trackMenuClick } from '../menuAnalytics'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage, navSummaryStyles, PrimaryNavGroup, SidebarDivider } from '../shared'
+import { NavItems, PrimaryNavLinks } from '../PrimaryNavLinks'
+import { LinkToPage, navSummaryStyles, SidebarDivider } from '../shared'
 import { ThemeSwitch } from '../ThemeSwitch'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 import { PinnedPages } from './PinnedPages'
@@ -26,7 +28,13 @@ export function DesktopNav({
 	const isResearch = asPath.startsWith('/research')
 	return (
 		<span className="desktop-nav-shell col-span-1 max-lg:hidden">
-			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-page py-4 *:pl-4">
+			<nav
+				ref={observeMenu}
+				data-menu-layout="desktop"
+				onClickCapture={trackMenuClick}
+				onAuxClickCapture={trackMenuClick}
+				className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-page py-4 *:pl-4"
+			>
 				<BasicLink href={isResearch ? '/research' : '/'} className="mb-4 w-fit shrink-0">
 					<span className="sr-only">
 						{isResearch ? 'Navigate to DefiLlama Research' : 'Navigate to DeFi Dashboard'}
@@ -58,28 +66,10 @@ export function DesktopNav({
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`desktop-nav-${category}`} className="group flex flex-col">
 							{category === 'Premium' ? <PremiumHeader /> : null}
-							{pages.map(({ name, route, icon, attention, isNew, umamiEvent, children }) =>
-								children ? (
-									<PrimaryNavGroup
-										key={`desktop-nav-${name}-${route}`}
-										name={name}
-										route={route}
-										icon={icon}
-										pages={children}
-										asPath={asPath}
-									/>
-								) : (
-									<LinkToPage
-										key={`desktop-nav-${name}-${route}`}
-										route={route}
-										name={name}
-										icon={icon}
-										attention={attention}
-										isNew={isNew}
-										asPath={asPath}
-										umamiEvent={umamiEvent}
-									/>
-								)
+							{category === 'Main' ? (
+								<PrimaryNavLinks pages={pages} asPath={asPath} />
+							) : (
+								<NavItems pages={pages} asPath={asPath} />
 							)}
 						</div>
 					))}

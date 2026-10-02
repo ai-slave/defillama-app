@@ -87,6 +87,7 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 				render={
 					<button
 						type="button"
+						aria-label="Unpin from navigation"
 						onClick={(e) => {
 							e.preventDefault()
 							e.stopPropagation()

@@ -25,8 +25,8 @@ export const freeTrialBadgeStyles =
 
 function NavGroupSummary({ name, icon }: { name: string; icon?: NavIconName }) {
 	return (
-		<summary className={navLinkStyles}>
-			<NavItemContent name={name} icon={icon} />
+		<summary className={navLinkStyles} data-menu-name={name}>
+			<NavItemContent name={name} icon={icon} wrapLabel />
 			<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
 		</summary>
 	)
@@ -38,7 +38,9 @@ export function PrimaryNavGroup({
 	icon,
 	pages,
 	asPath,
-	onClick
+	onClick,
+	defaultOpen = true,
+	alignLabels = false
 }: {
 	name: string
 	route: string
@@ -46,12 +48,20 @@ export function PrimaryNavGroup({
 	pages: Array<{ name: string; route: string }>
 	asPath: string
 	onClick?: () => void
+	defaultOpen?: boolean
+	alignLabels?: boolean
 }) {
-	const [open, setOpen] = useState(true)
+	const [open, setOpen] = useState(defaultOpen)
 	return (
 		<details className="group" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
 			<NavGroupSummary name={name} icon={icon} />
-			<div className="border-l border-subtle pl-2">
+			<div
+				className={
+					alignLabels
+						? 'relative pl-7 before:absolute before:inset-y-0 before:left-0 before:border-l before:border-subtle'
+						: 'border-l border-subtle pl-2'
+				}
+			>
 				{pages.map((page) => (
 					<LinkToPage
 						key={`${page.name}-${page.route}`}
@@ -59,7 +69,8 @@ export function PrimaryNavGroup({
 						route={page.route}
 						asPath={asPath}
 						onClick={onClick}
-						isOld={page.route === route}
+						isOld={page.route === route && pages.some((sibling) => sibling.route.startsWith(`${route}/`))}
+						hideIcon={alignLabels}
 					/>
 				))}
 			</div>
@@ -81,7 +92,8 @@ export function LinkToPage({
 	asPath,
 	umamiEvent,
 	onClick,
-	isOld
+	isOld,
+	hideIcon
 }: {
 	route: string
 	name: string
@@ -93,6 +105,7 @@ export function LinkToPage({
 	umamiEvent?: string
 	onClick?: () => void
 	isOld?: boolean
+	hideIcon?: boolean
 }) {
 	const isLlamaAI = name === 'LlamaAI'
 	const freeLabel = useLlamaAIFreeLabel(isLlamaAI)
@@ -104,6 +117,7 @@ export function LinkToPage({
 		<BasicLink
 			href={route}
 			data-linkactive={isActive}
+			aria-current={isActive ? 'page' : undefined}
 			data-umami-event={umamiEvent}
 			target={isExternal ? '_blank' : undefined}
 			rel={isExternal ? 'noopener noreferrer' : undefined}
@@ -124,6 +138,7 @@ export function LinkToPage({
 				freeTrial={freeTrial}
 				freeLabel={isLlamaAI && freeLabel.showFree}
 				isNew={isNew}
+				hideIcon={hideIcon}
 			/>
 		</BasicLink>
 	)
@@ -135,7 +150,9 @@ export function NavItemContent({
 	attention,
 	freeTrial,
 	freeLabel,
-	isNew
+	isNew,
+	hideIcon,
+	wrapLabel
 }: {
 	name: string
 	icon?: NavIconName
@@ -143,10 +160,12 @@ export function NavItemContent({
 	freeTrial?: boolean
 	freeLabel?: boolean
 	isNew?: boolean
+	hideIcon?: boolean
+	wrapLabel?: boolean
 }) {
 	return (
 		<>
-			{name === 'Universal Token Rating' ? (
+			{hideIcon ? null : name === 'Universal Token Rating' ? (
 				<UniversalTokenRatingNavIcon />
 			) : icon ? (
 				<Icon name={icon} className="size-4 shrink-0 group-hover/link:animate-wiggle" />
@@ -158,7 +177,7 @@ export function NavItemContent({
 				<ResearchIcon name="research-icon" className="size-4 shrink-0 group-hover/link:animate-wiggle" />
 			) : null}
 			<span className="relative flex min-w-0 flex-1 flex-nowrap items-center gap-2 text-left leading-tight">
-				<span className="min-w-0 flex-1 truncate">{name}</span>
+				<span className={wrapLabel ? 'min-w-0 flex-1' : 'min-w-0 flex-1 truncate'}>{name}</span>
 				{attention ? (
 					<span aria-hidden className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-page-ring" />
 				) : null}
