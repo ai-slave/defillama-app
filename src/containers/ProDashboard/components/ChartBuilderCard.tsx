@@ -24,6 +24,7 @@ import {
 import { fetchProtocolBreakdownData, fetchProtocolChainBreakdownData } from '../services/ProtocolChartBuilderData'
 import type { ChartBuilderConfig } from '../types'
 import { ProBadge, ProButton, ProMeta, ProSegmented } from '../ui'
+import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
@@ -323,13 +324,15 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		if (isReadOnly) {
 			return
 		}
-		handleEditItem(builder.id, {
-			...builder,
-			config: {
-				...builder.config,
-				seriesColors: nextColors
-			}
-		})
+		toastRefusal(
+			handleEditItem(builder.id, {
+				...builder,
+				config: {
+					...builder.config,
+					seriesColors: nextColors
+				}
+			})
+		)
 	}
 
 	const handleSeriesColorChange = (seriesName: string, colorValue: string) => {
@@ -379,13 +382,15 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		if (config.treemapValue === nextValue) {
 			return
 		}
-		handleEditItem(builder.id, {
-			...builder,
-			config: {
-				...builder.config,
-				treemapValue: nextValue
-			}
-		})
+		toastRefusal(
+			handleEditItem(builder.id, {
+				...builder,
+				config: {
+					...builder.config,
+					treemapValue: nextValue
+				}
+			})
+		)
 	}
 
 	return (

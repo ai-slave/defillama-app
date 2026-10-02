@@ -16,7 +16,12 @@ import {
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
 import { CHAIN_CHART_TYPES, CHART_TYPES, PROTOCOL_CHART_TYPES } from '~/containers/ProDashboard/types'
+import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { Dialog, DialogCloseGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
@@ -286,6 +291,8 @@ function seriesId(s: ArticleChartSeries) {
 
 const DEFAULT_METRIC = 'tvl'
 
+type PickerPane = 'series' | 'preview'
+
 export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Props) {
 	const normalizedInitialConfig = useMemo(() => validateArticleChartConfig(initialConfig), [initialConfig])
 	const initialSeries = normalizedInitialConfig?.series ?? []
@@ -463,43 +470,63 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 
 	const selectedIds = useMemo(() => new Set(series.map(seriesId)), [series])
 
-	return (
-		<Ariakit.Dialog
-			store={store}
-			initialFocus={searchRef}
-			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-research-backdrop backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
-		>
-			<div className="flex flex-wrap items-center gap-3 border-b border-medium px-5 py-3">
-				<Ariakit.DialogHeading className="mr-2 text-sm font-semibold tracking-tight text-primary">
-					Embed a DefiLlama chart
-				</Ariakit.DialogHeading>
-				<ChartOptionGroup
-					label="Entity type"
-					className="[&_label]:px-3"
-					value={tab}
-					options={ENTITY_TYPES}
-					onChange={(value) => {
-						setTab(value)
-						setQuery('')
-					}}
-				/>
-				{series.length > 0 ? (
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-						{series.length} / {MAX_SERIES} series
-					</span>
-				) : null}
-				<div className="ml-auto">
-					<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-tertiary hover:border-medium hover:text-primary">
-						Close
-					</Ariakit.DialogDismiss>
-				</div>
-			</div>
+	// The draft as the reader sees it, without the annotation ids the editor adds: leaving with it changed asks first.
+	const draftSnapshot = JSON.stringify({
+		series,
+		caption,
+		range,
+		logScale,
+		annotations: annotations.map(({ date, label }) => ({ date, label }))
+	})
+	const [openedSnapshot] = useState(draftSnapshot)
+	const dirty = draftSnapshot !== openedSnapshot
+	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
+	const leave = (proceed: () => void) => (dirty ? setPendingLeave(() => proceed) : proceed())
+	const [pane, setPane] = useState<PickerPane>('series')
+	// Phones skip the search autofocus: the keyboard would cover the list before anyone asked to search.
+	const isSmallScreen = useMedia('(max-width: 639px)')
 
+	return (
+		// An outside tap never drops the draft; Cancel, × and Escape ask first once it has changed.
+		<Dialog
+			size="xl"
+			store={store}
+			initialFocus={isSmallScreen ? undefined : searchRef}
+			hideOnInteractOutside={false}
+			portal
+		>
+			{dirty ? <DialogCloseGuard onAttemptLeave={(proceed) => setPendingLeave(() => proceed)} /> : null}
+			<DialogHeader title={initialConfig ? 'Edit chart' : 'Embed a DefiLlama chart'} />
+			<div className="md:hidden">
+				<DialogToolbar>
+					<SegmentedControl<PickerPane>
+						label="Picker view"
+						options={[
+							{ value: 'series', label: `Series (${series.length})` },
+							{ value: 'preview', label: 'Preview' }
+						]}
+						value={pane}
+						onValueChange={setPane}
+						variant="solid-responsive"
+						size="md"
+					/>
+				</DialogToolbar>
+			</div>
 			<div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[300px_1fr]">
-				<aside className="flex min-h-0 flex-col border-medium bg-page/40 md:border-r">
+				<aside
+					className={`min-h-0 flex-col border-medium bg-page/40 md:flex md:border-r ${pane === 'series' ? 'flex' : 'hidden'}`}
+				>
 					<div className="grid gap-2 px-3 pt-3 pb-2">
+						<ChartOptionGroup
+							label="Entity type"
+							className="[&_label]:px-3"
+							value={tab}
+							options={ENTITY_TYPES}
+							onChange={(value) => {
+								setTab(value)
+								setQuery('')
+							}}
+						/>
 						<div>
 							<span className="mb-1 block text-[10px] font-medium tracking-wide text-tertiary uppercase">
 								Metric to add
@@ -570,7 +597,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					</ul>
 				</aside>
 
-				<section className="flex min-h-0 flex-col overflow-y-auto">
+				<section className={`min-h-0 flex-col overflow-y-auto md:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}>
 					{series.length === 0 ? (
 						<div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-16 text-center">
 							<div className="text-sm font-medium text-primary">Pick up to {MAX_SERIES} series</div>
@@ -666,6 +693,18 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								</div>
 							</div>
 
+							<label className="grid gap-1 border-t border-medium px-5 py-3">
+								<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">
+									Caption (optional)
+								</span>
+								<input
+									value={caption}
+									onChange={(event) => setCaption(event.target.value)}
+									placeholder="Add a one-line caption shown under the chart…"
+									className="w-full rounded-md border border-medium bg-page px-3 py-1.5 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+								/>
+							</label>
+
 							<div className="grid gap-2 border-t border-medium px-5 py-3">
 								<div className="flex items-center justify-between">
 									<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Annotations</span>
@@ -724,31 +763,39 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 				</section>
 			</div>
 
-			<div className="grid items-end gap-3 border-t border-medium bg-surface px-5 py-3 md:grid-cols-[1fr_auto]">
-				<label className="grid gap-1">
-					<span className="text-[10px] font-medium tracking-wide text-tertiary uppercase">Caption (optional)</span>
-					<input
-						value={caption}
-						onChange={(event) => setCaption(event.target.value)}
-						placeholder="Add a one-line caption shown under the chart…"
-						disabled={!canInsert}
-						className="w-full rounded-md border border-medium bg-page px-3 py-1.5 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden disabled:opacity-60"
-					/>
-				</label>
-				<div className="flex items-center justify-end gap-2">
-					<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-tint-hover">
+			<DialogFooter
+				leading={
+					<span className="label-sm text-secondary">
+						{canInsert ? `${series.length} / ${MAX_SERIES} series` : 'Pick at least one series'}
+					</span>
+				}
+				dismiss={
+					<Button size="md" onClick={() => leave(() => store.hide())}>
 						Cancel
-					</Ariakit.DialogDismiss>
-					<button
-						type="button"
-						disabled={!canInsert}
-						onClick={handleInsert}
-						className="rounded-md bg-link px-4 py-2 text-xs font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-					>
-						{initialConfig ? 'Update chart' : 'Insert chart'}
-					</button>
-				</div>
-			</div>
-		</Ariakit.Dialog>
+					</Button>
+				}
+			>
+				<Button variant="primary" size="md" disabled={!canInsert} onClick={handleInsert}>
+					{initialConfig ? 'Update chart' : 'Insert chart'}
+				</Button>
+			</DialogFooter>
+			<ConfirmDialog
+				open={pendingLeave !== null}
+				onClose={() => setPendingLeave(null)}
+				portal
+				unmountOnHide
+				title="Discard this chart?"
+				description="The series and options you picked are not saved to the article."
+				confirmLabel="Discard"
+				cancelLabel="Keep editing"
+				pendingLabel={null}
+				error={null}
+				onConfirm={() => {
+					const proceed = pendingLeave!
+					setPendingLeave(null)
+					proceed()
+				}}
+			/>
+		</Dialog>
 	)
 }

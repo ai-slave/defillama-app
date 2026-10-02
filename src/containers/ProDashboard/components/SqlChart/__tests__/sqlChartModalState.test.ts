@@ -9,6 +9,7 @@ import {
 	settleRun,
 	sqlChartModalControls,
 	sqlChartModalReducer,
+	sqlDraftSnapshot,
 	type SqlChartModalEvent,
 	type SqlChartModalState
 } from '../sqlChartModalState'
@@ -44,6 +45,7 @@ const saved: SqlChartModalState = {
 	resultSql: 'SELECT day, tvl FROM t',
 	ranFresh: false,
 	chartConfig: lineChart,
+	chartEdited: false,
 	durationMs: null,
 	queryError: null,
 	execution: null
@@ -177,6 +179,7 @@ test('a completed run keeps the chart set up while it ran and adapts it to the n
 			resultSql: 'SELECT day, tvl, fees FROM t',
 			ranFresh: true,
 			chartConfig: barChart,
+			chartEdited: false,
 			durationMs: 4,
 			queryError: null,
 			execution: null
@@ -294,4 +297,30 @@ test('a run records the tables it loaded itself, so Save stores every source of 
 	expect(await loadSource(chainFees)).toBe(loaded)
 	expect(await loadSource({ kind: 'dataset', slug: 'missing' })).toBeNull()
 	expect(tables.map((table) => table.source)).toEqual([chainTvl, chainFees])
+})
+
+test('an idle Save that cannot run says why', () => {
+	const fresh = initialSqlChartModalState(null)
+	const status = (overrides: Partial<Parameters<typeof sqlChartModalControls>[1]>) =>
+		sqlChartModalControls(fresh, { ...ready, editing: false, ...overrides }).status
+	expect(status({ sql: '  ' })).toBe('Write a query to add the chart.')
+	expect(status({ sql: '', editing: true })).toBe('Write a query to save the chart.')
+	expect(status({ schemaLoading: true })).toBe('Loading tables…')
+	expect(status({ engine: 'loading' })).toBe('Waiting for the SQL engine to load…')
+	expect(status({ engine: 'error' })).toBe('The SQL engine failed to load.')
+	// An edited card's saved snapshot saves without the engine, so there is nothing to explain.
+	expect(sqlChartModalControls(saved, { ...ready, engine: 'loading' }).status).toBe('')
+})
+
+test('a run that adapts the saved chart leaves the draft unchanged, and changing only its chart type does not', () => {
+	const draft = { sql: 'SELECT day, tvl FROM t', name: 'TVL', rowCap: 1000, displayMode: 'chart' } as const
+	const opened = sqlDraftSnapshot(saved, draft)
+	const settlement = settleRun(
+		{ ok: true, result: feesResult, durationMs: 4, justLoaded: false },
+		{ aborted: false, sql: draft.sql, chartConfig: lineChart }
+	)
+	const ran = apply(saved, { type: 'runStarted', saving: false, taskId: null }, { type: 'runSettled', settlement })
+	expect(sqlDraftSnapshot(ran, draft) === opened).toBe(true)
+	const toBar = apply(ran, { type: 'chartConfigChanged', chartConfig: { ...lineChart, chartType: 'bar' } })
+	expect(sqlDraftSnapshot(toBar, draft) === opened).toBe(false)
 })

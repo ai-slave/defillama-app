@@ -16,7 +16,10 @@ import type { DashboardItemPlacement, useDashboardActions } from '../../useDashb
 import { QuickAddPalette } from '../QuickAddPalette'
 
 const mocks = vi.hoisted(() => ({
-	appendItems: vi.fn<ReturnType<typeof useDashboardActions>['handleAppendItems']>(() => ['added-item']),
+	appendItems: vi.fn<ReturnType<typeof useDashboardActions>['handleAppendItems']>(() => ({
+		status: 'saved',
+		ids: ['added-item']
+	})),
 	items: [] as Array<DashboardItemConfig>,
 	protocolsLoading: false
 }))
@@ -57,7 +60,7 @@ beforeEach(() => {
 	window.addEventListener(DASHBOARD_ITEM_REVEAL_EVENT, recordReveal)
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
-	mocks.appendItems.mockImplementation(() => ['added-item'])
+	mocks.appendItems.mockImplementation(() => ({ status: 'saved', ids: ['added-item'] }))
 	localStorage.clear()
 	mocks.items = []
 	mocks.protocolsLoading = false
@@ -189,7 +192,10 @@ test('closing after an add reveals the last added card once', async () => {
 })
 
 test('a dashboard that cannot take items yet asks to wait inside the palette, not as an error, and adds nothing', async () => {
-	mocks.appendItems.mockImplementation(() => false)
+	mocks.appendItems.mockImplementation(() => ({
+		status: 'refused',
+		reason: 'The dashboard is still loading. Try again in a moment.'
+	}))
 	await renderPalette()
 	await type('uniswap fees')
 	await pressKey('Enter')

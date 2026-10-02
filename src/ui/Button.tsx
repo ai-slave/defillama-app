@@ -208,3 +208,18 @@ function PendingContent({ square, label, idle }: { square: boolean; label: strin
 		</span>
 	)
 }
+
+/** A split button: a command and the menu that changes it ("Download CSV" and its format menu) share one outline.
+    The children are primary Buttons of one size, the menu trigger `square` and last; the group squares the corners
+    where they touch and draws a divider between them, so every height and touch target stays the Button recipe's. */
+export function ButtonGroup({ label, children }: { label: string; children: ReactNode }) {
+	return (
+		<div
+			role="group"
+			aria-label={label}
+			className="inline-flex *:not-first:rounded-l-none *:not-first:border-l-on-brand/25 *:not-last:rounded-r-none"
+		>
+			{children}
+		</div>
+	)
+}

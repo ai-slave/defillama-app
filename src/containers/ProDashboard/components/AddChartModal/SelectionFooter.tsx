@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { Icon } from '~/ui/Icon'
 import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
 import { ProChip, proInputStyles } from '../../ui'
@@ -21,6 +22,7 @@ export function SelectionFooter({
 	onComposerItemColorChange,
 	onRemoveFromComposer
 }: SelectionFooterProps) {
+	const nameId = useId()
 	if (composerItems.length === 0) {
 		return null
 	}
@@ -28,14 +30,18 @@ export function SelectionFooter({
 	return (
 		<div className="shrink-0 space-y-2">
 			{chartCreationMode === 'combined' ? (
-				<input
-					type="text"
-					value={unifiedChartName}
-					onChange={(e) => onUnifiedChartNameChange(e.target.value)}
-					aria-label="Card name"
-					placeholder="Optional"
-					className={proInputStyles}
-				/>
+				<div>
+					<label htmlFor={nameId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
+						Card name (optional)
+					</label>
+					<input
+						id={nameId}
+						type="text"
+						value={unifiedChartName}
+						onChange={(e) => onUnifiedChartNameChange(e.target.value)}
+						className={proInputStyles}
+					/>
+				</div>
 			) : null}
 			<div className="flex flex-wrap items-center gap-2">
 				<label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-pro-text-secondary">
@@ -65,7 +71,7 @@ export function SelectionFooter({
 								type="button"
 								onClick={() => onRemoveFromComposer(item.id)}
 								className="text-pro-text-tertiary transition-colors hover:text-error"
-								title="Remove from selection"
+								aria-label="Remove from selection"
 							>
 								<Icon name="x" height={12} width={12} />
 							</button>

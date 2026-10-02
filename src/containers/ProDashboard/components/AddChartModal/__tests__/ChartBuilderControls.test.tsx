@@ -35,6 +35,7 @@ async function renderBuilder(initial: ChartBuilderConfig) {
 		'http://localhost:3000/api/public/pro-dashboard/chart-builder/': { series: [] }
 	})
 	const change = vi.fn()
+	const nameChange = vi.fn()
 	function Harness() {
 		const [config, setConfig] = useState(initial)
 		return (
@@ -45,7 +46,7 @@ async function renderBuilder(initial: ChartBuilderConfig) {
 				protocolOptions={[]}
 				protocolsLoading={false}
 				timePeriod="365d"
-				onChartBuilderNameChange={vi.fn()}
+				onChartBuilderNameChange={nameChange}
 				onChartBuilderChange={(updates) => {
 					change(updates)
 					setConfig((previous) => normalizeChartBuilderConfig({ ...previous, ...updates }))
@@ -64,7 +65,7 @@ async function renderBuilder(initial: ChartBuilderConfig) {
 			</QueryClientProvider>
 		)
 	)
-	return change
+	return { change, nameChange }
 }
 function radio(group: string, value: string) {
 	return document.querySelector<HTMLInputElement>(`[role="radiogroup"][aria-label="${group}"] input[value="${value}"]`)!
@@ -77,7 +78,7 @@ async function pressKey(element: HTMLElement, key: string) {
 }
 
 test('chart and display selection uses arrows without changing the draft on mount or repeated selection', async () => {
-	const change = await renderBuilder(initializeFromEditItem(undefined).chartBuilder)
+	const { change } = await renderBuilder(initializeFromEditItem(undefined).chartBuilder)
 	expect(change).not.toHaveBeenCalled()
 	await pressKey(radio('Chart type', 'stackedArea'), 'ArrowRight')
 	await waitForUi(() => expect(radio('Chart type', 'line').checked).toBe(true))
@@ -95,7 +96,7 @@ test('chart and display selection uses arrows without changing the draft on moun
 })
 
 test('grouping changes preserve metric normalization and conditional percentage availability', async () => {
-	const change = await renderBuilder({
+	const { change } = await renderBuilder({
 		...initializeFromEditItem(undefined).chartBuilder,
 		mode: 'protocol',
 		metric: 'chain-fees',
@@ -119,7 +120,7 @@ test('grouping changes preserve metric normalization and conditional percentage 
 })
 
 test('percentage is absent for incomplete breakdowns and mount does not rewrite the draft', async () => {
-	const change = await renderBuilder({
+	const { change } = await renderBuilder({
 		...initializeFromEditItem(undefined).chartBuilder,
 		mode: 'protocol',
 		metric: 'fees'
@@ -128,4 +129,15 @@ test('percentage is absent for incomplete breakdowns and mount does not rewrite 
 	await pressKey(radio('Display value as', 'timeSeries'), 'ArrowRight')
 	expect(radio('Display value as', 'timeSeries').checked).toBe(true)
 	expect(change).not.toHaveBeenCalled()
+})
+
+test('the card name field is found by its visible label and edits the name', async () => {
+	const { nameChange } = await renderBuilder(initializeFromEditItem(undefined).chartBuilder)
+	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === 'Card name (optional)')!
+	const input = document.getElementById(label.htmlFor) as HTMLInputElement
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Top fees')
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	expect(nameChange.mock.calls).toEqual([['Top fees']])
 })

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useId, useMemo, type ComponentProps } from 'react'
+import { lazy, Suspense, useCallback, useId, useMemo, useState, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { fetchChainsCategories } from '~/containers/Chains/api'
@@ -28,6 +28,7 @@ import { AriakitVirtualizedSelect } from '../AriakitVirtualizedSelect'
 import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
+import { ADD_CARD_PANES, type AddCardPane } from './panes'
 import type { ChartBuilderConfig, ChartBuilderUpdate } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -154,6 +155,8 @@ export function ChartBuilderTab({
 	customTimePeriod
 }: ChartBuilderTabProps) {
 	const groupByParentId = useId()
+	const nameId = useId()
+	const [pane, setPane] = useState<AddCardPane>('configure')
 	const { loading: metaLoading, error: metaError, hasProtocolBuilderMetric } = useAppMetadata()
 	const { getProtocolInfo, protocols } = useProDashboardCatalog()
 
@@ -560,19 +563,33 @@ export function ChartBuilderTab({
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="mb-1">
+			<SegmentedControl<AddCardPane>
+				label="Editor view"
+				options={ADD_CARD_PANES}
+				value={pane}
+				onValueChange={setPane}
+				variant="solid-responsive"
+				size="md"
+				className="mb-3 shrink-0 lg:hidden"
+			/>
+
+			<div className={`mb-1 lg:block ${pane === 'configure' ? 'block' : 'hidden'}`}>
+				<label htmlFor={nameId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
+					Card name (optional)
+				</label>
 				<input
+					id={nameId}
 					type="text"
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
-					aria-label="Card name"
-					placeholder="Optional"
 					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
-				<div className="max-h-[calc(100vh-200px)] w-full shrink-0 space-y-1.5 overflow-x-visible overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 lg:w-[320px] xl:w-[360px]">
+				<div
+					className={`w-full space-y-1.5 overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 max-lg:min-h-0 max-lg:flex-1 lg:block lg:max-h-[calc(100vh-200px)] lg:w-[320px] lg:shrink-0 xl:w-[360px] ${pane === 'configure' ? 'block' : 'hidden'}`}
+				>
 					<h3 className="text-xs font-semibold text-pro-text-primary">Chart configuration</h3>
 
 					<div>
@@ -849,7 +866,7 @@ export function ChartBuilderTab({
 								if (option && next !== chartBuilder.chartType) handleChartTypeChange(option.value)
 							}}
 						>
-							<Ariakit.RadioGroup aria-label="Chart type" className="grid grid-cols-4 gap-1">
+							<Ariakit.RadioGroup aria-label="Chart type" className="grid grid-cols-2 gap-1 sm:grid-cols-4">
 								{CHART_TYPE_OPTIONS.map((option) => (
 									<label
 										key={option.value}
@@ -917,7 +934,9 @@ export function ChartBuilderTab({
 					</div>
 				</div>
 
-				<div className="flex min-h-0 flex-1 flex-col rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
+				<div
+					className={`min-h-0 flex-1 flex-col overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-3 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
+				>
 					<div className="mb-2 flex shrink-0 items-center justify-between">
 						<h3 className="text-xs font-semibold text-pro-text-primary">Preview</h3>
 						<div className="flex items-center gap-1 text-xs text-pro-text-tertiary">

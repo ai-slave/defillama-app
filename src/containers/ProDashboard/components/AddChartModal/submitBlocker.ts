@@ -47,6 +47,7 @@ export function resolveSubmitBlocker(
 			if (state.chartMode === 'builder') return state.chartBuilder.metric ? null : 'Choose a metric'
 			return resolveManualChartBlocker(state, editItem)
 		case 'table':
+			if (state.selectedTableType === null) return 'Pick a table type to start'
 			if (state.selectedTableType === 'stablecoins' || state.selectedTableType === 'rwa-selected-chain') {
 				return state.selectedDatasetChain ? null : 'Pick a chain'
 			}

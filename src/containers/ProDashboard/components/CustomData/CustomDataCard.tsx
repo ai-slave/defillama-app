@@ -12,6 +12,7 @@ import { useProDashboardEditorActions, useProDashboardPermissions } from '../../
 import { StreamDoneContext } from '../../queries'
 import { type CustomDataConfig, getCustomDataRowCount } from '../../types'
 import { ProMeta } from '../../ui'
+import { toastRefusal } from '../../useDashboardActions'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { scaledPx, useCardHeightScale } from '../cardHeightContext'
 import { useDashboardCardContext } from '../DashboardCardContext'
@@ -51,11 +52,11 @@ export function CustomDataCard({ config }: CustomDataCardProps) {
 	const rowCount = result ? result.rows.length : getCustomDataRowCount(config.rows)
 	const filename = config.name || 'custom-data'
 	const duplicate = () =>
-		handleAppendItems(
-			() => [{ ...config, id: generateItemId('custom-data', ''), name: `${config.name} (Duplicate)` }],
-			{
-				afterItemId: config.id
-			}
+		toastRefusal(
+			handleAppendItems(
+				() => [{ ...config, id: generateItemId('custom-data', ''), name: `${config.name} (Duplicate)` }],
+				{ afterItemId: config.id }
+			)
 		)
 
 	return (

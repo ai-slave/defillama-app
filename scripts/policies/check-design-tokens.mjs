@@ -407,6 +407,22 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		id: 'raw-dialog-surface',
+		description:
+			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net); the tracked exceptions are the mobile nav sheet, the image lightbox, the onboarding tour, the fullscreen chat table, the chat history drawer and the mobile-app gate',
+		pattern: /<Ariakit\.Dialog\b/g,
+		uiOwned: true,
+		// A test may host a component in a plain Ariakit dialog.
+		skipTests: true
+	},
+	{
+		id: 'arbitrary-dialog-width',
+		description:
+			'hand-set --dialog-width — pick a Dialog size (sm 448, md 600, lg 880, xl workspace) or a SideSheet size instead',
+		pattern: /\[--dialog-width:/g,
+		uiOwned: true
+	},
+	{
 		id: 'hand-rolled-spinner',
 		description:
 			'hand-rolled animate-spin spinner — use LoadingSpinner from src/ui/Loaders in buttons and inline controls, or LoadingIndicator from src/ui/Status for in-panel loading',

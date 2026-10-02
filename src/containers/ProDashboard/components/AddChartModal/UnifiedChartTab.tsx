@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import type { SegmentedControlOption } from '~/ui/SegmentedControl'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -23,6 +23,7 @@ import { ChartTypePills } from './ChartTypePills'
 import { CombinedChartPreview } from './CombinedChartPreview'
 import { EntityPickerList } from './EntityPickerList'
 import { IncomeStatementChartTab } from './IncomeStatementChartTab'
+import { ADD_CARD_PANES, type AddCardPane } from './panes'
 import { RWAChartTab } from './RWAChartTab'
 import { SelectionFooter } from './SelectionFooter'
 import { SeparateChartsPreview } from './SeparateChartsPreview'
@@ -259,6 +260,8 @@ export function UnifiedChartTab({
 	const { loading: metaLoading, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { protocols, chains } = useProDashboardCatalog()
 	const subjectParameter = useModalFieldBinding('subject', selectedChartTab === 'protocol' ? 'protocol' : 'chain')
+	const nameId = useId()
+	const [pane, setPane] = useState<AddCardPane>('configure')
 
 	const handleSubjectTabChange = (tab: ChartTabType) => {
 		subjectParameter.unbind()
@@ -451,7 +454,7 @@ export function UnifiedChartTab({
 	if (!manualFormOpen) {
 		return (
 			<div className="flex h-full flex-col">
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<CategoryCardsGrid onSelectCategory={onSelectCategory} />
 				</div>
 				<SelectionFooter
@@ -471,7 +474,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<YieldsChartTab
 						selectedYieldPool={selectedYieldPool}
 						onSelectedYieldPoolChange={onSelectedYieldPoolChange || (() => {})}
@@ -508,7 +511,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<StablecoinsChartTab
 						selectedStablecoinChain={selectedStablecoinChain}
 						selectedStablecoinChartType={selectedStablecoinChartType}
@@ -541,7 +544,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<RWAChartTab
 						rwaMode={rwaMode}
 						selectedRwaChain={selectedRwaChain}
@@ -580,7 +583,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<AdvancedTvlChartTab
 						selectedAdvancedTvlProtocol={selectedAdvancedTvlProtocol}
 						selectedAdvancedTvlProtocolName={selectedAdvancedTvlProtocolName}
@@ -609,7 +612,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<BorrowedChartTab
 						selectedBorrowedProtocol={selectedBorrowedProtocol}
 						selectedBorrowedProtocolName={selectedBorrowedProtocolName}
@@ -638,7 +641,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<IncomeStatementChartTab
 						selectedIncomeStatementProtocol={selectedIncomeStatementProtocol}
 						selectedIncomeStatementProtocolName={selectedIncomeStatementProtocolName}
@@ -665,7 +668,7 @@ export function UnifiedChartTab({
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1">
+				<div className="min-h-0 flex-1 overflow-y-auto">
 					<UnlocksChartTab
 						selectedUnlocksProtocol={selectedUnlocksProtocol}
 						selectedUnlocksProtocolName={selectedUnlocksProtocolName}
@@ -692,10 +695,31 @@ export function UnifiedChartTab({
 
 	return (
 		<div className="flex h-full flex-col gap-3">
-			<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
+			<CategoryFormHeader
+				category={selectedChartTab}
+				{...(isEditingItem
+					? {}
+					: {
+							onBack: () => {
+								// The next category starts on its configuration.
+								setPane('configure')
+								onBackToCategories()
+							}
+						})}
+			/>
 
-			<div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
-				<div className="flex min-h-0 flex-col gap-3">
+			<SegmentedControl<AddCardPane>
+				label="Editor view"
+				options={ADD_CARD_PANES}
+				value={pane}
+				onValueChange={setPane}
+				variant="solid-responsive"
+				size="md"
+				className="shrink-0 lg:hidden"
+			/>
+
+			<div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+				<div className={`min-h-0 flex-col gap-3 lg:flex ${pane === 'configure' ? 'flex' : 'hidden'}`}>
 					{subjectParameter.boundVariable ? (
 						<BoundParameterChip label={subjectParameter.boundVariable.label} onUnbind={subjectParameter.unbind} />
 					) : null}
@@ -730,16 +754,20 @@ export function UnifiedChartTab({
 					</div>
 				</div>
 
-				<div className="flex min-h-0 flex-col gap-3">
+				<div className={`min-h-0 flex-col gap-3 overflow-y-auto lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}>
 					{chartCreationMode === 'combined' ? (
-						<input
-							type="text"
-							value={unifiedChartName}
-							onChange={(e) => onUnifiedChartNameChange(e.target.value)}
-							aria-label="Card name"
-							placeholder="Optional"
-							className={`${proInputStyles} shrink-0`}
-						/>
+						<div className="shrink-0">
+							<label htmlFor={nameId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
+								Card name (optional)
+							</label>
+							<input
+								id={nameId}
+								type="text"
+								value={unifiedChartName}
+								onChange={(e) => onUnifiedChartNameChange(e.target.value)}
+								className={proInputStyles}
+							/>
+						</div>
 					) : null}
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
@@ -791,6 +819,7 @@ export function UnifiedChartTab({
 										value={item.color || '#3e61cc'}
 										onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
 										className="size-4 cursor-pointer rounded-sm border-0 bg-transparent p-0"
+										aria-label="Select chart color"
 									/>
 									<span className="whitespace-nowrap text-pro-text-primary">
 										{item.subjectType === 'protocol' ? item.protocol : item.chain} -{' '}
@@ -800,6 +829,7 @@ export function UnifiedChartTab({
 										type="button"
 										onClick={() => onRemoveFromComposer(item.id)}
 										className="text-pro-text-tertiary transition-colors hover:text-error"
+										aria-label="Remove from selection"
 									>
 										<Icon name="x" height={12} width={12} />
 									</button>

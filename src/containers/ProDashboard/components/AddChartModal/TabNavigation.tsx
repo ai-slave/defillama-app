@@ -43,7 +43,7 @@ export function TabNavigation({ editItem, isSqlAllowed }: TabNavigationProps) {
 	return (
 		<Ariakit.TabList
 			aria-label="Card type"
-			className="flex scrollbar-none shrink-0 overflow-x-auto border-b border-pro-cards-border"
+			className="flex scrollbar-none shrink-0 overflow-x-auto border-b border-subtle px-4"
 		>
 			{ALL_TABS.map((tab) => {
 				const requiresApiPlan = tab.id === 'sql' && !isSqlAllowed

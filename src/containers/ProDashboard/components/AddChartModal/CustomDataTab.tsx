@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { ChartToolbar } from '~/containers/Downloads/sql/chart/ChartToolbar'
@@ -8,10 +8,12 @@ import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
 import { assertCustomDataSizeAllowed, CustomDataParseError, parseCustomDataCsv } from '../CustomData/parseCustomDataCsv'
 import { CustomDataTooLargeError, encodeRows, useDecodedRows } from '../CustomData/rowsEncoding'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
+import { ADD_CARD_PANES, type AddCardPane } from './panes'
 import type { CustomDataModalState } from './types'
 
 export const TYPED_CSV_PARSE_DELAY_MS = 300
@@ -63,6 +65,7 @@ function CustomDataForm({
 	onDisplayModeChange
 }: CustomDataTabProps) {
 	const encodeToken = useRef(0)
+	const [pane, setPane] = useState<AddCardPane>('configure')
 	// A fresh CSV preview replaces the stored rows, so those only decode while there is no preview.
 	const stored = useDecodedRows(customData.previewRows || !customData.storedRows ? undefined : customData.storedRows)
 	const rows = customData.previewRows ?? (stored.status === 'ready' ? stored.rows : null)
@@ -134,14 +137,24 @@ function CustomDataForm({
 
 	return (
 		<div className="flex h-full min-h-0 flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-4">
-			<div className="flex min-h-0 flex-col gap-3">
+			<SegmentedControl<AddCardPane>
+				label="Editor view"
+				options={ADD_CARD_PANES}
+				value={pane}
+				onValueChange={setPane}
+				variant="solid-responsive"
+				size="md"
+				className="shrink-0 lg:hidden"
+			/>
+			<div
+				className={`min-h-0 flex-col gap-3 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'configure' ? 'flex' : 'hidden'}`}
+			>
 				<label className="flex flex-col gap-1">
-					<span className="text-xs font-medium text-pro-text-secondary">Card name</span>
+					<span className="text-xs font-medium text-pro-text-secondary">Card name (optional)</span>
 					<input
 						type="text"
 						value={customData.name}
 						onChange={(event) => onNameChange(event.target.value)}
-						placeholder="Optional"
 						maxLength={80}
 						className="w-full rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
@@ -175,12 +188,15 @@ function CustomDataForm({
 				) : null}
 			</div>
 
-			<div className="flex min-h-0 flex-col gap-2">
+			<div
+				className={`min-h-0 flex-col gap-2 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
+			>
 				<div className="flex shrink-0 items-center gap-2">
 					<div className="flex rounded-lg border border-pro-cards-border p-0.5">
 						<button
 							type="button"
 							onClick={() => onDisplayModeChange('chart')}
+							aria-pressed={customData.displayMode === 'chart'}
 							data-umami-event="custom-data-display-chart"
 							className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
 								customData.displayMode === 'chart'
@@ -194,6 +210,7 @@ function CustomDataForm({
 						<button
 							type="button"
 							onClick={() => onDisplayModeChange('table')}
+							aria-pressed={customData.displayMode === 'table'}
 							data-umami-event="custom-data-display-table"
 							className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
 								customData.displayMode === 'table'

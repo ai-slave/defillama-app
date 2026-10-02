@@ -9,6 +9,7 @@ import { readAppStorage, useSavedDownloads, writeAppStorage } from '~/contexts/L
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { SqlChartConfig } from '../../../types'
 import { SqlChartModal } from '../SqlChartModal'
 
@@ -26,7 +27,7 @@ beforeEach(() => {
 	engine.send.mockReset()
 	engine.cancelSent.mockReset().mockResolvedValue(true)
 	engine.load.mockReset().mockResolvedValue({ db: {}, conn: { send: engine.send, cancelSent: engine.cancelSent } })
-	onEdit.mockReset()
+	onEdit.mockReset().mockReturnValue({ status: 'saved', ids: ['sql'] })
 	localStorage.clear()
 	// Chart dataset options only fill the sidebar catalog.
 	const options: Record<string, () => Response> = {}
@@ -107,7 +108,11 @@ async function click(name: string) {
 	await act(async () => button(name).click())
 }
 const savedNames = () => document.querySelector('[aria-label="Saved queries"]')!.textContent
-const cardName = () => document.querySelector<HTMLInputElement>('[aria-label="Card name"]')!
+// The field is named by its visible label.
+const cardName = () =>
+	[...document.querySelectorAll('label')]
+		.find((label) => label.textContent?.startsWith('Card name'))
+		?.querySelector<HTMLInputElement>('input') ?? null
 
 test('Save keeps focus while it becomes Stop query, and Stop returns an editable draft that saves on retry', async () => {
 	const stopped = Promise.withResolvers<ReturnType<typeof valueTable>>()
@@ -240,4 +245,48 @@ test('Cancel reports once that the editor has finished leaving, so its session c
 	await click('Cancel')
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 	expect(onClosed).toHaveBeenCalledOnce()
+})
+
+test('Cancel closes an untouched editor at once, and asks before it drops a changed query', async () => {
+	await mount()
+	await waitForUi(() => expect(cardName()).not.toBeNull())
+	await act(async () => button('Cancel').click())
+	await waitForUi(() => expect(button('Reopen')).toBeDefined())
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+
+	await act(async () => button('Reopen').click())
+	const nameInput = await waitForUi(() => {
+		const input = cardName()
+		expect(input).not.toBeNull()
+		return input!
+	})
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(nameInput, 'Renamed')
+		nameInput.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await act(async () => button('Cancel').click())
+	const confirmation = await waitForUi(() => {
+		const dialog = document.querySelector<HTMLElement>('[role="alertdialog"]')
+		expect(dialog?.textContent).toContain('Discard this SQL chart?')
+		return dialog!
+	})
+	const keep = [...confirmation.querySelectorAll('button')].find((b) => b.textContent === 'Keep editing')!
+	await act(async () => keep.click())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	expect(cardName()!.value).toBe('Renamed')
+})
+
+test('a save the dashboard refuses keeps the editor open with the reason in its footer', async () => {
+	onEdit.mockReturnValue({ status: 'refused', reason: 'Dashboard is too large (2100 KB). Remove rows or a card.' })
+	await mount(storedItem)
+	await waitForUi(() => expect(button('Save changes')).toBeDefined())
+	await act(async () => button('Save changes').click())
+	await waitForUi(() => expect(onEdit).toHaveBeenCalledOnce())
+	await waitForUi(() =>
+		expect(document.querySelector('[role="dialog"] footer [role="alert"]')?.textContent).toBe(
+			'Dashboard is too large (2100 KB). Remove rows or a card.'
+		)
+	)
+	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+	expect(document.querySelector<HTMLOutputElement>('[aria-label="Saved queries"]')!.textContent).toBe('')
 })

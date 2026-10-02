@@ -265,7 +265,7 @@ describe('ChartStyleEditor', () => {
 		)
 		if (!saveButton) throw new Error('Expected save button')
 		expect(saveButton.disabled).toBe(true)
-		expect(saveButton.title).toContain('must be unique')
+		expect(container.querySelector('footer')?.textContent).toContain('must be unique')
 		expect(onPreview).not.toHaveBeenCalled()
 		expect(container.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Fees')
 

@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { Dialog, DialogCloseGuard, DialogHeader } from '~/ui/Dialog'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
@@ -11,10 +13,10 @@ import { ChartTab } from './ChartTab'
 import { CustomDataTab } from './CustomDataTab'
 import { LlamaAITab } from './LlamaAITab'
 import { MetricTab } from './MetricTab'
-import { ModalHeader } from './ModalHeader'
+import { hasDraftChanges } from './modalReducer'
 import { SqlHandoffPanel } from './SqlHandoffPanel'
 import { SubmitButton } from './SubmitButton'
-import { MAIN_TAB_VALUES, TabNavigation } from './TabNavigation'
+import { getMainTabEditLabel, MAIN_TAB_VALUES, TabNavigation } from './TabNavigation'
 import { TextTab } from './TextTab'
 import type { AddChartModalProps } from './types'
 import { UnifiedTableTab } from './UnifiedTableTab'
@@ -42,8 +44,16 @@ export function AddChartModal({
 			if (!mounted) onClosed?.()
 		}
 	})
-	const { state, actions, computed } = useModalActions(editItem, onClose, placement, draftItem)
+	const { state, actions, computed, submitError } = useModalActions(editItem, onClose, placement, draftItem)
 	const { isAllowed: isSqlAllowed, isUnknown: isSqlAccessUnknown, isRetrying, retry } = useIsSqlAllowed()
+
+	// Leaving asks first when it would lose work entered in any tab; browsing tabs, modes and categories never asks.
+	const [openedState] = useState(state)
+	const dirty = hasDraftChanges(state, openedState)
+	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
+	const leave = (proceed: () => void) => (dirty ? setPendingLeave(() => proceed) : proceed())
+	// The protocols table wizard lays out its own scrolling body and footer.
+	const tableWizardOpen = state.selectedMainTab === 'table' && state.selectedTableType === 'protocols'
 
 	// A combined preview loads every series at one grouping, as the saved chart will.
 	const previewItems = useMemo(() => {
@@ -121,19 +131,17 @@ export function AddChartModal({
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog
-				className="add-chart-dialog fixed top-0 right-0 bottom-0 z-50 flex h-full w-full max-w-6xl translate-x-full flex-col gap-3 overflow-hidden border-l border-pro-cards-border bg-pro-cards-bg p-3 opacity-0 shadow-dialog transition-[opacity,translate] duration-260 ease-out-quart pro-dashboard data-enter:translate-x-0 data-enter:opacity-100 data-leave:duration-200 md:p-4"
-				unmountOnHide
-				portal
-			>
+			{/* An outside tap never drops the card; Cancel, × and Escape ask first once there is work to lose. */}
+			<Dialog size="xl" scope="pro" unmountOnHide portal hideOnInteractOutside={false}>
+				{dirty ? <DialogCloseGuard onAttemptLeave={(proceed) => setPendingLeave(() => proceed)} /> : null}
 				<ModalBindingsProvider bindings={state.bindings} setBinding={actions.setItemBinding}>
 					<Tabs value={state.selectedMainTab} values={MAIN_TAB_VALUES} onValueChange={actions.handleMainTabChange}>
-						<ModalHeader editItem={editItem} selectedMainTab={state.selectedMainTab} />
+						<DialogHeader title={editItem ? `Edit card · ${getMainTabEditLabel(state.selectedMainTab)}` : 'Add card'} />
 						<TabNavigation editItem={editItem} isSqlAllowed={isSqlAllowed} />
 
 						<TabPanel
 							value={state.selectedMainTab}
-							className="-mx-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-3 md:mx-0 md:px-0"
+							className={`flex min-h-0 min-w-0 flex-1 flex-col ${tableWizardOpen ? '' : 'overflow-y-auto p-4'}`}
 						>
 							{state.selectedMainTab === 'charts' ? (
 								<ChartTab
@@ -260,6 +268,7 @@ export function AddChartModal({
 							{state.selectedMainTab === 'table' ? (
 								<UnifiedTableTab
 									onClose={onClose}
+									onCancel={() => leave(onClose)}
 									chainOptions={computed.chainOptions ?? EMPTY_CHAIN_OPTIONS}
 									editItem={editItem?.kind === 'unified-table' ? editItem : undefined}
 									initialFocusSection={editItem?.kind === 'unified-table' ? initialUnifiedFocusSection : undefined}
@@ -328,15 +337,37 @@ export function AddChartModal({
 							) : null}
 						</TabPanel>
 
-						{(state.selectedMainTab !== 'table' || state.selectedTableType !== 'protocols') &&
-						state.selectedMainTab !== 'sql' ? (
-							<div className="shrink-0">
-								<SubmitButton editItem={editItem} state={state} onSubmit={actions.handleSubmit} />
-							</div>
+						{!tableWizardOpen && state.selectedMainTab !== 'sql' ? (
+							<SubmitButton
+								editItem={editItem}
+								state={state}
+								onSubmit={actions.handleSubmit}
+								submitError={submitError}
+								onCancel={() => leave(onClose)}
+							/>
 						) : null}
 					</Tabs>
 				</ModalBindingsProvider>
-			</Ariakit.Dialog>
+				<ConfirmDialog
+					open={pendingLeave !== null}
+					onClose={() => setPendingLeave(null)}
+					portal
+					unmountOnHide
+					title={editItem ? 'Discard your changes?' : 'Discard this card?'}
+					description={
+						editItem ? 'Your edits to this card are not saved.' : 'The card you set up is not added to the dashboard.'
+					}
+					confirmLabel="Discard"
+					cancelLabel="Keep editing"
+					pendingLabel={null}
+					error={null}
+					onConfirm={() => {
+						const proceed = pendingLeave!
+						setPendingLeave(null)
+						proceed()
+					}}
+				/>
+			</Dialog>
 		</Ariakit.DialogProvider>
 	)
 }

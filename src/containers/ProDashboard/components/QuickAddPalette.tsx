@@ -60,7 +60,6 @@ const GROUP_LABELS: Record<QuickAddSuggestionGroup, string> = {
 const GROUP_ORDER: ReadonlyArray<QuickAddSuggestionGroup> = ['suggested', 'recent', 'start']
 
 const QUICK_ADD_PLACEHOLDER = 'Search charts, protocols, chains…'
-const DASHBOARD_NOT_READY_MESSAGE = 'The dashboard is still loading. Try again in a moment.'
 
 const KBD_STYLES = tw`rounded-sm border border-medium px-1 body-sm text-secondary`
 
@@ -261,12 +260,13 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 			openFullEditor(suggestion.build([])[0] ?? null)
 			return
 		}
-		const addedIds = handleAppendItems(suggestion.build, placement)
-		if (addedIds === false) {
-			showStatus({ tone: 'wait', text: DASHBOARD_NOT_READY_MESSAGE })
+		const added = handleAppendItems(suggestion.build, placement)
+		if (added.status === 'refused') {
+			// The palette stays open, so the refusal (still loading, or over the size limit) shows in its status line.
+			showStatus({ tone: 'wait', text: added.reason })
 			return
 		}
-		completeAdd(suggestion, addedIds[0] ?? null, closeAfter)
+		completeAdd(suggestion, added.ids[0] ?? null, closeAfter)
 	}
 
 	function customizeSuggestion(suggestion: QuickAddSuggestion) {

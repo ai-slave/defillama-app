@@ -91,14 +91,14 @@ async function render(node: ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
 }
-const renderChart = () =>
+const renderChart = (params = chartConfig.params) =>
 	render(
 		<ChartDatasetModal
 			dataset={chart}
 			options={options}
 			authorizedFetch={fetchCsv}
 			onClose={() => {}}
-			initialConfig={chartConfig}
+			initialConfig={{ ...chartConfig, params }}
 		/>
 	)
 const renderMetrics = () =>
@@ -162,16 +162,28 @@ test('the multi-metric modal is named by its heading', async () => {
 		expect(found).not.toBeNull()
 		return found!
 	})
-	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Alpha')
+	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Alpha Combined')
 })
 
-test('removing a selected protocol hands focus to the next row, and the last one to the picker', async () => {
-	await renderChart()
+test('removing a selected protocol hands focus to the next row; with one left the list closes onto the picker', async () => {
+	await renderChart(['alpha', 'beta', 'gamma'])
 	await waitForUi(() => expect(button('Remove Alpha')).toBeTruthy())
 	await press(button('Remove Alpha'))
 	expect(document.activeElement).toBe(button('Remove Beta'))
 	await press(button('Remove Beta'))
-	expect(document.activeElement).toBe(button('Select Protocol'))
+	expect(document.activeElement).toBe(button('Gamma'))
+	expect(document.querySelector('[aria-label="Remove Gamma"]')).toBeNull()
+})
+
+test('each selected metric offers its own download, named for the metric', async () => {
+	await renderMetrics()
+	await waitForUi(() =>
+		expect(
+			[...document.querySelectorAll<HTMLButtonElement>('aside button')]
+				.map(accessibleName)
+				.filter((name) => name.startsWith('Download'))
+		).toEqual(['Download TVL CSV', 'Download Active Loans CSV'])
+	)
 })
 
 test('clearing the selected metrics hands focus to the metric picker', async () => {
@@ -183,7 +195,7 @@ test('clearing the selected metrics hands focus to the metric picker', async () 
 
 test('Add all and Clear all in the protocol picker leave focus in its search field', async () => {
 	await renderChart()
-	await press(button('2 Protocols2'))
+	await press(button('2 protocols'))
 	const search = await waitForUi(() => {
 		const found = document.querySelector<HTMLInputElement>('input[placeholder="Search protocol…"]')
 		expect(found).not.toBeNull()
@@ -194,4 +206,49 @@ test('Add all and Clear all in the protocol picker leave focus in its search fie
 	const popover = search.closest('[role="dialog"]')!
 	await press([...popover.querySelectorAll('button')].find((node) => node.textContent === 'Clear all')!)
 	expect(document.activeElement).toBe(search)
+})
+
+test('on a phone, More actions offers Copy, Save preset and Copy link, and Copy link copies the share link', async () => {
+	await render(<DatasetPreviewModal dataset={dataset} authorizedFetch={fetchCsv} onClose={() => {}} />)
+	await waitForUi(() => expect(button('More actions')).toBeTruthy())
+	await press(button('More actions'))
+	const items = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+		expect(found.map(accessibleName)).toEqual(['Copy', 'Save preset', 'Copy link'])
+		return found
+	})
+	await press(items[2])
+	await waitForUi(() => expect(announced()).toContain('Link copied'))
+	// The menu has closed, so the dialog shows the confirmation itself.
+	expect([...document.querySelectorAll('[role="dialog"] p')].map((node) => node.textContent)).toContain('Link copied')
+	expect(writeClipboard).toHaveBeenCalledExactlyOnceWith(
+		'http://localhost:3000/downloads?k=dataset&s=test-dataset&c=date%2Cvalue'
+	)
+})
+
+test('the phone Selected toggle counts the selected protocols, says whether the list is showing, and leaves at one', async () => {
+	await renderChart()
+	const toggle = await waitForUi(() => button('Selected (2)'))
+	expect(toggle.getAttribute('aria-pressed')).toBe('false')
+	await press(toggle)
+	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('true')
+	await press(button('Remove Alpha'))
+	expect([...document.querySelectorAll('button')].some((node) => node.textContent?.startsWith('Selected'))).toBe(false)
+	expect(button('Beta')).toBeTruthy()
+})
+
+test('previewing a protocol from the phone Selected list switches back to the table', async () => {
+	await renderChart()
+	await press(await waitForUi(() => button('Selected (2)')))
+	await press(button('Preview Beta'))
+	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('false')
+	expect(button('Preview Beta').getAttribute('aria-current')).toBe('true')
+})
+
+test('the phone Selected toggle counts the selected metrics and says whether the list is showing', async () => {
+	await renderMetrics()
+	const toggle = await waitForUi(() => button('Selected (2)'))
+	expect(toggle.getAttribute('aria-pressed')).toBe('false')
+	await press(toggle)
+	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('true')
 })

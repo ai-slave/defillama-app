@@ -4,9 +4,12 @@ import Link from 'next/link'
 import { lazy, type RefObject, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
-import { catchLostFocus, keepFocus } from '~/ui/focus'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tag } from '~/ui/Tag'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
@@ -16,8 +19,8 @@ import { combineCsvsWide, type CsvItem } from './combineCsvsWide'
 import { filterCsvByDateRange, filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
-import { FormatSplitButton } from './FormatSplitButton'
 import { SavePresetDialog } from './PresetDialogs'
+import { PreviewHeaderActions } from './PreviewHeaderActions'
 import {
 	type AppliedMultiMetricConfig,
 	applyMultiMetricConfig,
@@ -156,6 +159,9 @@ export function MultiMetricModal({
 	const dateRangeTriggerRef = useRef<HTMLButtonElement>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
+	// Phones show the table or the selected list, one at a time; from sm both sit side by side.
+	const [showSelected, setShowSelected] = useState(false)
+	const selectedToggleRef = useRef<HTMLButtonElement>(null)
 	const { outcome, report, confirmed } = useActionFeedback()
 	// Takes focus when the control that had it leaves with the last selected metric.
 	const metricPickerRef = useRef<HTMLButtonElement>(null)
@@ -483,6 +489,9 @@ export function MultiMetricModal({
 
 	const isBulk = selectedMetrics.length > 1
 	const hasSelection = selectedMetrics.length > 0
+	// The list exists only for two or more metrics (the trigger names a single one), so dropping to one brings the
+	// table back.
+	const showingSelected = showSelected && !!param && isBulk
 	const downloadLabel = isBulk ? 'Download combined' : 'Download CSV'
 	const topBarDownloadDisabled =
 		!isPreview &&
@@ -527,111 +536,60 @@ export function MultiMetricModal({
 					if (!open) onClose()
 				}}
 			>
-				<Ariakit.Dialog
-					ref={catchLostFocus}
-					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
-					portal
-					unmountOnHide
-					backdrop={<div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />}
-				>
-					<div className="flex shrink-0 flex-col border-b border-subtle">
-						<div className="flex items-center gap-3 px-4 py-2.5">
-							<div className="mr-auto min-w-0">
-								<div className="flex items-center gap-2">
-									<Ariakit.DialogHeading
-										render={<h2>{param ? param.label : 'Combined report'}</h2>}
-										className="truncate heading-xs"
-									/>
-									<span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-brand uppercase">
-										Combined
-									</span>
-								</div>
-								<p className="truncate text-xs text-pro-text-tertiary">{headerSubtitle}</p>
-							</div>
-
-							{param && hasSelection && !isPreview ? (
-								<button
-									type="button"
-									onClick={() => setShowSaveDialog(true)}
-									className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary sm:flex"
-									title="Save as preset"
-								>
-									<ConfirmableContent
-										confirmed={confirmed('save-preset')}
-										idle={
-											<>
-												<Icon name="bookmark" className="size-3.5" />
-												<span className="hidden lg:inline">Save preset</span>
-											</>
-										}
-										done={
-											<>
-												<Icon name="check" className="size-3.5" />
-												<span className="hidden lg:inline">Saved</span>
-											</>
-										}
-									/>
-								</button>
-							) : null}
-
-							{param && hasSelection && !isPreview ? (
-								<button
-									type="button"
-									onClick={() => void handleCopyLink()}
-									disabled={!currentConfig}
-									className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
-									title="Copy shareable link"
-								>
-									<ConfirmableContent
-										confirmed={confirmed('copy-link')}
-										idle={<Icon name="link" className="size-3.5" />}
-										done={<Icon name="check" className="size-3.5" />}
-									/>
-								</button>
-							) : null}
-
-							{param && hasSelection ? (
-								isPreview ? (
-									<button
-										type="button"
-										onClick={() => handleTopBarDownload()}
-										disabled={topBarDownloadDisabled}
-										className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
-									>
-										<Icon name="download-cloud" className="size-3.5" />
-										<span className="hidden sm:inline">{downloadLabel}</span>
-									</button>
+				{/* Opens on the metric picker; before a protocol or chain is picked, the empty state's picker takes focus. */}
+				<Dialog size="xl" portal unmountOnHide initialFocus={param ? metricPickerRef : undefined}>
+					<DialogHeader
+						title={
+							<>
+								{param ? (
+									<>
+										{param.label} <Tag className="align-middle">Combined</Tag>
+									</>
 								) : (
-									<FormatSplitButton
-										onDownload={(fmt) => handleTopBarDownload(fmt)}
-										disabled={topBarDownloadDisabled}
-										label={downloadLabel}
-										confirmed={confirmed('download')}
+									'Combined report'
+								)}
+							</>
+						}
+						subtitle={headerSubtitle}
+						actions={
+							param && hasSelection ? (
+								isPreview ? (
+									<PreviewHeaderActions
+										mode="preview"
+										confirmed={confirmed}
+										downloadLabel={downloadLabel}
+										copy={null}
+										onSubscribe={handleSubscribeClick}
+									/>
+								) : (
+									<PreviewHeaderActions
+										mode="full"
+										confirmed={confirmed}
+										downloadLabel={downloadLabel}
+										copy={null}
+										savePreset={{ run: () => setShowSaveDialog(true), disabled: false }}
+										copyLink={{ run: () => void handleCopyLink(), disabled: !currentConfig }}
+										onDownload={handleTopBarDownload}
+										downloadDisabled={topBarDownloadDisabled}
 									/>
 								)
-							) : null}
+							) : null
+						}
+					/>
 
-							<button
-								type="button"
-								onClick={onClose}
-								className="rounded-md p-1.5 text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-								aria-label="Close"
-							>
-								<Icon name="x" className="size-4" />
-							</button>
-						</div>
+					{/* Until a protocol or chain is picked, the empty state below is the picker. */}
+					{param ? (
+						<DialogToolbar>
+							<div className="flex flex-wrap items-center gap-2">
+								<ParamPickerPopover
+									paramType={paramType}
+									value={param}
+									protocolOptions={protocolOptions}
+									chainOptions={chainOptions}
+									onChange={handleChangeParam}
+									onChangeParamType={handleChangeParamType}
+								/>
 
-						<div className="flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-2">
-							<ParamPickerPopover
-								paramType={paramType}
-								value={param}
-								protocolOptions={protocolOptions}
-								chainOptions={chainOptions}
-								onChange={handleChangeParam}
-								onChangeParamType={handleChangeParamType}
-							/>
-
-							{param ? (
 								<MetricMultiPickerPopover
 									triggerRef={metricPickerRef}
 									metrics={availableMetrics}
@@ -641,99 +599,126 @@ export function MultiMetricModal({
 									onSelectAll={() => keepFocus(handleSelectAll, () => metricPickerRef.current)}
 									maxSelections={MAX_METRICS}
 								/>
-							) : null}
 
-							{param && hasSelection && !isPreview ? (
-								<DateRangePicker
-									triggerRef={dateRangeTriggerRef}
-									value={dateRange}
-									onChange={setDateRange}
-									minDate={dateBounds.min}
-									maxDate={dateBounds.max}
-								/>
-							) : null}
+								{hasSelection && !isPreview ? (
+									<DateRangePicker
+										triggerRef={dateRangeTriggerRef}
+										value={dateRange}
+										onChange={setDateRange}
+										minDate={dateBounds.min}
+										maxDate={dateBounds.max}
+									/>
+								) : null}
 
-							{isPreview ? <p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p> : null}
-						</div>
-						<SavedPresetNotice notices={savedPresetNotices} />
-						<ActionFeedbackStatus outcome={outcome} />
-					</div>
+								{isBulk ? (
+									<Button
+										variant="filter"
+										size="sm"
+										data-active={showSelected}
+										aria-pressed={showSelected}
+										className="sm:hidden"
+										onClick={() => setShowSelected((shown) => !shown)}
+										ref={selectedToggleRef}
+									>
+										Selected ({selectedMetrics.length})
+									</Button>
+								) : null}
 
-					<div className="flex min-h-0 flex-1 flex-col sm:flex-row">
-						<div className="flex min-h-0 min-w-0 flex-1 flex-col">
-							{!param ? (
-								<ParamPickerEmpty
-									paramType={paramType}
-									onChangeParamType={handleChangeParamType}
-									options={paramOptions}
-									suggestions={suggestions}
-									onSelect={handleChangeParam}
-								/>
-							) : !hasSelection ? (
-								<EmptyState
-									paramType={paramType}
-									availableCount={availableMetrics.length}
-									onSelectAll={
-										availableMetrics.length > 0
-											? () => keepFocus(handleSelectAll, () => metricPickerRef.current)
-											: undefined
-									}
-								/>
-							) : !activeMetric ? (
-								<CenteredHint icon="search" text="Pick a metric to preview" />
-							) : activeLoading ? (
-								<CenteredLoader />
-							) : activeError ? (
-								<CenteredError error={activeError} />
-							) : !parsedActive || parsedActive.rows.length === 0 ? (
-								<CenteredHint icon="eye-off" text="No data" />
-							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">No rows in selected date range</p>
-										<button
-											type="button"
-											// Clearing removes this button; focus returns to the range picker it cleared.
-											onClick={() =>
-												keepFocus(
-													() => setDateRange(null),
-													() => dateRangeTriggerRef.current
-												)
-											}
-											className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-										>
-											Clear date range
-										</button>
+								{isPreview ? (
+									<p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p>
+								) : null}
+							</div>
+						</DialogToolbar>
+					) : null}
+					{/* Each band draws the line under itself, as the toolbar above does. */}
+					<SavedPresetNotice notices={savedPresetNotices} />
+					<ActionFeedbackStatus outcome={outcome} />
+
+					<DialogBody kind="flush">
+						<div className="flex h-full min-h-0">
+							<div className={`min-h-0 min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
+								{!param ? (
+									<ParamPickerEmpty
+										paramType={paramType}
+										onChangeParamType={handleChangeParamType}
+										options={paramOptions}
+										suggestions={suggestions}
+										onSelect={handleChangeParam}
+									/>
+								) : !hasSelection ? (
+									<EmptyState
+										paramType={paramType}
+										availableCount={availableMetrics.length}
+										onSelectAll={
+											availableMetrics.length > 0
+												? () => keepFocus(handleSelectAll, () => metricPickerRef.current)
+												: undefined
+										}
+									/>
+								) : !activeMetric ? (
+									<CenteredHint icon="search" text="Pick a metric to preview" />
+								) : activeLoading ? (
+									<CenteredLoader />
+								) : activeError ? (
+									<CenteredError error={activeError} />
+								) : !parsedActive || parsedActive.rows.length === 0 ? (
+									<CenteredHint icon="eye-off" text="No data" />
+								) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
+									<div className="flex flex-1 items-center justify-center">
+										<div className="flex flex-col items-center gap-2 text-center">
+											<Icon name="search" className="size-6 text-pro-text-tertiary" />
+											<p className="text-sm text-pro-text-secondary">No rows in selected date range</p>
+											<button
+												type="button"
+												// Clearing removes this button; focus returns to the range picker it cleared.
+												onClick={() =>
+													keepFocus(
+														() => setDateRange(null),
+														() => dateRangeTriggerRef.current
+													)
+												}
+												className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+											>
+												Clear date range
+											</button>
+										</div>
 									</div>
-								</div>
-							) : (
-								<PreviewTable parsed={parsedActiveFiltered} isPreview={isPreview} />
-							)}
-						</div>
+								) : (
+									<PreviewTable parsed={parsedActiveFiltered} isPreview={isPreview} />
+								)}
+							</div>
 
-						{param && hasSelection ? (
-							<MetricsSidebar
-								selectedMetrics={selectedMetrics
-									.map((slug) => chartDatasetsBySlug.get(slug))
-									.filter((d): d is ChartDatasetDefinition => !!d)}
-								csvQueries={csvQueries as ReadonlyArray<CsvQueryStatus>}
-								activeMetric={activeMetric}
-								onSetActive={handleSetActive}
-								onRemove={handleRemoveMetric}
-								onClearAll={() => keepFocus(handleClearMetrics, () => metricPickerRef.current)}
-								onDownloadSingle={(slug) => handleDownloadSingle(slug, 'csv', `download:${slug}`)}
-								onDownloadCombined={() => handleDownloadCombined('csv', 'download-combined')}
-								confirmed={confirmed}
-								pickerTriggerRef={metricPickerRef}
-								isPreview={isPreview}
-								onSubscribeClick={handleSubscribeClick}
-								readyCount={readyCount}
-								loadingCount={loadingCount}
-							/>
-						) : null}
-					</div>
-				</Ariakit.Dialog>
+							{param && isBulk ? (
+								<MetricsSidebar
+									selectedMetrics={selectedMetrics
+										.map((slug) => chartDatasetsBySlug.get(slug))
+										.filter((d): d is ChartDatasetDefinition => !!d)}
+									csvQueries={csvQueries as ReadonlyArray<CsvQueryStatus>}
+									activeMetric={activeMetric}
+									onSetActive={(slug) =>
+										// On a phone, previewing a metric switches to the table; the toggle keeps focus there.
+										keepFocus(
+											() => {
+												handleSetActive(slug)
+												setShowSelected(false)
+											},
+											() => selectedToggleRef.current
+										)
+									}
+									showOnPhone={showingSelected}
+									onRemove={handleRemoveMetric}
+									onClearAll={() => keepFocus(handleClearMetrics, () => metricPickerRef.current)}
+									onDownloadSingle={(slug) => handleDownloadSingle(slug, 'csv', `download:${slug}`)}
+									confirmed={confirmed}
+									pickerTriggerRef={metricPickerRef}
+									isPreview={isPreview}
+									readyCount={readyCount}
+									loadingCount={loadingCount}
+								/>
+							) : null}
+						</div>
+					</DialogBody>
+				</Dialog>
 			</Ariakit.DialogProvider>
 
 			{isPreview ? (
@@ -822,7 +807,10 @@ function ParamPickerEmpty({
 
 				<div className="w-full">
 					<Ariakit.PopoverProvider store={popoverStore}>
-						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium px-3.5 py-2.5 text-sm transition-colors hover:border-brand/50 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-hidden">
+						<Ariakit.PopoverDisclosure
+							autoFocus
+							className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium px-3.5 py-2.5 text-sm transition-colors hover:border-brand/50 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-hidden"
+						>
 							<span className="flex items-center gap-2 text-pro-text-tertiary">
 								<Icon name="search" className="size-4" />
 								Search a {labels.singular}
@@ -987,7 +975,7 @@ function PreviewTable({
 	return (
 		<div className={`relative min-h-0 flex-1 ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}>
 			<table className="w-full text-xs">
-				<thead className="sticky top-0 z-10 bg-surface">
+				<thead className="sticky top-0 z-10 bg-overlay">
 					<tr>
 						{headers.map((h, columnIndex) => (
 							<th
@@ -1002,7 +990,7 @@ function PreviewTable({
 				</thead>
 				<tbody>
 					{display.map((row, rowIdx) => (
-						<tr key={row.id} className={`border-subtle/40 border-b last:border-b-0 ${rowIdx % 2 === 1 ? '' : ''}`}>
+						<tr key={row.id} className={`border-b border-subtle last:border-b-0 ${rowIdx % 2 === 1 ? '' : ''}`}>
 							{headers.map((_, i) => (
 								<td
 									// oxlint-disable-next-line react/no-array-index-key -- CSV cells identify schema positions; column labels can repeat.
@@ -1018,7 +1006,7 @@ function PreviewTable({
 						<tr
 							// oxlint-disable-next-line react/no-array-index-key -- Filler intentionally repeats source rows, so source IDs would collide.
 							key={`filler-${rowIdx}`}
-							className={`border-subtle/40 border-b last:border-b-0 ${(display.length + rowIdx) % 2 === 1 ? '' : ''}`}
+							className={`border-b border-subtle last:border-b-0 ${(display.length + rowIdx) % 2 === 1 ? '' : ''}`}
 						>
 							{headers.map((_, i) => (
 								<td
@@ -1034,7 +1022,7 @@ function PreviewTable({
 				</tbody>
 			</table>
 			{!isPreview && rows.length > PREVIEW_ROWS ? (
-				<div className="border-t border-subtle bg-surface px-3 py-2 text-[11px] text-pro-text-tertiary">
+				<div className="border-t border-subtle bg-overlay px-3 py-2 text-[11px] text-pro-text-tertiary">
 					<p>
 						Showing first {formatNumber(PREVIEW_ROWS)} of {formatNumber(rows.length)} rows · download for full data
 					</p>
@@ -1052,7 +1040,7 @@ function PreviewTable({
 							WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
 						}}
 					/>
-					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-surface px-6 py-5">
+					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
 						<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
 							<p className="text-sm font-semibold text-pro-text-primary">
 								This is a preview — subscribe to download full datasets
@@ -1080,16 +1068,17 @@ interface MetricsSidebarProps {
 	csvQueries: ReadonlyArray<CsvQueryStatus>
 	activeMetric: string | null
 	onSetActive: (slug: string) => void
+	/** Below sm the list replaces the table instead of sitting beside it. */
+	showOnPhone: boolean
 	onRemove: (slug: string) => void
 	onClearAll: () => void
 	onDownloadSingle: (slug: string) => void
-	onDownloadCombined: () => void
 	/** Whether a download button shows its confirmation now. */
 	confirmed: (action: string) => boolean
 	/** Takes focus when the last row leaves. */
 	pickerTriggerRef: RefObject<HTMLButtonElement | null>
+	/** A preview downloads nothing: the header Download opens the subscribe prompt. */
 	isPreview: boolean
-	onSubscribeClick: () => void
 	readyCount: number
 	loadingCount: number
 }
@@ -1099,18 +1088,16 @@ function MetricsSidebar({
 	csvQueries,
 	activeMetric,
 	onSetActive,
+	showOnPhone,
 	onRemove,
 	onClearAll,
 	onDownloadSingle,
-	onDownloadCombined,
 	confirmed,
 	pickerTriggerRef,
 	isPreview,
-	onSubscribeClick,
 	readyCount,
 	loadingCount
 }: MetricsSidebarProps) {
-	const combinedDisabled = loadingCount > 0 || readyCount === 0
 	const listRef = useRef<HTMLDivElement>(null)
 	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
 	const removeRow = (slug: string, index: number) =>
@@ -1122,7 +1109,9 @@ function MetricsSidebar({
 			}
 		)
 	return (
-		<aside className="hidden w-72 shrink-0 flex-col border-l border-subtle sm:flex">
+		<aside
+			className={`w-full shrink-0 flex-col border-subtle sm:flex sm:w-72 sm:border-l ${showOnPhone ? 'flex' : 'hidden'}`}
+		>
 			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
 				<div className="min-w-0">
 					<p className="text-xs font-semibold text-pro-text-primary">Selected metrics ({selectedMetrics.length})</p>
@@ -1177,19 +1166,21 @@ function MetricsSidebar({
 									{metricDisplayName(metric)}
 								</span>
 							</button>
-							<button
-								type="button"
-								onClick={() => onDownloadSingle(metric.slug)}
-								disabled={!isReady || isPreview}
-								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
-								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
-							>
-								<ConfirmableContent
-									confirmed={confirmed(`download:${metric.slug}`)}
-									idle={<Icon name="download-cloud" className="size-3.5" />}
-									done={<Icon name="check" className="size-3.5" />}
-								/>
-							</button>
+							{isPreview ? null : (
+								<button
+									type="button"
+									onClick={() => onDownloadSingle(metric.slug)}
+									disabled={!isReady}
+									aria-label={`Download ${metricDisplayName(metric)} CSV`}
+									className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
+								>
+									<ConfirmableContent
+										confirmed={confirmed(`download:${metric.slug}`)}
+										idle={<Icon name="download-cloud" className="size-3.5" />}
+										done={<Icon name="check" className="size-3.5" />}
+									/>
+								</button>
+							)}
 							<button
 								type="button"
 								onClick={() => removeRow(metric.slug, i)}
@@ -1203,46 +1194,11 @@ function MetricsSidebar({
 					)
 				})}
 			</div>
-			<div className="border-t border-subtle p-3">
-				{isPreview ? (
-					<button
-						type="button"
-						onClick={onSubscribeClick}
-						className="flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-on-brand transition-colors hover:opacity-90"
-					>
-						<Icon name="arrow-up-right" className="size-3.5" />
-						Subscribe to download
-					</button>
-				) : (
-					<>
-						<button
-							type="button"
-							onClick={onDownloadCombined}
-							disabled={combinedDisabled}
-							className="flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
-						>
-							<ConfirmableContent
-								confirmed={confirmed('download-combined')}
-								idle={
-									<>
-										<Icon name="download-cloud" className="size-3.5" />
-										Download combined CSV
-									</>
-								}
-								done={
-									<>
-										<Icon name="check" className="size-3.5" />
-										Downloaded
-									</>
-								}
-							/>
-						</button>
-						<p className="mt-1.5 text-center text-[10px] text-pro-text-tertiary">
-							Wide format — each metric becomes a column
-						</p>
-					</>
-				)}
-			</div>
+			{isPreview ? null : (
+				<p className="border-t border-subtle p-3 text-center text-[10px] text-pro-text-tertiary">
+					Download combined puts each metric in its own column
+				</p>
+			)}
 		</aside>
 	)
 }
@@ -1387,6 +1343,7 @@ function MetricMultiPickerPopover({
 
 	const triggerLabel = (() => {
 		if (selected.length === 0) return 'Pick metrics'
+		if (selected.length === 1) return metrics.find((metric) => metric.slug === selected[0])!.name
 		if (selected.length === metrics.length) return `All ${metrics.length} metrics`
 		return `${selected.length} of ${metrics.length} metrics`
 	})()
@@ -1401,9 +1358,6 @@ function MetricMultiPickerPopover({
 			>
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerLabel}</span>
-				{selected.length > 0 ? (
-					<span className="rounded-sm bg-brand px-1 text-[10px] font-semibold text-on-brand">{selected.length}</span>
-				) : null}
 			</Ariakit.PopoverDisclosure>
 			<Ariakit.Popover
 				gutter={6}

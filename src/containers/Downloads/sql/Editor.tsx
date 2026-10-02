@@ -131,6 +131,8 @@ interface EditorProps {
 	height?: string | number
 	readOnly?: boolean
 	fitContentHeight?: boolean
+	// Monaco loads after its dialog opens; take focus on mount unless the reader already moved to a field.
+	autoFocus?: boolean
 }
 
 export function Editor({
@@ -141,6 +143,7 @@ export function Editor({
 	height = '44vh',
 	readOnly = false,
 	fitContentHeight = false,
+	autoFocus = false,
 	ref
 }: EditorProps & { ref?: Ref<EditorHandle> }) {
 	// The theme store, not the <html> class: the class flips in an effect after the toggle renders.
@@ -241,6 +244,7 @@ export function Editor({
 				return
 			}
 			editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRunRef.current())
+			if (autoFocus && !document.activeElement?.matches('input, textarea, [contenteditable="true"]')) editor.focus()
 
 			const completions = registerSqlCompletions(monaco, contextRef)
 			const hovers = registerSqlHovers(monaco, contextRef)
@@ -301,7 +305,7 @@ export function Editor({
 				if (editorInstanceRef.current === editor) editorInstanceRef.current = null
 			})
 		},
-		[fitContentHeight, readOnly]
+		[autoFocus, fitContentHeight, readOnly]
 	)
 
 	return (

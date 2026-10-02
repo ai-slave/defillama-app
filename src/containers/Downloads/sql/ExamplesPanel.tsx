@@ -225,7 +225,7 @@ function PlaybookItem({
 }) {
 	return (
 		<li
-			className={`group/item border-subtle/40 relative border-b last:border-b-0 ${
+			className={`group/item relative border-b border-subtle last:border-b-0 ${
 				isDisabled ? 'opacity-40' : ''
 			} ${isBusy ? 'bg-brand/5' : ''}`}
 		>

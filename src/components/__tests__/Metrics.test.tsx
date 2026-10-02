@@ -45,7 +45,7 @@ async function render(ui: ReactNode) {
 const searchInput = () => document.querySelector<HTMLInputElement>('input[placeholder^="Search"]')!
 const browseButton = () =>
 	[...document.querySelectorAll('button')].find((button) => button.textContent === 'Click to browse & search')!
-const closeButton = () => document.querySelector<HTMLButtonElement>('button[aria-label="Close metrics"]')!
+const closeButton = () => document.querySelector<HTMLButtonElement>('button[aria-label="Close dialog"]')!
 
 async function openDialog() {
 	await act(async () => browseButton().click())

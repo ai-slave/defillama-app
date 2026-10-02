@@ -1,6 +1,8 @@
 import { useId } from 'react'
+import { Button } from '~/ui/Button'
+import { DialogFooter } from '~/ui/Dialog'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
-import { ProButton, ProMeta } from '../../ui'
+import { ProMeta } from '../../ui'
 import { resolveSubmitBlocker } from './submitBlocker'
 import type { ModalState } from './types'
 
@@ -8,6 +10,9 @@ interface SubmitButtonProps {
 	editItem?: DashboardItemConfig | null | undefined
 	state: ModalState
 	onSubmit: () => void
+	/** Why the dashboard refused the last submit, shown where the blocker would be. */
+	submitError: string | null
+	onCancel: () => void
 }
 
 function getButtonText(state: ModalState, editItem: DashboardItemConfig | null | undefined): string {
@@ -36,28 +41,42 @@ function getButtonText(state: ModalState, editItem: DashboardItemConfig | null |
 	}
 }
 
-export function SubmitButton({ editItem, state, onSubmit }: SubmitButtonProps) {
+export function SubmitButton({ editItem, state, onSubmit, submitError, onCancel }: SubmitButtonProps) {
 	const reasonId = useId()
 	const disabledReason = resolveSubmitBlocker(state, editItem)
 	const isDisabled = disabledReason !== null
 
 	return (
-		<div className="mt-2 flex items-center justify-between gap-3 border-t border-pro-cards-border pt-3">
-			<div id={reasonId} className="flex min-h-4 min-w-0 items-center">
-				<ProMeta items={[disabledReason]} />
-			</div>
-			<ProButton
-				type="button"
+		<DialogFooter
+			leading={
+				<div id={reasonId} className="flex min-h-4 min-w-0 items-center">
+					{submitError ? (
+						<p role="alert" className="text-xs text-error">
+							{submitError}
+						</p>
+					) : (
+						<ProMeta items={[disabledReason]} />
+					)}
+				</div>
+			}
+			dismiss={
+				<Button size="md" onClick={onCancel}>
+					Cancel
+				</Button>
+			}
+		>
+			<Button
 				variant="primary"
 				size="md"
 				onClick={() => {
 					if (!isDisabled) onSubmit()
 				}}
-				{...(isDisabled ? { 'aria-disabled': true, 'aria-describedby': reasonId, title: disabledReason } : {})}
+				// Focusable while blocked, so the reason beside it is read with it.
+				{...(isDisabled ? { 'aria-disabled': true, 'aria-describedby': reasonId } : {})}
 				{...(state.selectedMainTab === 'custom-data' ? { 'data-umami-event': 'custom-data-add' } : {})}
 			>
 				{getButtonText(state, editItem)}
-			</ProButton>
-		</div>
+			</Button>
+		</DialogFooter>
 	)
 }

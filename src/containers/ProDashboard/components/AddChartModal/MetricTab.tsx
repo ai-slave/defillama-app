@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -7,6 +8,7 @@ import type { MetricAggregator, MetricChartType, MetricConfig, MetricSubject } f
 import { MetricCard } from '../MetricCard'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 import { MetricSentenceBuilder } from './MetricSentenceBuilder'
+import { ADD_CARD_PANES, type AddCardPane } from './panes'
 
 type MetricTabProps = {
 	metricSubjectType: 'chain' | 'protocol'
@@ -51,6 +53,8 @@ export function MetricTab(props: MetricTabProps) {
 
 	const { availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const subjectParameter = useModalFieldBinding('subject', metricSubjectType)
+	const nameId = useId()
+	const [pane, setPane] = useState<AddCardPane>('configure')
 
 	const availableTypes = useMemo(() => {
 		if (metricSubjectType === 'protocol' && metricProtocol) {
@@ -110,12 +114,25 @@ export function MetricTab(props: MetricTabProps) {
 
 	return (
 		<div className="flex h-full flex-col gap-3 lg:min-h-[360px] lg:flex-row lg:overflow-hidden">
-			<div className="flex w-full shrink-0 flex-col border border-pro-cards-border lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px]">
+			<SegmentedControl<AddCardPane>
+				label="Editor view"
+				options={ADD_CARD_PANES}
+				value={pane}
+				onValueChange={setPane}
+				variant="solid-responsive"
+				size="md"
+				className="shrink-0 lg:hidden"
+			/>
+			<div
+				className={`w-full flex-col border border-pro-cards-border max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px] ${pane === 'configure' ? 'flex' : 'hidden'}`}
+			>
 				<div className="flex flex-col gap-3 p-2.5 sm:p-3">
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-sm sm:p-3">
 						<div className="flex items-start justify-between gap-2 sm:gap-3">
 							<div>
-								<div className="text-xs font-semibold text-pro-text-primary">Card name</div>
+								<label htmlFor={nameId} className="block text-xs font-semibold text-pro-text-primary">
+									Card name (optional)
+								</label>
 								<p className="text-xs text-pro-text-tertiary">Shown above the metric tile</p>
 							</div>
 							<div className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-brand md:flex">
@@ -124,10 +141,10 @@ export function MetricTab(props: MetricTabProps) {
 						</div>
 						<div className="mt-2 space-y-1.5">
 							<input
+								id={nameId}
 								type="text"
 								value={metricLabel}
 								onChange={(e) => onLabelChange(e.target.value)}
-								placeholder="Optional"
 								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-2 focus:ring-brand/40 focus:outline-hidden"
 								maxLength={64}
 							/>
@@ -164,7 +181,9 @@ export function MetricTab(props: MetricTabProps) {
 				</div>
 			</div>
 
-			<div className="flex min-h-[280px] flex-1 shrink-0 flex-col overflow-hidden border border-pro-cards-border lg:min-h-0 lg:shrink">
+			<div
+				className={`min-h-[280px] flex-1 shrink-0 flex-col overflow-hidden border border-pro-cards-border lg:flex lg:min-h-0 lg:shrink ${pane === 'preview' ? 'flex' : 'hidden'}`}
+			>
 				<div className="flex-1 overflow-hidden rounded-md bg-pro-cards-bg p-2 sm:p-2.5">
 					{previewMetric ? (
 						<MetricCard metric={previewMetric} />

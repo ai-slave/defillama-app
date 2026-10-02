@@ -56,7 +56,7 @@ export function SqlChartModalSidebar({
 	const [tab, setTab] = useState<TabId>('examples')
 
 	return (
-		<aside className="flex max-h-96 min-h-0 min-w-0 shrink-0 flex-col overflow-hidden rounded-md border border-medium bg-surface lg:max-h-none lg:shrink">
+		<aside className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-medium bg-surface">
 			<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.id)}>
 				<TabList
 					aria-label="SQL reference section"

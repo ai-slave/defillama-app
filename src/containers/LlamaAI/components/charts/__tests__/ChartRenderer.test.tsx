@@ -152,6 +152,17 @@ async function click(scope: ParentNode, selector: string) {
 	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 }
 
+// Leaving an edited draft asks first; confirm the discard.
+async function discardDraft() {
+	const confirmation = await waitForUi(() => {
+		const dialog = document.querySelector('[role="alertdialog"]')
+		expect(dialog).not.toBeNull()
+		return dialog!
+	})
+	await clickButton(confirmation, 'Discard')
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+}
+
 async function clickButton(scope: ParentNode, text: string) {
 	const button = [...scope.querySelectorAll<HTMLButtonElement>('button')].find(
 		(candidate) => candidate.textContent?.trim() === text
@@ -319,6 +330,7 @@ describe('ChartRenderer', () => {
 		expect(viewLabels(container)).toContain('Stacked')
 
 		await clickButton(document, 'Cancel')
+		await discardDraft()
 		expect(document.querySelector('[role="dialog"]')).toBeNull()
 		expect(viewLabels(container)).toContain('Stacked')
 
@@ -379,6 +391,7 @@ describe('ChartRenderer', () => {
 		if (!reopenedTitleInput) throw new Error('Expected chart title input')
 		await setInputValue(reopenedTitleInput, 'Discarded Draft')
 		await clickButton(document, 'Cancel')
+		await discardDraft()
 		await click(container, '[title="Edit chart style"]')
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
 		await clickButton(document, 'Cancel')
@@ -407,7 +420,30 @@ describe('ChartRenderer', () => {
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
 	})
 
-	test('nested style editor owns Escape and returns focus without saving its draft', async () => {
+	test('Escape closes an untouched style editor at once, with nothing to confirm', async () => {
+		await act(async () =>
+			root.render(<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={vi.fn()} />)
+		)
+		const trigger = document.querySelector<HTMLButtonElement>('[title="Edit chart style"]')!
+		await act(async () => {
+			trigger.focus()
+			trigger.click()
+		})
+		const title = await waitForUi(() => {
+			const input = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+			expect(input).not.toBeNull()
+			return input!
+		})
+		await act(async () => {
+			title.focus()
+			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		})
+		await waitForUi(() => expect(document.querySelector('[aria-label="Chart title"]')).toBeNull())
+		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+		expect(document.activeElement).toBe(trigger)
+	})
+
+	test('nested style editor asks before Escape discards an edited draft, and returns focus without saving', async () => {
 		const onLocalStyleSave = vi.fn()
 		const onParentClose = vi.fn()
 		await act(async () =>
@@ -422,18 +458,35 @@ describe('ChartRenderer', () => {
 			trigger.focus()
 			trigger.click()
 		})
-		const editor = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Edit chart: Protocol Revenue"]')!
-		await waitForUi(() => expect(editor.contains(document.activeElement)).toBe(true))
-		const title = editor.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		const styleEditor = () =>
+			[...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((dialog) =>
+				dialog.querySelector('[aria-label="Chart title"]')
+			)
+		await waitForUi(() => expect(styleEditor()?.contains(document.activeElement)).toBe(true))
+		expect(styleEditor()!.querySelector('h2')?.textContent).toBe('Edit chart')
+		const title = styleEditor()!.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
 		await setInputValue(title, 'Discard this title')
-		await act(async () => {
-			title.focus()
-			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
-		})
+		const escape = async () =>
+			act(async () => {
+				title.focus()
+				title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+			})
+		const confirmButton = (name: string) =>
+			[...(document.querySelector('[role="alertdialog"]')?.querySelectorAll<HTMLButtonElement>('button') ?? [])].find(
+				(button) => button.textContent === name
+			)
+		await escape()
+		await waitForUi(() => expect(confirmButton('Keep editing')).toBeDefined())
+		await act(async () => confirmButton('Keep editing')!.click())
+		await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+		expect(title.value).toBe('Discard this title')
+		await escape()
+		await waitForUi(() => expect(confirmButton('Discard')).toBeDefined())
+		await act(async () => confirmButton('Discard')!.click())
 		await waitForUi(() => expect(document.activeElement).toBe(trigger))
 		expect(onParentClose).not.toHaveBeenCalled()
 		expect(document.querySelector('[aria-label="Article editor"]')).not.toBeNull()
-		expect(document.querySelector('[aria-label="Edit chart: Protocol Revenue"]')).toBeNull()
+		expect(styleEditor()).toBeUndefined()
 		expect(onLocalStyleSave).not.toHaveBeenCalled()
 		await act(async () => trigger.click())
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!.value).toBe('Protocol Revenue')

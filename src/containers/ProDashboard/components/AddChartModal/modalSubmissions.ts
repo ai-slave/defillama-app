@@ -40,6 +40,7 @@ export function buildDatasetTableSelections(
 	previous: DatasetTableConfig | null
 ): Array<NewDatasetTableSelection> {
 	switch (state.selectedTableType) {
+		case null:
 		case 'protocols':
 			return []
 		case 'cex':

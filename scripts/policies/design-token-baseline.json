@@ -16,6 +16,8 @@
 		"implicit-border-color": 2,
 		"deprecated-tailwind-spelling": 0,
 		"raw-popover-surface": 0,
+		"raw-dialog-surface": 1,
+		"arbitrary-dialog-width": 0,
 		"hand-rolled-spinner": 0,
 		"ascii-ellipsis": 141,
 		"raw-scope-note": 0,
@@ -31,12 +33,12 @@
 	"product": {
 		"hex-in-classname": 24,
 		"dark-hex-variant": 8,
-		"arbitrary-font-size": 562,
+		"arbitrary-font-size": 558,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
 		"product-token-leak": 0,
-		"builtin-palette-color": 165,
+		"builtin-palette-color": 156,
 		"arbitrary-color-function": 1,
 		"arbitrary-shadow": 0,
 		"product-utility-leak": 0,
@@ -44,9 +46,11 @@
 		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3,
 		"deprecated-tailwind-spelling": 0,
-		"raw-popover-surface": 45,
+		"raw-popover-surface": 44,
+		"raw-dialog-surface": 6,
+		"arbitrary-dialog-width": 0,
 		"hand-rolled-spinner": 20,
-		"ascii-ellipsis": 119,
+		"ascii-ellipsis": 117,
 		"raw-scope-note": 0,
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
@@ -55,6 +59,6 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 1199
+		"raw-type-pair": 1177
 	}
 }

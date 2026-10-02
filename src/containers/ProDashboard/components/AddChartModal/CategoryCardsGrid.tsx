@@ -79,7 +79,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 	const otherCards = CATEGORY_CARDS.slice(1)
 
 	return (
-		<div className="flex h-full flex-col p-4">
+		<div className="flex h-full flex-col">
 			<button
 				type="button"
 				onClick={() => onSelectCategory(heroCard.id)}
@@ -116,7 +116,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 				<span className="mb-2.5 block text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
 					Other datasets
 				</span>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 					{otherCards.map((card) => (
 						<button
 							type="button"

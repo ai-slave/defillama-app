@@ -42,7 +42,7 @@ type ModalAction =
 	| { type: 'SET_CHART_CREATION_MODE'; payload: 'separate' | 'combined' }
 	| { type: 'SET_TEXT_TITLE'; payload: string }
 	| { type: 'SET_TEXT_CONTENT'; payload: string }
-	| { type: 'SET_SELECTED_TABLE_TYPE'; payload: CombinedTableType }
+	| { type: 'SET_SELECTED_TABLE_TYPE'; payload: CombinedTableType | null }
 	| { type: 'SET_SELECTED_DATASET_CHAIN'; payload: string | null }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_VIEW'; payload: ModalState['selectedCexAnalyticsView'] }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_METRIC'; payload: ModalState['selectedCexAnalyticsMetric'] }
@@ -206,7 +206,7 @@ const INITIAL_MODAL_STATE: ModalState = {
 	chartCreationMode: 'combined',
 	textTitle: '',
 	textContent: '',
-	selectedTableType: 'protocols',
+	selectedTableType: null,
 	selectedDatasetChain: null,
 	selectedCexAnalyticsView: 'starter',
 	selectedCexAnalyticsMetric: 'derivatives',
@@ -596,6 +596,29 @@ function clearItemBinding(state: ModalState, field: DashboardBindableField): Mod
 	const bindings: DashboardItemBindings = { ...state.bindings }
 	delete bindings[field]
 	return { ...state, bindings }
+}
+
+// Moving between tabs, chart modes and categories, and the chart types a category seeds on entry, change these fields
+// without the reader entering anything. A picked table type is not here: the protocols table keeps its edits in its
+// own provider, so picking it is the work this state can see.
+const NAVIGATION_FIELDS = new Set<keyof ModalState>([
+	'selectedMainTab',
+	'selectedChartTab',
+	'chartMode',
+	'manualFormOpen',
+	'selectedChartType',
+	'selectedChartTypes'
+])
+
+/** Whether leaving would lose something the reader entered since the dialog opened, in any tab. */
+export function hasDraftChanges(state: ModalState, opened: ModalState): boolean {
+	let key: keyof ModalState
+	for (key in state) {
+		if (NAVIGATION_FIELDS.has(key) || state[key] === opened[key]) continue
+		// Reducers rebuild arrays and objects, so compare what they hold.
+		if (JSON.stringify(state[key]) !== JSON.stringify(opened[key])) return true
+	}
+	return false
 }
 
 export function modalReducer(state: ModalState, action: ModalAction): ModalState {

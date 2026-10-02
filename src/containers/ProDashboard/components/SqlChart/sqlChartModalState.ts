@@ -15,6 +15,8 @@ export type SqlChartModalState = {
 	resultSql: string
 	ranFresh: boolean
 	chartConfig: ChartConfig | undefined
+	// The reader changed the chart setup. A run adapts the setup to new columns on its own, which is not an edit.
+	chartEdited: boolean
 	durationMs: number | null
 	queryError: string | null
 	// One run at a time owns the editor: a plain Run, a sidebar action, or Save's own run.
@@ -43,6 +45,7 @@ export function initialSqlChartModalState(editItem: SqlChartConfig | null | unde
 		resultSql: editItem?.query.sql ?? '',
 		ranFresh: false,
 		chartConfig: editItem?.chart,
+		chartEdited: false,
 		durationMs: null,
 		queryError: null,
 		execution: null
@@ -74,8 +77,17 @@ export function sqlChartModalReducer(state: SqlChartModalState, event: SqlChartM
 		case 'sourceLoadStarted':
 			return { ...state, queryError: null }
 		case 'chartConfigChanged':
-			return { ...state, chartConfig: event.chartConfig }
+			return { ...state, chartConfig: event.chartConfig, chartEdited: true }
 	}
+}
+
+/** What leaving would lose and what a refusal describes: the query, name and card settings, and the chart setup once
+    the reader changed it. */
+export function sqlDraftSnapshot(
+	state: SqlChartModalState,
+	draft: { sql: string; name: string; rowCap: number; displayMode: 'chart' | 'table' }
+): string {
+	return JSON.stringify({ ...draft, chart: state.chartEdited ? state.chartConfig : null })
 }
 
 /**
@@ -182,6 +194,17 @@ export function sqlChartModalControls(
 				? 'Running query before saving. Stop query keeps your draft; Cancel closes the editor.'
 				: running
 					? (stage ?? 'Running query…')
-					: ''
+					: // An idle Save that cannot run says why, in the row it sits in.
+						!hasSql
+						? editing
+							? 'Write a query to save the chart.'
+							: 'Write a query to add the chart.'
+						: schemaLoading
+							? 'Loading tables…'
+							: needsRun && engine === 'error'
+								? 'The SQL engine failed to load.'
+								: needsRun && engineUnavailable
+									? 'Waiting for the SQL engine to load…'
+									: ''
 	}
 }

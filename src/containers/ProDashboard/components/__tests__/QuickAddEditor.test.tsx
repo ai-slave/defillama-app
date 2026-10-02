@@ -86,7 +86,10 @@ async function openPalette() {
 						catalog={{
 							protocols: [{ id: 'uniswap', name: 'Uniswap', slug: 'uniswap', tvl: 1, chains: [], symbol: 'UNI' }]
 						}}
-						editorActions={{ handleAppendItems: () => ['text-new'], handleEditItem: () => true }}
+						editorActions={{
+							handleAppendItems: () => ({ status: 'saved', ids: ['text-new'] }),
+							handleEditItem: () => ({ status: 'saved', ids: [] })
+						}}
 					>
 						<Harness />
 					</DashboardTestProvider>

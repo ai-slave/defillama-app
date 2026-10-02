@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useState } from 'react'
+import { useDeferredValue, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 
 interface SavedChart {
@@ -28,9 +30,10 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	const queryClient = useQueryClient()
 	const [searchQuery, setSearchQuery] = useState('')
 	const deferredSearchQuery = useDeferredValue(searchQuery)
-	const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<SavedChart | null>(null)
+	const searchRef = useRef<HTMLInputElement>(null)
 
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['pro-dashboard', 'saved-charts-list', user?.id],
 		queryFn: async () => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`)
@@ -50,16 +53,12 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 		onSuccess: (_, chartId) => {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'saved-charts-list'] })
 			if (selectedChart?.id === chartId) onChartSelect(null)
-			setDeleteConfirmId(null)
+			setDeleteTarget(null)
 		}
 	})
 
 	if (!user) {
-		return (
-			<div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-center">
-				<p className="text-sm text-pro-text-secondary">Sign in to access your saved LlamaAI charts</p>
-			</div>
-		)
+		return <SurfaceBodyStatus variant="empty">Sign in to access your saved LlamaAI charts</SurfaceBodyStatus>
 	}
 
 	if (!hasActiveSubscription) {
@@ -70,137 +69,116 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 		)
 	}
 
-	if (isLoading) {
-		return (
-			<div className="flex min-h-[300px] items-center justify-center text-pro-text-tertiary">
-				<LoadingSpinner size={24} />
-			</div>
-		)
-	}
+	if (isLoading) return <SurfaceBodyLoadingStatus label="Loading saved charts" />
 
 	if (error) {
 		return (
-			<div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
-				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-				<p className="text-sm text-pro-text-secondary">Failed to load saved charts</p>
-			</div>
+			<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
+				The saved charts could not load.
+				<Button size="sm" onClick={() => void refetch()}>
+					Try again
+				</Button>
+			</SurfaceBodyStatus>
+		)
+	}
+
+	if (!data?.length) {
+		return (
+			<SurfaceBodyStatus variant="empty">
+				No saved charts yet. Save a chart from LlamaAI to add it to your dashboard.
+			</SurfaceBodyStatus>
 		)
 	}
 
 	const filteredCharts = deferredSearchQuery
-		? matchSorter(data ?? [], deferredSearchQuery, {
+		? matchSorter(data, deferredSearchQuery, {
 				keys: ['title', 'original_query', 'description'],
 				threshold: matchSorter.rankings.CONTAINS
 			})
 		: data
 
-	if (!data?.length) {
-		return (
-			<div className="flex min-h-[300px] flex-col items-center justify-center gap-3 text-center">
-				<div>
-					<p className="font-medium text-pro-text-primary">No saved charts yet</p>
-					<p className="mt-1 text-sm text-pro-text-tertiary">Save charts from LlamaAI to add them to your dashboard</p>
-				</div>
-			</div>
-		)
-	}
-
 	return (
-		<div className="space-y-4">
-			<div>
-				<input
-					type="text"
-					placeholder="Search saved charts..."
-					onInput={(e) => setSearchQuery(e.currentTarget.value)}
-					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
-				/>
-			</div>
+		<div className="flex flex-col gap-4">
+			<input
+				ref={searchRef}
+				type="search"
+				aria-label="Search saved charts"
+				placeholder="Search saved charts…"
+				onInput={(e) => setSearchQuery(e.currentTarget.value)}
+				className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+			/>
 
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-				{filteredCharts?.map((chart) => (
-					<button
-						type="button"
-						key={chart.id}
-						onClick={() => onChartSelect(selectedChart?.id === chart.id ? null : chart)}
-						className={`group flex flex-col gap-2 rounded-lg border p-3 text-left transition-all ${
-							selectedChart?.id === chart.id
-								? 'border-brand bg-brand/5'
-								: 'border-pro-cards-border hover:border-brand/50'
-						}`}
-					>
-						<div className="flex items-start justify-between gap-2">
-							<h4 className="line-clamp-1 font-medium text-pro-text-primary">{chart.title}</h4>
-							<div className="flex shrink-0 items-center gap-1">
-								{selectedChart?.id === chart.id ? (
-									<Icon name="check" height={16} width={16} className="text-brand" />
-								) : null}
+				{filteredCharts.map((chart) => {
+					const selected = selectedChart?.id === chart.id
+					return (
+						<div
+							key={chart.id}
+							className={`relative flex flex-col gap-2 rounded-lg border p-3 transition-colors ${
+								selected ? 'border-brand bg-brand/5' : 'border-pro-cards-border hover:border-brand/50'
+							}`}
+						>
+							<div className="flex items-start gap-2">
+								{/* The select button covers the card; delete and the chat link sit above it. */}
 								<button
 									type="button"
-									onClick={(e) => {
-										e.stopPropagation()
-										setDeleteConfirmId(chart.id)
-									}}
-									className="rounded-sm p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10"
+									aria-pressed={selected}
+									onClick={() => onChartSelect(selected ? null : chart)}
+									className="line-clamp-1 min-w-0 flex-1 text-left font-medium text-pro-text-primary after:absolute after:inset-0 after:rounded-lg"
 								>
-									<Icon name="x" height={14} width={14} className="text-pro-text-tertiary" />
+									{chart.title}
 								</button>
+								{selected ? <Icon name="check" height={16} width={16} className="shrink-0 text-brand" /> : null}
+								<Button
+									variant="ghost"
+									size="sm"
+									square
+									aria-label={`Delete ${chart.title}`}
+									onClick={() => {
+										deleteMutation.reset()
+										setDeleteTarget(chart)
+									}}
+									className="relative"
+								>
+									<Icon name="trash-2" height={14} width={14} />
+								</Button>
 							</div>
+							<p className="line-clamp-2 text-xs text-pro-text-tertiary">{chart.original_query}</p>
+							{chart.session_id ? (
+								<a
+									href={`/ai/chat/${chart.session_id}`}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="relative self-start text-xs text-link hover:underline"
+								>
+									View chat →
+								</a>
+							) : null}
 						</div>
-						<p className="line-clamp-2 text-xs text-pro-text-tertiary">{chart.original_query}</p>
-						{chart.session_id ? (
-							<a
-								href={`/ai/chat/${chart.session_id}`}
-								target="_blank"
-								rel="noopener noreferrer"
-								onClick={(e) => e.stopPropagation()}
-								className="text-xs text-brand text-pro-text-tertiary hover:underline"
-							>
-								View chat →
-							</a>
-						) : null}
-					</button>
-				))}
+					)
+				})}
 			</div>
 
-			{filteredCharts?.length === 0 && searchQuery ? (
-				<p className="py-8 text-center text-sm text-pro-text-tertiary">No charts match your search</p>
+			{filteredCharts.length === 0 ? (
+				<p role="status" className="py-8 text-center body-sm text-tertiary">
+					No charts match your search
+				</p>
 			) : null}
 
-			{deleteConfirmId ? (
-				<div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-					role="presentation"
-					onClick={() => setDeleteConfirmId(null)}
-				>
-					<div
-						className="pro-card mx-4 w-full max-w-sm rounded-lg p-4"
-						role="presentation"
-						onClick={(e) => e.stopPropagation()}
-					>
-						<h3 className="font-medium text-pro-text-primary">Delete chart?</h3>
-						<p className="mt-2 text-sm text-pro-text-tertiary">
-							This will permanently delete the chart. Dashboards using it will show an error.
-						</p>
-						<div className="mt-4 flex justify-end gap-2">
-							<button
-								type="button"
-								onClick={() => setDeleteConfirmId(null)}
-								className="rounded-sm px-3 py-1.5 text-sm text-pro-text-secondary hover:bg-black/5 dark:hover:bg-white/5"
-							>
-								Cancel
-							</button>
-							<button
-								type="button"
-								onClick={() => deleteMutation.mutate(deleteConfirmId)}
-								disabled={deleteMutation.isPending}
-								className="rounded-sm bg-error px-3 py-1.5 text-sm text-on-brand hover:bg-red-600 disabled:opacity-50"
-							>
-								{deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-							</button>
-						</div>
-					</div>
-				</div>
-			) : null}
+			<ConfirmDialog
+				open={deleteTarget !== null}
+				onClose={() => setDeleteTarget(null)}
+				portal
+				unmountOnHide
+				// The deleted card's button is gone, so a finished delete returns focus to the search field.
+				finalFocus={deleteMutation.isSuccess ? searchRef : undefined}
+				title="Delete chart?"
+				description="The chart is deleted from LlamaAI. Dashboards that use it show an error instead."
+				confirmLabel="Delete"
+				pendingLabel={deleteMutation.isPending ? 'Deleting…' : null}
+				error={deleteMutation.isError ? 'The chart could not be deleted. Try again.' : null}
+				onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+			/>
 		</div>
 	)
 }

@@ -45,6 +45,19 @@ export type AutoSaveOverrides = {
 
 export type DashboardItemPlacement = { afterItemId: string } | { beforeItemId: string }
 
+export const DASHBOARD_NOT_READY_MESSAGE = 'The dashboard is still loading. Try again in a moment.'
+
+/** What an add or edit did. A refusal says why, so the caller can show it where the reader acted: inline while a
+    dialog is open, a toast from a page action. */
+export type DashboardWriteResult = { status: 'saved'; ids: Array<string> } | { status: 'refused'; reason: string }
+
+const NOT_READY: DashboardWriteResult = { status: 'refused', reason: DASHBOARD_NOT_READY_MESSAGE }
+
+/** For a write started from the page itself: with no dialog to explain a refusal in, it toasts. */
+export function toastRefusal(result: DashboardWriteResult) {
+	if (result.status === 'refused') toast.error(result.reason, { id: 'dashboard-write-refused' })
+}
+
 export function buildDefaultUnifiedTableConfig(configOverrides?: Partial<UnifiedTableConfig>): UnifiedTableConfig {
 	const resolvedSorting =
 		configOverrides?.defaultSorting && configOverrides.defaultSorting.length > 0
@@ -135,17 +148,16 @@ export function useDashboardActions(
 		hasHydratedRef.current = true
 	}, [items, variables, annotations, aiUndoState, history])
 
-	const fitsDashboardSizeLimit = useCallback((candidateItems: Array<DashboardItemConfig>) => {
-		const error = getDashboardSizeLimitError({
-			items: candidateItems,
-			variables: variablesRef.current,
-			annotations: annotationsRef.current,
-			aiUndoState: aiUndoStateRef.current
-		})
-		if (!error) return true
-		toast.error(error)
-		return false
-	}, [])
+	const dashboardSizeLimitError = useCallback(
+		(candidateItems: Array<DashboardItemConfig>) =>
+			getDashboardSizeLimitError({
+				items: candidateItems,
+				variables: variablesRef.current,
+				annotations: annotationsRef.current,
+				aiUndoState: aiUndoStateRef.current
+			}),
+		[]
+	)
 
 	const dispatchItemsAndSave = useCallback(
 		(updater: SetStateAction<Array<DashboardItemConfig>>) => {
@@ -225,9 +237,9 @@ export function useDashboardActions(
 	const redo = useCallback(() => stepHistoryAndSave('redo'), [stepHistoryAndSave])
 
 	const handleAppendItems = useCallback(
-		(createItems: DashboardItemsFactory, placement?: DashboardItemPlacement): false | Array<string> => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return false
-			let rejectedBySizeLimit = false
+		(createItems: DashboardItemsFactory, placement?: DashboardItemPlacement): DashboardWriteResult => {
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return NOT_READY
+			let sizeLimitError: string | null = null
 			let appendedIds: Array<string> = []
 			dispatchItemsAndSave((existingItems) => {
 				const newItems = createItems(existingItems)
@@ -237,28 +249,33 @@ export function useDashboardActions(
 					: 'afterItemId' in placement
 						? insertItemsAfter(existingItems, placement.afterItemId, newItems)
 						: insertItemsBefore(existingItems, placement.beforeItemId, newItems)
-				if (fitsDashboardSizeLimit(nextItems)) {
-					const existingIds = new Set(existingItems.map((item) => item.id))
-					appendedIds = nextItems.filter((item) => !existingIds.has(item.id)).map((item) => item.id)
-					return nextItems
-				}
-				rejectedBySizeLimit = true
-				return existingItems
+				sizeLimitError = dashboardSizeLimitError(nextItems)
+				if (sizeLimitError) return existingItems
+				const existingIds = new Set(existingItems.map((item) => item.id))
+				appendedIds = nextItems.filter((item) => !existingIds.has(item.id)).map((item) => item.id)
+				return nextItems
 			})
-			return rejectedBySizeLimit ? false : appendedIds
+			return sizeLimitError ? { status: 'refused', reason: sizeLimitError } : { status: 'saved', ids: appendedIds }
 		},
-		[dispatchItemsAndSave, fitsDashboardSizeLimit, isReadOnlyUntilDashboardLoaded, requestedTabId]
+		[dispatchItemsAndSave, dashboardSizeLimitError, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
 	const handleAddUnifiedTable = useCallback(
-		(configOverrides?: Partial<UnifiedTableConfig>) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+		(configOverrides?: Partial<UnifiedTableConfig>): DashboardWriteResult => {
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return NOT_READY
 
 			const newUnifiedTable = buildDefaultUnifiedTableConfig(configOverrides)
-
-			dispatchItemsAndSave((prev) => appendItemsToTab(prev, [newUnifiedTable], requestedTabId))
+			let sizeLimitError: string | null = null
+			dispatchItemsAndSave((prev) => {
+				const nextItems = appendItemsToTab(prev, [newUnifiedTable], requestedTabId)
+				sizeLimitError = dashboardSizeLimitError(nextItems)
+				return sizeLimitError ? prev : nextItems
+			})
+			return sizeLimitError
+				? { status: 'refused', reason: sizeLimitError }
+				: { status: 'saved', ids: [newUnifiedTable.id] }
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded, requestedTabId]
+		[dispatchItemsAndSave, dashboardSizeLimitError, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
 	const handleDuplicateChartBuilder = useCallback(
@@ -318,21 +335,20 @@ export function useDashboardActions(
 	)
 
 	const handleEditItem = useCallback(
-		(itemId: string, newItem: DashboardItemConfig) => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return false
+		(itemId: string, newItem: DashboardItemConfig): DashboardWriteResult => {
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return NOT_READY
 
 			const boundedItem =
 				newItem.kind === 'multi' ? { ...newItem, items: limitMultiChartItems(newItem.items) } : newItem
-			let rejectedBySizeLimit = false
+			let sizeLimitError: string | null = null
 			dispatchItemsAndSave((prev) => {
 				const nextItems = prev.map((item) => (item.id === itemId ? boundedItem : item))
-				if (fitsDashboardSizeLimit(nextItems)) return nextItems
-				rejectedBySizeLimit = true
-				return prev
+				sizeLimitError = dashboardSizeLimitError(nextItems)
+				return sizeLimitError ? prev : nextItems
 			})
-			return !rejectedBySizeLimit
+			return sizeLimitError ? { status: 'refused', reason: sizeLimitError } : { status: 'saved', ids: [itemId] }
 		},
-		[dispatchItemsAndSave, fitsDashboardSizeLimit, isReadOnlyUntilDashboardLoaded]
+		[dispatchItemsAndSave, dashboardSizeLimitError, isReadOnlyUntilDashboardLoaded]
 	)
 
 	const handleRemoveItem = useCallback(
@@ -345,19 +361,22 @@ export function useDashboardActions(
 	)
 
 	const handleAddSqlChart = useCallback(
-		(config: SqlChartConfig, placement?: DashboardItemPlacement): false | string => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return false
+		(config: SqlChartConfig, placement?: DashboardItemPlacement): DashboardWriteResult => {
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return NOT_READY
 
-			dispatchItemsAndSave((prev) =>
-				!placement
+			let sizeLimitError: string | null = null
+			dispatchItemsAndSave((prev) => {
+				const nextItems = !placement
 					? appendItemsToTab(prev, [config], requestedTabId)
 					: 'afterItemId' in placement
 						? insertItemsAfter(prev, placement.afterItemId, [config])
 						: insertItemsBefore(prev, placement.beforeItemId, [config])
-			)
-			return config.id
+				sizeLimitError = dashboardSizeLimitError(nextItems)
+				return sizeLimitError ? prev : nextItems
+			})
+			return sizeLimitError ? { status: 'refused', reason: sizeLimitError } : { status: 'saved', ids: [config.id] }
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded, requestedTabId]
+		[dispatchItemsAndSave, dashboardSizeLimitError, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
 	const setTimePeriod = useCallback(

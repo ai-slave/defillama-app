@@ -83,7 +83,7 @@ import { DASHBOARD_CARD_HEIGHTS, type DashboardCardHeight, type SectionConfig, t
 import { ProMeta } from '../ui'
 import { proCardShellStyles } from '../ui/styles'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
-import type { DashboardItemPlacement } from '../useDashboardActions'
+import { type DashboardItemPlacement, type DashboardWriteResult, toastRefusal } from '../useDashboardActions'
 import { generateItemId } from '../utils/dashboardUtils'
 import { gridColumnSpan, itemColSpan, itemColSpanOptions, itemSpansFullRow } from './cardColSpan'
 import { CardHeightScaleContext } from './cardHeightContext'
@@ -245,7 +245,7 @@ type DashboardItemRendererProps = DashboardItemRendererBaseProps &
 	(
 		| {
 				isEditable: true
-				handleEditItem: (itemId: string, newItem: DashboardItemConfig) => void
+				handleEditItem: (itemId: string, newItem: DashboardItemConfig) => DashboardWriteResult
 		  }
 		| { isEditable: false; handleEditItem?: never }
 	)
@@ -403,7 +403,10 @@ export const DashboardItemRenderer = memo(function DashboardItemRenderer(props: 
 		return (
 			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" kind="dataset-table" />}>
 				{props.isEditable ? (
-					<DatasetTableCard config={item} onConfigChange={(config) => props.handleEditItem(item.id, config)} />
+					<DatasetTableCard
+						config={item}
+						onConfigChange={(config) => toastRefusal(props.handleEditItem(item.id, config))}
+					/>
 				) : (
 					<DatasetTableCard config={item} />
 				)}
@@ -461,7 +464,7 @@ const CardBody = memo(function CardBody({
 	canMoveUp: boolean
 	canMoveDown: boolean
 	onEditItem?: ((item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => void) | undefined
-	handleEditItem?: ((itemId: string, newItem: DashboardItemConfig) => void) | undefined
+	handleEditItem?: ((itemId: string, newItem: DashboardItemConfig) => DashboardWriteResult) | undefined
 	onColSpanChange?: ((itemId: string, colSpan: StoredColSpan) => void) | undefined
 	onHeightChange?: ((itemId: string, height: DashboardCardHeight) => void) | undefined
 	onMoveItem?: ((itemId: string, direction: -1 | 1) => void) | undefined

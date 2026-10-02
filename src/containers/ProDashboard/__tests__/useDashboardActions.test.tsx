@@ -5,9 +5,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { DashboardAction, DashboardState } from '../dashboardReducer'
-import type { CustomDataConfig, MultiChartConfig, SectionConfig, TextConfig } from '../types'
+import type { CustomDataConfig, MultiChartConfig, SectionConfig, SqlChartConfig, TextConfig } from '../types'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
-import { useDashboardActions } from '../useDashboardActions'
+import { type DashboardWriteResult, useDashboardActions } from '../useDashboardActions'
 
 const toast = vi.hoisted(() => ({ error: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toast }))
@@ -263,25 +263,26 @@ describe('useDashboardActions', () => {
 		expect(afterPlacement?.slice(2)).toEqual(['first', 'after-first', 'second'])
 	})
 
-	test('an edit before the dashboard is ready is reported back instead of silently dropped', async () => {
+	test('an add or edit before the dashboard is ready is refused with a reason', async () => {
 		const { actions, autoSave } = await renderActions(dashboardState(), null, true)
 
-		let appended: false | Array<string> | undefined
-		let edited: boolean | undefined
+		let appended: DashboardWriteResult | undefined
+		let edited: DashboardWriteResult | undefined
 		act(() => {
 			appended = actions.handleAppendItems(() => [{ id: 'added', kind: 'text', content: 'Added' }])
 			edited = actions.handleEditItem('first', { id: 'first', kind: 'text', content: 'Edited' })
 		})
-		expect(appended).toBe(false)
-		expect(edited).toBe(false)
+		const notReady = { status: 'refused', reason: 'The dashboard is still loading. Try again in a moment.' }
+		expect(appended).toEqual(notReady)
+		expect(edited).toEqual(notReady)
 		expect(autoSave).not.toHaveBeenCalled()
 	})
 
-	test('an applied append reports the ids it added and an applied edit reports success', async () => {
+	test('an applied append reports the ids it added and an applied edit reports the item it saved', async () => {
 		const { actions } = await renderActions()
 
-		let appended: false | Array<string> | undefined
-		let edited: boolean | undefined
+		let appended: DashboardWriteResult | undefined
+		let edited: DashboardWriteResult | undefined
 		act(() => {
 			appended = actions.handleAppendItems(() => [
 				{ id: 'added', kind: 'text', content: 'Added' },
@@ -289,18 +290,8 @@ describe('useDashboardActions', () => {
 			])
 			edited = actions.handleEditItem('first', { id: 'first', kind: 'text', content: 'Edited' })
 		})
-		expect(appended).toEqual(['added', 'added-too'])
-		expect(edited).toBe(true)
-	})
-
-	test('an append rejected by the size limit reports false instead of ids', async () => {
-		const { actions } = await renderActions()
-
-		let appended: false | Array<string> | undefined
-		act(() => {
-			appended = actions.handleAppendItems(() => [OVERSIZED_CUSTOM_DATA])
-		})
-		expect(appended).toBe(false)
+		expect(appended).toEqual({ status: 'saved', ids: ['added', 'added-too'] })
+		expect(edited).toEqual({ status: 'saved', ids: ['first'] })
 	})
 
 	test('a beforeItemId placement drops the new cards above the anchor instead of into the tab', async () => {
@@ -313,23 +304,38 @@ describe('useDashboardActions', () => {
 		expect(autoSave.mock.calls[0]?.[0].map((item) => item.id)).toEqual(['first', 'shared', 'tab-one', 'second'])
 	})
 
-	test('refuses to append or edit a widget that would push the document over the size limit', async () => {
+	test('every way of adding or editing a card refuses one that would push the document over the size limit', async () => {
 		const { actions, dispatch, autoSave } = await renderActions()
-
-		act(() => actions.handleAppendItems(() => [OVERSIZED_CUSTOM_DATA]))
+		const tooLarge = expect.objectContaining({
+			status: 'refused',
+			reason: expect.stringMatching(/^Dashboard is too large \(\d+ KB\)\. Remove rows or a card\.$/)
+		})
+		const oversizedSql = {
+			id: 'sql-big',
+			kind: 'sql',
+			name: OVERSIZED_CUSTOM_DATA.name,
+			chart: { chartType: 'line' },
+			query: { sql: `SELECT '${'x'.repeat(2_000_000)}'`, tableSources: [] }
+		} as unknown as SqlChartConfig
+		let results: Array<DashboardWriteResult> = []
+		act(() => {
+			results = [
+				actions.handleAppendItems(() => [OVERSIZED_CUSTOM_DATA]),
+				actions.handleEditItem('first', { ...OVERSIZED_CUSTOM_DATA, id: 'first' }),
+				actions.handleAddSqlChart(oversizedSql)
+			]
+		})
+		expect(results).toEqual([tooLarge, tooLarge, tooLarge])
 		expect(autoSave).not.toHaveBeenCalled()
 		expect(dispatch).not.toHaveBeenCalled()
-		expect(toast.error).toHaveBeenCalledOnce()
-		expect(toast.error.mock.calls[0]?.[0]).toMatch(/^Dashboard is too large \(\d+ KB\)\. Remove rows or a card\.$/)
+		// The caller says why where the reader acted (inline in a dialog, a toast from the page); the hook stays quiet.
+		expect(toast.error).not.toHaveBeenCalled()
 
-		act(() => actions.handleEditItem('first', { ...OVERSIZED_CUSTOM_DATA, id: 'first' }))
-		expect(autoSave).not.toHaveBeenCalled()
-		expect(dispatch).not.toHaveBeenCalled()
-		expect(toast.error).toHaveBeenCalledTimes(2)
-
-		act(() => actions.handleAppendItems(() => [{ id: 'third', kind: 'text', content: 'Small' }]))
+		act(() => {
+			results = [actions.handleAppendItems(() => [{ id: 'third', kind: 'text', content: 'Small' }])]
+		})
+		expect(results).toEqual([{ status: 'saved', ids: ['third'] }])
 		expect(autoSave).toHaveBeenCalledOnce()
-		expect(toast.error).toHaveBeenCalledTimes(2)
 	})
 
 	test('undo dispatches UNDO and autosaves the restored snapshot with its variables', async () => {

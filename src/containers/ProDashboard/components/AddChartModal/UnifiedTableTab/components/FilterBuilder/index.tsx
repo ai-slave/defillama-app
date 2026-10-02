@@ -683,7 +683,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	}
 
 	return (
-		<div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
+		<div className="grid grid-cols-1 gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
 			<div className="flex min-w-0 flex-col gap-2">
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">

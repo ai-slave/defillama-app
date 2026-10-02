@@ -97,7 +97,8 @@ export interface ModalState {
 	chartCreationMode: 'separate' | 'combined'
 	textTitle: string
 	textContent: string
-	selectedTableType: CombinedTableType
+	/** null until the reader picks a table type; the Table tab opens on the type selector. */
+	selectedTableType: CombinedTableType | null
 	selectedDatasetChain: string | null
 	selectedCexAnalyticsView: CexAnalyticsView | 'starter'
 	selectedCexAnalyticsMetric: CexAnalyticsMetric

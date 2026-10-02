@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import {
 	type Dispatch,
@@ -50,6 +49,7 @@ import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransf
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button, buttonStyles } from '~/ui/Button'
+import { Dialog, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -398,29 +398,23 @@ function ChartEditorSession({
 	}
 
 	return (
-		<>
-			<div className="flex h-[360px] min-h-[360px] shrink-0 items-center justify-center overflow-hidden px-5 lg:h-auto lg:min-h-0 lg:flex-1 lg:overflow-auto lg:p-5">
-				<div className="w-full">{previewContent}</div>
-			</div>
-			<div className="flex w-full shrink-0 flex-col border-t border-subtle bg-surface-elevated-1 lg:h-full lg:min-h-0 lg:w-[340px] lg:overflow-y-auto lg:border-t-0 lg:border-l">
-				<ChartStyleEditor
-					config={config}
-					original={original}
-					caps={previewControls}
-					categories={categories}
-					view={{
-						logScale: initialViewIntent.logScale,
-						stacked: initialViewIntent.stacked,
-						showLabels: initialViewIntent.showLabels,
-						percentage: initialViewIntent.percentage
-					}}
-					resetView={resetView}
-					onPreview={handlePreview}
-					onSave={onSave}
-					onCancel={onCancel}
-				/>
-			</div>
-		</>
+		<ChartStyleEditor
+			config={config}
+			original={original}
+			caps={previewControls}
+			categories={categories}
+			view={{
+				logScale: initialViewIntent.logScale,
+				stacked: initialViewIntent.stacked,
+				showLabels: initialViewIntent.showLabels,
+				percentage: initialViewIntent.percentage
+			}}
+			resetView={resetView}
+			onPreview={handlePreview}
+			onSave={onSave}
+			onCancel={onCancel}
+			preview={previewContent}
+		/>
 	)
 }
 
@@ -796,30 +790,11 @@ function ActiveSingleChart({
 
 function ChartEditorModal({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
 	return (
-		<Ariakit.Dialog
-			open
-			onClose={onClose}
-			aria-label={title ? `Edit chart: ${title}` : 'Edit chart'}
-			className="fixed inset-0 z-50 m-auto flex h-[85dvh] max-h-[560px] w-[calc(100%-2rem)] max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-dialog lg:flex-row lg:overflow-hidden dark:shadow-dialog-deep"
-		>
-			<div className="flex shrink-0 items-center justify-between border-b border-subtle px-4 py-2.5 lg:hidden">
-				<span className="truncate heading-xs text-primary">{title ?? 'Edit chart'}</span>
-				<Ariakit.DialogDismiss
-					render={<Button type="button" variant="ghost" size="md" square />}
-					aria-label="Close editor"
-				>
-					<Icon name="x" className="size-4" aria-hidden="true" />
-				</Ariakit.DialogDismiss>
-			</div>
-			<Ariakit.DialogDismiss
-				render={<Button type="button" variant="ghost" size="md" square />}
-				aria-label="Close editor"
-				className="absolute top-2.5 right-2.5 z-10 hidden lg:flex"
-			>
-				<Icon name="x" className="size-4" aria-hidden="true" />
-			</Ariakit.DialogDismiss>
+		// An outside tap never drops the draft; the editor asks before × or Escape discards edits.
+		<Dialog size="xl" open onClose={onClose} hideOnInteractOutside={false} portal unmountOnHide>
+			<DialogHeader title="Edit chart" subtitle={title} />
 			{children}
-		</Ariakit.Dialog>
+		</Dialog>
 	)
 }
 

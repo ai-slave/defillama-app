@@ -12,9 +12,10 @@ import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/unifi
 import type { UnifiedTableConfig, UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedTable/config/layoutPolicy'
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
+import { Button } from '~/ui/Button'
+import { DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
-import { ProButton } from '../../../ui'
 import { AriakitVirtualizedSelect } from '../../AriakitVirtualizedSelect'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
 import { EquitiesFilingsDataset } from '../../datasets/EquitiesDataset/EquitiesFilingsDataset'
@@ -51,12 +52,14 @@ const SubscribeProModal = lazy(() =>
 
 interface UnifiedTableTabProps {
 	onClose: () => void
+	/** Cancel asks first when the card has work to lose. */
+	onCancel: () => void
 	chainOptions: Array<{ label: string; value: string }>
 	editItem?: UnifiedTableConfig | null | undefined
 	initialFocusSection?: UnifiedTableFocusSection | undefined
 	focusedSectionOnly?: 'filters' | 'columns' | undefined
-	selectedTableType: CombinedTableType
-	onTableTypeChange: (type: CombinedTableType) => void
+	selectedTableType: CombinedTableType | null
+	onTableTypeChange: (type: CombinedTableType | null) => void
 	selectedChains: Array<string>
 	onChainsChange: (values: Array<string>) => void
 	selectedDatasetChain: string | null
@@ -218,6 +221,7 @@ const EQUITIES_TABS: Array<{ value: CombinedTableType; label: string }> = [
 
 function TabContent({
 	onClose,
+	onCancel,
 	chainOptions,
 	editItem,
 	initialFocusSection,
@@ -268,7 +272,6 @@ function TabContent({
 	const isEditingUnifiedTable = editItem?.kind === 'unified-table'
 	const isRwaType = RWA_TABLE_TYPES.has(selectedTableType)
 	const isEquitiesType = EQUITIES_TABLE_TYPES.has(selectedTableType)
-	const [showTypeSelector, setShowTypeSelector] = useState(!isEditing && selectedTableType === 'protocols')
 	const [showRwaSelector, setShowRwaSelector] = useState(isEditing && isRwaType)
 	const [showEquitiesSelector, setShowEquitiesSelector] = useState(isEditing && isEquitiesType)
 	const { options: equitiesTickerOptions, isLoading: equitiesTickerLoading } =
@@ -414,19 +417,18 @@ function TabContent({
 
 	const visibleColumnsCount = columnOrder.filter((id) => id !== 'name' && (columnVisibility[id] ?? true)).length
 
+	// A refused add or edit keeps the tab open and says why, for as long as the draft is the one that was refused.
+	const [refusal, setRefusal] = useState<{ draft: typeof draftConfig; reason: string } | null>(null)
+	const refusalReason = refusal?.draft === draftConfig ? refusal.reason : null
+
 	const handleAdd = () => {
 		const boundVariableId = chainParameter.boundVariable?.id ?? null
-		if (editItem) {
-			const updatedConfig: UnifiedTableConfig = applyUnifiedTableBinding(
-				{
-					...editItem,
-					...draftConfig
-				},
-				boundVariableId
-			)
-			handleEditItem(editItem.id, updatedConfig)
-		} else {
-			handleAddUnifiedTable(applyUnifiedTableBinding(draftConfig, boundVariableId))
+		const written = editItem
+			? handleEditItem(editItem.id, applyUnifiedTableBinding({ ...editItem, ...draftConfig }, boundVariableId))
+			: handleAddUnifiedTable(applyUnifiedTableBinding(draftConfig, boundVariableId))
+		if (written.status === 'refused') {
+			setRefusal({ draft: draftConfig, reason: written.reason })
+			return
 		}
 		onClose()
 	}
@@ -653,7 +655,6 @@ function TabContent({
 			return
 		}
 		onTableTypeChange(type)
-		setShowTypeSelector(false)
 		setShowRwaSelector(false)
 		setShowEquitiesSelector(false)
 	}
@@ -672,17 +673,17 @@ function TabContent({
 		}
 	}
 
-	const handleBackToTypeSelector = useCallback(() => {
-		setShowTypeSelector(true)
+	const handleBackToTypeSelector = () => {
+		onTableTypeChange(null)
 		setShowRwaSelector(false)
 		setShowEquitiesSelector(false)
-	}, [])
+	}
 
 	if (showRwaSelector) {
 		const activeRwaTab = RWA_TABLE_TYPES.has(selectedTableType) ? selectedTableType : 'rwa-chains'
 
 		return (
-			<div className="flex h-full flex-col gap-4 p-4">
+			<div className="flex h-full flex-col gap-4">
 				<button
 					type="button"
 					onClick={handleBackToTypeSelector}
@@ -743,7 +744,7 @@ function TabContent({
 		const needsTicker = activeEquitiesTab === 'equities-financials' || activeEquitiesTab === 'equities-filings'
 
 		return (
-			<div className="flex h-full flex-col gap-4 p-4">
+			<div className="flex h-full flex-col gap-4">
 				<button
 					type="button"
 					onClick={handleBackToTypeSelector}
@@ -799,13 +800,13 @@ function TabContent({
 		)
 	}
 
-	if (showTypeSelector) {
+	if (selectedTableType === null) {
 		const heroCard = TABLE_TYPE_CARDS[0]
 		const otherCards = TABLE_TYPE_CARDS.slice(1)
 		if (!heroCard) throw new Error('The table type catalog must define a primary card')
 
 		return (
-			<div className="flex h-full flex-col p-4">
+			<div className="flex h-full flex-col">
 				<button
 					type="button"
 					onClick={() => handleSelectTableType(heroCard.value)}
@@ -842,7 +843,7 @@ function TabContent({
 					<span className="mb-2.5 block text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
 						Other datasets
 					</span>
-					<div className="grid grid-cols-2 gap-2">
+					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 						{otherCards.map((card) => {
 							const isProLocked =
 								(card.value === 'token-usage' || card.value === 'rwa' || card.value === 'equities') &&
@@ -863,11 +864,9 @@ function TabContent({
 										if (isRwa) {
 											onTableTypeChange('rwa-chains')
 											setShowRwaSelector(true)
-											setShowTypeSelector(false)
 										} else if (isEquities) {
 											onTableTypeChange('equities')
 											setShowEquitiesSelector(true)
-											setShowTypeSelector(false)
 										} else {
 											handleSelectTableType(card.value)
 										}
@@ -931,73 +930,81 @@ function TabContent({
 		)
 	}
 
+	// The shell leaves this view unpadded: the sections scroll between the tab row and the dialog footer.
 	return (
-		<div className="flex flex-col">
-			<header className="flex shrink-0 flex-col gap-1 pb-3">
-				{!isEditingUnifiedTable ? (
-					<button
-						type="button"
-						onClick={() => setShowTypeSelector(true)}
-						className="mb-2 flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-					>
-						<span>←</span>
-						<span>Back to table type selection</span>
-					</button>
-				) : null}
-			</header>
+		<>
+			<div className="flex min-h-0 flex-1 flex-col px-4 pt-4">
+				<header className="flex shrink-0 flex-col gap-1 pb-3">
+					{!isEditingUnifiedTable ? (
+						<button
+							type="button"
+							onClick={handleBackToTypeSelector}
+							className="mb-2 flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
+						>
+							<span>←</span>
+							<span>Back to table type selection</span>
+						</button>
+					) : null}
+				</header>
 
-			{availableTabs.length > 0 ? (
-				<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-pro-cards-border p-1 shadow-sm">
-					{availableTabs.map((tab) => {
-						const isActive = tab.key === effectiveActiveTab
-						return (
-							<button
-								key={tab.key}
-								type="button"
-								onClick={() => setActiveTab(tab.key)}
-								className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-									isActive
-										? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
-										: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
-								}`}
-							>
-								<span className="truncate" title={tab.label}>
-									{tab.label}
-								</span>
-								{tab.badge ? (
-									<span
-										className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-xs font-medium ${
-											isActive ? 'bg-brand/20 text-brand' : 'bg-pro-cards-border text-pro-text-tertiary'
-										}`}
-										title={tab.badge?.toString()}
-									>
-										{tab.badge}
+				{availableTabs.length > 0 ? (
+					<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-pro-cards-border p-1 shadow-sm">
+						{availableTabs.map((tab) => {
+							const isActive = tab.key === effectiveActiveTab
+							return (
+								<button
+									key={tab.key}
+									type="button"
+									onClick={() => setActiveTab(tab.key)}
+									className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+										isActive
+											? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
+											: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
+									}`}
+								>
+									<span className="truncate" title={tab.label}>
+										{tab.label}
 									</span>
-								) : null}
-							</button>
-						)
-					})}
+									{tab.badge ? (
+										<span
+											className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-xs font-medium ${
+												isActive ? 'bg-brand/20 text-brand' : 'bg-pro-cards-border text-pro-text-tertiary'
+											}`}
+											title={tab.badge?.toString()}
+										>
+											{tab.badge}
+										</span>
+									) : null}
+								</button>
+							)
+						})}
+					</div>
+				) : null}
+
+				<div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4" data-unified-table-scroll="true">
+					<div className="flex h-full flex-col gap-3">{tabContent[effectiveActiveTab]}</div>
 				</div>
-			) : null}
+			</div>
 
-			<div
-				className="flex-1 overflow-y-auto pr-1"
-				style={{ height: 'clamp(420px, 65vh, 720px)' }}
-				data-unified-table-scroll="true"
+			<DialogFooter
+				leading={
+					refusalReason ? (
+						<p role="alert" className="text-xs text-error">
+							{refusalReason}
+						</p>
+					) : null
+				}
+				dismiss={
+					<Button size="md" onClick={onCancel}>
+						Cancel
+					</Button>
+				}
 			>
-				<div className="flex h-full flex-col gap-3">{tabContent[effectiveActiveTab]}</div>
-			</div>
-
-			<div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-pro-cards-border bg-pro-cards-bg pt-3 pb-2 shadow-top-edge">
-				<ProButton type="button" onClick={onClose} variant="secondary">
-					Cancel
-				</ProButton>
-				<ProButton type="button" onClick={handleAdd} variant="primary">
+				<Button variant="primary" size="md" onClick={handleAdd}>
 					{isEditing ? 'Save changes' : 'Add card'}
-					<Icon name={isEditing ? 'check' : 'plus'} height={14} width={14} />
-				</ProButton>
-			</div>
-		</div>
+				</Button>
+			</DialogFooter>
+		</>
 	)
 }
 

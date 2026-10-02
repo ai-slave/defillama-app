@@ -810,7 +810,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 			<div className="relative flex-1">
 				<div className="pointer-events-none absolute inset-0 flex flex-col-reverse justify-between">
 					{ticks.map((t, i) => (
-						<div key={t} className={`border-t ${i === 0 ? 'border-subtle' : 'border-subtle/40 border-dashed'}`} />
+						<div key={t} className={`border-t ${i === 0 ? 'border-subtle' : 'border-dashed border-subtle'}`} />
 					))}
 				</div>
 

@@ -25,7 +25,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 
 	return (
 		<div className="flex size-full flex-col gap-2 overflow-y-auto p-2">
-			<div className="grid grid-cols-2 gap-2">
+			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 				{visibleItems.map((item, index) => {
 					const grouping = getMultiChartGrouping([item], item.grouping) ?? 'day'
 					const subject =

@@ -458,7 +458,7 @@ export function YieldsChartTab({
 				</div>
 			) : (
 				<div className="flex flex-col gap-4">
-					<div className="grid grid-cols-5 gap-2">
+					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
 						<div className="flex flex-col">
 							<span className="mb-1 block text-xs font-medium text-pro-text-secondary">Chains</span>
 							<PopoverDisclosure
@@ -816,8 +816,8 @@ export function YieldsChartTab({
 
 					{selectedYieldPool && !showPoolPicker ? (
 						<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-							<div className="flex items-center justify-between px-3 py-2.5">
-								<div className="flex items-center gap-3">
+							<div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+								<div className="flex min-w-0 items-center gap-3">
 									{selectedPoolData ? (
 										<img
 											src={getItemIconUrl('protocol', null, selectedPoolData.project)}
@@ -829,7 +829,7 @@ export function YieldsChartTab({
 									) : null}
 									<div className="min-w-0">
 										<p className="text-sm font-semibold text-pro-text-primary">{selectedYieldPool.name}</p>
-										<div className="flex items-center gap-2 text-xs text-pro-text-tertiary">
+										<div className="flex flex-wrap items-center gap-x-2 text-xs text-pro-text-tertiary">
 											<span>{selectedYieldPool.project}</span>
 											<span>•</span>
 											<span>{selectedYieldPool.chain}</span>
@@ -899,7 +899,8 @@ export function YieldsChartTab({
 												})
 											}
 											placeholder="Search pools..."
-											className="w-48 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+											aria-label="Search pools"
+											className="w-36 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
 										/>
 									</div>
 									<span className="text-xs text-pro-text-tertiary">
@@ -918,7 +919,7 @@ export function YieldsChartTab({
 								) : null}
 							</div>
 
-							<div className="grid grid-cols-[1fr_100px_100px_80px] gap-2 border-b border-pro-cards-border px-3 py-2 text-xs font-medium">
+							<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-pro-cards-border px-3 py-2 text-xs font-medium sm:grid-cols-[1fr_100px_100px_80px]">
 								<p className="text-pro-text-tertiary">Pool</p>
 								<button
 									type="button"
@@ -950,7 +951,7 @@ export function YieldsChartTab({
 										className={sortColumn === 'apy' ? 'opacity-100' : 'opacity-30'}
 									/>
 								</button>
-								<p className="text-right text-pro-text-tertiary">Category</p>
+								<p className="text-right text-pro-text-tertiary max-sm:hidden">Category</p>
 							</div>
 
 							<div ref={poolListRef} className="h-[240px] overflow-y-auto">
@@ -986,7 +987,7 @@ export function YieldsChartTab({
 															value: false
 														})
 													}}
-													className={`grid w-full grid-cols-[1fr_100px_100px_80px] items-center gap-2 px-3 py-2 text-left text-xs transition-all ${
+													className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left text-xs transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
 														isSelected ? 'bg-brand/10' : ''
 													}`}
 													style={{
@@ -1051,7 +1052,7 @@ export function YieldsChartTab({
 														) : null}
 													</div>
 
-													<div className="text-right">
+													<div className="text-right max-sm:hidden">
 														{pool.category ? (
 															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 text-xs text-pro-text-tertiary">
 																{pool.category}

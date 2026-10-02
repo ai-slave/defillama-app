@@ -17,7 +17,9 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
-import { catchLostFocus, keepFocus } from '~/ui/focus'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
@@ -30,7 +32,6 @@ import { combineCsvsWide } from './combineCsvsWide'
 import { filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
-import { FormatSplitButton } from './FormatSplitButton'
 import { SavePresetDialog } from './PresetDialogs'
 import {
 	downloadPreviewHasTime,
@@ -40,6 +41,7 @@ import {
 	formatDownloadPreviewPercent,
 	parseDownloadPreviewDate
 } from './previewFormatting'
+import { PreviewHeaderActions } from './PreviewHeaderActions'
 import { createPreviewSearchIndex, filterPreviewRows } from './previewSearch'
 import {
 	applyChartColumnsAndSort,
@@ -213,6 +215,9 @@ export function ChartDatasetModal({
 	const dateRangeTriggerRef = useRef<HTMLButtonElement>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
+	// Phones show the table or the selected list, one at a time; from sm both sit side by side.
+	const [showSelected, setShowSelected] = useState(false)
+	const selectedToggleRef = useRef<HTMLButtonElement>(null)
 	const { outcome, report, confirmed } = useActionFeedback()
 	// Where focus goes when the control that had it leaves with the last selected item.
 	const paramPickerRef = useRef<HTMLButtonElement>(null)
@@ -525,6 +530,9 @@ export function ChartDatasetModal({
 	const hasData = !dataLoading && !dataError && headers.length > 0 && hasPreviewTarget
 	const hasSelection = isCategoryMode || selectedParams.length > 0
 	const isBulk = !isCategoryMode && selectedParams.length > 1
+	// The list exists only for two or more picks (the trigger names a single one), so dropping to one brings the
+	// table back.
+	const showingSelected = showSelected && isBulk
 
 	const readyCount = useMemo(() => csvQueries.filter((q) => !!q.data).length, [csvQueries])
 	const loadingCount = useMemo(() => csvQueries.filter((q) => q.isLoading).length, [csvQueries])
@@ -1108,6 +1116,11 @@ export function ChartDatasetModal({
 
 	const showTopBarActions = hasSelection && (isBulk || hasData)
 
+	const handleSubscribeClick = () => {
+		setSignupSource('downloads')
+		subscribeModalStore.show()
+	}
+
 	return (
 		<>
 			<Ariakit.DialogProvider
@@ -1116,125 +1129,44 @@ export function ChartDatasetModal({
 					if (!open) onClose()
 				}}
 			>
-				<Ariakit.Dialog
-					ref={catchLostFocus}
-					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
+				{/* Opens on the first picker, the field the preview waits on. */}
+				<Dialog
+					size="xl"
 					portal
 					unmountOnHide
+					initialFocus={protocolCategories.length > 0 ? categoryPickerRef : paramPickerRef}
 				>
-					<div className="flex shrink-0 flex-col border-b border-subtle">
-						<div className="flex items-center gap-3 px-4 py-2.5">
-							<div className="mr-auto min-w-0">
-								<Ariakit.DialogHeading render={<h2>{dataset.name}</h2>} className="truncate heading-xs" />
-								<p className="text-xs text-pro-text-tertiary">{headerSubtitle}</p>
-							</div>
+					<DialogHeader
+						title={dataset.name}
+						subtitle={headerSubtitle}
+						actions={
+							showTopBarActions ? (
+								isPreview ? (
+									<PreviewHeaderActions
+										mode="preview"
+										confirmed={confirmed}
+										downloadLabel={downloadLabel}
+										copy={!isBulk && hasData ? { run: handleSubscribeClick, disabled: false } : null}
+										onSubscribe={handleSubscribeClick}
+									/>
+								) : (
+									<PreviewHeaderActions
+										mode="full"
+										confirmed={confirmed}
+										downloadLabel={downloadLabel}
+										copy={!isBulk && hasData ? { run: () => void handleCopy(), disabled: selectedCount === 0 } : null}
+										savePreset={{ run: () => setShowSaveDialog(true), disabled: !hasSelection }}
+										copyLink={{ run: () => void handleCopyLink(), disabled: !currentConfig }}
+										onDownload={handleDownload}
+										downloadDisabled={topBarDownloadDisabled}
+									/>
+								)
+							) : null
+						}
+					/>
 
-							{showTopBarActions ? (
-								<>
-									{!isBulk && hasData ? (
-										<button
-											type="button"
-											onClick={() =>
-												isPreview ? (setSignupSource('downloads'), subscribeModalStore.show()) : void handleCopy()
-											}
-											disabled={!isPreview && selectedCount === 0}
-											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
-											title="Copy selected columns as TSV"
-										>
-											<ConfirmableContent
-												confirmed={confirmed('copy')}
-												idle={
-													<>
-														<Icon name="clipboard" className="size-3.5" />
-														<span className="hidden lg:inline">Copy</span>
-													</>
-												}
-												done={
-													<>
-														<Icon name="check" className="size-3.5" />
-														<span className="hidden lg:inline">Copied</span>
-													</>
-												}
-											/>
-										</button>
-									) : null}
-
-									{!isPreview ? (
-										<button
-											type="button"
-											onClick={() => setShowSaveDialog(true)}
-											disabled={!hasSelection}
-											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
-											title="Save as preset"
-										>
-											<ConfirmableContent
-												confirmed={confirmed('save-preset')}
-												idle={
-													<>
-														<Icon name="bookmark" className="size-3.5" />
-														<span className="hidden lg:inline">Save preset</span>
-													</>
-												}
-												done={
-													<>
-														<Icon name="check" className="size-3.5" />
-														<span className="hidden lg:inline">Saved</span>
-													</>
-												}
-											/>
-										</button>
-									) : null}
-
-									{!isPreview ? (
-										<button
-											type="button"
-											onClick={() => void handleCopyLink()}
-											disabled={!currentConfig}
-											className="hidden items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:flex"
-											title="Copy shareable link"
-										>
-											<ConfirmableContent
-												confirmed={confirmed('copy-link')}
-												idle={<Icon name="link" className="size-3.5" />}
-												done={<Icon name="check" className="size-3.5" />}
-											/>
-										</button>
-									) : null}
-
-									{isPreview ? (
-										<button
-											type="button"
-											onClick={() => {
-												setSignupSource('downloads')
-												subscribeModalStore.show()
-											}}
-											className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:opacity-90"
-										>
-											<Icon name="download-cloud" className="size-3.5" />
-											<span className="hidden sm:inline">{downloadLabel}</span>
-										</button>
-									) : (
-										<FormatSplitButton
-											onDownload={(fmt) => handleDownload(fmt)}
-											disabled={topBarDownloadDisabled}
-											label={downloadLabel}
-											confirmed={confirmed('download')}
-										/>
-									)}
-								</>
-							) : null}
-
-							<button
-								type="button"
-								onClick={onClose}
-								aria-label="Close chart preview"
-								className="rounded-md p-1.5 text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-							>
-								<Icon name="x" className="size-4" />
-							</button>
-						</div>
-
-						<div className="flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-2">
+					<DialogToolbar>
+						<div className="flex flex-wrap items-center gap-2">
 							{protocolCategories.length > 0 ? (
 								<CategoryPickerPopover
 									triggerRef={categoryPickerRef}
@@ -1321,281 +1253,288 @@ export function ChartDatasetModal({
 										onToggle={toggleColumn}
 										onToggleAll={toggleAll}
 									/>
-
-									<button
-										type="button"
-										onClick={() => void handleCopy()}
-										disabled={selectedCount === 0}
-										className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40 sm:hidden"
-										title="Copy selected columns as TSV"
-									>
-										<ConfirmableContent
-											confirmed={confirmed('copy')}
-											idle={<Icon name="clipboard" className="size-3.5" />}
-											done={<Icon name="check" className="size-3.5" />}
-										/>
-									</button>
 								</>
 							) : hasData && isPreview ? (
 								<p className="text-xs text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
 							) : null}
+							{isBulk ? (
+								<Button
+									variant="filter"
+									size="sm"
+									data-active={showSelected}
+									aria-pressed={showSelected}
+									className="sm:hidden"
+									onClick={() => setShowSelected((shown) => !shown)}
+									ref={selectedToggleRef}
+								>
+									Selected ({selectedParams.length})
+								</Button>
+							) : null}
 						</div>
-						<SavedPresetNotice notices={savedPresetNotices} />
-						<ActionFeedbackStatus outcome={outcome} />
-					</div>
+					</DialogToolbar>
+					{/* Each band draws the line under itself, as the toolbar above does. */}
+					<SavedPresetNotice notices={savedPresetNotices} />
+					<ActionFeedbackStatus outcome={outcome} />
 
-					<div className="flex min-h-0 flex-1">
-						<div className="relative flex min-w-0 flex-1 flex-col">
-							{!hasPreviewTarget ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">
-											Select a {dataset.paramLabel.toLowerCase()} above to load chart data
-										</p>
+					<DialogBody kind="flush">
+						<div className="flex h-full min-h-0">
+							<div className={`relative min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
+								{!hasPreviewTarget ? (
+									<div className="flex flex-1 items-center justify-center">
+										<div className="flex flex-col items-center gap-2 text-center">
+											<Icon name="search" className="size-6 text-pro-text-tertiary" />
+											<p className="text-sm text-pro-text-secondary">
+												Select a {dataset.paramLabel.toLowerCase()} above to load chart data
+											</p>
+										</div>
 									</div>
-								</div>
-							) : dataLoading ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-3">
-										<LoadingSpinner size={28} />
-										<p className="text-sm text-pro-text-secondary">Fetching chart data...</p>
+								) : dataLoading ? (
+									<div className="flex flex-1 items-center justify-center">
+										<div className="flex flex-col items-center gap-3">
+											<LoadingSpinner size={28} />
+											<p className="text-sm text-pro-text-secondary">Fetching chart data...</p>
+										</div>
 									</div>
-								</div>
-							) : dataError ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2">
-										<Icon name="alert-triangle" className="size-6 text-error" />
-										<p className="text-sm text-error">
-											{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
-										</p>
+								) : dataError ? (
+									<div className="flex flex-1 items-center justify-center">
+										<div className="flex flex-col items-center gap-2">
+											<Icon name="alert-triangle" className="size-6 text-error" />
+											<p className="text-sm text-error">
+												{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
+											</p>
+										</div>
 									</div>
-								</div>
-							) : columnMeta.length === 0 ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">No data</p>
+								) : columnMeta.length === 0 ? (
+									<div className="flex flex-1 items-center justify-center">
+										<div className="flex flex-col items-center gap-2 text-center">
+											<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
+											<p className="text-sm text-pro-text-secondary">No data</p>
+										</div>
 									</div>
-								</div>
-							) : sortedRows.length === 0 ? (
-								<div className="flex flex-1 items-center justify-center">
-									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">
-											{dateRange && rows.length > 0
-												? 'No rows in selected date range'
-												: deferredSearch.length > 0
-													? 'No rows match your search'
-													: 'No matching rows'}
-										</p>
-										{dateRange && rows.length > 0 ? (
-											<button
-												type="button"
-												// Clearing removes this button; focus returns to the range picker it cleared.
-												onClick={() =>
-													keepFocus(
-														() => setDateRange(null),
-														() => dateRangeTriggerRef.current
-													)
-												}
-												className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+								) : sortedRows.length === 0 ? (
+									<div className="flex flex-1 items-center justify-center">
+										<div className="flex flex-col items-center gap-2 text-center">
+											<Icon name="search" className="size-6 text-pro-text-tertiary" />
+											<p className="text-sm text-pro-text-secondary">
+												{dateRange && rows.length > 0
+													? 'No rows in selected date range'
+													: deferredSearch.length > 0
+														? 'No rows match your search'
+														: 'No matching rows'}
+											</p>
+											{dateRange && rows.length > 0 ? (
+												<button
+													type="button"
+													// Clearing removes this button; focus returns to the range picker it cleared.
+													onClick={() =>
+														keepFocus(
+															() => setDateRange(null),
+															() => dateRangeTriggerRef.current
+														)
+													}
+													className="mt-1 rounded-md border border-subtle px-3 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
+												>
+													Clear date range
+												</button>
+											) : null}
+										</div>
+									</div>
+								) : (
+									<div className="relative min-h-0 flex-1">
+										<div
+											aria-hidden
+											className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 transition-opacity duration-200"
+											style={{
+												opacity: canScrollRight ? 1 : 0,
+												background: 'linear-gradient(to left, var(--bg-overlay) 0%, transparent 100%)'
+											}}
+										/>
+										<div
+											ref={setTableContainer}
+											className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
+											style={
+												{
+													'--sticky-shadow': canScrollLeft ? '4px 0 8px -2px rgba(0,0,0,0.25)' : 'none'
+												} as CSSProperties
+											}
+										>
+											<div className="sticky top-0 z-20 bg-overlay" style={{ minWidth: `${tableWidth}px` }}>
+												<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
+													{columnMeta.map((column, position) => {
+														const isSelected = cols.has(column.index)
+														const isSorted = sortState?.index === column.index ? activeSortDirection : false
+														const isSticky = position === 0
+														return (
+															<div
+																key={column.index}
+																className="border-t border-r border-subtle bg-overlay last:border-r-0"
+																style={{
+																	position: isSticky ? 'sticky' : undefined,
+																	left: isSticky ? 0 : undefined,
+																	zIndex: isSticky ? 30 : undefined,
+																	background: 'var(--bg-overlay)',
+																	boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
+																}}
+															>
+																<div className="flex items-center gap-0.5 p-2">
+																	<input
+																		type="checkbox"
+																		aria-label={`Include ${column.header} column`}
+																		checked={isSelected}
+																		onChange={() => toggleColumn(column.index)}
+																		className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
+																	/>
+																	<button
+																		type="button"
+																		onClick={() => handleSort(column)}
+																		className="flex min-w-0 flex-1 items-center gap-1"
+																	>
+																		<span
+																			className={`truncate text-xs font-medium ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+																		>
+																			{column.header}
+																		</span>
+																		<SortIcon dir={isSorted} />
+																	</button>
+																</div>
+															</div>
+														)
+													})}
+												</div>
+											</div>
+
+											<div
+												style={{
+													height: `${rowVirtualizer.totalSize}px`,
+													minWidth: `${tableWidth}px`,
+													position: 'relative'
+												}}
 											>
-												Clear date range
-											</button>
-										) : null}
-									</div>
-								</div>
-							) : (
-								<div className="relative min-h-0 flex-1">
-									<div
-										aria-hidden
-										className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 transition-opacity duration-200"
-										style={{
-											opacity: canScrollRight ? 1 : 0,
-											background: 'linear-gradient(to left, var(--bg-surface) 0%, transparent 100%)'
-										}}
-									/>
-									<div
-										ref={setTableContainer}
-										className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
-										style={
-											{
-												'--sticky-shadow': canScrollLeft ? '4px 0 8px -2px rgba(0,0,0,0.25)' : 'none'
-											} as CSSProperties
-										}
-									>
-										<div className="sticky top-0 z-20 bg-surface" style={{ minWidth: `${tableWidth}px` }}>
-											<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
-												{columnMeta.map((column, position) => {
-													const isSelected = cols.has(column.index)
-													const isSorted = sortState?.index === column.index ? activeSortDirection : false
-													const isSticky = position === 0
+												{rowVirtualizer.items.map((virtualRow) => {
+													const row = sortedRows[virtualRow.index]
+													const isOdd = virtualRow.index % 2 === 1
 													return (
 														<div
-															key={column.index}
-															className="border-t border-r border-subtle bg-surface last:border-r-0"
+															key={row.id}
 															style={{
-																position: isSticky ? 'sticky' : undefined,
-																left: isSticky ? 0 : undefined,
-																zIndex: isSticky ? 30 : undefined,
-																background: 'var(--bg-surface)',
-																boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
+																display: 'grid',
+																gridTemplateColumns: gridTemplate,
+																minWidth: `${tableWidth}px`,
+																position: 'absolute',
+																top: 0,
+																left: 0,
+																width: '100%',
+																height: `${virtualRow.size}px`,
+																transform: `translateY(${virtualRow.start}px)`
 															}}
 														>
-															<div className="flex items-center gap-0.5 p-2">
-																<input
-																	type="checkbox"
-																	aria-label={`Include ${column.header} column`}
-																	checked={isSelected}
-																	onChange={() => toggleColumn(column.index)}
-																	className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
-																/>
-																<button
-																	type="button"
-																	onClick={() => handleSort(column)}
-																	className="flex min-w-0 flex-1 items-center gap-1"
-																>
-																	<span
-																		className={`truncate text-xs font-medium ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+															{columnMeta.map((column, position) => {
+																const rawValue = row.values[column.index] ?? ''
+																const displayValue = formatCellValue(rawValue, column)
+																const isSticky = position === 0
+																const isSelected = cols.has(column.index)
+																const tone = isSelected ? getCellTone(rawValue, column) : ''
+																return (
+																	<div
+																		key={column.index}
+																		title={rawValue || undefined}
+																		className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+																		style={{
+																			textAlign: column.align,
+																			position: isSticky ? 'sticky' : undefined,
+																			left: isSticky ? 0 : undefined,
+																			zIndex: isSticky ? 1 : undefined,
+																			background: isSticky
+																				? 'var(--bg-overlay)'
+																				: isOdd
+																					? 'var(--bg-primary)'
+																					: undefined,
+																			boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
+																		}}
 																	>
-																		{column.header}
-																	</span>
-																	<SortIcon dir={isSorted} />
-																</button>
-															</div>
+																		{displayValue}
+																	</div>
+																)
+															})}
 														</div>
 													)
 												})}
 											</div>
-										</div>
-
-										<div
-											style={{
-												height: `${rowVirtualizer.totalSize}px`,
-												minWidth: `${tableWidth}px`,
-												position: 'relative'
-											}}
-										>
-											{rowVirtualizer.items.map((virtualRow) => {
-												const row = sortedRows[virtualRow.index]
-												const isOdd = virtualRow.index % 2 === 1
-												return (
-													<div
-														key={row.id}
-														style={{
-															display: 'grid',
-															gridTemplateColumns: gridTemplate,
-															minWidth: `${tableWidth}px`,
-															position: 'absolute',
-															top: 0,
-															left: 0,
-															width: '100%',
-															height: `${virtualRow.size}px`,
-															transform: `translateY(${virtualRow.start}px)`
-														}}
-													>
-														{columnMeta.map((column, position) => {
-															const rawValue = row.values[column.index] ?? ''
-															const displayValue = formatCellValue(rawValue, column)
-															const isSticky = position === 0
-															const isSelected = cols.has(column.index)
-															const tone = isSelected ? getCellTone(rawValue, column) : ''
-															return (
-																<div
-																	key={column.index}
-																	title={rawValue || undefined}
-																	className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
-																	style={{
-																		textAlign: column.align,
-																		position: isSticky ? 'sticky' : undefined,
-																		left: isSticky ? 0 : undefined,
-																		zIndex: isSticky ? 1 : undefined,
-																		background: isSticky
-																			? 'var(--bg-surface)'
-																			: isOdd
-																				? 'var(--bg-primary)'
-																				: undefined,
-																		boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
-																	}}
-																>
-																	{displayValue}
-																</div>
-															)
-														})}
-													</div>
-												)
-											})}
+											{isPreview ? (
+												<PlaceholderRows
+													columnMeta={columnMeta}
+													gridTemplate={gridTemplate}
+													tableWidth={tableWidth}
+													rows={sortedRows}
+													cols={cols}
+												/>
+											) : null}
 										</div>
 										{isPreview ? (
-											<PlaceholderRows
-												columnMeta={columnMeta}
-												gridTemplate={gridTemplate}
-												tableWidth={tableWidth}
-												rows={sortedRows}
-												cols={cols}
-											/>
+											<>
+												<div
+													className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
+													style={{
+														top: '20%',
+														backdropFilter: 'blur(4px)',
+														WebkitBackdropFilter: 'blur(4px)',
+														maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
+														WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
+													}}
+												/>
+												<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
+													<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
+														<p className="text-sm font-semibold text-pro-text-primary">
+															This is a preview — subscribe to download full datasets
+														</p>
+														<p className="text-xs text-pro-text-tertiary">
+															Get access to all rows, all columns, and unlimited CSV downloads
+														</p>
+														<Link
+															href="/subscribe"
+															className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
+														>
+															<Icon name="arrow-up-right" className="size-4" />
+															Subscribe
+														</Link>
+													</div>
+												</div>
+											</>
 										) : null}
 									</div>
-									{isPreview ? (
-										<>
-											<div
-												className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
-												style={{
-													top: '20%',
-													backdropFilter: 'blur(4px)',
-													WebkitBackdropFilter: 'blur(4px)',
-													maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
-													WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
-												}}
-											/>
-											<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-surface px-6 py-5">
-												<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-													<p className="text-sm font-semibold text-pro-text-primary">
-														This is a preview — subscribe to download full datasets
-													</p>
-													<p className="text-xs text-pro-text-tertiary">
-														Get access to all rows, all columns, and unlimited CSV downloads
-													</p>
-													<Link
-														href="/subscribe"
-														className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
-													>
-														<Icon name="arrow-up-right" className="size-4" />
-														Subscribe
-													</Link>
-												</div>
-											</div>
-										</>
-									) : null}
-								</div>
-							)}
-						</div>
+								)}
+							</div>
 
-						{hasSelection ? (
-							<BulkPreviewSidebar
-								dataset={dataset}
-								selectedParams={selectedParams}
-								activePreviewValue={activePreviewValue}
-								csvQueries={csvQueries}
-								onSelectActive={handleSetActive}
-								onRemove={handleRemoveParam}
-								onClearAll={() => keepFocus(handleClearParams, pickerTrigger)}
-								onDownloadSingle={(param) => handleDownloadSingle(param, 'csv', `download:${param.value}`)}
-								onDownloadCombined={() => handleDownloadCombined('csv', 'download-combined')}
-								confirmed={confirmed}
-								pickerTrigger={pickerTrigger}
-								isPreview={!!isPreview}
-								onSubscribeClick={() => {
-									setSignupSource('downloads')
-									subscribeModalStore.show()
-								}}
-								readyCount={readyCount}
-								loadingCount={loadingCount}
-							/>
-						) : null}
-					</div>
-				</Ariakit.Dialog>
+							{isBulk ? (
+								<BulkPreviewSidebar
+									dataset={dataset}
+									selectedParams={selectedParams}
+									activePreviewValue={activePreviewValue}
+									csvQueries={csvQueries}
+									onSelectActive={(value) =>
+										// On a phone, previewing an item switches to the table; the toggle keeps focus there.
+										keepFocus(
+											() => {
+												handleSetActive(value)
+												setShowSelected(false)
+											},
+											() => selectedToggleRef.current
+										)
+									}
+									showOnPhone={showingSelected}
+									onRemove={handleRemoveParam}
+									onClearAll={() => keepFocus(handleClearParams, pickerTrigger)}
+									onDownloadSingle={(param) => handleDownloadSingle(param, 'csv', `download:${param.value}`)}
+									confirmed={confirmed}
+									pickerTrigger={pickerTrigger}
+									isPreview={!!isPreview}
+									readyCount={readyCount}
+									loadingCount={loadingCount}
+								/>
+							) : null}
+						</div>
+					</DialogBody>
+				</Dialog>
 			</Ariakit.DialogProvider>
 			{isPreview ? (
 				<Suspense fallback={null}>
@@ -1654,7 +1593,7 @@ function PlaceholderRows({
 										position: isSticky ? 'sticky' : undefined,
 										left: isSticky ? 0 : undefined,
 										zIndex: isSticky ? 1 : undefined,
-										background: isSticky ? 'var(--bg-surface)' : isOdd ? 'var(--bg-primary)' : undefined,
+										background: isSticky ? 'var(--bg-overlay)' : isOdd ? 'var(--bg-primary)' : undefined,
 										boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 									}}
 								>
@@ -1800,8 +1739,13 @@ function MultiOptionPickerPopover({
 	)
 	const canAddAll = unselectedInView.length > 0 && selected.length + unselectedInView.length <= maxSelections
 
+	// One pick is named; the count of several shows once, in the label.
 	const triggerText =
-		selected.length === 0 ? `Select ${label}` : selected.length === 1 ? `1 ${label}` : `${selected.length} ${label}s`
+		selected.length === 0
+			? `Select ${label}`
+			: selected.length === 1
+				? selected[0].label
+				: `${selected.length} ${label.toLowerCase()}s`
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
@@ -1811,9 +1755,6 @@ function MultiOptionPickerPopover({
 			>
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerText}</span>
-				{selected.length > 0 ? (
-					<span className="rounded-sm bg-brand px-1 text-[10px] font-semibold text-on-brand">{selected.length}</span>
-				) : null}
 			</Ariakit.PopoverDisclosure>
 			<Ariakit.Popover
 				gutter={6}
@@ -1980,16 +1921,17 @@ interface BulkPreviewSidebarProps {
 	activePreviewValue: string | null
 	csvQueries: ReadonlyArray<CsvQueryStatus>
 	onSelectActive: (value: string) => void
+	/** Below sm the list replaces the table instead of sitting beside it. */
+	showOnPhone: boolean
 	onRemove: (value: string) => void
 	onClearAll: () => void
 	onDownloadSingle: (param: ParamOption) => void
-	onDownloadCombined: () => void
 	/** Whether a download button shows its confirmation now. */
 	confirmed: (action: string) => boolean
 	/** Takes focus when the last row leaves. */
 	pickerTrigger: () => HTMLElement | null
+	/** A preview downloads nothing: the header Download opens the subscribe prompt. */
 	isPreview: boolean
-	onSubscribeClick: () => void
 	readyCount: number
 	loadingCount: number
 }
@@ -2000,18 +1942,16 @@ function BulkPreviewSidebar({
 	activePreviewValue,
 	csvQueries,
 	onSelectActive,
+	showOnPhone,
 	onRemove,
 	onClearAll,
 	onDownloadSingle,
-	onDownloadCombined,
 	confirmed,
 	pickerTrigger,
 	isPreview,
-	onSubscribeClick,
 	readyCount,
 	loadingCount
 }: BulkPreviewSidebarProps) {
-	const combinedDisabled = loadingCount > 0 || readyCount === 0
 	const listRef = useRef<HTMLDivElement>(null)
 	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
 	const removeRow = (value: string, index: number) =>
@@ -2023,7 +1963,9 @@ function BulkPreviewSidebar({
 			}
 		)
 	return (
-		<aside className="hidden w-72 shrink-0 flex-col border-l border-subtle sm:flex">
+		<aside
+			className={`w-full shrink-0 flex-col border-subtle sm:flex sm:w-72 sm:border-l ${showOnPhone ? 'flex' : 'hidden'}`}
+		>
 			<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
 				<div className="min-w-0">
 					<p className="text-xs font-semibold text-pro-text-primary">
@@ -2081,20 +2023,21 @@ function BulkPreviewSidebar({
 									{param.label}
 								</span>
 							</button>
-							<button
-								type="button"
-								onClick={() => onDownloadSingle(param)}
-								disabled={!isReady || isPreview}
-								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
-								aria-label={`Download ${param.label} CSV`}
-								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
-							>
-								<ConfirmableContent
-									confirmed={confirmed(`download:${param.value}`)}
-									idle={<Icon name="download-cloud" className="size-3.5" />}
-									done={<Icon name="check" className="size-3.5" />}
-								/>
-							</button>
+							{isPreview ? null : (
+								<button
+									type="button"
+									onClick={() => onDownloadSingle(param)}
+									disabled={!isReady}
+									aria-label={`Download ${param.label} CSV`}
+									className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
+								>
+									<ConfirmableContent
+										confirmed={confirmed(`download:${param.value}`)}
+										idle={<Icon name="download-cloud" className="size-3.5" />}
+										done={<Icon name="check" className="size-3.5" />}
+									/>
+								</button>
+							)}
 							<button
 								type="button"
 								onClick={() => removeRow(param.value, i)}
@@ -2109,46 +2052,11 @@ function BulkPreviewSidebar({
 					)
 				})}
 			</div>
-			<div className="border-t border-subtle p-3">
-				{isPreview ? (
-					<button
-						type="button"
-						onClick={onSubscribeClick}
-						className="flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-on-brand transition-colors hover:opacity-90"
-					>
-						<Icon name="arrow-up-right" className="size-3.5" />
-						Subscribe to download
-					</button>
-				) : (
-					<>
-						<button
-							type="button"
-							onClick={onDownloadCombined}
-							disabled={combinedDisabled}
-							className="flex w-full items-center justify-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
-						>
-							<ConfirmableContent
-								confirmed={confirmed('download-combined')}
-								idle={
-									<>
-										<Icon name="download-cloud" className="size-3.5" />
-										Download combined CSV
-									</>
-								}
-								done={
-									<>
-										<Icon name="check" className="size-3.5" />
-										Downloaded
-									</>
-								}
-							/>
-						</button>
-						<p className="mt-1.5 text-center text-[10px] text-pro-text-tertiary">
-							Wide format — each {dataset.paramLabel.toLowerCase()} becomes a column
-						</p>
-					</>
-				)}
-			</div>
+			{isPreview ? null : (
+				<p className="border-t border-subtle p-3 text-center text-[10px] text-pro-text-tertiary">
+					Download combined puts each {dataset.paramLabel.toLowerCase()} in its own column
+				</p>
+			)}
 		</aside>
 	)
 }

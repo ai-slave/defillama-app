@@ -96,7 +96,7 @@ describe('a subscriber', () => {
 			await waitForUi(() => expect(selectedColumns()).toEqual(['name', 'tvl', 'chainId']))
 			expect(await copiedLink()).toBe(link)
 			expect(router.replace).not.toHaveBeenCalled()
-			await click(button('Close dataset preview'))
+			await click(button('Close dialog'))
 			expect(router.replace).toHaveBeenCalledExactlyOnceWith({ pathname: '/downloads', query: {} }, undefined, {
 				shallow: true
 			})

@@ -9,7 +9,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
 import trendingPages from '~/public/trending.json'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogCanvasSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -126,81 +126,110 @@ export function Metrics({
 
 	const pinnedRoutes = usePinnedRoutes()
 
-	return (
-		<div className={canDismiss ? 'flex min-h-0 flex-1 flex-col' : 'contents'}>
-			<div
-				className={
-					canDismiss ? 'flex flex-col gap-3 p-3' : 'flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3'
-				}
-			>
-				<div className="flex items-center gap-2">
-					{canDismiss ? <DialogHeading>Metrics</DialogHeading> : <h2 className="heading-sm">Metrics</h2>}
-					<TagGroup
-						selectedValue={tab}
-						setValue={(value) => startTransition(() => setTab(value))}
-						values={TABS}
-						variant="solid"
-						size="sm"
-					/>
-					{canDismiss ? <DialogCloseButton className="-my-2 ml-auto" ariaLabel="Close metrics" /> : null}
-				</div>
-				<label className="relative">
-					<span className="sr-only">Search pages</span>
-					<Icon name="search" height={16} width={16} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
-					<Input
-						ref={searchInputRef}
-						// The dialog moves focus itself when it opens; see MetricsAndTools.
-						autoFocus={!canDismiss}
-						type="text"
-						inputMode="search"
-						placeholder="Search..."
-						className={searchFieldInputPlacementStyles}
-						onInput={(e) => setSearchValue(e.currentTarget.value)}
-					/>
-				</label>
-				<div className="flex flex-wrap gap-1.5">
-					{pages.map(({ category }) => (
-						<Button
-							size="sm"
-							variant="filter"
-							key={category}
-							data-active={category === currentCategory}
-							onClick={() => {
-								const element = document.querySelector(`[data-category="${category}"]`)
-								if (element) {
-									element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-								}
-							}}
-						>
-							{category}
-						</Button>
-					))}
-				</div>
-			</div>
-			<div className={`flex flex-col gap-6 ${canDismiss ? `${dialogScrollableBodyStyles} px-3 pb-3` : ''}`}>
-				{pages.map(({ category, metrics }) => (
-					<div key={category} className="relative flex flex-col gap-3">
-						<div className="absolute -top-4" data-category={category} />
-						<div className="flex flex-row items-center gap-2">
-							<h2 className="heading-xs">{category}</h2>
-							<hr className="flex-1 border-subtle" />
-						</div>
-						<div
-							className={`grid grid-cols-1 gap-2 sm:grid-cols-2 ${canDismiss ? 'lg:grid-cols-3 xl:grid-cols-4' : 'xl:grid-cols-3 2xl:grid-cols-4'}`}
-						>
-							{metrics.map((metric) => (
-								<LinkToMetricOrToolPage
-									key={`metric-${metric.name}-${metric.route}`}
-									page={metric}
-									totalTrackedByMetric={totalTrackedByMetric}
-									pinnedRoutes={pinnedRoutes}
-								/>
-							))}
-						</div>
-					</div>
-				))}
-			</div>
+	const search = (
+		<label className="relative">
+			<span className="sr-only">Search pages</span>
+			<Icon name="search" height={16} width={16} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
+			<Input
+				ref={searchInputRef}
+				// The dialog moves focus itself when it opens; see MetricsAndTools.
+				autoFocus={!canDismiss}
+				type="text"
+				inputMode="search"
+				placeholder="Search..."
+				className={searchFieldInputPlacementStyles}
+				onInput={(e) => setSearchValue(e.currentTarget.value)}
+			/>
+		</label>
+	)
+	const tabs = (
+		<TagGroup
+			selectedValue={tab}
+			setValue={(value) => startTransition(() => setTab(value))}
+			values={TABS}
+			variant="solid"
+			size="sm"
+		/>
+	)
+	const categoryJumps = (
+		// One scrolling row on a phone, so the jumps never push the metrics below the fold; they wrap from sm.
+		<div
+			className={`flex [scrollbar-width:none] gap-1.5 overflow-x-auto sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 ${canDismiss ? '-mx-4 px-4' : '-mx-3 px-3'}`}
+		>
+			{pages.map(({ category }) => (
+				<Button
+					size="sm"
+					variant="filter"
+					key={category}
+					data-active={category === currentCategory}
+					onClick={() => {
+						const element = document.querySelector(`[data-category="${category}"]`)
+						if (element) {
+							element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+						}
+					}}
+				>
+					{category}
+				</Button>
+			))}
 		</div>
+	)
+	const sections = (
+		<div className="flex flex-col gap-6">
+			{pages.map(({ category, metrics }) => (
+				<div key={category} className="relative flex flex-col gap-3">
+					<div className="absolute -top-4" data-category={category} />
+					<div className="flex flex-row items-center gap-2">
+						<h2 className="heading-xs">{category}</h2>
+						<hr className="flex-1 border-subtle" />
+					</div>
+					<div
+						className={`grid grid-cols-1 gap-2 sm:grid-cols-2 ${canDismiss ? 'lg:grid-cols-3 xl:grid-cols-4' : 'xl:grid-cols-3 2xl:grid-cols-4'}`}
+					>
+						{metrics.map((metric) => (
+							<LinkToMetricOrToolPage
+								key={`metric-${metric.name}-${metric.route}`}
+								page={metric}
+								totalTrackedByMetric={totalTrackedByMetric}
+								pinnedRoutes={pinnedRoutes}
+							/>
+						))}
+					</div>
+				</div>
+			))}
+		</div>
+	)
+
+	if (canDismiss) {
+		return (
+			<>
+				<DialogHeader title="Metrics" />
+				<DialogToolbar>
+					<div className="flex flex-col gap-3">
+						<div className="flex flex-wrap items-center gap-2 *:first:min-w-0 *:first:flex-1">
+							{search}
+							{tabs}
+						</div>
+						{categoryJumps}
+					</div>
+				</DialogToolbar>
+				<DialogBody>{sections}</DialogBody>
+			</>
+		)
+	}
+
+	return (
+		<>
+			<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3">
+				<div className="flex items-center gap-2">
+					<h2 className="heading-sm">Metrics</h2>
+					{tabs}
+				</div>
+				{search}
+				{categoryJumps}
+			</div>
+			{sections}
+		</>
 	)
 }
 
@@ -261,7 +290,8 @@ export function LinkToMetricOrToolPage({
 							</span>
 						)
 					)}
-					<Icon name="arrow-right" height={16} width={16} className="ml-auto" />
+					{/* On touch the pin is always shown in this corner instead. */}
+					<Icon name="arrow-right" height={16} width={16} className="ml-auto pointer-coarse:invisible" />
 				</span>
 				{totalTrackedByMetric && page.totalTrackedKey ? (
 					<span className="body-sm text-link">{getTotalTracked(totalTrackedByMetric, page.totalTrackedKey)}</span>
@@ -289,7 +319,9 @@ export function LinkToMetricOrToolPage({
 						}}
 					/>
 				}
-				className="absolute top-1 right-1 hidden rounded-md bg-brand p-1.5 text-on-brand group-hover:block group-data-[pinned=true]:block"
+				// Shown on hover, on keyboard focus inside the card, and always on touch, which has no hover; unpinned it stays
+				// quiet there so a grid of cards is not a grid of brand squares.
+				className={`touch-target absolute top-1 right-1 hidden rounded-md p-1.5 group-focus-within:block group-hover:block group-data-[pinned=true]:block pointer-coarse:block ${isPinned ? 'bg-brand text-on-brand' : 'bg-brand text-on-brand pointer-coarse:bg-transparent pointer-coarse:text-tertiary'}`}
 			>
 				<Icon name="pin" height={14} width={14} style={pinStyle} />
 			</Tooltip>
@@ -416,8 +448,9 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 					/>
 				</svg>
 			</div>
-			<Ariakit.Dialog
-				className={`${dialogCanvasSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:min(85vw,1280px)]`}
+			<Dialog
+				size="xl"
+				canvas
 				// Keep the selected tab, search query, and category scroll position when reopening.
 				unmountOnHide={false}
 				hideOnInteractOutside
@@ -436,7 +469,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 				}}
 			>
 				<Metrics canDismiss searchInputRef={searchInputRef} />
-			</Ariakit.Dialog>
+			</Dialog>
 		</Ariakit.DialogProvider>
 	)
 }

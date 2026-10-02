@@ -7,7 +7,7 @@ import { installSubscriberSession, type SessionOptions } from '~/utils/testing/s
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { DASHBOARD_ITEM_REVEAL_EVENT } from '../../../hooks/useDashboardItemDeepLink'
 import { AddChartModal } from '../AddChartModal'
-import { CHART_MODE_STORAGE_KEY } from '../chartModePreference'
+import { CHART_MODE_STORAGE_KEY, writePreferredChartMode } from '../chartModePreference'
 
 const { openSql, appendItems } = vi.hoisted(() => ({
 	openSql: vi.fn(),
@@ -119,6 +119,47 @@ describe('a subscriber without SQL access', () => {
 		expect(appendItems).not.toHaveBeenCalled()
 	})
 
+	test('a fresh Table tab asks for a table type, and its Cancel closes without asking to discard', async () => {
+		const onClose = vi.fn()
+		await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />)
+		await click(tab('table'))
+		expect(document.querySelector('footer')!.textContent).toContain('Pick a table type to start')
+		await click([...document.querySelectorAll('button')].find((button) => button.textContent === 'Cancel')!)
+		expect(onClose).toHaveBeenCalledTimes(1)
+		expect(document.body.textContent).not.toContain('Discard this card?')
+	})
+
+	test('a draft in another tab still asks before the card closes, and Discard after Escape closes it', async () => {
+		const onClose = vi.fn()
+		await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />)
+		await click(tab('text'))
+		const content = document.querySelector<HTMLTextAreaElement>('textarea')!
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, '# Notes')
+			content.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await click(tab('charts'))
+		await pressKey(tab('charts'), 'Escape')
+		const confirm = await waitForUi(() => {
+			const found = document.querySelector<HTMLElement>('[role="alertdialog"]')
+			expect(found?.textContent).toContain('Discard this card?')
+			return found!
+		})
+		expect(onClose).not.toHaveBeenCalled()
+		await click([...confirm.querySelectorAll('button')].find((button) => button.textContent === 'Discard')!)
+		expect(onClose).toHaveBeenCalledTimes(1)
+	})
+
+	test('browsing every tab of a fresh card that opens on Top-N closes at once on Escape', async () => {
+		writePreferredChartMode('builder')
+		const onClose = vi.fn()
+		await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />)
+		for (const value of ['metric', 'table', 'text', 'charts']) await click(tab(value))
+		await pressKey(tab('charts'), 'Escape')
+		expect(onClose).toHaveBeenCalledTimes(1)
+		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	})
+
 	test('editing hides the tab list and shows the card type in the header', async () => {
 		await show(
 			<AddChartModal
@@ -135,8 +176,11 @@ describe('a subscriber without SQL access', () => {
 		expect(appendItems).not.toHaveBeenCalled()
 	})
 
-	test('a dropped edit keeps the modal open and says the dashboard is still loading', async () => {
-		appendItems.mockReturnValue(false)
+	test('a refused add keeps the modal open and says why beside its button, not in a toast', async () => {
+		appendItems.mockReturnValue({
+			status: 'refused',
+			reason: 'Dashboard is too large (2100 KB). Remove rows or a card.'
+		})
 		const onClose = vi.fn()
 		await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />)
 		await click(tab('text'))
@@ -152,17 +196,17 @@ describe('a subscriber without SQL access', () => {
 
 		expect(appendItems).toHaveBeenCalledTimes(1)
 		expect(onClose).not.toHaveBeenCalled()
-		expect(toastMock.error).toHaveBeenCalledWith(
-			'The dashboard is still loading. Try again in a moment.',
-			expect.objectContaining({ id: 'dashboard-not-ready' })
+		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
+			'Dashboard is too large (2100 KB). Remove rows or a card.'
 		)
+		expect(toastMock.error).not.toHaveBeenCalled()
 	})
 
 	test.each([
 		['a new card', undefined],
 		['a quick add draft', { id: 'quick-add-draft', kind: 'text', title: '', content: 'A note' } as const]
 	])('submitting %s appends it and reveals it once the modal has closed', async (_label, draftItem) => {
-		appendItems.mockReturnValue(['text-new'])
+		appendItems.mockReturnValue({ status: 'saved', ids: ['text-new'] })
 		const onClose = vi.fn()
 		const reveals: Array<{ itemId: string; closedFirst: boolean }> = []
 		const listener = (event: Event) => {

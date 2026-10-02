@@ -1,5 +1,8 @@
 import * as Ariakit from '@ariakit/react'
+import { Button, ButtonGroup } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { MenuSurface } from '~/ui/MenuSurface'
+import { popoverMenuItemStyles } from '~/ui/Popover'
 import type { DownloadFormat } from '~/utils/download'
 import { ConfirmableContent } from './ActionFeedback'
 
@@ -28,13 +31,13 @@ export function FormatSplitButton({
 	const { format } = Ariakit.useStoreState(menu, 'values')
 
 	return (
-		<div className="inline-flex overflow-hidden rounded-md bg-brand shadow-sm">
-			<button
-				type="button"
+		<ButtonGroup label={label}>
+			<Button
+				variant="primary"
+				size="md"
 				aria-label={`${label} ${FORMAT_LABELS[format]}`}
 				onClick={() => onDownload(format)}
 				disabled={disabled}
-				className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-black/10 disabled:opacity-40"
 			>
 				<ConfirmableContent
 					confirmed={confirmed}
@@ -53,42 +56,31 @@ export function FormatSplitButton({
 						</>
 					}
 				/>
-			</button>
+			</Button>
 			<Ariakit.MenuProvider store={menu}>
 				<Ariakit.MenuButton
 					disabled={disabled}
 					aria-label="Choose download format"
-					className="flex items-center border-l border-white/20 px-1.5 text-on-brand transition-colors hover:bg-black/10 disabled:opacity-40"
+					render={<Button variant="primary" size="md" square />}
 				>
 					<Icon name="chevron-down" className="size-3.5" />
 				</Ariakit.MenuButton>
-				<Ariakit.Menu
-					gutter={4}
-					unmountOnHide
-					hideOnInteractOutside
-					className="z-50 min-w-32 overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
-				>
+				<MenuSurface variant="actions" className="z-50 min-w-32">
 					{DOWNLOAD_FORMATS.map((fmt) => (
 						<Ariakit.MenuItemRadio
 							key={fmt}
 							name="format"
 							value={fmt}
 							hideOnClick
-							onClick={() => {
-								onDownload(fmt)
-							}}
-							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-pro-text-primary hover:bg-hover-row data-active-item:bg-hover-row"
+							onClick={() => onDownload(fmt)}
+							className={popoverMenuItemStyles}
 						>
-							<span>{FORMAT_LABELS[fmt]}</span>
-							{format === fmt ? (
-								<Icon name="check" className="size-3.5 text-brand" />
-							) : (
-								<span className="size-3.5" aria-hidden="true" />
-							)}
+							<span className="mr-auto">{FORMAT_LABELS[fmt]}</span>
+							<Icon name="check" className={`size-3.5 ${format === fmt ? 'text-link' : 'invisible'}`} />
 						</Ariakit.MenuItemRadio>
 					))}
-				</Ariakit.Menu>
+				</MenuSurface>
 			</Ariakit.MenuProvider>
-		</div>
+		</ButtonGroup>
 	)
 }

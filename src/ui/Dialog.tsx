@@ -48,7 +48,7 @@ import { tw } from './tw'
 ---------------------------------------------------------------------------- */
 
 const dialogSurfaceBaseStyles =
-	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog [--sheet-height:min(85dvh,calc(var(--visual-viewport-height,100dvh)-3rem))] max-sm:bottom-(--keyboard-inset,0px) max-sm:drawer sm:top-0 sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-dialog-deep sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
+	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog [--sheet-height:min(85dvh,calc(var(--visual-viewport-height,100dvh)-3rem))] max-sm:bottom-(--keyboard-inset,0px) max-sm:drawer sm:top-0 sm:mb-auto sm:h-(--dialog-height,fit-content) sm:max-h-(--dialog-max-height,min(720px,calc(100%-32px))) sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-dialog-deep sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
 
 export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 
@@ -56,7 +56,7 @@ export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 export const dialogFullSheetSurfaceStyles = `${dialogSurfaceStyles} max-sm:h-(--sheet-height)`
 
 /** Canvas dialogs only: hosts bg-surface cards on an elevated-1 backdrop. */
-export const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevated-1`
+const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevated-1`
 
 /** Use a content basis so Safari includes the body when sizing a fit-content dialog. */
 export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto overscroll-contain`
@@ -66,10 +66,17 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
    arbitrary --dialog-width:
      Dialog     sm 448 (confirms, short forms, lists) · md 600 (forms, pickers)
                 · lg 880 (two-pane filters, rails, settings)
+                · xl workspace: min(1280, 100% − 32) wide and a fixed
+                  min(900, 100dvh − 32) tall, for self-contained editors
+                  whose panes scroll on their own (Add card, SQL editor,
+                  Downloads previews, Metrics). On phones a workspace is
+                  the full sheet and brings its own layout, usually a
+                  switch between its panes in the toolbar band.
      SideSheet  sm 448 (forms, filters) · md 672 (detail viewers)
                 · lg 1152 (docs with a table of contents, history)
    Below sm both are bottom sheets: a Dialog hugs its content unless
-   `fullSheet`; a SideSheet always keeps the full sheet height.
+   `fullSheet` or xl; a SideSheet always keeps the full sheet height.
+   `canvas` gives either the elevated-1 fill for a body of bg-surface cards.
 
    `pending` locks the surface while a request that cannot be cancelled runs:
    Escape, an outside tap and the header × stop closing it. Callers still
@@ -104,6 +111,8 @@ function SurfaceDialog({
 	...props
 }: SurfaceDismissProps & Omit<ComponentProps<typeof Ariakit.Dialog>, 'hideOnEscape' | 'hideOnInteractOutside'>) {
 	const guardRef = useRef<LeaveGuard | null>(null)
+	// A dialog under Ariakit.DialogProvider gets its store from context, not from a prop.
+	const contextStore = Ariakit.useDialogContext()
 	// Stable, so a render never resets the net in the commit that removes the focused control.
 	const surfaceRef = useCallback(
 		(node: HTMLDivElement | null) => {
@@ -133,8 +142,16 @@ function SurfaceDialog({
 		<DialogSurfaceContext value={surface}>
 			<Ariakit.Dialog
 				hideOnEscape={(event) => {
-					// Leaving closes the way Escape would: through the caller's store, or its onClose for a controlled dialog.
-					if (surface.attemptLeave(() => (props.store ? props.store.hide() : props.onClose?.(new Event('close')))))
+					// Leaving closes the way Escape would: through the caller's store, its onClose for a controlled dialog, or
+					// the provider's store. onClose comes before the context, so a controlled dialog nested in another
+					// dialog's provider never closes its parent.
+					if (
+						surface.attemptLeave(() => {
+							if (props.store) props.store.hide()
+							else if (props.onClose) props.onClose(new Event('close'))
+							else contextStore?.hide()
+						})
+					)
 						return false
 					return !pending && (typeof hideOnEscape === 'function' ? hideOnEscape(event) : hideOnEscape)
 				}}
@@ -173,13 +190,16 @@ export function useDialogLeave() {
 	}
 }
 
-export type DialogSize = 'sm' | 'md' | 'lg'
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
+type SideSheetSize = Exclude<DialogSize, 'xl'>
 
-/** Width per size, for a surface that is not a Dialog itself (a Suspense placeholder shaped like one). */
+/** Width (and, for a workspace, height) per size, also for a surface that is not a Dialog itself (a Suspense
+    placeholder shaped like one). */
 export const dialogWidthStyles: Record<DialogSize, string> = {
 	sm: '[--dialog-width:448px]',
 	md: '[--dialog-width:600px]',
-	lg: '[--dialog-width:880px]'
+	lg: '[--dialog-width:880px]',
+	xl: '[--dialog-width:1280px] [--dialog-height:min(900px,calc(100dvh-32px))] [--dialog-max-height:none] max-sm:h-(--sheet-height)'
 }
 
 type SurfaceProps = {
@@ -192,12 +212,24 @@ const DIALOG_SCOPE = { pro: 'pro-dashboard' } as const
 export function Dialog({
 	size,
 	fullSheet = false,
+	canvas = false,
 	scope,
 	...props
-}: SurfaceProps & { size: DialogSize; fullSheet?: boolean; scope?: keyof typeof DIALOG_SCOPE }) {
+}: SurfaceProps & {
+	size: DialogSize
+	fullSheet?: boolean
+	/** Only for a body of bg-surface cards, like the Metrics browser. */
+	canvas?: boolean
+	scope?: keyof typeof DIALOG_SCOPE
+}) {
+	const surface = canvas
+		? `${dialogCanvasSurfaceStyles} ${fullSheet ? 'max-sm:h-(--sheet-height)' : ''}`
+		: fullSheet
+			? dialogFullSheetSurfaceStyles
+			: dialogSurfaceStyles
 	return (
 		<SurfaceDialog
-			className={`${fullSheet ? dialogFullSheetSurfaceStyles : dialogSurfaceStyles} ${dialogWidthStyles[size]} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
+			className={`${surface} ${dialogWidthStyles[size]} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
 			{...props}
 		/>
 	)
@@ -212,7 +244,7 @@ export function useOpeningKey(open: boolean) {
 	return opening.key
 }
 
-const SIDE_SHEET_WIDTH: Record<DialogSize, string> = {
+const SIDE_SHEET_WIDTH: Record<SideSheetSize, string> = {
 	sm: '[--side-sheet-width:448px]',
 	md: '[--side-sheet-width:672px]',
 	lg: '[--side-sheet-width:1152px]'
@@ -228,7 +260,7 @@ export function SideSheet({
 	canvas = false,
 	...props
 }: SurfaceProps & {
-	size: DialogSize
+	size: SideSheetSize
 	/** Only for a body of bg-surface cards, like the canvas dialog. */
 	canvas?: boolean
 }) {
@@ -241,16 +273,19 @@ export function SideSheet({
 }
 
 /** The title row: an optional leading control (DialogBackButton, a 32px icon tile), the heading, an optional
-    body-sm subtitle, and the × (confirmations pass closable={false}). */
+    body-sm subtitle, a workspace's own actions (Run, Copy, Download; a phone folds the secondary ones into a menu),
+    and the × (confirmations pass closable={false}). */
 export function DialogHeader({
 	title,
 	subtitle,
 	leading,
+	actions,
 	closable = true
 }: {
 	title: ReactNode
 	subtitle?: ReactNode
 	leading?: ReactNode
+	actions?: ReactNode
 	closable?: boolean
 }) {
 	return (
@@ -262,6 +297,7 @@ export function DialogHeader({
 					<Ariakit.DialogDescription className="body-sm text-secondary">{subtitle}</Ariakit.DialogDescription>
 				) : null}
 			</div>
+			{actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
 			{closable ? <DialogCloseButton /> : null}
 		</header>
 	)

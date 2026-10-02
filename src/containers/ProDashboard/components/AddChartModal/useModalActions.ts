@@ -1,5 +1,4 @@
-import { useCallback, useMemo } from 'react'
-import toast from 'react-hot-toast'
+import { useCallback, useMemo, useState } from 'react'
 import { normalizeChartBuilderConfig } from '../../chartBuilderCapabilities'
 import { isChainTokenChartType } from '../../chartSource'
 import { createChartConfig } from '../../dashboardConfig/classicChartConfig'
@@ -18,7 +17,7 @@ import type { DashboardItemPlacement } from '../../useDashboardActions'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
-import type { ChartBuilderUpdate, ChartTabType, MainTabType } from './types'
+import type { ChartBuilderUpdate, ChartTabType, MainTabType, ModalState } from './types'
 import { useModalState } from './useModalState'
 
 export function useModalActions(
@@ -364,25 +363,30 @@ export function useModalActions(
 		[actions]
 	)
 
+	// A refused add or edit says why beside the button, for as long as the form is the one that was refused.
+	const [rejection, setRejection] = useState<{ state: ModalState; reason: string } | null>(null)
+	const submitError = rejection?.state === state ? rejection.reason : null
+
 	const handleSubmit = useCallback(() => {
-		let applied = true
 		let appendedIds: Array<string> = []
 		if (editItem) {
 			const newItem = buildEditedDashboardItem({ editItem, state, protocols, chains })
-			if (newItem) applied = handleEditItem(editItem.id, newItem) !== false
+			const edited = newItem ? handleEditItem(editItem.id, newItem) : null
+			if (edited?.status === 'refused') {
+				setRejection({ state, reason: edited.reason })
+				return
+			}
 		} else {
 			const appended = handleAppendItems(
 				(existingItems) =>
 					buildNewDashboardItems({ state, protocols, chains, existingItems, idFactory: generateItemId }),
 				placement
 			)
-			applied = appended !== false
-			if (appended !== false) appendedIds = appended
-		}
-
-		if (!applied) {
-			toast.error('The dashboard is still loading. Try again in a moment.', { id: 'dashboard-not-ready' })
-			return
+			if (appended.status === 'refused') {
+				setRejection({ state, reason: appended.reason })
+				return
+			}
+			appendedIds = appended.ids
 		}
 
 		onClose()
@@ -454,6 +458,7 @@ export function useModalActions(
 	return {
 		state,
 		actions: uiActions,
-		computed
+		computed,
+		submitError
 	}
 }

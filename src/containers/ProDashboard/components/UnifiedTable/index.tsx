@@ -12,6 +12,7 @@ import {
 	sanitizeUnifiedTableRowHeaders
 } from '../../unifiedTable/config/layoutPolicy'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unifiedTable/config/types'
+import { toastRefusal } from '../../useDashboardActions'
 import { BoundParameterBadge } from '../BoundParameterBadge'
 import { ConfirmationModal } from '../ConfirmationModal'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../ProCardStatus'
@@ -205,7 +206,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				defaultSorting: nextColumns.sorting
 			}
 			if (nextFilters) nextConfig.filters = nextFilters
-			handleEditItem(config.id, nextConfig)
+			toastRefusal(handleEditItem(config.id, nextConfig))
 		},
 		[
 			config,

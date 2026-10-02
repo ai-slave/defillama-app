@@ -2,8 +2,8 @@ import { type ReactNode, useCallback, useRef, useState } from 'react'
 import { InlineStatus } from '~/ui/Status'
 
 /* The preview modals report what Copy, Copy link, Download and Save preset did on the modal itself, never in a toast
-   over it. A success shows on the pressed button for two seconds and is announced politely; a failure keeps its
-   reason under the header until the next action, so it can be read. */
+   over it. A success shows on the pressed button for two seconds (under the header on phones, where the button is in
+   a closed menu) and is announced politely; a failure keeps its reason under the header until the next action. */
 
 type ActionOutcome = { action: string; ok: boolean; message: string }
 
@@ -24,6 +24,10 @@ export function useActionFeedback() {
 	}
 }
 
+// On phones these actions sit in the More actions menu, which closes on the press, so their success shows in the band
+// instead of on a button. Download stays in the header and confirms on itself.
+const PHONE_MENU_ACTIONS = new Set(['copy', 'save-preset', 'copy-link'])
+
 /** The header's status band: the polite announcement of each success, and the reason for a failure. */
 export function ActionFeedbackStatus({ outcome }: { outcome: ActionOutcome | null }) {
 	return (
@@ -32,8 +36,14 @@ export function ActionFeedbackStatus({ outcome }: { outcome: ActionOutcome | nul
 			<span role="status" className="sr-only">
 				{outcome?.ok ? outcome.message : ''}
 			</span>
+			{outcome?.ok && PHONE_MENU_ACTIONS.has(outcome.action) ? (
+				// Already announced by the status above.
+				<p aria-hidden className="shrink-0 border-b border-subtle px-4 py-2 body-sm text-secondary sm:hidden">
+					{outcome.message}
+				</p>
+			) : null}
 			{outcome && !outcome.ok ? (
-				<div className="border-t border-subtle px-4 py-2">
+				<div className="shrink-0 border-b border-subtle px-4 py-2">
 					<InlineStatus variant="error">{outcome.message}</InlineStatus>
 				</div>
 			) : null}

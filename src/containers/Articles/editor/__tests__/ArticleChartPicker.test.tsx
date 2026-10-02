@@ -208,3 +208,20 @@ test('retains a duplicate annotation input after deleting its preceding row', as
 	await click(insert())
 	expect(onInsert.mock.calls[0][0].annotations).toEqual([{ date: '2026-01-01T00:00:00.000Z', label: 'Retained' }])
 })
+
+test('Cancel closes an untouched picker at once, and asks before it drops picked series', async () => {
+	await mount()
+	const dialog = () => document.querySelector('[role="dialog"]:not([hidden])')
+	const button = (name: string, scope: ParentNode = document) =>
+		[...scope.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent?.trim() === name)!
+	await click(entity('Aave'))
+	await click(button('Cancel', dialog()!))
+	const confirmation = document.querySelector<HTMLElement>('[role="alertdialog"]')!
+	expect(confirmation.textContent).toContain('Discard this chart?')
+	await click(button('Keep editing', confirmation))
+	await settle()
+	expect(entity('Aave').getAttribute('aria-checked')).toBe('true')
+	await click(entity('Aave'))
+	await click(button('Cancel', dialog()!))
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+})

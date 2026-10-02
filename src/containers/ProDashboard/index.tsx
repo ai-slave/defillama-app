@@ -78,7 +78,7 @@ import {
 	ProDialogFallback,
 	ProSegmented
 } from './ui'
-import type { DashboardItemPlacement } from './useDashboardActions'
+import { type DashboardItemPlacement, toastRefusal } from './useDashboardActions'
 import { generateItemId } from './utils/dashboardUtils'
 
 const SYNCABLE_CHART_KINDS: ReadonlySet<DashboardItemConfig['kind']> = new Set([
@@ -489,8 +489,9 @@ function ProDashboardContent() {
 			title: 'New section',
 			displayAs: 'heading'
 		}
-		if (handleAppendItems(() => [section]) === false) return
-		requestDashboardItemReveal(section.id, { focusTitle: true })
+		const added = handleAppendItems(() => [section])
+		toastRefusal(added)
+		if (added.status === 'saved') requestDashboardItemReveal(section.id, { focusTitle: true })
 	}
 	const toolbarActionById: Record<DashboardToolbarActionId, DashboardToolbarAction> = {
 		'add-card': {
@@ -869,7 +870,7 @@ function ProDashboardContent() {
 				<SimilarDashboards dashboardId={dashboardId} tags={dashboardTags} />
 			) : null}
 
-			<Suspense fallback={<ProDialogFallback sheet />}>
+			<Suspense fallback={<ProDialogFallback width="xl" />}>
 				{addModalSession ? (
 					<AddChartModal
 						key={addModalSession.key}
@@ -898,7 +899,7 @@ function ProDashboardContent() {
 				) : null}
 			</Suspense>
 
-			<Suspense fallback={<ProDialogFallback width="lg" />}>
+			<Suspense fallback={<ProDialogFallback width="xl" />}>
 				{sqlModalSession ? (
 					<SqlChartModal
 						key={sqlModalSession.key}

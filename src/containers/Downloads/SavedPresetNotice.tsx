@@ -4,7 +4,7 @@ import { InlineStatus } from '~/ui/Status'
 export function SavedPresetNotice({ notices }: { notices: Array<string> }) {
 	if (notices.length === 0) return null
 	return (
-		<div className="border-t border-subtle px-4 py-2">
+		<div className="shrink-0 border-b border-subtle px-4 py-2">
 			<InlineStatus variant="warning">
 				{notices.length === 1 ? (
 					notices[0]
