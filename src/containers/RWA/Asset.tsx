@@ -965,14 +965,14 @@ export function RWAAssetPage({
 						<ChartPanel className="overflow-hidden">
 							<div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#cc3e82] to-transparent" />
 							<ChartPanelToolbar className="items-start">
-								<p className="mr-auto flex flex-col">
-									<span className="label-sm text-secondary uppercase">Native Yield</span>
+								<div className="mr-auto flex flex-col gap-1">
+									<h2 className="heading-xs">Native Yield</h2>
 									{asset.nativeYieldCurrent != null ? (
-										<span className="font-jetbrains text-3xl font-bold tracking-tight text-[#cc3e82]">
+										<p className="mono-xl text-[#cc3e82]">
 											{formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
-										</span>
+										</p>
 									) : null}
-								</p>
+								</div>
 								<ChartExportButtons
 									chartInstance={nativeYieldChartInstance}
 									filename={nativeYieldExportFilename}

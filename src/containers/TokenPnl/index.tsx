@@ -164,14 +164,14 @@ function TokenPnlContent({
 			<section className="grid gap-2 sm:grid-cols-3" aria-label="Performance summary">
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Return</dt>
-					<dd className={`font-jetbrains text-3xl ${isProfit ? 'text-data-up' : 'text-data-down'} font-bold`}>
+					<dd className={`mono-xl ${isProfit ? 'text-data-up' : 'text-data-down'}`}>
 						{formatPnlPercent(percentChange)}
 					</dd>
 					<dd className="body-sm text-secondary">{quantityLabel}</dd>
 				</Card>
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Holding Period</dt>
-					<dd className="font-jetbrains text-3xl font-bold text-primary">
+					<dd className="mono-xl text-primary">
 						{holdingPeriodDays} <span className="label-lg text-secondary">days</span>
 					</dd>
 					<dd className="body-sm text-secondary">
@@ -181,9 +181,7 @@ function TokenPnlContent({
 				</Card>
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Annualised Return</dt>
-					<dd
-						className={`font-jetbrains text-3xl ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'} font-bold`}
-					>
+					<dd className={`mono-xl ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 						{formatPnlPercent(annualizedReturn)}
 					</dd>
 					<dd className="body-sm text-secondary">
@@ -225,7 +223,6 @@ function TokenPnlContent({
 					label="Current Price"
 					value={formatUsd(currentPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 					subtle={selectedCoinInfo?.symbol?.toUpperCase()}
-					variant="highlight"
 				/>
 				<StatsCard
 					label="Start Price"

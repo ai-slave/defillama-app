@@ -19,7 +19,7 @@ export function TokenIncomeStatementSection({ tokenSymbol, incomeStatement }: To
 			incomeStatement={incomeStatement}
 			view="table"
 			anchorId={TOKEN_INCOME_STATEMENT_SECTION_ID}
-			titleClassName="scroll-mt-24 text-xl font-bold"
+			titleClassName="scroll-mt-24"
 			description={description}
 		/>
 	)

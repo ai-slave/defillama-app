@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import Script from 'next/script'
 import * as React from 'react'
-import toast from 'react-hot-toast'
 import { useUserHash } from '~/auth'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
@@ -14,7 +13,7 @@ async function submitSupportRequest(formData: FormData) {
 		method: 'POST',
 		body: formData
 	}).then((res) => res.json())
-	return data
+	if (data?.message !== 'success') throw new Error('Failed to submit support request')
 }
 
 function LiveChatCard({ userHash, email }: { userHash: string | null; email: string | null }) {
@@ -85,7 +84,7 @@ function LiveChatCard({ userHash, email }: { userHash: string | null; email: str
 }
 
 function Support() {
-	const { mutateAsync, isPending, error } = useMutation({ mutationFn: submitSupportRequest })
+	const { mutate, isPending, error } = useMutation({ mutationFn: submitSupportRequest })
 	const [isSubmitted, setIsSubmitted] = React.useState(false)
 	const [showForm, setShowForm] = React.useState(false)
 
@@ -105,19 +104,12 @@ function Support() {
 			formData.delete('attachment')
 		}
 
-		mutateAsync(formData)
-			.then((data) => {
-				if (data?.message === 'success') {
-					toast.success('Support request submitted successfully', { position: 'bottom-right' })
-					form.reset()
-					setIsSubmitted(true)
-				} else {
-					toast.error('Failed to submit support request', { position: 'bottom-right' })
-				}
-			})
-			.catch(() => {
-				toast.error('Failed to submit support request', { position: 'bottom-right' })
-			})
+		mutate(formData, {
+			onSuccess: () => {
+				form.reset()
+				setIsSubmitted(true)
+			}
+		})
 	}
 
 	const { userHash, email } = useUserHash()
@@ -189,10 +181,20 @@ function Support() {
 								/>
 							</div>
 
-							<Button name="submit-btn" variant="primary" size="md" disabled={isPending} className="mt-3 w-full">
-								{isPending ? 'Submitting...' : 'Submit'}
+							<Button
+								name="submit-btn"
+								variant="primary"
+								size="md"
+								pendingLabel={isPending ? 'Submitting…' : null}
+								className="mt-3 w-full"
+							>
+								Submit
 							</Button>
-							{error ? <small className="text-center text-error">{error.message}</small> : null}
+							{error ? (
+								<p role="alert" className="text-center body-sm text-error">
+									Your request didn't send. Try again, or email support@defillama.com.
+								</p>
+							) : null}
 						</Card>
 					)
 				) : null}
@@ -221,7 +223,7 @@ function SuccessScreen({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boole
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
 				</svg>
 			</div>
-			<h1 className="text-2xl font-semibold text-success">Success!</h1>
+			<h2 className="heading-xs text-success">Request sent</h2>
 			<p className="text-secondary">
 				Your support request has been submitted successfully. We'll get back to you as soon as possible.
 			</p>

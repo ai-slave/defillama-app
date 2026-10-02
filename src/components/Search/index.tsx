@@ -294,7 +294,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 			{!hideLlamaAiCta ? (
 				<BasicLink
 					href={isClient && shouldSkipLanding ? '/ai/chat' : '/ai'}
-					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-4 py-2 text-xs font-semibold text-black shadow-ai-gold-cta lg:flex"
+					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-4 py-2 label-sm text-black shadow-ai-gold-cta lg:flex"
 					data-umami-event="llamaai-nav-link"
 					data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 				>

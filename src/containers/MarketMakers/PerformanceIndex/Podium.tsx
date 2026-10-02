@@ -13,7 +13,7 @@ function RibbonBadge({ place, color }: { place: number; color: string }) {
 			<svg viewBox="0 0 32 42" width={32} height={42} className="absolute inset-0">
 				<path d="M0 4C0 1.79086 1.79086 0 4 0H28C30.2091 0 32 1.79086 32 4V42L16 32L0 42V4Z" fill={color} />
 			</svg>
-			<span className="relative -mt-2 text-sm font-bold text-on-brand">{place}</span>
+			<span className="relative -mt-2 title-md text-on-brand">{place}</span>
 		</span>
 	)
 }
@@ -22,7 +22,7 @@ function Stat({ label, value, rank }: { label: string; value: string; rank: numb
 	return (
 		<div className="flex flex-col gap-0.5">
 			<span className="label-sm text-secondary">{label}</span>
-			<span className="label-md">{value}</span>
+			<span className="mono-md">{value}</span>
 			<span className="label-sm text-secondary">Rank: {rank ?? '—'}</span>
 		</div>
 	)
@@ -48,20 +48,18 @@ function PodiumCard({
 				<div className="flex items-center gap-2 pr-10 min-[713px]:max-[1119px]:flex-1 min-[713px]:max-[1119px]:pr-0">
 					<TokenLogo src={row.marketMakerImageUrl} size={32} />
 					<div className="flex min-w-0 flex-col">
-						<span className="truncate text-base font-semibold">{row.marketMakerName}</span>
+						<span className="truncate title-lg">{row.marketMakerName}</span>
 						<span className="label-sm text-secondary">{row.activeEngagementsCount ?? '—'} active engagements</span>
 					</div>
 				</div>
 				<div className="flex justify-between gap-2 min-[713px]:max-[1119px]:contents">
 					<div className="flex flex-col gap-0.5 min-[713px]:max-[1119px]:flex-1">
 						<span className="label-sm text-secondary">Composite Score</span>
-						<span className="text-lg font-semibold">{formatComposite(row.composite)}</span>
+						<span className="mono-lg">{formatComposite(row.composite)}</span>
 					</div>
 					<div className="flex flex-col gap-0.5 min-[713px]:max-[1119px]:flex-1">
 						<span className="label-sm text-secondary">Median Engagements FDV</span>
-						<span className="text-lg font-semibold">
-							{formatUsd(row.medianEngagementsFdv, { compact: true }) ?? '—'}
-						</span>
+						<span className="mono-lg">{formatUsd(row.medianEngagementsFdv, { compact: true }) ?? '—'}</span>
 					</div>
 				</div>
 			</div>

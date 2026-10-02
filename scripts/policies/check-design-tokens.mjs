@@ -173,7 +173,7 @@ function matchDeprecatedTailwindSpelling(content) {
 }
 
 const NAMED_TYPOGRAPHY_UTILITY =
-	/^(?:heading-(?:lg|sm|xs)|title-md|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|lg|md(?:-bold)?|sm(?:-bold)?))$/
+	/^(?:heading-(?:lg|sm|xs)|title-(?:lg|md|sm)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|lg|md(?:-bold)?|sm(?:-bold)?))$/
 // text-[…] counts as typography only when the arbitrary value is not a color
 // (text-[#999], text-[rgba(…)], text-[var(--x)] set color, not size).
 const RAW_TYPOGRAPHY_UTILITY =

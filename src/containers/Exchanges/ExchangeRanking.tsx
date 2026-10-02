@@ -235,8 +235,8 @@ function PillarSection({ pillar, ranking }: { pillar: ExchangeRankingPillarModel
 	return (
 		<Card as="section" padding="md" className="flex flex-col gap-4" id={`pillar-${pillar.key}`}>
 			<div className="flex flex-wrap items-baseline gap-3">
-				<h3 className="text-lg font-semibold">
-					<span className="pr-2 font-jetbrains text-tertiary">{pillar.key}</span>
+				<h3 className="heading-xs">
+					<span className="pr-2 font-jetbrains font-bold text-tertiary">{pillar.key}</span>
 					{pillar.label}
 				</h3>
 				<span className="rounded-sm bg-brand-muted px-2 py-0.5 mono-sm-bold text-primary">{pillar.weight} points</span>
@@ -379,7 +379,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 				) : null}
 			</Card>
 
-			<h2 className="px-1 pt-2 text-xl font-semibold">How the REAL score is built</h2>
+			<h2 className="px-1 pt-2 heading-sm">How the REAL score is built</h2>
 			<Card padding="md" className="flex flex-col gap-2 body-md text-secondary">
 				<p>
 					REAL is a weighted mean of four 0 to 100 pillars. Size is log-scaled, so a venue a tenth the size of the
@@ -405,7 +405,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			))}
 
 			<Card as="section" padding="md" className="flex flex-col gap-3">
-				<h3 className="text-lg font-semibold">Tiers</h3>
+				<h3 className="heading-xs">Tiers</h3>
 				<div className="relative flex h-6 w-full overflow-hidden rounded-sm">
 					{[...TIER_BANDS].reverse().map((band, index, all) => {
 						const next = all[index + 1]

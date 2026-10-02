@@ -16,7 +16,7 @@ export function TokenCardHeader({
 		<div className="flex items-start justify-between gap-2">
 			<h3 className="flex min-w-0 flex-col gap-0.5">
 				<span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-					<span className="text-sm leading-tight font-semibold sm:text-base">{name}</span>
+					<span className="title-md">{name}</span>
 					{symbols.map((symbol) => (
 						<span key={symbol} className="label-sm text-secondary">
 							${symbol}

@@ -20,7 +20,7 @@ export function EnterpriseDataAnnouncement() {
 			dismissButtonClassName="hover:bg-data-announcement-dismiss"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-data-announcement-badge-bg px-2.5 py-0.5 text-xs font-bold tracking-wide text-data-announcement-badge-text shadow-sm">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-data-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-data-announcement-badge-text shadow-sm">
 					<Icon name="code" height={12} width={12} />
 					API
 				</span>
@@ -30,7 +30,7 @@ export function EnterpriseDataAnnouncement() {
 				</span>
 				<BasicLink
 					href="/subscription"
-					className="inline-flex items-center gap-1 rounded-full bg-data-announcement-link px-2.5 py-0.5 text-xs font-semibold text-data-announcement-text ring-1 ring-data-announcement-ring transition-colors hover:bg-data-announcement-link-hover"
+					className="inline-flex items-center gap-1 rounded-full bg-data-announcement-link px-2.5 py-0.5 title-sm text-data-announcement-text ring-1 ring-data-announcement-ring transition-colors hover:bg-data-announcement-link-hover"
 				>
 					See plans
 					<Icon name="arrow-right" height={12} width={12} />

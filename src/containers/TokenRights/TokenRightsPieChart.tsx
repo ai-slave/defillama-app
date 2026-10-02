@@ -72,7 +72,7 @@ export function TokenRightsPieChart({
 							y={label.y}
 							textAnchor="middle"
 							transform={label.rotate ? `rotate(${label.rotate} ${label.x} ${label.y})` : undefined}
-							className="fill-secondary text-sm font-bold"
+							className="fill-secondary title-md"
 						>
 							{'lines' in label
 								? label.lines.map((line, index) => (

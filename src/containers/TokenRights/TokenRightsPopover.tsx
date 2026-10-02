@@ -76,9 +76,7 @@ export function TokenRightsPopover({
 				{hasPrimaryValueAccrual ? (
 					<div className="flex flex-col gap-1 rounded-md border border-success/30 bg-success/10 p-2">
 						<div className="label-sm tracking-wider text-secondary uppercase">Primary Value Accrual</div>
-						{rights.primaryValue !== null ? (
-							<div className="text-sm font-semibold text-success">{rights.primaryValue}</div>
-						) : null}
+						{rights.primaryValue !== null ? <div className="title-md text-success">{rights.primaryValue}</div> : null}
 						{rights.primaryDetails ? (
 							<p className="line-clamp-3 label-sm text-secondary sm:line-clamp-none">{rights.primaryDetails}</p>
 						) : null}

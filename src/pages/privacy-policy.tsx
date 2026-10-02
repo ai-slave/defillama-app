@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
 			canonicalUrl="/privacy-policy"
 		>
 			<div className="mx-auto mb-16 flex w-full max-w-3xl flex-col gap-8 text-secondary">
-				<h1 className="text-center text-3xl font-bold text-on-brand">Privacy Policy</h1>
+				<h1 className="text-center heading-lg text-on-brand">Privacy Policy</h1>
 				<p>
 					This Privacy Policy explains how information about you is collected, used, and disclosed by DefiLlama. This
 					Privacy Policy applies to information we collect when you use the website operated by us and located at{' '}

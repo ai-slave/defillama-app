@@ -169,7 +169,7 @@ export function ProfileMetrics({
 					>
 						<span className="flex w-full items-center gap-2">
 							{profile.quality.tier ? <TierBadge tier={profile.quality.tier} /> : null}
-							<span className="font-jetbrains text-xl leading-none font-bold">
+							<span className="mono-lg">
 								{formatNumber(profile.quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
 							</span>
 							<span className="body-sm text-tertiary">/ 100</span>

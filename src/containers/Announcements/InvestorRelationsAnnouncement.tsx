@@ -22,7 +22,7 @@ export function InvestorRelationsAnnouncement() {
 			dismissButtonClassName="hover:bg-ir-announcement-dismiss"
 		>
 			<span className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-ir-announcement-badge-bg px-2.5 py-0.5 text-xs font-bold tracking-wide text-ir-announcement-badge-text shadow-sm dark:ring-1 dark:ring-ir-announcement-ring">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-ir-announcement-badge-bg px-2.5 py-0.5 title-sm tracking-wide text-ir-announcement-badge-text shadow-sm dark:ring-1 dark:ring-ir-announcement-ring">
 					<Icon name="bar-chart-2" height={12} width={12} />
 					IR
 				</span>
@@ -34,7 +34,7 @@ export function InvestorRelationsAnnouncement() {
 					href={`https://investors.defillama.com${user?.id ? `?referrer=${user.id}` : ''}`}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 rounded-full bg-ir-announcement-link px-2.5 py-0.5 text-xs font-semibold text-ir-announcement-text ring-1 ring-ir-announcement-ring transition-colors hover:bg-ir-announcement-link-hover"
+					className="inline-flex items-center gap-1 rounded-full bg-ir-announcement-link px-2.5 py-0.5 title-sm text-ir-announcement-text ring-1 ring-ir-announcement-ring transition-colors hover:bg-ir-announcement-link-hover"
 				>
 					See how it works
 					<Icon name="arrow-right" height={12} width={12} />

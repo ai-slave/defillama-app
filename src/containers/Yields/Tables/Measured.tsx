@@ -108,7 +108,7 @@ export function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; c
 	return (
 		<span className="flex flex-col gap-2 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 			<span className="flex items-center justify-between gap-3">
-				<span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+				<span className="flex items-center gap-1.5 title-md text-primary">
 					<SealGlyph size={15} />
 					{content.headline}
 				</span>
@@ -215,7 +215,7 @@ export function MeasuredColumnHint() {
 							{/* The claim in its own tinted block: what the column holds, the tier, and what the number means. */}
 							<span className="flex flex-col gap-1 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 								<span className="flex items-center justify-between gap-3">
-									<span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+									<span className="flex items-center gap-1.5 title-md text-primary">
 										<SealGlyph size={15} />
 										Verified APY
 									</span>
@@ -293,7 +293,7 @@ export function MeasuredExitColumnHint() {
 						<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
 							<span className="flex flex-col gap-1 rounded-lg border border-medium bg-border-subtle px-3 py-2.5">
 								<span className="flex items-center justify-between gap-3">
-									<span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+									<span className="flex items-center gap-1.5 title-md text-primary">
 										<SealGlyph size={15} />
 										Verified Exit Status
 									</span>
@@ -420,7 +420,7 @@ export function MeasuredCard({
 	return (
 		<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
 			<span className="flex items-center justify-between gap-3">
-				<span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+				<span className="flex items-center gap-1.5 title-md text-primary">
 					<MeasuredSeal muted={!measured} size={14} />
 					{title}
 				</span>

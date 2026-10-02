@@ -54,12 +54,25 @@
 }
 
 /* title-* is the semibold name of a card or block at UI sizes, below the heading
-   ramp. 14/20 is the line box these titles rendered with as text-sm, so moving
-   a title onto the style keeps its row height. */
+   ramp, and the header or total of a compact card. Each line box matches the
+   text-* size it replaces (text-base 16/24, text-sm 14/20, text-xs 12/16), so moving a title
+   onto the style keeps its row height. */
+@utility title-lg {
+	font-family: var(--font-inter);
+	font-size: 1rem;
+	line-height: calc(24 / 16); /* accepted app value; not Figma-verified */
+	font-weight: 600;
+}
 @utility title-md {
 	font-family: var(--font-inter);
 	font-size: 0.875rem;
 	line-height: calc(20 / 14); /* accepted app value; not Figma-verified */
+	font-weight: 600;
+}
+@utility title-sm {
+	font-family: var(--font-inter);
+	font-size: 0.75rem;
+	line-height: calc(16 / 12); /* accepted app value; not Figma-verified */
 	font-weight: 600;
 }
 

@@ -192,7 +192,7 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	)
 	const body = (
 		<span className="grid grid-cols-[1fr_auto] items-center justify-items-end gap-x-1.5 leading-tight">
-			<span className="text-sm font-bold text-primary">
+			<span className="title-md text-primary">
 				<span className={showCard ? 'underline decoration-dotted' : undefined}>{pct(total)}</span>
 			</span>
 			{glyph}

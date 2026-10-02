@@ -138,9 +138,9 @@ export function ChainOverview(props: IChainOverviewData) {
 										{app.background}
 										<>{app.icon}</>
 										<span className="flex flex-1 flex-col gap-0.5">
-											<span className="col-span-1 row-span-1 truncate text-sm font-semibold">{app.name}</span>
+											<span className="truncate title-md">{app.name}</span>
 											{app.description === '' ? null : (
-												<span className="col-span-1 row-span-1 truncate text-sm font-light">{app.description}</span>
+												<span className="truncate body-md text-secondary">{app.description}</span>
 											)}
 										</span>
 										<Icon name="arrow-up-right-2" className="size-6 shrink-0" />

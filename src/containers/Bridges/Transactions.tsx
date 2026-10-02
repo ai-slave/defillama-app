@@ -469,7 +469,7 @@ function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps)
 	return (
 		<Card padding="md" className="flex flex-col gap-1">
 			<span className="label-sm text-secondary uppercase">{label}</span>
-			<span className={`text-2xl font-semibold ${accentClass}`}>{value}</span>
+			<span className={`mono-xl ${accentClass}`}>{value}</span>
 			{sublabel ? <span className="label-sm text-tertiary">{sublabel}</span> : null}
 		</Card>
 	)

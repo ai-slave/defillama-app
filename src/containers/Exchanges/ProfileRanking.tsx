@@ -155,7 +155,7 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 					>
 						<span className="flex items-end gap-3">
 							<TierBadge tier={quality.tier} />
-							<span className="font-jetbrains text-4xl leading-none font-bold">
+							<span className="mono-xl">
 								{formatNumber(quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
 							</span>
 							<span className="pb-0.5 body-sm text-secondary">/ 100</span>

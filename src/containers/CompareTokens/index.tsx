@@ -178,7 +178,7 @@ export function CompareTokens({
 						<SurfaceBodyLoadingStatus label="Loading token comparison" />
 					) : (
 						<div className="mt-10 flex flex-col items-center gap-2">
-							<h2 className="flex flex-wrap items-center justify-center gap-1 text-base font-normal">
+							<h2 className="flex flex-wrap items-center justify-center gap-1 body-lg">
 								<span className="flex items-center gap-1">
 									<img
 										alt=""
@@ -191,7 +191,7 @@ export function CompareTokens({
 									/>
 									<span>{selectedCoins[0]?.symbol?.toUpperCase()}</span>
 								</span>
-								<span>WITH THE {compareType.label.toUpperCase()} OF</span>
+								<span>with the {compareType.label} of</span>
 								<span className="flex items-center gap-1">
 									<img
 										alt=""
@@ -207,7 +207,7 @@ export function CompareTokens({
 							</h2>
 
 							{comparison != null ? (
-								<p className="text-lg font-bold">
+								<p className="mono-xl">
 									{formatUsd(comparison.newPrice)} ({formatRatio(comparison.increase)}x)
 								</p>
 							) : null}

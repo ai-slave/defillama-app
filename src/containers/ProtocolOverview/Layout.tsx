@@ -178,7 +178,7 @@ export function ProtocolOverviewLayout({
 				>
 					<span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
 						<span
-							className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ${dashboardAnnouncement.badgeClassName}`}
+							className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 title-sm ${dashboardAnnouncement.badgeClassName}`}
 						>
 							<TokenLogo
 								name={dashboardAnnouncement.logoName ?? name}

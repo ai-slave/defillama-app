@@ -13,7 +13,7 @@ export function DailyPnLGrid({ timeline }: { timeline: Array<TimelinePoint> }) {
 	return (
 		<Card padding="md" as="section" className="overflow-hidden" aria-label="Daily change grid">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="label-lg text-primary">Daily Change Grid</h3>
+				<h3 className="heading-xs">Daily Change Grid</h3>
 				<p className="body-xs text-secondary">{displayDays.length} days shown</p>
 			</div>
 			<ul className="flex scrollbar-none max-w-full flex-wrap gap-1.5 pb-1" aria-label="Daily return heat cells">

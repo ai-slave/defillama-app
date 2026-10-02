@@ -479,7 +479,7 @@ const emissionsColumns = columnHelper.columns([
 
 				return (
 					<div className="flex h-full w-full flex-col items-end justify-center gap-2 px-2">
-						<span className="text-sm font-bold text-primary">
+						<span className="text-primary">
 							{formatPercent(pctUnlocked, {
 								input: 'percent',
 								compact: true,

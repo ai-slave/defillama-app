@@ -1,8 +1,9 @@
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { Tooltip } from '~/ui/Tooltip'
+import { Hovercard } from '~/ui/Hovercard'
 import { slug } from '~/utils'
+import { formatDate } from '~/utils/dateFormat'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DailyUnlocks, DayInfo } from './calendarTypes'
@@ -16,6 +17,9 @@ interface CalendarDayCellProps {
 	maxUnlockValue: number
 	isToday: boolean
 }
+
+const usd = (value: number) =>
+	formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday }: CalendarDayCellProps) {
 	const [isDarkMode] = useDarkModeManager()
@@ -55,22 +59,20 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 
 	const cellContent = (
 		<div
-			className={`relative h-24 w-full ${isToday ? 'ring-1 ring-brand ring-inset' : ''} ${
-				dayInfo.isCurrentMonth ? 'hover:brightness-110' : 'bg-surface opacity-60 hover:opacity-80'
-			}`}
+			className={`relative h-24 w-full ${dayInfo.isCurrentMonth ? 'hover:brightness-110' : 'bg-surface opacity-60 hover:opacity-80'}`}
 			style={cellStyle}
 		>
 			<div className="relative z-10 flex h-full w-full flex-col justify-between p-2">
-				<span className={`text-sm font-medium ${isToday ? 'font-bold text-link' : ''}`}>{dayInfo.date.date()}</span>
+				{/* Today is a filled brand disc: a brand ring or brand text disappears on the blue unlock tints. */}
+				<span
+					aria-current={isToday ? 'date' : undefined}
+					className={`-m-0.5 flex size-6 items-center justify-center rounded-full label-md ${isToday ? 'bg-brand text-on-brand' : ''}`}
+				>
+					{dayInfo.date.date()}
+				</span>
 				{hasUnlocks && dayInfo.isCurrentMonth ? (
-					<div className="mt-auto hidden truncate text-xs sm:block">
-						{dayData.totalValue > 0 ? 'Cliff: ' : 'Rate: '}
-						{formatUsd(dayData.totalValue > 0 ? dayData.totalValue : weeklyRateValue, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-						{dayData.totalValue > 0 ? '' : ' / week'}
+					<div className="mt-auto hidden truncate body-sm sm:block">
+						{dayData.totalValue > 0 ? `Cliff: ${usd(dayData.totalValue)}` : `Rate: ${usd(weeklyRateValue)} / week`}
 					</div>
 				) : null}
 			</div>
@@ -82,70 +84,57 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 	}
 
 	return (
-		<Tooltip
+		<Hovercard
+			className="w-full"
+			contentClassName="w-max max-w-xs p-3"
 			content={
-				<div className="flex max-w-xs flex-col gap-2 p-2">
-					{dayData.totalValue > 0 ? (
-						<div className="text-sm font-semibold">
-							Cliff Unlock Value:{' '}
-							{formatUsd(dayData.totalValue, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
-						</div>
-					) : null}
-					{weeklyRateValue > 0 ? (
-						<div className="text-sm font-semibold">
-							Weekly Rate Value:{' '}
-							{formatUsd(weeklyRateValue, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}{' '}
-							/ week
-						</div>
-					) : null}
-					{dayData.events.length > 0 ? (
-						<>
-							<div className="-mx-2 border-t border-medium" />
-							<div className="flex flex-col gap-1.5">
-								{dayData.events.map((event) => (
-									<div
-										key={JSON.stringify([event.protocol, event.unit ?? 'once'])}
-										className="flex items-center justify-between gap-4"
-									>
-										<BasicLink
-											href={`/unlocks/${slug(event.protocol)}`}
-											target="_blank"
-											className="group flex min-w-0 shrink items-center gap-1.5 text-sm font-medium hover:underline"
-										>
-											<TokenLogo
-												name={event.protocol}
-												kind="token"
-												size={16}
-												fallbackSrc={event.geckoId ? geckoTokenIconUrl(event.geckoId) : null}
-												alt={`Logo of ${event.protocol}`}
-											/>
-											<span className="truncate">{event.protocol}</span>
-										</BasicLink>
-										<span className="text-sm font-medium whitespace-nowrap text-secondary">
-											{formatUsd(event.value, {
-												compact: true,
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})}
-											{event.unit === 'week' ? ' / week' : ''}
-										</span>
-									</div>
-								))}
-							</div>
-						</>
-					) : null}
+				<div className="flex flex-col gap-2">
+					<p className="title-sm text-primary">{formatDate(dateStr)}</p>
+					<ul className="flex flex-col gap-1.5">
+						{dayData.events.map((event) => (
+							<li
+								key={JSON.stringify([event.protocol, event.unit ?? 'once'])}
+								className="flex items-center justify-between gap-4"
+							>
+								<BasicLink
+									href={`/unlocks/${slug(event.protocol)}`}
+									target="_blank"
+									className="flex min-w-0 items-center gap-1.5 text-primary hover:underline"
+								>
+									<TokenLogo
+										name={event.protocol}
+										kind="token"
+										size={16}
+										fallbackSrc={event.geckoId ? geckoTokenIconUrl(event.geckoId) : null}
+										alt={`Logo of ${event.protocol}`}
+									/>
+									<span className="truncate">{event.protocol}</span>
+								</BasicLink>
+								<span className="label-sm whitespace-nowrap text-primary">
+									{usd(event.value)}
+									{event.unit === 'week' ? ' / week' : ''}
+								</span>
+							</li>
+						))}
+					</ul>
+					<div className="flex flex-col gap-1 border-t border-medium pt-2 title-sm text-primary">
+						{dayData.totalValue > 0 ? (
+							<p className="flex justify-between gap-4">
+								<span>Cliff unlocks</span>
+								<span>{usd(dayData.totalValue)}</span>
+							</p>
+						) : null}
+						{weeklyRateValue > 0 ? (
+							<p className="flex justify-between gap-4">
+								<span>Weekly rate</span>
+								<span>{usd(weeklyRateValue)} / week</span>
+							</p>
+						) : null}
+					</div>
 				</div>
 			}
 		>
 			{cellContent}
-		</Tooltip>
+		</Hovercard>
 	)
 }

@@ -9,7 +9,7 @@ export function successToast({ title, description }: { title: string; descriptio
 	}
 	return toast.success(
 		<div className="flex flex-col gap-1">
-			<p className="font-semibold text-primary">{title}</p>
+			<p className="title-md text-primary">{title}</p>
 			<p className="text-secondary">{description}</p>
 		</div>,
 		{ duration: SUCCESS_TOAST_DURATION }
@@ -20,7 +20,7 @@ export function errorToast({ title, description }: { title: string; description:
 	return toast.error(
 		(t) => (
 			<div className="flex flex-col gap-2">
-				<p className="flex items-center gap-2 text-base font-semibold text-error">
+				<p className="flex items-center gap-2 title-md text-error">
 					<Icon name="alert-triangle" height={16} width={16} />
 					<span>{title}</span>
 					<button type="button" onClick={() => toast.dismiss(t.id)} className="ml-auto text-primary">

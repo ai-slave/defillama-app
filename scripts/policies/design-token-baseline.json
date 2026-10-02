@@ -17,7 +17,7 @@
 		"deprecated-tailwind-spelling": 0,
 		"raw-popover-surface": 0,
 		"hand-rolled-spinner": 0,
-		"ascii-ellipsis": 142,
+		"ascii-ellipsis": 141,
 		"raw-scope-note": 0,
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
@@ -26,7 +26,7 @@
 		"conflicting-named-typography": 29,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 141
+		"raw-type-pair": 84
 	},
 	"product": {
 		"hex-in-classname": 24,
@@ -55,6 +55,6 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 1208
+		"raw-type-pair": 1199
 	}
 }

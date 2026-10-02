@@ -8,7 +8,7 @@ export function ComparisonPanel({ entries, activeId }: { entries: Array<Comparis
 	return (
 		<Card padding="md" as="section" aria-label="Range comparison">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="label-lg text-primary">Range Comparison</h3>
+				<h3 className="heading-xs">Range Comparison</h3>
 				<p className="body-xs text-secondary">BTC · ETH · SOL</p>
 			</div>
 			<ul className="grid gap-3 sm:grid-cols-3">
