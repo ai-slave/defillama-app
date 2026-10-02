@@ -25,6 +25,7 @@ const props = {
 	mainLinks: [{ category: 'Main', pages: pages.Main }] as TNavLinks,
 	pinnedPages: [],
 	userDashboards: [],
+	dashboardsStatus: null,
 	footerLinks: [],
 	oldMetricLinks: [],
 	asPath: '/tools'
