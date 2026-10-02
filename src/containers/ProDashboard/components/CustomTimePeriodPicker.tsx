@@ -1,11 +1,16 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import type { CustomTimePeriod } from '../dashboardTypes'
+import { absoluteTimePeriod } from '../timePeriod'
 import { ProButton, ProSegmented } from '../ui'
+
+// Picked days are UTC calendar days, like the daily points they filter.
+dayjs.extend(utc)
 
 const CUSTOM_PERIOD_MODE_OPTIONS = [
 	{ value: 'relative' as const, label: 'Relative' },
@@ -28,11 +33,11 @@ function formatCompactLabel(customPeriod: CustomTimePeriod | null): string {
 	}
 
 	if (customPeriod.type === 'absolute' && customPeriod.startDate && customPeriod.endDate) {
-		const start = dayjs.unix(customPeriod.startDate)
-		const end = dayjs.unix(customPeriod.endDate)
+		const start = dayjs.unix(customPeriod.startDate).utc()
+		const end = dayjs.unix(customPeriod.endDate).utc()
 		const startYear = start.year()
 		const endYear = end.year()
-		const currentYear = dayjs().year()
+		const currentYear = dayjs.utc().year()
 
 		if (startYear === endYear) {
 			if (startYear === currentYear) {
@@ -56,18 +61,18 @@ export function CustomTimePeriodPicker({
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-end' })
 	const [mode, setMode] = useState<'relative' | 'absolute'>(customPeriod?.type || 'relative')
 
-	const today = dayjs().format('YYYY-MM-DD')
+	const today = dayjs.utc().format('YYYY-MM-DD')
 
 	const defaultRelativeDays =
 		customPeriod?.type === 'relative' && customPeriod.relativeDays ? String(customPeriod.relativeDays) : '45'
 	const defaultStartDate =
 		customPeriod?.type === 'absolute' && customPeriod.startDate
-			? dayjs.unix(customPeriod.startDate).format('YYYY-MM-DD')
-			: dayjs().subtract(90, 'day').format('YYYY-MM-DD')
+			? dayjs.unix(customPeriod.startDate).utc().format('YYYY-MM-DD')
+			: dayjs.utc().subtract(90, 'day').format('YYYY-MM-DD')
 	const defaultEndDate =
 		customPeriod?.type === 'absolute' && customPeriod.endDate
-			? dayjs.unix(customPeriod.endDate).format('YYYY-MM-DD')
-			: dayjs().format('YYYY-MM-DD')
+			? dayjs.unix(customPeriod.endDate).utc().format('YYYY-MM-DD')
+			: today
 
 	const handleApply = (e: FormSubmitEvent) => {
 		e.preventDefault()
@@ -91,18 +96,13 @@ export function CustomTimePeriodPicker({
 			if (!startInput || !endInput) return
 			startInput.setCustomValidity('')
 			endInput.setCustomValidity('')
-			const start = dayjs(startInput.value)
-			const end = dayjs(endInput.value)
-			if (!start.isValid() || !end.isValid() || !start.isBefore(end)) {
+			// YYYY-MM-DD strings compare in date order.
+			if (!startInput.value || !endInput.value || startInput.value >= endInput.value) {
 				endInput.setCustomValidity('End date must be after start date')
 				endInput.reportValidity()
 				return
 			}
-			onApply({
-				type: 'absolute',
-				startDate: start.unix(),
-				endDate: end.endOf('day').unix()
-			})
+			onApply(absoluteTimePeriod(startInput.value, endInput.value))
 			popover.hide()
 		}
 	}

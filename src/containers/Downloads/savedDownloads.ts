@@ -1,7 +1,11 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { formatNumber } from '~/utils/numberFormat'
 import { chartDatasetsBySlug } from './chart-datasets'
 import type { ChartConfig } from './sql/chartConfig'
+
+// Saved ranges hold UTC calendar days, the keys the CSV rows use.
+dayjs.extend(utc)
 
 export type SavedDownloadKind = 'dataset' | 'chart' | 'multiMetric' | 'query'
 export type SavedSortDir = 'asc' | 'desc'
@@ -424,12 +428,12 @@ export function formatDateRangeShort(range: DateRangeConfig): string {
 				return 'All time'
 		}
 	}
-	const from = dayjs(range.from)
-	const to = dayjs(range.to)
+	const from = dayjs.utc(range.from)
+	const to = dayjs.utc(range.to)
 	if (!from.isValid() || !to.isValid()) return 'Custom range'
 	const fy = from.year()
 	const ty = to.year()
-	const cy = dayjs().year()
+	const cy = dayjs.utc().year()
 	if (fy === ty) {
 		if (fy === cy) return `${from.format('MMM D')} – ${to.format('MMM D')}`
 		return `${from.format('MMM D')} – ${to.format("MMM D 'YY")}`
@@ -455,12 +459,12 @@ export function formatDateRangeLong(range: DateRangeConfig): string {
 				return 'All time'
 		}
 	}
-	const from = dayjs(range.from)
-	const to = dayjs(range.to)
+	const from = dayjs.utc(range.from)
+	const to = dayjs.utc(range.to)
 	if (!from.isValid() || !to.isValid()) return 'Custom range'
 	const fy = from.year()
 	const ty = to.year()
-	const cy = dayjs().year()
+	const cy = dayjs.utc().year()
 	if (fy === ty && fy === cy) return `${from.format('MMM D')} – ${to.format('MMM D')}`
 	if (fy === ty) return `${from.format('MMM D')} – ${to.format('MMM D, YYYY')}`
 	return `${from.format('MMM D, YYYY')} – ${to.format('MMM D, YYYY')}`

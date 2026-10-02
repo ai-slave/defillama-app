@@ -47,7 +47,6 @@ const localeDateMethodFiles = new Set([
 
 const dayjsFormatFiles = new Set([
 	'src/containers/Cexs/DateFilter.tsx',
-	'src/containers/Downloads/DateRangePicker.tsx',
 	'src/containers/Downloads/csvDateFilter.ts',
 	'src/containers/Downloads/savedDownloads.ts',
 	'src/containers/ProDashboard/components/CustomTimePeriodPicker.tsx',
@@ -62,6 +61,35 @@ const dayjsFormatFiles = new Set([
 	'src/containers/Unlocks/useUnlockChartData.ts',
 	'src/containers/Unlocks/WeekDayColumn.tsx',
 	'src/utils/calendar.ts'
+])
+
+/**
+ * Day.js parses a date-only string at local midnight and puts calendar boundaries in the visitor's zone, while date
+ * keys and daily points are UTC calendar days (docs/date-formatting.md). These modules keep UTC date keys as
+ * local-midnight Day.js days on purpose: each key parses and formats in the same zone, so it round-trips.
+ */
+const localDayjsCalendarFiles = new Map<string, string>([
+	['src/containers/Unlocks/calendarUtils.ts', 'the unlocks calendar grid does its day math on local-midnight days'],
+	['src/containers/Unlocks/CalendarView.tsx', 'the unlocks calendar grid does its day math on local-midnight days'],
+	['src/containers/Unlocks/UnlocksListView.tsx', 'the unlocks list groups by the same local-midnight days']
+])
+
+const UTC_ZONE_NAMES = new Set(['UTC', 'Etc/UTC'])
+
+const DAYJS_CALENDAR_UNITS = new Set([
+	'day',
+	'date',
+	'd',
+	'D',
+	'week',
+	'w',
+	'isoWeek',
+	'month',
+	'M',
+	'quarter',
+	'Q',
+	'year',
+	'y'
 ])
 
 // These callers provide their own client clock. Other UI should use RelativeTime,
@@ -133,6 +161,22 @@ function isDayjsExpression(node: ts.Expression, bindings: ReadonlySet<string>): 
 	return false
 }
 
+/** A number or Date argument is an instant; anything else may be a date string that Day.js parses as local midnight. */
+function isInstantArgument(node: ts.Expression): boolean {
+	if (ts.isNumericLiteral(node) || ts.isNewExpression(node)) return true
+	if (ts.isPrefixUnaryExpression(node)) return isInstantArgument(node.operand)
+	if (ts.isParenthesizedExpression(node)) return isInstantArgument(node.expression)
+	if (ts.isBinaryExpression(node)) {
+		const operator = node.operatorToken.kind
+		return (
+			operator === ts.SyntaxKind.AsteriskToken ||
+			operator === ts.SyntaxKind.SlashToken ||
+			operator === ts.SyntaxKind.MinusToken
+		)
+	}
+	return ts.isCallExpression(node) && node.expression.getText() === 'Date.now'
+}
+
 function scanSource(relative: string, file: string, source: string): Array<string> {
 	const violations: Array<string> = []
 	const sourceFile = ts.createSourceFile(
@@ -144,6 +188,45 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 	)
 	const testFile = isTestFile(relative)
 	const dayjsBindings = new Set<string>()
+	const localDayjsCalendarOwner = localDayjsCalendarFiles.has(relative)
+	/** Same-file `const` initializers, so `const today = dayjs()` carries its zone to `today.format(…)`. */
+	const constInitializers = new Map<string, ts.Expression | null>()
+	;(function collectConsts(node: ts.Node) {
+		if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+			// A name declared twice is ambiguous without scope analysis, so it resolves to unknown.
+			const name = node.name.text
+			constInitializers.set(name, constInitializers.has(name) ? null : node.initializer)
+		}
+		ts.forEachChild(node, collectConsts)
+	})(sourceFile)
+
+	/**
+	 * Whether a Day.js chain ends in UTC or in another zone (the visitor's or a named one), or null when the chain does
+	 * not start from Day.js in this file. The zone call nearest the end wins, so `.utc().local()` is not UTC.
+	 */
+	function dayjsZone(node: ts.Expression, seen = new Set<string>()): 'utc' | 'zoned' | null {
+		if (ts.isParenthesizedExpression(node) || ts.isNonNullExpression(node)) return dayjsZone(node.expression, seen)
+		if (ts.isIdentifier(node)) {
+			const initializer = constInitializers.get(node.text)
+			if (!initializer || seen.has(node.text)) return null
+			seen.add(node.text)
+			return dayjsZone(initializer, seen)
+		}
+		if (!ts.isCallExpression(node)) return null
+		const callee = node.expression
+		if (ts.isIdentifier(callee)) return dayjsBindings.has(callee.text) ? 'zoned' : null
+		if (!ts.isPropertyAccessExpression(callee)) return null
+		const isDayjsStatic = ts.isIdentifier(callee.expression) && dayjsBindings.has(callee.expression.text)
+		if (callee.name.text === 'utc') return 'utc'
+		if (callee.name.text === 'local') return 'zoned'
+		if (callee.name.text === 'tz') {
+			// `dayjs.tz(value, zone)` and `value.tz(zone)`; no zone means the visitor's guessed zone.
+			const zone = node.arguments[isDayjsStatic ? 1 : 0]
+			return zone && ts.isStringLiteralLike(zone) && UTC_ZONE_NAMES.has(zone.text) ? 'utc' : 'zoned'
+		}
+		if (isDayjsStatic) return 'zoned'
+		return dayjsZone(callee.expression, seen)
+	}
 
 	function report(node: ts.Node, message: string) {
 		const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
@@ -255,6 +338,36 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 			if (method === 'format' && dayjsBindings.size > 0 && !dayjsFormatFiles.has(relative)) {
 				report(node, 'uses Day.js display formatting outside an approved domain policy')
 			}
+			const [firstArgument] = node.arguments
+			if (
+				dayjsBindings.size > 0 &&
+				!localDayjsCalendarOwner &&
+				firstArgument &&
+				ts.isStringLiteral(firstArgument) &&
+				(((method === 'startOf' || method === 'endOf') && DAYJS_CALENDAR_UNITS.has(firstArgument.text)) ||
+					(method === 'format' && firstArgument.text.includes('YYYY-MM-DD'))) &&
+				dayjsZone(node.expression.expression) === 'zoned'
+			) {
+				report(
+					node,
+					`calls Day.js ${method}('${firstArgument.text}') outside UTC; date keys are UTC days, so use dayjs.utc() or compare YYYY-MM-DD strings`
+				)
+			}
+		}
+
+		if (
+			!testFile &&
+			!localDayjsCalendarOwner &&
+			ts.isCallExpression(node) &&
+			ts.isIdentifier(node.expression) &&
+			dayjsBindings.has(node.expression.text) &&
+			node.arguments[0] &&
+			!isInstantArgument(node.arguments[0])
+		) {
+			report(
+				node,
+				"parses with Day.js in the visitor's zone, where a date-only string becomes local midnight; use dayjs.utc(value)"
+			)
 		}
 
 		if (
@@ -356,7 +469,62 @@ if (process.argv.includes('--self-test')) {
 			source: "import relativeTime from 'dayjs/plugin/relativeTime.js'",
 			violation: true
 		},
-		{ name: 'relative string', source: 'formatRelativeTime(value)', violation: true }
+		{ name: 'relative string', source: 'formatRelativeTime(value)', violation: true },
+		{ name: 'local Day.js parse', source: "import dayjs from 'dayjs'; dayjs(item.date).unix()", violation: true },
+		{ name: 'UTC Day.js parse', source: "import dayjs from 'dayjs'; dayjs.utc(item.date).unix()", violation: false },
+		{ name: 'Day.js instant', source: "import dayjs from 'dayjs'; dayjs(timestamp * 1e3)", violation: false },
+		{ name: 'Day.js now', source: "import dayjs from 'dayjs'; dayjs().subtract(30, 'day').unix()", violation: false },
+		{ name: 'local Day.js year start', source: "import dayjs from 'dayjs'; dayjs().startOf('year')", violation: true },
+		{
+			name: 'converted year start',
+			source: "import dayjs from 'dayjs'; dayjs().utc().startOf('year')",
+			violation: false
+		},
+		{
+			name: 'converted back to the local zone',
+			source: "import dayjs from 'dayjs'; dayjs().utc().local().startOf('year')",
+			violation: true
+		},
+		{
+			name: 'named non-UTC zone',
+			source: "import dayjs from 'dayjs'; dayjs().tz('America/Los_Angeles').startOf('year')",
+			violation: true
+		},
+		{ name: 'guessed zone', source: "import dayjs from 'dayjs'; dayjs.tz(value).startOf('day')", violation: true },
+		{
+			name: 'named UTC zone',
+			source: "import dayjs from 'dayjs'; dayjs().tz('UTC').startOf('year')",
+			violation: false
+		},
+		{
+			name: 'static UTC zone',
+			source: "import dayjs from 'dayjs'; dayjs.tz(value, 'UTC').startOf('day')",
+			violation: false
+		},
+		{ name: 'local Day.js hour start', source: "import dayjs from 'dayjs'; dayjs().startOf('hour')", violation: false },
+		{
+			name: 'local Day.js date key through a const',
+			relative: 'src/containers/Downloads/csvDateFilter.ts',
+			source: "import dayjs from 'dayjs'; const today = dayjs(); today.subtract(6, 'day').format('YYYY-MM-DD')",
+			violation: true
+		},
+		{
+			name: 'UTC Day.js date key through a const',
+			relative: 'src/containers/Downloads/csvDateFilter.ts',
+			source: "import dayjs from 'dayjs'; const today = dayjs.utc(); today.subtract(6, 'day').format('YYYY-MM-DD')",
+			violation: false
+		},
+		{
+			name: 'Day.js value of unknown zone',
+			source: "import dayjs from 'dayjs'; function f(day: Dayjs) { return day.startOf('month') }",
+			violation: false
+		},
+		{
+			name: 'approved local calendar grid',
+			relative: 'src/containers/Unlocks/calendarUtils.ts',
+			source: "import dayjs from 'dayjs'; dayjs(dateParam).startOf('month')",
+			violation: false
+		}
 	]
 	const failures = cases.filter(({ name, relative, source, violation }) => {
 		const file = relative ?? `src/policy-self-test/${name}.tsx`

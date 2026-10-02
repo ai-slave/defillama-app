@@ -24,7 +24,7 @@ interface DateRangePickerProps {
 export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }: DateRangePickerProps) {
 	const id = useId()
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
-	const today = dayjs().format('YYYY-MM-DD')
+	const today = dayjs().toISOString().slice(0, 10) // the UTC day, as rows are keyed by UTC date
 	const maxAllowed = maxDate ?? today
 
 	// Local state for custom inputs — commits to onChange only on Apply, so

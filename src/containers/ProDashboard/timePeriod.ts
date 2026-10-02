@@ -1,5 +1,8 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
+
+dayjs.extend(utc)
 
 export type TimePeriodBounds = { start: number; end: number } | null
 
@@ -38,6 +41,15 @@ export function filterDataByTimePeriod(
 	return data.slice(startIndex, low)
 }
 
+/** Bounds for picked `YYYY-MM-DD` days: UTC calendar days, both inclusive, matching the UTC-midnight daily points. */
+export function absoluteTimePeriod(startDay: string, endDay: string): CustomTimePeriod {
+	return {
+		type: 'absolute',
+		startDate: dayjs.utc(startDay).unix(),
+		endDate: dayjs.utc(endDay).endOf('day').unix()
+	}
+}
+
 export function getTimePeriodBounds(
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
@@ -67,7 +79,8 @@ export function getTimePeriodBounds(
 			cutoffDate = now.subtract(365, 'day')
 			break
 		case 'ytd':
-			cutoffDate = now.startOf('year')
+			// Daily points sit at UTC midnight, so the year starts at the UTC new year in every zone.
+			cutoffDate = now.utc().startOf('year')
 			break
 		case '3y':
 			cutoffDate = now.subtract(3, 'year')

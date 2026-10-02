@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -138,7 +137,8 @@ async function fetchProtocolTreasuryData(protocol: string): Promise<Array<[numbe
 async function fetchProtocolMedianApyData(protocol: string): Promise<Array<[number, number]>> {
 	const res: Array<[number, number]> = []
 	for (const item of await fetchProtocolMedianHistory(protocol)) {
-		res.push([dayjs(item.date).unix(), item.medianApy])
+		// Same parse as the protocol page's median chart: a date-only string is a UTC calendar day.
+		res.push([Math.floor(new Date(item.date).getTime() / 1000), item.medianApy])
 	}
 	return res
 }

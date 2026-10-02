@@ -179,6 +179,10 @@ render code imports.
 - Do not alias canonical imports or add wrappers that only supply a fallback.
 - Keep a local formatter only when it owns documented domain semantics that the canonical API does not express.
 - Date-only API fields must not shift a day in negative or positive UTC offsets.
+- Day.js works in the visitor's zone: `dayjs('2026-10-01')` is local midnight, and `startOf('year')` or
+  `format('YYYY-MM-DD')` on a local value names the visitor's day. Date keys, picked dates and daily points are UTC
+  days, so parse with `dayjs.utc`, take calendar boundaries in UTC, or compare `YYYY-MM-DD` strings. The "today"
+  that caps a date input or ends a preset is the UTC day too.
 - Exact instants must not lose their time.
 - Display labels must not be reused for machine output.
 - Invalid or missing values return `null`; the consumer chooses the appropriate UI copy.

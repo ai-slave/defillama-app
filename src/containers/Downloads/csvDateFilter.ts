@@ -1,7 +1,10 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { csvRecords, parseCsvLine, type ParsedCsvRow } from './csvParse'
 import type { DateRangeConfig } from './savedDownloads'
+
+dayjs.extend(utc)
 
 export interface ResolvedDateRange {
 	from: string // YYYY-MM-DD, inclusive
@@ -13,14 +16,14 @@ export interface ResolvedDateRange {
  * Returns null for unbounded ranges ('all' preset) and for invalid inputs — callers
  * treat null as "no filter applied".
  *
- * Relative presets resolve against `dayjs()` at call time, so "last 30 days" keeps
- * rolling each time a saved preset re-runs.
+ * Relative presets resolve against the clock at call time, so "last 30 days" keeps
+ * rolling each time a saved preset re-runs. Rows are keyed by UTC date, so today is the UTC day.
  */
 export function resolveDateRange(range: DateRangeConfig | null | undefined): ResolvedDateRange | null {
 	if (!range) return null
 	if (range.kind === 'preset') {
 		if (range.preset === 'all') return null
-		const today = dayjs()
+		const today = dayjs.utc()
 		const to = today.format('YYYY-MM-DD')
 		switch (range.preset) {
 			case '7d':

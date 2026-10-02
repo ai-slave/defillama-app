@@ -1,6 +1,8 @@
-import { describe, expect, test } from 'vitest'
+import dayjs from 'dayjs'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { getProDashboardChartSourceQueryKey } from '../chartSource'
 import { buildProDashboardChartObserverPlan, filterDataByTimePeriod } from '../queries'
+import { absoluteTimePeriod } from '../timePeriod'
 
 const data: Array<[number, number]> = [
 	[10, 1],
@@ -44,6 +46,37 @@ describe('filterDataByTimePeriod', () => {
 				endDate: 60
 			})
 		).toEqual([])
+	})
+})
+
+// Daily points sit at UTC midnight; Los Angeles is behind UTC, so a local-midnight bound lands mid-day.
+describe('calendar periods west of UTC', () => {
+	const originalTimeZone = process.env.TZ
+	beforeEach(() => {
+		process.env.TZ = 'America/Los_Angeles'
+	})
+	afterEach(() => {
+		// Assigning undefined to an env var stores the string "undefined".
+		if (originalTimeZone === undefined) delete process.env.TZ
+		else process.env.TZ = originalTimeZone
+	})
+
+	const day = (iso: string): [number, number] => [Date.parse(`${iso}T00:00:00Z`) / 1000, 1]
+
+	test('a picked range keeps its first and last day and nothing after', () => {
+		const daily = [day('2026-08-31'), day('2026-09-01'), day('2026-09-30'), day('2026-10-01')]
+		expect(filterDataByTimePeriod(daily, 'custom', absoluteTimePeriod('2026-09-01', '2026-09-30'))).toEqual([
+			day('2026-09-01'),
+			day('2026-09-30')
+		])
+	})
+
+	test('year to date starts on the UTC new year', () => {
+		const daily = [day('2025-12-31'), day('2026-01-01'), day('2026-01-02')]
+		expect(filterDataByTimePeriod(daily, 'ytd', null, dayjs('2026-10-01T02:56:00Z'))).toEqual([
+			day('2026-01-01'),
+			day('2026-01-02')
+		])
 	})
 })
 

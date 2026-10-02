@@ -1,8 +1,8 @@
-import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
+import { getTimePeriodBounds } from '../timePeriod'
 import type { ActiveYieldChartType } from '../types'
 import {
 	borrowApyDimensions,
@@ -24,43 +24,6 @@ interface UseYieldChartTransformationsOptions {
 
 function parseDate(date: string): number {
 	return Math.floor(new Date(date.includes('T') ? date : `${date}T00:00:00Z`).getTime() / 1000)
-}
-
-function getTimeBounds(
-	timePeriod: TimePeriod | null | undefined,
-	customTimePeriod: CustomTimePeriod | null | undefined
-): TimeBounds {
-	if (!timePeriod || timePeriod === 'all') return null
-	if (timePeriod === 'custom' && customTimePeriod) {
-		if (customTimePeriod.type === 'relative' && customTimePeriod.relativeDays) {
-			return {
-				start: dayjs().subtract(customTimePeriod.relativeDays, 'day').unix(),
-				end: Infinity
-			}
-		}
-		if (customTimePeriod.type === 'absolute' && customTimePeriod.startDate && customTimePeriod.endDate) {
-			return {
-				start: customTimePeriod.startDate,
-				end: customTimePeriod.endDate
-			}
-		}
-		return null
-	}
-
-	const now = dayjs()
-	const start =
-		timePeriod === '30d'
-			? now.subtract(30, 'day')
-			: timePeriod === '90d'
-				? now.subtract(90, 'day')
-				: timePeriod === '365d'
-					? now.subtract(365, 'day')
-					: timePeriod === 'ytd'
-						? now.startOf('year')
-						: timePeriod === '3y'
-							? now.subtract(3, 'year')
-							: null
-	return start ? { start: start.unix(), end: Infinity } : null
 }
 
 function inBounds(date: number, bounds: TimeBounds): boolean {
@@ -150,7 +113,10 @@ export function useYieldChartTransformations({
 	timePeriod,
 	customTimePeriod
 }: UseYieldChartTransformationsOptions) {
-	const bounds = useMemo(() => getTimeBounds(timePeriod, customTimePeriod), [timePeriod, customTimePeriod])
+	const bounds = useMemo(
+		() => (timePeriod ? getTimePeriodBounds(timePeriod, customTimePeriod) : null),
+		[timePeriod, customTimePeriod]
+	)
 	const dataset = useMemo(
 		() => buildProYieldChartSeries({ chartType, chartData: chartData ?? [], borrowData: borrowData ?? [], bounds }),
 		[borrowData, bounds, chartData, chartType]

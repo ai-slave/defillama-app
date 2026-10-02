@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useContext, useMemo } from 'react'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
 import { getProDashboardChartSourceQueryKey, isChainTokenChartType, isProtocolTokenChartType } from '../chartSource'
@@ -7,6 +8,8 @@ import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { getChartQueryFn, ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import type { ChartSubject, MetricAggregator, MetricConfig, MetricWindow } from '../types'
+
+dayjs.extend(utc)
 
 const DEFAULT_COMPARE = {
 	mode: 'previous_value' as const,
@@ -48,7 +51,8 @@ function getWindowBounds(window: MetricWindow, reference: Dayjs): WindowBounds {
 	}
 
 	if (window === 'ytd') {
-		const currentStart = reference.startOf('year')
+		// Daily points sit at UTC midnight, so the year starts at the UTC new year in every zone.
+		const currentStart = reference.utc().startOf('year')
 		const previousStart = currentStart.subtract(1, 'year')
 		return {
 			currentStart: currentStart.unix(),

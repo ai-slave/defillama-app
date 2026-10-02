@@ -51,10 +51,6 @@ const SERVER_ONLY_PATTERNS = [
 
 /** Modules that work in the visitor's local zone on purpose. */
 const localZoneDateFiles = new Map<string, string>([
-	[
-		'src/hooks/useDateRangeValidation.tsx',
-		'compares a date-only input against the local calendar day the picker shows'
-	],
 	['src/utils/dateFormat.ts', 'the canonical formatter; its local output is for hydration-safe client paths'],
 	['src/utils/cookies.ts', 'cookie expiry arithmetic; the zone does not reach the page'],
 	['src/utils/maxAgeForNext.ts', 'revalidate jitter from the server clock; the zone does not reach the page']

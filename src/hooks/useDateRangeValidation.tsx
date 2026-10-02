@@ -9,20 +9,6 @@ interface DateRangeValidationOptions {
 
 type DateSelection = { startDate: string; endDate: string }
 
-function parseDateOnlyLocal(value: string) {
-	const [yearStr, monthStr, dayStr] = value.split('-')
-	const year = Number(yearStr)
-	const month = Number(monthStr)
-	const day = Number(dayStr)
-	return new Date(year, month - 1, day)
-}
-
-function startOfTodayLocal() {
-	const d = new Date()
-	d.setHours(0, 0, 0, 0)
-	return d
-}
-
 export const useDateRangeValidation = (options?: DateRangeValidationOptions) => {
 	// Null until the reader picks a date: a default seeded from the page clock keeps applying after
 	// hydration moves that clock to the browser, so cached HTML never pins yesterday's date.
@@ -41,7 +27,7 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 			setSelection((current) => {
 				const currentEnd = current ? current.endDate : defaultEndDate
 				// The picker cannot show an inverted range, so an end before the new start clears.
-				const keepEnd = !(currentEnd && value && parseDateOnlyLocal(currentEnd) < parseDateOnlyLocal(value))
+				const keepEnd = !(currentEnd && value && currentEnd < value)
 				return { startDate: value, endDate: keepEnd ? currentEnd : '' }
 			})
 		},
@@ -63,25 +49,24 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 			return false
 		}
 
-		// Normalize all dates to local midnight to avoid UTC/local off-by-one errors
-		const start = parseDateOnlyLocal(startDateValue)
-		const end = parseDateOnlyLocal(endDateValue)
-		const today = startOfTodayLocal()
+		// Date-only values are UTC calendar days (docs/date-formatting.md), like the pages' defaults and the inputs' max,
+		// so today is the UTC day too; YYYY-MM-DD strings compare in date order.
+		const today = new Date().toISOString().slice(0, 10)
 
-		if (end < start) {
+		if (endDateValue < startDateValue) {
 			const errorMsg = 'End date cannot be before start date'
 			setDateError(errorMsg)
 			return false
 		}
 
 		if (!options?.allowFutureDates) {
-			if (start > today) {
+			if (startDateValue > today) {
 				const errorMsg = 'Start date cannot be in the future'
 				setDateError(errorMsg)
 				return false
 			}
 
-			if (end > today) {
+			if (endDateValue > today) {
 				const errorMsg = 'End date cannot be in the future'
 				setDateError(errorMsg)
 				return false

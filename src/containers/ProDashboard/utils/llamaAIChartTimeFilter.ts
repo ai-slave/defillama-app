@@ -1,6 +1,6 @@
-import dayjs from 'dayjs'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
+import { getTimePeriodBounds } from '../timePeriod'
 
 const DATE_LIKE_FIELD_RE = /(^|_)(date|day|month|time|timestamp)$/i
 
@@ -70,48 +70,6 @@ function isTimeSeriesChart<Row>(config: ChartConfiguration, rows: Array<Row>): b
 		if (parseRowTimestampSec(value) == null) return false
 	}
 	return hasValue
-}
-
-export function getTimePeriodBounds(
-	timePeriod: TimePeriod,
-	customPeriod?: CustomTimePeriod | null
-): { start: number; end: number } | null {
-	if (timePeriod === 'all') return null
-
-	if (timePeriod === 'custom' && customPeriod) {
-		if (customPeriod.type === 'relative' && customPeriod.relativeDays) {
-			return { start: dayjs().subtract(customPeriod.relativeDays, 'day').unix(), end: Infinity }
-		}
-		if (customPeriod.type === 'absolute' && customPeriod.startDate && customPeriod.endDate) {
-			return { start: customPeriod.startDate, end: customPeriod.endDate }
-		}
-		return null
-	}
-
-	const now = dayjs()
-	let cutoffDate: dayjs.Dayjs
-
-	switch (timePeriod) {
-		case '30d':
-			cutoffDate = now.subtract(30, 'day')
-			break
-		case '90d':
-			cutoffDate = now.subtract(90, 'day')
-			break
-		case '365d':
-			cutoffDate = now.subtract(365, 'day')
-			break
-		case 'ytd':
-			cutoffDate = now.startOf('year')
-			break
-		case '3y':
-			cutoffDate = now.subtract(3, 'year')
-			break
-		default:
-			return null
-	}
-
-	return { start: cutoffDate.unix(), end: Infinity }
 }
 
 function filterRowsByTimePeriod<Row>(
