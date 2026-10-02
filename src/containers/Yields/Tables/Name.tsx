@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
+import { TruncatedText } from './TruncatedText'
 import { DepegWarningIcon } from './YieldsCells'
 
 interface INameYield {
@@ -94,14 +95,8 @@ export function PoolNameLockup({
 				className="flex min-w-0 flex-col items-start leading-tight"
 				aria-label={`View ${value} pool`}
 			>
-				<Tooltip content={value} className="max-w-full">
-					<span className="truncate font-medium text-link hover:underline">{value}</span>
-				</Tooltip>
-				{poolMeta ? (
-					<Tooltip content={poolMeta} className="block! max-w-full truncate body-sm text-secondary">
-						{poolMeta}
-					</Tooltip>
-				) : null}
+				<TruncatedText text={value} className="font-medium text-link hover:underline" />
+				{poolMeta ? <TruncatedText text={poolMeta} className="body-sm text-secondary" /> : null}
 			</BasicLink>
 			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
 			{exploited || hasRiskData ? (

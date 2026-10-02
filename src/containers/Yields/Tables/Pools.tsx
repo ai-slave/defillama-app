@@ -13,6 +13,7 @@ import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
+import { TruncatedText } from './TruncatedText'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
 import { EarnApyCell, EmptyCell, ExitCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
 
@@ -151,15 +152,13 @@ function createEarnColumns(
 				if (!value) return <EmptyCell />
 				const route = info.row.original.referenceTokenRoute
 				return (
-					<Tooltip content={value} className="block">
+					<TruncatedText text={value}>
 						{route ? (
-							<BasicLink href={route} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">
+							<BasicLink href={route} target="_blank" rel="noopener noreferrer" className="hover:underline">
 								{value}
 							</BasicLink>
-						) : (
-							<span className="truncate">{value}</span>
-						)}
-					</Tooltip>
+						) : null}
+					</TruncatedText>
 				)
 			},
 			meta: {
@@ -180,13 +179,7 @@ function createEarnColumns(
 			enableSorting: false,
 			cell: (info) => {
 				const value = info.getValue()
-				return value ? (
-					<Tooltip content={value} className="block! truncate">
-						{value}
-					</Tooltip>
-				) : (
-					<EmptyCell />
-				)
+				return value ? <TruncatedText text={value} /> : <EmptyCell />
 			},
 			meta: { headerClassName: 'w-[110px] min-w-[110px]' }
 		}),
