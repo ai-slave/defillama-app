@@ -13,7 +13,7 @@ import { formatUsd } from '~/utils/numberFormat'
 import { seatPrice } from './seatPricing'
 import { getCancelAtDate, isCancelingSub } from './subscriptionCancel'
 import type { TeamSubscription } from './types'
-import { useTeam } from './useTeam'
+import { UnconfirmedTeamWriteError, useTeam } from './useTeam'
 
 interface ManageSeatsModalProps {
 	isOpen: boolean
@@ -70,7 +70,12 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 	const footerStatus =
 		pending || isTeamRefreshError || billingWait || hasChange ? null : 'Change the seat count to update'
 
-	const seatsError = setSeatsMutation.isError ? setSeatsMutation.error.message : null
+	const seats = subscription.seats.seatCount
+	const seatsError = !setSeatsMutation.isError
+		? null
+		: setSeatsMutation.error instanceof UnconfirmedTeamWriteError
+			? `We couldn't confirm this change. Your team currently shows ${seats} ${label} seat${seats === 1 ? '' : 's'}.`
+			: setSeatsMutation.error.message
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()

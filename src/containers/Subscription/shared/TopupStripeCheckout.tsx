@@ -1,12 +1,8 @@
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
-import { use } from 'react'
-import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
+import { use, useState } from 'react'
 import { InlineStatus } from '~/ui/Status'
+import { loadStripeOnce } from './stripeClient'
 import { TopupCheckoutLoading } from './TopupCheckoutLoading'
-
-// A blocked Stripe script should leave the dialog usable for another method.
-const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY).catch(() => null) : null
 
 export default function TopupStripeCheckout({
 	fetchClientSecret,
@@ -15,7 +11,11 @@ export default function TopupStripeCheckout({
 	fetchClientSecret: () => Promise<string>
 	isPending: boolean
 }) {
-	const stripe = stripeInstance ? use(stripeInstance) : null
+	const stripe = use(loadStripeOnce())
+	// Stripe reads its options once and warns when they change. The first fetchClientSecret is enough: the amount is
+	// fixed once the card step opens, and mutateAsync stays bound to the same mutation.
+	const [options] = useState(() => ({ fetchClientSecret }))
+	// A blocked Stripe script should leave the dialog usable for another method.
 	if (!stripe) {
 		return (
 			<InlineStatus variant="error">
@@ -31,7 +31,7 @@ export default function TopupStripeCheckout({
 					<TopupCheckoutLoading />
 				</div>
 			) : null}
-			<EmbeddedCheckoutProvider stripe={stripe} options={{ fetchClientSecret }}>
+			<EmbeddedCheckoutProvider stripe={stripe} options={options}>
 				<EmbeddedCheckout />
 			</EmbeddedCheckoutProvider>
 		</div>

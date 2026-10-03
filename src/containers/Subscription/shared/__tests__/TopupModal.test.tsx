@@ -1,13 +1,15 @@
 // @vitest-environment happy-dom
+import * as Ariakit from '@ariakit/react'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
+import { Dialog, DialogHeader } from '~/ui/Dialog'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import { TopupModal } from '../TopupModal'
+import { TopupForm, TopupModal } from '../TopupModal'
 
 // The card step lazy-loads Stripe; this stub holds the import open so the cold-load state is observable.
 const cardCheckout = vi.hoisted(() => ({ load: vi.fn(), resolve: () => {} }))
@@ -227,6 +229,63 @@ test('a crypto checkout that fails after the dialog closes says so outside it', 
 	await waitForUi(() => expect(document.body.textContent).toContain('Top-up failed: Checkout unavailable'))
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 	expect(topups()).toHaveLength(1)
+})
+
+// LlamaAI Settings puts the form in a tab panel inside its dialog. The dialog here stays mounted once closed, the state
+// Settings is in while it fades out.
+async function mountInSettings() {
+	function Settings() {
+		const [open, setOpen] = useState(true)
+		return (
+			<>
+				<Toaster />
+				<Dialog size="md" open={open} onClose={() => setOpen(false)}>
+					<DialogHeader title="Settings" />
+					<Ariakit.TabProvider defaultSelectedId="balance">
+						<Ariakit.TabList aria-label="Settings">
+							<Ariakit.Tab id="balance">Balance</Ariakit.Tab>
+						</Ariakit.TabList>
+						<Ariakit.TabPanel tabId="balance">
+							<TopupForm inDialog={false} redirectUrl="https://defillama.com/ai" cancelUrl="https://defillama.com/ai" />
+						</Ariakit.TabPanel>
+					</Ariakit.TabProvider>
+				</Dialog>
+			</>
+		)
+	}
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<Settings />
+			</session.Wrapper>
+		)
+	)
+}
+
+test('a crypto checkout that resolves after Settings starts closing does not leave the page', async () => {
+	window.location.hash = ''
+	const request = Promise.withResolvers<Response>()
+	topupReplies.push(request.promise)
+	await mountInSettings()
+	await click('Pay with crypto')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+	await click('Close dialog')
+	const checkoutUrl = `${window.location.href.split('#')[0]}#llamapay-checkout`
+	await act(async () => request.resolve(Response.json({ provider: 'llamapay', checkoutUrl })))
+	for (let tick = 0; tick < 5; tick++) await act(async () => {})
+	expect(window.location.hash).toBe('')
+})
+
+test('a crypto checkout that fails after Settings starts closing says so outside it', async () => {
+	const request = Promise.withResolvers<Response>()
+	topupReplies.push(request.promise)
+	await mountInSettings()
+	await click('Pay with crypto')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+	await click('Close dialog')
+	await act(async () => request.resolve(unavailable()))
+
+	await waitForUi(() => expect(document.body.textContent).toContain('Top-up failed: Checkout unavailable'))
 })
 
 test('a crypto checkout that fails while the dialog is open shows the error only in the dialog', async () => {

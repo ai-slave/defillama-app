@@ -29,7 +29,7 @@ const stripe = vi.hoisted(() => ({
 const upgradeIntent = vi.hoisted(() => ({ clientSecret: null as string | null }))
 const elements = vi.hoisted(() => ({ submit: async () => ({}) }))
 const stripeMounts = vi.hoisted(() => ({ count: 0 }))
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve(stripe) }))
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: () => Promise.resolve(stripe) }))
 // Stripe's iframe cannot run in Node. Like the real provider, this asks for the session once on mount and
 // draws the checkout only after it arrives. It counts its mounts, so a test can tell whether it rendered at all.
 vi.mock('@stripe/react-stripe-js', () => ({
@@ -76,37 +76,51 @@ beforeEach(() => {
 })
 
 // A caller as the pages write it: the click opens the checkout, and the modal renders only while it is open.
-function Caller({ request, modalKey }: { request: CheckoutRequest; modalKey: string }) {
+// Some callers (the crypto/card PaymentButton) keep the modal mounted while it is closed.
+function Caller({
+	request,
+	modalKey,
+	keepMounted
+}: {
+	request: CheckoutRequest
+	modalKey: string
+	keepMounted: boolean
+}) {
 	const checkout = useStripeCheckout()
 	return (
 		<>
 			<button type="button" onClick={() => checkout.open(request)}>
 				Subscribe
 			</button>
-			{checkout.isOpen ? <StripeCheckoutModal key={modalKey} checkout={checkout} /> : null}
+			{keepMounted || checkout.isOpen ? <StripeCheckoutModal key={modalKey} checkout={checkout} /> : null}
 		</>
 	)
 }
 
-async function mountCaller(request: CheckoutRequest = { type: 'api', billingInterval: 'month' }) {
+async function mountCaller(request: CheckoutRequest = { type: 'api', billingInterval: 'month' }, keepMounted = false) {
 	const host = document.body.appendChild(document.createElement('div'))
 	const root = createRoot(host)
 	const render = (modalKey: string) =>
 		act(async () =>
 			root.render(
 				<session.Wrapper>
-					<Caller request={request} modalKey={modalKey} />
+					<Caller request={request} modalKey={modalKey} keepMounted={keepMounted} />
 				</session.Wrapper>
 			)
 		)
 	await render('first')
+	const subscribeButton = () =>
+		[...host.querySelectorAll('button')].find((button) => accessibleName(button) === 'Subscribe')!
+	// A pointer click focuses the button before it activates, so the dialog has a trigger to return focus to.
 	const subscribe = () =>
-		act(async () =>
-			[...host.querySelectorAll('button')].find((button) => accessibleName(button) === 'Subscribe')!.click()
-		)
+		act(async () => {
+			subscribeButton().focus()
+			subscribeButton().click()
+		})
 	await subscribe()
 	return {
 		subscribe,
+		subscribeButton,
 		remountModal: render,
 		cleanup: async () => {
 			await act(async () => root.unmount())
@@ -394,6 +408,58 @@ test('reopening while an earlier upgrade payment is processing shows it instead 
 		)
 		expect(buttonNamed('Complete upgrade')).toBeUndefined()
 		expect(creates()).toBe(1)
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('closing the step an upgrade opening ends on hands focus back to the button that opened it', async () => {
+	localStorage.setItem(pendingKey, earlierIntent({ createdAt: Date.now() }))
+	session.serve({ '/subscription/create': paidUpgrade })
+	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status: 'processing' } })
+	const caller = await mountCaller(upgrade)
+	try {
+		await waitForUi(() => expect(dialogTitled('Payment processing')).toBeTruthy())
+		await act(async () => buttonNamed('Done')!.click())
+		await waitForUi(() => expect(dialog()).toBeNull())
+		await waitForUi(() => expect(document.activeElement).toBe(caller.subscribeButton()))
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('a canceled upgrade payment ends on its own step instead of a form that can never be paid', async () => {
+	session.serve({ '/subscription/create': paidUpgrade })
+	stripe.confirmPayment.mockResolvedValue({ paymentIntent: { status: 'canceled' } })
+	const caller = await mountCaller(upgrade)
+	try {
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
+		await pay()
+		await waitForUi(() => expect(dialogTitled('Payment canceled')).toBeTruthy())
+		expect(dialog()!.textContent).toContain('This upgrade payment was canceled, so it can no longer be paid.')
+		expect(buttonNamed('Complete upgrade')).toBeUndefined()
+		// The next opening creates a fresh payment instead of resuming the canceled one.
+		expect(localStorage.getItem(pendingKey)).toBeNull()
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('a modal kept mounted between openings starts the next upgrade from the form, not the last outcome', async () => {
+	session.serveInOrder('/subscription/create', [paidUpgrade, { ...paidUpgrade, clientSecret: 'pi_fresh_secret' }])
+	stripe.confirmPayment.mockResolvedValue({ paymentIntent: { status: 'canceled' } })
+	const caller = await mountCaller(upgrade, true)
+	try {
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
+		await pay()
+		await waitForUi(() => expect(dialogTitled('Payment canceled')).toBeTruthy())
+		await act(async () => buttonNamed('Done')!.click())
+		await waitForUi(() => expect(dialog()).toBeNull())
+
+		await caller.subscribe()
+		await waitForUi(() => expect(upgradeIntent.clientSecret).toBe('pi_fresh_secret'))
+		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
+		expect(dialogTitled('Payment canceled')).toBeUndefined()
 	} finally {
 		await caller.cleanup()
 	}

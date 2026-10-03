@@ -47,10 +47,6 @@ function getPaymentLabel(provider: string): string {
 	return provider
 }
 
-function getOverageErrorText(error: Error, action: 'enable' | 'disable'): string {
-	return error.message || `Failed to ${action} overage. Try again.`
-}
-
 function getPlanName(type: string): string {
 	if (type === 'api') return 'API'
 	if (type === 'llamafeed') return 'Pro'
@@ -81,6 +77,7 @@ function SubscriptionCardWithProps({
 			subscriptionType={getSubscriptionTypeLabel(subscription)}
 			subscriptionPayment={getPaymentLabel(subscription.provider)}
 			provider={subscription.provider}
+			isTeamSeat={Boolean(subscription.team_id)}
 			isCancelPending={isCancelPending}
 			onManage={onManage}
 			onCancel={onCancel}
@@ -276,14 +273,13 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 
 export function SubscriptionSection() {
 	const { isTrial: isTrialFromAuth, hasActiveSubscription } = useAuthContext()
-	const { team, isTeamError, isTeamRetrying, refetchTeam } = useTeam()
+	const { team, isTeamLoading, isTeamError, isTeamRetrying, refetchTeam } = useTeam()
 
 	const { balance, isLoading: isAiBalanceLoading } = useAiBalance()
 	const [isTopupModalOpen, setIsTopupModalOpen] = useState(false)
 	const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 	const [isCancelSubscriptionModalOpen, setIsCancelSubscriptionModalOpen] = useState(false)
 	const [isCancelSubModalOpen, setIsCancelSubModalOpen] = useState(false)
-	const [isCancelPastDueModalOpen, setIsCancelPastDueModalOpen] = useState(false)
 	const yearlyUpgrade = useStripeCheckout()
 	const {
 		apiSubscription,
@@ -305,78 +301,14 @@ export function SubscriptionSection() {
 		isSubscriptionLoading,
 		topupMutation,
 		subscription,
-		enableOverageMutation,
-		disableOverageMutation
+		setOverageMutation
 	} = useSubscribe()
-
-	// Unknown team means unknown billing ownership: don't render personal billing
-	// controls that may belong to a team seat.
-	if (isTeamError) {
-		return (
-			<SubscriptionLoadError
-				isRetrying={isTeamRetrying}
-				onRetry={() => void refetchTeam()}
-				message="Couldn't load your team."
-			/>
-		)
-	}
 
 	const isTeamMember = Boolean(team && !team.isAdmin)
 	const teamAssignedType = isTeamMember ? (team?.subscriptionType ?? null) : null
-
-	// Members with an assigned seat are billed through the team: hide personal billing
-	// controls and render only the feature cards the assigned subscription unlocks.
-	// Members WITHOUT a seat fall through — membership alone doesn't cancel a personal
-	// subscription, so any still-billed personal plan must stay visible.
-	if (isTeamMember && team && teamAssignedType) {
-		const teamBanner = <TeamSubscriptionBanner teamName={team.name} subscriptionType={teamAssignedType} />
-
-		if (teamAssignedType === 'api') {
-			const memberBalanceCard = balance ? (
-				<ExternalDataBalanceCard
-					freeRemaining={balance.freeRemaining}
-					toppedUpBalance={balance.toppedUpBalance}
-					freeLimit={balance.freeLimit}
-					freeSpent={balance.freeSpent}
-					isLoading={isAiBalanceLoading}
-					onTopUp={() => setIsTopupModalOpen(true)}
-				/>
-			) : isAiBalanceLoading ? (
-				<ExternalDataBalanceCard
-					freeRemaining="0"
-					toppedUpBalance="0"
-					freeLimit="0"
-					freeSpent="0"
-					isLoading
-					onTopUp={() => {}}
-				/>
-			) : null
-
-			return (
-				<>
-					{teamBanner}
-					<ApiAccessCard
-						apiKey={apiKey}
-						credits={credits}
-						usageStats={usageStats}
-						isUsageStatsLoading={isUsageStatsLoading}
-						isUsageStatsError={isUsageStatsError}
-						generateNewKeyMutation={generateNewKeyMutation}
-					/>
-					{memberBalanceCard}
-					{isTopupModalOpen ? (
-						<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
-					) : null}
-				</>
-			)
-		}
-
-		return teamBanner
-	}
-
 	// Unassigned team members still see their own billing below the membership notice.
 	const teamBanner =
-		isTeamMember && team ? <TeamSubscriptionBanner teamName={team.name} subscriptionType={null} /> : null
+		isTeamMember && team ? <TeamSubscriptionBanner teamName={team.name} subscriptionType={teamAssignedType} /> : null
 
 	// The overdue check failing silently would read as "no payment problems".
 	const pastDueCheckFailedNotice = isPastDueError ? (
@@ -442,24 +374,16 @@ export function SubscriptionSection() {
 	// The overage endpoints only operate on the user's own Stripe API subscription;
 	// seat-derived team records look like Stripe but have no Stripe subscription behind them.
 	const canManageOverage = hasApiSubscription && apiSubscription?.provider === 'stripe' && !apiSubscription?.team_id
-	const isOverageToggleLoading = enableOverageMutation.isPending || disableOverageMutation.isPending
-	const overageError = enableOverageMutation.isError
-		? getOverageErrorText(enableOverageMutation.error, 'enable')
-		: disableOverageMutation.isError
-			? getOverageErrorText(disableOverageMutation.error, 'disable')
-			: null
+	const isOverageToggleLoading = setOverageMutation.isPending
+	const overageError = setOverageMutation.isError ? setOverageMutation.error.message : null
 
 	const handleToggleOverage = () => {
-		if (isOverageToggleLoading) return
-		if (isOverageEnabled) {
-			disableOverageMutation.mutate()
-		} else {
-			enableOverageMutation.mutate()
-		}
+		if (!isOverageToggleLoading) setOverageMutation.mutate(!isOverageEnabled)
 	}
 
 	// The cancel endpoint targets the active subscription first, so cancelling from
 	// the overdue warning is only offered when the overdue record IS that subscription.
+	const isActivePastDue = activePastDueSubscription != null && activePastDueSubscription.id === activeSubscription?.id
 	const pastDueBanner = activePastDueSubscription ? (
 		<PastDueSubscriptionCard
 			subscription={activePastDueSubscription}
@@ -468,15 +392,14 @@ export function SubscriptionSection() {
 					await createPortalSession()
 				}
 			}}
-			onCancel={
-				activePastDueSubscription.id === activeSubscription?.id ? () => setIsCancelPastDueModalOpen(true) : null
-			}
+			onCancel={isActivePastDue ? () => setIsCancelSubModalOpen(true) : null}
 			isUpdateLoading={createPortalSessionMutation.isPending}
 		/>
 	) : null
 
+	const hasBalancePlan = hasProSubscription || hasApiSubscription || teamAssignedType === 'api'
 	const balanceCard =
-		(hasProSubscription || hasApiSubscription) && balance ? (
+		hasBalancePlan && balance ? (
 			<ExternalDataBalanceCard
 				freeRemaining={balance.freeRemaining}
 				toppedUpBalance={balance.toppedUpBalance}
@@ -485,7 +408,7 @@ export function SubscriptionSection() {
 				isLoading={isAiBalanceLoading}
 				onTopUp={() => setIsTopupModalOpen(true)}
 			/>
-		) : (hasProSubscription || hasApiSubscription) && isAiBalanceLoading ? (
+		) : hasBalancePlan && isAiBalanceLoading ? (
 			<ExternalDataBalanceCard
 				freeRemaining="0"
 				toppedUpBalance="0"
@@ -505,15 +428,12 @@ export function SubscriptionSection() {
 				isOpen={isCancelSubscriptionModalOpen}
 				onClose={() => setIsCancelSubscriptionModalOpen(false)}
 			/>
+			{/* The server cancels a past-due subscription at once and any other at the period's end, so the warning's Cancel
+			    and the plan card's Cancel open the same dialog with the same promise. */}
 			<CancelSubscriptionModal
 				isOpen={isCancelSubModalOpen}
 				onClose={() => setIsCancelSubModalOpen(false)}
-				variant={isPastDue ? 'pastDue' : 'subscription'}
-			/>
-			<CancelSubscriptionModal
-				isOpen={isCancelPastDueModalOpen}
-				onClose={() => setIsCancelPastDueModalOpen(false)}
-				variant="pastDue"
+				variant={isPastDue || isActivePastDue ? 'pastDue' : 'subscription'}
 			/>
 			<EndTrialModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
 			{isTopupModalOpen ? <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} /> : null}
@@ -526,10 +446,43 @@ export function SubscriptionSection() {
 	)
 
 	let body: ReactNode = null
-	// A failed read is unknown, not Free: show a retry state instead of an upsell
-	// banner or a misleading payment warning. The dialogs stay mounted, because the
-	// refetch after a cancel or an upgrade can fail while its result is on screen.
-	if (isSubscriptionError) {
+	// Unknown team means unknown billing ownership: personal billing controls may belong to a team seat, so none render
+	// until the team read answers. Every branch keeps the dialogs mounted: a refetch can switch branches while a
+	// dialog's result is on screen.
+	if (isTeamError) {
+		body = (
+			<SubscriptionLoadError
+				isRetrying={isTeamRetrying}
+				onRetry={() => void refetchTeam()}
+				message="Couldn't load your team."
+			/>
+		)
+	} else if (isTeamLoading) {
+		body = null
+	} else if (teamBanner && teamAssignedType) {
+		// Members with an assigned seat are billed through the team: no personal billing controls, only the feature
+		// cards the assigned subscription unlocks. Members without a seat fall through: membership alone doesn't cancel
+		// a personal subscription, so any still-billed personal plan stays visible.
+		body =
+			teamAssignedType === 'api' ? (
+				<>
+					{teamBanner}
+					<ApiAccessCard
+						apiKey={apiKey}
+						credits={credits}
+						usageStats={usageStats}
+						isUsageStatsLoading={isUsageStatsLoading}
+						isUsageStatsError={isUsageStatsError}
+						generateNewKeyMutation={generateNewKeyMutation}
+					/>
+					{balanceCard}
+				</>
+			) : (
+				teamBanner
+			)
+	} else if (isSubscriptionError) {
+		// A failed read is unknown, not Free: show a retry state instead of an upsell
+		// banner or a misleading payment warning.
 		body = (
 			<>
 				{teamBanner}

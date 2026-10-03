@@ -141,3 +141,38 @@ test('a hold older than half an hour no longer blocks the upgrade', async () => 
 	expect(button('Upgrade to Pro')!.disabled).toBe(false)
 	expect(text()).not.toContain(APPLYING)
 })
+
+test.each([
+	['a lost response', () => Promise.reject(new TypeError('Failed to fetch'))],
+	['a gateway timeout', fixtureStatus(504, { message: 'Gateway timeout' })]
+])('an upgrade whose answer is %s may have charged, so it holds the button too', async (_case, answer) => {
+	session.serve({ [END_TRIAL]: answer })
+	await render()
+	await waitForUi(() => expect(button('Upgrade to Pro')).toBeDefined())
+	await act(async () => button('Upgrade to Pro')!.click())
+	await waitForUi(() => expect(button('Confirm & upgrade now')).toBeDefined())
+	await act(async () => button('Confirm & upgrade now')!.click())
+
+	await waitForUi(() =>
+		expect(document.querySelector('[role=alertdialog] [role=alert]')?.textContent).toBe(
+			"We couldn't confirm the upgrade, so it may still go through. Check your plan in a minute."
+		)
+	)
+	expect(button('Confirm & upgrade now')!.disabled).toBe(true)
+	await act(async () => button('Confirm & upgrade now')!.click())
+	expect(endTrialPosts()).toBe(1)
+})
+
+test('an upgrade the server refuses leaves the button free to try again', async () => {
+	session.serve({ [END_TRIAL]: fixtureStatus(400, { message: 'No active trial subscription' }) })
+	await render()
+	await waitForUi(() => expect(button('Upgrade to Pro')).toBeDefined())
+	await act(async () => button('Upgrade to Pro')!.click())
+	await waitForUi(() => expect(button('Confirm & upgrade now')).toBeDefined())
+	await act(async () => button('Confirm & upgrade now')!.click())
+
+	await waitForUi(() =>
+		expect(document.querySelector('[role=alertdialog] [role=alert]')?.textContent).toBe('No active trial subscription')
+	)
+	expect(button('Confirm & upgrade now')!.disabled).toBe(false)
+})

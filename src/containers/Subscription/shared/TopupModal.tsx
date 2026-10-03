@@ -38,7 +38,6 @@ export function TopupForm({
 	cancelUrl: string
 }) {
 	const amountId = useId()
-	const dialog = Ariakit.useDialogContext()
 	const [amount, setAmount] = useState('10')
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
 	const [isRedirecting, setIsRedirecting] = useState(false)
@@ -50,7 +49,12 @@ export function TopupForm({
 	// animation keeps it mounted). Outcomes after that are the user's to miss: no redirect, a toast for an error.
 	// While mounted, the form shows the pending request's error itself: nothing resets the mutation while it is
 	// pending (Back waits, and both pay buttons are disabled), so the observer always receives that error.
-	const isOnScreen = () => errorSlotRef.current != null && (!dialog || dialog.getState().open)
+	// The dialog is read from the DOM, not Ariakit's dialog context: inside Settings that context is the tab panel,
+	// which stays open while the Settings dialog fades out. A closing dialog drops data-open at once.
+	const isOnScreen = () => {
+		const dialog = errorSlotRef.current?.closest('[data-dialog]')
+		return errorSlotRef.current != null && (!dialog || dialog.hasAttribute('data-open'))
+	}
 	const topupMutation = useCreateTopup(isOnScreen)
 
 	const parsedAmount = parseFloat(amount)

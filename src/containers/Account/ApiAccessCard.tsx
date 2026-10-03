@@ -195,7 +195,11 @@ export function ApiAccessCard({
 						<br />
 						We will notify you via email if you approach your plan limits.
 					</p>
-					{overageError ? <p className="text-xs leading-4 text-error">{overageError}</p> : null}
+					{overageError ? (
+						<p role="alert" className="text-xs leading-4 text-error">
+							{overageError}
+						</p>
+					) : null}
 				</div>
 			)}
 

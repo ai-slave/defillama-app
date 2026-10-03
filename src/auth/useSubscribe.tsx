@@ -57,6 +57,9 @@ const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage:
 	return details || fallbackMessage
 }
 
+const OVERAGE_UNCONFIRMED = "We couldn't confirm the change. The switch shows your current setting."
+const CANCEL_UNCONFIRMED = "We couldn't confirm the cancellation. Check your plan before trying again."
+
 const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
 
@@ -223,9 +226,9 @@ export const useSubscribe = () => {
 					throw new Error(getErrorMessage(error, 'Failed to create top-up link'))
 				})
 
-			if (result?.checkoutUrl) {
-				window.open(result.checkoutUrl, '_blank', 'noopener,noreferrer')
-			}
+			// Same tab, like subscribing: a new tab opened after these awaits is no longer a user gesture, and Safari blocks
+			// it without telling the page. LlamaPay returns to the account page.
+			if (result?.checkoutUrl) window.location.href = result.checkoutUrl
 		},
 		onError: (error) => {
 			console.log('Top-up error:', error)
@@ -397,29 +400,39 @@ export const useSubscribe = () => {
 
 	const endTrialMutation = useMutation({
 		mutationFn: async () => {
-			if (!isAuthenticated) {
+			if (!isAuthenticated || !user) {
 				throw new Error('Not authenticated')
+			}
+			// Ending a trial charges the card at once. Any answer that may have charged holds the button for the account
+			// that clicked: a success, and a lost response or a 5xx whose outcome is unknown. Only the server's refusal
+			// (4xx) leaves it free to try again. Written here, not in onSuccess, which sees whoever is signed in by then.
+			const accountId = user.id
+			const unconfirmed = () => {
+				holdEndTrial(accountId)
+				return new Error("We couldn't confirm the upgrade, so it may still go through. Check your plan in a minute.")
 			}
 
 			const response = await authorizedFetch(`${AUTH_SERVER}/subscription/end-trial`, {
 				method: 'POST'
+			}).catch(() => {
+				throw unconfirmed()
 			})
 
 			if (!response) {
 				throw new Error('Not authenticated')
 			}
+			if (response.status >= 500) throw unconfirmed()
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to end trial subscription'))
 			})
-
+			holdEndTrial(accountId)
 			return normalizedResponse.json()
 		},
-		// Hook-level, so the hold and the re-reads survive the dialog unmounting mid-request.
+		// Hook-level, so the re-reads survive the dialog unmounting mid-request. The webhook clears the trial after the
+		// request returns, so both trial signals are re-read a few times, after an unknown outcome too.
 		// The modal that runs this mutation shows the success state itself.
-		onSuccess: () => {
-			// The webhook clears the trial after this returns, so both trial signals are re-read a few times.
-			if (user) holdEndTrial(user.id)
+		onSettled: () => {
 			scheduleConfirmationReads(queryClient, ['auth', 'status'])
 			scheduleConfirmationReads(queryClient, ['subscription'])
 		},
@@ -428,71 +441,28 @@ export const useSubscribe = () => {
 		}
 	})
 
-	const enableOverageMutation = useMutation({
-		mutationFn: async () => {
-			if (!isAuthenticated) {
-				throw new Error('Sign in to enable overage')
-			}
+	const setOverageMutation = useMutation({
+		mutationFn: async (enabled: boolean) => {
+			if (!isAuthenticated) throw new Error('Sign in to change extra usage charges')
+			if (apiSubscription.status !== 'active') throw new Error('No active API subscription found')
 
-			if (apiSubscription.status !== 'active') {
-				throw new Error('No active API subscription found')
-			}
-
-			const data = await authorizedFetch(
-				`${AUTH_SERVER}/subscription/enable-overage`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				},
+			const response = await authorizedFetch(
+				`${AUTH_SERVER}/subscription/${enabled ? 'enable' : 'disable'}-overage`,
+				{ method: 'POST', headers: { 'Content-Type': 'application/json' } },
 				true
-			)
-				.then(handleSimpleFetchResponse)
-				.then((res) => res.json())
-
-			return data
+			).catch(() => {
+				throw new Error(OVERAGE_UNCONFIRMED)
+			})
+			if (!response) throw new Error('Sign in to change extra usage charges')
+			// A 5xx, like a lost response, can come after the server applied the change.
+			if (response.status >= 500) throw new Error(OVERAGE_UNCONFIRMED)
+			await handleSimpleFetchResponse(response).catch((error) => {
+				throw new Error(getErrorMessage(error, `Failed to ${enabled ? 'enable' : 'disable'} extra usage charges`))
+			})
 		},
-		onSuccess: () => {
-			// The toggle reflects the new state after the refetch; errors render inline next to it.
-			void queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] })
-		},
-		onError: (error) => {
-			console.log('Failed to enable overage:', error)
-		}
-	})
-
-	const disableOverageMutation = useMutation({
-		mutationFn: async () => {
-			if (!isAuthenticated) {
-				throw new Error('Sign in to disable overage')
-			}
-
-			if (apiSubscription.status !== 'active') {
-				throw new Error('No active API subscription found')
-			}
-
-			const data = await authorizedFetch(
-				`${AUTH_SERVER}/subscription/disable-overage`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				},
-				true
-			)
-				.then(handleSimpleFetchResponse)
-				.then((res) => res.json())
-
-			return data
-		},
-		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] })
-		},
-		onError: (error) => {
-			console.log('Failed to disable overage:', error)
-		}
+		// Returned, so the switch stays locked until the refetch shows the setting the server now holds. A failure is
+		// read again too: a lost response may still have changed it.
+		onSettled: () => queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] })
 	})
 
 	const cancelSubscriptionMutation = useMutation<
@@ -515,11 +485,16 @@ export const useSubscribe = () => {
 					body: JSON.stringify({ message })
 				},
 				true
-			)
+			).catch(() => {
+				throw new Error(CANCEL_UNCONFIRMED)
+			})
 
 			if (!response) {
 				throw new Error('Not authenticated')
 			}
+			// A 5xx, like a lost response, can come after the server cancelled. A cancel that went through stays
+			// cancelled, so trying again is safe; the plan is read again either way.
+			if (response.status >= 500) throw new Error(CANCEL_UNCONFIRMED)
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to cancel subscription'))
@@ -537,6 +512,7 @@ export const useSubscribe = () => {
 		},
 		onError: (error) => {
 			console.log('Cancel subscription error:', error)
+			scheduleConfirmationReads(queryClient, ['subscription'])
 		}
 	})
 
@@ -565,8 +541,7 @@ export const useSubscribe = () => {
 		createPortalSession,
 		createPortalSessionMutation,
 		endTrialMutation,
-		enableOverageMutation,
-		disableOverageMutation,
+		setOverageMutation,
 		cancelSubscriptionMutation,
 		apiSubscription,
 		llamafeedSubscription,

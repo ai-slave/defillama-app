@@ -263,18 +263,20 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		scope,
 		retry: false,
 		mutationFn: async (data: { subscriptionType: string; seatCount: number }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/seats`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to update seats'))
-			})
-			return normalized.json()
+			const response = await sendTeamWrite(
+				authorizedFetch(`${AUTH_SERVER}/team/seats`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(data)
+				}),
+				'Failed to update seats'
+			)
+			return response.json()
 		},
-		onSettled: reconcileTeam
+		onSuccess: () => refetch(),
+		// A failed change may still have applied, so the team is read again while it settles. The count is a target, not
+		// an increment, so trying again cannot add seats twice.
+		onError: () => scheduleConfirmationReads(queryClient, ['team'])
 	})
 
 	// ── Mutation: POST /team/member/assign ──

@@ -1,11 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
 import { useQueryClient } from '@tanstack/react-query'
-import { useId, useState, type FormEvent } from 'react'
+import { Suspense, useId, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
+import { EmbeddedCardCheckout } from '~/containers/Subscription/shared/EmbeddedCardCheckout'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
@@ -13,7 +11,7 @@ import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
 import { scheduleConfirmationReads } from '../utils'
@@ -47,8 +45,6 @@ const radioOptionStyles =
 	'relative flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg label-sm transition-colors has-focus-visible:focus-ring has-[input[aria-disabled=true]]:cursor-not-allowed has-[input[aria-disabled=true]]:opacity-60'
 const radioOptionSelectedStyles = 'border border-brand bg-brand-muted text-link-on-tint'
 const radioOptionIdleStyles = 'border border-medium text-primary'
-
-const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 
 interface PurchaseSeatsModalProps {
 	isOpen: boolean
@@ -147,17 +143,17 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 				<DialogHeader title={checkoutClientSecret ? 'Complete payment' : 'Purchase seats'} />
 				<DialogBody>
 					{checkoutClientSecret ? (
-						stripeInstance ? (
-							<div className="min-h-[400px]">
-								<EmbeddedCheckoutProvider stripe={stripeInstance} options={{ clientSecret: checkoutClientSecret }}>
-									<EmbeddedCheckout />
-								</EmbeddedCheckoutProvider>
-							</div>
-						) : (
-							<InlineStatus variant="error">
-								Stripe is not configured. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in your environment.
-							</InlineStatus>
-						)
+						<div className="relative min-h-[400px]">
+							<Suspense
+								fallback={
+									<div role="status" className="absolute inset-0 flex items-center justify-center">
+										<LoadingIndicator label="Loading checkout" />
+									</div>
+								}
+							>
+								<EmbeddedCardCheckout clientSecret={checkoutClientSecret} />
+							</Suspense>
+						</div>
 					) : (
 						<>
 							{/* Subscription Type */}

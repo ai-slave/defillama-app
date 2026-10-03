@@ -25,7 +25,7 @@ afterAll(() => {
 	if (originalKey === undefined) delete process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 	else process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = originalKey
 })
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: checkout.loadStripe }))
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: checkout.loadStripe }))
 vi.mock('@stripe/react-stripe-js', () => ({
 	EmbeddedCheckoutProvider: ({ children, ...props }: { children: ReactNode }) => {
 		checkout.provider(props)

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { getReferrer } from '~/auth/referrer'
 import { fetchSubscriptionStatus } from '~/auth/subscriptionStatus'
-import { AUTH_SERVER, STRIPE_PUBLISHABLE_KEY } from '~/constants'
+import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 import {
@@ -17,6 +17,7 @@ import {
 	type UpgradePricing,
 	withUpgradeLock
 } from './pendingUpgrade'
+import { CARD_PAYMENTS_UNAVAILABLE, loadStripeOnce } from './stripeClient'
 
 export interface CheckoutRequest {
 	type: 'api' | 'llamafeed'
@@ -49,9 +50,9 @@ export function checkoutReturnPath(request: CheckoutRequest) {
 const ACCOUNT_SWITCHED = 'The signed-in account changed while the checkout was starting. Try again.'
 
 async function readPaymentStatus(clientSecret: string) {
-	const { loadStripe } = await import('@stripe/stripe-js')
-	const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY!)
-	const { paymentIntent, error } = await stripe!.retrievePaymentIntent(clientSecret)
+	const stripe = await loadStripeOnce()
+	if (!stripe) throw new Error(CARD_PAYMENTS_UNAVAILABLE)
+	const { paymentIntent, error } = await stripe.retrievePaymentIntent(clientSecret)
 	if (error) throw new Error("Couldn't check your earlier upgrade payment. Try again.")
 	return paymentIntent.status
 }
@@ -192,8 +193,7 @@ export function useStripeCheckout() {
 		session,
 		open: (request: CheckoutRequest) => {
 			setIsOpen(true)
-			// Without a publishable key the dialog says Stripe is not configured, and no session is worth creating.
-			if (STRIPE_PUBLISHABLE_KEY) session.mutate(request)
+			session.mutate(request)
 		},
 		retry: () => session.mutate(session.variables!),
 		close: () => setIsOpen(false)

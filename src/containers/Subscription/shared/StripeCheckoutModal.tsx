@@ -1,17 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import {
-	Elements,
-	EmbeddedCheckout,
-	EmbeddedCheckoutProvider,
-	PaymentElement,
-	useElements,
-	useStripe
-} from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useElements } from '@stripe/react-stripe-js'
+import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { Suspense, use, useState, type ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
-import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import { scheduleConfirmationReads } from '~/containers/Account/utils'
 import { usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import type { FormSubmitEvent } from '~/types/forms'
@@ -20,6 +12,7 @@ import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
+import { EmbeddedCardCheckout } from './EmbeddedCardCheckout'
 import {
 	forgetPendingUpgrade,
 	isUnderWay,
@@ -27,9 +20,9 @@ import {
 	type UpgradePricing,
 	withUpgradeLock
 } from './pendingUpgrade'
+import { CARD_PAYMENTS_UNAVAILABLE, loadStripeOnce } from './stripeClient'
 import { checkoutReturnPath, type StripeCheckout } from './useStripeCheckout'
 
-const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 const formatAmount = (cents: number, currency: string) => {
 	const amount = cents / 100
 	const currencyCode = currency.toUpperCase()
@@ -45,8 +38,6 @@ const getFriendlyPaymentStatus = (status: string) => {
 			return 'Payment failed. Use a different payment method and try again.'
 		case 'requires_confirmation':
 			return 'Payment needs confirmation. Submit again to continue.'
-		case 'canceled':
-			return 'Payment was canceled. Try again when you are ready.'
 		default:
 			return 'Payment is pending confirmation. Check your account for updates.'
 	}
@@ -77,20 +68,22 @@ const UNDER_WAY_STEPS: Record<UnderWayStatus, { title: string; justPaid: string;
 const PLAN_NAMES = { api: 'API', llamafeed: 'Pro' } as const
 const INTERVAL_NAMES = { month: 'monthly', year: 'yearly' } as const
 
-// Reports a payment that is under way or stands in the way of a new one; there is nothing to pay from here.
-function PaymentOutcomeStep({
-	isOpen,
-	onClose,
-	title,
-	description
-}: {
-	isOpen: boolean
-	onClose: () => void
-	title: string
-	description: string
-}) {
+type UpgradeOutcome = UnderWayStatus | 'canceled'
+
+type UpgradePayment = {
+	/** The opening this payment belongs to, from the session's submittedAt. */
+	openedAt: number
+	stripe: Stripe
+	elements: StripeElements
+	clientSecret: string
+	awaitingVerification: boolean
+	postCheckoutPath: string
+}
+
+// A payment that is under way or stands in the way of a new one; there is nothing to pay from here.
+function OutcomeStep({ title, description }: { title: string; description: string }) {
 	return (
-		<Dialog size="sm" open={isOpen} onClose={onClose} portal unmountOnHide>
+		<>
 			<DialogHeader title={title} />
 			<DialogBody>
 				<Ariakit.DialogDescription className="body-sm text-secondary">{description}</Ariakit.DialogDescription>
@@ -100,199 +93,34 @@ function PaymentOutcomeStep({
 					Done
 				</Ariakit.DialogDismiss>
 			</DialogFooter>
-		</Dialog>
+		</>
 	)
 }
 
-// Reads the session the caller's useStripeCheckout created; nothing rendered here creates one.
+function CheckoutLoading() {
+	return (
+		<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center">
+			<LoadingIndicator label="Loading checkout" />
+		</div>
+	)
+}
+
+// Reads the session the caller's useStripeCheckout created; nothing rendered here creates one. Every step renders in
+// this one Dialog: a step swapped for another Dialog would leave nothing to hand focus back to when it closes.
 export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) {
 	const { isOpen, session, close, retry } = checkout
-
-	if (stripeInstance == null) {
-		return (
-			<Dialog size="md" open={isOpen} onClose={close} portal unmountOnHide>
-				<DialogHeader title="Checkout" />
-				<DialogBody>
-					<InlineStatus variant="error">
-						Stripe is not configured. Set <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> in your environment.
-					</InlineStatus>
-				</DialogBody>
-			</Dialog>
-		)
-	}
-
-	// A caller may keep the modal mounted before its first opening, when there is no session to show.
-	const request = session.variables
-	if (!request) return null
-	const result = session.data
-
-	if (result?.kind === 'openUpgrade') {
-		return (
-			<PaymentOutcomeStep
-				isOpen={isOpen}
-				onClose={close}
-				title="Earlier upgrade still open"
-				description={
-					result.stale
-						? 'An upgrade payment you started over a day ago can still be paid, and its price may be out of date. Contact support to cancel it before upgrading again.'
-						: `Your ${PLAN_NAMES[result.plan]} ${INTERVAL_NAMES[result.interval]} upgrade from earlier can still be paid. Finish that upgrade, or contact support to cancel it before choosing another plan.`
-				}
-			/>
-		)
-	}
-
-	if (result?.kind === 'pendingUpgrade') {
-		return (
-			<PaymentOutcomeStep
-				isOpen={isOpen}
-				onClose={close}
-				title={UNDER_WAY_STEPS[result.status].title}
-				description={
-					result.stale
-						? "This upgrade payment started over a week ago and hasn't cleared, so contact support before paying again."
-						: UNDER_WAY_STEPS[result.status].earlier
-				}
-			/>
-		)
-	}
-
-	if (result?.kind === 'paidUpgrade') {
-		return (
-			<Elements stripe={stripeInstance} options={{ clientSecret: result.clientSecret }}>
-				<UpgradePaymentDialog
-					isOpen={isOpen}
-					onClose={close}
-					plan={request.type}
-					billingInterval={request.billingInterval}
-					clientSecret={result.clientSecret}
-					pricing={result.pricing}
-					awaitingVerification={result.awaitingVerification}
-					postCheckoutPath={checkoutReturnPath(request)}
-				/>
-			</Elements>
-		)
-	}
-
-	return <SessionCheckoutDialog isOpen={isOpen} close={close} retry={retry} session={session} />
-}
-
-function SessionCheckoutDialog({
-	isOpen,
-	close,
-	retry,
-	session
-}: Pick<StripeCheckout, 'isOpen' | 'close' | 'retry' | 'session'>) {
 	const [confirmLeave, setConfirmLeave] = useState(false)
-	const result = session.data
-	const paying = result?.kind === 'checkout'
-	// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height.
-	return (
-		<Dialog
-			size="md"
-			fullSheet
-			open={isOpen}
-			// Closing mid-payment asks first: Stripe may already be taking the payment, and leaving drops its outcome.
-			onClose={paying ? () => setConfirmLeave(true) : close}
-			// Stripe owns the payment's submit state, so a stray tap outside must not drop a payment mid-submit.
-			hideOnInteractOutside={!paying}
-			portal
-			unmountOnHide
-		>
-			<DialogHeader title="Complete your purchase" />
-			{session.isError ? (
-				<>
-					<DialogBody>
-						<InlineStatus variant="error">{session.error.message}</InlineStatus>
-					</DialogBody>
-					<DialogFooter>
-						<Button type="button" variant="primary" size="md" onClick={retry}>
-							Try again
-						</Button>
-					</DialogFooter>
-				</>
-			) : (
-				<DialogBody kind="flush">
-					<div className="relative min-h-[400px]">
-						{/* The checkout draws nothing until the session arrives, so the wait needs its own label. */}
-						{result?.kind === 'checkout' ? (
-							<EmbeddedSessionCheckout stripe={stripeInstance} clientSecret={result.clientSecret} />
-						) : (
-							<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center">
-								<LoadingIndicator label="Loading checkout" />
-							</div>
-						)}
-					</div>
-				</DialogBody>
-			)}
-			<ConfirmDialog
-				open={confirmLeave}
-				onClose={() => setConfirmLeave(false)}
-				portal
-				unmountOnHide
-				title="Leave checkout?"
-				description="Your plan isn't active until the payment finishes. Leaving closes this checkout."
-				cancelLabel="Keep paying"
-				confirmLabel="Leave"
-				pendingLabel={null}
-				error={null}
-				onConfirm={() => {
-					setConfirmLeave(false)
-					close()
-				}}
-			/>
-		</Dialog>
-	)
-}
-
-// The provider gets the session that already exists, so mounting it again reuses that session. Stripe keeps the
-// options it mounted with and warns when they change.
-function EmbeddedSessionCheckout({
-	stripe,
-	clientSecret
-}: {
-	stripe: NonNullable<typeof stripeInstance>
-	clientSecret: string
-}) {
-	const [options] = useState(() => ({ fetchClientSecret: () => Promise.resolve(clientSecret) }))
-	return (
-		<EmbeddedCheckoutProvider stripe={stripe} options={options}>
-			<EmbeddedCheckout />
-		</EmbeddedCheckoutProvider>
-	)
-}
-
-function UpgradePaymentDialog({
-	isOpen,
-	onClose,
-	plan,
-	billingInterval,
-	clientSecret,
-	pricing,
-	awaitingVerification,
-	postCheckoutPath
-}: {
-	isOpen: boolean
-	onClose: () => void
-	plan: 'api' | 'llamafeed'
-	billingInterval: 'year' | 'month'
-	clientSecret: string
-	pricing: UpgradePricing | null
-	awaitingVerification: boolean
-	postCheckoutPath: string
-}) {
-	const stripe = useStripe()
-	const elements = useElements()
 	const queryClient = useQueryClient()
 	const { user } = useAuthContext()
-	const planLabel = `${plan === 'api' ? 'API' : 'Pro'} - ${billingInterval === 'year' ? 'Annual' : 'Monthly'}`
-	// The API plan being upgraded, read by type.
-	const currentApiPlan = usePlanRecord(plan === 'api' ? 'api' : null)
-	// The upgrade webhook turns extra usage charges on for every API plan, including one that had them switched off.
-	const turnsOverageBackOn = currentApiPlan?.type === 'api' && currentApiPlan.overage === false
 
-	const paymentMutation = useMutation({
-		mutationFn: async (): Promise<UnderWayStatus> => {
-			if (!stripe || !elements) throw new Error('Stripe not loaded')
+	const payment = useMutation({
+		mutationFn: async ({
+			stripe,
+			elements,
+			clientSecret,
+			awaitingVerification,
+			postCheckoutPath
+		}: UpgradePayment): Promise<UpgradeOutcome> => {
 			if (!user) throw new Error("You're signed out. Sign in and try again.")
 
 			const confirmResult = awaitingVerification
@@ -325,116 +153,325 @@ function UpgradePaymentDialog({
 			if (status === 'canceled') {
 				const userId = user.id
 				await withUpgradeLock(userId, async () => forgetPendingUpgrade(userId, clientSecret))
+				return status
 			}
 			throw new Error(confirmResult.error?.message || getFriendlyPaymentStatus(status))
 		},
 		onSuccess: (status) => {
-			if (status !== 'succeeded') scheduleConfirmationReads(queryClient, ['subscription'])
+			if (status === 'processing' || status === 'requires_capture')
+				scheduleConfirmationReads(queryClient, ['subscription'])
 		}
 	})
 
-	// A charged payment stays locked while the page navigates away, so it cannot be submitted twice.
-	const paying = paymentMutation.isPending || paymentMutation.data === 'succeeded'
+	// A caller may keep the modal mounted before its first opening, when there is no session to show.
+	const request = session.variables
+	if (!request) return null
+	const result = session.data
+	// A caller can keep this modal mounted between openings, and the payment mutation with it. Its outcome belongs to the
+	// opening that paid: a later opening, even one resuming the same intent, starts from the form.
+	const paid = payment.variables?.openedAt === session.submittedAt ? payment : null
 
-	const handleSubmit = (e: FormSubmitEvent) => {
-		e.preventDefault()
-		if (paying) return
-		paymentMutation.mutate(undefined, {
-			// A mutate() callback, unlike the hook's onSuccess, is dropped once this dialog unmounts on close.
-			onSuccess: (status) => {
-				if (status === 'succeeded') window.location.href = `${window.location.origin}${postCheckoutPath}`
-			}
-		})
+	let surface: { size: 'sm' | 'md'; fullSheet: boolean; pending: boolean; outsideTap: boolean; onClose: () => void } = {
+		size: 'sm',
+		fullSheet: false,
+		pending: false,
+		outsideTap: true,
+		onClose: close
 	}
-
-	const underWay = paymentMutation.data
-	if (underWay === 'processing' || underWay === 'requires_capture') {
-		return (
-			<PaymentOutcomeStep
-				isOpen={isOpen}
-				onClose={onClose}
-				title={UNDER_WAY_STEPS[underWay].title}
-				description={UNDER_WAY_STEPS[underWay].justPaid}
+	let content: ReactNode
+	if (result?.kind === 'openUpgrade') {
+		content = (
+			<OutcomeStep
+				title="Earlier upgrade still open"
+				description={
+					result.stale
+						? 'An upgrade payment you started over a day ago can still be paid, and its price may be out of date. Contact support to cancel it before upgrading again.'
+						: `Your ${PLAN_NAMES[result.plan]} ${INTERVAL_NAMES[result.interval]} upgrade from earlier can still be paid. Finish that upgrade, or contact support to cancel it before choosing another plan.`
+				}
 			/>
+		)
+	} else if (result?.kind === 'pendingUpgrade') {
+		content = (
+			<OutcomeStep
+				title={UNDER_WAY_STEPS[result.status].title}
+				description={
+					result.stale
+						? "This upgrade payment started over a week ago and hasn't cleared, so contact support before paying again."
+						: UNDER_WAY_STEPS[result.status].earlier
+				}
+			/>
+		)
+	} else if (result?.kind === 'paidUpgrade' && paid?.data === 'canceled') {
+		content = (
+			<OutcomeStep
+				title="Payment canceled"
+				description="This upgrade payment was canceled, so it can no longer be paid. Close this and start the upgrade again."
+			/>
+		)
+	} else if (result?.kind === 'paidUpgrade' && (paid?.data === 'processing' || paid?.data === 'requires_capture')) {
+		content = <OutcomeStep title={UNDER_WAY_STEPS[paid.data].title} description={UNDER_WAY_STEPS[paid.data].justPaid} />
+	} else if (result?.kind === 'paidUpgrade') {
+		const postCheckoutPath = checkoutReturnPath(request)
+		// A charged payment stays locked while the page navigates away, so it cannot be submitted twice.
+		const paying = paid !== null && (paid.isPending || paid.data === 'succeeded')
+		// The payment cannot be cancelled once confirmPayment starts, so the dialog stays open until it settles. The card
+		// form grows as it loads, so the phone sheet keeps its full height unless only a bank check is left.
+		surface = { ...surface, size: 'md', fullSheet: !result.awaitingVerification, pending: paying }
+		content = (
+			<Suspense fallback={<UpgradeLoading />}>
+				<UpgradeForm
+					plan={request.type}
+					billingInterval={request.billingInterval}
+					clientSecret={result.clientSecret}
+					pricing={result.pricing}
+					awaitingVerification={result.awaitingVerification}
+					paying={paying}
+					error={paid?.error?.message ?? null}
+					onPay={(stripe, elements) => {
+						if (paying) return
+						payment.mutate(
+							{
+								openedAt: session.submittedAt,
+								stripe,
+								elements,
+								clientSecret: result.clientSecret,
+								awaitingVerification: result.awaitingVerification,
+								postCheckoutPath
+							},
+							{
+								// A mutate() callback, unlike the hook's onSuccess, is dropped once this dialog unmounts on close.
+								onSuccess: (status) => {
+									if (status === 'succeeded') window.location.href = `${window.location.origin}${postCheckoutPath}`
+								}
+							}
+						)
+					}}
+				/>
+			</Suspense>
+		)
+	} else {
+		const paying = result?.kind === 'checkout'
+		// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height. Closing
+		// mid-payment asks first: Stripe may already be taking the payment, and leaving drops its outcome. Stripe owns
+		// the payment's submit state, so a stray tap outside must not drop a payment mid-submit.
+		surface = {
+			...surface,
+			size: 'md',
+			fullSheet: true,
+			outsideTap: !paying,
+			onClose: paying ? () => setConfirmLeave(true) : close
+		}
+		content = (
+			<>
+				<DialogHeader title="Complete your purchase" />
+				{session.isError ? (
+					<>
+						<DialogBody>
+							<InlineStatus variant="error">{session.error.message}</InlineStatus>
+						</DialogBody>
+						<DialogFooter>
+							<Button type="button" variant="primary" size="md" onClick={retry}>
+								Try again
+							</Button>
+						</DialogFooter>
+					</>
+				) : result?.kind === 'checkout' ? (
+					<Suspense fallback={<EmbeddedLoadingBody />}>
+						<EmbeddedCheckoutBody clientSecret={result.clientSecret} />
+					</Suspense>
+				) : (
+					<EmbeddedLoadingBody />
+				)}
+				<ConfirmDialog
+					open={confirmLeave}
+					onClose={() => setConfirmLeave(false)}
+					portal
+					unmountOnHide
+					title="Leave checkout?"
+					description="Your plan isn't active until the payment finishes. Leaving closes this checkout."
+					cancelLabel="Keep paying"
+					confirmLabel="Leave"
+					pendingLabel={null}
+					error={null}
+					onConfirm={() => {
+						setConfirmLeave(false)
+						close()
+					}}
+				/>
+			</>
 		)
 	}
 
-	// The payment cannot be cancelled once confirmPayment starts, so the dialog stays open until it settles. The card
-	// form grows as it loads, so the phone sheet keeps its full height unless only a bank check is left.
 	return (
 		<Dialog
-			size="md"
-			fullSheet={!awaitingVerification}
+			size={surface.size}
+			fullSheet={surface.fullSheet}
 			open={isOpen}
-			onClose={onClose}
-			pending={paying}
+			onClose={surface.onClose}
+			pending={surface.pending}
+			hideOnInteractOutside={surface.outsideTap}
 			portal
 			unmountOnHide
 		>
-			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+			{content}
+		</Dialog>
+	)
+}
+
+// The checkout draws nothing until the session arrives, so the wait needs its own label.
+function EmbeddedLoadingBody() {
+	return (
+		<DialogBody kind="flush">
+			<div className="relative min-h-[400px]">
+				<CheckoutLoading />
+			</div>
+		</DialogBody>
+	)
+}
+
+// Stripe's iframe fills a flush body; the message for a script that failed to load needs the usual padding.
+function EmbeddedCheckoutBody({ clientSecret }: { clientSecret: string }) {
+	const stripe = use(loadStripeOnce())
+	if (!stripe) {
+		return (
+			<DialogBody>
+				<InlineStatus variant="error">{CARD_PAYMENTS_UNAVAILABLE}</InlineStatus>
+			</DialogBody>
+		)
+	}
+	return (
+		<DialogBody kind="flush">
+			<div className="relative min-h-[400px]">
+				<EmbeddedCardCheckout clientSecret={clientSecret} />
+			</div>
+		</DialogBody>
+	)
+}
+
+function UpgradeLoading() {
+	return (
+		<>
+			<DialogHeader title="Complete your upgrade" />
+			<DialogBody>
+				<div className="relative min-h-[200px]">
+					<CheckoutLoading />
+				</div>
+			</DialogBody>
+		</>
+	)
+}
+
+type UpgradeFormProps = {
+	plan: 'api' | 'llamafeed'
+	billingInterval: 'year' | 'month'
+	pricing: UpgradePricing | null
+	awaitingVerification: boolean
+	paying: boolean
+	error: string | null
+	onPay: (stripe: Stripe, elements: StripeElements) => void
+}
+
+// Suspends until Stripe.js settles; a script that failed to load gets a message instead of a form that never draws.
+function UpgradeForm({ clientSecret, ...props }: UpgradeFormProps & { clientSecret: string }) {
+	const stripe = use(loadStripeOnce())
+	if (!stripe) {
+		return (
+			<>
 				<DialogHeader title="Complete your upgrade" />
 				<DialogBody>
-					<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-elevated-1 px-4 py-3">
-						<div className="flex flex-col gap-1">
-							<p className="label-sm text-secondary">Upgrading to</p>
-							<p className="label-lg text-primary">{planLabel}</p>
-						</div>
-
-						{pricing ? (
-							<div className="flex flex-col gap-2 body-sm">
-								<div className="flex justify-between gap-2">
-									<span className="text-secondary">New subscription price</span>
-									<span className="text-primary">
-										{formatAmount(pricing.newSubscriptionPrice, pricing.currency)}
-										<span className="text-secondary">/{billingInterval === 'year' ? 'year' : 'month'}</span>
-									</span>
-								</div>
-
-								{pricing.prorationCredit > 0 ? (
-									<div className="flex justify-between gap-2">
-										<span className="text-secondary">Proration credit</span>
-										<span className="text-success">-{formatAmount(pricing.prorationCredit, pricing.currency)}</span>
-									</div>
-								) : null}
-
-								<div className="flex justify-between gap-2 border-t border-subtle pt-2">
-									<span className="label-md text-primary">Amount due today</span>
-									<span className="label-md text-primary">{formatAmount(pricing.amount, pricing.currency)}</span>
-								</div>
-							</div>
-						) : null}
-					</div>
-					<p className="body-sm text-secondary">
-						{awaitingVerification
-							? 'Your bank still needs to verify this payment. Complete the verification to finish the upgrade.'
-							: pricing
-								? "You'll be charged immediately and your subscription will be updated."
-								: 'Enter your payment details below to complete the upgrade.'}
-					</p>
-					{turnsOverageBackOn ? (
-						<InlineStatus variant="warning">
-							Upgrading turns extra usage charges back on ($0.60 per 1,000 calls past your included limit). You can
-							switch them off again in API access afterwards.
-						</InlineStatus>
-					) : null}
-					{awaitingVerification ? null : <PaymentElement />}
-					{paymentMutation.error ? <InlineStatus variant="error">{paymentMutation.error.message}</InlineStatus> : null}
+					<InlineStatus variant="error">{CARD_PAYMENTS_UNAVAILABLE}</InlineStatus>
 				</DialogBody>
-				<DialogFooter leading={stripe ? null : <p className="body-sm text-secondary">Loading payment form…</p>}>
-					<Button
-						type="submit"
-						variant="primary"
-						size="md"
-						disabled={!stripe}
-						pendingLabel={paying ? 'Processing…' : null}
-					>
-						{awaitingVerification ? 'Complete verification' : 'Complete upgrade'}
-					</Button>
-				</DialogFooter>
-				<span role="status" className="sr-only">
-					{paying ? 'Processing payment' : ''}
-				</span>
-			</form>
-		</Dialog>
+			</>
+		)
+	}
+	return (
+		<Elements stripe={stripe} options={{ clientSecret }}>
+			<UpgradeFormFields stripe={stripe} {...props} />
+		</Elements>
+	)
+}
+
+function UpgradeFormFields({
+	stripe,
+	plan,
+	billingInterval,
+	pricing,
+	awaitingVerification,
+	paying,
+	error,
+	onPay
+}: UpgradeFormProps & { stripe: Stripe }) {
+	const elements = useElements()
+	const planLabel = `${plan === 'api' ? 'API' : 'Pro'} - ${billingInterval === 'year' ? 'Annual' : 'Monthly'}`
+	// The API plan being upgraded, read by type.
+	const currentApiPlan = usePlanRecord(plan === 'api' ? 'api' : null)
+	// The upgrade webhook turns extra usage charges on for every API plan, including one that had them switched off.
+	const turnsOverageBackOn = currentApiPlan?.type === 'api' && currentApiPlan.overage === false
+
+	const handleSubmit = (e: FormSubmitEvent) => {
+		e.preventDefault()
+		// Elements is ready as soon as it renders with a loaded Stripe instance.
+		onPay(stripe, elements!)
+	}
+
+	return (
+		<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+			<DialogHeader title="Complete your upgrade" />
+			<DialogBody>
+				<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-elevated-1 px-4 py-3">
+					<div className="flex flex-col gap-1">
+						<p className="label-sm text-secondary">Upgrading to</p>
+						<p className="label-lg text-primary">{planLabel}</p>
+					</div>
+
+					{pricing ? (
+						<div className="flex flex-col gap-2 body-sm">
+							<div className="flex justify-between gap-2">
+								<span className="text-secondary">New subscription price</span>
+								<span className="text-primary">
+									{formatAmount(pricing.newSubscriptionPrice, pricing.currency)}
+									<span className="text-secondary">/{billingInterval === 'year' ? 'year' : 'month'}</span>
+								</span>
+							</div>
+
+							{pricing.prorationCredit > 0 ? (
+								<div className="flex justify-between gap-2">
+									<span className="text-secondary">Proration credit</span>
+									<span className="text-success">-{formatAmount(pricing.prorationCredit, pricing.currency)}</span>
+								</div>
+							) : null}
+
+							<div className="flex justify-between gap-2 border-t border-subtle pt-2">
+								<span className="label-md text-primary">Amount due today</span>
+								<span className="label-md text-primary">{formatAmount(pricing.amount, pricing.currency)}</span>
+							</div>
+						</div>
+					) : null}
+				</div>
+				<p className="body-sm text-secondary">
+					{awaitingVerification
+						? 'Your bank still needs to verify this payment. Complete the verification to finish the upgrade.'
+						: pricing
+							? "You'll be charged immediately and your subscription will be updated."
+							: 'Enter your payment details below to complete the upgrade.'}
+				</p>
+				{turnsOverageBackOn ? (
+					<InlineStatus variant="warning">
+						Upgrading turns extra usage charges back on ($0.60 per 1,000 calls past your included limit). You can switch
+						them off again in API access afterwards.
+					</InlineStatus>
+				) : null}
+				{awaitingVerification ? null : <PaymentElement />}
+				{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
+			</DialogBody>
+			<DialogFooter>
+				<Button type="submit" variant="primary" size="md" pendingLabel={paying ? 'Processing…' : null}>
+					{awaitingVerification ? 'Complete verification' : 'Complete upgrade'}
+				</Button>
+			</DialogFooter>
+			<span role="status" className="sr-only">
+				{paying ? 'Processing payment' : ''}
+			</span>
+		</form>
 	)
 }

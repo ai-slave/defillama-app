@@ -11,6 +11,7 @@ import Account from '~/pages/account'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 // Constants read the publishable key at import time; checkout only loads Stripe when it is set.
 const originalKey = vi.hoisted(() => {
@@ -24,7 +25,7 @@ afterAll(() => {
 })
 // Stripe's record of the stored upgrade payment, which the return page reads before it forgets that payment.
 const stripe = vi.hoisted(() => ({ retrievePaymentIntent: vi.fn() }))
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve(stripe) }))
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: () => Promise.resolve(stripe) }))
 // Stripe's iframe cannot run in Node. Like the real provider, this asks for the session once on mount.
 vi.mock('@stripe/react-stripe-js', () => ({
 	EmbeddedCheckoutProvider: function Provider({
@@ -414,6 +415,21 @@ test('a second top-up return on the same page confirms again', async () => {
 		await page.rerender()
 		await page.wait(0)
 		expect(confirmations()).toBe(2)
+	} finally {
+		await page.unmount()
+	}
+})
+
+test('closing the payment outcome hands focus to the page, since nothing on the page opened it', async () => {
+	router.query = await upgradeReturnQuery('failed')
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		const done = [...page.dialog()!.querySelectorAll('button')].find((button) => accessibleName(button) === 'Done')!
+		await act(async () => done.click())
+		await waitForUi(() => expect(page.dialog()).toBeNull())
+
+		expect(document.activeElement).toBe(document.querySelector('main'))
 	} finally {
 		await page.unmount()
 	}

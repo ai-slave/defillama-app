@@ -9,6 +9,7 @@ import type {
 	PricingCardData
 } from '~/containers/Subscription/types'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 
 const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
 
@@ -169,7 +170,8 @@ function PricingCardCta({
 	onEndTrial,
 	onRevertCancellation,
 	isTrialAvailable,
-	loading
+	loading,
+	cryptoError
 }: {
 	card: PricingCardData
 	isCurrentPlan: boolean
@@ -382,6 +384,7 @@ function PricingCardCta({
 					</button>
 				</>
 			)}
+			{cryptoError?.cardKey === card.key ? <InlineStatus variant="error">{cryptoError.message}</InlineStatus> : null}
 			{card.ctaSubtext ? (
 				<p className="text-center text-xs leading-4 text-sub-text-cool-muted dark:text-sub-text-muted">
 					{card.ctaSubtext}
@@ -492,7 +495,8 @@ export function PricingCard({
 	onEndTrial,
 	onRevertCancellation,
 	isTrialAvailable,
-	loading
+	loading,
+	cryptoError
 }: {
 	card: PricingCardData
 	isCurrentPlan?: boolean
@@ -563,6 +567,7 @@ export function PricingCard({
 							onRevertCancellation={onRevertCancellation}
 							isTrialAvailable={isTrialAvailable}
 							loading={loading}
+							cryptoError={cryptoError}
 						/>
 						{isLowerTier ? (
 							<p className="text-center text-[13px] leading-5 font-medium text-sub-brand-primary dark:text-sub-brand-secondary">

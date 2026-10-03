@@ -6,6 +6,8 @@ interface SubscriptionCardProps {
 	subscriptionType: string
 	subscriptionPayment: string
 	provider: string
+	/** A seat on a team's subscription: the record has no Stripe subscription of its own to manage or cancel. */
+	isTeamSeat: boolean
 	isCancelPending: boolean
 	onManage: () => void
 	onCancel: () => void
@@ -30,6 +32,7 @@ export function SubscriptionCard({
 	subscriptionType,
 	subscriptionPayment,
 	provider,
+	isTeamSeat,
 	isCancelPending,
 	onManage,
 	onCancel,
@@ -88,6 +91,10 @@ export function SubscriptionCard({
 
 			{isCancelPending ? (
 				<p className="label-sm text-sub-warning-text-dark">Cancellation scheduled</p>
+			) : isTeamSeat ? (
+				<p className="body-sm text-sub-text-muted">
+					This plan is a seat on your team's subscription, so it's billed and managed with the team's seats.
+				</p>
 			) : provider === 'apple' || provider === 'google_play' ? (
 				<p className="body-sm text-sub-text-muted">
 					This plan is billed through {provider === 'apple' ? 'the App Store' : 'Google Play'}. Manage or cancel it in

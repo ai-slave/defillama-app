@@ -158,3 +158,142 @@ test('keeps the cancellation result on screen when the refetch after it fails', 
 	await waitFor(() => expect(text()).toContain("Couldn't load your subscription"))
 	expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Cancellation scheduled')
 })
+
+test('shows no personal billing controls until the team read says who owns the billing', async () => {
+	let answerTeam!: (response: Response) => void
+	session.serve({
+		'/subscription/status': { subscription: apiSubscription },
+		'/team': () => new Promise<Response>((resolve) => (answerTeam = resolve))
+	})
+	await render()
+	await waitFor(() => expect(answerTeam).toBeTypeOf('function'))
+	await waitFor(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
+
+	expect(button('Cancel Subscription')).toBeUndefined()
+	expect(button('Manage on Stripe')).toBeUndefined()
+
+	await act(async () => answerTeam(Response.json({ team: null })))
+	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
+})
+
+test('an open cancel dialog stays open when the team read behind it fails', async () => {
+	session.serve({ '/subscription/status': { subscription: apiSubscription } })
+	await render()
+	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
+	await act(async () => button('Cancel Subscription')!.click())
+	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
+
+	session.serve({ '/team': fixtureStatus(500) })
+	await act(async () => session.client.invalidateQueries({ queryKey: ['team'] }))
+
+	await waitFor(() => expect(text()).toContain("Couldn't load your team"))
+	expect(button('Confirm cancellation')).toBeDefined()
+})
+
+test("a plan whose latest payment failed promises immediate cancellation from the plan card's Cancel too", async () => {
+	session.serve({
+		'/subscription/status': { subscription: apiSubscription },
+		'/subscription/past-due': { subscription: apiSubscription }
+	})
+	await render()
+	const cancelButtons = () =>
+		[...document.querySelectorAll('button')].filter((b) => b.textContent === 'Cancel Subscription')
+	// The overdue warning's Cancel comes first; the plan card's is the last.
+	await waitFor(() => expect(cancelButtons()).toHaveLength(2))
+
+	await act(async () => cancelButtons()[1].click())
+	await waitFor(() => expect(document.querySelector('[role=alertdialog]')).not.toBeNull())
+	expect(document.querySelector('[role=alertdialog]')!.textContent).toContain(
+		'Because the latest payment failed, cancellation takes effect immediately and access ends right away.'
+	)
+})
+
+test('a plan that is a seat on a team subscription offers no personal Manage or Cancel', async () => {
+	session.serve({ '/subscription/status': { subscription: { ...apiSubscription, team_id: 'team-1' } } })
+	await render()
+
+	await waitFor(() => expect(text()).toContain("This plan is a seat on your team's subscription"))
+	expect(button('Cancel Subscription')).toBeUndefined()
+	expect(button('Manage on Stripe')).toBeUndefined()
+})
+
+const overageSwitch = () =>
+	document.querySelector<HTMLButtonElement>('[role=switch][aria-label="Allow extra usage charges"]')
+
+test('the extra usage switch stays locked until the plan read shows the new setting', async () => {
+	session.serve({ '/subscription/status': { subscription: { ...apiSubscription, overage: false } } })
+	await render()
+	await waitFor(() => expect(overageSwitch()).not.toBeNull())
+
+	let answerRead!: (response: Response) => void
+	session.serve({
+		'/subscription/enable-overage': { message: 'ok' },
+		'/subscription/status': () => new Promise<Response>((resolve) => (answerRead = resolve))
+	})
+	await act(async () => overageSwitch()!.click())
+	await waitFor(() => expect(answerRead).toBeTypeOf('function'))
+
+	expect(overageSwitch()!.disabled).toBe(true)
+
+	await act(async () => answerRead(Response.json({ subscription: { ...apiSubscription, overage: true } })))
+	await waitFor(() => expect(overageSwitch()!.getAttribute('aria-checked')).toBe('true'))
+	expect(overageSwitch()!.disabled).toBe(false)
+})
+
+const lostAnswers = [
+	['is lost', () => Promise.reject(new TypeError('Failed to fetch'))],
+	['is a gateway timeout', fixtureStatus(504, { message: 'Gateway timeout' })]
+] as const
+
+test.each(lostAnswers)(
+	'an extra usage change whose answer %s says it could not confirm it, as an alert',
+	async (_case, answer) => {
+		session.serve({
+			'/subscription/status': { subscription: { ...apiSubscription, overage: false } },
+			'/subscription/enable-overage': answer
+		})
+		await render()
+		await waitFor(() => expect(overageSwitch()).not.toBeNull())
+		await act(async () => overageSwitch()!.click())
+
+		await waitFor(() =>
+			expect(document.querySelector('[role=alert]')?.textContent).toBe(
+				"We couldn't confirm the change. The switch shows your current setting."
+			)
+		)
+	}
+)
+
+test.each(lostAnswers)('a cancellation whose answer %s says it could not confirm it', async (_case, answer) => {
+	session.serve({
+		'/subscription/status': { subscription: apiSubscription },
+		'/subscription/cancel': answer
+	})
+	await render()
+	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
+	await act(async () => button('Cancel Subscription')!.click())
+	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
+	await act(async () => button('Confirm cancellation')!.click())
+
+	await waitFor(() =>
+		expect(document.querySelector('[role=alertdialog] [role=alert]')?.textContent).toBe(
+			"We couldn't confirm the cancellation. Check your plan before trying again."
+		)
+	)
+})
+
+test('a LlamaPay top-up opens its checkout in this tab, where no popup blocker can swallow it', async () => {
+	window.location.hash = ''
+	// A same-page hash stands in for the checkout URL, so happy-dom records the navigation without loading a page.
+	const checkoutUrl = `${window.location.href.split('#')[0]}#llamapay-topup`
+	session.serve({
+		'/subscription/status': { subscription: { ...apiSubscription, provider: 'llamapay' } },
+		'/subscription/topup': { checkoutUrl }
+	})
+	await render()
+	await waitFor(() => expect(button('Top Up')).toBeDefined())
+	await act(async () => button('Top Up')!.click())
+
+	await waitFor(() => expect(window.location.hash).toBe('#llamapay-topup'))
+	window.location.hash = ''
+})

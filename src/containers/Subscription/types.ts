@@ -68,4 +68,6 @@ export interface PricingCardCallbacks {
 	onRevertCancellation?: () => void
 	isTrialAvailable?: boolean
 	loading?: 'stripe' | 'llamapay' | null
+	/** Why the last crypto checkout for this card couldn't start. */
+	cryptoError?: { cardKey: PlanKey; message: string } | null
 }

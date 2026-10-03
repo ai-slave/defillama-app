@@ -14,6 +14,7 @@ import Layout from '~/layout'
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { pageContent } from '~/ui/focus'
 import { LoadingIndicator } from '~/ui/Status'
 
 // Reads of the subscription after a ?success=true return, as WelcomeOnboarding budgets them: one at once, then
@@ -207,7 +208,18 @@ export default function Account() {
 					<ManageAccount />
 				</div>
 
-				<Dialog size="sm" open={showPaymentDialog} onClose={() => setShowPaymentDialog(false)} portal unmountOnHide>
+				{/* It opens from the checkout's return, with no trigger on this page to hand focus back to. */}
+				<Dialog
+					size="sm"
+					open={showPaymentDialog}
+					onClose={() => setShowPaymentDialog(false)}
+					autoFocusOnHide={() => {
+						pageContent()?.focus()
+						return false
+					}}
+					portal
+					unmountOnHide
+				>
 					<DialogHeader title={PAYMENT_TITLES[paymentStep]} />
 					<DialogBody>
 						{/* One live region for every step, so the outcome is announced when the reads settle. */}

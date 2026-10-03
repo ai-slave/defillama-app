@@ -49,13 +49,22 @@ const router = vi.hoisted(() => ({
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve({}) }))
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: () => Promise.resolve({}) }))
 vi.mock('@stripe/react-stripe-js', async () => {
 	const { useEffect } = await import('react')
 	return {
-		EmbeddedCheckoutProvider: ({ children, options }: { children: ReactNode; options: { clientSecret: string } }) => {
-			api.checkout(options)
-			useEffect(() => api.checkoutMount(), [])
+		// Like the real provider, it asks for the session once, when it mounts.
+		EmbeddedCheckoutProvider: ({
+			children,
+			options
+		}: {
+			children: ReactNode
+			options: { fetchClientSecret: () => Promise<string> }
+		}) => {
+			useEffect(() => {
+				api.checkoutMount()
+				void options.fetchClientSecret().then((clientSecret) => api.checkout({ clientSecret }))
+			}, [options])
 			return children
 		},
 		EmbeddedCheckout: () => null
@@ -309,9 +318,26 @@ test('seat form locks its submitted amount and preserves it after a failure', as
 	expect(button('Increase seats').disabled).toBe(true)
 	await click('Close dialog')
 	expect(dialog()).toBeTruthy()
-	await act(async () => request.reject(new Error('Card declined')))
+	await act(async () => request.resolve(Response.json({ message: 'Card declined' }, { status: 402 })))
 	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Card declined'))
 	expect(input.value).toBe('4')
+})
+
+test('a seat change whose answer is lost says it could not confirm it and shows the count the team has', async () => {
+	const request = Promise.withResolvers<Response>()
+	api.fetch.mockImplementation((_url, options) =>
+		options?.method === 'POST' ? request.promise : Promise.resolve(Response.json({ team }))
+	)
+	await mount(<Harness kind="manage" />)
+	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '4')
+	await click('Update seats')
+	await waitForUi(() => expect(posts()).toHaveLength(1))
+	await act(async () => request.reject(new TypeError('Failed to fetch')))
+	await waitForUi(() =>
+		expect(document.querySelector('[role=alert]')?.textContent).toBe(
+			"We couldn't confirm this change. Your team currently shows 3 Pro seats."
+		)
+	)
 })
 
 test('cancellation sends zero only after confirmation and preserves access until period end', async () => {
@@ -490,7 +516,7 @@ test('purchase respects the existing billing interval and does not repeat a requ
 	})
 	await act(async () => request.resolve(Response.json({ action: 'checkout_created', clientSecret: 'test-secret' })))
 	await waitForUi(() => expect(namedDialog('Complete payment')).toBeTruthy())
-	expect(api.checkout).toHaveBeenLastCalledWith({ clientSecret: 'test-secret' })
+	await waitForUi(() => expect(api.checkout).toHaveBeenLastCalledWith({ clientSecret: 'test-secret' }))
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	expect(posts()).toHaveLength(1)
 })

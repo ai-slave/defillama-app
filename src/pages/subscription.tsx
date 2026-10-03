@@ -77,6 +77,7 @@ function SubscriptionContent() {
 
 	/* ── End trial modal ──────────────────────────────────────────────── */
 	const [showEndTrialModal, setShowEndTrialModal] = useState(false)
+	const [cryptoError, setCryptoError] = useState<{ cardKey: PlanKey; message: string } | null>(null)
 
 	/* ── Slack acquisition source capture ─────────────────────────────── */
 	useEffect(() => {
@@ -156,7 +157,10 @@ function SubscriptionContent() {
 	const handleSecondaryCtaClick = (cardKey: PlanKey) => {
 		requireAuth(() => {
 			requireVerified(() => {
-				void handleSubscribe('llamapay', planKeyToSubType(cardKey), undefined, billingInterval, false)
+				setCryptoError(null)
+				handleSubscribe('llamapay', planKeyToSubType(cardKey), undefined, billingInterval, false).catch(
+					(error: Error) => setCryptoError({ cardKey, message: error.message })
+				)
 			})
 		})
 	}
@@ -265,6 +269,7 @@ function SubscriptionContent() {
 					onRevertCancellation={() => void handleRevertCancellation()}
 					isTrialAvailable={isTrialAvailable}
 					loading={loading}
+					cryptoError={cryptoError}
 				/>
 				<SubscriptionComparisonSection
 					planOrder={PLAN_ORDER}
