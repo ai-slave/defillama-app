@@ -21,6 +21,8 @@ import { clearPersistedSubscriptionStatus, subscriptionStatusQueryOptions } from
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { AUTH_SERVER } from '~/constants'
 import { clearPersistedUserInterests } from '~/containers/Announcements/userInterestsStorage'
+import { LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY } from '~/containers/LlamaAI/customInstructionsStorage'
+import { removeStorageItem } from '~/contexts/localStorageStore'
 import { refreshNowSeconds } from '~/hooks/useNowSeconds'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { useOpeningKey } from '~/ui/Dialog'
@@ -60,6 +62,9 @@ const loadCreateSiweMessage = async (): Promise<CreateSiweMessage> => {
 const clearUserSession = () => {
 	clearPersistedSubscriptionStatus(pb.authStore.record?.id)
 	clearPersistedUserInterests()
+	// Browsers from before the key moved into the query cache still hold the last account's key here.
+	localStorage.removeItem('pro_apikey')
+	removeStorageItem(LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY)
 	pb.authStore.clear()
 	localStorage.removeItem('userHash')
 	localStorage.removeItem('lite-dashboards')

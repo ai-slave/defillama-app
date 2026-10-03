@@ -13,6 +13,7 @@ import { lazy, useEffect, useMemo, useRef, useState } from 'react'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import type { IScatterChartProps, ScatterChartPoint } from '~/components/ECharts/ScatterChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -503,7 +504,7 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 				logScale
 				height="450px"
 				tooltipFormatter={({ value: [volume, openInterest, name, funding] }) =>
-					`<b>${name}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
+					`<b>${escapeHtml(String(name))}</b><br/>Volume: ${formatUsd(volume, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>OI: ${formatUsd(openInterest, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br/>Funding: ${formatPct(Number(funding))}`
 				}
 			/>
 		</div>

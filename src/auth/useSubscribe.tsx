@@ -8,7 +8,6 @@ import { subscriptionStatusQueryOptions, type Subscription } from '~/auth/subscr
 import { AUTH_SERVER } from '~/constants'
 import { holdEndTrial } from '~/containers/Account/endTrialHold'
 import { scheduleConfirmationReads } from '~/containers/Account/utils'
-import { getStorageItem, removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb from '~/utils/pocketbase'
 
@@ -49,8 +48,6 @@ const defaultInactiveSubscription: Subscription = {
 	provider: ''
 }
 
-const API_KEY_LOCAL_STORAGE_KEY = 'pro_apikey'
-
 const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage: string): string => {
 	if (!message) return fallbackMessage
 	if (!message.startsWith('[HTTP] [error]')) return message
@@ -62,16 +59,6 @@ const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage:
 
 const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
-
-const syncApiKeyStorage = (apiKey: string | null) => {
-	const currentApiKey = getStorageItem(API_KEY_LOCAL_STORAGE_KEY, null)
-	if (apiKey === currentApiKey) return
-	if (apiKey === null) {
-		removeStorageItem(API_KEY_LOCAL_STORAGE_KEY)
-		return
-	}
-	setStorageItem(API_KEY_LOCAL_STORAGE_KEY, apiKey)
-}
 
 const parseFetchedApiKey = (payload: unknown): string | null => {
 	if (payload == null || typeof payload !== 'object') return null
@@ -285,22 +272,19 @@ export const useSubscribe = () => {
 		refetchOnWindowFocus: false
 	})
 
-	// Runs for the side effect: fetches the key and mirrors it into local storage,
-	// which `apiKey` below subscribes to.
-	useQuery({
-		queryKey: ['subscription', 'api-key', user?.id],
-		queryFn: async () => {
-			const newApiKey = await authorizedFetch(`${AUTH_SERVER}/auth/get-api-key`)
+	// The key lives only in this account's query cache, so a response that lands after logout or an
+	// account switch can never show up for someone else.
+	const apiKeyQueryKey = ['subscription', 'api-key', user?.id]
+	const { data: apiKey = null } = useQuery({
+		queryKey: apiKeyQueryKey,
+		queryFn: () =>
+			authorizedFetch(`${AUTH_SERVER}/auth/get-api-key`)
 				.then(handleSimpleFetchResponse)
 				.then((res) => res.json())
 				.then(parseFetchedApiKey)
 				.catch((error) => {
 					throw new Error(getErrorMessage(error, 'Failed to fetch API key'))
-				})
-
-			syncApiKeyStorage(newApiKey)
-			return newApiKey
-		},
+				}),
 		staleTime: 24 * 60 * 60 * 1000, // 24 hours
 		refetchOnWindowFocus: false,
 		enabled: isAuthenticated && apiSubscription?.status === 'active' && router.pathname === '/account'
@@ -318,12 +302,10 @@ export const useSubscribe = () => {
 					throw new Error(getErrorMessage(error, 'Failed to generate API key'))
 				})
 
-			syncApiKeyStorage(newApiKey)
+			queryClient.setQueryData(apiKeyQueryKey, newApiKey)
 			return newApiKey
 		}
 	})
-
-	const apiKey = useStorageItem(API_KEY_LOCAL_STORAGE_KEY, null)
 
 	const { data: credits } = useQuery<Credits>({
 		queryKey: ['subscription', 'credits', user?.id, apiKey],

@@ -1,3 +1,4 @@
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
 	getTooltipAxisValue,
 	getTooltipRawYValue,
@@ -54,9 +55,9 @@ export function getLiquidationsTooltipHtml(params: unknown, metric: Liquidations
 		rows.push(`<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
 								<span style="display:inline-flex; align-items:center; gap:6px; min-width:0;">
 									${param.marker ?? ''}
-									<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${param.seriesName ?? ''}</span>
+									<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(param.seriesName ?? '')}</span>
 								</span>
-								<span style="color:var(--text-primary); text-align:right;">${rowValue}</span>
+								<span style="color:var(--text-primary); text-align:right;">${escapeHtml(rowValue)}</span>
 							</div>`)
 	}
 
@@ -75,7 +76,7 @@ export function getLiquidationsTooltipHtml(params: unknown, metric: Liquidations
 						<div style="margin-top:8px;">
 							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--border-medium); font-size:12px;">
 								<span style="color:var(--text-secondary);">Total</span>
-								<span style="color:var(--text-primary); font-weight:600;">${totalLabel}</span>
+								<span style="color:var(--text-primary); font-weight:600;">${escapeHtml(totalLabel)}</span>
 							</div>
 						</div>
 					</div>`

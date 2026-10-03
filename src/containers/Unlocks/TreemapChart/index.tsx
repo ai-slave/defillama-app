@@ -6,6 +6,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -95,7 +96,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', cal
 					if (iconUrl) {
 						content += `<img src="${iconUrl}" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; border-radius: 50%;" /> `
 					}
-					content += `<strong style="font-weight: 600;">${pathDisplay}${name}</strong><br/>`
+					content += `<strong style="font-weight: 600;">${escapeHtml(pathDisplay)}${escapeHtml(name)}</strong><br/>`
 					content += `<span style="opacity: 0.85;">Value:</span> <strong style="font-weight: 600;">${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</strong>`
 					content += `</div>`
 					return content

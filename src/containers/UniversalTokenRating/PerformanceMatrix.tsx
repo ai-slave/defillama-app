@@ -6,6 +6,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { Icon } from '~/ui/Icon'
@@ -60,15 +61,6 @@ function circularIcon(url: string): Promise<string | null> {
 // Each token's logo is loaded and cropped once per session and shared by every row set that shows it, so a filter change
 // that keeps the same logos draws at once. Pending logos stay undefined; a failed one is null.
 const readIconResults = (results: Array<QueryObserverResult<string | null>>) => results.map((result) => result.data)
-
-function escapeHtml(value: string): string {
-	return value
-		.replaceAll('&', '&amp;')
-		.replaceAll('<', '&lt;')
-		.replaceAll('>', '&gt;')
-		.replaceAll('"', '&quot;')
-		.replaceAll("'", '&#39;')
-}
 
 function scoreRow(label: string, value: number | null, hex: string, max: number): string {
 	const pct = value == null ? 0 : Math.min(100, (value / max) * 100)

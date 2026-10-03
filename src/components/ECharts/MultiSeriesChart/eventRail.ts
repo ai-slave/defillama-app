@@ -1,5 +1,6 @@
 import type { CustomSeriesOption, EChartsOption } from 'echarts'
 import type * as echarts from 'echarts/core'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { CHART_INSET, CHART_ZOOM_RESERVE } from '../shared/chartSpacing'
 import { formatTooltipChartDate } from '../shared/formatters'
 import { asTooltipDataRecord } from '../shared/tooltip'
@@ -371,7 +372,7 @@ export function createEventRailSeries({
 						? `${formatTooltipChartDate(event.rangeStart, 'daily')} - ${formatTooltipChartDate(event.rangeEnd, 'daily')}`
 						: formatTooltipChartDate(event.eventDate, 'daily')
 
-				return `${header}<li style="list-style:none;font-weight:600;">${event.fullText}</li>`
+				return `${header}<li style="list-style:none;font-weight:600;">${escapeHtml(event.fullText)}</li>`
 			}
 		}
 	}

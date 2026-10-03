@@ -6,6 +6,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { lazy, useEffect, useMemo, useRef } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
@@ -122,7 +123,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 			tooltip: {
 				formatter(rawInfo: unknown) {
 					const info = normalizeTooltipItems(rawInfo)[0]
-					return `<b>${info?.name ?? ''}</b><br/>Collected: ${formatSonicCount(getTreemapValue(info?.value))} S`
+					return `<b>${escapeHtml(info?.name ?? '')}</b><br/>Collected: ${formatSonicCount(getTreemapValue(info?.value))} S`
 				}
 			},
 			series: [

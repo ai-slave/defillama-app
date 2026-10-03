@@ -3,10 +3,11 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
+import { LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY } from '~/containers/LlamaAI/customInstructionsStorage'
 import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { getErrorMessage } from '~/utils/error'
+import pb from '~/utils/pocketbase'
 
-export const LLAMA_AI_CUSTOM_INSTRUCTIONS_KEY = 'llamaai-custom-instructions'
 export const LLAMA_AI_ENABLE_MEMORY_KEY = 'llamaai-enable-memory'
 export const LLAMA_AI_ENABLE_PREMIUM_TOOLS_KEY = 'llamaai-enable-premium-tools'
 export const LLAMA_AI_HACKER_MODE_KEY = 'llamaai-hacker-mode'
@@ -340,14 +341,9 @@ export function useAdvancedProvenance(): boolean {
 	return stored == null ? isLlama : stored === 'true'
 }
 
-// Throws from outside the try's own body, and reads through the optional chain outside the catch:
-// the compiler can lower neither in place.
+// Throws from outside the try's own body: the compiler cannot lower a throw inside try/catch.
 function assertSettingsPersisted(response: Response | null) {
 	if (!response?.ok) throw new Error('Failed to persist LlamaAI settings')
-}
-
-function settingsOf(latest: SettingsQueryResult | undefined) {
-	return latest?.settings ?? null
 }
 
 export function useLlamaAISettings() {
@@ -425,11 +421,6 @@ export function useLlamaAISettings() {
 		applyStoredSettings(settingsQuery.data.settings)
 	}, [settingsQuery.data?.settings])
 
-	useEffect(() => {
-		if (userId) return
-		queryClient.removeQueries({ queryKey: [...LLAMA_AI_SETTINGS_QUERY_KEY] })
-	}, [queryClient, userId])
-
 	const applySettingsUpdate = (update: LlamaAISettingsUpdate) => {
 		applyStoredSettings(update)
 		queryClient.setQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, userId], (previous) => ({
@@ -462,15 +453,16 @@ export function useLlamaAISettings() {
 				assertSettingsPersisted(response)
 			} catch (error) {
 				const latest = queryClient.getQueryData<SettingsQueryResult>(queryKey)
-				applySettingsUpdate(getFailedSettingsRollback(settingsOf(latest), optimisticUpdate, previousSettings))
+				applySettingsUpdate(getFailedSettingsRollback(latest?.settings ?? null, optimisticUpdate, previousSettings))
 				throw error
 			}
-			return update
-		},
-		onSuccess: ({ customInstructions: savedCustomInstructions }) => {
-			if (savedCustomInstructions !== undefined) {
-				applySettingsUpdate({ customInstructions: savedCustomInstructions })
+			// Written here, not in onSuccess: TanStack hands a pending save each render's new options, so onSuccess
+			// would see whoever signed in meanwhile, while this closure keeps the account that submitted the save.
+			// A save that lands after logout or an account switch must not write that account's text back.
+			if (update.customInstructions !== undefined && pb.authStore.record?.id === userId) {
+				applySettingsUpdate({ customInstructions: update.customInstructions })
 			}
+			return update
 		},
 		onError: (error) => {
 			// SettingsModal, the only caller, reports the failure in the dialog.

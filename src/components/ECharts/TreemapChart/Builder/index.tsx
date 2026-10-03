@@ -4,6 +4,7 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -119,7 +120,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 						minimumFractionDigits: 1,
 						maximumFractionDigits: 1
 					})
-					return `<div style="font-weight:600">${info.name ?? ''}</div><div>${formatTreemapUsd(rawValue)} (${pct})</div>`
+					return `<div style="font-weight:600">${escapeHtml(info.name ?? '')}</div><div>${formatTreemapUsd(rawValue)} (${pct})</div>`
 				}
 			},
 			series: [

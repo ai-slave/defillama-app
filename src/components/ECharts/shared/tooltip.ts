@@ -1,4 +1,5 @@
-import { formatTooltipChartDate, formatTooltipValue } from './formatters'
+import { escapeHtml } from './escapeHtml'
+import { formatTooltipChartDate, formatTooltipValueHtml } from './formatters'
 
 export const TOOLTIP_OTHERS_ROW_STYLE =
 	'list-style:none;margin-top:6px;padding-top:6px;border-top:1px solid rgba(128,128,128,0.3);'
@@ -108,18 +109,18 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 			}
 		}
 
-		output += `<li style="list-style:none;font-weight:600">Total Inflows&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
+		output += `<li style="list-style:none;font-weight:600">Total Inflows&nbsp;&nbsp;${formatTooltipValueHtml(total, valueSymbol)}</li>`
 		let selectedSum = 0
 		for (const row of rows) {
 			selectedSum += row.value
 			if (row.value === 0) continue
-			output += `<li style="list-style:none">${row.marker}${hideSeriesName ? '' : row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+			output += `<li style="list-style:none">${row.marker}${hideSeriesName ? '' : escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValueHtml(row.value, valueSymbol)}</li>`
 		}
 
 		let others = total - selectedSum
 		if (Math.abs(others) < 1e-8) others = 0
 		if (others !== 0) {
-			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? ''}Others&nbsp;&nbsp;${formatTooltipValue(others, valueSymbol)}</li>`
+			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? ''}Others&nbsp;&nbsp;${formatTooltipValueHtml(others, valueSymbol)}</li>`
 		}
 		return output
 	}

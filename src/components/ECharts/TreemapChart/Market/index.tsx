@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -390,16 +391,16 @@ export default function MarketTreemapChart({
 					const children = Array.isArray(data.children) ? data.children : []
 					if (children.length > 0) {
 						return [
-							`<strong>${info.name ?? ''}</strong><br>`,
+							`<strong>${escapeHtml(info.name ?? '')}</strong><br>`,
 							`${sizeLabel}: ${formatSizeValue(Number(values[0] ?? 0))}<br>`,
 							`${groupItemsLabel}: ${children.length}`
 						].join('')
 					}
 					const companyName = typeof data.companyName === 'string' ? data.companyName : (info.name ?? '')
 					const rows = [
-						`<strong>${companyName}</strong> (${info.name ?? ''})<br>`,
-						typeof data.sector === 'string' ? `Sector: ${data.sector}<br>` : '',
-						typeof data.industry === 'string' ? `Industry: ${data.industry}<br>` : '',
+						`<strong>${escapeHtml(companyName)}</strong> (${escapeHtml(info.name ?? '')})<br>`,
+						typeof data.sector === 'string' ? `Sector: ${escapeHtml(data.sector)}<br>` : '',
+						typeof data.industry === 'string' ? `Industry: ${escapeHtml(data.industry)}<br>` : '',
 						`${sizeLabel}: ${formatSizeValue(Number(values[0] ?? 0))}<br>`
 					]
 					if (typeof data.marketCap === 'number' && showMarketCapRow) {

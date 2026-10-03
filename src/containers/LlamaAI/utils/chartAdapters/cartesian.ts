@@ -4,7 +4,9 @@ import type {
 	MultiSeriesChartDataset,
 	MultiSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
+import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import {
 	buildLogoByCategory,
@@ -277,52 +279,25 @@ const isValidCartesianPoint = (
 	return value != null && !Number.isNaN(value)
 }
 
-const getTooltipValueFromParams = (item: Record<string, unknown>, valueIndex: number | undefined) => {
-	const seriesName = typeof item.seriesName === 'string' ? item.seriesName : null
-	const data = item.data
-	if (Array.isArray(item.value)) return item.value[valueIndex ?? 1]
-	if (Array.isArray(data)) return data[valueIndex ?? 1]
-	if (isChartDataRow(data) && seriesName && seriesName in data) return data[seriesName]
-	return item.value
-}
-
-const getNumericTooltipValueFromParams = (
-	item: Record<string, unknown>,
-	valueIndex: number | undefined
-): number | null => {
-	const rawValue = getTooltipValueFromParams(item, valueIndex)
-	const value = rawValue == null || rawValue === '-' ? null : typeof rawValue === 'number' ? rawValue : Number(rawValue)
-	return value == null || Number.isNaN(value) ? null : value
-}
-
 export const createCategoryTooltipFormatter = (
 	valueSymbol: string,
 	charts: Array<LlamaAICartesianSeriesConfig> = []
 ): ((params: unknown) => string) => {
 	const symbolBySeries = new Map<string, string>()
-	const valueIndexBySeries = new Map<string, number>()
-	for (const chart of charts) {
-		symbolBySeries.set(chart.name, chart.valueSymbol ?? valueSymbol)
-		if (typeof chart.encode.y === 'number') valueIndexBySeries.set(chart.name, chart.encode.y)
-	}
+	for (const chart of charts) symbolBySeries.set(chart.name, chart.valueSymbol ?? valueSymbol)
 
 	return (params: unknown) => {
-		const items: Array<Record<string, unknown>> = []
-		for (const item of Array.isArray(params) ? params : [params]) {
-			if (isChartDataRow(item)) items.push(item)
-		}
-		if (items.length === 0) return ''
-
+		const items = normalizeTooltipItems(params)
 		const firstItem = items[0]
 		if (!firstItem) return ''
-		const firstData = isChartDataRow(firstItem.data) ? firstItem.data : null
-		const header = String(firstItem.name ?? firstItem.axisValue ?? firstData?.category ?? '')
+		const header = String(firstItem.name ?? firstItem.axisValue ?? '')
 		const values: Array<{ marker: string; seriesName: string; value: number; symbol: string }> = []
 		for (const item of items) {
-			const seriesName = typeof item.seriesName === 'string' ? item.seriesName : null
+			const seriesName = item.seriesName
 			if (!seriesName) continue
-			const value = getNumericTooltipValueFromParams(item, valueIndexBySeries.get(seriesName))
-			if (value == null) continue
+			const rawValue = getTooltipRawYValue(item, seriesName)
+			const value = rawValue == null || rawValue === '-' ? null : Number(rawValue)
+			if (value == null || Number.isNaN(value)) continue
 			values.push({
 				marker: typeof item.marker === 'string' ? item.marker : '',
 				seriesName,
@@ -334,10 +309,10 @@ export const createCategoryTooltipFormatter = (
 
 		let lines = ''
 		for (const item of values) {
-			lines += `<div>${item.marker} ${item.seriesName}: ${formatChartValue(item.value, item.symbol)}</div>`
+			lines += `<div>${item.marker} ${escapeHtml(item.seriesName)}: ${escapeHtml(formatChartValue(item.value, item.symbol))}</div>`
 		}
 
-		return `<div style="margin-bottom: 8px; font-weight: 600;">${header}</div>${lines}`
+		return `<div style="margin-bottom: 8px; font-weight: 600;">${escapeHtml(header)}</div>${lines}`
 	}
 }
 

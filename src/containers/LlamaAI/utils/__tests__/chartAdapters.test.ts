@@ -441,6 +441,61 @@ describe('chart adapters', () => {
 		expect(tooltip).not.toContain('<img src=x')
 	})
 
+	test('escapes renamed scatter axis labels in the tooltip', () => {
+		const config = {
+			...baseConfig,
+			axes: {
+				x: { ...baseConfig.axes.x, label: '<img src=x onerror=alert(1)>' },
+				yAxes: [{ ...baseConfig.axes.yAxes[0]!, label: 'Fees & <b>revenue</b>' }]
+			}
+		} satisfies ChartConfiguration
+		const result = adaptScatterChartData(config, [{ x: 1, y: 2, protocol: 'Aave' }])
+
+		expect(result.props.tooltipFormatter?.({ value: [1, 2, 'Aave'] })).toBe(
+			'<strong>Aave</strong><br/>&lt;img src=x onerror=alert(1)&gt;: 1<br/>Fees &amp; &lt;b&gt;revenue&lt;/b&gt;: 2'
+		)
+	})
+
+	test('category tooltips list each renamed series with its own value, escaped', () => {
+		const config = {
+			...baseConfig,
+			type: 'bar',
+			axes: {
+				x: { field: 'chain', label: 'Chain', type: 'category' as const },
+				yAxes: [{ id: 'left', fields: ['tvl', 'fees'], label: 'USD', position: 'left' as const }]
+			},
+			series: [
+				{
+					...baseSeries,
+					name: 'TVL <img src=x onerror=alert(1)>',
+					type: 'bar' as const,
+					dataMapping: { xField: 'chain', yField: 'tvl' }
+				},
+				{ ...baseSeries, name: 'Fees', type: 'bar' as const, dataMapping: { xField: 'chain', yField: 'fees' } }
+			]
+		} satisfies ChartConfiguration
+		const result = adaptCartesianChartData(config, [{ chain: '<svg onload=alert(1)>', tvl: 20, fees: 5 }])
+		const formatter = result.props.chartOptions?.tooltip
+		const row = result.props.dataset.source[0]
+		// ECharts passes each series its dataset row and the encoded y column.
+		const params = result.props.charts.map((chart) => ({
+			seriesName: chart.name,
+			marker: '',
+			name: row?.[0],
+			value: row,
+			encode: { x: [0], y: [chart.encode.y] }
+		}))
+
+		expect(
+			formatter && !Array.isArray(formatter) && typeof formatter.formatter === 'function'
+				? formatter.formatter(params as never, '')
+				: null
+		).toBe(
+			'<div style="margin-bottom: 8px; font-weight: 600;">&lt;svg onload=alert(1)&gt;</div>' +
+				'<div> TVL &lt;img src=x onerror=alert(1)&gt;: 20</div><div> Fees: 5</div>'
+		)
+	})
+
 	test('keeps cartesian time-series rows sorted after adaptation', () => {
 		const timeConfig = {
 			...baseConfig,

@@ -1,4 +1,5 @@
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
 	type EChartsTooltipItem,
 	getTooltipAxisValue,
@@ -38,7 +39,7 @@ export const calendarChartOptions = {
 				for (const [param, value] of validParams) {
 					totalValue += value
 					tooltipContent += `<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-					<span>${param.marker} ${param.seriesName}</span>
+					<span>${param.marker} ${escapeHtml(param.seriesName)}</span>
 					<span style="font-weight: 500;">${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 				</div>`
 				}

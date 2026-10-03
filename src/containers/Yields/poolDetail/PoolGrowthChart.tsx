@@ -8,6 +8,7 @@ import type {
 	MultiSeriesChartDataset,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
@@ -288,7 +289,9 @@ function buildTooltipFormatter(model: GrowthChartModel, digits: number, assetNam
 			// The two never share a label: this is what the protocol said, not what a holder got.
 			const reason = reasonByDate.get(timestamp)
 			html += li(`${quotedItem.marker} Quoted value: ${formatUsd(quotedValue, valueOptions)}`)
-			html += li(`<span style="opacity:0.7">Quoted — exit not executable that day${reason ? `: ${reason}` : ''}</span>`)
+			html += li(
+				`<span style="opacity:0.7">Quoted — exit not executable that day${reason ? `: ${escapeHtml(reason)}` : ''}</span>`
+			)
 		} else if (item) {
 			// A gap day is worth naming: silence would read as "no data at all" for the day. On those
 			// days the series name is dropped — "Verified: not measured" is nonsense.
@@ -300,7 +303,7 @@ function buildTooltipFormatter(model: GrowthChartModel, digits: number, assetNam
 		const assetValue = assetItem ? valueOf(assetItem) : null
 		if (assetItem && assetValue != null && value != null) {
 			html += li(
-				`${assetItem.marker} ${assetName}: ${formatUsd(assetValue, { ...valueOptions, signDisplay: 'exceptZero' })}`
+				`${assetItem.marker} ${escapeHtml(assetName)}: ${formatUsd(assetValue, { ...valueOptions, signDisplay: 'exceptZero' })}`
 			)
 			html += li(`<span style="opacity:0.7">Total: ${formatUsd(value + assetValue, valueOptions)}</span>`)
 		}

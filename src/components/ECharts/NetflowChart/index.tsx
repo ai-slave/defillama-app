@@ -4,6 +4,7 @@ import { DatasetComponent, GraphicComponent, GridComponent, TooltipComponent } f
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import type { BridgeNetflowPeriod } from '~/containers/Bridges/api.types'
 import type { BridgeNetflowChartData } from '~/containers/Bridges/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -79,7 +80,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					const inflow = items[1]?.value
 					const value = (typeof outflow === 'number' ? outflow : 0) + (typeof inflow === 'number' ? inflow : 0)
 					return `<div class="flex flex-col gap-1">
-						<span class="font-medium">${chain}</span>
+						<span class="font-medium">${escapeHtml(String(chain))}</span>
 						<span>Net Flow: ${value > 0 ? '+' : ''}${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</span>
 					</div>`
 				}

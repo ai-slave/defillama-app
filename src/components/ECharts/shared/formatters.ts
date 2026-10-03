@@ -1,4 +1,5 @@
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { escapeHtml } from './escapeHtml'
 
 export type TooltipGroupBy = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
 
@@ -36,6 +37,11 @@ export function formatTooltipValue(value: number, symbol: string) {
 		default:
 			return `${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${symbol}`
 	}
+}
+
+/** `formatTooltipValue` for tooltip HTML. The symbol comes from chart configs, which users edit on LlamaAI charts. */
+export function formatTooltipValueHtml(value: number, symbol: string) {
+	return escapeHtml(formatTooltipValue(value, symbol))
 }
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

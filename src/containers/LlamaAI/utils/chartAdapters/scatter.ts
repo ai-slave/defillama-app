@@ -1,4 +1,5 @@
 import type { IScatterChartProps, ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 
@@ -9,24 +10,6 @@ export interface AdaptedScatterChartData {
 	description: string
 	defaultExportKind: 'scatter'
 }
-
-const escapeHtml = (value: string) =>
-	value.replace(/[&<>"']/g, (char) => {
-		switch (char) {
-			case '&':
-				return '&amp;'
-			case '<':
-				return '&lt;'
-			case '>':
-				return '&gt;'
-			case '"':
-				return '&quot;'
-			case "'":
-				return '&#39;'
-			default:
-				return char
-		}
-	})
 
 const parseScatterNumber = (value: unknown): number | null => {
 	if (typeof value === 'number') return Number.isFinite(value) ? value : null
@@ -78,7 +61,7 @@ export function adaptScatterChartData(config: ChartConfiguration, rawData: Chart
 				tooltipFormatter: (params: ScatterTooltipParams) => {
 					if (params.value.length < 2) return ''
 					const entityName = escapeHtml(String(params.value[2] ?? 'Unknown'))
-					return `<strong style="color: #000;">${entityName}</strong><br/>${xAxisLabel}: ${formatChartValue(params.value[0], xAxisSymbol)}<br/>${yAxisLabel}: ${formatChartValue(params.value[1], yAxisSymbol)}`
+					return `<strong>${entityName}</strong><br/>${escapeHtml(xAxisLabel)}: ${escapeHtml(formatChartValue(params.value[0], xAxisSymbol))}<br/>${escapeHtml(yAxisLabel)}: ${escapeHtml(formatChartValue(params.value[1], yAxisSymbol))}`
 				}
 			},
 			title: config.title,

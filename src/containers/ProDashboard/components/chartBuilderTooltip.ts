@@ -1,4 +1,9 @@
-import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '~/components/ECharts/shared/formatters'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
+import {
+	formatTooltipChartDate,
+	formatTooltipValueHtml,
+	type TooltipGroupBy
+} from '~/components/ECharts/shared/formatters'
 import {
 	getTooltipAxisValue,
 	getTooltipRawYValue,
@@ -19,7 +24,7 @@ function renderChartBuilderTooltipRow(
 	separated = false
 ) {
 	const name = row.name.length > maxNameLength ? `${row.name.substring(0, maxNameLength - 2)}..` : row.name
-	return `<div style="${separated ? TOOLTIP_OTHERS_ROW_STYLE : ''}display:flex;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap">${row.marker}<span style="margin-right:4px">${name}</span><span style="margin-left:auto;font-weight:500">${formatTooltipValue(row.value, valueSymbol)}</span></div>`
+	return `<div style="${separated ? TOOLTIP_OTHERS_ROW_STYLE : ''}display:flex;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap">${row.marker}<span style="margin-right:4px">${escapeHtml(name)}</span><span style="margin-left:auto;font-weight:500">${formatTooltipValueHtml(row.value, valueSymbol)}</span></div>`
 }
 
 export function createChartBuilderTooltipFormatter({
@@ -64,7 +69,7 @@ export function createChartBuilderTooltipFormatter({
 		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
 		const showTotal = rows.length + (explicitOthers ? 1 : 0) > 1
 		const totalLine = showTotal
-			? `<div style="font-size:11px;line-height:1.4;font-weight:600">Total&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</div>`
+			? `<div style="font-size:11px;line-height:1.4;font-weight:600">Total&nbsp;&nbsp;${formatTooltipValueHtml(total, valueSymbol)}</div>`
 			: ''
 
 		const renderInTwoColumns = useTwoColumns && rows.length > 10

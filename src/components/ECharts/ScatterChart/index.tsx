@@ -14,6 +14,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useRef } from 'react'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
@@ -239,8 +240,8 @@ function ScatterChart({
 						? formatNumber(params.value[0], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 						: '—'
 				return (
-					`Symbol: ${params.value[3]}<br/>` +
-					`Pool: ${params.value[4]}<br/>` +
+					`Symbol: ${escapeHtml(String(params.value[3]))}<br/>` +
+					`Pool: ${escapeHtml(String(params.value[4]))}<br/>` +
 					`TVL: ${formatUsd(params.value[5], {
 						compact: true,
 						minimumCompactValue: 1_000_000,
@@ -248,8 +249,8 @@ function ScatterChart({
 					})}<br/>` +
 					`APY Spot: ${apy}%` +
 					`<br/>` +
-					`Chain: ${params.value[7]}<br/>` +
-					`Project: ${params.seriesName}<br/>` +
+					`Chain: ${escapeHtml(String(params.value[7]))}<br/>` +
+					`Project: ${escapeHtml(String(params.seriesName))}<br/>` +
 					`APY Geometric Average: ${average}%` +
 					`<br/>` +
 					`APY Standard Deviation: ${deviation}%` +
@@ -257,7 +258,7 @@ function ScatterChart({
 					`Nb of collected daily datapoints: ${params.value[2]}`
 				)
 			}
-			return `${params.seriesName} :<br/>${params.name}`
+			return `${escapeHtml(String(params.seriesName))} :<br/>${escapeHtml(String(params.name))}`
 		}
 
 		const genericTooltipFormatter = (params: ScatterTooltipParams) => {
@@ -285,10 +286,10 @@ function ScatterChart({
 				}
 				let tooltip = ''
 				if (entityName) {
-					tooltip += `<strong>${entityName}</strong><br/>`
+					tooltip += `<strong>${escapeHtml(String(entityName))}</strong><br/>`
 				}
-				tooltip += `${xAxisLabel || 'X'}: ${formatValue(xValue)}<br/>`
-				tooltip += `${yAxisLabel || 'Y'}: ${formatValue(yValue)}`
+				tooltip += `${escapeHtml(xAxisLabel || 'X')}: ${formatValue(xValue)}<br/>`
+				tooltip += `${escapeHtml(yAxisLabel || 'Y')}: ${formatValue(yValue)}`
 				return tooltip
 			}
 			return ''

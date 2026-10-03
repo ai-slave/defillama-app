@@ -3,7 +3,9 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { useLlamaAISettings } from '../useLlamaAISettings'
@@ -23,9 +25,11 @@ describe('useLlamaAISettings', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let hook: ReturnType<typeof useLlamaAISettings>
+	let auth: ReturnType<typeof useAuthContext>
 
 	function Harness() {
 		hook = useLlamaAISettings()
+		auth = useAuthContext()
 		return null
 	}
 
@@ -50,6 +54,55 @@ describe('useLlamaAISettings', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+	})
+
+	test("logging out takes the account's custom instructions with it but keeps browser preferences", async () => {
+		session.serve({
+			[SETTINGS_URL]: { settings: { customInstructions: 'Account A private notes', enterToSend: false } }
+		})
+		await mount()
+		await waitForUi(async () => {
+			await act(async () => {})
+			expect(hook.settings.customInstructions).toBe('Account A private notes')
+		})
+
+		await act(async () => auth.logout())
+
+		expect(hook.settings.customInstructions).toBe('')
+		expect(hook.settings.enterToSend).toBe(false)
+	})
+
+	test('a custom instructions save that lands after switching accounts keeps them out of the next account', async () => {
+		let releaseSave!: () => void
+		session.serve({
+			[SETTINGS_URL]: (_url: URL, init?: RequestInit) => {
+				if (init?.method !== 'PUT') return { settings: { customInstructions: '' } }
+				return new Promise<Response>((resolve) => (releaseSave = () => resolve(new Response(null))))
+			}
+		})
+		await mount()
+		await waitForUi(() => expect(session.requests.some((r) => r.url.href === SETTINGS_URL)).toBe(true))
+
+		let save!: Promise<boolean>
+		await act(async () => {
+			save = hook.actions.setCustomInstructions('Account A private notes')
+		})
+		await waitForUi(() => expect(releaseSave).toBeTypeOf('function'))
+		await act(async () => auth.logout())
+		const otherRecord = { ...session.record, id: 'user-2' }
+		const otherToken = `e30.${btoa(JSON.stringify({ id: 'user-2', exp: 4_102_444_800 }))}.signature`
+		session.serve({ '/api/collections/users/auth-refresh': { token: otherToken, record: otherRecord } })
+		await act(async () => pb.authStore.save(otherToken, otherRecord))
+		await waitForUi(() => expect(auth.user?.id).toBe('user-2'))
+		await act(async () => releaseSave())
+		await within(save)
+		// Read what the page shows only once the response has been handled.
+		await waitForUi(async () => {
+			await act(async () => {})
+			expect(session.client.isMutating()).toBe(0)
+		})
+
+		expect(hook.settings.customInstructions).toBe('')
 	})
 
 	test('serializes saves across remount and keeps the preceding accepted value', async () => {

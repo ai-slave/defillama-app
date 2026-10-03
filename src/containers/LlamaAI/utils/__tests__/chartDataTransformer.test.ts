@@ -279,12 +279,14 @@ describe('ChartDataTransformer', () => {
 		if (typeof formatter !== 'function') throw new Error('Expected tooltip formatter')
 
 		const row = transformed.props.dataset.source[0]
+		// ECharts passes each series its dataset row and the encoded y column.
 		const tooltip = formatter(
-			[
-				{ seriesName: 'Primary A', data: row, marker: '' },
-				{ seriesName: 'Primary B', data: row, marker: '' },
-				{ seriesName: 'Secondary', data: row, marker: '' }
-			] as Parameters<typeof formatter>[0],
+			(transformed.props.charts ?? []).map((series) => ({
+				seriesName: series.name,
+				data: row,
+				marker: '',
+				encode: { x: [0], y: [series.encode.y] }
+			})) as Parameters<typeof formatter>[0],
 			''
 		)
 

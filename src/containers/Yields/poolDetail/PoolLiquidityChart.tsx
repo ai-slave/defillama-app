@@ -8,6 +8,7 @@ import type {
 	MultiSeriesChartDataset,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
@@ -224,11 +225,11 @@ function buildTooltipFormatter(
 				measured && measured > 0
 					? ` (${formatPercent((value / measured) * 100, { input: 'percent', maximumFractionDigits: 1 })})`
 					: ''
-			html += li(`${item.marker} ${name}: ${formatAmount(value, unit, model.symbol)}${share}`)
+			html += li(`${item.marker} ${name}: ${escapeHtml(formatAmount(value, unit, model.symbol))}${share}`)
 		}
 
 		if (measured != null && Number.isFinite(measured)) {
-			html += li(`${TOTAL_NAME}: ${formatAmount(measured, unit, model.symbol)}`, 'font-weight:600;')
+			html += li(`${TOTAL_NAME}: ${escapeHtml(formatAmount(measured, unit, model.symbol))}`, 'font-weight:600;')
 			if (quotedDates.has(timestamp)) {
 				html += li(
 					`<span style="opacity:0.7">Valued at the quoted rate: the exit could not price the supply that day</span>`

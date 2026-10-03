@@ -4,6 +4,7 @@ import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -173,7 +174,7 @@ function HolderDistribution({
 						if (!item) return ''
 						const rawValue = item.value
 						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
-						return `${item.marker}${item.name}: <b>${formatPercent(value, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}</b>`
+						return `${item.marker}${escapeHtml(item.name)}: <b>${formatPercent(value, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}</b>`
 					}}
 					exportButtons="hidden"
 					onReady={onReady}

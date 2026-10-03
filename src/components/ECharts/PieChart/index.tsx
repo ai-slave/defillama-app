@@ -19,9 +19,9 @@ import { ChartHeader } from '../shared/ChartHeader'
 import { enterAnimationOptions, useChartMotion } from '../shared/chartMotion'
 import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
-import { formatTooltipValue } from '../shared/formatters'
 import { buildPieLayoutOption } from './data'
-import type { IPieChartProps, PieTooltipParams } from './types'
+import { formatPieTooltip, normalizePieTooltipParams } from './tooltip'
+import type { IPieChartProps } from './types'
 
 echarts.use([
 	CanvasRenderer,
@@ -36,15 +36,6 @@ echarts.use([
 const DEFAULT_PIE_CENTER_Y = '50%' as const
 
 const PIE_DRAW_DURATION = 500
-
-function normalizePieTooltipParams(params: unknown): PieTooltipParams {
-	const value = Array.isArray(params) ? params[0] : params
-	return isPieTooltipParams(value) ? value : {}
-}
-
-function isPieTooltipParams(value: unknown): value is PieTooltipParams {
-	return value !== null && typeof value === 'object'
-}
 
 /** Module scope so effects that call it need no dependency on it: it reads only its argument. */
 function isChartDisposed(inst: echarts.ECharts | null) {
@@ -362,10 +353,7 @@ function PieChart({
 				confine: true,
 				formatter: (params: unknown) => {
 					const p = normalizePieTooltipParams(params)
-					if (formatTooltip) return formatTooltip(p)
-					const rawValue = typeof p?.value === 'number' ? p.value : Number(p?.value ?? 0)
-					const formattedValue = formatTooltipValue(rawValue, valueSymbol)
-					return `${p.marker ?? ''}${p.name ?? ''}: <b>${formattedValue}</b> (${formatPercent(p.percent ?? 0, { input: 'percent' })})`
+					return formatTooltip ? formatTooltip(p) : formatPieTooltip(p, valueSymbol)
 				}
 			},
 			grid: {

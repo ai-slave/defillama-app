@@ -1,5 +1,6 @@
 import { formatRatio } from '~/utils/numberFormat'
-import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '../shared/formatters'
+import { escapeHtml } from '../shared/escapeHtml'
+import { formatTooltipChartDate, formatTooltipValueHtml, type TooltipGroupBy } from '../shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '../shared/tooltip'
 
 const CHART_SYMBOLS: Record<string, string> = {
@@ -63,7 +64,7 @@ export function createOverviewTooltipFormatter({
 			const rawValue = getTooltipRawYValue(item, name)
 			const value = rawValue === '-' ? Number.NaN : typeof rawValue === 'number' ? rawValue : Number(rawValue)
 			if (!Number.isFinite(value)) continue
-			output += `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatTooltipValue(
+			output += `<li style="list-style:none">${item.marker ?? ''}${escapeHtml(name)}&nbsp;&nbsp;${formatTooltipValueHtml(
 				value,
 				getSeriesSymbol(name, valueSymbol, unlockTokenSymbol, seriesValueSymbols)
 			)}</li>`

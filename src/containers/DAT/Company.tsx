@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -490,7 +491,7 @@ const chartOptions = {
 				`<span style="font-weight:600;">${formatCompactNumber(Math.abs(deltaValue), {
 					minimumCompactValue: 1_000_000,
 					compactSuffix: 'lowercase'
-				})}&nbsp;${seriesName ?? ''}</span>` +
+				})}&nbsp;${escapeHtml(seriesName ?? '')}</span>` +
 				`</li>`
 
 			if (avgPrice != null) {
@@ -527,7 +528,7 @@ const chartOptions = {
 						minimumCompactValue: 1_000_000,
 						compactSuffix: 'lowercase'
 					}
-				)}&nbsp;${seriesName ?? ''}</span>` +
+				)}&nbsp;${escapeHtml(seriesName ?? '')}</span>` +
 				`</li>`
 			return val
 		}

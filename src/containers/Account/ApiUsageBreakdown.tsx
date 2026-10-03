@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useLocalSelection } from '~/components/Select/localSelection'
@@ -159,7 +160,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 					const rows = items
 						.map(
 							(item) =>
-								`<li style="list-style:none;padding:1px 0">${item.marker}${item.name}&nbsp;&nbsp;<b>${formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</b></li>`
+								`<li style="list-style:none;padding:1px 0">${item.marker}${escapeHtml(item.name)}&nbsp;&nbsp;<b>${formatCompactNumber(item.value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</b></li>`
 						)
 						.join('')
 					const totalRow = `<li style="list-style:none;padding:2px 0 0;border-top:1px solid ${activeColors.axis};margin-top:4px;font-weight:600">Total&nbsp;&nbsp;${formatCompactNumber(total, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}</li>`

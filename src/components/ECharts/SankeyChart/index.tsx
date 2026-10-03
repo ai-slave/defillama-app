@@ -6,6 +6,7 @@ import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
@@ -197,14 +198,14 @@ function SankeyChart({
 			formatter: (rawParams: unknown) => {
 				const params = normalizeSankeyFormatterParams(rawParams)
 				if (params.dataType === 'edge' && params.data) {
-					return `${params.data.source ?? ''} → ${params.data.target ?? ''}<br/>${formatSankeyValue(params.data.value ?? 0)}`
+					return `${escapeHtml(params.data.source ?? '')} → ${escapeHtml(params.data.target ?? '')}<br/>${formatSankeyValue(params.data.value ?? 0)}`
 				}
 				const valueWithPercent = formatSankeyNodeValue(params.name, params.value, nodeMetadata, formatSankeyValue)
 				const description = nodeMetadata.descriptions[params.name]
 				if (description) {
-					return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${description}</span>`
+					return `<strong>${escapeHtml(params.name)}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${escapeHtml(description)}</span>`
 				}
-				return `${params.name}<br/>${valueWithPercent}`
+				return `${escapeHtml(params.name)}<br/>${valueWithPercent}`
 			}
 		}
 		if (useMobileLayout) {

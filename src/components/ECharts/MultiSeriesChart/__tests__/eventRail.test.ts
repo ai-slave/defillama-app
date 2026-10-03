@@ -47,6 +47,24 @@ describe('hallmark event-rail tooltip', () => {
 		// The range's midpoint falls at noon on Sep 2; the header names the whole span instead.
 		expect(hoverHeader(byText['Incident']!)).toBe('01 Sep 2026 - 04 Sep 2026')
 	})
+
+	test('shows a dashboard annotation as text, never as markup', () => {
+		const { events } = buildEventRailData({
+			hallmarks: [[Date.UTC(2026, 8, 14), '<img src=x onerror=alert(1)>']],
+			isThemeDark: false
+		})
+		const series = createEventRailSeries({
+			eventRailData: events,
+			eventStripYAxisIndex: 1,
+			hoverState: { hoveredEventDate: null },
+			shouldHideDataZoom: false
+		})
+		const formatter = (series.tooltip as { formatter: (params: unknown) => string }).formatter
+
+		expect(formatter({ data: events[0] })).toBe(
+			'14 Sep 2026<li style="list-style:none;font-weight:600;">&lt;img src=x onerror=alert(1)&gt;</li>'
+		)
+	})
 })
 
 describe('hallmark event-rail time bounds', () => {
