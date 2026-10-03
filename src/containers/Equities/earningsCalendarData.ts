@@ -1,45 +1,45 @@
 import type { IEquitiesEarningsCalendarApiItem } from './api.types'
+import type { EquitiesCalendarResponse } from './queries.client'
 import { buildEquityTickerCountrySlug } from './tickerCountry'
 import type { IEquitiesCalendarCompany, IEquitiesCalendarRow } from './types'
 
 export type EarningsCalendarStatus = 'reported' | 'projected' | 'pastDue'
 export type EarningsMarketCapTier = 'mega' | 'large' | 'mid' | 'small' | 'micro'
-
-export type IEarningsCalendarEvent = IEquitiesEarningsCalendarApiItem
-export type IEarningsCalendarCompany = IEquitiesCalendarCompany
-export type IEarningsCalendarRow = IEquitiesCalendarRow
+/** Picker options for the market cap filter; rows without a market cap fall under `unknown`. */
+export type EarningsMarketCapOption = EarningsMarketCapTier | 'unknown'
 
 interface IEarningsCalendarFilters {
-	marketCapTiers?: ReadonlyArray<EarningsMarketCapTier>
-	sectorSlug?: string | null
+	/** The picked options; rows outside them are hidden. Omitted means every option. */
+	marketCapTiers?: ReadonlyArray<EarningsMarketCapOption>
+	sectorSlugs?: ReadonlyArray<string>
 	tightWindowsOnly?: boolean
 }
 
-interface IEarningsCalendarDay {
+interface EarningsCalendarDay {
 	date: string
 	weekday: number
-	rows: Array<IEarningsCalendarRow>
-	cards: Array<IEarningsCalendarRow>
+	rows: Array<IEquitiesCalendarRow>
+	cards: Array<IEquitiesCalendarRow>
 	remainingCount: number
 }
 
-interface IEarningsCalendarWeek {
+interface EarningsCalendarWeek {
 	monday: string
 	friday: string
-	rows: Array<IEarningsCalendarRow>
-	cards: Array<IEarningsCalendarRow>
-	days: Array<IEarningsCalendarDay>
+	rows: Array<IEquitiesCalendarRow>
+	cards: Array<IEquitiesCalendarRow>
+	days: Array<EarningsCalendarDay>
 	companyCount: number
 }
 
-interface IEarningsCalendarMonthBucket {
+interface EarningsCalendarMonthBucket {
 	month: string
 	count: number
 }
 
 export interface IEarningsCalendarBootstrap {
-	rows: Array<IEarningsCalendarRow>
-	monthBuckets: Array<IEarningsCalendarMonthBucket>
+	rows: Array<IEquitiesCalendarRow>
+	monthBuckets: Array<EarningsCalendarMonthBucket>
 	pastCount: number
 	firstReportByMonth: Record<string, string>
 	bounds: { first: string | null; last: string | null }
@@ -47,14 +47,51 @@ export interface IEarningsCalendarBootstrap {
 	sectorOptions: Array<{ key: string; name: string }>
 }
 
-interface IEarningsCalendarSearchCompany extends IEarningsCalendarCompany {
-	nextEvent: IEarningsCalendarRow | null
+/** The bootstrap with the page-level fields the route adds. */
+export type EarningsCalendarBootstrapSeed = IEarningsCalendarBootstrap & {
+	todayET: string
+	updatedAt: string | null
+	stale: boolean
+}
+
+/**
+ * What the page renders, from the full calendar once it has loaded, else from the server's current-week
+ * bootstrap. `companies` is null until the full calendar arrives, because search and navigation need every event.
+ */
+export function buildEarningsCalendarView(
+	data: EquitiesCalendarResponse | undefined,
+	bootstrap: EarningsCalendarBootstrapSeed
+) {
+	if (!data) {
+		return {
+			rows: bootstrap.rows,
+			companies: null,
+			sectorOptions: bootstrap.sectorOptions,
+			summary: bootstrap,
+			todayET: bootstrap.todayET,
+			stale: bootstrap.stale,
+			updatedAt: bootstrap.updatedAt
+		}
+	}
+	return {
+		rows: joinEarningsCalendarRows(data.rows, data.companies),
+		companies: data.companies,
+		sectorOptions: buildEarningsCalendarSectorOptions(data.companies),
+		summary: buildEarningsCalendarSummary(data.rows, data.todayET),
+		todayET: data.todayET,
+		stale: data.stale,
+		updatedAt: data.updatedAt
+	}
+}
+
+interface EarningsCalendarSearchCompany extends IEquitiesCalendarCompany {
+	nextEvent: IEquitiesCalendarRow | null
 }
 
 export type EarningsCalendarSearchResult =
-	| { kind: 'matches'; companies: Array<IEarningsCalendarSearchCompany> }
-	| { kind: 'no-dates'; companies: Array<IEarningsCalendarCompany> }
-	| { kind: 'no-results'; companies: [] }
+	| { kind: 'match'; company: EarningsCalendarSearchCompany; query: string }
+	| { kind: 'no-dates'; company: IEquitiesCalendarCompany; query: string }
+	| { kind: 'no-results'; query: string }
 
 const WEEKDAYS = 5
 
@@ -80,7 +117,7 @@ function dateFromParts(year: number, month: number, day: number): string {
 	return date.toISOString().slice(0, 10)
 }
 
-function isIsoCalendarDate(value: string): boolean {
+export function isValidEarningsCalendarDate(value: string): boolean {
 	try {
 		parseIsoDateParts(value)
 		return true
@@ -89,7 +126,15 @@ function isIsoCalendarDate(value: string): boolean {
 	}
 }
 
-export function isValidEarningsCalendarEvent(value: unknown): value is IEarningsCalendarEvent {
+export function getEarningsCalendarDisplayDate(
+	requestedDate: string | undefined,
+	todayET: string,
+	fullCalendarAvailable: boolean
+): string {
+	return fullCalendarAvailable && requestedDate && isValidEarningsCalendarDate(requestedDate) ? requestedDate : todayET
+}
+
+export function isValidEarningsCalendarEvent(value: unknown): value is IEquitiesEarningsCalendarApiItem {
 	if (value === null || typeof value !== 'object' || Array.isArray(value)) return false
 	const row = value as Record<string, unknown>
 	return (
@@ -98,7 +143,7 @@ export function isValidEarningsCalendarEvent(value: unknown): value is IEarnings
 		typeof row.event_key === 'string' &&
 		row.event_key.length > 0 &&
 		typeof row.report_date === 'string' &&
-		isIsoCalendarDate(row.report_date) &&
+		isValidEarningsCalendarDate(row.report_date) &&
 		(row.date_status === 'reported' ||
 			row.date_status === 'inferred' ||
 			row.date_status === 'estimated' ||
@@ -120,7 +165,6 @@ export function isValidEarningsCalendarEvent(value: unknown): value is IEarnings
 
 export function addCalendarDays(date: string, days: number): string {
 	const [year, month, day] = parseIsoDateParts(date)
-	if (!Number.isInteger(days)) throw new RangeError(`Invalid day offset: ${days}`)
 	return dateFromParts(year, month, day + days)
 }
 
@@ -138,14 +182,16 @@ export function mondayOfCalendarWeek(date: string): string {
 	return addCalendarDays(date, -((weekday + 6) % 7))
 }
 
-export function getEarningsCalendarStatus(row: IEarningsCalendarEvent, todayET: string): EarningsCalendarStatus {
-	parseIsoDateParts(todayET)
+export function getEarningsCalendarStatus(
+	row: IEquitiesEarningsCalendarApiItem,
+	todayET: string
+): EarningsCalendarStatus {
 	if (row.date_status === 'reported' || row.date_status === 'inferred') return 'reported'
 	return row.report_date < todayET ? 'pastDue' : 'projected'
 }
 
 export function getEarningsMarketCapTier(marketCap: number | null): EarningsMarketCapTier | null {
-	if (marketCap === null || !Number.isFinite(marketCap) || marketCap < 0) return null
+	if (marketCap === null || marketCap < 0) return null
 	if (marketCap >= 200_000_000_000) return 'mega'
 	if (marketCap >= 10_000_000_000) return 'large'
 	if (marketCap >= 2_000_000_000) return 'mid'
@@ -154,9 +200,9 @@ export function getEarningsMarketCapTier(marketCap: number | null): EarningsMark
 }
 
 export function joinEarningsCalendarRows(
-	events: ReadonlyArray<IEarningsCalendarEvent>,
-	companies: ReadonlyArray<IEarningsCalendarCompany>
-): Array<IEarningsCalendarRow> {
+	events: ReadonlyArray<IEquitiesEarningsCalendarApiItem>,
+	companies: ReadonlyArray<IEquitiesCalendarCompany>
+): Array<IEquitiesCalendarRow> {
 	const companyByTicker = new Map(companies.map((company) => [company.ticker.toUpperCase(), company]))
 	return events.map((event) => {
 		const company = companyByTicker.get(event.ticker.toUpperCase())
@@ -173,18 +219,18 @@ export function joinEarningsCalendarRows(
 }
 
 function matchesEarningsCalendarFilters(
-	row: IEarningsCalendarRow,
+	row: IEquitiesCalendarRow,
 	filters: IEarningsCalendarFilters,
-	allowedTiers: ReadonlySet<EarningsMarketCapTier> | null
+	allowedTiers: ReadonlySet<EarningsMarketCapOption> | null,
+	allowedSectors: ReadonlySet<string> | null
 ): boolean {
-	if (filters.sectorSlug && row.sectorSlug !== filters.sectorSlug) return false
-	if (allowedTiers && (row.marketCap === null || !allowedTiers.has(getEarningsMarketCapTier(row.marketCap)!)))
-		return false
+	if (allowedSectors && !allowedSectors.has(row.sectorSlug)) return false
+	if (allowedTiers && !allowedTiers.has(getEarningsMarketCapTier(row.marketCap) ?? 'unknown')) return false
 	if (filters.tightWindowsOnly && row.max_drift_days !== null && row.max_drift_days > 7) return false
 	return true
 }
 
-function compareMarketCapDescending(a: IEarningsCalendarRow, b: IEarningsCalendarRow): number {
+function compareMarketCapDescending(a: IEquitiesCalendarRow, b: IEquitiesCalendarRow): number {
 	return (
 		(b.marketCap ?? -1) - (a.marketCap ?? -1) ||
 		a.ticker.localeCompare(b.ticker) ||
@@ -193,28 +239,28 @@ function compareMarketCapDescending(a: IEarningsCalendarRow, b: IEarningsCalenda
 }
 
 export function buildEarningsCalendarWeek(
-	rows: ReadonlyArray<IEarningsCalendarRow>,
+	rows: ReadonlyArray<IEquitiesCalendarRow>,
 	selectedDate: string,
 	filters: IEarningsCalendarFilters = {},
 	cardLimit = 12
-): IEarningsCalendarWeek {
-	if (!Number.isInteger(cardLimit) || cardLimit < 0) throw new RangeError(`Invalid card limit: ${cardLimit}`)
+): EarningsCalendarWeek {
 	const monday = mondayOfCalendarWeek(selectedDate)
 	const friday = addCalendarDays(monday, WEEKDAYS - 1)
 	const allowedTiers = filters.marketCapTiers ? new Set(filters.marketCapTiers) : null
-	const weekRows: Array<IEarningsCalendarRow> = []
+	const allowedSectors = filters.sectorSlugs ? new Set(filters.sectorSlugs) : null
+	const weekRows: Array<IEquitiesCalendarRow> = []
 	for (const row of rows) {
 		if (
 			row.report_date >= monday &&
 			row.report_date <= friday &&
-			matchesEarningsCalendarFilters(row, filters, allowedTiers)
+			matchesEarningsCalendarFilters(row, filters, allowedTiers, allowedSectors)
 		) {
 			weekRows.push(row)
 		}
 	}
 	weekRows.sort((a, b) => a.report_date.localeCompare(b.report_date) || compareMarketCapDescending(a, b))
 	const cards = weekRows.slice().sort(compareMarketCapDescending).slice(0, cardLimit)
-	const cardsByDate = new Map<string, Array<IEarningsCalendarRow>>()
+	const cardsByDate = new Map<string, Array<IEquitiesCalendarRow>>()
 	for (const row of cards) {
 		const dateCards = cardsByDate.get(row.report_date) ?? []
 		dateCards.push(row)
@@ -242,38 +288,47 @@ export function buildEarningsCalendarWeek(
 	}
 }
 
-export function buildEarningsCalendarMonthBuckets(
-	rows: ReadonlyArray<IEarningsCalendarEvent>,
-	todayET: string
-): Array<IEarningsCalendarMonthBucket> {
-	parseIsoDateParts(todayET)
-	const counts = new Map<string, number>()
+export function buildEarningsCalendarSummary(rows: ReadonlyArray<IEquitiesEarningsCalendarApiItem>, todayET: string) {
+	const monthCounts = new Map<string, number>()
+	const firstReportByMonth: Record<string, string> = {}
+	const uniqueTickers = new Set<string>()
+	let firstReport: string | null = null
+	let lastReport: string | null = null
+	let pastCount = 0
+	const recentPastBoundary = addCalendarDays(todayET, -31)
 	for (const row of rows) {
-		if (row.report_date < todayET) continue
+		uniqueTickers.add(row.ticker)
+		if (firstReport === null || row.report_date < firstReport) firstReport = row.report_date
+		if (lastReport === null || row.report_date > lastReport) lastReport = row.report_date
+		if (row.report_date < todayET) {
+			if (row.report_date >= recentPastBoundary) pastCount++
+			continue
+		}
 		const month = row.report_date.slice(0, 7)
-		counts.set(month, (counts.get(month) ?? 0) + 1)
+		monthCounts.set(month, (monthCounts.get(month) ?? 0) + 1)
+		if (firstReportByMonth[month] === undefined || row.report_date < firstReportByMonth[month]) {
+			firstReportByMonth[month] = row.report_date
+		}
 	}
-	return [...counts].sort(([a], [b]) => a.localeCompare(b)).map(([month, count]) => ({ month, count }))
+	return {
+		monthBuckets: [...monthCounts].sort(([a], [b]) => a.localeCompare(b)).map(([month, count]) => ({ month, count })),
+		pastCount,
+		firstReportByMonth,
+		bounds: {
+			first: firstReport === null ? null : mondayOfCalendarWeek(firstReport),
+			last: lastReport === null ? null : mondayOfCalendarWeek(lastReport)
+		},
+		uniqueCompanyCount: uniqueTickers.size
+	}
 }
 
-export function getEarningsCalendarWeekBounds(rows: ReadonlyArray<IEarningsCalendarEvent>): {
-	first: string | null
-	last: string | null
-} {
-	if (rows.length === 0) return { first: null, last: null }
-	let first = rows[0]!.report_date
-	let last = first
-	for (let index = 1; index < rows.length; index++) {
-		const date = rows[index]!.report_date
-		if (date < first) first = date
-		if (date > last) last = date
-	}
-	return { first: mondayOfCalendarWeek(first), last: mondayOfCalendarWeek(last) }
-}
-
-export function buildEarningsCalendarWeekExposure(rows: ReadonlyArray<IEarningsCalendarRow>, monday: string) {
+export function buildEarningsCalendarWeekExposure(
+	rows: ReadonlyArray<IEquitiesCalendarRow>,
+	monday: string,
+	todayET: string
+) {
 	const friday = addCalendarDays(monday, WEEKDAYS - 1)
-	const rowByTicker = new Map<string, IEarningsCalendarRow>()
+	const rowByTicker = new Map<string, IEquitiesCalendarRow>()
 	for (const row of rows) {
 		if (row.report_date < monday || row.report_date > friday) continue
 		const current = rowByTicker.get(row.ticker)
@@ -297,89 +352,68 @@ export function buildEarningsCalendarWeekExposure(rows: ReadonlyArray<IEarningsC
 		}
 	})
 	const secConfirmedCount = companyRows.filter((row) => buildSecFilingUrl(row.cik, row.accession_number)).length
+	const statusCounts = { reported: 0, projected: 0, pastDue: 0 }
+	for (const row of companyRows) {
+		if (!buildSecFilingUrl(row.cik, row.accession_number)) statusCounts[getEarningsCalendarStatus(row, todayET)]++
+	}
 	return {
 		days,
 		companyCount: companyRows.length,
 		marketCap: days.reduce((total, day) => total + day.marketCap, 0),
 		secConfirmedCount,
-		projectedCount: companyRows.length - secConfirmedCount
+		projectedCount: statusCounts.projected,
+		pastDueCount: statusCounts.pastDue
 	}
 }
 
 /** Small server-rendered view model; the complete calendar continues loading in the background. */
 export function buildEarningsCalendarBootstrap(
-	events: ReadonlyArray<IEarningsCalendarEvent>,
-	companies: ReadonlyArray<IEarningsCalendarCompany>,
+	events: ReadonlyArray<IEquitiesEarningsCalendarApiItem>,
+	companies: ReadonlyArray<IEquitiesCalendarCompany>,
 	todayET: string
 ): IEarningsCalendarBootstrap {
 	const monday = mondayOfCalendarWeek(todayET)
 	const friday = addCalendarDays(monday, WEEKDAYS - 1)
-	const currentWeekEvents: Array<IEarningsCalendarEvent> = []
-	const monthCounts = new Map<string, number>()
-	const firstReportByMonth: Record<string, string> = {}
-	const uniqueTickers = new Set<string>()
-	let firstReport: string | null = null
-	let lastReport: string | null = null
-	let pastCount = 0
+	const currentWeekEvents: Array<IEquitiesEarningsCalendarApiItem> = []
 	for (const event of events) {
-		uniqueTickers.add(event.ticker)
-		if (firstReport === null || event.report_date < firstReport) firstReport = event.report_date
-		if (lastReport === null || event.report_date > lastReport) lastReport = event.report_date
 		if (event.report_date >= monday && event.report_date <= friday) currentWeekEvents.push(event)
-		if (event.report_date < todayET) {
-			pastCount++
-			continue
-		}
-		const month = event.report_date.slice(0, 7)
-		monthCounts.set(month, (monthCounts.get(month) ?? 0) + 1)
-		const firstMonthlyReport = firstReportByMonth[month]
-		if (firstMonthlyReport === undefined || event.report_date < firstMonthlyReport) {
-			firstReportByMonth[month] = event.report_date
-		}
 	}
+	const summary = buildEarningsCalendarSummary(events, todayET)
 	return {
 		rows: buildEarningsCalendarWeek(joinEarningsCalendarRows(currentWeekEvents, companies), todayET, {}, 0).rows,
-		monthBuckets: [...monthCounts].sort(([a], [b]) => a.localeCompare(b)).map(([month, count]) => ({ month, count })),
-		pastCount,
-		firstReportByMonth,
-		bounds: {
-			first: firstReport === null ? null : mondayOfCalendarWeek(firstReport),
-			last: lastReport === null ? null : mondayOfCalendarWeek(lastReport)
-		},
-		uniqueCompanyCount: uniqueTickers.size,
+		...summary,
 		sectorOptions: buildEarningsCalendarSectorOptions(companies)
 	}
 }
 
+/** Sectors by name, then Unknown, which also holds events whose company is missing from the company list. */
 export function buildEarningsCalendarSectorOptions(
-	companies: ReadonlyArray<IEarningsCalendarCompany>
+	companies: ReadonlyArray<IEquitiesCalendarCompany>
 ): Array<{ key: string; name: string }> {
 	const sectors = new Map<string, string>()
-	for (const company of companies) sectors.set(company.sectorSlug || 'unknown', company.sector || 'Unknown')
+	for (const company of companies) {
+		if (company.sectorSlug && company.sectorSlug !== 'unknown') sectors.set(company.sectorSlug, company.sector)
+	}
 	return [
-		{ key: 'all', name: 'All sectors' },
-		...[...sectors]
-			.filter(([key]) => key !== 'unknown')
-			.sort((a, b) => a[1].localeCompare(b[1]))
-			.map(([key, name]) => ({ key, name }))
+		...[...sectors].sort((a, b) => a[1].localeCompare(b[1])).map(([key, name]) => ({ key, name })),
+		{ key: 'unknown', name: 'Unknown' }
 	]
 }
 
 export function searchEarningsCalendarCompanies(
 	query: string,
-	companies: ReadonlyArray<IEarningsCalendarCompany>,
-	rows: ReadonlyArray<IEarningsCalendarRow>,
+	companies: ReadonlyArray<IEquitiesCalendarCompany>,
+	rows: ReadonlyArray<IEquitiesCalendarRow>,
 	todayET: string
 ): EarningsCalendarSearchResult {
-	parseIsoDateParts(todayET)
 	const normalizedQuery = query.trim().toLowerCase()
-	if (!normalizedQuery) return { kind: 'no-results', companies: [] }
+	if (!normalizedQuery) return { kind: 'no-results', query: query.trim() }
 	const matches = companies.filter(
 		(company) =>
 			company.ticker.toLowerCase().startsWith(normalizedQuery) || company.name.toLowerCase().includes(normalizedQuery)
 	)
-	if (matches.length === 0) return { kind: 'no-results', companies: [] }
-	const rowsByTicker = new Map<string, Array<IEarningsCalendarRow>>()
+	if (matches.length === 0) return { kind: 'no-results', query: query.trim() }
+	const rowsByTicker = new Map<string, Array<IEquitiesCalendarRow>>()
 	for (const row of rows) {
 		const tickerRows = rowsByTicker.get(row.ticker) ?? []
 		tickerRows.push(row)
@@ -403,9 +437,9 @@ export function searchEarningsCalendarCompanies(
 				(b.marketCap ?? -1) - (a.marketCap ?? -1)
 			)
 		})
-		return { kind: 'matches', companies: companiesWithDates }
+		return { kind: 'match', company: companiesWithDates[0]!, query: query.trim() }
 	}
-	return { kind: 'no-dates', companies: matches }
+	return { kind: 'no-dates', company: matches[0]!, query: query.trim() }
 }
 
 export function buildSecFilingUrl(cik: string, accessionNumber: string): string | null {

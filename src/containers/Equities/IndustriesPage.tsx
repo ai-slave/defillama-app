@@ -1,54 +1,47 @@
+import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
+import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Select/query'
+import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import { PaginatedTable } from '~/components/Table/PaginatedTable'
+import { prepareTableCsv } from '~/components/Table/utils'
 import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelStatus } from '~/ui/Status'
-import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildIndustrySummary,
+	buildIndustrySectorOptions,
 	type IndustriesPageData,
 	filterIndustryTail,
 	getIndustryTreemapOther,
 	filterKnownAggregates,
+	getSelectionChip,
 	selectIndustryReturnMatrix,
 	sortNullableRows,
 	type IndustryAggregateRow
 } from './aggregateData'
 import {
-	AggregateTableScroller,
 	AggregateTreemap,
 	ChangeValue,
 	EquitiesPageHeader,
 	formatMetric,
 	MetricCard,
 	ReturnMatrix,
+	RowNumber,
 	sectorColor,
-	SortableTableHeader,
-	StaleDataNotice
+	StaleDataNotice,
+	treemapChildColors
 } from './AggregateShared'
 import type { EquitiesPageDataState } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
-
-type IndustryTableSort =
-	| 'industry'
-	| 'companyCount'
-	| 'marketCap'
-	| 'weight'
-	| 'sectorWeight'
-	| 'priceChangePercentage1d'
-	| 'priceChangePercentage7d'
-	| 'priceChangePercentage1m'
-	| 'priceChangePercentageYtd'
-	| 'dollarVolume24h'
-	| 'trailingPE'
-	| 'dividendYield'
 
 const INDUSTRY_CHART_LABEL_REPLACEMENTS: Record<string, string> = {
 	Biotechnology: 'Biotech',
@@ -81,28 +74,104 @@ function formatIndustryChartLabel(value: string) {
 		: shortenIndustryChartLabelPart(firstLine)
 }
 
-function industryTreemapLeaf(row: IndustryAggregateRow): TreemapNode {
+function industryTreemapLeaf(row: IndustryAggregateRow, color: string): TreemapNode {
 	return {
 		name: row.industry,
 		path: `${row.sector}/${row.industry}`,
-		value: [row.marketCap ?? 0, row.weight, row.priceChangePercentage1d],
-		itemStyle: { color: sectorColor(row.sectorSlug) }
+		value: [row.marketCap ?? 0, row.sectorWeight, row.weight, row.priceChangePercentage1d],
+		itemStyle: { color }
 	}
 }
 
-export function IndustriesPage({ state }: { state: EquitiesPageDataState<IndustriesPageData> }) {
-	const router = useRouter()
-	const [groupBySector, setGroupBySector] = useState(false)
-	const [tableSort, setTableSort] = useState<{
-		key: IndustryTableSort
-		direction: 'asc' | 'desc'
-	}>({
-		key: 'marketCap',
-		direction: 'desc'
-	})
-	const requestedSectorSlug = readSingleQueryValue(router.query.sector) ?? 'all'
-	const hideTail = readSingleQueryValue(router.query.showTail) !== 'true'
+const industryColumnHelper = createColumnHelper<
+	typeof paginatedTableFeatures,
+	IndustryAggregateRow & { updatedAt: string }
+>()
+const INDUSTRY_TABLE_SORT: SortingState = [{ id: 'marketCap', desc: true }]
+const INDUSTRY_TABLE_PAGE_SIZES = [25, 50, 100] as const
 
+const industryColumns = industryColumnHelper.columns([
+	industryColumnHelper.accessor('industry', {
+		header: 'Industry · Sector',
+		cell: ({ row, getValue }) => (
+			<div className="flex gap-2">
+				<RowNumber rowId={row.id} />
+				<div>
+					<Link
+						href={`/equities/sectors/${row.original.sectorSlug}?industry=${encodeURIComponent(row.original.industrySlug)}`}
+						className="label-md text-link hover:underline"
+					>
+						{getValue()}
+					</Link>
+					<p className="body-sm text-tertiary">{row.original.sector}</p>
+				</div>
+			</div>
+		),
+		enableHiding: false,
+		meta: {
+			headerClassName: 'w-56 sticky left-0 z-20 bg-surface',
+			cellClassName: 'sticky left-0 z-10 bg-surface',
+			align: 'start'
+		}
+	}),
+	industryColumnHelper.accessor('companyCount', {
+		header: 'Companies',
+		meta: { headerClassName: 'w-24', align: 'end' }
+	}),
+	industryColumnHelper.accessor((row) => row.marketCap ?? undefined, {
+		id: 'marketCap',
+		header: 'Market cap',
+		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
+		meta: { headerClassName: 'w-28', align: 'end' }
+	}),
+	industryColumnHelper.accessor((row) => row.weight ?? undefined, {
+		id: 'weight',
+		header: 'Market share',
+		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
+		meta: { headerClassName: 'w-24', align: 'end' }
+	}),
+	industryColumnHelper.accessor((row) => row.sectorWeight ?? undefined, {
+		id: 'sectorWeight',
+		header: 'Sector share',
+		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
+		meta: { headerClassName: 'w-24', align: 'end' }
+	}),
+	...(
+		[
+			'priceChangePercentage1d',
+			'priceChangePercentage7d',
+			'priceChangePercentage1m',
+			'priceChangePercentageYtd'
+		] as const
+	).map((field, index) =>
+		industryColumnHelper.accessor((row) => row[field] ?? undefined, {
+			id: field,
+			header: ['1D', '7D', '1M', 'YTD'][index]!,
+			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
+			meta: { headerClassName: 'w-18', align: 'end' }
+		})
+	),
+	industryColumnHelper.accessor((row) => row.dollarVolume24h ?? undefined, {
+		id: 'dollarVolume24h',
+		header: 'Volume 24h',
+		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
+		meta: { headerClassName: 'w-28', align: 'end' }
+	}),
+	industryColumnHelper.accessor((row) => row.trailingPE ?? undefined, {
+		id: 'trailingPE',
+		header: 'P/E',
+		cell: ({ getValue }) => formatMetric(getValue(), 'multiple'),
+		meta: { headerClassName: 'w-18', align: 'end' }
+	}),
+	industryColumnHelper.accessor((row) => row.dividendYield ?? undefined, {
+		id: 'dividendYield',
+		header: 'Div. yield',
+		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
+		meta: { headerClassName: 'w-24', align: 'end' }
+	})
+])
+
+export function IndustriesPage({ state }: { state: EquitiesPageDataState<IndustriesPageData> }) {
 	if (state.status === 'error') {
 		return (
 			<PanelStatus variant="error">
@@ -111,20 +180,50 @@ export function IndustriesPage({ state }: { state: EquitiesPageDataState<Industr
 		)
 	}
 
+	return <IndustriesReadyPage state={state} />
+}
+
+function IndustriesReadyPage({
+	state
+}: {
+	state: Extract<EquitiesPageDataState<IndustriesPageData>, { status: 'ready' }>
+}) {
+	const router = useRouter()
+	const [groupBySector, setGroupBySector] = useState(false)
+	const hideTail = !isTrueQueryParam(router.query.showTail)
+
 	const { overview, industries } = state.data
 	const classifiedIndustries = filterKnownAggregates(industries)
-	const availableSectorSlugs = new Set(classifiedIndustries.map((row) => row.sectorSlug))
-	const sectorSlug =
-		requestedSectorSlug === 'all' || availableSectorSlugs.has(requestedSectorSlug) ? requestedSectorSlug : 'all'
+	const sectorSlugs = [...new Set(classifiedIndustries.map((row) => row.sectorSlug))]
+	const selectedSectors = new Set(readSelectionFromQuery(router.query, 'sector', 'excludeSector', sectorSlugs))
 	const globalSummary = buildIndustrySummary(classifiedIndustries, overview.marketCap)
-	const sectorRows =
-		sectorSlug === 'all' ? classifiedIndustries : classifiedIndustries.filter((row) => row.sectorSlug === sectorSlug)
+	const sectorRows = classifiedIndustries.filter((row) => selectedSectors.has(row.sectorSlug))
 	const summary = buildIndustrySummary(sectorRows, overview.marketCap)
 	const { visibleRows, hiddenRows } = filterIndustryTail(sectorRows, {
 		hideTail
 	})
-	const sortedVisibleRows = sortNullableRows(visibleRows, tableSort.key, tableSort.direction)
+	const industryTable = usePaginatedTable({
+		data: visibleRows,
+		columns: industryColumns,
+		defaultColumn: { sortUndefined: 'last' },
+		initialState: { sorting: INDUSTRY_TABLE_SORT, pagination: { pageIndex: 0, pageSize: 25 } },
+		enableSortingRemoval: false,
+		getRowId: (row) => `${row.sectorSlug}:${row.industrySlug}`
+	})
 	const treemapRows = visibleRows.slice(0, 20)
+	const industryTreemapColors = new Map<string, string>()
+	for (const colorSectorSlug of new Set(treemapRows.map((row) => row.sectorSlug))) {
+		const sectorIndustries = treemapRows.filter((row) => row.sectorSlug === colorSectorSlug)
+		const colors = treemapChildColors(sectorColor(colorSectorSlug), sectorIndustries.length)
+		for (const [index, row] of sectorIndustries.entries()) {
+			industryTreemapColors.set(`${row.sectorSlug}:${row.industrySlug}`, colors[index]!)
+		}
+	}
+	const toTreemapLeaf = (row: IndustryAggregateRow) =>
+		industryTreemapLeaf(
+			row,
+			industryTreemapColors.get(`${row.sectorSlug}:${row.industrySlug}`) ?? sectorColor(row.sectorSlug)
+		)
 	const other = getIndustryTreemapOther(visibleRows)
 	const treemapNodes: Array<TreemapNode> = groupBySector
 		? Array.from(new Set(treemapRows.map((row) => row.sectorSlug))).map((slug) => {
@@ -132,17 +231,21 @@ export function IndustriesPage({ state }: { state: EquitiesPageDataState<Industr
 				return {
 					name: group[0]?.sector ?? slug,
 					path: group[0]?.sector ?? slug,
-					value: [group.reduce((sum, row) => sum + (row.marketCap ?? 0), 0), null, null],
+					value: [
+						group.reduce((sum, row) => sum + (row.marketCap ?? 0), 0),
+						null,
+						group.reduce((sum, row) => sum + (row.weight ?? 0), 0)
+					],
 					itemStyle: { color: sectorColor(slug) },
-					children: group.map(industryTreemapLeaf)
+					children: group.map(toTreemapLeaf)
 				}
 			})
-		: treemapRows.map(industryTreemapLeaf)
+		: treemapRows.map(toTreemapLeaf)
 	if (other.count > 0) {
 		treemapNodes.push({
 			name: `Other ${other.count} industries`,
 			path: `Other/Other ${other.count} industries`,
-			value: [other.marketCap, other.weight, null],
+			value: [other.marketCap, null, other.weight],
 			itemStyle: { color: sectorColor('unknown') }
 		})
 	}
@@ -153,22 +256,7 @@ export function IndustriesPage({ state }: { state: EquitiesPageDataState<Industr
 		source: mostPopulatedIndustries.map((industry) => [industry.industry, industry.companyCount])
 	}
 	const matrixRows = selectIndustryReturnMatrix(sectorRows)
-	const sectors = new Map<string, { name: string; count: number }>()
-	for (const industry of classifiedIndustries) {
-		const current = sectors.get(industry.sectorSlug) ?? {
-			name: industry.sector,
-			count: 0
-		}
-		current.count += 1
-		sectors.set(industry.sectorSlug, current)
-	}
-	const sectorOptions = [
-		{ value: 'all', label: `All sectors ${classifiedIndustries.length}` },
-		...[...sectors].map(([slug, sector]) => ({
-			value: slug,
-			label: `${sector.name} ${sector.count}`
-		}))
-	]
+	const sectorOptions = buildIndustrySectorOptions(classifiedIndustries)
 
 	return (
 		<div className="flex min-w-0 flex-col gap-2">
@@ -180,12 +268,10 @@ export function IndustriesPage({ state }: { state: EquitiesPageDataState<Industr
 			<StaleDataNotice stale={state.stale} updatedAt={classifiedIndustries[0]?.updatedAt} />
 
 			<SegmentedControl
-				value={sectorSlug}
-				onValueChange={(next) => {
-					void pushShallowQuery(router, {
-						sector: next === 'all' ? undefined : next
-					})
-				}}
+				value={getSelectionChip([...selectedSectors], sectorSlugs)}
+				onValueChange={(next) =>
+					updateQueryFromSelected(router, 'sector', 'excludeSector', sectorSlugs, next === 'all' ? null : next)
+				}
 				options={sectorOptions}
 				label="Filter industries by sector"
 				variant="chips"
@@ -335,152 +421,10 @@ export function IndustriesPage({ state }: { state: EquitiesPageDataState<Industr
 						free
 						smol
 						size="md"
-						prepareCsv={() => ({
-							filename: 'equity-industries',
-							rows: [
-								[
-									'Rank',
-									'Industry',
-									'Sector',
-									'Companies',
-									'Market cap',
-									'Share of market',
-									'Share of sector',
-									'1D',
-									'7D',
-									'1M',
-									'YTD',
-									'Volume 24h',
-									'P/E',
-									'Dividend yield'
-								],
-								...sortedVisibleRows.map((row, index) => [
-									index + 1,
-									row.industry,
-									row.sector,
-									row.companyCount,
-									row.marketCap,
-									row.weight,
-									row.sectorWeight,
-									row.priceChangePercentage1d,
-									row.priceChangePercentage7d,
-									row.priceChangePercentage1m,
-									row.priceChangePercentageYtd,
-									row.dollarVolume24h,
-									row.trailingPE,
-									row.dividendYield
-								])
-							]
-						})}
+						prepareCsv={() => prepareTableCsv({ instance: industryTable, filename: 'equity-industries' })}
 					/>
 				</PanelHeader>
-				<AggregateTableScroller>
-					<table className="w-full min-w-[1120px] table-fixed">
-						<colgroup>
-							<col className="w-10" />
-							<col className="w-40" />
-							<col className="w-[100px]" />
-							<col className="w-[100px]" />
-							<col className="w-[100px]" />
-							<col className="w-[100px]" />
-							<col className="w-[72px]" />
-							<col className="w-[72px]" />
-							<col className="w-[72px]" />
-							<col className="w-[72px]" />
-							<col className="w-[92px]" />
-							<col className="w-[60px]" />
-							<col className="w-20" />
-						</colgroup>
-						<thead>
-							<tr className="border-b border-subtle table-header text-secondary">
-								<th className="sticky left-0 z-20 bg-surface px-2 py-3 text-left">#</th>
-								<SortableTableHeader
-									column="industry"
-									sort={tableSort}
-									onSort={setTableSort}
-									align="left"
-									defaultDirection="asc"
-									className="sticky left-[40px] z-20 border-r border-subtle bg-surface"
-								>
-									Industry · Sector
-								</SortableTableHeader>
-								<SortableTableHeader column="companyCount" sort={tableSort} onSort={setTableSort}>
-									Companies
-								</SortableTableHeader>
-								<SortableTableHeader column="marketCap" sort={tableSort} onSort={setTableSort}>
-									Market cap
-								</SortableTableHeader>
-								<SortableTableHeader column="weight" sort={tableSort} onSort={setTableSort}>
-									Share of market
-								</SortableTableHeader>
-								<SortableTableHeader column="sectorWeight" sort={tableSort} onSort={setTableSort}>
-									Share of sector
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentage1d" sort={tableSort} onSort={setTableSort}>
-									1D
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentage7d" sort={tableSort} onSort={setTableSort}>
-									7D
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentage1m" sort={tableSort} onSort={setTableSort}>
-									1M
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentageYtd" sort={tableSort} onSort={setTableSort}>
-									YTD
-								</SortableTableHeader>
-								<SortableTableHeader column="dollarVolume24h" sort={tableSort} onSort={setTableSort}>
-									Volume 24h
-								</SortableTableHeader>
-								<SortableTableHeader column="trailingPE" sort={tableSort} onSort={setTableSort}>
-									P/E
-								</SortableTableHeader>
-								<SortableTableHeader column="dividendYield" sort={tableSort} onSort={setTableSort}>
-									Div. yield
-								</SortableTableHeader>
-							</tr>
-						</thead>
-						<tbody>
-							{sortedVisibleRows.map((row, index) => (
-								<tr
-									key={`${row.sectorSlug}:${row.industrySlug}`}
-									className="group border-b border-subtle body-md hover:bg-hover-row"
-								>
-									<td className="sticky left-0 z-10 bg-surface px-2 py-3 text-tertiary group-hover:bg-hover-row">
-										{index + 1}
-									</td>
-									<td className="sticky left-[40px] z-10 border-r border-subtle bg-surface px-2 py-3 group-hover:bg-hover-row">
-										<Link
-											href={`/equities/sectors/${row.sectorSlug}?industry=${encodeURIComponent(row.industrySlug)}`}
-											className="font-medium hover:text-link"
-										>
-											{row.industry}
-										</Link>
-										<p className="body-sm text-tertiary">{row.sector}</p>
-									</td>
-									<td className="px-2 py-3 text-right">{row.companyCount}</td>
-									<td className="px-2 py-3 text-right">{formatMetric(row.marketCap, 'usd')}</td>
-									<td className="px-2 py-3 text-right">{formatMetric(row.weight, 'percent')}</td>
-									<td className="px-2 py-3 text-right">{formatMetric(row.sectorWeight, 'percent')}</td>
-									<td className="px-2 py-3 text-right">
-										<ChangeValue value={row.priceChangePercentage1d} />
-									</td>
-									<td className="px-2 py-3 text-right">
-										<ChangeValue value={row.priceChangePercentage7d} />
-									</td>
-									<td className="px-2 py-3 text-right">
-										<ChangeValue value={row.priceChangePercentage1m} />
-									</td>
-									<td className="px-2 py-3 text-right">
-										<ChangeValue value={row.priceChangePercentageYtd} />
-									</td>
-									<td className="px-2 py-3 text-right">{formatMetric(row.dollarVolume24h, 'usd')}</td>
-									<td className="px-2 py-3 text-right">{formatMetric(row.trailingPE, 'multiple')}</td>
-									<td className="px-2 py-3 text-right">{formatMetric(row.dividendYield, 'percent')}</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</AggregateTableScroller>
+				<PaginatedTable table={industryTable} pageSizeOptions={INDUSTRY_TABLE_PAGE_SIZES} />
 			</Panel>
 		</div>
 	)

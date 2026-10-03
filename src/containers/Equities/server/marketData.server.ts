@@ -137,13 +137,19 @@ function snapshot<T>(key: string, data: T): StoredSnapshot<T> {
 	}
 }
 
-async function readOrBuild<T>({
+interface SnapshotStore<T> {
+	readCurrent: (key: string) => Promise<StoredSnapshot<T> | null>
+	readLastGood: (key: string) => Promise<StoredSnapshot<T> | null>
+	publish: (snapshot: StoredSnapshot<T>) => Promise<unknown>
+}
+
+export async function readOrBuild<T>({
 	cacheKey,
 	store,
 	build
 }: {
 	cacheKey: string
-	store: ReturnType<typeof createStore<T>>
+	store: SnapshotStore<T>
 	build: () => Promise<StoredSnapshot<T>>
 }): Promise<SnapshotRead<T>> {
 	const current = await store.readCurrent(cacheKey)

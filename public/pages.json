@@ -73,15 +73,6 @@
       "oldName": "Bridged TVL"
     },
     {
-      "name": "Top Protocols",
-      "route": "/top-protocols",
-      "category": "Total Value Locked",
-      "description": "Overview of top protocols with the highest TVL by chain on each category",
-      "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Top Protocols"
-    },
-    {
       "name": "Active Loans by Protocol",
       "route": "/active-loans",
       "category": "Total Value Locked",
@@ -97,6 +88,15 @@
       "tab": "Protocols",
       "oldCategory": "Market Overview",
       "oldName": "Forks"
+    },
+    {
+      "name": "Top Protocols",
+      "route": "/top-protocols",
+      "category": "Total Value Locked",
+      "description": "Overview of top protocols with the highest TVL by chain on each category",
+      "tab": "Protocols",
+      "oldCategory": "Market Overview",
+      "oldName": "Top Protocols"
     },
     {
       "name": "Pool2 TVL by Protocol",
@@ -634,27 +634,6 @@
       ]
     },
     {
-      "name": "Equity Sectors",
-      "route": "/equities/sectors",
-      "category": "Equities, ETFs & DATs",
-      "description": "Compare US equity sectors by market capitalization, performance, and valuation",
-      "searchKeywords": ["equity sectors", "stock sectors", "sector performance"]
-    },
-    {
-      "name": "Equity Industries",
-      "route": "/equities/industries",
-      "category": "Equities, ETFs & DATs",
-      "description": "Explore US equity industries, company counts, market capitalization, and performance",
-      "searchKeywords": ["equity industries", "stock industries", "industry performance"]
-    },
-    {
-      "name": "Earnings Calendar",
-      "route": "/equities/earnings-calendar",
-      "category": "Equities, ETFs & DATs",
-      "description": "Browse reported and projected earnings dates for US-listed companies",
-      "searchKeywords": ["company earnings", "earnings dates", "earnings reports"]
-    },
-    {
       "name": "Pre-IPO",
       "route": "/pre-ipo",
       "category": "Equities, ETFs & DATs",
@@ -693,6 +672,39 @@
         "etfs",
         "exchange traded fund",
         "exchange traded funds"
+      ]
+    },
+    {
+      "name": "Equity Sectors",
+      "route": "/equities/sectors",
+      "category": "Equities, ETFs & DATs",
+      "description": "Compare US equity sectors by market capitalization, performance, and valuation",
+      "searchKeywords": [
+        "equity sectors",
+        "stock sectors",
+        "sector performance"
+      ]
+    },
+    {
+      "name": "Equity Industries",
+      "route": "/equities/industries",
+      "category": "Equities, ETFs & DATs",
+      "description": "Explore US equity industries, company counts, market capitalization, and performance",
+      "searchKeywords": [
+        "equity industries",
+        "stock industries",
+        "industry performance"
+      ]
+    },
+    {
+      "name": "Earnings Calendar",
+      "route": "/equities/earnings-calendar",
+      "category": "Equities, ETFs & DATs",
+      "description": "Browse reported and projected earnings dates for US-listed companies",
+      "searchKeywords": [
+        "company earnings",
+        "earnings dates",
+        "earnings reports"
       ]
     },
     {
@@ -755,6 +767,30 @@
       "oldName": "Investors"
     },
     {
+      "name": "Treasuries",
+      "route": "/treasuries",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols",
+      "oldName": "Treasuries"
+    },
+    {
+      "name": "Net Project Treasury",
+      "route": "/net-project-treasury",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, excluding its own token",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols"
+    },
+    {
+      "name": "Treasury: Entities",
+      "route": "/entities",
+      "category": "Treasury",
+      "description": "Treasury by entity",
+      "totalTrackedKey": "treasury.entities"
+    },
+    {
       "name": "Unlocks: Overview",
       "route": "/unlocks",
       "category": "Unlocks",
@@ -778,30 +814,6 @@
       "tab": "Protocols",
       "oldCategory": "Unlocks",
       "oldName": "Calendar"
-    },
-    {
-      "name": "Treasuries",
-      "route": "/treasuries",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols",
-      "oldName": "Treasuries"
-    },
-    {
-      "name": "Net Project Treasury",
-      "route": "/net-project-treasury",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, excluding its own token",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols"
-    },
-    {
-      "name": "Treasury: Entities",
-      "route": "/entities",
-      "category": "Treasury",
-      "description": "Treasury by entity",
-      "totalTrackedKey": "treasury.entities"
     },
     {
       "name": "Recently Listed Protocols",
@@ -891,6 +903,12 @@
       "description": "Directory of all protocols websites on DefiLlama",
       "tab": "Protocols",
       "oldName": "Directory"
+    },
+    {
+      "name": "Crypto Cards",
+      "route": "/crypto-cards",
+      "category": "Tools",
+      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability"
     },
     {
       "name": "Yields: Watchlist",
@@ -1018,12 +1036,6 @@
       "route": "/price-check",
       "category": "Tools",
       "description": "Check whether DefiLlama has a current price for a token address on a chain"
-    },
-    {
-      "name": "Crypto Cards",
-      "route": "/crypto-cards",
-      "category": "Tools",
-      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability"
     }
   ],
   "Main": [
@@ -1100,10 +1112,22 @@
       "route": "/equities",
       "icon": "trending-up",
       "children": [
-        { "name": "Rankings", "route": "/equities" },
-        { "name": "Sectors", "route": "/equities/sectors" },
-        { "name": "Industries", "route": "/equities/industries" },
-        { "name": "Earnings Calendar", "route": "/equities/earnings-calendar" }
+        {
+          "name": "Rankings",
+          "route": "/equities"
+        },
+        {
+          "name": "Sectors",
+          "route": "/equities/sectors"
+        },
+        {
+          "name": "Industries",
+          "route": "/equities/industries"
+        },
+        {
+          "name": "Earnings Calendar",
+          "route": "/equities/earnings-calendar"
+        }
       ]
     },
     {

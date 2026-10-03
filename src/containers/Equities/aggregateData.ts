@@ -159,8 +159,28 @@ export function sortRowsByValue<T>(
 		.map(({ row }) => row)
 }
 
-export function normalizeIndustrySelection(selection: string, availableIndustrySlugs: ReadonlyArray<string>): string {
-	return selection === 'all' || availableIndustrySlugs.includes(selection) ? selection : 'all'
+/**
+ * The chip a URL selection lights up in a chip row with an "all" chip: every option is the "all" chip, one
+ * option is its own chip, and any other selection (several options, or none) matches no chip.
+ */
+export function getSelectionChip(selection: ReadonlyArray<string>, optionKeys: ReadonlyArray<string>): string {
+	if (selection.length === optionKeys.length) return 'all'
+	return selection.length === 1 ? selection[0]! : ''
+}
+
+export function buildIndustrySectorOptions(rows: ReadonlyArray<IndustryAggregateRow>) {
+	const sectors = new Map<string, { name: string; count: number }>()
+	for (const row of rows) {
+		const current = sectors.get(row.sectorSlug) ?? { name: row.sector, count: 0 }
+		current.count++
+		sectors.set(row.sectorSlug, current)
+	}
+	return [
+		{ value: 'all', label: `All sectors ${rows.length}` },
+		...[...sectors]
+			.sort((a, b) => a[1].name.localeCompare(b[1].name))
+			.map(([value, sector]) => ({ value, label: `${sector.name} ${sector.count}` }))
+	]
 }
 
 interface SectorTreemapValue {
@@ -254,16 +274,14 @@ interface IndustryTailResult<T extends IndustryAggregateRow = IndustryAggregateR
 /** A row is in the hidden tail when it is under $10B OR has fewer than three constituents. */
 export function filterIndustryTail<T extends IndustryAggregateRow>(
 	rows: ReadonlyArray<T>,
-	options: { hideTail: boolean; marketCapThreshold?: number; minimumCompanyCount?: number } = { hideTail: true }
+	options: { hideTail: boolean } = { hideTail: true }
 ): IndustryTailResult<T> {
 	if (!options.hideTail) return { visibleRows: [...rows], hiddenRows: [] }
 
-	const threshold = options.marketCapThreshold ?? 10_000_000_000
-	const minimumCompanyCount = options.minimumCompanyCount ?? 3
 	const visibleRows: Array<T> = []
 	const hiddenRows: Array<T> = []
 	for (const row of rows) {
-		if ((row.marketCap !== null && row.marketCap < threshold) || row.companyCount < minimumCompanyCount) {
+		if ((row.marketCap !== null && row.marketCap < 10_000_000_000) || row.companyCount < 3) {
 			hiddenRows.push(row)
 		} else {
 			visibleRows.push(row)

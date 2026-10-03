@@ -1,71 +1,36 @@
 import { describe, expect, test } from 'vitest'
+import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
 import {
 	addCalendarDays,
 	buildEarningsCalendarBootstrap,
-	buildEarningsCalendarMonthBuckets,
+	buildEarningsCalendarSummary,
 	buildEarningsCalendarWeek,
 	buildEarningsCalendarWeekExposure,
 	buildSecFilingUrl,
 	cleanEarningsCompanyName,
+	getEarningsCalendarDisplayDate,
 	getEarningsCalendarStatus,
-	getEarningsCalendarWeekBounds,
 	getEarningsMarketCapTier,
 	isValidEarningsCalendarEvent,
 	joinEarningsCalendarRows,
 	mondayOfCalendarWeek,
 	searchEarningsCalendarCompanies,
-	type IEarningsCalendarCompany,
-	type IEarningsCalendarEvent,
-	type IEarningsCalendarRow
+	type EarningsMarketCapOption
 } from '../earningsCalendarData'
-
-function makeEvent(overrides: Partial<IEarningsCalendarEvent> = {}): IEarningsCalendarEvent {
-	return {
-		ticker: 'TEST',
-		date_status: 'estimated',
-		report_date: '2026-10-27',
-		report_time: 'unknown',
-		max_drift_days: 7,
-		fiscal_year: 2026,
-		fiscal_period: 'Q3',
-		event_key: '2026-Q3',
-		cik: '123456',
-		accession_number: '0000123456-26-123456',
-		...overrides
-	}
-}
-
-function makeCompany(overrides: Partial<IEarningsCalendarCompany> = {}): IEarningsCalendarCompany {
-	return {
-		ticker: 'TEST',
-		name: 'Test Corporation',
-		marketCap: 1_000_000_000,
-		sector: 'Technology',
-		sectorSlug: 'technology',
-		country: 'US',
-		...overrides
-	}
-}
-
-function makeRow(overrides: Partial<IEarningsCalendarRow> = {}): IEarningsCalendarRow {
-	return {
-		...makeEvent(),
-		name: 'Test Corporation',
-		marketCap: 1_000_000_000,
-		sector: 'Technology',
-		sectorSlug: 'technology',
-		country: 'US',
-		href: '/equities/TEST:US',
-		...overrides
-	}
-}
+import { makeCompany, makeEvent, makeRow } from './calendarFixture'
 
 describe('earnings calendar date arithmetic', () => {
-	test('uses strict calendar parts across leap day and Monday week boundaries', () => {
+	test('adds days across month and leap-day boundaries', () => {
 		expect(addCalendarDays('2024-02-28', 2)).toBe('2024-03-01')
 		expect(addCalendarDays('2026-10-31', 1)).toBe('2026-11-01')
+	})
+
+	test('finds the Monday containing a calendar date', () => {
 		expect(mondayOfCalendarWeek('2026-10-25')).toBe('2026-10-19')
 		expect(mondayOfCalendarWeek('2026-10-26')).toBe('2026-10-26')
+	})
+
+	test('rejects invalid machine dates', () => {
 		expect(() => addCalendarDays('2026-02-30', 1)).toThrow(RangeError)
 		expect(() => addCalendarDays('2026-10-01T00:00:00Z', 1)).toThrow(RangeError)
 	})
@@ -115,7 +80,7 @@ describe('earnings calendar rows and filters', () => {
 		]
 		expect(
 			buildEarningsCalendarWeek(rows, '2026-10-27', {
-				sectorSlug: 'technology',
+				sectorSlugs: ['technology'],
 				marketCapTiers: ['mega'],
 				tightWindowsOnly: true
 			}).rows.map((row) => row.ticker)
@@ -124,9 +89,32 @@ describe('earnings calendar rows and filters', () => {
 			buildEarningsCalendarWeek(rows, '2026-10-27', { tightWindowsOnly: true }).rows.map((row) => row.ticker)
 		).toEqual(['A', 'C'])
 	})
+
+	test('a company without a market cap shows under the Unknown tier', () => {
+		const rows = [makeRow({ ticker: 'A', marketCap: 250_000_000_000 }), makeRow({ ticker: 'C', marketCap: null })]
+
+		expect(
+			buildEarningsCalendarWeek(rows, '2026-10-27', { marketCapTiers: ['unknown'] }).rows.map((row) => row.ticker)
+		).toEqual(['C'])
+	})
 })
 
 describe('earnings calendar week selection', () => {
+	test('a shared future week shows available current-week events while the full calendar is unavailable', () => {
+		const bootstrapRows = [makeRow({ ticker: 'CURRENT', report_date: '2026-10-02' })]
+		const displayDate = getEarningsCalendarDisplayDate('2026-10-05', '2026-10-03', false)
+
+		expect(buildEarningsCalendarWeek(bootstrapRows, displayDate).rows.map((row) => row.ticker)).toEqual(['CURRENT'])
+	})
+
+	test('a shared future week becomes visible when the full calendar is available', () => {
+		const rows = [makeRow({ ticker: 'FUTURE', report_date: '2026-10-05' })]
+		const displayDate = getEarningsCalendarDisplayDate('2026-10-05', '2026-10-03', true)
+
+		expect(buildEarningsCalendarWeek(rows, displayDate).rows.map((row) => row.ticker)).toEqual(['FUTURE'])
+		expect(getEarningsCalendarDisplayDate('2026-02-30', '2026-10-03', true)).toBe('2026-10-03')
+	})
+
 	test('ranks one global top twelve across Monday to Friday and reports partial week bounds', () => {
 		const rows = Array.from({ length: 14 }, (_, index) =>
 			makeRow({
@@ -165,15 +153,14 @@ describe('earnings calendar week selection', () => {
 			['2026-10-30', 7, 5, 2]
 		])
 		expect(
-			getEarningsCalendarWeekBounds([
-				makeEvent({ report_date: '2026-10-28' }),
-				makeEvent({ report_date: '2026-11-03' })
-			])
+			buildEarningsCalendarSummary(
+				[makeEvent({ report_date: '2026-10-28' }), makeEvent({ report_date: '2026-11-03' })],
+				'2026-10-27'
+			).bounds
 		).toEqual({
 			first: '2026-10-26',
 			last: '2026-11-02'
 		})
-		expect(getEarningsCalendarWeekBounds([])).toEqual({ first: null, last: null })
 	})
 })
 
@@ -211,9 +198,9 @@ describe('earnings calendar buckets and company search', () => {
 			bounds: { first: '2026-10-19', last: '2026-11-02' },
 			uniqueCompanyCount: 4,
 			sectorOptions: [
-				{ key: 'all', name: 'All sectors' },
 				{ key: 'healthcare', name: 'Healthcare' },
-				{ key: 'technology', name: 'Technology' }
+				{ key: 'technology', name: 'Technology' },
+				{ key: 'unknown', name: 'Unknown' }
 			]
 		})
 	})
@@ -225,10 +212,20 @@ describe('earnings calendar buckets and company search', () => {
 			makeEvent({ report_date: '2026-11-01' }),
 			makeEvent({ report_date: '2026-11-02' })
 		]
-		expect(buildEarningsCalendarMonthBuckets(rows, '2026-10-02')).toEqual([
+		expect(buildEarningsCalendarSummary(rows, '2026-10-02').monthBuckets).toEqual([
 			{ month: '2026-10', count: 2 },
 			{ month: '2026-11', count: 2 }
 		])
+	})
+
+	test('counts the 31 completed calendar dates named by the recent bucket', () => {
+		const events = [
+			makeEvent({ ticker: 'BOUNDARY', report_date: '2026-09-01' }),
+			makeEvent({ ticker: 'INSIDE', report_date: '2026-09-02' }),
+			makeEvent({ ticker: 'TODAY', report_date: '2026-10-02' })
+		]
+
+		expect(buildEarningsCalendarSummary(events, '2026-10-02').pastCount).toBe(2)
 	})
 
 	test('summarizes weekly reporting market cap and filing-backed dates by company', () => {
@@ -239,7 +236,7 @@ describe('earnings calendar buckets and company search', () => {
 			makeRow({ ticker: 'SMALL', report_date: '2026-10-30', marketCap: 500_000_000, cik: '', accession_number: '' }),
 			makeRow({ ticker: 'LATER', report_date: '2026-11-02', marketCap: 50_000_000_000 })
 		]
-		const exposure = buildEarningsCalendarWeekExposure(rows, '2026-10-26')
+		const exposure = buildEarningsCalendarWeekExposure(rows, '2026-10-26', '2026-10-26')
 		expect(exposure.days.map((day) => [day.date, day.marketCap, day.companyCount])).toEqual([
 			['2026-10-26', 0, 0],
 			['2026-10-27', 3_000_000_000_000, 1],
@@ -258,12 +255,28 @@ describe('earnings calendar buckets and company search', () => {
 			marketCap: exposure.marketCap,
 			companyCount: exposure.companyCount,
 			secConfirmedCount: exposure.secConfirmedCount,
-			projectedCount: exposure.projectedCount
+			projectedCount: exposure.projectedCount,
+			pastDueCount: exposure.pastDueCount
 		}).toEqual({
 			marketCap: 5_500_500_000_000,
 			companyCount: 3,
 			secConfirmedCount: 2,
-			projectedCount: 1
+			projectedCount: 1,
+			pastDueCount: 0
+		})
+	})
+
+	test('does not label an overdue earnings date as projected', () => {
+		const rows = [
+			makeRow({ ticker: 'LATE', report_date: '2026-10-26', date_status: 'estimated', cik: '', accession_number: '' }),
+			makeRow({ ticker: 'NEXT', report_date: '2026-10-30', date_status: 'estimated', cik: '', accession_number: '' })
+		]
+
+		const exposure = buildEarningsCalendarWeekExposure(rows, '2026-10-26', '2026-10-28')
+
+		expect({ projectedCount: exposure.projectedCount, pastDueCount: exposure.pastDueCount }).toEqual({
+			projectedCount: 1,
+			pastDueCount: 1
 		})
 	})
 
@@ -283,27 +296,59 @@ describe('earnings calendar buckets and company search', () => {
 			})
 		]
 		expect(searchEarningsCalendarCompanies('aap', companies, rows, '2026-10-30')).toMatchObject({
-			kind: 'matches',
-			companies: [{ ticker: 'AAPL', nextEvent: { report_date: '2026-11-10' } }]
+			kind: 'match',
+			company: { ticker: 'AAPL', nextEvent: { report_date: '2026-11-10' } },
+			query: 'aap'
 		})
 		expect(searchEarningsCalendarCompanies('SPCX', companies, rows, '2026-10-30')).toEqual({
 			kind: 'no-dates',
-			companies: [companies[1]]
+			company: companies[1],
+			query: 'SPCX'
 		})
 		expect(searchEarningsCalendarCompanies('nobody', companies, rows, '2026-10-30')).toEqual({
 			kind: 'no-results',
-			companies: []
+			query: 'nobody'
 		})
 	})
 })
 
 describe('earnings calendar display helpers', () => {
-	test('builds SEC filing links only from valid identifiers and removes vendor stock suffixes', () => {
+	test('builds SEC filing links only from valid identifiers', () => {
 		expect(buildSecFilingUrl('320193', '0000320193-26-000123')).toBe(
 			'https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/0000320193-26-000123-index.htm'
 		)
 		expect(buildSecFilingUrl('bad', '0000320193-26-000123')).toBeNull()
+	})
+
+	test('removes vendor stock suffixes from company names', () => {
 		expect(cleanEarningsCompanyName('Visa Inc. Class A Common Stock')).toBe('Visa Inc.')
 		expect(cleanEarningsCompanyName('Microsoft Corporation Common Stock')).toBe('Microsoft Corporation')
+	})
+})
+
+describe('calendar filters in the URL', () => {
+	const tiers: Array<EarningsMarketCapOption> = ['mega', 'large', 'mid', 'small', 'micro', 'unknown']
+	const sectors = ['healthcare', 'technology', 'unknown']
+	const rows = [
+		makeRow({ ticker: 'MEGA', marketCap: 300_000_000_000, sectorSlug: 'technology' }),
+		makeRow({ ticker: 'HLTH', marketCap: 50_000_000_000, sectorSlug: 'healthcare' }),
+		makeRow({ ticker: 'NOCAP', marketCap: null, sectorSlug: 'unknown' })
+	]
+	const tickersAfter = (updates: Record<string, string | Array<string> | undefined>) =>
+		buildEarningsCalendarWeek(rows, '2026-10-27', {
+			marketCapTiers: readSelectionFromQuery(updates, 'marketCap', 'excludeMarketCap', tiers),
+			sectorSlugs: readSelectionFromQuery(updates, 'sector', 'excludeSector', sectors)
+		}).rows.map((row) => row.ticker)
+
+	test('picking Mega and Unknown keeps the company without a market cap', () => {
+		expect(
+			tickersAfter(getQueryUpdatesFromSelected('marketCap', 'excludeMarketCap', tiers, ['mega', 'unknown']))
+		).toEqual(['MEGA', 'NOCAP'])
+	})
+
+	test('leaving one sector out keeps every other sector, Unknown included', () => {
+		expect(
+			tickersAfter(getQueryUpdatesFromSelected('sector', 'excludeSector', sectors, ['healthcare', 'unknown']))
+		).toEqual(['HLTH', 'NOCAP'])
 	})
 })

@@ -1,3 +1,4 @@
+import { toEquitiesTaxonomySlug } from './aggregateData'
 import type { IEquitiesCompanyApiItem } from './api.types'
 import type { IEquitiesSectorPageData } from './types'
 
@@ -7,7 +8,6 @@ export type IEquitiesSectorPageCompanyRow = Pick<
 	| 'country'
 	| 'name'
 	| 'industry'
-	| 'industrySlug'
 	| 'marketCap'
 	| 'volume'
 	| 'currentPrice'
@@ -15,7 +15,7 @@ export type IEquitiesSectorPageCompanyRow = Pick<
 	| 'priceChangePercentage7d'
 	| 'priceChangePercentage1m'
 	| 'trailingPE'
->
+> & { industrySlug: string }
 
 export type EquitiesSectorPageCompanyTuple = readonly [
 	ticker: string,
@@ -33,10 +33,10 @@ export type EquitiesSectorPageCompanyTuple = readonly [
 ]
 
 export type IEquitiesSectorPageViewData = Omit<IEquitiesSectorPageData, 'companies'> & {
-	companies: Array<EquitiesSectorPageCompanyTuple | IEquitiesSectorPageCompanyRow>
+	companies: Array<EquitiesSectorPageCompanyTuple>
 }
 
-/** Keep only constituent values used by the page and avoid repeating object keys for every company in page JSON. */
+/** Keep only page fields, resolve optional slugs, and avoid repeating object keys in static page JSON. */
 export function buildEquitiesSectorPageViewData(data: IEquitiesSectorPageData): IEquitiesSectorPageViewData {
 	return {
 		overview: data.overview,
@@ -47,7 +47,7 @@ export function buildEquitiesSectorPageViewData(data: IEquitiesSectorPageData): 
 			company.country,
 			company.name,
 			company.industry,
-			company.industrySlug,
+			company.industrySlug ?? toEquitiesTaxonomySlug(company.industry),
 			company.marketCap,
 			company.volume,
 			company.currentPrice,
@@ -60,12 +60,10 @@ export function buildEquitiesSectorPageViewData(data: IEquitiesSectorPageData): 
 }
 
 export function readEquitiesSectorPageCompanies(
-	companies: Array<EquitiesSectorPageCompanyTuple | IEquitiesSectorPageCompanyRow>
+	companies: ReadonlyArray<EquitiesSectorPageCompanyTuple>
 ): Array<IEquitiesSectorPageCompanyRow> {
-	return companies.map((company) => {
-		if (!Array.isArray(company)) return company as IEquitiesSectorPageCompanyRow
-
-		const [
+	return companies.map(
+		([
 			ticker,
 			country,
 			name,
@@ -78,9 +76,7 @@ export function readEquitiesSectorPageCompanies(
 			priceChangePercentage7d,
 			priceChangePercentage1m,
 			trailingPE
-		] = company as EquitiesSectorPageCompanyTuple
-
-		return {
+		]) => ({
 			ticker,
 			country,
 			name,
@@ -93,6 +89,6 @@ export function readEquitiesSectorPageCompanies(
 			priceChangePercentage7d,
 			priceChangePercentage1m,
 			trailingPE
-		}
-	})
+		})
+	)
 }

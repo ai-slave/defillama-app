@@ -39,11 +39,11 @@ function isTreemapValue(value: unknown): value is TreemapValue {
 	if (!Array.isArray(value) || typeof value[0] !== 'number') return false
 	const secondary = value[1]
 	const color = value[2]
-	const gradient = value[3]
+	const change = value[3]
 	return (
 		(secondary === null || typeof secondary === 'number') &&
 		(color === null || typeof color === 'number') &&
-		(gradient === undefined || typeof gradient === 'number')
+		(change == null || typeof change === 'number')
 	)
 }
 

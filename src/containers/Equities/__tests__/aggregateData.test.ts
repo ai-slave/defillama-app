@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
+import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
 import {
 	buildIndustriesPageData,
+	buildIndustrySectorOptions,
 	buildIndustrySummary,
 	buildSectorTreemapData,
 	calculateCompanyDollarVolume,
@@ -9,7 +11,7 @@ import {
 	filterKnownAggregates,
 	filterIndustryTail,
 	getIndustryTreemapOther,
-	normalizeIndustrySelection,
+	getSelectionChip,
 	selectIndustryReturnMatrix,
 	sortNullableRows,
 	sortRowsByValue,
@@ -48,29 +50,14 @@ test('industries page data excludes unused API fields from the serialized payloa
 	})
 
 	expect(result.overview).toEqual({ marketCap: 100, companyCount: 20, sectorCount: 2 })
-	expect(Object.keys(result.industries[0]!).sort()).toEqual(
-		[
-			'companyCount',
-			'dividendYield',
-			'dollarVolume24h',
-			'industry',
-			'industrySlug',
-			'marketCap',
-			'priceChangePercentage1d',
-			'priceChangePercentage1m',
-			'priceChangePercentage1y',
-			'priceChangePercentage3m',
-			'priceChangePercentage6m',
-			'priceChangePercentage7d',
-			'priceChangePercentageYtd',
-			'sector',
-			'sectorSlug',
-			'sectorWeight',
-			'trailingPE',
-			'updatedAt',
-			'weight'
-		].sort()
-	)
+	expect(result.industries[0]).toMatchObject({
+		industry: 'Software',
+		sector: 'Technology',
+		marketCap: 10_000_000_000,
+		companyCount: 10,
+		updatedAt: '2026-10-01'
+	})
+	expect('coverage' in result.industries[0]!).toBe(false)
 })
 
 function sector(overrides: Partial<SectorAggregateRow> = {}): SectorAggregateRow {
@@ -133,11 +120,42 @@ describe('sortNullableRows', () => {
 	})
 })
 
-describe('industry query selection', () => {
-	test('preserves a valid selection and falls back to all for a stale slug', () => {
-		expect(normalizeIndustrySelection('software', ['software', 'semiconductors'])).toBe('software')
-		expect(normalizeIndustrySelection('old-industry', ['software', 'semiconductors'])).toBe('all')
+describe('chip selection in the URL', () => {
+	const sectors = ['technology', 'healthcare', 'energy']
+	const chipAfterPicking = (value: string | null) => {
+		const query = getQueryUpdatesFromSelected('sector', 'excludeSector', sectors, value)
+		return getSelectionChip(readSelectionFromQuery(query, 'sector', 'excludeSector', sectors), sectors)
+	}
+
+	test('picking a sector chip lights that chip after a reload', () => {
+		expect(chipAfterPicking('healthcare')).toBe('healthcare')
 	})
+
+	test('picking the all chip clears the URL and lights the all chip', () => {
+		expect(getQueryUpdatesFromSelected('sector', 'excludeSector', sectors, null)).toEqual({
+			sector: undefined,
+			excludeSector: undefined
+		})
+		expect(chipAfterPicking(null)).toBe('all')
+	})
+
+	test('a shared link with several sectors lights no single chip', () => {
+		expect(getSelectionChip(['technology', 'energy'], sectors)).toBe('')
+	})
+})
+
+test('counts industry filter options by sector', () => {
+	expect(
+		buildIndustrySectorOptions([
+			industry({ industry: 'Software' }),
+			industry({ industry: 'Semiconductors' }),
+			industry({ industry: 'Banks', sector: 'Financial Services', sectorSlug: 'financial-services' })
+		])
+	).toEqual([
+		{ value: 'all', label: 'All sectors 3' },
+		{ value: 'financial-services', label: 'Financial Services 1' },
+		{ value: 'technology', label: 'Technology 2' }
+	])
 })
 
 describe('sector treemap metric mapping', () => {

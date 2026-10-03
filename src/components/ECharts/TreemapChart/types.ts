@@ -1,6 +1,7 @@
 import type * as echarts from 'echarts/core'
 
-export type TreemapValue = [size: number, secondary: number | null, color: number | null, gradient?: number]
+/** `change` is a percent change: value-colored tiles shade by it, and the RWA tooltip shows it as the 1D return. */
+export type TreemapValue = [size: number, secondary: number | null, color: number | null, change?: number | null]
 
 export type TreemapNode = {
 	name: string

@@ -48,7 +48,7 @@ describe('SQL chart tooltip HTML boundaries', () => {
 			valueLabel: LABEL,
 			formatMetricValue: (value) => `${value}`
 		})
-		expect(expectLabelIsText(html).textContent).toContain(`Parent: ${LABEL}Child: ${LABEL}${LABEL}: 7`)
+		expect(expectLabelIsText(html).textContent).toBe(`${LABEL}${LABEL}: 7Share of ${LABEL}: 0%Share of total: 0%`)
 	})
 
 	test('escapes grouped treemap labels in the narrative formatter', () => {

@@ -1,4 +1,4 @@
-import { formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatPercentChange } from '~/utils/numberFormat'
 import { escapeHtml } from '../shared/escapeHtml'
 import type { TreemapValue } from './types'
 
@@ -34,16 +34,17 @@ export function formatRwaTreemapTooltip({
 	const metricValue = formatMetricValue(value?.[0] ?? 0)
 	const shareOfParent = formatPercent(value?.[1] ?? 0, { input: 'percent' })
 	const shareOfTotal = formatPercent(value?.[2] ?? 0, { input: 'percent' })
+	const change = value?.[3] == null ? '' : `1D return: ${formatPercentChange(value[3])}<br>`
 
 	if (treePath.length >= 2) {
 		const parent = treePath[treePath.length - 2]
 		const child = treePath[treePath.length - 1]
 		return [
-			`Parent: ${escapeHtml(parent!)}<br>`,
-			`Child: ${escapeHtml(child!)}<br>`,
+			`${escapeHtml(child!)}<br>`,
 			`${escapeHtml(valueLabel)}: ${escapeHtml(metricValue)}<br>`,
-			`Share of Parent: ${shareOfParent}<br>`,
-			`Share of Total: ${shareOfTotal}<br>`
+			`Share of ${escapeHtml(parent!)}: ${shareOfParent}<br>`,
+			`Share of total: ${shareOfTotal}<br>`,
+			change
 		].join('')
 	}
 
@@ -51,7 +52,8 @@ export function formatRwaTreemapTooltip({
 		return [
 			`${escapeHtml(treePath[0]!)}<br>`,
 			`${escapeHtml(valueLabel)}: ${escapeHtml(metricValue)}<br>`,
-			`Share of Total: ${shareOfTotal}<br>`
+			`Share of total: ${shareOfTotal}<br>`,
+			change
 		].join('')
 	}
 

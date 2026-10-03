@@ -1,12 +1,17 @@
+import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import Link from 'next/link'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
+import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import { PaginatedTable } from '~/components/Table/PaginatedTable'
+import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { PanelStatus } from '~/ui/Status'
+import { PanelStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import {
 	buildSectorTreemapData,
@@ -17,41 +22,30 @@ import {
 	type ReturnPeriod
 } from './aggregateData'
 import {
-	AggregateTableScroller,
 	AggregateTreemap,
+	categoryColor,
 	ChangeValue,
 	EquitiesPageHeader,
 	formatMetric,
 	MetricCard,
 	ReturnMatrix,
+	RowNumber,
 	sectorColor,
-	SortableTableHeader,
 	StaleDataNotice
 } from './AggregateShared'
-import type { IEquitiesAggregateHolding } from './api.types'
+import type { IEquitiesAggregateHolding, IEquitiesSectorApiItem } from './api.types'
 import { buildEquityTickerCountrySlug } from './tickerCountry'
 import type { EquitiesPageDataState, IEquitiesSectorsData } from './types'
 
 type SectorCardSort = 'marketCap' | 'priceChangePercentage1d' | 'dollarVolume24h' | 'trailingPE'
 type SectorPerformancePeriod = '1d' | '7d' | '1m' | 'ytd' | '1y'
-type SectorTableSort =
-	| 'sector'
-	| 'marketCap'
-	| 'weight'
-	| 'priceChangePercentage1d'
-	| 'priceChangePercentage7d'
-	| 'priceChangePercentage1m'
-	| 'priceChangePercentageYtd'
-	| 'dollarVolume24h'
-	| 'trailingPE'
-	| 'dividendYield'
-	| 'companyCount'
-
 const TREEMAP_OPTIONS = [
 	{ value: 'marketCap', label: 'Market cap' },
 	{ value: 'volume', label: 'Volume' },
 	{ value: 'revenue', label: 'Revenue' }
 ] as const
+
+const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 
 function HoldingLink({ holding, compact = false }: { holding: IEquitiesAggregateHolding; compact?: boolean }) {
 	return (
@@ -60,9 +54,8 @@ function HoldingLink({ holding, compact = false }: { holding: IEquitiesAggregate
 			className={
 				compact
 					? 'flex rounded-full'
-					: 'flex items-center gap-1.5 rounded-md border border-medium px-2 py-1 label-sm hover:bg-hover-row'
+					: 'flex items-center gap-1.5 rounded-md border border-medium px-2 py-1 label-sm text-link hover:bg-hover-row hover:underline'
 			}
-			title={holding.name}
 		>
 			<TokenLogo kind="equities" name={holding.ticker} country="US" size={24} alt={`Logo of ${holding.name}`} />
 			{compact ? null : holding.ticker}
@@ -70,15 +63,97 @@ function HoldingLink({ holding, compact = false }: { holding: IEquitiesAggregate
 	)
 }
 
-export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesSectorsData> }) {
-	const [treemapMetric, setTreemapMetric] = useState<SectorTreemapMetric>('marketCap')
-	const [cardSort, setCardSort] = useState<SectorCardSort>('marketCap')
-	const [performancePeriod, setPerformancePeriod] = useState<SectorPerformancePeriod>('1d')
-	const [tableSort, setTableSort] = useState<{ key: SectorTableSort; direction: 'asc' | 'desc' }>({
-		key: 'marketCap',
-		direction: 'desc'
-	})
+const sectorColumnHelper = createColumnHelper<typeof paginatedTableFeatures, IEquitiesSectorApiItem>()
+const SECTOR_TABLE_SORT: SortingState = [{ id: 'marketCap', desc: true }]
+const SECTOR_TABLE_PAGE_SIZES = [20, 50] as const
 
+const sectorColumns = sectorColumnHelper.columns([
+	sectorColumnHelper.accessor('sector', {
+		header: 'Sector',
+		cell: ({ row, getValue }) => (
+			<span className="flex items-center gap-2">
+				<RowNumber rowId={row.id} />
+				<Link href={`/equities/sectors/${row.original.sectorSlug}`} className="label-md text-link hover:underline">
+					{getValue()}
+				</Link>
+			</span>
+		),
+		enableHiding: false,
+		meta: { headerClassName: 'w-52', align: 'start' }
+	}),
+	sectorColumnHelper.accessor((row) => row.marketCap ?? undefined, {
+		id: 'marketCap',
+		header: 'Market cap',
+		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
+		meta: { headerClassName: 'w-28', align: 'end' }
+	}),
+	sectorColumnHelper.accessor((row) => row.weight ?? undefined, {
+		id: 'weight',
+		header: 'Weight',
+		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
+		meta: { headerClassName: 'w-20', align: 'end' }
+	}),
+	...(
+		[
+			'priceChangePercentage1d',
+			'priceChangePercentage7d',
+			'priceChangePercentage1m',
+			'priceChangePercentageYtd'
+		] as const
+	).map((field, index) =>
+		sectorColumnHelper.accessor((row) => row[field] ?? undefined, {
+			id: field,
+			header: ['1D', '7D', '1M', 'YTD'][index]!,
+			cell: ({ getValue }) => <ChangeValue value={getValue()} />,
+			meta: { headerClassName: 'w-20', align: 'end' }
+		})
+	),
+	sectorColumnHelper.accessor((row) => row.dollarVolume24h ?? undefined, {
+		id: 'dollarVolume24h',
+		header: 'Volume 24h',
+		cell: ({ getValue }) => formatMetric(getValue(), 'usd'),
+		meta: { headerClassName: 'w-28', align: 'end' }
+	}),
+	sectorColumnHelper.accessor((row) => row.trailingPE ?? undefined, {
+		id: 'trailingPE',
+		header: 'P/E',
+		cell: ({ getValue }) => formatMetric(getValue(), 'multiple'),
+		meta: { headerClassName: 'w-18', align: 'end' }
+	}),
+	sectorColumnHelper.accessor((row) => row.dividendYield ?? undefined, {
+		id: 'dividendYield',
+		header: 'Div. yield',
+		cell: ({ getValue }) => formatMetric(getValue(), 'percent'),
+		meta: { headerClassName: 'w-24', align: 'end' }
+	}),
+	sectorColumnHelper.accessor('companyCount', {
+		header: 'Equities',
+		meta: { headerClassName: 'w-20', align: 'end' }
+	}),
+	sectorColumnHelper.accessor('topHoldings', {
+		header: 'Top holdings',
+		enableSorting: false,
+		cell: ({ getValue }) => {
+			const holdings = getValue()
+			return holdings.length > 0 ? (
+				<div className="flex items-center gap-1.5">
+					{holdings.slice(0, 3).map((holding) => (
+						<HoldingLink key={holding.ticker} holding={holding} compact />
+					))}
+				</div>
+			) : (
+				'—'
+			)
+		},
+		meta: {
+			headerClassName: 'w-28',
+			align: 'start',
+			csvValue: (row) => row.topHoldings.map((holding) => holding.ticker).join(', ')
+		}
+	})
+])
+
+export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesSectorsData> }) {
 	if (state.status === 'error') {
 		return (
 			<PanelStatus variant="error">
@@ -86,6 +161,18 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 			</PanelStatus>
 		)
 	}
+
+	return <SectorsReadyPage state={state} />
+}
+
+function SectorsReadyPage({
+	state
+}: {
+	state: Extract<EquitiesPageDataState<IEquitiesSectorsData>, { status: 'ready' }>
+}) {
+	const [treemapMetric, setTreemapMetric] = useState<SectorTreemapMetric>('marketCap')
+	const [cardSort, setCardSort] = useState<SectorCardSort>('marketCap')
+	const [performancePeriod, setPerformancePeriod] = useState<SectorPerformancePeriod>('1d')
 
 	const { overview, sectors } = state.data
 	const classifiedSectors = filterKnownAggregates(sectors)
@@ -96,7 +183,7 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 		.map((row) => ({
 			name: row.sector,
 			path: `Equities/${row.sector}`,
-			value: [row.value!, row.share, row.priceChangePercentage1d],
+			value: [row.value!, null, row.share, row.priceChangePercentage1d],
 			itemStyle: { color: sectorColor(row.sectorSlug) }
 		}))
 	const matrixRows = classifiedSectors.map((row) => ({
@@ -109,15 +196,22 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 		>
 	}))
 	const cardRows = sortNullableRows(classifiedSectors, cardSort, cardSort === 'trailingPE' ? 'asc' : 'desc')
-	const tableRows = sortNullableRows(classifiedSectors, tableSort.key, tableSort.direction)
+	const sectorTable = usePaginatedTable({
+		data: classifiedSectors,
+		columns: sectorColumns,
+		defaultColumn: { sortUndefined: 'last' },
+		initialState: { sorting: SECTOR_TABLE_SORT, pagination: { pageIndex: 0, pageSize: 20 } },
+		enableSortingRemoval: false,
+		getRowId: (row) => row.sectorSlug
+	})
 	const performanceField = RETURN_PERIODS.find(({ key }) => key === performancePeriod)!.field
 	const marketReturn = overview[performanceField]
-	const performanceRows = sortNullableRows(classifiedSectors, performanceField, 'desc')
-	const maxAbsoluteReturn = Math.max(...performanceRows.map((row) => Math.abs(row[performanceField] ?? 0)), 1)
-	const outperforming =
-		marketReturn == null
-			? null
-			: performanceRows.filter((row) => row[performanceField] != null && row[performanceField] > marketReturn).length
+	const performanceRows = sortNullableRows(classifiedSectors, performanceField, 'desc').flatMap((row) => {
+		const value = row[performanceField]
+		return value == null ? [] : [{ row, value }]
+	})
+	const unavailablePerformanceCount = classifiedSectors.length - performanceRows.length
+	const outperforming = marketReturn == null ? null : performanceRows.filter(({ value }) => value > marketReturn).length
 
 	return (
 		<div className="flex min-w-0 flex-col gap-2">
@@ -197,34 +291,26 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 						size="md"
 					/>
 				</PanelHeader>
-				<div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
-					{performanceRows.map((sector) => {
-						const value = sector[performanceField]
-						return (
-							<div
-								key={sector.sectorSlug}
-								className="grid grid-cols-[minmax(0,1fr)_minmax(80px,1fr)_auto] items-center gap-3 body-sm"
-							>
-								<Link href={`/equities/sectors/${sector.sectorSlug}`} className="truncate font-medium hover:text-link">
-									{sector.sector}
-								</Link>
-								<div className="h-2 overflow-hidden rounded-sm bg-surface-elevated-1">
-									<span
-										className={`block h-full rounded-sm ${value != null && value < 0 ? 'bg-data-down' : 'bg-data-up'}`}
-										style={{ width: `${Math.min(100, (Math.abs(value ?? 0) / maxAbsoluteReturn) * 100)}%` }}
-									/>
-								</div>
-								<ChangeValue value={value} />
-							</div>
-						)
-					})}
-				</div>
+				{performanceRows.length > 0 ? (
+					<Suspense fallback={<ChartPanelBodyFallback />}>
+						<HBarChart
+							categories={performanceRows.map(({ row }) => row.sector)}
+							values={performanceRows.map(({ value }) => value)}
+							color={categoryColor(0)}
+							valueSymbol="%"
+							height="420px"
+							showValueLabels
+						/>
+					</Suspense>
+				) : (
+					<SurfaceBodyStatus variant="empty">No sector returns are available for this period.</SurfaceBodyStatus>
+				)}
 				<p className="border-t border-subtle px-4 py-3 body-sm text-tertiary">
 					All tracked equities <ChangeValue value={marketReturn} /> over the same period
 					{outperforming == null
 						? ''
-						: ` · ${outperforming} of ${performanceRows.length} sectors outperforming the market`}
-					.
+						: ` · ${outperforming} of ${performanceRows.length} sectors with data outperforming the market`}
+					{unavailablePerformanceCount > 0 ? ` · ${unavailablePerformanceCount} unavailable` : ''}.
 				</p>
 			</Panel>
 
@@ -259,7 +345,10 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 						<Card key={sector.sectorSlug} padding="md" className="flex flex-col gap-4">
 							<div className="flex items-start justify-between gap-2">
 								<div>
-									<Link href={`/equities/sectors/${sector.sectorSlug}`} className="heading-xs hover:text-link">
+									<Link
+										href={`/equities/sectors/${sector.sectorSlug}`}
+										className="heading-xs text-link hover:underline"
+									>
 										{sector.sector}
 									</Link>
 									<p className="body-sm text-tertiary">
@@ -314,131 +403,10 @@ export function SectorsPage({ state }: { state: EquitiesPageDataState<IEquitiesS
 						free
 						smol
 						size="md"
-						prepareCsv={() => ({
-							filename: 'equity-sectors',
-							rows: [
-								[
-									'Rank',
-									'Sector',
-									'Market cap',
-									'Weight',
-									'1D',
-									'7D',
-									'1M',
-									'YTD',
-									'Volume 24h',
-									'P/E',
-									'Dividend yield',
-									'Equities'
-								],
-								...tableRows.map((sector, index) => [
-									index + 1,
-									sector.sector,
-									sector.marketCap,
-									sector.weight,
-									sector.priceChangePercentage1d,
-									sector.priceChangePercentage7d,
-									sector.priceChangePercentage1m,
-									sector.priceChangePercentageYtd,
-									sector.dollarVolume24h,
-									sector.trailingPE,
-									sector.dividendYield,
-									sector.companyCount
-								])
-							]
-						})}
+						prepareCsv={() => prepareTableCsv({ instance: sectorTable, filename: 'equity-sectors' })}
 					/>
 				</PanelHeader>
-				<AggregateTableScroller>
-					<table className="w-full min-w-[900px]">
-						<thead>
-							<tr className="border-b border-subtle table-header text-secondary">
-								<th className="p-3 text-left">#</th>
-								<SortableTableHeader
-									column="sector"
-									sort={tableSort}
-									onSort={setTableSort}
-									align="left"
-									defaultDirection="asc"
-								>
-									Sector
-								</SortableTableHeader>
-								<SortableTableHeader column="marketCap" sort={tableSort} onSort={setTableSort}>
-									Market cap
-								</SortableTableHeader>
-								<SortableTableHeader column="weight" sort={tableSort} onSort={setTableSort}>
-									Weight
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentage1d" sort={tableSort} onSort={setTableSort}>
-									1D
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentage7d" sort={tableSort} onSort={setTableSort}>
-									7D
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentage1m" sort={tableSort} onSort={setTableSort}>
-									1M
-								</SortableTableHeader>
-								<SortableTableHeader column="priceChangePercentageYtd" sort={tableSort} onSort={setTableSort}>
-									YTD
-								</SortableTableHeader>
-								<SortableTableHeader column="dollarVolume24h" sort={tableSort} onSort={setTableSort}>
-									Volume 24h
-								</SortableTableHeader>
-								<SortableTableHeader column="trailingPE" sort={tableSort} onSort={setTableSort}>
-									P/E
-								</SortableTableHeader>
-								<SortableTableHeader column="dividendYield" sort={tableSort} onSort={setTableSort}>
-									Div. yield
-								</SortableTableHeader>
-								<SortableTableHeader column="companyCount" sort={tableSort} onSort={setTableSort}>
-									Equities
-								</SortableTableHeader>
-								<th className="p-3 text-left">Top holdings</th>
-							</tr>
-						</thead>
-						<tbody>
-							{tableRows.map((sector, index) => (
-								<tr key={sector.sectorSlug} className="border-b border-subtle body-md hover:bg-hover-row">
-									<td className="p-3 text-tertiary">{index + 1}</td>
-									<td className="p-3">
-										<Link href={`/equities/sectors/${sector.sectorSlug}`} className="font-medium hover:text-link">
-											{sector.sector}
-										</Link>
-									</td>
-									<td className="p-3 text-right">{formatMetric(sector.marketCap, 'usd')}</td>
-									<td className="p-3 text-right">{formatMetric(sector.weight, 'percent')}</td>
-									<td className="p-3 text-right">
-										<ChangeValue value={sector.priceChangePercentage1d} />
-									</td>
-									<td className="p-3 text-right">
-										<ChangeValue value={sector.priceChangePercentage7d} />
-									</td>
-									<td className="p-3 text-right">
-										<ChangeValue value={sector.priceChangePercentage1m} />
-									</td>
-									<td className="p-3 text-right">
-										<ChangeValue value={sector.priceChangePercentageYtd} />
-									</td>
-									<td className="p-3 text-right">{formatMetric(sector.dollarVolume24h, 'usd')}</td>
-									<td className="p-3 text-right">{formatMetric(sector.trailingPE, 'multiple')}</td>
-									<td className="p-3 text-right">{formatMetric(sector.dividendYield, 'percent')}</td>
-									<td className="p-3 text-right">{sector.companyCount}</td>
-									<td className="p-3">
-										{sector.topHoldings.length > 0 ? (
-											<div className="flex items-center gap-1.5">
-												{sector.topHoldings.slice(0, 3).map((holding) => (
-													<HoldingLink key={holding.ticker} holding={holding} compact />
-												))}
-											</div>
-										) : (
-											'—'
-										)}
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</AggregateTableScroller>
+				<PaginatedTable table={sectorTable} pageSizeOptions={SECTOR_TABLE_PAGE_SIZES} />
 			</Panel>
 		</div>
 	)

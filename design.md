@@ -286,6 +286,10 @@ These recipes are the shared component vocabulary established from the reviewed 
 - **Icon color** — three roles: (1) _affordance indicators_ (select/column-header/accordion/row-expand chevrons, resting sort carets, help circles, drag handles) pin `text-tertiary` — never ship a colorless icon that inherits whatever text tier surrounds it; (2) _icons beside a label in the same control_ (button icons, link arrows, leading icons) inherit `currentColor` deliberately so they move with their label on hover/active; (3) _icon-only action buttons_ (copy, close ✕, csv/download, settings, pagination arrows) use the ghost ladder `text-secondary` → hover/focus `text-primary` — never opacity dimming. Status icons use semantic tokens (`text-warning`, `text-data-down`); empty-state illustrations are `text-tertiary`; the active sort caret stays `text-link`. `QuestionHelper` and the `Ariakit.SelectArrow` hosts pin tertiary centrally.
 - **Active = branded** is the cross-component rule: selection is shown with brand tint/solid/border + link-blue text, never with grays.
 
+### Partial bootstrap states
+
+If the server provides only a subset of a dataset while the full client request loads, render URL-selected data only once that dataset is available. Until then, display the subset's actual period instead of a false empty state. Preserve the requested URL so it takes effect when the full dataset arrives, and describe the fallback accurately on request failure.
+
 ## Charts
 
 Chart **renderers** live in [`src/components/ECharts`](src/components/ECharts); pick the component for the chart's shape and pass it data and options:

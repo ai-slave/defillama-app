@@ -6,7 +6,6 @@ import type {
 	IEquitiesCompanyApiItem,
 	IEquitiesCompanyListApiItem,
 	IEquitiesDimensionsResponse,
-	IEquitiesEarningsCalendarApiItem,
 	IEquitiesFilingApiItem,
 	IEquitiesIndustryApiItem,
 	IEquitiesMetadataResponse,
@@ -42,7 +41,6 @@ function createEquitiesUrl(
 		countries?: 'US'
 		timeframe?: EquitiesPriceHistoryApiTimeframe
 		sector?: string
-		industry?: string
 	}
 ): string {
 	const url = new URL(baseUrl)
@@ -67,9 +65,6 @@ function createEquitiesUrl(
 		url.searchParams.set('sector', params.sector)
 	}
 
-	if (params?.industry) {
-		url.searchParams.set('industry', params.industry)
-	}
 	url.searchParams.set('cachebust', '091626')
 
 	return url.toString()
@@ -83,13 +78,11 @@ export async function fetchEquitiesCompanies(): Promise<Array<IEquitiesCompanyAp
 }
 
 export async function fetchEquitiesCompaniesByTaxonomy({
-	sector,
-	industry
+	sector
 }: {
 	sector?: string
-	industry?: string
 }): Promise<Array<IEquitiesCompanyApiItem>> {
-	return fetchJson<Array<IEquitiesCompanyApiItem>>(createEquitiesUrl(EQUITIES_COMPANIES_API, { sector, industry }))
+	return fetchJson<Array<IEquitiesCompanyApiItem>>(createEquitiesUrl(EQUITIES_COMPANIES_API, { sector }))
 }
 
 export async function fetchEquitiesSectors(): Promise<Array<IEquitiesSectorApiItem>> {
@@ -106,10 +99,6 @@ export async function fetchEquitiesSector(sector: string): Promise<IEquitiesSect
 
 export async function fetchEquitiesIndustries(sector?: string): Promise<Array<IEquitiesIndustryApiItem>> {
 	return fetchJson<Array<IEquitiesIndustryApiItem>>(createEquitiesUrl(EQUITIES_INDUSTRIES_API, { sector }))
-}
-
-export async function fetchEquitiesEarningsCalendar(): Promise<Array<IEquitiesEarningsCalendarApiItem>> {
-	return fetchJson<Array<IEquitiesEarningsCalendarApiItem>>(createEquitiesUrl(EQUITIES_EARNINGS_CALENDAR_API))
 }
 
 /**

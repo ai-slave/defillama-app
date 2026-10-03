@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
-import { SortIcon } from '~/components/Table/SortIcon'
+import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
@@ -11,19 +11,31 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatNumber, formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
-import { RETURN_PERIODS, type AggregateReturnMatrixRow, type SortDirection } from './aggregateData'
+import { RETURN_PERIODS, type AggregateReturnMatrixRow } from './aggregateData'
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
 
-export function formatMetric(value: number | null, kind: 'usd' | 'percent' | 'number' | 'multiple'): string {
-	if (value == null || !Number.isFinite(value)) return '—'
+export function formatMetric(
+	value: number | null | undefined,
+	kind: 'usd' | 'percent' | 'number' | 'multiple'
+): string {
+	if (value == null) return '—'
 	if (kind === 'usd') return formatUsd(value, { compact: true }) ?? '—'
 	if (kind === 'percent') return formatPercent(value, { input: 'percent', maximumFractionDigits: 1 }) ?? '—'
 	if (kind === 'multiple') return `${formatNumber(value, { maximumFractionDigits: 1 }) ?? '—'}×`
 	return formatCompactNumber(value, { maximumFractionDigits: 1 }) ?? '—'
 }
 
-export function ChangeValue({ value }: { value: number | null }) {
+/** A paginated table's display rank, shown inside its name cell so the CSV keeps one column per value. */
+export function RowNumber({ rowId }: { rowId: string }) {
+	return (
+		<span className="inline-block min-w-6 shrink-0 text-tertiary" aria-hidden="true">
+			{usePaginatedTableDisplayRowNumber(rowId)}
+		</span>
+	)
+}
+
+export function ChangeValue({ value }: { value: number | null | undefined }) {
 	const color =
 		value == null ? 'text-tertiary' : value > 0 ? 'text-data-up' : value < 0 ? 'text-data-down' : 'text-secondary'
 	return <span className={color}>{formatPercentChange(value) ?? '—'}</span>
@@ -137,57 +149,6 @@ export function AggregateTreemap({
 	)
 }
 
-export interface AggregateTableSort<K extends string> {
-	key: K
-	direction: SortDirection
-}
-
-export function AggregateTableScroller({ children }: { children: ReactNode }) {
-	return (
-		<div className="relative w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-			{children}
-		</div>
-	)
-}
-
-export function SortableTableHeader<K extends string>({
-	column,
-	sort,
-	onSort,
-	children,
-	align = 'right',
-	defaultDirection = 'desc',
-	className = ''
-}: {
-	column: K
-	sort: AggregateTableSort<K>
-	onSort: (sort: AggregateTableSort<K>) => void
-	children: ReactNode
-	align?: 'left' | 'right'
-	defaultDirection?: SortDirection
-	className?: string
-}) {
-	const isActive = sort.key === column
-	const direction = isActive ? sort.direction : false
-	const nextDirection = isActive ? (sort.direction === 'asc' ? 'desc' : 'asc') : defaultDirection
-
-	return (
-		<th
-			className={`px-2 py-3 ${align === 'right' ? 'text-right' : 'text-left'} ${className}`.trim()}
-			aria-sort={isActive ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
-		>
-			<button
-				type="button"
-				className={`inline-grid max-w-full grid-cols-[minmax(0,1fr)_10px] items-center gap-1.5 leading-tight font-medium text-secondary hover:text-primary ${align === 'right' ? 'text-right' : 'text-left'}`}
-				onClick={() => onSort({ key: column, direction: nextDirection })}
-			>
-				<span>{children}</span>
-				<SortIcon dir={direction} />
-			</button>
-		</th>
-	)
-}
-
 export function sectorColor(sectorSlug: string): string {
 	const index = [
 		'technology',
@@ -208,6 +169,19 @@ export function sectorColor(sectorSlug: string): string {
 
 export function categoryColor(index: number): string {
 	return CHART_COLORS[Math.abs(index) % CHART_COLORS.length]
+}
+
+export function treemapChildColors(parentColor: string, count: number): Array<string> {
+	if (count <= 1) return [parentColor]
+
+	const red = parseInt(parentColor.slice(1, 3), 16)
+	const green = parseInt(parentColor.slice(3, 5), 16)
+	const blue = parseInt(parentColor.slice(5, 7), 16)
+
+	return Array.from({ length: count }, (_, index) => {
+		const ratio = 0.12 + (index / (count - 1)) * 0.34
+		return `rgb(${Math.round(red + (255 - red) * ratio)}, ${Math.round(green + (255 - green) * ratio)}, ${Math.round(blue + (255 - blue) * ratio)})`
+	})
 }
 
 export function ReturnMatrix({

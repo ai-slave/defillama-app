@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { formatRwaTreemapTooltip } from '../rwaFormatting'
 
 describe('rwa treemap formatting', () => {
-	test('formats flat-node tooltips with share of total only', () => {
+	test('a top-level node shows its share of the total', () => {
 		const tooltip = formatRwaTreemapTooltip({
 			info: {
 				name: 'Tesla',
@@ -13,13 +13,10 @@ describe('rwa treemap formatting', () => {
 			formatMetricValue: (value) => String(value)
 		})
 
-		expect(tooltip).toContain('Tesla<br>')
-		expect(tooltip).toContain('Markets: 3<br>')
-		expect(tooltip).toContain('Share of Total: 6.12%<br>')
-		expect(tooltip).not.toContain('Share of Parent')
+		expect(tooltip).toBe('Tesla<br>Markets: 3<br>Share of total: 6.12%<br>')
 	})
 
-	test('formats nested-node tooltips with explicit parent and total shares', () => {
+	test('a nested node names its parent and shows both shares', () => {
 		const tooltip = formatRwaTreemapTooltip({
 			info: {
 				name: 'xyz:META',
@@ -30,11 +27,23 @@ describe('rwa treemap formatting', () => {
 			formatMetricValue: (value) => String(value)
 		})
 
-		expect(tooltip).toContain('Parent: Meta<br>')
-		expect(tooltip).toContain('Child: xyz:META<br>')
-		expect(tooltip).toContain('Markets: 2<br>')
-		expect(tooltip).toContain('Share of Parent: 66.67%<br>')
-		expect(tooltip).toContain('Share of Total: 44.44%<br>')
+		expect(tooltip).toBe('xyz:META<br>Markets: 2<br>Share of Meta: 66.67%<br>Share of total: 44.44%<br>')
+	})
+
+	test('a node with a 1D change shows it as the last line', () => {
+		const tooltip = formatRwaTreemapTooltip({
+			info: {
+				name: 'Software',
+				value: [2, 40, 12.5, -1.25],
+				treePathInfo: [{ name: 'Equities' }, { name: 'Technology' }, { name: 'Software' }]
+			},
+			valueLabel: 'Market Cap',
+			formatMetricValue: (value) => String(value)
+		})
+
+		expect(tooltip).toBe(
+			'Software<br>Market Cap: 2<br>Share of Technology: 40%<br>Share of total: 12.5%<br>1D return: -1.25%<br>'
+		)
 	})
 
 	test('labels the root node tooltip with the root name and total metric', () => {

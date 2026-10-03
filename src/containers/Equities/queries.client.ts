@@ -5,7 +5,7 @@ import type { EquitiesTableResponse, EquitiesTreemapResponse, IEquitiesCalendarD
 
 export const EQUITIES_API = '/api/public/equities'
 export const EQUITIES_MARKET_MAP_API = '/api/public/equities/market-map'
-export const EQUITIES_EARNINGS_CALENDAR_API = '/api/public/equities/earnings-calendar'
+export const EQUITIES_EARNINGS_CALENDAR_ROUTE = '/api/public/equities/earnings-calendar'
 
 export interface EquitiesCalendarResponse extends IEquitiesCalendarData {
 	generatedAt: number
@@ -49,7 +49,7 @@ export function useEquitiesTreemapDataset(queryString: string | null) {
 export function useEquitiesEarningsCalendar() {
 	return useQuery<EquitiesCalendarResponse>({
 		queryKey: ['equities-earnings-calendar'],
-		queryFn: async ({ signal }) => fetchJson<EquitiesCalendarResponse>(EQUITIES_EARNINGS_CALENDAR_API, { signal }),
+		queryFn: async ({ signal }) => fetchJson<EquitiesCalendarResponse>(EQUITIES_EARNINGS_CALENDAR_ROUTE, { signal }),
 		staleTime: 60 * 60 * 1000,
 		refetchInterval: 30 * 60 * 1000,
 		refetchOnWindowFocus: false,

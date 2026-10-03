@@ -1,10 +1,14 @@
 import Link from 'next/link'
-import { useState, type FormEvent } from 'react'
-import { Select } from '~/components/Select/Select'
+import { useRouter } from 'next/router'
+import { lazy, Suspense, useState, type FormEvent } from 'react'
+import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
+import { readSelectionFromQuery } from '~/components/Select/query'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -13,48 +17,45 @@ import { InlineStatus, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { formatDate, formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { isTrueQueryParam, pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { EquitiesPageHeader, StaleDataNotice } from './AggregateShared'
-import type { IEquitiesEarningsCalendarApiItem } from './api.types'
 import {
 	addCalendarDays,
-	buildEarningsCalendarMonthBuckets,
-	buildEarningsCalendarSectorOptions,
+	buildEarningsCalendarView,
 	buildEarningsCalendarWeek,
 	buildEarningsCalendarWeekExposure,
 	buildSecFilingUrl,
 	cleanEarningsCompanyName,
-	getEarningsCalendarStatus,
-	getEarningsCalendarWeekBounds,
-	joinEarningsCalendarRows,
-	searchEarningsCalendarCompanies,
+	type EarningsCalendarBootstrapSeed,
 	type EarningsCalendarSearchResult,
 	type EarningsCalendarStatus,
-	type EarningsMarketCapTier,
+	type EarningsMarketCapOption,
+	getEarningsCalendarDisplayDate,
+	getEarningsCalendarStatus,
 	type IEarningsCalendarBootstrap,
-	type IEarningsCalendarRow
+	searchEarningsCalendarCompanies
 } from './earningsCalendarData'
 import { useEquitiesEarningsCalendar } from './queries.client'
-import type { IEquitiesCalendarCompany } from './types'
+import type { IEquitiesCalendarRow } from './types'
 
-const EMPTY_CALENDAR_EVENTS: Array<IEquitiesEarningsCalendarApiItem> = []
-const EMPTY_CALENDAR_COMPANIES: Array<IEquitiesCalendarCompany> = []
-const EMPTY_CALENDAR_ROWS: Array<IEarningsCalendarRow> = []
+const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const MARKET_CAP_OPTIONS = [
-	{ key: 'all', name: 'All market caps' },
-	{ key: 'mega', name: 'Mega · ≥$200B' },
-	{ key: 'large', name: 'Large' },
-	{ key: 'mid', name: 'Mid' },
-	{ key: 'small', name: 'Small' },
-	{ key: 'micro', name: 'Micro' }
-] as const
+const MARKET_CAP_OPTIONS: ReadonlyArray<{ key: EarningsMarketCapOption; name: string; help: string }> = [
+	{ key: 'mega', name: 'Mega', help: '$200B and above' },
+	{ key: 'large', name: 'Large', help: '$10B to $200B' },
+	{ key: 'mid', name: 'Mid', help: '$2B to $10B' },
+	{ key: 'small', name: 'Small', help: '$300M to $2B' },
+	{ key: 'micro', name: 'Micro', help: 'Below $300M' },
+	{ key: 'unknown', name: 'Unknown', help: 'No market cap in the company data' }
+]
+const MARKET_CAP_KEYS = MARKET_CAP_OPTIONS.map((option) => option.key)
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-type EarningsCalendarBootstrapSeed = IEarningsCalendarBootstrap & {
-	todayET: string
-	updatedAt: string | null
-	stale: boolean
+const STATUS_LABELS: Record<EarningsCalendarStatus, string> = {
+	reported: 'Reported',
+	projected: 'Projected',
+	pastDue: 'Past due'
 }
 
 function formatCap(value: number | null): string {
@@ -64,11 +65,10 @@ function formatCap(value: number | null): string {
 function formatWeekRange(monday: string, friday: string): string {
 	const mondayLabel = formatDate(monday) ?? monday
 	const fridayLabel = formatDate(friday) ?? friday
-	const year = friday.slice(0, 4)
-	return `${mondayLabel.replace(`, ${year}`, '')} – ${fridayLabel}`
+	return `${mondayLabel} – ${fridayLabel}`
 }
 
-function getDayStatusLabel(rows: ReadonlyArray<IEarningsCalendarRow>, todayET: string): string {
+function getDayStatusLabel(rows: ReadonlyArray<IEquitiesCalendarRow>, todayET: string): string {
 	const counts = { reported: 0, projected: 0, pastDue: 0 }
 	for (const row of rows) counts[getEarningsCalendarStatus(row, todayET)]++
 	const parts = [
@@ -77,21 +77,6 @@ function getDayStatusLabel(rows: ReadonlyArray<IEarningsCalendarRow>, todayET: s
 		counts.pastDue ? `${counts.pastDue} past due` : null
 	].filter(Boolean)
 	return parts.join(' · ') || 'No reports'
-}
-
-function CalendarStatusMark({ status }: { status: EarningsCalendarStatus }) {
-	const styles =
-		status === 'reported'
-			? 'border-data-up bg-data-up'
-			: status === 'pastDue'
-				? 'border-warning bg-transparent'
-				: 'border-tertiary bg-transparent'
-	return (
-		<span
-			aria-hidden="true"
-			className={`inline-block size-2 rounded-full border ${status === 'reported' ? '' : 'border-dashed'} ${styles}`}
-		/>
-	)
 }
 
 function WindowBar({ drift }: { drift: number }) {
@@ -110,7 +95,7 @@ function WindowBar({ drift }: { drift: number }) {
 	)
 }
 
-function EarningsCard({ row, todayET }: { row: IEarningsCalendarRow; todayET: string }) {
+function EarningsCard({ row, todayET }: { row: IEquitiesCalendarRow; todayET: string }) {
 	const status = getEarningsCalendarStatus(row, todayET)
 	const filingUrl = buildSecFilingUrl(row.cik, row.accession_number)
 	const session =
@@ -127,9 +112,8 @@ function EarningsCard({ row, todayET }: { row: IEarningsCalendarRow; todayET: st
 				<TokenLogo kind="equities" name={row.ticker} country={row.country} size={24} />
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<CalendarStatusMark status={status} />
 						{row.href ? (
-							<Link href={row.href} className="label-md text-link hover:underline" aria-label={`Open ${row.name}`}>
+							<Link href={row.href} className="label-md text-link hover:underline">
 								{row.ticker}
 							</Link>
 						) : (
@@ -142,7 +126,8 @@ function EarningsCard({ row, todayET }: { row: IEarningsCalendarRow; todayET: st
 			</div>
 			<div className="flex min-w-0 items-center justify-between gap-2">
 				<span className="body-sm text-tertiary">
-					{row.fiscal_period} FY{String(row.fiscal_year).slice(-2)}
+					{row.fiscal_period} FY{String(row.fiscal_year).slice(-2)} ·{' '}
+					<span className={status === 'pastDue' ? 'text-warning' : undefined}>{STATUS_LABELS[status]}</span>
 				</span>
 				{status === 'reported' ? (
 					<span className="flex items-center gap-2 label-sm text-secondary">
@@ -152,8 +137,8 @@ function EarningsCard({ row, todayET }: { row: IEarningsCalendarRow; todayET: st
 								href={filingUrl}
 								target="_blank"
 								rel="noopener noreferrer"
+								aria-label={`SEC filing for ${row.ticker} (opens in a new tab)`}
 								className="inline-flex items-center gap-1 text-link hover:underline"
-								onClick={(event) => event.stopPropagation()}
 							>
 								SEC <Icon name="external-link" className="size-3" aria-hidden="true" />
 							</a>
@@ -167,85 +152,43 @@ function EarningsCard({ row, todayET }: { row: IEarningsCalendarRow; todayET: st
 	)
 }
 
-function SeasonsChart({
-	rows,
-	todayET,
-	selectedMonday,
-	onSelectDate,
-	bootstrap
-}: {
-	rows: Array<IEarningsCalendarRow> | null
-	todayET: string
-	selectedMonday: string
-	onSelectDate: (date: string) => void
-	bootstrap?: EarningsCalendarBootstrapSeed
-}) {
-	const { months, pastCount, maxCount, firstReportByMonth } = (() => {
-		if (rows === null) {
-			const bootstrapMonths = bootstrap?.monthBuckets ?? []
-			return {
-				months: bootstrapMonths,
-				pastCount: bootstrap?.pastCount ?? 0,
-				maxCount: Math.max(...bootstrapMonths.map((month) => month.count), 1),
-				firstReportByMonth: new Map(Object.entries(bootstrap?.firstReportByMonth ?? {}))
-			}
-		}
-		const nextMonths = buildEarningsCalendarMonthBuckets(rows, todayET)
-		const nextFirstReportByMonth = new Map<string, string>()
-		let nextPastCount = 0
-		for (const row of rows) {
-			if (row.report_date < todayET) {
-				nextPastCount++
-				continue
-			}
-			const month = row.report_date.slice(0, 7)
-			if (!nextFirstReportByMonth.has(month)) nextFirstReportByMonth.set(month, row.report_date)
-		}
-		return {
-			months: nextMonths,
-			pastCount: nextPastCount,
-			maxCount: Math.max(...nextMonths.map((month) => month.count), 1),
-			firstReportByMonth: nextFirstReportByMonth
-		}
-	})()
-	const selectedMonth = selectedMonday.slice(0, 7)
+function SeasonsChart({ summary }: { summary: Pick<IEarningsCalendarBootstrap, 'monthBuckets' | 'pastCount'> }) {
+	const months = summary.monthBuckets
+	const labels = ['Last 31 days', ...months.map((month) => formatMonthYear(`${month.month}-01`) ?? month.month)]
+	const dataset = {
+		dimensions: ['Period', 'Reports'],
+		source: labels.map((label, index) => [label, index === 0 ? summary.pastCount : months[index - 1]!.count])
+	}
 
 	return (
-		<div className="flex min-h-[176px] items-end gap-2 overflow-x-auto px-3 pb-3">
-			<div className="flex min-w-16 flex-col items-center gap-2">
-				<span className="label-sm text-tertiary">Last 31d</span>
-				<div className="h-4 w-full rounded-sm" style={{ backgroundColor: CHART_COLORS[0] }} />
-				<span className="label-sm">{pastCount}</span>
-			</div>
-			{months.map((month) => {
-				const firstReport = firstReportByMonth.get(month.month)
-				const isSelected = month.month === selectedMonth
-				return (
-					<button
-						key={month.month}
-						type="button"
-						onClick={() => firstReport && onSelectDate(firstReport)}
-						disabled={rows === null || !firstReport}
-						className="group flex min-w-16 flex-1 flex-col items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
-						aria-label={`Jump to ${formatMonthYear(`${month.month}-01`) ?? month.month}`}
-					>
-						<span
-							className={`w-full rounded-sm transition-opacity ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-75'}`}
-							style={{ backgroundColor: CHART_COLORS[0], height: `${Math.max(10, (month.count / maxCount) * 100)}px` }}
-						/>
-						<span className="body-sm text-secondary">
-							{formatMonthYear(`${month.month}-01`)?.split(' ')[0] ?? month.month}
-						</span>
-						<span className="label-sm">{month.count}</span>
-					</button>
-				)
-			})}
-		</div>
+		<Suspense fallback={<ChartPanelBodyFallback />}>
+			<MultiSeriesChart
+				dataset={dataset}
+				charts={[{ type: 'bar', name: 'Reports', encode: { x: 'Period', y: 'Reports' }, barMaxWidth: 48 }]}
+				chartOptions={{
+					...createCategoryChartOptions(''),
+					yAxis: { min: 0, minInterval: 1, name: 'Companies' },
+					xAxis: { type: 'category', boundaryGap: true, axisLabel: { interval: 0, rotate: 30 } }
+				}}
+				valueSymbol=""
+				exportButtons="hidden"
+				hideDataZoom
+				height="220px"
+			/>
+		</Suspense>
 	)
 }
 
-function WeekExposure({ rows, monday }: { rows: ReadonlyArray<IEarningsCalendarRow>; monday: string }) {
-	const exposure = buildEarningsCalendarWeekExposure(rows, monday)
+function WeekExposure({
+	rows,
+	monday,
+	todayET
+}: {
+	rows: ReadonlyArray<IEquitiesCalendarRow>
+	monday: string
+	todayET: string
+}) {
+	const exposure = buildEarningsCalendarWeekExposure(rows, monday, todayET)
 	const maxMarketCap = Math.max(...exposure.days.map((day) => day.marketCap), 1)
 	return (
 		<div className="flex min-h-[176px] flex-col gap-2 px-3 pb-3">
@@ -255,15 +198,13 @@ function WeekExposure({ rows, monday }: { rows: ReadonlyArray<IEarningsCalendarR
 					const remainingRows = day.rows.slice(5)
 					const remainingMarketCap = remainingRows.reduce((total, row) => total + (row.marketCap ?? 0), 0)
 					const weekday = WEEKDAY_LABELS[index + 1]
+					const companies = `${day.companyCount} ${day.companyCount === 1 ? 'company' : 'companies'}`
 					return (
 						<Hovercard
 							key={day.date}
 							placement="bottom-start"
 							render={
-								<button
-									type="button"
-									aria-label={`${weekday}: ${formatCap(day.marketCap)} across ${day.companyCount} ${day.companyCount === 1 ? 'company' : 'companies'}`}
-								/>
+								<button type="button" aria-label={`${weekday}: ${formatCap(day.marketCap)} across ${companies}`} />
 							}
 							className="hover-wash w-full rounded-md text-left"
 							contentClassName="w-80 max-w-(--popover-available-width) p-3"
@@ -274,37 +215,37 @@ function WeekExposure({ rows, monday }: { rows: ReadonlyArray<IEarningsCalendarR
 											{weekday} · {formatDate(day.date) ?? day.date}
 										</p>
 										<p className="body-sm text-secondary">
-											{formatCap(day.marketCap)} across {day.companyCount}{' '}
-											{day.companyCount === 1 ? 'company' : 'companies'}
+											{formatCap(day.marketCap)} across {companies}
 										</p>
 									</div>
 									{topCompanies.length > 0 ? (
 										<div className="flex flex-col gap-2 border-t border-subtle pt-2">
-											{topCompanies.map((row) => {
-												const filingUrl = buildSecFilingUrl(row.cik, row.accession_number)
-												const share =
-													row.marketCap != null && day.marketCap > 0
-														? formatPercent(row.marketCap / day.marketCap, {
-																input: 'fraction',
-																maximumFractionDigits: 1
-															})
-														: '—'
-												return (
-													<div key={`${row.ticker}:${row.event_key}`} className="flex items-center gap-2">
-														<TokenLogo kind="equities" name={row.ticker} country={row.country} size={20} />
-														<div className="min-w-0 flex-1">
-															<p className="truncate label-sm text-primary">
-																{row.ticker} · {cleanEarningsCompanyName(row.name)}
-															</p>
-															<p className="body-sm text-tertiary">{filingUrl ? 'SEC-confirmed' : 'Projected'}</p>
-														</div>
-														<div className="text-right">
-															<p className="label-sm text-primary">{formatCap(row.marketCap)}</p>
-															<p className="body-sm text-tertiary">{share}</p>
-														</div>
+											{topCompanies.map((row) => (
+												<div key={`${row.ticker}:${row.event_key}`} className="flex items-center gap-2">
+													<TokenLogo kind="equities" name={row.ticker} country={row.country} size={20} />
+													<div className="min-w-0 flex-1">
+														<p className="truncate label-sm text-primary">
+															{row.ticker} · {cleanEarningsCompanyName(row.name)}
+														</p>
+														<p className="body-sm text-tertiary">
+															{buildSecFilingUrl(row.cik, row.accession_number)
+																? 'SEC-confirmed'
+																: STATUS_LABELS[getEarningsCalendarStatus(row, todayET)]}
+														</p>
 													</div>
-												)
-											})}
+													<div className="text-right">
+														<p className="label-sm text-primary">{formatCap(row.marketCap)}</p>
+														<p className="body-sm text-tertiary">
+															{row.marketCap != null && day.marketCap > 0
+																? formatPercent(row.marketCap / day.marketCap, {
+																		input: 'fraction',
+																		maximumFractionDigits: 1
+																	})
+																: '—'}
+														</p>
+													</div>
+												</div>
+											))}
 											{remainingRows.length > 0 ? (
 												<p className="border-t border-subtle pt-2 body-sm text-secondary">
 													+{remainingRows.length} more · {formatCap(remainingMarketCap)}
@@ -339,112 +280,166 @@ function WeekExposure({ rows, monday }: { rows: ReadonlyArray<IEarningsCalendarR
 			</div>
 			<p className="mt-auto border-t border-subtle pt-2 body-sm text-secondary">
 				<span className="label-md text-primary">{formatCap(exposure.marketCap)}</span> reporting ·{' '}
-				{exposure.secConfirmedCount} SEC-confirmed · {exposure.projectedCount} projected
+				{exposure.companyCount} companies · {exposure.secConfirmedCount} SEC-confirmed · {exposure.projectedCount}{' '}
+				projected
+				{exposure.pastDueCount > 0 ? ` · ${exposure.pastDueCount} past due` : ''}
 			</p>
 		</div>
 	)
 }
 
+type EarningsCalendarDay = ReturnType<typeof buildEarningsCalendarWeek>['days'][number]
+
+function EarningsDayPanel({
+	day,
+	busiestCount,
+	todayET
+}: {
+	day: EarningsCalendarDay
+	busiestCount: number
+	todayET: string
+}) {
+	const [expanded, setExpanded] = useState(false)
+	const isBusiest = day.rows.length > 0 && day.rows.length === busiestCount
+	const visibleCards = expanded ? day.rows : day.cards
+	return (
+		<Panel padding="none" className="min-w-0">
+			<PanelHeader>
+				<div className="mr-auto">
+					<p className="label-sm text-secondary">
+						{WEEKDAY_LABELS[day.weekday]}
+						{isBusiest ? ' · Busiest' : ''}
+					</p>
+					<PanelTitle as="h3">{formatDate(day.date) ?? day.date}</PanelTitle>
+				</div>
+				<div className="text-right">
+					<p className="mono-xl">{day.rows.length}</p>
+					<p className="body-sm text-tertiary">{getDayStatusLabel(day.rows, todayET)}</p>
+				</div>
+			</PanelHeader>
+			<div className="flex flex-col gap-2 p-2">
+				{day.cards.length === 0 && day.rows.length > 0 ? (
+					<p className="p-2 body-sm text-secondary">None of this week’s 12 largest companies report today.</p>
+				) : null}
+				{visibleCards.map((row) => (
+					<EarningsCard key={`${row.ticker}:${row.event_key}`} row={row} todayET={todayET} />
+				))}
+				{day.rows.length === 0 ? <p className="py-8 text-center body-sm text-tertiary">No reports</p> : null}
+				{day.remainingCount > 0 ? (
+					<Button
+						type="button"
+						variant="secondary"
+						size="md"
+						className="w-full"
+						aria-expanded={expanded}
+						onClick={() => setExpanded((value) => !value)}
+					>
+						{expanded
+							? 'Show top events'
+							: day.cards.length > 0
+								? `Show ${day.remainingCount} more`
+								: `See all ${day.rows.length}`}
+					</Button>
+				) : null}
+			</div>
+		</Panel>
+	)
+}
+
 export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalendarBootstrapSeed }) {
+	const router = useRouter()
 	const query = useEquitiesEarningsCalendar()
-	const [selectedDate, setSelectedDate] = useState<string | null>(null)
-	const [marketCapTier, setMarketCapTier] = useState<'all' | EarningsMarketCapTier>('all')
-	const [sectorSlug, setSectorSlug] = useState('all')
-	const [tightWindowsOnly, setTightWindowsOnly] = useState(false)
-	const [expandedDays, setExpandedDays] = useState<Array<string>>([])
 	const [searchQuery, setSearchQuery] = useState('')
 	const [searchResult, setSearchResult] = useState<EarningsCalendarSearchResult | null>(null)
 
-	const data = query.data
-	const events = data?.rows ?? EMPTY_CALENDAR_EVENTS
-	const companies = data?.companies ?? EMPTY_CALENDAR_COMPANIES
-	const rows = data ? joinEarningsCalendarRows(events, companies) : (bootstrap?.rows ?? EMPTY_CALENDAR_ROWS)
-	const todayET = data?.todayET ?? bootstrap?.todayET ?? '1970-01-01'
-	const activeDate = selectedDate ?? todayET
-	const week = buildEarningsCalendarWeek(rows, activeDate, {
-		marketCapTiers: marketCapTier === 'all' ? undefined : [marketCapTier],
-		sectorSlug: sectorSlug === 'all' ? null : sectorSlug,
-		tightWindowsOnly
-	})
-	const bounds = data ? getEarningsCalendarWeekBounds(rows) : (bootstrap?.bounds ?? { first: null, last: null })
-	const uniqueCompanies = data ? new Set(rows.map((row) => row.ticker)).size : (bootstrap?.uniqueCompanyCount ?? 0)
-	const sectorOptions = data
-		? buildEarningsCalendarSectorOptions(companies)
-		: (bootstrap?.sectorOptions ?? [{ key: 'all', name: 'All sectors' }])
-	if (query.isPending && !bootstrap) return <PanelLoadingStatus label="Loading earnings calendar" />
-	if ((query.isError || !data) && !bootstrap) {
+	if (!query.data && !bootstrap) {
+		if (query.isPending) return <PanelLoadingStatus label="Loading earnings calendar" />
 		return (
 			<PanelStatus variant="error">
-				The earnings calendar is temporarily unavailable. Please try again shortly.
+				<span className="flex flex-col items-center gap-3">
+					The earnings calendar didn’t load.
+					<RetryButton refetch={query.refetch} fetching={query.isFetching} />
+				</span>
 			</PanelStatus>
 		)
 	}
 
+	const view = buildEarningsCalendarView(query.data, bootstrap!)
+	const { companies, rows, sectorOptions, summary, todayET } = view
+	const activeDate = getEarningsCalendarDisplayDate(readSingleQueryValue(router.query.week), todayET, companies != null)
+	const tightWindowsOnly = isTrueQueryParam(router.query.tightWindows)
+	const week = buildEarningsCalendarWeek(rows, activeDate, {
+		marketCapTiers: readSelectionFromQuery(router.query, 'marketCap', 'excludeMarketCap', MARKET_CAP_KEYS),
+		sectorSlugs: readSelectionFromQuery(
+			router.query,
+			'sector',
+			'excludeSector',
+			sectorOptions.map((option) => option.key)
+		),
+		tightWindowsOnly
+	})
+	const setSelectedDate = (date: string) => void pushShallowQuery(router, { week: date === todayET ? undefined : date })
+
 	const submitSearch = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (!data) return
+		if (!companies) return
 		const result = searchEarningsCalendarCompanies(searchQuery, companies, rows, todayET)
 		setSearchResult(result)
-		if (result.kind === 'matches' && result.companies[0]?.nextEvent)
-			setSelectedDate(result.companies[0].nextEvent.report_date)
+		if (result.kind === 'match' && result.company.nextEvent) setSelectedDate(result.company.nextEvent.report_date)
 	}
 	const busiestCount = Math.max(...week.days.map((day) => day.rows.length), 0)
-	const quietThreshold = week.cards.at(-1)?.marketCap ?? null
-	const canGoBack = data != null && bounds.first != null && week.monday > bounds.first
-	const canGoForward = data != null && bounds.last != null && week.monday < bounds.last
-	const marketCapLabel = MARKET_CAP_OPTIONS.find((option) => option.key === marketCapTier)?.name ?? 'All market caps'
-	const sectorLabel = sectorOptions.find((option) => option.key === sectorSlug)?.name ?? 'All sectors'
+	const canGoBack = companies != null && summary.bounds.first != null && week.monday > summary.bounds.first
+	const canGoForward = companies != null && summary.bounds.last != null && week.monday < summary.bounds.last
+	const monthOptions = summary.monthBuckets.map((month) => ({
+		key: month.month,
+		name: `${formatMonthYear(`${month.month}-01`) ?? month.month} (${formatNumber(month.count) ?? month.count})`
+	}))
 
 	return (
 		<div className="flex flex-col gap-2">
 			<EquitiesPageHeader
 				crumb="Earnings calendar"
 				title="Earnings calendar"
-				description={`When ${formatNumber(uniqueCompanies) ?? '0'} US companies report. Past dates come from SEC filings; upcoming dates are projections, never announced times.`}
-				meta={
-					<div
-						className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 body-sm text-secondary sm:ml-auto sm:w-auto"
-						aria-label="Earnings date status legend"
-					>
-						<span className="flex items-center gap-1.5">
-							<CalendarStatusMark status="reported" /> Reported
-						</span>
-						<span className="flex items-center gap-1.5">
-							<CalendarStatusMark status="projected" /> Projected
-						</span>
-						<span className="flex items-center gap-1.5">
-							<CalendarStatusMark status="pastDue" /> Past due
-						</span>
-					</div>
-				}
+				description={`When ${formatNumber(summary.uniqueCompanyCount) ?? '0'} US companies report. Past dates come from SEC filings; upcoming dates are projections, never announced times.`}
 			/>
-			<StaleDataNotice
-				stale={data?.stale ?? bootstrap?.stale ?? false}
-				updatedAt={data?.updatedAt ?? bootstrap?.updatedAt}
-			/>
+			<StaleDataNotice stale={view.stale} updatedAt={view.updatedAt} />
+			{!query.data && query.isError ? (
+				<InlineStatus variant="error">
+					<span className="flex flex-wrap items-center gap-2">
+						The full calendar didn’t load, so only this week is shown and search is off.
+						<RetryButton refetch={query.refetch} fetching={query.isFetching} />
+					</span>
+				</InlineStatus>
+			) : null}
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-[2fr_1fr]">
 				<Panel padding="none">
 					<PanelHeader>
 						<div className="mr-auto">
 							<PanelTitle>Earnings seasons</PanelTitle>
-							<p className="body-sm text-tertiary">Reports per month · pick a month to jump</p>
+							<p className="body-sm text-tertiary">Reports per month</p>
 						</div>
+						{companies ? (
+							<SelectWithCombobox
+								allValues={monthOptions}
+								selectedValues={[week.monday.slice(0, 7)]}
+								setSelectedValues={([month]) => setSelectedDate(summary.firstReportByMonth[month!]!)}
+								singleSelect
+								nestedMenu={false}
+								label="Jump to month"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 					</PanelHeader>
-					<SeasonsChart
-						rows={data ? rows : null}
-						todayET={todayET}
-						selectedMonday={week.monday}
-						onSelectDate={setSelectedDate}
-						bootstrap={bootstrap}
-					/>
+					<SeasonsChart summary={summary} />
 				</Panel>
 				<Panel padding="none">
 					<PanelHeader>
 						<PanelTitle>At stake this week</PanelTitle>
 						<p className="ml-auto label-sm text-secondary">{formatWeekRange(week.monday, week.friday)}</p>
 					</PanelHeader>
-					<WeekExposure rows={week.rows} monday={week.monday} />
+					<WeekExposure rows={week.rows} monday={week.monday} todayET={todayET} />
 				</Panel>
 			</div>
 
@@ -457,17 +452,21 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 							size="md"
 							aria-label="Previous week"
 							disabled={!canGoBack}
+							accessibleWhenDisabled
 							onClick={() => setSelectedDate(addCalendarDays(week.monday, -7))}
 						>
 							<Icon name="chevron-left" className="size-4" />
 						</Button>
-						<h2 className="heading-xs">{formatWeekRange(week.monday, week.friday)}</h2>
+						<h2 className="heading-xs" aria-live="polite">
+							{formatWeekRange(week.monday, week.friday)}
+						</h2>
 						<Button
 							type="button"
 							variant="secondary"
 							size="md"
 							aria-label="Next week"
 							disabled={!canGoForward}
+							accessibleWhenDisabled
 							onClick={() => setSelectedDate(addCalendarDays(week.monday, 7))}
 						>
 							<Icon name="chevron-right" className="size-4" />
@@ -487,29 +486,29 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 								className={searchFieldInputPlacementStyles}
 							/>
 						</label>
-						<Button type="submit" variant="secondary" size="md" disabled={!data}>
+						<Button type="submit" variant="secondary" size="md" disabled={!companies}>
 							Search
 						</Button>
 					</form>
 				</PanelHeader>
 				<div className="flex flex-wrap items-center gap-2 p-2">
-					<Select
-						heading="Market cap tier"
+					<SelectWithCombobox
 						allValues={MARKET_CAP_OPTIONS}
-						selectedValues={marketCapTier}
-						setSelectedValues={(value) => setMarketCapTier(value as 'all' | EarningsMarketCapTier)}
-						label={`Market cap: ${marketCapLabel}`}
-						labelType="none"
+						includeQueryKey="marketCap"
+						excludeQueryKey="excludeMarketCap"
+						nestedMenu={false}
+						label="Market cap"
+						labelType="regular"
 						variant="filter"
 						size="md"
 					/>
-					<Select
-						heading="Sector"
+					<SelectWithCombobox
 						allValues={sectorOptions}
-						selectedValues={sectorSlug}
-						setSelectedValues={setSectorSlug}
-						label={`Sector: ${sectorLabel}`}
-						labelType="none"
+						includeQueryKey="sector"
+						excludeQueryKey="excludeSector"
+						nestedMenu={false}
+						label="Sector"
+						labelType="regular"
 						variant="filter"
 						size="md"
 					/>
@@ -517,7 +516,9 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 						label="Tight windows only · ≤ ±7d"
 						value="tight-windows"
 						checked={tightWindowsOnly}
-						onChange={(event) => setTightWindowsOnly(event.target.checked)}
+						onChange={(event) =>
+							void pushShallowQuery(router, { tightWindows: event.target.checked ? 'true' : undefined })
+						}
 					/>
 					<p className="ml-auto body-sm text-secondary">
 						{formatNumber(week.companyCount) ?? '0'} companies · ranked by market cap
@@ -526,78 +527,36 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 			</Panel>
 
 			{searchResult?.kind === 'no-results' ? (
-				<InlineStatus variant="empty">No companies match “{searchQuery.trim()}”.</InlineStatus>
+				<InlineStatus variant="empty">No companies match “{searchResult.query}”.</InlineStatus>
 			) : null}
 			{searchResult?.kind === 'no-dates' ? (
-				<InlineStatus variant="empty">
-					No earnings dates for {searchResult.companies[0]?.ticker ?? searchQuery.trim()} in this window.
-				</InlineStatus>
-			) : null}
-			{searchResult?.kind === 'matches' && searchResult.companies[0]?.nextEvent ? (
-				<InlineStatus variant="empty">
-					Jumped to {searchResult.companies[0].ticker} on {formatDate(searchResult.companies[0].nextEvent.report_date)}.
-				</InlineStatus>
+				<InlineStatus variant="empty">No earnings dates for {searchResult.company.ticker} in this window.</InlineStatus>
 			) : null}
 
 			<div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
-				{week.days.map((day) => {
-					const isBusiest = day.rows.length > 0 && day.rows.length === busiestCount
-					const isExpanded = expandedDays.includes(day.date)
-					const visibleCards = isExpanded ? day.rows : day.cards
-					return (
-						<Panel key={day.date} padding="none" className="min-w-0">
-							<PanelHeader>
-								<div className="mr-auto">
-									<p className="label-sm text-secondary">
-										{WEEKDAY_LABELS[day.weekday].toUpperCase()}
-										{isBusiest ? ' · BUSIEST' : ''}
-									</p>
-									<PanelTitle>{formatDate(day.date)?.replace(/, \d{4}$/, '') ?? day.date}</PanelTitle>
-								</div>
-								<div className="text-right">
-									<p className="mono-xl">{day.rows.length}</p>
-									<p className="body-sm text-tertiary">{getDayStatusLabel(day.rows, todayET)}</p>
-								</div>
-							</PanelHeader>
-							<div className="flex flex-col gap-2 p-2">
-								{day.cards.length === 0 && day.rows.length > 0 ? (
-									<p className="p-2 body-sm text-secondary">
-										A quiet day: none of the week’s 12 largest. The card threshold is {formatCap(quietThreshold)}.
-									</p>
-								) : null}
-								{visibleCards.map((row) => (
-									<EarningsCard key={`${row.ticker}:${row.event_key}`} row={row} todayET={todayET} />
-								))}
-								{day.rows.length === 0 ? <p className="py-8 text-center body-sm text-tertiary">No reports</p> : null}
-								{day.remainingCount > 0 ? (
-									<Button
-										type="button"
-										variant="secondary"
-										size="md"
-										className="w-full"
-										onClick={() =>
-											setExpandedDays((dates) =>
-												isExpanded ? dates.filter((date) => date !== day.date) : [...dates, day.date]
-											)
-										}
-									>
-										{isExpanded
-											? 'Show top events'
-											: day.cards.length > 0
-												? `Show ${day.remainingCount} more`
-												: `See all ${day.rows.length}`}
-									</Button>
-								) : null}
-							</div>
-						</Panel>
-					)
-				})}
+				{week.days.map((day) => (
+					<EarningsDayPanel key={day.date} day={day} busiestCount={busiestCount} todayET={todayET} />
+				))}
 			</div>
 
 			<footer className="flex flex-wrap justify-between gap-2 py-4 body-sm text-tertiary">
-				<p>Each status mark is one company event. Projection windows use the event’s most likely day and ± drift.</p>
+				<p>Projected dates show the window around the most likely day, such as ±7d.</p>
 				<p>Names and market caps come from company data · dates come from SEC EDGAR and DefiLlama projections.</p>
 			</footer>
 		</div>
+	)
+}
+
+function RetryButton({ refetch, fetching }: { refetch: () => void; fetching: boolean }) {
+	return (
+		<Button
+			type="button"
+			variant="secondary"
+			size="md"
+			pendingLabel={fetching ? 'Retrying…' : null}
+			onClick={() => refetch()}
+		>
+			Try again
+		</Button>
 	)
 }
