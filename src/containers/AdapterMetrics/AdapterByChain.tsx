@@ -85,8 +85,6 @@ const SUPPORTED_OLD_VIEWS = new Set<TPageType>([
 	'Bridge Aggregator Volume'
 ])
 const FEES_CHART_PAGE_TYPES = new Set<TPageType>(['Fees', 'Revenue', 'Holders Revenue'])
-// These pages load token sources in getStaticProps, so their top-level rows carry `token`.
-const TOKEN_BADGE_PAGE_TYPES = new Set<TPageType>(['Revenue'])
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'total24h' }]
 // Columns left unchecked in the Columns picker until a user turns them on.
@@ -183,7 +181,8 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	useSortColumnOrders({
 		instance,
-		columnOrders
+		// Revenue keeps its column definition order everywhere: the numbers sit next to the name.
+		columnOrders: props.type === 'Revenue' ? null : columnOrders
 	})
 	const metricName = props.type === 'Options' ? 'Options Premium Volume' : props.type
 	const columnsKey = `columns-${props.type}`
@@ -514,9 +513,8 @@ type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
 
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, AdapterProtocolRow>()
 
-const NameColumn = (type: IProps['type']) => {
-	const showsTokenBadges = TOKEN_BADGE_PAGE_TYPES.has(type)
-	return columnHelper.accessor('name', {
+const NameColumn = (type: IProps['type']) =>
+	columnHelper.accessor('name', {
 		id: 'name',
 		enableHiding: false,
 		header: 'Name',
@@ -567,21 +565,6 @@ const NameColumn = (type: IProps['type']) => {
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-					{showsTokenBadges ? (
-						// Every row keeps the slot, so pies line up and child rows stay indented under their parent.
-						<span className="flex w-7 shrink-0 justify-center">
-							{row.original.token?.rights ? (
-								<TokenRightsPieHovercard
-									name={row.original.name}
-									rights={row.original.token.rights.preview}
-									fullRightsHref={row.original.token.rights.href}
-									utr={row.original.token.utr}
-									placement="right-start"
-								/>
-							) : null}
-						</span>
-					) : null}
-
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 					<span className="-my-2 flex min-w-0 flex-col">
@@ -592,13 +575,6 @@ const NameColumn = (type: IProps['type']) => {
 							>
 								{value}
 							</BasicLink>
-							{row.original.token?.utr ? (
-								<UtrGradeHovercard
-									name={row.original.name}
-									utr={row.original.token.utr}
-									rights={row.original.token.rights}
-								/>
-							) : null}
 							{row.original.warning ? (
 								<Tooltip content={row.original.warning}>
 									<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
@@ -612,12 +588,49 @@ const NameColumn = (type: IProps['type']) => {
 			)
 		},
 		meta: {
-			// Measured on /revenue: badges take 36px, so small screens widen by that. From md up the column
-			// stays at 280px, the widest that keeps the last metric column readable at 1440px.
-			headerClassName: showsTokenBadges ? 'w-[220px] sm:w-[280px]' : 'w-[180px] sm:w-[240px] md:w-[280px]'
+			headerClassName: 'w-[180px] sm:w-[240px] md:w-[280px]'
 		}
 	})
-}
+
+// Only Revenue pages load token sources, so only their top-level rows carry `token`.
+const utrColumn = columnHelper.accessor((row) => row.token?.utr?.score ?? undefined, {
+	id: 'utr',
+	header: 'Rating',
+	cell: ({ row }) =>
+		row.original.token?.utr ? (
+			<UtrGradeHovercard name={row.original.name} utr={row.original.token.utr} rights={row.original.token.rights} />
+		) : null,
+	meta: {
+		headerClassName: 'w-[98px]',
+		align: 'center',
+		headerHelperText:
+			'Universal Token Rating, from AAA to CCC, based on what the project discloses and how its token performs',
+		csvHeader: 'Universal Token Rating',
+		csvValue: (row) => row.token?.utr?.grade ?? ''
+	}
+})
+
+const rightsColumn = columnHelper.display({
+	id: 'rights',
+	header: 'Rights',
+	cell: ({ row }) =>
+		row.original.token?.rights ? (
+			<TokenRightsPieHovercard
+				name={row.original.name}
+				rights={row.original.token.rights.preview}
+				fullRightsHref={row.original.token.rights.href}
+				utr={row.original.token.utr}
+				placement="right-start"
+			/>
+		) : null,
+	meta: {
+		headerClassName: 'w-[82px]',
+		align: 'center',
+		headerHelperText:
+			'Which rights the token gives its holders: treasury, revenue, burns, equity, value accrual and governance',
+		tableOnly: true
+	}
+})
 
 const categoryColumn = (align?: 'center') =>
 	columnHelper.accessor('category', {
@@ -874,11 +887,13 @@ const COLUMNS_BY_TYPE = {
 	],
 	Revenue: [
 		NameColumn('Revenue'),
-		categoryColumn(),
-		definitionColumn,
 		metricColumn('total24h', 'Revenue 24h', (protocol) => protocol.total24h, definitions.revenue.protocol['24h'], 128),
 		metricColumn('total7d', 'Revenue 7d', (protocol) => protocol.total7d, definitions.revenue.protocol['7d'], 128),
-		metricColumn('total30d', 'Revenue 30d', (protocol) => protocol.total30d, definitions.revenue.protocol['30d'], 128)
+		metricColumn('total30d', 'Revenue 30d', (protocol) => protocol.total30d, definitions.revenue.protocol['30d'], 128),
+		utrColumn,
+		rightsColumn,
+		categoryColumn(),
+		definitionColumn
 	],
 	'Holders Revenue': [
 		NameColumn('Holders Revenue'),

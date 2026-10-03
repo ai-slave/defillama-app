@@ -232,7 +232,7 @@ export function prepareTableCsv<F extends VisibilityFeatures, T extends RowData>
 	rows: Array<Array<CsvCell>>
 } {
 	const columns = (includeHiddenColumns ? instance.getAllLeafColumns() : table_getVisibleLeafColumns(instance)).filter(
-		(column) => !column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly
+		(column) => !column.columnDef.meta?.tableOnly && (!column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly)
 	)
 	const tableRows = rowsOverride ?? instance.getPrePaginatedRowModel().rows
 	if (columns.length === 0) return { filename, rows: [] }

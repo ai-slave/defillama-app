@@ -37,3 +37,20 @@ test('exports every filtered and sorted row before pagination with literal CSV v
 		'Name,Volume (USD)\nBeta,-3\n"Alpha, Inc.",12'
 	)
 })
+
+test('leaves table-only columns out of the CSV, even when hidden columns are included', () => {
+	const table = constructTestTable({
+		features,
+		data: [{ name: 'Alpha', grade: 'AA' }],
+		columns: [
+			{ accessorKey: 'name', header: 'Name' },
+			{ id: 'rights', header: 'Rights', cell: () => 'pie', meta: { tableOnly: true } },
+			{ accessorKey: 'grade', header: 'Rating' }
+		],
+		renderFallbackValue: null
+	})
+	expect(serializeCsv(prepareTableCsv({ instance: table, filename: 'revenue' }).rows)).toBe('Name,Rating\nAlpha,AA')
+	expect(serializeCsv(prepareTableCsv({ instance: table, filename: 'revenue', includeHiddenColumns: true }).rows)).toBe(
+		'Name,Rating\nAlpha,AA'
+	)
+})

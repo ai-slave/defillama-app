@@ -20,6 +20,8 @@ declare module '@tanstack/react-table' {
 		hidden?: boolean
 		csvHeader?: string
 		csvOnly?: boolean
+		/** Shown in the table but left out of CSV exports, for cells that only make sense as a picture. */
+		tableOnly?: boolean
 		csvValue?: (row: TData) => CsvCell
 		/**
 		 * Type-only field to satisfy linters about unused generics.
