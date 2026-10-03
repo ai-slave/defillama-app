@@ -7,7 +7,8 @@ interface CopyHelperProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 	size?: number
 }
 
-export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
+/** Copies text and says so for 2 seconds; a failed write says why in a toast. */
+export function useCopy() {
 	const [copied, setCopied] = useState(false)
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	useEffect(() => {
@@ -15,9 +16,9 @@ export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 		}
 	}, [])
-	const copy = async () => {
+	const copy = async (text: string) => {
 		try {
-			await navigator.clipboard.writeText(toCopy)
+			await navigator.clipboard.writeText(text)
 			setCopied(true)
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 			copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000)
@@ -26,12 +27,17 @@ export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
 			toast.error('Failed to copy content')
 		}
 	}
+	return { copied, copy }
+}
+
+export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
+	const { copied, copy } = useCopy()
 	return (
 		<button
 			type="button"
 			className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary focus-visible:text-primary"
 			onClick={() => {
-				void copy()
+				void copy(toCopy)
 			}}
 			aria-label="Copy"
 			{...props}

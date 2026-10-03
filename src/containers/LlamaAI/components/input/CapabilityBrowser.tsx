@@ -24,7 +24,7 @@ export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
 			gutter={8}
 			flip
 			dismiss="own"
-			className="z-50 w-[600px] overflow-hidden sm:max-h-[min(420px,50dvh,var(--popover-available-height))]! sm:capability-panel"
+			className="z-50 w-[600px] overflow-hidden"
 		>
 			<BrowserContent onPromptSelect={onPromptSelect} />
 		</PopoverSurface>

@@ -79,14 +79,14 @@ test('says the chain has no chart data when it has no metrics to pick', async ()
 
 test('offers no export or embed while nothing is plotted', async () => {
 	await renderPanel(['TVL', 'Stablecoins Mcap'])
-	expect(buttonNames().filter((name) => ['.csv', '.png', 'Embed Chart'].includes(name))).toEqual([])
+	expect(buttonNames().filter((name) => ['.csv', '.png', 'Embed chart'].includes(name))).toEqual([])
 })
 
 test('offers export and embed once a metric is plotted', async () => {
 	// Fetching keeps the chart itself out of the render; the toolbar is what this test observes.
 	await renderPanel(['TVL', 'Stablecoins Mcap'], { toggledCharts: ['TVL'], isFetchingChartData: true })
-	expect(buttonNames().filter((name) => ['.csv', '.png', 'Embed Chart'].includes(name))).toEqual([
-		'Embed Chart',
+	expect(buttonNames().filter((name) => ['.csv', '.png', 'Embed chart'].includes(name))).toEqual([
+		'Embed chart',
 		'.csv',
 		'.png'
 	])

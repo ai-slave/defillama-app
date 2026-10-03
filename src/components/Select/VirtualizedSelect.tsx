@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { defaultRangeExtractor } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
-import { type KeyboardEvent, type ReactNode, type Ref, startTransition, useId, useMemo, useRef, useState } from 'react'
+import { type ReactNode, type Ref, startTransition, useId, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
@@ -16,6 +16,8 @@ import {
 import { PopoverHeader } from '~/ui/PopoverHeader'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator } from '~/ui/Status'
+import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
+import { isSearchable } from './searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import { selectTriggerStyles } from './types'
@@ -316,15 +318,6 @@ function PickerTrigger({
 }) {
 	const labelId = useId()
 	const triggerId = useId()
-	const store = Ariakit.useComboboxContext()!
-	// A list without a search field keeps focus on this trigger, inside any dialog around it. Ariakit closes the list
-	// on Escape and lets the key go on to that dialog, which closes too. While the list is open, the trigger takes
-	// Escape for the list alone, before Ariakit's own handler sees it.
-	const onKeyDownCapture = (event: KeyboardEvent<HTMLButtonElement>) => {
-		if (event.key !== 'Escape' || !store.getState().open) return
-		event.stopPropagation()
-		store.hide()
-	}
 	const content = (
 		<>
 			{/* The space keeps the accessible name "Label: value"; flex items join their text without one. */}
@@ -338,24 +331,22 @@ function PickerTrigger({
 	)
 	if (variant === 'chip') {
 		return (
-			<Ariakit.ComboboxSelect
+			<ComboboxSelectTrigger
 				ref={triggerRef}
-				onKeyDownCapture={onKeyDownCapture}
 				autoFocus={autoFocus}
 				disabled={isLoading}
 				aria-busy={isLoading || undefined}
 				className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0 ${className ?? ''}`}
 			>
 				{content}
-			</Ariakit.ComboboxSelect>
+			</ComboboxSelectTrigger>
 		)
 	}
 	return (
 		<div className={`flex min-w-0 flex-col gap-1.5 ${className ?? ''}`}>
 			<FieldLabel id={labelId} htmlFor={triggerId} label={label} action={labelAction} />
-			<Ariakit.ComboboxSelect
+			<ComboboxSelectTrigger
 				ref={triggerRef}
-				onKeyDownCapture={onKeyDownCapture}
 				id={triggerId}
 				autoFocus={autoFocus}
 				aria-labelledby={`${labelId} ${triggerId}`}
@@ -364,16 +355,9 @@ function PickerTrigger({
 				className={`${selectTriggerStyles('input', 'md')} w-full`}
 			>
 				{content}
-			</Ariakit.ComboboxSelect>
+			</ComboboxSelectTrigger>
 		</div>
 	)
-}
-
-// Lists this short are read at a glance, so they open without a search field (design.md: a search from 12).
-const SEARCH_FROM = 12
-
-function isSearchable(options: ReadonlyArray<unknown>, onSearchChange: ((value: string) => void) | undefined) {
-	return !!onSearchChange || options.length >= SEARCH_FROM
 }
 
 /** The popover: a tall list drawer with a search field for long or server-searched lists, a content-sized panel
@@ -397,11 +381,7 @@ function PickerSurface({
 			heading={label}
 			className={`z-50 ${variant === 'chip' ? 'w-72' : FIELD_SURFACE_WIDTH}`}
 		>
-			{searchable ? (
-				<PopoverHeader search={<SearchInput label={label} />}>{header}</PopoverHeader>
-			) : header ? (
-				<div className="flex shrink-0 flex-col border-b border-subtle pt-3 max-sm:pt-1">{header}</div>
-			) : null}
+			<PopoverHeader search={searchable ? <SearchInput label={label} /> : null}>{header}</PopoverHeader>
 			{children}
 		</ComboboxSurface>
 	)
@@ -454,7 +434,7 @@ export function VirtualizedSelect<T extends string = string>({
 			<PickerSurface
 				label={label}
 				variant={variant}
-				searchable={isSearchable(options, onSearchChange)}
+				searchable={isSearchable(options.length, !!onSearchChange)}
 				header={headerRow}
 			>
 				<OptionList
@@ -556,7 +536,7 @@ export function VirtualizedMultiSelect({
 			<PickerSurface
 				label={label}
 				variant={variant}
-				searchable={isSearchable(options, onSearchChange)}
+				searchable={isSearchable(options.length, !!onSearchChange)}
 				header={
 					maxSelections !== undefined || headerRow ? (
 						<>

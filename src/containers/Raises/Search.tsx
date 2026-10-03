@@ -9,6 +9,7 @@ import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { slug } from '~/utils'
+import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
 export function RaisesSearch({ list }: { list?: Array<string> }) {
 	const [searchValue, setSearchValue] = useState('')
@@ -28,21 +29,12 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
 		e.preventDefault()
 		e.stopPropagation()
-		const previousCount = viewableMatches
 		setViewableMatches((prev) => prev + 20)
-
-		// Focus on the first newly loaded item after a brief delay
-		setTimeout(() => {
-			const items = comboboxRef.current?.querySelectorAll('[role="option"]')
-			if (items && items.length > previousCount) {
-				const firstNewItem = items[previousCount] as HTMLElement
-				firstNewItem?.focus()
-			}
-		}, 0)
+		focusFirstNewItem(comboboxRef, '[role="option"]', viewableMatches)
 	}
 
 	return (
-		<div className="relative hidden flex-col rounded-md data-[alwaysdisplay=true]:flex lg:flex">
+		<div className="relative flex flex-col rounded-md">
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
 				setInputValue={(value) => {
@@ -53,7 +45,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 				open={open}
 				setOpen={setOpen}
 			>
-				<Input placeholder="Search Investors..." open={open} setOpen={setOpen} />
+				<Input placeholder="Search investors…" open={open} setOpen={setOpen} />
 
 				<ComboboxSurface
 					variant="search-results"
@@ -86,50 +78,36 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 	)
 }
 
-interface IInputProps {
+function Input({
+	open,
+	setOpen,
+	placeholder
+}: {
 	open: boolean
-	setOpen?: React.Dispatch<React.SetStateAction<boolean>>
+	setOpen: React.Dispatch<React.SetStateAction<boolean>>
 	placeholder: string
-	autoFocus?: boolean
-	withValue?: boolean
-	hideIcon?: boolean
-	onSearchTermChange?: (value: string) => void
-}
-
-function Input({ open, setOpen, placeholder, hideIcon, onSearchTermChange }: IInputProps) {
-	const inputField = useRef<HTMLInputElement>(null)
-
+}) {
 	return (
 		<>
-			{!hideIcon ? (
-				<button
-					type="button"
-					onClick={() => setOpen?.((prev) => !prev)}
-					className="absolute top-0 bottom-0 left-3 my-auto text-tertiary hover:text-primary focus-visible:text-primary"
-				>
-					{open ? (
-						<>
-							<span className="sr-only">Close Search</span>
-							<Icon name="x" height={16} width={16} />
-						</>
-					) : (
-						<>
-							<span className="sr-only">Open Search</span>
-							<Icon name="search" height={16} width={16} />
-						</>
-					)}
-				</button>
-			) : null}
+			<button
+				type="button"
+				onClick={() => setOpen((prev) => !prev)}
+				className="absolute top-0 bottom-0 left-3 my-auto text-tertiary hover:text-primary focus-visible:text-primary"
+			>
+				{open ? (
+					<>
+						<span className="sr-only">Close Search</span>
+						<Icon name="x" height={16} width={16} />
+					</>
+				) : (
+					<>
+						<span className="sr-only">Open Search</span>
+						<Icon name="search" height={16} width={16} />
+					</>
+				)}
+			</button>
 
-			<Ariakit.Combobox
-				placeholder={placeholder}
-				autoSelect
-				ref={inputField}
-				onChange={(e) => {
-					onSearchTermChange?.(e.target.value)
-				}}
-				className={searchFieldInputStyles}
-			/>
+			<Ariakit.Combobox placeholder={placeholder} autoSelect className={searchFieldInputStyles} />
 		</>
 	)
 }

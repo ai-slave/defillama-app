@@ -24,11 +24,20 @@ export function PopoverHeader({
 	children,
 	inset = 'popover'
 }: {
-	search: ReactNode
+	/** Short lists open without one; the header then holds only its rows. */
+	search: ReactNode | null
 	/** Full-bleed rows under the search field, e.g. a toggle. */
 	children?: ReactNode
 	inset?: PopoverHeaderInset
 }) {
+	if (!search && !children) return null
+	if (!search) {
+		return (
+			<div className="flex shrink-0 flex-col overflow-hidden border-b border-subtle bg-overlay pt-3 max-sm:pt-1">
+				{children}
+			</div>
+		)
+	}
 	return (
 		<div className="flex shrink-0 flex-col overflow-hidden border-b border-subtle bg-overlay">
 			{/* 12px frames the field unless a row follows; that row brings its own padding. */}

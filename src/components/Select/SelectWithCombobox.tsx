@@ -18,7 +18,9 @@ import { PopoverHeader } from '~/ui/PopoverHeader'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
+import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
+import { isSearchable } from './searchThreshold'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
@@ -454,6 +456,7 @@ export function SelectWithCombobox({
 		)
 	}
 
+	const searchable = isSearchable(allValues.length, false)
 	return (
 		<Ariakit.ComboboxProvider
 			resetValueOnHide
@@ -461,7 +464,7 @@ export function SelectWithCombobox({
 			selectedValue={providerValue}
 			setSelectedValue={setSelectedValue}
 		>
-			<Ariakit.ComboboxSelect
+			<ComboboxSelectTrigger
 				className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}
 				aria-label={`${label} dropdown`}
 				{...triggerProps}
@@ -489,10 +492,19 @@ export function SelectWithCombobox({
 					<span>{label}</span>
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
-			</Ariakit.ComboboxSelect>
-			<ComboboxSurface hideOnInteractOutside heading={heading ?? label} className={popoverClassName}>
+			</ComboboxSelectTrigger>
+			<ComboboxSurface
+				variant={searchable ? 'list' : 'panel'}
+				hideOnInteractOutside
+				heading={heading ?? label}
+				className={popoverClassName}
+			>
 				<PopoverHeader
-					search={<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />}
+					search={
+						searchable ? (
+							<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
+						) : null
+					}
 				>
 					{headerRow}
 				</PopoverHeader>

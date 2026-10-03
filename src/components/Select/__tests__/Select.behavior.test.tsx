@@ -14,6 +14,8 @@ const OPTIONS = [
 	{ key: 'fees', name: 'Fees' },
 	{ key: 'volume', name: 'Volume' }
 ]
+// Long enough that SelectWithCombobox shows its search field (design.md: a search from 12).
+const LONG_OPTIONS = [...OPTIONS, ...Array.from({ length: 9 }, (_, i) => ({ key: `metric-${i}`, name: `Metric ${i}` }))]
 
 function trigger() {
 	return document.querySelector<HTMLButtonElement>('button[role="combobox"]')!
@@ -59,12 +61,26 @@ function ControlledMetrics({
 	const Component = searchable ? SelectWithCombobox : Select
 	return (
 		<Component
-			allValues={OPTIONS}
+			allValues={searchable ? LONG_OPTIONS : OPTIONS}
 			selectedValues={values}
 			setSelectedValues={(next) => {
 				setValues(next)
 				onChange(next)
 			}}
+			label="Metrics"
+			variant="filter"
+			size="md"
+		/>
+	)
+}
+
+function ControlledMetricsShort() {
+	const [values, setValues] = useState(['tvl'])
+	return (
+		<SelectWithCombobox
+			allValues={OPTIONS}
+			selectedValues={values}
+			setSelectedValues={setValues}
 			label="Metrics"
 			variant="filter"
 			size="md"
@@ -130,15 +146,13 @@ describe('Select on the Combobox module', () => {
 		expect(trigger().getAttribute('aria-expanded')).toBe('false')
 	})
 
-	test('shows the see-more row without selecting it', async () => {
-		const many = Array.from({ length: 8 }, (_, index) => `Option ${index + 1}`)
-		const setSelectedValues = vi.fn()
+	test('lists every option at once', async () => {
 		await act(async () =>
 			root.render(
 				<Select
-					allValues={many}
+					allValues={Array.from({ length: 8 }, (_, index) => `Option ${index + 1}`)}
 					selectedValues={[]}
-					setSelectedValues={setSelectedValues}
+					setSelectedValues={vi.fn()}
 					label="Many"
 					variant="filter"
 					size="md"
@@ -147,10 +161,11 @@ describe('Select on the Combobox module', () => {
 		)
 
 		await click(trigger())
-		expect(options()).toHaveLength(7)
-		await click(optionByText('See more'))
-		expect(setSelectedValues).not.toHaveBeenCalled()
-		expect(options().filter((option) => !option.textContent?.includes('See more'))).toHaveLength(8)
+		expect(options().map((option) => option.textContent)).toEqual(
+			['Option 1', 'Option 2', 'Option 3', 'Option 4', 'Option 5', 'Option 6', 'Option 7', 'Option 8'].map(
+				(name) => `${name}Only`
+			)
+		)
 	})
 })
 
@@ -176,7 +191,7 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		await click(trigger())
 		const input = document.querySelector<HTMLInputElement>('input[role="combobox"]')!
 		expect(input).not.toBeNull()
-		expect(options()).toHaveLength(3)
+		expect(options()).toHaveLength(12)
 
 		await type(input, 'fe')
 		expect(options()).toHaveLength(1)
@@ -189,11 +204,18 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		expect(trigger().getAttribute('aria-expanded')).toBe('true')
 	})
 
+	test('a list under 12 options opens without a search field', async () => {
+		await act(async () => root.render(<ControlledMetricsShort />))
+		await click(trigger())
+		expect(document.querySelector('input')).toBeNull()
+		expect(options().map((option) => option.textContent)).toEqual(['TVLOnly', 'FeesOnly', 'VolumeOnly'])
+	})
+
 	test('renders the empty state with the typed filter', async () => {
 		await act(async () =>
 			root.render(
 				<SelectWithCombobox
-					allValues={OPTIONS}
+					allValues={LONG_OPTIONS}
 					selectedValues={[]}
 					setSelectedValues={vi.fn()}
 					label="Metrics"
@@ -213,7 +235,7 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		await act(async () =>
 			root.render(
 				<SelectWithCombobox
-					allValues={OPTIONS}
+					allValues={LONG_OPTIONS}
 					selectedValues={[]}
 					setSelectedValues={vi.fn()}
 					label="Columns"
@@ -327,15 +349,11 @@ describe('nested filter composition', () => {
 		expect(document.querySelector('output')?.textContent).toBe('fees')
 		expect(buttonByText('Metrics').getAttribute('aria-expanded')).toBe('true')
 	})
-	test('reaches See more by keyboard and focuses the first newly exposed item', async () => {
+	test('a nested select lists every option at once', async () => {
 		await open({ many: true })
-		const first = document.querySelector<HTMLElement>('[role="menuitemcheckbox"]')!
-		await press(first, 'End')
-		expect(document.activeElement?.textContent).toBe('See more...')
-		await press(document.activeElement as HTMLElement, 'Enter')
-		expect(document.querySelectorAll('[role="menuitemcheckbox"]')).toHaveLength(8)
-		expect(document.activeElement?.textContent).toBe('Option 7')
-		expect(document.querySelector('output')?.textContent).toBe('tvl')
+		expect([...document.querySelectorAll('[role="menuitemcheckbox"]')].map((item) => item.textContent)).toEqual(
+			Array.from({ length: 8 }, (_, i) => `Option ${i + 1}`)
+		)
 	})
 	test('says a nested search matched nothing', async () => {
 		await open({ searchable: true })

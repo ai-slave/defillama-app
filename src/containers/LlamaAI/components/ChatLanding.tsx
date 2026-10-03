@@ -305,7 +305,7 @@ function Capability({
 				gutter={14}
 				flip={false}
 				dismiss="own"
-				className="z-50 w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden sm:max-h-[min(420px,60dvh)] lg:max-h-(--popover-available-height)"
+				className="z-50 w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
 					<Icon name={cap.icon} height={14} width={14} className="text-brand" />

@@ -5,6 +5,7 @@ import { NestedMenu } from '~/components/NestedMenu'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Input } from '~/ui/Input'
+import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
 type RangeQuickPick = { label: string; value: number }
@@ -53,6 +54,7 @@ export function FilterBetweenRange({
 		return (
 			<NestedMenu label={trigger} render={<button type="button" />}>
 				<Form
+					inset="nested"
 					onSubmit={handleSubmit}
 					onClear={onClear}
 					min={min}
@@ -94,6 +96,7 @@ export function FilterBetweenRange({
 			>
 				<div className="mx-auto w-full sm:w-[260px]">
 					<Form
+						inset="popover"
 						min={min}
 						max={max}
 						onSubmit={(e) => {
@@ -117,6 +120,7 @@ export function FilterBetweenRange({
 }
 
 function Form({
+	inset,
 	onSubmit,
 	onClear,
 	min,
@@ -127,6 +131,8 @@ function Form({
 	maxInputProps,
 	quickPicks
 }: {
+	/** A nested phone menu's rows sit 16px from the edge, a popover's 12px. */
+	inset: 'popover' | 'nested'
 	onSubmit: FormSubmitHandler
 	onClear: () => void
 	min: number | string | null
@@ -153,7 +159,9 @@ function Form({
 				setMinValue('')
 				onClear()
 			}}
-			className="flex flex-col gap-3 p-3"
+			// A sheet row: on phones its fields and buttons are 44px, like a form in a dialog sheet.
+			data-sheet
+			className={`flex flex-col gap-3 py-3 ${inset === 'nested' ? 'px-4' : 'px-3'}`}
 		>
 			<div className="flex flex-col gap-1.5">
 				<label className="flex flex-col gap-1">
@@ -176,7 +184,7 @@ function Form({
 								type="button"
 								onClick={() => pickMin(pick.value)}
 								data-active={Number(minValue) === pick.value}
-								className="hover-wash rounded-full border border-medium px-2 py-0.5 label-sm text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint"
+								className={metricOptionChipStyles}
 							>
 								{pick.label}
 							</button>

@@ -52,14 +52,17 @@ import { tw } from './tw'
    nothing outside src/ui can wire a drawer by hand: the only way to get the
    surface + wrapper + close button triple is one of the components below. */
 
+/* Phone drawers sit on top of the iOS keyboard, as dialog sheets do: useKeyboardInset (mounted in _app) publishes the
+   keyboard's height and the visible viewport, which iOS Safari does not shrink for the keyboard. The top edge stays
+   80px below the visible top, so only the bottom rises. */
 const selectSurfaceHeightStyles =
-	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[min(400px,var(--popover-available-height))]'
+	'max-sm:h-[calc(var(--visual-viewport-height,100dvh)-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] sm:max-h-[min(400px,var(--popover-available-height))]'
 
 const menuSurfaceHeightStyles =
-	'max-sm:max-h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[min(60dvh,var(--popover-available-height))]'
+	'max-sm:max-h-[calc(var(--visual-viewport-height,100dvh)-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
 const nestedMenuSurfaceHeightStyles =
-	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
+	'max-sm:h-[calc(var(--visual-viewport-height,100dvh)-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
 const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
 
@@ -72,9 +75,9 @@ const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden o
    Ariakit copies the surface z-index onto the wrapper, so the pseudo paints
    under the surface, and a tap on it lands outside the surface and closes.
    Hidden popovers keep their wrapper mounted, so only open scrims accept clicks. */
-const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none! max-sm:before:pointer-events-none max-sm:before:fixed max-sm:before:inset-0 max-sm:before:bg-screen-dim max-sm:before:opacity-0 max-sm:before:transition-opacity max-sm:before:duration-200 max-sm:before:ease-out-quart max-sm:before:content-[''] max-sm:has-data-enter:before:pointer-events-auto max-sm:has-data-enter:before:opacity-100`
+const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-(--keyboard-inset,0px)! max-sm:left-0! max-sm:w-full! max-sm:transform-none! max-sm:before:pointer-events-none max-sm:before:fixed max-sm:before:inset-0 max-sm:before:bg-screen-dim max-sm:before:opacity-0 max-sm:before:transition-opacity max-sm:before:duration-200 max-sm:before:ease-out-quart max-sm:before:content-[''] max-sm:has-data-enter:before:pointer-events-auto max-sm:has-data-enter:before:opacity-100`
 
-const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
+const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-(--keyboard-inset,0px)! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
 
 // The row's 4px plus the close button's 8px inset puts the x on the 12px content edge.
 const drawerTitleRowStyles = tw`flex min-h-12 shrink-0 items-center gap-2 pt-2 pr-1 pl-3 sm:hidden`

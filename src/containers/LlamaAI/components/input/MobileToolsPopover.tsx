@@ -165,7 +165,7 @@ export function MobileToolsPopover({
 						gutter={4}
 						modal
 						aria-label="Explore AI capabilities"
-						className="z-20 overflow-hidden sm:max-h-[min(420px,var(--popover-available-height))] sm:w-[600px] sm:max-w-[calc(100vw-2rem)]"
+						className="z-20 overflow-hidden sm:w-[600px] sm:max-w-[calc(100vw-2rem)]"
 					>
 						<ExploreHeader onCloseTools={menu.hideAll} />
 						<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />

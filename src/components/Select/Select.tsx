@@ -4,17 +4,15 @@ import * as React from 'react'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
 import {
-	nestedMenuSeeMoreStyles,
 	nestedMenuSelectRowStyles,
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
 	popoverScrollAreaStyles,
-	popoverSeeMoreStyles,
 	popoverSingleSelectCheckStyles
 } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
-import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
+import { ComboboxSelectTrigger } from './ComboboxSelectTrigger'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
 import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
 import { SelectCheckIcon } from './SelectCheckIcon'
@@ -165,17 +163,13 @@ export function Select(props: ISelect) {
 		},
 		[getAllKeys, props, router]
 	)
-	const [viewableMatches, setViewableMatches] = React.useState(6)
-
 	const canSelectOnlyOne = typeof selectedValues === 'string'
 	const showCheckboxes = !canSelectOnlyOne
 	const selectedCount = canSelectOnlyOne ? (selectedValues ? 1 : 0) : selectedValues.length
 
-	const selectRef = React.useRef<HTMLDivElement>(null)
 	const selectAllState = getSelectAllState(getAllKeys(), canSelectOnlyOne ? [] : selectedValues)
 	const toggleSelectAll = selectAllState === 'all' ? clearAll : toggleAll
 	const selectAllContent = <SelectAllContent label="Select all" state={selectAllState} />
-	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
 
 	const NestedSelectItem = canSelectOnlyOne ? Ariakit.MenuItemRadio : Ariakit.MenuItemCheckbox
 
@@ -192,30 +186,16 @@ export function Select(props: ISelect) {
 		)
 	}
 
-	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
-		e.preventDefault()
-		e.stopPropagation()
-		const previousCount = viewableMatches
-		setViewableMatches((prev) => prev + 20)
-		const containerRef = nestedMenuRef.current ? nestedMenuRef : selectRef
-		// The index skips the "Select all" row that leads a multi-select list.
-		focusFirstNewItem(
-			containerRef,
-			nestedMenu ? '[role^="menuitem"]' : '[role="option"]',
-			(showCheckboxes ? 1 : 0) + previousCount
-		)
-	}
-
 	if (nestedMenu) {
 		return (
 			<NestedMenu combobox={null} label={label} render={<button type="button" />}>
-				<div ref={nestedMenuRef} className={popoverScrollAreaStyles}>
+				<div className={popoverScrollAreaStyles}>
 					{showCheckboxes ? (
 						<NestedMenuItem hideOnClick={false} onClick={toggleSelectAll} className={nestedMenuSelectRowStyles}>
 							{selectAllContent}
 						</NestedMenuItem>
 					) : null}
-					{allValues.slice(0, viewableMatches).map((option) => (
+					{allValues.map((option) => (
 						<NestedSelectItem
 							key={getOptionKey(option)}
 							name={selectionName}
@@ -251,11 +231,6 @@ export function Select(props: ISelect) {
 							{renderCheck(getOptionKey(option))}
 						</NestedSelectItem>
 					))}
-					{allValues.length > viewableMatches ? (
-						<NestedMenuItem hideOnClick={false} className={nestedMenuSeeMoreStyles} onClick={handleSeeMore}>
-							See more...
-						</NestedMenuItem>
-					) : null}
 				</div>
 			</NestedMenu>
 		)
@@ -263,7 +238,7 @@ export function Select(props: ISelect) {
 
 	return (
 		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues} placement={placement}>
-			<Ariakit.ComboboxSelect
+			<ComboboxSelectTrigger
 				className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}
 				aria-label={`${labelText} dropdown`}
 				{...triggerProps}
@@ -290,12 +265,13 @@ export function Select(props: ISelect) {
 					<>{label}</>
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
-			</Ariakit.ComboboxSelect>
+			</ComboboxSelectTrigger>
+			{/* Select has no search and holds short lists, so its phone drawer hugs its rows. */}
 			<ComboboxSurface
+				variant="panel"
 				hideOnInteractOutside
 				heading={heading ?? labelText}
 				className={popoverClassName}
-				ref={selectRef}
 			>
 				{allValues.length > 0 ? (
 					<div className={popoverScrollAreaStyles}>
@@ -310,7 +286,7 @@ export function Select(props: ISelect) {
 								{selectAllContent}
 							</Ariakit.ComboboxItem>
 						) : null}
-						{allValues.slice(0, viewableMatches).map((option) => (
+						{allValues.map((option) => (
 							<Ariakit.ComboboxItem
 								key={getOptionKey(option)}
 								value={getOptionKey(option)}
@@ -342,17 +318,6 @@ export function Select(props: ISelect) {
 								{renderCheck(getOptionKey(option))}
 							</Ariakit.ComboboxItem>
 						))}
-						{allValues.length > viewableMatches ? (
-							<Ariakit.ComboboxItem
-								value="__see_more__"
-								selectValueOnClick={false}
-								hideOnClick={false}
-								className={popoverSeeMoreStyles}
-								onClick={handleSeeMore}
-							>
-								See more...
-							</Ariakit.ComboboxItem>
-						) : null}
 					</div>
 				) : (
 					<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
