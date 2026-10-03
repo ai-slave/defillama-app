@@ -17,6 +17,10 @@ import type {
 } from '../savedDownloads'
 import { decodeDownloadConfig } from '../urlState'
 
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
+
 const chart: ChartDatasetDefinition = {
 	slug: 'test-chart',
 	name: 'Test chart',
@@ -203,11 +207,23 @@ test('category drafts use CSV protocols absent from the catalog and do not resel
 	await click(column('Unlisted'))
 	await renderChart(options, categoryConfig)
 	expect(await sharedLink()).toMatchObject({ columns: ['date', 'Alpha'] })
-	const clearCategory = document.querySelector<HTMLButtonElement>('[aria-label="Clear category"]')!
-	await click(clearCategory)
-	expect(button('All categories').getAttribute('aria-expanded')).toBe('false')
-	expect(button('Select Protocol').textContent?.trim()).toBe('Select Protocol')
-	expect(document.activeElement).toBe(button('All categories'))
+	const category = button('Category: Lending')
+	await act(async () => {
+		category.focus()
+		category.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	})
+	const all = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+			(row) => row.textContent === 'All'
+		)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await click(all)
+	await waitForUi(() => expect(category.getAttribute('aria-expanded')).toBe('false'))
+	expect(category.textContent).toBe('Category: All')
+	expect(button('Protocol: None')).toBeTruthy()
+	expect(document.activeElement).toBe(category)
 })
 
 test('dataset defaults initialize from loaded rows and saved settings do not overwrite user edits', async () => {

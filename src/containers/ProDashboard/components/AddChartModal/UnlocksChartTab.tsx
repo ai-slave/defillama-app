@@ -5,14 +5,13 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { slug } from '~/utils'
-import { AriakitSelect } from '../AriakitSelect'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -349,24 +348,26 @@ export function UnlocksChartTab({
 				{protocolParameter.boundVariable ? (
 					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
 				) : null}
-				<AriakitVirtualizedSelect
+				<VirtualizedSelect
+					variant="field"
 					label="Protocol"
 					options={selectableProtocolOptions}
-					selectedValue={selectedUnlocksProtocol || ''}
+					selectedValue={selectedUnlocksProtocol || null}
 					onChange={handleProtocolChange}
-					placeholder="Select protocol..."
+					placeholder="Select protocol…"
 					isLoading={protocolsLoading || unlocksProtocolsLoading}
 				/>
 
 				<div className={`grid grid-cols-1 gap-3 ${!hasSelection ? 'pointer-events-none opacity-50' : ''}`}>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Chart type"
 						options={chartTypeOptions}
 						selectedValue={selectedUnlocksChartType}
 						onChange={(option) =>
 							onSelectedUnlocksChartTypeChange(option.value as 'total' | 'schedule' | 'allocation' | 'locked-unlocked')
 						}
-						placeholder="Select chart type..."
+						placeholder="Select chart type…"
 					/>
 				</div>
 

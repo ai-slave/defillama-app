@@ -6,6 +6,7 @@ import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
@@ -14,8 +15,6 @@ import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChar
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { shouldSuppressBorrowedTokenBreakdown } from '../../services/protocolTvl'
 import type { BorrowedChartType } from '../../types'
-import { AriakitSelect } from '../AriakitSelect'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { useBorrowedChartData } from '../useBorrowedChartData'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
@@ -250,12 +249,13 @@ export function BorrowedChartTab({
 				{protocolParameter.boundVariable ? (
 					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
 				) : null}
-				<AriakitVirtualizedSelect
+				<VirtualizedSelect
+					variant="field"
 					label="Protocol"
 					options={selectableProtocolOptions}
-					selectedValue={selectedBorrowedProtocol || ''}
+					selectedValue={selectedBorrowedProtocol || null}
 					onChange={handleProtocolChange}
-					placeholder="Select protocol..."
+					placeholder="Select protocol…"
 					isLoading={protocolsLoading}
 				/>
 
@@ -264,12 +264,13 @@ export function BorrowedChartTab({
 					className={`w-full ${!hasProtocolSelection ? 'pointer-events-none opacity-50' : ''}`}
 					render={<div />}
 				>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Chart type"
 						options={chartTypeOptions}
 						selectedValue={selectedBorrowedChartType}
 						onChange={(option) => onSelectedBorrowedChartTypeChange(option.value)}
-						placeholder="Select chart type..."
+						placeholder="Select chart type…"
 					/>
 				</Tooltip>
 

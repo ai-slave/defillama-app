@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useMemo, useRef, useState } from 'react'
+import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -23,7 +24,7 @@ export function MultiSelectCombobox({
 	emptyMessage = 'No options found'
 }: {
 	data: ReadonlyArray<MultiSelectOption>
-	/** Accessible name of the search results. */
+	/** Accessible name of the search field and its results. */
 	heading: string
 	placeholder: string
 	selectedValues: Array<string>
@@ -112,8 +113,9 @@ export function MultiSelectCombobox({
 					</div>
 				) : null}
 				<Ariakit.Combobox
+					aria-label={heading}
 					placeholder={placeholder}
-					className="min-h-8 w-full flex-1 bg-transparent px-3 py-1.5 pr-8 text-base text-primary outline-hidden placeholder:text-tertiary sm:body-sm"
+					className="min-h-8 w-full flex-1 bg-transparent px-3 py-1.5 pr-8 text-base text-primary outline-hidden placeholder:text-tertiary max-sm:placeholder:text-sm/6 sm:body-sm"
 				/>
 				{open ? (
 					<Icon name="x" className="absolute top-0 right-2 bottom-0 my-auto size-4 text-tertiary" />
@@ -142,7 +144,7 @@ export function MultiSelectCombobox({
 							hideOnClick
 							className={`${popoverRowWithBorderStyles} group justify-start gap-2`}
 						>
-							{item.logo ? <img src={item.logo} alt={item.label} className="size-5 shrink-0 rounded-full" /> : null}
+							{item.logo ? <TokenLogo src={item.logo} size={20} /> : null}
 							<span>{item.label}</span>
 							<Ariakit.ComboboxItemSelected>
 								{(selected) => (

@@ -1,7 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import { useId, useState, type Ref } from 'react'
+import { selectTriggerStyles } from '~/components/Select/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { type DateRangeConfig, type DateRangePreset, formatDateRangeLong } from './savedDownloads'
 
 const PRESET_LABELS: Array<{ label: string; preset: DateRangePreset }> = [
@@ -70,142 +74,112 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 		popover.hide()
 	}
 
-	const triggerLabel = isActive && value ? formatDateRangeLong(value) : 'Date range'
-
-	const triggerClass = isActive
-		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-brand/40 bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-40'
-		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40'
-
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<div className="inline-flex items-stretch">
-				<Ariakit.PopoverDisclosure ref={triggerRef} disabled={disabled} className={triggerClass}>
-					<Icon name="calendar" className="size-3.5" />
-					<span className="max-w-[160px] truncate">{triggerLabel}</span>
-					<Icon name="chevron-down" className="size-3" />
-				</Ariakit.PopoverDisclosure>
-				{isActive ? (
-					<button
-						type="button"
-						onClick={handleClear}
-						disabled={disabled}
-						aria-label="Clear date range"
-						title="Clear date range"
-						className="-ml-px flex items-center justify-center rounded-md rounded-l-none border border-brand/40 bg-brand/10 px-1.5 text-brand transition-colors hover:bg-brand/20 disabled:opacity-40"
-					>
-						<Icon name="x" className="size-3" />
-					</button>
-				) : null}
-			</div>
-
-			<Ariakit.Popover
-				aria-label="Date range"
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex w-[320px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-medium bg-surface-elevated-1 p-4 shadow-xl"
+			<Ariakit.PopoverDisclosure
+				ref={triggerRef}
+				disabled={disabled}
+				className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0`}
 			>
-				<section className="flex flex-col gap-2">
-					<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Quick ranges</h3>
-					<div className="flex flex-wrap gap-1">
-						{PRESET_LABELS.map(({ label, preset }) => {
-							const isSelected = preset === 'all' ? isAllSelected : activePreset === preset
-							return (
-								<button
-									key={preset}
-									type="button"
-									onClick={() => handlePresetClick(preset)}
-									aria-pressed={isSelected}
-									className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-										isSelected
-											? 'border-brand bg-brand text-on-brand'
-											: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-									}`}
-								>
-									{label}
-								</button>
-							)
-						})}
-					</div>
-				</section>
+				<span className="shrink-0">Date range: </span>
+				<span className={`truncate ${isActive ? 'text-link' : 'text-tertiary'}`}>
+					{isActive && value ? formatDateRangeLong(value) : 'All'}
+				</span>
+				<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
+			</Ariakit.PopoverDisclosure>
 
-				<div className="border-t border-subtle" />
+			<PopoverSurface variant="panel" heading="Date range" className="z-50 w-80">
+				<div className="flex flex-col gap-3 p-3">
+					<section className="flex flex-col gap-2">
+						<h3 className="label-sm text-secondary">Quick ranges</h3>
+						<div className="flex flex-wrap gap-1">
+							{PRESET_LABELS.map(({ label, preset }) => {
+								const isSelected = preset === 'all' ? isAllSelected : activePreset === preset
+								return (
+									<Button
+										key={preset}
+										type="button"
+										variant="toggle"
+										size="sm"
+										data-active={isSelected}
+										aria-pressed={isSelected}
+										onClick={() => handlePresetClick(preset)}
+									>
+										{label}
+									</Button>
+								)
+							})}
+						</div>
+					</section>
 
-				<form
-					onSubmit={(e) => {
-						e.preventDefault()
-						if (!customFrom || !customTo) {
-							setError('Please pick both dates')
-							return
-						}
-						if (customFrom > customTo) {
-							setError('"From" must be before or equal to "To"')
-							return
-						}
-						setError(null)
-						onChange({ kind: 'custom', from: customFrom, to: customTo })
-						popover.hide()
-					}}
-					className="flex flex-col gap-2"
-				>
-					<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Custom range</h3>
-					<div className="grid grid-cols-2 gap-2">
-						<label className="flex flex-col gap-1">
-							<span className="text-[11px] text-pro-text-secondary">From</span>
-							<input
-								type="date"
-								aria-invalid={!!error}
-								aria-describedby={error ? `${id}-error` : undefined}
-								value={customFrom}
-								onChange={(e) => {
-									setCustomFrom(e.currentTarget.value)
-									setError(null)
-								}}
-								min={minDate}
-								max={customTo || maxAllowed}
-								className="min-w-0 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
-							/>
-						</label>
-						<label className="flex flex-col gap-1">
-							<span className="text-[11px] text-pro-text-secondary">To</span>
-							<input
-								type="date"
-								aria-invalid={!!error}
-								aria-describedby={error ? `${id}-error` : undefined}
-								value={customTo}
-								onChange={(e) => {
-									setCustomTo(e.currentTarget.value)
-									setError(null)
-								}}
-								min={customFrom || minDate}
-								max={maxAllowed}
-								className="min-w-0 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
-							/>
-						</label>
-					</div>
-					{error ? (
-						<p id={`${id}-error`} role="alert" className="text-[11px] text-error">
-							{error}
-						</p>
-					) : null}
-					<div className="flex justify-end gap-1.5 pt-1">
-						<button
-							type="button"
-							onClick={handleClear}
-							className="rounded-md border border-subtle px-2.5 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-						>
-							Clear
-						</button>
-						<button
-							type="submit"
-							disabled={!customFrom || !customTo}
-							className="rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
-						>
-							Apply
-						</button>
-					</div>
-				</form>
-			</Ariakit.Popover>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault()
+							if (!customFrom || !customTo) {
+								setError('Please pick both dates')
+								return
+							}
+							if (customFrom > customTo) {
+								setError('"From" must be before or equal to "To"')
+								return
+							}
+							setError(null)
+							onChange({ kind: 'custom', from: customFrom, to: customTo })
+							popover.hide()
+						}}
+						className="flex flex-col gap-2 border-t border-subtle pt-3"
+					>
+						<h3 className="label-sm text-secondary">Custom range</h3>
+						<div className="grid grid-cols-2 gap-2">
+							<label className="flex min-w-0 flex-col gap-1">
+								<span className="label-sm text-secondary">From</span>
+								<Input
+									type="date"
+									aria-invalid={!!error}
+									aria-describedby={error ? `${id}-error` : undefined}
+									value={customFrom}
+									onChange={(e) => {
+										setCustomFrom(e.currentTarget.value)
+										setError(null)
+									}}
+									min={minDate}
+									max={customTo || maxAllowed}
+									className="w-full min-w-0 cursor-pointer dark:scheme-dark"
+								/>
+							</label>
+							<label className="flex min-w-0 flex-col gap-1">
+								<span className="label-sm text-secondary">To</span>
+								<Input
+									type="date"
+									aria-invalid={!!error}
+									aria-describedby={error ? `${id}-error` : undefined}
+									value={customTo}
+									onChange={(e) => {
+										setCustomTo(e.currentTarget.value)
+										setError(null)
+									}}
+									min={customFrom || minDate}
+									max={maxAllowed}
+									className="w-full min-w-0 cursor-pointer dark:scheme-dark"
+								/>
+							</label>
+						</div>
+						{error ? (
+							<p id={`${id}-error`} role="alert" className="body-sm text-error">
+								{error}
+							</p>
+						) : null}
+						<div className="flex justify-end gap-1.5 pt-1">
+							<Button type="button" variant="secondary" size="sm" onClick={handleClear}>
+								Clear
+							</Button>
+							<Button type="submit" variant="primary" size="sm" disabled={!customFrom || !customTo}>
+								Apply
+							</Button>
+						</div>
+					</form>
+				</div>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

@@ -28,7 +28,15 @@ const allowedFiles = new Map<string, string>([
 		'src/containers/Yields/Filters/ColumnsSelect.tsx',
 		'adds optional extra columns through the URL; pool and project always show'
 	],
-	['src/pages/top-protocols.tsx', 'filters protocol categories through the URL; the chain column always shows']
+	['src/pages/top-protocols.tsx', 'filters protocol categories through the URL; the chain column always shows'],
+	[
+		'src/containers/Downloads/ChartDatasetModal.tsx',
+		'picks which CSV columns a download writes; the preview is the file, not a table with a row-naming column'
+	],
+	[
+		'src/containers/Downloads/DatasetPreviewModal.tsx',
+		'picks which CSV columns a download writes; the preview is the file, not a table with a row-naming column'
+	]
 ])
 
 function isColumnsLabel(node: ts.JsxAttribute): boolean {

@@ -1,18 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import {
-	type CSSProperties,
-	lazy,
-	type RefObject,
-	Suspense,
-	useCallback,
-	useDeferredValue,
-	useMemo,
-	useRef,
-	useState
-} from 'react'
+import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
+import { VirtualizedMultiSelect, VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
@@ -21,6 +12,7 @@ import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SearchField } from '~/ui/SearchField'
 import { slug as toSlug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
@@ -539,15 +531,15 @@ export function ChartDatasetModal({
 		})
 	}, [])
 
-	const toggleAll = useCallback(() => {
-		const allSelected = cols.size === headers.length
-		if (allSelected) {
-			setSelectedColumns(new Set())
-			setSortState(null)
-		} else {
-			setSelectedColumns(new Set(headers.map((_, i) => i)))
-		}
-	}, [cols.size, headers])
+	const columnOptions = useMemo(
+		() => columnMeta.map((column) => ({ value: String(column.index), label: column.header })),
+		[columnMeta]
+	)
+	const selectedColumnValues = useMemo(() => [...cols].map(String), [cols])
+	const handleColumnsChange = (values: Array<string>) => {
+		if (values.length === 0) setSortState(null)
+		setSelectedColumns(new Set(values.map(Number)))
+	}
 
 	const handleSort = useCallback((column: ColumnMeta) => {
 		setSortState((prev) => {
@@ -578,20 +570,6 @@ export function ChartDatasetModal({
 		[activePreviewValue, handleSetActive]
 	)
 
-	const handleToggleParam = useCallback(
-		(opt: ParamOption) => {
-			const exists = selectedParams.some((p) => p.value === opt.value)
-			if (exists) {
-				handleRemoveParam(opt.value)
-				return
-			}
-			// The picker disables options past the cap and says why in its header.
-			if (selectedParams.length >= MAX_PARAMS) return
-			setSelectedParams((prev) => [...prev, opt])
-		},
-		[selectedParams, handleRemoveParam]
-	)
-
 	const handleClearParams = useCallback(() => {
 		setSelectedParams([])
 		setActivePreviewValue(null)
@@ -610,6 +588,32 @@ export function ChartDatasetModal({
 			return combined
 		})
 	}, [])
+
+	const selectedParamValues = useMemo(() => selectedParams.map((param) => param.value), [selectedParams])
+	// One handler for the picker's whole selection: picks it drops are removed one by one, so a removed
+	// preview hands off as a row removal does, and its additions arrive together, as Select all sends them.
+	const handleParamValuesChange = (values: Array<string>) => {
+		if (values.length === 0) return handleClearParams()
+		const next = new Set(values)
+		for (const param of selectedParams) {
+			if (!next.has(param.value)) handleRemoveParam(param.value)
+		}
+		const current = new Set(selectedParamValues)
+		const added = filteredOptions.filter((option) => next.has(option.value) && !current.has(option.value))
+		if (added.length > 0) handleAddMultipleParams(added)
+	}
+
+	const categoryOptions = useMemo(
+		() => [
+			{ value: '', label: 'All' },
+			...protocolCategories.map(([category, count]) => ({
+				value: category,
+				label: category,
+				description: `${count} ${dataset.paramLabel.toLowerCase()}${count === 1 ? '' : 's'}`
+			}))
+		],
+		[protocolCategories, dataset.paramLabel]
+	)
 
 	const handleSelectCategory = useCallback(
 		(cat: string | null) => {
@@ -959,7 +963,6 @@ export function ChartDatasetModal({
 	}, [columnMeta, cols, sortedRows, selectedCount, report])
 
 	const activeSortDirection = sortState ? sortState.direction : false
-	const allSelected = headers.length > 0 && cols.size === headers.length
 
 	const hasActiveFilter = !!dateRange || deferredSearch.length > 0
 	const rowsCountLabel = hasActiveFilter
@@ -1056,22 +1059,26 @@ export function ChartDatasetModal({
 				<DialogToolbar>
 					<div className="flex flex-wrap items-center gap-2">
 						{protocolCategories.length > 0 ? (
-							<CategoryPickerPopover
+							<VirtualizedSelect
+								variant="chip"
+								label="Category"
 								triggerRef={categoryPickerRef}
-								categories={protocolCategories}
-								selected={selectedCategory}
-								onSelect={handleSelectCategory}
+								options={categoryOptions}
+								selectedValue={selectedCategory ?? ''}
+								onChange={(option) => handleSelectCategory(option.value || null)}
+								placeholder="All"
 							/>
 						) : null}
 						{!isCategoryMode ? (
-							<MultiOptionPickerPopover
-								triggerRef={paramPickerRef}
+							<VirtualizedMultiSelect
+								variant="chip"
 								label={dataset.paramLabel}
+								triggerRef={paramPickerRef}
 								options={filteredOptions}
-								selected={selectedParams}
-								onToggle={handleToggleParam}
-								onClearAll={handleClearParams}
-								onAddMultiple={handleAddMultipleParams}
+								selectedValues={selectedParamValues}
+								onChange={handleParamValuesChange}
+								placeholder="None"
+								maxSelections={MAX_PARAMS}
 							/>
 						) : (
 							<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary">
@@ -1081,28 +1088,21 @@ export function ChartDatasetModal({
 						)}
 
 						{dataset.sumMode && !isCategoryMode ? (
-							<button
+							<Button
 								type="button"
+								variant="toggle"
+								size="md"
+								data-active={sumModeActive}
+								aria-pressed={sumModeActive}
 								onClick={() => {
 									setSumMode((s) => !s)
 									setSelectedColumns(null)
 									setSortState(null)
 								}}
-								aria-pressed={sumModeActive}
-								title={
-									sumModeActive
-										? `Showing total per date. Click to show each ${dataset.paramLabel.toLowerCase()} as a separate column.`
-										: `Sum all columns into a single total per date`
-								}
-								className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-									sumModeActive
-										? 'border-brand bg-brand text-on-brand'
-										: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-								}`}
 							>
 								<Icon name="plus" className="size-3.5" />
 								<span>Sum all</span>
-							</button>
+							</Button>
 						) : null}
 
 						{hasSelection && !isPreview ? (
@@ -1117,28 +1117,21 @@ export function ChartDatasetModal({
 
 						{hasData && !isPreview ? (
 							<>
-								<label className="relative min-w-32 flex-1 sm:min-w-48">
-									<Icon
-										name="search"
-										height={14}
-										width={14}
-										className="absolute top-0 bottom-0 left-2.5 my-auto text-pro-text-tertiary"
-									/>
-									<input
-										value={search}
-										onChange={(e) => setSearch(e.currentTarget.value)}
-										aria-label="Filter rows"
-										placeholder="Filter rows..."
-										className="w-full min-w-0 rounded-md border border-subtle bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30 sm:w-48"
-									/>
-								</label>
+								<SearchField
+									label="Filter rows"
+									value={search}
+									onChange={setSearch}
+									placeholder="Filter rows…"
+									className="min-w-32 flex-1 sm:max-w-56 sm:min-w-48"
+								/>
 
-								<ColumnPickerPopover
-									columns={columnMeta}
-									selected={cols}
-									allSelected={allSelected}
-									onToggle={toggleColumn}
-									onToggleAll={toggleAll}
+								<VirtualizedMultiSelect
+									variant="chip"
+									label="Columns"
+									options={columnOptions}
+									selectedValues={selectedColumnValues}
+									onChange={handleColumnsChange}
+									placeholder="None"
 								/>
 							</>
 						) : hasData && isPreview ? (
@@ -1147,7 +1140,7 @@ export function ChartDatasetModal({
 						{isBulk ? (
 							<Button
 								variant="filter"
-								size="sm"
+								size="md"
 								data-active={showSelected}
 								aria-pressed={showSelected}
 								className="sm:hidden"
@@ -1491,302 +1484,5 @@ function PlaceholderRows({
 				)
 			})}
 		</div>
-	)
-}
-
-function CategoryPickerPopover({
-	triggerRef,
-	categories,
-	selected,
-	onSelect
-}: {
-	triggerRef: RefObject<HTMLButtonElement | null>
-	categories: Array<[string, number]>
-	selected: string | null
-	onSelect: (cat: string | null) => void
-}) {
-	const [search, setSearch] = useState('')
-	const deferred = useDeferredValue(search.trim().toLowerCase())
-
-	const filtered = useMemo(() => {
-		if (!deferred) return categories
-		return categories.filter(([cat]) => cat.toLowerCase().includes(deferred))
-	}, [categories, deferred])
-
-	return (
-		<Ariakit.PopoverProvider>
-			<div className="relative">
-				<Ariakit.PopoverDisclosure
-					ref={triggerRef}
-					className={`flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary ${selected ? 'pr-8' : ''}`}
-				>
-					<Icon name="tag" className="size-3.5" />
-					<span>{selected ?? 'All categories'}</span>
-				</Ariakit.PopoverDisclosure>
-				{selected ? (
-					<button
-						type="button"
-						aria-label="Clear category"
-						onClick={() => {
-							triggerRef.current?.focus()
-							onSelect(null)
-						}}
-						className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 hover:bg-hover-row"
-					>
-						<Icon name="x" className="size-2.5" />
-					</button>
-				) : null}
-			</div>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="border-b border-subtle px-3 py-2">
-					<input
-						value={search}
-						onChange={(e) => setSearch(e.currentTarget.value)}
-						placeholder="Search categories..."
-						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
-						autoFocus
-					/>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto py-1">
-					<button
-						type="button"
-						onClick={() => onSelect(null)}
-						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${
-							selected === null ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'
-						}`}
-					>
-						All categories
-					</button>
-					{filtered.map(([cat, count]) => (
-						<button
-							key={cat}
-							type="button"
-							onClick={() => onSelect(cat)}
-							className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${
-								selected === cat ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'
-							}`}
-						>
-							<span className="truncate">{cat}</span>
-							<span className="shrink-0 text-pro-text-tertiary">{count}</span>
-						</button>
-					))}
-					{filtered.length === 0 ? (
-						<p className="px-3 py-2 text-xs text-pro-text-tertiary">No categories match</p>
-					) : null}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
-	)
-}
-
-function MultiOptionPickerPopover({
-	triggerRef,
-	label,
-	options,
-	selected,
-	onToggle,
-	onClearAll,
-	onAddMultiple
-}: {
-	triggerRef: RefObject<HTMLButtonElement | null>
-	label: string
-	options: Array<ParamOption>
-	selected: Array<ParamOption>
-	onToggle: (option: ParamOption) => void
-	onClearAll: () => void
-	onAddMultiple: (options: Array<ParamOption>) => void
-}) {
-	const popoverStore = Ariakit.usePopoverStore()
-	const [optionSearch, setOptionSearch] = useState('')
-	const searchRef = useRef<HTMLInputElement>(null)
-	const deferredOptionSearch = useDeferredValue(optionSearch.trim().toLowerCase())
-
-	const selectedValues = useMemo(() => new Set(selected.map((s) => s.value)), [selected])
-
-	const filtered = useMemo(() => {
-		const source = deferredOptionSearch
-			? options.filter((o) => o.label.toLowerCase().includes(deferredOptionSearch))
-			: options
-		return source.slice(0, 200)
-	}, [options, deferredOptionSearch])
-
-	const capHit = selected.length >= MAX_PARAMS
-
-	const unselectedInView = useMemo(
-		() => filtered.filter((o) => !selectedValues.has(o.value)),
-		[filtered, selectedValues]
-	)
-	const canAddAll = unselectedInView.length > 0 && selected.length + unselectedInView.length <= MAX_PARAMS
-
-	// One pick is named; the count of several shows once, in the label.
-	const triggerText =
-		selected.length === 0
-			? `Select ${label}`
-			: selected.length === 1
-				? selected[0].label
-				: `${selected.length} ${label.toLowerCase()}s`
-
-	return (
-		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure
-				ref={triggerRef}
-				className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-			>
-				<Icon name="chevron-down" className="size-3.5" />
-				<span>{triggerText}</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
-					<span className="text-xs font-medium text-pro-text-secondary">
-						{selected.length}/{MAX_PARAMS} selected{capHit ? ' · remove one to add more' : ''}
-					</span>
-					<div className="flex items-center gap-2">
-						{canAddAll ? (
-							<button
-								type="button"
-								// Add all and Clear all leave once used; the search field stays.
-								onClick={() =>
-									keepFocus(
-										() => onAddMultiple(unselectedInView),
-										() => searchRef.current
-									)
-								}
-								className="text-xs text-brand hover:underline"
-							>
-								Add all ({unselectedInView.length})
-							</button>
-						) : null}
-						{selected.length > 0 ? (
-							<button
-								type="button"
-								onClick={() => keepFocus(onClearAll, () => searchRef.current)}
-								className="text-xs text-brand hover:underline"
-							>
-								Clear all
-							</button>
-						) : null}
-					</div>
-				</div>
-				<div className="border-b border-subtle px-3 py-2">
-					<input
-						ref={searchRef}
-						value={optionSearch}
-						onChange={(e) => setOptionSearch(e.currentTarget.value)}
-						placeholder={`Search ${label.toLowerCase()}…`}
-						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
-						autoFocus
-					/>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto py-1">
-					{filtered.length === 0 ? (
-						<p className="px-3 py-2 text-xs text-pro-text-tertiary">No results</p>
-					) : (
-						filtered.map((opt) => {
-							const isSelected = selectedValues.has(opt.value)
-							const disabled = !isSelected && capHit
-							return (
-								<button
-									key={opt.value}
-									type="button"
-									disabled={disabled}
-									onClick={() => onToggle(opt)}
-									title={disabled ? `Max ${MAX_PARAMS} items` : undefined}
-									className={`flex w-full items-center gap-2.5 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 ${
-										isSelected ? 'text-pro-text-primary' : 'text-pro-text-secondary'
-									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
-								>
-									<span
-										className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-											isSelected ? 'border-brand bg-brand text-on-brand' : 'border-subtle'
-										}`}
-									>
-										{isSelected ? <Icon name="check" className="size-2.5" /> : null}
-									</span>
-									<span className="truncate">{opt.label}</span>
-								</button>
-							)
-						})
-					)}
-					{filtered.length >= 200 ? (
-						<p className="px-3 py-2 text-[11px] text-pro-text-tertiary">
-							Showing first 200 — refine the search to narrow results
-						</p>
-					) : null}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
-	)
-}
-
-function ColumnPickerPopover({
-	columns,
-	selected,
-	allSelected,
-	onToggle,
-	onToggleAll
-}: {
-	columns: Array<ColumnMeta>
-	selected: Set<number>
-	allSelected: boolean
-	onToggle: (index: number) => void
-	onToggleAll: () => void
-}) {
-	const popoverStore = Ariakit.usePopoverStore()
-
-	return (
-		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
-				<Icon name="eye" className="size-3.5" />
-				Columns
-				<span className="text-pro-text-tertiary">
-					{selected.size}/{columns.length}
-				</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="flex items-center justify-between border-b border-subtle px-3 py-2">
-					<span className="text-xs font-medium text-pro-text-secondary">Toggle columns</span>
-					<button type="button" onClick={onToggleAll} className="text-xs text-brand hover:underline">
-						{allSelected ? 'Deselect all' : 'Select all'}
-					</button>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto py-1">
-					{columns.map((column) => {
-						const isSelected = selected.has(column.index)
-						return (
-							<button
-								key={column.index}
-								type="button"
-								onClick={() => onToggle(column.index)}
-								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row"
-							>
-								<span
-									className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-										isSelected ? 'border-brand bg-brand text-on-brand' : 'border-subtle'
-									}`}
-								>
-									{isSelected ? <Icon name="check" className="size-2.5" /> : null}
-								</span>
-								<span className={isSelected ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>{column.header}</span>
-							</button>
-						)
-					})}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
 	)
 }

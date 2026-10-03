@@ -1,0 +1,596 @@
+import * as Ariakit from '@ariakit/react'
+import { defaultRangeExtractor } from '@tanstack/react-virtual'
+import { matchSorter } from 'match-sorter'
+import { type KeyboardEvent, type ReactNode, type Ref, startTransition, useId, useMemo, useRef, useState } from 'react'
+import { TokenLogo } from '~/components/TokenLogo'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { Icon } from '~/ui/Icon'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
+import {
+	popoverMeasuredRowStyles,
+	popoverMultiSelectCheckStyles,
+	popoverScrollAreaStyles,
+	popoverSingleSelectCheckStyles
+} from '~/ui/Popover'
+import { PopoverHeader } from '~/ui/PopoverHeader'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { LoadingIndicator } from '~/ui/Status'
+import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
+import { SelectCheckIcon } from './SelectCheckIcon'
+import { selectTriggerStyles } from './types'
+
+/* ----------------------------------------------------------------------------
+   Searchable pickers for long option lists (design.md → Popover surface).
+   Only the rows in view are rendered, and each is measured, so a row may wrap
+   or carry a second line. Ariakit keeps DOM focus in the search field and
+   moves a virtual active row; the virtualizer keeps that row, its neighbours
+   and the selected rows mounted, so arrow keys continue past the rendered
+   window and the list opens on the selection.
+---------------------------------------------------------------------------- */
+
+export type VirtualizedSelectOption<T extends string = string> = {
+	value: T
+	label: string
+	/** Image URL, drawn with TokenLogo on the row and, once picked, on the trigger. */
+	logo?: string | null
+	/** A second line under the label. */
+	description?: string
+	disabled?: boolean
+	/** A child protocol, indented under its parent. */
+	isChild?: boolean
+	/** A heading the list shows above the first option of each run of the same group. */
+	group?: string
+}
+
+type PickerBaseProps<T extends string = string> = {
+	label: string
+	options: ReadonlyArray<VirtualizedSelectOption<T>>
+	/** Trigger text while nothing is picked. */
+	placeholder: string
+	/** The options are still loading: the trigger waits, disabled, with a spinner. */
+	isLoading?: boolean
+	/** Server search: the caller passes the matching `options`, so the list shows them unfiltered. */
+	onSearchChange?: (value: string) => void
+	/** A server search is in flight; the list says so instead of "No results". */
+	isSearching?: boolean
+	/** A control at the end of a field's label row, such as an include/exclude toggle. */
+	labelAction?: ReactNode
+	/** Full-bleed rows under the search field, such as a switch between the kinds of option listed. */
+	headerRow?: ReactNode
+	/** For a caller that hands focus back to the trigger, e.g. when the list of picks it fed empties. */
+	triggerRef?: Ref<HTMLButtonElement>
+	autoFocus?: boolean
+	/** Layout placement only. */
+	className?: string
+}
+
+function FieldLabel({ id, htmlFor, label, action }: { id: string; htmlFor: string; label: string; action: ReactNode }) {
+	const text = (
+		<label id={id} htmlFor={htmlFor} className="label-sm text-secondary">
+			{label}
+		</label>
+	)
+	if (!action) return text
+	return (
+		<div className="flex items-center justify-between gap-2">
+			{text}
+			{action}
+		</div>
+	)
+}
+
+// Ariakit scrolls the list to the selection on open, before the rows above it render and measure, so it lands only
+// as close as these estimates are. Measured heights: one line 33px (44px in a phone sheet), two lines 49px, plus 32px
+// for a group heading.
+function estimateRowHeight(option: VirtualizedSelectOption | null, startsGroup: boolean) {
+	const twoLines = !!option && (option.description !== undefined || !!option.isChild)
+	const phone = window.matchMedia('(max-width: 639px)').matches
+	return (twoLines ? 49 : phone ? 44 : 33) + (startsGroup ? 32 : 0)
+}
+
+// A field's list matches the field, but never narrower than a readable row: fields sit in two-column filter grids.
+const FIELD_SURFACE_WIDTH = 'w-[max(16rem,var(--popover-anchor-width))]'
+
+/** The typed search. Server-searched pickers also hear it through `onSearchChange`. */
+function useSearch(onSearchChange: ((value: string) => void) | undefined) {
+	const [search, setSearch] = useState('')
+	const updateSearch = (value: string) =>
+		startTransition(() => {
+			setSearch(value)
+			onSearchChange?.(value)
+		})
+	return { search, updateSearch }
+}
+
+function findOption<T extends string>(options: ReadonlyArray<VirtualizedSelectOption<T>>, value: string) {
+	for (const option of options) {
+		if (option.value === value) return option
+	}
+	return null
+}
+
+function filterOptions<T extends string>(
+	options: ReadonlyArray<VirtualizedSelectOption<T>>,
+	search: string,
+	serverSearch: boolean
+) {
+	if (serverSearch || !search) return options
+	return matchSorter(options, search, { keys: ['label', 'value', 'group'], threshold: matchSorter.rankings.CONTAINS })
+}
+
+function SearchInput({ label }: { label: string }) {
+	return (
+		<div className="relative">
+			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
+			<Ariakit.ComboboxInput aria-label={`Search ${label}`} placeholder="Search…" className={searchFieldInputStyles} />
+		</div>
+	)
+}
+
+function OptionLogo({ option, size, reserve }: { option: VirtualizedSelectOption; size: number; reserve: boolean }) {
+	if (option.logo) return <TokenLogo src={option.logo} size={size} />
+	// Rows without a logo keep the logo's slot, so labels in a list with logos line up.
+	return reserve ? <span aria-hidden className="shrink-0" style={{ width: size, height: size }} /> : null
+}
+
+function OptionList({
+	options,
+	matches,
+	multiple,
+	selectedValues,
+	selectAll,
+	isSearching,
+	search
+}: {
+	options: ReadonlyArray<VirtualizedSelectOption>
+	matches: ReadonlyArray<VirtualizedSelectOption>
+	multiple: boolean
+	selectedValues: ReadonlyArray<string>
+	/** Leads a multi-select list with the tri-state row (design.md → Popover surface). */
+	selectAll: { label: string; state: ReturnType<typeof getSelectAllState>; onToggle: () => void } | null
+	isSearching: boolean
+	search: string
+}) {
+	const listRef = useRef<HTMLDivElement>(null)
+	const rowIdPrefix = useId()
+	const store = Ariakit.useComboboxContext()
+	const activeId = Ariakit.useStoreState(store, 'activeId')
+	const offset = selectAll ? 1 : 0
+	const count = matches.length + offset
+	const reserveLogo = useMemo(() => options.some((option) => option.logo), [options])
+
+	// Ariakit moves only between mounted rows, so the selected rows stay rendered and the list opens on the
+	// selection, and so do the active row and its neighbours: the rendered window follows scroll events, which
+	// land a frame after each key press, so the next row has to exist before the key does.
+	const persistentIndexes = useMemo(() => {
+		const selected = new Set(selectedValues)
+		const indexes: Array<number> = []
+		for (let index = 0; index < matches.length; index++) {
+			if (selected.has(matches[index]!.value)) indexes.push(index + offset)
+		}
+		return indexes
+	}, [matches, selectedValues, offset])
+	// Each search remounts the list, so a row id from an earlier list never matches this one's prefix.
+	const activeIndex = activeId?.startsWith(`${rowIdPrefix}-`) ? Number(activeId.slice(rowIdPrefix.length + 1)) : -1
+
+	const virtualizer = useVirtualItems({
+		count,
+		getScrollElement: () => listRef.current,
+		estimateSize: (index) => {
+			const option = selectAll && index === 0 ? null : matches[index - offset]!
+			const previous = option && index - offset > 0 ? matches[index - offset - 1]! : null
+			return estimateRowHeight(option, !!option?.group && option.group !== previous?.group)
+		},
+		getItemKey: (index) => (selectAll && index === 0 ? SELECT_ALL_VALUE : matches[index - offset]!.value),
+		overscan: 8,
+		rangeExtractor: (range) => {
+			const indexes = new Set(defaultRangeExtractor(range))
+			for (const index of persistentIndexes) indexes.add(index)
+			for (let index = activeIndex - 1; index <= activeIndex + 1; index++) {
+				if (activeIndex >= 0 && index >= 0 && index < count) indexes.add(index)
+			}
+			return [...indexes].sort((a, b) => a - b)
+		}
+	})
+
+	if (matches.length === 0) {
+		return (
+			<p role="status" className="flex justify-center px-3 py-6 text-center body-sm text-tertiary">
+				{isSearching ? <LoadingIndicator label="Searching" /> : search ? `No results for "${search}"` : 'No options'}
+			</p>
+		)
+	}
+
+	return (
+		<Ariakit.ComboboxList ref={listRef} className={popoverScrollAreaStyles}>
+			<div className="relative w-full" style={{ height: virtualizer.totalSize }}>
+				{virtualizer.items.map((row) => {
+					const itemProps = {
+						id: `${rowIdPrefix}-${row.index}`,
+						className: `${popoverMeasuredRowStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
+							row.index < count - 1 ? 'border-b border-subtle' : ''
+						}`
+					}
+					const option = selectAll && row.index === 0 ? null : matches[row.index - offset]!
+					const previous = option && row.index - offset > 0 ? matches[row.index - offset - 1]! : null
+					// A group's first row carries its heading, so the heading scrolls and measures with it.
+					const groupHeading = option?.group && option.group !== previous?.group ? option.group : null
+					return (
+						<div
+							key={row.key}
+							ref={virtualizer.measureElement}
+							data-index={row.index}
+							className="absolute inset-x-0 top-0"
+							style={{ transform: `translateY(${row.start}px)` }}
+						>
+							{groupHeading ? <p className="px-3 pt-3 pb-1 label-sm text-tertiary">{groupHeading}</p> : null}
+							{option === null ? (
+								<Ariakit.ComboboxItem
+									{...itemProps}
+									value={SELECT_ALL_VALUE}
+									selectValueOnClick={false}
+									resetValueOnSelect={false}
+									hideOnClick={false}
+									onClick={selectAll!.onToggle}
+								>
+									<SelectAllContent label={selectAll!.label} state={selectAll!.state} />
+								</Ariakit.ComboboxItem>
+							) : (
+								<Ariakit.ComboboxItem
+									{...itemProps}
+									value={option.value}
+									disabled={option.disabled}
+									// A multi-select keeps the typed filter while several matches are toggled.
+									resetValueOnSelect={!multiple}
+									hideOnClick={!multiple}
+								>
+									<OptionContent option={option} reserveLogo={reserveLogo} />
+									<Ariakit.ComboboxItemSelected>
+										{(selected) => (
+											<span
+												aria-hidden
+												className={
+													multiple ? popoverMultiSelectCheckStyles(selected) : popoverSingleSelectCheckStyles(selected)
+												}
+											>
+												{selected ? <SelectCheckIcon /> : null}
+											</span>
+										)}
+									</Ariakit.ComboboxItemSelected>
+								</Ariakit.ComboboxItem>
+							)}
+						</div>
+					)
+				})}
+			</div>
+		</Ariakit.ComboboxList>
+	)
+}
+
+function OptionContent({ option, reserveLogo }: { option: VirtualizedSelectOption; reserveLogo: boolean }) {
+	const description = option.description ?? (option.isChild ? 'Child protocol' : null)
+	return (
+		<span className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
+			<OptionLogo option={option} size={20} reserve={reserveLogo} />
+			<span className="flex min-w-0 flex-col">
+				<span className="break-words">{option.label}</span>
+				{description ? <span className="break-words text-tertiary">{description}</span> : null}
+			</span>
+		</span>
+	)
+}
+
+function TriggerArrow({ isLoading }: { isLoading: boolean }) {
+	return isLoading ? (
+		<span className="ml-auto text-tertiary">
+			<LoadingSpinner size={14} />
+		</span>
+	) : (
+		<Ariakit.ComboboxSelectArrow className="ml-auto text-tertiary" />
+	)
+}
+
+type PickerVariant = 'field' | 'chip'
+
+/** The trigger, and for a field its label row. `chip` reads "Label: value" in a toolbar; `field` sets its
+    label above it, and the trigger is named by both. */
+function PickerTrigger({
+	variant,
+	label,
+	labelAction,
+	text,
+	picked,
+	logo,
+	isLoading,
+	triggerRef,
+	autoFocus,
+	className
+}: Pick<PickerBaseProps, 'label' | 'labelAction' | 'triggerRef' | 'autoFocus' | 'className'> & {
+	variant: PickerVariant
+	text: string
+	/** Whether `text` names a pick, or is the placeholder. */
+	picked: boolean
+	logo: VirtualizedSelectOption | null
+	isLoading: boolean
+}) {
+	const labelId = useId()
+	const triggerId = useId()
+	const store = Ariakit.useComboboxContext()!
+	// A list without a search field keeps focus on this trigger, inside any dialog around it. Ariakit closes the list
+	// on Escape and lets the key go on to that dialog, which closes too. While the list is open, the trigger takes
+	// Escape for the list alone, before Ariakit's own handler sees it.
+	const onKeyDownCapture = (event: KeyboardEvent<HTMLButtonElement>) => {
+		if (event.key !== 'Escape' || !store.getState().open) return
+		event.stopPropagation()
+		store.hide()
+	}
+	const content = (
+		<>
+			{/* The space keeps the accessible name "Label: value"; flex items join their text without one. */}
+			{variant === 'chip' ? <span className="shrink-0">{label}: </span> : null}
+			{logo ? <OptionLogo option={logo} size={16} reserve={false} /> : null}
+			<span className={`truncate ${!picked ? 'text-tertiary' : variant === 'chip' ? 'text-link' : ''}`}>
+				{isLoading ? 'Loading…' : text}
+			</span>
+			<TriggerArrow isLoading={isLoading} />
+		</>
+	)
+	if (variant === 'chip') {
+		return (
+			<Ariakit.ComboboxSelect
+				ref={triggerRef}
+				onKeyDownCapture={onKeyDownCapture}
+				autoFocus={autoFocus}
+				disabled={isLoading}
+				aria-busy={isLoading || undefined}
+				className={`${selectTriggerStyles('filter', 'md')} max-w-72 shrink-0 ${className ?? ''}`}
+			>
+				{content}
+			</Ariakit.ComboboxSelect>
+		)
+	}
+	return (
+		<div className={`flex min-w-0 flex-col gap-1.5 ${className ?? ''}`}>
+			<FieldLabel id={labelId} htmlFor={triggerId} label={label} action={labelAction} />
+			<Ariakit.ComboboxSelect
+				ref={triggerRef}
+				onKeyDownCapture={onKeyDownCapture}
+				id={triggerId}
+				autoFocus={autoFocus}
+				aria-labelledby={`${labelId} ${triggerId}`}
+				disabled={isLoading}
+				aria-busy={isLoading || undefined}
+				className={`${selectTriggerStyles('input', 'md')} w-full`}
+			>
+				{content}
+			</Ariakit.ComboboxSelect>
+		</div>
+	)
+}
+
+// Lists this short are read at a glance, so they open without a search field (design.md: a search from 12).
+const SEARCH_FROM = 12
+
+function isSearchable(options: ReadonlyArray<unknown>, onSearchChange: ((value: string) => void) | undefined) {
+	return !!onSearchChange || options.length >= SEARCH_FROM
+}
+
+/** The popover: a tall list drawer with a search field for long or server-searched lists, a content-sized panel
+    for short ones. `header` holds rows under the search field, or above a short list. */
+function PickerSurface({
+	label,
+	variant,
+	searchable,
+	header,
+	children
+}: {
+	label: string
+	variant: PickerVariant
+	searchable: boolean
+	header: ReactNode
+	children: ReactNode
+}) {
+	return (
+		<ComboboxSurface
+			variant={searchable ? 'list' : 'panel'}
+			heading={label}
+			className={`z-50 ${variant === 'chip' ? 'w-72' : FIELD_SURFACE_WIDTH}`}
+		>
+			{searchable ? (
+				<PopoverHeader search={<SearchInput label={label} />}>{header}</PopoverHeader>
+			) : header ? (
+				<div className="flex shrink-0 flex-col border-b border-subtle pt-3 max-sm:pt-1">{header}</div>
+			) : null}
+			{children}
+		</ComboboxSurface>
+	)
+}
+
+/** One pick from a list. */
+export function VirtualizedSelect<T extends string = string>({
+	label,
+	variant,
+	options,
+	selectedValue,
+	onChange,
+	placeholder,
+	isLoading = false,
+	onSearchChange,
+	isSearching = false,
+	headerRow,
+	...triggerProps
+}: PickerBaseProps<T> & {
+	variant: PickerVariant
+	selectedValue: T | null
+	onChange: (option: VirtualizedSelectOption<T>) => void
+}) {
+	const { search, updateSearch } = useSearch(onSearchChange)
+	const matches = useMemo(() => filterOptions(options, search, !!onSearchChange), [options, search, onSearchChange])
+	const selectedOption = selectedValue === null ? null : findOption(options, selectedValue)
+	const selectedText = selectedOption?.label ?? selectedValue
+	const selectedValues = useMemo(() => (selectedValue === null ? [] : [selectedValue]), [selectedValue])
+
+	return (
+		<Ariakit.ComboboxProvider
+			resetValueOnHide
+			placement="bottom-start"
+			selectedValue={selectedValue ?? ''}
+			setSelectedValue={(value) => {
+				const option = findOption(options, value)
+				if (option) onChange(option)
+			}}
+			setInputValue={updateSearch}
+		>
+			<PickerTrigger
+				{...triggerProps}
+				variant={variant}
+				label={label}
+				text={selectedText ?? placeholder}
+				picked={selectedText !== null}
+				logo={selectedOption}
+				isLoading={isLoading}
+			/>
+			<PickerSurface
+				label={label}
+				variant={variant}
+				searchable={isSearchable(options, onSearchChange)}
+				header={headerRow}
+			>
+				<OptionList
+					// A new search is a new list: it starts at the top, not where the last one was scrolled.
+					key={search}
+					options={options}
+					matches={matches}
+					multiple={false}
+					selectedValues={selectedValues}
+					selectAll={null}
+					isSearching={isSearching}
+					search={search}
+				/>
+			</PickerSurface>
+		</Ariakit.ComboboxProvider>
+	)
+}
+
+/** One pick is named. Several are counted against the list, unless a server search decides what the list holds. */
+function describePicks(
+	options: ReadonlyArray<VirtualizedSelectOption>,
+	values: ReadonlyArray<string>,
+	serverSearch: boolean
+) {
+	if (values.length === 1) return findOption(options, values[0]!)?.label ?? values[0]!
+	if (serverSearch) return `${values.length} selected`
+	return values.length === options.length ? 'All' : `${values.length} of ${options.length}`
+}
+
+/** Several picks from a list. The list leads with the tri-state "Select all" whenever every option in
+    view still fits under `maxSelections`; a capped list says how many picks it holds and, at the cap,
+    disables the rest. */
+export function VirtualizedMultiSelect({
+	label,
+	variant = 'field',
+	options,
+	selectedValues,
+	onChange,
+	placeholder,
+	isLoading = false,
+	onSearchChange,
+	isSearching = false,
+	maxSelections,
+	headerRow,
+	...triggerProps
+}: PickerBaseProps & {
+	variant?: PickerVariant
+	selectedValues: Array<string>
+	onChange: (values: Array<string>) => void
+	maxSelections?: number
+}) {
+	const { search, updateSearch } = useSearch(onSearchChange)
+	const matches = useMemo(() => filterOptions(options, search, !!onSearchChange), [options, search, onSearchChange])
+	const atCap = maxSelections !== undefined && selectedValues.length >= maxSelections
+	const listOptions = useMemo(() => {
+		if (!atCap) return matches
+		const selected = new Set(selectedValues)
+		return matches.map((option) =>
+			option.disabled || selected.has(option.value) ? option : { ...option, disabled: true }
+		)
+	}, [matches, atCap, selectedValues])
+
+	const selectsShown = search.trim() !== ''
+	const scopeKeys = useMemo(() => {
+		const keys: Array<string> = []
+		for (const option of selectsShown ? matches : options) {
+			if (!option.disabled) keys.push(option.value)
+		}
+		return keys
+	}, [selectsShown, matches, options])
+	const selectAllState = getSelectAllState(scopeKeys, selectedValues)
+	const selected = new Set(selectedValues)
+	const unpicked = scopeKeys.filter((value) => !selected.has(value))
+	const selectAllFits = maxSelections === undefined || selectedValues.length + unpicked.length <= maxSelections
+	const toggleSelectAll = () => {
+		if (selectAllState !== 'all') return onChange(selectedValues.concat(unpicked))
+		const scope = new Set(scopeKeys)
+		onChange(selectedValues.filter((value) => !scope.has(value)))
+	}
+	const firstPick = selectedValues.length === 1 ? findOption(options, selectedValues[0]!) : null
+
+	return (
+		<Ariakit.ComboboxProvider
+			resetValueOnHide
+			placement="bottom-start"
+			selectedValue={selectedValues}
+			setSelectedValue={onChange}
+			setInputValue={updateSearch}
+		>
+			<PickerTrigger
+				{...triggerProps}
+				variant={variant}
+				label={label}
+				text={selectedValues.length > 0 ? describePicks(options, selectedValues, !!onSearchChange) : placeholder}
+				picked={selectedValues.length > 0}
+				logo={firstPick}
+				isLoading={isLoading}
+			/>
+			<PickerSurface
+				label={label}
+				variant={variant}
+				searchable={isSearchable(options, onSearchChange)}
+				header={
+					maxSelections !== undefined || headerRow ? (
+						<>
+							{maxSelections !== undefined ? (
+								<p role="status" className="px-3 pb-2 body-sm text-tertiary">
+									{selectedValues.length} of {maxSelections} picked
+									{atCap ? '. Remove one to pick another.' : ''}
+								</p>
+							) : null}
+							{headerRow}
+						</>
+					) : null
+				}
+			>
+				<OptionList
+					// A new search is a new list: it starts at the top, not where the last one was scrolled.
+					key={search}
+					options={options}
+					matches={listOptions}
+					multiple
+					selectedValues={selectedValues}
+					selectAll={
+						scopeKeys.length > 0 && selectAllFits
+							? {
+									label: selectsShown ? 'Select all shown' : 'Select all',
+									state: selectAllState,
+									onToggle: toggleSelectAll
+								}
+							: null
+					}
+					isSearching={isSearching}
+					search={search}
+				/>
+			</PickerSurface>
+		</Ariakit.ComboboxProvider>
+	)
+}

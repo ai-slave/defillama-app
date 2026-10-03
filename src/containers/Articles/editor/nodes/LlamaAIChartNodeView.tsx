@@ -2,6 +2,7 @@ import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { useArticleEditable } from '../useArticleEditable'
 
@@ -98,11 +99,13 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 						<Icon name="sparkles" className="size-3 text-link" />
 						LlamaAI · {config?.type ?? 'chart'}
 					</span>
-					<span className="pointer-events-auto flex items-stretch divide-x divide-(--border-medium) overflow-hidden rounded-xs border border-medium bg-surface shadow-xs">
-						<button
+					<span className="pointer-events-auto flex gap-1 rounded-md bg-surface shadow-xs">
+						<Button
 							type="button"
-							title="Remove chart"
+							variant="secondary"
+							size="sm"
 							aria-label="Remove chart"
+							// Keeps the editor's selection on the node while the button is pressed.
 							onMouseDown={(e) => {
 								e.preventDefault()
 								e.stopPropagation()
@@ -112,11 +115,10 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 								deleteNode()
 								editor.commands.focus()
 							}}
-							className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-error"
 						>
-							<Icon name="trash-2" className="size-3" />
-							Remove
-						</button>
+							<Icon name="trash-2" className="size-3.5" />
+							<span>Remove</span>
+						</Button>
 					</span>
 				</div>
 			) : null}

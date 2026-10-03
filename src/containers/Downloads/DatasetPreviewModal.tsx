@@ -3,17 +3,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
+import { VirtualizedMultiSelect, VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SearchField } from '~/ui/SearchField'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
 import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import { parseCsv } from './csvParse'
-import type { DatasetDefinition, DatasetExcludeToggle } from './datasets'
+import type { DatasetDefinition } from './datasets'
 import { SavePresetDialog } from './PresetDialogs'
 import {
 	downloadPreviewHasTime,
@@ -376,15 +379,15 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 		})
 	}, [])
 
-	const toggleAll = useCallback(() => {
-		const allSelected = cols.size === headers.length
-		if (allSelected) {
-			setSelectedColumns(new Set())
-			setSortState(null)
-		} else {
-			setSelectedColumns(new Set(headers.map((_, index) => index)))
-		}
-	}, [cols.size, headers])
+	const columnOptions = useMemo(
+		() => columnMeta.map((column) => ({ value: String(column.index), label: column.header })),
+		[columnMeta]
+	)
+	const selectedColumnValues = useMemo(() => [...cols].map(String), [cols])
+	const handleColumnsChange = (values: Array<string>) => {
+		if (values.length === 0) setSortState(null)
+		setSelectedColumns(new Set(values.map(Number)))
+	}
 
 	const handleSort = useCallback((column: ColumnMeta) => {
 		setSortState((previous) => {
@@ -538,7 +541,6 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	}
 
 	const activeSortDirection = sortState ? sortState.direction : false
-	const allSelected = headers.length > 0 && cols.size === headers.length
 
 	return (
 		<>
@@ -583,28 +585,26 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 						<div className="flex flex-wrap items-center gap-2">
 							{!isPreview ? (
 								<>
-									<label className="relative min-w-32 flex-1 sm:min-w-48">
-										<Icon
-											name="search"
-											height={14}
-											width={14}
-											className="absolute top-0 bottom-0 left-2.5 my-auto text-pro-text-tertiary"
-										/>
-										<input
-											value={search}
-											onChange={(event) => setSearch(event.currentTarget.value)}
-											aria-label="Filter rows"
-											placeholder="Filter rows..."
-											className="w-full min-w-0 rounded-md border border-subtle bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30 sm:w-48"
-										/>
-									</label>
+									<SearchField
+										label="Filter rows"
+										value={search}
+										onChange={setSearch}
+										placeholder="Filter rows…"
+										className="min-w-32 flex-1 sm:max-w-56 sm:min-w-48"
+									/>
 
 									{dataset.chainFilterType && availableChains && availableChains.length > 0 ? (
-										<ChainPickerPopover
-											chains={availableChains}
-											selected={selectedChain}
-											onSelect={(chain) => {
-												setSelectedChain(chain)
+										<VirtualizedSelect
+											variant="chip"
+											label="Chain"
+											options={[
+												{ value: '', label: 'All' },
+												...availableChains.map((chain) => ({ value: chain, label: chain }))
+											]}
+											selectedValue={selectedChain ?? ''}
+											placeholder="All"
+											onChange={(option) => {
+												setSelectedChain(option.value || null)
 												setSelectedColumns(null)
 												setSortState(null)
 											}}
@@ -612,20 +612,28 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 									) : null}
 
 									{dataset.excludeToggles?.map((toggle) => (
-										<ExcludeToggleButton
+										<Button
 											key={toggle.field}
-											toggle={toggle}
-											excluded={excludeState[toggle.field] ?? false}
-											onToggle={(excluded) => setExcludeState((prev) => ({ ...prev, [toggle.field]: excluded }))}
-										/>
+											variant="toggle"
+											size="md"
+											data-active={!(excludeState[toggle.field] ?? false)}
+											aria-pressed={!(excludeState[toggle.field] ?? false)}
+											onClick={() =>
+												setExcludeState((prev) => ({ ...prev, [toggle.field]: !(prev[toggle.field] ?? false) }))
+											}
+										>
+											<Icon name={excludeState[toggle.field] ? 'eye-off' : 'eye'} className="size-3.5" />
+											{toggle.label}
+										</Button>
 									))}
 
-									<ColumnPickerPopover
-										columns={columnMeta}
-										selected={cols}
-										allSelected={allSelected}
-										onToggle={toggleColumn}
-										onToggleAll={toggleAll}
+									<VirtualizedMultiSelect
+										variant="chip"
+										label="Columns"
+										options={columnOptions}
+										selectedValues={selectedColumnValues}
+										onChange={handleColumnsChange}
+										placeholder="None"
 									/>
 
 									<RowLimitPicker value={rowLimit} totalRows={sortedRows.length} onChange={setRowLimit} />
@@ -904,161 +912,5 @@ function PlaceholderRows({
 				)
 			})}
 		</div>
-	)
-}
-
-function ChainPickerPopover({
-	chains,
-	selected,
-	onSelect
-}: {
-	chains: Array<string>
-	selected: string | null
-	onSelect: (chain: string | null) => void
-}) {
-	const popoverStore = Ariakit.usePopoverStore()
-	const [chainSearch, setChainSearch] = useState('')
-	const deferredChainSearch = useDeferredValue(chainSearch.trim().toLowerCase())
-
-	const filteredChains = useMemo(() => {
-		if (!deferredChainSearch) return chains
-		return chains.filter((c) => c.toLowerCase().includes(deferredChainSearch))
-	}, [chains, deferredChainSearch])
-
-	return (
-		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
-				<Icon name="link" className="size-3.5" />
-				{selected ?? 'All chains'}
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="border-b border-subtle px-3 py-2">
-					<input
-						value={chainSearch}
-						onChange={(e) => setChainSearch(e.currentTarget.value)}
-						placeholder="Search chains..."
-						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
-					/>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto py-1">
-					<button
-						type="button"
-						onClick={() => {
-							onSelect(null)
-							popoverStore.hide()
-						}}
-						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === null ? 'font-medium text-brand' : 'text-pro-text-secondary'}`}
-					>
-						All chains
-					</button>
-					{filteredChains.map((chain) => (
-						<button
-							key={chain}
-							type="button"
-							onClick={() => {
-								onSelect(chain)
-								popoverStore.hide()
-							}}
-							className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === chain ? 'font-medium text-brand' : 'text-pro-text-secondary'}`}
-						>
-							{chain}
-						</button>
-					))}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
-	)
-}
-
-function ExcludeToggleButton({
-	toggle,
-	excluded,
-	onToggle
-}: {
-	toggle: DatasetExcludeToggle
-	excluded: boolean
-	onToggle: (excluded: boolean) => void
-}) {
-	return (
-		<button
-			type="button"
-			onClick={() => onToggle(!excluded)}
-			className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-				excluded
-					? 'border-subtle text-pro-text-tertiary hover:bg-hover-row hover:text-pro-text-primary'
-					: 'border-brand/30 bg-brand/10 text-brand hover:bg-brand/20'
-			}`}
-		>
-			<Icon name={excluded ? 'eye-off' : 'eye'} className="size-3.5" />
-			{toggle.label}
-		</button>
-	)
-}
-
-function ColumnPickerPopover({
-	columns,
-	selected,
-	allSelected,
-	onToggle,
-	onToggleAll
-}: {
-	columns: Array<ColumnMeta>
-	selected: Set<number>
-	allSelected: boolean
-	onToggle: (index: number) => void
-	onToggleAll: () => void
-}) {
-	const popoverStore = Ariakit.usePopoverStore()
-
-	return (
-		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
-				<Icon name="eye" className="size-3.5" />
-				Columns
-				<span className="text-pro-text-tertiary">
-					{selected.size}/{columns.length}
-				</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="flex items-center justify-between border-b border-subtle px-3 py-2">
-					<span className="text-xs font-medium text-pro-text-secondary">Toggle columns</span>
-					<button type="button" onClick={onToggleAll} className="text-xs text-brand hover:underline">
-						{allSelected ? 'Deselect all' : 'Select all'}
-					</button>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto py-1">
-					{columns.map((column) => {
-						const isSelected = selected.has(column.index)
-						return (
-							<button
-								key={column.index}
-								type="button"
-								onClick={() => onToggle(column.index)}
-								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row"
-							>
-								<span
-									className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-										isSelected ? 'border-brand bg-brand text-on-brand' : 'border-subtle'
-									}`}
-								>
-									{isSelected ? <Icon name="check" className="size-2.5" /> : null}
-								</span>
-								<span className={isSelected ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>{column.header}</span>
-							</button>
-						)
-					})}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
 	)
 }

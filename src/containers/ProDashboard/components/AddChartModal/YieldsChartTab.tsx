@@ -1,6 +1,7 @@
 import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from 'react'
+import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import { useYieldsData } from '~/containers/ProDashboard/components/datasets/YieldsDataset/useYieldsData'
 import type { ProYieldRow } from '~/containers/ProDashboard/yieldData'
 import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalization'
@@ -11,7 +12,6 @@ import { LocalLoader } from '~/ui/Loaders'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { normalizeYieldChartType } from '../../types'
 import { getItemIconUrl } from '../../utils'
-import { AriakitMultiSelect } from '../AriakitMultiSelect'
 import { useYieldChartTransformations } from '../useYieldChartTransformations'
 import {
 	borrowApyCharts,
@@ -785,7 +785,7 @@ export function YieldsChartTab({
 							</Popover>
 						</div>
 
-						<AriakitMultiSelect
+						<VirtualizedMultiSelect
 							label="Categories"
 							options={categoryOptions}
 							selectedValues={selectedYieldCategories}

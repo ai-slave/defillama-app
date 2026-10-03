@@ -19,7 +19,11 @@ export const tooltipSurfaceStaticStyles = tw`z-50 max-h-[calc(100dvh-80px)] over
 
 export const tooltipSurfaceStyles = `${tooltipSurfaceStaticStyles} ${tooltipMotionStyles}`
 
-export const popoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11 max-sm:cv-auto-44`
+/* Virtualized lists measure each row, so their rows skip `content-visibility`: an off-screen row would report
+   its placeholder size instead of its own. */
+export const popoverMeasuredRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
+
+export const popoverRowStyles = `${popoverMeasuredRowStyles} cv-auto-37 max-sm:cv-auto-44`
 
 export const popoverRowWithBorderStyles = `${popoverRowStyles} border-b border-subtle last-of-type:border-b-0`
 

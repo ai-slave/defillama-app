@@ -14,7 +14,6 @@ vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query
 const http = installSubscriberSession('u1', { resolved: true })
 const downloads = installDownloadSink()
 vi.mock('../../../Table/TablePagination', () => ({ TablePagination: () => null }))
-vi.mock('~/components/MultiSelect/ReactSelect', () => ({ ReactSelect: () => null }))
 
 import { TokenUsageDataset } from '../index'
 
@@ -103,5 +102,42 @@ describe('TokenUsageDataset CSV export', () => {
 		}
 		expect(downloads.map((download) => download.filename)).toEqual(['token-usage-USDC.csv'])
 		expect(await downloads[0]!.blob.text()).toBe(expected.join('\n'))
+	})
+
+	test('an empty editable card searches tokens on the server and adds the picked one', async () => {
+		http.serve({
+			'/api/dynamic/pro-dashboard/tokens/search': [
+				{ value: 'usdc', label: 'USD Coin (USDC)', logo: null, id: 'usd-coin', price: 1 }
+			]
+		})
+		const onConfigChange = vi.fn()
+		await act(async () =>
+			root.render(
+				<http.Wrapper>
+					<DashboardTestProvider mode="edit" dashboard={{ dashboardId: 'dash-1' }}>
+						<TokenUsageDataset editable config={{ ...config, tokenSymbols: [] }} onConfigChange={onConfigChange} />
+					</DashboardTestProvider>
+				</http.Wrapper>
+			)
+		)
+		const search = container.querySelector<HTMLInputElement>('input[aria-label="Tokens"]')!
+		await act(async () => {
+			search.focus()
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'usd')
+			search.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		const option = await waitForUi(() => {
+			const match = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+				(row) => row.textContent === 'USD Coin (USDC)'
+			)
+			expect(match).toBeDefined()
+			return match!
+		})
+		await act(async () => option.click())
+
+		expect(http.requests.map((request) => request.url.search).filter((query) => query.startsWith('?query'))).toContain(
+			'?query=usd'
+		)
+		expect(onConfigChange.mock.calls).toEqual([[{ ...config, tokenSymbols: ['usdc'] }]])
 	})
 })

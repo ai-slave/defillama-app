@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { type FormEvent, useMemo, useState } from 'react'
+import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -10,7 +11,6 @@ import { DASHBOARD_VARIABLE_LABEL_MAX_LENGTH, type DashboardVariable, MAX_DASHBO
 import { getDashboardItemBoundVariableIds } from '../dashboardVariables/bindableFields'
 import { useProDashboardItemsState, useProDashboardVariables } from '../ProDashboardAPIContext'
 import { AddVariablePopover, useVariableOptions } from './AddVariablePopover'
-import { AriakitVirtualizedSelect } from './AriakitVirtualizedSelect'
 
 function VariableChip({ variable }: { variable: DashboardVariable }) {
 	const { values, canEditVariables, setVariableValue, renameVariable, removeVariable, unbindVariable } =
@@ -74,13 +74,13 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 				}
 				placement="bottom"
 			>
-				<AriakitVirtualizedSelect
+				<VirtualizedSelect
 					variant="chip"
 					label={variable.label}
 					options={options}
 					selectedValue={selectedValue}
 					isLoading={isLoading}
-					placeholder={variable.kind === 'chain' ? 'Select chain...' : 'Select protocol...'}
+					placeholder={variable.kind === 'chain' ? 'Select chain…' : 'Select protocol…'}
 					onChange={(option) => {
 						trackUmamiEvent('dashboard-variable-change', { kind: variable.kind, persist: canEditVariables })
 						if (canEditVariables) setVariableValue(variable.id, option.value, { persist: true })

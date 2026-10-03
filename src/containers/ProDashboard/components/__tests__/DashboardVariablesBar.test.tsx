@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { DashboardVariable } from '../../dashboardTypes'
 import type { ParameterCandidate } from '../../dashboardVariables/resolve'
@@ -53,22 +54,9 @@ function show(
 	)
 }
 
-vi.mock('@tanstack/react-virtual', () => ({
-	useVirtualizer: ({ count }: { count: number }) => ({
-		getVirtualItems: () =>
-			Array.from({ length: count }, (_, index) => ({
-				index,
-				key: index,
-				start: index * 44,
-				end: (index + 1) * 44,
-				size: 44,
-				lane: 0
-			})),
-		getTotalSize: () => count * 44,
-		measure: () => {},
-		scrollToIndex: () => {}
-	})
-}))
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
 
 let root: Root
 let container: HTMLDivElement
@@ -92,8 +80,19 @@ function buttons(label: string) {
 }
 
 async function pickChain(label: string) {
-	await act(async () => container.querySelector('button')!.click())
-	await act(async () => buttons(label).at(-1)!.click())
+	const trigger = container.querySelector<HTMLButtonElement>('button[role="combobox"]')!
+	await act(async () => trigger.focus())
+	await act(async () =>
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	)
+	const option = await waitForUi(() => {
+		const match = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+			(row) => row.textContent === label
+		)
+		expect(match).toBeDefined()
+		return match!
+	})
+	await act(async () => option.click())
 }
 
 const chainVariable: DashboardVariable = {

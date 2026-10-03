@@ -3,6 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useId, useMemo, useState, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import {
+	VirtualizedMultiSelect,
+	VirtualizedSelect,
+	type VirtualizedSelectOption
+} from '~/components/Select/VirtualizedSelect'
 import { fetchChainsCategories } from '~/containers/Chains/api'
 import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
@@ -19,12 +24,7 @@ import {
 	fetchProtocolChainBreakdownData,
 	type ProtocolBreakdownMetric
 } from '../../services/ProtocolChartBuilderData'
-import { getItemIconUrl } from '../../utils'
 import { buildProTreemapData } from '../../utils/treemap'
-import { AriakitMultiSelect } from '../AriakitMultiSelect'
-import { AriakitSelect, type SelectOption } from '../AriakitSelect'
-import { AriakitVirtualizedMultiSelect } from '../AriakitVirtualizedMultiSelect'
-import { AriakitVirtualizedSelect } from '../AriakitVirtualizedSelect'
 import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
@@ -54,7 +54,7 @@ const getProtocolBreakdownMetric = (metric: ChartBuilderConfig['metric']): Proto
 interface ChartBuilderTabProps {
 	chartBuilder: ChartBuilderConfig
 	chartBuilderName: string
-	chainOptions: Array<{ value: string; label: string }>
+	chainOptions: Array<VirtualizedSelectOption>
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
 	protocolsLoading: boolean
 	onChartBuilderChange: (updates: ChartBuilderUpdate) => void
@@ -409,7 +409,7 @@ export function ChartBuilderTab({
 
 	const chainParameter = useModalFieldBinding('chains', 'chain')
 	const protocolParameter = useModalFieldBinding('protocol', 'protocol')
-	const handleMetricChange = (option: SelectOption) => {
+	const handleMetricChange = (option: VirtualizedSelectOption) => {
 		const newMetric = METRIC_OPTIONS.find((metricOption) => metricOption.value === option.value)?.value
 		if (!newMetric) throw new Error(`Unsupported chart builder metric: ${option.value}`)
 		let newChartType: 'stackedBar' | 'stackedArea' | 'line' = 'stackedBar'
@@ -431,10 +431,7 @@ export function ChartBuilderTab({
 	}
 
 	const selectableChainFilterOptions = useMemo(
-		() =>
-			chainParameter.options.length > 0
-				? [...chainParameter.options, ...chainOptions.map((c) => ({ value: c.value, label: c.label }))]
-				: chainOptions.map((c) => ({ value: c.value, label: c.label })),
+		() => (chainParameter.options.length > 0 ? [...chainParameter.options, ...chainOptions] : chainOptions),
 		[chainParameter.options, chainOptions]
 	)
 
@@ -463,7 +460,7 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ protocolCategories })
 	}
 
-	const handleLimitChange = (option: SelectOption) => {
+	const handleLimitChange = (option: VirtualizedSelectOption) => {
 		onChartBuilderChange({ limit: parseInt(option.value, 10) || 10 })
 	}
 
@@ -475,7 +472,7 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ displayAs: display })
 	}
 
-	const handleTreemapValueChange = (option: SelectOption) => {
+	const handleTreemapValueChange = (option: VirtualizedSelectOption) => {
 		const nextValue = option.value
 		if (nextValue === 'sum7d' || nextValue === 'sum30d' || nextValue === 'latest') {
 			onChartBuilderChange({ treemapValue: nextValue })
@@ -593,13 +590,13 @@ export function ChartBuilderTab({
 					<h3 className="text-xs font-semibold text-pro-text-primary">Chart configuration</h3>
 
 					<div>
-						<AriakitSelect
+						<VirtualizedSelect
+							variant="field"
 							label="Metric"
 							options={metricOptions}
 							selectedValue={chartBuilder.metric}
 							onChange={handleMetricChange}
-							placeholder="Select metric..."
-							isLoading={false}
+							placeholder="Select metric…"
 						/>
 					</div>
 
@@ -641,56 +638,46 @@ export function ChartBuilderTab({
 
 						{chartBuilder.mode === 'chains' ? (
 							<>
-								<div className="mb-1.5">
-									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Chains filter</span>
-										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
-									</div>
-									{chainParameter.boundVariable ? (
-										<div className="mb-1.5">
-											<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
-										</div>
-									) : null}
-									<AriakitVirtualizedMultiSelect
-										label="Chains"
+								<div className="mb-1.5 flex flex-col gap-1.5">
+									<VirtualizedMultiSelect
+										label="Chains filter"
+										labelAction={<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />}
 										options={selectableChainFilterOptions}
 										selectedValues={chartBuilder.chains}
 										onChange={handleChainsChange}
-										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude...' : 'Select chains...'}
+										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude…' : 'Select chains…'}
 										isLoading={protocolsLoading || chainOptions.length === 0}
 										maxSelections={10}
-										renderIcon={(option) =>
-											option.value === 'All' ? null : getItemIconUrl('chain', null, option.value)
-										}
 									/>
+									{chainParameter.boundVariable ? (
+										<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+									) : null}
 								</div>
 
 								<div className="mb-1.5">
-									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Categories filter</span>
-										<FilterModeToggle value={categoryFilterMode} onChange={handleCategoryFilterModeChange} />
-									</div>
-									<AriakitMultiSelect
-										label="Categories"
+									<VirtualizedMultiSelect
+										label="Categories filter"
+										labelAction={
+											<FilterModeToggle value={categoryFilterMode} onChange={handleCategoryFilterModeChange} />
+										}
 										options={categoryOptions}
 										selectedValues={chartBuilder.categories}
 										onChange={handleCategoriesChange}
 										placeholder={
-											categoryFilterMode === 'exclude' ? 'Select categories to exclude...' : 'Select categories...'
+											categoryFilterMode === 'exclude' ? 'Select categories to exclude…' : 'Select categories…'
 										}
-										isLoading={false}
 										maxSelections={5}
 									/>
 								</div>
 
 								<div className="mb-1.5">
-									<AriakitSelect
+									<VirtualizedSelect
+										variant="field"
 										label="Number of protocols"
 										options={LIMIT_OPTIONS}
 										selectedValue={chartBuilder.limit.toString()}
 										onChange={handleLimitChange}
-										placeholder="Select limit..."
-										isLoading={false}
+										placeholder="Select limit…"
 									/>
 								</div>
 
@@ -732,101 +719,90 @@ export function ChartBuilderTab({
 										<p className="text-xs text-pro-text-tertiary">This metric is available only for all protocols.</p>
 									</div>
 								) : (
-									<div className="mb-1.5">
-										{protocolParameter.boundVariable ? (
-											<div className="mb-1.5">
-												<BoundParameterChip
-													label={protocolParameter.boundVariable.label}
-													onUnbind={protocolParameter.unbind}
-												/>
-											</div>
-										) : null}
-										<AriakitVirtualizedSelect
+									<div className="mb-1.5 flex flex-col gap-1.5">
+										<VirtualizedSelect
+											variant="field"
 											label="Protocol"
 											options={selectableProtocolOptions}
 											selectedValue={chartBuilder.protocol || null}
 											onChange={handleProtocolChange}
-											placeholder="Select protocol..."
+											placeholder="Select protocol…"
 											isLoading={protocolsLoading}
-											renderIcon={(option) => option.logo || getItemIconUrl('protocol', option, option.value)}
 										/>
+										{protocolParameter.boundVariable ? (
+											<BoundParameterChip
+												label={protocolParameter.boundVariable.label}
+												onUnbind={protocolParameter.unbind}
+											/>
+										) : null}
 									</div>
 								)}
 
-								<div className="mb-1.5">
-									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Chains filter</span>
-										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
-									</div>
-									{chainParameter.boundVariable ? (
-										<div className="mb-1.5">
-											<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
-										</div>
-									) : null}
-									<AriakitVirtualizedMultiSelect
-										label="Chains"
+								<div className="mb-1.5 flex flex-col gap-1.5">
+									<VirtualizedMultiSelect
+										label="Chains filter"
+										labelAction={<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />}
 										options={selectableChainFilterOptions}
 										selectedValues={chartBuilder.chains}
 										onChange={handleChainsChange}
-										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude...' : 'Select chains...'}
+										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude…' : 'Select chains…'}
 										isLoading={protocolsLoading || chainOptions.length === 0}
 										maxSelections={10}
-										renderIcon={(option) =>
-											option.value === 'All' ? null : getItemIconUrl('chain', null, option.value)
-										}
 									/>
+									{chainParameter.boundVariable ? (
+										<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+									) : null}
 								</div>
 								{!isProtocolUnsupportedMetric && chartBuilder.metric !== 'tvl' && !chartBuilder.protocol ? (
 									<div className="mb-1.5">
-										<div className="mb-1 flex items-center justify-between">
-											<span className="text-xs font-medium text-pro-text-secondary">Protocol categories filter</span>
-											<FilterModeToggle
-												value={protocolCategoryFilterMode}
-												onChange={handleProtocolCategoryFilterModeChange}
-											/>
-										</div>
-										<AriakitMultiSelect
-											label="Protocol categories"
+										<VirtualizedMultiSelect
+											label="Protocol categories filter"
+											labelAction={
+												<FilterModeToggle
+													value={protocolCategoryFilterMode}
+													onChange={handleProtocolCategoryFilterModeChange}
+												/>
+											}
 											options={categoryOptions}
 											selectedValues={chartBuilder.protocolCategories ?? EMPTY_CATEGORIES}
 											onChange={handleProtocolCategoriesChange}
 											placeholder={
 												protocolCategoryFilterMode === 'exclude'
-													? 'Select protocol categories to exclude...'
-													: 'Select protocol categories...'
+													? 'Select protocol categories to exclude…'
+													: 'Select protocol categories…'
 											}
-											isLoading={false}
 											maxSelections={5}
 										/>
 									</div>
 								) : null}
 								<div className="mb-1.5">
-									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs font-medium text-pro-text-secondary">Chain categories filter</span>
-										<FilterModeToggle value={chainCategoryFilterMode} onChange={handleChainCategoryFilterModeChange} />
-									</div>
-									<AriakitMultiSelect
-										label="Chain categories"
+									<VirtualizedMultiSelect
+										label="Chain categories filter"
+										labelAction={
+											<FilterModeToggle
+												value={chainCategoryFilterMode}
+												onChange={handleChainCategoryFilterModeChange}
+											/>
+										}
 										options={chainCategoryOptions}
 										selectedValues={chartBuilder.chainCategories ?? EMPTY_CATEGORIES}
 										onChange={handleChainCategoriesChange}
 										placeholder={
 											chainCategoryFilterMode === 'exclude'
-												? 'Select chain categories to exclude...'
-												: 'Select chain categories...'
+												? 'Select chain categories to exclude…'
+												: 'Select chain categories…'
 										}
-										isLoading={false}
 										maxSelections={5}
 									/>
 								</div>
 								<div className="mb-1.5">
-									<AriakitSelect
+									<VirtualizedSelect
+										variant="field"
 										label="Number of chains"
 										options={LIMIT_OPTIONS}
 										selectedValue={chartBuilder.limit.toString()}
 										onChange={handleLimitChange}
-										placeholder="Select limit..."
-										isLoading={false}
+										placeholder="Select limit…"
 									/>
 								</div>
 								{!hasExactRemainder ? (
@@ -887,13 +863,13 @@ export function ChartBuilderTab({
 
 					{chartBuilder.chartType === 'treemap' && !isSnapshotMetric ? (
 						<div className="border-t border-pro-cards-border pt-1.5">
-							<AriakitSelect
+							<VirtualizedSelect
+								variant="field"
 								label="Treemap value"
 								options={TREEMAP_VALUE_OPTIONS}
 								selectedValue={treemapMode}
 								onChange={handleTreemapValueChange}
-								placeholder="Select value..."
-								isLoading={false}
+								placeholder="Select value…"
 							/>
 						</div>
 					) : null}

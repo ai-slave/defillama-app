@@ -4,6 +4,7 @@ import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import {
 	type StablecoinAssetInfo,
 	useStablecoinAssetChartData,
@@ -33,8 +34,6 @@ import { LocalLoader } from '~/ui/Loaders'
 import { slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
-import { AriakitSelect } from '../AriakitSelect'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -128,7 +127,7 @@ export function StablecoinsChartTab({
 	const chainsList = chainsListData ?? EMPTY_CHAIN_LIST
 	const assetsList = assetsListData ?? EMPTY_ASSET_LIST
 	const chainOptions: Array<VirtualizedSelectOption> = useMemo(() => {
-		const options: Array<VirtualizedSelectOption> = [{ value: 'All', label: 'All chains', icon: '🌐' }]
+		const options: Array<VirtualizedSelectOption> = [{ value: 'All', label: 'All chains' }]
 		for (const chain of chainsList) {
 			options.push({
 				value: chain.name,
@@ -158,8 +157,7 @@ export function StablecoinsChartTab({
 							compact: true,
 							minimumCompactValue: 1_000_000,
 							compactSuffix: 'lowercase'
-						}),
-			extra: slug(asset.name)
+						})
 		}))
 	}, [assetsList])
 	const { intent: chainSelectionIntent, setIntent: setChainSelectionIntent } = useSelectionIntent(
@@ -534,7 +532,8 @@ export function StablecoinsChartTab({
 						{chainParameter.boundVariable ? (
 							<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
 						) : null}
-						<AriakitVirtualizedSelect
+						<VirtualizedSelect
+							variant="field"
 							label="Chain"
 							options={selectableChainOptions}
 							selectedValue={selectedStablecoinChain}
@@ -547,35 +546,38 @@ export function StablecoinsChartTab({
 								}
 								onSelectedStablecoinChainChange(option.value)
 							}}
-							placeholder="Select chain..."
+							placeholder="Select chain…"
 							isLoading={chainsLoading}
 						/>
 
-						<AriakitSelect
+						<VirtualizedSelect
+							variant="field"
 							label="Chart type"
 							options={STABLECOIN_CHAIN_CHART_TYPES}
 							selectedValue={chainChartType}
 							onChange={(option) => onSelectedStablecoinChartTypeChange(option.value)}
-							placeholder="Select chart type..."
+							placeholder="Select chart type…"
 						/>
 					</>
 				) : (
 					<>
-						<AriakitVirtualizedSelect
+						<VirtualizedSelect
+							variant="field"
 							label="Stablecoin"
 							options={assetOptions}
-							selectedValue={selectedStablecoinAsset || ''}
+							selectedValue={selectedStablecoinAsset || null}
 							onChange={handleAssetChange}
-							placeholder="Select stablecoin..."
+							placeholder="Select stablecoin…"
 							isLoading={assetsLoading}
 						/>
 
-						<AriakitSelect
+						<VirtualizedSelect
+							variant="field"
 							label="Chart type"
 							options={STABLECOIN_ASSET_CHART_TYPES}
 							selectedValue={assetChartType}
 							onChange={(option) => onSelectedStablecoinAssetChartTypeChange(option.value)}
-							placeholder="Select chart type..."
+							placeholder="Select chart type…"
 						/>
 					</>
 				)}

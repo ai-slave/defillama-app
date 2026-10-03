@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import {
+	VirtualizedMultiSelect,
+	VirtualizedSelect,
+	type VirtualizedSelectOption
+} from '~/components/Select/VirtualizedSelect'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import { createDatasetTableConfig } from '~/containers/ProDashboard/dashboardConfig/datasetTableConfig'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
-import { getItemIconUrl } from '../../../../utils'
-import { AriakitSelect } from '../../../AriakitSelect'
-import { AriakitVirtualizedMultiSelect } from '../../../AriakitVirtualizedMultiSelect'
-import { AriakitVirtualizedSelect } from '../../../AriakitVirtualizedSelect'
 import { CexAnalyticsDataset } from '../../../datasets/CexAnalyticsDataset'
 import { useEquitiesTickerOptions } from '../../../datasets/EquitiesDataset/useEquitiesTickerOptions'
 import { useTokenSearch } from '../../../datasets/TokenUsageDataset/useTokenSearch'
@@ -14,7 +15,7 @@ import type { CombinedTableType } from '../../types'
 
 interface SimpleTableConfigProps {
 	selectedChains: Array<string>
-	chainOptions: Array<{ value: string; label: string }>
+	chainOptions: Array<VirtualizedSelectOption>
 	protocolsLoading: boolean
 	onChainsChange: (values: Array<string>) => void
 	selectedDatasetChain: string | null
@@ -39,73 +40,61 @@ const tableTypeOptions: Array<{
 	value: CombinedTableType
 	label: string
 	description: string
-	icon: string
 }> = [
 	{
 		value: 'yields',
 		label: 'Yields',
-		description: 'V2 earn pools with supply APY, TVL, stability, and borrow-market facts',
-		icon: '🌾'
+		description: 'V2 earn pools with supply APY, TVL, stability, and borrow-market facts'
 	},
 	{
 		value: 'cex-analytics',
 		label: 'CEXs',
-		description: 'Spot volume, derivatives volume, open interest, leverage, and CEX efficiency',
-		icon: '📊'
+		description: 'Spot volume, derivatives volume, open interest, leverage, and CEX efficiency'
 	},
 	{
 		value: 'chains',
 		label: 'Chains',
-		description: 'Blockchain metrics including TVL, users, volume, and fees',
-		icon: '⛓️'
+		description: 'Blockchain metrics including TVL, users, volume, and fees'
 	},
 	{
 		value: 'stablecoins',
 		label: 'Stablecoins',
-		description: 'Stablecoin market caps, price stability, and chains',
-		icon: '💵'
+		description: 'Stablecoin market caps, price stability, and chains'
 	},
 	{
 		value: 'token-usage',
 		label: 'Token Usage',
-		description: 'Track protocol adoption by token usage',
-		icon: '🪙'
+		description: 'Track protocol adoption by token usage'
 	},
 	{
 		value: 'rwa',
 		label: 'RWA Assets',
-		description: 'Real World Assets with active AUM, onchain AUM, and DeFi TVL',
-		icon: '🏛️'
+		description: 'Real World Assets with active AUM, onchain AUM, and DeFi TVL'
 	},
 	{
 		value: 'rwa-chains',
 		label: 'RWA by chain',
-		description: 'RWA metrics aggregated by chain',
-		icon: '🏛️'
+		description: 'RWA metrics aggregated by chain'
 	},
 	{
 		value: 'rwa-selected-chain',
 		label: 'RWA on chain',
-		description: 'RWA assets on a selected chain',
-		icon: '🏛️'
+		description: 'RWA assets on a selected chain'
 	},
 	{
 		value: 'equities',
 		label: 'Equities',
-		description: 'Stock market companies overview',
-		icon: '📈'
+		description: 'Stock market companies overview'
 	},
 	{
 		value: 'equities-financials',
 		label: 'Equities financials',
-		description: 'Income statement, balance sheet & cashflow for a company',
-		icon: '📄'
+		description: 'Income statement, balance sheet & cashflow for a company'
 	},
 	{
 		value: 'equities-filings',
 		label: 'Equities filings',
-		description: 'SEC filings for a specific company',
-		icon: '📋'
+		description: 'SEC filings for a specific company'
 	}
 ]
 
@@ -232,7 +221,10 @@ export function SimpleTableConfig({
 		useEquitiesTickerOptions(isEquitiesTickerTable)
 	const [tokenSearchInput, setTokenSearchInput] = useState('')
 	const isTokenUsageTable = selectedTableType === 'token-usage'
-	const { data: tokenOptionsData, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput, isTokenUsageTable)
+	const { data: tokenOptionsData, isPlaceholderData: isSearchingTokens } = useTokenSearch(
+		tokenSearchInput,
+		isTokenUsageTable
+	)
 	const { data: defaultTokensData } = useTokenSearch('', isTokenUsageTable)
 	const tokenOptions = tokenOptionsData ?? EMPTY_TOKEN_OPTIONS
 	const defaultTokens = defaultTokensData ?? EMPTY_TOKEN_OPTIONS
@@ -259,12 +251,13 @@ export function SimpleTableConfig({
 			.map((option) => ({
 				value: option.value,
 				label: option.label,
-				icon: option.icon,
 				description: option.description
 			}))
 	}, [hasActiveSubscription])
 
 	const chainCategoryOptions = CHAIN_CATEGORY_OPTIONS
+	// A chain filter treats no pick as every chain, so its list leaves out the "All chains" row.
+	const chainFilterOptions = useMemo(() => chainOptions.filter((option) => option.value !== 'All'), [chainOptions])
 
 	const tokenOptionMap = useMemo(() => {
 		const map = new Map<string, { value: string; label: string; logo?: string }>()
@@ -285,7 +278,8 @@ export function SimpleTableConfig({
 				<span>Back to table type selection</span>
 			</button>
 
-			<AriakitVirtualizedSelect
+			<VirtualizedSelect
+				variant="field"
 				label="Table type"
 				options={datasetSelectOptions}
 				selectedValue={selectedTableType}
@@ -294,40 +288,41 @@ export function SimpleTableConfig({
 					if (!tableType) throw new Error(`Unsupported table type: ${option.value}`)
 					onTableTypeChange(tableType)
 				}}
-				placeholder="Select table type..."
+				placeholder="Select table type…"
 			/>
 
 			{selectedTableType === 'stablecoins' ? (
-				<AriakitVirtualizedSelect
-					label="Select chain"
+				<VirtualizedSelect
+					variant="field"
+					label="Chain"
 					options={chainOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
-					placeholder="Select chain..."
+					placeholder="Select chain…"
 					isLoading={protocolsLoading}
-					renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
 				/>
 			) : selectedTableType === 'yields' ? (
-				<AriakitVirtualizedMultiSelect
-					label="Select chains (optional)"
-					options={chainOptions}
+				<VirtualizedMultiSelect
+					label="Chains (optional)"
+					options={chainFilterOptions}
 					selectedValues={selectedChains}
 					onChange={onChainsChange}
 					isLoading={protocolsLoading}
-					placeholder="All chains..."
-					renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
+					placeholder="All chains"
 				/>
 			) : selectedTableType === 'chains' ? (
-				<AriakitSelect
-					label="Select category (optional)"
+				<VirtualizedSelect
+					variant="field"
+					label="Category (optional)"
 					options={chainCategoryOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
-					placeholder="All chains..."
+					placeholder="All chains…"
 				/>
 			) : selectedTableType === 'cex-analytics' ? (
 				<>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="CEX View"
 						options={isEditing ? CEX_ANALYTICS_VIEW_OPTIONS_EDIT : CEX_ANALYTICS_VIEW_OPTIONS}
 						selectedValue={selectedCexAnalyticsView}
@@ -336,11 +331,12 @@ export function SimpleTableConfig({
 							if (!view) throw new Error(`Unsupported CEX analytics view: ${option.value}`)
 							onCexAnalyticsViewChange(view)
 						}}
-						placeholder="Select CEX view..."
+						placeholder="Select CEX view…"
 					/>
 					{selectedCexAnalyticsView === 'market-share' ? (
 						<>
-							<AriakitSelect
+							<VirtualizedSelect
+								variant="field"
 								label="Share metric"
 								options={CEX_ANALYTICS_METRIC_OPTIONS}
 								selectedValue={selectedCexAnalyticsMetric}
@@ -351,14 +347,15 @@ export function SimpleTableConfig({
 									if (!metric) throw new Error(`Unsupported CEX analytics metric: ${option.value}`)
 									onCexAnalyticsMetricChange(metric)
 								}}
-								placeholder="Select metric..."
+								placeholder="Select metric…"
 							/>
-							<AriakitSelect
+							<VirtualizedSelect
+								variant="field"
 								label="Top CEXs"
 								options={CEX_ANALYTICS_TOP_N_OPTIONS}
 								selectedValue={String(selectedCexAnalyticsTopN)}
 								onChange={(option) => onCexAnalyticsTopNChange(Number(option.value))}
-								placeholder="Select top N..."
+								placeholder="Select top N…"
 							/>
 						</>
 					) : null}
@@ -372,16 +369,15 @@ export function SimpleTableConfig({
 				</>
 			) : selectedTableType === 'token-usage' ? (
 				<>
-					<AriakitVirtualizedMultiSelect
-						label="Select tokens (up to 4)"
+					<VirtualizedMultiSelect
+						label="Tokens (up to 4)"
 						options={mergedTokenOptions}
 						selectedValues={selectedTokens}
 						onChange={(values) => onTokensChange(values.slice(0, 4))}
-						isLoading={isLoadingTokens}
-						placeholder={selectedTokens.length >= 4 ? 'Maximum 4 tokens selected' : 'Search tokens...'}
+						placeholder="Select tokens…"
 						maxSelections={4}
 						onSearchChange={setTokenSearchInput}
-						renderIcon={(option) => option.logo || null}
+						isSearching={isSearchingTokens}
 					/>
 					{selectedTokens.length > 0 ? (
 						<div className="mt-2 flex flex-wrap gap-2">
@@ -449,22 +445,23 @@ export function SimpleTableConfig({
 					</button>
 				</>
 			) : selectedTableType === 'rwa-selected-chain' ? (
-				<AriakitVirtualizedSelect
-					label="Select chain"
+				<VirtualizedSelect
+					variant="field"
+					label="Chain"
 					options={chainOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
-					placeholder="Select chain..."
+					placeholder="Select chain…"
 					isLoading={protocolsLoading}
-					renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
 				/>
 			) : selectedTableType === 'equities-financials' || selectedTableType === 'equities-filings' ? (
-				<AriakitVirtualizedSelect
-					label="Select company"
+				<VirtualizedSelect
+					variant="field"
+					label="Company"
 					options={equitiesTickerOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
-					placeholder="Search ticker or company name..."
+					placeholder="Select company…"
 					isLoading={equitiesCompaniesLoading}
 				/>
 			) : null}

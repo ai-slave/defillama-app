@@ -1,17 +1,14 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useState } from 'react'
-import { components, type GroupBase, type MultiValue, type OptionProps, type ValueContainerProps } from 'react-select'
-import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
+import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
-import { useIsClient } from '~/hooks/useIsClient'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { reactSelectStyles } from '../../../utils/reactSelectStyles'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
@@ -41,93 +38,42 @@ type ReadOnlyTokenUsageDatasetProps = TokenUsageDatasetProps & {
 	onConfigChange?: never
 }
 
-function TokenOptionComponent({ innerProps, label, data }: OptionProps<TokenOption, true>) {
-	return (
-		<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
-			{data.logo ? (
-				<img src={data.logo?.replace('/0/', '')} alt="" width={20} height={20} className="size-5 rounded-full" />
-			) : (
-				<div className="size-5 rounded-full bg-surface-elevated-2" />
-			)}
-			<span>{label}</span>
-		</div>
-	)
-}
-
-function CustomValueContainer({ children, ...props }: ValueContainerProps<TokenOption, true>) {
-	const { getValue } = props
-	const values = getValue()
-
-	if (values.length === 0) {
-		return <components.ValueContainer {...props}>{children}</components.ValueContainer>
-	}
-
-	const shouldShowCount = values.length > 1
-
-	return (
-		<components.ValueContainer {...props}>
-			{shouldShowCount ? (
-				<div className="flex items-center gap-2">
-					<span className="text-sm font-medium">{values.length} tokens selected</span>
-				</div>
-			) : (
-				children
-			)}
-		</components.ValueContainer>
-	)
-}
-
 interface TokenSelectorProps {
 	config: TokenUsageDatasetTableConfig
 	onConfigChange: (config: TokenUsageDatasetTableConfig) => void
 	placeholder: string
-	menuPortalTarget?: HTMLElement | null
 }
 
-function TokenSelector({ config, onConfigChange, placeholder, menuPortalTarget }: TokenSelectorProps) {
+const MAX_TOKENS = 4
+
+function TokenSelector({ config, onConfigChange, placeholder }: TokenSelectorProps) {
 	const [tokenSearchInput, setTokenSearchInput] = useState('')
 	const tokenSymbols = useMemo(() => normalizeProTokenSymbols(config.tokenSymbols), [config.tokenSymbols])
 	const { data: tokenOptionsResponse, isLoading } = useTokenSearch(tokenSearchInput, true)
 	const { data: defaultTokensResponse } = useTokenSearch('', true)
 	const tokenOptions = tokenOptionsResponse ?? EMPTY_TOKEN_OPTIONS
 	const defaultTokens = defaultTokensResponse ?? EMPTY_TOKEN_OPTIONS
-	const value = useMemo(
-		() => tokenSymbols.map((symbol) => ({ id: symbol, label: symbol, value: symbol })),
-		[tokenSymbols]
-	)
-
-	const handleChange = (selectedOptions: MultiValue<TokenOption>) => {
-		const symbols = selectedOptions.map((option) => option.value)
-		if (symbols.length > 4) return
-		onConfigChange({ ...config, tokenSymbols: symbols })
-	}
 
 	return (
-		<ReactSelect
+		<MultiSelectCombobox
+			heading="Tokens"
 			placeholder={placeholder}
-			value={value}
-			onChange={handleChange}
-			options={tokenSearchInput ? tokenOptions : defaultTokens}
-			onInputChange={setTokenSearchInput}
-			isLoading={isLoading}
-			isClearable
-			isMulti
-			components={{ Option: TokenOptionComponent, ValueContainer: CustomValueContainer }}
-			styles={{
-				...reactSelectStyles<TokenOption, true, GroupBase<TokenOption>>({ minHeight: '38px', height: '38px' }),
-				valueContainer: (provided) => ({ ...provided, height: '36px', padding: '0 8px' }),
-				input: (provided) => ({ ...provided, margin: '0', padding: '0' })
+			data={tokenSearchInput ? tokenOptions : defaultTokens}
+			selectedValues={tokenSymbols}
+			setSelectedValues={(symbols) => {
+				if (symbols.length > MAX_TOKENS) return
+				onConfigChange({ ...config, tokenSymbols: symbols })
 			}}
-			{...(menuPortalTarget !== undefined ? { menuPortalTarget } : {})}
+			filterOptions={false}
+			onSearchChange={setTokenSearchInput}
+			isLoading={isLoading}
+			emptyMessage="No tokens found"
 		/>
 	)
 }
 
 export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOnlyTokenUsageDatasetProps) {
 	const { config } = props
-	const isClient = useIsClient()
-	const menuPortalTarget =
-		isClient && props.editable ? document.querySelector<HTMLElement>('.pro-dashboard-container') : null
 	const [search, setSearch] = useState('')
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
@@ -205,14 +151,9 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 								Select Tokens to Compare
 							</h3>
 							<div className="w-full max-w-md">
-								<TokenSelector
-									config={config}
-									onConfigChange={props.onConfigChange}
-									placeholder="Search tokens..."
-									menuPortalTarget={menuPortalTarget}
-								/>
+								<TokenSelector config={config} onConfigChange={props.onConfigChange} placeholder="Search tokens…" />
 							</div>
-							<p className="mt-2 text-sm text-pro-text-tertiary">Select up to 4 tokens for comparison (max 4)</p>
+							<p className="mt-2 text-sm text-pro-text-tertiary">Select up to {MAX_TOKENS} tokens to compare</p>
 						</>
 					) : (
 						<p className="text-sm text-pro-text-secondary">No tokens configured.</p>
@@ -410,7 +351,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 								<TokenSelector
 									config={config}
 									onConfigChange={props.onConfigChange}
-									placeholder="Add or remove tokens (max 4)..."
+									placeholder="Add or remove tokens (max 4)…"
 								/>
 							</div>
 						) : null}

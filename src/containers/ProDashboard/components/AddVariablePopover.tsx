@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { type FormEvent, useId, useMemo, useState } from 'react'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -15,7 +16,6 @@ import {
 import { useProDashboardCatalog, useProDashboardItemsState, useProDashboardVariables } from '../ProDashboardAPIContext'
 import { ProButton } from '../ui'
 import { getItemIconUrl } from '../utils'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from './AriakitVirtualizedSelect'
 
 export const VARIABLE_KIND_LABELS: Record<DashboardVariableKind, string> = {
 	chain: 'Chain',
@@ -143,12 +143,13 @@ export function AddVariablePopover() {
 							placeholder={VARIABLE_KIND_LABELS[kind]}
 						/>
 					</label>
-					<AriakitVirtualizedSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Initial value"
 						options={options}
 						selectedValue={value.length > 0 ? value : null}
 						onChange={(option) => setValue(option.value)}
-						placeholder={kind === 'chain' ? 'Select chain...' : 'Select protocol...'}
+						placeholder={kind === 'chain' ? 'Select chain…' : 'Select protocol…'}
 						isLoading={isLoading}
 					/>
 					{compatibleTargets.length > 0 ? (

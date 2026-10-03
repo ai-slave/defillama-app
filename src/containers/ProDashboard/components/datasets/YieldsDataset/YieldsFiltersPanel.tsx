@@ -1,7 +1,7 @@
 import * as React from 'react'
+import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { formatNumber } from '~/utils/numberFormat'
-import { AriakitVirtualizedMultiSelect } from '../../AriakitVirtualizedMultiSelect'
 
 const EMPTY_CATEGORIES: Array<string> = []
 const EMPTY_PROTOCOLS: Array<string> = []
@@ -278,21 +278,20 @@ export function YieldsFiltersPanel({
 					</h5>
 
 					<div className="space-y-3">
-						<AriakitVirtualizedMultiSelect
+						<VirtualizedMultiSelect
 							label="Protocols"
 							options={availableProtocols}
 							selectedValues={localFilters.protocols ?? EMPTY_PROTOCOLS}
 							onChange={(values) => updateFilter('protocols', values.length > 0 ? values : undefined)}
-							placeholder="Select protocols..."
-							renderIcon={(option) => option.logo || null}
+							placeholder="Select protocols…"
 						/>
 
-						<AriakitVirtualizedMultiSelect
+						<VirtualizedMultiSelect
 							label="Pool Tokens"
 							options={tokenOptions}
 							selectedValues={localFilters.tokens ?? EMPTY_TOKENS}
 							onChange={(values) => updateFilter('tokens', values.length > 0 ? values : undefined)}
-							placeholder="Select tokens..."
+							placeholder="Select tokens…"
 						/>
 					</div>
 				</div>

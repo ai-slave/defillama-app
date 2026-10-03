@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { useAppMetadata } from '../../AppMetadataContext'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 interface IncomeStatementChartTabProps {
@@ -91,10 +91,11 @@ export function IncomeStatementChartTab({
 				{protocolParameter.boundVariable ? (
 					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
 				) : null}
-				<AriakitVirtualizedSelect
+				<VirtualizedSelect
+					variant="field"
 					label="Protocol"
 					options={selectableProtocolOptions}
-					selectedValue={selectedIncomeStatementProtocol || ''}
+					selectedValue={selectedIncomeStatementProtocol || null}
 					onChange={(option) => {
 						const variable = protocolParameter.resolveSelection(option.value)
 						if (variable) {
@@ -108,7 +109,7 @@ export function IncomeStatementChartTab({
 						onSelectedIncomeStatementProtocolChange(option.value)
 						onSelectedIncomeStatementProtocolNameChange(option.label)
 					}}
-					placeholder="Select protocol..."
+					placeholder="Select protocol…"
 					isLoading={protocolsLoading}
 				/>
 				{!protocolsLoading && filteredProtocolOptions.length === 0 ? (

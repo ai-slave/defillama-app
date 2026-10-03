@@ -13,6 +13,7 @@ import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewP
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { getArticleEntityRoute } from '../entityLinks'
@@ -200,11 +201,13 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 					<Icon name="bar-chart-2" className="size-3 text-link" />
 					{tagLabel}
 				</span>
-				<span className="pointer-events-auto flex items-stretch divide-x divide-(--border-medium) overflow-hidden rounded-xs border border-medium bg-surface shadow-xs">
-					<button
+				<span className="pointer-events-auto flex gap-1 rounded-md bg-surface shadow-xs">
+					<Button
 						type="button"
-						title="Edit chart"
+						variant="secondary"
+						size="sm"
 						aria-label="Edit chart"
+						// Keeps the editor's selection on the node while the button is pressed.
 						onMouseDown={(e) => {
 							e.preventDefault()
 							e.stopPropagation()
@@ -213,15 +216,16 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 							e.stopPropagation()
 							handleEdit()
 						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-secondary uppercase transition-colors hover:bg-research-tint-hover hover:text-link"
 					>
-						<Icon name="pencil" className="size-3" />
-						Edit
-					</button>
-					<button
+						<Icon name="pencil" className="size-3.5" />
+						<span>Edit</span>
+					</Button>
+					<Button
 						type="button"
-						title="Remove chart"
+						variant="secondary"
+						size="sm"
 						aria-label="Remove chart"
+						// Keeps the editor's selection on the node while the button is pressed.
 						onMouseDown={(e) => {
 							e.preventDefault()
 							e.stopPropagation()
@@ -230,11 +234,10 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 							e.stopPropagation()
 							deleteNode()
 						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase transition-colors hover:bg-research-tint-hover hover:text-error"
 					>
-						<Icon name="trash-2" className="size-3" />
-						Remove
-					</button>
+						<Icon name="trash-2" className="size-3.5" />
+						<span>Remove</span>
+					</Button>
 				</span>
 			</div>
 

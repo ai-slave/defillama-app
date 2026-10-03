@@ -1,9 +1,9 @@
 import { createContext, type ReactNode, useContext, useMemo } from 'react'
+import type { VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Icon } from '~/ui/Icon'
 import type { DashboardVariable, DashboardVariableKind } from '../../dashboardTypes'
 import { useProDashboardVariables } from '../../ProDashboardAPIContext'
 import type { DashboardBindableField, DashboardItemBindings } from '../../types'
-import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 
 const DASHBOARD_PARAMETER_OPTION_PREFIX = 'dashboard-parameter:'
 

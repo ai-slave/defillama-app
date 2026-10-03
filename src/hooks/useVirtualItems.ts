@@ -12,6 +12,7 @@ export function useVirtualItems<TScrollElement extends Element, TItemElement ext
 		items: virtualizer.getVirtualItems(),
 		totalSize: virtualizer.getTotalSize(),
 		measure: virtualizer.measure,
+		measureElement: virtualizer.measureElement,
 		scrollToIndex: virtualizer.scrollToIndex
 	}
 }

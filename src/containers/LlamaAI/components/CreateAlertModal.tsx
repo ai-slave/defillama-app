@@ -5,7 +5,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
-import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { createManualAlert } from '~/containers/LlamaAI/components/alerts/api'
 import {
 	ALERT_PROMPT_SUGGESTIONS,
@@ -49,7 +49,10 @@ import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLin
 import { SESSIONS_QUERY_KEY, useSessionList } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
-import { useTokenSearch } from '~/containers/ProDashboard/components/datasets/TokenUsageDataset/useTokenSearch'
+import {
+	type TokenOption,
+	useTokenSearch
+} from '~/containers/ProDashboard/components/datasets/TokenUsageDataset/useTokenSearch'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { takeLostFocus } from '~/ui/focus'
@@ -111,21 +114,7 @@ function AlertTypeCard({
 	)
 }
 
-function TokenOptionRow({ innerProps, label, data }: any) {
-	return (
-		<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
-			{data.logo ? (
-				<img src={data.logo} alt="" width={18} height={18} className="size-[18px] rounded-full" />
-			) : (
-				<div className="size-[18px] rounded-full bg-surface-elevated-2" />
-			)}
-			<span className="text-sm">{label}</span>
-			{typeof data.price === 'number' ? (
-				<span className="ml-auto pl-3 font-mono text-xs text-tertiary">{formatPriceLabel(data.price)}</span>
-			) : null}
-		</div>
-	)
-}
+const EMPTY_TOKEN_OPTIONS: Array<TokenOption> = []
 
 // Each opening starts fresh: a new create request, and a form with its defaults. A closing dialog keeps its
 // last step on screen through the fade-out.
@@ -183,7 +172,6 @@ function CreateAlertModalForm({
 	const router = useRouter()
 	const { alertsUsage } = useSessionList()
 	const fieldId = useId()
-	const tokenInputId = `${fieldId}-token`
 	const promptId = `${fieldId}-prompt`
 	const titleId = `${fieldId}-title`
 	const summaryId = `${fieldId}-summary`
@@ -213,8 +201,24 @@ function CreateAlertModalForm({
 	// A retried channel list focuses the select that replaces the retry button, so focus never drops to the page.
 	const focusChannelsOnLoadRef = useRef(false)
 
-	const { data: tokenOptionsResponse, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput, true)
-	const tokenOptions = tokenOptionsResponse ?? []
+	const { data: tokenOptionsResponse, isPlaceholderData: isSearchingTokens } = useTokenSearch(tokenSearchInput, true)
+	const tokenOptions = tokenOptionsResponse ?? EMPTY_TOKEN_OPTIONS
+	const tokenSelectOptions = useMemo(() => {
+		const options: Array<VirtualizedSelectOption> = []
+		// The picked token stays listed through a new search, so the field keeps showing its name.
+		if (priceToken && !tokenOptions.some((token) => token.value === priceToken.symbol)) {
+			options.push({ value: priceToken.symbol, label: priceToken.symbol.toUpperCase() })
+		}
+		for (const token of tokenOptions) {
+			options.push({
+				value: token.value,
+				label: token.label,
+				logo: token.logo,
+				...(typeof token.price === 'number' ? { description: formatPriceLabel(token.price) } : {})
+			})
+		}
+		return options
+	}, [tokenOptions, priceToken])
 
 	const telegramLink = useIntegrationLink()
 	const telegramLinked = telegramLink.state.status === 'linked'
@@ -447,34 +451,24 @@ function CreateAlertModalForm({
 						</div>
 					) : (
 						<>
-							<div className="flex flex-col gap-1.5">
-								<label htmlFor={tokenInputId} className={alertFieldLabelClass}>
-									Token
-								</label>
-								<ReactSelect
-									inputId={tokenInputId}
-									placeholder="Search tokens…"
-									value={priceToken ? { value: priceToken.symbol, label: priceToken.symbol.toUpperCase() } : null}
-									onChange={(option: any) => {
-										if (!option) {
-											setPriceToken(null)
-											return
-										}
-										setPriceToken({
-											tokenNk: `coingecko:${option.id}`,
-											symbol: option.value,
-											currentPrice: typeof option.price === 'number' ? option.price : null
-										})
-									}}
-									onInputChange={(value: string) => setTokenSearchInput(value)}
-									options={tokenOptions}
-									isLoading={isLoadingTokens}
-									// A disabled fieldset reaches only native controls; the picker locks through its own prop.
-									isDisabled={isPending}
-									isClearable
-									components={{ Option: TokenOptionRow }}
-								/>
-							</div>
+							<VirtualizedSelect
+								variant="field"
+								label="Token"
+								options={tokenSelectOptions}
+								selectedValue={priceToken?.symbol ?? null}
+								onChange={(option) => {
+									const token = tokenOptions.find((candidate) => candidate.value === option.value)
+									if (!token) return
+									setPriceToken({
+										tokenNk: `coingecko:${token.id}`,
+										symbol: token.value,
+										currentPrice: typeof token.price === 'number' ? token.price : null
+									})
+								}}
+								onSearchChange={setTokenSearchInput}
+								isSearching={isSearchingTokens}
+								placeholder="Select token…"
+							/>
 							<div className="flex flex-col gap-1.5">
 								<span className={alertFieldLabelClass}>Fires when the price goes</span>
 								<div className="flex flex-wrap items-center gap-2">

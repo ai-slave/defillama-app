@@ -3,6 +3,7 @@ import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tan
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import {
 	UNIFIED_TABLE_PRESETS,
@@ -17,7 +18,6 @@ import { DialogCancelButton, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
-import { AriakitVirtualizedSelect } from '../../AriakitVirtualizedSelect'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
 import { EquitiesFilingsDataset } from '../../datasets/EquitiesDataset/EquitiesFilingsDataset'
 import { EquitiesFinancialsDataset } from '../../datasets/EquitiesDataset/EquitiesFinancialsDataset'
@@ -687,12 +687,13 @@ export function UnifiedTableTab({
 				</div>
 
 				{activeRwaTab === 'rwa-selected-chain' ? (
-					<AriakitVirtualizedSelect
-						label="Select chain"
+					<VirtualizedSelect
+						variant="field"
+						label="Chain"
 						options={chainOptions.filter((o) => o.value !== 'All')}
 						selectedValue={selectedDatasetChain}
 						onChange={(option) => onDatasetChainChange(option.value)}
-						placeholder="Select chain..."
+						placeholder="Select chain…"
 						isLoading={protocolsLoading}
 					/>
 				) : null}
@@ -748,12 +749,13 @@ export function UnifiedTableTab({
 				</div>
 
 				{needsTicker ? (
-					<AriakitVirtualizedSelect
-						label="Select company"
+					<VirtualizedSelect
+						variant="field"
+						label="Company"
 						options={equitiesTickerOptions}
 						selectedValue={selectedDatasetChain}
 						onChange={(option) => onDatasetChainChange(option.value)}
-						placeholder="Search ticker or company name..."
+						placeholder="Select company…"
 						isLoading={equitiesTickerLoading}
 					/>
 				) : null}

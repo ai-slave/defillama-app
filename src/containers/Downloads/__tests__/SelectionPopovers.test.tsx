@@ -57,7 +57,7 @@ test('unapplied dates keep All selected; Apply and Clear change the active range
 	}
 	await act(async () => root.render(<Harness />))
 	expect(changed).not.toHaveBeenCalled()
-	const trigger = button('Date range')
+	const trigger = button('Date range: All')
 	await click(trigger)
 	const dates = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
 	await input(dates[0], '2026-01-01')
@@ -83,7 +83,7 @@ test('unapplied dates keep All selected; Apply and Clear change the active range
 	await click(trigger)
 	expect(document.querySelector<HTMLInputElement>('input[type="date"]')!.value).toBe('')
 })
-test('row limit errors identify the input; correcting and clearing restore unrestricted rows', async () => {
+test('row limit errors identify the input; correcting applies it, and All restores unrestricted rows', async () => {
 	const changed = vi.fn()
 	function Harness() {
 		const [value, setValue] = useState<number | null>(null)
@@ -103,7 +103,7 @@ test('row limit errors identify the input; correcting and clearing restore unres
 		)
 	}
 	await act(async () => root.render(<Harness />))
-	const trigger = button('Row limit')
+	const trigger = button('Row limit: All')
 	await click(trigger)
 	const field = document.querySelector<HTMLInputElement>('[aria-label="Custom row limit"]')!
 	await input(field, '-1')
@@ -117,9 +117,12 @@ test('row limit errors identify the input; correcting and clearing restore unres
 	await click(button('Apply'))
 	expect(changed).toHaveBeenCalledExactlyOnceWith(250)
 	await waitForUi(() => expect(document.activeElement).toBe(trigger))
-	await click(button('Clear row limit'))
-	expect(document.activeElement).toBe(trigger)
+	expect(trigger.textContent).toBe('Row limit: Top 250 of 500')
+	await click(trigger)
+	await click(button('All'))
 	expect(changed).toHaveBeenLastCalledWith(null)
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
+	expect(trigger.textContent).toBe('Row limit: All')
 	await click(trigger)
 	expect(button('All').getAttribute('aria-pressed')).toBe('true')
 })

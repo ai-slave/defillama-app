@@ -4,6 +4,7 @@ import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECha
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import {
 	buildProtocolBreakdownPresentation,
@@ -22,8 +23,6 @@ import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../../services/protocolTvl'
 import type { AdvancedTvlChartType } from '../../types'
 import { buildAdvancedTvlPresentation } from '../advancedTvlPresentation'
-import { AriakitSelect } from '../AriakitSelect'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { useAdvancedTvlChartData } from '../useAdvancedTvlChartData'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
@@ -295,12 +294,13 @@ export function AdvancedTvlChartTab({
 				{protocolParameter.boundVariable ? (
 					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
 				) : null}
-				<AriakitVirtualizedSelect
+				<VirtualizedSelect
+					variant="field"
 					label="Protocol"
 					options={selectableProtocolOptions}
-					selectedValue={selectedAdvancedTvlProtocol || ''}
+					selectedValue={selectedAdvancedTvlProtocol || null}
 					onChange={handleProtocolChange}
-					placeholder="Select protocol..."
+					placeholder="Select protocol…"
 					isLoading={protocolsLoading}
 				/>
 
@@ -309,12 +309,13 @@ export function AdvancedTvlChartTab({
 					className={`w-full ${!hasProtocolSelection ? 'pointer-events-none opacity-50' : ''}`}
 					render={<div />}
 				>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Chart type"
 						options={chartTypeOptions}
 						selectedValue={selectedAdvancedTvlChartType}
 						onChange={(option) => onSelectedAdvancedTvlChartTypeChange(option.value)}
-						placeholder="Select chart type..."
+						placeholder="Select chart type…"
 					/>
 				</Tooltip>
 

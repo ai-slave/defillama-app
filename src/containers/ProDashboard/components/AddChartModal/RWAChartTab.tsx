@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
@@ -12,8 +13,6 @@ import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from 
 import { LocalLoader } from '~/ui/Loaders'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
-import { AriakitSelect, type SelectOption } from '../AriakitSelect'
-import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 import { buildProRwaAssetChartSeries } from '../rwaAssetChart'
 import { buildRwaSnapshotPresentation } from '../rwaSnapshot'
@@ -47,7 +46,7 @@ interface RWAChartTabProps {
 	onSelectedRwaAssetMetricsChange: (metrics: Array<RWAOverviewChartMetric>) => void
 }
 
-const BREAKDOWN_OPTIONS: Array<SelectOption<RWAOverviewChartBreakdown>> = [
+const BREAKDOWN_OPTIONS: Array<VirtualizedSelectOption<RWAOverviewChartBreakdown>> = [
 	{ value: 'chain', label: 'Chain' },
 	{ value: 'category', label: 'Category' },
 	{ value: 'platform', label: 'Platform' },
@@ -62,13 +61,15 @@ const METRIC_LABELS: Record<RWAOverviewChartMetric, string> = {
 	defiActiveTvl: 'DeFi Active TVL'
 }
 
-const RWA_METRIC_OPTIONS: Array<SelectOption<RWAOverviewChartMetric>> = getChartMetricOptions().map((option) => ({
-	value: option.key,
-	label: option.label
-}))
+const RWA_METRIC_OPTIONS: Array<VirtualizedSelectOption<RWAOverviewChartMetric>> = getChartMetricOptions().map(
+	(option) => ({
+		value: option.key,
+		label: option.label
+	})
+)
 // The share view belongs to the /rwa page; the dashboard card has no share renderer.
-const RWA_CHART_VIEW_OPTIONS: Array<SelectOption<RWAOverviewChartView>> = getChartViewOptions().flatMap((option) =>
-	option.key === 'share' ? [] : [{ value: option.key, label: option.name }]
+const RWA_CHART_VIEW_OPTIONS: Array<VirtualizedSelectOption<RWAOverviewChartView>> = getChartViewOptions().flatMap(
+	(option) => (option.key === 'share' ? [] : [{ value: option.key, label: option.name }])
 )
 
 export function RWAChartTab(props: RWAChartTabProps) {
@@ -154,27 +155,35 @@ function RWAChartTabInner({
 
 			{rwaMode === 'overview' ? (
 				<div className="flex flex-wrap gap-3">
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Chain"
+						placeholder="Select…"
 						options={chainOptions}
 						selectedValue={selectedRwaChain}
 						onChange={(opt) => onSelectedRwaChainChange(opt.value)}
 					/>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Metric"
+						placeholder="Select…"
 						options={metricOptions}
 						selectedValue={selectedRwaMetric}
 						onChange={(opt) => onSelectedRwaMetricChange(opt.value)}
 					/>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Chart type"
+						placeholder="Select…"
 						options={chartViewOptions}
 						selectedValue={selectedRwaChartView}
 						onChange={(opt) => onSelectedRwaChartViewChange(opt.value)}
 					/>
 					{!isChainSpecific ? (
-						<AriakitSelect
+						<VirtualizedSelect
+							variant="field"
 							label="Breakdown"
+							placeholder="Select…"
 							options={BREAKDOWN_OPTIONS}
 							selectedValue={selectedRwaBreakdown}
 							onChange={(opt) => onSelectedRwaBreakdownChange(opt.value)}
@@ -259,12 +268,13 @@ function AssetControls({
 
 	return (
 		<div className="flex flex-col gap-3">
-			<AriakitVirtualizedSelect
+			<VirtualizedSelect
+				variant="field"
 				label="Select asset"
 				options={assetOptions}
 				selectedValue={selectedAssetId}
 				onChange={handleAssetChange}
-				placeholder={isLoading ? 'Loading assets...' : 'Search for an RWA asset...'}
+				placeholder={isLoading ? 'Loading assets…' : 'Search for an RWA asset…'}
 			/>
 			<div className="flex flex-wrap gap-2">
 				<span className="text-sm text-pro-text-secondary">Metrics:</span>

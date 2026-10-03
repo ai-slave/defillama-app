@@ -14,6 +14,7 @@ import {
 	isProDashboardChartType
 } from '../../types'
 import type { DashboardItemPlacement } from '../../useDashboardActions'
+import { getItemIconUrl } from '../../utils'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
@@ -37,7 +38,8 @@ export function useModalActions(
 			{ value: 'All', label: 'All chains' },
 			...chains.map((chain: Chain) => ({
 				value: chain.name,
-				label: chain.name
+				label: chain.name,
+				logo: getItemIconUrl('chain', chain, chain.name)
 			}))
 		],
 		[chains]
@@ -59,10 +61,10 @@ export function useModalActions(
 
 		parentsOrSolo.sort((a, b) => b.tvl - a.tvl)
 
-		const options: Array<{ value: string; label: string; logo?: string; isChild?: boolean; parentValue?: string }> = []
+		const options: Array<{ value: string; label: string; logo: string; isChild?: boolean; parentValue?: string }> = []
 
 		for (const parent of parentsOrSolo) {
-			options.push({ value: parent.slug, label: parent.name, ...(parent.logo ? { logo: parent.logo } : {}) })
+			options.push({ value: parent.slug, label: parent.name, logo: getItemIconUrl('protocol', parent, parent.slug) })
 			const children = childrenByParentId.get(parent.id) || []
 			if (children.length > 0) {
 				children.sort((a, b) => b.tvl - a.tvl)
@@ -70,7 +72,7 @@ export function useModalActions(
 					options.push({
 						value: child.slug,
 						label: child.name,
-						...(child.logo ? { logo: child.logo } : {}),
+						logo: getItemIconUrl('protocol', child, child.slug),
 						isChild: true,
 						parentValue: parent.slug
 					})

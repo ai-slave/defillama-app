@@ -1,26 +1,31 @@
 import { useMemo, useState } from 'react'
+import { VirtualizedMultiSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import {
 	BoundParameterChip,
 	useModalFieldBinding
 } from '~/containers/ProDashboard/components/AddChartModal/bindingContext'
-import { AriakitVirtualizedMultiSelect } from '~/containers/ProDashboard/components/AriakitVirtualizedMultiSelect'
 import { buildOracleFilterOptions } from '~/containers/ProDashboard/oracleFilterOptions'
 import { useProDashboardCatalog } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { useOracleNamesByProtocol } from '~/containers/ProDashboard/queries'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { getItemIconUrl } from '~/containers/ProDashboard/utils'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 
 const EMPTY_CATEGORIES: Array<string> = []
 const EMPTY_PROTOCOLS: Array<string> = []
 const EMPTY_ORACLES: Array<string> = []
-const ALL_CHAINS_SELECTION = ['All']
+const NO_CHAINS: Array<string> = []
 
 interface FiltersPanelProps {
 	chains: Array<string>
 	filters: UnifiedTableFilters
-	availableChains: Array<{ label: string; value: string }>
+	availableChains: Array<VirtualizedSelectOption>
 	onChainsChange: (chains: Array<string>) => void
 	onFiltersChange: (filters: UnifiedTableFilters) => void
+}
+
+function countedLabel(label: string, count: number) {
+	return count > 0 ? `${label} (${count})` : label
 }
 
 export function FiltersPanel({ chains, filters, availableChains, onChainsChange, onFiltersChange }: FiltersPanelProps) {
@@ -30,14 +35,14 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 
 	const chainParameter = useModalFieldBinding('chains', 'chain')
 
+	// No pick means every chain, so the list has no "All chains" row of its own beside Select all.
 	const chainSelectOptions = useMemo(() => {
-		const base = availableChains.some((option) => option.value === 'All')
-			? availableChains
-			: [{ value: 'All', label: 'All chains' }, ...availableChains]
+		const base = availableChains.filter((option) => option.value !== 'All')
 		return chainParameter.options.length > 0 ? [...chainParameter.options, ...base] : base
 	}, [availableChains, chainParameter.options])
+	const realChainCount = chainSelectOptions.length - chainParameter.options.length
 
-	const selectedChainValues = chains.includes('All') ? ALL_CHAINS_SELECTION : chains
+	const selectedChainValues = chains.includes('All') ? NO_CHAINS : chains
 
 	const categoryOptions = useMemo(() => {
 		if (!protocols || protocols.length === 0) return []
@@ -68,16 +73,16 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 
 		parentsOrSolo.sort((a, b) => b.tvl - a.tvl)
 
-		const options: Array<{ value: string; label: string; logo?: string; isChild?: boolean }> = []
+		const options: Array<VirtualizedSelectOption> = []
 
 		for (const parent of parentsOrSolo) {
 			const childProtocols = (childrenByParentId.get(parent.id) ?? []).sort((a, b) => b.tvl - a.tvl)
-			options.push({ value: parent.name, label: parent.name, ...(parent.logo ? { logo: parent.logo } : {}) })
+			options.push({ value: parent.name, label: parent.name, logo: getItemIconUrl('protocol', parent, parent.slug) })
 			for (const child of childProtocols) {
 				options.push({
 					value: child.name,
 					label: child.name,
-					...(child.logo ? { logo: child.logo } : {}),
+					logo: getItemIconUrl('protocol', child, child.slug),
 					isChild: true
 				})
 			}
@@ -129,98 +134,59 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 		}
 
 		chainParameter.unbind()
-
-		if (values.length === 0) {
-			onChainsChange(['All'])
-			return
-		}
-
-		if (values.includes('All')) {
-			if (!chains.includes('All')) {
-				onChainsChange(['All'])
-				return
-			}
-
-			if (values.length === 1) {
-				onChainsChange(['All'])
-				return
-			}
-
-			const filtered = values.filter((value) => value !== 'All')
-			onChainsChange(filtered.length > 0 ? filtered : ['All'])
-			return
-		}
-
-		onChainsChange(values)
+		// Every chain picked, or none, is the "All" filter, which also covers chains listed later.
+		onChainsChange(values.length === 0 || values.length === realChainCount ? ['All'] : values)
 	}
 
 	return (
 		<div className="max-h-[350px] overflow-y-auto">
 			<div className="grid gap-3 md:grid-cols-2">
 				<div className="flex flex-col gap-1.5">
-					{chainParameter.boundVariable ? (
-						<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
-					) : null}
-					<AriakitVirtualizedMultiSelect
+					<VirtualizedMultiSelect
 						label="Chains"
 						options={chainSelectOptions}
 						selectedValues={selectedChainValues}
 						onChange={handleChainMultiSelectChange}
-						placeholder="All chains..."
-						renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
+						placeholder="All chains"
 					/>
+					{chainParameter.boundVariable ? (
+						<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+					) : null}
 				</div>
-				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-3 md:col-span-2">
-					<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-						<div>
-							<p className="text-xs font-semibold text-pro-text-secondary">Categories</p>
-							<p className="text-xs text-pro-text-tertiary">Toggle include or exclude selections.</p>
-						</div>
-						<div className="flex items-center rounded-md border border-pro-cards-border">
-							{(['include', 'exclude'] as const).map((mode) => {
-								const isActive = categoryMode === mode
-								const count = mode === 'include' ? includeCategories.length : excludeCategories.length
-								return (
-									<button
-										type="button"
-										key={mode}
-										onClick={() => setCategoryMode(mode)}
-										className={`px-2 py-1 text-xs font-medium transition ${
-											isActive ? 'bg-brand/10 text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
-										}`}
-									>
-										{mode === 'include' ? 'Include' : 'Exclude'}
-										{count > 0 ? <span className="ml-1 text-xs text-pro-text-tertiary">({count})</span> : null}
-									</button>
-								)
-							})}
-						</div>
-					</div>
-					<AriakitVirtualizedMultiSelect
-						label={categoryMode === 'include' ? 'Include categories' : 'Exclude categories'}
-						options={categoryOptions}
-						selectedValues={categoryValues}
-						onChange={handleCategoryMultiSelectChange}
-						placeholder={categoryMode === 'include' ? 'All categories...' : 'None'}
-						className="[&>label]:sr-only"
-					/>
-				</div>
-				<AriakitVirtualizedMultiSelect
+				<VirtualizedMultiSelect
+					label="Categories"
+					labelAction={
+						<SegmentedControl<'include' | 'exclude'>
+							label="Category match"
+							value={categoryMode}
+							onValueChange={setCategoryMode}
+							options={[
+								{ value: 'include', label: countedLabel('Include', includeCategories.length) },
+								{ value: 'exclude', label: countedLabel('Exclude', excludeCategories.length) }
+							]}
+							variant="default"
+							size="sm"
+						/>
+					}
+					options={categoryOptions}
+					selectedValues={categoryValues}
+					onChange={handleCategoryMultiSelectChange}
+					placeholder={categoryMode === 'include' ? 'All categories' : 'None'}
+					className="md:col-span-2"
+				/>
+				<VirtualizedMultiSelect
 					label="Protocols"
 					options={protocolOptions}
 					selectedValues={filters.protocols ?? EMPTY_PROTOCOLS}
 					onChange={(values) => handleMultiSelectChange('protocols', values)}
-					placeholder="All protocols..."
-					renderIcon={(option) => option.logo || getItemIconUrl('protocol', option, option.value)}
-					className="flex flex-col gap-1.5"
+					placeholder="All protocols"
 				/>
-				<AriakitVirtualizedMultiSelect
+				<VirtualizedMultiSelect
 					label="Oracles"
 					options={oracleOptions}
 					selectedValues={filters.oracles ?? EMPTY_ORACLES}
 					onChange={(values) => handleMultiSelectChange('oracles', values)}
-					placeholder="All oracles..."
-					className="flex flex-col gap-1.5"
+					placeholder="All oracles"
 				/>
 			</div>
 		</div>

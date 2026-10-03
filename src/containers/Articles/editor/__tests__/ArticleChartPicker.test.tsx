@@ -288,13 +288,20 @@ test('Cancel closes an untouched picker at once, and asks before it drops picked
 	const button = (name: string, scope: ParentNode = document) =>
 		[...scope.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent?.trim() === name)!
 	await click(entity('Aave'))
+	await waitForUi(() => expect(entity('Aave').getAttribute('aria-checked')).toBe('true'))
 	await click(button('Cancel', dialog()!))
-	const confirmation = document.querySelector<HTMLElement>('[role="alertdialog"]')!
-	expect(confirmation.textContent).toContain('Discard this chart?')
+	const confirmation = await waitForUi(() => {
+		const found = document.querySelector<HTMLElement>('[role="alertdialog"]')
+		expect(found?.textContent).toContain('Discard this chart?')
+		return found!
+	})
 	await click(button('Keep editing', confirmation))
-	await settle()
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	expect(entity('Aave').getAttribute('aria-checked')).toBe('true')
 	await click(entity('Aave'))
+	await waitForUi(() => expect(entity('Aave').getAttribute('aria-checked')).toBe('false'))
 	await click(button('Cancel', dialog()!))
+	// The picker closing is the signal Cancel finished; only then is the missing confirmation meaningful.
+	await waitForUi(() => expect(dialog()).toBeNull())
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 })

@@ -24,13 +24,9 @@ const router = vi.hoisted(() => ({
 	query: {}
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
-// happy-dom has no layout measurements; expose the virtual rows for interaction checks.
-vi.mock('@tanstack/react-virtual', () => ({
-	useVirtualizer: ({ count }: { count: number }) => ({
-		getTotalSize: () => count * 48,
-		getVirtualItems: () => Array.from({ length: count }, (_, index) => ({ index, size: 48, start: index * 48 }))
-	})
-}))
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
 
 const http = installFixtureFetch()
 
@@ -165,11 +161,22 @@ test('changing comparison type clears category filters and preserves search', as
 	await click('Compare chains')
 	await click('Create comparison')
 	await waitForText('Base')
-	await click('All categories')
-	const category = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(node) => node.textContent?.trim() === 'Rollup'
+	const categories = [...container.querySelectorAll<HTMLButtonElement>('button[role="combobox"]')].find(
+		(node) => node.textContent === 'All categories'
 	)!
+	await act(async () => {
+		categories.focus()
+		categories.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	})
+	const category = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+			(node) => node.textContent === 'Rollup'
+		)
+		expect(found).toBeDefined()
+		return found!
+	})
 	await act(async () => category.click())
+	expect(categories.textContent).toBe('Rollup')
 	const input = container.querySelector<HTMLInputElement>('input[type="text"]')!
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Base')

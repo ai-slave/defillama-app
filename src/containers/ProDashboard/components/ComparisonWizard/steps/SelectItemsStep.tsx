@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
+import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chains/api'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
@@ -11,7 +12,6 @@ import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { chainIconUrl } from '~/utils/icons'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
-import { AriakitMultiSelect } from '../../AriakitMultiSelect'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 
 interface Option {
@@ -259,7 +259,7 @@ export function SelectItemsStep() {
 			<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
 				<div className="border-b border-subtle p-2">
 					<div className="mb-2">
-						<AriakitMultiSelect
+						<VirtualizedMultiSelect
 							label="Filter by category"
 							options={
 								state.comparisonType === 'chains'

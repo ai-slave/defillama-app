@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react'
+import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -10,12 +11,11 @@ import {
 	type MetricAggregator,
 	type MetricWindow
 } from '../../../types'
-import { AriakitSelect, type SelectOption } from '../../AriakitSelect'
 import { dashboardFieldLabelStyles, DescriptionField, TagsField, VisibilityField } from '../../DashboardFormFields'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { DisplayMode } from '../types'
 
-const GROUPING_OPTIONS: Array<SelectOption<DashboardGrouping>> = [
+const GROUPING_OPTIONS: Array<VirtualizedSelectOption<DashboardGrouping>> = [
 	{ value: 'day', label: 'Day' },
 	{ value: 'week', label: 'Week' },
 	{ value: 'month', label: 'Month' },
@@ -23,14 +23,14 @@ const GROUPING_OPTIONS: Array<SelectOption<DashboardGrouping>> = [
 	{ value: 'year', label: 'Year' }
 ]
 
-const DISPLAY_OPTIONS: Array<SelectOption<DisplayMode>> = [
+const DISPLAY_OPTIONS: Array<VirtualizedSelectOption<DisplayMode>> = [
 	{ value: 'default', label: 'Default' },
 	{ value: 'stacked', label: 'Stacked' },
 	{ value: 'cumulative', label: 'Cumulative' },
 	{ value: 'percentage', label: 'Percentage' }
 ]
 
-const AGGREGATOR_OPTIONS: Array<SelectOption<MetricAggregator>> = [
+const AGGREGATOR_OPTIONS: Array<VirtualizedSelectOption<MetricAggregator>> = [
 	{ value: 'latest', label: 'Latest' },
 	{ value: 'avg', label: 'Average' },
 	{ value: 'sum', label: 'Total' },
@@ -39,7 +39,7 @@ const AGGREGATOR_OPTIONS: Array<SelectOption<MetricAggregator>> = [
 	{ value: 'growth', label: 'Growth' }
 ]
 
-const WINDOW_OPTIONS: Array<SelectOption<MetricWindow>> = [
+const WINDOW_OPTIONS: Array<VirtualizedSelectOption<MetricWindow>> = [
 	{ value: '7d', label: '7d' },
 	{ value: '30d', label: '30d' },
 	{ value: '90d', label: '90d' },
@@ -95,14 +95,18 @@ export function PreviewStep() {
 				<VisibilityField value={state.visibility} onChange={actions.setVisibility} sharedWithTeam={false} />
 
 				<div className="grid grid-cols-2 gap-2">
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Grouping"
+						placeholder="Select…"
 						options={GROUPING_OPTIONS}
 						selectedValue={state.grouping}
 						onChange={(opt) => actions.setGrouping(opt.value)}
 					/>
-					<AriakitSelect
+					<VirtualizedSelect
+						variant="field"
 						label="Display"
+						placeholder="Select…"
 						options={DISPLAY_OPTIONS}
 						selectedValue={state.displayMode}
 						onChange={(opt) => actions.setDisplayMode(opt.value)}
@@ -150,17 +154,21 @@ export function PreviewStep() {
 					</div>
 					{state.metricsForCards.length > 0 ? (
 						<div className="mt-2 flex items-center gap-2 border-t border-subtle pt-2">
-							<AriakitSelect
+							<VirtualizedSelect
+								variant="chip"
+								label="Value"
+								placeholder="Select…"
 								options={AGGREGATOR_OPTIONS}
 								selectedValue={state.metricSettings.aggregator}
 								onChange={(opt) => actions.setMetricSettings({ aggregator: opt.value })}
-								className="min-w-[80px]"
 							/>
-							<AriakitSelect
+							<VirtualizedSelect
+								variant="chip"
+								label="Window"
+								placeholder="Select…"
 								options={WINDOW_OPTIONS}
 								selectedValue={state.metricSettings.window}
 								onChange={(opt) => actions.setMetricSettings({ window: opt.value })}
-								className="min-w-[60px]"
 							/>
 						</div>
 					) : null}

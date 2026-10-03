@@ -1,14 +1,20 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import Link from 'next/link'
-import { lazy, type RefObject, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
+import {
+	VirtualizedMultiSelect,
+	VirtualizedSelect,
+	type VirtualizedSelectOption
+} from '~/components/Select/VirtualizedSelect'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tag } from '~/ui/Tag'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
@@ -57,9 +63,9 @@ const EMPTY_PARAM_OPTIONS: Array<ParamOption> = []
 
 export type ParamType = 'protocol' | 'chain'
 
-const PARAM_LABELS: Record<ParamType, { singular: string; verb: string; search: string }> = {
-	protocol: { singular: 'protocol', verb: 'Pick a protocol', search: 'Search protocols...' },
-	chain: { singular: 'chain', verb: 'Pick a chain', search: 'Search chains...' }
+const PARAM_LABELS: Record<ParamType, { singular: string; title: string; verb: string }> = {
+	protocol: { singular: 'protocol', title: 'Protocol', verb: 'Pick a protocol' },
+	chain: { singular: 'chain', title: 'Chain', verb: 'Pick a chain' }
 }
 
 interface MultiMetricModalProps {
@@ -262,17 +268,14 @@ export function MultiMetricModal({
 	const readyCount = csvQueries.filter((q) => typeof q.data === 'string').length
 	const loadingCount = csvQueries.filter((q) => q.isLoading).length
 
-	const handleToggleMetric = useCallback((slug: string) => {
-		// Either way the toggled metric stops being the preferred one: unpicked it is gone, and picked again it was
-		// dropped meanwhile, so it must not take the preview back.
-		setPreferredMetric((preferred) => (preferred === slug ? null : preferred))
-		setSelectedMetrics((prev) => {
-			if (prev.includes(slug)) return prev.filter((s) => s !== slug)
-			// The picker disables metrics past the cap and says why in its header.
-			if (prev.length >= MAX_METRICS) return prev
-			return [...prev, slug]
-		})
-	}, [])
+	// The picker keeps the order of existing picks and adds new ones at the end. A metric it adds or removes stops
+	// being the preferred one: unpicked it is gone, and picked again it was dropped meanwhile.
+	const handleMetricsChange = (values: Array<string>) => {
+		setPreferredMetric((preferred) =>
+			preferred !== null && selectedMetrics.includes(preferred) && values.includes(preferred) ? preferred : null
+		)
+		setSelectedMetrics(values)
+	}
 
 	const handleClearMetrics = useCallback(() => {
 		setSelectedMetrics([])
@@ -528,6 +531,16 @@ export function MultiMetricModal({
 	})()
 
 	const suggestions = useMemo(() => paramOptions.slice(0, SUGGESTED_COUNT), [paramOptions])
+	// Grouped by category, in the order categories first appear, so each category's heading shows once.
+	const metricOptions = useMemo(() => {
+		const groups = new Map<string, Array<VirtualizedSelectOption>>()
+		for (const metric of availableMetrics) {
+			const group = groups.get(metric.category) ?? []
+			group.push({ value: metric.slug, label: metricDisplayName(metric), group: metric.category })
+			groups.set(metric.category, group)
+		}
+		return [...groups.values()].flat()
+	}, [availableMetrics])
 
 	return (
 		<>
@@ -575,22 +588,35 @@ export function MultiMetricModal({
 				{param ? (
 					<DialogToolbar>
 						<div className="flex flex-wrap items-center gap-2">
-							<ParamPickerPopover
-								paramType={paramType}
-								value={param}
-								protocolOptions={protocolOptions}
-								chainOptions={chainOptions}
+							<VirtualizedSelect
+								variant="chip"
+								label={PARAM_LABELS[paramType].title}
+								options={paramOptions}
+								selectedValue={param.value}
 								onChange={handleChangeParam}
-								onChangeParamType={handleChangeParamType}
+								placeholder={PARAM_LABELS[paramType].verb}
+								headerRow={
+									<div className="px-3 pb-2">
+										<SegmentedControl<ParamType>
+											label="Pick by"
+											value={paramType}
+											onValueChange={handleChangeParamType}
+											options={PARAM_TYPE_OPTIONS}
+											variant="default"
+											size="sm"
+										/>
+									</div>
+								}
 							/>
 
-							<MetricMultiPickerPopover
+							<VirtualizedMultiSelect
+								variant="chip"
+								label="Metrics"
 								triggerRef={metricPickerRef}
-								metrics={availableMetrics}
-								selected={selectedMetrics}
-								onToggle={handleToggleMetric}
-								onClearAll={handleClearMetrics}
-								onSelectAll={handleSelectAll}
+								options={metricOptions}
+								selectedValues={selectedMetrics}
+								onChange={handleMetricsChange}
+								placeholder="None"
 								maxSelections={MAX_METRICS}
 							/>
 
@@ -607,7 +633,7 @@ export function MultiMetricModal({
 							{isBulk ? (
 								<Button
 									variant="filter"
-									size="sm"
+									size="md"
 									data-active={showSelected}
 									aria-pressed={showSelected}
 									className="sm:hidden"
@@ -731,33 +757,10 @@ export function MultiMetricModal({
 	)
 }
 
-function ParamTypeToggle({
-	paramType,
-	onChange,
-	size = 'md'
-}: {
-	paramType: ParamType
-	onChange: (next: ParamType) => void
-	size?: 'sm' | 'md'
-}) {
-	const pad = size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
-	return (
-		<div className="inline-flex items-center gap-0.5 rounded-md border border-subtle p-0.5">
-			{(['protocol', 'chain'] as const).map((t) => (
-				<button
-					key={t}
-					type="button"
-					onClick={() => onChange(t)}
-					className={`rounded-sm font-medium capitalize transition-colors ${pad} ${
-						paramType === t ? 'bg-brand text-on-brand shadow-sm' : 'text-pro-text-secondary hover:text-pro-text-primary'
-					}`}
-				>
-					{t}
-				</button>
-			))}
-		</div>
-	)
-}
+const PARAM_TYPE_OPTIONS: Array<{ value: ParamType; label: string }> = [
+	{ value: 'protocol', label: 'Protocol' },
+	{ value: 'chain', label: 'Chain' }
+]
 
 function ParamPickerEmpty({
 	paramType,
@@ -772,15 +775,6 @@ function ParamPickerEmpty({
 	suggestions: Array<ParamOption>
 	onSelect: (opt: ParamOption) => void
 }) {
-	const popoverStore = Ariakit.usePopoverStore()
-	const [search, setSearch] = useState('')
-	const deferred = useDeferredValue(search.trim().toLowerCase())
-
-	const filtered = useMemo(() => {
-		const source = deferred ? options.filter((o) => o.label.toLowerCase().includes(deferred)) : options
-		return source.slice(0, 200)
-	}, [options, deferred])
-
 	const labels = PARAM_LABELS[paramType]
 
 	return (
@@ -796,68 +790,25 @@ function ParamPickerEmpty({
 					</p>
 				</div>
 
-				<ParamTypeToggle paramType={paramType} onChange={onChangeParamType} />
+				<SegmentedControl<ParamType>
+					label="Pick by"
+					value={paramType}
+					onValueChange={onChangeParamType}
+					options={PARAM_TYPE_OPTIONS}
+					variant="default"
+					size="md"
+				/>
 
-				<div className="w-full">
-					<Ariakit.PopoverProvider store={popoverStore}>
-						<Ariakit.PopoverDisclosure
-							autoFocus
-							className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium px-3.5 py-2.5 text-sm transition-colors hover:border-brand/50 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-hidden"
-						>
-							<span className="flex items-center gap-2 text-pro-text-tertiary">
-								<Icon name="search" className="size-4" />
-								Search a {labels.singular}
-							</span>
-							<Icon
-								name="chevron-down"
-								className="size-4 text-pro-text-tertiary transition-transform group-aria-expanded:rotate-180"
-							/>
-						</Ariakit.PopoverDisclosure>
-						<Ariakit.Popover
-							gutter={6}
-							portal
-							unmountOnHide
-							sameWidth
-							className="z-[70] flex max-h-96 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-						>
-							<div className="border-b border-subtle px-3 py-2">
-								<input
-									value={search}
-									onChange={(e) => setSearch(e.currentTarget.value)}
-									placeholder={labels.search}
-									className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
-									autoFocus
-								/>
-							</div>
-							<div className="min-h-0 flex-auto overflow-auto py-1">
-								{filtered.length === 0 ? (
-									<p className="px-3 py-2 text-xs text-pro-text-tertiary">No results</p>
-								) : (
-									filtered.map((opt) => (
-										<button
-											key={opt.value}
-											type="button"
-											onClick={() => {
-												onSelect(opt)
-												setSearch('')
-												popoverStore.hide()
-											}}
-											className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary ${opt.isChild ? 'pl-7' : 'pl-3'}`}
-										>
-											<span className="size-1.5 shrink-0 rounded-full bg-pro-text-tertiary/30" />
-											<span className="truncate">{opt.label}</span>
-										</button>
-									))
-								)}
-								{filtered.length >= 200 ? (
-									<p className="px-3 py-2 text-[11px] text-pro-text-tertiary">
-										Showing first 200 — refine the search to narrow results
-									</p>
-								) : null}
-							</div>
-						</Ariakit.Popover>
-					</Ariakit.PopoverProvider>
-				</div>
+				<VirtualizedSelect
+					variant="field"
+					label={labels.title}
+					options={options}
+					selectedValue={null}
+					onChange={onSelect}
+					placeholder={labels.verb}
+					autoFocus
+					className="w-full text-left"
+				/>
 
 				{suggestions.length > 0 ? (
 					<div className="flex flex-col items-center gap-2">
@@ -866,14 +817,9 @@ function ParamPickerEmpty({
 						</p>
 						<div className="flex flex-wrap justify-center gap-1.5">
 							{suggestions.map((opt) => (
-								<button
-									key={opt.value}
-									type="button"
-									onClick={() => onSelect(opt)}
-									className="inline-flex items-center gap-1 rounded-md border border-subtle px-2.5 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/50 hover:text-pro-text-primary"
-								>
+								<Button key={opt.value} type="button" variant="secondary" size="sm" onClick={() => onSelect(opt)}>
 									{opt.label}
-								</button>
+								</Button>
 							))}
 						</div>
 					</div>
@@ -1053,231 +999,5 @@ function PreviewTable({
 				</>
 			) : null}
 		</div>
-	)
-}
-
-function ParamPickerPopover({
-	paramType,
-	value,
-	protocolOptions,
-	chainOptions,
-	onChange,
-	onChangeParamType
-}: {
-	paramType: ParamType
-	value: ParamOption | null
-	protocolOptions: Array<ParamOption>
-	chainOptions: Array<ParamOption>
-	onChange: (opt: ParamOption) => void
-	onChangeParamType: (next: ParamType) => void
-}) {
-	const popoverStore = Ariakit.usePopoverStore()
-	const [search, setSearch] = useState('')
-	const deferredSearch = useDeferredValue(search.trim().toLowerCase())
-
-	const activeOptions = paramType === 'protocol' ? protocolOptions : chainOptions
-	const labels = PARAM_LABELS[paramType]
-
-	const filtered = useMemo(() => {
-		const source = deferredSearch
-			? activeOptions.filter((o) => o.label.toLowerCase().includes(deferredSearch))
-			: activeOptions
-		return source.slice(0, 200)
-	}, [activeOptions, deferredSearch])
-
-	return (
-		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure
-				className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-hover-row hover:text-pro-text-primary ${
-					value ? 'border-subtle text-pro-text-secondary' : 'border-brand/40 text-brand'
-				}`}
-			>
-				<Icon name="chevron-down" className="size-3.5" />
-				{value ? (
-					<span className="capitalize">
-						{labels.singular}: <span className="text-pro-text-primary normal-case">{value.label}</span>
-					</span>
-				) : (
-					<span>{labels.verb}</span>
-				)}
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="flex items-center justify-center border-b border-subtle px-3 py-2">
-					<ParamTypeToggle paramType={paramType} onChange={onChangeParamType} size="sm" />
-				</div>
-				<div className="border-b border-subtle px-3 py-2">
-					<input
-						value={search}
-						onChange={(e) => setSearch(e.currentTarget.value)}
-						placeholder={labels.search}
-						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
-						autoFocus
-					/>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto py-1">
-					{filtered.length === 0 ? (
-						<p className="px-3 py-2 text-xs text-pro-text-tertiary">No results</p>
-					) : (
-						filtered.map((opt) => {
-							const isSelected = value?.value === opt.value
-							return (
-								<button
-									key={opt.value}
-									type="button"
-									onClick={() => {
-										onChange(opt)
-										setSearch('')
-										popoverStore.hide()
-									}}
-									className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-hover-row ${
-										isSelected ? 'text-pro-text-primary' : 'text-pro-text-secondary'
-									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
-								>
-									<span
-										className={`size-1.5 shrink-0 rounded-full transition-colors ${
-											isSelected ? 'bg-brand' : 'bg-pro-text-tertiary/30'
-										}`}
-									/>
-									<span className="truncate">{opt.label}</span>
-								</button>
-							)
-						})
-					)}
-					{filtered.length >= 200 ? (
-						<p className="px-3 py-2 text-[11px] text-pro-text-tertiary">
-							Showing first 200 — refine the search to narrow results
-						</p>
-					) : null}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
-	)
-}
-
-function MetricMultiPickerPopover({
-	triggerRef,
-	metrics,
-	selected,
-	onToggle,
-	onClearAll,
-	onSelectAll,
-	maxSelections
-}: {
-	triggerRef: RefObject<HTMLButtonElement | null>
-	metrics: Array<ChartDatasetDefinition>
-	selected: Array<string>
-	onToggle: (slug: string) => void
-	onClearAll: () => void
-	onSelectAll: () => void
-	maxSelections: number
-}) {
-	const [search, setSearch] = useState('')
-	const deferred = useDeferredValue(search.trim().toLowerCase())
-	const selectedSet = useMemo(() => new Set(selected), [selected])
-	const capHit = selected.length >= maxSelections
-
-	const grouped = useMemo(() => {
-		const filtered = deferred
-			? metrics.filter((m) => m.name.toLowerCase().includes(deferred) || m.category.toLowerCase().includes(deferred))
-			: metrics
-		const groups = new Map<string, Array<ChartDatasetDefinition>>()
-		for (const m of filtered) {
-			const arr = groups.get(m.category) ?? []
-			arr.push(m)
-			groups.set(m.category, arr)
-		}
-		return [...groups.entries()]
-	}, [metrics, deferred])
-
-	const triggerLabel = (() => {
-		if (selected.length === 0) return 'Pick metrics'
-		if (selected.length === 1) return metrics.find((metric) => metric.slug === selected[0])!.name
-		if (selected.length === metrics.length) return `All ${metrics.length} metrics`
-		return `${selected.length} of ${metrics.length} metrics`
-	})()
-
-	const allSelected = selected.length === metrics.length && metrics.length > 0
-
-	return (
-		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure
-				ref={triggerRef}
-				className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
-			>
-				<Icon name="chevron-down" className="size-3.5" />
-				<span>{triggerLabel}</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				gutter={6}
-				portal
-				unmountOnHide
-				className="z-[60] flex max-h-[28rem] w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
-			>
-				<div className="flex items-center justify-between gap-2 border-b border-subtle px-3 py-2">
-					<span className="text-xs font-medium text-pro-text-secondary">
-						{selected.length}/{maxSelections} selected{capHit ? ' · remove one to add more' : ''}
-					</span>
-					<button
-						type="button"
-						onClick={allSelected ? onClearAll : onSelectAll}
-						className="text-xs text-brand hover:underline"
-					>
-						{allSelected ? 'Clear all' : 'Select all'}
-					</button>
-				</div>
-				<div className="border-b border-subtle px-3 py-2">
-					<input
-						value={search}
-						onChange={(e) => setSearch(e.currentTarget.value)}
-						placeholder="Search metrics..."
-						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
-						autoFocus
-					/>
-				</div>
-				<div className="min-h-0 flex-auto overflow-auto">
-					{grouped.length === 0 ? (
-						<p className="p-3 text-xs text-pro-text-tertiary">No matches</p>
-					) : (
-						grouped.map(([category, items]) => (
-							<div key={category} className="py-1">
-								<p className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-[0.06em] text-pro-text-tertiary uppercase">
-									{category}
-								</p>
-								{items.map((metric) => {
-									const isSelected = selectedSet.has(metric.slug)
-									const disabled = !isSelected && capHit
-									return (
-										<button
-											key={metric.slug}
-											type="button"
-											disabled={disabled}
-											onClick={() => onToggle(metric.slug)}
-											title={disabled ? `Max ${maxSelections} metrics` : metric.description}
-											className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 ${
-												isSelected ? 'text-pro-text-primary' : 'text-pro-text-secondary'
-											}`}
-										>
-											<span
-												className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-													isSelected ? 'border-brand bg-brand text-on-brand' : 'border-subtle'
-												}`}
-											>
-												{isSelected ? <Icon name="check" className="size-2.5" /> : null}
-											</span>
-											<span className="truncate">{metricDisplayName(metric)}</span>
-										</button>
-									)
-								})}
-							</div>
-						))
-					)}
-				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
 	)
 }

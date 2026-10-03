@@ -14,6 +14,9 @@ import type { ChartSavedConfig, MultiMetricSavedConfig } from '../savedDownloads
 
 const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ toast: toasts, default: toasts }))
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
 // Downloads write a Blob through an object URL, which happy-dom cannot follow.
 vi.mock('~/utils/download', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/utils/download')>()),
@@ -171,7 +174,7 @@ test('removing a selected protocol hands focus to the next row; with one left th
 	await press(button('Remove Alpha'))
 	expect(document.activeElement).toBe(button('Remove Beta'))
 	await press(button('Remove Beta'))
-	expect(document.activeElement).toBe(button('Gamma'))
+	expect(document.activeElement).toBe(button('Protocol: Gamma'))
 	expect(document.querySelector('[aria-label="Remove Gamma"]')).toBeNull()
 })
 
@@ -190,22 +193,33 @@ test('clearing the selected metrics hands focus to the metric picker', async () 
 	await renderMetrics()
 	await waitForUi(() => expect(button('Clear all')).toBeTruthy())
 	await press(button('Clear all'))
-	expect(accessibleName(document.activeElement!)).toBe('Pick metrics')
+	expect(accessibleName(document.activeElement!)).toBe('Metrics: None')
 })
 
-test('Add all and Clear all in the protocol picker leave focus in its search field', async () => {
+test('Select all in the protocol picker adds every protocol, then clears them, keeping focus in the open picker', async () => {
 	await renderChart()
-	await press(button('2 protocols'))
-	const search = await waitForUi(() => {
-		const found = document.querySelector<HTMLInputElement>('input[placeholder="Search protocol…"]')
+	const trigger = await waitForUi(() => button('Protocol: 2 of 3'))
+	await act(async () => {
+		trigger.focus()
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	})
+	const list = await waitForUi(() => {
+		const found = document.querySelector<HTMLElement>('[role="listbox"]')
 		expect(found).not.toBeNull()
 		return found!
 	})
-	await press(button('Add all (1)'))
-	expect(document.activeElement).toBe(search)
-	const popover = search.closest('[role="dialog"]')!
-	await press([...popover.querySelectorAll('button')].find((node) => node.textContent === 'Clear all')!)
-	expect(document.activeElement).toBe(search)
+	const selectAll = () =>
+		[...list.querySelectorAll<HTMLElement>('[role="option"]')].find((row) => row.textContent?.startsWith('Select all'))!
+	// Three protocols open without a search field, so focus stays on the trigger or in the list.
+	const focusInPicker = () => document.activeElement === trigger || list.contains(document.activeElement)
+
+	await act(async () => selectAll().click())
+	expect(trigger.textContent).toBe('Protocol: All')
+	expect(focusInPicker()).toBe(true)
+	await act(async () => selectAll().click())
+	expect(trigger.textContent).toBe('Protocol: None')
+	expect(focusInPicker()).toBe(true)
+	expect(trigger.getAttribute('aria-expanded')).toBe('true')
 })
 
 test('on a phone, More actions offers Copy, Save preset and Copy link, and Copy link copies the share link', async () => {
@@ -234,7 +248,7 @@ test('the phone Selected toggle counts the selected protocols, says whether the 
 	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('true')
 	await press(button('Remove Alpha'))
 	expect([...document.querySelectorAll('button')].some((node) => node.textContent?.startsWith('Selected'))).toBe(false)
-	expect(button('Beta')).toBeTruthy()
+	expect(button('Protocol: Beta')).toBeTruthy()
 })
 
 test('previewing a protocol from the phone Selected list switches back to the table', async () => {
@@ -272,16 +286,31 @@ test('each selected metric has a Remove button named for it', async () => {
 		).toEqual(['Remove TVL', 'Remove Active Loans'])
 	)
 	await press(button('Remove TVL'))
-	expect(accessibleName(document.activeElement!)).toBe('Protocol Active Loans')
+	expect(accessibleName(document.activeElement!)).toBe('Metrics: Active Loans')
 })
+
+/** Opens the metric picker from its trigger with the keyboard and returns the option named `name`. */
+async function metricOption(trigger: string, name: string) {
+	await act(async () => {
+		const node = button(trigger)
+		node.focus()
+		node.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	})
+	return waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((row) =>
+			row.textContent?.startsWith(name)
+		)
+		expect(found).toBeDefined()
+		return found!
+	})
+}
 
 test('a previewed metric that is removed and picked again does not take the preview back', async () => {
 	await renderMetrics()
 	await press(await waitForUi(() => listButton('Active Loans')))
 	await press(button('Remove Active Loans'))
-	await press(button('Protocol TVL'))
-	const option = await waitForUi(() => button('Active Loans'))
-	await press(option)
+	const option = await metricOption('Metrics: TVL', 'Active Loans')
+	await act(async () => option.click())
 	expect(listButton('TVL').getAttribute('aria-current')).toBe('true')
 	expect(listButton('Active Loans').hasAttribute('aria-current')).toBe(false)
 })
@@ -296,8 +325,9 @@ test('Select all keeps the metric the table already previews', async () => {
 			initialConfig={{ ...metricsConfig, metrics: ['protocol-active-loans-chart'] }}
 		/>
 	)
-	await press(await waitForUi(() => button('Protocol Active Loans')))
-	await press(await waitForUi(() => button('Select all')))
+	await waitForUi(() => button('Metrics: Active Loans'))
+	const selectAll = await metricOption('Metrics: Active Loans', 'Select all')
+	await act(async () => selectAll.click())
 	await waitForUi(() => expect(listButton('Active Loans').getAttribute('aria-current')).toBe('true'))
 	expect(listButton('TVL').hasAttribute('aria-current')).toBe(false)
 })

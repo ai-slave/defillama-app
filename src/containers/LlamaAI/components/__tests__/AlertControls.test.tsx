@@ -9,6 +9,9 @@ import { PRICE_OPERATOR_OPTIONS, SegmentedToggle } from '../alerts/ui'
 import { CreateAlertModal } from '../CreateAlertModal'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/ai/chat' }) }))
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
 
 const session = installSubscriberSession('reader')
 const AI = 'https://ai.llama.fi'
@@ -308,4 +311,42 @@ test.each([
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
 	expect(onSave).toHaveBeenCalledTimes(1)
+})
+
+test('a price alert searches tokens on the server, sends the picked one, and locks the field while it saves', async () => {
+	const save = Promise.withResolvers<Response>()
+	session.serve({
+		'/api/dynamic/pro-dashboard/tokens/search': [
+			{ value: 'usdc', label: 'USD Coin (USDC)', logo: null, id: 'usd-coin', price: 1 }
+		],
+		[`${AI}/alerts`]: () => save.promise
+	})
+	await mountModal({ initialTab: 'price' })
+	const token = () => document.querySelector<HTMLButtonElement>('button[role="combobox"]')!
+	expect(token().textContent).toBe('Select token…')
+
+	await press(token(), 'ArrowDown')
+	await input('input[aria-label="Search Token"]', 'usd')
+	await act(async () => settle())
+	const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((row) =>
+		row.textContent?.startsWith('USD Coin (USDC)')
+	)!
+	await act(async () => {
+		option.click()
+		await settle()
+	})
+	expect(token().textContent).toBe('USD Coin (USDC)')
+	expect(session.urls().filter((url) => url.includes('tokens/search?query=usd'))).toHaveLength(1)
+
+	await input('[aria-label="Price"]', '1.05')
+	await act(async () => {
+		document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click()
+		await settle()
+	})
+	// The form's fieldset locks while the create runs; a native button inside it is disabled with it.
+	expect(token().closest('fieldset')?.disabled).toBe(true)
+	expect(alertCreations()).toEqual([
+		expect.objectContaining({ trigger: expect.objectContaining({ token_nk: 'coingecko:usd-coin', value: 1.05 }) })
+	])
+	await act(async () => save.resolve(Response.json({ id: 'new', alertExpression: '', nextRunAt: '' })))
 })
