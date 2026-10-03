@@ -78,7 +78,7 @@ export function AuthenticationCard() {
 							</div>
 							<div className="flex flex-col gap-1">
 								<span className="body-md text-sub-text-primary">{walletDisplayName}</span>
-								<span className="body-sm text-sub-text-muted">Wallet Address</span>
+								<span className="body-sm text-sub-text-muted">Wallet address</span>
 							</div>
 						</div>
 
@@ -89,7 +89,7 @@ export function AuthenticationCard() {
 									<span className="body-sm text-sub-text-muted">Not set up</span>
 								</div>
 								<Button type="button" size="md" onClick={() => setIsSwitchToEmailModalOpen(true)}>
-									Enable Email Auth
+									Enable email auth
 								</Button>
 							</div>
 							<p className="body-sm text-sub-text-muted">
@@ -111,7 +111,7 @@ export function AuthenticationCard() {
 							</div>
 							<div className="flex gap-2">
 								<Button type="button" size="md" onClick={handleChangeEmail}>
-									Change Email
+									Change email
 								</Button>
 								<Button
 									type="button"
@@ -119,7 +119,7 @@ export function AuthenticationCard() {
 									onClick={handleChangePassword}
 									disabled={resetPasswordMutation.isPending}
 								>
-									Change Password
+									Change password
 								</Button>
 							</div>
 						</div>
@@ -131,7 +131,7 @@ export function AuthenticationCard() {
 								</div>
 								<div className="flex flex-col gap-1">
 									<span className="body-md text-sub-text-primary">{truncateAddress(user.walletAddress)}</span>
-									<span className="body-sm text-sub-text-muted">Wallet Address</span>
+									<span className="body-sm text-sub-text-muted">Wallet address</span>
 								</div>
 							</div>
 						)}

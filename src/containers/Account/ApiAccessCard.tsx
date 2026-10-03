@@ -61,7 +61,7 @@ export function ApiAccessCard({
 			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex items-center gap-2">
 					<Icon name="cli" height={28} width={28} className="text-sub-text-primary" />
-					<span className="text-base leading-5 font-medium text-sub-text-primary">API Access</span>
+					<span className="text-base leading-5 font-medium text-sub-text-primary">API access</span>
 				</div>
 
 				<div className="flex flex-col items-center gap-4 rounded-lg bg-sub-surface-panel px-4 py-8 text-center dark:bg-sub-dark-page">
@@ -75,7 +75,7 @@ export function ApiAccessCard({
 						pendingLabel={generateNewKeyMutation.isPending ? 'Generating…' : null}
 					>
 						<Icon name="key" height={14} width={14} />
-						Generate API Key
+						Generate API key
 					</Button>
 					{generateNewKeyMutation.error ? (
 						<p role="alert" className="text-sm text-error">
@@ -92,13 +92,13 @@ export function ApiAccessCard({
 			{/* Header */}
 			<div className="flex items-center gap-2">
 				<Icon name="cli" height={28} width={28} className="text-sub-text-primary" />
-				<span className="text-base leading-5 font-medium text-sub-text-primary">API Access</span>
+				<span className="text-base leading-5 font-medium text-sub-text-primary">API access</span>
 			</div>
 
 			{/* API Key Section */}
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-					<span className="text-sm text-sub-text-primary">Your API Key</span>
+					<span className="text-sm text-sub-text-primary">Your API key</span>
 					<div className="flex flex-wrap gap-2">
 						<Button
 							// A key generated here replaces the Generate button, so its first control takes that focus.
@@ -152,11 +152,11 @@ export function ApiAccessCard({
 			) : null}
 			{/* API Usage */}
 			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
-				<span className="text-sm text-sub-text-primary">API Usage</span>
+				<span className="text-sm text-sub-text-primary">API usage</span>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
 						<span className="text-xs text-sub-text-muted">
-							Remaining API Calls: {formatPercent(usagePercentage, { input: 'percent' })}
+							Remaining API calls: {formatPercent(usagePercentage, { input: 'percent' })}
 						</span>
 						<span className="text-xs text-sub-text-primary">
 							{formatNumber(remaining)} <span className="text-sub-text-muted">/{formatNumber(API_CREDITS_LIMIT)}</span>
@@ -166,7 +166,7 @@ export function ApiAccessCard({
 						<div className="h-full rounded-full bg-sub-brand-primary" style={{ width: `${usagePercentage}%` }} />
 					</div>
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-sub-text-muted">Rate Limit:</span>
+						<span className="text-xs text-sub-text-muted">Rate limit:</span>
 						<span className="text-xs text-sub-text-primary">
 							1,000 Requests<span className="text-sub-text-muted">/minute</span>
 						</span>

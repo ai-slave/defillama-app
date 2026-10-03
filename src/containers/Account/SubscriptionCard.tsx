@@ -61,7 +61,7 @@ export function SubscriptionCard({
 				</div>
 
 				<p className="body-sm text-sub-text-muted">
-					Your {planName} plan was provided by the DefiLlama team. To make any changes, contact the team.
+					Your {planName} plan was set up by the DefiLlama team. To change it, email support@defillama.com.
 				</p>
 			</div>
 		)
@@ -81,12 +81,12 @@ export function SubscriptionCard({
 					valueClassName="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft dark:from-sub-brand-secondary dark:to-sub-brand-softest bg-clip-text text-transparent"
 				/>
 				<InfoRow
-					label={isCancelPending ? 'Cancels on' : 'Renewal Date'}
+					label={isCancelPending ? 'Cancels on' : 'Renewal date'}
 					value={renewalDate}
 					valueClassName={isCancelPending ? 'text-sub-warning-text-dark' : undefined}
 				/>
-				<InfoRow label="Subscription Type" value={subscriptionType} />
-				<InfoRow label="Payment Provider" value={subscriptionPayment} />
+				<InfoRow label="Subscription type" value={subscriptionType} />
+				<InfoRow label="Payment provider" value={subscriptionPayment} />
 			</div>
 
 			{isCancelPending ? (
@@ -109,7 +109,7 @@ export function SubscriptionCard({
 							disabled={isTopupLoading}
 							className="flex h-8 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 label-sm whitespace-nowrap text-on-brand disabled:opacity-50"
 						>
-							{isTopupLoading ? 'Loading...' : 'Top Up'}
+							{isTopupLoading ? 'Loading...' : 'Top up'}
 							{!isTopupLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
 						</button>
 					)}
@@ -127,7 +127,7 @@ export function SubscriptionCard({
 						onClick={onCancel}
 						className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 label-sm whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 					>
-						Cancel Subscription
+						Cancel subscription
 					</button>
 				</div>
 			) : null}

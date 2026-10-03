@@ -36,7 +36,7 @@ export function AddSourcesMenu({
 		<>
 			<Ariakit.MenuProvider placement="bottom-start">
 				<Ariakit.MenuButton disabled={isUploading} render={trigger as React.ReactElement} />
-				<MenuSurface variant="actions" gutter={gutter} className={menuClassName ?? 'z-50 w-60'}>
+				<MenuSurface variant="actions" gutter={gutter} className={menuClassName ?? 'w-60'}>
 					{onAddPhotosFiles ? (
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>

@@ -18,7 +18,6 @@
 		"raw-popover-surface": 0,
 		"raw-dialog-surface": 1,
 		"arbitrary-dialog-width": 0,
-		"dialog-popover-without-z": 0,
 		"dialog-button-pinned-height": 0,
 		"hand-rolled-spinner": 0,
 		"ascii-ellipsis": 139,
@@ -51,7 +50,6 @@
 		"raw-popover-surface": 33,
 		"raw-dialog-surface": 5,
 		"arbitrary-dialog-width": 0,
-		"dialog-popover-without-z": 0,
 		"dialog-button-pinned-height": 0,
 		"hand-rolled-spinner": 20,
 		"ascii-ellipsis": 52,
@@ -63,6 +61,6 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 1111
+		"raw-type-pair": 1108
 	}
 }

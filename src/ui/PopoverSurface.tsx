@@ -35,8 +35,10 @@ import { tw } from './tw'
    ComboboxSurface also supports `search-results`: input-anchored results at
    every breakpoint, with no drawer, scrim, or dismiss button.
 
-   `className` is for LAYOUT only — width (`w-72`), stacking (`z-50` when the
-   trigger sits inside a dialog). Never override the surface colors/radius.
+   Every surface sits on the dialogs' layer, z-50, and the one opened last is
+   added to the page last, so it paints on top: a picker over the dialog that
+   hosts it, a flyout over its parent menu. `className` is for LAYOUT only —
+   width (`w-72`). Never override the surface stacking, colors or radius.
    Results that match their input's width pass `sameWidth`: surfaces portal to
    body, so a width on the wrapper would size them to the viewport.
 
@@ -52,23 +54,22 @@ import { tw } from './tw'
    nothing outside src/ui can wire a drawer by hand: the only way to get the
    surface + wrapper + close button triple is one of the components below. */
 
-/* Phone drawers sit on top of the iOS keyboard, as dialog sheets do: useKeyboardInset (mounted in _app) publishes the
-   keyboard's height and the visible viewport, which iOS Safari does not shrink for the keyboard. The top edge stays
-   80px below the visible top, so only the bottom rises. */
+/* Phone drawers share the dialog sheets' height (--sheet-height in tailwind.css) and sit on top of the iOS keyboard:
+   useKeyboardInset (mounted in _app) publishes the keyboard's height, which iOS Safari does not take off the page. */
 const selectSurfaceHeightStyles =
-	'max-sm:h-[calc(var(--visual-viewport-height,100dvh)-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] sm:max-h-[min(400px,var(--popover-available-height))]'
+	'max-sm:h-(--sheet-height) max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] sm:max-h-[min(400px,var(--popover-available-height))]'
 
 const menuSurfaceHeightStyles =
-	'max-sm:max-h-[calc(var(--visual-viewport-height,100dvh)-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] sm:max-h-[min(60dvh,var(--popover-available-height))]'
+	'max-sm:max-h-(--sheet-height) max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
 const nestedMenuSurfaceHeightStyles =
-	'max-sm:h-[calc(var(--visual-viewport-height,100dvh)-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
+	'max-sm:h-(--sheet-height) max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
-const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
+const popoverSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
+const menuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
+const nestedMenuSurfaceStyles = `z-50 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
 /* Mobile drawers dim the page behind them so a short sheet at the bottom is
    still noticed. The scrim is a pseudo-element on the positioning wrapper:
@@ -264,7 +265,7 @@ export function ComboboxSurface({
 			{...(variant === 'search-results'
 				? {
 						className: join(
-							'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm',
+							'z-50 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm',
 							className
 						),
 						// Results match their field's edges. The default 8px viewport padding is wider than the 4px

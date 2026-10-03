@@ -29,7 +29,7 @@ export function CreateTeamCard() {
 	return (
 		<div className="flex flex-col items-center gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-8 text-center dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex flex-col gap-2">
-				<h2 className="heading-sm text-sub-text-primary">Team Management</h2>
+				<h2 className="heading-sm text-sub-text-primary">Team management</h2>
 				<p className="max-w-sm body-md text-sub-text-muted">
 					Create a team to manage subscriptions for your organization. Purchase seats and invite members.
 				</p>
@@ -93,7 +93,7 @@ export function CreateTeamCard() {
 			) : (
 				<Button type="button" variant="primary" size="md" ref={createTeamButtonRef} onClick={() => setIsCreating(true)}>
 					<Icon name="plus" height={16} width={16} />
-					Create Team
+					Create team
 				</Button>
 			)}
 		</div>

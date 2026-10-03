@@ -118,7 +118,7 @@ export function TeamInvitesCard() {
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<Icon name="mail" height={20} width={20} className="text-sub-text-primary" />
-					<span className="label-lg text-sub-text-primary">Pending Invites</span>
+					<span className="label-lg text-sub-text-primary">Pending invites</span>
 				</div>
 				<Button
 					type="button"
@@ -128,7 +128,7 @@ export function TeamInvitesCard() {
 					onClick={() => setShowInviteModal(true)}
 				>
 					<Icon name="plus" height={14} width={14} />
-					Invite Member
+					Invite member
 				</Button>
 			</div>
 

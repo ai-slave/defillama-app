@@ -93,7 +93,7 @@ async function upgradeFromAccount() {
 test('an upgrade still being applied disables every upgrade action and sends no second end-trial', async () => {
 	await upgradeFromAccount()
 
-	expect(text()).toContain('Active Free Trial')
+	expect(text()).toContain('Active free trial')
 	expect(button('Upgrade to Pro')!.disabled).toBe(true)
 	expect(text()).toContain(APPLYING)
 	await act(async () => button('Upgrade to Pro')!.click())
@@ -118,7 +118,7 @@ test('the upgrade actions clear once a later read shows the trial has ended', as
 	await act(() => vi.advanceTimersByTimeAsync(4000))
 
 	await waitForUi(() => expect(text()).toContain('Monthly ($49/month)'))
-	expect(text()).not.toContain('Active Free Trial')
+	expect(text()).not.toContain('Active free trial')
 	expect(text()).not.toContain(APPLYING)
 })
 

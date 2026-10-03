@@ -20,7 +20,7 @@ test('keeps blank draft rows distinct through edits and deletion', async () => {
 				</QueryClientProvider>
 			)
 		)
-		const add = [...container.querySelectorAll('button')].find((button) => button.textContent?.includes('Add More'))!
+		const add = [...container.querySelectorAll('button')].find((button) => button.textContent?.includes('Add more'))!
 		await act(async () => add.click())
 		await act(async () => add.click())
 		const table = container.querySelector('table')!

@@ -550,7 +550,7 @@ export function DeleteAccountCard() {
 			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-surface p-4 dark:border-sub-border-strong">
 				<div className="flex items-center gap-2">
 					<Icon name="trash-2" height={28} width={28} className="text-error" />
-					<span className="label-lg text-sub-text-primary">Delete Account</span>
+					<span className="label-lg text-sub-text-primary">Delete account</span>
 				</div>
 				<div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
 					<p className="max-w-[440px] body-sm text-sub-text-muted">
@@ -564,7 +564,7 @@ export function DeleteAccountCard() {
 						onClick={() => setIsModalOpen(true)}
 						disabled={!authToken || !user?.id}
 					>
-						Delete Account
+						Delete account
 					</Button>
 				</div>
 			</div>

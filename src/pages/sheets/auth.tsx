@@ -118,7 +118,7 @@ function AuthContent() {
 								onClick={logout}
 								className="w-full rounded-lg border border-sub-line bg-transparent py-3 font-medium text-on-brand transition-colors hover:bg-sub-dark-card-raised"
 							>
-								Sign Out
+								Sign out
 							</button>
 						</div>
 					</div>

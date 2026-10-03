@@ -1,8 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { AI_SERVER } from '~/constants'
 import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import {
@@ -114,7 +115,7 @@ function readTrialCheckoutMarker(storage: Storage): { variant: string } | null {
 export function WelcomeOnboarding() {
 	const queryClient = useQueryClient()
 	const router = useRouter()
-	const { isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
+	const { user, authToken, isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
 	const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set())
 	const [slackAcquisition, setSlackAcquisition] = useState<SlackAcquisition | null>(null)
 
@@ -137,6 +138,9 @@ export function WelcomeOnboarding() {
 	// returns just the first active plan, so the bought one is read by type, under the subscription key so the reads
 	// below refresh it. A trial checkout lands here too, so a trial record of the bought plan confirms it.
 	const purchasedSubscription = usePlanRecord(purchase?.plan ?? null)
+	const activeSubscription = useQuery(
+		subscriptionStatusQueryOptions({ userId: user?.id ?? null, token: authToken })
+	).data
 	const isConfirmed =
 		!isPaymentFailed &&
 		(purchase
@@ -288,7 +292,7 @@ export function WelcomeOnboarding() {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center px-4">
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
-					<h2 className="heading-sm text-on-brand">Payment Not Completed</h2>
+					<h2 className="heading-sm text-on-brand">Payment not completed</h2>
 					<p className="body-md text-sub-text-muted">Your payment didn't go through, so your plan hasn't changed.</p>
 					<button
 						type="button"
@@ -309,7 +313,7 @@ export function WelcomeOnboarding() {
 			<div className="flex min-h-[60vh] items-center justify-center px-4">
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
 					<h2 className="heading-sm text-on-brand">
-						{isPaymentProcessing ? 'Payment Processing' : 'Processing your payment'}
+						{isPaymentProcessing ? 'Payment processing' : 'Processing your payment'}
 					</h2>
 					<p className="body-md text-sub-text-muted">
 						{isPaymentProcessing
@@ -337,7 +341,9 @@ export function WelcomeOnboarding() {
 		)
 	}
 
-	const planName = purchase?.plan === 'api' ? 'API' : 'Pro'
+	// A crypto checkout returns without the plan params, so a plain visit names the active plan the auth read found.
+	const planType = purchase ? purchase.plan : activeSubscription?.type
+	const planName = planType === 'api' ? 'API' : 'Pro'
 	return (
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">

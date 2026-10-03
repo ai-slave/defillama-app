@@ -182,18 +182,6 @@ function dialogBodies(content) {
 	return bodies
 }
 
-// A shared popover surface stacks under the dialog that hosts it unless it passes z-50 (design.md → Popover
-// surface). Counts surfaces written inside a dialog's JSX; one in a component the dialog renders is not seen.
-function matchDialogPopoverWithoutZ(content) {
-	const found = []
-	for (const body of dialogBodies(content)) {
-		for (const tag of openingTags(body, ['MenuSurface', 'PopoverSurface', 'ComboboxSurface'])) {
-			if (!/\bz-50\b/.test(tag)) found.push(tag.split(/\s/)[0])
-		}
-	}
-	return found.length > 0 ? found : null
-}
-
 // Buttons in a dialog grow to 44px in phone sheets through their recipe; a pinned h-* or size-* stops that
 // (design.md → Control heights). Counts buttons written inside a dialog's JSX.
 function matchPinnedButtonHeightInDialog(content) {
@@ -490,14 +478,6 @@ const RULES = [
 			'hand-set --dialog-width — pick a Dialog size (sm 448, md 600, lg 880, xl workspace) or a SideSheet size instead',
 		pattern: /\[--dialog-width:/g,
 		uiOwned: true
-	},
-	{
-		id: 'dialog-popover-without-z',
-		description:
-			'MenuSurface/PopoverSurface/ComboboxSurface written inside a Dialog or SideSheet without z-50 — the surface opens under the dialog',
-		match: matchDialogPopoverWithoutZ,
-		uiOwned: true,
-		skipTests: true
 	},
 	{
 		id: 'dialog-button-pinned-height',

@@ -168,7 +168,7 @@ function InlineTableSection({
 }) {
 	const tbodyRef = useRef<HTMLTableSectionElement>(null)
 	const addRef = useRef<HTMLButtonElement>(null)
-	// A deleted row's button hands focus to the delete button that takes its place, the one above, or Add More.
+	// A deleted row's button hands focus to the delete button that takes its place, the one above, or Add more.
 	const deleteRow = (rowIndex: number) =>
 		keepFocus(
 			() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex)),
@@ -248,7 +248,7 @@ function InlineTableSection({
 				</span>
 			) : null}
 			<span>
-				{/* Add More disables itself at the row limit; it stays focusable so focus does not drop to the page. */}
+				{/* Add more disables itself at the row limit; it stays focusable so focus does not drop to the page. */}
 				<Button
 					type="button"
 					size="md"
@@ -257,7 +257,7 @@ function InlineTableSection({
 					disabled={rows.length >= 100}
 					onClick={() => onChange([...rows, { id: crypto.randomUUID(), values: {} }])}
 				>
-					Add More
+					Add more
 					<Icon name="plus" height={14} width={14} />
 				</Button>
 			</span>
@@ -320,7 +320,7 @@ function AttachDocuments({
 							if (files.length > 0) onFiles(files)
 						}}
 					/>
-					{status.pending ? 'Uploading…' : 'Attach Documents'}
+					{status.pending ? 'Uploading…' : 'Attach documents'}
 					<Icon name="link" height={14} width={14} />
 				</label>
 				<span className="body-sm text-tertiary">{ATTACH_HINT}</span>
@@ -551,7 +551,7 @@ export function ClaimTokenProfile({
 				<div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
 					<Card padding="md" className="flex flex-col gap-4">
 						<div className="flex flex-col gap-1 border-b border-subtle pb-3">
-							<h2 className="heading-sm">Verify Your Affiliation</h2>
+							<h2 className="heading-sm">Verify your affiliation</h2>
 							<p className="body-sm text-secondary">
 								Tell us who you are and how you are affiliated with the project. We may contact you to verify your
 								claim.
@@ -590,17 +590,17 @@ export function ClaimTokenProfile({
 							</LabeledField>
 						)}
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LabeledField label="First Name*" error={showError('firstName')}>
+							<LabeledField label="First name*" error={showError('firstName')}>
 								<Input
-									aria-label="First Name"
+									aria-label="First name"
 									value={firstName}
 									onChange={(event) => setFirstName(event.target.value)}
 									maxLength={100}
 								/>
 							</LabeledField>
-							<LabeledField label="Last Name*" error={showError('lastName')}>
+							<LabeledField label="Last name*" error={showError('lastName')}>
 								<Input
-									aria-label="Last Name"
+									aria-label="Last name"
 									value={lastName}
 									onChange={(event) => setLastName(event.target.value)}
 									maxLength={100}
@@ -647,14 +647,14 @@ export function ClaimTokenProfile({
 						</LabeledField>
 						<div className="flex flex-col gap-1 border-t border-subtle pt-4">
 							<Checkbox
-								variant="inline"
+								variant="consent"
 								checked={alignmentConsent}
 								onChange={(event) => setAlignmentConsent(event.target.checked)}
 							>
 								I agree to verify my alignment with the organization to confirm the claim.*
 							</Checkbox>
 							<Checkbox
-								variant="inline"
+								variant="consent"
 								checked={termsConsent}
 								onChange={(event) => setTermsConsent(event.target.checked)}
 							>
@@ -692,7 +692,7 @@ export function ClaimTokenProfile({
 						) : null}
 					</Card>
 
-					<h2 className="heading-sm">Disclosures Details</h2>
+					<h2 className="heading-sm">Disclosure details</h2>
 					{CLAIM_BLOCKS.map((block) => (
 						<Card key={block.id} padding="md" className="flex flex-col gap-5">
 							<div className="flex flex-wrap items-center justify-between gap-2 border-b border-subtle pb-3">

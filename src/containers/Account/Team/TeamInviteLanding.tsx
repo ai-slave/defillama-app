@@ -29,7 +29,7 @@ export function TeamInviteLanding() {
 				className="flex h-10 items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand"
 				onClick={() => openDialog('signup')}
 			>
-				Sign Up & Accept
+				Sign up & accept
 			</button>
 			<p className="text-sm text-sub-text-muted">
 				Already have an account?{' '}

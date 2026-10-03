@@ -417,7 +417,7 @@ test('an upgrade confirmation waits in its button while another team update runs
 			<Hook id="other" />
 		</>
 	)
-	await click('Upgrade to Yearly')
+	await click('Upgrade to yearly')
 	const confirmation = namedDialog('Upgrade Pro to yearly')
 	const confirm = () => [...confirmation.querySelectorAll('button')].at(-1)!
 	expect(accessibleName(confirm())).toBe('Upgrade to yearly')
@@ -696,7 +696,7 @@ test('a timed-out yearly upgrade names the billing the team shows after its re-r
 		options?.method === 'POST' ? Promise.resolve(new Response('upstream timed out', { status: 504 })) : reread.promise
 	)
 	await mount(<TeamSeatsCard />)
-	await click('Upgrade to Yearly')
+	await click('Upgrade to yearly')
 	await act(async () => confirmButton('Upgrade Pro to yearly', 'Upgrade to yearly').click())
 	await waitForUi(() => expect(teamReads()).toHaveLength(1))
 	await act(async () =>
@@ -759,7 +759,7 @@ test.each([
 		seats: { seatCount, occupiedSeats: 2, availableSeats: seatCount - 2 }
 	}
 	await mount(<TeamSeatsCard />)
-	await click('Upgrade to Yearly')
+	await click('Upgrade to yearly')
 	expect(namedDialog(title).querySelector('p')?.textContent).toBe(copy)
 	expect(posts()).toHaveLength(0)
 })
@@ -787,7 +787,7 @@ test('a paid checkout note clears once the team shows the plan, and seats can be
 	notePaidCheckout(60_000)
 	await mount(<TeamSeatsCard />)
 	await waitForUi(() => expect(readPendingTeamCheckout('user', 'llamafeed')).toBeNull())
-	await click('Purchase Seats')
+	await click('Purchase seats')
 	await waitForUi(() => expect(namedDialog('Purchase seats')).toBeTruthy())
 	expect(namedDialog('Purchase seats').textContent).not.toContain('still being confirmed')
 	await act(async () => document.querySelector('form')!.requestSubmit())
@@ -912,10 +912,10 @@ test('the seats card says why billing buttons are disabled while the team refres
 	await act(async () => void session.client.refetchQueries({ queryKey: ['team', 'user'] }))
 
 	await waitForUi(() => expect(status()).toContain('Refreshing'))
-	expect(button('Purchase Seats').disabled).toBe(true)
+	expect(button('Purchase seats').disabled).toBe(true)
 	await act(async () => refresh.resolve(Response.json({ team })))
 	await waitForUi(() => expect(status()).toBe(''))
-	expect(button('Purchase Seats').disabled).toBe(false)
+	expect(button('Purchase seats').disabled).toBe(false)
 })
 
 test('a successful write with a failed refresh blocks another billing change until reconciliation succeeds', async () => {
@@ -946,13 +946,13 @@ test('leaving a team waits for confirmation and focuses the surviving team regio
 		options?.method === 'POST' ? request.promise : Promise.resolve(Response.json({ team: null }))
 	)
 	await mount(<TeamTab />)
-	await click('Leave Team')
+	await click('Leave team')
 	const confirm = namedDialog('Leave team').querySelectorAll('button')
 	await act(async () => [...confirm].find((b) => accessibleName(b) === 'Leave team')!.click())
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('Original')
 	await act(async () => request.resolve(Response.json({})))
-	await waitForUi(() => expect(button('Create Team')).toBeTruthy())
+	await waitForUi(() => expect(button('Create team')).toBeTruthy())
 	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Team management'))
 })
 
@@ -1060,7 +1060,7 @@ test('an expired invite offers only Revoke, from its first render', async () => 
 	expect(withdrawn.join('|')).not.toContain('Resend')
 })
 
-test('revoking an invite keeps its row until confirmed and returns focus to Invite Member', async () => {
+test('revoking an invite keeps its row until confirmed and returns focus to Invite member', async () => {
 	team.pendingInvites = [
 		{
 			id: 'invite',
@@ -1084,7 +1084,7 @@ test('revoking an invite keeps its row until confirmed and returns focus to Invi
 	team = { ...team, pendingInvites: [] }
 	await act(async () => request.resolve(Response.json({})))
 	await waitForUi(() => expect(container.textContent).toContain('No pending invites'))
-	await waitForUi(() => expect(document.activeElement).toBe(button('Invite Member')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Invite member')))
 })
 
 test.each(['', '1', '2.5', '0'])(
@@ -1251,10 +1251,10 @@ test('manage seats opens on the seat count', async () => {
 	await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('input[type=number]')))
 })
 
-test('cancelling team creation returns focus to Create Team', async () => {
+test('cancelling team creation returns focus to Create team', async () => {
 	await mount(<CreateTeamCard />)
-	await click('Create Team')
+	await click('Create team')
 	await act(async () => button('Cancel').focus())
 	await click('Cancel')
-	expect(document.activeElement).toBe(button('Create Team'))
+	expect(document.activeElement).toBe(button('Create team'))
 })

@@ -116,7 +116,7 @@ export function PreviewHeaderActions(props: PreviewHeaderActionsProps) {
 					>
 						<Icon name="ellipsis" className="size-4" aria-hidden="true" />
 					</Ariakit.MenuButton>
-					<MenuSurface variant="actions" className="z-50">
+					<MenuSurface variant="actions">
 						{copy ? (
 							<MenuItem disabled={copy.disabled} onClick={copy.run}>
 								<Icon name="clipboard" className="size-3.5" aria-hidden="true" />

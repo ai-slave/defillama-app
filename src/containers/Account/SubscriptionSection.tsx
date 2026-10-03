@@ -91,7 +91,7 @@ function SubscriptionCardWithProps({
 function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () => void; planType?: 'pro' | 'api' }) {
 	const savings = planType === 'api' ? '$600/year' : '$98/year'
 	const subscriptionLabel = planType === 'api' ? 'API subscription' : 'Pro subscription'
-	const buttonLabel = planType === 'api' ? 'Upgrade API to Yearly' : 'Upgrade Pro to Yearly'
+	const buttonLabel = planType === 'api' ? 'Upgrade API to yearly' : 'Upgrade Pro to yearly'
 
 	return (
 		<div className="flex items-center rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
@@ -132,7 +132,7 @@ function FreeUpgradeBanner() {
 					href="/subscription"
 					className="flex h-8 w-fit items-center rounded-lg bg-sub-brand-primary px-3 label-sm text-on-brand"
 				>
-					View & Compare Plans
+					View & compare plans
 				</BasicLink>
 			</div>
 
@@ -186,7 +186,7 @@ function PastDueSubscriptionCard({
 				/>
 				<div className="flex flex-col gap-1">
 					<h3 className="text-base font-semibold text-sub-warning-text-light dark:text-sub-warning-text-dark">
-						{planName} Subscription Past Due
+						{planName} subscription past due
 					</h3>
 					<p className="body-md text-sub-warning-text-light dark:text-sub-warning-text-dark">
 						Your most recent payment failed. To keep your subscription active, update your payment method on Stripe.
@@ -202,7 +202,7 @@ function PastDueSubscriptionCard({
 						disabled={isUpdateLoading}
 						className="flex h-9 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 label-md whitespace-nowrap text-on-brand disabled:opacity-50"
 					>
-						{isUpdateLoading ? 'Loading...' : 'Update Payment on Stripe'}
+						{isUpdateLoading ? 'Loading...' : 'Update payment on Stripe'}
 						{!isUpdateLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
 					</button>
 				)}
@@ -212,7 +212,7 @@ function PastDueSubscriptionCard({
 						onClick={onCancel}
 						className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 label-md whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 					>
-						Cancel Subscription
+						Cancel subscription
 					</button>
 				)}
 			</div>
@@ -253,7 +253,7 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 		<div className="flex flex-col gap-3 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
 				<Icon name="users" height={20} width={20} className="text-sub-text-primary" />
-				<span className="label-md text-sub-text-primary">Team Subscription</span>
+				<span className="label-md text-sub-text-primary">Team subscription</span>
 			</div>
 			{hasAssigned ? (
 				<p className="body-md text-sub-text-muted">

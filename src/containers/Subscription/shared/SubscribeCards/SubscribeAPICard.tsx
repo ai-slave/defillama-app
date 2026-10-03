@@ -95,7 +95,7 @@ export function SubscribeAPICard({
 			<div className="relative z-10 mx-auto flex w-full max-w-[408px] flex-col gap-3">
 				{active && !isLegacyActive ? (
 					<div className="flex flex-col gap-2">
-						<span className="text-center font-bold text-success">Current Plan</span>
+						<span className="text-center font-bold text-success">Current plan</span>
 						{currentBillingInterval === 'month' || !currentBillingInterval ? (
 							<div className="flex flex-col gap-2">
 								<button

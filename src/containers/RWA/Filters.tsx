@@ -771,7 +771,6 @@ function RWASelectDraftEditor({
 			selectAllScope="matches"
 			searchPlaceholder={`Search ${definition.label.toLowerCase()}...`}
 			emptyLabel="No matches found"
-			popoverClassName="z-50"
 			triggerProps={{ 'aria-label': `${definition.label} values` }}
 		/>
 	)

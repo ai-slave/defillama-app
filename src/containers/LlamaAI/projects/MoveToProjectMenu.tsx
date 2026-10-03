@@ -32,7 +32,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				<span className="flex-1 text-left">Move to project</span>
 				<Icon name="chevron-right" height={14} width={14} className="shrink-0 text-tertiary" />
 			</Ariakit.MenuItem>
-			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4} className="z-50">
+			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4}>
 				<NestedDrawerHeader
 					title="Move to project"
 					backLabel="Back to session actions"

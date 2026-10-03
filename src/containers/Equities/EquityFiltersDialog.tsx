@@ -79,7 +79,6 @@ function OperatorSelect({
 			variant="input"
 			size="md"
 			className="shrink-0"
-			popoverClassName="z-50"
 			triggerProps={{ 'aria-label': 'Operator' }}
 		/>
 	)
@@ -281,7 +280,6 @@ function CategoricalFilterEditor({
 					selectAllScope="matches"
 					searchPlaceholder={`Search ${valueLabel.toLowerCase()}...`}
 					emptyLabel="No matches found"
-					popoverClassName="z-50"
 					className="flex-1"
 					triggerProps={{ 'aria-label': `${valueLabel} values` }}
 				/>

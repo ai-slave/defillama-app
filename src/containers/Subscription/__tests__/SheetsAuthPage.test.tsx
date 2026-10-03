@@ -79,7 +79,7 @@ test('offers no close button on the page, so the inline form keeps sending sign-
 test('sends a sign-in from the form shown again after signing out', async () => {
 	await renderPage()
 	await signIn()
-	await act(async () => button('Sign Out')!.click())
+	await act(async () => button('Sign out')!.click())
 	await waitForUi(() => expect(container.querySelector('form')).not.toBeNull())
 	await signIn()
 	expect(logins()).toHaveLength(2)

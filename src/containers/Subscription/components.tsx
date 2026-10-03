@@ -214,12 +214,12 @@ function PricingCardCta({
 		return (
 			<>
 				<p className="mt-4 text-center text-base leading-5 font-medium text-sub-brand-primary sm:text-sm dark:text-sub-brand-secondary">
-					Current Plan
+					Current plan
 				</p>
 				<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
 					{isTeamProvided
 						? `Your ${card.title} plan is provided through your team. Ask your team admin about plan changes.`
-						: `Your ${card.title} plan was provided by the DefiLlama team. To make any changes, contact the team.`}
+						: `Your ${card.title} plan was set up by the DefiLlama team. To change it, email support@defillama.com.`}
 				</p>
 			</>
 		)
@@ -235,7 +235,7 @@ function PricingCardCta({
 		return (
 			<>
 				<p className="mt-4 text-center text-base leading-5 font-medium text-sub-brand-primary sm:text-sm dark:text-sub-brand-secondary">
-					{isTrial ? 'Current Plan (trial)' : 'Current Plan'}
+					{isTrial ? 'Current plan (trial)' : 'Current plan'}
 				</p>
 				{isCancelPending ? (
 					<div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">

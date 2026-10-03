@@ -379,7 +379,7 @@ function PickerSurface({
 		<ComboboxSurface
 			variant={searchable ? 'list' : 'panel'}
 			heading={label}
-			className={`z-50 ${variant === 'chip' ? 'w-72' : FIELD_SURFACE_WIDTH}`}
+			className={`${variant === 'chip' ? 'w-72' : FIELD_SURFACE_WIDTH}`}
 		>
 			<PopoverHeader search={searchable ? <SearchInput label={label} /> : null}>{header}</PopoverHeader>
 			{children}

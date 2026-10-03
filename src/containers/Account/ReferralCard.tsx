@@ -64,7 +64,7 @@ export function ReferralCard() {
 
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center justify-between">
-					<span className="text-sm text-sub-text-primary">Your Referral Link</span>
+					<span className="text-sm text-sub-text-primary">Your referral link</span>
 					<button
 						type="button"
 						onClick={handleCopy}
@@ -115,7 +115,7 @@ export function ReferralCard() {
 							)}
 						</div>
 						<div className="flex items-center justify-between">
-							<span className="text-xs text-sub-text-primary">Paid Subscriptions</span>
+							<span className="text-xs text-sub-text-primary">Paid subscriptions</span>
 							{isStatsLoading ? (
 								<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
 							) : (

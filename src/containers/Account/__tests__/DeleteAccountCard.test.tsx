@@ -90,8 +90,8 @@ async function startDialog() {
 			</session.Wrapper>
 		)
 	)
-	await waitFor(() => expect(button('Delete Account')!.disabled).toBe(false))
-	await act(async () => button('Delete Account')!.click())
+	await waitFor(() => expect(button('Delete account')!.disabled).toBe(false))
+	await act(async () => button('Delete account')!.click())
 	await waitFor(() => expect(text()).toContain('This permanently deletes your DefiLlama account'))
 }
 

@@ -83,9 +83,9 @@ async function attach(input: HTMLInputElement, names: Array<string>) {
 }
 const attachInput = () => container.querySelector<HTMLInputElement>('#attach-alignment')!
 
-test('deleting a disclosure row hands focus to the next row, and the last one to Add More', async () => {
+test('deleting a disclosure row hands focus to the next row, and the last one to Add more', async () => {
 	const addMore = [...container.querySelectorAll<HTMLButtonElement>('button')].find((el) =>
-		el.textContent?.includes('Add More')
+		el.textContent?.includes('Add more')
 	)!
 	await press(addMore)
 	await press(addMore)
@@ -130,8 +130,8 @@ test('dismissing an upload error hands focus to the attach control', async () =>
 test('Submit keeps focus while the request runs, and the confirmation takes it once the request succeeds', async () => {
 	const answer = Promise.withResolvers<Response>()
 	http.serve({ '/api/public/utr/claim': () => answer.promise })
-	await type('First Name', 'Ada')
-	await type('Last Name', 'Lovelace')
+	await type('First name', 'Ada')
+	await type('Last name', 'Lovelace')
 	await type('Position at organization', 'CEO')
 	await type('Your email address', 'ada@example.com')
 	for (const checkbox of container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {

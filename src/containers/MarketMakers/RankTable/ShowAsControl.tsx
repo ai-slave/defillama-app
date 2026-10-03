@@ -40,7 +40,7 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 						{SHORT[mode]}
 						<Ariakit.ComboboxSelectArrow />
 					</Ariakit.ComboboxSelect>
-					<ComboboxSurface variant="list" heading="Show as" className="z-50 min-w-[11rem]">
+					<ComboboxSurface variant="list" heading="Show as" className="min-w-[11rem]">
 						{DISPLAY_MODES.map((option) => (
 							<Ariakit.ComboboxItem key={option} value={option} className={popoverRowWithBorderStyles}>
 								<span>{LABELS[option]}</span>

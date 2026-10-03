@@ -103,7 +103,7 @@ test('keeps the plan visible and flags an unknown payment status when the past-d
 
 	await waitFor(() => expect(text()).toContain('Current plan'))
 	expect(text()).toContain("Couldn't check payment status")
-	expect(text()).not.toContain('Subscription Past Due')
+	expect(text()).not.toContain('subscription past due')
 })
 
 test('keeps the upgrade success pane on screen after the upgrade refetches the trial state', async () => {
@@ -137,7 +137,7 @@ test('treats a failed team read as unknown billing ownership, not personal billi
 	await render()
 
 	await waitFor(() => expect(text()).toContain("Couldn't load your team"))
-	expect(text()).not.toContain('Cancel Subscription')
+	expect(text()).not.toContain('Cancel subscription')
 })
 
 test('keeps the cancellation result on screen when the refetch after it fails', async () => {
@@ -150,8 +150,8 @@ test('keeps the cancellation result on screen when the refetch after it fails', 
 	})
 	await render()
 
-	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
-	await act(async () => button('Cancel Subscription')!.click())
+	await waitFor(() => expect(button('Cancel subscription')).toBeDefined())
+	await act(async () => button('Cancel subscription')!.click())
 	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
 	await act(async () => button('Confirm cancellation')!.click())
 
@@ -169,18 +169,18 @@ test('shows no personal billing controls until the team read says who owns the b
 	await waitFor(() => expect(answerTeam).toBeTypeOf('function'))
 	await waitFor(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
 
-	expect(button('Cancel Subscription')).toBeUndefined()
+	expect(button('Cancel subscription')).toBeUndefined()
 	expect(button('Manage on Stripe')).toBeUndefined()
 
 	await act(async () => answerTeam(Response.json({ team: null })))
-	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
+	await waitFor(() => expect(button('Cancel subscription')).toBeDefined())
 })
 
 test('an open cancel dialog stays open when the team read behind it fails', async () => {
 	session.serve({ '/subscription/status': { subscription: apiSubscription } })
 	await render()
-	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
-	await act(async () => button('Cancel Subscription')!.click())
+	await waitFor(() => expect(button('Cancel subscription')).toBeDefined())
+	await act(async () => button('Cancel subscription')!.click())
 	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
 
 	session.serve({ '/team': fixtureStatus(500) })
@@ -197,7 +197,7 @@ test("a plan whose latest payment failed promises immediate cancellation from th
 	})
 	await render()
 	const cancelButtons = () =>
-		[...document.querySelectorAll('button')].filter((b) => b.textContent === 'Cancel Subscription')
+		[...document.querySelectorAll('button')].filter((b) => b.textContent === 'Cancel subscription')
 	// The overdue warning's Cancel comes first; the plan card's is the last.
 	await waitFor(() => expect(cancelButtons()).toHaveLength(2))
 
@@ -213,7 +213,7 @@ test('a plan that is a seat on a team subscription offers no personal Manage or 
 	await render()
 
 	await waitFor(() => expect(text()).toContain("This plan is a seat on your team's subscription"))
-	expect(button('Cancel Subscription')).toBeUndefined()
+	expect(button('Cancel subscription')).toBeUndefined()
 	expect(button('Manage on Stripe')).toBeUndefined()
 })
 
@@ -270,8 +270,8 @@ test.each(lostAnswers)('a cancellation whose answer %s says it could not confirm
 		'/subscription/cancel': answer
 	})
 	await render()
-	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
-	await act(async () => button('Cancel Subscription')!.click())
+	await waitFor(() => expect(button('Cancel subscription')).toBeDefined())
+	await act(async () => button('Cancel subscription')!.click())
 	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
 	await act(async () => button('Confirm cancellation')!.click())
 
@@ -291,8 +291,8 @@ test('a LlamaPay top-up opens its checkout in this tab, where no popup blocker c
 		'/subscription/topup': { checkoutUrl }
 	})
 	await render()
-	await waitFor(() => expect(button('Top Up')).toBeDefined())
-	await act(async () => button('Top Up')!.click())
+	await waitFor(() => expect(button('Top up')).toBeDefined())
+	await act(async () => button('Top up')!.click())
 
 	await waitFor(() => expect(window.location.hash).toBe('#llamapay-topup'))
 	window.location.hash = ''

@@ -206,7 +206,7 @@ function SubscriptionContent() {
 			toast.error(
 				isTeamProvided
 					? 'Your plan is provided through your team. Ask your team admin about plan changes.'
-					: 'Your plan was provided by the DefiLlama team. Please contact the team to make changes.'
+					: "Your plan was set up by the DefiLlama team, so it can't be changed here. Email support@defillama.com to change it."
 			)
 			return
 		}

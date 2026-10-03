@@ -89,7 +89,7 @@ export function ChartPngExportButton({
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
 			</Tooltip>
 
-			<MenuSurface variant="actions" gutter={8} className="z-50">
+			<MenuSurface variant="actions" gutter={8}>
 				{csvMenuItem ? (
 					<MenuItem
 						data-umami-event="export-csv"

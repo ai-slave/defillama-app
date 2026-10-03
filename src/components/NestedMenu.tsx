@@ -55,7 +55,6 @@ export function NestedMenu({ label, children, combobox, buttonVariant = 'default
 				hideOnInteractOutside
 				gutter={menu.parent ? 4 : 8}
 				shift={menu.parent ? -9 : 0}
-				className={menu.parent ? 'z-20' : 'z-10'}
 			>
 				{menu.parent ? (
 					<NestedDrawerHeader

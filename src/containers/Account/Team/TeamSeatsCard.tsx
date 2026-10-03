@@ -98,7 +98,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 							disabled={!canChangeTeamBilling}
 						>
 							<Icon name="sparkles" height={14} width={14} />
-							Upgrade to Yearly
+							Upgrade to yearly
 						</Button>
 					)}
 					<Button
@@ -268,7 +268,7 @@ export function TeamSeatsCard() {
 						onClick={() => setShowPurchaseModal(true)}
 					>
 						<Icon name="plus" height={14} width={14} />
-						Purchase Seats
+						Purchase seats
 					</Button>
 				</div>
 			</div>

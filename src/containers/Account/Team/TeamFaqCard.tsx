@@ -31,7 +31,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 		<div className="flex flex-col gap-3 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
 				<Icon name="help-circle" height={20} width={20} className="text-sub-text-primary" />
-				<span className="text-base leading-5 font-medium text-sub-text-primary">Frequently Asked Questions</span>
+				<span className="text-base leading-5 font-medium text-sub-text-primary">Frequently asked questions</span>
 			</div>
 
 			<div className="flex flex-col">

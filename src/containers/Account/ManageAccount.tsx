@@ -54,12 +54,12 @@ export function ManageAccount() {
 			<div className="flex flex-col items-center gap-6 py-16">
 				<img src="/assets/account_avatar.png" alt="" className="size-16 rounded-full" />
 				<div className="flex flex-col gap-2 text-center">
-					<h2 className="heading-sm text-sub-text-primary">Account Access Required</h2>
+					<h2 className="heading-sm text-sub-text-primary">Account access required</h2>
 					<p className="max-w-md body-md text-sub-text-muted">
 						Sign in to view and manage your account and subscription.
 					</p>
 				</div>
-				<SignInModal text="Sign In" className={buttonStyles({ variant: 'primary', size: 'md' })} />
+				<SignInModal text="Sign in" className={buttonStyles({ variant: 'primary', size: 'md' })} />
 			</div>
 		)
 	}
@@ -68,7 +68,7 @@ export function ManageAccount() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<h1 className="heading-sm text-sub-text-primary">Manage Account</h1>
+			<h1 className="heading-sm text-sub-text-primary">Manage account</h1>
 			<UserHeader displayName={displayName} onLogout={logout} />
 
 			<Ariakit.TabProvider store={tabStore}>

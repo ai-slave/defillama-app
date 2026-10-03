@@ -1482,7 +1482,6 @@ function RWAPerpsDraftFilterEditor({
 				selectAllScope="matches"
 				searchPlaceholder={`Search ${filter.label.toLowerCase()}...`}
 				emptyLabel="No matches found"
-				popoverClassName="z-50"
 				triggerProps={{ 'aria-label': `${filter.label} values` }}
 			/>
 		</ActiveFilterCard>

@@ -24,7 +24,7 @@ export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
 			gutter={8}
 			flip
 			dismiss="own"
-			className="z-50 w-[600px] overflow-hidden"
+			className="w-[600px] overflow-hidden"
 		>
 			<BrowserContent onPromptSelect={onPromptSelect} />
 		</PopoverSurface>
@@ -83,7 +83,6 @@ export function BrowserContent({
 							visibleOptionLimit={null}
 							searchPlaceholder="Search categories…"
 							emptyLabel="No matching categories"
-							popoverClassName="z-50"
 							className="w-full"
 						/>
 					</div>

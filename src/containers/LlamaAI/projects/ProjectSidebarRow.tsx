@@ -126,7 +126,7 @@ export function ProjectSidebarRow({
 						>
 							<Icon name="ellipsis" height={16} width={16} />
 						</Ariakit.MenuButton>
-						<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`} className="z-50">
+						<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`}>
 							<MenuItem onClick={renameStore.show} className="border-b border-subtle">
 								<Icon name="pencil" height={14} width={14} />
 								Rename project

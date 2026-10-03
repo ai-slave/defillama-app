@@ -35,7 +35,7 @@ interface ISelectBase {
 	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
 	'aria-label'?: never
 	placement?: Ariakit.ComboboxProviderProps['placement']
-	/** Layout only, e.g. `z-100` above an open dialog. */
+	/** Layout only, such as a width. */
 	popoverClassName?: string
 }
 

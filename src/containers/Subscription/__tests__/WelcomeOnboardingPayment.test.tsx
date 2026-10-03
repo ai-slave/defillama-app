@@ -107,7 +107,7 @@ test('a declined redirect payment says the payment did not complete and stops ch
 	const page = await renderWelcome({ plan: 'llamafeed', interval: 'year', redirect_status: 'requires_payment_method' })
 	try {
 		await page.read()
-		expect(page.heading()).toBe('Payment Not Completed')
+		expect(page.heading()).toBe('Payment not completed')
 		expect(page.host.textContent).toContain("Your payment didn't go through, so your plan hasn't changed.")
 		expect(statusReads()).toHaveLength(0)
 	} finally {
@@ -119,7 +119,7 @@ test('a redirect payment still processing keeps waiting for the plan', async () 
 	const page = await renderWelcome({ plan: 'llamafeed', interval: 'year', redirect_status: 'processing' })
 	try {
 		await page.read()
-		expect(page.heading()).toBe('Payment Processing')
+		expect(page.heading()).toBe('Payment processing')
 		expect(page.host.textContent).toContain('Your bank is still processing the payment.')
 		expect(page.host.querySelector('[role="status"]')?.textContent).toContain('Checking your payment')
 	} finally {
@@ -156,6 +156,22 @@ test("a redirect return drops Stripe's payment intent and client secret from the
 			undefined,
 			{ shallow: true }
 		)
+	} finally {
+		await page.unmount()
+	}
+})
+
+// A crypto checkout returns to the bare /welcome URL, so the page names the plan the account holds.
+test.each([
+	{ owned: plan('api', 'month'), badge: 'API activated', welcome: 'Welcome to DefiLlama API' },
+	{ owned: plan('llamafeed', 'month'), badge: 'Pro activated', welcome: 'Welcome to DefiLlama Pro' }
+])('a plain visit names the plan the account holds: "$badge"', async ({ owned, badge, welcome }) => {
+	session.client.setQueryData(subscriptionStatusQueryKey('pending-user'), owned)
+	session.serve({ '/subscription/status': { subscription: owned } })
+	const page = await renderWelcome({})
+	try {
+		await waitForUi(() => expect(page.heading()).toBe(welcome))
+		expect(page.host.textContent).toContain(badge)
 	} finally {
 		await page.unmount()
 	}

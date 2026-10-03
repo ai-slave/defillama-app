@@ -83,7 +83,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 					className="w-fit"
 				>
 					<Icon name="sign-out" height={14} width={14} />
-					Leave Team
+					Leave team
 				</Button>
 			</div>
 

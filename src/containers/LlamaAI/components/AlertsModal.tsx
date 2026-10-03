@@ -770,7 +770,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						>
 							<Icon name="ellipsis" height={16} width={16} />
 						</Ariakit.MenuButton>
-						<MenuSurface variant="actions" gutter={6} className="z-50">
+						<MenuSurface variant="actions" gutter={6}>
 							{isFiredOneTimePriceAlert(alert) ? (
 								<MenuItem onClick={handleRearm}>
 									<Icon name="repeat" height={14} width={14} />

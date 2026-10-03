@@ -530,7 +530,6 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 														variant="input"
 														size="md"
 														className="w-44 justify-between"
-														popoverClassName="z-50"
 														triggerProps={{ 'aria-label': `Chart type for ${s.name}` }}
 													/>
 												</div>

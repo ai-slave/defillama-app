@@ -334,7 +334,6 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						ref={menuContentRef}
 						composite={false}
 						aria-label={`Actions for ${session.title}`}
-						className="z-50"
 					>
 						<Ariakit.MenuList store={menu} aria-label="Session actions" className="flex shrink-0 flex-col">
 							<MenuItem

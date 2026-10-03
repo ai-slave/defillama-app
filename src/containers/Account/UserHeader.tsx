@@ -18,7 +18,7 @@ export function UserHeader({ displayName, onLogout }: UserHeaderProps) {
 				className="flex h-8 items-center justify-center gap-1 rounded-lg border border-sub-border-muted px-3 text-xs leading-4 font-medium text-error dark:border-sub-border-strong"
 			>
 				<Icon name="sign-out" height={16} width={16} />
-				<span>Sign Out</span>
+				<span>Sign out</span>
 			</button>
 		</div>
 	)

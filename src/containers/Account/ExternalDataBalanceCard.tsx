@@ -55,13 +55,13 @@ export function ExternalDataBalanceCard({
 					className="flex h-8 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>
 					<Icon name="plus" height={14} width={14} />
-					Top Up
+					Top up
 				</button>
 			</div>
 
 			<p className="text-xs leading-4 text-sub-text-muted">
 				Credits give LlamaAI access to premium data: onchain data, X profiles and posts, LinkedIn, and more. Pro
-				Subscribers get $10 per month in credits.
+				subscribers get $10 per month in credits.
 			</p>
 
 			{/* Balances */}
@@ -69,7 +69,7 @@ export function ExternalDataBalanceCard({
 				{/* Free This Month */}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-sub-text-muted">Free This Month</span>
+						<span className="text-xs text-sub-text-muted">Free this month</span>
 						<span className="text-xs text-sub-text-primary">
 							{formatBalanceUsd(freeRemaining)}{' '}
 							<span className="text-sub-text-muted">/ {formatBalanceUsd(freeLimit)}</span>
@@ -98,14 +98,14 @@ export function ExternalDataBalanceCard({
 
 				{/* Topped Up */}
 				<div className="flex items-center justify-between">
-					<span className="text-xs text-sub-text-muted">Topped Up</span>
+					<span className="text-xs text-sub-text-muted">Topped up</span>
 					<span className="text-xs font-medium text-sub-text-primary">{formatBalanceUsd(toppedUpBalance)}</span>
 				</div>
 			</div>
 
 			{/* Total */}
 			<div className="flex items-center justify-between">
-				<span className="text-sm text-sub-text-muted">Total Available</span>
+				<span className="text-sm text-sub-text-muted">Total available</span>
 				<span
 					className={`text-sm font-semibold ${isLowBalance ? 'text-sub-warning-text-dark' : 'text-sub-text-primary'}`}
 				>

@@ -60,7 +60,7 @@ export function FormatSplitButton({ onDownload, disabled, label, confirmed = fal
 				>
 					<Icon name="chevron-down" className="size-3.5" />
 				</Ariakit.MenuButton>
-				<MenuSurface variant="actions" className="z-50 min-w-32">
+				<MenuSurface variant="actions" className="min-w-32">
 					{DOWNLOAD_FORMATS.map((fmt) => (
 						<Ariakit.MenuItemRadio
 							key={fmt}

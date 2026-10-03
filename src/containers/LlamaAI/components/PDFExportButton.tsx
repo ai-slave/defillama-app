@@ -177,7 +177,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 				>
 					{isLoading ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
 				</Tooltip>
-				<MenuSurface variant="actions" className="z-50 w-44">
+				<MenuSurface variant="actions" className="w-44">
 					<MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="light"

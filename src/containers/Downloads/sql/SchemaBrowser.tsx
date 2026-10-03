@@ -652,7 +652,7 @@ function ParamCombobox({
 					<span className={`truncate ${current ? '' : 'text-secondary'}`}>{current?.label ?? `Pick a ${noun}`}</span>
 					<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 				</Ariakit.ComboboxSelect>
-				<ComboboxSurface heading={paramLabel} className="z-50 max-h-80 w-[min(320px,90vw)]">
+				<ComboboxSurface heading={paramLabel} className="max-h-80 w-[min(320px,90vw)]">
 					<PopoverHeader
 						search={
 							<Ariakit.ComboboxInput autoSelect placeholder={`Search ${noun}s`} className={`w-full ${inputStyles}`} />

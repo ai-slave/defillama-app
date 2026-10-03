@@ -55,7 +55,7 @@ async function openAndSend() {
 			</session.Wrapper>
 		)
 	)
-	await act(async () => button('Change Password').click())
+	await act(async () => button('Change password').click())
 	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
 	await act(async () => button('Test CAPTCHA').click())
 	await act(async () => button('Send reset link').click())
@@ -103,7 +103,7 @@ test('a reopened dialog starts from the send step without the last failure', asy
 	await act(async () => button('Cancel').click())
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')).toBeNull())
 
-	await act(async () => button('Change Password').click())
+	await act(async () => button('Change password').click())
 	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
 	expect(document.querySelector('[role=dialog] [role=alert]')).toBeNull()
 })
@@ -115,7 +115,7 @@ test('a reopened dialog after a sent link starts on the form, and the resend coo
 	await act(async () => button('Done').click())
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')).toBeNull())
 
-	await act(async () => button('Change Password').click())
+	await act(async () => button('Change password').click())
 	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
 	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Change password')
 	await act(async () => button('Test CAPTCHA').click())
@@ -141,7 +141,7 @@ test('a sent link hands focus from the send button to Done on the step that repl
 			</session.Wrapper>
 		)
 	)
-	await act(async () => button('Change Password').click())
+	await act(async () => button('Change password').click())
 	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
 	await act(async () => button('Test CAPTCHA').click())
 	await act(async () => {

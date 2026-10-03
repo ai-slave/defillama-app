@@ -241,7 +241,7 @@ export function ProjectLanding({
 								>
 									<Icon name="ellipsis" height={16} width={16} />
 								</Ariakit.MenuButton>
-								<MenuSurface variant="actions" gutter={6} className="z-50 w-52">
+								<MenuSurface variant="actions" gutter={6} className="w-52">
 									<MenuItem onClick={renameStore.show}>Rename project</MenuItem>
 									<MenuItem onClick={deleteStore.show} className="text-error!">
 										Delete project

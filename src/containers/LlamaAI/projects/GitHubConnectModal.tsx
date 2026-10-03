@@ -291,7 +291,7 @@ function GitHubConnectForm({
 									<ComboboxSurface
 										variant="search-results"
 										sameWidth
-										className="z-50 max-h-[min(256px,var(--popover-available-height))]"
+										className="max-h-[min(256px,var(--popover-available-height))]"
 									>
 										{filteredRepos.length === 0 ? (
 											<p className={EMPTY_RESULTS_STYLES}>No repositories match.</p>
@@ -357,7 +357,7 @@ function GitHubConnectForm({
 									<ComboboxSurface
 										variant="search-results"
 										sameWidth
-										className="z-50 max-h-[min(256px,var(--popover-available-height))]"
+										className="max-h-[min(256px,var(--popover-available-height))]"
 									>
 										{filteredBranches.length === 0 ? (
 											<p className={EMPTY_RESULTS_STYLES}>No branches match.</p>

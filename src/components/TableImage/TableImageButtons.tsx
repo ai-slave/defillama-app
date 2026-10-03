@@ -163,7 +163,7 @@ export function TableImageButtons({
 					{triggerContent || iconOnly ? null : <span>{triggerLabel ?? '.png'}</span>}
 				</Ariakit.MenuButton>
 
-				<MenuSurface variant="actions" aria-label="Export table" gutter={8} className="z-50">
+				<MenuSurface variant="actions" aria-label="Export table" gutter={8}>
 					{prepareCsv ? (
 						<MenuItem
 							disabled={csv.userLoading || csv.status === 'pending'}
