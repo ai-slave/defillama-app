@@ -2,22 +2,51 @@
  * Maintains the accepted React Compiler debt, so a component that compiles today cannot quietly stop.
  *
  * The compiler is not a linter: a single unsupported expression makes it skip a whole component, and
- * nothing else notices. Components that skip are not memoized, which is how `AgenticChat` came to render
- * everything below it on every keystroke without anyone seeing a failing check.
+ * nothing else notices. A component that skips is not memoized, and nothing downstream of it is cached
+ * either, without any failing check.
  *
  * The committed file is .reactcompiler.baseline.json: bailouts per file per reason, one line per file.
- * It records what still fails, so the rest is protected.
+ * It records what still fails, so the rest is protected. The count helpers live in
+ * scripts/lib/compilerBaselineCounts.ts.
  *
- *   bun scripts/compilerBaseline.ts
- *     Recompile everything and rewrite the counts.
+ *   bun run compiler:baseline
+ *     Recompile every non-test .ts/.tsx under src (about a minute) and rewrite the counts.
  *
- *   bun scripts/compilerBaseline.ts --check [--base <git ref>]
+ *   bun run compiler:baseline:check [-- --base <git ref>]
  *     Fail if the committed counts are stale, if the working tree bails more than recorded for any
  *     file/reason, or if the committed counts accept more than the same file on <git ref>
- *     (default origin/main, skipped when the ref has no counts file).
+ *     (default origin/main, skipped when the ref has no counts file). CI runs it; `bun run check` does not.
  *
  * Both modes refuse to run on an incomplete report. A file the compiler cannot parse emits BABEL
  * FAILED and no bailout lines, so counting it as clean would turn a fatal error into a passing check.
+ *
+ * Every count is a floor. The compiler stops at the first unsupported expression in a component, so the
+ * baseline records the reason it reported, not every reason the component has.
+ * - Fixing the recorded bailout can reveal another underneath. Judge a fix by the components that newly
+ *   compile, not by the change in the total.
+ * - The ratchet cannot express "same file, still broken, different first reason". Revert the fix until the
+ *   blocking rule is in scope; never add an allowance to quiet the check.
+ *
+ * Working with the compiler:
+ * - Fix a bailout at the line the checker's BAILOUT output names. It prints the expression's own location
+ *   when the diagnostic has one, and the enclosing function otherwise.
+ * - A file that stops bailing has started compiling. Verify its newly memoized reads stay reactive before
+ *   regenerating the baseline.
+ * - Hoisting an impure helper to module scope changes what the compiler may cache, even when it captures no
+ *   local variables. A clock-reading helper hoisted out of a component makes its label go stale, and neither
+ *   the type checker nor this baseline sees it.
+ * - When a bailout is required for correctness, say why at the line so later edits keep it.
+ *
+ * Two traps when running the checker directly, both of which produce false clean runs:
+ * - scripts/reactCompilerCheck.cjs takes the repo root as its first argument. Passing only a file checks
+ *   nothing and exits 0. Run `node scripts/reactCompilerCheck.cjs . <files>` and expect a
+ *   `<file>: compiled N [...]` line for every file.
+ * - The compiler visits only components and real hooks. A plain function whose name starts with `use` but
+ *   calls no hooks is never compiled, so probing the checker with one proves nothing.
+ *
+ * This script parses the checker's stdout (the `compiled`, `BAILOUT`, `SKIPPED` and `BABEL FAILED` lines).
+ * A format change there can empty the counts without failing, so change both scripts together and rerun
+ * `bun run compiler:baseline` before trusting the diff.
  */
 import { spawnSync } from 'node:child_process'
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -33,15 +62,14 @@ const LIBRARY_REASON = 'Use of incompatible library'
  * ignores them. Both still fail the working-tree check until the baseline is regenerated, which keeps
  * every new entry a visible diff and a review decision.
  *
- * `Skipped by directive` is an opt-out somebody chose. `Use of incompatible library` is the deferred
- * TanStack rule -- the same decision as `react/incompatible-library: "off"` in .oxlintrc.json -- and it
- * fires on every `useReactTable` and `useVirtualizer` call site, so a new table page trips it with no
- * fix available. Treating that as new debt blocked the page and told the author to fix a bailout that
- * only the TanStack migration can remove.
+ * `Skipped by directive` is an opt-out somebody chose, such as `'use no memo'` in VirtualTable.
+ * `Use of incompatible library` fires where a React Virtual hook is called
+ * (UnifiedVirtualTable, useVirtualItems), the same deferred decision as `react/incompatible-library: "off"`
+ * in .oxlintrc.json. A new virtualized list trips it with no fix available, so it is not new debt.
  *
  * Staleness is deliberately not exempt. A file that stops bailing on the library has started compiling,
- * and for a component that reads TanStack row or cell state that is the failure mode described in
- * docs/lint-burn-down.md: the read lands in a cache guard against a stable identity and freezes.
+ * and a read from a stable object such as the virtualizer can land in a cache guard keyed on that
+ * object's identity and freeze.
  */
 const GROWTH_EXEMPT_REASONS = [SKIP_REASON, LIBRARY_REASON]
 
@@ -153,7 +181,7 @@ if (args.includes('--check')) {
 	const stale = findStale(committed, fresh)
 	if (stale.length > 0) {
 		report(
-			`Baseline records ${stale.length} file/reason entr(ies) that no longer bail. Run \`bun run compiler:baseline\`.`,
+			`Baseline records ${stale.length} file/reason entr(ies) that no longer bail. Those components now compile: check that their reads stay reactive, then run \`bun run compiler:baseline\` and keep the diff. Rules: the header of scripts/compilerBaseline.ts.`,
 			stale
 		)
 		failed = true
@@ -165,7 +193,7 @@ if (args.includes('--check')) {
 		report(
 			expected
 				? `${hidden.length} file/reason entr(ies) bail more than the baseline records, all for expected reasons. Run \`bun run compiler:baseline\` and keep the diff in the change.`
-				: `${hidden.length} file/reason entr(ies) bail more than the baseline records. A component stopped compiling; fix it rather than regenerating.`,
+				: `${hidden.length} file/reason entr(ies) bail more than the baseline records. A component stopped compiling: run \`node scripts/reactCompilerCheck.cjs . <file>\` and fix the expression its BAILOUT line names instead of regenerating. Rules: the header of scripts/compilerBaseline.ts.`,
 			hidden
 		)
 		failed = true
@@ -180,7 +208,7 @@ if (args.includes('--check')) {
 		const grown = findGrowth(base, committed).filter((entry) => !isGrowthExempt(entry))
 		if (grown.length > 0) {
 			report(
-				`Baseline accepts ${grown.length} file/reason entr(ies) of new debt relative to ${baseRef}. Fix the bailouts instead.`,
+				`Baseline accepts ${grown.length} file/reason entr(ies) of new debt relative to ${baseRef}. Fix the bailouts instead of regenerating. Rules: the header of scripts/compilerBaseline.ts.`,
 				grown
 			)
 			failed = true

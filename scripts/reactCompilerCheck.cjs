@@ -11,7 +11,13 @@
  *   node scripts/reactCompilerCheck.cjs <repo-root> <file>...
  *   node scripts/reactCompilerCheck.cjs . src/containers/RWA/index.tsx --cached buildRwaTimeSeriesCharts
  *
+ * The repo root comes first: passing only a file checks nothing and exits 0. Expect a `compiled` line for
+ * every file.
+ *
  * Exits non-zero on any bailout or uncached required call.
+ *
+ * scripts/compilerBaseline.ts parses the `compiled`, `BAILOUT`, `SKIPPED` and `BABEL FAILED` lines this
+ * prints. Change their format only together with that parser.
  */
 const path = require('node:path')
 const fs = require('node:fs')

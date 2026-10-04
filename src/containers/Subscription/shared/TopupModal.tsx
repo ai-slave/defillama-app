@@ -10,6 +10,21 @@ import { InlineStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { TopupCheckoutLoading } from './TopupCheckoutLoading'
 
+/* ----------------------------------------------------------------------------
+   The External Data Balance top-up. Account opens TopupModal, a
+   `Dialog size="sm" fullSheet`: DialogHeader with the description as its
+   subtitle and a DialogBackButton on the payment step, then a `content`
+   DialogBody. LlamaAI settings render TopupForm inline, where Back is a
+   labelled link above the section heading instead of a second icon-only
+   back beside the host dialog's header.
+
+   - The amount field is `Input`. Presets are `toggle` Buttons with numeric
+     selection; the payment methods are equal secondary Buttons side by side.
+   - An empty or out-of-range amount says so ("Enter an amount") instead of
+     silently disabling the payment buttons.
+   - Closing the dialog while the crypto request runs cancels its redirect.
+---------------------------------------------------------------------------- */
+
 // Keep the amount form immediate; card payments alone need Stripe.
 const TopupStripeCheckout = lazy(() => import('./TopupStripeCheckout'))
 

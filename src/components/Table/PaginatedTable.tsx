@@ -116,6 +116,13 @@ export function usePaginatedTableDisplayRowNumber(rowId: string) {
 	return useContext(DisplayRowNumbersContext)?.get(rowId)
 }
 
+/**
+ * Render the current page with pagination controls, a page-size selector, loading overlays and optional expanded
+ * panels. The surrounding Panel or Card is the table's border.
+ *
+ * - Body cells wrap unless the column sets `meta.cellClassName: 'truncate'`.
+ * - `stickyHeader` is only for long directories that need persistent column context.
+ */
 export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & VisibilityFeatures, T extends RowData>({
 	table,
 	pageSizeOptions,

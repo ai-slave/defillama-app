@@ -17,8 +17,8 @@ export const lifecycleStyles: Record<RewardLifecycle, string> = {
 }
 const helper = createColumnHelper<typeof tableFeaturesConfig, RewardProgram>()
 
-// Widths follow COLUMN_WIDTHS.md: 24px padding + max(header + 14px sort, widest
-// realistic body), measured against public/fonts/inter.woff2.
+// Widths follow "Column widths" in src/components/Table/README.md: 24px padding + max(header + 14px sort,
+// widest realistic body).
 export const columns = helper.columns([
 	helper.accessor('protocol', {
 		header: 'Protocol / Program',
@@ -71,8 +71,8 @@ export const columns = helper.columns([
 		// The page's primary content, so it takes the width the viewport can spare.
 		// Two clamped lines rather than one truncated one: at 520px that shows the
 		// whole benefit for nearly every program while still bounding row height.
-		// The expanded row always carries the full copy (COLUMN_WIDTHS.md —
-		// clipped cells reveal nothing on hover).
+		// The expanded row always carries the full copy, because a clipped cell reveals nothing on hover
+		// ("Column widths" in src/components/Table/README.md).
 		meta: {
 			headerClassName: 'w-[320px] min-w-[320px] xl:w-[420px] xl:min-w-[420px] 2xl:w-[520px] 2xl:min-w-[520px]'
 		},

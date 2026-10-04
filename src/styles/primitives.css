@@ -1,19 +1,9 @@
 /* ----------------------------------------------------------------------------
-   Llama Design System — Primitives (color ramps, raw values)
+   Primitives: raw color values. Components must NOT reference these
+   directly; use the semantic tokens in semantics.css instead.
 
-   Source of truth: the "Llama Design System" Figma team library
-   (Primitives collection). Components must NOT reference these directly —
-   use the semantic tokens in semantics.css instead.
-
-   NOTE: this file intentionally contains only the primitive values that have
-   been verified against the current library (resolved from the redesigned
-   page frames in the DefiLlama-UX file). The old "Base Color Palette"
-   embedded in that file (and mirrored in code as the --sub-* product ramps)
-   has DIVERGED from the library — e.g. old green-500 #3feb8d vs library
-   Green/500 #3eb84f, old red-500 #ff4d6b vs library Red/500 #e24a42, old
-   purple-500 #5c5cf9 vs library Violet/500 #9333ea. Do not promote --sub-*
-   values here. Full 50–950 ramps get added when design exports the library
-   variables.
+   Add a value here only when a token needs it, never a full ramp up front.
+   Do not promote the --sub-* product ramps into this file.
 
    These are deliberately NOT registered as Tailwind theme colors: names like
    neutral/blue/green would override Tailwind's built-in palettes and change
@@ -22,13 +12,13 @@
 
 :root {
 	/* Neutral (achromatic ramp) */
-	--neutral-500: #878787; /* Colors/Neutral/500 */
-	--neutral-800: #232628; /* Colors/Neutral/800 */
+	--neutral-500: #878787;
+	--neutral-800: #232628;
 
-	/* Accents — "500-default" resolves to the same value in light and dark */
-	--blue-500: #1f67d2; /* Colors/Blue/500 */
-	--green-500: #3eb84f; /* Colors/Green/500 */
-	--red-500: #e24a42; /* Colors/Red/500 */
-	--violet-500: #9333ea; /* Colors/Violet/500 */
-	--orange-500: #ff8e2b; /* Colors/Orange/500 */
+	/* Accents: the same value in light and dark */
+	--blue-500: #1f67d2;
+	--green-500: #3eb84f;
+	--red-500: #e24a42;
+	--violet-500: #9333ea;
+	--orange-500: #ff8e2b;
 }

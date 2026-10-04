@@ -1,6 +1,8 @@
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatPercent } from '~/utils/numberFormat' // Design language (see design.md): numbers are the hero — large, monospaced and
+import { formatPercent } from '~/utils/numberFormat'
+
+// This dashboard's design language: numbers are the hero — large, monospaced and
 // tabular; labels are tiny, uppercase and dim. Flat, hairline-bordered, no shadows.
 export function KpiCard({
 	label,

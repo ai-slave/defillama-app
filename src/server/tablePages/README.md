@@ -1,28 +1,14 @@
 # tablePages
 
-Shared mechanism for server-paginated tables. Product code lives in
-`src/containers/<Surface>/`; nothing in this directory may know what a
-protocol, pool, or token is. If a product name appears here, the extraction
-has failed. There is deliberately no `index.ts` — import each module directly
-so a grep for any symbol returns exactly one definition site. Design record
-and change policy: `docs/adr/0005-table-delivery-tiers.md`.
+Shared mechanism for server-paginated tables. Product code lives in `src/containers/<Surface>/`; nothing in this directory may know what a protocol, pool, or token is. If a product name appears here, the extraction has failed. There is deliberately no `index.ts`: import each module directly so a grep for any symbol returns exactly one definition site. Snapshot stores and caches: `docs/server-data.md`.
 
 ## The delivery-tier decision rule
 
-Pick the cheapest tier that satisfies the surface. Promotion is triggered by
-measurement, never by consistency with other tables.
+Pick the cheapest tier that satisfies the surface. Promotion is triggered by measurement, never by consistency with other tables.
 
-1. **local** — the whole dataset fits in page props (< ~300 KB serialized).
-   Ship all rows, filter/sort client-side, render virtualized. None of these
-   modules are involved. Most tables in this repo are — correctly — here.
-2. **offset** — too big to ship; the UI shows discrete prev/next pages.
-   Snapshot + `offsetPage`. A dataset version rolling over between requests is
-   a cosmetic wobble for a paged UI, so offsets are sufficient.
-3. **cursor** — too big to ship AND the UI accumulates pages (infinite
-   scroll). A skipped or repeated row corrupts a list the reader believes is
-   complete, so pages are answered against a pinned, client-visible version
-   with verified cursor boundaries: `cursorPage` + a content-hashed version
-   (`contentHashVersion` in `~/server/datasetSnapshots/redisBlobStore.server`).
+1. **local**: the whole dataset fits in page props (< ~300 KB serialized). Ship all rows, filter/sort client-side, render virtualized. None of these modules are involved. Most tables in this repo belong here.
+2. **offset**: too big to ship; the UI shows discrete prev/next pages. Snapshot + `offsetTablePage`. A dataset version rolling over between requests is a cosmetic wobble for a paged UI, so offsets are sufficient.
+3. **cursor**: too big to ship AND the UI accumulates pages (infinite scroll). A skipped or repeated row corrupts a list the reader believes is complete, so pages are answered against a pinned, client-visible version with verified cursor boundaries: `cursorTablePage` + a content-hashed version (`contentHashVersion` in `~/server/datasetSnapshots/redisBlobStore.server`).
 
 ## The pipeline
 
@@ -39,7 +25,7 @@ build (surface)          expensive aggregation, runs on cache miss only
 
 ## Adding a surface
 
-Everything a surface owns sits in its container — three files:
+Everything a surface owns sits in its container, in three files:
 
 1. `containers/<S>/tableQuery.ts` (browser-safe): the query schema and limits.
 
@@ -58,28 +44,19 @@ Everything a surface owns sits in its container — three files:
    })
    ```
 
-2. `containers/<S>/server/tableData.server.ts`: the build function plus
-   snapshot registration — disk domains register in
-   `~/server/datasetSnapshots/contract.ts`; runtime datasets create a
-   `redisBlobStore` with their prefix, TTLs, and identity accessor, and gate
-   publishes behind their validation checks.
+2. `containers/<S>/server/tableData.server.ts`: the build function plus snapshot registration. A disk domain registers its files in `~/server/datasetSnapshots/contract.ts`, its builder and `maxAgeMs` in `registry.server.ts`, and its routes in `traceIncludes.ts`. A runtime dataset creates a `createRedisBlobStore` with its prefix, TTLs, and identity accessor, and gates publishes behind its validation checks.
 
-3. `containers/<S>/server/api.ts`: ~30 lines composing the pipeline inside
-   `defineApiRoute` — parse via the schema, load the snapshot, `prepareTableRows`
-   (namespace `table-pages:<surface>:prepared-rows`, plan D4), then
-   `offsetTablePage` or `cursorTablePage`. Cursor routes map
-   `TableCursorError` to `400 invalid_cursor` and a version mismatch to
-   `409` with the current version in the body.
+3. `containers/<S>/server/api.ts`: composes the pipeline inside `defineApiRoute`. Parse via the schema, load the snapshot, `prepareTableRows` (namespace `table-pages:<surface>:prepared-rows`), then `offsetTablePage` or `cursorTablePage`. Cursor routes map `TableCursorError` to `400 invalid_cursor` and a version mismatch to `409` with the current version in the body.
 
 ## Invariants
 
-- The prepared row order must be TOTAL and deterministic: nulls last
-  (`compareTableSortValues`), ties broken on stable row identity. Cursor
-  boundary verification depends on it.
-- A query signature must capture EVERYTHING that changes row order. If a
-  parameter can reorder rows and is not in the signature, two clients will
-  share a cache entry they shouldn't.
-- Blob-first, pointer-second writes; `:last-good` is read only on rebuild
-  failure. See `redisBlobStore.server.ts`.
-- `.server.ts` modules here are server-only; `types.ts` and `tableQuery.ts`
-  are browser-safe and are the only modules client code may import.
+- The prepared row order must be TOTAL and deterministic: nulls last (`compareTableSortValues`), ties broken on stable row identity. Cursor boundary verification depends on it.
+- A query signature must capture EVERYTHING that changes row order. If a parameter can reorder rows and is not in the signature, two clients will share a cache entry they shouldn't.
+- Blob-first, pointer-second writes; `:last-good` is read only on rebuild failure. See `redisBlobStore.server.ts`.
+- `types.ts` and `tableQuery.ts` are browser-safe and are the only modules client code may import. `.oxlintrc.json` (`no-restricted-imports`) rejects runtime imports of the `.server` modules from client code.
+
+## Changing the shared modules
+
+- Product changes (columns, filters, row fields, display rules) live in containers and never touch this directory.
+- A shared-module change needs two live consumers that the current contract cannot serve.
+- Permanently rejected: an `index.ts` barrel, a route factory, a strategy registry, wall-clock `revision` version naming, speculative storage backings, and any shared option without two live consumers.

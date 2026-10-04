@@ -81,7 +81,7 @@ export async function runPullMetadataCommand({
 		logger.log('[dev:prepare] Metadata cache: failed to pull data', error)
 
 		if (shouldWriteMetadataStubsOnFailure(env)) {
-			logger.log('[dev:prepare] Metadata cache: writing empty stubs so local dev and CI can proceed')
+			logger.log('[dev:prepare] Metadata cache: writing empty stubs so local development can proceed')
 			await writeMissingMetadataStubArtifacts(cacheDir, now)
 			return { exitCode: 0 }
 		}

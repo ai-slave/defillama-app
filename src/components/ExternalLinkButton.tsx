@@ -3,13 +3,13 @@ import { buttonStyles } from '~/ui/Button'
 import { Icon, type IIcon } from '~/ui/Icon'
 
 /* ----------------------------------------------------------------------------
-   ExternalLinkButton — the app-wide grammar for external link pills
-   (protocol page "Protocol Information" row): optional brand icon on the
-   left, label in the middle, arrow-up-right affordance on the right, all on
-   the secondary md button recipe.
+   ExternalLinkButton — every external link presented as a button: an
+   optional 14px brand icon on the left (globe, github, twitter, …), the
+   label, and a 14px arrow-up-right on the right, all on the secondary md
+   button recipe. Never hand-roll an icon + label + arrow anchor.
 
-   Multi-URL cases (several websites, audit reports…) are not this
-   component's job — use <Menu isExternal className={buttonStyles({ size: 'md' })}>.
+   Multi-URL cases (several websites, audit reports) use
+   <Menu isExternal className={buttonStyles({ size: 'md' })}> instead.
 ---------------------------------------------------------------------------- */
 
 interface ExternalLinkButtonProps extends Omit<ComponentPropsWithRef<'a'>, 'className'> {

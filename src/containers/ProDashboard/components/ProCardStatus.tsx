@@ -4,7 +4,7 @@ import { focusRegionOnLeave } from '~/ui/focus'
 import type { QueryRetry } from '~/utils/query'
 import { ProCardSkeleton, type ProCardSkeletonVariant } from './ProCardSkeleton'
 
-// Pro cards follow the Status recipes (design.md): body-sm copy, tertiary
+// Pro cards follow the src/ui/Status.tsx states: body-sm copy, tertiary
 // for empty, data-down for errors, warning text for notices, no icons.
 // Retry and recovery actions are small secondary Buttons, never text links.
 interface ProCardStatusAction {

@@ -1,3 +1,17 @@
+/**
+ * Pro protocol table share columns use three denominators. Keep each one visibly distinct in its label and
+ * description; changing a denominator changes what the column claims.
+ *
+ * - DEX, perps, DEX aggregator and options volume dominance divide by the global Lens metric total. A chain filter
+ *   changes the rows and their values, never the denominator.
+ * - Bridge Aggregator volume share divides by the canonical total of the selected chains, or the global total with no
+ *   chain filter.
+ * - `% of Filtered Rows` divides each positive top-level row by the positive total after source filters and search.
+ * - Grouped rows sum their available leaf shares, since every leaf uses the same denominator. An unavailable leaf stays
+ *   blank without erasing measured siblings, and a group with no measured share is unavailable. Parent supplements that
+ *   need complete filtered membership, Bridge Aggregator share included, stay strict.
+ */
+
 import type { ProtocolTableMetrics } from '../contracts'
 import {
 	FILTERED_SHARE_METRIC_KEYS,

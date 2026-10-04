@@ -1,10 +1,20 @@
 import { tw } from './tw'
 /* ----------------------------------------------------------------------------
-   Popover/menu surface recipe from Figma 6183:293478.
+   Row, check and hovercard/tooltip recipes for the popover surfaces. The
+   surfaces themselves are private to ./PopoverSurface.tsx.
 
-   Surface owns the elevated background, medium border, 12px radius, scrollbars,
-   overscroll, drawer behavior, and max height. Rows and footers own their
-   spacing; the search/toggle/action block above a list is `PopoverHeader`.
+   The surface owns its overlay background, medium border, 12px radius,
+   scrolling, drawer behavior and max height. Rows and footers own their
+   spacing; the search/toggle block above a list is `PopoverHeader`.
+
+   Rows: px-3 py-2 body-sm, full-bleed, hover-row wash, 44px tall on phones.
+   Nested-menu rows use the `nestedMenu*` recipes (16px sides, always 44px).
+
+   Checks (popoverMultiSelectCheckStyles, popoverSingleSelectCheckStyles):
+   a multi-select row draws a 14px rounded box, brand-filled with a white
+   check when selected and an empty border-strong box when not. A
+   single-select row draws no box: only the selected row shows a 14px
+   text-link check.
 ---------------------------------------------------------------------------- */
 
 export const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-180 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-140`
@@ -38,8 +48,8 @@ export const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error
 export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row max-sm:min-h-11`
 
 /* The list under a PopoverHeader scrolls on its own, so the title row and header stay put when Ariakit
-   scrolls the selected option into view on open, or the user scrolls a long list. It and the header both
-   reserve the scrollbar gutter, so rows and the search field end on the same edge with classic scrollbars. */
+   scrolls the selected option into view on open, or the user scrolls a long list. Neither reserves a
+   scrollbar gutter: with always-visible scrollbars a reserved gutter leaves every short list lopsided. */
 export const popoverScrollAreaStyles = tw`min-h-0 flex-1 overflow-y-auto overscroll-contain`
 
 export const popoverFooterActionStyles = tw`flex w-full min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-subtle px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row max-sm:min-h-11`

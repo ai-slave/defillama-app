@@ -22,12 +22,25 @@ interface IHovercard {
 }
 
 /**
- * Hover/focus card for structured content — unlike a text `<Tooltip>` it can
- * be hovered into, dismissed with Escape, and reached by keyboard via the
- * built-in HovercardDisclosure. The anchor also opens on tap/click unless
- * `showOnClick={false}`, so the content stays reachable on touch. Plain short
- * text belongs in `<Tooltip>`; click-interactive content belongs in a real
- * popover.
+ * Hover/focus card for structured or long content (lists, breakdowns, definitions, previews). Unlike a text
+ * `<Tooltip>` it can be hovered into, dismissed with Escape, and reached by keyboard via the built-in
+ * HovercardDisclosure. The anchor also opens on tap/click unless `showOnClick={false}`, so the content stays
+ * reachable on touch.
+ *
+ * Which surface: plain short text is a `<Tooltip>`. When opening the surface is the primary action, or the content
+ * is a form or control set, use a popover, menu or dialog. A preview here may hold a few links or actions while
+ * keyboard and touch access stay intact. When the anchor has its own click action, keep it and add a separate
+ * labelled info control. The "N chains" list is the shared `ProtocolChainsHovercard`.
+ *
+ * Anchor: inline-flex, so it sizes to its content and follows the parent's `text-align`. Put truncating text in an
+ * inner `<span className="truncate">` with `max-w-full` on the anchor; a bar that fills its cell adds `w-full`; an
+ * anchor with no text (a pie, a bar) adds `align-middle` so it leaves the text baseline.
+ *
+ * Width: the surface caps itself with Ariakit's `--popover-available-width` and `--popover-available-height` and
+ * keeps 16px from the viewport edges. The content owns its preferred width: `w-max` for compact vertical lists,
+ * `w-80` for prose and ordinary cards, `w-96` for dense financial breakdowns, combined with
+ * `max-w-(--popover-available-width)`. Long content scrolls inside the available height. Never reproduce anchored
+ * safety with `calc(100vw - …)`.
  */
 export function Hovercard({
 	content,

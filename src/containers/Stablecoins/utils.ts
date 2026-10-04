@@ -1,3 +1,27 @@
+/**
+ * Stablecoin totals, history points and chain rows.
+ *
+ * - Aggregate supply, dominance and inflow totals exclude producer-marked double-counted assets.
+ * - Table rows keep a double-counted asset's measured value, muted and labeled as excluded from aggregate market cap.
+ * - Chart labels are generated once from the full unfiltered asset universe, so duplicate symbols stay separate after
+ *   chain or URL filtering. `Others` is reserved for the chart remainder and never labels a real asset.
+ * - History follows the producer's sparse-zero contract: no point is unavailable; a top-level supply metric missing
+ *   from a present point is a pruned zero; a null detail measurement (chain issuance, unreleased supply) stays
+ *   unavailable; an explicit zero stays zero.
+ * - The producer owns lifecycle extension (`deadFrom`). Never carry a series forward past its last producer point:
+ *   the frontend cannot tell a delayed active asset from an ended one.
+ * - Assets with `deadFrom` or `delisted` keep their history, but their current values and snapshot contributions are
+ *   unavailable, never zero. `deprecated` alone does not make current values unavailable.
+ * - Filtered pages derive headline totals from the same filtered rows as the chart and table.
+ * - Asset supply is in token units with the asset symbol; only explicitly USD-valued metrics use USD.
+ * - Enabling unreleased supply never turns an unavailable unreleased measurement into zero or a partial total.
+ * - A bridge row represents the full supply only when both compared measurements are present.
+ * - Grouped chain rows compute current and comparison totals from the same current-contributing rows. A chain without
+ *   current market cap neither erases siblings nor counts toward a prior period; a contributing row missing one
+ *   comparison period makes only that period and its change unavailable.
+ * - `chains[].totalCirculatingUSD` from the chain list is stablecoin market cap, never DeFi TVL.
+ */
+
 import { getPercentChange, slug } from '~/utils'
 import { formatUsd, formatFixedNumber } from '~/utils/numberFormat'
 import {

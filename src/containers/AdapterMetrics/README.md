@@ -1,159 +1,41 @@
 # AdapterMetrics
 
-AdapterMetrics owns adapter-backed metric pages where the product surface ranks or charts protocol activity by chain, protocol, or adapter data type.
+AdapterMetrics owns the pages that rank or chart adapter data (fees, revenue, volume, open interest, P/F, P/S) by protocol or chain. One protocol's page belongs to `ProtocolOverview`, which reuses these fetchers.
 
-Start from the route file in `src/pages`, then follow imports here. Public route slugs are contracts; this folder name is only the implementation owner.
+## Builder responsibilities
 
-## Route Families
+Use the smallest builder that matches the route, all in `queries.tsx`. Never substitute one ranking builder for another because the route labels look alike.
 
-Common route families owned here:
+| Builder                                    | Builds                                                                           | Used by                                                                                  |
+| ------------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `getAdapterByChainPageData`                | Protocol rows for one chain or all chains                                        | `/<metric>`, `/<metric>/chain/[chain]`                                                   |
+| `getChainsByAdapterPageData`               | Chain rows for every other chain ranking, app-on-chain fees and revenue included | `/<metric>/chains`, `/app-fees/chains`, `/app-revenue/chains`, `/holders-revenue/chains` |
+| `getChainsByChainNativeFeeRevenuePageData` | Chain-native Chain Fees and Chain Revenue                                        | `/fees/chains`, `/revenue/chains`                                                        |
+| `getChainsByREVPageData`                   | REV: chain fees plus MEV tips                                                    | `/rev/chains`                                                                            |
+| `getAdapterChainOverview`                  | Adapter metrics and chart data for one chain                                     | `ProtocolRankings` row assembly                                                          |
+| `getAdapterProtocolOverview`               | Adapter metrics and chart data for one protocol                                  | `/protocol/<metric>/[protocol]` sections                                                 |
+| `getChainsByAdapterChartData`              | The chain-breakdown dataset behind ranking charts                                | `/api/public/page-data/dimension-adapters/chains-chart`                                  |
 
-- `/fees`, `/revenue`, `/holders-revenue`, `/earnings`, `/pf`, `/ps`
-- `/fees/chain/[chain]`, `/revenue/chain/[chain]`, `/holders-revenue/chain/[chain]`, and related chain detail routes
-- `/fees/chains`, `/revenue/chains`, `/app-fees/chains`, `/app-revenue/chains`, `/rev/chains`
-- `/dexs`, `/perps`, `/dex-aggregators`, `/perps-aggregators`
-- `/options` and `/options/chain/:chain` (premium volume ranking with notional volume, options open interest, fees and ratios), `/options/premium-volume`, `/options/notional-volume`
-- `/bridge-aggregators`, `/open-interest`, `/normalized-volume`
-- each supported `/chains` or `/chain/[chain]` variant for those metric families
+## Routes
 
-Protocol overview pages also use the AdapterMetrics fetch contract for the `liquidations` namespace:
+- `/fees`, `/revenue`, `/holders-revenue`, `/earnings`, `/pf`, `/ps` and their `/chain/[chain]` pages
+- `/fees/chains`, `/revenue/chains`, `/holders-revenue/chains`, `/app-fees/chains`, `/app-revenue/chains`, `/rev/chains`
+- `/dexs`, `/perps`, `/dex-aggregators`, `/perps-aggregators`, `/bridge-aggregators`, `/normalized-volume`, `/open-interest` and their `/chain/[chain]` and `/chains` pages (`/open-interest` has no `/chains`)
+- `/options` and `/options/chain/[chain]`
+- `/options/premium-volume`, `/options/notional-volume` and their `/chain/[chain]` and `/chains` pages
 
-- `dailyLiquidationVolume`
-- `dailyCollateralLiquidated`
+## Rules
 
-For a broader route-to-container map, see `src/containers/README.md`.
+- Keep each page's builder call visible in its `src/pages/` file. Never add a generic page dispatcher that hides which builder a route calls.
+- Reason about `adapterType` and `dataType` together: `dailyVolume` is shared by DEXs, perps and both aggregator types, and `dailyNotionalVolume` by DEX and options notional.
+- `getChainMetadataKey(adapterType, dataType)` in `constants.ts` is the one place that maps a pair to its chain metadata flag.
+- Chain-native fees and revenue, app-on-chain aggregation and REV are different concepts with different builders. See `docs/metrics.md` → "Terms that mean different things".
+- P/F and P/S use `annualized1y` denominators. See `docs/metrics.md` → "Earnings, P/F and P/S".
+- Chart query params are user-facing state; changing one is a behavior change.
+- A rule moves to `src/metrics` only when another container or a public API endpoint consumes the same invariant.
 
-## Main Files
+## Not here
 
-- `constants.ts`: adapter type strings, adapter data type strings, compact data-type keys, and `getChainMetadataKey`.
-- `api.ts`: upstream adapter metrics and chart fetchers.
-- `queries.tsx`: page-data/read-model builders used by `getStaticProps`.
-- `AdapterByChain.tsx`: table view for a selected chain or `All` chains, where rows are adapter protocols.
-- `ChainsByAdapter.tsx`: chain ranking table view, where rows are chains.
-- `ChainChart.tsx`: chart UI for chain detail and chain ranking pages.
-- `ProtocolChart.tsx`: protocol chart UI used by adapter-backed protocol views.
-- `utils.ts`: local table, grouping, matching, and chart transformation helpers.
-- `metricPeriods.ts`: shared metric period field merging.
-- `telemetry.ts`: adapter route telemetry helpers.
-- `types.ts` and `api.types.ts`: UI/read-model types and upstream DTO types.
-
-## ProDashboard Chart-Builder Breakdowns
-
-ProDashboard owns the adapter-backed chart-builder breakdown routes. AdapterMetrics keeps the normal page-data,
-ranking, chart, and upstream adapter fetch flows.
-
-- `src/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes.ts`: route definitions and cache keys.
-- `src/containers/ProDashboard/server/chartBuilder/adapterMetrics/breakdowns/protocolSeries.ts`: top protocols over time.
-- `src/containers/ProDashboard/server/chartBuilder/adapterMetrics/breakdowns/chainSeries.ts`: top chains over time.
-- `src/containers/ProDashboard/server/chartBuilder/adapterMetrics/breakdowns/config.ts`: upstream Dimensions API endpoint/data-type mapping.
-
-In this folder, `Dimensions` means the upstream Dimensions API. File names should describe the chart output axis (`protocolSeries`, `chainSeries`) rather than using `dimensions` as the route concept.
-
-## Data Flows
-
-Selected-chain or all-chain protocol table:
-
-```text
-src/pages/<adapter-route>/index.tsx
-src/pages/<adapter-route>/chain/[chain].tsx
-  -> getAdapterByChainPageData(...)
-  -> AdapterByChain
-  -> AdapterByChainChart
-```
-
-Chain ranking table:
-
-```text
-src/pages/<adapter-route>/chains.tsx
-  -> getChainsByAdapterPageData(...) or getChainsByChainNativeFeeRevenuePageData(...)
-  -> ChainsByAdapter
-  -> ChainsByAdapterChart
-```
-
-REV chain ranking:
-
-```text
-src/pages/rev/chains.tsx
-  -> getChainsByREVPageData(...)
-```
-
-Keep these flows easy to trace. Avoid generic page dispatchers that hide which builder a route calls.
-
-## Metric Semantics
-
-Check `docs/metrics.md` before changing route semantics, metadata flags, chart queries, public API validation, or fee/revenue wording.
-
-Important rules:
-
-- Always reason about `adapterType` and `dataType` together.
-- `dailyVolume` is shared across DEXs, perps, DEX aggregators, and perp aggregators.
-- `dailyNotionalVolume` is shared across DEX notional and options notional paths.
-- `open-interest` serves perp and options OI, split by protocol category: unfiltered requests are `Derivatives` only, options OI is the `Options` category. Keep them apart (see `docs/metrics.md`).
-- `liquidations` is currently consumed as protocol overview metrics/charts, not as an AdapterMetrics ranking page.
-- `getChainMetadataKey(adapterType, dataType)` is the local source for AdapterMetrics chain metadata flag disambiguation.
-- Do not move a rule into `src/metrics` unless another container or public API endpoint consumes the same invariant.
-
-Fee/revenue has extra terminology risk:
-
-- Chain Fees and Chain Revenue are chain-native economics.
-- App Fees and App Revenue are app-on-chain aggregation.
-- `/fees/chains` and `/revenue/chains` are not the same concept as `/fees/chain/[chain]` and `/revenue/chain/[chain]`.
-- Chain-native fee/revenue ranking semantics are described in `src/metrics/feesRevenue.ts`.
-- Public chart validation helpers for that migrated slice live in `src/metrics/routeSemantics.ts`.
-- REV is chain fees plus MEV tips and has its own builder.
-- P/F and P/S ratios use `annualized1y` as the denominator. Do not derive those ratios from 30-day totals. Parent rows stay null when a contributing child is missing the annualized denominator.
-
-## Builder Responsibilities
-
-Use the smallest builder that matches the route:
-
-- `getAdapterByChainPageData`: selected-chain or all-chain protocol rows.
-- `getChainsByAdapterPageData`: normal chain ranking rows for app aggregation and non-fee/revenue adapter metrics.
-- `getChainsByChainNativeFeeRevenuePageData`: chain-native Chain Fees and Chain Revenue rankings.
-- `getChainsByREVPageData`: REV chain ranking.
-- `getAdapterChainOverview`: adapter metrics/chart data for a chain.
-- `getAdapterProtocolOverview`: adapter metrics/chart data for a protocol.
-- `getChainsByAdapterChartData`: chain-breakdown chart dataset for ranking charts.
-
-Do not substitute one ranking builder for another just because the route labels look similar.
-
-## Chart Notes
-
-- `ChainChart.tsx` supports combined and breakdown views for `AdapterByChain`.
-- `ChainsByAdapterChart` supports bar, dominance, treemap, and horizontal bar chart modes.
-- `LINE_DIMENSIONS` in `constants.ts` marks dimensions that should render as lines instead of bars.
-- Chart query params are user-facing state. Keep existing query behavior stable unless a product change explicitly asks for a migration.
-
-## Tests
-
-Relevant tests today:
-
-- `__tests__/chainsPageData.test.ts`: chain ranking builders, metadata flag disambiguation, and selected builder behavior.
-- `__tests__/chainRouteWiring.test.ts`: route module to builder adapter/data-type wiring.
-- `__tests__/ChainsByAdapter.test.tsx` and `__tests__/ChainsByAdapterChart.test.tsx`: chain ranking table/chart behavior.
-- `__tests__/feeRevenueSemantics.test.ts`: fee/revenue route semantics and `public/pages.json` alignment.
-- `__tests__/metricPeriods.test.ts`: nullable period merging and change derivation.
-- `__tests__/utils.test.ts`: local helper and chart/read-model utilities.
-- `__tests__/api.test.ts`: adapter API fetch behavior.
-- `__tests__/telemetry.test.ts`: telemetry helpers.
-
-Focused commands:
-
-```bash
-bun run test src/containers/AdapterMetrics/__tests__/chainsPageData.test.ts src/containers/AdapterMetrics/__tests__/chainRouteWiring.test.ts
-bun run test src/containers/AdapterMetrics/__tests__/ChainsByAdapter.test.tsx src/containers/AdapterMetrics/__tests__/ChainsByAdapterChart.test.tsx
-bun run test src/containers/AdapterMetrics/__tests__/feeRevenueSemantics.test.ts
-bun run test src/containers/AdapterMetrics/__tests__/metricPeriods.test.ts src/containers/AdapterMetrics/__tests__/utils.test.ts
-```
-
-For source changes, follow the repo root verification instructions.
-
-## Change Rules
-
-- Keep public routes, query params, API payloads, page copy, and displayed numbers stable unless explicitly requested.
-- Trust upstream API payloads and aggregates.
-- Prefer characterization tests before refactors.
-- Keep route-to-builder flow readable from `src/pages`.
-- Avoid re-export shims and barrel files. Update imports directly.
-- Keep AdapterMetrics-local rules in this folder unless there is a proven cross-container invariant.
-- Do not convert this folder into a generic metric framework.
+- Chart-builder breakdowns by protocol or chain → `src/containers/ProDashboard/server/chartBuilder/adapterMetrics/`
+- One protocol's page and its layout → `ProtocolOverview`
+- `/chains`, the chain directory → `ChainsByCategory`

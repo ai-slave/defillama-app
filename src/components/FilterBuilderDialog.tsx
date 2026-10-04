@@ -15,15 +15,20 @@ import { Tag } from '~/ui/Tag'
 
 /* ----------------------------------------------------------------------------
    FilterBuilderDialog — the table filter builder: a Filters button with the
-   applied count, and a dialog that edits a draft of the filters and applies
-   it on Apply. One pane lists the filters to add, grouped; the other holds
-   an editor card per added filter. Below sm the panes stack, the active
-   filters first.
+   applied count, and an `lg` dialog that edits a draft of the filters and
+   applies it on Apply. One pane lists the filters to add as grouped chips
+   (FilterBrowser, with a search from 12); the other holds an
+   ActiveFilterCard per added filter around the page's own editor. Below sm
+   the panes stack, the active filters first. Number editors use
+   FilterNumberInput, which names each field ("Market cap minimum").
 
    The caller owns its draft: render a session component as the child and
    build its `useState` from the applied filters. Each opening remounts the
    child, so every opening starts from what the table shows and Cancel
    needs no reset. The session renders <FilterBuilderContent>.
+
+   Adding or removing a filter keeps focus in its pane, and Clear all stays
+   rendered (disabled at zero) so it keeps focus too.
 ---------------------------------------------------------------------------- */
 
 export function FilterBuilderDialog({ appliedCount, children }: { appliedCount: number; children: ReactNode }) {

@@ -10,8 +10,9 @@ export const focusComposerOnLeave = passFocusOnLeave(() =>
 
 /**
  * A strip docked on the composer's top edge for conversation state that blocks or shapes the next prompt, with
- * its actions: a failed prompt, a thread near its context limit. It stays out of the input box, so the composer
- * keeps its height, and sits beside the send button whose state it explains.
+ * its actions: a failed prompt, a full queue, a thread near its context limit, most urgent first. It stays out of the
+ * input box, so the composer keeps its height, and sits beside the send button whose state it explains. The box
+ * holds the draft alone: its text, quote, attachments, upload feedback and an error about sending that draft.
  */
 export function ComposerTray({
 	tone,

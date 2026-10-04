@@ -1,3 +1,20 @@
+/**
+ * Protocol category and tag read models (`/protocols/[category]`, `/categories`, `/top-protocols`).
+ *
+ * - On a selected-chain page, canonical `/lite/protocols2` `protocol.chains` decides TVL membership; adapter-only
+ *   fallback rows use their adapter's source chains. Adapter metric chains may enrich display metadata but never admit
+ *   a canonical off-chain TVL child.
+ * - Membership is filtered before parent grouping: one remaining child shows as that child, several form a parent, and a
+ *   declared member missing its exact chain snapshot makes that parent's TVL unavailable.
+ * - Category and tag directory totals summarize a successful listing: a metadata-only protocol with null current or
+ *   comparison TVL contributes zero and still counts as a protocol, while its own row stays nullable. A failed listing
+ *   makes the page unavailable.
+ * - A selected-chain chart adds an additive section only from its own chain-qualified key, such as `Ethereum-staking`.
+ * - The Active Loans chart stays the producer's borrowed series when additive TVL settings change the TVL series.
+ * - The `/categories` chart (`CategoriesPage.tsx`) requires complete tooltip totals: the total hides when a displayed
+ *   contributor is unavailable.
+ */
+
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	fetchAdapterChainChartData,

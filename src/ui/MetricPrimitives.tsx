@@ -4,6 +4,19 @@ import { Icon } from '~/ui/Icon'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 
+/* ----------------------------------------------------------------------------
+   Metric rows for summary cards (./SummaryStats.tsx variants 1 and 2) and
+   KeyMetricsPanel.
+
+   - Stack rows in a NO-GAP flex column. Each row's py-1 spaces its border-b
+     divider evenly; a gapped parent puts the whole gap below every divider.
+   - Labels are body-md text-secondary, always: never body-sm, a bare
+     unsized span, or text-base. text-tertiary is for de-emphasized sub-data
+     (raise dates, 24h/30d suffixes, counts) and utility icons.
+   - Values are mono-md-bold by default (`valueClassName` for mono-md or
+     placement). Never promote a row to the headline size.
+---------------------------------------------------------------------------- */
+
 export const METRIC_LABEL_SELECTOR = '[data-metric-label]'
 export const METRIC_VALUE_SELECTOR = '[data-metric-value]'
 

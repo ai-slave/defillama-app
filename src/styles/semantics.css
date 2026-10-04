@@ -1,112 +1,88 @@
 /* ----------------------------------------------------------------------------
-   Llama Design System — Semantic tokens
+   Semantic tokens: the role tokens every component uses. When to use each
+   one is in design.md → "Tokens".
 
-   Source of truth: the "Llama Design System" Figma team library (Semantics
-   collection), values verified per-mode from the redesigned page frames
-   (home/chain, metrics, protocol, protocol-tvl, unlocks, token-rights).
-
-   Naming: 1:1 with the Figma variable names, with the fixes agreed with
-   design (Text/links+Text/branded → link; Background/bg-interactive → brand;
-   bg-brand-transparent/-subtle → brand-muted/-faint). Design-system tokens
-   own the clean role names; product themes own their prefixed namespaces
-   (src/styles/themes/).
+   Design-system tokens own the clean role names; product themes own their
+   prefixed namespaces (src/styles/themes/).
 
    Mode handling: light values on :root, dark overrides under html.dark.
-   Never create *-light/*-dark suffixed pairs — the mode lives in the
+   Never create *-light/*-dark suffixed pairs: the mode lives in the
    selector, not the token name.
 ---------------------------------------------------------------------------- */
 
 :root {
 	/* Background */
-	--bg-page: #f7f7f7; /* Background/bg-page */
-	--bg-surface: #ffffff; /* Background/bg-surface */
-	--bg-surface-elevated-1: #eeeeee; /* Background/bg-surface-elevated1 */
-	--bg-surface-elevated-2: #dedede; /* Background/bg-surface-elevated2 */
+	--bg-page: #f7f7f7;
+	--bg-surface: #ffffff;
+	--bg-surface-elevated-1: #eeeeee;
+	--bg-surface-elevated-2: #dedede;
 	--bg-equity-logo: #ffffff; /* Fixed canvas for company artwork authored for light backgrounds */
-	/* Floating overlays: popovers, menus, tooltips, dialogs, toasts. The
-	   Figma library maps these to bg-surface-elevated1 (#eee), but a
-	   darker-than-surroundings overlay reads recessed in light mode (light
-	   elevation is carried by shadow, dark elevation by surface lift) —
-	   library update requested. Dark value intentionally equals
-	   bg-surface-elevated-1 so dark mode is pixel-identical. */
+	/* Floating overlays: popovers, menus, tooltips, dialogs, toasts. A
+	   darker-than-surroundings overlay reads recessed in light mode, where
+	   shadow carries elevation; dark mode carries it with surface lift, so
+	   the dark value equals bg-surface-elevated-1. */
 	--bg-overlay: #ffffff;
-	--bg-brand: var(--blue-500); /* Background/bg-interactive */
-	--bg-brand-muted: #1f67d21f; /* Background/bg-brand-transparent */
-	--bg-brand-faint: #1f67d20f; /* Background/bg-brand-transparent-subtle */
-	/* Modal/backdrop scrim. Figma only publishes bg-screen-dim-subtle (#090b0c33),
-	   which was never modal-strength — these are the values every dialog has
-	   shipped with ([data-backdrop] literals, now unified here). Library ask
-	   filed for a modal-strength bg-screen-dim. */
+	--bg-brand: var(--blue-500);
+	--bg-brand-muted: #1f67d21f;
+	--bg-brand-faint: #1f67d20f;
+	/* Dialog and drawer backdrop. */
 	--bg-screen-dim: #090b0c66;
 
 	/* Text */
-	--text-primary: #090b0c; /* Text/primary */
-	--text-secondary: #484848; /* Text/secondary */
-	--text-tertiary: #6f6f6f; /* Text/tertiary [light AA override; library update requested] */
-	--text-disabled: #dedede; /* Text/disabled */
-	--text-link: #1853a8; /* Text/links = Text/branded */
-	--text-on-brand: #ffffff; /* Text/on-brand [fixed] */
-	--text-data-up: #32933f; /* Text/data-up */
-	--text-data-down: #b53b35; /* Text/data-down */
-	--text-data-up-alt: var(--blue-500); /* Text/data-up-alternative [fixed] */
-	--text-data-down-alt: var(--violet-500); /* Text/data-down-alternative [fixed] */
-	--text-verified: #3b82f6; /* Text/verified: the verified-yields mark; brighter than bg-brand, 3.7:1 on white (a filled glyph, not text) */
-	/* TODO(design): light value for Text/Warning not yet published in the
-	   library pages; using the legacy warning orange until confirmed. */
+	--text-primary: #090b0c;
+	--text-secondary: #484848;
+	--text-tertiary: #6f6f6f; /* raised in light mode to meet AA */
+	--text-disabled: #dedede;
+	--text-link: #1853a8;
+	--text-on-brand: #ffffff;
+	--text-data-up: #32933f;
+	--text-data-down: #b53b35;
+	--text-data-up-alt: var(--blue-500);
+	--text-data-down-alt: var(--violet-500);
+	--text-verified: #3b82f6; /* The verified-yields mark; brighter than bg-brand, 3.7:1 on white (a filled glyph, not text) */
 	--text-warning: #a15d23;
 
-	/* Feedback roles keep their established public names. Unlike the
-	   product-theme variables, these are semantic state tokens. */
+	/* Feedback on the reader's own action (validation, destructive rows,
+	   toasts). Same values as the data and warning tones. */
 	--success: var(--text-data-up);
 	--error: var(--text-data-down);
 	--warning: var(--text-warning);
 
 	/* Stroke (alpha-based: layers correctly on any surface) */
-	--border-very-subtle: #090b0c08; /* Stroke/stroke-very-subtle */
-	--border-subtle: #090b0c0f; /* Stroke/stroke-subtle */
-	--border-medium: #090b0c1f; /* Stroke/stroke-medium */
-	--border-strong: #090b0c82; /* Stroke/stroke-strong */
-	--border-brand: var(--blue-500); /* Stroke/stroke-brand */
+	--border-very-subtle: #090b0c08;
+	--border-subtle: #090b0c0f;
+	--border-medium: #090b0c1f;
+	--border-strong: #090b0c82;
+	--border-brand: var(--blue-500);
 
-	/* States — both hovers verified from the page frames (columns popover
-	   row 6183:293504, metrics card pair 6183:354581/354721). Deliberately
-	   asymmetric across modes: brand-tinted in light, white-lift in dark.
-	   Focus-visible keeps the wash and adds the focus-ring outline (owner
-	   decision 2026-07-09; the wash alone was the entire indicator before).
-	   (Figma name "hover-neutral-normal" is a misnomer in light; rename
-	   requested.) */
-	--hover-row: #1f67d21f; /* States/hover-neutral-normal — popover/menu/table rows */
-	--hover-card: #1f67d20f; /* light: Background/bg-brand-transparent-subtle overlay */
+	/* Hover washes, deliberately asymmetric across modes: brand-tinted in
+	   light, a white lift in dark. Focus-visible may keep the wash; the
+	   focus ring is the indicator. */
+	--hover-row: #1f67d21f; /* popover, menu and table rows */
+	--hover-card: #1f67d20f; /* interactive cards */
 
-	/* Link-colored text ON a brand-tinted background (chain pills). Light
-	   Text/links passes AA there (6.2:1); the dark override below is an
-	   interim owner value because dark Text/links #4b86db is only 4.2:1 on
-	   bg-brand-muted over bg-surface — design ask filed to fix the library
-	   token, at which point this collapses back into --text-link. */
+	/* Link-colored text ON a brand-tinted background (selected pills and
+	   segments). Light text-link passes AA there (6.2:1); dark text-link is
+	   only 4.2:1 on bg-brand-muted over bg-surface, so dark mode lifts it. */
 	--text-link-on-tint: var(--text-link);
 
 	/* Error-colored text ON an error-tinted background (pool exploit banner).
-	   Light Text/data-down passes AA there; the dark override below lifts
-	   red-500 (only 4.2:1 on error/10 over surface) — same pattern as
-	   text-link-on-tint. */
+	   Light text-data-down passes AA there; dark mode lifts red-500, which
+	   is only 4.2:1 on error/10 over surface. */
 	--text-error-on-tint: var(--error);
 
 	/* Chips */
-	--chip-bg: #dedede; /* Chips/bg-default */
-	--chip-text: #484848; /* Chips/text-default */
+	--chip-bg: #dedede;
+	--chip-text: #484848;
 
 	/* ------------------------------------------------------------------
-	   Chart tokens.
-	   Chrome tokens carry TODAY'S exact literal values from the ECharts
-	   configs (MultiSeriesChart, ChartPngExportButton.tsx) — deliberately
-	   NOT mapped onto the text/stroke semantics above, so that consuming
-	   them (PR 3) is pixel-identical by construction. Charts must not
-	   change visually as a side effect of the token refresh.
+	   Chart tokens, read on canvas through
+	   src/components/ECharts/shared/chartTheme.ts. Chrome tokens are not
+	   mapped onto the text and stroke semantics above, so a semantic change
+	   never recolors a chart.
 	------------------------------------------------------------------ */
 	--chart-text: rgba(0, 0, 0, 1); /* titles, legend & dataZoom text, always-on tooltips */
-	/* Axis labels converge on tertiary (chart-theme branch, 2026-07-09): the
-	   frames spec a quieter axis than full ink; previously 5 treatments shipped
-	   (ink 1 / 0.8 / 0.6 / unset-default / hand-rolled literals). */
+	/* Axis labels use the tertiary tier, quieter than full ink. */
 	--chart-axis-label: #6f6f6f;
 	/* Matches Table/SortIcon: text-brand when active, text-tertiary/50 otherwise. */
 	--chart-legend-page-active: var(--bg-brand);
@@ -128,8 +104,7 @@
 	--chart-export-label-stroke: rgba(0, 0, 0, 0.45); /* treemap label outline (black in both modes) */
 	--chart-treemap-label: #111; /* treemap upper label, live + export */
 
-	/* Chart accents (design-driven; consumed only in per-page redesign
-	   sweeps, never as a bulk swap). Fixed across modes per the library. */
+	/* Chart accents: the same in both modes. Never swap them in bulk. */
 	--chart-up: var(--green-500);
 	--chart-down: var(--red-500);
 	--chart-up-alt: var(--blue-500);
@@ -144,26 +119,24 @@ html.dark {
 	--bg-surface-elevated-2: var(--neutral-800);
 	--bg-overlay: #181a1b;
 	--bg-brand-muted: #1f67d233;
-	/* TODO(design): dark value for bg-brand-transparent-subtle unobserved;
-	   one alpha step below muted until confirmed. */
+	/* One alpha step below muted. */
 	--bg-brand-faint: #1f67d21f;
 
 	/* Text */
 	--text-primary: #ffffff;
 	--text-secondary: #c6c6c6;
-	--text-tertiary: var(--neutral-500); /* Text/tertiary */
+	--text-tertiary: var(--neutral-500);
 	--text-disabled: #2f3336;
 	--text-link: #4b86db;
 	--text-data-up: var(--green-500);
 	--text-data-down: var(--red-500);
-	/* TODO(design): the library keeps the alt pair at the 500s across modes,
-	   but blue/violet 500 are ~3.4:1 on dark surfaces — under AA for text.
-	   Interim owner lifts (blue matches dark Text/links; violet ~5.5:1),
-	   same pattern as text-link-on-tint. Chart fills stay on the 500s. */
+	/* Blue and violet 500 are ~3.4:1 on dark surfaces, under AA for text,
+	   so dark mode lifts the text pair (blue matches dark text-link; violet
+	   ~5.5:1). Chart fills stay on the 500s. */
 	--text-data-up-alt: #4b86db;
 	--text-data-down-alt: #a674ec;
 	--text-verified: #3b82f6;
-	--text-warning: #ffa455; /* Text/Warning */
+	--text-warning: #ffa455;
 
 	/* Stroke */
 	--border-very-subtle: #ffffff08;
@@ -172,10 +145,10 @@ html.dark {
 	--border-strong: #ffffff29;
 
 	/* States */
-	--bg-screen-dim: #090b0cb3; /* dialogs' shipped 70%; shadows are invisible in dark */
+	--bg-screen-dim: #090b0cb3; /* stronger in dark, where shadows are invisible */
 
-	--hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
-	--hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
+	--hover-row: #ffffff0f;
+	--hover-card: #ffffff08;
 	--text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
 	--text-error-on-tint: #ec7a73; /* ~6:1 on error/10 over surface (AA) */
 
@@ -183,7 +156,7 @@ html.dark {
 	--chip-bg: var(--neutral-800);
 	--chip-text: #c6c6c6;
 
-	/* Chart chrome (today's exact dark literals) */
+	/* Chart chrome */
 	--chart-text: rgba(255, 255, 255, 1);
 	--chart-axis-label: #878787;
 	--chart-legend-page-inactive: #87878780;
@@ -207,8 +180,8 @@ html.dark {
 
 /* ----------------------------------------------------------------------------
    Tailwind utility registration.
-   `inline` means unused entries emit nothing — this block adds zero CSS
-   until a component actually uses a class, so it is safe pre-migration.
+   `inline` means unused entries emit nothing: this block adds no CSS
+   until a component uses a class.
    Gives first-class utilities with autocomplete: bg-surface, text-primary,
    text-data-up, bg-brand-muted, … (preferred over `bg-(--var)` arbitrary
    values in all new code).
@@ -224,8 +197,7 @@ html.dark {
 	--color-brand-muted: var(--bg-brand-muted);
 	--color-brand-faint: var(--bg-brand-faint);
 	--color-on-brand: var(--text-on-brand);
-	/* Text hierarchy — by convention text-* only (bg-primary would be
-	   nonsense; enforced by review, documented in design.md) */
+	/* Text hierarchy: text-* only, never bg-primary (design.md → "Tokens") */
 	--color-primary: var(--text-primary);
 	--color-secondary: var(--text-secondary);
 	--color-tertiary: var(--text-tertiary);
@@ -248,7 +220,7 @@ html.dark {
 
 /* Border-color utilities get explicit names ("--color-border-subtle" would
    generate the class `border-border-subtle`). Small, flat, variant-free —
-   within the @utility policy in design.md. */
+   within the @utility policy in design.md → "Where code and classes live". */
 @utility border-very-subtle {
 	border-color: var(--border-very-subtle);
 }

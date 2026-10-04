@@ -22,7 +22,7 @@ An effect synchronizes React with something outside it: a subscription, a timer,
 | Default a control from the clock (a calendar's month)     | Derive the default during render; only the reader's own pick goes in state, never a clock frozen at mount                         | `src/containers/Unlocks/TreemapChart/index.tsx`                                                                    |
 | Edit a value the server also owns                         | A draft that is `null` while clean; render `draft ?? server`, set it on edit, and drop it once the server reports the saved value | `src/containers/LlamaAI/components/SettingsModal.tsx`                                                              |
 | Hand a callback to a timer, listener or another hook      | `useStableCallback`; `useEffectEvent` only when its own component's effect calls it                                               | `reveal` in `src/containers/ProDashboard/hooks/useDashboardItemDeepLink.ts`                                        |
-| Show a request's error                                    | Render it where the data would be, not a toast from an effect on `.error`                                                         | design.md → Status states                                                                                          |
+| Show a request's error                                    | Render it where the data would be, not a toast from an effect on `.error`                                                         | `docs/focus-and-errors.md`                                                                                         |
 
 Adjusting state during render (`if (prev !== value) { setPrev(value); setOther(...) }`) is the last resort, for when neither deriving from a stored id nor a `key` works. Comment why at the site.
 
@@ -42,3 +42,4 @@ An effect that looks like a derivation sometimes holds memory. Check these befor
 - Timers and intervals.
 - A request that page arrival itself causes, with no user event, guarded against Strict Mode's second run.
 - Copying a server snapshot into an editable draft, when pending saves and freshness decide whether it applies.
+- An effect that lists a dependency it does not read, so it re-runs when that value changes. `react/exhaustive-effect-dependencies` reports it as an extra dependency; removing it changes behavior, so it carries a disable comment naming the trigger.

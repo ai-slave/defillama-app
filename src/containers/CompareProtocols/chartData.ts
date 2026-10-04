@@ -1,3 +1,13 @@
+/**
+ * Compare Protocols chart composition.
+ *
+ * - A failed base chart keeps the protocol's series as unavailable, and a failed enabled section makes the composed
+ *   points null.
+ * - A successful empty base chart can still produce additive-only history; a successful empty section contributes zero.
+ * - Rows use explicit null gaps so JSON, the chart and the CSV keep the same selected-series order.
+ * - The chart shows no tooltip total: parents and children can overlap.
+ */
+
 import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesTimeSeriesRow

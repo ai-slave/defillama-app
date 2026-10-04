@@ -1,3 +1,13 @@
+/**
+ * Token page Borrow section.
+ *
+ * - Requests use `TOKEN_PAGE_BORROW_QUERY` on both legs (use as collateral, borrow this): meme pools included, net APY
+ *   descending, the same settings and cache identity as SSR.
+ * - Both leg responses must succeed before either list replaces the hydrated rows.
+ * - A failed load keeps the existing rows and offers Retry beside the section error, or in the placeholder when there
+ *   are no rows. Retry shows loading, blocks duplicate requests and keeps the page and sorting.
+ */
+
 import type { SortingState } from '@tanstack/react-table'
 import * as React from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'

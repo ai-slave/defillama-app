@@ -69,6 +69,9 @@ export function EquitiesPageHeader({
 	)
 }
 
+/** The dense KPI card of the Equities aggregate pages. A numeric value is mono-lg in cards narrower than 13rem and
+    mono-xl when the card has room, so compact currency values stay whole instead of ending in an ellipsis; a text
+    value (`valueKind="text"`) is heading-sm and may truncate. */
 export function MetricCard({
 	label,
 	value,

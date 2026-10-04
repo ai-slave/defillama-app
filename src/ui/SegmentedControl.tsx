@@ -4,11 +4,43 @@ import * as React from 'react'
 import { Tab } from './Tabs'
 import { Tooltip } from './Tooltip'
 
-/* Two selection controls in the design system — do not conflate:
-   - default/responsive = the padded, tinted segmented control for periods,
-     denominations, and view modes.
-   - solid = the compact joined toggle group with a solid brand selection for
-     explicit scope switches such as All | Protocols | Chains. */
+/* ----------------------------------------------------------------------------
+   SegmentedControl — one pick from a short set of options, shown as segments.
+
+   Variants (required, with `size`):
+   - default:    the padded, tinted control for chart periods, denominations,
+                 table metric and period filters, and view modes. Selected is
+                 bg-brand-muted + text-link-on-tint; unselected is
+                 text-secondary, text-primary on hover.
+   - responsive: `default` that stretches its segments to the row below `sm`.
+                 Use it in the phone filter menu (under a body-sm row label);
+                 chart and table toolbars keep `default` so they never stretch.
+   - field:      a choice that is a form field (visibility, owner): fills its
+                 row with equal segments. Never a caller width override.
+   - chips:      spaced pill segments.
+   - solid / solid-responsive: the joined toggle group, no padding, solid
+                 bg-brand selection. Only for explicit scope switches such as
+                 All | Protocols | Chains. Class-only hosts compose
+                 `TAG_GROUP_VARIANTS.solid` with `TAG_GROUP_SIZES.md`.
+   - pro:        ProDashboard's own look (ProSegmented).
+   Toolbars use size md (32px). In a phone sheet's rows the padded variants
+   are 44px with a 4px inset and body-md labels. A disabled option dims to
+   60% with the not-allowed cursor, like Button; its reason stays in visible
+   text or the option's `tooltip`.
+
+   `semantics` picks what the control announces; the look is the same:
+   - radio (default): a value that reconfigures one region (a period, a
+     denomination, a chart metric, a grouping). Nothing appears or
+     disappears, so it is a radiogroup. The caller holds `value`.
+   - tabs: switching between distinct content panels. Render it inside a
+     `Tabs` provider from ./Tabs, which holds the value, and give each panel
+     a `TabPanel`; the provider wires every tab's id and aria-controls to
+     its panel. `Tabs` defaults to `selectOnMove={false}`: arrow keys move
+     focus and Enter or Space selects. Panels stay mounted while hidden
+     unless the caller unmounts them.
+   Never convert a value picker to tabs to make controls uniform. Page-level
+   route navigation is `TabLink` in ./Tab.tsx, never this control.
+---------------------------------------------------------------------------- */
 export const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
@@ -52,9 +84,8 @@ export const TAG_GROUP_VARIANTS = {
 } as const
 
 /* The scrolling variants (default, chips, responsive) keep each segment's touch target inside the row: a target
-   reaching past a scroller's edge made it scroll, which drew a scrollbar beside the last segment on touch screens.
-   Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. In a phone sheet's rows the
-   padded variants are 44px with a 4px inset and 14px labels, like the fields around them. */
+   reaching past a scroller's edge makes it scroll, which draws a scrollbar beside the last segment on touch screens.
+   Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. */
 export const TAG_GROUP_SIZES = {
 	sm: 'min-h-6',
 	md: 'min-h-8'

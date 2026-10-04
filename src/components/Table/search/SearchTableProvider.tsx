@@ -15,7 +15,14 @@ import { searchTableContext } from './context'
 
 export type SearchTableOptions<T extends RowData> = Omit<TableOptions<SearchTableFeatures, T>, 'features'>
 
-/** Own table state; controls and renderers subscribe where their output needs it. */
+/**
+ * Own table state; controls and renderers subscribe where their output needs it.
+ *
+ * - The provider selects no table state itself.
+ * - It passes an explicit context value instead of `table.AppTable`, whose internal ref hides data and column
+ *   option changes from React Compiler even when children are memoized.
+ * - The context is scoped to the search table family; a nested provider deliberately starts a new scope.
+ */
 export function SearchTableProvider<T extends RowData>({
 	options,
 	children

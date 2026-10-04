@@ -38,6 +38,11 @@ import {
 import { useEquitiesEarningsCalendar } from './queries.client'
 import type { IEquitiesCalendarRow } from './types'
 
+/* Earnings calendar. Each event names its status in text (Reported, Projected, Past due); past due reads in
+   text-warning. Day count bars use the single-series chart color `CHART_COLORS[0]`, never a text or surface token.
+   High-cardinality filters (market cap, sector, month) are compact SelectWithCombobox triggers, never full chip rows,
+   and filing links stay inline with each event's period metadata so weekly columns stay easy to scan. */
+
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const MARKET_CAP_OPTIONS: ReadonlyArray<{ key: EarningsMarketCapOption; name: string; help: string }> = [

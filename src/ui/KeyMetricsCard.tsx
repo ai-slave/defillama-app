@@ -12,7 +12,10 @@ interface KeyMetricsPanelProps {
 	children: ReactNode
 }
 
-/** The Key Metrics block of every overview card: the heading with the DefiLlama mark top-right, the rows, then the footer. */
+/** The Key Metrics block of every overview card (summary variant 1 in ./SummaryStats.tsx): the title-md "Key Metrics"
+    h2 with the DefiLlama mark top-right, the MetricRow/MetricSection rows, then the footer pinned to the card bottom
+    (csv or report button left, PNG export right; a lone button sits left). Every Key Metrics block renders through it,
+    token, equity and RWA pages included; never hand-roll the heading, mark or footer. */
 export function KeyMetricsPanel({ id, rowsRef, footer, children }: KeyMetricsPanelProps) {
 	return (
 		<div className="flex flex-1 flex-col gap-2">

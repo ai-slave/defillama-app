@@ -1,3 +1,5 @@
+// Standalone liquidations pages reset search and sorting when the view tab changes: they pass `resetTableOnChange`,
+// which keys the tab panel in TableTabs.tsx. Token pages keep table state across views instead.
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'

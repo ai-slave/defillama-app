@@ -6,7 +6,13 @@ import { surfaceMotionStyles } from './Popover'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
-   Anchored popover surfaces (design.md → Popover surface).
+   Anchored popover surfaces: PopoverSurface, ComboboxSurface, and
+   MenuSurface (./MenuSurface.tsx). New surfaces use them, never a raw
+   `Ariakit.Menu`, `Ariakit.Popover` or `Ariakit.ComboboxPopover`; the
+   `raw-popover-surface` rule in check-design-tokens.mjs counts direct
+   renders outside src/ui. A raw surface stays only where no variant can
+   anchor or theme it: popovers that follow a text caret or a selection, and
+   menus on the always-dark subscription surfaces.
 
    A surface is three things wired together: the surface recipe, the mobile
    drawer wrapper (bottom sheet + scrim below `sm`), and the drawer's close
@@ -32,15 +38,41 @@ import { tw } from './tw'
                scrim of its own and no close button: the caller renders the
                back/title/close header (see NestedMenu).
 
+   Every phone drawer uses the dialogs' sheet height, `--sheet-height` in
+   src/tailwind.css: `list` and `nested` fill it, `actions` and `panel` cap
+   at it, so a picker opened over a dialog sheet lines up with it. The
+   drawer shape applies only below `sm`; from `sm` every surface stays
+   anchored to its trigger. A drawer's close or back button is the 32px
+   ghost Button with a 44px hit area, placed so its icon lands on the
+   content edge (12px, 16px in nested menus). Drawer animations own their
+   transform: never add `transform-none` to an animated drawer surface.
+
    ComboboxSurface also supports `search-results`: input-anchored results at
-   every breakpoint, with no drawer, scrim, or dismiss button.
+   every breakpoint, with no drawer, scrim, or dismiss button. A combobox
+   whose input sits on the page (site search, lookups, chip-based
+   multi-selects) uses `search-results`, never `list` or `panel`, because a
+   phone drawer would cover the field being typed into. That field stays
+   the only search input; never add a second one inside the results.
+   Chip-based multi-selects anchor the results to the whole chip-and-input
+   container, so adding chips never narrows the list. Results that are
+   always visible use an inline `Ariakit.ComboboxList` in the page flow.
+
+   Surface: bg-overlay, border-medium, rounded-xl, the `shadow-overlay-sm`
+   token, no padding. The surface owns background, border, radius and
+   overflow; search blocks (PopoverHeader), rows, action rows and footers own
+   their spacing. Action and footer rows stay inside the popover width with
+   row-owned padding and `min-w-0` flex or grid sizing.
 
    Every surface sits on the dialogs' layer, z-50, and the one opened last is
    added to the page last, so it paints on top: a picker over the dialog that
    hosts it, a flyout over its parent menu. `className` is for LAYOUT only —
-   width (`w-72`). Never override the surface stacking, colors or radius.
-   Results that match their input's width pass `sameWidth`: surfaces portal to
-   body, so a width on the wrapper would size them to the viewport.
+   width (`w-72`). Never override the surface stacking, shadow, padding,
+   colors or radius. Results that match their input's width pass
+   `sameWidth`: surfaces portal to body by default (`portal={false}` opts
+   out), so a width on the wrapper would size them to the viewport.
+
+   Gutters: PopoverSurface and ComboboxSurface default to `gutter={6}`,
+   MenuSurface to 8, nested flyouts pass 4; Tooltip keeps Ariakit's default.
 
    Every surface unmounts its content on hide, like the dialogs and tooltips
    in this repo and the shared Select. Pass `unmountOnHide={false}` only with
@@ -168,7 +200,7 @@ export function NestedDrawerHeader({
 }
 
 type SurfaceLayout = {
-	/** Layout placement only: width, z-index. */
+	/** Layout placement only: width. */
 	className?: string
 }
 

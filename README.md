@@ -1,19 +1,8 @@
-# DefiLlama
+# DefiLlama app
 
-[DefiLlama](https://defillama.com) is the leading DeFi analytics and insights platform, providing comprehensive data on total value locked (TVL), yields, stablecoins, and more across all blockchain ecosystems
+The Next.js frontend for [defillama.com](https://defillama.com), plus the investors and enterprise dashboard sites built from the same code. Its data comes from the backends listed under [Where the data comes from](#where-the-data-comes-from).
 
-Check it out live at: https://defillama.com
-
-## Features
-
-- Real-time TVL tracking across 200+ chains and 6000+ protocols
-- DeFi yield aggregation and comparison
-- Stablecoin market analysis and tracking
-- Protocol metrics and historical data
-- Advanced search and filtering capabilities
-- Responsive design for all devices
-
-## Local Setup
+## Local setup
 
 #### 1. Clone the repository:
 
@@ -50,15 +39,19 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 - `bun run dev` starts plain Next.js development.
 - `bun run dev:prepared` refreshes local generated data before starting Next.js development.
-- `bun run build` refreshes generated metadata, dataset caches, site navigation, and `public/robots.txt`, then runs the Next.js production build on the Bun runtime. Vercel builds pass `--webpack`; Coolify builds use Turbopack.
+- `bun run build` refreshes generated metadata, dataset caches, site navigation, `public/llms.txt`, and `public/robots.txt`, then runs the Next.js production build on the Bun runtime. Vercel builds pass `--webpack`; Coolify builds use Turbopack.
 - `bun run build:next` runs plain `next build` without refreshing generated data.
 - `bun run build:deploy` runs the self-hosted deploy wrapper, including build logs, artifact sync, and notifications.
 - `bun run start` starts a standard Next.js production server.
 - `bun run start:docker` runs the Docker/self-hosted entrypoint, including the post-start hook.
 
-## Vercel
+## Deployment
 
-Use the Next.js framework preset and leave Build Command, Output Directory, Install Command, and Development Command overrides disabled. Vercel should run the package build script; do not override the Build Command to `next build`, because that skips metadata cache, dataset cache, site navigation, and robots.txt generation.
+defillama.com sits behind Cloudflare and the [DefiLlama/defillama-app-lb](https://github.com/DefiLlama/defillama-app-lb) load balancer. Its `nginx.conf` routes each request to the self-hosted Coolify origins first, which build with `bun run build:deploy` (Turbopack). When an origin is slow or fails, the balancer serves a stale cached copy, then falls back to the Vercel deployment (webpack). A page that looks different from another, or a build-only bug, can come from either platform.
+
+### Vercel
+
+Use the Next.js framework preset and leave Build Command, Output Directory, Install Command, and Development Command overrides disabled. Vercel should run the package build script; do not override the Build Command to `next build`, because that skips metadata cache, dataset cache, site navigation, llms.txt, and robots.txt generation.
 
 Set the required Vercel environment variables from `.env.example`. For production indexing, set `ROBOTS_ALLOW_INDEXING=true` only in the Production environment.
 
@@ -66,32 +59,43 @@ Set the required Vercel environment variables from `.env.example`. For productio
 
 Do not set `NODE_OPTIONS` on Vercel for this project. Static generation memory is bounded in `next.config.ts`, and Node flags are ignored by the Bun runtime.
 
-## Contributing
+## Where the data comes from
 
-Contributions are welcome. New features, small fixes, docs updates, whatever helps.
+When a number is wrong, the bug is usually in the repo that serves or produces it. Upstream URLs live in `src/constants/index.ts`. Each one resolves in this order: a server-only direct URL from its env var (`src/utils/directApi.ts`), then `PRO_API_BASE_URL` (`pro-api.llama.fi/<API_KEY>/<section>`) when `API_KEY` is set, then the public host.
 
-If you're adding a protocol adapter, check out [DefiLlama-Adapters](https://github.com/DefiLlama/DefiLlama-Adapters).
+Every hosted deploy sets `API_KEY`, so most server-side fetches go through [DefiLlama/pro-proxy](https://github.com/DefiLlama/pro-proxy). It maps each section to a backend and serves some sections from cached files. Some public defaults, such as `etfs.llama.fi` and `markets.llama.fi`, are placeholders: those sections work only through pro-proxy. Check its mapping and cache first, then the repo below. Read backend code at `origin/HEAD`; a local clone can be behind.
 
-Here's how you can help:
+| Data                                                                                           | Constant                                 | Serving repo                            | Produced in                                                                                        |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| TVL, protocols, chains, raises, hacks, emissions, `/overview`                                  | `SERVER_URL`, `V2_SERVER_URL`            | `DefiLlama/defillama-server`            | `DefiLlama/DefiLlama-Adapters` (TVL), `DefiLlama/dimension-adapters` (fees, volume, open interest) |
+| RWA and RWA perps                                                                              | `RWA_SERVER_URL`, `RWA_PERPS_SERVER_URL` | `DefiLlama/defillama-server`            |                                                                                                    |
+| Datasets bucket (token lists, unlocks, search list) and site search                            | `DATASETS_SERVER_URL`, `SEARCH_API_URL`  | written by `defillama-server`           |                                                                                                    |
+| Coin prices and price charts                                                                   | `COINS_SERVER_URL`                       | `DefiLlama/defillama-server` (coins)    |                                                                                                    |
+| Stablecoins                                                                                    | `STABLECOINS_SERVER_URL`                 | `DefiLlama/peggedassets-server`         |                                                                                                    |
+| Bridges                                                                                        | `BRIDGES_SERVER_URL`                     | `DefiLlama/bridges-server`              |                                                                                                    |
+| Yields                                                                                         | `YIELDS_V2_SERVER_URL`                   | `DefiLlama/yield-server-v2`             |                                                                                                    |
+| Perp funding in Downloads                                                                      | `YIELDS_SERVER_URL`                      | `DefiLlama/yield-server`                |                                                                                                    |
+| Vault and protocol risk                                                                        | `VAULT_RISK_SERVER_URL`                  | `DefiLlama/vault-risk-adapters`         |                                                                                                    |
+| Lending risk on token pages                                                                    | `RISK_SERVER_URL`                        | `DefiLlama/llamarisks`                  |                                                                                                    |
+| Liquidations                                                                                   | `LIQUIDATIONS_SERVER_URL_V2`             | `DefiLlama/liquidations`                |                                                                                                    |
+| Equities                                                                                       | `EQUITIES_SERVER_URL`                    | `DefiLlama/pro-proxy` (cached files)    | `DefiLlama/equity-adapters`                                                                        |
+| Pre-IPO                                                                                        | `PRE_IPO_SERVER_URL`                     | `DefiLlama/pro-proxy` (cached files)    | `DefiLlama/pre-ipo-adapters`                                                                       |
+| Crypto Cards                                                                                   | `CARDS_SERVER_URL`                       | `DefiLlama/pro-proxy` (cached files)    | `DefiLlama/crypto-cards-server`                                                                    |
+| Markets and exchanges                                                                          | `MARKETS_SERVER_URL`                     | `DefiLlama/pro-proxy` (cached files)    | `DefiLlama/orderbook-watch`                                                                        |
+| ETFs                                                                                           | `ETF_SERVER_URL`                         | `DefiLlama/pro-proxy`                   | `DefiLlama/etf`                                                                                    |
+| Digital asset treasuries                                                                       | `TRADFI_API`                             | `DefiLlama/pro-proxy`                   | `DefiLlama/tradfi`                                                                                 |
+| Narrative tracker and FDV categories                                                           | `FDV_SERVER_URL`                         | `DefiLlama/fdv-server`                  |                                                                                                    |
+| Icons                                                                                          | `ICONS_CDN`                              | `DefiLlama/icons`                       |                                                                                                    |
+| Accounts, auth, subscriptions, dashboards, research, banners, watchlist                        | `AUTH_SERVER`, `FEATURES_SERVER`         | `DefiLlama/features-server`             | card payments: Stripe, handled in features-server; crypto payments: `LlamaPay/payments-server`     |
+| Investors and enterprise dashboard data (`src/pages/api/public/<project>/*`)                   | `IR_SERVER_URL`                          | `DefiLlama/ir-server`                   |                                                                                                    |
+| LlamaAI                                                                                        | `AI_SERVER`                              | `DefiLlama/llama-ai`                    | `DefiLlama/llama-ai-warehouse`; top-ups: `DefiLlama/llama-ai-x402-payment-service`                 |
+| Pro Dashboard server-side tables                                                               | `LLAMA_DB_URL` (Postgres)                | `DefiLlama/llama-ai-warehouse` (schema) |                                                                                                    |
+| GitHub sign-in (wallet sign-in uses `AUTH_SERVER` `/nonce` and `/eth-auth` in features-server) | `POCKETBASE_URL`                         | `DefiLlama/pocketbase` (hooks)          |                                                                                                    |
+| Banner interests and UTR claim copies                                                          | `USER_ANALYTICS_URL`, `src/api/users.ts` | `DefiLlama/user-analytics`              |                                                                                                    |
+| OG images (Pro dashboards render their own in `src/pages/api/og`)                              | `src/components/SEO/index.tsx`           | `DefiLlama/og-cards`                    |                                                                                                    |
+| Server telemetry                                                                               | `OPS_TELEMETRY_URL`                      | `DefiLlama/defillama-ops`               |                                                                                                    |
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-Before opening a PR:
-
-1. Make sure it builds and runs locally
-2. Keep changes focused and easy to review
-3. Use clear commit messages
-
-## Community
-
-Join the conversation and stay up to date:
-
-- [X/Twitter](https://x.com/DefiLlama)
-- [Documentation](https://docs.llama.fi/)
+Analytics events go to a self-hosted Umami instance with no repo; see `docs/analytics.md`.
 
 ## License
 

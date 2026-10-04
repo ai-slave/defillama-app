@@ -1,6 +1,6 @@
 import { tw } from './tw'
 /* ----------------------------------------------------------------------------
-   MetricChip — selected-chart-metric chip (Figma node 6183:312062).
+   MetricChip — selected-chart-metric chip.
 
    rounded-full, 32px tall (md row height), label-sm in text-primary (white —
    NOT link-blue), 2px gap to a 16px trailing × icon, px-2. The border color

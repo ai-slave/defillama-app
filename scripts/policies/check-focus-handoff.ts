@@ -5,8 +5,8 @@ import { policyTargetFiles } from '../lib/sourceFiles'
 
 /*
  * Focus handoff policy. A control that the browser disables while it has focus drops focus to the page, so a
- * keyboard reader starts over from the top (design.md, Dialog surface: "focus never drops to the page"). Three
- * mechanical shapes cause it and are refused here:
+ * keyboard reader starts over from the top (docs/focus-and-errors.md → "Where focus goes when a control leaves").
+ * Three mechanical shapes cause it and are refused here:
  *
  * 1. A submit button inside a `<fieldset disabled>`: the lock disables the pending button that should hold focus.
  *    Wrap only the fields; the submit sits outside and the submit handler focuses `event.nativeEvent.submitter`.

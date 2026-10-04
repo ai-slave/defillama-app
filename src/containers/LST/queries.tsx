@@ -1,3 +1,15 @@
+/**
+ * The LST directory read model.
+ *
+ * - One population feeds the headline totals, charts, table and exports.
+ * - Core protocol histories are required. The LST-rate and Yields APY sources are optional enrichments: a failed one
+ *   hides only its own table columns, and a successful empty one keeps the columns with empty cells.
+ * - APY uses the pool whose symbol matches the LST-rate symbol exactly, else the largest eligible TVL pool.
+ * - The canonical LST member slug is the identity across sources; never rebuild it from display names, which drops
+ *   mixed-case names.
+ * - Historical token balances sum every key containing `ETH`; current balances use the largest such key.
+ */
+
 import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'

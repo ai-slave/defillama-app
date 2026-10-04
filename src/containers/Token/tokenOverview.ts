@@ -1,3 +1,19 @@
+/**
+ * Token page overview: market data, links, categories, raises and treasury.
+ *
+ * - Website, Twitter, Telegram and Discord resolve independently. A token directory URL wins over the cached CoinGecko
+ *   coin-detail value. CoinGecko handles become full URLs, and Discord uses a Discord invite from the chat links.
+ *   A missing link is `null` and is not rendered.
+ * - Coin details stay available when chart history is missing; that never changes the sources or precedence of current
+ *   market metrics.
+ * - Categories use the same `tokenFilterMetadata` as `/tokens`, joined by exact CoinGecko ID. Every assigned category
+ *   links to `/tokens?categories=<id>`, in the Tokens dropdown order (aggregate market cap, then alphabetical). A token
+ *   with no category has no category row; protocol categories never stand in.
+ * - Raises and treasury are optional: an ordinary fetch failure hides only that part and keeps the overview and current
+ *   metrics. Snapshot-integrity errors and required current-snapshot errors still fail the page.
+ * - Chain tokens never request a protocol treasury.
+ */
+
 import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoCoinById } from '~/api/coingecko'
 import type { CgChartResponse, CoinGeckoCoinDetailResultForOptions } from '~/api/coingecko.types'
 import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'

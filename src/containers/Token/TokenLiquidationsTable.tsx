@@ -1,3 +1,5 @@
+// Token liquidations keep search and sorting across views (`resetTableOnChange={false}` in
+// TokenLiquidationsSection.tsx), unlike the standalone liquidations pages.
 import type { RowData } from '@tanstack/react-table'
 import { SearchTableProvider, type SearchTableOptions } from '~/components/Table/search/SearchTableProvider'
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'

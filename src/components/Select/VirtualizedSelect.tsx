@@ -23,12 +23,24 @@ import { SelectCheckIcon } from './SelectCheckIcon'
 import { selectTriggerStyles } from './types'
 
 /* ----------------------------------------------------------------------------
-   Searchable pickers for long option lists (design.md → Popover surface).
-   Only the rows in view are rendered, and each is measured, so a row may wrap
+   Pickers for long option lists (protocols, chains, tokens, Downloads
+   parameters): VirtualizedSelect and VirtualizedMultiSelect. Never build a
+   long list from a plain input over buttons, or cap it with `slice()`.
+
+   Only the rows in view are rendered, and each is measured
+   (`popoverMeasuredRowStyles`, without `content-visibility`, because an
+   off-screen row would report its placeholder height), so a row may wrap
    or carry a second line. Ariakit keeps DOM focus in the search field and
    moves a virtual active row; the virtualizer keeps that row, its neighbours
    and the selected rows mounted, so arrow keys continue past the rendered
    window and the list opens on the selection.
+
+   Triggers: `field` is an input-style trigger under a visible label-sm
+   text-secondary label, with an optional `labelAction` at the end of the
+   label row; `chip` is a toolbar trigger that reads "Label: value". An
+   option's `logo` draws with TokenLogo on its row and, once picked, on the
+   trigger. A server-searched picker passes `onSearchChange` and lists the
+   options it is given unfiltered.
 ---------------------------------------------------------------------------- */
 
 export type VirtualizedSelectOption<T extends string = string> = {
@@ -149,7 +161,7 @@ function OptionList({
 	matches: ReadonlyArray<VirtualizedSelectOption>
 	multiple: boolean
 	selectedValues: ReadonlyArray<string>
-	/** Leads a multi-select list with the tri-state row (design.md → Popover surface). */
+	/** Leads a multi-select list with the tri-state Select all row (./SelectAll.tsx). */
 	selectAll: { label: string; state: ReturnType<typeof getSelectAllState>; onToggle: () => void } | null
 	isSearching: boolean
 	search: string

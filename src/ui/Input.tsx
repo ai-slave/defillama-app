@@ -2,7 +2,7 @@ import type { ComponentPropsWithRef } from 'react'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
-   Input — the design.md text-input recipe.
+   Input — every single-line text field.
 
    Field: 32px (the min-h-8 floor decides; py-0.5 keeps the 16px phone text
    under it, like Button md), bg-page on the surface it sits in,
@@ -10,11 +10,25 @@ import { tw } from './tw'
    is 44px (`sheet:`), matching the sheet's footer buttons. Entered text and
    placeholder are body-sm (text-primary / text-tertiary); focus swaps the
    border to brand, and `aria-invalid` keeps it border-error while focused
-   too. Entered text stays text-base below the sm breakpoint so iOS Safari
-   does not zoom the page when the field focuses (it reads the typed size
-   only), while the placeholder drops to 14px on the same 24px line, so the
-   hint reads as a hint — sm:body-sm takes over from there (variant
-   utilities sort after base ones, verified).
+   too, so callers never add their own error border. Entered text stays
+   text-base below the sm breakpoint so iOS Safari does not zoom the page
+   when the field focuses (it reads the typed size only), while the
+   placeholder drops to 14px on the same 24px line, so the hint reads as a
+   hint; sm:body-sm takes over from there. The recipe sizes the
+   placeholder; callers never do.
+
+   Date fields are `<Input type="date" className="cursor-pointer dark:scheme-dark">`.
+   Multiline fields use `textareaStyles`, never `inputStyles`.
+
+   Search fields: SearchField (./SearchField.tsx) for a search with a clear
+   button. A hand-built one renders `<Input className={searchFieldInputPlacementStyles}>`
+   inside a wrapper; only Ariakit hosts (Combobox, ComboboxInput) take
+   `searchFieldInputStyles`. Table searches pick one wrapper:
+   `searchFieldWrapperStyles` (standalone, left-anchored),
+   `searchFieldInlineWrapperStyles` (fixed 280px beside other toolbar
+   controls, never shrinks), or `searchFieldFlexibleWrapperStyles` (shares
+   the remaining toolbar width). Never copy a page-local
+   `sm:max-w-[280px]` wrapper.
 
    Leading icon (optional, per the recipe's 16px icon + gap-1): wrap the
    field in a `relative` label, absolutely position a 16px icon at left-3,
@@ -23,8 +37,8 @@ import { tw } from './tw'
    not a spacing restyle, so it is allowed in `className`.
 
    `className` is otherwise LAYOUT PLACEMENT ONLY (w-full, m-3, shrink-0…),
-   same contract as Button/Card. Different colors/type = a new variant to
-   agree on in design.md, not a className override.
+   same contract as Button/Card. Different colors or type are a new variant
+   in this file, not a className override.
 
    For Ariakit hosts that render their own input (Ariakit.Combobox), pass
    `className={inputStyles}` (plus layout classes) instead of the component.

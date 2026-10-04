@@ -3,25 +3,47 @@ import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
 import { LoadingSpinner } from './Loaders'
 
 /* ----------------------------------------------------------------------------
-   Button — the design.md button recipe (see "Component recipes").
+   Button — every action button. Callers choose `size`; `variant` defaults to
+   secondary.
 
-   Variants map to the Figma frames:
-   - secondary: transparent + border-medium (default toolbar/action button)
-   - primary:   bg-brand + text-on-brand (one per view: Done, Sign-in, …)
-   - outline:   border-brand + text-link ("active = branded" toggles/chips)
-   - destructive: outlined data-down treatment for irreversible actions
-   - filter:    rounded-full brand-border filter pill (metrics directory)
-   - toggle:    filled toolbar filter with a brand-tinted active state
-   - metricBrowse: dashed 6px-radius selected pill in the home metrics browse bar
+   Variants:
+   - secondary:   transparent + border-medium (default toolbar/action button)
+   - primary:     bg-brand + text-on-brand (one per view: Done, Sign-in, …)
+   - outline:     border-brand + text-link
+   - destructive: border-data-down + text-data-down for irreversible actions
+   - ghost:       borderless quiet trigger; `data-active` gives it the
+                  brand-muted fill and text-link-on-tint
+   - filter:      rounded-full brand-border pill; `data-active` tints it.
+                  Metrics-directory category filters and removable
+                  active-filter pills (label + x) use `filter` size="sm";
+                  never hand-roll the pill classes
+   - toggle:      elevated neutral fill, brand border/tint/text-link-on-tint
+                  when `data-active`: toolbar filters and selectable options
+   - metricBrowse: dashed brand pill in the home metrics browse toolbar
+   Variants with a selected state use the additive `hover-wash`, so the
+   active tint stays under hover. Variants never inject icons.
 
-   Heights are PADDING-DRIVEN, never fixed: every control in a row shares
-   the same py, so mixed content (text, icons, both) always lines up. Text
-   floor is 12px (label-sm) — the frames' 10px control text was rejected
-   as too small.
+   Sizes: sm = min-h-6 px-2 py-0.5 rounded-md; md = min-h-8 px-3 py-1.5
+   rounded-lg; both label-sm. Heights are PADDING-DRIVEN, never fixed: every
+   control in a row shares the same py, so mixed content lines up. `square`
+   (icon-only) is p-0.5 / p-1.5. In a phone sheet's rows (`data-sheet`, the
+   `sheet:` variant) md grows to 44px with a label-md label and a square md
+   to 44x44; sm keeps its size. On touch screens `touch-target` gives every
+   size an invisible 44px hit area. Never pin `h-*` or `size-*` on a button,
+   and never put an sm control beside md ones.
+
+   Icons: an icon beside a label is 14px (`size-3.5`); an icon-only square
+   control uses 16px (`size-4`). An icon-only action beside text buttons
+   reads better with a label, which also spares it the Tooltip an icon-only
+   control needs.
 
    `className` is for LAYOUT PLACEMENT ONLY (ml-auto, w-full, shrink-0…),
-   same contract as Card. If you need different colors/spacing, that is a
-   new variant to agree on in design.md, not a className override.
+   same contract as Card. Different colors or spacing are a new variant in
+   this file, not a className override.
+
+   Width: `min-w-fit` keeps the label from shrinking under the global
+   `* { min-width: 0 }`, and a pending button keeps the wider of its idle and
+   busy widths, so the row does not reflow while the action runs.
 
    The button is Ariakit's Button, so a disabled button keeps React Aria's
    model: `disabled` takes it out of the tab order, and two states keep it
@@ -34,14 +56,28 @@ import { LoadingSpinner } from './Loaders'
      guards). Pass null once the action settles.
    - `accessibleWhenDisabled`: a control that disables itself when pressed (a
      stepper at its limit, Resend during its cooldown, a pager at its end).
+   A pending button is never natively disabled, even when the caller also
+   passes `disabled`, because a native disable drops focus to the page.
+   Disabled controls dim to 60% and keep their fill on hover. Never a spinner
+   without a label or a label without a spinner; an icon-only pending button
+   shows the spinner alone and announces the label.
    Like Ariakit's, the button is type="button" unless it says otherwise: a
    submit button passes type="submit", so no other button submits by accident.
    Inside a dialog, any other focused control that disappears hands focus to
    the dialog's first control (catchLostFocus in src/ui/focus.ts).
 
+   A form that locks its fields while a request runs wraps only the fields in
+   `<fieldset disabled>`. The submit stays outside it (in DialogFooter, joined
+   by `form=`), and the submit handler focuses `event.nativeEvent.submitter`,
+   so Enter in a field leaves focus on the pending button and an error leaves
+   the reader on the retry.
+
    For Ariakit hosts, prefer composing the component itself:
    <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
-   `buttonStyles(...)` exists for the rare host that only takes a class.
+   (DialogDismiss, MenuButton, PopoverDisclosure alike). Never render it into
+   `Ariakit.Button`: pass `disabled` and `accessibleWhenDisabled` to Button.
+   `buttonStyles({ size })` exists for the rare host that only takes a class.
+   ProButton follows the same model with `loading`.
 ---------------------------------------------------------------------------- */
 
 type ButtonVariant =
@@ -71,7 +107,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary'
 }
 
-/* min-h pins the control heights the frames use (sm 24, md 32) so rows of
+/* min-h pins the control heights (sm 24, md 32) so rows of
    mixed content (16px icons vs 16px text lines) stay exactly level; padding
    supplies the breathing room within. sm py is 0.5 (not 1) because label-sm's
    16px line + py-1 + border = 26px would overshoot the 24px floor — content
@@ -200,7 +236,8 @@ function PendingContent({ square, label, idle }: { square: boolean; label: strin
 
 /** A split button: a command and the menu that changes it ("Download CSV" and its format menu) share one outline.
     The children are primary Buttons of one size, the menu trigger `square` and last; the group squares the corners
-    where they touch and draws a divider between them, so every height and touch target stays the Button recipe's. */
+    where they touch and draws a divider between them, so every height and touch target stays the Button recipe's.
+    The menu is a MenuSurface with `Ariakit.MenuItemRadio` rows. */
 export function ButtonGroup({ label, children }: { label: string; children: ReactNode }) {
 	return (
 		<div

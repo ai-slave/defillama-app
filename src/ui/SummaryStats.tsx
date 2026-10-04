@@ -4,19 +4,31 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatPercentChange } from '~/utils/numberFormat'
 
 /* ----------------------------------------------------------------------------
-   Summary-card layout (design.md → Summary metric cards, variants 1–2).
+   Summary metric cards: the overview card beside a page's main chart.
 
    <SummaryCardGrid>            page grid: summary card (1 col on xl) + chart
-     <SummaryStatsCard>         the stats card
-       <StatItem … />           headline label/value stacks
-       …MetricRow / children…   rows, toggles, footers stay at the callsite
+     <SummaryStatsCard>         the stats card; gap="sm" only for dense rows
+       <StatItem … />           headline label over a mono-xl value
+       <SummaryChange … />      the headline's change beside its StatItem
+       <KeyMetricsPanel>…       rows (./KeyMetricsCard.tsx, ./MetricPrimitives.tsx)
      </SummaryStatsCard>
      <ChartPanel className="col-span-2">…                     (route-owned)
    </SummaryCardGrid>
 
-   These replace the grid/card/stat strings that were copy-pasted across
-   ~19 route files. Titles (h1 + logo) vary legitimately and remain callsite
-   JSX; a headline's change is SummaryChange.
+   Three variants; pick one, never a hybrid:
+   1. Headline + "Key Metrics" heading + metric rows (chain and protocol
+      overviews): StatItem, then KeyMetricsPanel.
+   2. Headline + metric rows, no heading (adapter and token overviews):
+      StatItem, then MetricRow rows without KeyMetricsPanel.
+   3. Stat stack (stablecoins overview): label-md text-secondary over a
+      mono-xl headline, then compact rows with label-md text-secondary
+      labels and non-bold mono-md values; no heading, no bold rows.
+   Titles (h1 + logo) and collapsible bodies stay callsite JSX. StatItem
+   also stands alone in stat-tile grids. Every headline change renders
+   through SummaryChange; never hand-roll the percent and its window.
+
+   Inline summary strips above a table or chart use InlineStatStrip; never
+   hand-roll a new strip.
 ---------------------------------------------------------------------------- */
 
 export function SummaryCardGrid({ className, children }: { className?: string; children: ReactNode }) {
@@ -54,8 +66,8 @@ interface StatItemProps {
 	tooltip?: ReactNode
 	/** First stat often doubles as the page heading; headings force a div container (invalid inside p). */
 	labelAs?: 'span' | 'h1' | 'h2'
-	className?: string
 	/** Layout-only additions; the type comes from the recipe. */
+	className?: string
 	/** Single-line value that ellipsizes instead of wrapping (reserves control height). */
 	truncate?: boolean
 }
@@ -86,7 +98,8 @@ export function SummaryChange({
 	tooltip
 }: {
 	percent: number
-	/** Worded as a comparison window, such as "over 24h" (design.md → measurement vs comparison window). */
+	/** A comparison window the caller words from the metric's definition: "over 24h", or "vs 24h ago" for a rolling
+	    value against its own earlier snapshot. The component never adds "over" itself. */
 	comparison: string
 	/** The same movement in another unit, such as the dollar change; underlines the percent. */
 	tooltip?: string
@@ -123,11 +136,9 @@ export interface InlineStatStripItem {
 	changeClassName?: string
 }
 
-/** Inline stat strip (design.md → Summary metric cards, inline variant): a
-    full-width Card of `label: value` pairs above a table or chart. One rhythm
-    everywhere — strip padding, 14px pairs (body-md secondary labels, label-md
-    values), 24px item gaps. `stacked` puts each label over its value for
-    dense one-row headers. */
+/** Inline stat strip: a full-width Card of `label: value` pairs above a table or chart. One rhythm everywhere: strip
+    padding, 14px pairs (body-md secondary labels, label-md values), an optional colored change, 24px item gaps.
+    `stacked` puts each label over its value for dense one-row headers. */
 export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStripItem>; stacked?: boolean }) {
 	return (
 		<Card as="dl" padding="strip" className="flex w-full flex-wrap items-center gap-x-6 gap-y-2">

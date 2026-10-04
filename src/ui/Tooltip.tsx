@@ -11,6 +11,13 @@ interface ITooltip extends Ariakit.TooltipOptions {
 	placement?: Ariakit.TooltipProviderProps['placement']
 }
 
+/* Tooltip — plain short text on hover, focus and tap, on the 6px tooltip surface. Structured or long content is a
+   Hovercard (./Hovercard.tsx); content a reader acts on is a popover. Never put data in a native `title=`: it is
+   unreachable on touch and unstyled. An icon-only control has an `aria-label` plus a Tooltip.
+
+   Touch has no hover, so a tap opens the tooltip whatever element `render` makes the anchor, except an anchor that
+   is, or sits inside, a link, button or other control, where the tap keeps that control's action. */
+
 /** Elements whose tap already does something, such as a link or button: a tap there keeps that action instead of opening the tooltip. */
 const TAP_ACTION_SELECTOR =
 	'a[href], button, summary, input, select, textarea, label, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]'

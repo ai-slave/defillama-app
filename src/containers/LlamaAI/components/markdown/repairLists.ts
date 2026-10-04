@@ -1,3 +1,7 @@
+// Models write two list habits that Markdown does not parse as lists: an ordered list starting above 1 right
+// after a paragraph, and a sub-list indented less than its parent item's content. Both repairs read the parse
+// tree and rewrite only the affected range. Unlike `mendStreamingMarkdown`, they also run on finished text, so a
+// finished answer keeps the lists its last streamed frame showed.
 import type { Root } from 'mdast'
 import { visit } from 'unist-util-visit'
 

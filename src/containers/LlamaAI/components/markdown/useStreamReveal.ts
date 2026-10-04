@@ -37,6 +37,9 @@ const FREE_RENDER = () => 0
  * `renderCostMs` (how long the last markdown render took) paces the commits: the text keeps
  * advancing every frame, but a new commit waits until the previous one has earned its share of
  * the budget. A paragraph commits every frame; a long open table commits a few times a second.
+ *
+ * Per-word fade-in spans were rejected: they add a DOM node per word and break the heading text that
+ * heading ids read and the citation markers in the text.
  */
 export function useStreamReveal(content: string, active: boolean, renderCostMs: () => number = FREE_RENDER) {
 	const [revealed, setRevealed] = useState(active ? 0 : content.length)

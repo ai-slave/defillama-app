@@ -9,6 +9,11 @@ import {
 	type ExchangeMicaStatus
 } from './models'
 
+/* KYC requirement chips give each requirement type its own stock hue (ID sky, selfie violet, proof of address amber,
+   income profile teal, knowledge quiz indigo), an exception the `builtin-palette-color` baseline keeps. The hue marks
+   a category, not a state; the icon and tooltip carry the meaning. Keep the palette in KYC_REQUIREMENT_BY_TOKEN and
+   never use it for status: compliance status badges use the data-up, warning and data-down tones in TONE_CLASS. */
+
 type ComplianceTone = 'positive' | 'caution' | 'negative' | 'neutral'
 
 interface StatusPresentation {

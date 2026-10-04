@@ -1,5 +1,19 @@
 import { chainIconUrl, equityIconUrl, exchangeIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 
+/* ----------------------------------------------------------------------------
+   TokenLogo — a circular logo for a token, chain, exchange, pegged asset or
+   equity. A missing image falls through `fallbackSrc`, then the placeholder,
+   then hides.
+
+   Token, chain, exchange and pegged-asset artwork fills the circle
+   (`object-cover`). Equity artwork is company art: it keeps its proportions
+   (`object-contain`) inside the circle, with a subtle border on the fixed
+   light `bg-equity-logo` canvas the source assets are drawn for. Never
+   stretch equity artwork or put it on a dark surface. `equityIconUrl` in
+   src/utils/icons.ts may route a ticker whose asset is a poorly fitted
+   wordmark to a reviewed alternative.
+---------------------------------------------------------------------------- */
+
 export type LogoKind = 'token' | 'chain' | 'exchange' | 'pegged' | 'equities'
 
 type TokenLogoProps = {

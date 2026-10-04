@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
 /* ----------------------------------------------------------------------------
-   Popover header — the block above a popover list (design.md → Popover
-   surface): a search field, then optional full-bleed rows such as a toggle
+   Popover header — the block above a popover list: a search field, then
+   optional full-bleed rows such as a toggle
    that qualifies the selection. It owns every gap inside it, and one divider
    separates it from the list, so a surface reads as two groups: title and
    search, then the list. Selection actions (Select all) are list rows, not

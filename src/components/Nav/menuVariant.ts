@@ -1,3 +1,14 @@
+/*
+ * menu-layout-v1 compares two main menus. A is the menu from public/pages.json, with Equities' child labels aligned
+ * to the parent text. B is MENU_VARIANT_B below: the same row recipe, grouped, with Rewards added to Tools. In both,
+ * the current page's group opens on its own and at most one group is open (groupState.ts). Premium, pinned pages,
+ * personal dashboards, Old Menu and the footer destinations stay in both.
+ *
+ * It is a `site` experiment in EXPERIMENTS (~/utils/analytics/experiment): the variant is the site's persistent 50/50
+ * `defillama-ab-group` assignment (AB_GROUP_COOKIE_NAME in ~/utils/abTesting), so it shares cohorts with other site experiments and never rerandomizes on navigation.
+ * PrimaryNavLinks server-renders both layouts and the pre-paint `data-ab-group` attribute shows one through CSS;
+ * without an assignment the menu is A. Never pick the layout on the client, or the other one flashes first.
+ */
 import type { TNavLink } from './types'
 
 export const MENU_EXPERIMENT_ID = 'menu-layout-v1'

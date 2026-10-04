@@ -1,3 +1,12 @@
+/**
+ * Narrative Tracker returns.
+ *
+ * - When the selected denomination has no usable benchmark, relative returns stay unavailable. Keep the selected
+ *   denomination and show its availability message; never substitute USD returns.
+ * - USD returns need no benchmark.
+ * - A benchmark return of -100% makes the division undefined, so that point is unavailable.
+ */
+
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { boundSelection } from '~/components/Select/localSelection'
 import type { TimeSeriesEntry } from './api.types'

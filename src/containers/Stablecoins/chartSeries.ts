@@ -1,3 +1,18 @@
+/**
+ * Stablecoin chart series.
+ *
+ * - Breakdown pickers check every aggregate-eligible asset by default; double-counted assets are available only by
+ *   explicit selection.
+ * - The chart draws the top named assets plus their exact `Others` remainder, and a double-counted asset never lands in
+ *   `Others`. Pro pie charts follow the same rule; a scope where every asset is double counted has an empty default and
+ *   no headline total.
+ * - The dominance view offers only aggregate-eligible assets, and its `Others` is the aggregate total minus the drawn
+ *   series, so every row totals 100%.
+ * - Draw only the points the producer sends; never extend a series past its last point.
+ * - When several supply snapshots fall in one UTC day, keep the last one; never add stock values together. Additive
+ *   flow metrics sum.
+ */
+
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type {
 	ChartTimeGroupingWithCumulative,

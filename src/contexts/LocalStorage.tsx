@@ -355,6 +355,10 @@ export const updateAllSettingsInLsAndUrl = (keys: Partial<Record<SettingKey, boo
 	notifyKeyChange(DEFILLAMA)
 }
 
+// `tvl` holds the "Include in TVL" toggles (TVL_SETTINGS) that every TVL surface reads: chain and
+// protocol overviews, ranking and list tables, and TVL charts. `tvl_chains` holds only the chain
+// grouping toggles (CHAINS_CATEGORY_GROUP_SETTINGS) that `/chains`, `/chains/[category]` and
+// `/stablecoins/chains` read. A chain page's TVL toggles live in `tvl`, never `tvl_chains`.
 type TSETTINGTYPE = 'tvl' | 'tvl_chains' | 'stablecoins' | 'bridges' | 'dimension_chart_interval' | 'compare_chains'
 
 function getSettingKeys<T extends TSETTINGTYPE>(type: T): Array<KeysFor<T>> {

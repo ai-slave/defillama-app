@@ -17,20 +17,26 @@ const canonicalExports = new Set([
 	'parseDateTimestamp'
 ])
 
-// These modules own deliberately non-canonical domain output documented in
-// docs/date-formatting.md. Keep this list narrow: a new raw formatter should fail CI.
+// The allowlists below name modules that own deliberately non-canonical domain output. Each keeps its own range,
+// zone and serialization rules, but not a confirmed bug such as dropping a meaningful time or including one extra
+// day in an inclusive preset. Keep them narrow: a new raw formatter should fail CI.
 const intlDateFormatFiles = new Set([
 	canonicalFormatter,
+	// Exchange charts name the UTC zone in their formatters.
 	'src/containers/Exchanges/DirectoryChart.tsx',
 	'src/containers/Exchanges/ResearchChart.tsx',
 	'src/containers/Exchanges/VenueChart.tsx',
+	// The earnings calendar's product day is the New York calendar day (comment at NEW_YORK_DATE_FORMATTER).
 	'src/containers/Equities/server/marketData.server.ts',
+	// Alert scheduling reads each zone's offset.
 	'src/containers/LlamaAI/components/alerts/schedule.ts',
 	'src/pages/research/authors/[slug].tsx'
 ])
 
 const localeDateMethodFiles = new Set([
+	// ECharts daily tooltips, UTC timestamps with a time, weekly to yearly ranges, emphasis and hallmark labels.
 	'src/components/ECharts/shared/formatters.ts',
+	// Article publication times, scheduling inputs, revision times and article-card dates.
 	'src/containers/Articles/editor/ArticleEditorUtils.ts',
 	'src/containers/Articles/editor/RevisionHistoryDrawer.tsx',
 	'src/containers/Articles/landing/utils.ts',
@@ -41,6 +47,7 @@ const localeDateMethodFiles = new Set([
 	'src/containers/Investors/dashboards/hyperliquid/Stats.tsx',
 	'src/containers/Investors/dashboards/hyperliquid/Trades.tsx',
 	'src/containers/LlamaAI/components/AddToArticle/AddToArticleModal.tsx',
+	// Alert scheduling and its time-zone offsets.
 	'src/containers/LlamaAI/components/AlertsModal.tsx',
 	'src/containers/LlamaAI/components/alerts/createAlertForm.ts',
 	'src/containers/TokenPnl/format.ts'
@@ -48,11 +55,14 @@ const localeDateMethodFiles = new Set([
 
 const dayjsFormatFiles = new Set([
 	'src/containers/Cexs/DateFilter.tsx',
+	// Download range labels: "Last N days" is exactly N inclusive calendar dates ending today, and YTD includes
+	// January 1 and today.
 	'src/containers/Downloads/csvDateFilter.ts',
 	'src/containers/Downloads/savedDownloads.ts',
 	'src/containers/ProDashboard/components/CustomTimePeriodPicker.tsx',
 	'src/containers/ProtocolOverview/AdditionalInfo.tsx',
 	'src/containers/RWA/Perps/contractPageUtils.ts',
+	// Unlock calendar labels, query date keys and timestamps with explicit GMT offsets.
 	'src/containers/Unlocks/CalendarDayCell.tsx',
 	'src/containers/Unlocks/CalendarView.tsx',
 	'src/containers/Unlocks/PastUnlockPriceImpact.tsx',
@@ -61,6 +71,7 @@ const dayjsFormatFiles = new Set([
 	'src/containers/Unlocks/UpcomingEvent.tsx',
 	'src/containers/Unlocks/useUnlockChartData.ts',
 	'src/containers/Unlocks/WeekDayColumn.tsx',
+	// iCalendar fields are machine output.
 	'src/utils/calendar.ts'
 ])
 

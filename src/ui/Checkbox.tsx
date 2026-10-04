@@ -1,6 +1,21 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentProps, ReactNode } from 'react'
 
+/* ----------------------------------------------------------------------------
+   Checkbox — a 14px rounded box: checked is bg-brand with a white check,
+   unchecked an empty border-strong box. Callers choose the wrapper
+   `variant`:
+   - default / filter / filter-borderless: rows in lists, menus and filters.
+   - inline:  label-md, centred, for short one-line toggles.
+   - consent: body-sm text-secondary like the form copy around it, for a
+              sentence-long agreement (claim consents, terms); the box stays
+              on the label's first line when it wraps.
+   Keyboard focus on the hidden input draws the ring and row wash on the
+   label (`has-focus-visible:`), so callers never track focus. A disabled
+   checkbox dims to 60% with the not-allowed cursor, like Button; its reason
+   stays in visible text.
+---------------------------------------------------------------------------- */
+
 const CHECKBOX_WRAPPER_VARIANTS = {
 	default:
 		'group flex cursor-pointer flex-nowrap items-center gap-3 rounded-md px-3 py-2 body-sm text-primary hover:bg-hover-row has-focus-visible:bg-hover-row has-focus-visible:focus-ring',

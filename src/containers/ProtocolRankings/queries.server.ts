@@ -406,6 +406,12 @@ function aggregateActivityMetric(
 	}
 }
 
+/**
+ * The expensive multi-adapter aggregation behind the rankings snapshot. It has
+ * two callers: the snapshot builder in `server/tableData.server.ts`, and Forks,
+ * whose fork filter must run before parent aggregation. Other pages read the
+ * rankings snapshot, or join `fetchProtocols` with their own domain data.
+ */
 export const getProtocolsByChain = async ({
 	chain,
 	chainMetadata,

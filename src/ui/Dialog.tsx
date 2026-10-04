@@ -17,35 +17,34 @@ import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
-   Dialog — the design.md popover/dialog surface recipe (stroke-medium,
-   radius 12).
+   Dialog — modal surfaces: Dialog, SideSheet, and ConfirmDialog
+   (./ConfirmDialog.tsx). Build new dialogs from these components, not the
+   class strings; a raw Ariakit.Dialog passes `ref={catchLostFocus}`. Never
+   reuse the popover drawer helpers for a task dialog.
 
-   Surface: below sm = bottom drawer (full width, rounded top, safe-area pad),
-                       height fits content up to 85dvh;
-            sm+      = centered card, height fits content up to 720px, width
-            capped at --dialog-width (default 600px).
-            Only the bottom edge is pinned below sm, so the sheet sizes to its
-            content. `dialogFullSheetSurfaceStyles` keeps the full 85dvh sheet
-            instead when the content changes height in use (search results,
-            lists that load, filter rows). Below sm the sheet sits on top of
-            the keyboard and caps its height to the space above it, through
-            the vars useKeyboardInset publishes.
-   Chrome:  header/footer rows bring their own `border-subtle` divider and
-            px-4 py-3 section padding; title is DialogHeading (heading-xs);
-            close × is a 32px ghost square Button with a 16px x icon; footer
-            is <DialogFooter> with <Button size="md">Cancel</Button> +
-            <Button variant="primary" size="md">Save/Done</Button>.
-   Body:    the surface is overflow-hidden flex-col — give the scrolling
-            region `min-h-0 flex-auto overflow-y-auto` and p-3 itself.
-
-   `dialogSurfaceStyles` (bg-overlay) is the default for content dialogs —
-   a single sheet of controls/text. `dialogCanvasSurfaceStyles`
-   (bg-surface-elevated-1) is only for canvas dialogs that host white
-   bg-surface cards inside them (currently: Metrics).
-
-   Both are plain strings for Ariakit.Dialog's className. Width is LAYOUT
-   and comes from the call site: append e.g. `[--dialog-width:448px]` —
-   never override the surface colors/radius.
+   Surface: below sm, a bottom sheet (full width, rounded top corners, no
+            bottom radius, safe-area pad) that hugs its content up to
+            `--sheet-height` (src/tailwind.css). `fullSheet` keeps the full
+            sheet height when the content changes height in use (search
+            results, lists that load, suggestions that appear as you type,
+            filter rows you add); everything else hugs, forms included.
+            The sheet sits on top of the iOS keyboard: useKeyboardInset
+            (mounted once in _app) publishes --keyboard-inset and
+            --visual-viewport-height, which set its bottom offset and height
+            cap, so it shrinks above the keyboard and scrolls inside.
+            From sm, a centered card that fits its content up to
+            min(720px, 100% − 32px). Never patch sheet height per dialog.
+   Fill:    bg-overlay. `canvas` gives the elevated-1 fill, only for a body
+            of bg-surface cards. Emphasis boxes inside a content dialog use
+            bg-surface-elevated-1; dashed empty-state wells use bg-page.
+   Rows:    DialogToolbar, DialogBody, DialogFooter and a drawer's
+            PopoverHeader search carry `data-sheet`. Below sm, controls in
+            them take a 44px floor through the `sheet:` variant: fields,
+            select triggers, md buttons (a square md grows to 44x44) and
+            padded segmented controls. sm controls keep their size, and the
+            header keeps 32px controls. The rule reaches every descendant,
+            shared page parts included; never pin `h-*` or `size-*` on a
+            control, so a row never mixes heights.
 ---------------------------------------------------------------------------- */
 
 const dialogSurfaceBaseStyles =
@@ -63,30 +62,67 @@ const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevate
 export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto overscroll-contain`
 
 /* ----------------------------------------------------------------------------
-   Dialog / SideSheet — the surfaces as components. Pick a size, never an
-   arbitrary --dialog-width:
+   Dialog / SideSheet sizes. Pick a size, never an arbitrary --dialog-width
+   (the `arbitrary-dialog-width` rule in check-design-tokens.mjs):
      Dialog     sm 448 (confirms, short forms, lists) · md 600 (forms, pickers)
                 · lg 880 (two-pane filters, rails, settings)
                 · xl 1280, up to min(900, 100% − 32) tall, for wide viewers
-                  that fit their content (the fullscreen chat table)
+                  that fit their content
                 · xl + `workspace`: a fixed min(900, 100dvh − 32) tall, for
-                  self-contained editors whose panes scroll on their own
-                  (Add card, SQL editor, Downloads previews, Metrics), so a
-                  pane that changes never resizes the dialog. On phones a
-                  workspace is the full sheet and brings its own layout,
-                  usually a switch between its panes in the toolbar band.
+                  self-contained editors and viewers whose panes scroll on
+                  their own, so a pane that changes never resizes the
+                  dialog. On phones a workspace is the full sheet and brings
+                  its own layout, usually a switch between its panes in the
+                  toolbar band, never its desktop panes stacked.
      SideSheet  sm 448 (forms, filters) · md 672 (detail viewers)
                 · lg 1152 (docs with a table of contents, history)
    Below sm both are bottom sheets: a Dialog hugs its content unless
    `fullSheet` or a workspace; a SideSheet always keeps the full sheet height.
-   `canvas` gives either the elevated-1 fill for a body of bg-surface cards.
+   A two-pane sheet shows one pane at a time below md (the list, or the
+   pick's detail with a DialogBackButton); every switch goes through
+   `keepFocus` from ./focus.ts. A product that re-scopes tokens under its own
+   root class passes `scope`, because a portalled dialog sits outside it.
 
    `pending` locks the surface while a request that cannot be cancelled runs:
    Escape, an outside tap, the header × and DialogCancelButton stop closing
    it. A request that aborts on close does not need it.
 
-   Contents: <DialogHeader> · optional <DialogToolbar> (search, tabs, steps)
-   · <DialogBody> · optional <DialogFooter>.
+   Contents:
+     <DialogHeader>   56px row (min-h-14 px-4 py-2.5) with a divider: an
+                      optional `leading` control (DialogBackButton, a 32px
+                      icon tile), heading-xs title, optional body-sm subtitle,
+                      and the × unless closable={false}. A palette uses
+                      <DialogSearchHeader>: the search field takes the
+                      title's place, which stays for screen readers.
+     <DialogToolbar>  optional band for search, tabs or steps.
+     <DialogBody>     `content` p-4 with 16px between blocks, `list` p-2,
+                      `flush` for panes and bodies that own their layout.
+                      Third-party widgets (Turnstile) fill the row like the
+                      fields around them.
+     <DialogFooter>   every action row; never a hand-rolled one. Leading
+                      actions (Clear all, a status line) far left, `dismiss`
+                      (Cancel) next, the primary action last. One row at
+                      every width; see its JSDoc for the phone layout.
+   Confirmations use ConfirmDialog: no ×, Cancel kept at every width,
+   role="alertdialog" only when the choice is destructive or irreversible.
+   ConfirmActionDialog wraps it for a delete-style mutation.
+
+   Behavior:
+   - A dialog that would drop work on close mounts DialogDiscardGuard with
+     `when` true while the draft differs from a snapshot of what it opened
+     with, never a "touched" flag. Its footer Cancel is DialogCancelButton;
+     never write a Cancel that decides for itself whether to ask.
+   - Reset steps when the dialog opens, never in its close handler: key the
+     stateful child by `useOpeningKey(open)`, so the fade-out keeps the last
+     step on screen and a reopened dialog starts fresh.
+   - A form dialog focuses its first field with Ariakit's autoFocus
+     (`Ariakit.Focusable autoFocus render={<Input />}`); otherwise it starts
+     on the ×. A picker's search autofocuses on desktop only, so a phone
+     does not open its keyboard over the list.
+   - Escape on an open picker closes only the picker: every picker trigger
+     is ComboboxSelectTrigger, so a second Escape closes the dialog.
+   - Pending buttons, errors, focus handoff and success steps follow
+     docs/focus-and-errors.md.
 ---------------------------------------------------------------------------- */
 
 /** A leave prompt: it receives the step that leaving would take (close the dialog, switch a tab) and runs it if

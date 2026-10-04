@@ -3,7 +3,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 
 /* ----------------------------------------------------------------------------
-   Switch — design.md form-control recipe (Figma node 6298:54913).
+   Switch — an on/off toggle with a visible or screen-reader label.
    40x24 rounded-full track, 16px knob; on = bg-brand, off = elevated-2.
    Label is label-sm at gap-2. `hideLabel` keeps the label for assistive tech
    only, for rows whose visible text sits outside the control; `describedBy`

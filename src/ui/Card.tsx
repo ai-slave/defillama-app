@@ -1,20 +1,28 @@
 import type { ComponentPropsWithoutRef, ElementType } from 'react'
 
 /**
- * Design-system card surface (see design.md): 8px default radius, subtle
- * stroke, bg-surface, spacing via constrained padding choices.
+ * Card — the surface for repeated content and data: bg-surface, border-subtle, 8px radius. Every new card uses it.
+ * `Card` and `Panel` share the same outer chrome; `Panel` adds chart/table header and body structure, not a stronger
+ * border. `border-medium` belongs to controls, inputs and overlays, never to page cards.
  *
- * `padding` is required and deliberately an enum, not a free value — the
- * p-2/p-3/p-4/p-5 drift across the old hand-rolled cards is exactly what
- * this component exists to end. `className` is for layout placement only (grid column,
- * margins, flex behavior); never pass visual overrides (bg-*, border-*,
- * rounded-*, p-*, hover/focus colors, type styles) — if a card needs to look
- * different, that's a new recipe to discuss, not a className.
+ * `padding` is required and an enum, not a free value:
+ * - sm (p-2): dense stat and data cards, and information, methodology and notes cards.
+ * - strip (px-4 py-3): summary strips such as InlineStatStrip.
+ * - md (p-4): roomy detail cards, only where the content needs the extra inset.
+ * - none: embedded tables and charts that bring their own layout.
+ * Never add responsive padding such as `xl:p-4`.
  *
- * Adoption happens page-by-page during the redesign sweeps (the 8px radius
- * intentionally differs from the legacy rounded-md cards); all new code must
- * use it. Radius exceptions must be explicit primitive choices, not page-local
- * `rounded-*` overrides.
+ * `radius="large"` (12px) is reserved for unlock event cards; never use it as a generic drift patch. Any other radius
+ * exception is a new primitive choice here, not a page-local `rounded-*`.
+ *
+ * `className` is for layout placement only (grid column, margins, flex behavior); never pass visual overrides (bg-*,
+ * border-*, rounded-*, p-*, hover/focus colors, type styles). A hoverable or focusable card uses `.hover-wash-card`,
+ * which stacks a card-strength wash over bg-surface instead of replacing it.
+ *
+ * Information and methodology cards: `gap-3`, a heading-xs heading, body-md content. Metadata labels are
+ * `label-md text-secondary` with `text-primary` values; run-in labels ("TVL:", adapter titles) are
+ * `font-medium text-secondary` before a `text-primary` sentence. Action links inside are neutral `Button size="md"`
+ * with 12px gaps, never blue outline or link styling.
  */
 type CardProps<T extends ElementType> = {
 	as?: T

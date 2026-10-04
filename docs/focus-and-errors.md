@@ -36,13 +36,31 @@ A retry that hides its error removes the button that has focus, never shows its 
 
 `ConfirmActionDialog`'s `onSuccess` and a `mutate()` call's own callbacks are skipped once the dialog or component has gone. Put only view work there: closing, focus, a redirect that only makes sense while the page is open. Work that belongs to the accepted action goes in the mutation's `onSuccess`, and it names its entity from the mutation's variables, never from state read at settle time.
 
+## Inside a dialog
+
+Pending states, errors and outcomes stay in the dialog. The surface and its parts are described in the `src/ui/Dialog.tsx` header.
+
+| When                                      | Use                                                                                                                                      | Example                                                 |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| A button starts a request                 | `pendingLabel` on that button ("Saving…"): spinner and label, focus kept, presses ignored; never a status line elsewhere                 | `src/ui/Button.tsx`                                     |
+| A check decides whether an action may run | Render the content at once; the action's button waits with `pendingLabel="Checking…"`, never a loading screen that grows into the layout | `src/containers/Account/DeleteAccountCard.tsx`          |
+| That check fails                          | Its error inline, and the same button becomes "Try again"                                                                                | `src/containers/Account/DeleteAccountCard.tsx`          |
+| A request fails                           | `InlineStatus variant="error"` at the end of the body, right above the footer; field errors sit under their field                        | `src/components/ReportIncorrectData/index.tsx`          |
+| An error offers a retry                   | A small secondary `Button` ("Try again") beside the message, never an underlined link                                                    | `src/components/AddToDashboard/AddToDashboardModal.tsx` |
+| A consequence or blocker needs saying     | `InlineStatus variant="warning"` for consequences, `variant="error"` for blockers; one sentence, or a list for several                   | `src/components/ReportIncorrectData/index.tsx`          |
+| A button is disabled                      | Its reason in visible text (the footer's leading slot or a field hint), never only in `title=` or a tooltip                              | `src/containers/Subscription/shared/TopupModal.tsx`     |
+| A new step or a success step appears      | `autoFocus` on its first field or its action                                                                                             | `src/components/ReportIncorrectData/index.tsx`          |
+| The action succeeds                       | A success step: the header title names the outcome, one `body-sm text-secondary` description says what happens next, one primary action  | `src/components/ReportIncorrectData/index.tsx`          |
+
+- An error `InlineStatus` inside a dialog scrolls itself into view when it appears; callers never scroll to it. On pages it never scrolls.
+- A success step never keeps the form, a disabled "Created" button, a tinted box or a large status icon.
+- Never a tinted callout with its own type size: warnings and blockers are `InlineStatus` at the description's `body-sm`.
+- Never toast while the dialog is open, success included; a toast appears only once the dialog is gone (the last row under "Errors and retries").
+- A non-control that takes focus (`tabIndex={-1}`: a list, a step, a status line) shows the global focus ring; never hide it with `outline-hidden`.
+
 ## Lost work
 
 - A draft lives in the component that stays mounted for the whole edit. A view switch inside a dialog (a detail view, a step, a tab) hides the editor instead of unmounting it, or lifts the draft above the switch.
 - `DialogDiscardGuard when={dirty}` turns Escape, the ×, Cancel, Back and guarded steps into one "Discard?" question. Dirty means the draft differs from what the opening started with; opening a saved item without changing it is not dirty.
 - Every exit goes through the surface: `DialogCancelButton` and `DialogBackButton` ask the guard and honour `pending`, and a step or tab switch that drops work calls `useDialogLeave()`. A plain `onClick={goBack}` skips the question.
 - A pending request that cannot be cancelled passes `pending` to the dialog, which locks every exit without asking.
-
-## Pickers
-
-A multi-select row in `SelectWithCombobox` holds two `role="option"` items: the option and its "Only". Code that counts or indexes options skips `[aria-label^="Only "]`.

@@ -1,3 +1,5 @@
+// A venue or category change resets the markets table through a key on DeferredTokenMarketsTable. The category
+// filter sits outside that key, so it stays mounted and keeps focus.
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'

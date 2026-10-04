@@ -37,9 +37,11 @@ export type ChartMetricsClear =
 // Long catalogues get a search; a short one fits on screen, so a field would only cover it with a keyboard.
 const SEARCH_MIN_OPTIONS = 12
 
-/** The chart toolbar's "Add Metrics" button and its dialog: the catalogue as grouped chips that toggle series
-    on the chart, a search for long catalogues, and Clear all or Reset. Choices apply as they are made, so Done only
-    closes. */
+/** The chart toolbar's "Add Metrics" button and its dialog, on every page: the catalogue as grouped chips that toggle
+    series on the chart, "N of M selected", a search from 12 options (with the full phone sheet), and Clear all or
+    Reset. Choices apply as they are made, so Done only closes. Locked Pro options open the upgrade path. Pages pass
+    their catalogue as groups and keep their own removable chips in the toolbar. The option chips are
+    `metricOptionChipStyles`: 24px, full radius, neutral border, brand when picked. */
 export function ChartMetricsDialog<O extends ChartMetricOption>({
 	groups,
 	onToggle,

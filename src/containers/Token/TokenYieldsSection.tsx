@@ -1,3 +1,17 @@
+/**
+ * Token page Yields (Earn) section.
+ *
+ * - SSR hydration and browser full-data requests use one population, `TOKEN_PAGE_EARN_QUERY`: the resolved asset keys,
+ *   `tokenMatch=contains`, `tokenOn=both` and meme pools included. Pagination, sorting and filtering never fall back
+ *   to the general Yields defaults (`tokenMatch=exact`, `tokenOn=reference`, meme pools excluded).
+ * - The directory's `hasEarn` and `hasBorrow` flags gate the SSR Yields lookups independently and never affect page
+ *   discovery. With neither flag the page acquires no Yields snapshot; with both, Earn and Borrow share one snapshot
+ *   handle. Each section still needs matching rows to show.
+ * - Browser refreshes acquire current data and are not pinned to the SSR snapshot.
+ * - A failed full-data load keeps the existing rows and offers Retry beside the section error, or in the error
+ *   placeholder when there are no rows. Retry shows loading, blocks duplicate requests and keeps the page and sorting.
+ */
+
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'

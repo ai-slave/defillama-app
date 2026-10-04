@@ -14,7 +14,7 @@ const OPTIONS = [
 	{ key: 'fees', name: 'Fees' },
 	{ key: 'volume', name: 'Volume' }
 ]
-// Long enough that SelectWithCombobox shows its search field (design.md: a search from 12).
+// Long enough that SelectWithCombobox shows its search field (isSearchable in searchThreshold.ts).
 const LONG_OPTIONS = [...OPTIONS, ...Array.from({ length: 9 }, (_, i) => ({ key: `metric-${i}`, name: `Metric ${i}` }))]
 
 function trigger() {

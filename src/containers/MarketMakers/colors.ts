@@ -32,7 +32,7 @@ const HEAT_CLASS: Record<number, string> = {
 
 // The fill paints under the 1px row divider (default border-box), so the
 // semi-transparent divider composites over the translucent heatmap and the bottom
-// border reads as tinted by the cell's heatmap, matching the Figma mockup.
+// border reads as tinted by the cell's heatmap.
 export function heatmapClass(opacity: number): string | undefined {
 	return HEAT_CLASS[opacity]
 }

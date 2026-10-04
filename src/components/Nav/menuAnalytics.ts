@@ -1,3 +1,22 @@
+/*
+ * Event contract for the menu-layout-v1 experiment. Analysis depends on these names and shapes; change them only
+ * together with the analysis.
+ *
+ * - `experiment-exposure`: { experiment, variant: 'a' | 'b', layout: 'desktop' | 'mobile' }.
+ * - `experiment-action`: the same context plus `metric`.
+ * - An exposure needs the navigation to intersect the viewport while the document is visible, so the hidden desktop
+ *   layout and a closed mobile drawer never count. `trackExperimentExposure` in src/utils/analytics/experiment.ts
+ *   sends it once per tab session; rerenders, route changes, drawer reopening and layout switches add none. The
+ *   exposure's `layout` is the first visible menu; each action carries its current layout.
+ * - Metrics: `navigate:<path>` for site destinations (same metric in A and B whatever the label or group),
+ *   `navigate:<host><path>` for external ones, `group-open:<slug>` / `group-close:<slug>` for disclosures, and
+ *   `action:<slug>` for named buttons such as `action:toggle-theme`.
+ * - Queries and fragments are dropped, and personal dashboards normalize to `/pro/:dashboard`. Repeat actions count.
+ * - Primary and keyboard clicks count, and middle clicks on links; right clicks and disabled controls do not.
+ * - Events queue in order until the lazy Umami script loads, exposure before any early action; analytics never
+ *   blocks navigation.
+ * - Compare navigation engagement with `navigate:` metrics; group toggles are interaction breakdowns.
+ */
 import type { MouseEvent as ReactMouseEvent } from 'react'
 import { readExperimentVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
 import { MENU_EXPERIMENT_ID } from './menuVariant'

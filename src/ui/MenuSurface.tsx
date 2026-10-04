@@ -4,17 +4,22 @@ import { type SurfaceOwnProps, surfaceProps, surfaceTitleRow } from './PopoverSu
 
 /* ----------------------------------------------------------------------------
    Menu surface — `Ariakit.Menu` with the popover surface contract wired in
-   (see PopoverSurface.tsx for the variants). Menus anchor with `gutter={8}`;
-   `nested` flyouts use `gutter={4}` and `portal={false}`-or-not as the parent
-   requires — pass them explicitly.
+   (see PopoverSurface.tsx for the variants). Menus anchor with `gutter={8}`
+   (the default); `nested` flyouts pass `gutter={4}` and `portal` as the
+   parent requires.
+
+   A disclosure whose rows are actions (a chart's .png export, a table's
+   Export menu) is a menu: MenuSurface with MenuItem rows, so arrow keys move
+   between them. A preference toggle inside one is an
+   `Ariakit.MenuItemCheckbox`.
 
    Rows are `MenuItem`. `row` picks the recipe: `menu` (default; px-3 py-2
-   body-sm, hover wash, 44px touch target on phones), `tree` (the indented
-   hierarchy row used by the protocol switcher), or `none` when the caller owns
-   the whole row recipe (radio/checkbox rows, select rows). `className` is
-   layout only, e.g. `border-b border-subtle` to group items; a destructive
-   action passes `destructive`, because an appended color class loses to the
-   recipe's `text-primary`.
+   body-sm full-bleed, hover-row wash, 44px tall on phones) or `tree` (the
+   indented hierarchy row used by the protocol switcher). Radio, checkbox
+   and select rows use the Ariakit item with a recipe from ./Popover.ts.
+   `className` is layout only, e.g. `border-b border-subtle` to group items.
+   A destructive row passes `destructive`, its own red recipe, because an
+   appended color class loses to the recipe's `text-primary`.
 ---------------------------------------------------------------------------- */
 
 type MenuSurfaceProps = SurfaceOwnProps & Omit<Ariakit.MenuProps, 'className' | 'wrapperProps' | 'title'>

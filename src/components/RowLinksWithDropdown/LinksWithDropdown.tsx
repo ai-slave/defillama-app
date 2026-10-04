@@ -150,9 +150,15 @@ function recalculateFromCache(containerWidth: number, cached: CachedLayout, link
 	return { renderMenuOnly: false, firstOverflowIndex: null }
 }
 
-// Renders a row of links; overflow links are removed from DOM and shown in a dropdown.
+// Renders a row of chain pills clipped to one row; overflow links are removed from DOM and shown in the "Others"
+// menu (OtherLinks).
 // Initial measurement renders all links (hidden by CSS) to cache widths, then trims.
 // Resize uses cached widths for instant recalculation — no DOM churn.
+//
+// Pill: rounded-sm px-2 py-1 label-sm, resting bg-brand-muted + text-link-on-tint, active bg-brand + text-on-brand,
+// hover-wash for hover and focus. text-link-on-tint keeps the label readable on the muted tint in dark mode, where
+// text-link falls below AA. When the active link sits in the overflow menu, the "Others" trigger takes the active
+// fill and its chevron turns text-on-brand with the label, because the resting tertiary chevron vanishes on bg-brand.
 export function LinksWithDropdown({
 	links = EMPTY_LINKS,
 	heading,

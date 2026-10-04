@@ -2,6 +2,34 @@ import type { ReactNode } from 'react'
 import { LoadingDots, LoadingSpinner } from './Loaders'
 import { Panel } from './Panel'
 
+/* ----------------------------------------------------------------------------
+   Loading, empty and error states.
+
+   | Where                                     | Use                                         |
+   | ----------------------------------------- | ------------------------------------------- |
+   | A whole panel is the state                | PanelStatus, PanelLoadingStatus             |
+   | Inside a rendered Panel or Card body      | SurfaceBodyStatus, SurfaceBodyLoadingStatus |
+   | Inside a ChartPanelBody                   | ChartPanelBodyFallback (./ChartPanel.tsx)   |
+   | A message in a dialog or above content    | InlineStatus (error, warning, empty)        |
+   | Loading over content that stays visible   | SurfaceLoadingOverlay                       |
+   | An empty result in a list, popover, table | NoResults (./NoResults.tsx)                 |
+   | A busy button or inline control           | LoadingSpinner (./Loaders.tsx)              |
+
+   - Loading always shows on the surface that holds the content, through
+     these parts, with the quiet LoadingIndicator they render by default.
+     A loading state never sits on the bare page background.
+   - Copy is text-center body-sm: loading and empty text-tertiary, error
+     text-data-down with role="alert". Ad-hoc placeholders use the same
+     tokens; never raw `text-red-*` or text-primary for "No results found".
+   - Shells reserve space with min-h: 360px by default, 400px for a lazy
+     chart that renders its own export toolbar, larger only when the route's
+     chart or table shape needs it.
+   - A request's error renders where its data would be, as one of these
+     states, never as a toast from an effect watching `.error`. Read it with
+     `queryReadFailed` from src/utils/query.ts and check it before loading;
+     see docs/focus-and-errors.md for retries.
+---------------------------------------------------------------------------- */
+
 export type StatusVariant = 'loading' | 'empty' | 'error'
 
 const STATUS_TEXT = {
@@ -32,8 +60,7 @@ export function PanelStatus({ children, variant, className }: PanelStatusProps) 
 	)
 }
 
-/** The app's loading indicator (design.md → Status states): quiet tertiary
-    text matching the empty/error copy. */
+/** The app's loading indicator: quiet tertiary text matching the empty/error copy. */
 export function LoadingIndicator({ label = 'Loading' }: { label?: string }) {
 	return (
 		<span className="flex items-center gap-1 body-sm text-tertiary">

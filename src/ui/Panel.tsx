@@ -1,17 +1,17 @@
 import type { ComponentProps, ComponentPropsWithoutRef, ElementType } from 'react'
 
 /* ----------------------------------------------------------------------------
-   Panel — the design.md chart/table panel recipe (Figma node 6183:148797).
+   Panel — the titled chart/table shell. Not for standalone title strips
+   (EntityTitleStrip) or inline chart toolbars (ChartPanelToolbar).
 
-   Shell:  bg-surface + border-subtle + 8px radius.
+   Shell:  bg-surface + border-subtle + 8px radius, the same chrome as Card.
    Header: px-4 py-3 with a subtle bottom divider (divider floor); heading-xs title on
            the left, controls on the right. Every control in a panel header
            is the 32px md size (Button md, Select size="md", segmented
            min-h-8); dense control clusters use a 6px gap.
-   Body:   charts sit flush and keep their own grid padding; non-chart
-           content either brings its own padding or uses an explicit Panel
-           padding choice for panel-owned content.
-           Callers always choose padding explicitly; there is no default.
+   Body:   charts and tables use padding="none" and sit flush; a panel that
+           owns its content's inset (a status, a list of cards) uses "sm" or
+           "md". Callers always choose padding explicitly; there is no default.
 
    `className` is for LAYOUT PLACEMENT ONLY (col-span, min-h, …), same
    contract as Button/Card.

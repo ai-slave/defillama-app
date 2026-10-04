@@ -1,148 +1,35 @@
 # ProtocolOverview
 
-ProtocolOverview owns single-protocol entity pages: the main protocol overview, protocol chart page, CEX protocol pages, and protocol subroutes that reuse the same layout and metric flags.
+ProtocolOverview owns the pages about one protocol or one CEX: the overview, the chart page, and the subroutes that share its layout and metric flags. Protocol lists and ranking tables belong to `ProtocolLists` and `ProtocolRankings`.
 
-Start from the route file in `src/pages`, then follow imports here. This container is for one protocol entity at a time. Protocol lists and shared ranking tables belong in `ProtocolLists` and `ProtocolRankings`.
+## Routes
 
-## Route Families
+- `/protocol/[protocol]`, `/chart/protocol/[protocol]`
+- `/protocol/*/[protocol]` subroutes, except `/protocol/deep-dive` and `/protocol/investor-relations` (`Investors`) and `/protocol/card-details` (`CryptoCards`)
+- `/cex/[cex]`, `/cex/assets/[cex]`, `/cex/stablecoins/[cex]`
 
-Common routes:
+## Where the logic lives
 
-- `/protocol/[protocol]`
-- `/chart/protocol/[protocol]`
-- `/cex/[cex]` and CEX subroutes that reuse the protocol layout
-- `/protocol/tvl/[protocol]`
-- `/protocol/treasury/[protocol]`
-- `/protocol/yields/[protocol]`
-- `/protocol/perps/[protocol]`
-- `/protocol/forks/[protocol]`
-- `/protocol/stablecoins/[protocol]`
-- `/protocol/active-loans/[protocol]`
-- `/protocol/token-rights/[protocol]`
+| To change                                       | Edit                                      | Notes                                               |
+| ----------------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| Which charts and sections a protocol shows      | `getProtocolMetricFlags` in `queries.tsx` | Maps protocol metadata to availability              |
+| Adapter chart requests (fees, revenue, volume…) | `chartDescriptors.ts`                     |                                                     |
+| TVL chart composition                           | `tvlChart.ts`                             | Extra TVL series, timestamp alignment, denomination |
+| Main chart orchestration                        | `useFetchProtocolChartData.ts`            |                                                     |
+| TVL toggles on the overview                     | `useFinalTVL` in `helpers.ts`             |                                                     |
 
-Category and protocol listing routes are not owned here. See `ProtocolTaxonomy`, `ProtocolLists`, and `ProtocolRankings`.
+## Rules
 
-## Main Files
+- A subroute composes `fetchProtocolOverviewMetrics`, `getProtocolMetricFlags` and `ProtocolOverviewLayout`, and its section UI may come from another container, such as `AdapterMetrics`, `Yields` or `TokenRights`.
+- Protocol fee and revenue charts use the protocol adapter endpoints, never chain-native fee and revenue semantics. See `docs/metrics.md` → "Terms that mean different things".
+- Fee, revenue and holders-revenue cards lead with observed 30-day totals, never annualized values or 30-day run rates.
+- `useFinalTVL` reads the shared `tvl` settings namespace, and its toggles come only from the TVL keys present in the protocol's data. See `docs/metrics.md` → "TVL models".
+- `dcAndLsOverlap` is chain overlap data, never a protocol toggle.
+- A chart request URL change is a behavior change; test the exact URL or descriptor before changing it.
 
-- `index.tsx`: main protocol overview page composition.
-- `Layout.tsx`: shared protocol subroute layout and SEO frame.
-- `queries.tsx`: server/page-data builder for the main overview.
-- `api.ts`: protocol overview, TVL chart, token breakdown, expenses, and related fetchers.
-- `types.ts` and `api.types.ts`: UI/read-model types and upstream DTO types.
-- `constants.tsx`: protocol chart labels and toggle keys.
-- `defaultCharts.ts`: available/default chart selection.
-- `chartDescriptors.ts`: protocol-level adapter chart request descriptors.
-- `useFetchProtocolChartData.ts`: main protocol chart data hook and chart composition.
-- `useProtocolBreakdownCharts.ts`: token/chain breakdown chart fetching for subroutes.
-- `formatAdapterData.ts`: adapter metric normalization for protocol overview cards.
-- `IncomeStatement.tsx`, `KeyMetrics.tsx`, `AdditionalInfo.tsx`: major overview sections.
+## Not here
 
-## Data Flow
-
-Main overview:
-
-```text
-src/pages/protocol/[protocol].tsx
-  -> getProtocolOverviewPageData(...)
-  -> ProtocolOverview
-  -> ProtocolChartPanel / KeyMetrics / IncomeStatement / AdditionalInfo
-```
-
-Protocol chart page:
-
-```text
-src/pages/chart/protocol/[protocol].tsx
-  -> ProtocolOverview data
-  -> Chart / useFetchProtocolChartData
-```
-
-Protocol subroutes:
-
-```text
-src/pages/protocol/<section>/[protocol].tsx
-  -> fetchProtocolOverviewMetrics(...)
-  -> getProtocolMetricFlags(...)
-  -> ProtocolOverviewLayout
-  -> section-specific UI
-```
-
-Keep this flow visible. Do not move protocol list/table behavior into this folder unless the route is about a single protocol entity.
-
-## Metric Semantics
-
-ProtocolOverview metrics are protocol-level unless a subroute explicitly says otherwise.
-
-Important rules:
-
-- `getProtocolMetricFlags` maps protocol metadata to chart/section availability.
-- Protocol fees/revenue charts use protocol adapter endpoints, not chain-native fee/revenue ranking semantics.
-- `chartDescriptors.ts` owns protocol-level adapter chart request descriptors.
-- Chain Fees, Chain Revenue, App Fees, App Revenue, and REV semantics live in `src/metrics` only where they cross ChainOverview, AdapterMetrics, CompareChains, and public chart validation. Do not move ProtocolOverview descriptors there unless another container or API endpoint needs the same invariant.
-- Fee, revenue, and holder-revenue cards lead with observed 30-day totals instead of annualized values or 30-day run rates.
-- TVL chart composition in `useFetchProtocolChartData.ts` is local and has timestamp alignment and denomination behavior. Add characterization tests before extracting it.
-
-## TVL Notes
-
-ProtocolOverview TVL chart behavior is not the same as every chain or protocol list TVL surface.
-
-Current behavior to preserve before refactoring:
-
-- TVL chart data may be prefetched in `initialMultiSeriesChartData`.
-- Missing prefetched base TVL can be fetched through `useFetchProtocolTVLChart`.
-- Enabled extra TVL series are fetched only when the protocol has the current TVL key and the relevant chart/toggle state needs it.
-- Latest base TVL and extra TVL timestamps can be aligned when they are close.
-- Denominated charts drop points when the selected denomination price is missing for the retained timestamp.
-
-`useFinalTVL` reads the `tvl` local storage namespace, shared with the other TVL inclusion surfaces. Its toggle options are derived only from the TVL suffixes present in the protocol data.
-
-Do not model chain overlap adjustment as a ProtocolOverview setting. `dcAndLsOverlap` is chain TVL overlap data, not a toggle key, and ProtocolOverview summary tests should not fabricate `*-doublecounted`, `*-liquidstaking`, or `*-dcAndLsOverlap` chain entries unless the upstream protocol page payload changes.
-
-Prefer a local `ProtocolOverview` helper if this code needs extraction. Do not start with a global TVL registry.
-
-## Chart Notes
-
-- `useFetchProtocolChartData.ts` orchestrates TVL, adapter metrics, token liquidity, treasury, inflows, activity, and other chart families.
-- `chartSeries.utils.ts` normalizes timestamp units for chart rendering.
-- `chartYAxis.ts` owns protocol chart y-axis grouping behavior.
-- `usePrefetchedProtocolChartQuery.ts` lets prefetched chart data avoid duplicate client fetches.
-- Chart request URL changes are behavior changes. Add tests around the exact URL or descriptor before changing them.
-
-## Tests
-
-Relevant tests today:
-
-- `__tests__/queries.test.ts`
-- `__tests__/queries.client.test.tsx`
-- `__tests__/api.test.ts`
-- `__tests__/chartDescriptors.test.ts`
-- `__tests__/chartMetricSemantics.test.tsx`
-- `__tests__/tvlChart.test.ts`
-- `__tests__/chartSeries.utils.test.ts`
-- `__tests__/useProtocolBreakdownCharts.test.ts`
-- `__tests__/protocol-chart-page.test.tsx`
-- `__tests__/protocolFeeCharts.test.ts`
-- `__tests__/formatAdapterData.test.ts`
-- `__tests__/helpers.test.ts`
-- `__tests__/category.test.ts`
-- `__tests__/KeyMetrics.test.tsx`
-- `__tests__/seo.test.tsx`
-
-Focused commands:
-
-```bash
-bun run test src/containers/ProtocolOverview/__tests__/queries.test.ts src/containers/ProtocolOverview/__tests__/queries.client.test.tsx
-bun run test src/containers/ProtocolOverview/__tests__/api.test.ts src/containers/ProtocolOverview/__tests__/chartDescriptors.test.ts
-bun run test src/containers/ProtocolOverview/__tests__/tvlChart.test.ts src/containers/ProtocolOverview/__tests__/chartSeries.utils.test.ts src/containers/ProtocolOverview/__tests__/useProtocolBreakdownCharts.test.ts
-bun run test src/containers/ProtocolOverview/__tests__/formatAdapterData.test.ts src/containers/ProtocolOverview/__tests__/helpers.test.ts
-bun run test src/containers/ProtocolOverview/__tests__/KeyMetrics.test.tsx src/containers/ProtocolOverview/__tests__/seo.test.tsx
-```
-
-For source changes, follow the repo root verification instructions.
-
-## Change Rules
-
-- Trust upstream API payloads and aggregates.
-- Preserve public routes, query params, payload shapes, page copy, and displayed numbers unless explicitly requested.
-- Keep protocol entity behavior here; keep protocol list/ranking behavior in `ProtocolLists` or `ProtocolRankings`.
-- Prefer local pure helpers and characterization tests before refactoring `useFetchProtocolChartData.ts`.
-- Avoid re-export shims and barrel files. Update imports directly.
+- Protocol lists and ranking tables → `ProtocolLists`, `ProtocolRankings`
+- Category pages → `ProtocolTaxonomy`
+- Adapter ranking pages → `AdapterMetrics`
+- `/cex/card-details/[cex]` → `CryptoCards`

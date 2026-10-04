@@ -8,6 +8,7 @@ export function LoadingDots() {
 	)
 }
 
+/** The spinner for buttons and inline controls; never hand-roll an `animate-spin` border circle. */
 export function LoadingSpinner({ size }: { size: number }) {
 	return (
 		<span className="inline-flex shrink-0 animate-spin">

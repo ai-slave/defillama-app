@@ -19,6 +19,9 @@ import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
 import { selectTriggerStyles } from './types'
 
+/* Select — a single or multi picker for a short list. It never searches and shows every option, with no "See more",
+   in a `panel` drawer that hugs its rows. The folder README says which picker fits. */
+
 /** With `labelType="none"` the trigger shows the current value, so `heading` names the phone drawer; otherwise the label does. */
 type SelectLabelProps =
 	| { label: React.ReactNode; labelType?: 'regular' | 'smol' | 'none'; heading: string }

@@ -1,3 +1,23 @@
+/**
+ * Oracle membership and TVS read models.
+ *
+ * - Membership and measurement are separate sources. `/v2/metrics/oracle` `oracles` owns global membership and order,
+ *   `protocolsByOracleChain` owns chain membership and secured-protocol counts, and `oraclesTVS` supplies measurements
+ *   only. `chainsByOracle` may order chain links but never adds or removes members.
+ * - In a successful current snapshot, an omitted known member contributes zero without erasing measured peers, an
+ *   explicit zero stays zero, and a known provider with no current measurements totals zero. A whole-source failure
+ *   is unavailable.
+ * - Historical dominance divides each provider's available measurement by the available total at that timestamp.
+ *   A provider absent from every successful selected section is a gap.
+ * - When any successful selected base or extra section has a point, omitted successful sections contribute zero at that
+ *   timestamp. A failed selected extra section is excluded and disclosed, never treated as zero.
+ * - Oracle identity does not depend on measurement availability, so a metrics outage never relabels ordinary protocol
+ *   TVL as TVS.
+ * - A chain-qualified recognized extra-TVL key contributes its exact value; when it is the member's only selected-chain
+ *   measurement, the member's base contribution is zero.
+ * - `/lite/protocols2` only enriches exact member names with protocol metadata.
+ */
+
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { toStrikeTvl } from '~/containers/ProtocolRankings/utils'

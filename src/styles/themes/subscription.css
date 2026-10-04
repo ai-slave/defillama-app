@@ -91,7 +91,7 @@
 
 @layer base {
 	:root {
-		/* Subscription Palette (Figma Color Palette) */
+		/* Subscription palette */
 		--sub-white: #ffffff;
 
 		/* Frozen residue of the subscription/sheets dark-surface values that

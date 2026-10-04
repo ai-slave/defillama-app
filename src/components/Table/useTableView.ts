@@ -4,6 +4,13 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 
+/**
+ * Select the reactive rows, header groups and visible columns a renderer draws.
+ *
+ * The selector reads the stable core table inside the store subscription, so React Compiler sees each change.
+ * Read core table objects the same way or render from these values; never replace the subscription with a
+ * compiler opt-out.
+ */
 export function useTableView<F extends SortingFeatures & VisibilityFeatures, T extends RowData>(
 	table: TableInstance<F, T> & Table_ColumnVisibility<F, T>
 ) {

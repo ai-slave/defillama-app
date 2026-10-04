@@ -1,29 +1,26 @@
-# Menu layout experiment
+# Navigation
 
-`menu-layout-v1` compares the existing main menu (A, from `public/pages.json`) with the grouped menu (B, from `menuVariant.ts`). A aligns Equities child labels to the parent text. B groups destinations and adds Rewards to Tools. The current page’s group opens automatically, including after refresh; visitors can open another group or collapse it, with at most one group open at a time. Premium, pinned pages, personal dashboards, Old Menu, and footer destinations stay available in both variants.
+## Where the work goes
 
-The experiment reuses the site's persistent 50/50 `defillama-ab-group` assignment, established by the proxy and `_app`. It does not rerandomize on navigation. Both layouts are server-rendered; the head bootstrap's `data-ab-group` attribute selects the matching layout with the existing A/B CSS before paint. The fallback when assignment is unavailable is A. This shares cohorts with existing site experiments; it is not an independent randomization.
+| To do this                         | Use                                                                                                                 | Example               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Add a main destination             | An entry in `public/pages.json`; `NavItems` renders it with `LinkToPage`                                            | `PrimaryNavLinks.tsx` |
+| Add an expandable main destination | An entry with `children`, rendered by `PrimaryNavGroup` with the same `navLinkStyles` and `NavItemContent` as links | Equities              |
+| Separate sidebar sections          | `SidebarDivider`                                                                                                    | `shared.tsx`          |
+| Change the menu-layout-v1 variants | `menuVariant.ts`; its events and their contract live in `menuAnalytics.ts`                                          | `MENU_VARIANT_B`      |
 
-## Events
+## Checks
 
-`menuAnalytics.ts` sends the generic ingestion contract through the shared helpers in `src/utils/analytics/experiment.ts`, where `menu-layout-v1` is registered as a `site` experiment that reads `data-ab-group`. It does not depend on an A/B tag:
-
-- `experiment-exposure`: `{ experiment: 'menu-layout-v1', variant: 'a' | 'b', layout: 'desktop' | 'mobile' }`.
-- `experiment-action`: the same context plus `metric`.
-
-An exposure requires the actual navigation to intersect the viewport while the document is visible. The hidden desktop layout and closed mobile drawer do not count. Exposure is deduplicated once per tab session by the shared helper, using session storage and an in-memory fallback when storage is blocked. Rerenders, route changes, StrictMode, drawer reopening, and switching between mobile and desktop do not add exposures. `layout` on the exposure identifies the first visible menu; each action uses its current layout.
-
-Metrics distinguish destinations from other interactions:
-
-- `navigate:/chains`, `navigate:/cexs`, etc. The same destination has the same metric in A and B, regardless of its label or grouping.
-- `navigate:chainlist.org`, `navigate:swap.defillama.com`, etc. for external destinations.
-- `group-open:tools`, `group-close:tools`, etc. for disclosure clicks, including keyboard activation.
-- `action:close-navigation-menu`, `action:toggle-theme`, etc. for named buttons inside the navigation.
-
-Queries and fragments are excluded, and personal dashboard routes are normalized to `/pro/:dashboard`. Repeat actions are retained. Left/keyboard clicks and middle-click links count; right-clicks and disabled controls do not. Existing feature-specific link events remain intact. Events wait in order for the lazy Umami script, including exposure before an early action; analytics never blocks navigation.
-
-Use `navigate:` metrics to compare navigation engagement; group toggles are interaction breakdowns, not destination conversions. Generic ingestion accepts production events only from `defillama.com` and `www.defillama.com`, hourly at :30. Local preview events are not ingested. No backend registration is needed.
-
-## Verification
-
-`bun run test src/components/Nav/__tests__/menuExperiment.test.tsx` covers server hydration, A/B menu contents, disclosure state, visibility, per-session deduplication, late Umami loading, mobile navigation, and blocked storage. Browser checks cover both variants on desktop and at 375px in light/dark mode.
+- Primary groups form an accordion: opening one closes the open group, and clicking it again closes it. `groupState.ts` holds the state outside the page layout, so desktop and mobile share it per variant.
+- Navigating to a grouped destination opens its group. A fresh load of a page outside the groups starts with every group closed.
+- A remount on the same pathname keeps a manual open or close choice; a completed navigation to another pathname drops it.
+- Native disclosure toggles (find-in-page, text highlighting) update the shared state, but a toggle event that already matches the controlled `open` prop is ignored.
+- Group rows keep the inherited font size and weight, primary text, 16px icons and a 12px icon gap, on desktop and mobile alike.
+- A child destination stays selected on its subpages. An overview matches exactly only when its siblings are its own subroutes, such as Equities rankings next to sectors.
+- The active destination carries `aria-current`.
+- An icon-only navigation control needs an explicit accessible label, even with a tooltip.
+- Long group labels wrap so their full names stay readable; ordinary destination links truncate.
+- `label-sm text-secondary` is only for section headings and utility groups.
+- Aligned child labels drop their icons and indent with `pl-7` to match the 16px icon and 12px gap. The guide line beside them is an absolute pseudo-element, so its border never offsets the labels.
+- Sidebar scroll containers clip horizontally, so a long pinned label or a capped divider never adds a horizontal scrollbar.
+- Nav borders use the semantic border tokens, never black or white opacity classes.

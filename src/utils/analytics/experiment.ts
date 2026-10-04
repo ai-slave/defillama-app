@@ -4,6 +4,8 @@ import { trackUmamiEvent, UMAMI_READY_EVENT } from './umami'
 /**
  * Deterministic A/B variant assignment using FNV-1a hash.
  * Same (experimentId, userId) always produces the same variant.
+ * getHeadBootstrapScript inlines this function with toString() into the pre-paint script, so keep it
+ * self-contained: no imports, closures or TypeScript-only runtime helpers.
  */
 export function getExperimentVariant(experimentId: string, userId: string): 'A' | 'B' {
 	let hash = 2_166_136_261
@@ -15,7 +17,8 @@ export function getExperimentVariant(experimentId: string, userId: string): 'A' 
 	return (hash >>> 0) / 4_294_967_296 < 0.5 ? 'A' : 'B'
 }
 
-/** `visitor` and `user` split on their own hash; `site` reuses the global `defillama-ab-group` cohort. */
+/** `visitor` and `user` split on their own hash; `site` reuses the global `defillama-ab-group` cohort.
+    Ids are part of the analytics contract (experiment.test.ts checks their pattern); never rename a running experiment. */
 export const EXPERIMENTS = {
 	'free-limit-cta-v1': 'user',
 	'llamaai-free-label-v1': 'visitor',

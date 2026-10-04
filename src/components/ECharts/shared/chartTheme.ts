@@ -137,8 +137,7 @@ export function getChartTheme(isThemeDark: boolean): ChartTheme {
 		theme[key as keyof typeof TOKENS] = resolved || (isThemeDark ? dark : light)
 	}
 	// Per-chart monochrome chrome (labels, faint fills, shadows) uses ad-hoc
-	// alphas that are chart tuning, not design tokens — Figma has no
-	// equivalents. One helper instead of scattered literals.
+	// alphas that are chart tuning, not design tokens. One helper instead of scattered literals.
 	theme.ink = (alpha) => (isThemeDark ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`)
 	theme.inkInverted = (alpha) => (isThemeDark ? `rgba(0, 0, 0, ${alpha})` : `rgba(255, 255, 255, ${alpha})`)
 	return theme

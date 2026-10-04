@@ -57,6 +57,9 @@ const SECTORS_KEY = 'sectors'
 const INDUSTRIES_KEY = 'industries'
 const CALENDAR_KEY = 'calendar'
 const MEMORY_TTL_MS = 60 * 1000
+// The earnings calendar's product day is the New York calendar day, the one exception to UTC calendar days. The
+// server derives a `YYYY-MM-DD` key with this formatter and sends it beside the calendar data; browser rendering and
+// date arithmetic work on calendar strings.
 const NEW_YORK_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
 	year: 'numeric',
 	month: '2-digit',

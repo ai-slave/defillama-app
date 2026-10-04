@@ -13,9 +13,10 @@ type SearchFieldProps = {
 	className?: string
 } & Omit<ComponentPropsWithRef<'input'>, 'className' | 'value' | 'onChange' | 'type' | 'aria-label'>
 
-/** The design.md search field: a 16px search icon, the Input recipe, and a clear button once there is text.
-    Clearing moves focus back to the field, because the button that had it disappears. `autoFocus` goes through
-    Ariakit, so a dialog starts on the field instead of its ×. */
+/** A search field: a 16px search icon, the Input recipe, an accessible `label`, and a small ghost × once there is
+    text. Clearing moves focus back to the field, because the button that had it disappears. `autoFocus` goes through
+    Ariakit, so a dialog starts on the field instead of its ×; pickers pass `autoFocus={!isSmallScreen}`. Never
+    hand-roll a clear button beside a search input. */
 export function SearchField({ label, value, onChange, className, autoFocus, ...props }: SearchFieldProps) {
 	return (
 		<div className={`relative ${className ?? ''}`.trim()}>

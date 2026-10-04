@@ -8,7 +8,10 @@ import { useTableView } from './useTableView'
 
 export type { TableLayout, TableProps } from './types'
 
-/** Render the current row model in full. Pagination, if configured, belongs to the table owner. */
+/**
+ * Render the current row model in full. Pagination, if configured, belongs to the table owner; this component never
+ * creates a second pagination state or slices rows again.
+ */
 export function Table<F extends SortingFeatures & VisibilityFeatures, T extends RowData>({
 	table,
 	rowSize,

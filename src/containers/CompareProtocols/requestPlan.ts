@@ -1,3 +1,12 @@
+/**
+ * Compare Protocols requests.
+ *
+ * - Each selected protocol fetches one base TVL chart plus only the enabled `PROTOCOL_LIST_ADDITIVE_TVL_KEYS` sections;
+ *   `doublecounted`, `liquidstaking` and `govtokens` never apply.
+ * - URL selections are trimmed and deduplicated by canonical slug, in first-selected order, before any request or
+ *   series is built.
+ */
+
 import { PROTOCOL_LIST_ADDITIVE_TVL_KEYS, type ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'

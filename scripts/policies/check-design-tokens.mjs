@@ -1,4 +1,4 @@
-// Design-token ratchet (see design.md → Do's and Don'ts).
+// Design-token ratchet (see design.md → "Enforcement").
 //
 // Counts styling patterns that bypass the token system and compares them
 // against scripts/policies/design-token-baseline.json. Everything is ratcheted; there
@@ -54,8 +54,6 @@ const PRODUCT_SURFACE_PREFIXES = [
 ]
 
 const PRODUCT_SURFACE_FILES = new Set([
-	'src/components/StripeCheckoutModal.tsx',
-	'src/components/TopupModal.tsx',
 	'src/pages/account.tsx',
 	'src/pages/downloads.tsx',
 	'src/pages/newsletters.tsx',
@@ -183,7 +181,7 @@ function dialogBodies(content) {
 }
 
 // Buttons in a dialog grow to 44px in phone sheets through their recipe; a pinned h-* or size-* stops that
-// (design.md → Control heights). Counts buttons written inside a dialog's JSX.
+// (design.md → "Spacing and radius"). Counts buttons written inside a dialog's JSX.
 function matchPinnedButtonHeightInDialog(content) {
 	const found = []
 	for (const body of dialogBodies(content)) {
@@ -383,7 +381,8 @@ const RULES = [
 	},
 	{
 		id: 'arbitrary-spacing',
-		description: 'arbitrary margin/padding/gap value (use the space palette: p-2, gap-4, … — see design.md)',
+		description:
+			'arbitrary margin/padding/gap value (use the space palette: p-2, gap-4, … — see design.md → Spacing and radius)',
 		// calc()/env()/min()/max()/var() are excluded: those express layout
 		// relationships that cannot come from the palette.
 		pattern: /(?<![a-zA-Z0-9-])-?(?:[mp][trblxyes]?|gap(?:-[xy])?|space-[xy])-\[(?!(?:calc|env|min|max|var)\()[^\]]+\]/g
@@ -538,7 +537,7 @@ const RULES = [
 	{
 		id: 'raw-echarts-init',
 		description:
-			'echarts.init outside the shared renderers — draw the chart with the src/components/ECharts component for its shape (design.md → Charts → Renderers); MultiSeriesChart covers time and category axes',
+			'echarts.init outside the shared renderers — draw the chart with the src/components/ECharts component for its shape (design.md → Charts); MultiSeriesChart covers time and category axes',
 		pattern: /\becharts(?:Core)?\.init\(/g,
 		// The shared renderers and the PNG exporter own chart instances.
 		ownedBy: ['src/components/ECharts/', 'src/components/ChartExport/'],

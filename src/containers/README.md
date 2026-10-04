@@ -1,130 +1,44 @@
 # Containers
 
-This directory contains product-page containers and their page-data/read-model code.
-Use this map before moving metric code or deciding which folder owns a route family.
+Each folder here owns one product surface: its page components, page data and upstream fetchers. To find the owner of a route, open its page in `src/pages/` and follow the container import.
 
-`src/pages/` remains the source of truth for public route slugs. Container names are
-implementation ownership boundaries, not public API contracts.
+Public route slugs come from `src/pages/` and stay stable. A container name is an implementation boundary, so renaming a folder never renames a route.
 
-## Module Ownership
+## File names
 
-Prefer domain-local modules over shared catch-all folders:
+| File                                                     | Holds                                                                                |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `api.ts`                                                 | Upstream fetchers and URL construction for the domain                                |
+| `api.types.ts`                                           | Raw upstream response types                                                          |
+| `queries.ts` or `queries.tsx`                            | Page-data builders that page components may also import                              |
+| `queries.server.ts` or `.tsx`                            | Page-data builders only data functions call                                          |
+| `queries.client.tsx`                                     | Browser query hooks                                                                  |
+| `server/api.ts`                                          | Framework-neutral API route definitions that thin files under `src/pages/api/` mount |
+| `server/routes.ts`                                       | Sitemap and static path params only, never API handlers                              |
+| `server/routeData.ts`                                    | Snapshot-backed data that `server/routes.ts` reads                                   |
+| `server/upstream.ts`                                     | Direct upstream fetchers used only on the server                                     |
+| `server/dataset.builder.server.ts`                       | Network acquisition that writes an unpublished snapshot candidate                    |
+| `server/dataset.index.ts`, `server/dataset.transform.ts` | Pure transforms that build snapshot artifacts                                        |
+| `server/dataset.server.ts`                               | Typed read access to the published snapshot for pages and API handlers               |
+| `server/charts.ts`                                       | Domain chart assembly that is more than an HTTP handler                              |
 
-- `api.ts`: raw upstream/API fetchers and URL construction for the domain.
-- `api.types.ts`: raw upstream response types for the domain.
-- `queries.tsx`: page-data/read-model builders that may be used by page components.
-- `queries.server.tsx`: page-data builders that are only intended for server data functions.
-- `server/`: server-oriented helpers; dataset snapshot readers/builders in this folder are
-  server-only.
-- `server/routes.ts`: sitemap/static route helpers, not API route handlers. API route
-  definitions should use names like `server/api.ts`, `server/*Routes.ts`, or a
-  route-specific module.
+Dataset snapshot modules are imported only from server code: page data functions, API handlers and other server modules. See `docs/server-data.md`; `src/server/datasetSnapshots/__tests__/importBoundary.test.ts` enforces the rule.
 
-## Server Folder Naming
+## Confusable owners
 
-Use these names consistently for new server modules:
+| You are changing                                                                  | Owner                                                                      |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| One protocol: `/protocol/[protocol]`, its subroutes, `/chart/protocol/[protocol]` | `ProtocolOverview/`                                                        |
+| One CEX: `/cex/[cex]` and its subroutes                                           | `ProtocolOverview/` layout, with sections from `Cexs/`                     |
+| The shared protocol ranking table, `/protocols`, or `getProtocolsByChain`         | `ProtocolRankings/`                                                        |
+| `/recent`, `/airdrops`, token metric lists (`/mcaps`, `/fdv`…), extra-TVL lists   | `ProtocolLists/`                                                           |
+| Categories and tags: `/categories`, `/protocols/[category]`                       | `ProtocolTaxonomy/`                                                        |
+| Fees, revenue, volume, open interest, P/F, P/S by protocol or chain               | `AdapterMetrics/`                                                          |
+| `/chains` and `/chains/[category]`, the chain directory                           | `ChainsByCategory/`                                                        |
+| `/fees/chains`, `/dexs/chains` and every other `/<metric>/chains` ranking         | `AdapterMetrics/`                                                          |
+| `/`, `/chain/[chain]`, `/chart/chain/[chain]`, one chain                          | `ChainOverview/`; REV is not one of its charts (it lives on `/rev/chains`) |
 
-- `server/api.ts`: framework-neutral HTTP route definitions consumed by thin files under `src/pages/api/**`.
-- `server/routes.ts`: sitemap/static route param assembly only.
-- `server/routeData.ts`: snapshot-backed data helpers used by `routes.ts`.
-- `server/upstream.ts`: direct upstream server fetchers for the domain.
-- `server/dataset.builder.server.ts`: network acquisition that writes an unpublished snapshot candidate.
-- `server/dataset.index.ts`: pure index-building helpers for snapshot artifacts.
-- `server/dataset.server.ts`: typed immutable snapshot access used by pages and API handlers.
-- `server/charts.ts` or `server/breakdowns.ts`: domain-specific chart or breakdown assembly when it is not just an HTTP handler.
+## Rules
 
-Dataset snapshot modules under `server/` must only be imported from server-only call sites:
-`getStaticProps`, `getServerSideProps`, `getStaticPaths`, `pages/api` handlers,
-route-data code, dataset snapshot build commands, or tests for those paths. Use dynamic
-imports inside those data functions when a page component also ships client code. Do not
-import `containers/*/server/dataset.server*` from React
-components, hooks, browser query modules, or shared utilities that can enter a client
-bundle.
-
-Dataset snapshot domains should live with their product owner when there is one. The usual
-shape is:
-
-- `server/dataset.builder.server.ts`: builds that domain's unpublished snapshot artifacts from network APIs.
-- `server/dataset.server.ts`: server-only typed access through one snapshot handle.
-- `server/dataset.transform.ts` or `server/dataset.index.ts`: pure data transforms.
-
-`src/server/datasetSnapshots` owns the shared manifest, artifact layout, immutable reader,
-and build orchestration. Domain-specific builders remain with their product owner.
-
-## Route Family Map
-
-| Route family                                                                                                                                                                            | Primary container           | Notes                                                                                                                                                                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`, `/chain/[chain]`, `/chart/chain/[chain]`                                                                                                                                           | `ChainOverview/`            | Chain entity overview, chain chart UI, chain overview page data, and chain-level metric summaries. Renders protocol rankings through `ProtocolRankings/`.                                         |
-| `/protocol/[protocol]`, `/chart/protocol/[protocol]`, `/protocol/*/[protocol]`                                                                                                          | `ProtocolOverview/`         | Protocol entity overview, protocol chart UI, protocol page data, metric flags, income statement, and protocol subroute layout.                                                                    |
-| `/fees`, `/revenue`, `/holders-revenue`, `/earnings`, `/pf`, `/ps` and their `/chain/[chain]` routes                                                                                    | `AdapterMetrics/`           | Adapter-backed metric pages where the main entity is a chain selection or an adapter protocol list. Fees/revenue terminology is overloaded; check `docs/metrics.md` before changing these routes. |
-| `/fees/chains`, `/revenue/chains`, `/app-fees/chains`, `/app-revenue/chains`, `/rev/chains`                                                                                             | `AdapterMetrics/`           | Chain ranking pages backed by adapter metrics. Chain-native fees/revenue and app-on-chain aggregation are different concepts.                                                                     |
-| `/dexs`, `/perps`, `/open-interest`, `/normalized-volume`, `/dex-aggregators`, `/perps-aggregators`, `/bridge-aggregators`, `/options/*` and their `/chains` or `/chain/[chain]` routes | `AdapterMetrics/`           | Generic dimension/adapter metric pages. `AdapterByChain` owns chain-detail views; `ChainsByAdapter` owns chain ranking views.                                                                     |
-| `/chains`, `/chains/[category]`                                                                                                                                                         | `ChainsByCategory/`         | Chain directory and chain category pages, including chain TVL grouping and some chain-level summary metrics.                                                                                      |
-| `/protocols/[category]`, `/protocols/[category]/[chain]`, `/categories`, `/top-protocols`                                                                                               | `ProtocolTaxonomy/`         | Protocol taxonomy/category pages. These can enrich protocol/category data with adapter metric charts.                                                                                             |
-| `/protocols`                                                                                                                                                                            | `ProtocolRankings/`         | Shared protocol ranking table and `getProtocolsByChain` read model.                                                                                                                               |
-| `/recent`, `/airdrops`                                                                                                                                                                  | `ProtocolLists/`            | Protocol-list read models for recent and airdrop pages.                                                                                                                                           |
-| `/mcaps`, `/fdv`, `/outstanding-fdv`, `/token-prices` and `/chain/[chain]` variants                                                                                                     | `ProtocolLists/`            | Protocol/token list pages that reuse protocol directory API data.                                                                                                                                 |
-| `/active-loans`, `/total-staked`, `/pool2` and `/chain/[chain]` variants                                                                                                                | `ProtocolLists/`            | Extra-TVL protocol list pages. Do not confuse these with ChainOverview extra TVL charts.                                                                                                          |
-| `/watchlist`                                                                                                                                                                            | `DeFiWatchlist/`            | Composes protocol rows from `ProtocolRankings` and chain rows from `ChainsByCategory`.                                                                                                            |
-| `/compare-chains`                                                                                                                                                                       | `CompareChains/`            | Composes chain overview data and adapter metric data.                                                                                                                                             |
-| `/compare-protocols`                                                                                                                                                                    | `CompareProtocols/`         | Composes protocol metadata with the shared protocol table from `ProtocolRankings`.                                                                                                                |
-| `/rwa/*`                                                                                                                                                                                | `RWA/`                      | RWA-specific pages and definitions. Use RWA definition files instead of general adapter metric assumptions.                                                                                       |
-| `/stablecoins*`                                                                                                                                                                         | `Stablecoins/`              | Stablecoin route family and stablecoin chain views.                                                                                                                                               |
-| `/bridges*`, `/bridged*`                                                                                                                                                                | `Bridges/`, `BridgedTVL/`   | Bridge protocol pages and bridged TVL pages are separate route families.                                                                                                                          |
-| `/yields*`, `/borrow*`                                                                                                                                                                  | `Yields/`                   | Yield pool, borrow, strategy, and yield watchlist routes.                                                                                                                                         |
-| `/cex*`                                                                                                                                                                                 | `Cexs/`                     | Centralized exchange entity and market routes.                                                                                                                                                    |
-| `/raises*`, `/investors*`                                                                                                                                                               | `Raises/`, `Investors/`     | Funding, investor, and dashboard-specific investor routes.                                                                                                                                        |
-| `/token/[token]`                                                                                                                                                                        | `Token/`                    | Token overview route. It imports protocol overview chart/income-statement helpers where needed.                                                                                                   |
-| `/token-rights` and `/protocol/token-rights/[protocol]`                                                                                                                                 | `TokenRights/`              | Token rights pages and protocol-specific token rights views.                                                                                                                                      |
-| `/oracles*`                                                                                                                                                                             | `Oracles/`                  | Oracle route family.                                                                                                                                                                              |
-| `/forks*`                                                                                                                                                                               | `Forks/`                    | Fork pages and forked protocol tables.                                                                                                                                                            |
-| `/unlocks*`                                                                                                                                                                             | `Unlocks/`                  | Unlock route family and unlock calendar.                                                                                                                                                          |
-| `/hacks*`                                                                                                                                                                               | `Hacks/`                    | Hack and total value lost pages.                                                                                                                                                                  |
-| `/digital-asset-treasuries*`                                                                                                                                                            | `DAT/`                      | Digital asset treasury pages.                                                                                                                                                                     |
-| `/etfs`                                                                                                                                                                                 | `ETF/`                      | ETF page family.                                                                                                                                                                                  |
-| `/equities*`                                                                                                                                                                            | `Equities/`                 | Equities pages.                                                                                                                                                                                   |
-| `/pro*`                                                                                                                                                                                 | `ProDashboard/`             | Pro dashboard pages and server-side dashboard data fetchers.                                                                                                                                      |
-| `/ai*`                                                                                                                                                                                  | `LlamaAI/`                  | AI chat and project pages.                                                                                                                                                                        |
-| `/account`, `/subscription*`                                                                                                                                                            | `Account/`, `Subscription/` | Account and subscription routes.                                                                                                                                                                  |
-
-## Shared Or Cross-Cutting Containers
-
-- `ProtocolLists/` is not the `/protocol/[protocol]` owner. It is a shared protocol
-  list/read-model data area used by recent, airdrops, token metric pages, extra
-  TVL pages, category queries, and several server helpers.
-- `AdapterMetrics/` is the adapter metric workhorse. Its name reflects upstream
-  adapter APIs, not route names. If a page is about fees, revenue, volume, open
-  interest, P/F, or P/S by protocol or chain, start here.
-- `ProtocolRankings/` owns the shared protocol ranking table, protocol row types,
-  custom protocol table columns, and `getProtocolsByChain` read model used by
-  `/protocols`, chain overview, watchlist, forks, and compare pages.
-- `ProtocolOverview/` owns protocol detail behavior. Do not move list/table code into
-  it unless the route is about a single protocol entity.
-- `Subscription/shared/` is the public upsell/checkout surface other products
-  lazy-import (`SubscribeCards`, `StripeCheckoutModal`, `TopupModal`,
-  `TrialCsvLimitModal`). Paywall gates in shared components and other containers
-  import from here; the rest of `Subscription/` (pricing data, payment machinery,
-  sign-in surfaces) is internal to the subscription product. Identity/session state
-  is not here — that lives in `src/auth/`.
-
-## Metric Semantics
-
-For metric routes, use these files before changing code:
-
-- `docs/metrics.md` for engineering semantics and overloaded terminology.
-- `public/pages.json` for product-facing page names, route definitions,
-  descriptions, tabs, and total tracked keys.
-- `src/metrics/feesRevenue.ts` and `src/metrics/routeSemantics.ts` for
-  fees/revenue intent shared by ChainOverview and public chart validation.
-- `src/containers/AdapterMetrics/constants.ts` for adapter and data type keys.
-
-## Navigation Rules
-
-- Start from the page file in `src/pages/`, then follow imports to the container.
-- Keep public route slugs stable. Renaming a container folder must not imply route
-  changes.
-- Prefer small ownership improvements over broad folder merges. These containers
-  often share data sources while still owning different product surfaces.
-- When a module is reused by unrelated route families, document that reuse or extract
-  a shared module before renaming the owning folder.
+- `Subscription/shared/` is the public upsell and checkout surface (`SubscribeCards`, `StripeCheckoutModal`, `TopupModal`, `TrialCsvLimitModal`). Paywall gates elsewhere import from there; the rest of `Subscription/` is internal to the subscription product, and session state lives in `src/auth/`.
+- Before changing a metric route, read `docs/metrics.md`.

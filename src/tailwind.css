@@ -11,8 +11,8 @@
 @import './styles/llamaai.css';
 @plugin '@tailwindcss/typography';
 
-/* Documentation and codemod maps mention utility names; they must not
-   drive codegen. */
+/* Documentation and scripts mention utility names; they must not drive
+   codegen. */
 @source not '../design.md';
 @source not '../scripts';
 
@@ -454,17 +454,18 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	/*
 	  App tokens OUTSIDE the design system. The design system is
 	  src/styles/semantics.css; product palettes live in src/styles/themes/.
-	  --interim-* marks a value awaiting a library token (ratcheted by
-	  the design-token policy check — don't add more); the rest are domain tokens documented
-	  in design.md. --announcement-bg has no global default: the Announcement
-	  component sets it inline per variant.
+	  --interim-* marks a stopgap value with no semantic token (counted as
+	  `interim-token` by the design-token policy check; don't add more); the
+	  rest are domain tokens owned by the code that reads them.
+	  --announcement-bg has no global default: the Announcement component
+	  sets it inline per variant.
 	*/
 	:root {
 		/* dlnews partner logo mark (consumed inside public/assets/dlnews*.svg) */
 		--dlnews-logo: oklch(0.241 0.056 240.6);
 
-		/* One alpha step above bg-brand-muted for hover states — the library
-		   has no brand-tint-hover token yet (flagged to design) */
+		/* One alpha step above bg-brand-muted for hover states; no semantic
+		   brand-tint hover token exists */
 		--interim-brand-tint-hover: #1f67d233;
 
 		/* Yields v2 APY tiers (light). The top tier is intentionally red: a very-high APY reads as a risk signal. */

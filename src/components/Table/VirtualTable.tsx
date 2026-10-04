@@ -23,6 +23,11 @@ const INITIAL_VIRTUAL_WINDOW_ROWS = 18
 const getInitialVirtualizerHeight = (rowCount: number, rowHeight: number) =>
 	Math.min(rowCount, INITIAL_VIRTUAL_WINDOW_ROWS) * rowHeight
 
+/**
+ * Render a window of the current row model with window scrolling. This component owns the virtual spacers, the
+ * container offset measurement and the warning that browser find cannot search rows outside the window; callers
+ * never add their own. Rows are fixed-height and every cell truncates, so `rowSize` must match the rendered row.
+ */
 export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T extends RowData>({
 	table,
 	rowSize,

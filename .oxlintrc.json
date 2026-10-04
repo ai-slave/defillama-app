@@ -98,6 +98,9 @@
 		"react/jsx-no-target-blank": "error",
 		// `<>{children}</>` is how a component returns a ReactNode child; only a fragment around a single element is useless.
 		"react/jsx-no-useless-fragment": ["error", { "allowExpressions": true }],
+		// Editable rows keep local IDs made at creation, and persisted records use their domain identity. A display
+		// slot with a fixed lifecycle may disable this inline and say why. Table callers that lack a source identity
+		// opt into occurrence keys, which cannot track two identical records swapping positions.
 		"react/no-array-index-key": "error",
 		"react/no-danger": "error",
 		// The React Compiler caches a `= []` default, but only in a component it compiles. One that bails
@@ -134,7 +137,8 @@
 		// --- Deferred: off until the trigger named here happens ---
 		// Trigger: the strict-types migration completes. 175 non-test hits.
 		"typescript/no-explicit-any": "off",
-		// Trigger: TanStack table and virtual migrate. Every hit is useReactTable or useVirtualizer.
+		// Trigger: TanStack Virtual migrates. Every hit is a React Virtual hook call; the compiler baseline
+		// records the same bailout as "Use of incompatible library".
 		"react/incompatible-library": "off",
 		// Trigger: oxc's compiler port stops crashing on Unlocks/Table and ChainsByCategory/Table. Both
 		// hits are its own internal error; Babel compiles both components.

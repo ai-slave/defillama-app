@@ -27,6 +27,11 @@ import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
 import { selectTriggerStyles } from './types'
 
+/* SelectWithCombobox — a single or multi picker for a mid-sized list; the folder README says which picker fits.
+
+   A multi-select row holds two `role="option"` items: the option and its "Only" button. Code that counts or indexes
+   options skips `[aria-label^="Only "]`. */
+
 interface ISelectWithComboboxBase {
 	allValues: SelectValues
 	/** What the trigger lists instead of `selectedValues`, e.g. one group name for its selected members. */

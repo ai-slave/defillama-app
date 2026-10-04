@@ -1,200 +1,61 @@
-# Date formatting policy
+# Date formatting
 
-Dates in the app represent different kinds of data. The formatter must follow the
-meaning of the value rather than the shape returned by an API.
+A date's formatter follows what the value means, not the shape the API returns. Generic UI dates come from `src/utils/dateFormat.ts`, imported directly from `~/utils/dateFormat`. Chart time axes and period grouping are in `docs/charts.md`.
 
-## Display categories
+`scripts/policies/check-date-formatting.ts` enforces the import and raw-formatter boundaries, and `scripts/policies/check-hydration.ts` enforces the render-clock rules it can see. CI runs both over the whole tree; the pre-commit hook runs them on staged `src/` files. This page covers the choices the checks cannot make.
 
-| Category      | Example                 | Policy                                                                                                                                 |
-| ------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Calendar date | `Jul 24, 2026`          | Treat as a UTC calendar fact so the day cannot move with the viewer's timezone.                                                        |
-| Exact instant | `Jul 24, 2026, 4:30 PM` | Preserve the time. Use UTC for SSR-stable output or render the viewer's timezone through an explicitly hydration-safe client path.     |
-| Relative time | `3h ago`                | Use compact relative text through six days, then an absolute UTC date. Keep the exact instant available in a title or adjacent detail. |
-| Month         | `Jul 2026`              | Treat as a UTC calendar period.                                                                                                        |
-| Domain range  | `Jan 1 - Mar 31, 2026`  | Keep the domain formatter that owns the range and its inclusivity rules.                                                               |
-| Machine date  | `2026-07-24`            | Preserve the API, URL, form, CSV, or serialization contract; do not apply display formatting.                                          |
+## What to use
 
-Numeric timestamps must declare whether they are seconds or milliseconds at the
-formatting boundary. A formatter must never guess from the magnitude.
+| To show this                                                                 | Use                                                                                                  | Example                                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| A calendar date (`Jul 24, 2026`)                                             | `formatDate(value, { input: 'seconds' })`, in UTC so the day cannot move with the viewer's zone      | `src/containers/Token/TokenOverviewSection.tsx`                    |
+| An exact instant (`Jul 24, 2026, 4:30 PM`)                                   | `formatDateTime(value, { timeZone: 'UTC' })`, or `timeZone: 'local'` on a hydration-safe client path | `src/containers/ProDashboard/components/SqlChart/SqlFreshness.tsx` |
+| A local clock time (`4:30 PM`)                                               | `formatLocalTime(date)`, on a hydration-safe client path                                             | `src/containers/LlamaAI/components/ResponseControls.tsx`           |
+| A month (`Jul 2026`)                                                         | `formatMonthYear(value)`, a UTC calendar period                                                      | `src/containers/ProtocolOverview/IncomeStatement.tsx`              |
+| A machine date for an API, URL, form, CSV or serialization (`2026-07-24`)    | `formatIsoDate(value)`; never a display label                                                        | `src/components/ECharts/shared/csv.ts`                             |
+| A timestamp parsed from a date value, with no display formatting             | `parseDateTimestamp(value)`                                                                          |                                                                    |
+| Relative time (`3h ago`)                                                     | `<RelativeTime>` from `src/ui/RelativeTime.tsx`                                                      | `src/ui/DataFreshness.tsx`                                         |
+| A value about the period the page data describes                             | `usePageClockSec()` from `src/hooks/usePageClock.tsx`                                                | `src/containers/Hacks/index.tsx`                                   |
+| A value about now (countdown, expiry, "ago")                                 | `useNowSeconds(seed?, tickMs?)` from `src/hooks/useNowSeconds.ts`                                    | `src/auth/VerifyEmailDialog.tsx`                                   |
+| Text the server may render differently (a cached price, a build-frozen year) | `<StaleText>` from `src/ui/StaleText.tsx`                                                            | `src/ui/HeroMetric.tsx`                                            |
+| The visitor's "today"                                                        | Mark it after mount with `useIsClient()` from `src/hooks/useIsClient.tsx`, or compare in UTC         | `src/containers/Unlocks/CalendarView.tsx`                          |
+| A date range input seeded from the clock                                     | `useDateRangeValidation` from `src/hooks/useDateRangeValidation.tsx`                                 | `src/containers/Bridges/Transactions.tsx`                          |
+| A domain range (`Jan 1 - Mar 31, 2026`)                                      | The domain formatter that owns the range and its inclusivity rules                                   |                                                                    |
 
-## Canonical API
+## Values
 
-Generic UI dates are formatted by `src/utils/dateFormat.ts` and imported directly
-from `~/utils/dateFormat`. Callers own presentation fallbacks such as `?? '-'`.
-The intended API is:
-
-```ts
-formatDate(value, { input: 'seconds' })
-formatDateTime(value, { input: 'milliseconds', timeZone: 'UTC' })
-formatMonthYear(value)
-formatRelativeTime(value, { now })
-formatIsoDate(value)
-```
-
-The input option is required for numbers. Date-only strings (`YYYY-MM-DD`) are UTC
-calendar facts. Strings representing instants must include `Z` or a numeric UTC
-offset; offsetless date-time strings are not accepted because the server and browser
-can interpret them in different timezones. `Date` objects already represent an exact
-instant. Generic formatters use the app's centrally chosen locale rather than the
-host's implicit locale.
-
-Exact-instant callers must choose `UTC` or `local`; there is no implicit timezone.
-Local displays may request `timeZoneName: 'short'` when the surrounding UI needs to
-state the viewer's zone explicitly. Because local output varies by host, callers must
-handle server rendering and hydration explicitly.
-
-Relative output is clock-dependent. UI should use `src/ui/RelativeTime.tsx`, which
-provides a deterministic server fallback, updates after hydration, refreshes over
-time, and exposes the exact UTC instant. Direct `formatRelativeTime` calls are reserved
-for client-clock owners that provide equivalent behavior.
-
-## Chart time axes
-
-ECharts time axes run in UTC. `MultiSeriesChart` sends `useUTC: true` unless a
-caller sets `chartOptions.useUTC: false`, and `CandlestickChart` always sets it. Tick
-placement and default tick labels then agree with the UTC tooltip, zoom, and hallmark
-labels, and daily points stamped at UTC midnight sit on their day's tick in every
-viewer timezone. Without it, ECharts places and labels ticks in the viewer's local
-time, so one chart would show two timezones.
-
-Chart timestamps for calendar dates must be UTC midnight, for example
-``Date.parse(`${date}T00:00:00Z`)``. Do not stamp a date key with local midnight
-(`dayjs(date)`, `new Date(y, m, d)`, an offsetless date-time string): a chart built
-on the server and one built in the browser would then disagree.
-
-A chart that deliberately shows the viewer's local time must opt out as a whole. Set
-`useUTC: false`, and replace the tooltip and zoom-label formatters with local ones.
-`useUTC` only changes ECharts' own time handling; the shared tooltip and zoom
-formatters stay UTC. Rendering local time must also follow the hydration rules for
-local exact instants above.
-
-## Grouped chart periods
-
-Weekly, monthly, quarterly, and yearly charts bucket daily points into UTC calendar
-periods. A week runs Monday to Sunday and is keyed by its Sunday; every other period
-is keyed by its first day (`getBucketTimestampSec`). The tooltip reads that key as
-the period it names, for example "14 - 20 Sep 2026" or "Sep 1 - 30, 2026", and CSV
-exports write the period's start and end dates.
-
-- Flows and counts that add up across days sum the period (`formatBarChart`).
-- Balances and running totals keep the period's last available value
-  (`formatLineChart`), on the same key as the bars, so one period label describes
-  every series in the chart.
-- Daily counts that do not add up across days, such as active addresses, average the
-  period's observed days (`formatDailyAverageChart`) and say so in their series name.
-  Cumulative mode leaves them out.
-- A grouped chart passes `groupBy` together with its rows, in the same memo or
-  deferred snapshot, so the tooltip and CSV never label one grouping's rows with
-  another.
-- An API payload that is already grouped keeps its values. A week the API stamps on
-  its Monday moves to that week's Sunday (`lastDayOfWeek`) instead of being summed
-  again.
-- Fiscal reporting periods, such as equities fundamentals, are the provider's periods,
-  not calendar buckets. Name them by their period end, for example "Quarter ending
-  Jul 2025".
-
-## Protected domain behavior
-
-The following behavior is intentionally not redefined by the generic policy:
-
-- ECharts daily tooltips, UTC timestamps with a time component, weekly/monthly/quarterly/yearly ranges, emphasis labels, and hallmark ranges.
-- Unlock calendar labels, query date keys, and timestamps with explicit GMT offsets.
-- Article header publication times, scheduling inputs, revision times, and article-card dates.
-- Alert scheduling and timezone-offset calculations.
-- Download date-range labels. “Last N days” means exactly N inclusive calendar dates ending today; YTD includes January 1 and today.
-- iCalendar fields, chart CSV timestamps, SQL results, dataset snapshots, API payloads, URLs, and form values.
-
-These implementations may use canonical primitives where that preserves their exact
-output. They remain domain-owned when their range, timezone, or serialization rules
-are more specific than a generic display date. Domain ownership does not preserve a
-confirmed correctness bug, such as dropping a meaningful time component or including
-one extra day in an inclusive preset.
+- A numeric timestamp declares `input: 'seconds'` or `input: 'milliseconds'` at the formatting boundary. A formatter never guesses from the magnitude.
+- A date-only string (`YYYY-MM-DD`) is a UTC calendar day. Date keys, picked dates and daily points are UTC days too, and must not shift a day in any UTC offset.
+- A string that represents an instant includes `Z` or a numeric UTC offset. Offsetless date-time strings are rejected, because the server and the browser read them in different zones.
+- A `Date` object is an exact instant. An exact instant never loses its time.
+- Generic formatters use the app's one display locale, never the host's implicit locale.
+- Exact-instant callers choose `UTC` or `local`; there is no implicit zone. A local display may add `timeZoneName: 'short'` when the UI must name the viewer's zone. Local output varies by host, so it follows "Render clock and hydration".
+- Relative time stays compact through six days, then shows an absolute UTC date, with the exact instant in a title. `RelativeTime` does this, renders a deterministic server fallback and ticks after hydration. Call `formatRelativeTime` directly only from a client-clock owner that does the same.
+- Invalid or missing values return `null`. The caller picks the UI copy, such as `?? '-'`.
+- Never reuse a display label as machine output.
+- Never re-export date formatters from a barrel, alias a canonical import, or wrap one only to supply a fallback.
+- Day.js works in the visitor's zone: `dayjs('2026-10-01')` is local midnight, and `startOf('year')` or `format('YYYY-MM-DD')` on a local value names the visitor's day. Parse with `dayjs.utc`, take calendar boundaries in UTC, or compare `YYYY-MM-DD` strings. The "today" that caps a date input or ends a preset is the UTC day.
+- Keep a raw formatter only when it owns domain semantics the canonical API does not express. Allowlisted domain formatters in `check-date-formatting.ts` keep their own range and zone rules, but not their bugs, such as dropping a meaningful time or including one extra day in an inclusive preset.
 
 ## Render clock and hydration
 
-The Equities earnings calendar is the documented exception whose product day is the New York calendar day. Its
-server data layer derives a `YYYY-MM-DD` key with a literal `America/New_York` formatter and sends that key beside
-the cached calendar data; browser rendering and date arithmetic continue to operate on calendar strings.
+Most pages are static with a long revalidate, so the HTML a visitor receives was rendered hours earlier. React compares that HTML with the first client render; any text derived from the live clock, the visitor's zone or the visitor's locale differs, React logs a hydration mismatch and rebuilds the subtree.
 
-Most pages are static with a long revalidate, so the HTML a visitor receives was rendered hours earlier. React
-compares that HTML with the first client render; any text derived from the live clock, the visitor's zone or the
-visitor's locale differs, React logs a hydration mismatch and rebuilds the subtree. The rule is:
+**The first client render uses the server's clock. After hydration, live displays may advance, but never by overwriting a choice the reader made.**
 
-**The first client render uses the server's clock. After hydration, live displays may advance, but never by
-overwriting a choice the reader made.**
-
-- Every data function that goes through `withPerformanceLogging` or `withServerSidePropsTelemetry` stamps
-  `pageClockSec` into its props, and `_app` provides it as the page clock. A page without a data function has no
-  clock, and time-dependent content there renders after mount.
-- Pick the clock by the question the value answers. There are two, and each has one hook:
-  - **Which period does this data describe?** The last completed day, a 7-day window ending at the data, whether a
-    rolling stat is from today, trimming today's partial point. The clock is the time the data was built:
-    `usePageClockSec()` from `src/hooks/usePageClock.tsx` for page props, the query's `dataUpdatedAt` for data a
-    client query fetched. Old data measured against the visitor's today has no rows for it and shows zeros; the
-    data's own clock shows what the data covers, and a client navigation brings the next page's clock with its
-    data. A query seeded from props needs `initialDataUpdatedAt` from the page clock, or the server and the
-    hydrating client disagree about its time.
-  - **How does now relate to something?** A countdown, an "ago" label, a cooldown, an expiry, a staleness
-    warning, a date input's max, a "today" marker. The clock is `useNowSeconds(seed?, tickMs?)` from
-    `src/hooks/useNowSeconds.ts`: the first render uses the page clock (or the seed), so the HTML hydrates, then it
-    ticks on the browser clock. Pass a seed only when the first render must use a time tied to the data, such as
-    the time a dataset was built.
-    Never freeze the clock at mount: a mounted page keeps that second across client navigations, so the next page's
-    data is measured against the wrong day. A default derived from the clock (the month a calendar opens on) is
-    derived during render; only the reader's own choice goes in state.
-- Never read `Date.now()`, `new Date()` or `dayjs()` while rendering: not in a component or hook body, not in a
-  `useMemo` or `useState` initializer, and not in a helper a render path calls. Effects, event handlers, query
-  functions and data functions may read it.
-- No helper defaults or falls back to the clock (`now = Date.now()`, `options.now ?? Date.now()`). Its caller passes
-  the clock it means: a data function reads `Date.now()` once and passes it down, and render code passes one of the
-  two hooks.
-- When a render value moves to the page clock, move everything compared against it too, including helpers in other
-  modules. A range built from `useNowSeconds` and checked against `new Date()` in an imported helper agrees on the
-  server and disagrees in the browser once the HTML crosses midnight.
-- "Today" for the visitor is their local day, which the server cannot know. Mark it after mount with
-  `useIsClient()`, or compare in UTC.
-- Date arithmetic uses the UTC methods (`getUTCMonth`, `setUTCDate`); the local-zone methods belong to the few
-  modules listed in `scripts/policies/check-hydration.ts` with their reason.
-- Server-rendered date text names a literal locale and a `timeZone`. `~/utils/dateFormat` does this; an approved
-  raw formatter must too, unless the surface renders after interaction.
-- Text the server may legitimately render differently, a cached price, a build-frozen copyright year, goes through
-  `StaleText` from `src/ui/StaleText.tsx`. It carries the one `suppressHydrationWarning` in the app and accepts text
-  only, because the flag covers an element's own text and nothing nested. React keeps the server's text until a
-  later render changes the value, so suppression is not a way to show the visitor's zone: a local-zone time is the
-  same on every client render and would stay as the server wrote it. Render it after mount or in UTC.
-- A form default seeded from the page clock must follow the clock after hydration while a value the reader picked
-  stays: derive the shown value from the selection when there is one, else from the live default
-  (`useDateRangeValidation` is the reference).
-- Test the whole path with `renderHydrated` from `src/utils/testing/hydration.tsx`: render on the server at a
-  stale clock and zone, hydrate at the visitor's, assert no errors, then assert the displayed values after the live
-  clock takes over and that a selection survives it. The helper renders the server side under the page clock
-  and gives both renders the same element, so build per-render state such as a `QueryClient` inside the tree: a
-  shared instance hands the browser the server's cache and hides the mismatch. A component that hydrates cleanly
-  can still freeze on the
-  server's day.
-
-`scripts/policies/check-hydration.ts` enforces the flag, the render-time reads it can see and the local-zone
-methods; it does not trace a clock read through an imported helper, so keep clock reads out of helpers that
-render code imports.
-
-## Enforcement rules
-
-- Do not re-export date formatters from `~/utils` or another barrel.
-- Do not alias canonical imports or add wrappers that only supply a fallback.
-- Keep a local formatter only when it owns documented domain semantics that the canonical API does not express.
-- Date-only API fields must not shift a day in negative or positive UTC offsets.
-- Day.js works in the visitor's zone: `dayjs('2026-10-01')` is local midnight, and `startOf('year')` or
-  `format('YYYY-MM-DD')` on a local value names the visitor's day. Date keys, picked dates and daily points are UTC
-  days, so parse with `dayjs.utc`, take calendar boundaries in UTC, or compare `YYYY-MM-DD` strings. The "today"
-  that caps a date input or ends a preset is the UTC day too.
-- Exact instants must not lose their time.
-- Display labels must not be reused for machine output.
-- Invalid or missing values return `null`; the consumer chooses the appropriate UI copy.
-- Raw `Intl.DateTimeFormat`, Date locale methods, and Day.js display formatting are limited to reviewed domain-owned paths.
-- Approved raw formatters name a literal locale and a `timeZone` unless the surface renders after interaction.
-- Render-time clock reads and `suppressHydrationWarning` outside `StaleText` fail `check-hydration.ts` (see "Render clock and hydration").
-
-`scripts/policies/check-date-formatting.ts` enforces these boundaries. CI runs it over
-the whole tree; the pre-commit hook runs it on the staged `src/` TypeScript files by
-passing their paths as arguments. Its allowlists are exceptions for the protected
-behavior above, not alternative generic formatting APIs.
+- Every data function that goes through `withPerformanceLogging` or `withServerSidePropsTelemetry` stamps `pageClockSec` into its props, and `_app` provides it as the page clock. A page without a data function has no clock, and time-dependent content there renders after mount.
+- Pick the clock by the question the value answers:
+  - **Which period does this data describe?** The last completed day, a 7-day window ending at the data, whether a rolling stat is from today, trimming today's partial point. The clock is the time the data was built: `usePageClockSec()` for page props, the query's `dataUpdatedAt` for data a client query fetched. Old data measured against the visitor's today has no rows for it and shows zeros. A client navigation brings the next page's clock with its data.
+  - **How does now relate to something?** A countdown, an "ago" label, a cooldown, an expiry, a staleness warning, a date input's max, a "today" marker. The clock is `useNowSeconds`: the first render uses the page clock (or the seed), so the HTML hydrates, then it ticks on the browser clock. Pass a seed only when the first render must use a time tied to the data, such as the time a dataset was built.
+- A query seeded from props sets `initialDataUpdatedAt` from the page clock, or the server and the hydrating client disagree about its time.
+- Never freeze the clock at mount: a mounted page keeps that second across client navigations, so the next page's data is measured against the wrong day.
+- Derive a default from the clock (the month a calendar opens on) during render. Only the reader's own choice goes in state.
+- Never read `Date.now()`, `new Date()` or `dayjs()` while rendering: not in a component or hook body, a `useMemo` or `useState` initializer, or a helper a render path calls. Effects, event handlers, query functions and data functions may read it.
+- No helper defaults or falls back to the clock (`now = Date.now()`, `options.now ?? Date.now()`). Its caller passes the clock it means: a data function reads `Date.now()` once and passes it down, and render code passes one of the two hooks.
+- `check-hydration.ts` does not trace a clock read through an imported helper, so keep clock reads out of helpers that render code imports.
+- When a render value moves to the page clock, move everything compared against it too, including helpers in other modules. A range built from `useNowSeconds` and checked against `new Date()` in an imported helper agrees on the server and disagrees in the browser once the HTML crosses midnight.
+- Date arithmetic uses the UTC methods (`getUTCMonth`, `setUTCDate`). The local-zone methods belong to the modules `check-hydration.ts` lists with their reason.
+- Server-rendered date text names a literal locale and a `timeZone`. `~/utils/dateFormat` does this; an approved raw formatter must too, unless the surface renders after interaction.
+- `StaleText` carries the one `suppressHydrationWarning` in the app and accepts text only. React keeps the server's text until a later render changes the value, so suppression cannot show the visitor's zone: render a local-zone time after mount or in UTC.
+- A form default seeded from the page clock follows the clock after hydration while a value the reader picked stays. Derive the shown value from the selection when there is one, else from the live default (`useDateRangeValidation`).
+- Prove the whole path with `renderHydrated`; `docs/testing.md`, "Clock and hydration", covers how.

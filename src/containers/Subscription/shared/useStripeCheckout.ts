@@ -19,6 +19,23 @@ import {
 } from './pendingUpgrade'
 import { CARD_PAYMENTS_UNAVAILABLE, loadStripeOnce } from './stripeClient'
 
+/* ----------------------------------------------------------------------------
+   Stripe checkout: this hook creates the session; StripeCheckoutModal renders it.
+
+   - A payment write, such as creating a checkout session, starts from the
+     user's click, never from a component mounting, so a remount, a leave
+     animation or a reopened dialog cannot create another.
+   - An earlier payment that could still take money is resumed or blocks a
+     new one, because the frontend cannot cancel it. It is forgotten only on
+     Stripe's status for that payment, never on a plan, an interval or a
+     return URL (./pendingUpgrade.ts).
+   - A payment still under way (Stripe `processing`, `requires_capture`) is an
+     outcome step named for its status, never an error beside a pay button
+     that still works.
+   - While the embedded payment form is on screen, closing the dialog asks
+     first ("Keep paying" / "Leave") through DialogDiscardGuard.
+---------------------------------------------------------------------------- */
+
 export interface CheckoutRequest {
 	type: 'api' | 'llamafeed'
 	billingInterval: 'year' | 'month'

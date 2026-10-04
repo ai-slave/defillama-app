@@ -3,6 +3,13 @@ import type { EquitiesCalendarResponse } from './queries.client'
 import { buildEquityTickerCountrySlug } from './tickerCountry'
 import type { IEquitiesCalendarCompany, IEquitiesCalendarRow } from './types'
 
+/* The server sends a bootstrap seed (the current week and the summary) while the client loads the full calendar.
+   Until the full calendar arrives:
+   - URL-selected data (another week) renders only once the full dataset is available; the page shows the seed's
+     actual period, never a false empty state (getEarningsCalendarDisplayDate).
+   - The URL keeps the requested selection, so it takes effect when the full dataset arrives.
+   - A failed request says what the page still shows ("only this week is shown and search is off"). */
+
 export type EarningsCalendarStatus = 'reported' | 'projected' | 'pastDue'
 export type EarningsMarketCapTier = 'mega' | 'large' | 'mid' | 'small' | 'micro'
 /** Picker options for the market cap filter; rows without a market cap fall under `unknown`. */

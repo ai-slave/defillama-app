@@ -252,7 +252,7 @@ function segmentColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
 	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
-	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
+	/** For labels wider than the default 112px column (see "Column widths" in src/components/Table/README.md). */
 	headerClassName?: string
 }) {
 	return columnHelper.accessor(spec.value, {
@@ -306,7 +306,7 @@ function perpColumn(spec: {
 	suffix?: (row: ExchangeDirectoryRowModel) => string
 	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
 	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
-	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
+	/** For labels wider than the default 112px column (see "Column widths" in src/components/Table/README.md). */
 	headerClassName?: string
 }) {
 	const parts = (row: ExchangeDirectoryRowModel) =>

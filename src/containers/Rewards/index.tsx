@@ -156,7 +156,7 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 						/>
 					</label>
 					{/* filter, not inline: it sits between the search field and Reset, so it
-					    takes the same 32px bordered control shape (design.md → Table toolbar). */}
+					    takes the same 32px bordered control shape as the other toolbar controls. */}
 					<Checkbox
 						variant="filter"
 						checked={query.hideUnverified}

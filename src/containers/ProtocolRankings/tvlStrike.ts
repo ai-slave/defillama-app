@@ -2,8 +2,7 @@ import { removedCategoriesFromChainTvlSet } from './constants'
 import type { IChildProtocol, IProtocol } from './types'
 
 /**
- * Display policy for the TVL strike marker, restoring the pre-extraction
- * toggle behavior: `strikeTvl` is baked into the snapshot as "this protocol
+ * Display policy for the TVL strike marker. `strikeTvl` is baked into the snapshot as "this protocol
  * HAS a doublecounted or liquidstaking section (or a removed category)", but
  * whether that section is actually subtracted from chain TVL depends on the
  * reader's "Include in TVL" toggles. A section the reader opted back in is

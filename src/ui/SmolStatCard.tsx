@@ -22,7 +22,11 @@ interface SmolStatCardProps {
 	children: ReactNode
 }
 
-/** A small overview card: the title with its definition, the value and its change on one line, then the chart. */
+/** A small chart-forward stat card: a title-md title with its definition and the DefiLlama mark, one value line, then
+    the chart. The line reads value → qualifier → change → comparison: the value is text-secondary, the signed change
+    a colored body-sm, and qualifiers bare tertiary spans one tier below what they qualify, with no parentheses. A
+    missing value reads a tertiary "Unavailable". The line wraps only between its two groups (value + qualifier,
+    change + comparison) and never truncates the value. */
 export function SmolStatCard({
 	title,
 	tooltip,

@@ -38,7 +38,7 @@ const SELECT_TRIGGER_VARIANTS = {
 
 export type SelectTriggerVariant = keyof typeof SELECT_TRIGGER_VARIANTS
 
-/* Panel headers use 32px (md) controls everywhere (Figma 6183:148797) — the
+/* Panel headers use 32px (md) controls everywhere. The
    md filter trigger mirrors Button md so selects line up with .csv/.png, and
    in a phone sheet's rows it is 44px like Button md. */
 const SELECT_TRIGGER_MD_VARIANTS: Partial<Record<SelectTriggerVariant, string>> = {

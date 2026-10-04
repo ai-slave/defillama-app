@@ -36,7 +36,7 @@ export function MaterialChangeCell({
 	return <ChangeCell fraction={change.fraction} />
 }
 
-/** One label/value pair inside a MetricStatStrip (summary-strip recipe — see design.md). */
+/** One label/value pair in a MetricStatStrip, the Markets mono variant of `InlineStatStrip` (src/ui). */
 export function MetricStat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
 	return (
 		<div className="flex items-baseline gap-1.5">

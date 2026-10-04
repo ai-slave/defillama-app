@@ -1,172 +1,40 @@
 # ProtocolLists
 
-ProtocolLists owns protocol list/read-model pages that are not the single-protocol overview and not the shared protocol ranking table.
+ProtocolLists owns protocol list pages that are neither one protocol (`ProtocolOverview`) nor the shared ranking table (`ProtocolRankings`).
 
-This folder is used by recent protocols, airdrops, token metric lists, and extra-TVL list pages. It also provides protocol-list API helpers used by other containers.
+## Routes
 
-## Route Families
+- `/recent`, `/airdrops`
+- `/mcaps`, `/fdv`, `/outstanding-fdv`, `/token-prices` and their `/chain/[chain]` pages
+- `/active-loans`, `/total-staked`, `/pool2` and their `/chain/[chain]` pages
+- `/api/public/protocol-lists`, the paginated rows and CSV for `/recent` and `/airdrops`
 
-Common routes:
+Shared with: `fetchProtocols` in `api.ts` is the `/lite/protocols2` source for more than twenty other containers and pages, and `applyProtocolTvlSettings` in `utils.ts` prepares rows for `ProtocolRankings` and `DeFiWatchlist`. A change to either reaches far outside this folder.
 
-- `/recent`
-- `/airdrops`
-- `/mcaps` and `/mcaps/chain/[chain]`
-- `/fdv` and related token metric list pages
-- `/outstanding-fdv`
-- `/token-prices` and `/token-prices/chain/[chain]`
-- `/active-loans` and `/active-loans/chain/[chain]`
-- `/total-staked` and `/total-staked/chain/[chain]`
-- `/pool2` and `/pool2/chain/[chain]`
+## Where the logic lives
 
-The `/protocol/[protocol]` entity page belongs to `ProtocolOverview`. The `/protocols` ranking table and chain overview protocol rows are shared through `ProtocolRankings`.
+| To change                                                      | Edit                         | Notes                                                                                |
+| -------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------ |
+| Which protocols are recent or airdrops                         | `queries.ts`                 | `getRecentProtocols`, `getAirdropsProtocols`                                         |
+| Filtering, TVL scope, bounds, search and sort for those tables | `pagination.server.ts`       | Initial rows, later pages and CSV all use it                                         |
+| URL params, page sizes and the query signature                 | `tableQuery.ts`              | Browser-safe; `PROTOCOL_LIST_LIMITS`                                                 |
+| Snapshot storage and initial props                             | `server/tableData.server.ts` |                                                                                      |
+| CSV columns                                                    | `export.server.ts`           |                                                                                      |
+| Additive TVL toggles on list rows                              | `utils.ts`                   | `applyExtraTvl` for recent and airdrops, `applyProtocolTvlSettings` for ranking rows |
 
-## Main Files
+## Rules
 
-- `api.ts` and `api.types.ts`: protocol list API fetchers and DTO types.
-- `queries.ts`: page-data/read-model builders for recent, airdrops, token metrics, and extra-TVL pages.
-- `RecentProtocolsTable.tsx`: recent/airdrop table rendering.
-- `ProtocolsWithTokens.tsx`: protocol token metric list UI.
-- `ExtraTvlByChain.tsx`: active loans, total staked, and pool2 chain views.
-- `utils.ts`: TVL toggle transforms and list filtering helpers.
-- `types.ts`: protocol-list read-model types.
-- `airdrop-exclude.ts`, `data.json`: airdrop-specific local data.
+- Additive TVL keys follow the `/lite/protocols2` producer: `staking`, `pool2`, `borrowed` and `vesting` (`PROTOCOL_LIST_ADDITIVE_TVL_KEYS`). Never reuse the wider chain toggle set. See `docs/metrics.md` → "TVL models".
+- A recent row requires `listedAt`, and zero counts as listed.
+- Recent rows stay individual listings and are never grouped under a parent.
+- Airdrop membership is `symbol === '-'`, minus the names in `airdrop-exclude.ts`, minus children of a parent that has its own token.
+- The airdrops list needs both the protocol listing and the funding rounds; if either fetch fails, the list is unavailable.
+- The airdrops funding column sorts and exports the disclosed subtotal (`raiseSummary.totalUsd`). The CSV labels it "Disclosed Money Raised" and adds the undisclosed round count. See `docs/metrics.md` → "Funding amounts".
+- Chain and category selections follow the picker rules in `src/components/Select/query.ts`.
+- Nullable TVL snapshots stay null until a page deliberately normalizes them. See `docs/metrics.md` → "Null, zero and failure".
 
-## Data Flows
+## Not here
 
-Recent protocols and airdrops:
-
-```text
-src/pages/recent.tsx / src/pages/airdrops.tsx
-  -> getProtocolListInitialProps(kind)
-  -> Redis snapshot built by getRecentProtocols() / getAirdropsProtocols()
-  -> getProtocolListRows() -> cursorTablePage() -> 50 initial rows
-  -> RecentlyListedProtocolsTable -> useTablePages()
-  -> /api/public/protocol-lists (75 rows per subsequent request)
-```
-
-`tableQuery.ts` preserves the existing router parameter parsers and uses the shared
-canonical query signature. `pagination.server.ts` owns chain/category/fork filtering,
-exact TVL scope and settings, bounds, search and stable sorting. Initial data, later
-pages and CSV all use this preparation over the complete eligible population.
-Per-chain TVL sections and fork lookup maps stay on the server. Filter menus follow
-the page snapshot when an expired version triggers replacement.
-
-The same endpoint with `csv=true` exports every matching row using `export.server.ts`.
-It requires the displayed snapshot to remain available; unlike page replacement,
-export never silently switches snapshots. The shared CSV button retains subscription,
-loading and failure behavior. The airdrop claim directory and address checker remain
-in `RecentProtocols`.
-
-Snapshots have a 55-minute freshness pointer and four-hour version retention, with
-bounded process caches for snapshots and prepared rows. Like the existing rankings
-snapshot, a healthy build remains usable if Redis publication fails (including
-`next dev`, where the cache client disables Redis). Its exact version is retained
-locally. Another worker can recover it only if its rebuilt content hash matches;
-otherwise pagination replaces at the latest version and export fails. No production
-configuration is changed here.
-
-Default listing order is newest first on both pages, matching the former table sort
-(including airdrops, whose source builder orders ascending). Equal values use protocol
-ID as a deterministic tie-breaker. Chain and category selections follow the filter
-picker rules in `src/components/Select/query.ts`.
-
-Token metric lists:
-
-```text
-src/pages/mcaps*.tsx
-src/pages/fdv*.tsx
-src/pages/outstanding-fdv*.tsx
-src/pages/token-prices*.tsx
-  -> getProtocolsMarketCapsByChain(...)
-  -> getProtocolsFDVsByChain(...)
-  -> getProtocolsAdjustedFDVsByChain(...)
-  -> getProtocolsTokenPricesByChain(...)
-  -> ProtocolsWithTokens
-```
-
-Extra-TVL pages:
-
-```text
-src/pages/active-loans*.tsx
-src/pages/total-staked*.tsx
-src/pages/pool2*.tsx
-  -> getExtraTvlByChain(...)
-  -> ExtraTvlByChain
-```
-
-## Metric Semantics
-
-ProtocolLists consumes protocol list data and reshapes it for list pages. It should not become a generic metric registry.
-
-Important rules:
-
-- `fetchProtocols()` is a shared protocol list source used by many containers.
-- `/lite/protocols2` returns `protocolCategories` and emits nullable top-level and section
-  TVL snapshots. Every child protocol has `category`; tagged protocols also retain `tags`,
-  so the fields are not mutually exclusive. List DTOs preserve nullable snapshots until a
-  page deliberately normalizes them.
-- Protocol-list TVL sections are finite. `staking`, `pool2`, `borrowed`, and `vesting`
-  are the only selectable/additive keys. `doublecounted` and `liquidstaking` are upstream
-  classification markers only, and `govtokens` is not a protocol-list section.
-- Recent/airdrop TVL toggle behavior is not the same as chain TVL normalization.
-- Hidden chain-only doublecounted/liquidstaking/govtokens settings do not change protocol
-  list values, strike state, or tooltip copy.
-- Selected-chain recent/airdrop snapshots use exact chain-name prefixes (including
-  hyphenated names). Present null current/previous snapshots keep the aggregate period
-  null; every selected chain declared by the protocol requires a base snapshot. A missing
-  selected-chain base is unavailable because the response has no coverage marker proving
-  that omission means zero. Explicit zero remains zero, and selected undeclared chains are
-  irrelevant.
-- `applyProtocolTvlSettings` applies additive table toggles, min/max TVL filtering, and
-  child protocol behavior without changing producer-derived `strikeTvl`.
-- Min/max TVL bounds exclude unavailable rows. Market-cap-to-TVL ratios require a strictly
-  positive TVL denominator; zero market cap over positive TVL remains a valid zero ratio.
-- Extra-TVL and token-metric pages group only canonical parents with multiple visible
-  children; missing parents and sole children remain public rows.
-
-Read `docs/metrics.md` before changing TVL terminology or trying to share behavior with chain TVL pages.
-
-## Tests
-
-Local TVL/list helper coverage now exists, but the surface area is still broad. Add or update focused tests before refactoring TVL/list behavior.
-
-Current covered helper targets:
-
-- `applyExtraTvl`:
-  - adds only the four producer-backed additive protocol extras
-  - ignores chain-only doublecounted/liquidstaking/govtokens state
-  - preserves unknown previous snapshots as null
-  - clamps negative values to zero
-  - recalculates percent changes and market-cap-to-TVL
-- `scopeRecentProtocolToChains`:
-  - aggregates selected base-chain snapshots exactly
-  - handles hyphenated chain-name prefixes
-  - distinguishes known, null, explicit zero, and missing selected-chain current values
-- `applyProtocolTvlSettings`:
-  - filters by min/max after selected extras are applied
-  - handles child protocols
-  - leaves producer-derived strike presentation unchanged by hidden chain-only settings
-  - preserves null previous TVL fields for parent and child table rows
-- `getExtraTvlByChain` and token metrics:
-  - preserve explicit zero and null metric rows
-  - retain zero-valued chain navigation entries by section presence
-  - preserve missing-parent and sole-child rows
-
-Focused command:
-
-```bash
-bun run test src/containers/ProtocolLists/__tests__/utils.test.ts src/containers/ProtocolLists/__tests__/queries.test.ts src/containers/ProtocolLists/utils.old.test.ts
-```
-
-For source changes, follow the repo root verification instructions.
-
-## Change Rules
-
-- Trust upstream API payloads and aggregates.
-- Keep protocol-list extra-key admission aligned with the `/lite/protocols2` producer;
-  do not reuse broader chain-level toggle key sets.
-- Preserve public routes, query params, payload shapes, page copy, and displayed numbers unless explicitly requested.
-- Do not dedupe TVL behavior with ChainOverview or ChainsByCategory until characterization tests prove it is the same behavior.
-- Keep protocol entity behavior in `ProtocolOverview`.
-- Keep shared protocol ranking table behavior in `ProtocolRankings`.
-- Avoid re-export shims and barrel files. Update imports directly.
+- One protocol's page → `ProtocolOverview`
+- The ranking table on `/`, `/chain/[chain]` and `/protocols` → `ProtocolRankings`
+- Chain TVL charts and their toggles → `ChainOverview`

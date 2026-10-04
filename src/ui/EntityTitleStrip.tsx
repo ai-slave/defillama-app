@@ -1,5 +1,8 @@
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 
+/* A standalone page title surface for an entity, not a panel header: a 28px logo slot, the heading-sm h1 and an
+   optional right-side action slot on a padded card. Never use PanelHeader for this. */
+
 type EntityTitleStripProps = {
 	media?: ReactNode
 	title: ReactNode

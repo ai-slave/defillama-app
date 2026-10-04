@@ -1,6 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
 
+/* Tabs — content panels switched by a tab list. The list is a SegmentedControl with `semantics="tabs"` or `Tab`
+   elements; each panel is a `TabPanel`, and the ids tie every tab to its panel. */
+
 export function tabIds(prefix: string, value: string) {
 	return { tabId: `${prefix}-tab-${value}`, panelId: `${prefix}-panel-${value}` }
 }

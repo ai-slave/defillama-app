@@ -1,55 +1,50 @@
 /* ----------------------------------------------------------------------------
-   Llama Design System — Type ramp
+   Type ramp: the only named text styles (design.md → "Typography").
 
-   Sizes and weights follow the Figma library text styles (see design.md).
-   Sizes are rem (Figma px ÷ 16) so user browser font-size preferences are
+   Sizes are rem (px ÷ 16) so user browser font-size preferences are
    respected, matching Tailwind's own text-* scale.
 
-   Line heights are the Figma per-style values, written as exact unitless
-   fractions (Figma-lh ÷ font-size) so they track the rem size. They are
-   integers at the default root size ON PURPOSE: band ratios (the previous
-   approach) produced fractional line boxes (12×1.2 = 14.4px), which made
-   sibling controls render at mixed fractional heights (34 vs 32.4) and
-   glyphs land on half-pixels — visible as "more space below than above"
-   on retina. Verified per-style in Figma: Label 10/12, 12/16, 14/17;
-   Heading 18/22; Body 12/16, 14/21. The other integer line boxes are
-   owner-accepted application values, not claims of Figma verification; a
-   future published library measurement may supersede them explicitly.
+   Line heights are exact unitless fractions (line box ÷ font size) so they
+   track the rem size. They are integers at the default root size ON
+   PURPOSE: fractional line boxes (12×1.2 = 14.4px) made sibling controls
+   render at mixed heights (34 vs 32.4) and put glyphs on half-pixels,
+   visible as more space below than above on retina.
 
    Each utility is a small, flat, variant-free declaration set per the
    @utility policy. heading-*, title-*, label-* and body-* set Inter and
    mono-* sets JetBrains Mono, so words inside a mono value (a unit, "below
    reported") never inherit the number font.
 
-   Mono is for figures only: values in a data slot, addresses, code. It has
-   two weights. 400 for every figure; 700 (mono-xl, mono-lg, mono-*-bold)
-   only for the number a block exists to show, such as a headline value or
-   a Key Metrics row. Never 500, 600 or 800: JetBrains Mono is drawn around
-   Regular and Bold, and two weights keep the hierarchy readable.
+   Mono is for headline and summary values, code, addresses and hashes,
+   never table cells. It has two weights. 400 for figures; 700 (mono-xl,
+   mono-lg, mono-*-bold) only for the number a block exists to show, such
+   as a headline value or a Key Metrics row. Never 500, 600 or 800:
+   JetBrains Mono is drawn around Regular and Bold, and two weights keep
+   the hierarchy readable.
 
    Use these instead of arbitrary font sizes: the ramp includes 10px and 12px
    steps (label-xs/body-xs, label-sm/body-sm) that cover the text-[10px] /
-   text-[11px] cases. label-* (medium) is single-line scannable text: table
-   headers, nav, form labels, metadata. body-* (regular) is multi-line copy.
-   mono-* sets numbers, addresses, and code.
+   text-[11px] cases. label-* (medium) is single-line scannable text: nav,
+   form labels, controls, metadata. Table headers use table-header. body-*
+   (regular) is multi-line copy.
 ---------------------------------------------------------------------------- */
 
 @utility heading-lg {
 	font-family: var(--font-inter);
 	font-size: 2rem;
-	line-height: calc(40 / 32); /* accepted app value; not Figma-verified */
+	line-height: calc(40 / 32);
 	font-weight: 600;
 }
 @utility heading-sm {
 	font-family: var(--font-inter);
 	font-size: 1.25rem;
-	line-height: calc(24 / 20); /* accepted app value; not Figma-verified */
+	line-height: calc(24 / 20);
 	font-weight: 600;
 }
 @utility heading-xs {
 	font-family: var(--font-inter);
 	font-size: 1.125rem;
-	line-height: calc(22 / 18); /* Figma Heading/XS 18/22 */
+	line-height: calc(22 / 18);
 	font-weight: 600;
 }
 
@@ -60,19 +55,19 @@
 @utility title-lg {
 	font-family: var(--font-inter);
 	font-size: 1rem;
-	line-height: calc(24 / 16); /* accepted app value; not Figma-verified */
+	line-height: calc(24 / 16);
 	font-weight: 600;
 }
 @utility title-md {
 	font-family: var(--font-inter);
 	font-size: 0.875rem;
-	line-height: calc(20 / 14); /* accepted app value; not Figma-verified */
+	line-height: calc(20 / 14);
 	font-weight: 600;
 }
 @utility title-sm {
 	font-family: var(--font-inter);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* accepted app value; not Figma-verified */
+	line-height: calc(16 / 12);
 	font-weight: 600;
 }
 
@@ -81,76 +76,76 @@
 @utility table-header {
 	font-family: var(--font-inter);
 	font-size: 0.875rem;
-	line-height: calc(20 / 14); /* accepted app value; not Figma-verified */
+	line-height: calc(20 / 14);
 	font-weight: 500;
 }
 
 @utility label-xl {
 	font-family: var(--font-inter);
 	font-size: 1.125rem;
-	line-height: calc(22 / 18); /* accepted app value; not Figma-verified */
+	line-height: calc(22 / 18);
 	font-weight: 500;
 }
 @utility label-lg {
 	font-family: var(--font-inter);
 	font-size: 1rem;
-	line-height: calc(20 / 16); /* accepted app value; not Figma-verified */
+	line-height: calc(20 / 16);
 	font-weight: 500;
 }
 @utility label-md {
 	font-family: var(--font-inter);
 	font-size: 0.875rem;
-	line-height: calc(17 / 14); /* Figma Label/Medium 14/17 */
+	line-height: calc(17 / 14);
 	font-weight: 500;
 }
 @utility label-sm {
 	font-family: var(--font-inter);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* Figma Label/Small 12/16 */
+	line-height: calc(16 / 12);
 	font-weight: 500;
 }
 @utility label-xs {
 	font-family: var(--font-inter);
 	font-size: 0.625rem;
-	line-height: calc(12 / 10); /* Figma Label/XS 10/12 */
+	line-height: calc(12 / 10);
 	font-weight: 500;
 }
 
 @utility body-xl {
 	font-family: var(--font-inter);
 	font-size: 1.125rem;
-	line-height: calc(27 / 18); /* accepted app value; not Figma-verified */
+	line-height: calc(27 / 18);
 	font-weight: 400;
 }
 @utility body-lg {
 	font-family: var(--font-inter);
 	font-size: 1rem;
-	line-height: calc(24 / 16); /* accepted app value; not Figma-verified */
+	line-height: calc(24 / 16);
 	font-weight: 400;
 }
 @utility body-md {
 	font-family: var(--font-inter);
 	font-size: 0.875rem;
-	line-height: calc(21 / 14); /* Figma Body/Medium 14/21 */
+	line-height: calc(21 / 14);
 	font-weight: 400;
 }
 @utility body-sm {
 	font-family: var(--font-inter);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* Figma Body/Small 12/16 */
+	line-height: calc(16 / 12);
 	font-weight: 400;
 }
 @utility body-xs {
 	font-family: var(--font-inter);
 	font-size: 0.625rem;
-	line-height: calc(14 / 10); /* accepted app value; not Figma-verified */
+	line-height: calc(14 / 10);
 	font-weight: 400;
 }
 
 @utility mono-xl {
 	font-family: var(--font-jetbrains);
 	font-size: 1.5rem;
-	line-height: calc(32 / 24); /* accepted app value; not Figma-verified */
+	line-height: calc(32 / 24);
 	font-weight: 700;
 }
 @utility mono-lg {
@@ -162,24 +157,24 @@
 @utility mono-md {
 	font-family: var(--font-jetbrains);
 	font-size: 0.875rem;
-	line-height: calc(19 / 14); /* accepted app value; not Figma-verified */
+	line-height: calc(19 / 14);
 	font-weight: 400;
 }
 @utility mono-md-bold {
 	font-family: var(--font-jetbrains);
 	font-size: 0.875rem;
-	line-height: calc(19 / 14); /* accepted app value; not Figma-verified */
+	line-height: calc(19 / 14);
 	font-weight: 700;
 }
 @utility mono-sm {
 	font-family: var(--font-jetbrains);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* accepted app value; not Figma-verified */
+	line-height: calc(16 / 12);
 	font-weight: 400;
 }
 @utility mono-sm-bold {
 	font-family: var(--font-jetbrains);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* accepted app value; not Figma-verified */
+	line-height: calc(16 / 12);
 	font-weight: 700;
 }

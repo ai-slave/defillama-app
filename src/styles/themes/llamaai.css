@@ -4,7 +4,7 @@
 
    Everything ordinary — text tiers, borders, surfaces, hover washes,
    backdrops, status colors, blues — comes from semantics.css and the shared
-   src/ui primitives (design.md → "LlamaAI is in scope"). This file holds:
+   src/ui primitives (design.md → "Product surfaces"). This file holds:
    - the gold/bronze brand accents and the CTA gradient,
    - the always-dark ink surfaces (image lightbox),
    - the terminal palette behind hacker mode,

@@ -2,12 +2,12 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
-   Tab navigation — page-level underline tabs ([LD 1.0] Tab Navigation,
-   nodes 6183:148781 / 6183:355440).
+   Tab navigation — page-level underline tabs between routes. Content panels
+   on one page use SegmentedControl `semantics="tabs"` instead.
 
-   Item: label-md (14 Medium), px-3 py-2, inactive text-secondary (primary
-   on hover — the standard interactive ladder), active = text-primary + 2px
-   bg-brand underline bar with rounded top corners, inset 4px from the edges.
+   Item: label-md, px-3 py-2, inactive text-secondary (primary on hover),
+   active = text-primary + 2px bg-brand underline bar with rounded top
+   corners, inset 4px from the edges.
 
    Wrap items in a row that draws the track:
    <nav className={tabTrackStyles}> <TabLink … data-active={bool}> </nav>

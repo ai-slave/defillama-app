@@ -4,6 +4,15 @@ import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { useSearchTableScope } from './context'
 
+/**
+ * Search input for a `SearchTableProvider` column.
+ *
+ * - The draft text updates urgently; a deferred copy applies it to the table filter after the input commit.
+ * - Filter changes carry the provider's change counter, because TanStack suppresses equal state updates and a
+ *   reset of an already-empty filter must still cancel pending text.
+ * - An external reset or replacement supersedes the draft; acknowledging the input's own write keeps newer typing.
+ * - A column missing from dynamic column definitions leaves the filter untouched instead of crashing.
+ */
 export function TableSearchInput({
 	columnId,
 	placeholder,

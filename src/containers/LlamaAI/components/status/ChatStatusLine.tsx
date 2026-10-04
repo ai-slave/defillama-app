@@ -5,6 +5,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 /**
  * One line of status in the conversation, attached to the message it is about: under a failed prompt it sits at
  * the end, under an answer at the start. It is never a tinted box; an action beside it is a small button.
+ * The action that resolves a failed prompt lives on `ComposerTray`, never here as well.
  */
 export function ChatStatusLine({
 	variant,
