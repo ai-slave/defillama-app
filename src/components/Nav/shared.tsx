@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { freeBadgeBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { UniversalTokenRatingNavIcon } from '~/containers/UniversalTokenRating/NavIcon'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
+import { navPath } from './path'
 
 type NavIconName = IIcon['name']
 
@@ -23,9 +23,17 @@ export const navActionStyles =
 export const freeTrialBadgeStyles =
 	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-wide text-warning'
 
-function NavGroupSummary({ name, icon }: { name: string; icon?: NavIconName }) {
+function NavGroupSummary({ name, icon, onToggle }: { name: string; icon?: NavIconName; onToggle: () => void }) {
 	return (
-		<summary className={navLinkStyles} data-menu-name={name}>
+		<summary
+			className={navLinkStyles}
+			data-menu-name={name}
+			onClick={(event) => {
+				// Handle clicks immediately; native browser changes are reconciled by the details toggle handler.
+				event.preventDefault()
+				onToggle()
+			}}
+		>
 			<NavItemContent name={name} icon={icon} wrapLabel />
 			<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
 		</summary>
@@ -38,7 +46,8 @@ export function PrimaryNavGroup({
 	icon,
 	pages,
 	asPath,
-	defaultOpen = true,
+	open,
+	onToggle,
 	alignLabels = false
 }: {
 	name: string
@@ -46,13 +55,20 @@ export function PrimaryNavGroup({
 	icon?: NavIconName
 	pages: Array<{ name: string; route: string }>
 	asPath: string
-	defaultOpen?: boolean
+	open: boolean
+	onToggle: () => void
 	alignLabels?: boolean
 }) {
-	const [open, setOpen] = useState(defaultOpen)
 	return (
-		<details className="group" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-			<NavGroupSummary name={name} icon={icon} />
+		<details
+			className="group"
+			open={open}
+			onToggle={(event) => {
+				// Find-in-page can open a group without a click. Ignore toggles caused by React applying `open`.
+				if (event.currentTarget.open !== open) onToggle()
+			}}
+		>
+			<NavGroupSummary name={name} icon={icon} onToggle={onToggle} />
 			<div
 				className={
 					alignLabels
@@ -104,7 +120,7 @@ export function LinkToPage({
 }) {
 	const isLlamaAI = name === 'LlamaAI'
 	const freeLabel = useLlamaAIFreeLabel(isLlamaAI)
-	const cleanAsPath = asPath.split('/?')[0].split('?')[0]
+	const cleanAsPath = navPath(asPath)
 	const isActive = isOld ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
 	const isExternal = route.startsWith('http')
 

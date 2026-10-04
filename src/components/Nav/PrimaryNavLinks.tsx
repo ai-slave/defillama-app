@@ -1,4 +1,6 @@
+import { useNavGroupState } from './groupState'
 import { MENU_VARIANT_B } from './menuVariant'
+import { navPath } from './path'
 import { LinkToPage, PrimaryNavGroup } from './shared'
 import type { TNavLink } from './types'
 
@@ -13,6 +15,11 @@ export function PrimaryNavLinks({ pages, asPath }: { pages: Array<TNavLink>; asP
 }
 
 export function NavItems({ pages, asPath, variant }: { pages: Array<TNavLink>; asPath: string; variant?: 'a' | 'b' }) {
+	const pathname = navPath(asPath)
+	const activeGroup =
+		pages.find((page) => page.children?.some(({ route }) => pathname === route || pathname.startsWith(`${route}/`)))
+			?.route ?? null
+	const { openGroup, toggleGroup } = useNavGroupState(variant ?? 'default', pathname, activeGroup)
 	return (
 		<div className="flex flex-col" data-ab-variant={variant}>
 			{pages.map(({ children, ...page }) =>
@@ -22,7 +29,8 @@ export function NavItems({ pages, asPath, variant }: { pages: Array<TNavLink>; a
 						{...page}
 						pages={children}
 						asPath={asPath}
-						defaultOpen={variant !== 'b' && !(variant === 'a' && page.route === '/equities')}
+						open={openGroup === page.route}
+						onToggle={() => toggleGroup(page.route)}
 						alignLabels={variant === 'b' || (variant === 'a' && page.route === '/equities')}
 					/>
 				) : (

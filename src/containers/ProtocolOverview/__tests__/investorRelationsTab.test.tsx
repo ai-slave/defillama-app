@@ -9,7 +9,8 @@ import { ProtocolOverviewLayout } from '../Layout'
 import type { IProtocolPageMetrics } from '../types'
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
-vi.mock('next/router', () => ({
+vi.mock('next/router', async (importOriginal) => ({
+	...(await importOriginal<typeof import('next/router')>()),
 	useRouter: () => ({
 		pathname: '/protocol/[...protocol]',
 		asPath: '/protocol/spark',

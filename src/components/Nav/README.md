@@ -1,6 +1,6 @@
 # Menu layout experiment
 
-`menu-layout-v1` compares the existing main menu (A, from `public/pages.json`) with the grouped menu (B, from `menuVariant.ts`). A starts Equities collapsed with its child labels aligned to the parent text. B starts its groups collapsed and adds Rewards to Tools. Premium, pinned pages, personal dashboards, Old Menu, and footer destinations stay available in both variants.
+`menu-layout-v1` compares the existing main menu (A, from `public/pages.json`) with the grouped menu (B, from `menuVariant.ts`). A aligns Equities child labels to the parent text. B groups destinations and adds Rewards to Tools. The current page’s group opens automatically, including after refresh; visitors can open another group or collapse it, with at most one group open at a time. Premium, pinned pages, personal dashboards, Old Menu, and footer destinations stay available in both variants.
 
 The experiment reuses the site's persistent 50/50 `defillama-ab-group` assignment, established by the proxy and `_app`. It does not rerandomize on navigation. Both layouts are server-rendered; the head bootstrap's `data-ab-group` attribute selects the matching layout with the existing A/B CSS before paint. The fallback when assignment is unavailable is A. This shares cohorts with existing site experiments; it is not an independent randomization.
 

@@ -7,7 +7,8 @@ import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Nav } from '../index'
 
-vi.mock('next/router', () => ({
+vi.mock('next/router', async (importOriginal) => ({
+	...(await importOriginal<typeof import('next/router')>()),
 	useRouter: () => ({ pathname: '/yields', asPath: '/yields', query: {}, push: vi.fn() })
 }))
 
@@ -50,13 +51,9 @@ test('a failed dashboards list says so in the sidebar; a slow retry keeps its fo
 		)
 	)
 
-	// The retry takes a moment, so the test sees the sidebar while it waits.
-	session.serve({
-		'/lite/dashboards': () =>
-			new Promise((resolve) =>
-				setTimeout(() => resolve(Response.json({ items: [{ id: 'one', name: 'Research', slug: 'research' }] })), 200)
-			)
-	})
+	// Keep the response pending until the loading state has been inspected.
+	const response = Promise.withResolvers<Response>()
+	session.serve({ '/lite/dashboards': () => response.promise })
 	const button = retry()
 	await act(async () => {
 		button.focus()
@@ -66,6 +63,7 @@ test('a failed dashboards list says so in the sidebar; a slow retry keeps its fo
 	await waitForUi(() => expect(button.getAttribute('aria-busy')).toBe('true'))
 	expect(dashboardsSection()!.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your dashboards.")
 	expect(document.activeElement).toBe(button)
+	await act(async () => response.resolve(Response.json({ items: [{ id: 'one', name: 'Research', slug: 'research' }] })))
 	await waitForUi(() => expect(dashboardsSection()!.querySelector('[role="alert"]')).toBeNull())
 	expect(dashboardsSection()!.querySelector('a')?.getAttribute('href')).toBe('/pro/research')
 	await waitForUi(() => expect(document.activeElement).toBe(dashboardsSection()!.querySelector('a')))
