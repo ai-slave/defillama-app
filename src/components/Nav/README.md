@@ -6,12 +6,12 @@ The experiment reuses the site's persistent 50/50 `defillama-ab-group` assignmen
 
 ## Events
 
-`menuAnalytics.ts` sends the generic ingestion contract, without depending on an A/B tag:
+`menuAnalytics.ts` sends the generic ingestion contract through the shared helpers in `src/utils/analytics/experiment.ts`, where `menu-layout-v1` is registered as a `site` experiment that reads `data-ab-group`. It does not depend on an A/B tag:
 
 - `experiment-exposure`: `{ experiment: 'menu-layout-v1', variant: 'a' | 'b', layout: 'desktop' | 'mobile' }`.
 - `experiment-action`: the same context plus `metric`.
 
-An exposure requires the actual navigation to intersect the viewport while the document is visible. The hidden desktop layout and closed mobile drawer do not count. Exposure is deduplicated once per variant per tab session using session storage and an in-memory fallback. Rerenders, route changes, StrictMode, drawer reopening, and switching between mobile and desktop do not add exposures. `layout` on the exposure identifies the first visible menu; each action uses its current layout.
+An exposure requires the actual navigation to intersect the viewport while the document is visible. The hidden desktop layout and closed mobile drawer do not count. Exposure is deduplicated once per tab session by the shared helper, using session storage and an in-memory fallback when storage is blocked. Rerenders, route changes, StrictMode, drawer reopening, and switching between mobile and desktop do not add exposures. `layout` on the exposure identifies the first visible menu; each action uses its current layout.
 
 Metrics distinguish destinations from other interactions:
 

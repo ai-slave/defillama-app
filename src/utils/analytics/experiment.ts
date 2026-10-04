@@ -1,3 +1,4 @@
+import { AB_GROUP_ATTRIBUTE } from '~/utils/abTesting'
 import { trackUmamiEvent, UMAMI_READY_EVENT } from './umami'
 
 /**
@@ -14,12 +15,14 @@ export function getExperimentVariant(experimentId: string, userId: string): 'A' 
 	return (hash >>> 0) / 4_294_967_296 < 0.5 ? 'A' : 'B'
 }
 
+/** `visitor` and `user` split on their own hash; `site` reuses the global `defillama-ab-group` cohort. */
 export const EXPERIMENTS = {
 	'free-limit-cta-v1': 'user',
 	'llamaai-free-label-v1': 'visitor',
 	'home-brief-default-v1': 'visitor',
-	'llamaai-signin-offer-v1': 'visitor'
-} as const satisfies Record<string, 'visitor' | 'user'>
+	'llamaai-signin-offer-v1': 'visitor',
+	'menu-layout-v1': 'site'
+} as const satisfies Record<string, 'visitor' | 'user' | 'site'>
 
 export type ExperimentId = keyof typeof EXPERIMENTS
 export type ExperimentVariant = 'a' | 'b'
@@ -33,10 +36,10 @@ export function getVariant(experimentId: ExperimentId, unitId: string): Experime
 }
 
 export function getExperimentAttribute(experimentId: ExperimentId): string {
-	return `data-ab-${experimentId}`
+	return EXPERIMENTS[experimentId] === 'site' ? AB_GROUP_ATTRIBUTE : `data-ab-${experimentId}`
 }
 
-/** The visitor's arm as the head script set it before paint, or null when no A/B seed was set. */
+/** The visitor's arm as the page set it before paint, or null when no assignment was set. */
 export function readExperimentVariant(experimentId: ExperimentId): ExperimentVariant | null {
 	const variant = document.documentElement.getAttribute(getExperimentAttribute(experimentId))
 	return variant === 'a' || variant === 'b' ? variant : null
@@ -51,19 +54,38 @@ function whenUmamiReady(send: () => void) {
 	window.addEventListener(UMAMI_READY_EVENT, send, { once: true })
 }
 
-export function trackExperimentExposure(experimentId: ExperimentId, variant: ExperimentVariant): void {
+// Stands in for session storage when the browser blocks it, so those sessions still count one exposure.
+const exposedWithoutStorage = new Set<ExperimentId>()
+
+/** `context` adds experiment-specific fields, such as the menu's layout, to the event. */
+export function trackExperimentExposure(
+	experimentId: ExperimentId,
+	variant: ExperimentVariant,
+	context?: Record<string, string>
+): void {
 	whenUmamiReady(() => {
 		const key = `experiment-exposure:${experimentId}`
 		try {
 			if (sessionStorage.getItem(key)) return
 			sessionStorage.setItem(key, variant)
 		} catch {
-			return
+			if (exposedWithoutStorage.has(experimentId)) return
+			exposedWithoutStorage.add(experimentId)
 		}
-		trackUmamiEvent('experiment-exposure', { experiment: experimentId, variant })
+		trackUmamiEvent('experiment-exposure', { experiment: experimentId, variant, ...context })
 	})
 }
 
-export function trackExperimentAction(experimentId: ExperimentId, variant: ExperimentVariant, metric: string): void {
-	whenUmamiReady(() => trackUmamiEvent('experiment-action', { experiment: experimentId, variant, metric }))
+export function trackExperimentAction(
+	experimentId: ExperimentId,
+	variant: ExperimentVariant,
+	metric: string,
+	context?: Record<string, string>
+): void {
+	whenUmamiReady(() => trackUmamiEvent('experiment-action', { experiment: experimentId, variant, metric, ...context }))
+}
+
+/** Start each test from a fresh page runtime; production keeps this across route changes. */
+export function resetExperimentTracking() {
+	exposedWithoutStorage.clear()
 }

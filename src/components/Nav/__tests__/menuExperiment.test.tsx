@@ -3,12 +3,12 @@ import { act, StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pages from '~/public/pages.json'
+import { resetExperimentTracking } from '~/utils/analytics/experiment'
 import { getHeadBootstrapScript } from '~/utils/cookies'
 import { renderHydrated } from '~/utils/testing/hydration'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { DesktopNav } from '../Desktop'
-import { resetMenuAnalytics } from '../menuAnalytics'
 import { Menu } from '../Mobile/Menu'
 import { PrimaryNavLinks } from '../PrimaryNavLinks'
 import type { TNavLinks } from '../types'
@@ -42,7 +42,7 @@ beforeEach(() => {
 	vi.stubGlobal('IntersectionObserver', TestObserver)
 	vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
 	window.sessionStorage.clear()
-	resetMenuAnalytics()
+	resetExperimentTracking()
 	observers.length = 0
 	assign('a')
 	container = document.createElement('div')
@@ -53,7 +53,7 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	resetMenuAnalytics()
+	resetExperimentTracking()
 	window.sessionStorage.clear()
 	document.cookie = 'defillama-ab-group=; Max-Age=0; path=/'
 	document.documentElement.removeAttribute('data-ab-group')
@@ -166,7 +166,7 @@ test.each(['a', 'b'] as const)(
 			)
 		)
 		await act(async () => intersect('desktop', 1))
-		resetMenuAnalytics()
+		resetExperimentTracking()
 		await act(async () => intersect('desktop', 1))
 		expect(track.mock.calls).toEqual([
 			['experiment-exposure', { experiment: 'menu-layout-v1', variant, layout: 'desktop' }]
