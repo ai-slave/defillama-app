@@ -1,6 +1,6 @@
 /** Typed token-risk reads and hydration over the current immutable snapshot. */
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
-import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
+import { acquireDatasetSnapshot } from '~/server/datasetSnapshots/refresh.server'
 import {
 	hydrateIndexedBorrowCapacitySnapshot,
 	type IndexedBorrowCapacitySnapshot,
@@ -8,9 +8,7 @@ import {
 } from './dataset.risk.transform'
 
 export async function getIndexedTokenRiskBorrowCapacity(): Promise<IndexedTokenRiskBorrowCapacity> {
-	const snapshot = await datasetSnapshotReader.readJson<IndexedBorrowCapacitySnapshot>(
-		'risk',
-		DATASET_SNAPSHOT_CONTRACT.risk.files.indexed
-	)
+	const { handle } = await acquireDatasetSnapshot('risk', 'blocking')
+	const snapshot = await handle.readJson<IndexedBorrowCapacitySnapshot>(DATASET_SNAPSHOT_CONTRACT.risk.files.indexed)
 	return hydrateIndexedBorrowCapacitySnapshot(snapshot)
 }

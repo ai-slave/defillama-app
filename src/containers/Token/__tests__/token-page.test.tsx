@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import { DATASETS_SERVER_URL, V2_SERVER_URL, VAULT_RISK_API } from '~/constants'
 import { hasTokenLiquidationsData } from '~/containers/LiquidationsV2/server/dataset.server'
-import { getTokenMarketSummary, hasTokenMarkets } from '~/containers/Markets/server/dataset.server'
+import { getTokenMarkets } from '~/containers/Markets/server/dataset.server'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/server/dataset.server'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import {
-	fetchTokenRightsEntryByDefillamaId,
+	fetchTokenRightsEntryByDefillamaIds,
 	fetchTokenRightsEntryByName
 } from '~/containers/TokenRights/server/dataset.server'
 import { fetchTreasuryById } from '~/containers/Treasuries/server/dataset.server'
@@ -40,8 +40,7 @@ vi.mock('next/router', () => ({
 	})
 }))
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	hasTokenMarkets: vi.fn(),
-	getTokenMarketSummary: vi.fn(),
+	getTokenMarkets: vi.fn(),
 	fetchTokenMarketsList: async () => ({ last_updated: '', tokens: [] })
 }))
 vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({ hasTokenLiquidationsData: vi.fn() }))
@@ -49,7 +48,7 @@ vi.mock('~/containers/Raises/server/dataset.server', () => ({ fetchRaisesByDefil
 vi.mock('~/containers/Treasuries/server/dataset.server', () => ({ fetchTreasuryById: vi.fn() }))
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
 	fetchTokenRightsEntries: async () => [],
-	fetchTokenRightsEntryByDefillamaId: vi.fn(),
+	fetchTokenRightsEntryByDefillamaIds: vi.fn(),
 	fetchTokenRightsEntryByName: vi.fn()
 }))
 vi.mock('~/containers/Yields/server/dataset.server', () => ({ acquireOptionalYieldsSnapshot: vi.fn() }))
@@ -93,12 +92,11 @@ beforeEach(() => {
 	vi.stubEnv('API_KEY', '')
 	vi.mocked(acquireOptionalYieldsSnapshot).mockResolvedValue(null)
 	vi.mocked(getIndexedTokenRiskBorrowCapacity).mockResolvedValue(borrowCapacity([]))
-	vi.mocked(hasTokenMarkets).mockResolvedValue(false)
-	vi.mocked(getTokenMarketSummary).mockResolvedValue(null)
+	vi.mocked(getTokenMarkets).mockResolvedValue({ summary: null, hasMarkets: false })
 	vi.mocked(hasTokenLiquidationsData).mockResolvedValue(false)
 	vi.mocked(fetchRaisesByDefillamaId).mockResolvedValue([])
 	vi.mocked(fetchTreasuryById).mockResolvedValue(null)
-	vi.mocked(fetchTokenRightsEntryByDefillamaId).mockResolvedValue(null)
+	vi.mocked(fetchTokenRightsEntryByDefillamaIds).mockResolvedValue(null)
 	vi.mocked(fetchTokenRightsEntryByName).mockResolvedValue(null)
 	directory({ btc })
 	seed({
@@ -236,11 +234,11 @@ describe('token page', () => {
 	test('includes markets and liquidations only when the indexes contain data', async () => {
 		seed({ liquidationsTokenSymbolsSet: new Set(['BTC']) })
 		vi.mocked(hasTokenLiquidationsData).mockResolvedValue(true)
-		vi.mocked(hasTokenMarkets).mockResolvedValue(true)
+		vi.mocked(getTokenMarkets).mockResolvedValue({ summary: null, hasMarkets: true })
 		expect((await props()).sections.map((s) => s.id)).toContain('token-liquidations')
 		expect((await props()).sections.map((s) => s.id)).toContain('token-markets')
 		vi.mocked(hasTokenLiquidationsData).mockResolvedValue(false)
-		vi.mocked(hasTokenMarkets).mockResolvedValue(false)
+		vi.mocked(getTokenMarkets).mockResolvedValue({ summary: null, hasMarkets: false })
 		expect((await props()).sections.map((s) => s.id)).toEqual(['token-overview', 'token-usage'])
 	})
 	test('contains optional source failures and recovers on the next request', async () => {
@@ -248,12 +246,12 @@ describe('token page', () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {})
 		vi.mocked(fetchRaisesByDefillamaId).mockRejectedValueOnce(new Error('Raises unavailable'))
 		vi.mocked(fetchTreasuryById).mockRejectedValueOnce(new Error('Treasury unavailable'))
-		vi.mocked(hasTokenMarkets).mockRejectedValueOnce(new Error('Markets unavailable'))
+		vi.mocked(getTokenMarkets).mockRejectedValueOnce(new Error('Markets unavailable'))
 		expect((await props()).sections[0]).toMatchObject({
 			id: 'token-overview',
 			overview: { raises: null, treasury: null, marketData: { currentPrice: 100 } }
 		})
-		vi.mocked(fetchTokenRightsEntryByDefillamaId).mockResolvedValue(tokenRightsEntryFixture)
+		vi.mocked(fetchTokenRightsEntryByDefillamaIds).mockResolvedValue(tokenRightsEntryFixture)
 		vi.mocked(fetchRaisesByDefillamaId).mockResolvedValue([
 			{
 				date: 1,
@@ -282,13 +280,13 @@ describe('token page', () => {
 		else vi.mocked(fetchTreasuryById).mockRejectedValueOnce(error)
 		await expect(request('BTC')).rejects.toBe(error)
 	})
-	test('uses protocol rights after a chain lookup misses and hides missing rights', async () => {
+	test('looks up rights by chain then protocol id and hides missing rights', async () => {
 		directory({ btc: { ...btc, chainId: 'Bitcoin', protocolId: 'bitcoin', tokenRights: true } })
-		vi.mocked(fetchTokenRightsEntryByDefillamaId).mockImplementation(async (id) =>
-			id === 'bitcoin' ? tokenRightsEntryFixture : null
+		vi.mocked(fetchTokenRightsEntryByDefillamaIds).mockImplementation(async (ids) =>
+			ids.join() === 'Bitcoin,bitcoin' ? tokenRightsEntryFixture : null
 		)
 		expect((await props()).sections).toContainEqual(expect.objectContaining({ id: 'token-rights-and-value-accrual' }))
-		vi.mocked(fetchTokenRightsEntryByDefillamaId).mockResolvedValue(null)
+		vi.mocked(fetchTokenRightsEntryByDefillamaIds).mockResolvedValue(null)
 		expect((await props()).sections.map((s) => s.id)).not.toContain('token-rights-and-value-accrual')
 	})
 	test('selects cached protocol unlocks before chain unlocks and hides unavailable unlocks', async () => {
@@ -322,7 +320,7 @@ describe('token page', () => {
 	test('keeps the page when flagged rights and income statement sources fail', async () => {
 		directory({ btc: { ...btc, protocolId: 'bitcoin', tokenRights: true, incomeStatement: true } })
 		vi.spyOn(console, 'error').mockImplementation(() => {})
-		vi.mocked(fetchTokenRightsEntryByDefillamaId).mockRejectedValue(new Error('Rights unavailable'))
+		vi.mocked(fetchTokenRightsEntryByDefillamaIds).mockRejectedValue(new Error('Rights unavailable'))
 		serve({ [`${V2_SERVER_URL}/metrics/financial-statement/token/btc?q=30`]: fixtureStatus(500) })
 		const ids = (await props()).sections.map((s) => s.id)
 		expect(ids).not.toContain('token-rights-and-value-accrual')
@@ -372,9 +370,9 @@ describe('token page', () => {
 			})
 		)
 		let marketsFinished = false
-		vi.mocked(hasTokenMarkets).mockImplementation(async () => {
+		vi.mocked(getTokenMarkets).mockImplementation(async () => {
 			marketsFinished = true
-			return false
+			return { summary: null, hasMarkets: false }
 		})
 		const pending = props()
 		await waitForUi(() => expect(marketsFinished).toBe(true))
@@ -411,7 +409,7 @@ describe('token page', () => {
 				dex: { spot: bucket, linear_perp: bucket, inverse_perp: bucket }
 			}
 		}
-		vi.mocked(getTokenMarketSummary).mockResolvedValue(summary)
+		vi.mocked(getTokenMarkets).mockResolvedValue({ summary, hasMarkets: false })
 		expect((await props()).sections[0]).toMatchObject({ overview: { marketSummary: summary } })
 	})
 	test('propagates liquidations index corruption', async () => {

@@ -117,10 +117,10 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		async ([
 			{ isDatasetSnapshotIntegrityError },
 			{ hasTokenLiquidationsData },
-			{ hasTokenMarkets, getTokenMarketSummary },
+			{ getTokenMarkets },
 			{ fetchRaisesByDefillamaId },
 			{ getIndexedTokenRiskBorrowCapacity },
-			{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
+			{ fetchTokenRightsEntryByDefillamaIds, fetchTokenRightsEntryByName },
 			{ fetchTreasuryById },
 			{ acquireOptionalYieldsSnapshot },
 			{ getTokenBorrowRoutes, getTokenEarnRows }
@@ -129,16 +129,12 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				record.hasEarn || record.hasBorrow ? acquireOptionalYieldsSnapshot() : Promise.resolve(null)
 			const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
 				downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
-			const marketSummaryPromise = geckoId
-				? getTokenMarketSummary(geckoId).catch((error) =>
-						downgradeTokenPageError(error, `Failed to load token market summary for ${geckoId}`, null)
+			const noTokenMarkets = { summary: null, hasMarkets: false }
+			const marketsPromise = geckoId
+				? getTokenMarkets(geckoId).catch((error) =>
+						downgradeTokenPageError(error, `Failed to load token markets for ${geckoId}`, noTokenMarkets)
 					)
-				: Promise.resolve(null)
-			const marketsAvailablePromise = geckoId
-				? hasTokenMarkets(geckoId).catch((error) =>
-						downgradeTokenPageError(error, `Failed to load token markets index for ${geckoId}`, false)
-					)
-				: Promise.resolve(false)
+				: Promise.resolve(noTokenMarkets)
 			let liquidationsPromise: Promise<boolean> = Promise.resolve(false)
 			if (metadataCache.liquidationsTokenSymbolsSet.has(record.symbol)) {
 				liquidationsPromise = hasTokenLiquidationsData(record.symbol).catch((error) =>
@@ -192,12 +188,10 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			const tokenRightsPromise = record.tokenRights
 				? (async () => {
 						try {
-							for (const defillamaId of tokenRightsDefillamaIds) {
-								const rawEntry = await fetchTokenRightsEntryByDefillamaId(defillamaId)
-								if (rawEntry) return parseTokenRightsEntry(rawEntry)
-							}
 							const rawEntry =
-								tokenRightsDefillamaIds.length === 0 ? await fetchTokenRightsEntryByName(record.name) : null
+								tokenRightsDefillamaIds.length > 0
+									? await fetchTokenRightsEntryByDefillamaIds(tokenRightsDefillamaIds)
+									: await fetchTokenRightsEntryByName(record.name)
 							return rawEntry ? parseTokenRightsEntry(rawEntry) : null
 						} catch (error) {
 							return downgradeTokenPageError(
@@ -258,8 +252,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				tokenBorrowRoutesData,
 				hasLiquidations,
 				tokenRiskData,
-				hasMarkets,
-				marketSummary,
+				{ hasMarkets, summary: marketSummary },
 				currentSnapshot
 			] = await Promise.all([
 				overviewPromise,
@@ -269,8 +262,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				borrowRoutesPromise,
 				liquidationsPromise,
 				tokenRiskPromise,
-				marketsAvailablePromise,
-				marketSummaryPromise,
+				marketsPromise,
 				currentSnapshotPromise
 			])
 

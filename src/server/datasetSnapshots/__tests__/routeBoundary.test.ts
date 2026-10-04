@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
-const SNAPSHOT_READER = '~/server/datasetSnapshots/reader.server'
+const SNAPSHOT_ACQUISITION = '~/server/datasetSnapshots/refresh.server'
 
 async function collectSourceFiles(rootDir: string): Promise<Array<string>> {
 	const entries = await fs.readdir(rootDir, { withFileTypes: true })
@@ -28,10 +28,10 @@ function isDomainDatasetModule(filePath: string): boolean {
 }
 
 describe('dataset snapshot reader boundary', () => {
-	test('allows filesystem reads only in typed domain dataset modules', async () => {
+	test('acquires snapshots only in typed domain dataset modules', async () => {
 		const files = (await collectSourceFiles('src/containers')).filter((filePath) => !isDomainDatasetModule(filePath))
 		const sources = await Promise.all(files.map((filePath) => fs.readFile(filePath, 'utf8')))
-		const errors = files.filter((_, i) => sources[i].includes(SNAPSHOT_READER)).map(relativePath)
+		const errors = files.filter((_, i) => sources[i].includes(SNAPSHOT_ACQUISITION)).map(relativePath)
 		expect(errors).toEqual([])
 	})
 })

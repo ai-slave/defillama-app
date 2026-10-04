@@ -2,7 +2,8 @@
 import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
 import type { TokenMarketsListResponse, TokenMarketSummary } from '~/containers/Markets/api.types'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
-import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
+import { acquireDatasetSnapshot } from '~/server/datasetSnapshots/refresh.server'
+import type { DatasetSnapshotHandle } from '~/server/datasetSnapshots/store'
 import {
 	hasTokenMarketsGeckoId,
 	resolveExchangeByDefillamaCexSlug as resolveExchangeByDefillamaCexSlugFromIndex,
@@ -13,20 +14,21 @@ import {
 
 const MARKET_FILES = DATASET_SNAPSHOT_CONTRACT.markets.files
 
-export function fetchExchangeDirectory(): Promise<MasterDirectoryResponse> {
-	return datasetSnapshotReader.readJson<MasterDirectoryResponse>('markets', MARKET_FILES.exchangeDirectory)
+// Each export serves one response and reads every artifact it needs from this one handle.
+async function acquireMarketsSnapshot(): Promise<DatasetSnapshotHandle> {
+	return (await acquireDatasetSnapshot('markets', 'blocking')).handle
 }
 
-export function fetchTokenMarketsList(): Promise<TokenMarketsListResponse> {
-	return datasetSnapshotReader.readJson<TokenMarketsListResponse>('markets', MARKET_FILES.tokensList)
+export async function fetchExchangeDirectory(): Promise<MasterDirectoryResponse> {
+	return (await acquireMarketsSnapshot()).readJson<MasterDirectoryResponse>(MARKET_FILES.exchangeDirectory)
 }
 
-function fetchTokenMarketsGeckoIdIndex(): Promise<TokenMarketsGeckoIdIndex> {
-	return datasetSnapshotReader.readJson<TokenMarketsGeckoIdIndex>('markets', MARKET_FILES.tokenGeckoIds)
+export async function fetchTokenMarketsList(): Promise<TokenMarketsListResponse> {
+	return (await acquireMarketsSnapshot()).readJson<TokenMarketsListResponse>(MARKET_FILES.tokensList)
 }
 
-export function fetchCexExchangeSlugIndex(): Promise<CexExchangeSlugIndex> {
-	return datasetSnapshotReader.readJson<CexExchangeSlugIndex>('markets', MARKET_FILES.cexByDefillamaSlug)
+export async function fetchCexExchangeSlugIndex(): Promise<CexExchangeSlugIndex> {
+	return (await acquireMarketsSnapshot()).readJson<CexExchangeSlugIndex>(MARKET_FILES.cexByDefillamaSlug)
 }
 
 export async function resolveExchangeByDefillamaCexSlug(
@@ -36,15 +38,19 @@ export async function resolveExchangeByDefillamaCexSlug(
 	return resolveExchangeByDefillamaCexSlugFromIndex(index, defillamaSlug)
 }
 
-export async function hasTokenMarkets(geckoId: string): Promise<boolean> {
-	const index = await fetchTokenMarketsGeckoIdIndex()
-	return hasTokenMarketsGeckoId(index, geckoId)
+export type TokenMarkets = {
+	summary: TokenMarketSummary | null
+	hasMarkets: boolean
 }
 
-export async function getTokenMarketSummary(geckoId: string): Promise<TokenMarketSummary | null> {
-	const index = await datasetSnapshotReader.readJson<Record<string, TokenMarketSummary>>(
-		'markets',
-		MARKET_FILES.tokenSummaries
-	)
-	return index[geckoId.toLowerCase()] ?? null
+export async function getTokenMarkets(geckoId: string): Promise<TokenMarkets> {
+	const snapshot = await acquireMarketsSnapshot()
+	const [summaries, geckoIds] = await Promise.all([
+		snapshot.readJson<Record<string, TokenMarketSummary>>(MARKET_FILES.tokenSummaries),
+		snapshot.readJson<TokenMarketsGeckoIdIndex>(MARKET_FILES.tokenGeckoIds)
+	])
+	return {
+		summary: summaries[geckoId.toLowerCase()] ?? null,
+		hasMarkets: hasTokenMarketsGeckoId(geckoIds, geckoId)
+	}
 }

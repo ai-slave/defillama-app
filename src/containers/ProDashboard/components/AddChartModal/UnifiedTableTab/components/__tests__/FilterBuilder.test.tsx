@@ -6,6 +6,9 @@ import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { FilterBuilder } from '../FilterBuilder'
 
+// The shared Select reads the router for URL selections; these pickers hold local state.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
+
 let root: Root
 let container: HTMLDivElement
 const changes = vi.fn()

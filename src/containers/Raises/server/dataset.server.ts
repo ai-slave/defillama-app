@@ -2,7 +2,7 @@
 import type { RaisesApiResponse } from '~/containers/Raises/api.types'
 import { normalizeRaisesApiResponse, type Raise, type RaisesResponse } from '~/containers/Raises/model'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
-import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
+import { acquireDatasetSnapshot } from '~/server/datasetSnapshots/refresh.server'
 import { findRaisesByDefillamaId } from './dataset.transform'
 
 export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Array<Raise>> {
@@ -11,9 +11,7 @@ export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Arr
 }
 
 export async function fetchRaises(): Promise<RaisesResponse> {
-	const response = await datasetSnapshotReader.readJson<RaisesApiResponse>(
-		'raises',
-		DATASET_SNAPSHOT_CONTRACT.raises.files.full
-	)
+	const { handle } = await acquireDatasetSnapshot('raises', 'blocking')
+	const response = await handle.readJson<RaisesApiResponse>(DATASET_SNAPSHOT_CONTRACT.raises.files.full)
 	return normalizeRaisesApiResponse(response)
 }

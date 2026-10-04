@@ -20,7 +20,10 @@ network builder -> unpublished writer -> validated immutable version
 - Domain `*.builder.server.ts` modules own network acquisition and write through
   `DatasetSnapshotWriter`. They do not choose storage paths or publish.
 - Domain `dataset*.server.ts` modules turn one snapshot
-  handle into typed data and compose pure transforms.
+  handle into typed data and compose pure transforms. They alone acquire
+  handles. Each export acquires once and reads every artifact it needs from
+  that handle; a response that needs several artifacts of a domain calls one
+  export that reads them all, never two exports that each acquire.
 - Pages acquire data only inside `getStaticProps` or `getServerSideProps`. API,
   proxy, and other server entry points acquire inside their handlers.
 - React components and shared transforms never import snapshot readers, refresh
