@@ -15,6 +15,7 @@ import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
@@ -339,9 +340,9 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const fundamentalsExportFilename = `${props.ticker.toLowerCase()}-${activeFundamentalChart.toLowerCase().replaceAll(' ', '-')}-${activeDimensionPeriod.toLowerCase()}`
 	return (
 		<article className="flex flex-col gap-2">
-			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+			<SummaryCardGrid>
 				{/* Desktop: left stats panel */}
-				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
+				<SummaryStatsCard padding="sm" className="max-xl:hidden xl:min-h-[360px]">
 					<EquityTitle
 						ticker={props.ticker}
 						country={props.country}
@@ -353,9 +354,9 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						<span className="min-h-8 mono-xl">{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}</span>
 					</p>
 					<EquityKeyMetrics summary={props.summary} />
-				</Card>
+				</SummaryStatsCard>
 
-				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
+				<div className="col-span-2 grid grid-cols-2 gap-2">
 					<ChartPanel className="col-span-full">
 						{/* Mobile: name + market cap */}
 						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
@@ -471,7 +472,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						/>
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} values={availableTabs}>
 				<ViewTabs tabs={availableTabs.map((id) => ({ id, label: TAB_LABELS[id] }))} label="Ticker sections" />

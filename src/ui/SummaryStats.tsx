@@ -23,6 +23,10 @@ import { formatPercentChange } from '~/utils/numberFormat'
    3. Stat stack (stablecoins overview): label-md text-secondary over a
       mono-xl headline, then compact rows with label-md text-secondary
       labels and non-bold mono-md values; no heading, no bold rows.
+   Every overview card beside a page's chart renders through
+   SummaryCardGrid + SummaryStatsCard (chain, protocol, token, equity and
+   RWA asset pages included); never hand-roll the grid or the card. A card
+   shown only on desktop passes className="max-xl:hidden".
    Titles (h1 + logo) and collapsible bodies stay callsite JSX. StatItem
    also stands alone in stat-tile grids. Every headline change renders
    through SummaryChange; never hand-roll the percent and its window.
@@ -49,10 +53,12 @@ export function SummaryStatsCard({
 	className?: string
 	children: ReactNode
 }) {
+	// No overflow class: any overflow value makes the card a scroll container, and the 44px .touch-target area of a
+	// small footer button then pokes past the 8px padding and scrolls the card on touch screens.
 	return (
 		<Card
 			padding={padding}
-			className={`col-span-2 flex w-full flex-col ${gap === 'sm' ? 'gap-3' : 'gap-6'} overflow-x-auto xl:col-span-1 ${className ?? ''}`.trim()}
+			className={`col-span-2 flex w-full flex-col ${gap === 'sm' ? 'gap-3' : 'gap-6'} xl:col-span-1 ${className ?? ''}`.trim()}
 		>
 			{children}
 		</Card>

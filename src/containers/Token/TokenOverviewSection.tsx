@@ -26,6 +26,7 @@ import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/M
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
 import { LoadingIndicator } from '~/ui/Status'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
@@ -749,18 +750,18 @@ export function TokenOverviewSection({
 	return (
 		<section className="scroll-mt-24" id="token-overview">
 			<h2 className="sr-only">Overview</h2>
-			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm" className="xl:min-h-[360px]">
 					<TokenPageHero overview={overview} logo={logo} geckoId={geckoId} />
 					<TokenMetrics overview={overview} />
-				</Card>
-				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
+				</SummaryStatsCard>
+				<div className="col-span-2 grid grid-cols-2 gap-2">
 					<ChartPanel className="col-span-full">
 						<TokenChartPanel overview={overview} geckoId={geckoId} />
 					</ChartPanel>
 				</div>
 				<TokenInformationCard overview={overview} issuer={issuer} chain={chain} />
-			</div>
+			</SummaryCardGrid>
 		</section>
 	)
 }

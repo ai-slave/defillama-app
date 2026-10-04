@@ -7,9 +7,9 @@ import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { HeroMetric } from '~/ui/HeroMetric'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -78,8 +78,8 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 			{props.hasInviteCodes ? (
 				<InviteBanner key={props.name} protocol={slug(props.name)} name={props.name} website={props.website} />
 			) : null}
-			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm" className="xl:min-h-[360px]">
 					<ProtocolHeader
 						props={props}
 						hasTvlData={hasTvlData}
@@ -98,8 +98,8 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 						computedOracleTvs={oracleTvs}
 						hasTvlData={hasTvlData}
 					/>
-				</Card>
-				<div className="col-span-1 flex flex-col xl:col-[2/-1]">
+				</SummaryStatsCard>
+				<div className="col-span-2 flex flex-col">
 					<Suspense
 						fallback={
 							<ChartPanel>
@@ -120,7 +120,7 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 						/>
 					</Suspense>
 				) : null}
-			</div>
+			</SummaryCardGrid>
 			{props.faqItems?.length ? <ProtocolFaq items={props.faqItems} /> : null}
 		</ProtocolOverviewLayout>
 	)

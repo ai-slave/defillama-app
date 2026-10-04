@@ -24,7 +24,7 @@ import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/M
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
-import { StatItem } from '~/ui/SummaryStats'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
@@ -482,8 +482,8 @@ export function RWAAssetPage({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm" className="max-xl:hidden xl:min-h-[360px]">
 					<AssetHeader asset={asset} displayName={displayName} headingAs="h1" />
 					<AssetKeyMetrics
 						asset={asset}
@@ -492,8 +492,8 @@ export function RWAAssetPage({
 						isLoadingFlows={isLoadingFlowSummary}
 						isFlowUnavailable={isFlowSummaryError && !flowSummary}
 					/>
-				</Card>
-				<div className="col-span-1 flex flex-col gap-2 xl:col-[2/-1]">
+				</SummaryStatsCard>
+				<div className="col-span-2 flex flex-col gap-2">
 					<Card padding="sm" className="flex flex-col gap-6 xl:hidden">
 						<AssetHeader asset={asset} displayName={displayName} headingAs="div" />
 					</Card>
@@ -604,7 +604,7 @@ export function RWAAssetPage({
 						/>
 					</Card>
 				</div>
-			</div>
+			</SummaryCardGrid>
 
 			<div className="grid gap-2 lg:grid-cols-2">
 				{/* Left Column */}
