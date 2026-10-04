@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useDeferredValue, useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { StreamDoneContext } from '../../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../../queryPolicy'
@@ -52,7 +53,7 @@ export function useUnifiedTableReadModel({
 	const aggregationPlan = getProtocolAggregationPlan(queryIdentity)
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, dataUpdatedAt, errorUpdatedAt, isLoading, isFetching, refetch } = useQuery({
+	const rowsQuery = useQuery({
 		queryKey,
 		queryFn: () => fetchUnifiedTableRows(config, rowHeaders),
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
@@ -60,7 +61,8 @@ export function useUnifiedTableReadModel({
 		enabled: streamDone
 	})
 
-	const readFailed = errorUpdatedAt > dataUpdatedAt
+	const { data, dataUpdatedAt, isLoading, isFetching, refetch } = rowsQuery
+	const readFailed = queryReadFailed(rowsQuery)
 	const deferredSearchTerm = useDeferredValue(searchTerm)
 
 	const parentMetrics = data?.parentMetrics ?? EMPTY_PARENT_METRICS

@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
@@ -301,8 +302,9 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 			const next = profileToForm(updated)
 			setProfile(updated)
 			setInitial(next)
-			setState(next)
-			setShowCustom(next.customSocials.length > 0)
+			// The fields stay editable while the save runs. Edits made since submitting stay on screen, unsaved
+			// against the new copy; otherwise the form shows what the server kept.
+			setState((current) => (current === state ? next : current))
 			if (isRenamed(next.slug)) {
 				toast.success(`Saved as @${next.slug}`)
 			} else {
@@ -515,14 +517,15 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						{dirty ? 'Unsaved changes' : 'All changes saved'}
 					</span>
 					<div className="flex items-center gap-2">
-						<button
+						<Ariakit.Button
 							type="button"
 							onClick={handleReset}
 							disabled={!dirty || updateProfileMutation.isPending}
-							className="rounded-md px-3 py-2 text-sm text-secondary transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+							accessibleWhenDisabled
+							className="rounded-md px-3 py-2 text-sm text-secondary transition-colors hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 						>
 							Discard
-						</button>
+						</Ariakit.Button>
 						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
 						<Button
 							variant="primary"

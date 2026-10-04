@@ -111,8 +111,20 @@ export function TagsField({
 					aria-describedby={`${id}-hint`}
 					// Enter adds the tag; it never submits the form around the field.
 					onKeyDown={(e) => {
-						if (e.key !== 'Enter') return
-						e.preventDefault()
+						if (disabled) return
+						if (e.key === 'Enter') {
+							e.preventDefault()
+							addTag()
+						}
+						// Typed text is part of the draft: the first Escape adds it and keeps the dialog open, so the
+						// next one asks through the dialog's discard question instead of dropping it.
+						if (e.key === 'Escape' && e.currentTarget.value.trim()) {
+							e.preventDefault()
+							addTag()
+						}
+					}}
+					// Leaving the field for Save, Cancel or Back adds the typed tag, so it is saved or asked about.
+					onBlur={() => {
 						if (!disabled) addTag()
 					}}
 					className="flex-1"
@@ -141,7 +153,7 @@ export function TagsField({
 								aria-label={`Remove tag ${tag}`}
 								onClick={(event) => {
 									// The removed tag takes its button with it: the next tag's takes focus, else the field.
-									const next = neighbourRowControl(event.currentTarget)
+									const next = neighbourRowControl(event.currentTarget.closest('li')!, event.currentTarget)
 									keepFocus(
 										() => onChange(tags.filter((t) => t !== tag)),
 										() => next ?? inputRef.current

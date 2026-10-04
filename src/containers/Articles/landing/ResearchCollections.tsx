@@ -56,7 +56,7 @@ export function ResearchCollections({ title, articles }: ResearchCollectionsProp
 									{article.coverImage?.url ? (
 										<img
 											src={article.coverImage.url}
-											alt={article.coverImage.alt}
+											alt={article.coverImage.alt ?? ''}
 											className="absolute inset-0 h-full w-full object-cover"
 											loading="lazy"
 											decoding="async"

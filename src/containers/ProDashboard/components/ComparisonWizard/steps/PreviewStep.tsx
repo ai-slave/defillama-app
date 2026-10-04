@@ -59,7 +59,7 @@ function outputSummary(cards: number, charts: number, includeTable: boolean) {
 }
 
 export function PreviewStep() {
-	const { state, actions } = useComparisonWizardContext()
+	const { state, actions, derived } = useComparisonWizardContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const id = useId()
 
@@ -84,7 +84,7 @@ export function PreviewStep() {
 					<Input
 						id={`${id}-name`}
 						type="text"
-						value={state.dashboardName}
+						value={derived.dashboardName}
 						onChange={(e) => actions.setDashboardName(e.target.value)}
 						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						placeholder="Enter dashboard name"
@@ -113,7 +113,7 @@ export function PreviewStep() {
 					/>
 				</div>
 
-				<TagsField tags={state.tags} onChange={actions.setTags} />
+				<TagsField tags={derived.tags} onChange={actions.setTags} />
 				<DescriptionField value={state.description} onChange={actions.setDescription} />
 			</div>
 
@@ -134,7 +134,7 @@ export function PreviewStep() {
 							return (
 								<label
 									key={metric}
-									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 label-sm transition-colors ${
+									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 label-sm transition-colors has-focus-visible:focus-ring ${
 										isSelected
 											? 'border-brand bg-brand-muted text-link-on-tint'
 											: 'border-medium text-secondary hover:border-brand/40'

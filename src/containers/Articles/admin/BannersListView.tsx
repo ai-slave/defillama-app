@@ -1,6 +1,7 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -12,7 +13,6 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 
 export function BannersListView() {
 	const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null)
-	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -74,9 +74,7 @@ export function BannersListView() {
 					>
 						<span aria-hidden>←</span> Admin
 					</Link>
-					<h1 ref={headingRef} tabIndex={-1} className="mt-2 text-3xl font-semibold tracking-tight text-primary">
-						Banners
-					</h1>
+					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Banners</h1>
 					<p className="mt-1 text-sm text-secondary">
 						Configure the dismissible top strip, the desktop right-rail image, or the mobile inline image shown on
 						/research, all articles, a section's articles, or a single article.
@@ -100,7 +98,6 @@ export function BannersListView() {
 					mutation={deleteBannerMutation}
 					variables={deleteTarget.id}
 					onClose={() => setDeleteTarget(null)}
-					fallbackFocus={headingRef}
 				/>
 			) : null}
 			{items.length === 0 ? (
@@ -177,14 +174,15 @@ export function BannersListView() {
 								)}
 							</div>
 							<div className="flex flex-wrap items-center gap-2 justify-self-end">
-								<button
+								<Ariakit.Button
 									type="button"
 									onClick={() => toggleMutation.mutate({ id: banner.id, enabled: !banner.enabled })}
 									disabled={toggleMutation.isPending}
-									className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:opacity-50"
+									accessibleWhenDisabled
+									className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary aria-disabled:opacity-50"
 								>
 									{banner.enabled ? 'Disable' : 'Enable'}
-								</button>
+								</Ariakit.Button>
 								<Link
 									href={`/research/admin/banners/${banner.id}`}
 									className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary"
@@ -193,10 +191,7 @@ export function BannersListView() {
 								</Link>
 								<button
 									type="button"
-									onClick={() => {
-										deleteBannerMutation.reset()
-										setDeleteTarget(banner)
-									}}
+									onClick={() => setDeleteTarget(banner)}
 									disabled={deleteBannerMutation.isPending}
 									className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"
 								>

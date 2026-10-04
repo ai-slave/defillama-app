@@ -186,3 +186,89 @@ describe('claim form submission', () => {
 		)
 	})
 })
+
+async function fillClaim() {
+	await type(inputByLabel('Position at organization')!, 'CEO')
+	await type(inputByLabel('Your full name')!, 'Ada Lovelace')
+	await type(inputByLabel('Your LinkedIn or X profile')!, 'linkedin.com/in/ada')
+	await type(inputByLabel('Your organization email address')!, 'ada@acme.com')
+	for (const checkbox of document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[type="checkbox"]')) {
+		await click(checkbox)
+	}
+}
+
+describe('lead forms keep what was typed', () => {
+	test('Escape on a filled claim form asks before discarding it', async () => {
+		const onClose = vi.fn()
+		await render(<ClaimDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await type(inputByLabel('Your full name')!, 'Ada Lovelace')
+		const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+		await act(async () => {
+			dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		})
+
+		await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Keep editing'))
+		expect(onClose).not.toHaveBeenCalled()
+	})
+
+	test('Escape on a filled connect form asks before discarding it', async () => {
+		const onClose = vi.fn()
+		await render(<ConnectDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await type(inputByLabel('Full name')!, 'Ada Lovelace')
+		const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+		await act(async () => {
+			dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		})
+
+		await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Keep editing'))
+		expect(onClose).not.toHaveBeenCalled()
+	})
+
+	test('an incomplete claim moves focus to the first field that needs fixing', async () => {
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await type(inputByLabel('Position at organization')!, 'CEO')
+
+		await click(buttonByText('Submit claim request')!)
+
+		expect(document.activeElement).toBe(inputByLabel('Your full name'))
+	})
+
+	test('a failed claim keeps its error on screen while the retry runs', async () => {
+		let attempt = 0
+		let answer!: () => void
+		http.serve({
+			'/api/public/market-makers/lead/claim': () =>
+				++attempt === 1
+					? Response.json({ error: 'Lead service unavailable' }, { status: 503 })
+					: new Promise((resolve) => {
+							answer = () => resolve({ status: 'ok', request_id: 'req-1' })
+						})
+		})
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await fillClaim()
+		await click(buttonByText('Submit claim request')!)
+		const alert = () => document.querySelector('[role="dialog"] [role="alert"]')?.textContent
+		await waitForUi(() => expect(alert()).toBe('Lead service unavailable'))
+
+		await click(buttonByText('Submit claim request')!)
+		await waitForUi(() => expect(attempt).toBe(2))
+		expect(alert()).toBe('Lead service unavailable')
+
+		await act(async () => answer())
+		await waitForUi(() =>
+			expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Claim request received')
+		)
+	})
+})
+
+describe('lead dialogs open on their first field', () => {
+	test('the claim form focuses the position field', async () => {
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await waitForUi(() => expect(document.activeElement).toBe(inputByLabel('Position at organization')))
+	})
+
+	test('the connect form focuses the interest picker', async () => {
+		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await waitForUi(() => expect(document.activeElement?.textContent).toBe('Select an option'))
+	})
+})

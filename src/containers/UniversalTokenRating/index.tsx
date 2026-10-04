@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { Button } from '~/ui/Button'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -66,6 +67,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		updateQueryFromSelected(router, listingKeys.include, listingKeys.exclude, [...listingKeys.all], values)
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
+	const filterButtonRef = useRef<HTMLButtonElement>(null)
 	// The search is not a form, so nothing submits natively before hydration, and text typed before then is kept,
 	// as the site search does.
 	const [searchQuery, setSearchQuery] = useState(readPreHydrationSearch)
@@ -225,7 +227,13 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 						size="md"
 					/>
 				</span>
-				<Button type="button" size="md" onClick={() => setFiltersOpen(true)} className="ml-auto lg:hidden">
+				<Button
+					ref={filterButtonRef}
+					type="button"
+					size="md"
+					onClick={() => setFiltersOpen(true)}
+					className="ml-auto lg:hidden"
+				>
 					Filter
 					{activeFilterCount ? <span className="label-sm text-link">({activeFilterCount})</span> : null}
 					<Icon name="settings" height={14} width={14} />
@@ -242,8 +250,12 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 							key={chip.key}
 							type="button"
 							onClick={chip.onRemove}
+							// The chip leaves once the URL drops its filter. It hands focus to the next chip, else the previous
+							// one, else the Filter button.
+							ref={passFocusOnLeave((node) => neighbourRowControl(node, node) ?? filterButtonRef.current)}
 							className="flex cursor-pointer items-center gap-1.5 rounded-full border border-medium bg-surface px-3 py-1 label-sm text-link"
 						>
+							<span className="sr-only">Remove </span>
 							{chip.label}
 							<Icon name="x" height={12} width={12} />
 						</button>
@@ -310,7 +322,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				listingStatuses={listingStatuses}
 				setListingStatuses={setListingStatuses}
 				sort={sort}
-				setSort={(next) => setSort(next)}
+				setSort={setSort}
 				canReset={activeFilterCount > 0 || sort.desc}
 				onReset={resetFilters}
 			/>

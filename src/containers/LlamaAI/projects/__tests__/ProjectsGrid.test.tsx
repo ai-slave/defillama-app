@@ -79,3 +79,17 @@ test.each(['Clear project search', 'Clear search'])('%s returns focus to the sea
 	expect(search.value).toBe('')
 	expect(document.activeElement).toBe(search)
 })
+
+test('closing a rename returns focus to the Rename button that opened it', async () => {
+	await waitForUi(() => expect(container.querySelector('button[aria-label="Rename Research"]')).not.toBeNull())
+	const rename = container.querySelector<HTMLButtonElement>('button[aria-label="Rename Research"]')!
+	await act(async () => {
+		rename.focus()
+		rename.click()
+	})
+	await waitForUi(() => expect(dialogTitle()).toBe('Rename project'))
+	const cancel = [...openDialog()!.querySelectorAll('button')].find((button) => button.textContent === 'Cancel')!
+	await act(async () => cancel.click())
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(document.activeElement).toBe(rename))
+})

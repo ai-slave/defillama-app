@@ -60,3 +60,51 @@ export function formatDownloadPreviewPercent(value: number): string {
 		maximumFractionDigits: Number.isInteger(value) ? 0 : absoluteValue >= 1 ? 2 : 6
 	})
 }
+
+export type ColumnKind = 'text' | 'number' | 'currency' | 'percent' | 'date'
+
+export interface ColumnMeta {
+	index: number
+	header: string
+	kind: ColumnKind
+	align: 'start' | 'end'
+	width: number
+}
+
+export function parseNumericValue(value: string): number | null {
+	const trimmed = value.trim()
+	if (!trimmed) return null
+	const normalized = trimmed.replace(/[$,%\s]/g, '').replace(/,/g, '')
+	if (!normalized) return null
+	const parsed = Number(normalized)
+	return Number.isFinite(parsed) ? parsed : null
+}
+
+export function formatCellValue(value: string, column: ColumnMeta): string {
+	if (!value) return ''
+	if (column.kind === 'currency') {
+		const numeric = parseNumericValue(value)
+		return numeric === null ? value : formatDownloadPreviewCurrency(numeric)
+	}
+	if (column.kind === 'number') {
+		const numeric = parseNumericValue(value)
+		return numeric === null ? value : formatDownloadPreviewNumber(numeric)
+	}
+	if (column.kind === 'percent') {
+		const numeric = parseNumericValue(value)
+		return numeric === null ? value : formatDownloadPreviewPercent(numeric)
+	}
+	if (column.kind === 'date') {
+		return formatDownloadPreviewDate(value, column.header) ?? value
+	}
+	return value
+}
+
+export function getCellTone(value: string, column: ColumnMeta): string {
+	if (column.kind !== 'percent') return ''
+	const numeric = parseNumericValue(value)
+	if (numeric === null) return ''
+	if (numeric > 0) return 'text-success'
+	if (numeric < 0) return 'text-error'
+	return ''
+}

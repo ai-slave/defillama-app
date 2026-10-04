@@ -244,7 +244,7 @@ describe('UnifiedTable rendering', () => {
 		document.body.appendChild(container)
 		root = createRoot(container)
 		virtualizer.scrollToOffset.mockReset()
-		dashboardMocks.handleDuplicateUnifiedTable.mockReset()
+		dashboardMocks.handleDuplicateUnifiedTable.mockReset().mockReturnValue({ status: 'saved', ids: ['copy'] })
 		dashboardMocks.handleEditItem.mockReset()
 		dashboardMocks.permissions.isReadOnly = true
 		dashboardMocks.permissions.hideDuplicateButton = false

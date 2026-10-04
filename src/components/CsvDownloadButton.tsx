@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { lazy, type ReactNode, Suspense, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
@@ -11,12 +12,6 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 interface CSVDownloadButtonProps {
 	// Common props
@@ -99,15 +94,10 @@ export function useCsvDownload(free = false) {
 }
 
 export function CsvDownloadDialogs({ controller }: { controller: ReturnType<typeof useCsvDownload> }) {
-	const subscriptionOpen = Ariakit.useStoreState(controller.subscriptionDialog, 'open')
 	const trialOpen = Ariakit.useStoreState(controller.trialDialog, 'open')
 	return (
 		<>
-			{subscriptionOpen ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={controller.subscriptionDialog} />
-				</Suspense>
-			) : null}
+			<LazySubscribeProModal dialogStore={controller.subscriptionDialog} />
 			{trialOpen ? <TrialCsvLimitModal isOpen onClose={controller.trialDialog.hide} /> : null}
 		</>
 	)

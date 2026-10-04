@@ -1,8 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useAuthContext } from '~/auth'
-import { FEATURES_SERVER } from '~/constants'
-
-export type PdfUploadScope = 'report-pdf'
+import { postUpload, UploadError, uploadErrorMessage } from './useImageUpload'
 
 export type PdfUploadResult = {
 	id: string
@@ -15,21 +13,7 @@ export type PdfUploadResult = {
 const MAX_BYTES = 100 * 1024 * 1024
 const ALLOWED_MIMES = new Set(['application/pdf'])
 
-export class PdfUploadError extends Error {
-	status: number
-	constructor(message: string, status = 400) {
-		super(message)
-		this.name = 'PdfUploadError'
-		this.status = status
-	}
-}
-
-function uploadUrl() {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}/uploads/pdf`
-}
-
 function validateClient(file: File): string | null {
-	if (!file) return 'No file selected'
 	if (file.size === 0) return 'Empty file'
 	if (file.size > MAX_BYTES) return 'File exceeds 100 MB limit'
 	const looksLikePdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
@@ -38,51 +22,20 @@ function validateClient(file: File): string | null {
 	return null
 }
 
-async function fileToBase64(file: File): Promise<string> {
-	const buf = await file.arrayBuffer()
-	const bytes = new Uint8Array(buf)
-	let binary = ''
-	const chunkSize = 0x80_00
-	for (let i = 0; i < bytes.length; i += chunkSize) {
-		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-	}
-	return btoa(binary)
-}
-
 export function usePdfUpload(args: { articleId: string | null | undefined }) {
 	const { authorizedFetch } = useAuthContext()
 
 	const upload = useMutation({
 		mutationFn: async (file: File): Promise<PdfUploadResult> => {
 			const clientError = validateClient(file)
-			if (clientError) throw new PdfUploadError(clientError, 400)
-			if (!args.articleId) throw new PdfUploadError('Save the article before uploading a PDF', 400)
-
-			const dataBase64 = await fileToBase64(file)
-			const payload = {
-				scope: 'report-pdf' as PdfUploadScope,
+			if (clientError) throw new UploadError(clientError, 400)
+			if (!args.articleId) throw new UploadError('Save the article before uploading a PDF', 400)
+			return postUpload<PdfUploadResult>(authorizedFetch, 'pdf', file, {
+				scope: 'report-pdf',
 				articleId: args.articleId,
 				originalName: file.name,
-				mimeType: file.type || 'application/pdf',
-				dataBase64
-			}
-
-			const response = await authorizedFetch(uploadUrl(), {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
+				mimeType: file.type || 'application/pdf'
 			})
-			if (!response) throw new PdfUploadError('Please sign in to continue', 401)
-			const text = await response.text()
-			const data = text ? JSON.parse(text) : null
-			if (!response.ok) {
-				const message =
-					data && typeof data === 'object' && typeof data.error === 'string'
-						? data.error
-						: response.statusText || 'Upload failed'
-				throw new PdfUploadError(message, response.status)
-			}
-			return data as PdfUploadResult
 		}
 	})
 	const { mutateAsync: uploadFile } = upload
@@ -90,11 +43,6 @@ export function usePdfUpload(args: { articleId: string | null | undefined }) {
 	return {
 		uploadFile,
 		isUploading: upload.isPending,
-		// Client checks and the server's 4xx reasons name the fix; anything else is a plain retry.
-		errorMessage: upload.error
-			? upload.error instanceof PdfUploadError && upload.error.status < 500
-				? upload.error.message
-				: "Couldn't upload this PDF. Try again."
-			: null
+		errorMessage: uploadErrorMessage(upload.error, "Couldn't upload this PDF. Try again.")
 	}
 }

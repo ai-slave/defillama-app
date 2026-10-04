@@ -59,28 +59,34 @@ export function InviteBanner({ protocol, name, website }: InviteBannerProps) {
 	)
 }
 
+/** When the visitor may ask for another code: an assignment's refresh time or a cooldown's retry time. */
+function getNextAttemptAt(result: Awaited<ReturnType<typeof revealInvite>>) {
+	return result.status === 'assigned' ? result.refreshAt : result.status === 'cooldown' ? result.retryAt : null
+}
+
 function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps & { onAssigned: () => void }) {
 	const [token, setToken] = useState('')
 	const [verificationError, setVerificationError] = useState(false)
+	// The last claim failure, kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [failure, setFailure] = useState<string | null>(null)
 	const turnstile = useRef<TurnstileInstance>(undefined)
 	const claim = useMutation({
 		mutationFn: revealInvite,
 		retry: false,
 		onSuccess: (result) => {
-			setToken('')
-			const nextAttemptAt =
-				result.status === 'assigned' ? result.refreshAt : result.status === 'cooldown' ? result.retryAt : null
+			setFailure(null)
+			const nextAttemptAt = getNextAttemptAt(result)
 			// An existing assignment can already be eligible for refresh, leaving the widget mounted.
 			if (nextAttemptAt && Date.parse(nextAttemptAt) <= Date.now()) turnstile.current?.reset()
 			if (result.status === 'assigned') onAssigned()
 		},
-		onError: () => {
+		onError: (error) => {
+			setFailure(error.message)
 			turnstile.current?.reset()
 		}
 	})
 	const result = claim.data
-	const retryAt =
-		result?.status === 'assigned' ? result.refreshAt : result?.status === 'cooldown' ? result.retryAt : null
+	const retryAt = result ? getNextAttemptAt(result) : null
 	// The dialog body mounts only after the visitor opens it, never while hydrating. The clock ticks every second
 	// from the claim on, so a new retry time is measured against a current second.
 	const nowSeconds = useNowSeconds(undefined, claim.isPending || retryAt ? 1000 : 30_000)
@@ -131,7 +137,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 								: 'Code already used? You can try another.'}
 						</p>
 					</>
-				) : !result && !claim.isError ? (
+				) : !result && !failure ? (
 					<p className="body-md text-secondary">
 						Use an invite code to join {name}. Verify below, then reveal your code.
 					</p>
@@ -148,10 +154,10 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 						Please check back later.
 					</p>
 				) : null}
-				{claim.isError ? <InlineStatus variant="error">{claim.error.message}</InlineStatus> : null}
+				{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
 				{minutesLeft === 0 && result?.status !== 'unavailable' ? (
 					<>
-						{claim.isError ? <p className="body-md text-secondary">Verify again, then retry your request.</p> : null}
+						{failure ? <p className="body-md text-secondary">Verify again, then retry your request.</p> : null}
 						<Turnstile
 							ref={turnstile}
 							action={`${protocol}_invite`}
@@ -199,7 +205,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 							accessibleWhenDisabled
 							onClick={submit}
 						>
-							{result?.status === 'assigned' ? 'Try another code' : claim.isError ? 'Try again' : 'Reveal my code'}
+							{result?.status === 'assigned' ? 'Try another code' : failure ? 'Try again' : 'Reveal my code'}
 						</Button>
 					) : null}
 					{result?.status === 'assigned' && website ? (

@@ -8,6 +8,7 @@ import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { slug } from '~/utils'
+import { queryReadFailed } from '~/utils/query'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
@@ -42,13 +43,14 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	)
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const scheduleQuery = useQuery({
 		queryKey: ['pro-dashboard', 'unlocks-schedule', protocol, resolvedDataType],
 		queryFn: () => getProtocolEmissionsScheduleData(slug(protocol)),
 		enabled: streamDone && Boolean(protocol),
 		staleTime: 60 * 60 * 1000
 	})
-	const readFailed = errorUpdatedAt > dataUpdatedAt
+	const { data, isLoading } = scheduleQuery
+	const readFailed = queryReadFailed(scheduleQuery)
 
 	// Pre-built from the API — no need to reconstruct dataset/charts from scratch.
 	const apiDataset = data?.datasets?.[resolvedDataType] ?? EMPTY_DATASET
@@ -93,8 +95,6 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(360, cardHeightScale)
 
-	const retryScheduleData = { run: () => void refetch(), pending: isFetching }
-
 	const title = `${protocolName} Unlocks Schedule`
 	const dataTypeLabel = config.dataType === 'documented' ? 'Documented' : 'Realtime'
 
@@ -108,7 +108,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	)
 
 	if (readFailed && data === undefined) {
-		return renderStatusShell(<ProCardError retry={retryScheduleData} />)
+		return renderStatusShell(<ProCardError retry={scheduleQuery} />)
 	}
 
 	if (isLoading || (!streamDone && data === undefined)) {
@@ -117,7 +117,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
-			{readFailed ? <ProCardRefreshFailed retry={retryScheduleData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={scheduleQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={title}

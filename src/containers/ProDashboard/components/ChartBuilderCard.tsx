@@ -8,9 +8,11 @@ import { Select } from '~/components/Select/Select'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { chartBuilderHasExactRemainder, chartBuilderScopeHidesOthers } from '../chartBuilderCapabilities'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
 import { chartBuilderSubtitleParts } from '../chartBuilderSubtitle'
@@ -36,7 +38,6 @@ import {
 	withoutOthersSeries
 } from './chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from './chartBuilderTooltip'
-import { ConfirmationModal } from './ConfirmationModal'
 import { DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
@@ -174,14 +175,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			selectChartBuilderSeries(data, { hideOthers: config.hideOthers === true, timePeriod, customTimePeriod }),
 		[config.hideOthers, timePeriod, customTimePeriod]
 	)
-	const {
-		data: chartData,
-		isPending: isChartDataPending,
-		isFetching: isChartDataFetching,
-		errorUpdatedAt,
-		dataUpdatedAt,
-		refetch: refetchChartData
-	} = useQuery({
+	const chartDataQuery = useQuery({
 		queryKey: getChartBuilderQueryKey(config),
 		queryFn: () => fetchChartBuilderSeries(config).then((series) => ({ series })),
 		select: selectChartData,
@@ -189,7 +183,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-	const isChartDataError = errorUpdatedAt > dataUpdatedAt
+	const { data: chartData, isPending: isChartDataPending } = chartDataQuery
+	const isChartDataError = queryReadFailed(chartDataQuery)
 
 	const chartView = useMemo(() => {
 		if (!chartData?.series || config.chartType === 'treemap') {
@@ -239,7 +234,6 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const displayedSeries = chartData?.series ?? []
 	const hasRenderableData =
 		config.chartType === 'treemap' ? treemapData.length > 0 : chartView.dataset.source.length > 0
-	const retryChartData = { run: () => void refetchChartData(), pending: isChartDataFetching }
 
 	const chartOptions = useMemo<MultiSeriesChartOptions>(() => {
 		const tooltipFormatter = createChartBuilderTooltipFormatter({
@@ -395,7 +389,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 	return (
 		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
-			{isChartDataError && hasRenderableData ? <ProCardRefreshFailed retry={retryChartData} /> : null}
+			{isChartDataError && hasRenderableData ? <ProCardRefreshFailed retry={chartDataQuery} /> : null}
 			<ProCardHeader
 				title={
 					builder.name ||
@@ -564,7 +558,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{/* A disabled React Query is not "loading", but remains pending until the stream seeds its cache. */}
 				{isChartDataError && !hasRenderableData ? (
-					<ProCardError retry={retryChartData} />
+					<ProCardError retry={chartDataQuery} />
 				) : isChartDataPending ? (
 					<ProCardLoading label="Loading chart…" />
 				) : hasRenderableData ? (
@@ -594,17 +588,23 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					<ProCardEmpty message="No data available" />
 				)}
 			</div>
-			<ConfirmationModal
-				isOpen={showDuplicateConfirm}
+			<ConfirmDialog
+				open={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
-				onConfirm={() => {
-					const duplicateId = handleDuplicateChartBuilder(builder)
-					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
-				}}
+				unmountOnHide
+				scope="pro"
 				title="Duplicate chart"
-				message="Create a duplicate of this chart in the dashboard?"
-				confirmText="Duplicate"
+				description="Create a duplicate of this chart in the dashboard?"
+				confirmLabel="Duplicate"
+				pendingLabel={null}
+				error={null}
 				tone="primary"
+				onConfirm={() => {
+					const duplicated = handleDuplicateChartBuilder(builder)
+					setShowDuplicateConfirm(false)
+					toastRefusal(duplicated)
+					if (duplicated.status === 'saved') requestDashboardItemReveal(duplicated.ids[0], { scroll: 'nearest' })
+				}}
 			/>
 		</div>
 	)

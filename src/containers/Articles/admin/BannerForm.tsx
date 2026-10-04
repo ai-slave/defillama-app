@@ -726,12 +726,8 @@ export function BannerForm({ banner }: Props) {
 						{banner ? (
 							<button
 								type="button"
-								onClick={() => {
-									deleteMutation.reset()
-									setConfirmDelete(true)
-								}}
-								disabled={deleteMutation.isPending}
-								className="rounded-md px-3 py-2 text-sm text-error transition-colors hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
+								onClick={() => setConfirmDelete(true)}
+								className="rounded-md px-3 py-2 text-sm text-error transition-colors hover:bg-error/10"
 							>
 								Delete
 							</button>
@@ -752,7 +748,6 @@ export function BannerForm({ banner }: Props) {
 			</div>
 			{confirmDelete && banner ? (
 				<ConfirmActionDialog
-					key={banner.id}
 					title="Delete this banner?"
 					description="This removes the banner from research pages. This cannot be undone."
 					confirmLabel="Delete"

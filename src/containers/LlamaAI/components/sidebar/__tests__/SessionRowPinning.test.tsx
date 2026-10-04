@@ -220,7 +220,7 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete this chat. Try again.")
 	)
 	expect(document.querySelector('[role="alertdialog"]')).not.toBeNull()
-	await click('Retry deletion')
+	await click('Delete')
 	await waitForUi(() => expect(container.textContent).toContain('Deletion completed'))
 	expect(container.querySelector('[aria-label="Actions for chat"]')).toBeNull()
 	await waitForUi(() => expect(document.activeElement).toBe(button('New Chat')))

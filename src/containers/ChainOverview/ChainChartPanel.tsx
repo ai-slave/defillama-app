@@ -16,6 +16,7 @@ import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { FailedDataNote } from '~/ui/ScopeNote'
@@ -66,6 +67,12 @@ for (const category of chainChartCategoryOrder) {
 
 const getQueryValueOnRemove = (isDefaultEnabled: boolean): 'false' | undefined =>
 	isDefaultEnabled ? 'false' : undefined
+
+// A removed chip hands focus to the next chip, else the previous one, which for the first chip is Add Metrics.
+const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
+	const next = neighbourRowControl(chip, chip)
+	return next?.querySelector<HTMLElement>('input') ?? next
+})
 
 interface ChainChartPanelProps {
 	charts: IChainOverviewData['charts']
@@ -180,9 +187,8 @@ export function ChainChartPanel({
 		for (const chart of toggledCharts) {
 			updates[chainCharts[chart]] = getQueryValueOnRemove(charts[0] === chart)
 		}
-		if (Object.keys(updates).length > 0) {
-			void pushShallowQuery(router, updates)
-		}
+		// Clear all is disabled while nothing is picked, so updates is never empty here.
+		void pushShallowQuery(router, updates)
 	}, [router, charts, toggledCharts])
 
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
@@ -209,6 +215,7 @@ export function ChainChartPanel({
 							<label
 								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
 								key={`add-or-remove-metric-${chainCharts[tchart]}`}
+								ref={focusNeighbourChipOnLeave}
 							>
 								<input
 									type="checkbox"

@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { SelectWithCombobox } from '../SelectWithCombobox'
 
 const router = vi.hoisted(() => ({
@@ -14,14 +15,28 @@ const router = vi.hoisted(() => ({
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
 const CATEGORIES = ['Dexs', 'Lending', 'Bridge']
+// From 12 options the picker opens with a search field (searchThreshold.ts).
+const SEARCHABLE_CATEGORIES = [
+	...CATEGORIES,
+	'CDP',
+	'Yield',
+	'Derivatives',
+	'Liquid Staking',
+	'RWA',
+	'Options',
+	'Farm',
+	'Launchpad',
+	'Oracle'
+]
 
 let container: HTMLDivElement
 let root: Root
 
 let labelType: 'smol' | 'regular' = 'smol'
+let categories = CATEGORIES
 const picker = () => (
 	<SelectWithCombobox
-		allValues={CATEGORIES}
+		allValues={categories}
 		includeQueryKey="category"
 		excludeQueryKey="excludeCategory"
 		label="Category"
@@ -54,8 +69,7 @@ const selectAllRow = () =>
 const selected = () =>
 	[...document.querySelectorAll('[role="option"]')]
 		.filter((option) => option.getAttribute('aria-selected') === 'true')
-		// Each option row also holds its "Only" button.
-		.map((option) => option.textContent?.replace(/Only$/, ''))
+		.map((option) => option.textContent)
 
 beforeEach(() => {
 	container = document.createElement('div')
@@ -68,6 +82,7 @@ afterEach(async () => {
 	container.remove()
 	router.query = {}
 	labelType = 'smol'
+	categories = CATEGORIES
 })
 
 test('the Select all row shows how much the URL selects and writes all or none back to it', async () => {
@@ -101,4 +116,30 @@ test('names an empty or all-except selection on the trigger, so a filter never l
 	router.query = { category: 'Dexs' }
 	await act(async () => root.render(picker()))
 	expect(trigger().textContent).toBe('Category: Dexs')
+})
+
+async function press(key: string) {
+	const input = document.querySelector<HTMLInputElement>('input[role="combobox"]')!
+	await act(async () => {
+		input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+		await Promise.resolve()
+	})
+}
+
+test("a keyboard reader reaches an option's Only with the right arrow and selects just that option", async () => {
+	// Nothing selected, so the list opens without an active option.
+	categories = SEARCHABLE_CATEGORIES
+	router.query = { category: 'None' }
+	await act(async () => root.render(picker()))
+	await click(trigger())
+	await waitForUi(() => expect(document.activeElement?.getAttribute('role')).toBe('combobox'))
+	// Select all, then Dexs, then the Only beside Dexs.
+	await press('ArrowDown')
+	await press('ArrowDown')
+	await press('ArrowRight')
+	await waitForUi(() =>
+		expect(document.querySelector('[data-active-item]')?.getAttribute('aria-label')).toBe('Only Dexs')
+	)
+	await press('Enter')
+	expect(router.query).toEqual({ category: 'Dexs' })
 })

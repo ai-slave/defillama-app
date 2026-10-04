@@ -9,6 +9,7 @@ import {
 	nestedMenuSeeMoreStyles,
 	nestedMenuSelectRowStyles,
 	popoverMultiSelectCheckStyles,
+	popoverRowStyles,
 	popoverRowWithBorderStyles,
 	popoverScrollAreaStyles,
 	popoverSeeMoreStyles,
@@ -44,8 +45,6 @@ interface ISelectWithComboboxBase {
 	headerRow?: React.ReactNode
 	/** Rows under "Select all" that select a preset, e.g. only EVM chains. */
 	quickActions?: ReadonlyArray<{ label: string; onSelect: () => void }>
-	onEditCustomColumn?: (idx: number) => void
-	onDeleteCustomColumn?: (idx: number) => void
 	onValuesChange?: (values: Array<string>, label: string) => void
 	resetPageOnQueryChange?: boolean
 	pushQueryUpdates?: (updates: Record<string, string | Array<string> | undefined>) => void
@@ -80,6 +79,16 @@ type SelectWithComboboxLabelProps =
 	| { label: string; labelType?: 'regular' | 'smol'; heading?: undefined }
 
 type ISelectWithCombobox = SelectWithComboboxLabelProps & (ISelectWithComboboxUrlParams | ISelectWithComboboxState)
+
+const gridRowStyles = 'group relative flex border-b border-subtle last-of-type:border-b-0'
+// "Only" is a small button lying over the space its option keeps free before the check (the row's px-3, the 14px check
+// and the gap-2 put it 34px from the edge), so the check stays at the edge. It shows while either item is active, so a
+// keyboard reader sees it on reaching the row and a phone shows it on the row last tapped, and on desktop also on hover.
+// Phones get a larger tap area.
+const onlyItemStyles =
+	'absolute inset-y-0 right-[34px] my-auto flex h-6 cursor-pointer items-center rounded-md border border-subtle bg-surface px-2 label-sm text-secondary invisible group-has-data-active-item:visible sm:group-hover:visible hover:border-medium hover:bg-hover-row hover:text-primary data-active-item:border-medium data-active-item:bg-hover-row data-active-item:text-primary data-focus-visible:focus-ring max-sm:h-8 max-sm:px-3'
+
+const getOptionKey = (option: string | SelectOption) => (typeof option === 'string' ? option : option.key)
 
 const EMPTY_QUICK_ACTIONS: ReadonlyArray<{ label: string; onSelect: () => void }> = []
 
@@ -131,8 +140,6 @@ export function SelectWithCombobox({
 	customFooter,
 	headerRow,
 	quickActions = EMPTY_QUICK_ACTIONS,
-	onEditCustomColumn,
-	onDeleteCustomColumn,
 	includeQueryKey,
 	excludeQueryKey,
 	resetPageOnQueryChange,
@@ -165,84 +172,34 @@ export function SelectWithCombobox({
 	// looks like the default.
 	const urlSelectionText = includeQueryKey && !selectedLabelsProp ? describeSelection(allValues, selectedValues) : null
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
-	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
+	const showCheckboxes = !singleSelect
 	const queryUpdateOptions = {
 		...(resetPageOnQueryChange !== undefined ? { resetPage: resetPageOnQueryChange } : {}),
 		...(pushQueryUpdates !== undefined ? { pushQueryUpdates } : {})
 	}
+	const allKeys = allValues.map(getOptionKey)
 
-	const isStringValue = React.useCallback((value: string | SelectOption): value is string => {
-		return typeof value === 'string'
-	}, [])
-
-	const getOptionKey = React.useCallback(
-		(value: string | SelectOption) => {
-			return isStringValue(value) ? value : value.key
-		},
-		[isStringValue]
-	)
-	const setSelectedValuesFromState = React.useCallback(
-		(values: Array<string>) => {
-			if (setSelectedValuesProp) {
-				setSelectedValuesProp(values)
-			}
-		},
-		[setSelectedValuesProp]
-	)
-
-	// Helper to extract keys from allValues
-	const getAllKeys = React.useCallback(() => allValues.map((v) => (typeof v === 'string' ? v : v.key)), [allValues])
-
-	// If includeQueryKey is provided, use URL-based functions; otherwise derive from setSelectedValues
-	const setSelectedValues: (values: Array<string>) => void = includeQueryKey
-		? (values: Array<string>) =>
-				updateQueryFromSelected(
-					router,
-					includeQueryKey,
-					excludeQueryKey,
-					getAllKeys(),
-					values,
-					defaultSelectedValues,
-					queryUpdateOptions
-				)
-		: setSelectedValuesFromState
-	const clearAll = includeQueryKey
-		? () =>
-				updateQueryFromSelected(
-					router,
-					includeQueryKey,
-					excludeQueryKey,
-					getAllKeys(),
-					'None',
-					defaultSelectedValues,
-					queryUpdateOptions
-				)
-		: () => setSelectedValuesFromState([])
-	const selectOnlyOne = includeQueryKey
-		? (value: string) =>
-				updateQueryFromSelected(
-					router,
-					includeQueryKey,
-					excludeQueryKey,
-					getAllKeys(),
-					[value],
-					defaultSelectedValues,
-					queryUpdateOptions
-				)
-		: (value: string) => setSelectedValuesFromState([value])
+	// One writer for every selection change: the URL when the picker reads it, else the caller's state.
+	const writeSelection = (values: Array<string> | 'None' | null) => {
+		if (includeQueryKey) {
+			updateQueryFromSelected(
+				router,
+				includeQueryKey,
+				excludeQueryKey,
+				allKeys,
+				values,
+				defaultSelectedValues,
+				queryUpdateOptions
+			)
+			return
+		}
+		setSelectedValuesProp!(values === 'None' ? [] : (values ?? allKeys))
+	}
+	const setSelectedValues = (values: Array<string>) => writeSelection(values)
+	const clearAll = () => writeSelection('None')
+	const selectOnlyOne = (value: string) => writeSelection([value])
 	const firstSelectedValue = selectedValues[0]
 	const providerValue = singleSelect ? (firstSelectedValue ?? '') : selectedValues
-	const normalizeNextValues = React.useCallback(
-		(values: Array<string> | string) => {
-			if (singleSelect) {
-				if (typeof values === 'string') return values ? [values] : []
-				return values.slice(0, 1)
-			}
-
-			return Array.isArray(values) ? values : values ? [values] : []
-		},
-		[singleSelect]
-	)
 
 	const [searchValue, setSearchValue] = React.useState('')
 
@@ -270,43 +227,18 @@ export function SelectWithCombobox({
 	}, [valuesAreAnArrayOfStrings, allValues, searchValue])
 
 	const [viewableMatches, setViewableMatches] = React.useState(visibleOptionLimit ?? 20)
+	const matchKeys = matches.map(getOptionKey)
 
-	// A new limit from the caller replaces however far the list was expanded.
-	const [syncedVisibleOptionLimit, setSyncedVisibleOptionLimit] = React.useState(visibleOptionLimit)
-	if (visibleOptionLimit !== syncedVisibleOptionLimit) {
-		setSyncedVisibleOptionLimit(visibleOptionLimit)
-		if (visibleOptionLimit !== null) {
-			setViewableMatches(visibleOptionLimit)
-		}
+	const toggleAll = () => {
+		if (selectAllScope === 'all') return writeSelection(includeQueryKey ? null : allKeys)
+		const nextValues = Array.from(new Set(selectedValues.concat(matchKeys)))
+		writeSelection(includeQueryKey && nextValues.length === allKeys.length ? null : nextValues)
 	}
-
-	const getMatchKeys = React.useCallback(() => matches.map(getOptionKey), [matches, getOptionKey])
-
-	const getSelectAllValues = React.useCallback(() => {
-		if (selectAllScope === 'all') return getAllKeys()
-		return Array.from(new Set(selectedValues.concat(getMatchKeys())))
-	}, [getAllKeys, getMatchKeys, selectedValues, selectAllScope])
-
-	const toggleAll = includeQueryKey
-		? () => {
-				const allKeys = getAllKeys()
-				const nextValues = selectAllScope === 'all' ? null : getSelectAllValues()
-				updateQueryFromSelected(
-					router,
-					includeQueryKey,
-					excludeQueryKey,
-					allKeys,
-					nextValues && nextValues.length === allKeys.length ? null : nextValues,
-					defaultSelectedValues,
-					queryUpdateOptions
-				)
-			}
-		: () => setSelectedValuesFromState(getSelectAllValues())
 	const hasOptionLimit = visibleOptionLimit !== null
 	const visibleMatches = hasOptionLimit ? matches.slice(0, viewableMatches) : matches
 	// With a search typed and `selectAllScope="matches"`, the row acts on the shown options only.
 	const selectsShown = selectAllScope === 'matches' && searchValue.trim() !== ''
-	const selectAllScopeKeys = selectsShown ? getMatchKeys() : getAllKeys()
+	const selectAllScopeKeys = selectsShown ? matchKeys : allKeys
 	const selectAllState = getSelectAllState(selectAllScopeKeys, selectedValues)
 	const toggleSelectAll = () => {
 		if (selectAllState !== 'all') return toggleAll()
@@ -319,33 +251,49 @@ export function SelectWithCombobox({
 
 	const comboboxRef = React.useRef<HTMLDivElement>(null)
 
+	// The flat multi-select lays its options out as rows with an "Only" item; the nested menu has no "Only".
+	const grid = showCheckboxes && !nestedMenu
+	// Ariakit groups items without a row into one row, so beside the option rows every single item needs its own.
+	const inRow = (item: React.ReactElement, key?: string) =>
+		grid ? (
+			<Ariakit.ComboboxRow key={key} className={gridRowStyles}>
+				{item}
+			</Ariakit.ComboboxRow>
+		) : (
+			item
+		)
 	const renderLeadingRows = (rowStyles: string, actionStyles: string) => (
 		<>
-			{showCheckboxes ? (
-				<Ariakit.ComboboxItem
-					value={SELECT_ALL_VALUE}
-					selectValueOnClick={false}
-					resetValueOnSelect={false}
-					hideOnClick={false}
-					onClick={toggleSelectAll}
-					className={rowStyles}
-				>
-					<SelectAllContent label={selectsShown ? 'Select all shown' : 'Select all'} state={selectAllState} />
-				</Ariakit.ComboboxItem>
-			) : null}
-			{quickActions.map((action) => (
-				<Ariakit.ComboboxItem
-					key={action.label}
-					value={`__quick_action__${action.label}`}
-					selectValueOnClick={false}
-					resetValueOnSelect={false}
-					hideOnClick={false}
-					onClick={action.onSelect}
-					className={actionStyles}
-				>
-					{action.label}
-				</Ariakit.ComboboxItem>
-			))}
+			{showCheckboxes
+				? inRow(
+						<Ariakit.ComboboxItem
+							value={SELECT_ALL_VALUE}
+							selectValueOnClick={false}
+							resetValueOnSelect={false}
+							hideOnClick={false}
+							onClick={toggleSelectAll}
+							className={rowStyles}
+						>
+							<SelectAllContent label={selectsShown ? 'Select all shown' : 'Select all'} state={selectAllState} />
+						</Ariakit.ComboboxItem>
+					)
+				: null}
+			{quickActions.map((action) =>
+				inRow(
+					<Ariakit.ComboboxItem
+						key={action.label}
+						value={`__quick_action__${action.label}`}
+						selectValueOnClick={false}
+						resetValueOnSelect={false}
+						hideOnClick={false}
+						onClick={action.onSelect}
+						className={actionStyles}
+					>
+						{action.label}
+					</Ariakit.ComboboxItem>,
+					action.label
+				)
+			)}
 		</>
 	)
 
@@ -371,7 +319,8 @@ export function SelectWithCombobox({
 		e.stopPropagation()
 		const previousCount = viewableMatches
 		setViewableMatches((prev) => prev + 20)
-		focusFirstNewItem(comboboxRef, '[role="option"]', leadingRowCount + previousCount)
+		// Each multi-select row also holds an "Only" item, which the count skips.
+		focusFirstNewItem(comboboxRef, '[role="option"]:not([aria-label^="Only "])', leadingRowCount + previousCount)
 	}
 
 	const setInputValue = (value: string) => {
@@ -381,7 +330,8 @@ export function SelectWithCombobox({
 	}
 
 	const setSelectedValue = (values: string | Array<string>) => {
-		const nextValues = normalizeNextValues(values)
+		// Ariakit hands a single select its value as a string and a multi select an array.
+		const nextValues = typeof values === 'string' ? (values ? [values] : []) : values
 		setSelectedValues(nextValues)
 		onValuesChange?.(nextValues, label)
 	}
@@ -420,17 +370,17 @@ export function SelectWithCombobox({
 									hideOnClick={false}
 									className={nestedMenuSelectRowStyles}
 								>
-									{isStringValue(option) ? (
+									{typeof option === 'string' ? (
 										<span>{option}</span>
-									) : !isStringValue(option) && option.help ? (
+									) : option.help ? (
 										<Tooltip content={option.help}>
 											<span className="mr-1">{option.name}</span>
 											<Icon name="help-circle" height={15} width={15} />
 										</Tooltip>
 									) : (
 										<span className="inline-flex items-center gap-1.5">
-											{isStringValue(option) ? option : option.name}
-											{isStringValue(option) ? null : option.icon}
+											{option.name}
+											{option.icon}
 										</span>
 									)}
 									{renderCheck()}
@@ -444,7 +394,7 @@ export function SelectWithCombobox({
 									className={nestedMenuSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
-									See more...
+									See more…
 								</Ariakit.ComboboxItem>
 							) : null}
 						</Ariakit.ComboboxList>
@@ -510,14 +460,17 @@ export function SelectWithCombobox({
 				</PopoverHeader>
 				{matches.length > 0 ? (
 					<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
-						{renderLeadingRows(`${popoverRowWithBorderStyles} gap-2`, `${popoverSeeMoreStyles} border-b border-subtle`)}
+						{grid
+							? renderLeadingRows(`${popoverRowStyles} flex-1 gap-2`, `${popoverSeeMoreStyles} flex-1`)
+							: renderLeadingRows(
+									`${popoverRowWithBorderStyles} gap-2`,
+									`${popoverSeeMoreStyles} border-b border-subtle`
+								)}
 						{visibleMatches.map((option) => {
-							const isCustom = typeof option === 'object' && option.isCustom
-							const customIndex = typeof option === 'object' ? option.customIndex : undefined
 							const optionKey = getOptionKey(option)
 							const optionContent = (
 								<>
-									{isStringValue(option) ? (
+									{typeof option === 'string' ? (
 										<span>{option}</span>
 									) : option.help ? (
 										<span className="inline-flex items-center">
@@ -530,48 +483,8 @@ export function SelectWithCombobox({
 											{option.icon}
 										</span>
 									)}
-									{isCustom && typeof customIndex === 'number' ? (
-										<span className="ml-2 flex gap-1">
-											<button
-												type="button"
-												tabIndex={-1}
-												className="rounded-sm p-1 hover:bg-hover-row"
-												onClick={(e) => {
-													e.stopPropagation()
-													onEditCustomColumn?.(customIndex)
-												}}
-												title="Edit custom column"
-												aria-label="Edit custom column"
-											>
-												<Icon name="settings" height={14} width={14} />
-											</button>
-											<button
-												type="button"
-												tabIndex={-1}
-												className="hover-wash rounded-sm p-1 text-secondary hover:text-data-down"
-												onClick={(e) => {
-													e.stopPropagation()
-													onDeleteCustomColumn?.(customIndex)
-												}}
-												title="Delete custom column"
-												aria-label="Delete custom column"
-											>
-												<Icon name="trash-2" height={14} width={14} />
-											</button>
-										</span>
-									) : null}
-									{showCheckboxes ? (
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation()
-												selectOnlyOne(optionKey)
-											}}
-											className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
-										>
-											Only
-										</button>
-									) : null}
+									{/* The space "Only" lies over, so a long name never runs under it. */}
+									{grid ? <span aria-hidden className="ml-auto w-11 shrink-0 max-sm:w-14" /> : null}
 									{renderCheck()}
 								</>
 							)
@@ -581,32 +494,53 @@ export function SelectWithCombobox({
 									key={`${label}-${optionKey}`}
 									value={optionKey}
 									resetValueOnSelect={false}
-									className={`${popoverRowWithBorderStyles} group gap-2`}
+									className={showCheckboxes ? `${popoverRowStyles} min-w-0 flex-1` : popoverRowWithBorderStyles}
 								>
 									{optionContent}
 								</Ariakit.ComboboxItem>
 							)
-
-							return !isStringValue(option) && option.help ? (
-								<Tooltip key={`${label}-${optionKey}`} content={option.help} render={selectItem}>
-									{optionContent}
-								</Tooltip>
-							) : (
-								selectItem
+							const item =
+								typeof option !== 'string' && option.help ? (
+									<Tooltip key={`${label}-${optionKey}`} content={option.help} render={selectItem}>
+										{optionContent}
+									</Tooltip>
+								) : (
+									selectItem
+								)
+							if (!showCheckboxes) return item
+							// "Only" is its own item in the option's row, so ArrowRight reaches it: the search field keeps focus, and
+							// a button inside an option would take only clicks.
+							return (
+								<Ariakit.ComboboxRow key={`${label}-${optionKey}`} className={gridRowStyles}>
+									{item}
+									<Ariakit.ComboboxItem
+										value={`__only__${optionKey}`}
+										selectValueOnClick={false}
+										resetValueOnSelect={false}
+										hideOnClick={false}
+										onClick={() => selectOnlyOne(optionKey)}
+										aria-label={`Only ${typeof option === 'string' ? option : option.name}`}
+										className={onlyItemStyles}
+									>
+										Only
+									</Ariakit.ComboboxItem>
+								</Ariakit.ComboboxRow>
 							)
 						})}
 
-						{hasOptionLimit && matches.length > viewableMatches ? (
-							<Ariakit.ComboboxItem
-								value="__see_more__"
-								selectValueOnClick={false}
-								hideOnClick={false}
-								className={popoverSeeMoreStyles}
-								onClick={handleSeeMore}
-							>
-								See more...
-							</Ariakit.ComboboxItem>
-						) : null}
+						{hasOptionLimit && matches.length > viewableMatches
+							? inRow(
+									<Ariakit.ComboboxItem
+										value="__see_more__"
+										selectValueOnClick={false}
+										hideOnClick={false}
+										className={popoverSeeMoreStyles}
+										onClick={handleSeeMore}
+									>
+										See more…
+									</Ariakit.ComboboxItem>
+								)
+							: null}
 					</Ariakit.ComboboxList>
 				) : (
 					emptyState

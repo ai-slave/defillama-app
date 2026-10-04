@@ -6,6 +6,7 @@ import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolD
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
@@ -52,14 +53,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const needsBorrowData = chartType === 'borrow-apy' || chartType === 'net-borrow-apy'
 	const needsSupplyData = !needsBorrowData
-	const {
-		data: chart,
-		isLoading: fetchingChartData,
-		isFetching: fetchingChart,
-		errorUpdatedAt: supplyErrorAt,
-		dataUpdatedAt: supplyDataAt,
-		refetch: refetchChart
-	} = useQuery({
+	const supplyQuery = useQuery({
 		queryKey: ['yield-supply-history', poolConfigId],
 		queryFn: (): Promise<PoolHistory> => {
 			return authToken
@@ -71,16 +65,10 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		retry: 1,
 		enabled: streamDone && needsSupplyData && Boolean(poolConfigId)
 	})
-	const chartError = supplyErrorAt > supplyDataAt
+	const { data: chart, isLoading: fetchingChartData } = supplyQuery
+	const chartError = queryReadFailed(supplyQuery)
 
-	const {
-		data: borrowChart,
-		isLoading: fetchingBorrowData,
-		isFetching: fetchingBorrow,
-		errorUpdatedAt: borrowErrorAt,
-		dataUpdatedAt: borrowDataAt,
-		refetch: refetchBorrowChart
-	} = useQuery({
+	const borrowQuery = useQuery({
 		queryKey: ['yield-borrow-history', poolConfigId],
 		queryFn: (): Promise<BorrowMarketHistory> => {
 			return authToken
@@ -92,7 +80,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		retry: 1,
 		enabled: streamDone && needsBorrowData && Boolean(poolConfigId)
 	})
-	const borrowError = borrowErrorAt > borrowDataAt
+	const { data: borrowChart, isLoading: fetchingBorrowData } = borrowQuery
+	const borrowError = queryReadFailed(borrowQuery)
 
 	const { dataset: currentChartDataset, latestData } = useYieldChartTransformations({
 		chartType,
@@ -169,13 +158,12 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		(needsBorrowData ? fetchingBorrowData : fetchingChartData) || (!streamDone && selectedData === undefined)
 
 	const hasError = needsBorrowData ? chartError || borrowError : chartError
-	const isFetching = needsBorrowData ? fetchingBorrow || fetchingChart : fetchingChart
 	const retryChartData = {
-		run: () => {
-			if (chartError) void refetchChart()
-			if (borrowError) void refetchBorrowChart()
+		refetch: () => {
+			if (chartError) void supplyQuery.refetch()
+			if (borrowError) void borrowQuery.refetch()
 		},
-		pending: isFetching
+		isFetching: needsBorrowData ? borrowQuery.isFetching || supplyQuery.isFetching : supplyQuery.isFetching
 	}
 
 	const hasRequiredData = currentChartDataset.source.length > 0

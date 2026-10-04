@@ -2,9 +2,9 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { getErrorMessage } from '~/utils/error'
@@ -14,25 +14,27 @@ export function ProjectSessionItem({
 	session: s,
 	projectId,
 	onSelect,
-	onDelete,
-	isDeleting
+	onDelete
 }: {
 	session: ProjectChatSession
 	projectId: string
 	onSelect: () => void
-	onDelete: () => void
-	isDeleting: boolean
+	/** Receives the Delete button, so the confirmation can return focus to it. */
+	onDelete: (trigger: HTMLElement) => void
 }) {
 	const [isRenaming, setIsRenaming] = useState(false)
 	const updateTitle = useUpdateSessionTitle()
 	const formRef = useRef<HTMLFormElement>(null)
 	const renameRef = useRef<HTMLButtonElement>(null)
-	const isBusy = isDeleting || updateTitle.isPending
-	const closeRename = () => {
-		const restoreFocus = formRef.current?.contains(document.activeElement)
-		setIsRenaming(false)
-		if (restoreFocus) requestAnimationFrame(() => renameRef.current?.focus())
-	}
+	const isBusy = updateTitle.isPending
+	// The last failed save, not the mutation's error: that one clears as soon as a retry starts.
+	const [renameError, setRenameError] = useState<string | null>(null)
+	// The rename form leaves with focus; the Rename button that opened it takes it back.
+	const closeRename = () =>
+		keepFocus(
+			() => setIsRenaming(false),
+			() => renameRef.current
+		)
 	const handleRenameSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		if (updateTitle.isPending) return
@@ -46,7 +48,8 @@ export function ProjectSessionItem({
 			await updateTitle.mutateAsync({ sessionId: s.sessionId, title, projectId })
 			closeRename()
 		} catch (error) {
-			if (!formRef.current?.isConnected) toast.error(getErrorMessage(error))
+			if (formRef.current?.isConnected) setRenameError(getErrorMessage(error))
+			else toast.error(getErrorMessage(error))
 		}
 	}
 	if (isRenaming) {
@@ -63,7 +66,7 @@ export function ProjectSessionItem({
 						aria-label="Session title"
 						defaultValue={s.title}
 						autoFocus
-						disabled={isBusy}
+						readOnly={isBusy}
 						onFocus={(e) => e.currentTarget.select()}
 						onKeyDown={(e) => {
 							if (e.key === 'Escape' && !isBusy) {
@@ -76,13 +79,11 @@ export function ProjectSessionItem({
 					<Button
 						size="md"
 						variant="primary"
-						accessibleWhenDisabled
 						type="submit"
-						disabled={isBusy}
-						aria-label={updateTitle.isPending ? 'Saving title' : 'Save title'}
+						pendingLabel={updateTitle.isPending ? 'Saving…' : null}
+						aria-label={updateTitle.isPending ? undefined : 'Save title'}
 					>
-						{updateTitle.isPending ? <LoadingSpinner size={14} /> : null}
-						{updateTitle.isPending ? 'Saving…' : 'Save'}
+						Save
 					</Button>
 					<Button
 						type="button"
@@ -96,9 +97,9 @@ export function ProjectSessionItem({
 						<Icon name="x" height={16} width={16} />
 					</Button>
 				</form>
-				{updateTitle.error ? (
+				{renameError ? (
 					<p role="alert" className="mt-1 body-sm text-error">
-						{updateTitle.error.message} Edit the title or retry saving.
+						{renameError} Edit the title or retry saving.
 					</p>
 				) : null}
 			</li>
@@ -128,7 +129,9 @@ export function ProjectSessionItem({
 					value={s.lastActivity ?? s.createdAt}
 					className="shrink-0 body-sm text-tertiary tabular-nums group-focus-within/row:hidden group-hover/row:hidden max-sm:hidden"
 				/>
-				<div className="hidden shrink-0 items-center gap-0.5 group-focus-within/row:flex group-hover/row:flex max-sm:flex">
+				{/* Collapsed, not hidden, until the row is hovered or focused: a hidden button cannot take focus back from
+				    the rename form or the delete confirmation. */}
+				<div className="flex shrink-0 items-center gap-0.5 overflow-hidden sm:w-0 sm:group-focus-within/row:w-auto sm:group-hover/row:w-auto">
 					<Tooltip
 						content="Rename chat"
 						render={
@@ -142,7 +145,7 @@ export function ProjectSessionItem({
 								disabled={isBusy}
 								onClick={(e) => {
 									e.stopPropagation()
-									updateTitle.reset()
+									setRenameError(null)
 									setIsRenaming(true)
 								}}
 							/>
@@ -162,16 +165,12 @@ export function ProjectSessionItem({
 								disabled={isBusy}
 								onClick={(e) => {
 									e.stopPropagation()
-									onDelete()
+									onDelete(e.currentTarget)
 								}}
 							/>
 						}
 					>
-						{isDeleting ? (
-							<LoadingSpinner size={16} />
-						) : (
-							<Icon name="trash-2" height={16} width={16} className="text-error" />
-						)}
+						<Icon name="trash-2" height={16} width={16} className="text-error" />
 					</Tooltip>
 				</div>
 			</div>

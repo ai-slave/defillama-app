@@ -2,7 +2,15 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useAddTextFile } from './hooks'
@@ -30,6 +38,8 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 	// Set by a submit with an empty field; each field error then follows what is typed.
 	const [checkRequired, setCheckRequired] = useState(false)
 	const add = useAddTextFile(projectId)
+	// The last failed save, not the mutation's error: that one clears as soon as a retry starts.
+	const [failed, setFailed] = useState(false)
 	const nameMissing = checkRequired && !name.trim()
 	const contentMissing = checkRequired && !content
 	// The server can accept the request and still skip the file, e.g. at the project's file limit.
@@ -48,6 +58,7 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 		}
 		void add.mutateAsync({ name: trimmedName, content }).then(
 			(result) => {
+				setFailed(false)
 				const skipped = result.skipped.length > 0 && result.imported.length === 0
 				// The dialog shows the outcome while it is open; after it closes, only a toast can.
 				if (!formRef.current?.isConnected) {
@@ -58,7 +69,8 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 				if (!skipped) dialogStore.hide()
 			},
 			() => {
-				if (!formRef.current?.isConnected) toast.error("Couldn't add the text content.")
+				if (formRef.current?.isConnected) setFailed(true)
+				else toast.error("Couldn't add the text content.")
 			}
 		)
 	}
@@ -69,6 +81,11 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 				<DialogHeader
 					title="Add text content"
 					subtitle="Paste a note, prompt, or any plain-text content for this project."
+				/>
+				<DialogDiscardGuard
+					when={name.trim() !== '' || content.trim() !== ''}
+					title="Discard this text?"
+					description="The text you entered is not added to the project."
 				/>
 				<DialogBody>
 					<div className="flex flex-col gap-1.5">
@@ -122,24 +139,13 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 						) : null}
 					</div>
 
-					{add.isError ? (
+					{failed ? (
 						<InlineStatus variant="error">Couldn&apos;t add the text content. Try again.</InlineStatus>
 					) : skippedReason ? (
 						<InlineStatus variant="error">{skippedReason}</InlineStatus>
 					) : null}
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Ariakit.DialogDismiss
-							type="button"
-							disabled={add.isPending}
-							accessibleWhenDisabled
-							render={<Button size="md" />}
-						>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button type="submit" size="md" variant="primary" pendingLabel={add.isPending ? 'Saving…' : null}>
 						Save
 					</Button>

@@ -7,7 +7,6 @@ import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
-import { Switch } from '~/ui/Switch'
 
 const settingsIntegrationsLinkClass =
 	'cursor-pointer underline decoration-dotted underline-offset-2 not-disabled:not-aria-disabled:hover:text-link'
@@ -35,8 +34,6 @@ export function SettingsIntegrationsLink() {
 
 export const alertInputClass = `${inputStyles} w-full`
 
-export const alertSelectClass = inputStyles
-
 export const alertFieldLabelClass = 'label-sm text-secondary'
 
 export const alertIconButtonClass = buttonStyles({ variant: 'ghost', size: 'md', square: true })
@@ -50,18 +47,9 @@ export function AlertsHeaderIcon() {
 	)
 }
 
-export function PriceInput({
-	value,
-	onValueChange,
-	placeholder = 'Price'
-}: {
-	value: string
-	onValueChange: (canonical: string) => void
-	placeholder?: string
-}) {
-	const [isFocused, setIsFocused] = useState(false)
-	const [draft, setDraft] = useState(value)
-	const display = isFocused ? draft : formatPriceDisplay(value)
+export function PriceInput({ value, onValueChange }: { value: string; onValueChange: (canonical: string) => void }) {
+	// What the reader types while the field has focus; null shows the formatted value.
+	const [draft, setDraft] = useState<string | null>(null)
 
 	return (
 		<div className="relative w-32">
@@ -69,49 +57,20 @@ export function PriceInput({
 			<Input
 				type="text"
 				inputMode="decimal"
-				value={display}
-				onFocus={() => {
-					setIsFocused(true)
-					setDraft(value)
-				}}
-				onBlur={() => setIsFocused(false)}
+				value={draft ?? formatPriceDisplay(value)}
+				onFocus={() => setDraft(value)}
+				onBlur={() => setDraft(null)}
 				onChange={(e) => {
 					const rawValue = e.currentTarget.value
 					const canonical = normalizePriceInput(rawValue)
 					setDraft(rawValue)
 					onValueChange(canonical)
 				}}
-				placeholder={placeholder}
-				aria-label={placeholder}
+				placeholder="Price"
+				aria-label="Price"
 				className="w-full pl-6"
 			/>
 		</div>
-	)
-}
-
-export function ToggleSwitch({
-	checked,
-	onClick,
-	label,
-	disabled,
-	isLoading
-}: {
-	checked: boolean
-	onClick: () => void
-	label: string
-	disabled?: boolean
-	isLoading?: boolean
-}) {
-	return (
-		<Switch
-			label={label}
-			hideLabel
-			value={label}
-			checked={checked}
-			onChange={onClick}
-			disabled={disabled}
-			isLoading={isLoading}
-		/>
 	)
 }
 
@@ -130,14 +89,12 @@ export function SegmentedToggle<T extends string>({
 	value,
 	onChange,
 	options,
-	label,
-	disabled
+	label
 }: {
 	value: T
 	onChange: (next: T) => void
 	options: ReadonlyArray<{ value: T; label: string }>
 	label: string
-	disabled?: boolean
 }) {
 	return (
 		<Ariakit.RadioProvider
@@ -155,9 +112,9 @@ export function SegmentedToggle<T extends string>({
 					<label
 						key={option.value}
 						data-active={value === option.value}
-						className={`${TAG_GROUP_VARIANTS.default.button} relative cursor-pointer capitalize has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:opacity-60`}
+						className={`${TAG_GROUP_VARIANTS.default.button} relative cursor-pointer capitalize has-focus-visible:focus-ring`}
 					>
-						<Ariakit.Radio value={option.value} aria-label={option.label} disabled={disabled} className="sr-only" />
+						<Ariakit.Radio value={option.value} aria-label={option.label} className="sr-only" />
 						{option.label}
 					</label>
 				))}

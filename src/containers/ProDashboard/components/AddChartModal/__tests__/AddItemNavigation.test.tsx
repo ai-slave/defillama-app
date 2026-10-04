@@ -265,4 +265,28 @@ describe('a reader with SQL access', () => {
 		expect(openSql).toHaveBeenCalledTimes(1)
 		expect(document.querySelector('[role="tablist"][aria-label="Card type"]')).not.toBeNull()
 	})
+
+	test('opening the SQL editor asks first when another tab holds a draft', async () => {
+		await renderModal()
+		await click(tab('text'))
+		const content = document.querySelector<HTMLTextAreaElement>('textarea')!
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, '# Notes')
+			content.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await click(tab('sql'))
+		await click(
+			Array.from(document.querySelectorAll('button')).find(
+				(button) => button.textContent?.trim() === 'Open SQL editor'
+			)!
+		)
+		const confirm = await waitForUi(() => {
+			const found = document.querySelector<HTMLElement>('[role="alertdialog"]')
+			expect(found?.textContent).toContain('Discard this card?')
+			return found!
+		})
+		expect(openSql).not.toHaveBeenCalled()
+		await click([...confirm.querySelectorAll('button')].find((button) => button.textContent === 'Discard')!)
+		expect(openSql).toHaveBeenCalledTimes(1)
+	})
 })

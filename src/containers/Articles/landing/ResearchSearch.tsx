@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import * as Ariakit from '@ariakit/react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
@@ -21,8 +22,11 @@ import {
 } from '~/containers/Articles/landing/utils'
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
+import { Button } from '~/ui/Button'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 
 function humanizeTag(tag: string) {
 	return tag.replace(/-/g, ' ')
@@ -202,7 +206,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 				{cover ? (
 					<img
 						src={cover}
-						alt={article.coverImage?.alt}
+						alt={article.coverImage?.alt ?? ''}
 						loading="lazy"
 						decoding="async"
 						className="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
@@ -281,27 +285,31 @@ function Pagination({
 				{rangeStart}–{rangeEnd} of {formatNumber(totalItems)}
 			</span>
 			<div className="flex items-center gap-2">
-				<button
-					type="button"
+				{/* Focusable at the ends: paging to the last page disables the Next that was pressed. A failed page replaces
+				    the pager with the error, so focus moves to the page instead of dropping to the body. */}
+				<Ariakit.Button
+					ref={focusRegionOnLeave}
 					onClick={() => go(prevPage)}
 					disabled={page <= 1}
+					accessibleWhenDisabled
 					className={`${btnBase} ${page <= 1 ? disabledStyle : enabledStyle}`}
 				>
 					<span aria-hidden>←</span>
 					<span>Prev</span>
-				</button>
+				</Ariakit.Button>
 				<span className="px-2 font-jetbrains text-xs tracking-[0.12em] text-research-heading/80 tabular-nums dark:text-on-brand/80">
 					{page} / {totalPages}
 				</span>
-				<button
-					type="button"
+				<Ariakit.Button
+					ref={focusRegionOnLeave}
 					onClick={() => go(nextPage)}
 					disabled={page >= totalPages}
+					accessibleWhenDisabled
 					className={`${btnBase} ${page >= totalPages ? disabledStyle : enabledStyle}`}
 				>
 					<span>Next</span>
 					<span aria-hidden>→</span>
-				</button>
+				</Ariakit.Button>
 			</div>
 		</nav>
 	)
@@ -361,7 +369,11 @@ export default function ResearchSearch() {
 	const {
 		data: response,
 		isLoading,
-		error
+		error,
+		refetch,
+		isFetching,
+		errorUpdatedAt,
+		dataUpdatedAt
 	} = useQuery({
 		queryKey: ['research', 'articles', searchQuery],
 		queryFn: async () => {
@@ -375,25 +387,18 @@ export default function ResearchSearch() {
 			})
 		},
 		retry: false,
-		enabled: router.isReady
+		enabled: router.isReady,
+		// Paging keeps the current results on screen until the next page arrives, so the pressed Prev or Next keeps focus.
+		placeholderData: keepPreviousData
 	})
 
 	const resultsLoading = !router.isReady || isLoading
+	const failed = queryReadFailed({ errorUpdatedAt, dataUpdatedAt })
 	const totalItems = response?.totalItems ?? 0
 	const totalPages = response ? Math.max(1, response.totalPages) : 1
 	const safePage = Math.min(Math.max(1, page), totalPages)
 	const rangeStart = totalItems === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
 	const rangeEnd = Math.min(safePage * PAGE_SIZE, totalItems)
-
-	if (error) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load articles'
-		return (
-			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-research-heading dark:text-research-ink">Couldn't load research</h1>
-				<p className="text-sm text-error">{message}</p>
-			</div>
-		)
-	}
 
 	return (
 		<div className="mx-auto grid w-full max-w-6xl gap-7 px-3 pt-4 pb-20 sm:px-6 lg:px-8">
@@ -419,7 +424,12 @@ export default function ResearchSearch() {
 
 				<div className="flex items-center gap-x-3 text-research-heading/55 dark:text-on-brand/55">
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
-						{resultsLoading ? 'Loading…' : `${formatNumber(totalItems)} ${totalItems === 1 ? 'result' : 'results'}`}
+						{/* A failed read has no count to give: the block below says why. */}
+						{failed
+							? null
+							: resultsLoading
+								? 'Loading…'
+								: `${formatNumber(totalItems)} ${totalItems === 1 ? 'result' : 'results'}`}
 					</span>
 					<div className="grow border-t border-research-heading/15 dark:border-research-line" />
 				</div>
@@ -428,7 +438,23 @@ export default function ResearchSearch() {
 				<SectionsPills searchQuery={searchQuery} pathname={router.pathname} />
 			</header>
 
-			{resultsLoading ? (
+			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
+			{failed ? (
+				<div className="grid justify-items-start gap-3 border border-error/30 bg-error/5 p-6">
+					<h2 className="text-xl font-semibold text-research-heading dark:text-research-ink">Couldn't load research</h2>
+					<p role="alert" className="text-sm text-error">
+						{error instanceof ArticleApiError ? error.message : 'Failed to load articles'}
+					</p>
+					<Button
+						ref={focusRegionOnLeave}
+						size="sm"
+						onClick={() => void refetch()}
+						pendingLabel={isFetching ? 'Retrying…' : null}
+					>
+						Try again
+					</Button>
+				</div>
+			) : resultsLoading ? (
 				<div className="grid min-h-[280px] place-items-center py-12">
 					<ResearchLoader />
 				</div>

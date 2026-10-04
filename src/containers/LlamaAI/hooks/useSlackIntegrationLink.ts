@@ -33,21 +33,19 @@ export function deriveSlackIntegrationState({
 	status,
 	isLoading,
 	isStarting,
-	startError,
 	statusError
 }: {
 	status: SlackStatus | null | undefined
 	isLoading: boolean
 	isStarting: boolean
-	startError: Error | null
 	statusError: Error | null
 }): SlackIntegrationState {
 	// Pending OAuth state comes from the backend and should continue polling until
 	// Slack redirects back and the status endpoint reports linked workspaces.
-	if (startError) return { status: 'error', message: startError.message || 'Failed to start linking' }
-	if (isStarting) return { status: 'starting' }
+	// A start from a pending link or from linked workspaces keeps them on screen; the button that started it waits.
 	if (status?.pending) return { status: 'pending', expiresAt: status.pending.expiresAt }
 	if (status?.links && status.links.length > 0) return { status: 'linked', workspaces: status.links }
+	if (isStarting) return { status: 'starting' }
 	if (isLoading) return { status: 'loading' }
 	if (statusError) return { status: 'error', message: statusError.message || 'Failed to load Slack status' }
 	return { status: 'idle' }
@@ -129,7 +127,6 @@ export function useSlackIntegrationLink(opts: Options = {}) {
 		status: statusQuery.data,
 		isLoading: statusQuery.isLoading,
 		isStarting: startMutation.isPending,
-		startError: startMutation.error,
 		statusError: statusQuery.error
 	})
 
@@ -139,6 +136,8 @@ export function useSlackIntegrationLink(opts: Options = {}) {
 		disconnect,
 		cancelPending,
 		isStarting: startMutation.isPending,
+		// Beside the state, not instead of it: the linked workspaces and the button that retries stay on screen.
+		startError: startMutation.error ? startMutation.error.message || 'Failed to start linking' : null,
 		isDisconnecting: unlinkMutation.isPending,
 		disconnectFailed: unlinkMutation.isError,
 		resetDisconnect: unlinkMutation.reset,

@@ -8,6 +8,7 @@ import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
 import { BreakdownTables } from './BreakdownTable'
 import { ClaimDialog } from './ClaimDialog'
@@ -256,14 +257,11 @@ function DrawerBody({
 	const breakdown = useMarketMakerBreakdown(marketMakerId, range, open)
 	const performance = useMarketMakerPerformance(marketMakerId, range, open)
 
-	const isPending = detail.isPending || breakdown.isPending || performance.isPending
 	// Any one of the three missing would show fallbacks and 0.00 scores as if they were this market maker's data.
-	const isError = detail.isError || breakdown.isError || performance.isError
-	if (isPending) return <SurfaceBodyLoadingStatus />
-	if (isError) {
-		const queries = [detail, breakdown, performance]
+	const failedQueries = [detail, breakdown, performance].filter(queryReadFailed)
+	if (failedQueries.length > 0) {
 		const retry = () => {
-			for (const query of queries) if (query.isError) void query.refetch()
+			for (const query of failedQueries) void query.refetch()
 		}
 		return (
 			<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-3">
@@ -272,13 +270,14 @@ function DrawerBody({
 					type="button"
 					size="sm"
 					onClick={retry}
-					pendingLabel={queries.some((query) => query.isFetching) ? 'Retrying…' : null}
+					pendingLabel={failedQueries.some((query) => query.isFetching) ? 'Retrying…' : null}
 				>
 					Try again
 				</Button>
 			</SurfaceBodyStatus>
 		)
 	}
+	if (detail.isPending || breakdown.isPending || performance.isPending) return <SurfaceBodyLoadingStatus />
 
 	const d = asDict(detail.data)
 	const p = asDict(performance.data)
@@ -400,19 +399,14 @@ export function MMDetailDrawer({
 }) {
 	// Keep the last opened market maker while the drawer animates closed so the content
 	// does not blank out to N/A before it finishes leaving.
-	const [lastId, setLastId] = useState<string | null>(marketMakerId)
-	const [lastName, setLastName] = useState<string | undefined>(fallbackName)
-	const [syncedMarketMaker, setSyncedMarketMaker] = useState({ marketMakerId, fallbackName })
-	if (syncedMarketMaker.marketMakerId !== marketMakerId || syncedMarketMaker.fallbackName !== fallbackName) {
-		setSyncedMarketMaker({ marketMakerId, fallbackName })
-		if (marketMakerId) {
-			setLastId(marketMakerId)
-			setLastName(fallbackName)
-		}
+	// Both callers clear the id and the name together.
+	const [last, setLast] = useState({ marketMakerId, fallbackName })
+	if (marketMakerId !== null && (last.marketMakerId !== marketMakerId || last.fallbackName !== fallbackName)) {
+		setLast({ marketMakerId, fallbackName })
 	}
 
-	const id = marketMakerId ?? lastId
-	const name = fallbackName ?? lastName
+	const id = marketMakerId ?? last.marketMakerId
+	const name = marketMakerId !== null ? fallbackName : last.fallbackName
 	const detail = useMarketMakerDetail(id, open)
 	const title = asStr(asDict(detail.data).name) ?? name ?? id ?? 'Market maker'
 	const logo = asStr(asDict(detail.data).imageUrl)
@@ -428,12 +422,6 @@ export function MMDetailDrawer({
 		leadClick.mutate({ kind, marketMakerId: id })
 	}
 	const clickId = leadClick.data ?? null
-	// Closing the drawer closes whatever lead dialog it opened.
-	const [wasOpen, setWasOpen] = useState(open)
-	if (open !== wasOpen) {
-		setWasOpen(open)
-		if (!open) setLeadDialog(null)
-	}
 
 	return (
 		<>

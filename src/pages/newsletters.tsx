@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { isWalletEmail } from '~/containers/Account/utils'
@@ -175,13 +176,14 @@ export default function NewslettersPage() {
 									const on = selected[key]
 									const details = newsletterDetails[key]
 									return (
-										<button
+										<Ariakit.Button
 											key={key}
 											type="button"
 											aria-pressed={on}
 											onClick={() => toggle(key)}
 											disabled={isPending}
-											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+											accessibleWhenDisabled
+											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
 												!isPending ? 'motion-safe:hover:-translate-y-0.5' : ''
 											} ${on ? 'border-link bg-research-tint' : 'border-medium bg-surface hover:border-link/50'}`}
 										>
@@ -242,7 +244,7 @@ export default function NewslettersPage() {
 													))}
 												</span>
 											</span>
-										</button>
+										</Ariakit.Button>
 									)
 								})}
 							</div>

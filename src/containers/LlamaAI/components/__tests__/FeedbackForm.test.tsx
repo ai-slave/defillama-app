@@ -53,8 +53,9 @@ async function type(text: string) {
 	})
 }
 
-test('a failed submission stays in the dialog with its text, and a retry closes it and thanks the reader', async () => {
-	session.serveInOrder(RATE, [fixtureStatus(500, { message: 'boom' }), { ok: true }])
+test('a failed submission stays in the dialog with its text, also while its retry runs, and the retry closes it and thanks the reader', async () => {
+	const retry = Promise.withResolvers<Response>()
+	session.serveInOrder(RATE, [fixtureStatus(500, { message: 'boom' }), () => retry.promise])
 	await click('Thumbs up')
 	await type('The TVL is stale')
 	await click('Submit')
@@ -68,6 +69,11 @@ test('a failed submission stays in the dialog with its text, and a retry closes 
 	expect(toastError).not.toHaveBeenCalled()
 	await click('Submit')
 	await act(async () => {
+		await waitForUi(() => expect(button('Submitting…')).toBeDefined())
+	})
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't send your feedback. Try again.")
+	await act(async () => retry.resolve(Response.json({ ok: true })))
+	await act(async () => {
 		await waitForUi(() => expect(toastSuccess).toHaveBeenCalledWith('Thank you for your feedback!'))
 	})
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -79,6 +85,37 @@ test('a failed submission stays in the dialog with its text, and a retry closes 
 	])
 })
 
+test('after rating, focus returns to the thumb, which shows the rating and refuses a second one', async () => {
+	session.serveInOrder(RATE, [{ ok: true }])
+	const thumb = button('Thumbs up')
+	await act(async () => thumb.focus())
+	await click('Thumbs up')
+	await click('Submit')
+	await act(async () => {
+		await waitForUi(() => expect(toastSuccess).toHaveBeenCalledWith('Thank you for your feedback!'))
+		await waitForUi(() => expect(document.activeElement).toBe(thumb))
+	})
+	expect(thumb.getAttribute('aria-pressed')).toBe('true')
+	expect(thumb.getAttribute('aria-disabled')).toBe('true')
+	await click('Thumbs up')
+	expect(dialog()).toBeNull()
+})
+
+test('closing with typed feedback asks first, and keeping it returns to the text', async () => {
+	await click('Thumbs down')
+	await type('Wrong chain')
+	await click('Cancel')
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard your feedback?')
+	await click('Keep editing')
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	expect(document.querySelector('textarea')?.value).toBe('Wrong chain')
+	await click('Cancel')
+	await click('Discard')
+	await act(async () => {
+		await waitForUi(() => expect(dialog()).toBeNull())
+	})
+})
+
 test('a running submission names itself and cannot be cancelled', async () => {
 	const response = Promise.withResolvers<Response>()
 	session.serveInOrder(RATE, [() => response.promise])
@@ -87,7 +124,7 @@ test('a running submission names itself and cannot be cancelled', async () => {
 	await act(async () => {
 		await waitForUi(() => expect(button('Submitting…').getAttribute('aria-busy')).toBe('true'))
 	})
-	expect(button('Cancel').disabled).toBe(true)
+	expect(button('Cancel').getAttribute('aria-disabled')).toBe('true')
 	await act(async () => {
 		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 	})

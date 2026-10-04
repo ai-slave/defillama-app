@@ -2,10 +2,8 @@ import { describe, expect, test } from 'vitest'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey } from '~/containers/LlamaAI/components/IntegrationRow'
 import {
-	deriveTelegramLocalState,
 	deriveTelegramLinkState,
-	getTelegramStatusRefetchInterval,
-	type IntegrationLinkLocalState
+	getTelegramStatusRefetchInterval
 } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 
 const linked: TelegramStatus = {
@@ -29,13 +27,16 @@ const linkedWithPending: TelegramStatus = {
 	pending: pending.pending
 }
 
-function derive(status: TelegramStatus | null, localState: IntegrationLinkLocalState = { status: 'idle' }) {
+const noConfirm = { isPending: false, data: undefined, variables: undefined, error: null }
+
+function derive(status: TelegramStatus | null) {
 	return deriveTelegramLinkState({
 		status,
-		localState,
+		statusError: null,
 		isLoading: false,
 		isStarting: false,
-		isConfirming: false
+		confirm: noConfirm,
+		initialTgloginToken: null
 	})
 }
 
@@ -71,30 +72,31 @@ describe('useIntegrationLink state helpers', () => {
 
 	test('keeps forced switch confirmation errors visible while a tglogin token is still present', () => {
 		expect(
-			deriveTelegramLocalState({
-				switchConfirmation: null,
-				confirmLinked: false,
-				initialTgloginToken: 'deep-link-token',
-				startError: null,
-				confirmError: new Error('Switch failed'),
-				confirmWasForced: true,
+			deriveTelegramLinkState({
+				status: linked,
 				statusError: null,
-				hasStatusData: true
+				isLoading: false,
+				isStarting: false,
+				confirm: {
+					isPending: false,
+					data: undefined,
+					variables: { token: 'deep-link-token', short_code: '123456', force: true },
+					error: new Error('Switch failed')
+				},
+				initialTgloginToken: 'deep-link-token'
 			})
 		).toEqual({ status: 'error', message: 'Switch failed' })
 	})
 
 	test('surfaces status load errors when there is no status data to render', () => {
 		expect(
-			deriveTelegramLocalState({
-				switchConfirmation: null,
-				confirmLinked: false,
-				initialTgloginToken: null,
-				startError: null,
-				confirmError: null,
-				confirmWasForced: false,
+			deriveTelegramLinkState({
+				status: undefined,
 				statusError: new Error('Failed to load Telegram status'),
-				hasStatusData: false
+				isLoading: false,
+				isStarting: false,
+				confirm: noConfirm,
+				initialTgloginToken: null
 			})
 		).toEqual({ status: 'error', message: 'Failed to load Telegram status' })
 	})

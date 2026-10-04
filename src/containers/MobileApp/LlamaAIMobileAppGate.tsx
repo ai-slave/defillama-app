@@ -3,7 +3,7 @@ import { useSyncExternalStore, type ReactNode } from 'react'
 import { StoreButtons } from '~/containers/MobileApp'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useMedia } from '~/hooks/useMedia'
-import { catchLostFocus } from '~/ui/focus'
+import { catchLostFocus, pageContent, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import {
 	createAnnouncementDismissalToken,
@@ -16,12 +16,29 @@ const promotionDismissalToken = createAnnouncementDismissalToken('llamaai-mobile
 
 const continueOnWeb = () => dismissAnnouncement(promotionDismissalToken)
 
+// The promotion opens on load with no trigger and leaves by unmounting, so nothing returns focus. Its portal is gone
+// before its ref cleanup runs, so whether it held focus is tracked while it is open; then the page takes focus.
+function promotionRef(dialog: HTMLDivElement | null) {
+	if (!dialog) return
+	const releaseNet = catchLostFocus(dialog)
+	let held = dialog.contains(document.activeElement)
+	const track = () => {
+		held = dialog.contains(document.activeElement)
+	}
+	document.addEventListener('focusin', track)
+	return () => {
+		releaseNet?.()
+		document.removeEventListener('focusin', track)
+		if (held) queueMicrotask(() => takeLostFocus(pageContent()))
+	}
+}
+
 function MobileAppPromotion() {
 	return (
 		<Ariakit.Dialog
 			open
 			onClose={continueOnWeb}
-			ref={catchLostFocus}
+			ref={promotionRef}
 			hideOnInteractOutside={false}
 			portal
 			className="fixed inset-0 z-[100] flex h-dvh w-screen overflow-y-auto bg-sub-surface-page p-[max(20px,env(safe-area-inset-top))_20px_max(20px,env(safe-area-inset-bottom))] text-sub-text-primary outline-hidden dark:bg-sub-dark-page"

@@ -2,7 +2,15 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useCreateProject, useProjectUsage, useUpdateProject } from './hooks'
@@ -11,7 +19,7 @@ import type { Project } from './types'
 interface CreateProjectModalProps {
 	dialogStore: Ariakit.DialogStore
 	finalFocus?: React.RefObject<HTMLElement | null>
-	mode?: 'create' | 'rename'
+	/** The project to rename; without one the dialog creates a project. */
 	project?: Project | null
 	onCreated?: (project: Project) => void
 }
@@ -22,13 +30,7 @@ export function CreateProjectModal(props: CreateProjectModalProps) {
 	return <CreateProjectDialog key={useOpeningKey(open)} {...props} />
 }
 
-function CreateProjectDialog({
-	dialogStore,
-	mode = 'create',
-	project = null,
-	finalFocus,
-	onCreated
-}: CreateProjectModalProps) {
+function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreated }: CreateProjectModalProps) {
 	const formRef = useRef<HTMLFormElement>(null)
 	const nameRef = useRef<HTMLInputElement>(null)
 	const nameId = useId()
@@ -39,10 +41,12 @@ function CreateProjectDialog({
 	const [checkRequired, setCheckRequired] = useState(false)
 	const create = useCreateProject()
 	const update = useUpdateProject(project?.id ?? '')
-	const isRename = mode === 'rename' && project != null
+	const isRename = project !== null
 	const pending = create.isPending || update.isPending
-	const failed = create.isError || update.isError
+	// The last failed save, not the mutations' errors: those clear as soon as a retry starts.
+	const [failed, setFailed] = useState(false)
 	const nameMissing = checkRequired && !name.trim()
+	const edited = name.trim() !== (project?.name ?? '') || description.trim() !== (project?.description ?? '')
 	// The server refuses a project past the plan's cap, so say so up front instead of after a failed create.
 	const usage = useProjectUsage(!isRename)
 	const projectCap = isRename ? null : (usage.data?.limits.projects ?? null)
@@ -77,7 +81,8 @@ function CreateProjectDialog({
 			else toast.success(doneMessage)
 		} catch {
 			// The dialog shows the error while it is open; after it closes, only a toast can.
-			if (!isStillMounted()) toast.error(failedMessage)
+			if (isStillMounted()) setFailed(true)
+			else toast.error(failedMessage)
 		}
 	}
 
@@ -87,6 +92,13 @@ function CreateProjectDialog({
 				<DialogHeader
 					title={isRename ? 'Rename project' : 'New project'}
 					subtitle="Group sessions and give them shared file knowledge."
+				/>
+				<DialogDiscardGuard
+					when={edited}
+					title={isRename ? 'Discard your changes?' : 'Discard this project?'}
+					description={
+						isRename ? 'Your changes to the project are not saved.' : 'The project you started is not created.'
+					}
 				/>
 				<DialogBody>
 					<div className="flex flex-col gap-1.5">
@@ -143,18 +155,7 @@ function CreateProjectDialog({
 						</InlineStatus>
 					) : null}
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Ariakit.DialogDismiss
-							type="button"
-							disabled={pending}
-							accessibleWhenDisabled
-							render={<Button size="md" />}
-						>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button
 						type="submit"
 						size="md"

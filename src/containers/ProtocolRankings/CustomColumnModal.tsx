@@ -1,11 +1,20 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useId, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import { useId, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { isCustomColumnFormat, type CustomColumnDef } from '~/contexts/LocalStorage'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
+import type { CustomColumnDef } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Input, inputStyles } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { InlineStatus } from '~/ui/Status'
@@ -13,21 +22,7 @@ import { AVAILABLE_FIELDS, AVAILABLE_FUNCTIONS, replaceAliases } from './customC
 import { evaluateFormula, formatCustomColumnValue, type FormulaValue } from './formula.service'
 import type { IProtocol } from './types'
 
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
-
-interface CustomColumnModalProps {
-	dialogStore: Ariakit.DialogStore
-	onSave: (def: CustomColumnDef) => void
-	sampleRow: IProtocol
-	name?: string
-	formula?: string
-	formatType?: CustomColumnDef['formatType']
-	displayAs?: string
-}
+type CustomColumnDraft = Omit<CustomColumnDef, 'id'>
 
 type FormulaSuggestion = { name: string; type: string; args?: string }
 
@@ -35,8 +30,8 @@ interface CustomColumnState {
 	name: string
 	formula: string
 	formatType: CustomColumnDef['formatType']
-	submissionError: string | null
-	showSuggestions: boolean
+	submitted: boolean
+	/** Empty while the suggestion list is closed. */
 	suggestions: Array<FormulaSuggestion>
 	highlighted: number
 	fieldWarning: string | null
@@ -57,21 +52,46 @@ function inferCustomColumnFormat(value: FormulaValue): NonNullable<CustomColumnD
 	return 'number'
 }
 
+/** Adds a custom column (`column` null) or edits `column`. Every opening starts from the column as saved. */
 export function CustomColumnModal({
-	dialogStore,
+	open,
+	onClose,
+	column,
 	onSave,
-	sampleRow,
-	name: initialName = '',
-	formula: initialFormula = '',
-	formatType: initialFormatType = 'auto',
-	displayAs: _initialDisplayAs = 'auto'
-}: CustomColumnModalProps) {
+	sampleRow
+}: {
+	open: boolean
+	onClose: () => void
+	column: CustomColumnDef | null
+	onSave: (def: CustomColumnDraft) => void
+	sampleRow: IProtocol
+}) {
+	const opening = useOpeningKey(open)
+	return (
+		// Suggestions open below the formula as it is typed, so the phone sheet keeps its full height.
+		<Dialog size="md" fullSheet open={open} onClose={onClose} unmountOnHide portal>
+			<CustomColumnForm key={opening} column={column} onSave={onSave} sampleRow={sampleRow} />
+		</Dialog>
+	)
+}
+
+function CustomColumnForm({
+	column,
+	onSave,
+	sampleRow
+}: {
+	column: CustomColumnDef | null
+	onSave: (def: CustomColumnDraft) => void
+	sampleRow: IProtocol
+}) {
+	const initialName = column?.name ?? ''
+	const initialFormula = column?.formula ?? ''
+	const initialFormatType = column?.formatType ?? 'auto'
 	const [state, setState] = useState<CustomColumnState>({
 		name: initialName,
 		formula: initialFormula,
 		formatType: initialFormatType,
-		submissionError: null,
-		showSuggestions: false,
+		submitted: false,
 		suggestions: [],
 		highlighted: 0,
 		fieldWarning: null
@@ -79,14 +99,15 @@ export function CustomColumnModal({
 	const inputRef = useRef<HTMLInputElement>(null)
 	const fieldId = useId()
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
-	const [shouldRenderModal, setShouldRenderModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
+	const subscribeModalStore = Ariakit.useDialogStore()
 	const formula = state.formula.trim()
 	const formulaEvaluation = useMemo(
 		() => (formula ? evaluateFormula(replaceAliases(formula), sampleRow) : null),
 		[formula, sampleRow]
 	)
 	const formulaError = formulaEvaluation?.status === 'error' ? `Invalid formula: ${formulaEvaluation.error}` : null
+	const missingField = !state.name.trim() || !formula
+	const suggestionsOpen = state.suggestions.length > 0
 
 	const handleFormulaChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value
@@ -104,15 +125,7 @@ export function CustomColumnModal({
 				? `Field or function '${word}' is not available.`
 				: null
 
-		setState((prev) => ({
-			...prev,
-			formula: value,
-			submissionError: null,
-			suggestions,
-			showSuggestions: suggestions.length > 0,
-			highlighted: 0,
-			fieldWarning
-		}))
+		setState((prev) => ({ ...prev, formula: value, suggestions, highlighted: 0, fieldWarning }))
 	}
 
 	const handleSuggestionClick = (item: FormulaSuggestion) => {
@@ -126,21 +139,13 @@ export function CustomColumnModal({
 		const isCall = item.type === 'function' || item.type === 'operator'
 		const nextFormula = isCall ? `${head}()${afterCursor}` : head + afterCursor
 		const cursor = head.length + (isCall ? 1 : 0)
-		flushSync(() =>
-			setState((prev) => ({
-				...prev,
-				formula: nextFormula,
-				showSuggestions: false,
-				fieldWarning: null,
-				submissionError: null
-			}))
-		)
+		flushSync(() => setState((prev) => ({ ...prev, formula: nextFormula, suggestions: [], fieldWarning: null })))
 		input.focus()
 		input.setSelectionRange(cursor, cursor)
 	}
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-		if (!state.showSuggestions) return
+		if (state.suggestions.length === 0) return
 		if (e.key === 'ArrowDown') {
 			setState((prev) => ({ ...prev, highlighted: Math.min(prev.highlighted + 1, prev.suggestions.length - 1) }))
 			e.preventDefault()
@@ -156,23 +161,19 @@ export function CustomColumnModal({
 		} else if (e.key === 'Escape') {
 			// Dismiss the suggestions only; the enclosing Ariakit dialog stays open.
 			e.stopPropagation()
-			setState((prev) => ({ ...prev, showSuggestions: false }))
+			setState((prev) => ({ ...prev, suggestions: [] }))
 		}
 	}
 
 	const handleSave = () => {
-		if (!state.name.trim() || !state.formula.trim()) {
-			setState((prev) => ({ ...prev, submissionError: 'Name and formula are required' }))
-			return
-		}
+		setState((prev) => ({ ...prev, submitted: true }))
+		if (missingField) return
 		if (formulaEvaluation?.status === 'error') return
 		if (!isAuthenticated || !hasActiveSubscription) {
 			setSignupSource('custom-columns')
-			setShouldRenderModal(true)
+			subscribeModalStore.show()
 			return
 		}
-		setState((prev) => ({ ...prev, submissionError: null }))
-
 		const determinedFormat =
 			state.formatType === 'auto' && formulaEvaluation?.status === 'success'
 				? inferCustomColumnFormat(formulaEvaluation.value)
@@ -187,6 +188,7 @@ export function CustomColumnModal({
 	}
 
 	const hasFormulaError = formulaEvaluation?.status === 'error'
+	const dirty = state.name !== initialName || state.formula !== initialFormula || state.formatType !== initialFormatType
 	let previewFormat: NonNullable<CustomColumnDef['determinedFormat']> | null = null
 	let preview: string | null = null
 	if (formulaEvaluation?.status === 'success') {
@@ -206,148 +208,153 @@ export function CustomColumnModal({
 
 	return (
 		<>
-			<Ariakit.DialogProvider store={dialogStore}>
-				{/* Suggestions open below the formula as it is typed, so the phone sheet keeps its full height. */}
-				<Dialog size="md" fullSheet unmountOnHide portal>
-					<DialogHeader title={initialName ? 'Edit custom column' : 'Add custom column'} />
-					<DialogBody>
-						<div className="flex flex-col gap-1">
-							<label htmlFor={`${fieldId}-name`} className="label-sm text-secondary">
-								Column name
-							</label>
-							<Ariakit.Focusable
-								autoFocus
-								render={
-									<Input
-										id={`${fieldId}-name`}
-										value={state.name}
-										onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value, submissionError: null }))}
-										placeholder="Custom Column"
-									/>
-								}
+			<DialogDiscardGuard
+				when={dirty}
+				title={column ? 'Discard changes to this column?' : 'Discard this column?'}
+				description="The name, formula and format you entered are lost."
+			/>
+			<DialogHeader title={column ? 'Edit custom column' : 'Add custom column'} />
+			<DialogBody>
+				<div className="flex flex-col gap-1">
+					<label htmlFor={`${fieldId}-name`} className="label-sm text-secondary">
+						Column name
+					</label>
+					<Ariakit.Focusable
+						autoFocus
+						render={
+							<Input
+								id={`${fieldId}-name`}
+								value={state.name}
+								onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value }))}
+								placeholder="Custom Column"
 							/>
-						</div>
-						<div className="flex flex-col gap-1">
-							<label htmlFor={`${fieldId}-formula`} className="label-sm text-secondary">
-								Formula
-							</label>
-							<div className="relative">
-								<Input
-									id={`${fieldId}-formula`}
-									ref={inputRef}
-									aria-invalid={formulaError ? true : undefined}
-									aria-describedby={formulaError || state.fieldWarning ? `${fieldId}-formula-note` : undefined}
-									className="w-full"
-									value={state.formula}
-									onChange={handleFormulaChange}
-									onKeyDown={handleKeyDown}
-									placeholder="e.g. revenue_30d / tvl"
-									autoComplete="off"
-								/>
-								{state.showSuggestions ? (
-									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay-sm">
-										{state.suggestions.map((s, i) => (
-											// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the input owns arrow-key and Enter selection for these suggestions.
-											<li
-												key={s.name}
-												data-active-item={i === state.highlighted || undefined}
-												className={popoverRowStyles}
-												onMouseDown={(e) => {
-													// Keep focus in the formula while a suggestion is picked.
-													e.preventDefault()
-													handleSuggestionClick(s)
-												}}
-											>
-												<span className="flex items-center gap-2">
-													{s.type === 'function' || s.type === 'operator' ? <span className="text-link">ƒ</span> : null}
-													<span>{s.name}</span>
-												</span>
-											</li>
-										))}
-									</ul>
-								) : null}
-							</div>
-							{formulaError || state.fieldWarning ? (
-								<p
-									id={`${fieldId}-formula-note`}
-									className={`body-sm ${formulaError ? 'text-data-down' : 'text-warning'}`}
-								>
-									{formulaError ?? state.fieldWarning}
-								</p>
-							) : null}
-						</div>
-						<div className="flex flex-col gap-1">
-							<label htmlFor={`${fieldId}-format`} className="label-sm text-secondary">
-								Format
-							</label>
-							<select
-								id={`${fieldId}-format`}
-								className={`${inputStyles} w-full`}
-								value={state.formatType}
-								onChange={(e) => {
-									const formatType = e.target.value
-									if (isCustomColumnFormat(formatType)) {
-										setState((prev) => ({ ...prev, formatType }))
-									}
-								}}
+						}
+					/>
+				</div>
+				<div className="flex flex-col gap-1">
+					<label htmlFor={`${fieldId}-formula`} className="label-sm text-secondary">
+						Formula
+					</label>
+					<div className="relative">
+						<Input
+							id={`${fieldId}-formula`}
+							ref={inputRef}
+							role="combobox"
+							aria-autocomplete="list"
+							aria-expanded={suggestionsOpen}
+							aria-controls={suggestionsOpen ? `${fieldId}-suggestions` : undefined}
+							aria-activedescendant={suggestionsOpen ? `${fieldId}-suggestion-${state.highlighted}` : undefined}
+							aria-invalid={formulaError ? true : undefined}
+							aria-describedby={formulaError || state.fieldWarning ? `${fieldId}-formula-note` : undefined}
+							className="w-full"
+							value={state.formula}
+							onChange={handleFormulaChange}
+							onKeyDown={handleKeyDown}
+							placeholder="e.g. revenue_30d / tvl"
+							autoComplete="off"
+						/>
+						{suggestionsOpen ? (
+							<div
+								id={`${fieldId}-suggestions`}
+								role="listbox"
+								aria-label="Formula suggestions"
+								className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay-sm"
 							>
-								<option value="auto">Auto</option>
-								<option value="number">Number</option>
-								<option value="usd">USD</option>
-								<option value="percent">Percent</option>
-								<option value="string">String</option>
-								<option value="boolean">Boolean (checkmark)</option>
-							</select>
-							{state.formatType === 'auto' && formula && !hasFormulaError ? (
-								<p className="body-sm text-secondary">Auto will format as: {autoFormatLabel}</p>
-							) : null}
-						</div>
-						<div className="flex flex-col gap-1">
-							<p className="label-sm text-secondary">Available fields</p>
-							<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-lg border border-medium bg-page p-2">
-								{AVAILABLE_FIELDS.map((f) => (
-									<li key={f}>
-										<button
-											type="button"
-											className="hover-wash cursor-pointer rounded-sm bg-surface-elevated-1 px-1 py-0.5 font-mono text-link"
-											onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
-										>
-											{f}
-										</button>
-									</li>
+								{state.suggestions.map((s, i) => (
+									<div
+										key={s.name}
+										id={`${fieldId}-suggestion-${i}`}
+										role="option"
+										// Focus stays in the formula, which points at the highlighted option.
+										tabIndex={-1}
+										aria-selected={i === state.highlighted}
+										data-active-item={i === state.highlighted || undefined}
+										className={popoverRowStyles}
+										onMouseDown={(e) => {
+											// Keep focus in the formula while a suggestion is picked.
+											e.preventDefault()
+											handleSuggestionClick(s)
+										}}
+									>
+										<span className="flex items-center gap-2">
+											{s.type === 'function' || s.type === 'operator' ? <span className="text-link">ƒ</span> : null}
+											<span>{s.name}</span>
+										</span>
+									</div>
 								))}
-							</ul>
-						</div>
-						{formula && !hasFormulaError ? (
-							<p className="body-sm">
-								<span className="font-semibold text-secondary">Preview: </span>
-								<span className="rounded-sm bg-page px-2 py-1 text-primary">{preview}</span>
-							</p>
+							</div>
 						) : null}
-						<a
-							href="https://docs.llama.fi/analysts/custom-columns"
-							target="_blank"
-							className="body-sm text-link hover:underline"
-							rel="noreferrer"
-						>
-							Learn more on how to create custom columns
-						</a>
-						{state.submissionError ? <InlineStatus variant="error">{state.submissionError}</InlineStatus> : null}
-					</DialogBody>
-					<DialogFooter
-						dismiss={<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>}
+					</div>
+					{formulaError || state.fieldWarning ? (
+						<p id={`${fieldId}-formula-note`} className={`body-sm ${formulaError ? 'text-data-down' : 'text-warning'}`}>
+							{formulaError ?? state.fieldWarning}
+						</p>
+					) : null}
+				</div>
+				<div className="flex flex-col gap-1">
+					<label htmlFor={`${fieldId}-format`} className="label-sm text-secondary">
+						Format
+					</label>
+					<select
+						id={`${fieldId}-format`}
+						className={`${inputStyles} w-full`}
+						value={state.formatType}
+						// The options below are exactly the format values.
+						onChange={(e) =>
+							setState((prev) => ({ ...prev, formatType: e.target.value as CustomColumnDef['formatType'] }))
+						}
 					>
-						<Button type="button" variant="primary" size="md" onClick={handleSave}>
-							Save
-						</Button>
-					</DialogFooter>
-				</Dialog>
-			</Ariakit.DialogProvider>
-			{shouldRenderModal ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+						<option value="auto">Auto</option>
+						<option value="number">Number</option>
+						<option value="usd">USD</option>
+						<option value="percent">Percent</option>
+						<option value="string">String</option>
+						<option value="boolean">Boolean (checkmark)</option>
+					</select>
+					{state.formatType === 'auto' && formula && !hasFormulaError ? (
+						<p className="body-sm text-secondary">Auto will format as: {autoFormatLabel}</p>
+					) : null}
+				</div>
+				<div className="flex flex-col gap-1">
+					<p className="label-sm text-secondary">Available fields</p>
+					<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-lg border border-medium bg-page p-2">
+						{AVAILABLE_FIELDS.map((f) => (
+							<li key={f}>
+								<button
+									type="button"
+									className="hover-wash cursor-pointer rounded-sm bg-surface-elevated-1 px-1 py-0.5 font-mono text-link"
+									onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
+								>
+									{f}
+								</button>
+							</li>
+						))}
+					</ul>
+				</div>
+				{formula && !hasFormulaError ? (
+					<p className="body-sm">
+						<span className="font-semibold text-secondary">Preview: </span>
+						<span className="rounded-sm bg-page px-2 py-1 text-primary">{preview}</span>
+					</p>
+				) : null}
+				<a
+					href="https://docs.llama.fi/analysts/custom-columns"
+					target="_blank"
+					className="body-sm text-link hover:underline"
+					rel="noreferrer"
+				>
+					Learn more on how to create custom columns
+				</a>
+				{state.submitted && missingField ? (
+					<InlineStatus variant="error">Name and formula are required</InlineStatus>
+				) : null}
+			</DialogBody>
+			<DialogFooter dismiss={<DialogCancelButton />}>
+				<Button type="button" variant="primary" size="md" onClick={handleSave}>
+					Save
+				</Button>
+			</DialogFooter>
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</>
 	)
 }

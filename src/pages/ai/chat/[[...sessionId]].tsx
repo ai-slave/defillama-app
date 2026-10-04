@@ -149,17 +149,19 @@ function SignedOutChat() {
 								onAttachmentsGated={() => askToSignIn(null)}
 								isAlertsModalOpen={false}
 								enterToSend
+								holdWalkthrough={!isSession && !!promptParam}
 							/>
 						</div>
 					</div>
 				</LlamaAIChromeContext.Provider>
 			)}
-			<SignInModal {...signIn.dialogProps} hideWhenAuthenticated={false} />
+			<SignInModal {...signIn.dialogProps} />
 			<DeepLinkPromptModal
 				isOpen={!isSession && !!promptParam}
 				prompt={promptParam}
 				onClose={handleCloseDeepLinkPrompt}
 				onConfirm={handleConfirmDeepLinkPrompt}
+				promptInputRef={promptInputRef}
 			/>
 		</>
 	)

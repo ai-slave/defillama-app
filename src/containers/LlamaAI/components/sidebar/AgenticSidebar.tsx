@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import type { Virtualizer } from '@tanstack/react-virtual'
 import {
@@ -13,7 +12,6 @@ import {
 	useRef,
 	useState
 } from 'react'
-import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
@@ -235,14 +233,11 @@ function SidebarPanel({
 		})
 	}, [])
 
-	const deleteStore = Ariakit.useDialogStore()
+	const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
 	const bulkDeleteRef = useRef<HTMLButtonElement>(null)
-	const bulkDeletion = useMutation({
-		mutationFn: (ids: Array<string>) => onBulkDelete!(ids),
-		onError: (error) => {
-			if (!deleteStore.getState().contentElement?.isConnected) toast.error(error.message)
-		}
-	})
+	// Leaving select mode removes the footer and its Delete button; the Select toggle that replaces Cancel takes focus.
+	const selectToggleRef = useRef<HTMLButtonElement>(null)
+	const bulkDeletion = useMutation({ mutationFn: (ids: Array<string>) => onBulkDelete!(ids) })
 
 	const exitSelectMode = useCallback(() => {
 		setSelectMode(false)
@@ -276,16 +271,6 @@ function SidebarPanel({
 		}
 		return ids
 	}, [filteredSessions, selectedSessionIds])
-	const handleBulkDelete = () => {
-		if (selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending) return
-		bulkDeletion.mutate(selectedIds, {
-			onSuccess: () => {
-				deleteStore.hide()
-				setSelectMode(false)
-				setSelectedSessionIds(new Set())
-			}
-		})
-	}
 
 	const allSelected = filteredSessions.length > 0 && selectedIds.length === filteredSessions.length
 
@@ -385,11 +370,12 @@ function SidebarPanel({
 	}, [])
 
 	const onClickOutside = useEffectEvent((event: MouseEvent) => {
+		// A tap in any Ariakit dialog, alertdialog, menu or popover, or on a modal's backdrop, belongs to that layer.
 		if (
-			event.target instanceof Node &&
+			event.target instanceof Element &&
 			sidebarRef.current &&
 			!sidebarRef.current.contains(event.target) &&
-			!(event.target instanceof Element && event.target.closest('[role="dialog"], [role="menu"]')) &&
+			!event.target.closest('[data-dialog], [data-backdrop], [role="menu"]') &&
 			document.documentElement.clientWidth < 1024
 		) {
 			hideSidebar()
@@ -521,6 +507,7 @@ function SidebarPanel({
 									type="button"
 									size="sm"
 									variant="ghost"
+									ref={selectToggleRef}
 									data-active={selectMode}
 									onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
 									disabled={isLoading && !hasShownSessions}
@@ -555,7 +542,8 @@ function SidebarPanel({
 									onSearchMatchClick?.(sessionId, messageId)
 								}}
 								onSessionClick={(sessionId) => {
-									closeSearch()
+									// The results leave with the clicked one; the search toggle takes its focus, as clearing does.
+									clearSearchField()
 									onSessionSelect(sessionId)
 								}}
 							/>
@@ -590,7 +578,8 @@ function SidebarPanel({
 													? `header-${item.groupName}`
 													: item.type === 'loader'
 														? 'session-loader'
-														: `session-${item.session.sessionId}-${item.session.isPublic}-${item.session.lastActivity}`
+														: // The session alone: a row that remounts on new activity or a visibility change drops its open menu, rename or confirm.
+															`session-${item.session.sessionId}`
 											}
 											item={item}
 											itemStyle={itemStyle}
@@ -609,14 +598,16 @@ function SidebarPanel({
 					</nav>
 				</div>
 
-				<DeleteSessionDialog
-					store={deleteStore}
-					title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
-					pending={bulkDeletion.isPending}
-					error={bulkDeletion.error}
-					onConfirm={handleBulkDelete}
-					finalFocus={bulkDeleteRef}
-				/>
+				{confirmBulkDelete ? (
+					<DeleteSessionDialog
+						title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
+						mutation={bulkDeletion}
+						variables={selectedIds}
+						onClose={() => setConfirmBulkDelete(false)}
+						onSuccess={() => keepFocus(exitSelectMode, () => selectToggleRef.current)}
+						finalFocus={bulkDeleteRef}
+					/>
+				) : null}
 				{selectMode ? (
 					<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-subtle px-4 py-2">
 						<Button
@@ -639,10 +630,7 @@ function SidebarPanel({
 							size="md"
 							variant="destructive"
 							ref={bulkDeleteRef}
-							onClick={() => {
-								bulkDeletion.reset()
-								deleteStore.show()
-							}}
+							onClick={() => setConfirmBulkDelete(true)}
 							disabled={selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending}
 						>
 							Delete{selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}

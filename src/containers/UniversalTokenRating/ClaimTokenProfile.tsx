@@ -1,12 +1,12 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { Fragment, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useId, useRef, useState, type ReactNode } from 'react'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { keepFocus, takeLostFocus } from '~/ui/focus'
+import { keepFocus, neighbourRowControl, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -46,26 +46,53 @@ const ATTACH_HINT = 'Supported formats: PDF, DOCX, XLSX, TXT, MD - Max file size
 type ClaimDraftRow = { id: string; values: UtrClaimFormRow }
 type ClaimDraftRows = Record<keyof UtrClaimRows, Array<ClaimDraftRow>>
 
-type UploadStatus = { pending: boolean; error: string | null }
+type UploadStatus = { state: 'idle' } | { state: 'uploading' } | { state: 'failed'; error: string }
 
 function createEmptyDocuments(): UtrClaimDocuments {
 	return Object.fromEntries(UTR_CLAIM_DOCUMENT_KEYS.map((key) => [key, []])) as UtrClaimDocuments
 }
 
 function createUploadStatuses(): Record<UtrClaimDocumentKey, UploadStatus> {
-	return Object.fromEntries(UTR_CLAIM_DOCUMENT_KEYS.map((key) => [key, { pending: false, error: null }])) as Record<
+	return Object.fromEntries(UTR_CLAIM_DOCUMENT_KEYS.map((key) => [key, { state: 'idle' }])) as Record<
 		UtrClaimDocumentKey,
 		UploadStatus
 	>
 }
 
-function LabeledField({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
+type FieldProps = {
+	id: string
+	'aria-required': true | undefined
+	'aria-invalid': true | undefined
+	'aria-describedby': string | undefined
+}
+
+/** A visible label tied to its field, and the field's error read out with it. */
+function LabeledField({
+	label,
+	required = false,
+	error,
+	children
+}: {
+	label: string
+	required?: boolean
+	error?: string | null
+	children: (field: FieldProps) => ReactNode
+}) {
+	const id = useId()
 	return (
 		<div className="flex flex-col gap-1.5">
-			<span className="label-md text-primary">{label}</span>
-			{children}
+			<label htmlFor={id} className="label-md text-primary">
+				{label}
+				{required ? <span aria-hidden="true">*</span> : null}
+			</label>
+			{children({
+				id,
+				'aria-required': required || undefined,
+				'aria-invalid': error ? true : undefined,
+				'aria-describedby': error ? `${id}-error` : undefined
+			})}
 			{error ? (
-				<span data-utr-claim-error className="body-sm text-error">
+				<span id={`${id}-error`} data-utr-claim-error className="body-sm text-error">
 					{error}
 				</span>
 			) : null}
@@ -166,17 +193,15 @@ function InlineTableSection({
 	error: string | null
 	onChange: (rows: Array<ClaimDraftRow>) => void
 }) {
-	const tbodyRef = useRef<HTMLTableSectionElement>(null)
 	const addRef = useRef<HTMLButtonElement>(null)
-	// A deleted row's button hands focus to the delete button that takes its place, the one above, or Add more.
-	const deleteRow = (rowIndex: number) =>
+	// A deleted row's button hands focus to the next row's delete button, the one above, or Add more.
+	const deleteRow = (rowIndex: number, remove: HTMLElement) => {
+		const next = neighbourRowControl(remove.closest('tr')!, remove)
 		keepFocus(
 			() => onChange(rows.filter((_, entryIndex) => entryIndex !== rowIndex)),
-			() => {
-				const deleteButtons = tbodyRef.current?.querySelectorAll<HTMLElement>('[data-row-delete]') ?? []
-				return deleteButtons[Math.min(rowIndex, deleteButtons.length - 1)] ?? addRef.current
-			}
+			() => next ?? addRef.current
 		)
+	}
 	return (
 		<div className="flex flex-col gap-3">
 			<h3 className="heading-xs">{section.title}</h3>
@@ -194,7 +219,7 @@ function InlineTableSection({
 								<th aria-label="Row actions" />
 							</tr>
 						</thead>
-						<tbody ref={tbodyRef}>
+						<tbody>
 							{rows.map((row, rowIndex) => (
 								<tr key={row.id} className="border-b border-subtle last:border-b-0">
 									{section.columns.map((column) => (
@@ -230,8 +255,7 @@ function InlineTableSection({
 											size="sm"
 											square
 											aria-label={`Delete row ${rowIndex + 1} from ${section.title}`}
-											data-row-delete
-											onClick={() => deleteRow(rowIndex)}
+											onClick={(event) => deleteRow(rowIndex, event.currentTarget)}
 										>
 											<Icon name="trash-2" height={14} width={14} />
 										</Button>
@@ -280,18 +304,16 @@ function AttachDocuments({
 	onRemove: (index: number) => void
 	onClearError: () => void
 }) {
-	const unavailable = status.pending || receipts.length >= 10
+	const unavailable = status.state === 'uploading' || receipts.length >= 10
 	const inputRef = useRef<HTMLInputElement>(null)
-	const chipsRef = useRef<HTMLDivElement>(null)
-	// A removed file's × hands focus to the × that takes its place, the one before it, or the attach control.
-	const removeReceipt = (index: number) =>
+	// A removed file's × hands focus to the next file's ×, the one before it, or the attach control.
+	const removeReceipt = (index: number, remove: HTMLElement) => {
+		const next = neighbourRowControl(remove.parentElement!, remove)
 		keepFocus(
 			() => onRemove(index),
-			() => {
-				const removeButtons = chipsRef.current?.querySelectorAll<HTMLElement>('button') ?? []
-				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? inputRef.current
-			}
+			() => next ?? inputRef.current
 		)
+	}
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center gap-3">
@@ -320,13 +342,13 @@ function AttachDocuments({
 							if (files.length > 0) onFiles(files)
 						}}
 					/>
-					{status.pending ? 'Uploading…' : 'Attach documents'}
+					{status.state === 'uploading' ? 'Uploading…' : 'Attach documents'}
 					<Icon name="link" height={14} width={14} />
 				</label>
 				<span className="body-sm text-tertiary">{ATTACH_HINT}</span>
 			</div>
 			{receipts.length > 0 ? (
-				<div ref={chipsRef} className="flex flex-wrap gap-2">
+				<div className="flex flex-wrap gap-2">
 					{keyedOccurrences(receipts, (receipt) => receipt.key).map(({ item: receipt, key }, index) => (
 						<span
 							key={key}
@@ -337,7 +359,7 @@ function AttachDocuments({
 								type="button"
 								aria-label={`Remove ${receipt.fileName}`}
 								className="cursor-pointer text-secondary hover:text-primary"
-								onClick={() => removeReceipt(index)}
+								onClick={(event) => removeReceipt(index, event.currentTarget)}
 							>
 								<Icon name="x" height={12} width={12} />
 							</button>
@@ -345,7 +367,7 @@ function AttachDocuments({
 					))}
 				</div>
 			) : null}
-			{status.error ? (
+			{status.state === 'failed' ? (
 				<div data-utr-claim-error className="flex items-center gap-2 body-sm text-error">
 					<span>{status.error}</span>
 					<button type="button" className="underline" onClick={() => keepFocus(onClearError, () => inputRef.current)}>
@@ -442,6 +464,8 @@ export function ClaimTokenProfile({
 	const [scoringCriteriaOpen, setScoringCriteriaOpen] = useState(false)
 	const formRef = useRef<HTMLDivElement>(null)
 	const submit = useMutation({ mutationFn: submitUtrClaim })
+	// The last failed submit, kept on screen while a retry runs: the mutation clears its error when the retry starts.
+	const [submitError, setSubmitError] = useState<string | null>(null)
 	const scrollToError = () => window.requestAnimationFrame(() => scrollToFirstUtrClaimError(formRef.current))
 	const selectedProject = variant === 'claim' ? (projects.find((project) => project.arcticId === token) ?? null) : null
 	const selectedProjectStatus = selectedProject ? formatClaimProjectStatus(selectedProject) : null
@@ -469,26 +493,26 @@ export function ClaimTokenProfile({
 	const validation = buildUtrClaimRequest(requestInput(null))
 	const errors = validation.errors
 	const showError = (key: string) => (submitAttempted ? errors[key] : null)
-	const hasPendingUpload = Object.values(uploadStatuses).some((status) => status.pending)
-	const hasUploadError = Object.values(uploadStatuses).some((status) => status.error)
+	const hasPendingUpload = Object.values(uploadStatuses).some((status) => status.state === 'uploading')
+	const hasUploadError = Object.values(uploadStatuses).some((status) => status.state === 'failed')
 
 	const uploadDocuments = async (key: UtrClaimDocumentKey, files: Array<File>) => {
 		const validationError = validateUtrClaimFiles(files, documents[key].length)
 		if (validationError) {
-			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: validationError } }))
+			setUploadStatuses((current) => ({ ...current, [key]: { state: 'failed', error: validationError } }))
 			return
 		}
-		setUploadStatuses((current) => ({ ...current, [key]: { pending: true, error: null } }))
+		setUploadStatuses((current) => ({ ...current, [key]: { state: 'uploading' } }))
 		try {
 			const receipts = await uploadUtrClaimDocuments(files)
 			assertReceiptsSigned(receipts)
 			setDocuments((current) => ({ ...current, [key]: [...current[key], ...receipts] }))
-			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: null } }))
+			setUploadStatuses((current) => ({ ...current, [key]: { state: 'idle' } }))
 		} catch (error) {
 			// Named out here, then read into a local: a conditional cannot be lowered inside a catch, and a
 			// caught binding referenced from the updater closure is not consistently local either.
 			const message = uploadErrorMessage(error)
-			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: message } }))
+			setUploadStatuses((current) => ({ ...current, [key]: { state: 'failed', error: message } }))
 		}
 	}
 
@@ -504,23 +528,24 @@ export function ClaimTokenProfile({
 					[key]: current[key].filter((_, receiptIndex) => receiptIndex !== index)
 				}))
 			}
-			onClearError={() => setUploadStatuses((current) => ({ ...current, [key]: { ...current[key], error: null } }))}
+			onClearError={() => setUploadStatuses((current) => ({ ...current, [key]: { state: 'idle' } }))}
 		/>
 	)
 
+	// Submit refuses presses while pending, uploading, after a failed upload or before the verification check passes.
 	const onSubmit = () => {
-		if (submit.isPending || hasPendingUpload || hasUploadError) return
 		setSubmitAttempted(true)
 		const clickId =
 			typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('fgclick')?.trim() || null
 		const result = buildUtrClaimRequest(requestInput(clickId))
-		if (!result.payload || (captchaEnabled && !turnstileToken)) {
+		if (!result.payload) {
 			scrollToError()
 			return
 		}
 		submit.mutate(result.payload, {
 			onSuccess: () => window.scrollTo({ top: 0 }),
-			onError: () => {
+			onError: (error) => {
+				setSubmitError(error.message)
 				setTurnstileToken('')
 				turnstileRef.current?.reset()
 				scrollToError()
@@ -559,92 +584,104 @@ export function ClaimTokenProfile({
 						</div>
 						{variant === 'claim' ? (
 							<LabeledField label="Token to claim" error={showError('token')}>
-								<span className="flex flex-wrap items-center gap-2">
-									<select
-										className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
-										aria-label="Token to claim"
-										value={token}
-										disabled={projects.length === 0}
-										onChange={(event) => setToken(event.target.value)}
-									>
-										{projects.length > 0 ? null : <option value="">Token list unavailable</option>}
-										{projects.map((project) => (
-											<option key={project.arcticId} value={project.arcticId}>
-												{project.projectName} ({project.symbol})
-											</option>
-										))}
-									</select>
-									<span className="rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 mono-sm text-secondary">
-										{selectedProjectStatus ?? 'Token list unavailable'}
+								{(field) => (
+									<span className="flex flex-wrap items-center gap-2">
+										<select
+											{...field}
+											className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
+											value={token}
+											disabled={projects.length === 0}
+											onChange={(event) => setToken(event.target.value)}
+										>
+											{projects.length > 0 ? null : <option value="">Token list unavailable</option>}
+											{projects.map((project) => (
+												<option key={project.arcticId} value={project.arcticId}>
+													{project.projectName} ({project.symbol})
+												</option>
+											))}
+										</select>
+										<span className="rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 mono-sm text-secondary">
+											{selectedProjectStatus ?? 'Token list unavailable'}
+										</span>
 									</span>
-								</span>
+								)}
 							</LabeledField>
 						) : (
-							<LabeledField label="Token to claim*" error={showError('token')}>
-								<Input
-									aria-label="Token to claim"
-									value={token}
-									onChange={(event) => setToken(event.target.value)}
-									maxLength={200}
-								/>
+							<LabeledField label="Token to claim" required error={showError('token')}>
+								{(field) => (
+									<Input {...field} value={token} onChange={(event) => setToken(event.target.value)} maxLength={200} />
+								)}
 							</LabeledField>
 						)}
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LabeledField label="First name*" error={showError('firstName')}>
-								<Input
-									aria-label="First name"
-									value={firstName}
-									onChange={(event) => setFirstName(event.target.value)}
-									maxLength={100}
-								/>
+							<LabeledField label="First name" required error={showError('firstName')}>
+								{(field) => (
+									<Input
+										{...field}
+										value={firstName}
+										onChange={(event) => setFirstName(event.target.value)}
+										maxLength={100}
+									/>
+								)}
 							</LabeledField>
-							<LabeledField label="Last name*" error={showError('lastName')}>
-								<Input
-									aria-label="Last name"
-									value={lastName}
-									onChange={(event) => setLastName(event.target.value)}
-									maxLength={100}
-								/>
+							<LabeledField label="Last name" required error={showError('lastName')}>
+								{(field) => (
+									<Input
+										{...field}
+										value={lastName}
+										onChange={(event) => setLastName(event.target.value)}
+										maxLength={100}
+									/>
+								)}
 							</LabeledField>
-							<LabeledField label="Position at organization*" error={showError('position')}>
-								<Input
-									aria-label="Position at organization"
-									value={position}
-									onChange={(event) => setPosition(event.target.value)}
-									maxLength={200}
-									placeholder="E.g., CEO"
-								/>
+							<LabeledField label="Position at organization" required error={showError('position')}>
+								{(field) => (
+									<Input
+										{...field}
+										value={position}
+										onChange={(event) => setPosition(event.target.value)}
+										maxLength={200}
+										placeholder="E.g., CEO"
+									/>
+								)}
 							</LabeledField>
 							<LabeledField label="Your LinkedIn or X profile" error={showError('profileUrl')}>
-								<Input
-									aria-label="Your LinkedIn or X profile"
-									value={profileUrl}
-									onChange={(event) => setProfileUrl(event.target.value)}
-									maxLength={500}
-									placeholder="Enter a valid LinkedIn or X URL"
-								/>
+								{(field) => (
+									<Input
+										{...field}
+										value={profileUrl}
+										onChange={(event) => setProfileUrl(event.target.value)}
+										maxLength={500}
+										placeholder="Enter a valid LinkedIn or X URL"
+									/>
+								)}
 							</LabeledField>
-							<LabeledField label="Your email address*" error={showError('email')}>
-								<Input
-									aria-label="Your email address"
-									type="email"
-									value={email}
-									onChange={(event) => setEmail(event.target.value)}
-									maxLength={320}
-								/>
+							<LabeledField label="Your email address" required error={showError('email')}>
+								{(field) => (
+									<Input
+										{...field}
+										type="email"
+										value={email}
+										onChange={(event) => setEmail(event.target.value)}
+										maxLength={320}
+									/>
+								)}
 							</LabeledField>
 							<LabeledField label="Telegram handle">
-								<Input
-									aria-label="Telegram handle"
-									value={telegram}
-									onChange={(event) => setTelegram(event.target.value)}
-									maxLength={100}
-								/>
+								{(field) => (
+									<Input
+										{...field}
+										value={telegram}
+										onChange={(event) => setTelegram(event.target.value)}
+										maxLength={100}
+									/>
+								)}
 							</LabeledField>
 						</div>
-						<LabeledField label="Other support document (optional)">
+						<div className="flex flex-col gap-1.5">
+							<span className="label-md text-primary">Other support document (optional)</span>
 							{documentUploader('alignment', 'attach-alignment')}
-						</LabeledField>
+						</div>
 						<div className="flex flex-col gap-1 border-t border-subtle pt-4">
 							<Checkbox
 								variant="consent"
@@ -752,10 +789,7 @@ export function ClaimTokenProfile({
 								)
 							})}
 							<div className="flex flex-col gap-2 border-t border-subtle pt-4">
-								<h3 className="heading-xs">
-									{block.id === 'team' ? '4.' : block.id === 'tokenomics' ? '4.' : block.id === 'legal' ? '3.' : '4.'}{' '}
-									Other support document (optional)
-								</h3>
+								<h3 className="heading-xs">{block.id === 'legal' ? '3.' : '4.'} Other support document (optional)</h3>
 								<p className="body-sm text-secondary">
 									{block.documentDescription ??
 										'Upload any additional documentation that supports or provides further context for the disclosures above.'}
@@ -765,11 +799,9 @@ export function ClaimTokenProfile({
 						</Card>
 					))}
 
-					{submit.isError ? (
+					{submitError ? (
 						<div data-utr-claim-error>
-							<InlineStatus variant="error">
-								{submit.error instanceof Error ? submit.error.message : "Couldn't submit the claim request. Try again."}
-							</InlineStatus>
+							<InlineStatus variant="error">{submitError}</InlineStatus>
 						</div>
 					) : null}
 					{/* Focusable while disabled: a failed submit resets the verification check, which disables the pressed

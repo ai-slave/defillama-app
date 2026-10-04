@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
+import type { QueryRetry } from '~/utils/query'
 import { ProCardSkeleton, type ProCardSkeletonVariant } from './ProCardSkeleton'
 
 // Pro cards follow the Status recipes (design.md): body-sm copy, tertiary
@@ -9,12 +10,6 @@ import { ProCardSkeleton, type ProCardSkeletonVariant } from './ProCardSkeleton'
 interface ProCardStatusAction {
 	label: string
 	onClick: () => void
-}
-
-// A retry waits in its button while the read it started runs, so the caller passes that read's fetching state.
-interface ProCardRetry {
-	run: () => void
-	pending: boolean
 }
 
 function ProCardActionButton({ label, onClick, pendingLabel }: ProCardStatusAction & { pendingLabel: string | null }) {
@@ -29,6 +24,17 @@ function ProCardActionButton({ label, onClick, pendingLabel }: ProCardStatusActi
 		>
 			{label}
 		</Button>
+	)
+}
+
+// A retry waits in its button while the read it started runs.
+function ProCardRetryButton({ retry }: { retry: QueryRetry }) {
+	return (
+		<ProCardActionButton
+			label="Try again"
+			onClick={() => void retry.refetch()}
+			pendingLabel={retry.isFetching ? 'Retrying…' : null}
+		/>
 	)
 }
 
@@ -60,7 +66,7 @@ export function ProCardError({
 }: {
 	title?: string
 	detail?: ReactNode
-	retry?: ProCardRetry
+	retry?: QueryRetry
 	action?: ProCardStatusAction
 	role?: 'alert' | 'status'
 }) {
@@ -71,13 +77,7 @@ export function ProCardError({
 			{detail ? <p className="body-sm text-pro-text-tertiary">{detail}</p> : null}
 			{retry || action ? (
 				<div className="mt-1 flex flex-wrap justify-center gap-2">
-					{retry ? (
-						<ProCardActionButton
-							label="Try again"
-							onClick={retry.run}
-							pendingLabel={retry.pending ? 'Retrying…' : null}
-						/>
-					) : null}
+					{retry ? <ProCardRetryButton retry={retry} /> : null}
 					{action ? <ProCardActionButton {...action} pendingLabel={null} /> : null}
 				</div>
 			) : null}
@@ -98,7 +98,7 @@ export function ProCardEmpty({ message, action }: { message: ReactNode; action?:
 	)
 }
 
-export function ProCardRefreshFailed({ retry }: { retry: ProCardRetry }) {
+export function ProCardRefreshFailed({ retry }: { retry: QueryRetry }) {
 	return (
 		<ProCardNotice tone="warning" retry={retry}>
 			Couldn&apos;t refresh this card. Showing the last loaded data.
@@ -115,7 +115,7 @@ export function ProCardNotice({
 }: {
 	tone: 'warning' | 'error'
 	children: ReactNode
-	retry?: ProCardRetry
+	retry?: QueryRetry
 	action?: ProCardStatusAction
 	title?: string
 }) {
@@ -127,9 +127,7 @@ export function ProCardNotice({
 			className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-1 body-sm md:px-3 ${isError ? 'text-data-down' : 'text-warning'}`}
 		>
 			<span>{children}</span>
-			{retry ? (
-				<ProCardActionButton label="Try again" onClick={retry.run} pendingLabel={retry.pending ? 'Retrying…' : null} />
-			) : null}
+			{retry ? <ProCardRetryButton retry={retry} /> : null}
 			{action ? <ProCardActionButton {...action} pendingLabel={null} /> : null}
 		</div>
 	)

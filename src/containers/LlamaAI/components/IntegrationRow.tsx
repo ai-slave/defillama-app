@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
@@ -51,11 +52,11 @@ export function IntegrationRow({
 	const codeId = useId()
 	const [codeDraft, setCodeDraft] = useState('')
 	const [inlineError, setInlineError] = useState<string | null>(null)
-	// Which prompt started the confirm request, so that prompt stays on screen with its button pending.
-	const [confirming, setConfirming] = useState<'code' | 'switch' | null>(null)
+	const confirming = link.state.status === 'confirming' ? link.state.step : null
 	const linkedHandle = link.state.status === 'linked' ? formatHandle(link.state.username) : ''
 	const [disconnectHandle, setDisconnectHandle] = useState<string | null>(null)
 	const rowRef = useRef<HTMLDivElement>(null)
+	const error = link.startError ?? (link.state.status === 'error' ? link.state.message : null)
 	// Once unlinked there is nothing left to confirm.
 	if (disconnectHandle !== null && link.state.status !== 'linked') setDisconnectHandle(null)
 
@@ -85,12 +86,23 @@ export function IntegrationRow({
 							>
 								Disconnect
 							</Button>
-							<Button type="button" size="md" variant="primary" onClick={() => link.connect()}>
+							<Button
+								// A finished code or switch step leaves; the linked account's main action takes its focus.
+								ref={takeLostFocus}
+								type="button"
+								size="md"
+								variant="primary"
+								pendingLabel={link.isStarting ? 'Opening…' : null}
+								onClick={() => link.connect()}
+							>
 								Switch account
 							</Button>
 						</div>
 					</div>
-				) : link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading' ? (
+				) : link.state.status === 'idle' ||
+				  link.state.status === 'starting' ||
+				  link.state.status === 'loading' ||
+				  link.state.status === 'error' ? (
 					<Button
 						ref={takeLostFocus}
 						type="button"
@@ -119,19 +131,18 @@ export function IntegrationRow({
 				</div>
 			)}
 
-			{link.state.status === 'awaiting_code' || (link.state.status === 'confirming' && confirming === 'code') ? (
+			{link.state.status === 'awaiting_code' || confirming === 'code' ? (
 				<form
 					onSubmit={(e) => {
 						e.preventDefault()
-						setInlineError(null)
-						setConfirming('code')
+						// A wrong code's message stays while the next code is checked.
 						link
 							.confirmCode(codeDraft)
 							.then((result) => {
+								setInlineError(null)
 								if (result && 'linked' in result && result.linked) onInitialStateConsumed?.()
 							})
 							.catch(() => setInlineError("That code didn't work. Check it in Telegram and try again."))
-							.finally(() => setConfirming(null))
 					}}
 					className="mt-3 flex flex-col gap-1.5"
 				>
@@ -139,18 +150,24 @@ export function IntegrationRow({
 						Code from Telegram
 					</label>
 					<div className="flex gap-2">
-						<Input
-							ref={takeLostFocus}
-							id={codeId}
-							value={codeDraft}
-							onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
-							placeholder="123456"
-							maxLength={6}
-							inputMode="numeric"
-							autoComplete="one-time-code"
-							aria-invalid={inlineError !== null}
-							aria-describedby={`${codeId}-hint`}
-							className="flex-1"
+						{/* Ariakit's autoFocus, so Settings opened from a Telegram login link starts on the code instead of its
+						    ×, and a cancelled switch returns here. */}
+						<Ariakit.Focusable
+							autoFocus
+							render={
+								<Input
+									id={codeId}
+									value={codeDraft}
+									onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
+									placeholder="123456"
+									maxLength={6}
+									inputMode="numeric"
+									autoComplete="one-time-code"
+									aria-invalid={inlineError !== null}
+									aria-describedby={`${codeId}-hint`}
+									className="flex-1"
+								/>
+							}
 						/>
 						<Button
 							type="submit"
@@ -174,7 +191,7 @@ export function IntegrationRow({
 				</form>
 			) : null}
 
-			{link.state.status === 'switch_confirm' || (link.state.status === 'confirming' && confirming === 'switch') ? (
+			{link.state.status === 'switch_confirm' || confirming === 'switch' ? (
 				<div className="mt-3 flex flex-col gap-3">
 					<InlineStatus variant="warning">
 						{link.state.status === 'switch_confirm'
@@ -189,9 +206,7 @@ export function IntegrationRow({
 							variant="primary"
 							pendingLabel={confirming === 'switch' ? 'Switching…' : null}
 							onClick={() => {
-								setConfirming('switch')
 								void link.confirmSwitch().then((consumed) => {
-									setConfirming(null)
 									if (consumed) onInitialStateConsumed?.()
 								})
 							}}
@@ -213,11 +228,11 @@ export function IntegrationRow({
 				</div>
 			) : null}
 
-			{link.state.status === 'error' && (
+			{error ? (
 				<div className="mt-3">
-					<InlineStatus variant="error">{link.state.message}</InlineStatus>
+					<InlineStatus variant="error">{error}</InlineStatus>
 				</div>
-			)}
+			) : null}
 
 			<ConfirmDialog
 				open={disconnectHandle !== null}

@@ -171,7 +171,7 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 											<div className="relative h-[75px] w-[75px] shrink-0 overflow-hidden rounded-full transition-[filter] duration-300 group-hover:brightness-[0.8] lg:h-[105px] lg:w-[105px]">
 												<img
 													src={article.coverImage.url}
-													alt={article.coverImage.alt}
+													alt={article.coverImage.alt ?? ''}
 													className="h-full w-full object-cover"
 													loading="lazy"
 													decoding="async"

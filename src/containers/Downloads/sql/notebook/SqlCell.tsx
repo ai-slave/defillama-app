@@ -31,7 +31,7 @@ interface SqlCellProps {
 	onRunAndAdvance: () => void
 	onFocus: () => void
 	onChartConfigChange: (next: ChartConfig | null) => void
-	onPreferredViewChange: (view: ResultsView | undefined) => void
+	onViewChange: (view: ResultsView) => void
 }
 
 export function SqlCell({
@@ -42,7 +42,7 @@ export function SqlCell({
 	onRunAndAdvance,
 	onFocus,
 	onChartConfigChange,
-	onPreferredViewChange,
+	onViewChange,
 	ref
 }: SqlCellProps & { ref?: Ref<SqlCellHandle> }) {
 	// The theme store, not the <html> class: the class flips in an effect after the toggle renders.
@@ -159,8 +159,8 @@ export function SqlCell({
 				busyLabel={cell.loadingStage}
 				chartConfig={cell.chartConfig}
 				onChartConfigChange={onChartConfigChange}
-				preferredView={cell.preferredView}
-				onConsumePreferredView={() => onPreferredViewChange(undefined)}
+				view={cell.view}
+				onViewChange={onViewChange}
 				durationMs={cell.lastRun?.durationMs ?? null}
 			/>
 		</div>

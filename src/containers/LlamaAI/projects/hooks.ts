@@ -134,7 +134,10 @@ export function useDeleteProject() {
 	const { authorizedFetch } = useAuthContext()
 	const qc = useQueryClient()
 	return useMutation({
-		mutationFn: (id: string) => deleteProject(authorizedFetch, id),
+		mutationFn: (id: string) =>
+			deleteProject(authorizedFetch, id).catch((error: unknown) => {
+				throw new Error("Couldn't delete this project. Try again.", { cause: error })
+			}),
 		onSuccess: () => {
 			void qc.invalidateQueries({ queryKey: PROJECTS_KEY })
 		}

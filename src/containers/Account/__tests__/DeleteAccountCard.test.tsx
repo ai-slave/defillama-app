@@ -277,6 +277,21 @@ test('signs out the deleted account even after its token refreshed mid-request',
 	expect(router.replace).toHaveBeenCalledWith('/')
 })
 
+test('a retried deletion keeps the last failure on screen while it runs', async () => {
+	session.serveInOrder(DELETE, [
+		fixtureStatus(500, { error: 'Failed to remove external subscriptions' }),
+		() => new Promise<Response>(() => {})
+	])
+	await openDialog()
+	await continueAndSubmit()
+	const alert = () => document.querySelector('[role=alertdialog] [role=alert]')?.textContent
+	await waitFor(() => expect(alert()).toBe('Failed to remove external subscriptions'))
+
+	await act(async () => button('Delete account permanently')!.click())
+	await waitFor(() => expect(button('Deleting account…')!.getAttribute('aria-busy')).toBe('true'))
+	expect(alert()).toBe('Failed to remove external subscriptions')
+})
+
 test('sends one deletion request when the form is submitted twice while pending', async () => {
 	const pending = deferred<Response>()
 	session.serve({ [DELETE]: () => pending.promise })
@@ -299,7 +314,7 @@ test('refuses to delete through a dialog opened by an older session', async () =
 	await act(async () => setInput('#delete-account-confirmation', 'DELETE'))
 	await act(async () => document.querySelector('#delete-account-confirmation')!.closest('form')!.requestSubmit())
 
-	expect(text()).toContain('Your session changed')
+	await waitFor(() => expect(text()).toContain('Your session changed'))
 	expect(deleteRequests()).toHaveLength(0)
 	expect(signedOut()).toBe(false)
 })
@@ -320,4 +335,25 @@ test('a resent deletion code is confirmed inside the dialog', async () => {
 		expect(document.querySelector('[role=alertdialog] [role=status]')?.textContent).toBe('Code sent. Check your inbox.')
 	)
 	expect(session.requests.filter((request) => request.url.href === REQUEST)).toHaveLength(2)
+})
+
+test('typing the code while a resend runs keeps the dialog locked until the resend settles', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	session.serve({
+		[ELIGIBILITY]: { ...eligibility, requiredConfirmation: otp },
+		[REQUEST]: { message: 'Deletion code sent', requiredConfirmation: otp }
+	})
+	await openDialog()
+	await act(async () => button('Continue')!.click())
+	await waitFor(() => expect(text()).toContain('Resend code (60s)'))
+	await act(async () => vi.advanceTimersByTime(60_000))
+	const resend = deferred<Response>()
+	session.serve({ [REQUEST]: () => resend.promise })
+	await act(async () => button('Resend code')!.click())
+	await act(async () => setInput('#delete-account-otp', '1'))
+
+	expect(button('Sending code…')).toBeDefined()
+	expect(button('Cancel')!.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => resend.resolve(Response.json({ message: 'Deletion code sent', requiredConfirmation: otp })))
+	await waitFor(() => expect(button('Cancel')!.getAttribute('aria-disabled')).toBeNull())
 })

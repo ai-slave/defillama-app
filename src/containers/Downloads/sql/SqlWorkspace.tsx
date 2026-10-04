@@ -36,6 +36,7 @@ import { QueryTabBar } from './QueryTabBar'
 import { ResultsPanel } from './ResultsPanel'
 import { SchemaDrawer } from './SchemaDrawer'
 import { ShareQueryButton } from './ShareQueryButton'
+import { sqlWorkspaceAccess } from './sqlAccess'
 import { TableChipRail } from './TableChipRail'
 import { UpsellGate } from './UpsellGate'
 import { useDuckDB } from './useDuckDB'
@@ -121,11 +122,16 @@ export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 	const { isAuthenticated, isTrial, loaders, authorizedFetch, user } = useAuthContext()
 	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
 		useSubscribe()
-	const isApiPlan = subscription?.type === 'api' && subscription?.status === 'active'
-	const isLlama = !!user?.flags?.is_llama
-	const allowed = isAuthenticated && (isApiPlan || isLlama)
+	const access = sqlWorkspaceAccess({
+		userLoading: loaders.userLoading,
+		isAuthenticated,
+		subscriptionLoading: isSubscriptionLoading,
+		subscriptionError: isSubscriptionError,
+		isApiPlan: subscription.type === 'api' && subscription.status === 'active',
+		isLlama: !!user?.flags?.is_llama
+	})
 
-	if (loaders.userLoading || (isAuthenticated && isSubscriptionLoading && !isLlama)) {
+	if (access === 'loading') {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center">
 				<LocalLoader />
@@ -133,8 +139,7 @@ export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 		)
 	}
 
-	// A failed read is unknown: show a retry state, not an upsell.
-	if (isAuthenticated && isSubscriptionError && !isLlama) {
+	if (access === 'unknown') {
 		return (
 			<div className="mx-auto w-full max-w-xl py-16">
 				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
@@ -142,7 +147,7 @@ export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 		)
 	}
 
-	if (!allowed) {
+	if (access === 'upsell') {
 		return <UpsellGate isAuthenticated={isAuthenticated} isTrial={isTrial} />
 	}
 
@@ -166,7 +171,6 @@ function SqlWorkspaceInner({
 	const savedTabRef = useRef<HTMLButtonElement>(null)
 	const [schemaParams, setSchemaParams] = useState<Record<string, string>>({})
 	const [savePresetOpen, setSavePresetOpen] = useState(false)
-	const [chartPreferredTab, setChartPreferredTab] = useState<string | null>(null)
 	const [playbookCollapsed, setPlaybookCollapsed] = useState<boolean>(() =>
 		getStorageJSON<boolean>(PLAYBOOK_COLLAPSED_KEY, false)
 	)
@@ -724,27 +728,16 @@ function SqlWorkspaceInner({
 		[tabs, focusTab, openTab, prepareAndRun]
 	)
 
-	const onReplaceSql = useCallback(
-		(snippet: string) => {
-			openTab({ sql: snippet, focus: true })
-			setSectionTab('editor')
-		},
-		[openTab]
-	)
+	// The reference sheet opens only from the editor section, so these need not switch sections.
+	const onReplaceSql = useCallback((snippet: string) => openTab({ sql: snippet, focus: true }), [openTab])
 
 	const onCookbookApply = useCallback(
 		(snippet: string) => {
 			const newId = openTab({ sql: snippet, focus: true })
-			setSectionTab('editor')
 			runSqlForTab(newId, snippet)
 		},
 		[openTab, runSqlForTab]
 	)
-
-	const onInsertAtCursor = useCallback((text: string) => {
-		setSectionTab('editor')
-		setTimeout(() => editorRef.current?.insertSnippet(text), 0)
-	}, [])
 
 	const onSavePreset = useCallback(
 		(name: string) => {
@@ -763,7 +756,7 @@ function SqlWorkspaceInner({
 					)
 				})
 			}
-			saveDownload(preset, { replaceByName: true })
+			saveDownload(preset)
 			setSavePresetOpen(false)
 		},
 		[activeTab.sql, registry.tables, saveDownload]
@@ -819,18 +812,11 @@ function SqlWorkspaceInner({
 			const existing = tabs.find((t) => t.mode === 'query' && t.sql === decoded.sql)
 			const tabId = existing ? existing.id : openTab({ sql: decoded.sql, focus: true })
 			if (existing) focusTab(existing.id)
-			if (decoded.chartConfig) {
-				updateTab(tabId, { chartConfig: decoded.chartConfig })
-				window.setTimeout(() => setChartPreferredTab(tabId), 0)
-			}
-			window.setTimeout(() => setSectionTab('editor'), 0)
+			// A link made from the chart view opens on the chart.
+			if (decoded.chartConfig) updateTab(tabId, { chartConfig: decoded.chartConfig, view: 'chart' })
+			// The run switches to the editor section itself; a task keeps that state update out of the effect.
 			window.setTimeout(() => {
-				prepareAndRun({
-					tabId,
-					taskId: `share:${Date.now()}`,
-					tables: decoded.tables,
-					sql: decoded.sql
-				})
+				void prepareAndRun({ tabId, taskId: `share:${Date.now()}`, tables: decoded.tables, sql: decoded.sql })
 			}, 0)
 			router.replace({ pathname: router.pathname, query: { mode: 'sql' } }, undefined, { shallow: true })
 		}
@@ -959,9 +945,7 @@ function SqlWorkspaceInner({
 												onCellChartConfig={(cellId, next) =>
 													updateCell(activeTab.id, cellId, { chartConfig: next ?? undefined })
 												}
-												onCellPreferredView={(cellId, view) =>
-													updateCell(activeTab.id, cellId, { preferredView: view })
-												}
+												onCellViewChange={(cellId, view) => updateCell(activeTab.id, cellId, { view })}
 												onRunCell={async (cellId) => {
 													await runSqlForCell(activeTab.id, cellId)
 												}}
@@ -1030,8 +1014,8 @@ function SqlWorkspaceInner({
 													busyLabel={activeTab.loadingStage}
 													chartConfig={activeTab.chartConfig}
 													onChartConfigChange={setActiveChartConfig}
-													preferredView={chartPreferredTab === activeTabId ? 'chart' : undefined}
-													onConsumePreferredView={() => setChartPreferredTab(null)}
+													view={activeTab.view}
+													onViewChange={(view) => updateTab(activeTabId, { view })}
 													durationMs={activeTab.lastRun?.durationMs ?? null}
 												/>
 											</>
@@ -1057,8 +1041,7 @@ function SqlWorkspaceInner({
 								<ExamplesPanel
 									onApply={onApplyExample}
 									busyTaskId={activeTab.busyTaskId}
-									collapsed={playbookCollapsed}
-									onToggleCollapsed={togglePlaybook}
+									collapse={{ collapsed: playbookCollapsed, onToggle: togglePlaybook }}
 								/>
 							</div>
 						</div>
@@ -1081,7 +1064,6 @@ function SqlWorkspaceInner({
 					existingNames={savedDownloads.map((d) => d.name)}
 					title="Save SQL query"
 					description="Saved queries appear in the saved tab and in the main Saved list."
-					submitLabel="Save"
 					placeholder="Query name"
 					onSave={onSavePreset}
 					onClose={() => setSavePresetOpen(false)}
@@ -1095,7 +1077,8 @@ function SqlWorkspaceInner({
 				loadedTables={registry.tables}
 				onLoad={registry.load}
 				onReplaceSql={onReplaceSql}
-				onInsertAtCursor={onInsertAtCursor}
+				// A notebook has no single editor for a column name to go into.
+				onInsertAtCursor={activeTab.mode === 'query' ? (text) => editorRef.current?.insertSnippet(text) : null}
 				onApplyAndRun={onCookbookApply}
 				loading={registry.loading}
 				loadError={registry.error}
@@ -1116,7 +1099,7 @@ function buildCellFromShared(c: {
 		type: c.type,
 		source: c.source,
 		chartConfig: c.chartConfig,
-		preferredView: undefined,
+		view: 'table',
 		result: null,
 		running: false,
 		runError: null,
@@ -1374,7 +1357,8 @@ function SavedQueriesTab({
 									<span className="truncate font-mono text-xs text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
 								</span>
 							</button>
-							<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+							{/* A touch screen cannot hover, so it always shows the actions. */}
+							<div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
 								<button
 									type="button"
 									onClick={() => setRenaming(q)}

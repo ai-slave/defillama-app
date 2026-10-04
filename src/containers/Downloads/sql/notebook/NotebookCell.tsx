@@ -31,7 +31,7 @@ interface NotebookCellProps {
 	onMoveDown: () => void
 	onConvertType: (nextType: CellType) => void
 	onChartConfigChange: (next: ChartConfig | null) => void
-	onPreferredViewChange: (view: ResultsView | undefined) => void
+	onViewChange: (view: ResultsView) => void
 	onDragStart?: (cellId: string, cellEl: HTMLElement | null) => (e: React.DragEvent) => void
 	onDragEnd?: () => void
 	canRun: boolean
@@ -58,7 +58,7 @@ export function NotebookCell({
 	onMoveDown,
 	onConvertType,
 	onChartConfigChange,
-	onPreferredViewChange,
+	onViewChange,
 	onDragStart,
 	onDragEnd,
 	canRun,
@@ -199,7 +199,7 @@ export function NotebookCell({
 					onRunAndAdvance={onRunAndAdvance}
 					onFocus={onFocus}
 					onChartConfigChange={onChartConfigChange}
-					onPreferredViewChange={onPreferredViewChange}
+					onViewChange={onViewChange}
 				/>
 			) : cell.type === 'chart' ? (
 				<ChartCell

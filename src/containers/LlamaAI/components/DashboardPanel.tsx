@@ -194,27 +194,34 @@ function DashboardPanelInner({
 
 					{hasMultipleVersions ? (
 						<div className="flex items-center justify-center gap-3 border-t border-subtle px-4 py-2.5">
-							<button
+							{/* Focusable at the ends, so stepping to the last version keeps focus on the arrow. */}
+							<Button
 								type="button"
+								size="sm"
+								variant="ghost"
+								square
 								onClick={() => onVersionChange(versionIndex - 1)}
 								disabled={versionIndex === 0}
+								accessibleWhenDisabled
 								aria-label="Previous version"
-								className="flex size-6 items-center justify-center rounded-sm text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:opacity-30"
 							>
 								<Icon name="chevron-left" className="size-3.5" />
-							</button>
+							</Button>
 							<span className="text-xs text-tertiary">
 								Version {versionIndex + 1} of {versions.length}
 							</span>
-							<button
+							<Button
 								type="button"
+								size="sm"
+								variant="ghost"
+								square
 								onClick={() => onVersionChange(versionIndex + 1)}
 								disabled={versionIndex === versions.length - 1}
+								accessibleWhenDisabled
 								aria-label="Next version"
-								className="flex size-6 items-center justify-center rounded-sm text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:opacity-30"
 							>
 								<Icon name="chevron-right" className="size-3.5" />
-							</button>
+							</Button>
 						</div>
 					) : null}
 				</div>

@@ -24,7 +24,7 @@ vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) =>
 vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('~/containers/LlamaAI/components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/SettingsModal', () => ({ SettingsModal: () => null }))
-vi.mock('~/containers/LlamaAI/components/TokenLimitModal', () => ({ TokenLimitModal: () => null }))
+vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
 import LlamaAIPage from '~/pages/ai/chat/[[...sessionId]]'
 
@@ -95,7 +95,7 @@ const button = (text: string) =>
 	})
 const turnOnResearch = async () => {
 	const research = await waitForUi(() => {
-		const input = document.querySelector<HTMLInputElement>('input[type="radio"][aria-label="Research"]')
+		const input = document.querySelector<HTMLInputElement>('input[type="radio"][value="research"]')
 		expect(input).not.toBeNull()
 		return input!
 	})

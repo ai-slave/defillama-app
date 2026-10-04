@@ -8,8 +8,7 @@ import { scheduleConfirmationReads } from '~/containers/Account/utils'
 import { usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
 import { EmbeddedCardCheckout } from './EmbeddedCardCheckout'
@@ -108,8 +107,7 @@ function CheckoutLoading() {
 // Reads the session the caller's useStripeCheckout created; nothing rendered here creates one. Every step renders in
 // this one Dialog: a step swapped for another Dialog would leave nothing to hand focus back to when it closes.
 export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) {
-	const { isOpen, session, close, retry } = checkout
-	const [confirmLeave, setConfirmLeave] = useState(false)
+	const { isOpen, session, failure, close, retry } = checkout
 	const queryClient = useQueryClient()
 	const { user } = useAuthContext()
 
@@ -171,12 +169,10 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 	// opening that paid: a later opening, even one resuming the same intent, starts from the form.
 	const paid = payment.variables?.openedAt === session.submittedAt ? payment : null
 
-	let surface: { size: 'sm' | 'md'; fullSheet: boolean; pending: boolean; outsideTap: boolean; onClose: () => void } = {
+	let surface: { size: 'sm' | 'md'; fullSheet: boolean; pending: boolean } = {
 		size: 'sm',
 		fullSheet: false,
-		pending: false,
-		outsideTap: true,
-		onClose: close
+		pending: false
 	}
 	let content: ReactNode
 	if (result?.kind === 'openUpgrade') {
@@ -226,8 +222,7 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 					pricing={result.pricing}
 					awaitingVerification={result.awaitingVerification}
 					paying={paying}
-					error={paid?.error?.message ?? null}
-					onPay={(stripe, elements) => {
+					onPay={(stripe, elements, onSettled) => {
 						if (paying) return
 						payment.mutate(
 							{
@@ -242,7 +237,8 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 								// A mutate() callback, unlike the hook's onSuccess, is dropped once this dialog unmounts on close.
 								onSuccess: (status) => {
 									if (status === 'succeeded') window.location.href = `${window.location.origin}${postCheckoutPath}`
-								}
+								},
+								onSettled: (_status, error) => onSettled(error)
 							}
 						)
 					}}
@@ -251,26 +247,34 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 		)
 	} else {
 		const paying = result?.kind === 'checkout'
-		// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height. Closing
-		// mid-payment asks first: Stripe may already be taking the payment, and leaving drops its outcome. Stripe owns
-		// the payment's submit state, so a stray tap outside must not drop a payment mid-submit.
-		surface = {
-			...surface,
-			size: 'md',
-			fullSheet: true,
-			outsideTap: !paying,
-			onClose: paying ? () => setConfirmLeave(true) : close
-		}
+		// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height. A failure is
+		// one message and its retry, so that sheet fits its content.
+		surface = { ...surface, size: 'md', fullSheet: !failure }
 		content = (
 			<>
+				{/* Closing mid-payment asks first: Stripe may already be taking the payment, and leaving drops its outcome. The
+				    guard also ignores outside taps, since Stripe owns the payment's submit state. */}
+				<DialogDiscardGuard
+					when={paying}
+					title="Leave checkout?"
+					description="Your plan isn't active until the payment finishes. Leaving closes this checkout."
+					cancelLabel="Keep paying"
+					confirmLabel="Leave"
+				/>
 				<DialogHeader title="Complete your purchase" />
-				{session.isError ? (
+				{failure ? (
 					<>
 						<DialogBody>
-							<InlineStatus variant="error">{session.error.message}</InlineStatus>
+							<InlineStatus variant="error">{failure.message}</InlineStatus>
 						</DialogBody>
 						<DialogFooter>
-							<Button type="button" variant="primary" size="md" onClick={retry}>
+							<Button
+								type="button"
+								variant="primary"
+								size="md"
+								onClick={retry}
+								pendingLabel={session.isPending ? 'Retrying…' : null}
+							>
 								Try again
 							</Button>
 						</DialogFooter>
@@ -282,22 +286,6 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 				) : (
 					<EmbeddedLoadingBody />
 				)}
-				<ConfirmDialog
-					open={confirmLeave}
-					onClose={() => setConfirmLeave(false)}
-					portal
-					unmountOnHide
-					title="Leave checkout?"
-					description="Your plan isn't active until the payment finishes. Leaving closes this checkout."
-					cancelLabel="Keep paying"
-					confirmLabel="Leave"
-					pendingLabel={null}
-					error={null}
-					onConfirm={() => {
-						setConfirmLeave(false)
-						close()
-					}}
-				/>
 			</>
 		)
 	}
@@ -307,9 +295,8 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 			size={surface.size}
 			fullSheet={surface.fullSheet}
 			open={isOpen}
-			onClose={surface.onClose}
+			onClose={close}
 			pending={surface.pending}
-			hideOnInteractOutside={surface.outsideTap}
 			portal
 			unmountOnHide
 		>
@@ -367,8 +354,7 @@ type UpgradeFormProps = {
 	pricing: UpgradePricing | null
 	awaitingVerification: boolean
 	paying: boolean
-	error: string | null
-	onPay: (stripe: Stripe, elements: StripeElements) => void
+	onPay: (stripe: Stripe, elements: StripeElements, onSettled: (error: Error | null) => void) => void
 }
 
 // Suspends until Stripe.js settles; a script that failed to load gets a message instead of a form that never draws.
@@ -398,10 +384,11 @@ function UpgradeFormFields({
 	pricing,
 	awaitingVerification,
 	paying,
-	error,
 	onPay
 }: UpgradeFormProps & { stripe: Stripe }) {
 	const elements = useElements()
+	// The last failed payment, kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [error, setError] = useState<string | null>(null)
 	const planLabel = `${plan === 'api' ? 'API' : 'Pro'} - ${billingInterval === 'year' ? 'Annual' : 'Monthly'}`
 	// The API plan being upgraded, read by type.
 	const currentApiPlan = usePlanRecord(plan === 'api' ? 'api' : null)
@@ -411,7 +398,7 @@ function UpgradeFormFields({
 	const handleSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
 		// Elements is ready as soon as it renders with a loaded Stripe instance.
-		onPay(stripe, elements!)
+		onPay(stripe, elements!, (failure) => setError(failure?.message ?? null))
 	}
 
 	return (

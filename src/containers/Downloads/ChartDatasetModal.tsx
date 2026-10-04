@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
-import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { VirtualizedMultiSelect, VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
@@ -23,16 +23,19 @@ import { combineCsvsWide } from './combineCsvsWide'
 import { filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
+import { fetchDownloadCsv } from './fetchDownloadCsv'
 import { SavePresetDialog } from './PresetDialogs'
 import {
+	type ColumnKind,
+	type ColumnMeta,
 	downloadPreviewHasTime,
-	formatDownloadPreviewDate,
-	formatDownloadPreviewCurrency,
-	formatDownloadPreviewNumber,
-	formatDownloadPreviewPercent,
-	parseDownloadPreviewDate
+	parseDownloadPreviewDate,
+	parseNumericValue,
+	formatCellValue,
+	getCellTone
 } from './previewFormatting'
 import { PreviewHeaderActions } from './PreviewHeaderActions'
+import { PlaceholderRows, PREVIEW_ROW_HEIGHT, PreviewPaywall } from './PreviewPaywall'
 import { createPreviewSearchIndex, filterPreviewRows } from './previewSearch'
 import {
 	applyChartColumnsAndSort,
@@ -52,13 +55,6 @@ import { sumCsvColumnsToTotal } from './sumCsvColumns'
 import { buildShareUrl } from './urlState'
 import { usePreviewTableScroller } from './usePreviewTableScroller'
 
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
-
-const ROW_HEIGHT = 36
 const COLUMN_DETECTION_SAMPLE_SIZE = 200
 const COLUMN_WIDTH_SAMPLE_SIZE = 40
 const EMPTY_SELECTION = new Set<number>()
@@ -69,16 +65,7 @@ const CURRENCY_HEADER_PATTERN =
 	/(usd|tvl|mcap|market.?cap|price|amount|volume|fees?|revenue|supply|borrow|depositusd|withdrawusd|value|flow)/i
 
 type PreviewRow = ParsedCsvRow
-type ColumnKind = 'text' | 'number' | 'currency' | 'percent' | 'date'
 type SortDirection = 'asc' | 'desc'
-
-interface ColumnMeta {
-	index: number
-	header: string
-	kind: ColumnKind
-	align: 'start' | 'end'
-	width: number
-}
 
 interface SortState {
 	index: number
@@ -90,15 +77,6 @@ interface ParamOption {
 	value: string
 	category?: string
 	isChild?: boolean
-}
-
-function parseNumericValue(value: string): number | null {
-	const trimmed = value.trim()
-	if (!trimmed) return null
-	const normalized = trimmed.replace(/[$,%\s]/g, '').replace(/,/g, '')
-	if (!normalized) return null
-	const parsed = Number(normalized)
-	return Number.isFinite(parsed) ? parsed : null
 }
 
 function detectColumnKind(header: string, values: Array<string>): ColumnKind {
@@ -124,35 +102,6 @@ function getColumnWidth(header: string, kind: ColumnKind, values: Array<string>,
 	if (kind === 'currency' || kind === 'number' || kind === 'percent') return isFirst ? 200 : 140
 	const estimated = Math.max(140, Math.min(300, sampleMaxLength * 8 + 24))
 	return isFirst ? Math.max(200, estimated) : estimated
-}
-
-function formatCellValue(value: string, column: ColumnMeta): string {
-	if (!value) return ''
-	if (column.kind === 'currency') {
-		const n = parseNumericValue(value)
-		return n === null ? value : formatDownloadPreviewCurrency(n)
-	}
-	if (column.kind === 'number') {
-		const n = parseNumericValue(value)
-		return n === null ? value : formatDownloadPreviewNumber(n)
-	}
-	if (column.kind === 'percent') {
-		const n = parseNumericValue(value)
-		return n === null ? value : formatDownloadPreviewPercent(n)
-	}
-	if (column.kind === 'date') {
-		return formatDownloadPreviewDate(value, column.header) ?? value
-	}
-	return value
-}
-
-function getCellTone(value: string, column: ColumnMeta): string {
-	if (column.kind !== 'percent') return ''
-	const n = parseNumericValue(value)
-	if (n === null) return ''
-	if (n > 0) return 'text-success'
-	if (n < 0) return 'text-error'
-	return ''
 }
 
 function getInitialSortDirection(kind: ColumnKind): SortDirection {
@@ -281,17 +230,14 @@ export function ChartDatasetModal({
 				: selectedParams.map((param) => ({
 						queryKey: ['chart-preview', dataset.slug, param.value, isPreview] as const,
 						queryFn: async () => {
-							const nonce = isPreview ? `&_n=${Math.random().toString(36).slice(2)}` : ''
-							const url = `/api/private/downloads/chart/${dataset.slug}?param=${encodeURIComponent(param.value)}${nonce}`
-							const response = isPreview ? await fetch(url) : await authorizedFetch(url)
-							if (!response || !response.ok) {
-								const errorData = await response?.json().catch(() => null)
-								throw new Error(errorData?.error ?? `Download failed (${response?.status})`)
-							}
+							const text = await fetchDownloadCsv(
+								`/api/private/downloads/chart/${dataset.slug}?param=${encodeURIComponent(param.value)}`,
+								{ isPreview: !!isPreview, authorizedFetch }
+							)
 							if (isTrial) {
 								void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 							}
-							return response.text()
+							return text
 						},
 						staleTime: 5 * 60 * 1000,
 						refetchOnWindowFocus: false,
@@ -304,17 +250,14 @@ export function ChartDatasetModal({
 		queryFn: async () => {
 			const cat = selectedCategory
 			if (!cat) throw new Error('No category selected')
-			const nonce = isPreview ? `&_n=${Math.random().toString(36).slice(2)}` : ''
-			const url = `/api/private/downloads/chart-breakdown/${dataset.slug}?category=${encodeURIComponent(cat)}${nonce}`
-			const response = isPreview ? await fetch(url) : await authorizedFetch(url)
-			if (!response || !response.ok) {
-				const errorData = await response?.json().catch(() => null)
-				throw new Error(errorData?.error ?? `Download failed (${response?.status})`)
-			}
+			const text = await fetchDownloadCsv(
+				`/api/private/downloads/chart-breakdown/${dataset.slug}?category=${encodeURIComponent(cat)}`,
+				{ isPreview: !!isPreview, authorizedFetch }
+			)
 			if (isTrial) {
 				void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			}
-			return response.text()
+			return text
 		},
 		enabled: isCategoryMode,
 		staleTime: 5 * 60 * 1000,
@@ -509,8 +452,8 @@ export function ChartDatasetModal({
 	const hasSelection = isCategoryMode || selectedParams.length > 0
 	const isBulk = !isCategoryMode && selectedParams.length > 1
 	// The list exists only for two or more picks (the trigger names a single one), so dropping to one brings the
-	// table back.
-	const showingSelected = showSelected && isBulk
+	// table back, and a later second pick opens on the table too.
+	if (showSelected && !isBulk) setShowSelected(false)
 
 	const readyCount = useMemo(() => csvQueries.filter((q) => !!q.data).length, [csvQueries])
 	const loadingCount = useMemo(() => csvQueries.filter((q) => q.isLoading).length, [csvQueries])
@@ -518,7 +461,7 @@ export function ChartDatasetModal({
 	const rowVirtualizer = useVirtualItems({
 		count: sortedRows.length,
 		getScrollElement: () => scrollerRef.current,
-		estimateSize: () => ROW_HEIGHT,
+		estimateSize: () => PREVIEW_ROW_HEIGHT,
 		overscan: 10
 	})
 
@@ -866,7 +809,7 @@ export function ChartDatasetModal({
 	)
 
 	const handleSavePreset = useCallback(
-		(name: string, replaceExisting: boolean) => {
+		(name: string) => {
 			const configBase = extractChartConfig({
 				slug: dataset.slug,
 				headers,
@@ -876,15 +819,12 @@ export function ChartDatasetModal({
 				dateRange,
 				categoryBreakdown: isCategoryMode && selectedCategory ? { category: selectedCategory } : null
 			})
-			saveDownload(
-				{
-					...configBase,
-					id: generatePresetId(),
-					name,
-					createdAt: Date.now()
-				},
-				{ replaceByName: replaceExisting }
-			)
+			saveDownload({
+				...configBase,
+				id: generatePresetId(),
+				name,
+				createdAt: Date.now()
+			})
 			setShowSaveDialog(false)
 			report('save-preset', true, `Saved preset "${name}"`)
 		},
@@ -1158,7 +1098,7 @@ export function ChartDatasetModal({
 
 				<DialogBody kind="flush">
 					<div className="flex h-full min-h-0">
-						<div className={`relative min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
+						<div className={`relative min-w-0 flex-1 flex-col ${showSelected ? 'hidden sm:flex' : 'flex'}`}>
 							{!hasPreviewTarget ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center">
@@ -1350,37 +1290,7 @@ export function ChartDatasetModal({
 											/>
 										) : null}
 									</div>
-									{isPreview ? (
-										<>
-											<div
-												className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
-												style={{
-													top: '20%',
-													backdropFilter: 'blur(4px)',
-													WebkitBackdropFilter: 'blur(4px)',
-													maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
-													WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
-												}}
-											/>
-											<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
-												<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-													<p className="text-sm font-semibold text-pro-text-primary">
-														This is a preview — subscribe to download full datasets
-													</p>
-													<p className="text-xs text-pro-text-tertiary">
-														Get access to all rows, all columns, and unlimited CSV downloads
-													</p>
-													<Link
-														href="/subscribe"
-														className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
-													>
-														<Icon name="arrow-up-right" className="size-4" />
-														Subscribe
-													</Link>
-												</div>
-											</div>
-										</>
-									) : null}
+									{isPreview ? <PreviewPaywall /> : null}
 								</div>
 							)}
 						</div>
@@ -1401,7 +1311,7 @@ export function ChartDatasetModal({
 										() => selectedToggleRef.current
 									)
 								}
-								showOnPhone={showingSelected}
+								showOnPhone={showSelected}
 								onRemove={handleRemoveParam}
 								onClearAll={handleClearParams}
 								onDownload={(param) => handleDownloadSingle(param, 'csv', `download:${param.value}`)}
@@ -1415,11 +1325,7 @@ export function ChartDatasetModal({
 					</div>
 				</DialogBody>
 			</Dialog>
-			{isPreview ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			{isPreview ? <LazySubscribeProModal dialogStore={subscribeModalStore} /> : null}
 			{showSaveDialog ? (
 				<SavePresetDialog
 					suggestedName={suggestedPresetName}
@@ -1429,60 +1335,5 @@ export function ChartDatasetModal({
 				/>
 			) : null}
 		</>
-	)
-}
-
-function PlaceholderRows({
-	columnMeta,
-	gridTemplate,
-	tableWidth,
-	rows,
-	cols
-}: {
-	columnMeta: Array<ColumnMeta>
-	gridTemplate: string
-	tableWidth: number
-	rows: Array<PreviewRow>
-	cols: Set<number>
-}) {
-	if (rows.length === 0) return null
-	const duplicated = [...rows, ...rows]
-	return (
-		<div style={{ minWidth: `${tableWidth}px` }}>
-			{duplicated.map((row, rowIdx) => {
-				const isOdd = (rows.length + rowIdx) % 2 === 1
-				return (
-					<div
-						// oxlint-disable-next-line react/no-array-index-key -- Filler intentionally repeats source rows, so source IDs would collide.
-						key={`placeholder-${rowIdx}`}
-						style={{ display: 'grid', gridTemplateColumns: gridTemplate, height: `${ROW_HEIGHT}px` }}
-					>
-						{columnMeta.map((column, position) => {
-							const rawValue = row.values[column.index] ?? ''
-							const displayValue = formatCellValue(rawValue, column)
-							const isSticky = position === 0
-							const isSelected = cols.has(column.index)
-							const tone = isSelected ? getCellTone(rawValue, column) : ''
-							return (
-								<div
-									key={column.index}
-									className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
-									style={{
-										textAlign: column.align,
-										position: isSticky ? 'sticky' : undefined,
-										left: isSticky ? 0 : undefined,
-										zIndex: isSticky ? 1 : undefined,
-										background: isSticky ? 'var(--bg-overlay)' : isOdd ? 'var(--bg-primary)' : undefined,
-										boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
-									}}
-								>
-									{displayValue}
-								</div>
-							)
-						})}
-					</div>
-				)
-			})}
-		</div>
 	)
 }

@@ -9,6 +9,7 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { EmbedPicker } from '../EmbedPicker'
 import { LlamaAIChartPickerDialog } from '../LlamaAIChartPicker'
 import { LlamaAIChart } from '../nodes/LlamaAIChart'
 import { makeEmptyPeoplePanelItem, type ArticlePeoplePanelConfig } from '../peoplePanel'
@@ -130,6 +131,50 @@ test("removing a person hands focus to the next person's ×, then to Add person 
 	expect(accessibleName(document.activeElement!)).toBe('Add person')
 	expect(findButton('Remove person 1')!.getAttribute('aria-disabled')).toBe('true')
 })
+async function typeInto(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+/** Cancel on a changed draft asks first; Keep editing keeps it open with the draft, and an untouched draft closes. */
+async function expectCancelGuard(title: string, edit: () => Promise<void>) {
+	await click('Cancel')
+	await waitForUi(() => expect(store.getState().open).toBe(false))
+	await act(async () => store.show())
+	await edit()
+	await click('Cancel')
+	const confirmation = await waitForUi(() => {
+		const found = document.querySelector<HTMLElement>('[role="alertdialog"]')
+		expect(found?.textContent).toContain(title)
+		return found!
+	})
+	await act(async () =>
+		[...confirmation.querySelectorAll('button')].find((b) => b.textContent === 'Keep editing')!.click()
+	)
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	expect(store.getState().open).toBe(true)
+}
+test('Cancel closes an untouched people panel at once, and asks before it drops typed bios', async () => {
+	await mountPanel()
+	await expectCancelGuard('Discard this people panel?', () =>
+		typeInto(document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!, 'Moderates the panel.')
+	)
+	expect(document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!.value).toBe('Moderates the panel.')
+})
+test('Cancel closes an untouched embed picker at once, and asks before it drops a pasted link', async () => {
+	function Harness() {
+		store = Ariakit.useDialogStore({ defaultOpen: true })
+		return <EmbedPicker store={store} onInsert={vi.fn()} initialConfig={null} />
+	}
+	await act(async () => root.render(<Harness />))
+	await expectCancelGuard('Discard this embed?', () =>
+		typeInto(
+			document.querySelector<HTMLInputElement>('[role="dialog"] input[inputmode="url"]')!,
+			'https://youtu.be/abc'
+		)
+	)
+})
 test('inserting a panel with a person missing an image shows the error on that row and focuses its image', async () => {
 	const submit = await mountPanel(null)
 	await click('Insert panel')
@@ -211,12 +256,15 @@ test('closing and reopening the picker ignores an old insertion but allows the n
 	await act(async () => store.show())
 	await select()
 	await act(async () => first.resolve(Response.json(chart)))
+	// React Query reports the new opening's pending insertion on its next tick.
+	await waitForUi(() =>
+		expect(
+			[...document.querySelectorAll<HTMLButtonElement>('button')]
+				.find((e) => e.textContent?.includes('Saved chart'))!
+				.getAttribute('aria-busy')
+		).toBe('true')
+	)
 	expect(editor.getJSON().content?.some((n) => n.type === 'llamaaiChart')).toBe(false)
-	expect(
-		[...document.querySelectorAll<HTMLButtonElement>('button')]
-			.find((e) => e.textContent?.includes('Saved chart'))!
-			.getAttribute('aria-busy')
-	).toBe('true')
 	expect(document.body.textContent).toContain('Inserting…')
 	await act(async () => second.resolve(Response.json(chart)))
 	expect(editor.getJSON().content?.filter((n) => n.type === 'llamaaiChart')).toHaveLength(1)
@@ -271,6 +319,20 @@ test('a failed insertion shows a plain error under the chart inside the open pic
 	session.serve({ '/charts/saved': chart })
 	await selectSavedChart()
 	await waitForUi(() => expect(editor.getJSON().content?.filter((n) => n.type === 'llamaaiChart')).toHaveLength(1))
+})
+test('a chart insertion that is retried keeps its error on screen while the retry runs', async () => {
+	session.serve({
+		'/charts/saved': () => {
+			throw new Error('Detail unavailable')
+		}
+	})
+	await mountCharts()
+	await selectSavedChart()
+	await waitForUi(() => expect(document.querySelector('li [role="alert"]')).not.toBeNull())
+	session.serve({ '/charts/saved': () => new Promise<Response>(() => {}) })
+	await selectSavedChart()
+	await waitForUi(() => expect(document.body.textContent).toContain('Inserting…'))
+	expect(document.querySelector('li [role="alert"]')?.textContent).toBe("Couldn't insert this chart. Try again.")
 })
 test('a saved chart without usable data says so instead of inserting', async () => {
 	session.serve({ '/charts/saved': { chartConfig: chart.chartConfig, chartData: [] } })

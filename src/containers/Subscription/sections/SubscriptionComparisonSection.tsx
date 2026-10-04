@@ -60,8 +60,8 @@ function ComparisonPlanHead({
 	isSelected: boolean
 	isCurrentPlan: boolean
 	isLowerTier: boolean
-	hideAction?: boolean
-	onAction?: (plan: PlanKey) => void
+	hideAction: boolean
+	onAction: (plan: PlanKey) => void
 }) {
 	const meta = PLAN_META_BY_CYCLE[billingCycle][plan]
 	const colStyle = isSelected ? planHeadStyles.selected : planHeadStyles.default
@@ -105,7 +105,9 @@ function ComparisonPlanHead({
 					<button
 						type="button"
 						className={`h-7 rounded-[6px] border px-2 text-[10px] leading-3 md:h-8 md:rounded-lg md:text-xs ${btnStyle}`}
-						onClick={() => onAction?.(plan)}
+						// Several plans share an action label, so the name says which plan it starts.
+						aria-label={`${meta.action}: ${meta.title}`}
+						onClick={() => onAction(plan)}
 					>
 						{meta.action}
 					</button>
@@ -122,18 +124,18 @@ export function SubscriptionComparisonSection({
 	comparisonSections,
 	billingCycle,
 	selectedPlan,
-	currentPlan = null,
-	hidePlanActions = false,
+	currentPlan,
+	hidePlanActions,
 	onPlanAction
 }: {
 	planOrder: Array<PlanKey>
 	comparisonSections: Array<ComparisonSection>
 	billingCycle: BillingCycle
 	selectedPlan: PlanKey
-	currentPlan?: PlanKey | null
+	currentPlan: PlanKey | null
 	// Withhold plan-change buttons while the current plan is unknown
-	hidePlanActions?: boolean
-	onPlanAction?: (plan: PlanKey) => void
+	hidePlanActions: boolean
+	onPlanAction: (plan: PlanKey) => void
 }) {
 	const headerPlanTrackRef = useRef<HTMLDivElement>(null)
 	const selectedIndex = planOrder.indexOf(selectedPlan)
@@ -146,9 +148,13 @@ export function SubscriptionComparisonSection({
 
 	return (
 		<section className="mt-12 bg-white py-12 md:mt-0 md:py-20 dark:bg-sub-mobile-table-section-bg md:dark:bg-sub-desktop-table-section-bg">
-			<div className="mx-auto w-full px-2 md:max-w-[984px] md:px-0">
+			{/* One table around the plan header and the body, so every cell reads with its plan's column header. */}
+			<div className="mx-auto w-full px-2 md:max-w-[984px] md:px-0" role="table" aria-label="Plan comparison">
 				{/* ── Sticky plan header (mobile: sticky top-0, desktop: static) ── */}
-				<div className="sticky top-0 z-40 overflow-hidden bg-white md:static dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg">
+				<div
+					role="rowgroup"
+					className="sticky top-0 z-40 overflow-hidden bg-white md:static dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg"
+				>
 					<div className="flex" role="row">
 						<div
 							role="columnheader"
@@ -189,7 +195,7 @@ export function SubscriptionComparisonSection({
 					className="relative isolate scrollbar-none overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
 					onScroll={onBodyScroll}
 				>
-					<div className="w-max" role="table" aria-label="Plan comparison">
+					<div className="w-max">
 						<div className="relative">
 							{comparisonSections.map((section, sectionIndex) => {
 								const isLastSection = sectionIndex === comparisonSections.length - 1

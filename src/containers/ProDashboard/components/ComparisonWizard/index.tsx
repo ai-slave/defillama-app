@@ -1,6 +1,5 @@
-import type { MutationStatus } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { DialogBody, DialogToolbar } from '~/ui/Dialog'
+import { DialogBody, DialogDiscardGuard, DialogToolbar, useDialogLeave } from '~/ui/Dialog'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -17,7 +16,7 @@ import { SelectTypeStep } from './steps/SelectTypeStep'
 import type { ComparisonPreset } from './types'
 
 interface ComparisonWizardProps {
-	creationStatus: MutationStatus
+	creating: boolean
 	onComplete: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
@@ -35,10 +34,11 @@ interface ComparisonWizardProps {
 function ComparisonWizardContent({
 	onComplete,
 	onExit,
-	creationStatus,
+	creating,
 	feedback
 }: Omit<ComparisonWizardProps, 'comparisonPreset'>) {
 	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
+	const leave = useDialogLeave()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const { chainsByName } = useAppMetadata()
 
@@ -173,7 +173,7 @@ function ComparisonWizardContent({
 	}
 
 	const handleGenerate = () => {
-		if (!state.dashboardName.trim()) return
+		if (derived.blockedReason) return
 
 		const metricCards = generateComparisonMetrics()
 		const charts = generateComparisonCharts()
@@ -193,9 +193,9 @@ function ComparisonWizardContent({
 		}
 
 		onComplete({
-			dashboardName: state.dashboardName.trim(),
+			dashboardName: derived.dashboardName.trim(),
 			visibility: state.visibility,
-			tags: state.tags,
+			tags: derived.tags,
 			description: state.description,
 			items
 		})
@@ -211,16 +211,19 @@ function ComparisonWizardContent({
 				return <SelectMetricsStep />
 			case 'preview':
 				return <PreviewStep />
-			default:
-				return null
 		}
 	})()
 
 	// Rendered straight into the dialog surface: the steps band, the scrolling step, and the navigation footer.
 	return (
 		<>
+			<DialogDiscardGuard
+				when={derived.dirty && !creating}
+				title="Discard this comparison?"
+				description="The choices you made are not saved."
+			/>
 			{/* Creating locks the steps, but not the footer: the pending Create keeps focus and its "Creating…" label. */}
-			<fieldset disabled={creationStatus === 'pending'} className="contents">
+			<fieldset disabled={creating} className="contents">
 				<DialogToolbar>
 					<WizardSteps currentStep={state.step} />
 				</DialogToolbar>
@@ -232,32 +235,20 @@ function ComparisonWizardContent({
 			</fieldset>
 			<WizardNavigation
 				currentStep={state.step}
-				comparisonType={state.comparisonType}
-				canProceed={derived.canProceed}
+				blockedReason={derived.blockedReason}
 				onNext={actions.goToNextStep}
-				onBack={derived.canGoBack ? actions.goToPrevStep : onExit}
+				onBack={derived.canGoBack ? actions.goToPrevStep : () => leave(onExit)}
 				onGenerate={handleGenerate}
-				creationStatus={creationStatus}
+				creating={creating}
 			/>
 		</>
 	)
 }
 
-export function ComparisonWizard({
-	onComplete,
-	onExit,
-	comparisonPreset,
-	creationStatus,
-	feedback
-}: ComparisonWizardProps) {
+export function ComparisonWizard({ onComplete, onExit, comparisonPreset, creating, feedback }: ComparisonWizardProps) {
 	return (
 		<ComparisonWizardProvider comparisonPreset={comparisonPreset}>
-			<ComparisonWizardContent
-				creationStatus={creationStatus}
-				feedback={feedback}
-				onComplete={onComplete}
-				onExit={onExit}
-			/>
+			<ComparisonWizardContent creating={creating} feedback={feedback} onComplete={onComplete} onExit={onExit} />
 		</ComparisonWizardProvider>
 	)
 }

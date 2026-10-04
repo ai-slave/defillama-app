@@ -1,38 +1,22 @@
-import { useCallback, useId, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import {
-	CHAIN_CHART_TYPES,
-	getProDashboardChartTypeConfig,
-	PROTOCOL_CHART_TYPES,
-	type RWAOverviewChartBreakdown,
-	type RWAOverviewChartMetric,
-	type RWAOverviewChartView
-} from '../../types'
-import { ProSegmented, proInputStyles } from '../../ui'
-import { AdvancedTvlChartTab } from './AdvancedTvlChartTab'
+import { CHAIN_CHART_TYPES, getProDashboardChartTypeConfig, PROTOCOL_CHART_TYPES } from '../../types'
+import { ProSegmented } from '../../ui'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
-import { BorrowedChartTab } from './BorrowedChartTab'
 import { CategoryCardsGrid } from './CategoryCardsGrid'
 import { CategoryFormHeader } from './CategoryFormHeader'
 import { ChartCreationModeToggle } from './ChartCreationModeToggle'
 import { ChartTypePills } from './ChartTypePills'
 import { CombinedChartPreview } from './CombinedChartPreview'
 import { EntityPickerList } from './EntityPickerList'
-import { IncomeStatementChartTab } from './IncomeStatementChartTab'
 import { ADD_CARD_PANES, type AddCardPane } from './panes'
-import { RWAChartTab } from './RWAChartTab'
-import { SelectionFooter } from './SelectionFooter'
+import { ComposerChips, ComposerNameField, SelectionFooter } from './SelectionFooter'
 import { SeparateChartsPreview } from './SeparateChartsPreview'
-import { StablecoinsChartTab } from './StablecoinsChartTab'
 import type { ChartTabType } from './types'
-import { UnlocksChartTab } from './UnlocksChartTab'
-import { YieldsChartTab } from './YieldsChartTab'
-
-const EMPTY_ARRAY: Array<string> = []
 
 const SUBJECT_OPTIONS: Array<SegmentedControlOption<'chain' | 'protocol'>> = [
 	{
@@ -76,96 +60,9 @@ interface UnifiedChartTabProps {
 	onComposerItemColorChange: (id: string, color: string) => void
 	onAddToComposer: (typesToAdd?: Array<string>, options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
 	onRemoveFromComposer: (id: string) => void
+	/** The single-card category's form (CategoryChartForm); chains and protocols compose series here instead. */
+	categoryForm: ReactNode
 }
-
-interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
-	selectedYieldPool?: {
-		configID: string
-		name: string
-		project: string
-		chain: string
-	} | null
-	onSelectedYieldPoolChange?: (
-		pool: {
-			configID: string
-			name: string
-			project: string
-			chain: string
-		} | null
-	) => void
-	selectedYieldChains?: Array<string>
-	selectedYieldProjects?: Array<string>
-	selectedYieldCategories?: Array<string>
-	selectedYieldTokens?: Array<string>
-	minTvl?: number | null
-	maxTvl?: number | null
-	onSelectedYieldChainsChange?: (chains: Array<string>) => void
-	onSelectedYieldProjectsChange?: (projects: Array<string>) => void
-	onSelectedYieldCategoriesChange?: (categories: Array<string>) => void
-	onSelectedYieldTokensChange?: (tokens: Array<string>) => void
-	onMinTvlChange?: (tvl: number | null) => void
-	onMaxTvlChange?: (tvl: number | null) => void
-	selectedYieldChartType?: string
-	onSelectedYieldChartTypeChange?: (chartType: string) => void
-	selectedStablecoinChain?: string
-	selectedStablecoinChartType?: string
-	stablecoinMode?: 'chain' | 'asset'
-	selectedStablecoinAsset?: string | null
-	selectedStablecoinAssetId?: string | null
-	selectedStablecoinAssetChartType?: string
-	onSelectedStablecoinChainChange?: (chain: string) => void
-	onSelectedStablecoinChartTypeChange?: (chartType: string) => void
-	onStablecoinModeChange?: (mode: 'chain' | 'asset') => void
-	onSelectedStablecoinAssetChange?: (asset: string | null) => void
-	onSelectedStablecoinAssetIdChange?: (id: string | null) => void
-	onSelectedStablecoinAssetChartTypeChange?: (chartType: string) => void
-	selectedAdvancedTvlProtocol?: string | null
-	selectedAdvancedTvlProtocolName?: string | null
-	selectedAdvancedTvlChartType?: string
-	onSelectedAdvancedTvlProtocolChange?: (protocol: string | null) => void
-	onSelectedAdvancedTvlProtocolNameChange?: (name: string | null) => void
-	onSelectedAdvancedTvlChartTypeChange?: (chartType: string) => void
-	selectedBorrowedProtocol?: string | null
-	selectedBorrowedProtocolName?: string | null
-	selectedBorrowedChartType?: string
-	onSelectedBorrowedProtocolChange?: (protocol: string | null) => void
-	onSelectedBorrowedProtocolNameChange?: (name: string | null) => void
-	onSelectedBorrowedChartTypeChange?: (chartType: string) => void
-	selectedIncomeStatementProtocol?: string | null
-	selectedIncomeStatementProtocolName?: string | null
-	onSelectedIncomeStatementProtocolChange?: (protocol: string | null) => void
-	onSelectedIncomeStatementProtocolNameChange?: (name: string | null) => void
-	selectedUnlocksProtocol?: string | null
-	selectedUnlocksProtocolName?: string | null
-	selectedUnlocksChartType?: 'total' | 'schedule' | 'allocation' | 'locked-unlocked'
-	onSelectedUnlocksProtocolChange?: (protocol: string | null) => void
-	onSelectedUnlocksProtocolNameChange?: (name: string | null) => void
-	onSelectedUnlocksChartTypeChange?: (type: 'total' | 'schedule' | 'allocation' | 'locked-unlocked') => void
-	rwaMode?: 'overview' | 'asset'
-	selectedRwaChain?: string
-	selectedRwaMetric?: RWAOverviewChartMetric
-	selectedRwaChartView?: RWAOverviewChartView
-	selectedRwaBreakdown?: RWAOverviewChartBreakdown
-	selectedRwaTreemapNestedBy?: string
-	selectedRwaAssetId?: string | null
-	selectedRwaAssetName?: string | null
-	selectedRwaAssetMetrics?: Array<RWAOverviewChartMetric>
-	onRwaModeChange?: (mode: 'overview' | 'asset') => void
-	onSelectedRwaChainChange?: (chain: string) => void
-	onSelectedRwaMetricChange?: (metric: RWAOverviewChartMetric) => void
-	onSelectedRwaChartViewChange?: (view: RWAOverviewChartView) => void
-	onSelectedRwaBreakdownChange?: (breakdown: RWAOverviewChartBreakdown) => void
-	onSelectedRwaTreemapNestedByChange?: (nestedBy: string) => void
-	onSelectedRwaAssetIdChange?: (id: string | null) => void
-	onSelectedRwaAssetNameChange?: (name: string | null) => void
-	onSelectedRwaAssetMetricsChange?: (metrics: Array<RWAOverviewChartMetric>) => void
-}
-
-const DEFAULT_SELECTED_RWA_ASSET_METRICS: NonNullable<UnifiedChartTabPropsExtended['selectedRwaAssetMetrics']> = [
-	'activeMcap',
-	'onChainMcap',
-	'defiActiveTvl'
-]
 
 export function UnifiedChartTab({
 	selectedChartTab,
@@ -188,79 +85,11 @@ export function UnifiedChartTab({
 	onComposerItemColorChange,
 	onAddToComposer,
 	onRemoveFromComposer,
-	selectedYieldPool = null,
-	onSelectedYieldPoolChange,
-	selectedYieldChains = EMPTY_ARRAY,
-	selectedYieldProjects = EMPTY_ARRAY,
-	selectedYieldCategories = EMPTY_ARRAY,
-	selectedYieldTokens = EMPTY_ARRAY,
-	minTvl = null,
-	maxTvl = null,
-	onSelectedYieldChainsChange,
-	onSelectedYieldProjectsChange,
-	onSelectedYieldCategoriesChange,
-	onSelectedYieldTokensChange,
-	onMinTvlChange,
-	onMaxTvlChange,
-	selectedYieldChartType = 'tvl-apy',
-	onSelectedYieldChartTypeChange,
-	selectedStablecoinChain = 'All',
-	selectedStablecoinChartType = 'totalMcap',
-	stablecoinMode = 'chain',
-	selectedStablecoinAsset = null,
-	selectedStablecoinAssetId = null,
-	selectedStablecoinAssetChartType = 'totalCirc',
-	onSelectedStablecoinChainChange,
-	onSelectedStablecoinChartTypeChange,
-	onStablecoinModeChange,
-	onSelectedStablecoinAssetChange,
-	onSelectedStablecoinAssetIdChange,
-	onSelectedStablecoinAssetChartTypeChange,
-	selectedAdvancedTvlProtocol = null,
-	selectedAdvancedTvlProtocolName = null,
-	selectedAdvancedTvlChartType = 'tvl',
-	onSelectedAdvancedTvlProtocolChange,
-	onSelectedAdvancedTvlProtocolNameChange,
-	onSelectedAdvancedTvlChartTypeChange,
-	selectedBorrowedProtocol = null,
-	selectedBorrowedProtocolName = null,
-	selectedBorrowedChartType = 'chainsBorrowed',
-	onSelectedBorrowedProtocolChange,
-	onSelectedBorrowedProtocolNameChange,
-	onSelectedBorrowedChartTypeChange,
-	selectedIncomeStatementProtocol = null,
-	selectedIncomeStatementProtocolName = null,
-	onSelectedIncomeStatementProtocolChange,
-	onSelectedIncomeStatementProtocolNameChange,
-	selectedUnlocksProtocol = null,
-	selectedUnlocksProtocolName = null,
-	selectedUnlocksChartType = 'total',
-	onSelectedUnlocksProtocolChange,
-	onSelectedUnlocksProtocolNameChange,
-	onSelectedUnlocksChartTypeChange,
-	rwaMode = 'overview',
-	selectedRwaChain = 'All',
-	selectedRwaMetric = 'activeMcap',
-	selectedRwaChartView = 'timeSeries',
-	selectedRwaBreakdown = 'assetGroup',
-	selectedRwaTreemapNestedBy = 'none',
-	selectedRwaAssetId = null,
-	selectedRwaAssetName = null,
-	selectedRwaAssetMetrics = DEFAULT_SELECTED_RWA_ASSET_METRICS,
-	onRwaModeChange,
-	onSelectedRwaChainChange,
-	onSelectedRwaMetricChange,
-	onSelectedRwaChartViewChange,
-	onSelectedRwaBreakdownChange,
-	onSelectedRwaTreemapNestedByChange,
-	onSelectedRwaAssetIdChange,
-	onSelectedRwaAssetNameChange,
-	onSelectedRwaAssetMetricsChange
-}: UnifiedChartTabPropsExtended) {
+	categoryForm
+}: UnifiedChartTabProps) {
 	const { loading: metaLoading, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { protocols, chains } = useProDashboardCatalog()
 	const subjectParameter = useModalFieldBinding('subject', selectedChartTab === 'protocol' ? 'protocol' : 'chain')
-	const nameId = useId()
 	const [pane, setPane] = useState<AddCardPane>('configure')
 
 	const handleSubjectTabChange = (tab: ChartTabType) => {
@@ -269,7 +98,6 @@ export function UnifiedChartTab({
 	}
 
 	const handleChartTypeSelect = useCallback((type: string) => onChartTypesChange([type]), [onChartTypesChange])
-	const handleBulkChartTypeSelect = useCallback((type: string) => onBulkChartTypeChange(type), [onBulkChartTypeChange])
 
 	const selectedChartTypeSingle = selectedChartTypes[0] ?? null
 	const bulkChartType = useMemo(() => {
@@ -328,11 +156,10 @@ export function UnifiedChartTab({
 
 	const handleClearSelection = useCallback(() => {
 		if (!selectedChartTypeSingle) return
-		const itemsToRemove = composerItems.filter((item) => item.type === selectedChartTypeSingle)
-		for (const item of itemsToRemove) {
-			onRemoveFromComposer(item.id)
+		for (const item of composerItems) {
+			if (item.type === selectedChartTypeSingle && item.subjectType === selectedChartTab) onRemoveFromComposer(item.id)
 		}
-	}, [selectedChartTypeSingle, composerItems, onRemoveFromComposer])
+	}, [selectedChartTypeSingle, selectedChartTab, composerItems, onRemoveFromComposer])
 
 	const globalAvailableChartTypes = useMemo(() => {
 		const set = new Set<string>()
@@ -470,225 +297,12 @@ export function UnifiedChartTab({
 		)
 	}
 
-	if (selectedChartTab === 'yields') {
+	// The single-card categories save from their own selection, so they show no series composer.
+	if (selectedChartTab !== 'chain' && selectedChartTab !== 'protocol') {
 		return (
 			<div className="flex h-full flex-col">
 				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<YieldsChartTab
-						selectedYieldPool={selectedYieldPool}
-						onSelectedYieldPoolChange={onSelectedYieldPoolChange || (() => {})}
-						selectedYieldChartType={selectedYieldChartType}
-						onSelectedYieldChartTypeChange={onSelectedYieldChartTypeChange || (() => {})}
-						selectedYieldChains={selectedYieldChains}
-						selectedYieldProjects={selectedYieldProjects}
-						selectedYieldCategories={selectedYieldCategories}
-						selectedYieldTokens={selectedYieldTokens}
-						minTvl={minTvl}
-						maxTvl={maxTvl}
-						onSelectedYieldChainsChange={onSelectedYieldChainsChange || (() => {})}
-						onSelectedYieldProjectsChange={onSelectedYieldProjectsChange || (() => {})}
-						onSelectedYieldCategoriesChange={onSelectedYieldCategoriesChange || (() => {})}
-						onSelectedYieldTokensChange={onSelectedYieldTokensChange || (() => {})}
-						onMinTvlChange={onMinTvlChange || (() => {})}
-						onMaxTvlChange={onMaxTvlChange || (() => {})}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
-			</div>
-		)
-	}
-
-	if (selectedChartTab === 'stablecoins') {
-		return (
-			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<StablecoinsChartTab
-						selectedStablecoinChain={selectedStablecoinChain}
-						selectedStablecoinChartType={selectedStablecoinChartType}
-						stablecoinMode={stablecoinMode}
-						selectedStablecoinAsset={selectedStablecoinAsset}
-						selectedStablecoinAssetId={selectedStablecoinAssetId}
-						selectedStablecoinAssetChartType={selectedStablecoinAssetChartType}
-						onSelectedStablecoinChainChange={onSelectedStablecoinChainChange || (() => {})}
-						onSelectedStablecoinChartTypeChange={onSelectedStablecoinChartTypeChange || (() => {})}
-						onStablecoinModeChange={onStablecoinModeChange || (() => {})}
-						onSelectedStablecoinAssetChange={onSelectedStablecoinAssetChange || (() => {})}
-						onSelectedStablecoinAssetIdChange={onSelectedStablecoinAssetIdChange || (() => {})}
-						onSelectedStablecoinAssetChartTypeChange={onSelectedStablecoinAssetChartTypeChange || (() => {})}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
-			</div>
-		)
-	}
-
-	if (selectedChartTab === 'rwa') {
-		return (
-			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<RWAChartTab
-						rwaMode={rwaMode}
-						selectedRwaChain={selectedRwaChain}
-						selectedRwaMetric={selectedRwaMetric}
-						selectedRwaChartView={selectedRwaChartView}
-						selectedRwaBreakdown={selectedRwaBreakdown}
-						selectedRwaTreemapNestedBy={selectedRwaTreemapNestedBy}
-						selectedRwaAssetId={selectedRwaAssetId}
-						selectedRwaAssetName={selectedRwaAssetName}
-						selectedRwaAssetMetrics={selectedRwaAssetMetrics}
-						onRwaModeChange={onRwaModeChange || (() => {})}
-						onSelectedRwaChainChange={onSelectedRwaChainChange || (() => {})}
-						onSelectedRwaMetricChange={onSelectedRwaMetricChange || (() => {})}
-						onSelectedRwaChartViewChange={onSelectedRwaChartViewChange || (() => {})}
-						onSelectedRwaBreakdownChange={onSelectedRwaBreakdownChange || (() => {})}
-						onSelectedRwaTreemapNestedByChange={onSelectedRwaTreemapNestedByChange || (() => {})}
-						onSelectedRwaAssetIdChange={onSelectedRwaAssetIdChange || (() => {})}
-						onSelectedRwaAssetNameChange={onSelectedRwaAssetNameChange || (() => {})}
-						onSelectedRwaAssetMetricsChange={onSelectedRwaAssetMetricsChange || (() => {})}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
-			</div>
-		)
-	}
-
-	if (selectedChartTab === 'advanced-tvl') {
-		return (
-			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<AdvancedTvlChartTab
-						selectedAdvancedTvlProtocol={selectedAdvancedTvlProtocol}
-						selectedAdvancedTvlProtocolName={selectedAdvancedTvlProtocolName}
-						selectedAdvancedTvlChartType={selectedAdvancedTvlChartType}
-						onSelectedAdvancedTvlProtocolChange={onSelectedAdvancedTvlProtocolChange || (() => {})}
-						onSelectedAdvancedTvlProtocolNameChange={onSelectedAdvancedTvlProtocolNameChange || (() => {})}
-						onSelectedAdvancedTvlChartTypeChange={onSelectedAdvancedTvlChartTypeChange || (() => {})}
-						protocolOptions={protocolOptions}
-						protocolsLoading={protocolsLoading}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
-			</div>
-		)
-	}
-
-	if (selectedChartTab === 'borrowed') {
-		return (
-			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<BorrowedChartTab
-						selectedBorrowedProtocol={selectedBorrowedProtocol}
-						selectedBorrowedProtocolName={selectedBorrowedProtocolName}
-						selectedBorrowedChartType={selectedBorrowedChartType}
-						onSelectedBorrowedProtocolChange={onSelectedBorrowedProtocolChange || (() => {})}
-						onSelectedBorrowedProtocolNameChange={onSelectedBorrowedProtocolNameChange || (() => {})}
-						onSelectedBorrowedChartTypeChange={onSelectedBorrowedChartTypeChange || (() => {})}
-						protocolOptions={protocolOptions}
-						protocolsLoading={protocolsLoading}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
-			</div>
-		)
-	}
-
-	if (selectedChartTab === 'income-statement') {
-		return (
-			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<IncomeStatementChartTab
-						selectedIncomeStatementProtocol={selectedIncomeStatementProtocol}
-						selectedIncomeStatementProtocolName={selectedIncomeStatementProtocolName}
-						onSelectedIncomeStatementProtocolChange={onSelectedIncomeStatementProtocolChange || (() => {})}
-						onSelectedIncomeStatementProtocolNameChange={onSelectedIncomeStatementProtocolNameChange || (() => {})}
-						protocolOptions={protocolOptions}
-						protocolsLoading={protocolsLoading}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
-			</div>
-		)
-	}
-
-	if (selectedChartTab === 'unlocks') {
-		return (
-			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
-				<div className="min-h-0 flex-1 overflow-y-auto">
-					<UnlocksChartTab
-						selectedUnlocksProtocol={selectedUnlocksProtocol}
-						selectedUnlocksProtocolName={selectedUnlocksProtocolName}
-						selectedUnlocksChartType={selectedUnlocksChartType}
-						onSelectedUnlocksProtocolChange={onSelectedUnlocksProtocolChange || (() => {})}
-						onSelectedUnlocksProtocolNameChange={onSelectedUnlocksProtocolNameChange || (() => {})}
-						onSelectedUnlocksChartTypeChange={onSelectedUnlocksChartTypeChange || (() => {})}
-						protocolOptions={protocolOptions}
-						protocolsLoading={protocolsLoading}
-					/>
-				</div>
-				<SelectionFooter
-					composerItems={composerItems}
-					chartCreationMode={chartCreationMode}
-					unifiedChartName={unifiedChartName}
-					onChartCreationModeChange={onChartCreationModeChange}
-					onUnifiedChartNameChange={onUnifiedChartNameChange}
-					onComposerItemColorChange={onComposerItemColorChange}
-					onRemoveFromComposer={onRemoveFromComposer}
-				/>
+				<div className="min-h-0 flex-1 overflow-y-auto">{categoryForm}</div>
 			</div>
 		)
 	}
@@ -756,18 +370,7 @@ export function UnifiedChartTab({
 
 				<div className={`min-h-0 flex-col gap-3 overflow-y-auto lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}>
 					{chartCreationMode === 'combined' ? (
-						<div className="shrink-0">
-							<label htmlFor={nameId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
-								Card name (optional)
-							</label>
-							<input
-								id={nameId}
-								type="text"
-								value={unifiedChartName}
-								onChange={(e) => onUnifiedChartNameChange(e.target.value)}
-								className={proInputStyles}
-							/>
-						</div>
+						<ComposerNameField value={unifiedChartName} onChange={onUnifiedChartNameChange} />
 					) : null}
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
@@ -776,7 +379,7 @@ export function UnifiedChartTab({
 							<ChartTypePills
 								chartTypes={bulkChartTypeOptions}
 								selectedType={bulkChartType}
-								onSelect={handleBulkChartTypeSelect}
+								onSelect={onBulkChartTypeChange}
 								isLoading={metaLoading}
 								mode={selectedChartTab === 'protocol' ? 'protocol' : 'chain'}
 							/>
@@ -809,32 +412,11 @@ export function UnifiedChartTab({
 
 					{composerItems.length > 0 ? (
 						<div className="flex shrink-0 items-center gap-2 overflow-x-auto py-1">
-							{composerItems.map((item) => (
-								<div
-									key={item.id}
-									className="flex shrink-0 items-center gap-1.5 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs"
-								>
-									<input
-										type="color"
-										value={item.color || '#3e61cc'}
-										onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
-										className="size-4 cursor-pointer rounded-sm border-0 bg-transparent p-0"
-										aria-label="Select chart color"
-									/>
-									<span className="whitespace-nowrap text-pro-text-primary">
-										{item.subjectType === 'protocol' ? item.protocol : item.chain} -{' '}
-										{getProDashboardChartTypeConfig(item.type)?.title || item.type}
-									</span>
-									<button
-										type="button"
-										onClick={() => onRemoveFromComposer(item.id)}
-										className="text-pro-text-tertiary transition-colors hover:text-error"
-										aria-label="Remove from selection"
-									>
-										<Icon name="x" height={12} width={12} />
-									</button>
-								</div>
-							))}
+							<ComposerChips
+								composerItems={composerItems}
+								onComposerItemColorChange={onComposerItemColorChange}
+								onRemoveFromComposer={onRemoveFromComposer}
+							/>
 						</div>
 					) : null}
 				</div>

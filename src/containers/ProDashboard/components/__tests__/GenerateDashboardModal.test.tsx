@@ -66,7 +66,8 @@ afterEach(async () => {
 })
 test('generation waits for persistence, retains a failed draft, and navigates only after a successful retry', async () => {
 	const pending = Promise.withResolvers<{ created: Dashboard }>()
-	save.mockReturnValueOnce(pending.promise).mockResolvedValueOnce({ created: dashboard })
+	const retry = Promise.withResolvers<{ created: Dashboard }>()
+	save.mockReturnValueOnce(pending.promise).mockReturnValueOnce(retry.promise)
 	await render()
 	draft()
 	await submit()
@@ -81,6 +82,10 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	expect(toast.error).not.toHaveBeenCalled()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('My analysis')
 	await submit()
+	await waitForUi(() => expect(save).toHaveBeenCalledTimes(2))
+	// The retry runs under the error it answers.
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable')
+	await act(async () => retry.resolve({ created: dashboard }))
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/pro/new')
 	expect(mocks.creator).toHaveBeenCalledOnce()
@@ -130,6 +135,23 @@ test.each([
 	expect(save).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	expect(toast.error).not.toHaveBeenCalled()
+})
+
+test('a generation retry keeps the failure on screen while it runs', async () => {
+	mocks.creator
+		.mockImplementationOnce(async () => new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'))
+		.mockImplementationOnce(() => new Promise(() => {}))
+	await render()
+	draft()
+	await submit()
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	await submit()
+
+	await waitForUi(() => expect(mocks.creator).toHaveBeenCalledTimes(2))
+	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-busy')).toBe('true')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+		'Generation unavailable.Your draft is still here. Try again.'
+	)
 })
 
 test('iteration preserves existing metadata, awaits saving, and closes without creation navigation', async () => {
@@ -264,4 +286,41 @@ test('generation finishing after leaving does not start a save in a new opening'
 	expect(save).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
+})
+
+async function pressEscape() {
+	await act(async () => {
+		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+	})
+}
+
+test('leaving with a typed prompt asks before discarding it', async () => {
+	await render()
+	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
+	await act(async () => {
+		prompt.focus()
+		prompt.value = 'Compare the fees of Ethereum and Arbitrum'
+		prompt.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+
+	await pressEscape()
+	await waitForUi(() => expect(document.body.textContent).toContain('Discard this prompt?'))
+	expect(close).not.toHaveBeenCalled()
+
+	const discard = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Discard')!
+	await act(async () => discard.click())
+	expect(close).toHaveBeenCalledOnce()
+})
+
+test('leaving after a failed save asks before discarding the generated dashboard', async () => {
+	save.mockRejectedValueOnce(new Error('Save unavailable'))
+	await render()
+	draft()
+	await submit()
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
+
+	await act(async () => document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.focus())
+	await pressEscape()
+	await waitForUi(() => expect(document.body.textContent).toContain('Discard the generated dashboard?'))
+	expect(close).not.toHaveBeenCalled()
 })

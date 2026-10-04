@@ -140,10 +140,8 @@ export function DashboardTestProvider({ children, ...state }: DashboardTestState
 																	<C.UI.Provider
 																		value={{
 																			createDashboardDialogStore,
-																			showGenerateDashboardModal: false,
-																			setShowGenerateDashboardModal: noop,
-																			showIterateDashboardModal: false,
-																			setShowIterateDashboardModal: noop,
+																			aiDialog: null,
+																			setAiDialog: noop,
 																			...state.ui
 																		}}
 																	>

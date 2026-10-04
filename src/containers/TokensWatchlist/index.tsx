@@ -9,8 +9,9 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { DeletePortfolioButton } from '~/components/DeletePortfolioButton'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
@@ -30,7 +31,6 @@ import { TokensSourceAvailability } from '~/containers/Tokens/SourceAvailability
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
 import type { TokensTableRow } from '~/containers/Tokens/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
-import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -38,6 +38,7 @@ import { Icon } from '~/ui/Icon'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 import { mergeMarketsSummary } from './marketsMerge'
 
 const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
@@ -98,7 +99,9 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 		}
 	}
 
-	const { data, isLoading, isFetching, isError, refetch } = useWatchlistTokensTable(savedTokenIds)
+	const tokensQuery = useWatchlistTokensTable(savedTokenIds)
+	const { data, isLoading, isFetching, refetch } = tokensQuery
+	const failed = queryReadFailed(tokensQuery)
 	const { data: marketsList } = useQuery({
 		queryKey: ['tokens-markets-summary'],
 		queryFn: () => fetchJson<TokenMarketsListResponse>('/api/public/markets/tokens'),
@@ -153,7 +156,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 			<WatchListTabs />
 			<div className="flex flex-col gap-2">
 				<TokensPortfolioSelection />
-				{hasSavedTokens && data && isError ? (
+				{hasSavedTokens && data && failed ? (
 					<InlineStatus variant="error">Unable to refresh token data. Showing the last available data.</InlineStatus>
 				) : null}
 				{data ? (
@@ -179,15 +182,20 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							size="md"
 						/>
 					</TableToolbar>
-					{hasSavedTokens && isLoading ? (
-						<SurfaceBodyLoadingStatus className="p-2" />
-					) : hasSavedTokens && !data && isError ? (
+					{hasSavedTokens && !data && failed ? (
 						<SurfaceBodyStatus variant="error" className="p-2">
 							<p>Token data is unavailable. Your saved tokens are unchanged.</p>
-							<Button size="md" className="mt-2" onClick={() => void refetch()}>
+							<Button
+								size="md"
+								className="mt-2"
+								pendingLabel={isFetching ? 'Retrying…' : null}
+								onClick={() => void refetch()}
+							>
 								Retry
 							</Button>
 						</SurfaceBodyStatus>
+					) : hasSavedTokens && isLoading ? (
+						<SurfaceBodyLoadingStatus className="p-2" />
 					) : hasSavedTokens && rows.length > 0 ? (
 						<PaginatedTable
 							table={table}
@@ -243,6 +251,7 @@ function ExpandedTokenMarkets({ geckoId, symbol }: { geckoId: string; symbol: st
 
 function TokensPortfolioSelection() {
 	const [open, setOpen] = useState(false)
+	const newButtonRef = useRef<HTMLButtonElement>(null)
 	const { portfolios, selectedPortfolio, addPortfolio, removePortfolio, setSelectedPortfolio } = useBookmarks('tokens')
 
 	return (
@@ -257,22 +266,11 @@ function TokensPortfolioSelection() {
 					className={`${selectTriggerStyles('filter', 'md')} min-w-[100px]`}
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
-				<Button type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
+				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
 					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>
 				</Button>
-				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
-					<Button
-						type="button"
-						variant="destructive"
-						size="md"
-						onClick={() => removePortfolio(selectedPortfolio)}
-						title="Delete current portfolio"
-					>
-						<Icon name="trash-2" height={16} width={16} />
-						<span>Delete</span>
-					</Button>
-				) : null}
+				<DeletePortfolioButton portfolio={selectedPortfolio} onDelete={removePortfolio} finalFocus={newButtonRef} />
 			</TableToolbar>
 		</Card>
 	)

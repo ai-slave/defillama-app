@@ -18,6 +18,7 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { queryReadFailed } from '~/utils/query'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
@@ -73,35 +74,22 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		getProtocolInfo(protocol)?.misrepresentedTokens
 	)
 
-	const {
-		data: basicTvlDataset,
-		isLoading: isBasicTvlLoading,
-		isFetching: isBasicTvlFetching,
-		errorUpdatedAt,
-		dataUpdatedAt,
-		refetch: refetchBasicTvl
-	} = useQuery({
+	const basicTvlQuery = useQuery({
 		queryKey: buildProtocolValueChartQueryKey({ source: 'tvl', protocol }),
 		queryFn: () => fetchProtocolValueChart({ source: 'tvl', protocol }),
 		enabled: streamDone && chartType === 'tvl',
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		select: selectBasicTvlDataset
 	})
-	const isBasicTvlError = errorUpdatedAt > dataUpdatedAt
-	const {
-		data: advancedData,
-		isLoading: isAdvancedLoading,
-		readFailed: isAdvancedError,
-		isFetching: isAdvancedFetching,
-		refetch: refetchAdvanced,
-		hasSourceData: hasAdvancedSourceData
-	} = useAdvancedTvlChartData({
+	const { data: basicTvlDataset, isLoading: isBasicTvlLoading } = basicTvlQuery
+	const advancedQuery = useAdvancedTvlChartData({
 		protocol,
 		protocolName,
 		chartType,
 		extraTvlsEnabled,
 		enabled: streamDone && chartType !== 'tvl' && !suppressTokenBreakdowns
 	})
+	const advancedData = advancedQuery.data
 	const advancedSeriesNames = advancedData.seriesNames
 	const pieSeriesNames = useMemo(
 		() => advancedData.pieSeries.peers.map((peer) => peer.name),
@@ -241,18 +229,11 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const isLoading =
 		chartType === 'tvl'
 			? isBasicTvlLoading || (!streamDone && basicTvlDataset === undefined)
-			: isAdvancedLoading || (!streamDone && !hasAdvancedSourceData && !suppressTokenBreakdowns)
+			: advancedQuery.isLoading || (!streamDone && !advancedQuery.hasSourceData && !suppressTokenBreakdowns)
 
-	const hasError = chartType === 'tvl' ? isBasicTvlError : isAdvancedError
-	const isFetching = chartType === 'tvl' ? isBasicTvlFetching : isAdvancedFetching
-	const hasLoadedData = chartType === 'tvl' ? basicTvlDataset !== undefined : hasAdvancedSourceData
-	const retryChartData = {
-		run: () => {
-			if (chartType === 'tvl') void refetchBasicTvl()
-			else refetchAdvanced()
-		},
-		pending: isFetching
-	}
+	const hasError = chartType === 'tvl' ? queryReadFailed(basicTvlQuery) : advancedQuery.readFailed
+	const hasLoadedData = chartType === 'tvl' ? basicTvlDataset !== undefined : advancedQuery.hasSourceData
+	const retryChartData = chartType === 'tvl' ? basicTvlQuery : advancedQuery
 
 	const hallmarks = useDashboardAnnotationHallmarks()
 	const syncGroup = useChartSyncGroup()

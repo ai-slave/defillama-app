@@ -271,15 +271,6 @@ export function applyDatasetConfig(config: DatasetSavedConfig, headers: Array<st
 	}
 }
 
-export interface AppliedChartConfig {
-	params: Array<{ label: string; value: string }>
-	selectedColumns: Set<number> | null
-	sort: { index: number; direction: SavedSortDir } | null
-	missingParams: Array<string>
-	missingColumns: Array<string>
-	missingSortColumn: string | null
-}
-
 export function applyChartParams(
 	config: ChartSavedConfig,
 	options: Array<{ label: string; value: string }>

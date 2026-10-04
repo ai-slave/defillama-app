@@ -24,7 +24,7 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function renderBuilder(initial: ChartBuilderConfig) {
+async function renderBuilder(initial: ChartBuilderConfig, previewStatus = 200) {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -32,7 +32,8 @@ async function renderBuilder(initial: ChartBuilderConfig) {
 	http.serve({
 		...appMetadataFixtures(),
 		'https://api.llama.fi/chains2': { categories: [] },
-		'http://localhost:3000/api/public/pro-dashboard/chart-builder/': { series: [] }
+		'http://localhost:3000/api/public/pro-dashboard/chart-builder/': () =>
+			previewStatus === 200 ? Response.json({ series: [] }) : new Response(null, { status: previewStatus })
 	})
 	const change = vi.fn()
 	const nameChange = vi.fn()
@@ -140,4 +141,17 @@ test('the card name field is found by its visible label and edits the name', asy
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 	expect(nameChange.mock.calls).toEqual([['Top fees']])
+})
+
+test('a preview that fails to load says so and offers a retry, and an empty one says there is no data', async () => {
+	const config = normalizeChartBuilderConfig({ ...initializeFromEditItem(null).chartBuilder, metric: 'fees' })
+	await renderBuilder(config, 503)
+	await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load the preview."))
+	expect(document.body.textContent).not.toContain('Configure chart settings to see preview')
+	await act(async () => root.unmount())
+	client.clear()
+	container.remove()
+
+	await renderBuilder(config)
+	await waitForUi(() => expect(document.body.textContent).toContain('No data for these settings.'))
 })

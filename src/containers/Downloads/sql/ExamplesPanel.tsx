@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import * as Ariakit from '@ariakit/react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubcategory } from './examples'
@@ -6,21 +8,31 @@ import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubca
 interface ExamplesPanelProps {
 	onApply: (example: ExampleQuery) => void
 	busyTaskId?: string | null
-	collapsed?: boolean
-	onToggleCollapsed?: () => void
+	/** Omitted where the panel cannot collapse, such as the SQL chart sidebar. */
+	collapse?: { collapsed: boolean; onToggle: () => void }
 }
 
-export function ExamplesPanel({ onApply, busyTaskId, collapsed = false, onToggleCollapsed }: ExamplesPanelProps) {
-	if (collapsed) {
-		return <CollapsedExamplesRail onExpand={onToggleCollapsed} />
+export function ExamplesPanel({ onApply, busyTaskId, collapse }: ExamplesPanelProps) {
+	// Collapsing swaps the panel for the rail, so the other side's toggle takes focus.
+	const toggleRef = useRef<HTMLButtonElement>(null)
+	const toggle = collapse ? () => keepFocus(collapse.onToggle, () => toggleRef.current) : null
+	if (collapse?.collapsed) {
+		return <CollapsedExamplesRail onExpand={toggle!} toggleRef={toggleRef} />
 	}
-	return <ExpandedExamplesPanel onApply={onApply} busyTaskId={busyTaskId} onCollapse={onToggleCollapsed} />
+	return <ExpandedExamplesPanel onApply={onApply} busyTaskId={busyTaskId} onCollapse={toggle} toggleRef={toggleRef} />
 }
 
-function CollapsedExamplesRail({ onExpand }: { onExpand?: () => void }) {
+function CollapsedExamplesRail({
+	onExpand,
+	toggleRef
+}: {
+	onExpand: () => void
+	toggleRef: RefObject<HTMLButtonElement | null>
+}) {
 	return (
 		<aside className="flex flex-col items-stretch gap-2 rounded-md border border-subtle bg-surface p-1.5">
 			<button
+				ref={toggleRef}
 				type="button"
 				onClick={onExpand}
 				title="Expand playbook"
@@ -52,11 +64,13 @@ function CollapsedExamplesRail({ onExpand }: { onExpand?: () => void }) {
 function ExpandedExamplesPanel({
 	onApply,
 	busyTaskId,
-	onCollapse
+	onCollapse,
+	toggleRef
 }: {
 	onApply: (example: ExampleQuery) => void
 	busyTaskId?: string | null
-	onCollapse?: () => void
+	onCollapse: (() => void) | null
+	toggleRef: RefObject<HTMLButtonElement | null>
 }) {
 	const [filter, setFilter] = useState('')
 	const [hoveredGroup, setHoveredGroup] = useState<ExampleSubcategory | null>(null)
@@ -108,6 +122,7 @@ function ExpandedExamplesPanel({
 					<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary" />
 					{onCollapse ? (
 						<button
+							ref={toggleRef}
 							type="button"
 							onClick={onCollapse}
 							title="Collapse playbook"
@@ -238,11 +253,12 @@ function PlaybookItem({
 				}`}
 				style={{ background: accentColor }}
 			/>
-			<button
-				type="button"
+			{/* The pressed example turns busy under the reader's focus, so it stays focusable while it runs. */}
+			<Ariakit.Button
 				onClick={() => onApply(example)}
 				title={example.description}
 				disabled={isDisabled || isBusy}
+				accessibleWhenDisabled={isBusy}
 				aria-busy={isBusy}
 				className={`grid w-full grid-cols-[1.5rem_minmax(0,1fr)_0.75rem] items-center gap-2 py-1.5 text-left transition-transform duration-200 disabled:cursor-not-allowed ${
 					!isDisabled && !isBusy ? 'group-hover/item:translate-x-0.5' : ''
@@ -272,7 +288,7 @@ function PlaybookItem({
 							: '-translate-x-1 text-pro-text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-brand group-hover/item:opacity-100'
 					}`}
 				/>
-			</button>
+			</Ariakit.Button>
 		</li>
 	)
 }

@@ -45,7 +45,6 @@ async function render(nextOptions = options, selectedValues: Array<string> = [])
 	await act(async () =>
 		root.render(
 			<TokenSearchDialog
-				open
 				onClose={() => {}}
 				title="Tokens"
 				options={nextOptions}
@@ -88,7 +87,6 @@ async function renderSelection(selectedValues: Array<string>) {
 	await act(async () =>
 		root.render(
 			<TokenSearchDialog
-				open
 				onClose={() => {}}
 				title="Tokens"
 				options={options}
@@ -115,4 +113,20 @@ test('a removed pick hands focus to the next pick, else the previous one, else t
 
 	await renderSelection([])
 	expect(document.activeElement).toBe(document.querySelector('input'))
+})
+
+test('arrow keys announce the highlighted row to screen readers', async () => {
+	await render()
+	const input = document.querySelector<HTMLInputElement>('input')!
+	const activeOption = () => document.getElementById(input.getAttribute('aria-activedescendant') ?? '')
+	expect(activeOption()).toBeNull()
+	await act(async () => {
+		input.focus()
+		input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+	})
+	expect(activeOption()?.getAttribute('role')).toBe('option')
+	expect(activeOption()?.textContent).toContain('Ether family')
+	await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })))
+	expect(activeOption()?.textContent).toContain('Ethereum')
+	expect(input.getAttribute('aria-controls')).toBe(activeOption()?.closest('[role="listbox"]')?.id)
 })

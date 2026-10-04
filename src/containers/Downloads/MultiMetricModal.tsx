@@ -1,13 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
-import Link from 'next/link'
-import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import {
 	VirtualizedMultiSelect,
 	VirtualizedSelect,
 	type VirtualizedSelectOption
 } from '~/components/Select/VirtualizedSelect'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader, DialogToolbar } from '~/ui/Dialog'
@@ -25,8 +25,10 @@ import { combineCsvsWide, type CsvItem } from './combineCsvsWide'
 import { filterCsvByDateRange, filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
+import { fetchDownloadCsv } from './fetchDownloadCsv'
 import { SavePresetDialog } from './PresetDialogs'
 import { PreviewHeaderActions } from './PreviewHeaderActions'
+import { PreviewPaywall } from './PreviewPaywall'
 import {
 	type AppliedMultiMetricConfig,
 	applyMultiMetricConfig,
@@ -41,12 +43,6 @@ import {
 import { SavedPresetNotice } from './SavedPresetNotice'
 import { type CsvQueryStatus, SelectedListSidebar } from './SelectedListSidebar'
 import { buildShareUrl } from './urlState'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 const MAX_METRICS = 25
 const PREVIEW_ROWS = 200
@@ -215,14 +211,10 @@ export function MultiMetricModal({
 				queryKey: ['multi-metric', slug, paramType, datasetValue, isPreview] as const,
 				queryFn: async () => {
 					if (!datasetValue) throw new Error(`Not available for this ${PARAM_LABELS[paramType].singular}`)
-					const nonce = isPreview ? `&_n=${Math.random().toString(36).slice(2)}` : ''
-					const url = `/api/private/downloads/chart/${slug}?param=${encodeURIComponent(datasetValue)}${nonce}`
-					const resp = isPreview ? await fetch(url) : await authorizedFetch(url)
-					if (!resp || !resp.ok) {
-						const msg = (await resp?.json().catch(() => null))?.error ?? `Download failed (${resp?.status})`
-						throw new Error(msg)
-					}
-					return await resp.text()
+					return fetchDownloadCsv(`/api/private/downloads/chart/${slug}?param=${encodeURIComponent(datasetValue)}`, {
+						isPreview,
+						authorizedFetch
+					})
 				},
 				enabled: !!param && !!datasetValue,
 				staleTime: 5 * 60 * 1000,
@@ -412,7 +404,7 @@ export function MultiMetricModal({
 	}, [subscribeModalStore])
 
 	const handleSavePreset = useCallback(
-		(name: string, replaceExisting: boolean) => {
+		(name: string) => {
 			if (!param) return
 			const configBase = extractMultiMetricConfig({
 				paramType,
@@ -421,15 +413,12 @@ export function MultiMetricModal({
 				metrics: selectedMetrics,
 				dateRange
 			})
-			saveDownload(
-				{
-					...configBase,
-					id: generatePresetId(),
-					name,
-					createdAt: Date.now()
-				},
-				{ replaceByName: replaceExisting }
-			)
+			saveDownload({
+				...configBase,
+				id: generatePresetId(),
+				name,
+				createdAt: Date.now()
+			})
 			setShowSaveDialog(false)
 			report('save-preset', true, `Saved preset "${name}"`)
 		},
@@ -494,8 +483,8 @@ export function MultiMetricModal({
 	const isBulk = selectedMetrics.length > 1
 	const hasSelection = selectedMetrics.length > 0
 	// The list exists only for two or more metrics (the trigger names a single one), so dropping to one brings the
-	// table back.
-	const showingSelected = showSelected && !!param && isBulk
+	// table back, and a later second pick opens on the table too.
+	if (showSelected && !(param && isBulk)) setShowSelected(false)
 	const downloadLabel = isBulk ? 'Download combined' : 'Download CSV'
 	const topBarDownloadDisabled =
 		!isPreview &&
@@ -654,7 +643,7 @@ export function MultiMetricModal({
 
 				<DialogBody kind="flush">
 					<div className="flex h-full min-h-0">
-						<div className={`min-h-0 min-w-0 flex-1 flex-col ${showingSelected ? 'hidden sm:flex' : 'flex'}`}>
+						<div className={`min-h-0 min-w-0 flex-1 flex-col ${showSelected ? 'hidden sm:flex' : 'flex'}`}>
 							{!param ? (
 								<ParamPickerEmpty
 									paramType={paramType}
@@ -725,7 +714,7 @@ export function MultiMetricModal({
 										() => selectedToggleRef.current
 									)
 								}
-								showOnPhone={showingSelected}
+								showOnPhone={showSelected}
 								onRemove={handleRemoveMetric}
 								onClearAll={handleClearMetrics}
 								onDownload={(metric) => handleDownloadSingle(metric.value, 'csv', `download:${metric.value}`)}
@@ -740,11 +729,7 @@ export function MultiMetricModal({
 				</DialogBody>
 			</Dialog>
 
-			{isPreview ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			{isPreview ? <LazySubscribeProModal dialogStore={subscribeModalStore} /> : null}
 			{showSaveDialog ? (
 				<SavePresetDialog
 					suggestedName={suggestedPresetName}
@@ -967,37 +952,7 @@ function PreviewTable({
 					</p>
 				</div>
 			) : null}
-			{isPreview ? (
-				<>
-					<div
-						className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
-						style={{
-							top: '20%',
-							backdropFilter: 'blur(4px)',
-							WebkitBackdropFilter: 'blur(4px)',
-							maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
-							WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
-						}}
-					/>
-					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
-						<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-							<p className="text-sm font-semibold text-pro-text-primary">
-								This is a preview — subscribe to download full datasets
-							</p>
-							<p className="text-xs text-pro-text-tertiary">
-								Get access to all rows, all columns, and unlimited CSV downloads
-							</p>
-							<Link
-								href="/subscribe"
-								className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
-							>
-								<Icon name="arrow-up-right" className="size-4" />
-								Subscribe
-							</Link>
-						</div>
-					</div>
-				</>
-			) : null}
+			{isPreview ? <PreviewPaywall /> : null}
 		</div>
 	)
 }

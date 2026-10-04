@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
@@ -26,7 +27,11 @@ export function ArticlePageAssetPicker({
 	const atLimit = value.length >= MAX_PAGE_ASSETS
 	const selectedIds = useMemo(() => new Set(value.map((asset) => asset.geckoId)), [value])
 
-	const { data: results, isFetching } = useQuery({
+	const {
+		data: results,
+		isFetching,
+		isError
+	} = useQuery({
 		queryKey: ['research', 'page-asset-search', debouncedQuery],
 		queryFn: async ({ signal }) => {
 			const res = await fetch(`/api/public/research/page-assets/search?q=${encodeURIComponent(debouncedQuery)}`, {
@@ -46,15 +51,23 @@ export function ArticlePageAssetPicker({
 		[results, selectedIds]
 	)
 
+	const searchRef = useRef<HTMLInputElement>(null)
+	// The search lists only tokens not picked yet, and closes at the limit.
 	const addAsset = (hit: PageAssetSearchHit) => {
-		if (selectedIds.has(hit.geckoId) || value.length >= MAX_PAGE_ASSETS) return
 		onChange([...value, { geckoId: hit.geckoId, symbol: hit.symbol, name: hit.name }])
 		setSearchValue('')
 	}
-	const removeAsset = (index: number) => onChange(value.filter((_, i) => i !== index))
+	// The removed row's × hands focus to the next row's ×, the one above, or the search.
+	const removeAsset = (index: number, remove: HTMLElement) => {
+		const neighbour = neighbourRowControl(remove.closest('li')!, remove)
+		keepFocus(
+			() => onChange(value.filter((_, i) => i !== index)),
+			() => neighbour ?? searchRef.current
+		)
+	}
+	// The edge rows' moves are disabled, so the target always exists.
 	const moveAsset = (index: number, direction: -1 | 1) => {
 		const target = index + direction
-		if (target < 0 || target >= value.length) return
 		const next = value.slice()
 		;[next[index], next[target]] = [next[target], next[index]]
 		onChange(next)
@@ -77,6 +90,7 @@ export function ArticlePageAssetPicker({
 				<div className="relative">
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Ariakit.Combobox
+						ref={searchRef}
 						aria-label="Search tokens to add"
 						placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
 						disabled={atLimit}
@@ -92,7 +106,11 @@ export function ArticlePageAssetPicker({
 					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-overlay py-1 shadow-xl outline-hidden"
 				>
 					{isFetching && hits.length === 0 ? <p className="p-3 text-center body-sm text-tertiary">Searching…</p> : null}
-					{!isFetching && debouncedQuery.length > 0 && hits.length === 0 ? (
+					{!isFetching && isError ? (
+						<p className="p-3 text-center body-sm text-data-down">
+							Couldn&apos;t search tokens. Edit the search to try again.
+						</p>
+					) : !isFetching && debouncedQuery.length > 0 && hits.length === 0 ? (
 						<p className="p-3 text-center body-sm text-tertiary">No tokens found</p>
 					) : null}
 					{hits.map((hit) => (
@@ -139,7 +157,12 @@ export function ArticlePageAssetPicker({
 									disabled={index === value.length - 1}
 									onClick={() => moveAsset(index, 1)}
 								/>
-								<RowAction tip="Remove" label={`Remove ${asset.symbol}`} icon="x" onClick={() => removeAsset(index)} />
+								<RowAction
+									tip="Remove"
+									label={`Remove ${asset.symbol}`}
+									icon="x"
+									onClick={(event) => removeAsset(index, event.currentTarget)}
+								/>
 							</div>
 						</li>
 					))}
@@ -164,7 +187,7 @@ function RowAction({
 	label: string
 	icon: 'chevron-up' | 'chevron-down' | 'x'
 	disabled?: boolean
-	onClick: () => void
+	onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
 }) {
 	return (
 		<Tooltip
@@ -175,7 +198,9 @@ function RowAction({
 					variant="ghost"
 					size="sm"
 					square
+					// A move that reaches the edge disables the button it was made with, which keeps focus.
 					disabled={disabled}
+					accessibleWhenDisabled
 					aria-label={label}
 					onClick={onClick}
 				/>

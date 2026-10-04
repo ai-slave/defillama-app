@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
+import { useAuthContext } from '~/auth'
 import type { ProtocolEmissionResult } from '~/containers/Unlocks/types'
 import { handleSimpleFetchResponse } from '~/utils/async'
-import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
+import { TokenPrivateSectionGate } from './TokenPrivateSectionGate'
 
 const TOKEN_UNLOCKS_SECTION_ID = 'token-unlocks'
 
@@ -23,8 +24,7 @@ async function fetchTokenUnlocksClient(
 }
 
 export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSlug?: string | null }) {
-	const access = useTokenPrivateSectionAccess()
-	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = access
+	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const isEnabled = Boolean(resolvedUnlocksSlug)
 	const { data, error, isLoading, dataUpdatedAt } = useQuery<ProtocolEmissionResult>({
 		queryKey: ['token-unlocks', resolvedUnlocksSlug],
@@ -46,7 +46,6 @@ export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSl
 
 	return (
 		<TokenPrivateSectionGate
-			access={access}
 			title="Unlocks"
 			sectionId={TOKEN_UNLOCKS_SECTION_ID}
 			contentLabel="token unlocks"

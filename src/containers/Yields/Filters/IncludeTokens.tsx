@@ -108,7 +108,6 @@ export function IncludeTokens({
 
 	const dialog = open ? (
 		<TokenSearchDialog
-			open
 			onClose={() => setOpen(false)}
 			title="Search tokens"
 			options={tokens}

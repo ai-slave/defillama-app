@@ -54,13 +54,16 @@ router.push.mockImplementation(async ({ query }: { query: Record<string, string 
 	await act(async () => root.render(page()))
 })
 
-// The token column: a "Tokens" heading, one remove button per token, then "Add token".
+// The token column: a "Tokens" heading, one "Remove <symbol>" button per token, then "Add token".
 const tokenButtons = () =>
 	[...container.querySelectorAll('h2')]
 		.find((heading) => heading.textContent === 'Tokens')
 		?.parentElement?.querySelectorAll('button') ?? []
 const listedTokens = () =>
-	[...tokenButtons()].map((button) => button.textContent).filter((text) => text !== 'Add token')
+	[...tokenButtons()]
+		.map((button) => button.textContent)
+		.filter((text) => text !== 'Add token')
+		.map((text) => text?.replace(/^Remove /, ''))
 
 beforeEach(() => {
 	for (const { id } of TOKENS) http.serve({ [`/api/public/tokens/charts/coingecko/${id}`]: { data: { prices: [] } } })

@@ -36,22 +36,10 @@ export interface LlamaAISettings {
 	spendCapPerMessage: number
 }
 
-export interface LlamaAISettingsActions {
-	setCustomInstructions: (value: string) => Promise<boolean>
-	setEnableMemory: (value: boolean) => Promise<boolean>
-	setEnablePremiumTools: (value: boolean) => Promise<boolean>
-	setHackerMode: (value: boolean) => Promise<boolean>
-	setModel: (value: string) => Promise<boolean>
-	setEffort: (value: string) => Promise<boolean>
-	setEnableSoundNotifications: (value: boolean) => Promise<boolean>
-	setEnterToSend: (value: boolean) => Promise<boolean>
-	setAdvancedProvenance: (value: boolean) => Promise<boolean>
-	setShowBalanceInSidebar: (value: boolean) => Promise<boolean>
-	setSpendCapPerMessage: (value: number) => Promise<boolean>
-}
-
 type LlamaAISettingKey = keyof LlamaAISettings
-type LlamaAISettingsUpdate = Partial<LlamaAISettings>
+export type LlamaAISettingsUpdate = Partial<LlamaAISettings>
+/** Saves the given settings; resolves false when the server refuses them. */
+export type SaveLlamaAISettings = (update: LlamaAISettingsUpdate) => Promise<boolean>
 type StoredLlamaAISettings = Partial<LlamaAISettings> | null
 
 export interface ModelOption {
@@ -221,111 +209,45 @@ function isEffortAvailableForModel(effort: string, model: string) {
 	return true
 }
 
+function writeStoredSetting<K extends LlamaAISettingKey>(key: K, value: LlamaAISettings[K]) {
+	SETTING_DEFINITIONS[key].write(value)
+}
+
 function applyStoredSettings(update: LlamaAISettingsUpdate) {
-	if (update.customInstructions !== undefined) SETTING_DEFINITIONS.customInstructions.write(update.customInstructions)
-	if (update.enableMemory !== undefined) SETTING_DEFINITIONS.enableMemory.write(update.enableMemory)
-	if (update.enablePremiumTools !== undefined) SETTING_DEFINITIONS.enablePremiumTools.write(update.enablePremiumTools)
-	if (update.hackerMode !== undefined) SETTING_DEFINITIONS.hackerMode.write(update.hackerMode)
-	if (update.model !== undefined) SETTING_DEFINITIONS.model.write(update.model)
-	if (update.effort !== undefined) SETTING_DEFINITIONS.effort.write(update.effort)
-	if (update.enableSoundNotifications !== undefined)
-		SETTING_DEFINITIONS.enableSoundNotifications.write(update.enableSoundNotifications)
-	if (update.enterToSend !== undefined) SETTING_DEFINITIONS.enterToSend.write(update.enterToSend)
-	if (update.advancedProvenance !== undefined) SETTING_DEFINITIONS.advancedProvenance.write(update.advancedProvenance)
-	if (update.showBalanceInSidebar !== undefined)
-		SETTING_DEFINITIONS.showBalanceInSidebar.write(update.showBalanceInSidebar)
-	if (update.spendCapPerMessage !== undefined) SETTING_DEFINITIONS.spendCapPerMessage.write(update.spendCapPerMessage)
+	for (const key in update) {
+		const settingKey = key as LlamaAISettingKey
+		writeStoredSetting(settingKey, update[settingKey]!)
+	}
 }
 
-function mergeDefinedSettings(base: StoredLlamaAISettings, incoming: LlamaAISettingsUpdate): StoredLlamaAISettings {
-	const merged: LlamaAISettingsUpdate = { ...base }
-	if (incoming.customInstructions !== undefined) merged.customInstructions = incoming.customInstructions
-	if (incoming.enableMemory !== undefined) merged.enableMemory = incoming.enableMemory
-	if (incoming.enablePremiumTools !== undefined) merged.enablePremiumTools = incoming.enablePremiumTools
-	if (incoming.hackerMode !== undefined) merged.hackerMode = incoming.hackerMode
-	if (incoming.model !== undefined) merged.model = incoming.model
-	if (incoming.effort !== undefined) merged.effort = incoming.effort
-	if (incoming.enableSoundNotifications !== undefined)
-		merged.enableSoundNotifications = incoming.enableSoundNotifications
-	if (incoming.enterToSend !== undefined) merged.enterToSend = incoming.enterToSend
-	if (incoming.advancedProvenance !== undefined) merged.advancedProvenance = incoming.advancedProvenance
-	if (incoming.showBalanceInSidebar !== undefined) merged.showBalanceInSidebar = incoming.showBalanceInSidebar
-	if (incoming.spendCapPerMessage !== undefined) merged.spendCapPerMessage = incoming.spendCapPerMessage
-	return merged
-}
-
+/** The previous value of each attempted setting that still shows the attempt, so a refused save undoes only itself. */
 function getFailedSettingsRollback(
 	current: StoredLlamaAISettings,
 	attempted: LlamaAISettingsUpdate,
 	previous: LlamaAISettings
 ): LlamaAISettingsUpdate {
-	const rollback: LlamaAISettingsUpdate = {}
-	if (attempted.enableMemory !== undefined && current?.enableMemory === attempted.enableMemory)
-		rollback.enableMemory = previous.enableMemory
-	if (attempted.enablePremiumTools !== undefined && current?.enablePremiumTools === attempted.enablePremiumTools)
-		rollback.enablePremiumTools = previous.enablePremiumTools
-	if (attempted.hackerMode !== undefined && current?.hackerMode === attempted.hackerMode)
-		rollback.hackerMode = previous.hackerMode
-	if (attempted.model !== undefined && current?.model === attempted.model) rollback.model = previous.model
-	if (attempted.effort !== undefined && current?.effort === attempted.effort) rollback.effort = previous.effort
-	if (
-		attempted.enableSoundNotifications !== undefined &&
-		current?.enableSoundNotifications === attempted.enableSoundNotifications
-	)
-		rollback.enableSoundNotifications = previous.enableSoundNotifications
-	if (attempted.enterToSend !== undefined && current?.enterToSend === attempted.enterToSend)
-		rollback.enterToSend = previous.enterToSend
-	if (attempted.advancedProvenance !== undefined && current?.advancedProvenance === attempted.advancedProvenance)
-		rollback.advancedProvenance = previous.advancedProvenance
-	if (attempted.showBalanceInSidebar !== undefined && current?.showBalanceInSidebar === attempted.showBalanceInSidebar)
-		rollback.showBalanceInSidebar = previous.showBalanceInSidebar
-	if (attempted.spendCapPerMessage !== undefined && current?.spendCapPerMessage === attempted.spendCapPerMessage)
-		rollback.spendCapPerMessage = previous.spendCapPerMessage
-	return rollback
+	const rollback: Record<string, unknown> = {}
+	for (const key in attempted) {
+		const settingKey = key as LlamaAISettingKey
+		if (current?.[settingKey] === attempted[settingKey]) rollback[key] = previous[settingKey]
+	}
+	return rollback as LlamaAISettingsUpdate
 }
 
+// The server's settings are untyped JSON: keep only values of each setting's type.
 function normalizeServerSettings(value: unknown): LlamaAISettingsUpdate {
 	if (!isRecord(value)) return {}
-
-	const normalized: LlamaAISettingsUpdate = {}
-	if (typeof value.customInstructions === 'string') {
-		normalized.customInstructions = value.customInstructions
+	const normalized: Record<string, unknown> = {}
+	for (const key in DEFAULT_SETTINGS) {
+		if (typeof value[key] === typeof DEFAULT_SETTINGS[key as LlamaAISettingKey]) normalized[key] = value[key]
 	}
-	if (typeof value.enableMemory === 'boolean') {
-		normalized.enableMemory = value.enableMemory
-	}
-	if (typeof value.enablePremiumTools === 'boolean') {
-		normalized.enablePremiumTools = value.enablePremiumTools
-	}
-	if (typeof value.hackerMode === 'boolean') {
-		normalized.hackerMode = value.hackerMode
-	}
-	if (typeof value.model === 'string') {
-		normalized.model = value.model
-	} else if (typeof value.modelOverride === 'string') {
-		normalized.model = value.modelOverride
-	}
-	if (typeof value.effort === 'string') {
-		normalized.effort = value.effort
-	} else if (typeof value.effortOverride === 'string') {
+	if (normalized.model === undefined && typeof value.modelOverride === 'string') normalized.model = value.modelOverride
+	if (normalized.effort === undefined && typeof value.effortOverride === 'string')
 		normalized.effort = value.effortOverride
+	if (typeof normalized.spendCapPerMessage === 'number') {
+		normalized.spendCapPerMessage = normalizeSpendCap(normalized.spendCapPerMessage)
 	}
-	if (typeof value.enableSoundNotifications === 'boolean') {
-		normalized.enableSoundNotifications = value.enableSoundNotifications
-	}
-	if (typeof value.enterToSend === 'boolean') {
-		normalized.enterToSend = value.enterToSend
-	}
-	if (typeof value.advancedProvenance === 'boolean') {
-		normalized.advancedProvenance = value.advancedProvenance
-	}
-	if (typeof value.showBalanceInSidebar === 'boolean') {
-		normalized.showBalanceInSidebar = value.showBalanceInSidebar
-	}
-	if (typeof value.spendCapPerMessage === 'number') {
-		normalized.spendCapPerMessage = normalizeSpendCap(value.spendCapPerMessage)
-	}
-	return normalized
+	return normalized as LlamaAISettingsUpdate
 }
 
 export function useLlamaAISetting<K extends LlamaAISettingKey>(key: K): LlamaAISettings[K] {
@@ -379,15 +301,6 @@ export function useLlamaAISettings() {
 	const settingsQuery = useQuery({
 		queryKey: [...LLAMA_AI_SETTINGS_QUERY_KEY, userId],
 		queryFn: async (): Promise<SettingsQueryResult> => {
-			if (!authorizedFetch || !isAuthenticated || !userId) {
-				return {
-					settings: null,
-					availableModels: EMPTY_MODEL_OPTIONS,
-					availableEfforts: EMPTY_EFFORT_OPTIONS,
-					telegramStatus: null,
-					tip: null
-				}
-			}
 			const response = await authorizedFetch(`${AI_SERVER}/user-settings`)
 			if (!response?.ok)
 				return {
@@ -424,7 +337,7 @@ export function useLlamaAISettings() {
 	const applySettingsUpdate = (update: LlamaAISettingsUpdate) => {
 		applyStoredSettings(update)
 		queryClient.setQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, userId], (previous) => ({
-			settings: mergeDefinedSettings(previous?.settings ?? null, update),
+			settings: { ...previous?.settings, ...update },
 			availableModels: previous?.availableModels ?? EMPTY_MODEL_OPTIONS,
 			availableEfforts: previous?.availableEfforts ?? EMPTY_EFFORT_OPTIONS,
 			telegramStatus: previous?.telegramStatus ?? null,
@@ -435,7 +348,6 @@ export function useLlamaAISettings() {
 	const persistSettingsMutation = useMutation({
 		scope: { id: `llama-ai-settings:${userId ?? 'local'}` },
 		mutationFn: async (update: LlamaAISettingsUpdate) => {
-			if (!authorizedFetch || !isAuthenticated || !userId) return update
 			const queryKey = [...LLAMA_AI_SETTINGS_QUERY_KEY, userId]
 			await queryClient.cancelQueries({ queryKey })
 			const current = queryClient.getQueryData<SettingsQueryResult>(queryKey)
@@ -470,8 +382,8 @@ export function useLlamaAISettings() {
 		}
 	})
 
-	const persistSettings = useCallback(
-		async (update: LlamaAISettingsUpdate) => {
+	const saveSettings: SaveLlamaAISettings = useCallback(
+		async (update) => {
 			if (!isAuthenticated || !userId) {
 				applyStoredSettings(update)
 				return true
@@ -484,23 +396,6 @@ export function useLlamaAISettings() {
 			}
 		},
 		[isAuthenticated, persistSettingsMutation, userId]
-	)
-
-	const actions = useMemo<LlamaAISettingsActions>(
-		() => ({
-			setCustomInstructions: (value) => persistSettings({ customInstructions: value.trim() }),
-			setEnableMemory: (value) => persistSettings({ enableMemory: value }),
-			setEnablePremiumTools: (value) => persistSettings({ enablePremiumTools: value }),
-			setHackerMode: (value) => persistSettings({ hackerMode: value }),
-			setModel: (value) => persistSettings({ model: value }),
-			setEffort: (value) => persistSettings({ effort: value }),
-			setEnableSoundNotifications: (value) => persistSettings({ enableSoundNotifications: value }),
-			setEnterToSend: (value) => persistSettings({ enterToSend: value }),
-			setAdvancedProvenance: (value) => persistSettings({ advancedProvenance: value }),
-			setShowBalanceInSidebar: (value) => persistSettings({ showBalanceInSidebar: value }),
-			setSpendCapPerMessage: (value) => persistSettings({ spendCapPerMessage: normalizeSpendCap(value) })
-		}),
-		[persistSettings]
 	)
 
 	const availableModels = settingsQuery.data?.availableModels ?? EMPTY_MODEL_OPTIONS
@@ -545,7 +440,7 @@ export function useLlamaAISettings() {
 
 	return {
 		settings,
-		actions,
+		saveSettings,
 		availableModels,
 		availableEfforts,
 		tip: settingsQuery.data?.tip ?? null,

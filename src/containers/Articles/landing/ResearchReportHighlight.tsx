@@ -36,7 +36,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 						<div className="relative w-full">
 							<img
 								src={coverUrl}
-								alt={highlight?.coverImage?.alt}
+								alt={highlight?.coverImage?.alt ?? ''}
 								className="h-full w-full rounded-[6px] object-cover"
 								loading="lazy"
 								decoding="async"

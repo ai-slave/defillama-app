@@ -8,11 +8,13 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { FileDropProvider } from '../../components/FileDrop'
+import { AddSourcesMenu } from '../AddSourcesMenu'
 import { AddTextContentModal } from '../AddTextContentModal'
 import { GitHubConnectModal } from '../GitHubConnectModal'
 import { ProjectFilesPanel } from '../ProjectFilesPanel'
 
 const api = vi.hoisted(() => ({
+	installations: vi.fn(),
 	connect: vi.fn(),
 	add: vi.fn(),
 	remove: vi.fn(),
@@ -30,7 +32,8 @@ async function aiServer(url: URL, init?: RequestInit) {
 	const path = url.href.slice(AI_SERVER.length)
 	const json = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined
 	const method = init?.method ?? 'GET'
-	if (path === '/github/installations') return [{ installation_id: 1, account_login: 'owner' }]
+	if (path === '/github/installations')
+		return (await api.installations()) ?? [{ installation_id: 1, account_login: 'owner' }]
 	if (path === '/github/installations/1/repos')
 		return { repos: [{ full_name: 'owner/repo', name: 'repo', private: false }] }
 	if (path === '/github/installations/1/repos/owner/repo/branches') return [{ name: 'main', is_default: true }]
@@ -153,6 +156,21 @@ test('a GitHub connection that finishes after its project changes leaves the new
 	expect(field('Repository').value).toBe('')
 })
 
+test('a retried installation list keeps its error while retrying, then the picker takes focus', async () => {
+	const retry = Promise.withResolvers<Array<{ installation_id: number; account_login: string }>>()
+	api.installations.mockRejectedValueOnce(new Error('offline')).mockReturnValueOnce(retry.promise)
+	await mount('github')
+	await waitForUi(() => expect(button('Try again')).toBeDefined())
+	const tryAgain = button('Try again')
+	await act(async () => {
+		tryAgain.focus()
+		tryAgain.click()
+	})
+	await waitForUi(() => expect(accessibleName(tryAgain)).toBe('Retrying…'))
+	await act(async () => retry.resolve([{ installation_id: 1, account_login: 'owner' }]))
+	await waitForUi(() => expect(document.activeElement).toBe(field('Installation')))
+})
+
 test('Connect with nothing chosen names the missing field', async () => {
 	await mount('github')
 	await waitForUi(() => expect(document.querySelector('input[role="combobox"]')).not.toBeNull())
@@ -198,6 +216,16 @@ test('text import focuses its filename, keeps a skipped draft, and resets after 
 	expect(document.querySelector('textarea')?.value).toBe('')
 })
 
+test('closing typed text asks first, and keeping it returns to the draft', async () => {
+	await mount('text')
+	await fill(document.querySelector('textarea')!, 'Article notes')
+	await click('Cancel')
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this text?')
+	await click('Keep editing')
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	expect(document.querySelector('textarea')?.value).toBe('Article notes')
+})
+
 test('text import locks the dialog while it saves and names an empty field', async () => {
 	const request = Promise.withResolvers<{ imported: Array<{ path: string }>; skipped: [] }>()
 	api.add.mockReturnValue(request.promise)
@@ -219,8 +247,9 @@ test('text import locks the dialog while it saves and names an empty field', asy
 	expect(api.success).not.toHaveBeenCalled()
 })
 
-test('a failed text import stays inline as a plain sentence', async () => {
-	api.add.mockRejectedValueOnce(new Error('Failed to fetch'))
+test('a failed text import stays inline as a plain sentence, also while its retry saves', async () => {
+	const retry = Promise.withResolvers<{ imported: Array<{ path: string }>; skipped: [] }>()
+	api.add.mockRejectedValueOnce(new Error('Failed to fetch')).mockReturnValueOnce(retry.promise)
 	await mount('text')
 	await fill(document.querySelector('input')!, 'notes.md')
 	await fill(document.querySelector('textarea')!, 'Note')
@@ -230,6 +259,11 @@ test('a failed text import stays inline as a plain sentence', async () => {
 	)
 	expect(openDialog()).toBeDefined()
 	expect(api.error).not.toHaveBeenCalled()
+	await click('Save')
+	await waitForUi(() => expect(button('Saving…')).toBeDefined())
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add the text content. Try again.")
+	await act(async () => retry.resolve({ imported: [{ path: 'notes.md' }], skipped: [] }))
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
 })
 
 test('file removal prevents duplicates, retries inline, and focuses Add after removing its trigger', async () => {
@@ -407,4 +441,28 @@ test('file picking stays unavailable until both file and source requests settle'
 	await waitForUi(() => expect(drop.disabled).toBe(false))
 	expect(drop.hasAttribute('aria-hidden')).toBe(false)
 	expect(container.querySelector('[role="status"]')).toBeNull()
+})
+
+test('discarding text opened from the sources menu returns focus to the menu button', async () => {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<FileDropProvider>
+					<AddSourcesMenu projectId="qa" trigger={<button type="button">Add files</button>} />
+				</FileDropProvider>
+			</session.Wrapper>
+		)
+	)
+	await click('Add files')
+	await waitForUi(() => expect(document.querySelector('[role="menu"]')).not.toBeNull())
+	const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((e) =>
+		e.textContent?.includes('Add text content')
+	)!
+	await act(async () => item.click())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"] textarea')).not.toBeNull())
+	await fill(document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!, 'Article notes')
+	await click('Cancel')
+	await click('Discard')
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Add files')))
 })

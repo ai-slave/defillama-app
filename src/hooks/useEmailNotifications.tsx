@@ -3,6 +3,7 @@ import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb from '~/utils/pocketbase'
+import { queryReadFailed } from '~/utils/query'
 
 export type MetricType =
 	| 'tvl'
@@ -38,34 +39,12 @@ interface SaveNotificationPreferencesRequest {
 	frequency: 'daily' | 'weekly'
 }
 
-const parseJsonSafely = async <T = unknown,>(response: Response): Promise<T | null> => {
-	const parsed = await response.json().catch(() => null)
-	return parsed as T | null
-}
-
-/** The server's reason when it gave one. The hook only writes the cache: each caller shows the outcome where the
-    action happened, so a dialog never gets a toast over it. */
-export const getUserFacingErrorMessage = (error: unknown, fallbackMessage: string): string => {
-	if (!(error instanceof Error)) return fallbackMessage
-	if (!error.message.startsWith('[HTTP] [error]')) return error.message || fallbackMessage
-	const colonIndex = error.message.indexOf(':')
-	if (colonIndex === -1) return fallbackMessage
-	const details = error.message.slice(colonIndex + 1).trim()
-	return details || fallbackMessage
-}
-
 export const useEmailNotifications = (portfolioName?: string) => {
 	const { authorizedFetch } = useAuthContext()!
 	const queryClient = useQueryClient()
 	const isAuthenticated = !!pb.authStore.token
 
-	const {
-		data: preferences,
-		isLoading,
-		isFetching,
-		error,
-		refetch
-	} = useQuery<NotificationPreference | null>({
+	const preferencesQuery = useQuery<NotificationPreference | null>({
 		queryKey: ['notifications', 'preferences', pb.authStore.record?.id, portfolioName],
 		queryFn: async () => {
 			if (!isAuthenticated || !portfolioName) {
@@ -91,11 +70,8 @@ export const useEmailNotifications = (portfolioName?: string) => {
 			}
 			await handleSimpleFetchResponse(response)
 
-			const data = await parseJsonSafely<{ preferences?: NotificationPreference | null }>(response)
-			if (!data || data.preferences == null) {
-				return null
-			}
-			return data.preferences
+			const data: { preferences?: NotificationPreference | null } | null = await response.json().catch(() => null)
+			return data?.preferences ?? null
 		},
 		enabled: isAuthenticated && !!portfolioName,
 		staleTime: 1000 * 60 * 5, // 5 minutes
@@ -130,9 +106,6 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		},
 		onSuccess: (data, variables) => {
 			queryClient.setQueryData(['notifications', 'preferences', pb.authStore.record?.id, variables.portfolioName], data)
-		},
-		onError: (err) => {
-			console.error('Error saving notification preferences:', err)
 		}
 	})
 
@@ -162,9 +135,6 @@ export const useEmailNotifications = (portfolioName?: string) => {
 			void queryClient.invalidateQueries({
 				queryKey: ['notifications', 'preferences', pb.authStore.record?.id, variables.portfolioName]
 			})
-		},
-		onError: (err) => {
-			console.error('Error updating notification status:', err)
 		}
 	})
 
@@ -191,17 +161,15 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		},
 		onSuccess: (_, variables) => {
 			queryClient.setQueryData(['notifications', 'preferences', pb.authStore.record?.id, variables.portfolioName], null)
-		},
-		onError: (err) => {
-			console.error('Error deleting notification preferences:', err)
 		}
 	})
 
+	const { data: preferences, isLoading, isFetching, refetch } = preferencesQuery
 	return {
 		preferences,
 		isLoading,
 		isFetching,
-		error,
+		readFailed: queryReadFailed(preferencesQuery),
 		refetch,
 		savePreferences,
 		updateStatus,

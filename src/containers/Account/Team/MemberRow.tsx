@@ -1,8 +1,7 @@
 import { useRef, useState, type RefObject } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { AssignSubscriptionModal } from './AssignSubscriptionModal'
 import type { TeamMember } from './types'
@@ -14,14 +13,13 @@ function getSubscriptionLabel(type: string | null): string {
 	return 'Unassigned'
 }
 
-export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFocus?: RefObject<HTMLElement | null> }) {
+export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFocus: RefObject<HTMLElement | null> }) {
 	const subscriptionFocusRef = useRef<HTMLButtonElement>(null)
-	const removeFocusRef = useRef<HTMLElement>(null)
+	const removeFocusRef = useRef<HTMLElement | null>(null)
 	const { user } = useAuthContext()
 	const { isAdmin, teamSubscriptions, unassignMemberMutation, removeMemberMutation } = useTeam()
-	const [showAssignModal, setShowAssignModal] = useState(false)
-	const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
-	const [showUnassignConfirm, setShowUnassignConfirm] = useState(false)
+	const [openDialog, setOpenDialog] = useState<'assign' | 'unassign' | 'remove' | null>(null)
+	const closeDialog = () => setOpenDialog(null)
 
 	const isCurrentUser = user?.id === member.userId
 	const isAdminMember = member.isAdmin
@@ -56,7 +54,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 									type="button"
 									size="md"
 									ref={subscriptionFocusRef}
-									onClick={() => setShowAssignModal(true)}
+									onClick={() => setOpenDialog('assign')}
 									aria-label={`Assign subscription to ${member.email}`}
 								>
 									<Icon name="plus" height={14} width={14} />
@@ -68,7 +66,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 								type="button"
 								size="md"
 								ref={subscriptionFocusRef}
-								onClick={() => setShowUnassignConfirm(true)}
+								onClick={() => setOpenDialog('unassign')}
 								aria-label={`Unassign subscription from ${member.email}`}
 							>
 								<Icon name="x" height={14} width={14} />
@@ -82,7 +80,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 								square
 								onClick={(event) => {
 									removeFocusRef.current = event.currentTarget
-									setShowRemoveConfirm(true)
+									setOpenDialog('remove')
 								}}
 								aria-label={`Remove ${member.email}`}
 							>
@@ -93,72 +91,45 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 				)}
 			</div>
 
-			{showAssignModal && (
+			{openDialog === 'assign' ? (
 				<AssignSubscriptionModal
 					finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
-					isOpen={showAssignModal}
-					onClose={() => setShowAssignModal(false)}
+					onClose={closeDialog}
 					member={member}
 				/>
-			)}
+			) : null}
 
-			<ConfirmDialog
-				open={showUnassignConfirm}
-				onClose={() => {
-					unassignMemberMutation.reset()
-					setShowUnassignConfirm(false)
-				}}
-				portal
-				unmountOnHide
-				finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
-				title="Unassign subscription"
-				description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
-				confirmLabel="Unassign"
-				pendingLabel={unassignMemberMutation.isPending ? 'Unassigning…' : null}
-				error={unassignMemberMutation.isError ? unassignMemberMutation.error.message : null}
-				onConfirm={() => {
-					unassignMemberMutation.mutate(
-						{ userId: member.userId },
-						{
-							onSuccess: () => {
-								setShowUnassignConfirm(false)
-								toast.success('Subscription removed from member')
-							}
-						}
-					)
-				}}
-			/>
+			{openDialog === 'unassign' ? (
+				<ConfirmActionDialog
+					finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
+					title="Unassign subscription"
+					description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
+					confirmLabel="Unassign"
+					pendingLabel="Unassigning…"
+					mutation={unassignMemberMutation}
+					variables={{ userId: member.userId }}
+					onClose={closeDialog}
+					successMessage="Subscription removed from member"
+				/>
+			) : null}
 
-			<ConfirmDialog
-				open={showRemoveConfirm}
-				onClose={() => {
-					removeMemberMutation.reset()
-					setShowRemoveConfirm(false)
-				}}
-				portal
-				unmountOnHide
-				finalFocus={removeFocusRef}
-				title="Remove member"
-				description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
-				confirmLabel="Remove"
-				pendingLabel={removeMemberMutation.isPending ? 'Removing…' : null}
-				error={removeMemberMutation.isError ? removeMemberMutation.error.message : null}
-				onConfirm={() => {
-					const trigger = removeFocusRef.current
-					// Reconciliation can unmount this row before the success callback runs.
-					removeFocusRef.current = finalFocus?.current ?? trigger
-					// Success drops this row, and mutate() callbacks with it; the returned promise still settles.
-					removeMemberMutation.mutateAsync({ userId: member.userId }).then(
-						() => {
-							setShowRemoveConfirm(false)
-							toast.success('Member removed from team')
-						},
-						() => {
-							removeFocusRef.current = trigger
-						}
-					)
-				}}
-			/>
+			{openDialog === 'remove' ? (
+				<ConfirmActionDialog
+					finalFocus={removeFocusRef}
+					title="Remove member"
+					description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
+					confirmLabel="Remove"
+					pendingLabel="Removing…"
+					mutation={removeMemberMutation}
+					variables={{ userId: member.userId }}
+					onClose={closeDialog}
+					onSuccess={() => {
+						// Success removes this row and its Remove button.
+						removeFocusRef.current = finalFocus.current
+					}}
+					successMessage="Member removed from team"
+				/>
+			) : null}
 		</>
 	)
 }

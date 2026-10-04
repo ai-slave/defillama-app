@@ -59,9 +59,13 @@ beforeEach(() => {
 			if (url.pathname.endsWith('/collaborators')) return { collaborators: [] }
 			return { article: await api.save(url, init) }
 		},
-		'http://localhost:3000/api/private/research/articles/': async (url: URL, init?: RequestInit) => ({
-			article: await api.publish(url, init)
-		}),
+		'http://localhost:3000/api/private/research/articles/': async (url: URL, init?: RequestInit) => {
+			if (url.pathname.endsWith('/unpublish')) {
+				article = { ...article, status: 'draft' }
+				return { article }
+			}
+			return { article: await api.publish(url, init) }
+		},
 		'/api/private/research/revalidate-landing': {},
 		'/uploads/image': (url: URL, init?: RequestInit) => api.upload(url, init)
 	})
@@ -330,4 +334,44 @@ test('a scheduled draft stops reading as scheduled once its go-live time passes 
 	} finally {
 		vi.useRealTimers()
 	}
+})
+
+test('Move to drafts sends the edits still waiting for an autosave before the draft replaces the editor', async () => {
+	article.status = 'published'
+	await mount()
+	await typeTitle('Edited before moving')
+	await click('Live')
+	await act(async () =>
+		[...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+			.find((x) => x.textContent?.includes('Move to drafts'))!
+			.click()
+	)
+	await settle()
+	await settle()
+	expect(api.save).toHaveBeenCalledOnce()
+	expect(article).toMatchObject({ status: 'draft', title: 'Edited before moving' })
+	expect(title().value).toBe('Edited before moving')
+})
+
+test('the Topics field keeps the comma being typed and saves at most 12 topics', async () => {
+	await mount()
+	await click('Publish')
+	const topics = document.querySelector<HTMLInputElement>('input[placeholder="stablecoins, lending, ethereum"]')!
+	const typeTopics = async (value: string) => {
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(topics, value)
+			topics.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+	}
+	await typeTopics('defi, ')
+	expect(topics.value).toBe('defi, ')
+	await typeTopics('defi, lending fees')
+	expect(topics.value).toBe('defi, lending fees')
+
+	const thirteen = Array.from({ length: 13 }, (_, i) => `t${i + 1}`)
+	await typeTopics(thirteen.join(', '))
+	expect(topics.getAttribute('aria-invalid')).toBe('true')
+	expect(topics.closest('div')!.textContent).toContain('Only the first 12 topics are saved.')
+	await save()
+	expect(article.tags).toEqual(thirteen.slice(0, 12))
 })

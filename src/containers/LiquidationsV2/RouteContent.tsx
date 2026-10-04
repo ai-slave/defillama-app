@@ -21,12 +21,13 @@ export function LiquidationsOverviewRouteContent({ shell }: { shell: Liquidation
 		enabled: canFetch && !loaders.userLoading
 	})
 
-	if (loaders.userLoading || (canFetch && query.isLoading)) {
-		return <LiquidationsShellLoader protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
+	// The gate shows the loader itself while the account loads, so its sign-in survives a sign-in from another tab.
+	if (loaders.userLoading || !canFetch) {
+		return <LiquidationsAccessGate protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
 	}
 
-	if (!canFetch) {
-		return <LiquidationsAccessGate protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
+	if (query.isLoading) {
+		return <LiquidationsShellLoader protocolLinks={shell.protocolLinks} activeProtocolLink="Overview" />
 	}
 
 	if (query.error) {
@@ -58,9 +59,9 @@ export function LiquidationsProtocolRouteContent({ shell }: { shell: Liquidation
 		enabled: canFetch && !loaders.userLoading
 	})
 
-	if (loaders.userLoading || (canFetch && query.isLoading)) {
+	if (loaders.userLoading || !canFetch) {
 		return (
-			<LiquidationsShellLoader
+			<LiquidationsAccessGate
 				protocolLinks={shell.protocolLinks}
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
@@ -69,9 +70,9 @@ export function LiquidationsProtocolRouteContent({ shell }: { shell: Liquidation
 		)
 	}
 
-	if (!canFetch) {
+	if (query.isLoading) {
 		return (
-			<LiquidationsAccessGate
+			<LiquidationsShellLoader
 				protocolLinks={shell.protocolLinks}
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
@@ -118,9 +119,9 @@ export function LiquidationsChainRouteContent({ shell }: { shell: LiquidationsCh
 		enabled: canFetch && !loaders.userLoading
 	})
 
-	if (loaders.userLoading || (canFetch && query.isLoading)) {
+	if (loaders.userLoading || !canFetch) {
 		return (
-			<LiquidationsShellLoader
+			<LiquidationsAccessGate
 				protocolLinks={shell.protocolLinks}
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}
@@ -129,9 +130,9 @@ export function LiquidationsChainRouteContent({ shell }: { shell: LiquidationsCh
 		)
 	}
 
-	if (!canFetch) {
+	if (query.isLoading) {
 		return (
-			<LiquidationsAccessGate
+			<LiquidationsShellLoader
 				protocolLinks={shell.protocolLinks}
 				activeProtocolLink={shell.protocolName}
 				chainLinks={shell.chainLinks}

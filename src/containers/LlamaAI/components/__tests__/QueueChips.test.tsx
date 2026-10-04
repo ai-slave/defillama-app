@@ -7,6 +7,12 @@ import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import type { QueueSurface, QueueServerRow } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { accessibleName } from '~/utils/testing/accessibleName'
 
+function named(within: ParentNode, name: string) {
+	return (
+		[...within.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name) ?? null
+	)
+}
+
 function pending(overrides: Partial<QueueServerRow> = {}): QueueServerRow {
 	return {
 		kind: 'server',
@@ -58,7 +64,13 @@ describe('QueueChips', () => {
 
 	async function render(queueSurface: QueueSurface, quotaResetTime?: string | null) {
 		await act(async () =>
-			root.render(<QueueChips surface={queueSurface} {...(quotaResetTime === undefined ? {} : { quotaResetTime })} />)
+			root.render(
+				<QueueChips
+					surface={queueSurface}
+					promptInputRef={{ current: null }}
+					{...(quotaResetTime === undefined ? {} : { quotaResetTime })}
+				/>
+			)
 		)
 	}
 
@@ -93,7 +105,7 @@ describe('QueueChips', () => {
 		)
 
 		expect(container.textContent).toContain('Queue paused')
-		expect(container.querySelector('[aria-label="Retry"]')).toBeNull()
+		expect(named(container, 'Retry')).toBeNull()
 		const continueButton = [...container.querySelectorAll('button')].find(
 			(button) => button.textContent === 'Continue queue'
 		)
@@ -159,7 +171,7 @@ describe('QueueChips', () => {
 		const onEditStart = vi.fn()
 		const initial = surface({ rows: [pending()], onEditStart })
 		await render(initial)
-		await act(async () => (container.querySelector('[aria-label="Edit"]') as HTMLButtonElement).click())
+		await act(async () => named(container, 'Edit')!.click())
 
 		expect(onEditStart).toHaveBeenCalledWith('q1')
 		expect(container.querySelector('textarea')).toBeNull()
@@ -215,7 +227,7 @@ describe('QueueChips', () => {
 		const textarea = container.querySelector('textarea') as HTMLTextAreaElement
 		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(textarea, ' edited follow up ')
 		textarea.dispatchEvent(new Event('input', { bubbles: true }))
-		await act(async () => (container.querySelector('[aria-label="Save"]') as HTMLButtonElement).click())
+		await act(async () => named(container, 'Save')!.click())
 
 		expect(onEditDraftChange).toHaveBeenCalledWith('q1', ' edited follow up ')
 		expect(onEditSave).toHaveBeenCalledWith('q1', 'edited follow up')
@@ -237,13 +249,11 @@ describe('QueueChips', () => {
 				rowStatus: { q1: { action: 'dismissing', error: null } }
 			})
 		)
-		const dismissButtons = container.querySelectorAll<HTMLButtonElement>('[aria-label="Dismiss"]')
-
-		const firstDismiss = dismissButtons[0]
-		const secondDismiss = dismissButtons[1]
-		expect(firstDismiss).toBeDefined()
-		expect(secondDismiss).toBeDefined()
-		if (!firstDismiss || !secondDismiss) throw new Error('Missing dismiss buttons')
+		const [firstDismiss, secondDismiss] = [...container.querySelectorAll('li')].map((row) =>
+			[...row.querySelectorAll('button')].at(-1)!
+		)
+		expect(accessibleName(firstDismiss)).toBe('Dismissing…')
+		expect(accessibleName(secondDismiss)).toBe('Dismiss')
 		// Unavailable while busy, yet still focusable, so a pressed button keeps focus while its request runs.
 		expect(firstDismiss.getAttribute('aria-disabled')).toBe('true')
 		expect(firstDismiss.disabled).toBe(false)
@@ -265,13 +275,13 @@ describe('QueueChips', () => {
 				]
 			})
 		)
-		const retry = container.querySelector('[aria-label="Retry"]') as HTMLButtonElement
+		const retry = named(container, 'Retry')!
 		await act(async () => retry.click())
 
 		expect(retry.disabled).toBe(false)
 		expect(onRetry).toHaveBeenCalledWith('q1')
 		expect(container.textContent).not.toContain("Images can't")
-		expect(container.querySelector('[aria-label="Edit"]')).toBeNull()
+		expect(named(container, 'Edit')).toBeNull()
 	})
 
 	test('preserves a rejected edit for copying without retrying the original text', async () => {
@@ -287,7 +297,7 @@ describe('QueueChips', () => {
 		expect(container.textContent).toContain('unsaved edit')
 		expect(container.textContent).not.toContain('original text')
 		expect(container.textContent).toContain('Copy the unsaved edit')
-		expect(container.querySelector('[aria-label="Retry"]')!.getAttribute('aria-disabled')).toBe('true')
+		expect(named(container, 'Retry')!.getAttribute('aria-disabled')).toBe('true')
 	})
 
 	test('unblocks the paused queue when the quota reset time arrives', async () => {
@@ -369,7 +379,7 @@ describe('QueueChips', () => {
 		const first = pending({ id: 'q1', message: 'First prompt' })
 		const second = pending({ id: 'q2', message: 'Second prompt' })
 		await renderWithComposer(surface({ rows: [first, second] }))
-		const dismiss = rowNamed('First prompt').querySelector<HTMLElement>('[aria-label="Dismiss"]')!
+		const dismiss = named(rowNamed('First prompt'), 'Dismiss')!
 		await act(async () => dismiss.focus())
 		await renderWithComposer(
 			surface({ rows: [first, second], rowStatus: { q1: { action: 'dismissing', error: null } } })
@@ -385,7 +395,7 @@ describe('QueueChips', () => {
 	test('a saved edit leaves focus on its row', async () => {
 		const editing = pending({ state: 'editing', editLeaseId: 'lease-1', editExpiresAt: 'later' })
 		await renderWithComposer(surface({ ownedEditId: 'q1', rows: [editing] }))
-		const save = container.querySelector<HTMLElement>('[aria-label="Save"]')!
+		const save = named(container, 'Save')!
 		await act(async () => save.focus())
 		await renderWithComposer(
 			surface({ ownedEditId: 'q1', rows: [editing], rowStatus: { q1: { action: 'saving_edit', error: null } } })

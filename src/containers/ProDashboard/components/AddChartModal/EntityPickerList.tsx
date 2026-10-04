@@ -1,6 +1,7 @@
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { getItemIconUrl } from '../../utils'
@@ -33,6 +34,8 @@ export function EntityPickerList({
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
 	const listRef = useRef<HTMLDivElement | null>(null)
+	// Clear removes itself with the selection; picking continues from the search.
+	const searchRef = useRef<HTMLInputElement>(null)
 	const searchQuery = deferredSearch.trim()
 
 	const filteredEntities = useMemo(() => {
@@ -102,6 +105,7 @@ export function EntityPickerList({
 						className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
 					/>
 					<input
+						ref={searchRef}
 						onInput={(e) => setSearch(e.currentTarget.value)}
 						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}...`}
 						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
@@ -112,7 +116,7 @@ export function EntityPickerList({
 						<span className="text-xs font-medium text-pro-text-secondary">{selectedEntities.length} selected</span>
 						<button
 							type="button"
-							onClick={onClear}
+							onClick={() => keepFocus(onClear, () => searchRef.current)}
 							className="text-xs font-medium text-pro-text-tertiary transition-colors hover:text-brand"
 						>
 							Clear

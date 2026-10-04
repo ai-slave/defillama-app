@@ -8,7 +8,7 @@ import { datasets } from '../../datasets'
 import { SchemaBrowser } from '../SchemaBrowser'
 import { SchemaDrawer } from '../SchemaDrawer'
 import { UpsellGate } from '../UpsellGate'
-import { useTableRegistry } from '../useTableRegistry'
+import { useTableRegistry, type RegisteredTable } from '../useTableRegistry'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/downloads?mode=sql' }) }))
 const flatDescription = datasets.find((dataset) => dataset.slug === 'hacks')!.description
@@ -179,4 +179,103 @@ test('a time series keeps its parameter across a tab switch and shows a failure 
 	await waitForUi(() => expect(row().querySelector('[role="alert"]')?.textContent).toBe('Aave TVL is unavailable'))
 	expect(authorizedFetch).toHaveBeenCalledWith('/api/private/downloads/chart/protocol-tvl-chart?param=aave', undefined)
 	expect(authorizedFetch).toHaveBeenCalledTimes(1)
+})
+
+const hacksTable: RegisteredTable = {
+	name: 'hacks',
+	source: { kind: 'dataset', slug: 'hacks' },
+	columns: [{ name: 'name', type: 'VARCHAR' }],
+	rowCount: 3,
+	loadedAt: 1
+}
+
+// Holds the search and picks the way the SQL workspace does.
+const noTables: Array<RegisteredTable> = []
+
+function Browser({
+	loadedTables = noTables,
+	onInsertAtCursor = vi.fn()
+}: {
+	loadedTables?: Array<RegisteredTable>
+	onInsertAtCursor?: ((text: string) => void) | null
+}) {
+	const [pickedParams, setPickedParams] = useState<Record<string, string>>({ 'protocol-tvl-chart': 'aave' })
+	return (
+		<SchemaBrowser
+			chartOptionsMap={{ 'protocol-tvl-chart': [{ label: 'Aave', value: 'aave' }] }}
+			loadedTables={loadedTables}
+			onLoad={vi.fn(async () => null)}
+			onReplaceSql={vi.fn()}
+			onInsertAtCursor={onInsertAtCursor}
+			loading={null}
+			loadError={null}
+			pickedParams={pickedParams}
+			setPickedParams={setPickedParams}
+		/>
+	)
+}
+
+const schemaRow = (description: string) =>
+	[...container.querySelectorAll('li')].find((li) => li.textContent?.includes(description))!
+const buttonIn = (el: Element, name: string) =>
+	[...el.querySelectorAll<HTMLButtonElement>('button')].find(
+		(b) => b.textContent === name || b.getAttribute('aria-label') === name
+	)!
+
+test('clearing the schema search hands focus back to the search field', async () => {
+	await act(async () => root.render(<Browser />))
+	const search = container.querySelector<HTMLInputElement>('input[type="text"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'hacks')
+		search.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await act(async () => {
+		buttonIn(container, 'Clear search').focus()
+		buttonIn(container, 'Clear search').click()
+	})
+	expect(search.value).toBe('')
+	expect(document.activeElement).toBe(search)
+})
+
+test("clearing a time series' parameter hands focus to its picker", async () => {
+	await act(async () => root.render(<Browser />))
+	const row = schemaRow(chartDescription)
+	expect(row.querySelector('[role="combobox"]')!.textContent).toBe('Aave')
+	await act(async () => {
+		buttonIn(row, 'Clear').focus()
+		buttonIn(row, 'Clear').click()
+	})
+	expect(row.querySelector('[role="combobox"]')!.textContent).toBe('Pick a protocol')
+	expect(document.activeElement).toBe(row.querySelector('[role="combobox"]'))
+})
+
+test('Load stays focusable when its table lands and it turns into Loaded', async () => {
+	await act(async () => root.render(<Browser />))
+	const load = buttonIn(schemaRow(flatDescription), 'Load')
+	await act(async () => load.focus())
+	await act(async () => root.render(<Browser loadedTables={[hacksTable]} />))
+	expect(load.textContent).toBe('Loaded')
+	expect(load.getAttribute('aria-disabled')).toBe('true')
+	expect(load.matches(':disabled')).toBe(false)
+	expect(document.activeElement).toBe(load)
+})
+
+test('with no editor to insert into, a table lists its columns without offering them', async () => {
+	const insert = vi.fn()
+	await act(async () => root.render(<Browser loadedTables={[hacksTable]} onInsertAtCursor={insert} />))
+	const columns = () => schemaRow(flatDescription).querySelector('ul[aria-label^="Columns"]')!
+	await act(async () => columns().querySelector('button')!.click())
+	expect(insert).toHaveBeenCalledWith('date')
+
+	await act(async () => root.render(<Browser loadedTables={[hacksTable]} onInsertAtCursor={null} />))
+	expect(columns().getAttribute('aria-label')).toBe('Columns')
+	expect(columns().querySelectorAll('button')).toHaveLength(0)
+	expect(columns().textContent).not.toBe('')
+})
+
+test('the upsell sample shows its notebook controls without offering dead buttons', async () => {
+	await act(async () => root.render(<UpsellGate isAuthenticated={false} isTrial={false} />))
+	const panel = container.querySelector('[role="tabpanel"]:not([hidden])')!
+	expect(panel.textContent).toContain('Run all')
+	expect(panel.querySelectorAll('button')).toHaveLength(0)
 })

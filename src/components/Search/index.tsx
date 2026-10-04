@@ -12,6 +12,7 @@ import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Dialog, dialogScrollableBodyStyles, DialogSearchHeader } from '~/ui/Dialog'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
@@ -19,6 +20,7 @@ import { NoResults } from '~/ui/NoResults'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
 
 const SEARCH_PAGE_SIZE = 20
@@ -153,23 +155,29 @@ function SearchResults({ searchValue, onSelect }: { searchValue: string; onSelec
 	const defaults = useDefaultSearchList()
 
 	if (debouncedSearchValue) {
+		// The failure first: a retry from it moves the query back to loading, and the error waits in its Try again.
+		if (search.data.length === 0 && search.failed) {
+			return <SearchError retrying={search.isFetching} onRetry={() => void search.refetch()} />
+		}
 		if (search.isLoading) return <SearchLoading />
-		if (search.error) return <SearchError onRetry={() => void search.refetch()} />
 		if (search.data.length === 0) return <NoResults />
 		return (
 			<>
 				{search.data.map((route) => (
 					<SearchItem key={`${route.name}-${route.route}-${route.subName}`} route={route} onSelect={onSelect} />
 				))}
-				{search.hasNextPage ? (
+				{/* A failed next page keeps the results already loaded and offers its own retry in place of See more. */}
+				{search.isFetchNextPageError ? (
+					<SearchError retrying={search.isFetchingNextPage} onRetry={() => void search.fetchNextPage()} />
+				) : search.hasNextPage ? (
 					<SeeMoreButton isLoading={search.isFetchingNextPage} onClick={() => search.fetchNextPage()} />
 				) : null}
 			</>
 		)
 	}
 
+	if (defaults.failed) return <SearchError retrying={defaults.isFetching} onRetry={() => void defaults.refetch()} />
 	if (defaults.isLoading) return <SearchLoading />
-	if (defaults.error) return <SearchError onRetry={() => void defaults.refetch()} />
 	if (defaults.defaultSearchList.length === 0) return <NoResults />
 	return (
 		<>
@@ -196,13 +204,20 @@ function SearchLoading() {
 	)
 }
 
-function SearchError({ onRetry }: { onRetry: () => void }) {
+function SearchError({ retrying, onRetry }: { retrying: boolean; onRetry: () => void }) {
 	return (
 		<div className="p-2">
 			<InlineStatus variant="error">
 				<span className="flex flex-wrap items-center justify-between gap-2">
 					Couldn&rsquo;t load search results.
-					<Button type="button" size="sm" onClick={onRetry}>
+					{/* Replaces a See more that failed with focus, so it takes that focus. */}
+					<Button
+						ref={takeLostFocus}
+						type="button"
+						size="sm"
+						pendingLabel={retrying ? 'Retrying…' : null}
+						onClick={onRetry}
+					>
 						Try again
 					</Button>
 				</span>
@@ -362,7 +377,7 @@ function SearchItem({
 			hideOnClick
 		>
 			{route.logo ? (
-				<img src={route.logo} alt={route.name} className="size-6 rounded-full" loading="lazy" />
+				<img src={route.logo} alt="" className="size-6 rounded-full" loading="lazy" />
 			) : (
 				<Icon name="file-text" className="size-6" />
 			)}
@@ -385,11 +400,16 @@ function SearchItem({
 
 function SeeMoreButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => void }) {
 	return (
-		<button
+		// Focusable while it loads, so a reader who pressed it keeps their place; it takes focus back from a Try again
+		// whose retry brought it back.
+		<Ariakit.Button
+			ref={takeLostFocus}
 			type="button"
 			onClick={onClick}
 			disabled={isLoading}
-			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row disabled:opacity-60"
+			accessibleWhenDisabled
+			aria-busy={isLoading || undefined}
+			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:opacity-60"
 		>
 			{isLoading ? (
 				<>
@@ -399,7 +419,7 @@ function SeeMoreButton({ isLoading, onClick }: { isLoading: boolean; onClick: ()
 			) : (
 				'See more'
 			)}
-		</button>
+		</Ariakit.Button>
 	)
 }
 
@@ -419,11 +439,12 @@ const defaultSearchListQuery = {
 }
 
 function useDefaultSearchList() {
-	const { data, isLoading, error, refetch } = useQuery({
+	const query = useQuery({
 		...defaultSearchListQuery,
 		refetchOnMount: false,
 		refetchOnWindowFocus: false
 	})
+	const data = query.data
 
 	const recentSearch = useStorageItem('recentSearch', '[]')
 
@@ -441,7 +462,14 @@ function useDefaultSearchList() {
 		}
 	}, [data, recentSearch])
 
-	return { defaultSearchList, recentSearchList, isLoading, error, refetch }
+	return {
+		defaultSearchList,
+		recentSearchList,
+		isLoading: query.isLoading,
+		failed: queryReadFailed(query),
+		isFetching: query.isFetching,
+		refetch: query.refetch
+	}
 }
 
 function useSearch(searchValue: string) {
@@ -461,8 +489,10 @@ function useSearch(searchValue: string) {
 	return {
 		data,
 		isLoading: query.isLoading,
-		error: query.error,
+		failed: queryReadFailed(query),
+		isFetching: query.isFetching,
 		hasNextPage: query.hasNextPage,
+		isFetchNextPageError: query.isFetchNextPageError,
 		isFetchingNextPage: query.isFetchingNextPage,
 		fetchNextPage: query.fetchNextPage,
 		refetch: query.refetch

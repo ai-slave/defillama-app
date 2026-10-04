@@ -19,6 +19,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { AI_SERVER } from '~/constants'
+import { EndTrialModal } from '~/containers/Account/EndTrialModal'
 import { AbortScope } from '~/containers/LlamaAI/abortScope'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { chatFrameStyles, LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
@@ -45,7 +46,6 @@ import { ShareModal } from '~/containers/LlamaAI/components/ShareModal'
 import { AgenticSidebar } from '~/containers/LlamaAI/components/sidebar/AgenticSidebar'
 import { TextSelectionPopup } from '~/containers/LlamaAI/components/TextSelectionPopup'
 import { TipActionProvider } from '~/containers/LlamaAI/components/TipActionContext'
-import { TokenLimitModal } from '~/containers/LlamaAI/components/TokenLimitModal'
 import { UploadTargetProvider } from '~/containers/LlamaAI/components/UploadTarget'
 import { RECOVERY_MAX_MS } from '~/containers/LlamaAI/connectionErrors'
 import { dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE } from '~/containers/LlamaAI/dashboardPanelState'
@@ -120,6 +120,7 @@ import { shouldQueuePrompt } from '~/containers/LlamaAI/utils/composerSubmit'
 import { materializePersistedUserMessage } from '~/containers/LlamaAI/utils/materializeUserMessage'
 import { hasClaimableQueueWork } from '~/containers/LlamaAI/utils/queueAttach'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { AI_BALANCE_QUERY_KEY } from '~/containers/Subscription/useTopup'
 import { isLlamaAIConversationPage, useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
@@ -160,12 +161,6 @@ import {
 	useTerminalViewOpen,
 	withTerminalView
 } from './terminal/terminalViewStore'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 const TerminalPanel = lazy(() => import('./terminal/TerminalPanel').then((m) => ({ default: m.TerminalPanel })))
 
@@ -375,12 +370,12 @@ export function AgenticChat({
 		useSidebarVisibility()
 	const enableSoundNotifications = useLlamaAISetting('enableSoundNotifications')
 	const alertsModalStore = Ariakit.useDialogStore()
-	const settingsModalStore = Ariakit.useDialogStore()
-	const [shouldRenderSubscribeModal, setShouldRenderSubscribeModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({
-		open: shouldRenderSubscribeModal,
-		setOpen: setShouldRenderSubscribeModal
+	const settingsModalStore = Ariakit.useDialogStore({
+		setOpen: (open) => {
+			if (open) trackUmamiEvent('llamaai-settings-open')
+		}
 	})
+	const subscribeModalStore = Ariakit.useDialogStore()
 
 	const [messages, setMessages] = useState<Array<Message>>([])
 	const [activeLeafMessageId, setActiveLeafMessageId] = useState<string | null>(null)
@@ -478,7 +473,7 @@ export function AgenticChat({
 	})
 	const {
 		settings,
-		actions,
+		saveSettings,
 		availableModels,
 		availableEfforts,
 		telegramStatus,
@@ -976,8 +971,10 @@ export function AgenticChat({
 		dispatchDashboardPanel({ type: 'SELECT_VERSION', value: index })
 	}, [])
 
+	// The × slides the panel away with its own focus; the composer takes it.
 	const handleDashboardClose = useCallback(() => {
 		dispatchDashboardPanel({ type: 'CLOSE' })
+		promptInputRef.current?.focus()
 	}, [])
 
 	const handleDashboardExited = useCallback(() => {
@@ -2663,7 +2660,8 @@ export function AgenticChat({
 		isAlertsModalOpen,
 		quotedText,
 		onClearQuotedText: () => setQuotedText(null),
-		enterToSend: settings.enterToSend
+		enterToSend: settings.enterToSend,
+		holdWalkthrough: !!deepLinkConfirmationPrompt
 	}
 
 	const queueCapMessage =
@@ -2819,7 +2817,6 @@ export function AgenticChat({
 							type="button"
 							onClick={() => {
 								setSignupSource('llamaai')
-								if (!shouldRenderSubscribeModal) setShouldRenderSubscribeModal(true)
 								subscribeModalStore.show()
 							}}
 							className="underline"
@@ -2829,11 +2826,7 @@ export function AgenticChat({
 						to use LlamaAI.
 					</p>
 				</div>
-				{shouldRenderSubscribeModal ? (
-					<Suspense fallback={null}>
-						<SubscribeProModal dialogStore={subscribeModalStore} />
-					</Suspense>
-				) : null}
+				<LazySubscribeProModal dialogStore={subscribeModalStore} />
 			</>
 		)
 	}
@@ -3098,7 +3091,13 @@ export function AgenticChat({
 										/>
 									) : null}
 									{!readOnly ? (
-										<TokenLimitModal isOpen={showTokenLimitModal} onClose={() => setShowTokenLimitModal(false)} />
+										<EndTrialModal
+											isOpen={showTokenLimitModal}
+											onClose={() => setShowTokenLimitModal(false)}
+											title="Daily usage limit reached"
+											description="You've reached your daily AI usage limit on the trial plan. Upgrade to a full subscription for unlimited access."
+											confirmLabel="Upgrade now"
+										/>
 									) : null}
 									{!readOnly && shareTarget ? (
 										<ShareModal
@@ -3114,6 +3113,7 @@ export function AgenticChat({
 											prompt={deepLinkConfirmationPrompt}
 											onClose={handleCloseDeepLinkPrompt}
 											onConfirm={handleConfirmDeepLinkPrompt}
+											promptInputRef={promptInputRef}
 										/>
 									) : null}
 									{!readOnly ? (
@@ -3123,16 +3123,12 @@ export function AgenticChat({
 											onPrefillPrompt={(text) => prefillComposer(text, true)}
 										/>
 									) : null}
-									{shouldRenderSubscribeModal ? (
-										<Suspense fallback={null}>
-											<SubscribeProModal dialogStore={subscribeModalStore} />
-										</Suspense>
-									) : null}
+									<LazySubscribeProModal dialogStore={subscribeModalStore} />
 									{!readOnly ? (
 										<SettingsModal
 											dialogStore={settingsModalStore}
 											settings={settings}
-											actions={actions}
+											saveSettings={saveSettings}
 											availableModels={availableModels}
 											availableEfforts={availableEfforts}
 											telegramStatus={telegramStatus}

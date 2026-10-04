@@ -30,7 +30,7 @@ vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) =>
 vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('~/containers/LlamaAI/components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/SettingsModal', () => ({ SettingsModal: () => null }))
-vi.mock('~/containers/LlamaAI/components/TokenLimitModal', () => ({ TokenLimitModal: () => null }))
+vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
 import LlamaAIPage from '~/pages/ai/chat/[[...sessionId]]'
 
@@ -94,7 +94,7 @@ test('a research limit shows up as a message in the chat, not as a dialog over i
 			resetTime: '2026-10-12T00:00:00.000Z'
 		})
 	})
-	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][aria-label="Research"]')!.click())
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][value="research"]')!.click())
 	await send('Write a report on restaking')
 
 	await waitForUi(() =>

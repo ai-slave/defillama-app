@@ -192,8 +192,7 @@ test('accepts Google identity before one account refresh and keeps onboarding op
 	const signIn = act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'popup-code',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await settle()
@@ -225,8 +224,7 @@ test('closes the OAuth welcome dialog when a different account takes over the se
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'popup-code',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await settle()
@@ -245,7 +243,6 @@ async function emailLogin(suppressVerifyEmailPrompt = false) {
 			password: 'password',
 			turnstileToken: 'fixture-token',
 			signal: new AbortController().signal,
-			canAccept: () => true,
 			suppressVerifyEmailPrompt
 		})
 	)
@@ -285,7 +282,11 @@ test('continues unverified email sign-in in a dismissible sheet and retains the 
 	otpCalls[1].resolve(jsonResponse({ verified: true }))
 	await settle()
 	expect(sessionView.user?.verified).toBe(true)
-	expect(document.querySelector('[role="dialog"]')).toBeNull()
+	// The sheet confirms the verification instead of closing silently.
+	expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Email verified')
+	expect(document.activeElement).toBe(button('Done'))
+	await act(async () => button('Done').click())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
 	expect(sessionView.isAuthenticated).toBe(true)
 })
 
@@ -340,7 +341,7 @@ test.each(['verified', 'invite'] as const)('does not interrupt the %s sign-in ha
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 })
 
-test('shows delivery failures inline and respects the server resend delay on retry', async () => {
+test('shows delivery failures inline, keeps them while Try again resends, and respects the server resend delay', async () => {
 	await render()
 	await emailLogin()
 	otpCalls[0].resolve(jsonResponse({ error: 'Failed to send OTP' }, 500))
@@ -352,6 +353,8 @@ test('shows delivery failures inline and respects the server resend delay on ret
 	expect(button('Try again').disabled).toBe(false)
 	await act(async () => button('Try again').click())
 	await settle()
+	await waitForUi(() => expect(button('Sending code…').getAttribute('aria-busy')).toBe('true'))
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
 	otpCalls[1].resolve(jsonResponse({ error: 'Please wait', details: { retryAfterSeconds: 120 } }, 429))
 	await settle()
 	await waitForUi(async () => {
@@ -360,6 +363,32 @@ test('shows delivery failures inline and respects the server resend delay on ret
 	})
 	expect(locked(button('Resend code'))).toBe(true)
 	expect(button('Resend code').textContent).toContain('120s')
+})
+
+test('a failed verification keeps its error on screen while the same code is retried', async () => {
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
+	await settle()
+	const codeInput = () => document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(codeInput(), '123456')
+		codeInput().dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	const submit = () =>
+		act(async () => codeInput().form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await submit()
+	await settle()
+	otpCalls[1].resolve(jsonResponse({ error: 'Unavailable' }, 503))
+	await waitForUi(async () => {
+		await settle()
+		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe('Could not verify your email.')
+	})
+
+	await submit()
+	await waitForUi(() => expect(button('Verifying…').getAttribute('aria-busy')).toBe('true'))
+	expect(otpCalls).toHaveLength(3)
+	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe('Could not verify your email.')
 })
 
 test('a reopened sheet starts without the last typed code and verify error', async () => {
@@ -470,8 +499,7 @@ const signupRequest = (signal = new AbortController().signal) => ({
 	passwordConfirm: 'password123',
 	turnstileToken: 'fixture-token',
 	promotionalEmails: 'off' as const,
-	signal,
-	canAccept: () => true
+	signal
 })
 const signupResponse = () =>
 	jsonResponse(
@@ -609,8 +637,7 @@ test.each(['cancel', 'replace'] as const)('ignores a late Google session after %
 	const result = sessionView.signInWithGoogle({
 		code: 'fixture',
 		onAuthenticated,
-		signal: controller.signal,
-		canAccept: () => true
+		signal: controller.signal
 	})
 	await settle()
 	await act(async () => {
@@ -645,7 +672,7 @@ test.each(['confirm', 'resend'] as const)('ignores a cancelled Google link %s re
 			})
 	)
 	const controller = new AbortController()
-	const request = { challengeToken: 'challenge', code: '123456', signal: controller.signal, canAccept: () => true }
+	const request = { challengeToken: 'challenge', code: '123456', signal: controller.signal }
 	const result =
 		operation === 'confirm' ? sessionView.confirmGoogleLink(request) : sessionView.resendGoogleLink(request)
 	await settle()
@@ -677,8 +704,7 @@ test('blocks onboarding Continue if a replacement token arrives before its recor
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
@@ -704,8 +730,7 @@ test('ignores an onboarding save after the owning session is replaced', async ()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
@@ -733,8 +758,7 @@ test('accepts an onboarding save when the same account refreshes its token', asy
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
@@ -761,13 +785,39 @@ test('accepts an onboarding save when the same account refreshes its token', asy
 	expect(pb.authStore.record?.promotionalEmails).toBe('on')
 })
 
+test('a failed onboarding save keeps its error on screen while Continue retries', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			code: 'fixture',
+			signal: new AbortController().signal
+		})
+	})
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
+	vi.mocked(fetch)
+		.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
+		.mockImplementationOnce(() => new Promise(() => {}))
+	await act(async () => button('Continue').click())
+	await waitForUi(async () => {
+		await settle()
+		expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
+			'Could not save your preference. Check your connection.'
+		)
+	})
+
+	await act(async () => button('Continue').click())
+	await waitForUi(() => expect(button('Saving…').getAttribute('aria-busy')).toBe('true'))
+	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
+		'Could not save your preference. Check your connection.'
+	)
+})
+
 test('offers sign out from required OAuth onboarding', async () => {
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await act(async () => button('Sign out').click())
@@ -784,7 +834,6 @@ test.each([false, true])(
 		await act(async () => {
 			signIn = sessionView.signInWithGithub({
 				signal: new AbortController().signal,
-				canAccept: () => true,
 				popup: oauth.openPopup(),
 				suppressVerifyEmailPrompt
 			})
@@ -818,7 +867,6 @@ test('welcomes a new GitHub account and attributes its signup to GitHub', async 
 	await act(async () => {
 		signIn = sessionView.signInWithGithub({
 			signal: new AbortController().signal,
-			canAccept: () => true,
 			popup: oauth.openPopup()
 		})
 	})
@@ -845,8 +893,7 @@ test('reloads Google profile fields even when an earlier sign-in left a fresh ca
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	expect(refreshCalls).toHaveLength(1)
@@ -862,8 +909,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
@@ -880,8 +926,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'second-login',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	finish(jsonResponse({ success: true }))
@@ -898,8 +943,7 @@ test('backs off a Google-link resend when the endpoint gives a 429 without timin
 	await expect(
 		sessionView.resendGoogleLink({
 			challengeToken: 'challenge',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	).rejects.toMatchObject({ retryAt: Date.now() + 60_000 })
 })
@@ -918,8 +962,7 @@ test('remembers Google only after its linking challenge becomes an accepted sess
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'email' })
@@ -935,8 +978,7 @@ test('remembers Google only after its linking challenge becomes an accepted sess
 		await sessionView.confirmGoogleLink({
 			challengeToken: 'challenge',
 			code: '123456',
-			signal: new AbortController().signal,
-			canAccept: () => true
+			signal: new AbortController().signal
 		})
 	})
 	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'google' })

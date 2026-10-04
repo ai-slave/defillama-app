@@ -36,24 +36,3 @@ export function getDashboardRecovery(
 	}
 	return { unsaved: pending.size > 0 || failed, notices }
 }
-
-/**
- * Where one dashboard's recoverable draft stands for the discard confirmation, which stays open until the reader
- * answers even when the notice that opened it hides: 'failed' while it waits for the reader, 'saving' while a newer
- * save for the dashboard runs (it may still save or fail as a newer draft), 'gone' once a save or a discard settled it.
- */
-export function getDraftStatus(
-	attempts: Array<DashboardSaveAttempt>,
-	userId: string | undefined,
-	dashboardId: string
-): 'failed' | 'saving' | 'gone' {
-	let saving = false
-	let latest: DashboardSaveAttempt | undefined
-	for (const attempt of attempts) {
-		if (attempt.userId !== userId || attempt.request?.id !== dashboardId) continue
-		if (attempt.status === 'pending') saving = true
-		if (attempt.request.source === 'autosave') latest = attempt
-	}
-	if (saving) return 'saving'
-	return latest?.status === 'error' ? 'failed' : 'gone'
-}

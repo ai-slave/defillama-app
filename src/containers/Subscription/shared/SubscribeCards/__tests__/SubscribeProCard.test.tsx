@@ -10,7 +10,7 @@ import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import { SubscribeProModal } from '../SubscribeProCard'
+import { LazySubscribeProModal } from '../LazySubscribeProModal'
 
 const router = vi.hoisted(() => ({ pathname: '/yields', asPath: '/yields', query: {}, push: () => {} }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
@@ -43,7 +43,7 @@ function Harness() {
 	dialog = Ariakit.useDialogStore()
 	return (
 		<session.Wrapper>
-			<SubscribeProModal dialogStore={dialog} source="sheets" placement="toolbar" />
+			<LazySubscribeProModal dialogStore={dialog} source="sheets" placement="toolbar" />
 		</session.Wrapper>
 	)
 }

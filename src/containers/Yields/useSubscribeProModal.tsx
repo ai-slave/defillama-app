@@ -1,13 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, type ReactNode, Suspense, useCallback, useState } from 'react'
+import { type ReactNode, useCallback } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 /**
  * The site's upgrade modal, opened in place. `modal` must be rendered OUTSIDE any hovercard
@@ -16,12 +11,9 @@ const SubscribeProModal = lazy(() =>
  * `show`, so the click is tracked here once, tagged with where the button sits.
  */
 export function useSubscribeProModal(source: string, placement: string): { show: () => void; modal: ReactNode } {
-	const [open, setOpen] = useState(false)
 	const store = Ariakit.useDialogStore({
-		open,
-		setOpen: (next) => {
-			if (open && !next) trackYieldsEvent(YIELDS_EVENTS.VERIFIED_MODAL_CLOSE, { source, placement })
-			setOpen(next)
+		setOpen: (open) => {
+			if (!open) trackYieldsEvent(YIELDS_EVENTS.VERIFIED_MODAL_CLOSE, { source, placement })
 		}
 	})
 
@@ -33,10 +25,6 @@ export function useSubscribeProModal(source: string, placement: string): { show:
 
 	return {
 		show,
-		modal: open ? (
-			<Suspense fallback={null}>
-				<SubscribeProModal dialogStore={store} source={source} placement={placement} />
-			</Suspense>
-		) : null
+		modal: <LazySubscribeProModal dialogStore={store} source={source} placement={placement} />
 	}
 }

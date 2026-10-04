@@ -13,6 +13,7 @@ import { popoverRowStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { SearchField } from '~/ui/SearchField'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
+import { queryReadFailed } from '~/utils/query'
 import { searchTokens } from './search'
 import { TOKEN_SEARCH_LIMIT, type TokenSearchResult } from './types'
 
@@ -96,8 +97,8 @@ function TokenSearch({
 
 	const [localResultsLength, setLocalResultsLength] = useState(10)
 	const visibleTokens = coinsData ? filteredLocalTokens.slice(0, localResultsLength + 1) : filteredRemoteTokens
-	const isLoading = !coinsData && tokenSearch.isLoading
-	const error = coinsData ? null : tokenSearch.error
+	const failed = !coinsData && queryReadFailed(tokenSearch)
+	const isLoading = !coinsData && !failed && tokenSearch.isLoading
 	const hasMoreLocalResults = coinsData ? localResultsLength < filteredLocalTokens.length : false
 
 	const showMoreLocalResults = () => {
@@ -141,11 +142,16 @@ function TokenSearch({
 					<p role="status" aria-live="polite" className="p-3">
 						<LoadingIndicator />
 					</p>
-				) : error ? (
+				) : failed ? (
 					<InlineStatus variant="error">
 						<span className="flex flex-wrap items-center justify-between gap-2">
 							Couldn&rsquo;t search tokens.
-							<Button type="button" size="sm" onClick={() => void tokenSearch.refetch()}>
+							<Button
+								type="button"
+								size="sm"
+								pendingLabel={tokenSearch.isFetching ? 'Retrying…' : null}
+								onClick={() => void tokenSearch.refetch()}
+							>
 								Try again
 							</Button>
 						</span>
@@ -155,7 +161,7 @@ function TokenSearch({
 				) : null}
 				{hasMoreLocalResults ? (
 					<button type="button" className={`${popoverSeeMoreStyles} rounded-md`} onClick={showMoreLocalResults}>
-						See more...
+						See more…
 					</button>
 				) : null}
 			</DialogBody>

@@ -19,6 +19,7 @@ const cell: NotebookCell = {
 	id: 'cell',
 	type: 'sql',
 	source: 'SELECT 1',
+	view: 'table',
 	result: null,
 	running: false,
 	runError: null,
@@ -67,7 +68,7 @@ test('the SQL editor and notebook cells open in the site theme and follow its to
 					onRunAndAdvance={() => {}}
 					onFocus={() => {}}
 					onChartConfigChange={() => {}}
-					onPreferredViewChange={() => {}}
+					onViewChange={() => {}}
 				/>
 			</>
 		)

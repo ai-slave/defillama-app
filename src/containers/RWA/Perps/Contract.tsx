@@ -12,6 +12,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
@@ -32,6 +33,13 @@ import {
 } from './contractPageUtils'
 import { perpsDefinitions as d } from './definitions'
 import type { IRWAPerpsContractData } from './types'
+
+// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip, else the previous one,
+// else the metrics button before the chips.
+const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
+	const next = neighbourRowControl(chip, chip)
+	return next?.querySelector<HTMLElement>('input') ?? next
+})
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -329,6 +337,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 
 							return (
 								<label
+									ref={focusNeighbourChipOnLeave}
 									className="relative flex cursor-pointer flex-nowrap items-center gap-1 label-sm"
 									key={metric.key}
 								>

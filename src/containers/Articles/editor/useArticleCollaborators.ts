@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 import { useMemo, useState } from 'react'
+import { queryReadFailed } from '~/utils/query'
 import {
 	addCollaborator,
 	ArticleApiError,
@@ -10,7 +11,6 @@ import {
 	transferOwnership,
 	updateCollaborator
 } from '../api'
-import { applyPendingToLocalArticle } from '../document'
 import type { LocalArticleDocument } from '../types'
 import { articleWriteKey, cacheWrittenArticle } from './ArticleEditorUtils'
 
@@ -74,13 +74,25 @@ export function useArticleCollaborators({
 			void queryClient.invalidateQueries({ queryKey: collaboratorsQueryKey })
 		}
 	})
+	// The confirm dialog shows the failure; on success the authors list shows the new owner.
 	const transferOwnershipMutation = useMutation({
 		mutationKey: articleWriteKey(articleId),
-		mutationFn: ({ targetArticleId, pbUserId }: { targetArticleId: string; pbUserId: string }) =>
-			transferOwnership(targetArticleId, { pbUserId }, authorizedFetch),
+		mutationFn: (pbUserId: string) =>
+			transferOwnership(articleId!, { pbUserId }, authorizedFetch).catch((error: unknown) => {
+				throw new Error("Couldn't transfer ownership. Try again.", { cause: error })
+			}),
 		onSuccess: async (updated) => {
 			void queryClient.invalidateQueries({ queryKey: collaboratorsQueryKey })
 			await cacheWrittenArticle(queryClient, updated)
+			// Only the ownership changed: the rest of the response is the saved copy, which lacks the edits still
+			// waiting for an autosave.
+			setArticle((current) => ({
+				...current,
+				author: updated.author,
+				authorProfile: updated.authorProfile,
+				coAuthors: updated.coAuthors,
+				viewerRole: updated.viewerRole
+			}))
 		}
 	})
 
@@ -120,34 +132,20 @@ export function useArticleCollaborators({
 		}
 	}
 
-	// The confirm dialog shows the failure; on success the authors list shows the new owner.
-	const handleTransferOwnership = async (pbUserId: string) => {
-		if (!articleId) return false
-		try {
-			const updated = await transferOwnershipMutation.mutateAsync({ targetArticleId: articleId, pbUserId })
-			setArticle(applyPendingToLocalArticle(updated, updated.pending))
-			return true
-		} catch {
-			return false
-		}
-	}
-
 	return {
 		collaboratorAdding: addCollaboratorMutation.isPending,
 		collaboratorRemovingId: removeCollaboratorMutation.isPending ? removeCollaboratorMutation.variables.pbUserId : null,
 		collaboratorUpdatingId: updateCollaboratorMutation.isPending ? updateCollaboratorMutation.variables.pbUserId : null,
 		collaboratorEmail,
 		collaborators,
-		collaboratorsLoadFailed: collaboratorsQuery.isError,
+		collaboratorsLoadFailed: queryReadFailed(collaboratorsQuery),
+		collaboratorsRetrying: collaboratorsQuery.isFetching,
 		collaboratorsLoading,
 		handleAddCollaborator,
 		handleRemoveCollaborator,
 		handleToggleHidden,
-		handleTransferOwnership,
-		resetTransferOwnership: transferOwnershipMutation.reset,
 		retryCollaborators: collaboratorsQuery.refetch,
 		setCollaboratorEmail,
-		transferOwnershipFailed: transferOwnershipMutation.isError,
-		transferringOwnership: transferOwnershipMutation.isPending
+		transferOwnershipMutation
 	}
 }

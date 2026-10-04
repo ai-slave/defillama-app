@@ -37,8 +37,10 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 					aria-label="Research article to link"
 					placeholder="Search Research articles…"
 					autoSelect
+					// Focusable while a pick links: the pick disables the field that holds focus.
 					disabled={disabled}
-					className={`${inputStyles} w-full pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
+					accessibleWhenDisabled
+					className={`${inputStyles} w-full pl-9 aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 				/>
 			</div>
 			<Ariakit.ComboboxPopover

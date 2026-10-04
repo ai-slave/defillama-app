@@ -477,6 +477,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 						<button
 							type="button"
 							onClick={() => dialogStore.toggle()}
+							aria-label={`Token: ${selectedCoinInfo?.name ?? 'none'}`}
 							className={`${inputStyles} flex w-full cursor-pointer items-center justify-start gap-2 overflow-hidden text-left dark:scheme-dark`}
 						>
 							{selectedCoinInfo != null ? (

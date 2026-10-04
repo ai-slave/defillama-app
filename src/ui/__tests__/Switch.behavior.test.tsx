@@ -56,14 +56,13 @@ test.each(['isLoading', 'disabled'] as const)(
 
 test('article switch has a concise label and separate description; label activation is reversible', async () => {
 	const changed = vi.fn()
-	function Field({ disabled }: { disabled: boolean }) {
+	function Field() {
 		const [checked, setChecked] = useState(false)
 		return (
 			<MetaSwitch
 				label="Show on homepage"
 				description="The article appears in featured research."
 				checked={checked}
-				disabled={disabled}
 				onCheckedChange={(next) => {
 					changed(next)
 					setChecked(next)
@@ -71,7 +70,7 @@ test('article switch has a concise label and separate description; label activat
 			/>
 		)
 	}
-	await act(async () => root.render(<Field disabled={false} />))
+	await act(async () => root.render(<Field />))
 	const input = container.querySelector<HTMLInputElement>('[role="switch"]')!
 	expect(document.getElementById(input.getAttribute('aria-labelledby')!)?.textContent).toBe('Show on homepage')
 	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe(
@@ -83,7 +82,4 @@ test('article switch has a concise label and separate description; label activat
 	await act(async () => container.querySelector('label')!.click())
 	expect(input.checked).toBe(false)
 	expect(changed.mock.calls).toEqual([[true], [false]])
-	await act(async () => root.render(<Field disabled />))
-	await act(async () => container.querySelector('label')!.click())
-	expect(changed).toHaveBeenCalledTimes(2)
 })

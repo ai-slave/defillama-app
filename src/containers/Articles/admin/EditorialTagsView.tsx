@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
@@ -26,6 +27,7 @@ import {
 } from '~/containers/Articles/editorialTags'
 import type { ArticleDocument, ArticleImage } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
+import { passFocusOnLeave } from '~/ui/focus'
 
 export function EditorialTagsView() {
 	return (
@@ -210,6 +212,9 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 
 type HighlightForm = { highlightText: string; sponsorLogo: ArticleImage | null }
 
+// A cleared override removes Clear override, which held focus; the highlight field takes it.
+const focusHighlightFieldOnLeave = passFocusOnLeave((node) => node.closest('label')?.querySelector('textarea'))
+
 function highlightFormFromArticle(article: ArticleDocument): HighlightForm {
 	return { highlightText: article.editorialTagMetadata?.highlightText ?? '', sponsorLogo: article.sponsorLogo ?? null }
 }
@@ -304,26 +309,29 @@ export function ReportHighlightControls({
 						className="resize-none rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 					/>
 					<div className="flex flex-wrap items-center gap-2">
-						<button
+						<Ariakit.Button
 							type="button"
 							disabled={!textDirty || pending || metadataMutation.isPending}
+							accessibleWhenDisabled
 							onClick={() => metadataMutation.mutate(highlightText)}
-							className="rounded-md border border-medium px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-medium px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
 							{metadataMutation.isPending ? 'Saving…' : 'Save highlight text'}
-						</button>
+						</Ariakit.Button>
 						{currentText ? (
-							<button
+							<Ariakit.Button
+								ref={focusHighlightFieldOnLeave}
 								type="button"
 								disabled={pending || metadataMutation.isPending}
+								accessibleWhenDisabled
 								onClick={() => {
 									setHighlightText('')
 									metadataMutation.mutate('')
 								}}
-								className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
+								className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 							>
 								Clear override
-							</button>
+							</Ariakit.Button>
 						) : null}
 					</div>
 				</label>

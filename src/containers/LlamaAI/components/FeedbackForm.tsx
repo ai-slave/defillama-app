@@ -1,12 +1,20 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { memo, useDeferredValue, useId, useState } from 'react'
+import { memo, useId, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -19,8 +27,8 @@ interface FeedbackDialogProps {
 	open: boolean
 	setOpen: (value: boolean) => void
 	messageId: string
-	selectedRating: Rating
-	setSelectedRating: (value: Rating) => void
+	/** The rating the reader picked to open the dialog: a thumb, or none for general feedback. */
+	initialRating: Rating
 	onRatingSubmitted: (value: Rating) => void
 }
 
@@ -30,16 +38,12 @@ export const FeedbackDialog = memo(function FeedbackDialog(props: FeedbackDialog
 	return <FeedbackDialogOpening key={openingKey} {...props} />
 })
 
-function FeedbackDialogOpening({
-	open,
-	setOpen,
-	messageId,
-	selectedRating,
-	setSelectedRating,
-	onRatingSubmitted
-}: FeedbackDialogProps) {
+function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRatingSubmitted }: FeedbackDialogProps) {
+	const [selectedRating, setSelectedRating] = useState(initialRating)
 	const id = useId()
 	const { authorizedFetch } = useAuthContext()
+	// The last failed send, not the mutation's error: that one clears as soon as a retry starts.
+	const [failed, setFailed] = useState(false)
 	const submission = useMutation({
 		mutationFn: async ({ rating, feedback }: { rating: Rating; feedback?: string }) => {
 			const res = await authorizedFetch(`${AI_SERVER}/user/messages/${messageId}/rate`, {
@@ -61,12 +65,12 @@ function FeedbackDialogOpening({
 		},
 		onError: (error) => {
 			console.error('Failed to submit feedback:', error)
+			setFailed(true)
 		}
 	})
 	const pending = submission.isPending
 
 	const [feedbackText, setFeedbackText] = useState('')
-	const finalFeedbackText = useDeferredValue(feedbackText)
 	const handleSubmitFeedback = () => {
 		trackUmamiEvent('llamaai-feedback-text-submit')
 		submission.mutate({ rating: selectedRating, feedback: feedbackText.trim() || undefined })
@@ -75,6 +79,11 @@ function FeedbackDialogOpening({
 	return (
 		<Dialog size="sm" open={open} onClose={() => setOpen(false)} pending={pending} unmountOnHide portal>
 			<DialogHeader title="Provide feedback" />
+			<DialogDiscardGuard
+				when={feedbackText.trim() !== ''}
+				title="Discard your feedback?"
+				description="The feedback you typed is not sent."
+			/>
 			<DialogBody>
 				<fieldset className="flex flex-col gap-2">
 					<legend className="mb-2 label-sm text-secondary">Rate this response</legend>
@@ -131,20 +140,14 @@ function FeedbackDialogOpening({
 						}
 					/>
 					<p id={`${id}-count`} className="body-sm text-tertiary">
-						{finalFeedbackText.length}/500
+						{feedbackText.length}/500
 					</p>
 				</div>
-				{submission.error ? (
-					<InlineStatus variant="error">Couldn&apos;t send your feedback. Try again.</InlineStatus>
-				) : null}
+				{failed ? <InlineStatus variant="error">Couldn&apos;t send your feedback. Try again.</InlineStatus> : null}
 			</DialogBody>
 			<DialogFooter
 				leading={selectedRating ? null : <p className="body-sm text-secondary">Choose Good or Bad to submit.</p>}
-				dismiss={
-					<Button type="button" size="md" onClick={() => setOpen(false)} disabled={pending}>
-						Cancel
-					</Button>
-				}
+				dismiss={<DialogCancelButton />}
 			>
 				<Button
 					type="button"

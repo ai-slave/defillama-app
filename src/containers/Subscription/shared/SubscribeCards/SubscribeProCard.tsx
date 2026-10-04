@@ -1,13 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useEffect, useEffectEvent, useRef } from 'react'
+import { useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
 import { MONTHLY_PRICING_CARDS } from '~/containers/Subscription/data'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { FeatureItem } from '~/containers/Subscription/types'
-import { ClientOnly } from '~/layout/ClientOnly'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
@@ -51,21 +51,21 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 
 	const isTrialAvailable = isAuthenticated ? isTrialAvailableFromApi : true
 
-	const open = Ariakit.useStoreState(dialogStore, 'open')
-	const onOpened = useEffectEvent(() => {
+	// The dialog unmounts its content on hide, so the marker below mounts once per opening. Stable, so a render never
+	// re-attaches it.
+	const trackOpen = useStableCallback((node: HTMLSpanElement | null) => {
+		if (!node) return
 		trackUmamiEvent('subscribe-modal-open', {
 			page: router.asPath,
 			...(source ? { source } : {}),
 			...(placement ? { placement } : {})
 		})
 	})
-	useEffect(() => {
-		if (open) onOpened()
-	}, [open])
 
 	return (
-		<ClientOnly>
+		<>
 			<Dialog size="sm" store={dialogStore} portal unmountOnHide>
+				<span hidden ref={trackOpen} />
 				<DialogHeader title={`Upgrade to ${PRO_CARD.title}`} subtitle={PRO_CARD.subtitle} />
 				<DialogBody>
 					<div className="flex flex-col gap-1">
@@ -130,6 +130,6 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 				// Signing in removes the sign-in button this dialog returns focus to; the plan's action takes it.
 				onAuthenticated={() => signInDialogStore.setDisclosureElement(unlockRef.current)}
 			/>
-		</ClientOnly>
+		</>
 	)
 }

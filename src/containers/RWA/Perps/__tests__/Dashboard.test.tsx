@@ -77,7 +77,7 @@ function filterBar(html: string) {
 	const buttons = Array.from(document.querySelectorAll('button'))
 	const reset = buttons.find((button) => button.textContent === 'Reset filters')
 	return {
-		resetEnabled: reset ? !reset.hasAttribute('disabled') : null,
+		resetEnabled: reset ? reset.getAttribute('aria-disabled') !== 'true' && !reset.hasAttribute('disabled') : null,
 		pills: buttons.map((button) => button.textContent ?? '').filter((text) => text.includes(': ')),
 		notice: reset?.closest('div')?.parentElement?.querySelector('p[role="status"]')?.textContent ?? null
 	}
@@ -380,7 +380,7 @@ describe('RWA perps dashboard markets table', () => {
 		const html = render({ mode: 'overview', data: cexOverviewData })
 
 		expect(tableContracts(html, ALL_CONTRACTS)).toEqual([])
-		expect(filterBar(html).pills).toEqual(['Venue: binance'])
+		expect(filterBar(html).pills).toEqual(['Remove Venue: binance'])
 		expect(html).toContain('These filters only match markets under CEX Venues. Turn it on to see them.')
 
 		router.query = { venues: 'binance', includeCex: 'true' }
@@ -469,7 +469,7 @@ describe('RWA perps dashboard markets table', () => {
 		expect(tableContracts(html, [...ALL_CONTRACTS, 'okx:METAUSDT'])).toEqual([])
 		expect(filterBar(html)).toEqual({
 			resetEnabled: true,
-			pills: ['Venue: All except xyz'],
+			pills: ['Remove Venue: All except xyz'],
 			notice: 'These filters only match markets under CEX Venues. Turn it on to see them.'
 		})
 		expect(html).toContain('These filters only match markets under CEX Venues. Turn it on to see them.')
@@ -511,6 +511,15 @@ describe('RWA perps dashboard markets table', () => {
 
 		router.query = { excludeBaseAssets: 'Gold' }
 		expect(filterBar(render({ mode: 'overview', data: multiBaseAssetOverviewData })).resetEnabled).toBe(true)
+	})
+
+	test('Reset stays focusable once it clears the filters, so pressing it keeps focus', () => {
+		const html = render({ mode: 'overview', data: multiBaseAssetOverviewData })
+		const { document } = new Window()
+		document.body.innerHTML = html
+		const reset = [...document.querySelectorAll('button')].find((button) => button.textContent === 'Reset filters')!
+		expect(reset.getAttribute('aria-disabled')).toBe('true')
+		expect(reset.hasAttribute('disabled')).toBe(false)
 	})
 
 	test('filters Forex rows by base asset and ignores the hidden asset-class filter on the Forex page', () => {

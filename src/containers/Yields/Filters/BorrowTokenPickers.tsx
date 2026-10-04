@@ -95,7 +95,6 @@ function TokenSearchField({
 			</div>
 			{open ? (
 				<TokenSearchDialog
-					open
 					onClose={() => setOpen(false)}
 					title={`Search ${label.toLowerCase()} token`}
 					options={tokens}

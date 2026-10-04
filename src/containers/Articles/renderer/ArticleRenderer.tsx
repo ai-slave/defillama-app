@@ -529,7 +529,7 @@ function useActiveHeading(toc: Array<TocEntry>): [string | null, (id: string) =>
 	const [active, setActive] = useState<string | null>(toc[0]?.id ?? null)
 
 	useEffect(() => {
-		if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return
+		if (typeof IntersectionObserver === 'undefined') return
 		if (toc.length === 0) return
 		const ids = toc.map((t) => t.id)
 		const visible = new Set<string>()
@@ -553,7 +553,6 @@ function useActiveHeading(toc: Array<TocEntry>): [string | null, (id: string) =>
 	}, [toc])
 
 	useEffect(() => {
-		if (typeof window === 'undefined') return
 		const onHash = () => {
 			const id = window.location.hash.slice(1)
 			if (id && toc.some((t) => t.id === id)) setActive(id)
@@ -578,7 +577,6 @@ function ActivePill() {
 function useReadingProgress() {
 	const [progress, setProgress] = useState(0)
 	useEffect(() => {
-		if (typeof window === 'undefined') return
 		let raf = 0
 		const update = () => {
 			const doc = document.documentElement
@@ -603,7 +601,6 @@ function useReadingProgress() {
 }
 
 const onJumpToTop = () => {
-	if (typeof window === 'undefined') return
 	window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -709,30 +706,31 @@ function TocList({
 					return (
 						<li key={group.id} className="relative">
 							{hasChildren ? (
-								<button
-									type="button"
-									onClick={() => toggle(group.id)}
-									className="flex w-full items-center justify-between gap-2 px-5 py-1.5 text-left text-[15px] leading-6 font-bold text-primary hover:text-link"
-								>
+								// The link and its disclosure are siblings: a link inside a button is unreachable by keyboard.
+								<div className="flex w-full items-center justify-between gap-2 pr-3 pl-5 text-[15px] leading-6 font-bold text-primary">
 									<a
 										href={`#${group.id}`}
-										onClick={(event) => {
-											event.stopPropagation()
-											setActive(group.id)
-										}}
-										className={`min-w-0 flex-1 truncate ${isParentActive ? 'underline' : ''}`}
+										onClick={() => setActive(group.id)}
+										aria-current={isParentActive ? 'location' : undefined}
+										className={`min-w-0 flex-1 truncate py-1.5 hover:text-link ${isParentActive ? 'underline' : ''}`}
 									>
 										{group.text}
 									</a>
-									<Icon
-										name={isCollapsed ? 'chevron-right' : 'chevron-down'}
-										className="size-3 shrink-0 text-secondary"
-									/>
-								</button>
+									<button
+										type="button"
+										onClick={() => toggle(group.id)}
+										aria-expanded={!isCollapsed}
+										aria-label={`${group.text} subsections`}
+										className="grid size-6 shrink-0 place-items-center rounded-sm text-secondary hover:text-link"
+									>
+										<Icon name={isCollapsed ? 'chevron-right' : 'chevron-down'} className="size-3" />
+									</button>
+								</div>
 							) : (
 								<a
 									href={`#${group.id}`}
 									onClick={() => setActive(group.id)}
+									aria-current={isParentActive ? 'location' : undefined}
 									className={`flex items-center px-5 py-1.5 text-[15px] leading-6 font-bold text-primary hover:text-link ${
 										isParentActive ? 'underline' : ''
 									}`}
@@ -750,6 +748,7 @@ function TocList({
 												<a
 													href={`#${child.id}`}
 													onClick={() => setActive(child.id)}
+													aria-current={isActive ? 'location' : undefined}
 													className={`block truncate py-1.5 pr-3 pl-10 text-[15px] leading-6 transition-colors ${
 														isActive ? 'font-semibold text-primary underline' : 'text-secondary hover:text-primary'
 													}`}
@@ -882,7 +881,7 @@ export function ArticleRenderer({
 	const [pastHeader, setPastHeader] = useState(false)
 	useEffect(() => {
 		const el = sentinelRef.current
-		if (!el || typeof window === 'undefined') return
+		if (!el) return
 		let raf = 0
 		const update = () => {
 			const top = el.getBoundingClientRect().top

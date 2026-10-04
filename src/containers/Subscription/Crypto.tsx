@@ -53,9 +53,7 @@ export function PaymentButton({
 		} else {
 			// For crypto payments, use the legacy flow
 			setCryptoError(null)
-			handleSubscribe(paymentMethod, type, undefined, billingInterval, false).catch((error: Error) =>
-				setCryptoError(error.message)
-			)
+			handleSubscribe(paymentMethod, type, billingInterval).catch((error: Error) => setCryptoError(error.message))
 		}
 	}
 

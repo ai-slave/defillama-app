@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
@@ -43,9 +44,10 @@ export function FollowAuthorButton({
 	const isFollowing = mutation.data?.following ?? following ?? false
 
 	return (
-		<button
+		<Ariakit.Button
 			type="button"
 			disabled={mutation.isPending}
+			accessibleWhenDisabled
 			onClick={() => {
 				if (!isAuthenticated) {
 					toast.error('Please sign in to follow authors')
@@ -53,7 +55,7 @@ export function FollowAuthorButton({
 				}
 				mutation.mutate()
 			}}
-			className={`inline-flex min-w-24 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+			className={`inline-flex min-w-24 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
 				isFollowing
 					? 'border border-medium bg-page text-secondary hover:border-link/50 hover:text-link'
 					: 'bg-link text-on-brand hover:opacity-90'
@@ -61,6 +63,6 @@ export function FollowAuthorButton({
 		>
 			<Icon name={isFollowing ? 'check' : 'plus'} className="size-3.5" />
 			{isFollowing ? 'Following' : 'Follow'}
-		</button>
+		</Ariakit.Button>
 	)
 }

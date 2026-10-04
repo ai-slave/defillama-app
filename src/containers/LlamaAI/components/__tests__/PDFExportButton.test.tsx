@@ -26,7 +26,7 @@ test('Dark mode exports the message as a dark PDF and downloads the file', async
 		await act(async () =>
 			root.render(
 				<session.Wrapper>
-					<PDFExportButton sessionId="session" messageId="message" exportType="single_message" />
+					<PDFExportButton sessionId="session" messageId="message" className="" />
 				</session.Wrapper>
 			)
 		)
@@ -55,5 +55,42 @@ test('Dark mode exports the message as a dark PDF and downloads the file', async
 		await act(async () => root.unmount())
 		container.remove()
 		vi.restoreAllMocks()
+	}
+})
+
+test('the menu button keeps focus while the export runs', async () => {
+	const exportResponse = Promise.withResolvers<Response>()
+	session.serve({ 'https://ai.llama.fi/export/pdf': () => exportResponse.promise })
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	try {
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<PDFExportButton sessionId="session" messageId="message" className="" />
+				</session.Wrapper>
+			)
+		)
+		const trigger = container.querySelector<HTMLButtonElement>('button[aria-label="Export PDF options"]')!
+		await act(async () => trigger.focus())
+		await act(async () => trigger.click())
+		const lightMode = await waitForUi(() => {
+			const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+				(element) => element.textContent === 'Light mode'
+			)
+			expect(item?.getAttribute('aria-disabled')).not.toBe('true')
+			return item!
+		})
+		await act(async () => lightMode.click())
+		await act(async () => {
+			await waitForUi(() => expect(trigger.getAttribute('aria-label')).toBe('Exporting PDF'))
+			await waitForUi(() => expect(document.activeElement).toBe(trigger))
+		})
+		expect(trigger.getAttribute('aria-disabled')).toBe('true')
+		await act(async () => exportResponse.resolve(Response.json({ success: false, error: 'Export unavailable' })))
+	} finally {
+		await act(async () => root.unmount())
+		container.remove()
 	}
 })

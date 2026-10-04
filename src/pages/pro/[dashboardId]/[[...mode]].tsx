@@ -1,7 +1,7 @@
 import type { InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import Router, { useRouter } from 'next/router'
-import { useEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import ProDashboard from '~/containers/ProDashboard'
@@ -81,6 +81,25 @@ export default function DashboardPage({
 				</ProDashboardAPIProvider>
 			</div>
 		</Layout>
+	)
+}
+
+// The full-card states (sign in, not found, failed): one heading, an optional line and one action.
+function DashboardPageNotice({
+	title,
+	message,
+	children
+}: {
+	title: string
+	message?: ReactNode
+	children: ReactNode
+}) {
+	return (
+		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
+			<h1 className="text-3xl font-bold">{title}</h1>
+			{message ? <p className="text-center text-base text-pro-text-label">{message}</p> : null}
+			{children}
+		</div>
 	)
 }
 
@@ -167,7 +186,9 @@ function DashboardPageContent({
 	// auth snapshot is signed out and would offer "Sign In Required" to a signed-in visitor.
 	const isValidating =
 		!initialDashboard && (dashboardId === 'new' ? !isClient : !currentDashboard && !streamHasResolved)
-	const isAccountLoading = loaders.userLoading
+	// The editor waits for the account to decide who may edit. A view waits only for its first load: an account change
+	// keeps the shown dashboard and its open dialogs. A failed subscription read ends the wait in both.
+	const isAccountLoading = loaders.sessionLoading && (isEditing || !currentDashboard)
 	const isLoading = (isEditing && !isClient) || isAccountLoading || isValidating || isLoadingDashboard
 	const initialSeoSummary =
 		!isEditing && initialDashboard && initialDashboard.visibility === 'public' && seo && !currentDashboard ? (
@@ -191,9 +212,7 @@ function DashboardPageContent({
 	if (isEditing && !currentDashboard) {
 		if (loadError?.status === 401) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Sign In Required</h1>
-					<p className="text-center text-base text-pro-text-label">Please sign in to edit this dashboard</p>
+				<DashboardPageNotice title="Sign In Required" message="Please sign in to edit this dashboard">
 					<ProButton
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -203,49 +222,43 @@ function DashboardPageContent({
 					>
 						Sign In
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		if (loadError && loadError.status >= 500) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Failed to load dashboard</h1>
+				<DashboardPageNotice title="Failed to load dashboard">
 					<ProButton as={BasicLink} href={`/pro/${dashboardId}`} variant="primary" size="lg" className="mt-2">
 						Back to dashboard
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-				<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
+			<DashboardPageNotice title="Dashboard Not Found">
 				<ProButton as={BasicLink} href="/pro" variant="primary" size="lg" className="mt-7">
 					Browse Dashboards
 				</ProButton>
-			</div>
+			</DashboardPageNotice>
 		)
 	}
 
 	if (!isEditing) {
 		if (dashboardId !== 'new' && !currentDashboard && initialStatus === 404) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
-					<p className="text-center text-base text-pro-text-label">This dashboard does not exist.</p>
+				<DashboardPageNotice title="Dashboard Not Found" message="This dashboard does not exist.">
 					<ProButton as={BasicLink} href="/pro" variant="primary" size="lg" className="mt-7">
 						Browse Dashboards
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		if (dashboardId !== 'new' && !currentDashboard && loadError?.status === 401) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Sign In Required</h1>
-					<p className="text-center text-base text-pro-text-label">Please sign in to view this dashboard</p>
+				<DashboardPageNotice title="Sign In Required" message="Please sign in to view this dashboard">
 					<ProButton
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -255,43 +268,39 @@ function DashboardPageContent({
 					>
 						Sign In
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		if (dashboardId !== 'new' && !currentDashboard && loadError && loadError.status >= 500) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Failed to load dashboard</h1>
-					<p className="text-center text-base text-pro-text-label">
-						Something went wrong while loading this dashboard. Please try again.
-					</p>
+				<DashboardPageNotice
+					title="Failed to load dashboard"
+					message="Something went wrong while loading this dashboard. Please try again."
+				>
 					<ProButton type="button" onClick={reloadDashboard} variant="primary" size="lg" className="mt-2">
 						Retry
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		if (dashboardId !== 'new' && !currentDashboard && isAuthenticated) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
-					<p className="text-center text-base text-pro-text-label">
-						This dashboard does not exist or you don&apos;t have permission to view it
-					</p>
+				<DashboardPageNotice
+					title="Dashboard Not Found"
+					message="This dashboard does not exist or you don't have permission to view it"
+				>
 					<ProButton as={BasicLink} href="/pro" variant="primary" size="lg" className="mt-7">
 						Browse Dashboards
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		if (dashboardId === 'new' && !isAuthenticated) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Sign In Required</h1>
-					<p className="text-center text-base text-pro-text-label">Please sign in to create a new dashboard</p>
+				<DashboardPageNotice title="Sign In Required" message="Please sign in to create a new dashboard">
 					<ProButton
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -301,15 +310,13 @@ function DashboardPageContent({
 					>
 						Sign In
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 
 		if (!isAuthenticated && dashboardVisibility === 'private') {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Sign In Required</h1>
-					<p className="text-center text-base text-pro-text-label">Please sign in to view this dashboard</p>
+				<DashboardPageNotice title="Sign In Required" message="Please sign in to view this dashboard">
 					<ProButton
 						as={BasicLink}
 						href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -319,7 +326,7 @@ function DashboardPageContent({
 					>
 						Sign In
 					</ProButton>
-				</div>
+				</DashboardPageNotice>
 			)
 		}
 

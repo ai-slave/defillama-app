@@ -4,6 +4,7 @@ import { useAuthContext } from '~/auth'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
 import { LoadingIndicator } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { CreateTeamCard } from './CreateTeamCard'
 import { TeamFaqCard } from './TeamFaqCard'
 import { TeamInfoCard } from './TeamInfoCard'
@@ -50,21 +51,21 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
 	}, [inviteAccount.isSuccess, inviteAccount.data, promptVerifyEmail, router, token])
 
-	if ((inviteAcceptance.isFetching || (membershipConfirmed && inviteAccount.isPending)) && token) {
-		return (
-			<div role="status" aria-live="polite" className="flex justify-center py-16">
-				<LoadingIndicator label={membershipConfirmed ? 'Invite accepted. Loading your account' : 'Accepting invite'} />
-			</div>
-		)
-	}
-
-	if (token && membershipConfirmed && inviteAccount.isError) {
+	if (token && membershipConfirmed && queryReadFailed(inviteAccount)) {
 		return (
 			<SubscriptionLoadError
 				isRetrying={inviteAccount.isFetching}
 				onRetry={() => void inviteAccount.refetch()}
 				message="You joined the team, but account details could not be loaded."
 			/>
+		)
+	}
+
+	if ((inviteAcceptance.isFetching || (membershipConfirmed && inviteAccount.isPending)) && token) {
+		return (
+			<div role="status" aria-live="polite" className="flex justify-center py-16">
+				<LoadingIndicator label={membershipConfirmed ? 'Invite accepted. Loading your account' : 'Accepting invite'} />
+			</div>
 		)
 	}
 
@@ -105,7 +106,7 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 		)
 	}
 
-	// A failed team read is unknown, not "no team": don't offer Create Team.
+	// A failed team read is unknown, not "no team": don't offer Create team.
 	if (isTeamError) {
 		return (
 			<SubscriptionLoadError

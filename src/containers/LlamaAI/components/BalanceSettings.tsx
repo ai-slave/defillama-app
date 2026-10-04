@@ -9,7 +9,7 @@ import { formatUsd } from '~/utils/numberFormat'
 
 export function BalanceSettings({ result, balanceBefore }: { result?: TopupResult; balanceBefore?: number }) {
 	const { hasActiveSubscription } = useAuthContext()
-	const { balance, totalAvailable, isLoading, isError, refetch } = useAiBalance()
+	const { balance, totalAvailable, isLoading, isFetching, readFailed, refetch } = useAiBalance()
 	// The balance the payment is measured against: the one at checkout start when the return URL carries it,
 	// else the first read after return, which may already include the credit. That first read is memory, kept the
 	// render it arrives in.
@@ -59,7 +59,7 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 					more.
 				</p>
 				<div className="flex min-h-7 items-center justify-between gap-3">
-					{isLoading ? (
+					{isLoading && !readFailed ? (
 						<p role="status">Loading balance…</p>
 					) : balance ? (
 						<p className="text-xl font-semibold text-primary tabular-nums">
@@ -67,39 +67,41 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 						</p>
 					) : null}
 				</div>
-				{result === 'cancelled' && !isError ? (
+				{result === 'cancelled' && !readFailed ? (
 					<p role="status" className="body-sm text-secondary">
 						Payment cancelled.
 					</p>
 				) : null}
-				{isError || (result === 'success' && returnState !== 'hidden') ? (
+				{readFailed || (result === 'success' && returnState !== 'hidden') ? (
 					<div className="space-y-3 rounded-lg border border-subtle bg-brand-muted p-4">
-						<div role={isError ? 'alert' : 'status'} className="space-y-1 body-sm">
+						<div role={readFailed ? 'alert' : 'status'} className="space-y-1 body-sm">
 							<p className="font-semibold text-primary">
-								{isError
+								{readFailed
 									? "Couldn't load your balance"
-									: result === 'success'
-										? returnState === 'updated'
-											? 'Balance updated'
-											: returnState === 'exhausted'
-												? 'Still waiting for your balance to update'
-												: 'Checking your payment'
-										: 'Payment cancelled'}
+									: returnState === 'updated'
+										? 'Balance updated'
+										: returnState === 'exhausted'
+											? 'Still waiting for your balance to update'
+											: 'Checking your payment'}
 							</p>
 							<p className="text-secondary">
-								{isError
+								{readFailed
 									? 'Try refreshing your balance.'
-									: result === 'success'
-										? returnState === 'updated'
-											? `Your current balance is ${formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
-											: 'Your balance may take a moment to update.'
-										: 'You can choose an amount and try again.'}
+									: returnState === 'updated'
+										? `Your current balance is ${formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+										: 'Your balance may take a moment to update.'}
 							</p>
 						</div>
-						{isError || returnState === 'exhausted' ? (
+						{readFailed || returnState === 'exhausted' ? (
 							<div className="flex flex-wrap items-center gap-3">
-								{!isError ? <p className="body-sm text-secondary">Balance still unchanged?</p> : null}
-								<Button type="button" variant="outline" size="md" onClick={() => void refetch()}>
+								{!readFailed ? <p className="body-sm text-secondary">Balance still unchanged?</p> : null}
+								<Button
+									type="button"
+									variant="outline"
+									size="md"
+									pendingLabel={isFetching ? 'Refreshing…' : null}
+									onClick={() => void refetch()}
+								>
 									Refresh balance
 								</Button>
 							</div>

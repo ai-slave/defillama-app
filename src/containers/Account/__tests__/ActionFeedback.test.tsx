@@ -179,13 +179,17 @@ test('regeneration keeps confirmation and old key on failure, retries, and close
 	await click('Show API key')
 	expect(container.textContent).toContain('new-test-key')
 })
-test('first key generation needs no destructive confirmation and exposes retry feedback', async () => {
-	regenerate.mockRejectedValueOnce(new Error('Try again')).mockResolvedValueOnce('first-test-key')
+test('first key generation needs no destructive confirmation and keeps its failure on screen while it retries', async () => {
+	const retry = Promise.withResolvers<string>()
+	regenerate.mockRejectedValueOnce(new Error('Try again')).mockReturnValueOnce(retry.promise)
 	await mount(<ApiHarness initialKey={null} />)
 	await click('Generate API key')
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Try again'))
 	expect(dialog()).toBeUndefined()
 	await click('Generate API key')
+	await waitForUi(() => expect(button('Generating…').getAttribute('aria-busy')).toBe('true'))
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Try again')
+	await act(async () => retry.resolve('first-test-key'))
 	await waitForUi(() => expect(button('Show API key')).toBeDefined())
 })
 test('first key generation keeps focus on Generate while it runs, then hands it to the new key', async () => {
@@ -222,7 +226,7 @@ const pending = () => {
 }
 const offline = () => fixtureStatus(500, { error: 'Offline' })()
 
-test('an old sponsor update cannot close a reopened editor or clear its new selection', async () => {
+test('Cancel edit waits while a sponsor save runs, so its failure shows in the editor', async () => {
 	const first = pending()
 	sponsorUpdates.push(first.answer)
 	await mount(<ResearchSponsorsAdminView />)
@@ -230,51 +234,28 @@ test('an old sponsor update cannot close a reopened editor or clear its new sele
 	await click('Change page')
 	await selectReplacement('s1', 'new')
 	await click('Save page')
+	await waitForUi(() => expect(button('Cancel edit').getAttribute('aria-disabled')).toBe('true'))
 	await click('Cancel edit')
-	await click('Change page')
-	await selectReplacement('s1', 'second')
-	await act(async () => first.reply.resolve({}))
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
-	expect(button('Save page').disabled).toBe(false)
-	await click('Save page')
-	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
-	expect(sponsorUpdateBodies()).toEqual([
-		['s1', 'new'],
-		['s1', 'second']
-	])
+	await act(async () => first.reply.resolve(offline()))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Offline'))
+	expect(button('Cancel edit').getAttribute('aria-disabled')).toBeNull()
 })
-test.each(['success', 'failure'] as const)(
-	'a reopened sponsor save waits for the previous request to settle with %s',
-	async (outcome) => {
-		const first = pending()
-		const second = pending()
-		sponsorUpdates.push(first.answer, second.answer)
-		await mount(<ResearchSponsorsAdminView />)
-		await waitForUi(() => expect(button('Change page')).toBeDefined())
-		await click('Change page')
-		await selectReplacement('s1', 'new')
-		await click('Save page')
-		await waitForUi(() => expect(sponsorUpdateBodies()).toHaveLength(1))
-		await click('Cancel edit')
-		await click('Change page')
-		await selectReplacement('s1', 'second')
-		await click('Save page')
-		await waitForUi(() => expect(button('Saving…').getAttribute('aria-disabled')).toBe('true'))
-		expect(sponsorUpdateBodies()).toHaveLength(1)
-		await act(async () => first.reply.resolve(outcome === 'success' ? {} : offline()))
-		await waitForUi(() =>
-			expect(sponsorUpdateBodies()).toEqual([
-				['s1', 'new'],
-				['s1', 'second']
-			])
-		)
-		expect(document.querySelector('#replacement-s1')).not.toBeNull()
-		expect(document.querySelector('[role="alert"]')).toBeNull()
-		await act(async () => second.reply.resolve({}))
-		await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
-	}
-)
 
+test('a saved sponsor page closes its editor and hands focus to Change page', async () => {
+	sponsorUpdates.push(() => ({}))
+	await mount(<ResearchSponsorsAdminView />)
+	await waitForUi(() => expect(button('Change page')).toBeDefined())
+	await click('Change page')
+	await selectReplacement('s1', 'new')
+	await act(async () => {
+		button('Save page')!.focus()
+		button('Save page')!.click()
+	})
+	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	expect(document.activeElement).toBe(button('Change page'))
+	expect(button('Change page')!.getAttribute('aria-expanded')).toBe('false')
+})
 test('a pending sponsor save does not block saving another sponsor', async () => {
 	const first = pending()
 	sponsorUpdates.push(first.answer)
@@ -315,19 +296,74 @@ test('sponsor save failure preserves the selected page and retries inline', asyn
 	await click('Save page')
 	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 })
-test('sponsor deletion removes the row and restores focus to the surviving heading', async () => {
+test('picking a Research article keeps focus on the article search while the link saves', async () => {
+	const link = pending()
+	sponsorUpdates.push(link.answer)
+	session.serve({
+		[features('/research/sponsors/articles')]: {
+			articles: [
+				{ id: 'r1', title: 'Linkable report', slug: 'linkable', section: 'report', lifecycleStatus: 'published' }
+			]
+		}
+	})
+	await mount(<ResearchSponsorsAdminView />)
+	const search = await waitForUi(() => {
+		const input = document.querySelector<HTMLInputElement>('input[aria-label="Research article to link"]')
+		expect(input).not.toBeNull()
+		return input!
+	})
+	await act(async () => {
+		search.focus()
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'Link')
+		search.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await waitForUi(() => expect(document.querySelector('[role="option"]')).not.toBeNull())
+	await act(async () => document.querySelector<HTMLElement>('[role="option"]')!.click())
+	await waitForUi(() => expect(search.getAttribute('aria-disabled')).toBe('true'))
+	// A browser drops focus from a natively disabled field; happy-dom does not, so the field must stay enabled.
+	expect(search.disabled).toBe(false)
+	expect(document.activeElement).toBe(search)
+	await act(async () => link.reply.resolve({}))
+	await waitForUi(() => expect(search.getAttribute('aria-disabled')).toBeNull())
+	expect(document.activeElement).toBe(search)
+})
+test('a trusted logo toggle keeps focus on its checkbox while it saves', async () => {
+	const save = pending()
+	deletions.push(save.answer)
+	await mount(<TrustedByAdminView />)
+	const toggle = await waitForUi(() => {
+		const box = document.querySelector<HTMLInputElement>('input[type="checkbox"]')
+		expect(box).not.toBeNull()
+		return box!
+	})
+	await act(async () => {
+		toggle.focus()
+		toggle.click()
+	})
+	await waitForUi(() => expect(toggle.getAttribute('aria-disabled')).toBe('true'))
+	// A browser drops focus from a natively disabled box; happy-dom does not, so the box must stay enabled.
+	expect(toggle.disabled).toBe(false)
+	expect(document.activeElement).toBe(toggle)
+	await act(async () => save.reply.resolve({ logo: {} }))
+	await waitForUi(() => expect(toggle.getAttribute('aria-disabled')).toBeNull())
+})
+test('sponsor deletion removes the row and hands focus to the page content', async () => {
 	sponsorUpdates.push(() => {
 		sponsors = []
 		return {}
 	})
-	await mount(<ResearchSponsorsAdminView />)
+	await mount(
+		<main>
+			<ResearchSponsorsAdminView />
+		</main>
+	)
 	await waitForUi(() => expect(button('Remove')).toBeDefined())
 	await click('Remove')
 	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => accessibleName(el) === 'Remove')!
 	await act(async () => confirm.click())
 	await waitForUi(() => expect(container.textContent).not.toContain('Original sponsor'))
-	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Sponsored reports'))
+	await waitForUi(() => expect(document.activeElement?.tagName).toBe('MAIN'))
 	expect(deletedPaths()).toEqual(['/research/sponsors/s1'])
 })
 test.each([
@@ -346,13 +382,17 @@ test.each([
 	expect(deletedPaths()).toEqual([path, path])
 })
 
-test('deletion stays pending through the list refresh before restoring focus after its row disappears', async () => {
+test('deletion stays pending through the list refresh, then hands focus to the page content once its row disappears', async () => {
 	const refreshed = Promise.withResolvers<unknown>()
 	deletions.push(() => {
 		logosReply = () => refreshed.promise
 		return {}
 	})
-	await mount(<TrustedByAdminView />)
+	await mount(
+		<main>
+			<TrustedByAdminView />
+		</main>
+	)
 	await waitForUi(() => expect(button('Delete Example logo')).toBeDefined())
 	await click('Delete Example logo')
 	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
@@ -360,5 +400,5 @@ test('deletion stays pending through the list refresh before restoring focus aft
 	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => refreshed.resolve({ logos: [] }))
 	await waitForUi(() => expect(dialog()).toBeUndefined())
-	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Trusted By'))
+	await waitForUi(() => expect(document.activeElement?.tagName).toBe('MAIN'))
 })

@@ -23,9 +23,19 @@ function subscribe(onChange: () => void) {
 	}
 }
 
-/** Call after `Notification.requestPermission()` settles, so every reader picks up the new value. */
-export function notifyNotificationPermissionChanged() {
-	for (const listener of listeners) listener()
+/**
+ * Asks the browser for permission, then tells every reader. Some browsers throttle repeated requests and resolve to
+ * 'default' without showing a prompt (Chrome quiet UI, users who dismissed the system prompt before), so any result
+ * but 'granted' runs `onRefused`, letting the caller stop asking a user the browser will not prompt again.
+ */
+export function requestNotificationPermission(onRefused: () => void) {
+	return Notification.requestPermission().then(
+		(next) => {
+			for (const listener of listeners) listener()
+			if (next !== 'granted') onRefused()
+		},
+		() => onRefused()
+	)
 }
 
 /**

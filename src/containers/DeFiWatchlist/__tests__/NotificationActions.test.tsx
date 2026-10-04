@@ -152,3 +152,25 @@ test('a failed read offers no setup over the saved preferences, and a retry show
 	expect(button('Update settings')?.disabled).toBe(false)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 })
+
+test('a failed settings save keeps its error on screen while the retry saves', async () => {
+	await renderCard()
+	await waitFor(() => expect(button('Update settings')?.disabled).toBe(false))
+	await act(async () => button('Update settings')!.click())
+	const dialog = () => document.querySelector('[role="dialog"]')
+	await waitFor(() => expect(dialog()).not.toBeNull())
+	const save = () =>
+		[...dialog()!.querySelectorAll<HTMLButtonElement>('button[type="submit"]')].find((el) => el.closest('form'))!
+
+	await act(async () => save().click())
+	await waitFor(() => expect(writes).toHaveLength(1))
+	await act(async () => writes[0]!.resolve(new Response('Temporary failure', { status: 503 })))
+	await waitFor(() => expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe('Temporary failure'))
+
+	await act(async () => save().click())
+	await waitFor(() => expect(writes).toHaveLength(2))
+	await waitFor(() => expect(save().getAttribute('aria-busy')).toBe('true'))
+	expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe('Temporary failure')
+	await act(async () => writes[1]!.resolve(Response.json({ preferences })))
+	await waitFor(() => expect(document.body.textContent).toContain('Notification preferences saved'))
+})

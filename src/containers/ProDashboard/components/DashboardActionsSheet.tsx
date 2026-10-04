@@ -26,15 +26,13 @@ export function DashboardActionsSheet({ actions }: { actions: Array<DashboardShe
 	return (
 		<Ariakit.DialogProvider store={store}>
 			<Ariakit.DialogDisclosure
-				disabled={selection.isPending}
-				accessibleWhenDisabled
 				render={
 					<ProButton
 						type="button"
 						variant="secondary"
 						className="md:hidden"
 						icon={<Icon name="ellipsis" height={16} width={16} />}
-						{...(selection.isPending ? { loading: true } : {})}
+						loading={selection.isPending}
 					/>
 				}
 			>

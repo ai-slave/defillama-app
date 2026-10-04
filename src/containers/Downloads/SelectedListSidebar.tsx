@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { keepFocus } from '~/ui/focus'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { ConfirmableContent } from './ActionFeedback'
@@ -55,16 +54,15 @@ export function SelectedListSidebar({
 	readyCount,
 	loadingCount
 }: SelectedListSidebarProps) {
-	const listRef = useRef<HTMLDivElement>(null)
-	// A removed row's × hands focus to the × that takes its place, the one above, or the picker once none is left.
-	const removeRow = (value: string, index: number) =>
+	// A removed row's × hands focus to the next row's ×, the one above, or the picker once the list closes: the
+	// modals show it only for two or more items, so the last row's × leaves with it.
+	const removeRow = (value: string, remove: HTMLElement) => {
+		const next = neighbourRowControl(remove.parentElement!, remove)
 		keepFocus(
 			() => onRemove(value),
-			() => {
-				const removeButtons = listRef.current?.querySelectorAll<HTMLElement>('[data-row-remove]') ?? []
-				return removeButtons[Math.min(index, removeButtons.length - 1)] ?? pickerTrigger()
-			}
+			() => (next?.isConnected ? next : pickerTrigger())
 		)
+	}
 	return (
 		<aside
 			className={`w-full shrink-0 flex-col border-subtle sm:flex sm:w-72 sm:border-l ${showOnPhone ? 'flex' : 'hidden'}`}
@@ -90,7 +88,7 @@ export function SelectedListSidebar({
 					</button>
 				) : null}
 			</div>
-			<div ref={listRef} className="flex-1 overflow-auto">
+			<div className="flex-1 overflow-auto">
 				{items.map((item, i) => {
 					const query = queries[i]
 					const isActive = item.value === activeValue
@@ -141,8 +139,7 @@ export function SelectedListSidebar({
 							)}
 							<button
 								type="button"
-								onClick={() => removeRow(item.value, i)}
-								data-row-remove
+								onClick={(event) => removeRow(item.value, event.currentTarget)}
 								title="Remove"
 								aria-label={`Remove ${item.label}`}
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"

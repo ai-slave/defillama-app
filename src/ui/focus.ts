@@ -1,6 +1,7 @@
 import { flushSync } from 'react-dom'
 
-const FOCUSABLE = 'button, [href], input, select, textarea, summary, [tabindex]'
+// a[href], not [href]: an icon's <use href> matches that too.
+const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]'
 
 function firstFocusableIn(container: HTMLElement): HTMLElement {
 	for (const element of container.querySelectorAll<HTMLElement>(FOCUSABLE)) {
@@ -109,10 +110,14 @@ export function catchLostFocus(dialog: HTMLElement | null) {
      control's ref; when it leaves holding focus, `target` takes focus.
 ---------------------------------------------------------------------------- */
 
-/** The control in the list row after `control`'s row, else the row before: where focus goes when that row leaves. */
-export function neighbourRowControl(control: Element | null) {
-	const row = control?.closest('li')
-	return (row?.nextElementSibling ?? row?.previousElementSibling)?.querySelector<HTMLElement>('button, a[href], input')
+/** Where focus goes when `row` leaves its list: the control in the next row that sits where `control` sits in `row`,
+    else the one in the previous row. Rows of one list share their layout, so the place picks the same control (the
+    next row's ×). With `control` = `row`, the neighbour row itself. Call it before the change removes the row. */
+export function neighbourRowControl(row: Element, control: Element) {
+	const place = [...row.querySelectorAll(FOCUSABLE)].indexOf(control)
+	const pick = (neighbour: Element | null) =>
+		control === row ? neighbour : neighbour?.querySelectorAll<HTMLElement>(FOCUSABLE)[place]
+	return (pick(row.nextElementSibling) ?? pick(row.previousElementSibling)) as HTMLElement | null | undefined
 }
 
 export function keepFocus(commit: () => void, target: () => HTMLElement | null | undefined) {
@@ -137,10 +142,10 @@ export function pageContent() {
 }
 
 /** A ref callback for a retry that data removes once it succeeds, outside a dialog: the closest focusable region
-    around the retry (`tabIndex={-1}`, such as a dashboard card or a list) takes focus, unless content that loaded in
-    its place did. Inside a dialog the dialog's own net (catchLostFocus) catches it instead. */
+    around the retry (`tabIndex={-1}`, such as a dashboard card) takes focus, else the page content, unless content
+    that loaded in its place did. Inside a dialog the dialog's own net (catchLostFocus) catches it instead. */
 export const focusRegionOnLeave = passFocusOnLeave((node) =>
-	node.closest('[data-dialog]') ? null : node.parentElement?.closest<HTMLElement>('[tabindex]')
+	node.closest('[data-dialog]') ? null : (node.parentElement?.closest<HTMLElement>('[tabindex]') ?? pageContent())
 )
 
 /** A ref callback for a control that data can remove while it has focus. When it leaves holding focus, `target` takes

@@ -9,7 +9,6 @@ export function TrialCsvLimitModal({ isOpen, onClose }: { isOpen: boolean; onClo
 			description="You're currently on a trial plan. Upgrade to export data from any chart or table across DefiLlama."
 			confirmLabel="Upgrade to Pro"
 			secondaryHref="/subscription"
-			secondaryLabel="View all plans"
 		/>
 	)
 }

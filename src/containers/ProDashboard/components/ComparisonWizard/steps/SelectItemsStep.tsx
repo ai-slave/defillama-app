@@ -7,6 +7,7 @@ import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chain
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { CheckboxIndicator } from '~/ui/Checkbox'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -36,15 +37,10 @@ export function SelectItemsStep() {
 	const { protocols, chains, protocolsLoading, protocolCatalog } = useProDashboardCatalog()
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
-	const [categoryFilter, setCategoryFilter] = useState({
-		comparisonType: state.comparisonType,
-		selected: [] as Array<string>
-	})
-	if (categoryFilter.comparisonType !== state.comparisonType) {
-		setCategoryFilter({ comparisonType: state.comparisonType, selected: [] })
-	}
-	const selectedCategories = categoryFilter.selected
+	const [selectedCategories, setSelectedCategories] = useState<Array<string>>([])
 	const listRef = useRef<HTMLDivElement>(null)
+	// Clearing removes the control that did it; focus moves on to the search, where picking continues.
+	const searchRef = useRef<HTMLInputElement>(null)
 
 	const { data: chainCategoriesList } = useQuery({
 		queryKey: ['pro-dashboard', 'chain-categories'],
@@ -182,14 +178,6 @@ export function SelectItemsStep() {
 
 	const typeLabel = state.comparisonType === 'chains' ? 'Chains' : 'Protocols'
 
-	const handleToggle = (value: string) => {
-		actions.toggleSelectedItem(value, 10)
-	}
-
-	const handleRemoveItem = (item: string) => {
-		actions.toggleSelectedItem(item)
-	}
-
 	const optionsMap = useMemo(() => new Map(options.map((o) => [o.value, o])), [options])
 
 	const selectedLabels = useMemo(() => {
@@ -217,7 +205,12 @@ export function SelectItemsStep() {
 							type="button"
 							variant="ghost"
 							size="sm"
-							onClick={() => actions.setSelectedItems([])}
+							onClick={() =>
+								keepFocus(
+									() => actions.setSelectedItems([]),
+									() => searchRef.current
+								)
+							}
 							className="-my-1 -mr-2.25"
 						>
 							Clear all
@@ -240,7 +233,13 @@ export function SelectItemsStep() {
 										size="sm"
 										square
 										aria-label={`Remove ${item.label}`}
-										onClick={() => handleRemoveItem(item.value)}
+										onClick={(event) => {
+											const next = neighbourRowControl(event.currentTarget.parentElement!, event.currentTarget)
+											keepFocus(
+												() => actions.toggleSelectedItem(item.value),
+												() => next ?? searchRef.current
+											)
+										}}
 									>
 										<Icon name="x" height={12} width={12} />
 									</Button>
@@ -267,7 +266,7 @@ export function SelectItemsStep() {
 									: protocolCategoryOptions
 							}
 							selectedValues={selectedCategories}
-							onChange={(selected) => setCategoryFilter({ comparisonType: state.comparisonType, selected })}
+							onChange={setSelectedCategories}
 							placeholder="All categories"
 							maxSelections={5}
 						/>
@@ -275,6 +274,7 @@ export function SelectItemsStep() {
 					<div className="relative">
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<Input
+							ref={searchRef}
 							type="text"
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label={`Search ${typeLabel.toLowerCase()}`}
@@ -292,7 +292,12 @@ export function SelectItemsStep() {
 					) : protocolCatalog.status === 'error' ? (
 						<div className="flex h-full flex-col items-center justify-center gap-2 p-3">
 							<InlineStatus variant="error">Failed to load {typeLabel.toLowerCase()}.</InlineStatus>
-							<Button type="button" size="sm" onClick={protocolCatalog.retry}>
+							<Button
+								type="button"
+								size="sm"
+								pendingLabel={protocolCatalog.retrying ? 'Retrying…' : null}
+								onClick={protocolCatalog.retry}
+							>
 								Retry
 							</Button>
 						</div>
@@ -324,7 +329,7 @@ export function SelectItemsStep() {
 										role="checkbox"
 										aria-checked={!!isSelected}
 										aria-label={option.label}
-										onClick={() => !isDisabled && handleToggle(option.value)}
+										onClick={() => actions.toggleSelectedItem(option.value)}
 										disabled={isDisabled}
 										className={`group absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
 											isSelected ? 'bg-brand-faint' : 'not-disabled:hover:bg-hover-row'

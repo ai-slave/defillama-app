@@ -115,10 +115,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 					<form
 						onSubmit={(e) => {
 							e.preventDefault()
-							if (!customFrom || !customTo) {
-								setError('Please pick both dates')
-								return
-							}
+							// Apply stays disabled until both dates are set, which also blocks submitting with Enter.
 							if (customFrom > customTo) {
 								setError('"From" must be before or equal to "To"')
 								return

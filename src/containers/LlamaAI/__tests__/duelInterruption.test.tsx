@@ -31,7 +31,7 @@ vi.mock('../components/ChatSurface', () => ({
 vi.mock('../components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('../components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('../components/SettingsModal', () => ({ SettingsModal: () => null }))
-vi.mock('../components/TokenLimitModal', () => ({ TokenLimitModal: () => null }))
+vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('../components/DeepLinkPromptModal', () => ({ DeepLinkPromptModal: () => null }))
 vi.mock('../components/TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
 vi.mock('../components/ConversationView', () => ({

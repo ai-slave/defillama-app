@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import type { RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
@@ -8,12 +9,14 @@ interface DeepLinkPromptModalProps {
 	prompt: string | null
 	onClose: () => void
 	onConfirm: () => void
+	/** The dialog opens on load with no trigger; closing it either way continues in the composer. */
+	promptInputRef: RefObject<HTMLTextAreaElement | null>
 }
 
 // A confirmation: the question arrived in a link someone else wrote, so it starts on Cancel and is sent only by choice.
-export function DeepLinkPromptModal({ isOpen, prompt, onClose, onConfirm }: DeepLinkPromptModalProps) {
+export function DeepLinkPromptModal({ isOpen, prompt, onClose, onConfirm, promptInputRef }: DeepLinkPromptModalProps) {
 	return (
-		<Dialog size="sm" open={isOpen && !!prompt} onClose={onClose} portal unmountOnHide>
+		<Dialog size="sm" open={isOpen && !!prompt} onClose={onClose} finalFocus={promptInputRef} portal unmountOnHide>
 			<DialogHeader
 				title="Ask LlamaAI?"
 				subtitle="This link includes a question. Review it before sending."

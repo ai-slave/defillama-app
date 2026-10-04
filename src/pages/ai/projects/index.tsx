@@ -1,17 +1,11 @@
-import * as Ariakit from '@ariakit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import toast from 'react-hot-toast'
-import { useAuthContext } from '~/auth'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
-import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { useIsClient } from '~/hooks/useIsClient'
+import { ProjectsSignInGate } from '~/containers/LlamaAI/projects/ProjectsSignInGate'
 
 export default function ProjectsIndexPage() {
-	const isClient = useIsClient()
-	const { user, loaders } = useAuthContext()
-	const signInDialogStore = Ariakit.useDialogStore()
 	const router = useRouter()
 	const queryClient = useQueryClient()
 
@@ -32,28 +26,7 @@ export default function ProjectsIndexPage() {
 		}
 	}, [router, queryClient])
 
-	if (!isClient || loaders.userLoading) {
-		return null
-	}
-
-	if (!user) {
-		return (
-			<>
-				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-					<p className="flex items-center gap-1 text-center">
-						Please{' '}
-						<button type="button" onClick={signInDialogStore.show} className="underline">
-							sign in
-						</button>{' '}
-						to access this page.
-					</p>
-				</div>
-				<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
-			</>
-		)
-	}
-
-	return null
+	return <ProjectsSignInGate />
 }
 
 ProjectsIndexPage.getLayout = LlamaAIShell.getLayout

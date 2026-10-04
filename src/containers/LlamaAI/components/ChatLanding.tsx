@@ -3,6 +3,7 @@ import Router from 'next/router'
 import { type RefObject, useCallback, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
+import { focusComposerOnLeave } from '~/containers/LlamaAI/components/ComposerTray'
 import { FreeUsageNote, getPhonePromptPlaceholder } from '~/containers/LlamaAI/components/FreeUsageNote'
 import { OnboardingWalkthrough } from '~/containers/LlamaAI/components/OnboardingWalkthrough'
 import { PromptInput } from '~/containers/LlamaAI/components/PromptInput'
@@ -56,6 +57,8 @@ export interface ChatLandingProps {
 	quotedText?: string | null
 	onClearQuotedText?: () => void
 	enterToSend: boolean
+	/** The tour waits, still unseen: a question from a link is asking first, or this is the landing's exit copy. */
+	holdWalkthrough: boolean
 }
 
 export function ChatLanding({
@@ -81,11 +84,12 @@ export function ChatLanding({
 	isAlertsModalOpen,
 	quotedText,
 	onClearQuotedText,
-	enterToSend
+	enterToSend,
+	holdWalkthrough
 }: ChatLandingProps) {
 	const { hasActiveSubscription } = useAuthContext()
-	const [hasSeenWelcome, markWelcomeSeen] = useLlamaAIWelcome(hasActiveSubscription)
-	const showWalkthrough = !readOnly && hasActiveSubscription && !hasSeenWelcome
+	const [hasSeenWelcome, markWelcomeSeen] = useLlamaAIWelcome()
+	const showWalkthrough = !readOnly && hasActiveSubscription && !hasSeenWelcome && !holdWalkthrough
 	const { tip, markSeen, dismissTip, clickTip } = useActiveTip()
 	const tipActions = useTipActions()
 	const greetingTip = !readOnly && !isSharedView && hasSeenWelcome && tip?.placement === 'greeting' ? tip : null
@@ -136,7 +140,7 @@ export function ChatLanding({
 					{greetingTip ? greetingTip.title : title}
 				</h1>
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
-					<div className="flex items-center gap-3 body-sm">
+					<div ref={focusComposerOnLeave} className="flex items-center gap-3 body-sm">
 						<button
 							type="button"
 							onClick={onGreetingCta}
@@ -150,7 +154,7 @@ export function ChatLanding({
 						<span className="h-3 w-px bg-surface-elevated-2" aria-hidden />
 						<button
 							type="button"
-							onClick={() => void dismissTip(greetingTip)}
+							onClick={() => dismissTip(greetingTip)}
 							className="text-tertiary not-disabled:not-aria-disabled:hover:text-primary"
 						>
 							Not now
@@ -269,7 +273,7 @@ function Capability({
 
 	const handlePromptClick = (prompt: string) => {
 		trackUmamiEvent('llamaai-landing-prompt-click', {
-			category: cap.key ?? 'unknown',
+			category: cap.key,
 			prompt: prompt.slice(0, 100)
 		})
 

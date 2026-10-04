@@ -1,6 +1,6 @@
 import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { keepFocus } from '~/ui/focus'
+import { focusRegionOnLeave, keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { useTeam } from './useTeam'
@@ -10,18 +10,22 @@ export function CreateTeamCard() {
 	const [isCreating, setIsCreating] = useState(false)
 	const [teamName, setTeamName] = useState('')
 	const createTeamButtonRef = useRef<HTMLButtonElement>(null)
+	// Not the mutation's own error: that one clears as soon as a retry starts.
+	const [error, setError] = useState<string | null>(null)
 	const pending = createTeamMutation.isPending
 
 	const handleCreate = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (!teamName.trim() || pending) return
+		if (!teamName.trim()) return
 		createTeamMutation.mutate(
 			{ name: teamName.trim() },
 			{
 				onSuccess: () => {
+					setError(null)
 					setTeamName('')
 					setIsCreating(false)
-				}
+				},
+				onError: (failure) => setError(failure.message)
 			}
 		)
 	}
@@ -47,15 +51,15 @@ export function CreateTeamCard() {
 							value={teamName}
 							readOnly={pending}
 							onChange={(e) => setTeamName(e.target.value)}
-							aria-invalid={createTeamMutation.isError}
-							aria-describedby={createTeamMutation.isError ? 'create-team-error' : undefined}
+							aria-invalid={error !== null}
+							aria-describedby={error ? 'create-team-error' : undefined}
 							className="w-full"
 							autoFocus
 						/>
 					</div>
-					{createTeamMutation.isError ? (
+					{error ? (
 						<p id="create-team-error" role="alert" className="body-sm text-data-down">
-							{createTeamMutation.error.message}
+							{error}
 						</p>
 					) : null}
 					<div className="flex gap-2">
@@ -65,10 +69,10 @@ export function CreateTeamCard() {
 							className="flex-1"
 							disabled={pending}
 							onClick={() =>
-								// The form gives way to the Create Team button that opened it, which takes focus back.
+								// The form gives way to the Create team button that opened it, which takes focus back.
 								keepFocus(
 									() => {
-										createTeamMutation.reset()
+										setError(null)
 										setIsCreating(false)
 										setTeamName('')
 									},
@@ -79,6 +83,8 @@ export function CreateTeamCard() {
 							Cancel
 						</Button>
 						<Button
+							// A created team replaces this card with the team's own, so focus moves to the team region.
+							ref={focusRegionOnLeave}
 							type="submit"
 							variant="primary"
 							size="md"

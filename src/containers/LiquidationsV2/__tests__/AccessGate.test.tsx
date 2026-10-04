@@ -14,6 +14,10 @@ import { LiquidationsChainRouteContent } from '../RouteContent'
 vi.mock('next/router', () => ({
 	useRouter: () => ({ asPath: '/liquidations/sky/arbitrum-one', pathname: '/liquidations', query: {}, push() {} })
 }))
+// The real sign-in dialog, without the wallet picker, Turnstile and third-party scripts it loads.
+vi.mock('next/script', () => ({ default: () => null }))
+vi.mock('next/dynamic', () => ({ default: () => () => null }))
+vi.mock('~/containers/Subscription/Turnstile', () => ({ Turnstile: () => null }))
 
 const http = installFixtureFetch()
 const shell = {
@@ -107,6 +111,17 @@ test('sends a signed-in visitor without a subscription to checkout and back', as
 		'/subscription?returnUrl=%2Fliquidations%2Fsky%2Farbitrum-one'
 	)
 	expect(http.urls().some((url) => url.includes('/api/private/liquidations'))).toBe(false)
+})
+
+test('an open sign-in stays through the account load after a sign-in from another tab', async () => {
+	await render()
+	const gateSignIn = [...container.querySelectorAll('button')].find((el) => el.textContent === 'active subscription')!
+	await act(async () => gateSignIn.click())
+	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Sign in'))
+	await act(async () => signIn('none'))
+	await waitForUi(() => expect(document.querySelector('[role=dialog] h2')?.textContent).toBe("You're signed in"))
+	await waitForText('is required to view liquidations data')
+	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe("You're signed in")
 })
 
 test('loads the chain for a subscriber and shows the server error message', async () => {

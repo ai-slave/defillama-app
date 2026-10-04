@@ -154,18 +154,18 @@ test.each([
 	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe(
 		'Enter an amount between $1 and $500'
 	)
-	expect(button('Pay with card').disabled).toBe(true)
+	expect(button('Pay with card').getAttribute('aria-disabled')).toBe('true')
 	expect(button('Pay with crypto').disabled).toBe(true)
 	await enterAmount('')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe('Enter an amount')
-	expect(button('Pay with card').disabled).toBe(true)
+	expect(button('Pay with card').getAttribute('aria-disabled')).toBe('true')
 	expect(button('Pay with crypto').disabled).toBe(true)
 	await enterAmount(valid)
 	expect(input.value).toBe(valid)
 	expect(input.hasAttribute('aria-invalid')).toBe(false)
 	expect(input.hasAttribute('aria-describedby')).toBe(false)
-	expect(button('Pay with card').disabled).toBe(false)
+	expect(button('Pay with card').getAttribute('aria-disabled')).toBeNull()
 	expect(button('Pay with crypto').disabled).toBe(false)
 })
 
@@ -179,7 +179,7 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Redirecting…')
 	expect(input.readOnly).toBe(true)
 	expect(button('$5').disabled).toBe(true)
-	expect(button('Pay with card').disabled).toBe(true)
+	expect(button('Pay with card').getAttribute('aria-disabled')).toBe('true')
 	await click('Redirecting…')
 	await click('Pay with card')
 	await waitForUi(() => expect(topups()).toHaveLength(1))
@@ -188,7 +188,7 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	expect(input.value).toBe('25')
 	expect(input.disabled).toBe(false)
-	expect(button('Pay with card').disabled).toBe(false)
+	expect(button('Pay with card').getAttribute('aria-disabled')).toBeNull()
 	await click('$5')
 	await click('Pay with crypto')
 	await waitForUi(() => expect(button('Pay with crypto').disabled).toBe(false))
@@ -286,6 +286,26 @@ test('a crypto checkout that fails after Settings starts closing says so outside
 	await act(async () => request.resolve(unavailable()))
 
 	await waitForUi(() => expect(document.body.textContent).toContain('Top-up failed: Checkout unavailable'))
+})
+
+test('in Settings, Back from an open card checkout asks before leaving it; before a session it goes straight back', async () => {
+	topupReplies.push(Response.json({ provider: 'stripe', clientSecret: 'cs_topup' }))
+	await mountInSettings()
+	await click('Pay with card')
+	await act(async () => cardCheckout.resolve())
+	await waitForUi(() => expect(button('Start card session')).toBeDefined())
+	await click('Back to amount')
+	expect(document.querySelector('input')?.value).toBe('10')
+
+	await click('Pay with card')
+	await waitForUi(() => expect(button('Start card session')).toBeDefined())
+	await click('Start card session')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+	await click('Back to amount')
+	await waitForUi(() => expect(document.body.textContent).toContain('Leave checkout?'))
+	await click('Keep paying')
+	await waitForUi(() => expect(document.body.textContent).not.toContain('Leave checkout?'))
+	expect(document.body.textContent).toContain('Card checkout')
 })
 
 test('a crypto checkout that fails while the dialog is open shows the error only in the dialog', async () => {

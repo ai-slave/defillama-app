@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { queryReadFailed } from '~/utils/query'
 import { useIdleChartComputation } from '../hooks/useIdleChartComputation'
 import {
 	fetchProtocolTvlBreakdown,
@@ -54,7 +55,7 @@ export function useBorrowedChartData({
 	return {
 		data,
 		isLoading: isNetworkLoading || (canCompute && isComputing),
-		readFailed: enabled && queries.some((query) => query.errorUpdatedAt > query.dataUpdatedAt),
+		readFailed: enabled && queries.some(queryReadFailed),
 		isFetching: enabled && queries.some((query) => query.isFetching),
 		refetch: () => {
 			for (const query of queries) void query.refetch()

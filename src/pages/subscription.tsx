@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
@@ -28,9 +30,10 @@ import { SubscriptionLoadError } from '~/containers/Subscription/shared/Subscrip
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { BillingCycle, PlanKey } from '~/containers/Subscription/types'
-import { useSubscriptionPageState } from '~/containers/Subscription/usePageState'
+import { planCheckoutBlock, readSubscribedPlan, useSubscriptionPageState } from '~/containers/Subscription/usePageState'
 import { applySlackAcquisitionFromQuery } from '~/containers/Subscription/utils/slackAcquisition'
 import { ClientOnly } from '~/layout/ClientOnly'
+import pb from '~/utils/pocketbase'
 import { safeInternalPath } from '~/utils/routerQuery'
 
 const StripeCheckoutModal = lazy(() =>
@@ -38,6 +41,10 @@ const StripeCheckoutModal = lazy(() =>
 )
 
 const planKeyToSubType = (key: PlanKey): 'api' | 'llamafeed' => (key === 'api' ? 'api' : 'llamafeed')
+
+const SUBSCRIPTION_UNKNOWN = "Couldn't load your subscription. Retry loading it before changing plans."
+
+type PlanAction = { method: 'card' | 'crypto' | 'trial'; plan: PlanKey; interval: 'year' | 'month' }
 
 function SubscriptionContent() {
 	const router = useRouter()
@@ -72,6 +79,9 @@ function SubscriptionContent() {
 	const isCancelPending = subscription?.metadata?.isCanceled === 'true'
 
 	const signInDialog = Ariakit.useDialogStore()
+	// The plan action a signed-out click asked for, continued once sign-in finishes.
+	const [planAfterSignIn, setPlanAfterSignIn] = useState<PlanAction | null>(null)
+	const queryClient = useQueryClient()
 
 	const stripeCheckout = useStripeCheckout()
 
@@ -107,17 +117,11 @@ function SubscriptionContent() {
 	}, [returnIntent, returnUrl, consumeSignupOutcome, pathname, query, replace])
 
 	/* ── Helpers ───────────────────────────────────────────────────────── */
-	// Reverting a scheduled cancellation happens in the Stripe billing portal.
-	const handleRevertCancellation = () => createPortalSession()
-
 	const billingInterval = billingCycle === 'yearly' ? 'year' : 'month'
 
-	const requireAuth = (action: () => void) => {
-		if (!isAuthenticated) {
-			signInDialog.show()
-			return
-		}
-		action()
+	const openSignIn = (action: PlanAction | null) => {
+		setPlanAfterSignIn(action)
+		signInDialog.show()
 	}
 
 	const requireVerified = (action: () => void) => {
@@ -128,56 +132,58 @@ function SubscriptionContent() {
 		action()
 	}
 
-	const openStripeCheckout = (
-		type: 'api' | 'llamafeed',
-		interval: 'year' | 'month',
-		trial = false,
-		upgrade = false
-	) => {
-		requireAuth(() => {
-			requireVerified(() => {
-				stripeCheckout.open({ type, billingInterval: interval, isTrial: trial, isUpgradeFlow: upgrade })
-			})
+	const runPlanAction = ({ method, plan, interval }: PlanAction) =>
+		requireVerified(() => {
+			if (method !== 'crypto') {
+				stripeCheckout.open({ type: planKeyToSubType(plan), billingInterval: interval, isTrial: method === 'trial' })
+				return
+			}
+			setCryptoError(null)
+			handleSubscribe('llamapay', planKeyToSubType(plan), interval).catch((error: Error) =>
+				setCryptoError({ cardKey: plan, message: error.message })
+			)
 		})
+
+	// Signed out, the action waits for sign-in and then for the new account's plan.
+	const startPlanAction = (action: PlanAction) => {
+		if (isAuthenticated) runPlanAction(action)
+		else openSignIn(action)
 	}
+	const startTrial = () => startPlanAction({ method: 'trial', plan: 'pro', interval: 'month' })
+
+	// The plan is unknown until the new account's subscription loads, so the guards wait for that read.
+	const continueAfterSignIn = useMutation({
+		mutationFn: (_action: PlanAction) =>
+			queryClient.fetchQuery(
+				subscriptionStatusQueryOptions({ userId: pb.authStore.record!.id, token: pb.authStore.token })
+			),
+		onSuccess: (accountSubscription, action) => {
+			const plan = readSubscribedPlan(accountSubscription)
+			const block = planCheckoutBlock(action.plan, { ...plan, isTrial })
+			if (block && block !== 'skip') toast.error(block)
+			// As on the pricing cards, crypto and the trial only start a plan; a paid plan changes by card.
+			else if (!block && (action.method === 'card' || plan.currentPlan === 'free')) runPlanAction(action)
+		},
+		onError: () => toast.error(SUBSCRIPTION_UNKNOWN)
+	})
 
 	/* ── Card handlers ─────────────────────────────────────────────────── */
 	const handlePrimaryCtaClick = (cardKey: PlanKey) => {
 		if (cardKey === 'free') {
-			signInDialog.show()
+			openSignIn(null)
 			return
 		}
 		if (cardKey === 'enterprise') {
 			window.location.href = 'mailto:sales@defillama.com'
 			return
 		}
-		openStripeCheckout(planKeyToSubType(cardKey), billingInterval)
+		startPlanAction({ method: 'card', plan: cardKey, interval: billingInterval })
 	}
 
-	const handleSecondaryCtaClick = (cardKey: PlanKey) => {
-		requireAuth(() => {
-			requireVerified(() => {
-				setCryptoError(null)
-				handleSubscribe('llamapay', planKeyToSubType(cardKey), undefined, billingInterval, false).catch(
-					(error: Error) => setCryptoError({ cardKey, message: error.message })
-				)
-			})
-		})
-	}
-
-	const handleUpgradeToYearly = (cardKey: PlanKey) => {
-		openStripeCheckout(planKeyToSubType(cardKey), 'year', false, true)
-	}
-
-	const handleUpgradeTier = (cardKey: PlanKey) => {
-		openStripeCheckout(planKeyToSubType(cardKey), billingInterval)
-	}
-
-	const handleStartTrial = () => {
-		openStripeCheckout('llamafeed', 'month', true, false)
-	}
-
-	const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
+	const handleUpgradeToYearly = (cardKey: PlanKey) =>
+		requireVerified(() =>
+			stripeCheckout.open({ type: planKeyToSubType(cardKey), billingInterval: 'year', isUpgradeFlow: true })
+		)
 
 	// Self-serve plan changes only apply to Stripe-billed personal plans. Everyone
 	// else (manual, team seat, LlamaPay, app store) keeps the comparison buttons
@@ -196,44 +202,32 @@ function SubscriptionContent() {
 
 		// With the current plan unknown, checkout could double-subscribe.
 		if (isSubscriptionError) {
-			toast.error("Couldn't load your subscription. Retry loading it before changing plans.")
-			return
-		}
-
-		// Plans not billed through the user's own Stripe account can't be changed
-		// via self-serve checkout; say so instead of silently doing nothing.
-		if (isManualSubscription || isTeamProvided) {
-			toast.error(
-				isTeamProvided
-					? 'Your plan is provided through your team. Ask your team admin about plan changes.'
-					: "Your plan was set up by the DefiLlama team, so it can't be changed here. Email support@defillama.com to change it."
-			)
-			return
-		}
-		if (isAuthenticated && currentPlan && currentPlan !== 'free' && currentProvider !== 'stripe') {
-			toast.error(
-				currentProvider === 'llamapay' || currentProvider === 'legacy'
-					? 'Your plan is billed through LlamaPay. Manage it at subscriptions.llamapay.io first.'
-					: 'Your plan is billed through the app store. Manage it there first.'
-			)
+			toast.error(SUBSCRIPTION_UNKNOWN)
 			return
 		}
 
 		// Same guards the pricing cards enforce
-		if (isAuthenticated && currentPlan) {
-			const isCurrentOrTrial = plan === currentPlan || (isTrial && plan === 'pro')
-			const isLowerTier = PLAN_TIER[plan] < PLAN_TIER[currentPlan]
-			if (isCurrentOrTrial || isLowerTier) return
+		if (currentPlan) {
+			const block = planCheckoutBlock(plan, {
+				currentPlan,
+				isTrial,
+				isManualSubscription,
+				isTeamProvided,
+				currentProvider
+			})
+			if (block === 'skip') return
+			if (block) {
+				toast.error(block)
+				return
+			}
 		}
 
 		if (plan === 'free') {
-			if (!isAuthenticated) {
-				signInDialog.show()
-			}
+			if (!isAuthenticated) openSignIn(null)
 			return
 		}
 
-		openStripeCheckout(planKeyToSubType(plan), billingInterval)
+		startPlanAction({ method: 'card', plan, interval: billingInterval })
 	}
 
 	return (
@@ -261,12 +255,15 @@ function SubscriptionContent() {
 					isTeamProvided={isTeamProvided}
 					isPageStateLoading={isPageStateLoading || isSubscriptionError}
 					onPrimaryCtaClick={handlePrimaryCtaClick}
-					onSecondaryCtaClick={handleSecondaryCtaClick}
+					onSecondaryCtaClick={(cardKey) =>
+						startPlanAction({ method: 'crypto', plan: cardKey, interval: billingInterval })
+					}
 					onUpgradeToYearly={handleUpgradeToYearly}
-					onUpgradeTier={handleUpgradeTier}
-					onStartTrial={handleStartTrial}
+					onUpgradeTier={(cardKey) => startPlanAction({ method: 'card', plan: cardKey, interval: billingInterval })}
+					onStartTrial={startTrial}
 					onEndTrial={() => setShowEndTrialModal(true)}
-					onRevertCancellation={() => void handleRevertCancellation()}
+					// Reverting a scheduled cancellation happens in the Stripe billing portal.
+					onRevertCancellation={() => void createPortalSession()}
 					isTrialAvailable={isTrialAvailable}
 					loading={loading}
 					cryptoError={cryptoError}
@@ -283,14 +280,22 @@ function SubscriptionContent() {
 
 				<section className="mx-auto flex max-w-[1440px] flex-col items-center px-4 py-12 md:px-10 md:py-20 2xl:px-32">
 					<SubscriptionTrustedBlock trustLogos={TRUST_LOGOS} />
-					<SubscriptionFaqBlock faqItems={FAQ_ITEMS} onStartTrial={isTrialAvailable ? handleStartTrial : undefined} />
+					<SubscriptionFaqBlock faqItems={FAQ_ITEMS} onStartTrial={isTrialAvailable ? startTrial : undefined} />
 				</section>
 			</main>
 
 			<SubscriptionFooter />
 
 			{/* Sign-in dialog (opened programmatically by CTA buttons) */}
-			<SignInModal store={signInDialog} />
+			<SignInModal
+				store={signInDialog}
+				onAuthenticated={() => {
+					if (!planAfterSignIn) return
+					// The reader chose a plan here, so the checkout replaces the offer to go back.
+					setHandledReturnUrl(returnUrl)
+					continueAfterSignIn.mutate(planAfterSignIn)
+				}}
+			/>
 
 			{/* Stripe checkout modal */}
 			{stripeCheckout.isOpen ? (

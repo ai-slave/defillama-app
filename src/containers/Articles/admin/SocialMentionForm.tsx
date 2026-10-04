@@ -14,6 +14,7 @@ import {
 import type { MentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import type { SocialMention, SocialMentionPayload } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
+import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
 	quote: string
@@ -106,6 +107,22 @@ export function SocialMentionForm({ mentionId }: Props) {
 	})
 
 	const update = (patch: Partial<FormState>) => setState((prev) => ({ ...prev, ...patch }))
+
+	// A failed list read is not a missing mention: say so and offer the retry.
+	if (mentionId && queryReadFailed(mentionsQuery) && !mentionsQuery.data) {
+		return (
+			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+				<h1 className="text-xl font-semibold text-primary">Couldn't load the mentions</h1>
+				<Button
+					size="sm"
+					onClick={() => void mentionsQuery.refetch()}
+					pendingLabel={mentionsQuery.isFetching ? 'Retrying…' : null}
+				>
+					Try again
+				</Button>
+			</div>
+		)
+	}
 
 	if (mentionId && mentionsQuery.isLoading) {
 		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>

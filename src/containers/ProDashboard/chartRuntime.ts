@@ -1,3 +1,5 @@
+import type { QueryObserverResult } from '@tanstack/react-query'
+import { queryReadFailed } from '~/utils/query'
 import type { ChartConfig, ChartSubject } from './types'
 
 export interface ChartRuntimeState {
@@ -16,7 +18,8 @@ export type ChartDataPrerequisite =
 	| { status: 'loading' }
 	| { status: 'ready' }
 	| { status: 'unavailable' }
-	| { status: 'error'; retry: () => void }
+	// `retrying` while the read its retry started runs; the failure stays until it succeeds.
+	| { status: 'error'; retry: () => void; retrying: boolean }
 
 interface ChartQueryResult {
 	data: Array<[number, number]> | undefined
@@ -29,6 +32,19 @@ interface ChartQueryResult {
 
 const EMPTY_CHART_DATA: Array<[number, number]> = []
 const UNAVAILABLE_CHART_DATA = { status: 'unavailable' } as const satisfies ChartDataPrerequisite
+
+const READY_CHART_DATA = { status: 'ready' } as const satisfies ChartDataPrerequisite
+const LOADING_CHART_DATA = { status: 'loading' } as const satisfies ChartDataPrerequisite
+
+/** The protocol catalog that protocol cards wait on. Its failure stays through a retry, like a card's own read. */
+export function getProtocolCatalogPrerequisite(
+	needed: boolean,
+	query: Pick<QueryObserverResult<unknown>, 'data' | 'errorUpdatedAt' | 'dataUpdatedAt' | 'isFetching' | 'refetch'>
+): ChartDataPrerequisite {
+	if (!needed || query.data !== undefined) return READY_CHART_DATA
+	if (queryReadFailed(query)) return { status: 'error', retry: () => void query.refetch(), retrying: query.isFetching }
+	return LOADING_CHART_DATA
+}
 
 export function getChartDataPrerequisite(
 	subject: ChartSubject,
@@ -55,13 +71,13 @@ export function toChartRuntimeState(
 		}
 	}
 	if (prerequisite.status === 'error') {
-		// The catalog shows its failure only while it is not fetching; its retry loads the card again.
+		// The catalog's failure stays through its retry, which loads the card again.
 		return {
 			data: EMPTY_CHART_DATA,
 			isLoading: false,
 			hasError: true,
 			canRetry: true,
-			isFetching: false,
+			isFetching: prerequisite.retrying,
 			refetch: prerequisite.retry
 		}
 	}
@@ -75,8 +91,7 @@ export function toChartRuntimeState(
 			refetch: query.refetch
 		}
 	}
-	// Attempt times, not isError: design.md → Status states.
-	const hasError = query.errorUpdatedAt > query.dataUpdatedAt && query.data === undefined
+	const hasError = queryReadFailed(query) && query.data === undefined
 	return {
 		data: query.data ?? EMPTY_CHART_DATA,
 		isLoading: !hasError && (query.isLoading || (!streamDone && query.data === undefined)),

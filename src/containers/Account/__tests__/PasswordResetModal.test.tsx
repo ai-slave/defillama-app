@@ -73,6 +73,25 @@ test('a failed reset request shows its reason inside the dialog and keeps the se
 	expect(dialogText()).toContain("We'll send a password reset link to subscriber@example.com.")
 })
 
+test('a retried reset request keeps the last failure on screen while it sends', async () => {
+	session.serveInOrder(RESET, [fixtureStatus(429, { error: 'rate limited' }), () => new Promise<Response>(() => {})])
+	await openAndSend()
+	await waitForUi(() =>
+		expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(
+			'Too many reset requests. Wait before trying again.'
+		)
+	)
+
+	await act(async () => button('Test CAPTCHA').click())
+	await act(async () => button('Send reset link').click())
+	await waitForUi(() =>
+		expect(document.querySelector('[role=dialog] button[aria-busy=true]')?.textContent).toContain('Sending…')
+	)
+	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(
+		'Too many reset requests. Wait before trying again.'
+	)
+})
+
 test('a sent reset link is confirmed inside the dialog instead of a toast', async () => {
 	session.serve({ [RESET]: {} })
 	await openAndSend()
@@ -81,19 +100,21 @@ test('a sent reset link is confirmed inside the dialog instead of a toast', asyn
 	expect(document.body.textContent).not.toContain('Password reset email sent')
 })
 
-test('the sent step hides the security check until another link is requested, and the cooldown still applies', async () => {
+const resetRequests = () => session.requests.filter((request) => request.url.href === RESET)
+
+test('the sent step hides the security check until another link is requested, which waits out the cooldown first', async () => {
 	session.serve({ [RESET]: {} })
 	await openAndSend()
 	await waitForUi(() => expect(dialogText()).toContain('We sent a password reset link to subscriber@example.com.'))
 	expect(dialogText()).not.toContain('Complete the check above')
 
 	await act(async () => button('Send another link').click())
-	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
+	// The wait shows before the check, and holds the send even once the check passes.
+	await waitForUi(() => expect(dialogText()).toMatch(/Wait \d+s before sending another link\./))
 	await act(async () => button('Test CAPTCHA').click())
+	expect(button('Send reset link').getAttribute('aria-disabled')).toBe('true')
 	await act(async () => button('Send reset link').click())
-	// The 60-second resend cooldown keeps the form open with its warning instead of claiming a new link.
-	await waitForUi(() => expect(dialogText()).toMatch(/Wait \d+s before resending\./))
-	expect(dialogText()).not.toContain('We sent a new password reset link')
+	expect(resetRequests()).toHaveLength(1)
 })
 
 test('a reopened dialog starts from the send step without the last failure', async () => {
@@ -116,11 +137,11 @@ test('a reopened dialog after a sent link starts on the form, and the resend coo
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')).toBeNull())
 
 	await act(async () => button('Change password').click())
-	await waitForUi(() => expect(dialogText()).toContain('Complete the check above'))
+	await waitForUi(() => expect(dialogText()).toMatch(/Wait \d+s before sending another link\./))
 	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Change password')
 	await act(async () => button('Test CAPTCHA').click())
 	await act(async () => button('Send reset link').click())
-	await waitForUi(() => expect(dialogText()).toMatch(/Wait \d+s before resending\./))
+	expect(resetRequests()).toHaveLength(1)
 })
 
 test('Send another link hands focus to the send button that replaces it', async () => {

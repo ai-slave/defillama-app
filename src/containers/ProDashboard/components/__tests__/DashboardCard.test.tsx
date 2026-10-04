@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
 import { DashboardCard } from '../DashboardCard'
 
@@ -102,9 +103,9 @@ test('a single card and a single view read in the singular', async () => {
 
 test('the card actions menu only exists when the card can be deleted', async () => {
 	await render(makeDashboard({ visibility: 'private' }))
-	expect(container.querySelector('[aria-label="Dashboard card actions"]')).toBeNull()
+	expect(container.querySelector('[aria-label="Actions for Audit board"]')).toBeNull()
 	await render(makeDashboard({ visibility: 'private' }), async () => {})
-	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
+	expect(container.querySelector('[aria-label="Actions for Audit board"]')).not.toBeNull()
 })
 
 test('a team dashboard names its last editor and hides delete for members who cannot delete', async () => {
@@ -119,7 +120,7 @@ test('a team dashboard names its last editor and hides delete for members who ca
 		onDelete
 	)
 	expect(container.textContent).toContain('Edited by Ana')
-	expect(container.querySelector('[aria-label="Dashboard card actions"]')).toBeNull()
+	expect(container.querySelector('[aria-label="Actions for Audit board"]')).toBeNull()
 
 	await render(
 		makeDashboard({
@@ -129,5 +130,106 @@ test('a team dashboard names its last editor and hides delete for members who ca
 		}),
 		onDelete
 	)
-	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
+	expect(container.querySelector('[aria-label="Actions for Audit board"]')).not.toBeNull()
+})
+
+test('a tag is a plain label where the page has no tag filter, and a filter button where it does', async () => {
+	await render(makeDashboard({ visibility: 'private' }))
+	const label = [...container.querySelectorAll('span')].find((node) => node.textContent === 'Security')
+	expect(label).toBeDefined()
+	expect([...container.querySelectorAll('button')].some((node) => node.textContent === 'Security')).toBe(false)
+
+	const onTagClick = vi.fn()
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<DashboardCard dashboard={makeDashboard({ visibility: 'private' })} viewMode="grid" onTagClick={onTagClick} />
+			</session.Wrapper>
+		)
+	)
+	const button = [...container.querySelectorAll('button')].find((node) => node.textContent === 'Security')!
+	await act(async () => button.click())
+	expect(onTagClick).toHaveBeenCalledWith('Security')
+})
+
+test('every card names its own link and actions after its dashboard', async () => {
+	await render(makeDashboard({ visibility: 'private' }), async () => {})
+	expect(container.querySelector('a[href="/pro/dash-1-slug"]')?.textContent).toBe('View Audit board')
+	expect(container.querySelector('[aria-label="Actions for Audit board"]')).not.toBeNull()
+})
+
+test('cancelling a delete from the card menu returns focus to the menu button', async () => {
+	await render(makeDashboard({}), async () => {})
+	const menuButton = container.querySelector<HTMLButtonElement>('[aria-label="Actions for Audit board"]')!
+	await act(async () => {
+		menuButton.focus()
+		menuButton.click()
+	})
+	const remove = await waitForUi(() => {
+		const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+			(el) => el.textContent === 'Delete…'
+		)
+		expect(item).toBeDefined()
+		return item!
+	})
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
+	const cancel = await waitForUi(() => {
+		const button = [...document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')].find(
+			(el) => el.textContent === 'Cancel'
+		)
+		expect(button).toBeDefined()
+		return button!
+	})
+	await act(async () => cancel.click())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(menuButton))
+})
+
+test('a deleted dashboard that leaves the list hands focus to the page content', async () => {
+	const dashboard = makeDashboard({})
+	const renderList = (dashboards: Array<Dashboard>) =>
+		act(async () =>
+			root.render(
+				<session.Wrapper>
+					<main>
+						{dashboards.map((item) => (
+							<DashboardCard key={item.id} dashboard={item} viewMode="grid" onDelete={async () => {}} />
+						))}
+					</main>
+				</session.Wrapper>
+			)
+		)
+	await renderList([dashboard])
+	const menuButton = container.querySelector<HTMLButtonElement>('[aria-label="Actions for Audit board"]')!
+	await act(async () => {
+		menuButton.focus()
+		menuButton.click()
+	})
+	const remove = await waitForUi(() => {
+		const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+			(el) => el.textContent === 'Delete…'
+		)
+		expect(item).toBeDefined()
+		return item!
+	})
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
+	const confirm = await waitForUi(() => {
+		const button = [...document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')].find(
+			(el) => el.textContent === 'Delete'
+		)
+		expect(button).toBeDefined()
+		return button!
+	})
+	await act(async () => confirm.click())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(menuButton))
+	// The list refetch drops the deleted card after the confirmation has closed onto its menu button.
+	await renderList([])
+	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('main')))
 })

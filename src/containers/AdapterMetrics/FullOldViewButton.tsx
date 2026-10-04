@@ -1,29 +1,19 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { useDashboardCreation } from '~/containers/ProDashboard/hooks/useDashboardCreation'
-import { useIsClient } from '~/hooks/useIsClient'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 export function FullOldViewButton() {
 	const { createDashboardWithDataset, isLoading } = useDashboardCreation()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
-	const [shouldRenderModal, setShouldRenderModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
-	const isClient = useIsClient()
+	const subscribeModalStore = Ariakit.useDialogStore()
 
 	const handleClick = () => {
-		if (isLoading || loaders.userLoading) return
+		if (loaders.userLoading) return
 
 		if (isAuthenticated && hasActiveSubscription) {
 			createDashboardWithDataset()
@@ -52,8 +42,8 @@ export function FullOldViewButton() {
 	return (
 		<>
 			<span className="flex items-center gap-1">
-				<Button type="button" size="md" onClick={handleClick} disabled={isLoading}>
-					{isClient && isLoading ? <LoadingSpinner size={16} /> : <Icon name="plus" height={16} width={16} />}
+				<Button type="button" size="md" onClick={handleClick} pendingLabel={isLoading ? 'Creating dashboard…' : null}>
+					<Icon name="plus" height={16} width={16} />
 					<span>Open in Dashboard</span>
 				</Button>
 				<Hovercard
@@ -64,11 +54,7 @@ export function FullOldViewButton() {
 					<Icon name="help-circle" height={16} width={16} />
 				</Hovercard>
 			</span>
-			{shouldRenderModal ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</>
 	)
 }

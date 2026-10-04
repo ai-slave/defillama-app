@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
+import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import type { DashboardRatingDecision } from '../dashboardTypes'
 import { ProButton } from '../ui/ProButton'
@@ -10,16 +11,18 @@ import { ProButton } from '../ui/ProButton'
 interface RatingProps {
 	sessionId: string
 	mode: 'create' | 'iterate'
-	variant: 'banner' | 'inline'
 	prompt?: string
 	onSubmit: (sessionId: string, decision: DashboardRatingDecision) => Promise<void>
 }
+
+// The banner leaves once the rating is saved or skipped; focus that was on it goes to the page, not the body.
+const focusPageOnLeave = passFocusOnLeave(() => pageContent())
 
 export function Rating(props: RatingProps) {
 	return <RatingForm key={props.sessionId} {...props} />
 }
 
-function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps) {
+function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 	const [rating, setRating] = useState(0)
 	const formRef = useRef<HTMLFormElement>(null)
 	const submission = useMutation({
@@ -30,177 +33,92 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 	})
 	const skipping = submission.isPending && 'skipped' in submission.variables
 	const saving = submission.isPending && !skipping
-	const bannerFeedbackId = `${sessionId}-rating-feedback-banner`
-	const inlineFeedbackId = `${sessionId}-rating-feedback-inline`
+	const feedbackId = `${sessionId}-rating-feedback`
 
 	const handleSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
-		if (rating === 0 || submission.isPending) return
+		if (rating === 0) return
 		const feedback = (new FormData(e.currentTarget).get('feedback') as string | null)?.trim()
 		submission.mutate({ rating, ...(feedback ? { feedback } : {}) })
 	}
 
-	const handleSkip = () => {
-		if (!submission.isPending) submission.mutate({ skipped: true })
-	}
-
-	const texts = {
-		banner: {
-			title: mode === 'create' ? 'Rate this AI-generated dashboard' : 'Rate this AI improvement',
-			subtitle:
-				mode === 'create'
-					? 'How well did LlamaAI understand your requirements?'
-					: 'How well did LlamaAI improve your dashboard?'
-		},
-		inline: {
-			title: mode === 'create' ? 'Rate AI Generation' : 'Rate AI Improvement',
-			subtitle: mode === 'create' ? 'Help us improve dashboard generation' : 'Help us improve dashboard iterations'
-		}
-	}
-
-	const currentTexts = texts[variant]
-
-	if (variant === 'banner') {
-		return (
-			<form
-				ref={formRef}
-				onSubmit={handleSubmit}
-				className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
-			>
-				<div className="flex flex-wrap items-center gap-4">
-					<h3 className="text-lg font-semibold">{currentTexts.title}</h3>
-					<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} size={20} />
-					<ProButton
-						type="button"
-						variant="ghost"
-						square
-						className="ml-auto"
-						onClick={handleSkip}
-						disabled={submission.isPending}
-						accessibleWhenDisabled
-						aria-label="Dismiss rating"
-						icon={<Icon name="x" height={16} width={16} />}
-					/>
-				</div>
-
-				<p className="text-sm text-pro-text-label">{currentTexts.subtitle}</p>
-
-				{prompt ? (
-					<div className="flex flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
-						<p className="text-xs text-pro-text-label">Prompt used:</p>
-						<p className="text-center text-sm">{prompt}</p>
-					</div>
-				) : null}
-
-				{rating > 0 ? (
-					<div className="flex w-full flex-col gap-1">
-						<label
-							htmlFor={bannerFeedbackId}
-							className="text-xs font-semibold tracking-wide text-pro-text-label uppercase"
-						>
-							Your Feedback (Optional)
-						</label>
-						<textarea
-							id={bannerFeedbackId}
-							name="feedback"
-							placeholder="Share your thoughts about the AI-generated dashboard..."
-							rows={3}
-							className="w-full rounded-md border border-pro-cards-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
-							readOnly={submission.isPending}
-						/>
-					</div>
-				) : null}
-
-				<div className="mt-6 flex items-center justify-center gap-3">
-					<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
-						Skip
-					</ProButton>
-
-					{rating > 0 ? (
-						<ProButton
-							type="submit"
-							variant="primary"
-							loading={saving}
-							disabled={skipping}
-							icon={<Icon name="sparkles" height={14} width={14} />}
-						>
-							Submit Rating
-						</ProButton>
-					) : null}
-				</div>
-				<span role="status" className="sr-only">
-					{submission.isPending ? ('skipped' in submission.variables ? 'Dismissing rating' : 'Saving rating') : ''}
-				</span>
-				{submission.error ? (
-					<p role="alert" className="text-sm text-error">
-						{submission.error.message}
-					</p>
-				) : null}
-			</form>
-		)
-	}
+	const handleSkip = () => submission.mutate({ skipped: true })
 
 	return (
-		<form ref={formRef} onSubmit={handleSubmit} className="contents">
-			<Icon name="sparkles" height={24} width={24} className="shrink-0 text-pro-info-400 dark:text-pro-info-200" />
+		<form
+			ref={(node) => {
+				formRef.current = node
+				return focusPageOnLeave(node)
+			}}
+			onSubmit={handleSubmit}
+			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
+		>
+			<div className="flex flex-wrap items-center gap-4">
+				<h3 className="text-lg font-semibold">
+					{mode === 'create' ? 'Rate this AI-generated dashboard' : 'Rate this AI improvement'}
+				</h3>
+				<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} />
+				<ProButton
+					type="button"
+					variant="ghost"
+					square
+					className="ml-auto"
+					onClick={handleSkip}
+					disabled={submission.isPending}
+					accessibleWhenDisabled
+					aria-label="Dismiss rating"
+					icon={<Icon name="x" height={16} width={16} />}
+				/>
+			</div>
 
-			<h3 className="-mt-5 text-xl font-semibold">{currentTexts.title}</h3>
-			<p className="-mt-5 text-sm text-pro-text-label">{currentTexts.subtitle}</p>
+			<p className="text-sm text-pro-text-label">
+				{mode === 'create'
+					? 'How well did LlamaAI understand your requirements?'
+					: 'How well did LlamaAI improve your dashboard?'}
+			</p>
 
 			{prompt ? (
-				<div className="flex w-full max-w-xl flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
-					<h4 className="text-xs text-pro-text-label">Prompt used:</h4>
+				<div className="flex flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
+					<p className="text-xs text-pro-text-label">Prompt used:</p>
 					<p className="text-center text-sm">{prompt}</p>
 				</div>
 			) : null}
 
-			<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} size={24} />
-
 			{rating > 0 ? (
-				<div className="flex w-full max-w-xl flex-col items-center gap-6">
-					<div className="flex w-full flex-col items-center gap-1">
-						<label
-							htmlFor={inlineFeedbackId}
-							className="text-center text-xs font-semibold tracking-wide text-pro-text-label uppercase"
-						>
-							Your Feedback (Optional)
-						</label>
-						<textarea
-							id={inlineFeedbackId}
-							name="feedback"
-							placeholder="Share your thoughts about the AI-generated dashboard..."
-							rows={3}
-							className="w-full rounded-md border border-pro-cards-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
-							readOnly={submission.isPending}
-						/>
-					</div>
-
-					<div className="flex items-center justify-center gap-3">
-						<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
-							Skip
-						</ProButton>
-						<ProButton
-							type="submit"
-							variant="primary"
-							loading={saving}
-							disabled={skipping}
-							icon={<Icon name="sparkles" height={14} width={14} />}
-						>
-							Submit Rating
-						</ProButton>
-					</div>
+				<div className="flex w-full flex-col gap-1">
+					<label htmlFor={feedbackId} className="text-xs font-semibold tracking-wide text-pro-text-label uppercase">
+						Your Feedback (Optional)
+					</label>
+					<textarea
+						id={feedbackId}
+						name="feedback"
+						placeholder="Share your thoughts about the AI-generated dashboard..."
+						rows={3}
+						className="w-full rounded-md border border-pro-cards-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
+						readOnly={submission.isPending}
+					/>
 				</div>
-			) : (
-				<>
-					<p className="-mt-5 text-center text-xs text-pro-text-form">Click the stars above to rate your experience</p>
+			) : null}
 
-					<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
-						Skip
+			<div className="mt-6 flex items-center justify-center gap-3">
+				<ProButton type="button" variant="ghost" onClick={handleSkip} loading={skipping} disabled={saving}>
+					Skip
+				</ProButton>
+
+				{rating > 0 ? (
+					<ProButton
+						type="submit"
+						variant="primary"
+						loading={saving}
+						disabled={skipping}
+						icon={<Icon name="sparkles" height={14} width={14} />}
+					>
+						Submit Rating
 					</ProButton>
-				</>
-			)}
+				) : null}
+			</div>
 			<span role="status" className="sr-only">
-				{submission.isPending ? ('skipped' in submission.variables ? 'Dismissing rating' : 'Saving rating') : ''}
+				{submission.isPending ? (skipping ? 'Dismissing rating' : 'Saving rating') : ''}
 			</span>
 			{submission.error ? (
 				<p role="alert" className="text-sm text-error">
@@ -216,13 +134,11 @@ const RATING_VALUES = [1, 2, 3, 4, 5] as const
 function RatingStars({
 	value,
 	onChange,
-	disabled,
-	size
+	disabled
 }: {
 	value: number
 	onChange: (value: number) => void
 	disabled: boolean
-	size: 20 | 24
 }) {
 	const [hovered, setHovered] = useState(0)
 	return (
@@ -235,7 +151,7 @@ function RatingStars({
 				{RATING_VALUES.map((star) => (
 					<span
 						key={star}
-						className={`relative rounded-sm transition-transform has-focus-visible:focus-ring has-aria-disabled:opacity-50 ${size === 20 ? 'p-1' : 'p-2'} ${disabled ? '' : 'cursor-pointer hover:scale-110'}`}
+						className={`relative rounded-sm p-1 transition-transform has-focus-visible:focus-ring has-aria-disabled:opacity-50 ${disabled ? '' : 'cursor-pointer hover:scale-110'}`}
 					>
 						<Ariakit.Radio
 							accessibleWhenDisabled
@@ -249,8 +165,8 @@ function RatingStars({
 						/>
 						<Icon
 							name="star"
-							height={size}
-							width={size}
+							height={20}
+							width={20}
 							aria-hidden="true"
 							className={`${star <= (hovered || value) ? 'fill-current text-warning' : 'text-pro-text-form'} transition-colors`}
 						/>

@@ -4,6 +4,7 @@ import { act, useReducer } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
+import type { CustomDataConfig } from '../../../types'
 import { CustomDataTab, TYPED_CSV_PARSE_DELAY_MS } from '../CustomDataTab'
 import { initializeFromEditItem, modalReducer } from '../modalReducer'
 import type { ModalState } from '../types'
@@ -39,19 +40,19 @@ function signInAs(account: SessionAccount) {
 		session = installed
 	})
 }
-const renderTab = () =>
+const renderTab = (editItem: CustomDataConfig | null = null) =>
 	act(async () =>
 		root.render(
 			<session.Wrapper>
-				<Harness />
+				<Harness editItem={editItem} />
 			</session.Wrapper>
 		)
 	)
 let latest: ModalState | null = null
 let parsedCount = 0
 
-function Harness() {
-	const [state, dispatch] = useReducer(modalReducer, null, () => initializeFromEditItem(null))
+function Harness({ editItem = null }: { editItem?: CustomDataConfig | null }) {
+	const [state, dispatch] = useReducer(modalReducer, editItem, initializeFromEditItem)
 	latest = state
 	return (
 		<CustomDataTab
@@ -155,6 +156,38 @@ describe('a subscriber', () => {
 		await waitForTypedParse()
 		expect(parsedCount).toBe(0)
 		expect(latest?.customData.storedRows).toBeNull()
+	})
+
+	test('emptying the CSV box removes the preview of the rows it held', async () => {
+		await renderTab()
+		await pasteCsv(CSV)
+		expect(document.body.textContent).toContain('chart line: 2')
+
+		await typeCsv('')
+		expect(document.body.textContent).not.toContain('chart line')
+		expect(document.body.textContent).toContain('Paste or upload a CSV to preview it here.')
+	})
+
+	test('the first keystroke in a saved card keeps its rows on screen until the new CSV parses', async () => {
+		await renderTab({
+			id: 'custom',
+			kind: 'custom-data',
+			name: 'Saved data',
+			columns: [
+				{ name: 'day', type: 'DATE' },
+				{ name: 'value', type: 'BIGINT' }
+			],
+			rows: [
+				[Date.UTC(2026, 0, 1), 10],
+				[Date.UTC(2026, 0, 2), 20]
+			],
+			chart: { chartType: 'line', xCol: 'day', yCols: ['value'] } as CustomDataConfig['chart'],
+			displayMode: 'chart'
+		})
+		expect(document.body.textContent).toContain('chart line: 2')
+
+		await typeCsv('d')
+		expect(document.body.textContent).toContain('chart line: 2')
 	})
 
 	test('reports a malformed CSV as plain text without storing rows', async () => {

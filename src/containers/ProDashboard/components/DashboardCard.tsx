@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useMemo, useRef, useState, type RefObject } from 'react'
-import toast from 'react-hot-toast'
+import { useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -13,19 +14,20 @@ import { countDashboardWidgets } from '../dashboardWidgets'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { ProBadge, ProChip, ProMeta, proCardShellStyles, ProButton } from '../ui'
 import { CardLikeButton } from './CardLikeButton'
-import { ConfirmationModal } from './ConfirmationModal'
 import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
 import { DashboardPreview } from './DashboardPreview'
 import { buildDashboardPreview } from './dashboardPreview.utils'
 
 interface DashboardCardProps {
-	fallbackFocus?: RefObject<HTMLElement | null>
 	dashboard: Dashboard
 	onTagClick?: (tag: string) => void
 	onDelete?: (dashboardId: string) => void | Promise<void>
 	viewMode?: 'grid' | 'list'
 	className?: string
 }
+
+// A confirmed delete closes onto the card's own control, and the list refetch removes the card after that.
+const focusPageOnLeave = passFocusOnLeave(pageContent)
 
 function DashboardCardGradientStrip() {
 	return <div className="h-1.5 w-full bg-linear-to-r from-pro-accent/20 via-pro-accent/10 to-transparent" />
@@ -57,21 +59,14 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	)
 }
 
-function DashboardCardActionsMenu({
-	onDelete,
-	disabled
-}: {
-	onDelete: (trigger: HTMLElement) => void
-	disabled: boolean
-}) {
+function DashboardCardActionsMenu({ name, onDelete }: { name: string; onDelete: (trigger: HTMLElement) => void }) {
 	const triggerRef = useRef<HTMLButtonElement>(null)
 	return (
 		<Ariakit.MenuProvider placement="bottom-end">
 			<Ariakit.MenuButton
 				ref={triggerRef}
 				render={<ProButton size="sm" square variant="secondary" />}
-				aria-label="Dashboard card actions"
-				disabled={disabled}
+				aria-label={`Actions for ${name}`}
 				className="absolute top-2 right-2 z-10"
 				onClick={(event: React.MouseEvent) => event.stopPropagation()}
 			>
@@ -89,22 +84,11 @@ function DashboardCardActionsMenu({
 	)
 }
 
-export function DashboardCard({
-	fallbackFocus,
-	dashboard,
-	onTagClick,
-	onDelete,
-	viewMode = 'grid',
-	className
-}: DashboardCardProps) {
+export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'grid', className }: DashboardCardProps) {
 	const returnFocus = useRef<HTMLElement | null>(null)
-	const cardRef = useRef<HTMLDivElement>(null)
 	const deletion = useMutation({
 		mutationFn: async () => {
 			await onDelete!(dashboard.id)
-		},
-		onError: (error) => {
-			if (!cardRef.current?.isConnected) toast.error(error.message)
 		}
 	})
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)
@@ -113,10 +97,10 @@ export function DashboardCard({
 	// A team list carries server-resolved access; a member who cannot delete gets no delete control.
 	const canDelete = !!onDelete && (dashboard.access ? dashboard.access.canDelete : true)
 	const editedBy = dashboard.team ? dashboard.editedBy?.displayName : undefined
+	const name = dashboard.data.dashboardName || 'Untitled Dashboard'
 
 	const requestDelete = (trigger: HTMLElement) => {
 		returnFocus.current = trigger
-		deletion.reset()
 		setShowDeleteConfirm(true)
 	}
 
@@ -158,9 +142,7 @@ export function DashboardCard({
 	const titleRow = (
 		<div className="flex min-w-0 items-start gap-2">
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<h2 className="line-clamp-1 text-base leading-snug font-semibold text-pro-text-primary">
-					{dashboard.data.dashboardName || 'Untitled Dashboard'}
-				</h2>
+				<h2 className="line-clamp-1 text-base leading-snug font-semibold text-pro-text-primary">{name}</h2>
 				<DashboardAuthorLink author={dashboard.author} />
 			</div>
 			{isPrivate ? (
@@ -180,34 +162,41 @@ export function DashboardCard({
 	const tagRow =
 		tags.length > 0 ? (
 			<div className="flex h-6 items-center gap-1.5 overflow-hidden">
-				{tags.slice(0, 2).map((tag) => (
-					<ProChip
-						key={tag}
-						as="button"
-						type="button"
-						onClick={(event: React.MouseEvent) => {
-							event.stopPropagation()
-							event.preventDefault()
-							onTagClick?.(tag)
-						}}
-						className="z-10 max-w-40 truncate"
-					>
-						{tag}
-					</ProChip>
-				))}
+				{tags.slice(0, 2).map((tag) =>
+					// Without a tag filter on the page, a tag is a label and a click opens the dashboard like the rest.
+					onTagClick ? (
+						<ProChip
+							key={tag}
+							as="button"
+							type="button"
+							onClick={(event: React.MouseEvent) => {
+								event.stopPropagation()
+								event.preventDefault()
+								onTagClick(tag)
+							}}
+							className="z-10 max-w-40 truncate"
+						>
+							{tag}
+						</ProChip>
+					) : (
+						<ProChip key={tag} className="max-w-40 truncate">
+							{tag}
+						</ProChip>
+					)
+				)}
 				{tags.length > 2 ? <ProChip>+{tags.length - 2}</ProChip> : null}
 			</div>
 		) : null
 
 	return (
 		<div
-			ref={cardRef}
+			ref={focusPageOnLeave}
 			className={`${proCardShellStyles} group/dashboard-card relative isolate flex flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-180 ease-out-quart hover:-translate-y-0.5 hover:border-pro-accent/40 hover:shadow-overlay-sm ${className ?? ''}`}
 		>
 			{viewMode === 'grid' ? (
 				<div className="relative">
 					<DashboardPreview tiles={tiles} />
-					{canDelete ? <DashboardCardActionsMenu onDelete={requestDelete} disabled={deletion.isPending} /> : null}
+					{canDelete ? <DashboardCardActionsMenu name={name} onDelete={requestDelete} /> : null}
 				</div>
 			) : (
 				<DashboardCardGradientStrip />
@@ -236,8 +225,7 @@ export function DashboardCard({
 							size="sm"
 							square
 							variant="ghost"
-							aria-label="Delete dashboard"
-							disabled={deletion.isPending}
+							aria-label={`Delete ${name}`}
 							onClick={(event: React.MouseEvent) => {
 								event.stopPropagation()
 								event.preventDefault()
@@ -252,23 +240,22 @@ export function DashboardCard({
 			)}
 
 			<BasicLink href={`/pro/${dashboardUrlKey(dashboard)}`} className="absolute inset-0">
-				<span className="sr-only">View dashboard</span>
+				<span className="sr-only">View {name}</span>
 			</BasicLink>
 
-			<ConfirmationModal
-				finalFocus={returnFocus}
-				fallbackFocus={fallbackFocus}
-				isOpen={showDeleteConfirm}
-				onClose={() => setShowDeleteConfirm(false)}
-				onConfirm={() => deletion.mutate(undefined, { onSuccess: () => setShowDeleteConfirm(false) })}
-				closeOnConfirm={false}
-				pending={deletion.isPending}
-				pendingText="Deleting…"
-				error={deletion.error?.message}
-				title={`Delete ${dashboard.data.dashboardName || 'dashboard'}?`}
-				message="Deleting a dashboard cannot be undone."
-				confirmText="Delete"
-			/>
+			{showDeleteConfirm ? (
+				<ConfirmActionDialog
+					scope="pro"
+					finalFocus={returnFocus}
+					title={`Delete ${name}?`}
+					description="Deleting a dashboard cannot be undone."
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deletion}
+					variables={undefined}
+					onClose={() => setShowDeleteConfirm(false)}
+				/>
+			) : null}
 		</div>
 	)
 }

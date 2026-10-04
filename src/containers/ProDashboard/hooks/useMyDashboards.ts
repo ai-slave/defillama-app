@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
@@ -18,7 +19,7 @@ export function useMyDashboards({ page, limit, enabled = true }: UseMyDashboards
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 	const router = useRouter()
 
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const dashboardsQuery = useQuery({
 		queryKey: ['pro-dashboard', 'my-dashboards', user?.id, page, limit],
 		queryFn: async () => {
 			if (!isAuthenticated) {
@@ -36,6 +37,8 @@ export function useMyDashboards({ page, limit, enabled = true }: UseMyDashboards
 		enabled: isAuthenticated && enabled
 	})
 
+	const { data, isLoading, isFetching, refetch } = dashboardsQuery
+
 	const goToPage = useCallback(
 		(newPage: number) => {
 			void pushShallowQuery(router, { tab: 'my-dashboards', page: newPage }, '/pro')
@@ -47,7 +50,7 @@ export function useMyDashboards({ page, limit, enabled = true }: UseMyDashboards
 		dashboards: data?.items ?? EMPTY_DASHBOARDS,
 		isLoading,
 		isFetching,
-		readFailed: errorUpdatedAt > dataUpdatedAt,
+		readFailed: queryReadFailed(dashboardsQuery),
 		page: data?.page || page,
 		totalPages: data?.totalPages || 1,
 		totalItems: data?.totalItems || 0,

@@ -54,7 +54,11 @@ export function ChatSurface({
 					className="pointer-events-none absolute inset-0 motion-safe:animate-ai-landing-exit motion-reduce:opacity-0"
 				>
 					<FileDropContext.Provider value={null}>
-						{renderLanding(landingOverride, { ...landingProps, promptInputRef: exitLandingPromptInputRef })}
+						{renderLanding(landingOverride, {
+							...landingProps,
+							promptInputRef: exitLandingPromptInputRef,
+							holdWalkthrough: true
+						})}
 					</FileDropContext.Provider>
 				</div>
 			) : null}

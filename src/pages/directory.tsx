@@ -238,7 +238,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 										className={popoverSeeMoreStyles}
 										onClick={handleSeeMore}
 									>
-										See more...
+										See more…
 									</Ariakit.ComboboxItem>
 								) : null}
 							</>

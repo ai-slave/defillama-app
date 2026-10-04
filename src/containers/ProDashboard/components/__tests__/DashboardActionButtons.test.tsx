@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, type ReactNode } from 'react'
+import { act, type ReactNode, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -103,7 +103,7 @@ test.each(['Skip', 'Dismiss rating'])(
 	async (action) => {
 		const pending = Promise.withResolvers<void>()
 		const submit = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
-		await render(<Rating sessionId="first" mode="create" variant="banner" onSubmit={submit} />)
+		await render(<Rating sessionId="first" mode="create" onSubmit={submit} />)
 		await act(async () => container.querySelector<HTMLInputElement>('[aria-label="4 stars"]')!.click())
 		container.querySelector('textarea')!.value = 'Keep this feedback'
 		button(action).focus()
@@ -121,7 +121,7 @@ test.each(['Skip', 'Dismiss rating'])(
 		await waitForUi(() =>
 			expect(submit).toHaveBeenLastCalledWith('first', { rating: 4, feedback: 'Keep this feedback' })
 		)
-		await render(<Rating sessionId="second" mode="iterate" variant="banner" onSubmit={submit} />)
+		await render(<Rating sessionId="second" mode="iterate" onSubmit={submit} />)
 		expect(container.querySelector('textarea')).toBeNull()
 		expect(container.querySelector('[role="alert"]')).toBeNull()
 		expect([...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].some((el) => el.checked)).toBe(
@@ -163,4 +163,34 @@ test('a copied dashboard remains reachable when navigation fails without creatin
 	)
 	await click('Copied')
 	expect(copy).toHaveBeenCalledOnce()
+})
+
+// The control leaves once its request settles, the way the dashboard page drops it.
+function LeavesWhenDone({ control }: { control: (done: () => Promise<void>) => ReactNode }) {
+	const [shown, setShown] = useState(true)
+	return shown ? control(async () => setShown(false)) : null
+}
+
+async function renderUntilDone(control: (done: () => Promise<void>) => ReactNode) {
+	const main = document.createElement('main')
+	document.body.append(main)
+	main.append(container)
+	await render(<LeavesWhenDone control={control} />)
+	return main
+}
+
+test('a skipped rating banner hands focus to the page as it leaves', async () => {
+	const main = await renderUntilDone((done) => <Rating sessionId="r" mode="create" onSubmit={done} />)
+	button('Skip').focus()
+	await click('Skip')
+	await waitForUi(() => expect(document.activeElement).toBe(main))
+	main.remove()
+})
+
+test('a finished undo hands focus to the page as it leaves', async () => {
+	const main = await renderUntilDone((done) => <UndoAIGenerationButton onUndo={done} />)
+	button('Undo AI changes').focus()
+	await click('Undo AI changes')
+	await waitForUi(() => expect(document.activeElement).toBe(main))
+	main.remove()
 })

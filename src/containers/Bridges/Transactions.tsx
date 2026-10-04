@@ -507,9 +507,14 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 	} | null>(null)
 	const [selectedBridgeId, setSelectedBridgeId] = React.useState<Array<string>>([])
 
-	const { mutate, isPending, error } = useMutation({
+	// The last failed fetch, kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [fetchFailure, setFetchFailure] = React.useState<string | null>(null)
+
+	const { mutate, isPending } = useMutation({
 		mutationFn: fetchTransactions,
+		onError: (error) => setFetchFailure(error.message),
 		onSuccess: (data, variables) => {
+			setFetchFailure(null)
 			setTransactionResult(data)
 			setFetchedContext({
 				startDate: variables.startDate,
@@ -561,7 +566,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 		? `bridge-transactions_${slug(fetchedContext.bridgeName)}_${fetchedContext.startDate}_${fetchedContext.endDate}${transactionResult.truncated ? '_newest-loaded-truncated' : ''}`
 		: `bridge-transactions_${startDate}_${endDate}`
 
-	const formError = error?.message ?? dateError ?? null
+	const formError = fetchFailure ?? dateError ?? null
 	const showEmpty = tableData.length === 0 && !isPending
 
 	return (

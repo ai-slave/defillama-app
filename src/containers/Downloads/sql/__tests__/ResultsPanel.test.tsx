@@ -62,18 +62,27 @@ test.each(['table', 'chart'] as const)(
 	}
 )
 
+// Holds the view the way a query tab or a notebook cell does.
+function Panel() {
+	const [view, setView] = useState<'table' | 'chart'>('table')
+	return (
+		<ResultsPanel
+			result={{ columns: [{ name: 'value', type: 'INTEGER' }], rows: [[1]] }}
+			running
+			chartConfig={undefined}
+			onChartConfigChange={vi.fn()}
+			view={view}
+			onViewChange={setView}
+		/>
+	)
+}
+
 test('Results keyboard focus does not activate charts and multiple panels remain independent', async () => {
-	const props = {
-		result: { columns: [{ name: 'value', type: 'INTEGER' }], rows: [[1]] },
-		running: true,
-		chartConfig: undefined,
-		onChartConfigChange: vi.fn()
-	}
 	await act(async () =>
 		root.render(
 			<>
-				<ResultsPanel {...props} />
-				<ResultsPanel {...props} />
+				<Panel />
+				<Panel />
 			</>
 		)
 	)
@@ -115,6 +124,7 @@ test('picking the chart view stores its default configuration for share links, a
 	let stored: ChartConfig | undefined
 	function Tab({ initial }: { initial: ChartConfig | undefined }) {
 		const [config, setConfig] = useState(initial)
+		const [view, setView] = useState<'table' | 'chart'>('table')
 		stored = config
 		return (
 			<ResultsPanel
@@ -122,6 +132,8 @@ test('picking the chart view stores its default configuration for share links, a
 				running={false}
 				chartConfig={config}
 				onChartConfigChange={(next) => setConfig(next ?? undefined)}
+				view={view}
+				onViewChange={setView}
 			/>
 		)
 	}

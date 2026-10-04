@@ -34,12 +34,7 @@ const button = (text: string) =>
 		(el) => el.textContent?.trim() === text || el.getAttribute('aria-label') === text
 	)!
 
-test('Fetch keeps focus while transactions load, and the pager stays focusable at the first page', async () => {
-	const page = Promise.withResolvers<RawBridgeTransactionsPage>()
-	http.serve({
-		'https://defillama-datasets.llama.fi/blockExplorers.json': [],
-		'/api/public/bridges/transactions/7': () => page.promise
-	})
+async function pickPortal() {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
@@ -56,7 +51,16 @@ test('Fetch keeps focus while transactions load, and the pager stays focusable a
 		return found!
 	})
 	await act(async () => option.click())
-	const fetchButton = button('Fetch Transactions')
+	return button('Fetch Transactions')
+}
+
+test('Fetch keeps focus while transactions load, and the pager stays focusable at the first page', async () => {
+	const page = Promise.withResolvers<RawBridgeTransactionsPage>()
+	http.serve({
+		'https://defillama-datasets.llama.fi/blockExplorers.json': [],
+		'/api/public/bridges/transactions/7': () => page.promise
+	})
+	const fetchButton = await pickPortal()
 	await act(async () => {
 		fetchButton.focus()
 		fetchButton.click()
@@ -93,4 +97,18 @@ test('Fetch keeps focus while transactions load, and the pager stays focusable a
 	})
 	expect(first.disabled).toBe(false)
 	expect(first.getAttribute('aria-disabled')).toBe('true')
+})
+
+test('a failed fetch keeps its error on screen while the retry loads', async () => {
+	http.serve({ 'https://defillama-datasets.llama.fi/blockExplorers.json': [] })
+	// A page that says there is more but gives no cursor fails the fetch; the retry never answers.
+	http.serveInOrder('/api/public/bridges/transactions/7', [{ hasMore: true, rows: [] }, () => new Promise(() => {})])
+	const fetchButton = await pickPortal()
+	const alertText = 'Bridge transactions response is missing its continuation cursor'
+	await act(async () => fetchButton.click())
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe(alertText))
+
+	await act(async () => fetchButton.click())
+	await waitForUi(() => expect(fetchButton.getAttribute('aria-busy')).toBe('true'))
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(alertText)
 })

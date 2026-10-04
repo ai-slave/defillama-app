@@ -17,6 +17,8 @@ import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import {
 	ActiveFilterCard,
+	ActiveFilterPills,
+	type ActiveFilterPill,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog,
@@ -40,6 +42,7 @@ import {
 	toRwaMultiSeriesChartDataset,
 	type RWAChartDataset
 } from '~/containers/RWA/chartDataset'
+import { clearRwaFilterQueryKeys } from '~/containers/RWA/filterState'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -47,7 +50,6 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
@@ -234,12 +236,6 @@ const PERPS_MARKET_FILTER_QUERY_KEYS = PERPS_MARKET_FILTER_DEFINITIONS.flatMap((
 type RWAPerpsFilterDraft = {
 	activeIds: Array<string>
 	selectValues: Record<string, Array<string>>
-}
-
-type RWAPerpsActiveFilterPill = {
-	id: string
-	label: string
-	onRemove: () => void
 }
 
 type RWAPerpsDashboardProps = (
@@ -1199,14 +1195,6 @@ function matchesRWAPerpsMarketFilter(market: IRWAPerpsMarket, filter: RWAPerpsMa
 	return false
 }
 
-function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: ReadonlyArray<string>) {
-	const resetUpdates: Record<string, undefined> = {}
-	for (const key of keys) {
-		resetUpdates[key] = undefined
-	}
-	void pushShallowQuery(router, resetUpdates)
-}
-
 export function createRWAPerpsFilterDraft(filters: Array<RWAPerpsMarketFilterState>): RWAPerpsFilterDraft {
 	const activeIds: Array<string> = []
 	const selectValues: Record<string, Array<string>> = {}
@@ -1217,18 +1205,6 @@ export function createRWAPerpsFilterDraft(filters: Array<RWAPerpsMarketFilterSta
 	}
 
 	return { activeIds, selectValues }
-}
-
-function addRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, filter: RWAPerpsMarketFilterState): RWAPerpsFilterDraft {
-	if (draft.activeIds.includes(filter.id)) return draft
-
-	return {
-		activeIds: draft.activeIds.concat(filter.id),
-		selectValues: {
-			...draft.selectValues,
-			[filter.id]: draft.selectValues[filter.id] ?? filter.selectedValues.slice()
-		}
-	}
 }
 
 function removeRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, id: string): RWAPerpsFilterDraft {
@@ -1257,21 +1233,21 @@ export function serializeRWAPerpsFilterDraft(
 	const activeIds = new Set(draft.activeIds)
 	for (const filter of filters) {
 		if (!activeIds.has(filter.id)) continue
-		Object.assign(updates, getRWAPerpsSelectDraftQueryUpdates(filter, draft.selectValues[filter.id] ?? []))
+		Object.assign(updates, getRWAPerpsSelectDraftQueryUpdates(filter, draft.selectValues[filter.id]))
 	}
 
 	return updates
 }
 
 function getRWAPerpsActiveFilterPills(filters: Array<RWAPerpsMarketFilterState>, router: ReturnType<typeof useRouter>) {
-	const activeFilters: Array<RWAPerpsActiveFilterPill> = []
+	const activeFilters: Array<ActiveFilterPill> = []
 
 	for (const filter of filters) {
 		if (!filter.active) continue
 		activeFilters.push({
 			id: filter.includeQueryKey,
 			label: `${filter.label}: ${describeSelection(filter.options, filter.selectedValues)}`,
-			onRemove: () => clearRWAPerpsFilterQueryKeys(router, [filter.includeQueryKey, filter.excludeQueryKey])
+			onRemove: () => clearRwaFilterQueryKeys(router, [filter.includeQueryKey, filter.excludeQueryKey])
 		})
 	}
 
@@ -1313,29 +1289,6 @@ export function getRWAPerpsToggleNotice({
 		: null
 }
 
-function RWAPerpsActiveFilterPills({ pills }: { pills: Array<RWAPerpsActiveFilterPill> }) {
-	if (pills.length === 0) return null
-
-	return (
-		<div className="flex flex-wrap gap-1">
-			{pills.map((pill) => (
-				<Button
-					key={pill.id}
-					type="button"
-					variant="filter"
-					size="sm"
-					data-active="true"
-					className="group"
-					onClick={pill.onRemove}
-				>
-					<span>{pill.label}</span>
-					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</Button>
-			))}
-		</div>
-	)
-}
-
 function RWAPerpsMarketFilters({
 	filters,
 	showForexToggle,
@@ -1357,7 +1310,6 @@ function RWAPerpsMarketFilters({
 }) {
 	const router = useRouter()
 
-	const activeFilterPills = getRWAPerpsActiveFilterPills(filters, router)
 	const selectedFilterCount = createRWAPerpsFilterDraft(filters).activeIds.length
 
 	return (
@@ -1365,8 +1317,10 @@ function RWAPerpsMarketFilters({
 			<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
 				{filters.length > 0 ? (
 					<>
-						<RWAPerpsActiveFilterPills pills={activeFilterPills} />
-						<RWAPerpsFiltersDialog filters={filters} selectedFilterCount={selectedFilterCount} />
+						<ActiveFilterPills pills={getRWAPerpsActiveFilterPills(filters, router)} />
+						<FilterBuilderDialog appliedCount={selectedFilterCount}>
+							<RWAPerpsFiltersSession filters={filters} />
+						</FilterBuilderDialog>
 					</>
 				) : null}
 				{showForexToggle ? (
@@ -1381,9 +1335,11 @@ function RWAPerpsMarketFilters({
 					type="button"
 					size="md"
 					onClick={() =>
-						clearRWAPerpsFilterQueryKeys(router, [...PERPS_MARKET_FILTER_QUERY_KEYS, 'includeForex', 'includeCex'])
+						clearRwaFilterQueryKeys(router, [...PERPS_MARKET_FILTER_QUERY_KEYS, 'includeForex', 'includeCex'])
 					}
+					// Reset disables itself; it keeps focus instead of dropping it to the page.
 					disabled={!hasActiveFilters}
+					accessibleWhenDisabled
 				>
 					Reset filters
 				</Button>
@@ -1394,20 +1350,6 @@ function RWAPerpsMarketFilters({
 				</p>
 			) : null}
 		</Card>
-	)
-}
-
-function RWAPerpsFiltersDialog({
-	filters,
-	selectedFilterCount
-}: {
-	filters: Array<RWAPerpsMarketFilterState>
-	selectedFilterCount: number
-}) {
-	return (
-		<FilterBuilderDialog appliedCount={selectedFilterCount}>
-			<RWAPerpsFiltersSession filters={filters} />
-		</FilterBuilderDialog>
 	)
 }
 
@@ -1423,14 +1365,8 @@ function RWAPerpsFiltersSession({ filters }: { filters: Array<RWAPerpsMarketFilt
 			browse={
 				<FilterBrowser
 					groups={[{ label: 'Market fields', filters: filters.filter((filter) => !activeIds.has(filter.id)) }]}
-					onAdd={(id) =>
-						setDraft((current) =>
-							addRWAPerpsDraftFilter(
-								current,
-								filters.find((filter) => filter.id === id)!
-							)
-						)
-					}
+					// The draft already holds every filter's current values, so an added filter starts from them.
+					onAdd={(id) => setDraft((current) => ({ ...current, activeIds: current.activeIds.concat(id) }))}
 				/>
 			}
 			active={
@@ -1457,7 +1393,7 @@ function RWAPerpsDraftFilterEditor({
 	draft: RWAPerpsFilterDraft
 	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
 }) {
-	const selectedValues = draft.selectValues[filter.id] ?? []
+	const selectedValues = draft.selectValues[filter.id]
 
 	return (
 		<ActiveFilterCard

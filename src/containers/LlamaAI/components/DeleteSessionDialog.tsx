@@ -1,29 +1,28 @@
-import type * as Ariakit from '@ariakit/react'
+import type { UseMutationResult } from '@tanstack/react-query'
 import { createContext, useContext, type RefObject } from 'react'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 
 export const SessionListFocusContext = createContext<RefObject<HTMLElement | null> | null>(null)
 
-export function DeleteSessionDialog({
-	store,
+// Mount for one confirmation only, like ConfirmActionDialog.
+export function DeleteSessionDialog<TVariables>({
 	title,
-	pending,
-	error,
-	onConfirm,
+	mutation,
+	variables,
+	onClose,
+	onSuccess,
 	finalFocus
 }: {
-	store: Ariakit.DialogStore
 	title: string
-	pending: boolean
-	error: Error | null
-	onConfirm: () => void
-	finalFocus?: React.RefObject<HTMLElement | null>
+	mutation: UseMutationResult<unknown, Error, TVariables>
+	variables: TVariables
+	onClose: () => void
+	onSuccess?: () => void
+	finalFocus?: RefObject<HTMLElement | null>
 }) {
 	const fallbackFocus = useContext(SessionListFocusContext)
 	return (
-		<ConfirmDialog
-			store={store}
-			unmountOnHide
+		<ConfirmActionDialog
 			finalFocus={finalFocus}
 			autoFocusOnHide={(element) => {
 				// A successful deletion removes its trigger; return to the surviving list control.
@@ -33,11 +32,12 @@ export function DeleteSessionDialog({
 			}}
 			title={title}
 			description="This permanently deletes the selected chat history."
-			confirmLabel={error ? 'Retry deletion' : 'Delete'}
-			pendingLabel={pending ? 'Deleting…' : null}
-			// The confirm button already offers the retry, so the message is the error alone.
-			error={error?.message}
-			onConfirm={onConfirm}
+			confirmLabel="Delete"
+			pendingLabel="Deleting…"
+			mutation={mutation}
+			variables={variables}
+			onClose={onClose}
+			onSuccess={onSuccess}
 		/>
 	)
 }

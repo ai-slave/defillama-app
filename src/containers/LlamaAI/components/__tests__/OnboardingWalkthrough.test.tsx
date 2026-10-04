@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { AgenticAnswerMode } from '../../types'
+import { MobileToolsPopover } from '../input/MobileToolsPopover'
 import { ModeToggle } from '../input/ModeToggle'
 import { OnboardingWalkthrough } from '../OnboardingWalkthrough'
 const complete = vi.fn()
@@ -137,4 +138,114 @@ test('opening Alerts pauses the tour and closing it resumes the same step', asyn
 	await waitForUi(() => expect(button('Try this control')).toBeDefined())
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Step 3 of 6')
 	expect(complete).not.toHaveBeenCalled()
+})
+
+test('skipping the tour on a phone during a drawer step closes the tools drawer it opened', async () => {
+	await act(async () => root.unmount())
+	vi.stubGlobal('matchMedia', (query: string) => ({
+		matches: query === '(max-width: 639px)',
+		media: query,
+		addEventListener: () => {},
+		removeEventListener: () => {}
+	}))
+	// The composer's tools drawer, as the tour reads and drives it.
+	function PhoneHarness() {
+		const [drawerOpen, setDrawerOpen] = useState(false)
+		const [touring, setTouring] = useState(true)
+		const input = useRef<HTMLTextAreaElement>(null)
+		const [mode, setMode] = useState<AgenticAnswerMode>('quick')
+		return (
+			<>
+				<textarea ref={input} aria-label="Prompt" />
+				<button
+					type="button"
+					data-walkthrough="mobile-tools-button"
+					aria-expanded={drawerOpen}
+					onClick={() => setDrawerOpen(!drawerOpen)}
+				>
+					Tools
+				</button>
+				{drawerOpen ? (
+					<button type="button" data-walkthrough="mobile-upload-item">
+						Upload
+					</button>
+				) : null}
+				{touring ? (
+					<OnboardingWalkthrough
+						isAlertsModalOpen={false}
+						mode={mode}
+						setMode={setMode}
+						promptInputRef={input}
+						onComplete={() => setTouring(false)}
+						handleSubmit={submit}
+					/>
+				) : null}
+			</>
+		)
+	}
+	try {
+		root = createRoot(container)
+		await act(async () => root.render(<PhoneHarness />))
+		const tools = () => document.querySelector('[data-walkthrough="mobile-tools-button"]')!
+		await click('Show me around')
+		await waitForUi(() => expect(tools().getAttribute('aria-expanded')).toBe('true'))
+		await click('Skip')
+		expect(tools().getAttribute('aria-expanded')).toBe('false')
+	} finally {
+		vi.unstubAllGlobals()
+	}
+})
+
+test('Escape on a phone drawer step ends the tour and closes the real tools drawer', async () => {
+	await act(async () => root.unmount())
+	vi.stubGlobal('matchMedia', (query: string) => ({
+		matches: query === '(max-width: 639px)',
+		media: query,
+		addEventListener: () => {},
+		removeEventListener: () => {}
+	}))
+	function PhoneHarness() {
+		const [touring, setTouring] = useState(true)
+		const input = useRef<HTMLTextAreaElement>(null)
+		const [mode, setMode] = useState<AgenticAnswerMode>('quick')
+		return (
+			<>
+				<textarea ref={input} aria-label="Prompt" />
+				<MobileToolsPopover
+					mode={mode}
+					setMode={setMode}
+					onPromptSelect={() => {}}
+					onImageUploadClick={() => {}}
+					isPending={false}
+					walkthroughActive={touring}
+				/>
+				{touring ? (
+					<OnboardingWalkthrough
+						isAlertsModalOpen={false}
+						mode={mode}
+						setMode={setMode}
+						promptInputRef={input}
+						onComplete={() => {
+							complete()
+							setTouring(false)
+						}}
+						handleSubmit={submit}
+					/>
+				) : null}
+			</>
+		)
+	}
+	try {
+		root = createRoot(container)
+		await act(async () => root.render(<PhoneHarness />))
+		const tools = () => document.querySelector('[data-walkthrough="mobile-tools-button"]')!
+		await click('Show me around')
+		await waitForUi(() => expect(tools().getAttribute('aria-expanded')).toBe('true'))
+		await waitForUi(() => expect(button('Try this control')).toBeDefined())
+		await escape(button('Try this control'))
+		expect(complete).toHaveBeenCalledOnce()
+		expect(tools().getAttribute('aria-expanded')).toBe('false')
+	} finally {
+		vi.unstubAllGlobals()
+	}
 })

@@ -25,7 +25,7 @@ function SnapshotImage({ article }: Readonly<{ article: ArticleDocument }>) {
 	return (
 		<img
 			src={url}
-			alt={article.coverImage.alt}
+			alt={article.coverImage.alt ?? ''}
 			className="h-full w-full object-cover"
 			loading="lazy"
 			decoding="async"

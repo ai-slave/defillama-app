@@ -80,8 +80,15 @@ test('stepping through versions that share an artifact id shows each version’s
 	)
 	expect(container.textContent).toContain('First draft')
 
+	const next = [...container.querySelectorAll('button')].find(
+		(candidate) => accessibleName(candidate) === 'Next version'
+	)!
+	await act(async () => next.focus())
 	await click('Next version')
 	expect(container.textContent).toContain('Second draft')
+	// The last version disables Next without dropping its focus.
+	expect(next.getAttribute('aria-disabled')).toBe('true')
+	expect(document.activeElement).toBe(next)
 	expect(container.textContent).not.toContain('First draft')
 
 	await click('Previous version')

@@ -285,6 +285,15 @@ export function OnboardingWalkthrough({
 		return () => clearTimeout(timer)
 	}, [currentStep, config, steps, isAlertsModalOpen])
 
+	// The tour leaves the drawer as it found it: Skip, Escape, a prompt pick or finishing during a drawer step close it.
+	useEffect(
+		() => () => {
+			const btn = document.querySelector<HTMLElement>('[data-walkthrough="mobile-tools-button"]')
+			if (btn?.getAttribute('aria-expanded') === 'true') btn.click()
+		},
+		[]
+	)
+
 	// Manage mobile drawer: open when entering a drawer step, close when leaving all drawer steps
 	useEffect(() => {
 		if (isAlertsModalOpen) return
@@ -340,7 +349,7 @@ export function OnboardingWalkthrough({
 
 	return (
 		<Ariakit.Portal>
-			<div className="pointer-events-none fixed inset-0 z-9999">
+			<div data-walkthrough="tour-layer" className="pointer-events-none fixed inset-0 z-9999">
 				{/* Dark overlay bridging the gap between intro→spotlight and spotlight→prompts */}
 				{showGapOverlay ? (
 					<button

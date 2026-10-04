@@ -6,7 +6,6 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard, SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
-import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
 import { StaleText } from '~/ui/StaleText'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
@@ -46,12 +45,8 @@ export function SubscribeLayout({
 						</div>
 
 						<div className="flex items-center gap-2">
-							{!isAuthenticated ? (
-								<SignInModal
-									className="rounded-lg bg-sub-purple px-3 py-1.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-purple-hover"
-									hideWhenAuthenticated={false}
-								/>
-							) : (
+							{/* No sign-in here: signed out, the page's own "Sign in to continue" step is the one call to action. */}
+							{isAuthenticated ? (
 								<Ariakit.MenuProvider open={isMenuOpen} setOpen={setIsMenuOpen}>
 									<Ariakit.MenuButton className="flex size-8 items-center justify-center rounded-lg text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand">
 										<Icon name="menu" height={18} width={18} />
@@ -77,7 +72,7 @@ export function SubscribeLayout({
 										</Ariakit.MenuItem>
 									</Ariakit.Menu>
 								</Ariakit.MenuProvider>
-							)}
+							) : null}
 						</div>
 					</div>
 				</header>

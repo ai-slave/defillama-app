@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import type { ComponentPropsWithRef, ElementType, MouseEvent, ReactNode } from 'react'
+import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react'
 import { LoadingSpinner } from './Loaders'
 
 /* ----------------------------------------------------------------------------
@@ -116,7 +116,8 @@ type ButtonProps<T extends ElementType> = {
 	variant?: ButtonVariant
 	size: ButtonSize
 	square?: boolean
-	/** Set while the button's action runs; the button shows a spinner and this label, keeps focus and ignores presses. */
+	/** Set while the button's action runs; the button shows a spinner and this label, keeps focus and ignores presses.
+	    Buttons only: a link (`as`) navigates and has nothing to wait on. */
 	pendingLabel?: string | null
 	/** For a control that disables itself when pressed (a stepper at its limit, Resend during its cooldown): it keeps
 	    focus while disabled, so pressing it never drops focus to the page. Other disabled buttons leave the tab order. */
@@ -141,28 +142,16 @@ export function Button<T extends ElementType = 'button'>({
 	...props
 }: ButtonProps<T>) {
 	const classes = `${buttonStyles({ variant, size, square })} ${className ?? ''}`.trim()
+	if (as) {
+		const Component = as as ElementType
+		return <Component className={classes} data-active={dataActive} aria-disabled={ariaDisabled} {...props} />
+	}
 	const pending = pendingLabel !== null
 	const children = pending ? (
 		<PendingContent square={square} label={pendingLabel} idle={props.children} />
 	) : (
 		props.children
 	)
-	if (as) {
-		const Component = as as ElementType
-		// A pending link keeps its role, so it is marked busy and swallows its own click instead.
-		return (
-			<Component
-				className={classes}
-				data-active={dataActive}
-				aria-disabled={pending || ariaDisabled}
-				aria-busy={pending || undefined}
-				{...props}
-				{...(pending ? { onClick: (event: MouseEvent) => event.preventDefault() } : {})}
-			>
-				{children}
-			</Component>
-		)
-	}
 	return (
 		<Ariakit.Button
 			className={classes}

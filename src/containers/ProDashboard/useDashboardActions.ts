@@ -260,28 +260,9 @@ export function useDashboardActions(
 		[dispatchItemsAndSave, dashboardSizeLimitError, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
-	const handleAddUnifiedTable = useCallback(
-		(configOverrides?: Partial<UnifiedTableConfig>): DashboardWriteResult => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return NOT_READY
-
-			const newUnifiedTable = buildDefaultUnifiedTableConfig(configOverrides)
-			let sizeLimitError: string | null = null
-			dispatchItemsAndSave((prev) => {
-				const nextItems = appendItemsToTab(prev, [newUnifiedTable], requestedTabId)
-				sizeLimitError = dashboardSizeLimitError(nextItems)
-				return sizeLimitError ? prev : nextItems
-			})
-			return sizeLimitError
-				? { status: 'refused', reason: sizeLimitError }
-				: { status: 'saved', ids: [newUnifiedTable.id] }
-		},
-		[dispatchItemsAndSave, dashboardSizeLimitError, isReadOnlyUntilDashboardLoaded, requestedTabId]
-	)
-
+	// A duplicate lands right after its source and is refused like any other add that would pass the size limit.
 	const handleDuplicateChartBuilder = useCallback(
-		(builder: ChartBuilderConfig) => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return null
-
+		(builder: ChartBuilderConfig): DashboardWriteResult => {
 			const clonedConfig: ChartBuilderConfig['config'] = {
 				...builder.config,
 				chains: [...builder.config.chains],
@@ -290,34 +271,25 @@ export function useDashboardActions(
 				...(builder.config.protocolCategories ? { protocolCategories: [...builder.config.protocolCategories] } : {}),
 				...(builder.config.seriesColors ? { seriesColors: { ...builder.config.seriesColors } } : {})
 			}
-
 			const newBuilder: ChartBuilderConfig = {
 				...builder,
 				id: generateItemId('builder', ''),
 				...(builder.name ? { name: `${builder.name} (Duplicate)` } : {}),
 				config: clonedConfig
 			}
-			dispatchItemsAndSave((prev) => insertItemsAfter(prev, builder.id, [newBuilder]))
-			return newBuilder.id
+			return handleAppendItems(() => [newBuilder], { afterItemId: builder.id })
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		[handleAppendItems]
 	)
 
 	const handleDuplicateUnifiedTable = useCallback(
-		(table: UnifiedTableConfig) => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return null
-
-			const clonedTable = cloneUnifiedTable(table)
-			dispatchItemsAndSave((prev) => insertItemsAfter(prev, table.id, [clonedTable]))
-			return clonedTable.id
-		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		(table: UnifiedTableConfig): DashboardWriteResult =>
+			handleAppendItems(() => [cloneUnifiedTable(table)], { afterItemId: table.id }),
+		[handleAppendItems]
 	)
 
 	const handleDuplicateMultiChart = useCallback(
-		(multi: MultiChartConfig) => {
-			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return null
-
+		(multi: MultiChartConfig): DashboardWriteResult => {
 			const newItems = limitMultiChartItems(multi.items).map((item) => ({
 				...item,
 				id: generateItemId('chart', `${item.subjectType === 'protocol' ? item.protocol : item.chain}-${item.type}`)
@@ -328,10 +300,9 @@ export function useDashboardActions(
 				...(multi.name ? { name: `${multi.name} (Duplicate)` } : {}),
 				items: newItems
 			}
-			dispatchItemsAndSave((prev) => insertItemsAfter(prev, multi.id, [newMulti]))
-			return newMulti.id
+			return handleAppendItems(() => [newMulti], { afterItemId: multi.id })
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		[handleAppendItems]
 	)
 
 	const handleEditItem = useCallback(
@@ -640,20 +611,6 @@ export function useDashboardActions(
 		[dispatch]
 	)
 
-	const setShowGenerateDashboardModal = useCallback(
-		(show: boolean) => {
-			dispatch({ type: 'SET_SHOW_GENERATE_DASHBOARD_MODAL', payload: show })
-		},
-		[dispatch]
-	)
-
-	const setShowIterateDashboardModal = useCallback(
-		(show: boolean) => {
-			dispatch({ type: 'SET_SHOW_ITERATE_DASHBOARD_MODAL', payload: show })
-		},
-		[dispatch]
-	)
-
 	const setItems = useCallback(
 		(newItems: Array<DashboardItemConfig>) => {
 			dispatch({ type: 'SET_ITEMS', payload: newItems })
@@ -664,7 +621,6 @@ export function useDashboardActions(
 	return useMemo(
 		() => ({
 			handleAppendItems,
-			handleAddUnifiedTable,
 			handleDuplicateChartBuilder,
 			handleDuplicateUnifiedTable,
 			handleDuplicateMultiChart,
@@ -688,8 +644,6 @@ export function useDashboardActions(
 			setDashboardVisibility,
 			setDashboardTags,
 			setDashboardDescription,
-			setShowGenerateDashboardModal,
-			setShowIterateDashboardModal,
 			setItems,
 			dispatchItemsAndSave,
 			dispatchItemsWithVariablesAndSave,
@@ -700,7 +654,6 @@ export function useDashboardActions(
 		}),
 		[
 			handleAppendItems,
-			handleAddUnifiedTable,
 			handleDuplicateChartBuilder,
 			handleDuplicateUnifiedTable,
 			handleDuplicateMultiChart,
@@ -724,8 +677,6 @@ export function useDashboardActions(
 			setDashboardVisibility,
 			setDashboardTags,
 			setDashboardDescription,
-			setShowGenerateDashboardModal,
-			setShowIterateDashboardModal,
 			setItems,
 			dispatchItemsAndSave,
 			dispatchItemsWithVariablesAndSave,

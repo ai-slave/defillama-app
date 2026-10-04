@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
-import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { isColumnSupported } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
@@ -40,32 +40,29 @@ import {
 	UNIFIED_TABLE_COLUMN_DICTIONARY
 } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
+import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
 
 const AVAILABLE_VARIABLES = getAvailableVariables()
 const AVAILABLE_VARIABLES_BY_KEY = new Map(AVAILABLE_VARIABLES.map((variable) => [variable.key, variable]))
 const SAMPLE_METRICS_BY_KEY = new Map(Object.entries(SAMPLE_METRICS))
-const EMPTY_CUSTOM_COLUMNS: Array<CustomColumnDefinition> = []
 
 interface ColumnManagerProps {
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
 	columnOrder: ColumnOrderState
 	columnVisibility: ColumnVisibilityState
 	onChange: (columnOrder: ColumnOrderState, columnVisibility: ColumnVisibilityState) => void
-	customColumns?: Array<CustomColumnDefinition>
-	onAddCustomColumn?: (column: CustomColumnDefinition) => void
-	onUpdateCustomColumn?: (id: string, updates: Partial<CustomColumnDefinition>) => void
-	onRemoveCustomColumn?: (id: string) => void
-	sorting?: SortingState
-	onSortingChange?: (sorting: SortingState) => void
-	onSortingReset?: () => void
+	customColumns: Array<CustomColumnDefinition>
+	onAddCustomColumn: (column: CustomColumnDefinition) => void
+	onUpdateCustomColumn: (id: string, updates: Partial<CustomColumnDefinition>) => void
+	onRemoveCustomColumn: (id: string) => void
+	customColumnDraft: CustomColumnDraft
+	onCustomColumnDraftChange: (draft: CustomColumnDraft) => void
+	sorting: SortingState
+	onSortingChange: (sorting: SortingState) => void
+	onSortingReset: () => void
 }
 
 type ColumnGroupId = MetricGroup | 'meta' | 'custom'
@@ -137,12 +134,30 @@ interface AutocompleteSuggestion {
 	category: string
 }
 
+const AUTOCOMPLETE_SUGGESTIONS: Array<AutocompleteSuggestion> = [
+	...AVAILABLE_VARIABLES.map((v) => ({
+		type: 'variable' as const,
+		value: v.key,
+		display: v.key,
+		description: v.name,
+		category: v.group
+	})),
+	{ type: 'operator', value: ' + ', display: '+', description: 'Addition', category: 'Operators' },
+	{ type: 'operator', value: ' - ', display: '-', description: 'Subtraction', category: 'Operators' },
+	{ type: 'operator', value: ' * ', display: '*', description: 'Multiplication', category: 'Operators' },
+	{ type: 'operator', value: ' / ', display: '/', description: 'Division', category: 'Operators' },
+	{ type: 'function', value: 'abs(', display: 'abs()', description: 'Absolute value', category: 'Functions' },
+	{ type: 'function', value: 'sqrt(', display: 'sqrt()', description: 'Square root', category: 'Functions' },
+	{ type: 'function', value: 'max(', display: 'max(a,b)', description: 'Maximum', category: 'Functions' },
+	{ type: 'function', value: 'min(', display: 'min(a,b)', description: 'Minimum', category: 'Functions' }
+]
+
 const NAME_COLUMN: ColumnMeta = { id: 'name', header: 'Name', group: 'meta' }
 
-const getColumnMeta = (id: string, customColumns?: Array<CustomColumnDefinition>): ColumnMeta | null => {
+const getColumnMeta = (id: string, customColumns: Array<CustomColumnDefinition>): ColumnMeta | null => {
 	if (id === 'name') return NAME_COLUMN
 	if (id.startsWith('custom_')) {
-		const customCol = customColumns?.find((c) => c.id === id)
+		const customCol = customColumns.find((c) => c.id === id)
 		if (customCol) {
 			return { id: customCol.id, header: customCol.name, group: 'custom' }
 		}
@@ -159,13 +174,13 @@ const getColumnMeta = (id: string, customColumns?: Array<CustomColumnDefinition>
 
 const buildAllColumns = (
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
-	customColumns?: Array<CustomColumnDefinition>
+	customColumns: Array<CustomColumnDefinition>
 ): Array<ColumnMeta> => {
 	const dictionaryMetas = UNIFIED_TABLE_COLUMN_DICTIONARY.filter((column) => isColumnSupported(column.id, rowHeaders))
-		.map(({ id }) => getColumnMeta(id))
+		.map(({ id }) => getColumnMeta(id, []))
 		.filter((meta): meta is ColumnMeta => Boolean(meta))
 
-	const customMetas: Array<ColumnMeta> = (customColumns ?? EMPTY_CUSTOM_COLUMNS).map((col) => ({
+	const customMetas: Array<ColumnMeta> = customColumns.map((col) => ({
 		id: col.id,
 		header: col.name,
 		group: 'custom'
@@ -183,16 +198,14 @@ export function ColumnManager({
 	onAddCustomColumn,
 	onUpdateCustomColumn,
 	onRemoveCustomColumn,
+	customColumnDraft: draft,
+	onCustomColumnDraftChange: setDraft,
 	sorting,
 	onSortingChange,
 	onSortingReset
 }: ColumnManagerProps) {
 	const { hasActiveSubscription } = useAuthContext()
-	const [shouldRenderSubscribeModal, setShouldRenderSubscribeModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({
-		open: shouldRenderSubscribeModal,
-		setOpen: setShouldRenderSubscribeModal
-	})
+	const subscribeModalStore = Ariakit.useDialogStore()
 	const [uiState, setUIState] = useState<{
 		search: string
 		groupFilter: ColumnGroupId | 'all'
@@ -207,23 +220,7 @@ export function ColumnManager({
 	const { search, groupFilter, activeId, customColumnExpanded } = uiState
 	const deferredSearch = useDeferredValue(search)
 
-	const [customColumnState, setCustomColumnState] = useState<{
-		customName: string
-		customExpression: string
-		customFormat: ColumnFormat
-		customAggregation: ColumnAggregation
-		editingId: string | null
-		aggregationTouched: boolean
-	}>({
-		customName: '',
-		customExpression: '',
-		customFormat: 'number',
-		customAggregation: 'recalculate',
-		editingId: null,
-		aggregationTouched: false
-	})
-	const { customName, customExpression, customFormat, customAggregation, editingId, aggregationTouched } =
-		customColumnState
+	const { name: customName, expression: customExpression, format: customFormat, id: editingId } = draft
 
 	const [autocompleteState, setAutocompleteState] = useState<{
 		showAutocomplete: boolean
@@ -252,29 +249,7 @@ export function ColumnManager({
 		setUIState((prev) => ({ ...prev, customColumnExpanded: value }))
 	}
 
-	const setCustomName = (value: string) => {
-		setCustomColumnState((prev) => ({ ...prev, customName: value }))
-	}
-
-	const setCustomExpression = (value: string) => {
-		setCustomColumnState((prev) => ({ ...prev, customExpression: value }))
-	}
-
-	const setCustomFormat = (value: ColumnFormat) => {
-		setCustomColumnState((prev) => ({ ...prev, customFormat: value }))
-	}
-
-	const setCustomAggregation = (value: ColumnAggregation) => {
-		setCustomColumnState((prev) => ({ ...prev, customAggregation: value }))
-	}
-
-	const setEditingId = (value: string | null) => {
-		setCustomColumnState((prev) => ({ ...prev, editingId: value }))
-	}
-
-	const setAggregationTouched = (value: boolean) => {
-		setCustomColumnState((prev) => ({ ...prev, aggregationTouched: value }))
-	}
+	const setCustomExpression = (expression: string) => setDraft({ ...draft, expression })
 
 	const setShowAutocomplete = (value: boolean) => {
 		setAutocompleteState((prev) => ({ ...prev, showAutocomplete: value }))
@@ -385,33 +360,13 @@ export function ColumnManager({
 	}
 	const handleDragCancel = () => setActiveId(null)
 
-	const autocompleteSuggestions = useMemo<Array<AutocompleteSuggestion>>(() => {
-		return [
-			...AVAILABLE_VARIABLES.map((v) => ({
-				type: 'variable' as const,
-				value: v.key,
-				display: v.key,
-				description: v.name,
-				category: v.group
-			})),
-			{ type: 'operator', value: ' + ', display: '+', description: 'Addition', category: 'Operators' },
-			{ type: 'operator', value: ' - ', display: '-', description: 'Subtraction', category: 'Operators' },
-			{ type: 'operator', value: ' * ', display: '*', description: 'Multiplication', category: 'Operators' },
-			{ type: 'operator', value: ' / ', display: '/', description: 'Division', category: 'Operators' },
-			{ type: 'function', value: 'abs(', display: 'abs()', description: 'Absolute value', category: 'Functions' },
-			{ type: 'function', value: 'sqrt(', display: 'sqrt()', description: 'Square root', category: 'Functions' },
-			{ type: 'function', value: 'max(', display: 'max(a,b)', description: 'Maximum', category: 'Functions' },
-			{ type: 'function', value: 'min(', display: 'min(a,b)', description: 'Minimum', category: 'Functions' }
-		]
-	}, [])
-
 	const filteredSuggestions = useMemo(() => {
-		if (!autocompleteFilter.trim()) return autocompleteSuggestions.slice(0, 15)
+		if (!autocompleteFilter.trim()) return AUTOCOMPLETE_SUGGESTIONS.slice(0, 15)
 		const filter = autocompleteFilter.toLowerCase()
-		return autocompleteSuggestions
-			.filter((s) => s.display.toLowerCase().includes(filter) || s.description.toLowerCase().includes(filter))
-			.slice(0, 10)
-	}, [autocompleteSuggestions, autocompleteFilter])
+		return AUTOCOMPLETE_SUGGESTIONS.filter(
+			(s) => s.display.toLowerCase().includes(filter) || s.description.toLowerCase().includes(filter)
+		).slice(0, 10)
+	}, [autocompleteFilter])
 
 	const expressionValidation = useMemo(() => {
 		if (!customExpression.trim()) return { isValid: false, error: 'Expression is required' }
@@ -420,7 +375,7 @@ export function ColumnManager({
 
 	const validation = useMemo(() => {
 		if (!customName.trim()) return { isValid: false, error: 'Name is required' }
-		const isDuplicate = (customColumns ?? EMPTY_CUSTOM_COLUMNS).some(
+		const isDuplicate = customColumns.some(
 			(col) => col.name.toLowerCase() === customName.toLowerCase() && col.id !== editingId
 		)
 		if (isDuplicate) return { isValid: false, error: 'Column name already exists' }
@@ -452,9 +407,8 @@ export function ColumnManager({
 			.filter((variable) => variable !== null)
 	}, [customExpression, expressionValidation.isValid])
 	const resolvedCustomAggregation =
-		customExpression && expressionValidation.isValid && !editingId && !aggregationTouched
-			? getDefaultAggregation(customExpression)
-			: customAggregation
+		draft.aggregation ??
+		(customExpression && expressionValidation.isValid ? getDefaultAggregation(customExpression) : 'recalculate')
 
 	const insertSuggestion = (suggestion: AutocompleteSuggestion) => {
 		if (!expressionInputRef.current) return
@@ -554,51 +508,44 @@ export function ColumnManager({
 			format: customFormat,
 			aggregation: resolvedCustomAggregation
 		}
-		if (editingId && onUpdateCustomColumn) {
+		if (editingId) {
 			onUpdateCustomColumn(editingId, {
 				name: column.name,
 				expression: column.expression,
 				format: column.format,
 				aggregation: column.aggregation
 			})
-			setEditingId(null)
-		} else if (onAddCustomColumn) {
+		} else {
 			onAddCustomColumn(column)
 		}
-		setAggregationTouched(false)
-		setCustomName('')
-		setCustomExpression('')
-		setCustomFormat('number')
-		setCustomAggregation('recalculate')
+		setDraft(EMPTY_CUSTOM_COLUMN_DRAFT)
 		setCustomColumnExpanded(false)
 	}
 
+	const showUpgrade = () => {
+		setSignupSource('pro-dashboard')
+		subscribeModalStore.show()
+	}
+
 	const handleApplyPreset = (preset: { name: string; expression: string; format: ColumnFormat }) => {
-		setAggregationTouched(false)
-		setCustomName(preset.name)
-		setCustomExpression(preset.expression)
-		setCustomFormat(preset.format)
-		setCustomAggregation(getDefaultAggregation(preset.expression))
+		// A preset opens the custom column form, which is a Pro feature like the form's own toggle.
+		if (!hasActiveSubscription) return showUpgrade()
+		setDraft({ id: null, name: preset.name, expression: preset.expression, format: preset.format, aggregation: null })
 		setCustomColumnExpanded(true)
 	}
 
 	const handleEditCustomColumn = (col: CustomColumnDefinition) => {
-		setCustomName(col.name)
-		setCustomExpression(col.expression)
-		setCustomFormat(col.format)
-		setCustomAggregation(col.aggregation)
-		setEditingId(col.id)
+		setDraft({
+			id: col.id,
+			name: col.name,
+			expression: col.expression,
+			format: col.format,
+			aggregation: col.aggregation
+		})
 		setCustomColumnExpanded(true)
 	}
 
-	const handleCancelEdit = () => {
-		setAggregationTouched(false)
-		setCustomName('')
-		setCustomExpression('')
-		setCustomFormat('number')
-		setCustomAggregation('recalculate')
-		setEditingId(null)
-	}
+	const handleCancelEdit = () => setDraft(EMPTY_CUSTOM_COLUMN_DRAFT)
 
 	useEffect(() => {
 		const handleClickOutside = () => setAutocompleteState((prev) => ({ ...prev, showAutocomplete: false }))
@@ -608,7 +555,7 @@ export function ColumnManager({
 
 	const activeColumn = activeId ? getColumnMeta(String(activeId), customColumns) : null
 
-	const currentSorting = sorting?.[0]
+	const currentSorting = sorting[0]
 	const currentSortColumn = currentSorting?.id ?? ''
 	const isDescending = currentSorting?.desc ?? true
 
@@ -620,7 +567,6 @@ export function ColumnManager({
 	}, [columnOrder, columnVisibility, customColumns])
 
 	const handleSortColumnChange = (value: string) => {
-		if (!onSortingChange) return
 		if (!value) {
 			onSortingChange([])
 			return
@@ -630,7 +576,7 @@ export function ColumnManager({
 	}
 
 	const handleSortDirectionChange = (desc: boolean) => {
-		if (!onSortingChange || !currentSortColumn) return
+		if (!currentSortColumn) return
 		onSortingChange([{ id: currentSortColumn, desc }])
 	}
 
@@ -695,16 +641,14 @@ export function ColumnManager({
 				<p className="mt-2 text-xs text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
 			</section>
 
-			{sorting !== undefined && onSortingChange ? (
-				<SortingSection
-					currentSortColumn={currentSortColumn}
-					isDescending={isDescending}
-					selectableColumns={selectableColumnsForSort}
-					onColumnChange={handleSortColumnChange}
-					onDirectionChange={handleSortDirectionChange}
-					onReset={onSortingReset}
-				/>
-			) : null}
+			<SortingSection
+				currentSortColumn={currentSortColumn}
+				isDescending={isDescending}
+				selectableColumns={selectableColumnsForSort}
+				onColumnChange={handleSortColumnChange}
+				onDirectionChange={handleSortDirectionChange}
+				onReset={onSortingReset}
+			/>
 
 			<section className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 				<div className="flex flex-wrap gap-1 border-b border-pro-cards-border p-2">
@@ -712,6 +656,7 @@ export function ColumnManager({
 						<button
 							key={filter.id}
 							type="button"
+							aria-pressed={groupFilter === filter.id}
 							onClick={() => setGroupFilter(filter.id)}
 							className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
 								groupFilter === filter.id
@@ -734,6 +679,7 @@ export function ColumnManager({
 						/>
 						<input
 							onInput={(e) => setSearch(e.currentTarget.value)}
+							aria-label="Search columns"
 							placeholder="Search columns..."
 							className="w-full rounded-md border border-pro-cards-border py-1.5 pr-2.5 pl-8 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 						/>
@@ -751,6 +697,7 @@ export function ColumnManager({
 									<button
 										key={column.id}
 										type="button"
+										aria-pressed={isSelected}
 										onClick={() => handleToggleColumn(column.id)}
 										className={`group flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-all ${
 											isSelected ? 'border-brand/30 bg-brand/5' : 'border-transparent hover:border-pro-cards-border'
@@ -785,14 +732,11 @@ export function ColumnManager({
 				<button
 					type="button"
 					onClick={() => {
-						if (!hasActiveSubscription) {
-							setSignupSource('pro-dashboard')
-							subscribeModalStore.show()
-							return
-						}
+						if (!hasActiveSubscription) return showUpgrade()
+						// Like a new column's draft, an edit survives folding the form and leaving the section; Cancel drops it.
 						setCustomColumnExpanded(!customColumnExpanded)
-						if (editingId) handleCancelEdit()
 					}}
+					aria-expanded={hasActiveSubscription ? customColumnExpanded : undefined}
 					className="flex w-full items-center justify-between"
 				>
 					<div className="flex items-center gap-2">
@@ -806,9 +750,9 @@ export function ColumnManager({
 							{editingId ? 'Edit custom column' : 'Custom column'}
 							{!hasActiveSubscription ? <span className="ml-1 text-xs font-normal opacity-60">(Pro)</span> : null}
 						</span>
-						{(customColumns?.length ?? 0) > 0 ? (
+						{customColumns.length > 0 ? (
 							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-500">
-								{customColumns?.length}
+								{customColumns.length}
 							</span>
 						) : null}
 					</div>
@@ -848,7 +792,8 @@ export function ColumnManager({
 							<input
 								type="text"
 								value={customName}
-								onChange={(e) => setCustomName(e.target.value)}
+								onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+								aria-label="Custom column name"
 								placeholder="Column name"
 								className="flex-1 rounded-md border border-pro-cards-border px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 							/>
@@ -862,6 +807,7 @@ export function ColumnManager({
 								onChange={handleExpressionChange}
 								onKeyDown={handleExpressionKeyDown}
 								onFocus={() => customExpression && setShowAutocomplete(true)}
+								aria-label="Custom column expression"
 								placeholder="e.g., tvl / mcap, fees24h * 365"
 								className={`w-full rounded-md border px-2 py-1.5 pr-8 font-mono text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
 									customExpression && !expressionValidation.isValid
@@ -922,7 +868,8 @@ export function ColumnManager({
 											render={
 												<button
 													type="button"
-													onClick={() => setCustomFormat(opt.id)}
+													aria-pressed={customFormat === opt.id}
+													onClick={() => setDraft({ ...draft, format: opt.id })}
 													className={`flex-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
 														customFormat === opt.id
 															? 'border-brand bg-brand/15 text-brand'
@@ -947,10 +894,8 @@ export function ColumnManager({
 											render={
 												<button
 													type="button"
-													onClick={() => {
-														setAggregationTouched(true)
-														setCustomAggregation(opt.id)
-													}}
+													aria-pressed={resolvedCustomAggregation === opt.id}
+													onClick={() => setDraft({ ...draft, aggregation: opt.id })}
 													className={`flex-1 rounded-md border px-1 py-1 text-xs font-medium transition-colors ${
 														resolvedCustomAggregation === opt.id
 															? 'border-brand bg-brand/15 text-brand'
@@ -1003,9 +948,9 @@ export function ColumnManager({
 					</div>
 				) : null}
 
-				{(customColumns?.length ?? 0) > 0 ? (
+				{customColumns.length > 0 ? (
 					<div className="mt-3 space-y-1.5 border-t border-pro-cards-border pt-3">
-						{customColumns?.map((col) => (
+						{customColumns.map((col) => (
 							<div
 								key={col.id}
 								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand/5' : 'border-pro-cards-border'}`}
@@ -1026,13 +971,15 @@ export function ColumnManager({
 									<button
 										type="button"
 										onClick={() => handleEditCustomColumn(col)}
+										aria-label={`Edit ${col.name}`}
 										className="rounded-sm p-1 text-pro-text-tertiary hover:text-brand"
 									>
 										<Icon name="pencil" height={12} width={12} />
 									</button>
 									<button
 										type="button"
-										onClick={() => onRemoveCustomColumn?.(col.id)}
+										onClick={() => onRemoveCustomColumn(col.id)}
+										aria-label={`Delete ${col.name}`}
 										className="rounded-sm p-1 text-pro-text-tertiary hover:bg-error/10 hover:text-error"
 									>
 										<Icon name="trash-2" height={12} width={12} />
@@ -1044,11 +991,7 @@ export function ColumnManager({
 				) : null}
 			</section>
 
-			{shouldRenderSubscribeModal ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</div>
 	)
 }
@@ -1088,6 +1031,7 @@ function SortableChip({
 			<span
 				{...attributes}
 				{...listeners}
+				aria-label={`Move ${label}`}
 				className="cursor-grab touch-none text-pro-text-tertiary hover:text-pro-text-secondary active:cursor-grabbing"
 			>
 				<Icon name="menu" width={10} height={10} />
@@ -1102,6 +1046,7 @@ function SortableChip({
 					e.stopPropagation()
 					onRemove()
 				}}
+				aria-label={`Hide ${label}`}
 				className="rounded-sm text-pro-text-tertiary transition-colors hover:text-error"
 			>
 				<Icon name="x" width={10} height={10} />
@@ -1123,7 +1068,7 @@ function SortingSection({
 	selectableColumns: Array<ColumnMeta>
 	onColumnChange: (value: string) => void
 	onDirectionChange: (desc: boolean) => void
-	onReset?: (() => void) | undefined
+	onReset: () => void
 }) {
 	const popover = usePopoverStore({ placement: 'bottom-start' })
 
@@ -1200,6 +1145,7 @@ function SortingSection({
 					<button
 						type="button"
 						onClick={() => onDirectionChange(false)}
+						aria-pressed={!!currentSortColumn && !isDescending}
 						disabled={!currentSortColumn}
 						className={`px-2 py-1 text-xs font-medium transition ${
 							!currentSortColumn
@@ -1214,6 +1160,7 @@ function SortingSection({
 					<button
 						type="button"
 						onClick={() => onDirectionChange(true)}
+						aria-pressed={!!currentSortColumn && isDescending}
 						disabled={!currentSortColumn}
 						className={`border-l border-pro-cards-border px-2 py-1 text-xs font-medium transition ${
 							!currentSortColumn
@@ -1226,11 +1173,9 @@ function SortingSection({
 						Desc
 					</button>
 				</div>
-				{onReset ? (
-					<button type="button" onClick={onReset} className="text-xs text-brand hover:underline">
-						Reset
-					</button>
-				) : null}
+				<button type="button" onClick={onReset} className="text-xs text-brand hover:underline">
+					Reset
+				</button>
 			</div>
 		</section>
 	)

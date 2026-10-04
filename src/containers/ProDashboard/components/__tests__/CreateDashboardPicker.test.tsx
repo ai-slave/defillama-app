@@ -109,6 +109,7 @@ describe('a subscriber', () => {
 
 	test('failed creation retains the name and visibility, blocks duplicate submissions, and retries successfully', async () => {
 		let reject!: (error: Error) => void
+		let resolve!: (dashboard: { id: string; slug: string }) => void
 		create
 			.mockImplementationOnce(
 				() =>
@@ -116,7 +117,12 @@ describe('a subscriber', () => {
 						reject = fail
 					})
 			)
-			.mockResolvedValueOnce({ id: 'created', slug: 'new-dashboard' })
+			.mockImplementationOnce(
+				() =>
+					new Promise((done) => {
+						resolve = done
+					})
+			)
 		await mount()
 		const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
 		name.value = 'Keep my draft'
@@ -131,7 +137,7 @@ describe('a subscriber', () => {
 		})
 		await act(async () => {
 			reject(new Error('Unavailable'))
-			await new Promise((resolve) => setTimeout(resolve, 0))
+			await new Promise((done) => setTimeout(done, 0))
 		})
 		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 		expect(document.querySelector('[role="alert"]')!.textContent).toBe('UnavailableYour choices are still here.')
@@ -139,6 +145,9 @@ describe('a subscriber', () => {
 		expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.checked).toBe(true)
 		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
+		// The retry runs under the error it answers.
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe('UnavailableYour choices are still here.')
+		await act(async () => resolve({ id: 'created', slug: 'new-dashboard' }))
 		await waitFor(() => expect(store.getState().open).toBe(false))
 		expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/new-dashboard/edit')
 		expect(toast.error).not.toHaveBeenCalled()
@@ -219,10 +228,10 @@ describe('a subscriber', () => {
 		const next = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => accessibleName(button) === 'Next'
 		)!
-		expect(next.disabled).toBe(true)
+		expect(next.getAttribute('aria-disabled')).toBe('true')
 		expect(document.querySelector('footer')!.textContent).toContain('Pick at least 1 metric')
 		await click('TVL')
-		expect(next.disabled).toBe(false)
+		expect(next.getAttribute('aria-disabled')).toBeNull()
 		expect(document.querySelector('footer')!.textContent).not.toContain('Pick at least')
 	})
 
@@ -235,9 +244,49 @@ describe('a subscriber', () => {
 		await click('Back')
 		expect(document.body.textContent).toContain('What would you like to compare?')
 		await click('Back')
+		// The metric picked on the way in is work, so leaving the wizard asks first.
+		await click('Discard')
 		await waitFor(() => expect(document.body.textContent).toContain('How would you like to create your dashboard?'))
+		expect(accessibleName(document.activeElement as HTMLElement)).toMatch(/^Comparison/)
 		await click('From scratch')
 		expect(names()).toContain('Back to dashboard choices')
+	})
+
+	test('Next keeps focus when the step it opens starts incomplete', async () => {
+		await mount('Comparison', { toPreview: false })
+		await click('Back')
+		await click('Back')
+		// A new type drops the preset's chain, so the items step opens with nothing picked and Next disabled.
+		await click('Compare protocols')
+		const next = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+			(button) => accessibleName(button) === 'Next'
+		)!
+		await act(async () => next.focus())
+		await click('Next')
+		expect(document.body.textContent).toContain('Select Protocols')
+		expect(document.activeElement).toBe(next)
+	})
+
+	test('picking the comparison type already chosen keeps the picked items', async () => {
+		await mount('Comparison', { toPreview: false })
+		await click('Back')
+		await click('Back')
+		await click('Compare chains')
+		await click('Next')
+		expect(document.body.textContent).toContain('Selected (1/10)')
+	})
+
+	test('leaving the blank dashboard form with a typed name asks first', async () => {
+		await mount()
+		const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+		await act(async () => {
+			name.value = 'Half typed'
+			name.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await click('Back to dashboard choices')
+		expect(document.body.textContent).toContain('Discard this dashboard?')
+		await click('Keep editing')
+		expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('Half typed')
 	})
 
 	test('the metrics step counts one available metric in the singular', async () => {

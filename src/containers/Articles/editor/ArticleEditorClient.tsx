@@ -9,6 +9,7 @@ import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useR
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { InlineStatus, PanelStatus } from '~/ui/Status'
 import {
 	ArticleApiError,
@@ -38,7 +39,7 @@ import { ArticleChartPickerDialog } from './ArticleChartPicker'
 import { ArticleCoverImageEditor } from './ArticleCoverImageEditor'
 import { ArticleEditorCanvas } from './ArticleEditorCanvas'
 import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } from './ArticleEditorControls'
-import { CoverDetailsDialog, DeleteArticleDialog, DiscardPendingDialog } from './ArticleEditorDialogs'
+import { CoverDetailsDialog } from './ArticleEditorDialogs'
 import { ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
 import { ArticleEditorPreview } from './ArticleEditorPreview'
 import type { PublishResult } from './ArticleEditorTypes'
@@ -125,9 +126,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		}
 	})
 	const metaDialog = Ariakit.useDialogStore()
-	const deleteDialog = Ariakit.useDialogStore()
-	const deleteConfirmRef = useRef<HTMLDivElement>(null)
-	const discardDialog = Ariakit.useDialogStore()
+	const [confirmDelete, setConfirmDelete] = useState(false)
+	const [confirmDiscard, setConfirmDiscard] = useState(false)
 	const coverDetailsDialog = Ariakit.useDialogStore()
 	const [saveError, setSaveError] = useState(false)
 	const [slugEditing, setSlugEditing] = useState(false)
@@ -629,19 +629,43 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		mutationFn: (targetArticleId: string) => unpublishArticle(targetArticleId, authorizedFetch),
 		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
+	// A server result replaces the document without an update event. The editor is gone when the reader left
+	// the article while the request was out, and a destroyed editor cannot take content.
+	const replaceEditorContent = (contentJson: LocalArticleDocument['contentJson']) => {
+		if (!editor || editor.isDestroyed) return
+		editor.commands.setContent(contentJson, { emitUpdate: false })
+	}
+
 	const discardPendingMutation = useMutation({
 		mutationKey: articleWriteKey(articleId),
-		mutationFn: (targetArticleId: string) => discardPendingEdits(targetArticleId, authorizedFetch),
-		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
+		mutationFn: (targetArticleId: string) => {
+			// The discard drops every edit, so an autosave still waiting must not send them back afterwards.
+			if (debounceRef.current) {
+				clearTimeout(debounceRef.current)
+				debounceRef.current = null
+			}
+			return discardPendingEdits(targetArticleId, authorizedFetch).catch((error: unknown) => {
+				throw new Error("Couldn't discard the pending changes. Try again.", { cause: error })
+			})
+		},
+		// The editor shows the live version again. An editor the reader already left takes nothing: its state is
+		// gone and its tiptap instance destroyed.
+		onSuccess: (saved) => {
+			const merged = applyPendingToLocalArticle(saved, saved.pending)
+			setArticle(merged)
+			replaceEditorContent(merged.contentJson)
+			setSavedAt(merged.updatedAt)
+			setIsDirty(false)
+			return cacheWrittenArticle(queryClient, saved)
+		}
 	})
 	const deleteArticleMutation = useMutation({
-		mutationFn: (targetArticleId: string) => deleteArticle(targetArticleId, authorizedFetch),
+		mutationFn: (targetArticleId: string) =>
+			deleteArticle(targetArticleId, authorizedFetch).catch((error: unknown) => {
+				throw new Error("Couldn't delete this article. Try again.", { cause: error })
+			}),
 		onSuccess: () => {
 			revalidateLanding()
-		},
-		// The confirm shows a failure while it is open; after a route change only a toast can.
-		onError: () => {
-			if (!deleteConfirmRef.current?.isConnected) toast.error("Couldn't delete this article. Try again.")
 		}
 	})
 	const isPublishing = publishMutation.isPending || unpublishMutation.isPending
@@ -649,7 +673,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	// go-live time passes while it is open stops reading as scheduled.
 	const nowSec = useNowSeconds()
 	const articleIsScheduled = isScheduled(article, nowSec * 1000)
-	const isDiscarding = discardPendingMutation.isPending
 	const collaborators = useArticleCollaborators({
 		articleId: article.id,
 		authorizedFetch,
@@ -711,16 +734,14 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		else toast.error(result.error)
 	}
 
-	// A server result replaces the document without an update event. The editor is gone when the reader left
-	// the article while the request was out, and a destroyed editor cannot take content.
-	const replaceEditorContent = (contentJson: LocalArticleDocument['contentJson']) => {
-		if (!editor || editor.isDestroyed) return
-		editor.commands.setContent(contentJson, { emitUpdate: false })
-	}
-
 	const handleUnpublish = async () => {
 		if (!article.id) return
 		try {
+			// The result replaces the editor's content, so the edits still waiting for an autosave go first.
+			if (!(await flushPendingSave())) {
+				toast.error('Save the latest edits before moving to drafts.')
+				return
+			}
 			const saved = await unpublishMutation.mutateAsync(article.id)
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
@@ -731,24 +752,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		} catch (error) {
 			toast.error(errorMessageOr(error, 'Failed to unpublish'))
 		}
-	}
-
-	const handleDiscardPending = async () => {
-		if (!article.id) return
-		if (debounceRef.current) {
-			clearTimeout(debounceRef.current)
-			debounceRef.current = null
-		}
-		const saved = await discardPendingMutation.mutateAsync(article.id).catch(() => null)
-		// The confirm shows the failure.
-		if (!saved) return
-		const merged = applyPendingToLocalArticle(saved, saved.pending)
-		setArticle(merged)
-		replaceEditorContent(merged.contentJson)
-		setSavedAt(merged.updatedAt)
-		setIsDirty(false)
-		discardDialog.hide()
-		toast.success('Pending changes discarded')
 	}
 
 	const handleRevisionRestored = useCallback(
@@ -799,25 +802,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			...article.coverImage,
 			[key]: value
 		})
-	}
-
-	// Each opening of a confirm starts without the previous attempt's error.
-	const handleDeleteArticle = () => {
-		if (!article.id) return
-		deleteArticleMutation.reset()
-		deleteDialog.show()
-	}
-
-	const confirmDeleteArticle = () => {
-		if (!article.id) return
-		// The confirm stays open, pending, until the route leaves this article. A reader who already left
-		// must not be pulled back to the list, so the redirect belongs to this call.
-		deleteArticleMutation.mutate(article.id, { onSuccess: () => void Router.replace('/research') })
-	}
-
-	const openDiscardPending = () => {
-		discardPendingMutation.reset()
-		discardDialog.show()
 	}
 
 	const isOwner = canManageResearchArticle(article)
@@ -984,13 +968,11 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				beginSlugEdit={beginSlugEdit}
 				cancelSlugEdit={cancelSlugEdit}
 				commitSlugEdit={commitSlugEdit}
-				deletePending={deleteArticleMutation.isPending}
-				handleDeleteArticle={handleDeleteArticle}
-				handleDiscardPending={openDiscardPending}
+				handleDeleteArticle={() => setConfirmDelete(true)}
+				handleDiscardPending={() => setConfirmDiscard(true)}
 				handlePublish={() => void publishFromHeader()}
 				handleUnpublish={handleUnpublish}
 				hasPendingEdits={hasPendingEdits}
-				isDiscarding={isDiscarding}
 				isOwner={isOwner}
 				isPublished={isPublished}
 				isPublishing={isPublishing}
@@ -1081,28 +1063,49 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				updateCoverField={updateCoverField}
 			/>
 
-			<DeleteArticleDialog
-				ref={deleteConfirmRef}
-				confirmDeleteArticle={confirmDeleteArticle}
-				failed={deleteArticleMutation.isError}
-				isPending={deleteArticleMutation.isPending}
-				isPublished={isPublished}
-				store={deleteDialog}
-				title={article.title}
-			/>
+			{confirmDelete && article.id ? (
+				<ConfirmActionDialog
+					title={isPublished ? 'Delete this article?' : 'Delete this draft?'}
+					description={
+						article.title ? (
+							<>
+								<span className="font-medium text-primary">{article.title}</span> will be permanently removed. This
+								cannot be undone.
+							</>
+						) : (
+							'This will be permanently removed. This cannot be undone.'
+						)
+					}
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteArticleMutation}
+					variables={article.id}
+					onClose={() => setConfirmDelete(false)}
+					// A reader who already left must not be pulled back to the list.
+					onSuccess={() => void Router.replace('/research')}
+				/>
+			) : null}
 
-			<DiscardPendingDialog
-				failed={discardPendingMutation.isError}
-				isPending={isDiscarding}
-				store={discardDialog}
-				onConfirm={() => void handleDiscardPending()}
-			/>
+			{confirmDiscard && article.id ? (
+				<ConfirmActionDialog
+					title="Discard pending changes?"
+					description="Your pending edits are removed and the editor shows the live version again. Readers see no change."
+					confirmLabel="Discard changes"
+					cancelLabel="Keep changes"
+					pendingLabel="Discarding…"
+					mutation={discardPendingMutation}
+					variables={article.id}
+					onClose={() => setConfirmDiscard(false)}
+					successMessage="Pending changes discarded"
+				/>
+			) : null}
 
 			{article.id && historyOpen ? (
 				<RevisionHistoryDrawer
 					onClose={() => setHistoryOpen(false)}
 					articleId={article.id}
 					authorizedFetch={authorizedFetch}
+					saveEdits={flushPendingSave}
 					onRestored={handleRevisionRestored}
 				/>
 			) : null}

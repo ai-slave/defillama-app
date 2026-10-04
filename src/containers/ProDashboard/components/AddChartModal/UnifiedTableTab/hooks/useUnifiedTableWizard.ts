@@ -28,6 +28,26 @@ type WizardAction =
 	| { type: 'ADD_CUSTOM_COLUMN'; column: CustomColumnDefinition }
 	| { type: 'UPDATE_CUSTOM_COLUMN'; id: string; updates: Partial<CustomColumnDefinition> }
 	| { type: 'REMOVE_CUSTOM_COLUMN'; id: string }
+	| { type: 'SET_CUSTOM_COLUMN_DRAFT'; draft: CustomColumnDraft }
+
+/** The custom column form as typed: `id` names the column being edited (null for a new one), and a null
+    `aggregation` follows the expression's default. It lives in the wizard state so Add card's discard question counts
+    a half-typed column and it survives switching sections. */
+export type CustomColumnDraft = {
+	id: string | null
+	name: string
+	expression: string
+	format: CustomColumnDefinition['format']
+	aggregation: CustomColumnDefinition['aggregation'] | null
+}
+
+export const EMPTY_CUSTOM_COLUMN_DRAFT: CustomColumnDraft = {
+	id: null,
+	name: '',
+	expression: '',
+	format: 'number',
+	aggregation: null
+}
 
 interface WizardState {
 	chains: Array<string>
@@ -38,6 +58,21 @@ interface WizardState {
 	columnVisibility: ColumnVisibilityState
 	sorting: SortingState
 	customColumns: Array<CustomColumnDefinition>
+	customColumnDraft: CustomColumnDraft
+}
+
+/** The wizard state as Add card's discard question compares it: a custom column opened for editing and left as saved
+    is not unsaved work. */
+export function tableDraftKey(state: WizardState) {
+	const draft = state.customColumnDraft
+	const saved = draft.id ? state.customColumns.find((column) => column.id === draft.id) : undefined
+	const unchanged =
+		saved &&
+		saved.name === draft.name &&
+		saved.expression === draft.expression &&
+		saved.format === draft.format &&
+		saved.aggregation === draft.aggregation
+	return JSON.stringify(unchanged ? { ...state, customColumnDraft: EMPTY_CUSTOM_COLUMN_DRAFT } : state)
 }
 
 const derivePreset = (presetId: string | undefined) => {
@@ -86,7 +121,8 @@ const createStateFromConfig = (config: UnifiedTableConfig, fallbackPresetId?: st
 		columnOrder: mergedOrder,
 		columnVisibility: mergedVisibility,
 		sorting: sanitized.sorting,
-		customColumns
+		customColumns,
+		customColumnDraft: EMPTY_CUSTOM_COLUMN_DRAFT
 	}
 }
 
@@ -114,7 +150,8 @@ export const createWizardState = (presetId?: string, existingConfig?: UnifiedTab
 		columnOrder: sanitized.order,
 		columnVisibility: applyUnifiedTableRowHeaderVisibility(rowHeaders, sanitized.visibility),
 		sorting: sanitized.sorting,
-		customColumns: []
+		customColumns: [],
+		customColumnDraft: EMPTY_CUSTOM_COLUMN_DRAFT
 	}
 }
 
@@ -221,9 +258,13 @@ const reducer = (state: WizardState, action: WizardAction): WizardState => {
 				customColumns: state.customColumns.filter((col) => col.id !== action.id),
 				columnOrder: newOrder,
 				columnVisibility: newVisibility,
-				sorting: newSorting
+				sorting: newSorting,
+				customColumnDraft:
+					state.customColumnDraft.id === action.id ? EMPTY_CUSTOM_COLUMN_DRAFT : state.customColumnDraft
 			}
 		}
+		case 'SET_CUSTOM_COLUMN_DRAFT':
+			return { ...state, customColumnDraft: action.draft }
 		default:
 			return state
 	}
@@ -256,25 +297,26 @@ export const useUnifiedTableWizard = (existingConfig: UnifiedTableConfig | undef
 		[]
 	)
 	const removeCustomColumn = useCallback((id: string) => dispatch({ type: 'REMOVE_CUSTOM_COLUMN', id }), [])
+	const setCustomColumnDraft = useCallback(
+		(draft: CustomColumnDraft) => dispatch({ type: 'SET_CUSTOM_COLUMN_DRAFT', draft }),
+		[]
+	)
 
-	const draftConfig = useMemo<Partial<UnifiedTableConfig>>(() => {
-		const params = {
-			chains: state.chains.length > 0 ? state.chains : ['All']
-		}
-
-		const base: Partial<UnifiedTableConfig> = {
-			rowHeaders: state.rowHeaders,
-			params,
-			filters: state.filters,
-			columnOrder: state.columnOrder.length > 0 ? state.columnOrder : DEFAULT_COLUMN_ORDER,
-			columnVisibility: state.columnVisibility,
-			activePresetId: state.activePresetId,
-			defaultSorting: state.sorting,
-			...(state.customColumns.length > 0 ? { customColumns: state.customColumns } : {})
-		}
-
-		return base
-	}, [state])
+	// Keyed on the saved fields only: typing a custom column changes no config, so the preview keeps its input.
+	const { chains, rowHeaders, filters, columnOrder, columnVisibility, activePresetId, sorting, customColumns } = state
+	const draftConfig = useMemo<Partial<UnifiedTableConfig>>(
+		() => ({
+			rowHeaders,
+			params: { chains: chains.length > 0 ? chains : ['All'] },
+			filters,
+			columnOrder: columnOrder.length > 0 ? columnOrder : DEFAULT_COLUMN_ORDER,
+			columnVisibility,
+			activePresetId,
+			defaultSorting: sorting,
+			...(customColumns.length > 0 ? { customColumns } : {})
+		}),
+		[chains, rowHeaders, filters, columnOrder, columnVisibility, activePresetId, sorting, customColumns]
+	)
 
 	return {
 		state,
@@ -287,7 +329,8 @@ export const useUnifiedTableWizard = (existingConfig: UnifiedTableConfig | undef
 			setSorting,
 			addCustomColumn,
 			updateCustomColumn,
-			removeCustomColumn
+			removeCustomColumn,
+			setCustomColumnDraft
 		},
 		derived: {
 			draftConfig

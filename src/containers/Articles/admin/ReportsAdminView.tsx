@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -131,23 +132,25 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 					</p>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					<button
+					<Ariakit.Button
 						type="button"
 						disabled={!dirty || isMutating}
+						accessibleWhenDisabled
 						onClick={() => saveMutation.mutate(state)}
-						className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md border border-medium px-3 py-1.5 text-xs text-secondary transition-colors hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 					>
 						{saveMutation.isPending ? 'Saving…' : 'Save'}
-					</button>
+					</Ariakit.Button>
 					{isPublished ? (
-						<button
+						<Ariakit.Button
 							type="button"
 							disabled={isMutating || (!dirty && !hasPending)}
+							accessibleWhenDisabled
 							onClick={() => publishMutation.mutate({ submitted: state, save: dirty })}
-							className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md bg-success px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
 							{publishMutation.isPending ? 'Publishing…' : 'Save & publish'}
-						</button>
+						</Ariakit.Button>
 					) : null}
 					<Link
 						href={articleEditHref(article)}

@@ -1,8 +1,7 @@
-import { useState, type RefObject } from 'react'
-import toast from 'react-hot-toast'
+import { useRef, useState, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import type { TeamMember } from './types'
 import { useTeam } from './useTeam'
@@ -42,6 +41,7 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 	const { user } = useAuthContext()
 	const { team, members, leaveTeamMutation } = useTeam()
 	const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+	const leaveFocusRef = useRef<HTMLElement | null>(null)
 
 	if (!team) return null
 
@@ -79,7 +79,10 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 					type="button"
 					variant="destructive"
 					size="md"
-					onClick={() => setShowLeaveConfirm(true)}
+					onClick={(event) => {
+						leaveFocusRef.current = event.currentTarget
+						setShowLeaveConfirm(true)
+					}}
 					className="w-fit"
 				>
 					<Icon name="sign-out" height={14} width={14} />
@@ -101,32 +104,23 @@ export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLEleme
 				</div>
 			)}
 
-			<ConfirmDialog
-				open={showLeaveConfirm}
-				onClose={() => {
-					leaveTeamMutation.reset()
-					setShowLeaveConfirm(false)
-				}}
-				portal
-				unmountOnHide
-				finalFocus={finalFocus}
-				title="Leave team"
-				description="Are you sure you want to leave this team? Your team subscription will be revoked and you will lose access to any team-managed features."
-				confirmLabel="Leave team"
-				pendingLabel={leaveTeamMutation.isPending ? 'Leaving team…' : null}
-				error={leaveTeamMutation.isError ? leaveTeamMutation.error.message : null}
-				onConfirm={() => {
-					// Success unmounts this view, and mutate() callbacks with it; the returned promise still settles.
-					leaveTeamMutation.mutateAsync().then(
-						() => {
-							setShowLeaveConfirm(false)
-							toast.success('You have left the team')
-						},
-						// The dialog shows the failure from the mutation state.
-						() => {}
-					)
-				}}
-			/>
+			{showLeaveConfirm ? (
+				<ConfirmActionDialog
+					finalFocus={leaveFocusRef}
+					title="Leave team"
+					description="Are you sure you want to leave this team? Your team subscription will be revoked and you will lose access to any team-managed features."
+					confirmLabel="Leave team"
+					pendingLabel="Leaving team…"
+					mutation={leaveTeamMutation}
+					variables={undefined}
+					onClose={() => setShowLeaveConfirm(false)}
+					onSuccess={() => {
+						// Leaving unmounts this view and its Leave Team button.
+						leaveFocusRef.current = finalFocus.current
+					}}
+					successMessage="You have left the team"
+				/>
+			) : null}
 		</div>
 	)
 }

@@ -12,6 +12,7 @@ import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import pb from '~/utils/pocketbase'
+import { queryReadFailed } from '~/utils/query'
 import { ResendCooldown } from './ResendCooldown'
 
 type ConfirmationType = 'apple_reauth' | 'otp' | 'typed_confirmation'
@@ -52,20 +53,11 @@ interface DeleteAccountResult {
 	status: 'completed'
 }
 
-interface DeletedAccountSession {
+/** The session the flow started in, captured when the dialog opens. */
+interface DeleteAccountSession {
 	accountId: string
+	/** The Google account's email for a Google sign-in, whose credential sharing is revoked after deletion. */
 	googleLoginHint: string | null
-	shouldRevokeGoogleCredentialSharing: boolean
-	sessionToken: string
-}
-
-interface DeleteAccountModalProps {
-	accountId: string
-	isOpen: boolean
-	onClose: () => void
-	onDeleted: (session: DeletedAccountSession) => Promise<void>
-	googleLoginHint: string | null
-	shouldRevokeGoogleCredentialSharing: boolean
 	sessionToken: string
 }
 
@@ -132,7 +124,7 @@ function DeleteAccountOverview({
 	isRequesting,
 	onContinue
 }: {
-	actionError: string
+	actionError: string | null
 	cancel: ReactNode
 	check: EligibilityState
 	isRequesting: boolean
@@ -205,7 +197,6 @@ function DeleteAccountOverview({
 function DeleteAccountConfirmationForm({
 	actionError,
 	cancel,
-	codeResent,
 	confirmation,
 	isDeleting,
 	isRequesting,
@@ -217,9 +208,8 @@ function DeleteAccountConfirmationForm({
 	requiredConfirmation,
 	codeSentAt
 }: {
-	actionError: string
+	actionError: string | null
 	cancel: ReactNode
-	codeResent: boolean
 	confirmation: string
 	isDeleting: boolean
 	isRequesting: boolean
@@ -266,11 +256,6 @@ function DeleteAccountConfirmationForm({
 							disabled={isDeleting}
 							pending={isRequesting}
 						/>
-						{codeResent ? (
-							<p role="status" className="body-sm text-secondary">
-								Code sent. Check your inbox.
-							</p>
-						) : null}
 					</div>
 				) : null}
 
@@ -309,49 +294,43 @@ function DeleteAccountConfirmationForm({
 	)
 }
 
+const SESSION_CHANGED = 'Your session changed. Close this dialog and try again.'
+
 function DeleteAccountModal({
-	accountId,
-	googleLoginHint,
-	isOpen,
+	session,
 	onClose,
-	onDeleted,
-	shouldRevokeGoogleCredentialSharing,
-	sessionToken
-}: DeleteAccountModalProps) {
-	const [flowSession] = useState<DeletedAccountSession>({
-		accountId,
-		googleLoginHint,
-		shouldRevokeGoogleCredentialSharing,
-		sessionToken
-	})
-	const flowSessionToken = flowSession.sessionToken
+	onDeleted
+}: {
+	session: DeleteAccountSession
+	onClose: () => void
+	onDeleted: (session: DeleteAccountSession) => void
+}) {
+	const { sessionToken } = session
 	// When the last code went out; the resend countdown runs from it.
 	const [codeSentAt, setCodeSentAt] = useState<number | null>(null)
-	const deleteSubmissionPendingRef = useRef(false)
-	const [step, setStep] = useState<'overview' | 'confirm'>('overview')
 	const [requestedConfirmation, setRequestedConfirmation] = useState<RequiredConfirmation | null>(null)
 	const [confirmation, setConfirmation] = useState('')
 	const [otp, setOtp] = useState('')
-	const [localError, setLocalError] = useState('')
-	const [codeResent, setCodeResent] = useState(false)
+	// The last failed request or deletion. Not the mutations' own errors: those clear as soon as a retry starts.
+	const [actionError, setActionError] = useState<string | null>(null)
+	// The mutation reports pending a tick after mutate(), so a second submit in that tick would send again.
+	const deleteSubmittedRef = useRef(false)
 
-	const isCurrentSession = () => pb.authStore.token === flowSessionToken
 	const assertCurrentSession = () => {
-		if (!isCurrentSession()) throw new Error('Your session changed. Close this dialog and try again.')
+		if (pb.authStore.token !== sessionToken) throw new Error(SESSION_CHANGED)
 	}
 
 	const eligibilityQuery = useQuery({
-		queryKey: ['account-deletion', 'eligibility', flowSessionToken],
+		queryKey: ['account-deletion', 'eligibility', sessionToken],
 		queryFn: async () => {
 			const data = await fetchDeleteAccountJson<DeleteAccountEligibility>(
 				'/user/delete-account/eligibility',
-				flowSessionToken,
+				sessionToken,
 				{ cache: 'no-store' }
 			)
 			assertCurrentSession()
 			return data
 		},
-		enabled: isOpen,
 		gcTime: 0,
 		retry: false
 	})
@@ -361,49 +340,40 @@ function DeleteAccountModal({
 			assertCurrentSession()
 			const data = await fetchDeleteAccountJson<DeleteAccountRequestResponse>(
 				'/user/delete-account/request',
-				flowSessionToken,
+				sessionToken,
 				{ method: 'POST' }
 			)
 			assertCurrentSession()
-			return { action, data }
+			if (action === 'resend' && data.requiredConfirmation.type !== 'otp')
+				throw new Error('Account verification requirements changed. Close this dialog and try again.')
+			return data
 		},
-		onSuccess: ({ action, data }) => {
+		onSuccess: (data) => {
+			setActionError(null)
 			setRequestedConfirmation(data.requiredConfirmation)
-			if (action === 'resend') {
-				if (data.requiredConfirmation.type !== 'otp') {
-					setLocalError('Account verification requirements changed. Close this dialog and try again.')
-					return
-				}
-				setCodeSentAt(Math.floor(Date.now() / 1000))
-				setCodeResent(true)
-				return
-			}
-			if (data.requiredConfirmation.type !== 'apple_reauth') {
-				setStep('confirm')
-				if (data.requiredConfirmation.type === 'otp') setCodeSentAt(Math.floor(Date.now() / 1000))
-			}
-		}
+			if (data.requiredConfirmation.type === 'otp') setCodeSentAt(Math.floor(Date.now() / 1000))
+		},
+		onError: (error) => setActionError(error.message)
 	})
 
 	const deleteMutation = useMutation({
 		mutationFn: async ({ needsOtp }: { needsOtp: boolean }) => {
 			assertCurrentSession()
-			const data = await fetchDeleteAccountJson<unknown>('/user/delete-account', flowSessionToken, {
+			const data = await fetchDeleteAccountJson<unknown>('/user/delete-account', sessionToken, {
 				method: 'POST',
 				body: JSON.stringify({ confirmation, ...(needsOtp ? { otp } : {}) })
 			})
 			return readDeleteAccountResult(data)
 		},
-		onSuccess: () => onDeleted(flowSession)
+		onSuccess: () => onDeleted(session),
+		onError: (error) => setActionError(error.message)
 	})
 
 	// Neither request can be cancelled, so the dialog stays open until it settles.
 	const pending = requestMutation.isPending || deleteMutation.isPending
 	const requiredConfirmation = requestedConfirmation ?? eligibilityQuery.data?.requiredConfirmation
-	const actionError =
-		localError ||
-		(requestMutation.error instanceof Error ? requestMutation.error.message : '') ||
-		(deleteMutation.error instanceof Error ? deleteMutation.error.message : '')
+	// Apple accounts confirm in the mobile app, so their request keeps the overview.
+	const onConfirmStep = requestedConfirmation !== null && requestedConfirmation.type !== 'apple_reauth'
 
 	const check: EligibilityState = eligibilityQuery.data
 		? {
@@ -411,9 +381,10 @@ function DeleteAccountModal({
 				eligibility: eligibilityQuery.data,
 				requiredConfirmation: requestedConfirmation ?? eligibilityQuery.data.requiredConfirmation
 			}
-		: eligibilityQuery.isError
+		: queryReadFailed(eligibilityQuery)
 			? {
 					kind: 'failed',
+					// The retry clears the error while it runs; the generic message covers that.
 					message:
 						eligibilityQuery.error instanceof Error
 							? eligibilityQuery.error.message
@@ -423,33 +394,13 @@ function DeleteAccountModal({
 				}
 			: { kind: 'checking' }
 
-	const requireCurrentSession = () => {
-		if (isCurrentSession()) return true
-		setLocalError('Your session changed. Close this dialog and try again.')
-		return false
-	}
-
-	const clearActionError = () => {
-		setLocalError('')
-		requestMutation.reset()
-		deleteMutation.reset()
-	}
-
 	const handleDelete = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (deleteSubmissionPendingRef.current || !requiredConfirmation || !requireCurrentSession()) return
+		if (deleteSubmittedRef.current || !requiredConfirmation) return
 		const needsOtp = requiredConfirmation.type === 'otp'
 		if (confirmation !== requiredConfirmation.text || (needsOtp && otp.length !== 6)) return
-		clearActionError()
-		deleteSubmissionPendingRef.current = true
-		deleteMutation.mutate(
-			{ needsOtp },
-			{
-				onSettled: () => {
-					deleteSubmissionPendingRef.current = false
-				}
-			}
-		)
+		deleteSubmittedRef.current = true
+		deleteMutation.mutate({ needsOtp }, { onSettled: () => (deleteSubmittedRef.current = false) })
 	}
 
 	const cancel = (
@@ -467,13 +418,12 @@ function DeleteAccountModal({
 	// A destructive confirmation on every step: no ×, and Cancel stays in the footer at every width,
 	// so the exit never moves between the header and the footer mid-flow.
 	return (
-		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
+		<Dialog size="sm" role="alertdialog" open onClose={onClose} pending={pending} portal unmountOnHide>
 			<DialogHeader title="Delete account" closable={false} />
-			{step === 'confirm' && requiredConfirmation ? (
+			{onConfirmStep ? (
 				<DeleteAccountConfirmationForm
-					requiredConfirmation={requiredConfirmation}
+					requiredConfirmation={requestedConfirmation}
 					cancel={cancel}
-					codeResent={codeResent}
 					confirmation={confirmation}
 					otp={otp}
 					actionError={actionError}
@@ -481,19 +431,14 @@ function DeleteAccountModal({
 					isDeleting={deleteMutation.isPending}
 					codeSentAt={codeSentAt}
 					onConfirmationChange={(value) => {
-						clearActionError()
+						setActionError(null)
 						setConfirmation(value)
 					}}
 					onOtpChange={(value) => {
-						clearActionError()
+						setActionError(null)
 						setOtp(value)
 					}}
-					onResendOtp={() => {
-						if (!requireCurrentSession()) return
-						clearActionError()
-						setCodeResent(false)
-						requestMutation.mutate('resend')
-					}}
+					onResendOtp={() => requestMutation.mutate('resend')}
 					onDelete={handleDelete}
 				/>
 			) : (
@@ -502,11 +447,7 @@ function DeleteAccountModal({
 					cancel={cancel}
 					check={check}
 					isRequesting={requestMutation.isPending}
-					onContinue={() => {
-						if (!requireCurrentSession()) return
-						clearActionError()
-						requestMutation.mutate('continue')
-					}}
+					onContinue={() => requestMutation.mutate('continue')}
 				/>
 			)}
 		</Dialog>
@@ -516,32 +457,19 @@ function DeleteAccountModal({
 export function DeleteAccountCard() {
 	const router = useRouter()
 	const { authToken, user, logout } = useAuthContext()
-	const [isModalOpen, setIsModalOpen] = useState(false)
+	const [openSession, setOpenSession] = useState<DeleteAccountSession | null>(null)
 
-	const handleDeleted = async (deletedSession: DeletedAccountSession) => {
-		if (pb.authStore.record?.id !== deletedSession.accountId) {
-			setIsModalOpen(false)
-			return
-		}
-
-		const googleRevocation = deletedSession.shouldRevokeGoogleCredentialSharing
-			? Promise.resolve().then(() => {
-					if (!deletedSession.googleLoginHint) throw new Error('Google account email is unavailable')
-					return revokeGoogleCredentialSharing(deletedSession.googleLoginHint)
-				})
-			: null
-
-		setIsModalOpen(false)
+	const handleDeleted = (deletedSession: DeleteAccountSession) => {
+		setOpenSession(null)
+		if (pb.authStore.record?.id !== deletedSession.accountId) return
 		logout()
 		void router.replace('/')
 		toast.success('Your account has been deleted')
-
-		if (!googleRevocation) return
-
-		try {
-			await googleRevocation
-		} catch (error) {
-			console.error('Account deleted, but Google credential revocation failed:', error)
+		// The account is gone either way; a failed revocation only leaves Google's credential sharing on.
+		if (deletedSession.googleLoginHint) {
+			revokeGoogleCredentialSharing(deletedSession.googleLoginHint).catch((error) => {
+				console.error('Account deleted, but Google credential revocation failed:', error)
+			})
 		}
 	}
 
@@ -561,7 +489,14 @@ export function DeleteAccountCard() {
 						type="button"
 						variant="destructive"
 						size="md"
-						onClick={() => setIsModalOpen(true)}
+						onClick={() => {
+							if (!authToken || !user) return
+							setOpenSession({
+								accountId: user.id,
+								googleLoginHint: user.authMethod === 'google' && user.email ? user.email : null,
+								sessionToken: authToken
+							})
+						}}
 						disabled={!authToken || !user?.id}
 					>
 						Delete account
@@ -569,16 +504,8 @@ export function DeleteAccountCard() {
 				</div>
 			</div>
 
-			{isModalOpen && authToken && user?.id ? (
-				<DeleteAccountModal
-					accountId={user.id}
-					googleLoginHint={user?.authMethod === 'google' && user.email ? user.email : null}
-					isOpen
-					sessionToken={authToken}
-					onClose={() => setIsModalOpen(false)}
-					onDeleted={handleDeleted}
-					shouldRevokeGoogleCredentialSharing={user?.authMethod === 'google'}
-				/>
+			{openSession ? (
+				<DeleteAccountModal session={openSession} onClose={() => setOpenSession(null)} onDeleted={handleDeleted} />
 			) : null}
 		</>
 	)

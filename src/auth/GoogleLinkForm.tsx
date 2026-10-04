@@ -1,43 +1,29 @@
-import type * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useCallback, useId, useSyncExternalStore } from 'react'
+import { useId } from 'react'
 import { useAuthContext } from '~/auth'
 import { authInputStyles } from '~/auth/AuthDialog'
 import { OtpRequestError } from '~/auth/emailVerification'
 import type { GoogleLinkChallenge, SignInFlowStore } from '~/auth/signInFlowStore'
+import { refreshNowSeconds, useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { InlineStatus } from '~/ui/Status'
 
-function useDeadlinePassed(timestamp: string) {
-	const getSnapshot = useCallback(() => Date.now() >= Date.parse(timestamp), [timestamp])
-	const subscribe = useCallback(
-		(notify: () => void) => {
-			const delay = Date.parse(timestamp) - Date.now()
-			if (delay <= 0) return () => undefined
-			const timer = window.setTimeout(notify, delay)
-			return () => window.clearTimeout(timer)
-		},
-		[timestamp]
-	)
-	return useSyncExternalStore(subscribe, getSnapshot, () => false)
-}
-
 export function GoogleLinkForm({
-	dialogStore,
 	challenge,
 	error,
 	store,
 	onVerified
 }: {
-	dialogStore: Ariakit.DialogStore
 	challenge: GoogleLinkChallenge
 	error?: string
 	store: SignInFlowStore
 	onVerified: () => void
 }) {
-	const expired = useDeadlinePassed(challenge.expiresAt)
-	const canResend = useDeadlinePassed(challenge.resendAfter)
+	// The form mounts only after a sign-in answer, never while hydrating.
+	const nowMs = useNowSeconds(undefined, 1000) * 1000
+	const expired = nowMs >= Date.parse(challenge.expiresAt)
+	const canResend = nowMs >= Date.parse(challenge.resendAfter)
 	const { confirmGoogleLink, resendGoogleLink } = useAuthContext()
 	const confirmGoogleLinkMutation = useMutation({ mutationFn: confirmGoogleLink })
 	const resendGoogleLinkMutation = useMutation({ mutationFn: resendGoogleLink })
@@ -65,7 +51,6 @@ export function GoogleLinkForm({
 
 	const handleSubmit = async (event: FormSubmitEvent) => {
 		event.preventDefault()
-		if (pending) return
 		const form = event.currentTarget
 		const code = String(new FormData(form).get('code'))
 		store.dispatch({ kind: 'requestStarted' })
@@ -75,11 +60,10 @@ export function GoogleLinkForm({
 				challengeToken: challenge.challengeToken,
 				code,
 				signal,
-				onAuthenticated: onVerified,
-				canAccept: () => dialogStore.getState().open
+				onAuthenticated: onVerified
 			})
 			.catch((caughtError) => {
-				if (!signal.aborted && dialogStore.getState().open)
+				if (!signal.aborted)
 					store.dispatch({
 						error: caughtError instanceof Error ? caughtError.message : 'Invalid or expired code.',
 						kind: 'failed'
@@ -89,18 +73,18 @@ export function GoogleLinkForm({
 	}
 
 	const handleResend = async (form: HTMLFormElement) => {
-		if (pending || !canResend) return
 		store.dispatch({ kind: 'requestStarted' })
 		const signal = store.beginAuthRequest()
 		const nextChallenge = await resendGoogleLinkMutation
 			.mutateAsync({
 				challengeToken: challenge.challengeToken,
-				signal,
-				canAccept: () => dialogStore.getState().open
+				signal
 			})
 			.catch((caughtError) => {
-				if (signal.aborted || !dialogStore.getState().open) return null
+				if (signal.aborted) return null
 				if (caughtError instanceof OtpRequestError && caughtError.retryAt) {
+					// The wait was measured from Date.now(), so the clock re-reads the second before the form shows it.
+					refreshNowSeconds()
 					store.dispatch({
 						kind: 'googleLinkUpdated',
 						challenge: {
@@ -115,7 +99,7 @@ export function GoogleLinkForm({
 					})
 				return null
 			})
-		if (!nextChallenge || signal.aborted || !dialogStore.getState().open) return
+		if (!nextChallenge || signal.aborted) return
 		store.dispatch({ challenge: nextChallenge, kind: 'googleLinkUpdated' })
 		form.reset()
 	}

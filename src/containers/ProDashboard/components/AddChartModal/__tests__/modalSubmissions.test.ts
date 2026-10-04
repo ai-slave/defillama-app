@@ -148,6 +148,23 @@ describe('buildEditedDashboardItem', () => {
 		})
 	})
 
+	test('saves the one series left in an edited multi as a chart card in separate mode', () => {
+		const state: ModalState = {
+			...initializeFromEditItem(existingMulti),
+			chartCreationMode: 'separate',
+			composerItems: [{ id: 'solana-fees', kind: 'chart', subjectType: 'chain', chain: 'Solana', type: 'fees' }]
+		}
+
+		expect(buildEditedDashboardItem({ editItem: existingMulti, state, protocols: [], chains: [] })).toEqual({
+			id: 'multi-card',
+			kind: 'chart',
+			subjectType: 'chain',
+			chain: 'Solana',
+			type: 'fees',
+			colSpan: 2
+		})
+	})
+
 	test('does not submit stale composer items for a different Manual chart tab', () => {
 		const state: ModalState = {
 			...initializeFromEditItem(existingMulti),
@@ -425,22 +442,6 @@ describe('buildNewDashboardItems', () => {
 				colSpan: 1
 			}
 		])
-
-		const selectionState: ModalState = {
-			...base,
-			composerItems: [],
-			selectedProtocol: 'aave',
-			selectedChartTypes: ['fees', 'unlocks']
-		}
-		const [fees, unlocks] = buildNewDashboardItems({
-			state: selectionState,
-			protocols: [{ id: 'aave', name: 'Aave', slug: 'aave', tvl: 1, chains: [], geckoId: 'aave' }],
-			chains: [],
-			existingItems: [],
-			idFactory
-		})
-		expect(fees).toMatchObject({ id: 'fees:aave', kind: 'chart', grouping: 'day', geckoId: 'aave' })
-		expect(unlocks).toMatchObject({ id: 'unlocks:aave', kind: 'chart', dataType: 'documented', geckoId: 'aave' })
 	})
 
 	test('constructs every special manual card with its subject and width', () => {
@@ -679,8 +680,7 @@ describe('parameter bindings', () => {
 			chartMode: 'manual',
 			selectedChartTab: 'chain',
 			chartCreationMode: 'separate',
-			selectedChain: 'Ethereum',
-			selectedChartTypes: ['tvl'],
+			composerItems: [{ id: 'ethereum-tvl', kind: 'chart', subjectType: 'chain', chain: 'Ethereum', type: 'tvl' }],
 			bindings: { subject: 'chain', protocol: 'protocol' }
 		})
 		expect(chart).toMatchObject({ kind: 'chart', chain: 'Ethereum', bindings: { subject: 'chain' } })

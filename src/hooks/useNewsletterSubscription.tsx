@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { refreshSession } from '~/auth/authStore'
 import { errorToast, successToast } from '~/components/Toast/notifications'
 import { AUTH_SERVER } from '~/constants'
-import { handleSimpleFetchResponse } from '~/utils/async'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'
 
 export type NewsletterKey = 'newsletter' | 'research'
@@ -39,15 +39,6 @@ export interface MediaKitEmailResponse {
 
 export function shouldShowNewsletterSignup(user: AuthModel | null | undefined): boolean {
 	return user?.promotionalEmails !== 'on'
-}
-
-const getUserFacingErrorMessage = (error: unknown, fallbackMessage: string): string => {
-	if (!(error instanceof Error)) return fallbackMessage
-	if (!error.message.startsWith('[HTTP] [error]')) return error.message || fallbackMessage
-	const colonIndex = error.message.indexOf(':')
-	if (colonIndex === -1) return fallbackMessage
-	const details = error.message.slice(colonIndex + 1).trim()
-	return details || fallbackMessage
 }
 
 export interface NewsletterSuccessToast {
@@ -95,7 +86,7 @@ export function useNewsletterSubscription({
 			errorToast({ title: 'Subscription failed', description: 'Please try again in a moment.' })
 		},
 		onError: (err) => {
-			toast.error(getUserFacingErrorMessage(err, 'Could not subscribe. Please try again.'))
+			toast.error(httpErrorMessage(err, 'Could not subscribe. Please try again.'))
 		}
 	})
 }
@@ -118,7 +109,7 @@ export function useMediaKitEmail() {
 			})
 		},
 		onError: (err) => {
-			toast.error(getUserFacingErrorMessage(err, 'Could not send the media kit. Please try again.'))
+			toast.error(httpErrorMessage(err, 'Could not send the media kit. Please try again.'))
 		}
 	})
 }

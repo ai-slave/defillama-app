@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, type Ref } from 'react'
+import { useId } from 'react'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
 import type { LocalArticleDocument } from '../types'
@@ -60,73 +59,5 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 				<Ariakit.DialogDismiss render={<Button size="md" variant="primary" />}>Done</Ariakit.DialogDismiss>
 			</DialogFooter>
 		</Dialog>
-	)
-}
-
-type DeleteArticleDialogProps = {
-	failed: boolean
-	isPending: boolean
-	isPublished: boolean
-	ref: Ref<HTMLDivElement>
-	store: DialogStore
-	title: string
-	confirmDeleteArticle: () => void
-}
-
-export function DeleteArticleDialog({
-	confirmDeleteArticle,
-	failed,
-	isPending,
-	isPublished,
-	ref,
-	store,
-	title
-}: DeleteArticleDialogProps) {
-	return (
-		<ConfirmDialog
-			ref={ref}
-			store={store}
-			portal
-			unmountOnHide
-			title={isPublished ? 'Delete this article?' : 'Delete this draft?'}
-			description={
-				title ? (
-					<>
-						<span className="font-medium text-primary">{title}</span> will be permanently removed. This cannot be
-						undone.
-					</>
-				) : (
-					'This will be permanently removed. This cannot be undone.'
-				)
-			}
-			confirmLabel="Delete"
-			pendingLabel={isPending ? 'Deleting…' : null}
-			error={failed ? "Couldn't delete this article. Try again." : null}
-			onConfirm={confirmDeleteArticle}
-		/>
-	)
-}
-
-type DiscardPendingDialogProps = {
-	failed: boolean
-	isPending: boolean
-	store: DialogStore
-	onConfirm: () => void
-}
-
-export function DiscardPendingDialog({ failed, isPending, store, onConfirm }: DiscardPendingDialogProps) {
-	return (
-		<ConfirmDialog
-			store={store}
-			portal
-			unmountOnHide
-			title="Discard pending changes?"
-			description="Your pending edits are removed and the editor shows the live version again. Readers see no change."
-			confirmLabel="Discard changes"
-			cancelLabel="Keep changes"
-			pendingLabel={isPending ? 'Discarding…' : null}
-			error={failed ? "Couldn't discard the pending changes. Try again." : null}
-			onConfirm={onConfirm}
-		/>
 	)
 }

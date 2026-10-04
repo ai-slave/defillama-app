@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { useTeam } from './useTeam'
 
@@ -8,23 +9,26 @@ export function TeamInfoCard() {
 	const [isEditing, setIsEditing] = useState(false)
 	const errorId = useId()
 	const renameRef = useRef<HTMLButtonElement>(null)
-	const closeEditor = () => {
-		setIsEditing(false)
-		requestAnimationFrame(() => renameRef.current?.focus())
-	}
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success closes the editor.
+	const [error, setError] = useState<string | null>(null)
+	// The rename button replaces the editor, so it takes the focus the editor had.
+	const closeEditor = () =>
+		keepFocus(
+			() => setIsEditing(false),
+			() => renameRef.current
+		)
 
 	if (!team) return null
 
 	const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (updateTeamMutation.isPending) return
 		const name = (new FormData(event.currentTarget).get('name') as string).trim()
 		if (!name) return
-		updateTeamMutation.mutate({ name }, { onSuccess: closeEditor })
+		updateTeamMutation.mutate({ name }, { onSuccess: closeEditor, onError: (failure) => setError(failure.message) })
 	}
 
 	const startEditing = () => {
-		updateTeamMutation.reset()
+		setError(null)
 		setIsEditing(true)
 	}
 
@@ -53,7 +57,8 @@ export function TeamInfoCard() {
 								required
 								pattern=".*\S.*"
 								title="Enter a team name"
-								aria-describedby={updateTeamMutation.isError ? errorId : undefined}
+								aria-describedby={error ? errorId : undefined}
+								aria-invalid={error ? true : undefined}
 								onKeyDown={(e) => {
 									if (e.key === 'Escape' && !updateTeamMutation.isPending) closeEditor()
 								}}
@@ -100,9 +105,9 @@ export function TeamInfoCard() {
 				<p role="status" className="sr-only">
 					{updateTeamMutation.isPending ? 'Saving team name…' : ''}
 				</p>
-				{isEditing && updateTeamMutation.isError ? (
+				{isEditing && error ? (
 					<p id={errorId} role="alert" className="text-xs text-error">
-						{updateTeamMutation.error.message}
+						{error}
 					</p>
 				) : null}
 			</div>

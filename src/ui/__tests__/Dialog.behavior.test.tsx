@@ -12,6 +12,7 @@ import {
 	DialogBackButton,
 	DialogBody,
 	DialogCancelButton,
+	DialogCloseButton,
 	DialogDiscardGuard,
 	DialogFooter,
 	DialogHeader,
@@ -123,6 +124,46 @@ test('a pending dialog keeps focus on its back button and ignores it until the r
 	expect(back).toHaveBeenCalledOnce()
 })
 
+test('back asks a mounted discard guard first and leaves the step only on Discard', async () => {
+	function Harness() {
+		const [step, setStep] = useState<'choices' | 'form'>('form')
+		return (
+			<Dialog size="sm" open onClose={() => {}}>
+				{step === 'form' ? (
+					<>
+						<DialogHeader
+							title="New dashboard"
+							leading={<DialogBackButton label="Back to choices" onClick={() => setStep('choices')} />}
+						/>
+						<DialogDiscardGuard when title="Discard this dashboard?" description="It is not created." />
+					</>
+				) : (
+					<DialogHeader title="Choices" />
+				)}
+			</Dialog>
+		)
+	}
+	await act(async () => root.render(<Harness />))
+	await waitForUi(() => expect(document.querySelector('[aria-label="Back to choices"]')).not.toBeNull())
+	const named = (name: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
+	const heading = () => document.querySelector('[role="dialog"] h2')?.textContent
+
+	await act(async () => named('Back to choices').click())
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this dashboard?')
+	)
+	expect(heading()).toBe('New dashboard')
+	await act(async () => named('Keep editing').click())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	expect(heading()).toBe('New dashboard')
+
+	await act(async () => named('Back to choices').click())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeNull())
+	await act(async () => named('Discard').click())
+	await waitForUi(() => expect(heading()).toBe('Choices'))
+})
+
 test('the header subtitle is announced as the dialog description', async () => {
 	await act(async () =>
 		root.render(
@@ -199,48 +240,93 @@ test('a discard guard turns Escape, the ×, Cancel and guarded steps into its pr
 	await waitForUi(() => expect(container.textContent).toContain('Closed'))
 })
 
-test('Cancel inside a tab panel closes the dialog, asking first while a guard is mounted', async () => {
-	function Harness({ guarded }: { guarded: boolean }) {
-		const store = Ariakit.useDialogStore({ defaultOpen: true })
-		const open = Ariakit.useStoreState(store, 'open')
-		const [tab, setTab] = useState('table')
+test('a confirmed discard that unmounts its dialog leaves focus on the opener still on the page', async () => {
+	function Harness() {
+		const [open, setOpen] = useState(false)
 		return (
-			<>
-				{open ? null : <p>Closed</p>}
-				<Ariakit.DialogProvider store={store}>
-					<Dialog size="sm">
-						<Tabs value={tab} values={['chart', 'table']} onValueChange={setTab}>
-							<DialogHeader title="Add card" />
-							<Ariakit.TabList aria-label="Card type">
-								<TabTrigger value="chart">Chart</TabTrigger>
-								<TabTrigger value="table">Table</TabTrigger>
-							</Ariakit.TabList>
-							<TabPanel value="table">
-								<DialogDiscardGuard when={guarded} title="Discard this card?" description="It is not added." />
-								<DialogFooter dismiss={<DialogCancelButton />} />
-							</TabPanel>
-						</Tabs>
+			<main tabIndex={-1}>
+				<button type="button" onClick={() => setOpen(true)}>
+					Purchase seats
+				</button>
+				{open ? (
+					<Dialog size="sm" open onClose={() => setOpen(false)}>
+						<DialogHeader title="Checkout" />
+						<DialogBody>
+							<DialogDiscardGuard when title="Leave checkout?" description="The payment is not finished." />
+						</DialogBody>
 					</Dialog>
-				</Ariakit.DialogProvider>
-			</>
+				) : null}
+			</main>
 		)
 	}
-	const named = (name: string) =>
-		[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
-
-	await act(async () => root.render(<Harness guarded={false} />))
-	await act(async () => named('Cancel').click())
-	await waitForUi(() => expect(container.textContent).toContain('Closed'))
-
-	await act(async () => root.render(null))
-	await act(async () => root.render(<Harness guarded />))
-	await act(async () => named('Cancel').click())
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this card?')
+	await act(async () => root.render(<Harness />))
+	const opener = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(button) => button.textContent === 'Purchase seats'
+	)!
+	await act(async () => {
+		opener.focus()
+		opener.click()
+	})
+	const dialog = await waitForUi(() => document.querySelector<HTMLElement>('[role="dialog"]')!)
+	await act(async () =>
+		dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
-	await act(async () => named('Discard').click())
-	await waitForUi(() => expect(container.textContent).toContain('Closed'))
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeNull())
+	await act(async () =>
+		[...document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')]
+			.find((button) => button.textContent === 'Discard')!
+			.click()
+	)
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(opener))
 })
+
+test.each(['Cancel', 'Close dialog'])(
+	'%s inside a tab panel closes the dialog, asking first while a guard is mounted',
+	async (control) => {
+		function Harness({ guarded }: { guarded: boolean }) {
+			const store = Ariakit.useDialogStore({ defaultOpen: true })
+			const open = Ariakit.useStoreState(store, 'open')
+			const [tab, setTab] = useState('table')
+			return (
+				<>
+					{open ? null : <p>Closed</p>}
+					<Ariakit.DialogProvider store={store}>
+						<Dialog size="sm">
+							<Tabs value={tab} values={['chart', 'table']} onValueChange={setTab}>
+								<DialogHeader title="Add card" />
+								<Ariakit.TabList aria-label="Card type">
+									<TabTrigger value="chart">Chart</TabTrigger>
+									<TabTrigger value="table">Table</TabTrigger>
+								</Ariakit.TabList>
+								<TabPanel value="table">
+									<DialogDiscardGuard when={guarded} title="Discard this card?" description="It is not added." />
+									<DialogCloseButton />
+									<DialogFooter dismiss={<DialogCancelButton />} />
+								</TabPanel>
+							</Tabs>
+						</Dialog>
+					</Ariakit.DialogProvider>
+				</>
+			)
+		}
+		const named = (name: string) =>
+			[...document.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
+
+		await act(async () => root.render(<Harness guarded={false} />))
+		await act(async () => named(control).click())
+		await waitForUi(() => expect(container.textContent).toContain('Closed'))
+
+		await act(async () => root.render(null))
+		await act(async () => root.render(<Harness guarded />))
+		await act(async () => named(control).click())
+		await waitForUi(() =>
+			expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this card?')
+		)
+		await act(async () => named('Discard').click())
+		await waitForUi(() => expect(container.textContent).toContain('Closed'))
+	}
+)
 
 test('without a guard, a guarded step runs at once', async () => {
 	function Tab() {

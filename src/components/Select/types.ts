@@ -4,8 +4,6 @@ export type SelectOption = {
 	key: string
 	name: string
 	help?: string
-	isCustom?: boolean
-	customIndex?: number
 	icon?: ReactNode
 }
 

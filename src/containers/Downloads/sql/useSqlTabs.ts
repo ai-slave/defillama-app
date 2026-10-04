@@ -456,7 +456,7 @@ export interface NotebookCell {
 	type: NotebookCellType
 	source: string
 	chartConfig?: ChartConfig
-	preferredView?: ResultsView
+	view: ResultsView
 	result: QueryResult | null
 	running: boolean
 	runError: string | null
@@ -480,14 +480,15 @@ export interface QueryTab {
 	pendingTables: Array<PendingTable>
 	dirty: boolean
 	chartConfig?: ChartConfig
+	view: ResultsView
 	mode: TabMode
 	cells?: Array<NotebookCell>
 	activeCellId?: string
 	cellsDirty?: boolean
 }
 
-type PersistedCell = Pick<NotebookCell, 'id' | 'type' | 'source' | 'chartConfig' | 'preferredView'>
-type PersistedTab = Pick<QueryTab, 'id' | 'title' | 'titleAuto' | 'sql' | 'chartConfig'> & {
+type PersistedCell = Pick<NotebookCell, 'id' | 'type' | 'source' | 'chartConfig' | 'view'>
+type PersistedTab = Pick<QueryTab, 'id' | 'title' | 'titleAuto' | 'sql' | 'chartConfig' | 'view'> & {
 	mode?: TabMode
 	cells?: Array<PersistedCell>
 	activeCellId?: string
@@ -530,6 +531,7 @@ function blankTab(sql = ''): QueryTab {
 		pendingTables: [],
 		dirty: sql.length > 0,
 		chartConfig: undefined,
+		view: 'table',
 		mode: 'query'
 	}
 }
@@ -540,7 +542,7 @@ function makeCell(type: NotebookCellType, source = ''): NotebookCell {
 		type,
 		source,
 		chartConfig: undefined,
-		preferredView: undefined,
+		view: 'table',
 		result: null,
 		running: false,
 		runError: null,
@@ -567,6 +569,7 @@ function blankNotebookTab(initialCells?: Array<NotebookCell>, title = 'Untitled 
 		pendingTables: [],
 		dirty: false,
 		chartConfig: undefined,
+		view: 'table',
 		mode: 'notebook',
 		cells,
 		activeCellId: cells[0].id
@@ -587,7 +590,7 @@ function hydrateCell(p: PersistedCell): NotebookCell | null {
 		type,
 		source: p.source,
 		chartConfig: p.chartConfig,
-		preferredView: p.preferredView,
+		view: p.view === 'chart' ? 'chart' : 'table',
 		result: null,
 		running: false,
 		runError: null,
@@ -633,6 +636,7 @@ function hydrate(): TabsState {
 				pendingTables: [],
 				dirty: false,
 				chartConfig: p.chartConfig,
+				view: p.view === 'chart' ? 'chart' : 'table',
 				mode,
 				cells,
 				activeCellId
@@ -651,19 +655,20 @@ function writeUnsaved(unsavedRef: { current: TabsState | null }) {
 	if (!state) return
 	unsavedRef.current = null
 	const payload: PersistedState = {
-		tabs: state.tabs.map(({ id, title, titleAuto, sql, chartConfig, mode, cells, activeCellId }) => ({
+		tabs: state.tabs.map(({ id, title, titleAuto, sql, chartConfig, view, mode, cells, activeCellId }) => ({
 			id,
 			title,
 			titleAuto,
 			sql,
 			chartConfig,
+			view,
 			mode,
 			cells: cells?.map((c) => ({
 				id: c.id,
 				type: c.type,
 				source: c.source,
 				chartConfig: c.chartConfig,
-				preferredView: c.preferredView
+				view: c.view
 			})),
 			activeCellId
 		})),
@@ -930,6 +935,7 @@ export function useSqlTabs(): UseSqlTabsReturn {
 			const firstCell: NotebookCell = {
 				...makeCell('sql', current.sql),
 				chartConfig: current.chartConfig,
+				view: current.view,
 				dirty: current.sql.trim().length > 0
 			}
 			const nextTab: QueryTab = {

@@ -5,7 +5,6 @@ import { SignInDialog } from '~/containers/Subscription/SignInDialog'
 export function SignInModal({
 	text,
 	className,
-	hideWhenAuthenticated = true,
 	store,
 	prompt,
 	question,
@@ -13,7 +12,6 @@ export function SignInModal({
 }: {
 	text?: string
 	className?: string
-	hideWhenAuthenticated?: boolean
 	store?: Ariakit.DialogStore
 	prompt?: string
 	question?: string
@@ -28,7 +26,7 @@ export function SignInModal({
 
 	// Only the trigger hides; an open dialog stays until it closes, so a sign-in from another tab ends on its own step
 	// instead of vanishing while the new session's user loads.
-	const hideTrigger = loaders.userLoading || (hideWhenAuthenticated && isAuthenticated)
+	const hideTrigger = loaders.userLoading || isAuthenticated
 
 	return (
 		<>

@@ -60,19 +60,38 @@ afterEach(async () => {
 	document.body.innerHTML = ''
 })
 
-test('drafts that fail to load say so, and Try again lists them with focus kept in the search field', async () => {
-	session.serveInOrder(MINE, [fixtureStatus(500, { error: 'Database unavailable' })], DRAFTS)
+test('drafts that fail to load say so; Try again keeps the error while it waits, then lists them and focuses the search field', async () => {
+	const retry = Promise.withResolvers<Response>()
+	session.serveInOrder(MINE, [fixtureStatus(500, { error: 'Database unavailable' }), () => retry.promise], DRAFTS)
 	await click('Open')
 	await expectText("Couldn't load your drafts.")
 	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('No drafts yet')
-	await click('Try again')
+	const tryAgain = button('Try again')
+	await act(async () => {
+		tryAgain.focus()
+		tryAgain.click()
+	})
+	await act(async () => {
+		await waitForUi(() => expect(accessibleName(tryAgain)).toBe('Retrying…'))
+	})
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Couldn't load your drafts.")
+	expect(document.activeElement).toBe(tryAgain)
+
+	await act(async () => retry.resolve(Response.json(DRAFTS)))
 	await expectText('Weekly recap')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	expect(document.activeElement).toBe(document.querySelector('input'))
+	await act(async () => {
+		await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('input')))
+	})
 })
 
-test('a failed export stays in the dialog as a plain sentence instead of a toast', async () => {
-	session.serve({ [MINE]: DRAFTS, 'https://features.llama.fi/articles/a1/edit': fixtureStatus(500, { error: 'boom' }) })
+test('a failed export stays in the dialog as a plain sentence instead of a toast, also while its retry runs', async () => {
+	const retry = Promise.withResolvers<Response>()
+	session.serve({ [MINE]: DRAFTS })
+	session.serveInOrder('https://features.llama.fi/articles/a1/edit', [
+		fixtureStatus(500, { error: 'boom' }),
+		() => retry.promise
+	])
 	await click('Open')
 	await expectText('Weekly recap')
 	// A draft row reads its title, then its last edit date.
@@ -88,6 +107,12 @@ test('a failed export stays in the dialog as a plain sentence instead of a toast
 	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
 	expect(toastError).not.toHaveBeenCalled()
 	expect(button('Add to article').getAttribute('aria-busy')).toBeNull()
+	await click('Add to article')
+	await act(async () => {
+		await waitForUi(() => expect(button('Adding…').getAttribute('aria-busy')).toBe('true'))
+	})
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add to the article. Try again.")
+	await act(async () => retry.resolve(fixtureStatus(500, { error: 'boom' })()))
 })
 
 test('without a target the add button says why it is unavailable', async () => {
@@ -97,4 +122,23 @@ test('without a target the add button says why it is unavailable', async () => {
 	expect(button('Add to article').disabled).toBe(true)
 	await click('Create new article')
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Enter a title for the new article.')
+})
+
+test('while an export runs, the target cannot change under it', async () => {
+	const edit = Promise.withResolvers<Response>()
+	session.serve({ [MINE]: DRAFTS, 'https://features.llama.fi/articles/a1/edit': () => edit.promise })
+	await click('Open')
+	await expectText('Weekly recap')
+	const draft = [...document.querySelectorAll('button')].find((el) => accessibleName(el).startsWith('Weekly recap'))!
+	await act(async () => draft.click())
+	await click('Add to article')
+	await act(async () => {
+		await waitForUi(() => expect(button('Adding…').getAttribute('aria-busy')).toBe('true'))
+	})
+	// A browser disables every control inside a disabled fieldset; happy-dom does not compute that, so read it the same way.
+	const locked = (control: HTMLElement) =>
+		control.matches(':disabled') || control.closest('fieldset[disabled]') !== null
+	expect(locked(button('Create new article'))).toBe(true)
+	expect(locked(draft)).toBe(true)
+	await act(async () => edit.resolve(fixtureStatus(500, { error: 'boom' })()))
 })

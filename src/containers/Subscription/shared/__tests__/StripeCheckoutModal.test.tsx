@@ -330,9 +330,11 @@ test('a succeeded upgrade payment stays locked while it leaves for the next page
 	}
 })
 
-test('a declined upgrade payment shows the failure inline and keeps that payment open to pay again', async () => {
+test('a declined upgrade payment shows the failure inline and keeps it on screen while the payment is retried', async () => {
 	session.serve({ '/subscription/create': paidUpgrade })
-	stripe.confirmPayment.mockResolvedValue({ paymentIntent: { status: 'requires_payment_method' } })
+	stripe.confirmPayment
+		.mockResolvedValueOnce({ paymentIntent: { status: 'requires_payment_method' } })
+		.mockReturnValueOnce(new Promise(() => {}))
 	const caller = await mountCaller(upgrade)
 	try {
 		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
@@ -345,6 +347,10 @@ test('a declined upgrade payment shows the failure inline and keeps that payment
 		expect(JSON.parse(localStorage.getItem(pendingKey)!)).toMatchObject({ clientSecret: paidUpgrade.clientSecret })
 		await pay()
 		await waitForUi(() => expect(stripe.confirmPayment).toHaveBeenCalledTimes(2))
+		expect(buttonNamed('Processing…')!.getAttribute('aria-busy')).toBe('true')
+		expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe(
+			'Payment failed. Use a different payment method and try again.'
+		)
 	} finally {
 		await caller.cleanup()
 	}
@@ -721,6 +727,27 @@ test.each([
 	try {
 		await waitForUi(() => expect(buttonNamed('Complete upgrade')).toBeTruthy())
 		expect(dialog()!.textContent.includes('Upgrading turns extra usage charges back on')).toBe(warns)
+	} finally {
+		await caller.cleanup()
+	}
+})
+
+test('a failed checkout keeps its error on screen while Try again runs', async () => {
+	let answer!: (response: Response) => void
+	session.serveInOrder('/subscription/create', [
+		fixtureStatus(500, { error: 'Checkout unavailable' }),
+		() => new Promise<Response>((resolve) => (answer = resolve))
+	])
+	const caller = await mountCaller()
+	try {
+		await waitForUi(() => expect(buttonNamed('Try again')).toBeTruthy())
+		await act(async () => buttonNamed('Try again')!.click())
+		await waitForUi(() => expect(answer).toBeTypeOf('function'))
+
+		expect(dialog()?.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable')
+		expect(buttonNamed('Retrying…')).toBeTruthy()
+		await act(async () => answer(Response.json({ clientSecret: 'cs_fixture' })))
+		await waitForUi(() => expect(dialog()?.textContent).toContain('Payment fields'))
 	} finally {
 		await caller.cleanup()
 	}

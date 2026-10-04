@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
@@ -11,6 +11,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Skeleton } from '~/ui/Skeleton'
+import { queryReadFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
 import { useProjectSessions } from './hooks'
@@ -47,14 +48,16 @@ export function ProjectSidebarRow({
 	deleteFinalFocus
 }: ProjectSidebarRowProps) {
 	const renameStore = Ariakit.useDialogStore()
-	const deleteStore = Ariakit.useDialogStore()
+	const [confirmDelete, setConfirmDelete] = useState(false)
 	const projectMenuRef = useRef<HTMLButtonElement>(null)
+	const deleteReturnFocus = useRef<HTMLElement | null>(null)
 	const isActiveRef = useRef(isActive)
 	useLayoutEffect(() => {
 		isActiveRef.current = isActive
 	}, [isActive])
 	const router = useRouter()
 	const projectSessions = useProjectSessions(isExpanded ? project.id : null)
+	const sessionsFailed = queryReadFailed(projectSessions)
 	const activeProjectSessions = projectSessions.data
 	const visibleProjectSessions = useMemo(
 		() => orderVisibleProjectSessions(activeProjectSessions, currentSessionId ?? null, 5),
@@ -131,7 +134,14 @@ export function ProjectSidebarRow({
 								<Icon name="pencil" height={14} width={14} />
 								Rename project
 							</MenuItem>
-							<MenuItem onClick={deleteStore.show} className="text-error!">
+							<MenuItem
+								onClick={() => {
+									// A cancel returns to the menu that opened the confirmation.
+									deleteReturnFocus.current = projectMenuRef.current
+									setConfirmDelete(true)
+								}}
+								className="text-error!"
+							>
 								<Icon name="trash-2" height={14} width={14} />
 								Delete project
 							</MenuItem>
@@ -139,14 +149,14 @@ export function ProjectSidebarRow({
 					</Ariakit.MenuProvider>
 				</span>
 			</div>
-			{isExpanded && projectSessions.error ? (
+			{isExpanded && sessionsFailed ? (
 				<RetryNotice
 					message="Couldn't load project chats."
 					retrying={projectSessions.isFetching}
 					onRetry={() => void projectSessions.refetch()}
 				/>
 			) : null}
-			{isExpanded && projectSessions.isLoading ? (
+			{isExpanded && !sessionsFailed && projectSessions.isLoading ? (
 				<div role="status" aria-label="Loading project chats" className="py-2">
 					<Skeleton className="h-3 w-full" />
 				</div>
@@ -182,16 +192,20 @@ export function ProjectSidebarRow({
 					) : null}
 				</ul>
 			) : null}
-			<CreateProjectModal dialogStore={renameStore} mode="rename" project={project} finalFocus={projectMenuRef} />
-			<DeleteProjectModal
-				dialogStore={deleteStore}
-				project={project}
-				finalFocus={deleteFinalFocus}
-				onDeleted={() => {
-					// A completed deletion must not replace a chat opened while the request was running.
-					if (isActiveRef.current) void router.push('/ai/projects')
-				}}
-			/>
+			<CreateProjectModal dialogStore={renameStore} project={project} finalFocus={projectMenuRef} />
+			{confirmDelete ? (
+				<DeleteProjectModal
+					project={project}
+					finalFocus={deleteReturnFocus}
+					onClose={() => setConfirmDelete(false)}
+					onDeleted={() => {
+						// The deleted project's row leaves with its menu; the section's New project takes focus instead.
+						deleteReturnFocus.current = deleteFinalFocus.current
+						// A completed deletion must not replace a chat opened while the request was running.
+						if (isActiveRef.current) void router.push('/ai/projects')
+					}}
+				/>
+			) : null}
 		</>
 	)
 }

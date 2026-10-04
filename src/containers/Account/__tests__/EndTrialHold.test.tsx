@@ -163,8 +163,11 @@ test.each([
 	expect(endTrialPosts()).toBe(1)
 })
 
-test('an upgrade the server refuses leaves the button free to try again', async () => {
-	session.serve({ [END_TRIAL]: fixtureStatus(400, { message: 'No active trial subscription' }) })
+test('an upgrade the server refuses leaves the button free to try again, and its reason stays while the retry runs', async () => {
+	session.serveInOrder(END_TRIAL, [
+		fixtureStatus(400, { message: 'No active trial subscription' }),
+		() => new Promise<Response>(() => {})
+	])
 	await render()
 	await waitForUi(() => expect(button('Upgrade to Pro')).toBeDefined())
 	await act(async () => button('Upgrade to Pro')!.click())
@@ -175,4 +178,8 @@ test('an upgrade the server refuses leaves the button free to try again', async 
 		expect(document.querySelector('[role=alertdialog] [role=alert]')?.textContent).toBe('No active trial subscription')
 	)
 	expect(button('Confirm & upgrade now')!.disabled).toBe(false)
+
+	await act(async () => button('Confirm & upgrade now')!.click())
+	await waitForUi(() => expect(button('Processing…')!.getAttribute('aria-busy')).toBe('true'))
+	expect(document.querySelector('[role=alertdialog] [role=alert]')?.textContent).toBe('No active trial subscription')
 })

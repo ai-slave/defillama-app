@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MemoriesResponse, SkillsResponse } from '~/containers/LlamaAI/api/agentHome'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
 import { AGENT_HOME_MEMORIES_KEY, AGENT_HOME_SKILLS_KEY } from '~/containers/LlamaAI/hooks/useAgentHomeData'
-import type { LlamaAISettings, LlamaAISettingsActions } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
+import type { LlamaAISettings, SaveLlamaAISettings } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import type {
 	WebMobilePreference,
 	WebMobilePushEnabledMutation
@@ -63,20 +63,21 @@ const settings: LlamaAISettings = {
 	spendCapPerMessage: 0.5
 }
 
+const SIGNED_OUT: WebMobilePreference = { kind: 'signed-out' }
+
 describe('SettingsModal instructions', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let dialogStore: Ariakit.DialogStore
-	let setCustomInstructions: ReturnType<typeof vi.fn<(value: string) => Promise<boolean>>>
+	let saveSettings: ReturnType<typeof vi.fn<SaveLlamaAISettings>>
 	let mutateMobileNotifications: ReturnType<
 		typeof vi.fn<(enabled: boolean) => Promise<{ available: boolean; enabled: boolean }>>
 	>
 	let setMobileNotifications: WebMobilePushEnabledMutation
-	let actions: LlamaAISettingsActions
 
 	function Harness({
 		currentSettings = settings,
-		mobileNotificationPreference
+		mobileNotificationPreference = SIGNED_OUT
 	}: {
 		currentSettings?: LlamaAISettings
 		mobileNotificationPreference?: WebMobilePreference
@@ -87,7 +88,13 @@ describe('SettingsModal instructions', () => {
 				<SettingsModal
 					dialogStore={dialogStore}
 					settings={currentSettings}
-					actions={actions}
+					saveSettings={saveSettings}
+					availableModels={[]}
+					availableEfforts={[]}
+					telegramStatus={null}
+					isSettingsLoading={false}
+					initialState={null}
+					onInitialStateConsumed={() => {}}
 					mobileNotificationPreference={mobileNotificationPreference}
 					setMobileNotificationEnabled={setMobileNotifications}
 				/>
@@ -97,26 +104,13 @@ describe('SettingsModal instructions', () => {
 
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		setCustomInstructions = vi.fn(async () => true)
+		saveSettings = vi.fn(async () => true)
 		mutateMobileNotifications = vi.fn(async (enabled: boolean) => ({ available: true, enabled }))
 		setMobileNotifications = {
 			mutateAsync: mutateMobileNotifications,
 			isPending: false,
 			error: null
 		} as WebMobilePushEnabledMutation
-		actions = {
-			setCustomInstructions,
-			setEnableMemory: vi.fn(async () => true),
-			setEnablePremiumTools: vi.fn(async () => true),
-			setHackerMode: vi.fn(async () => true),
-			setModel: vi.fn(async () => true),
-			setEffort: vi.fn(async () => true),
-			setEnableSoundNotifications: vi.fn(async () => true),
-			setEnterToSend: vi.fn(async () => true),
-			setAdvancedProvenance: vi.fn(async () => true),
-			setShowBalanceInSidebar: vi.fn(async () => true),
-			setSpendCapPerMessage: vi.fn(async () => true)
-		}
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -326,6 +320,22 @@ describe('SettingsModal instructions', () => {
 		await settle(() => expect(document.body.textContent).toContain('Archived (1)'))
 		await settle(() => expect(document.activeElement).toBe(next))
 	})
+	test('retrying a failed archive keeps its error on screen while the retry runs', async () => {
+		const archives: Array<() => Response | Promise<Response>> = [offline, () => new Promise<Response>(() => {})]
+		session.serve({
+			[`${AGENT_HOME}/skills`]: () => Response.json({ ...emptySkills, active: [research] }),
+			[`${AGENT_HOME}/skills/Research`]: () => archives.shift()!()
+		})
+		await openMemory()
+		await settle(() => expect(buttonNamed('Archive')).toBeDefined())
+		await press(buttonNamed('Archive')!)
+		await settle(() => expect(buttonNamed('Try again')).toBeDefined())
+		const retry = buttonNamed('Try again')!
+		await press(retry)
+
+		await settle(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+		expect(retry.closest('[role="alert"]')?.textContent).toContain("Couldn't archive this skill.")
+	})
 	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
 		await act(async () => change('Keep this draft'))
 		const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
@@ -357,28 +367,28 @@ describe('SettingsModal instructions', () => {
 
 	test('saves once when blur and dialog close happen together', async () => {
 		let resolveSave: ((accepted: boolean) => void) | null = null
-		setCustomInstructions.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveSave = resolve)))
+		saveSettings.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveSave = resolve)))
 		await act(async () => change('Updated instructions'))
 		await act(async () => {
 			textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
 			dialogStore.hide()
 		})
 
-		expect(setCustomInstructions).toHaveBeenCalledTimes(1)
-		expect(setCustomInstructions).toHaveBeenCalledWith('Updated instructions')
+		expect(saveSettings).toHaveBeenCalledTimes(1)
+		expect(saveSettings).toHaveBeenCalledWith({ customInstructions: 'Updated instructions' })
 		await act(async () => resolveSave?.(true))
 	})
 
 	test('submits a newer draft before an earlier save settles', async () => {
 		let resolveFirstSave: ((accepted: boolean) => void) | null = null
-		setCustomInstructions.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveFirstSave = resolve)))
+		saveSettings.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveFirstSave = resolve)))
 		await act(async () => change('First draft'))
 		await act(async () => textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
 		await act(async () => change('Latest draft'))
 		await act(async () => textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
 
-		expect(setCustomInstructions).toHaveBeenCalledTimes(2)
-		expect(setCustomInstructions).toHaveBeenLastCalledWith('Latest draft')
+		expect(saveSettings).toHaveBeenCalledTimes(2)
+		expect(saveSettings).toHaveBeenLastCalledWith({ customInstructions: 'Latest draft' })
 		await act(async () => resolveFirstSave?.(true))
 	})
 
@@ -389,8 +399,8 @@ describe('SettingsModal instructions', () => {
 			await Promise.resolve()
 		})
 
-		expect(setCustomInstructions).toHaveBeenCalledTimes(1)
-		expect(setCustomInstructions).toHaveBeenCalledWith('Escape-safe instructions')
+		expect(saveSettings).toHaveBeenCalledTimes(1)
+		expect(saveSettings).toHaveBeenCalledWith({ customInstructions: 'Escape-safe instructions' })
 	})
 
 	test('does not replace a dirty draft with a settings refresh', async () => {
@@ -411,13 +421,13 @@ describe('SettingsModal instructions', () => {
 	})
 
 	test('keeps a failed save dirty and retries it', async () => {
-		setCustomInstructions.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+		saveSettings.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
 		await act(async () => change('Retry me'))
 		await act(async () => textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
 
-		expect(setCustomInstructions).toHaveBeenCalledTimes(1)
+		expect(saveSettings).toHaveBeenCalledTimes(1)
 		await act(async () => textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		expect(setCustomInstructions).toHaveBeenCalledTimes(2)
+		expect(saveSettings).toHaveBeenCalledTimes(2)
 	})
 
 	test('clearing a draft that leaves nothing to clear returns focus to the field', async () => {
@@ -440,14 +450,28 @@ describe('SettingsModal instructions', () => {
 			clearButton?.focus()
 			clearButton?.click()
 		})
+		await act(async () => buttonNamed('Clear', confirmation()!)!.click())
 
-		expect(setCustomInstructions).toHaveBeenCalledTimes(1)
-		expect(setCustomInstructions).toHaveBeenCalledWith('')
+		expect(saveSettings).toHaveBeenCalledTimes(1)
+		expect(saveSettings).toHaveBeenCalledWith({ customInstructions: '' })
+	})
+
+	test('clearing saved instructions asks first, and Cancel keeps them', async () => {
+		await press(buttonNamed('Clear')!)
+		expect(confirmation()?.textContent).toContain('Clear your instructions?')
+		await act(async () => buttonNamed('Cancel', confirmation()!)!.click())
+		await settle(() => expect(confirmation()).toBeNull())
+		expect(textarea().value).toBe('Saved instructions')
+		expect(saveSettings).not.toHaveBeenCalled()
+		await press(buttonNamed('Clear')!)
+		await act(async () => buttonNamed('Clear', confirmation()!)!.click())
+		expect(saveSettings).toHaveBeenCalledExactlyOnceWith({ customInstructions: '' })
+		await settle(() => expect(document.activeElement).toBe(textarea()))
 	})
 
 	test('keeps the submitted draft when reopened before props catch up', async () => {
 		let resolveSave: ((accepted: boolean) => void) | null = null
-		setCustomInstructions.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveSave = resolve)))
+		saveSettings.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveSave = resolve)))
 		await act(async () => change('Locally submitted'))
 		await act(async () => dialogStore.hide())
 		await act(async () => dialogStore.show())
@@ -536,7 +560,7 @@ describe('SettingsModal instructions', () => {
 	})
 
 	test('a refused setting save says so inside the dialog', async () => {
-		actions.setEnterToSend = vi.fn(async () => false)
+		saveSettings.mockResolvedValue(false)
 		await act(async () => buttonNamed('App')!.click())
 		await act(async () => document.querySelector<HTMLInputElement>('[aria-label="Enter to send"]')!.click())
 
@@ -546,7 +570,7 @@ describe('SettingsModal instructions', () => {
 
 	test('a save refused after closing and reopening still says so in the reopened dialog', async () => {
 		const pendingSave = Promise.withResolvers<boolean>()
-		actions.setEnterToSend = vi.fn(() => pendingSave.promise)
+		saveSettings.mockImplementation(() => pendingSave.promise)
 		await act(async () => buttonNamed('App')!.click())
 		await act(async () => document.querySelector<HTMLInputElement>('[aria-label="Enter to send"]')!.click())
 		await act(async () => dialogStore.hide())
@@ -559,7 +583,7 @@ describe('SettingsModal instructions', () => {
 
 	test('Save shows its progress, and a refused save keeps the dialog open with its error', async () => {
 		const firstSave = Promise.withResolvers<boolean>()
-		setCustomInstructions.mockImplementationOnce(() => firstSave.promise).mockResolvedValueOnce(false)
+		saveSettings.mockImplementationOnce(() => firstSave.promise).mockResolvedValueOnce(false)
 		await act(async () => change('Answer in bullet points'))
 		await act(async () => buttonNamed('Save')!.click())
 		expect(buttonNamed('Saving…')).toBeDefined()
@@ -571,9 +595,24 @@ describe('SettingsModal instructions', () => {
 		await act(async () => {
 			textarea().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true }))
 		})
-		await settle(() => expect(setCustomInstructions).toHaveBeenCalledTimes(2))
+		await settle(() => expect(saveSettings).toHaveBeenCalledTimes(2))
 		expect(dialogStore.getState().open).toBe(true)
 		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+	})
+
+	test('a retried instructions save keeps its error on screen until the retry lands', async () => {
+		const retry = Promise.withResolvers<boolean>()
+		saveSettings.mockResolvedValueOnce(false).mockImplementationOnce(() => retry.promise)
+		await act(async () => change('Answer in bullet points'))
+		await act(async () => buttonNamed('Save')!.click())
+		await settle(() => expect(alertText()).toBe("Couldn't save your instructions. Try again."))
+
+		await act(async () => buttonNamed('Save')!.click())
+		expect(buttonNamed('Saving…')).toBeDefined()
+		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+
+		await act(async () => retry.resolve(true))
+		await settle(() => expect(alertText()).toBeUndefined())
 	})
 
 	test('Clear all asks first, keeps its progress and error in the confirmation, and closes once cleared', async () => {
@@ -624,7 +663,7 @@ describe('SettingsModal instructions', () => {
 
 	test('an older save of the same text never clears a newer draft', async () => {
 		const resolvers: Array<(accepted: boolean) => void> = []
-		setCustomInstructions.mockImplementation(() => new Promise<boolean>((resolve) => resolvers.push(resolve)))
+		saveSettings.mockImplementation(() => new Promise<boolean>((resolve) => resolvers.push(resolve)))
 		await act(async () => change('Lead with numbers'))
 		await act(async () => buttonNamed('Save')!.click())
 		await act(async () => change('Lead with charts'))
@@ -641,7 +680,10 @@ describe('SettingsModal instructions', () => {
 			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Lead with charts' }} />)
 		)
 
-		expect(setCustomInstructions.mock.calls).toEqual([['Lead with numbers'], ['Lead with charts']])
+		expect(saveSettings.mock.calls).toEqual([
+			[{ customInstructions: 'Lead with numbers' }],
+			[{ customInstructions: 'Lead with charts' }]
+		])
 		expect(textarea().value).toBe('Lead with numbers')
 		expect(buttonNamed('Save')).toBeDefined()
 	})
@@ -661,7 +703,7 @@ describe('SettingsModal instructions', () => {
 	})
 
 	test('restores the spend cap after a failed save', async () => {
-		actions.setSpendCapPerMessage = vi.fn(async () => false)
+		saveSettings.mockResolvedValue(false)
 		const capabilitiesTab = Array.from(document.querySelectorAll('button')).find(
 			(button) => button.textContent === 'Capabilities'
 		)
@@ -684,7 +726,7 @@ describe('SettingsModal instructions', () => {
 describe('SettingsModal initial tab', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let actions: LlamaAISettingsActions
+	let saveSettings: ReturnType<typeof vi.fn<SaveLlamaAISettings>>
 	let tabDialogStore: Ariakit.DialogStore
 
 	function Harness({
@@ -701,8 +743,14 @@ describe('SettingsModal initial tab', () => {
 				<SettingsModal
 					dialogStore={dialogStore}
 					settings={currentSettings}
-					actions={actions}
+					saveSettings={saveSettings}
+					availableModels={[]}
+					availableEfforts={[]}
+					telegramStatus={null}
+					isSettingsLoading={false}
 					initialState={initialState as never}
+					onInitialStateConsumed={() => {}}
+					mobileNotificationPreference={{ kind: 'signed-out' }}
 					setMobileNotificationEnabled={
 						{ mutateAsync: vi.fn(), isPending: false, error: null } as unknown as WebMobilePushEnabledMutation
 					}
@@ -713,19 +761,7 @@ describe('SettingsModal initial tab', () => {
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		actions = {
-			setCustomInstructions: vi.fn(async () => true),
-			setEnableMemory: vi.fn(async () => true),
-			setEnablePremiumTools: vi.fn(async () => true),
-			setHackerMode: vi.fn(async () => true),
-			setModel: vi.fn(async () => true),
-			setEffort: vi.fn(async () => true),
-			setEnableSoundNotifications: vi.fn(async () => true),
-			setEnterToSend: vi.fn(async () => true),
-			setAdvancedProvenance: vi.fn(async () => true),
-			setShowBalanceInSidebar: vi.fn(async () => true),
-			setSpendCapPerMessage: vi.fn(async () => true)
-		} as LlamaAISettingsActions
+		saveSettings = vi.fn(async () => true)
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -764,6 +800,17 @@ describe('SettingsModal initial tab', () => {
 
 		await act(async () => tab('App').click())
 		expect(openTabId()).toBe(tab('App').id)
+	})
+
+	test('a Telegram login link opens Integrations on the code field', async () => {
+		session.serve({
+			'https://ai.llama.fi/telegram/status': { link: { state: 'unlinked' }, pending: null },
+			'https://ai.llama.fi/slack/status': { links: [], pending: null }
+		})
+		await render({ tab: 'integrations', tgloginToken: 'token' })
+		await settle(() =>
+			expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))
+		)
 	})
 
 	// The lab tab exists only in dark mode, and these tests run in light mode.
@@ -813,6 +860,6 @@ describe('SettingsModal initial tab', () => {
 		expect(toggle.checked).toBe(saved)
 
 		await act(async () => toggle.click())
-		expect(actions.setShowBalanceInSidebar).toHaveBeenCalledWith(!saved)
+		expect(saveSettings).toHaveBeenCalledWith({ showBalanceInSidebar: !saved })
 	})
 })

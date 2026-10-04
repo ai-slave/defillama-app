@@ -1,61 +1,52 @@
 import type { UseMutationResult } from '@tanstack/react-query'
-import { useRef, type RefObject } from 'react'
+import { useRef, useState, type ComponentProps } from 'react'
 import toast from 'react-hot-toast'
 import { ConfirmDialog } from './ConfirmDialog'
 
-// Mount for one confirmation only. Request callbacks belong to that opening;
-// cache updates belong to the caller's mutation and survive closing the page.
+// Mount for one confirmation only. Request callbacks and the error belong to that opening; cache updates belong to
+// the caller's mutation and survive closing the page.
 export function ConfirmActionDialog<TData, TVariables>({
-	title,
-	description,
-	confirmLabel,
 	pendingLabel,
 	mutation,
 	variables,
 	onClose,
 	onSuccess,
-	finalFocus,
-	fallbackFocus
+	successMessage,
+	...props
 }: {
-	title: string
-	description: string
-	confirmLabel: string
 	pendingLabel: string
 	mutation: UseMutationResult<TData, Error, TVariables>
 	variables: TVariables
 	onClose: () => void
+	/** Runs after the dialog closes on success. Skipped when the dialog left the page first. */
 	onSuccess?: () => void
-	finalFocus?: RefObject<HTMLElement | null>
-	fallbackFocus?: RefObject<HTMLElement | null>
-}) {
+	/** A toast once the action succeeds, also when the dialog left the page before the request settled. */
+	successMessage?: string
+} & Omit<ComponentProps<typeof ConfirmDialog>, 'open' | 'store' | 'onClose' | 'pendingLabel' | 'error' | 'onConfirm'>) {
 	const dialogRef = useRef<HTMLDivElement>(null)
+	// Not the mutation's own error: that one clears when a retry starts, and it outlives this opening.
+	const [shownError, setShownError] = useState<string | null>(null)
 	return (
 		<ConfirmDialog
+			{...props}
 			ref={dialogRef}
 			open
 			onClose={onClose}
-			finalFocus={finalFocus}
-			autoFocusOnHide={(element) => {
-				if (element) return true
-				fallbackFocus?.current?.focus()
-				return false
-			}}
-			title={title}
-			description={description}
-			confirmLabel={confirmLabel}
 			pendingLabel={mutation.isPending ? pendingLabel : null}
-			error={mutation.error?.message}
+			error={shownError}
 			onConfirm={() => {
-				if (mutation.isPending) return
 				void mutation.mutateAsync(variables).then(
 					() => {
-						if (!dialogRef.current?.isConnected) return
-						onClose()
-						onSuccess?.()
+						if (dialogRef.current?.isConnected) {
+							onClose()
+							onSuccess?.()
+						}
+						if (successMessage) toast.success(successMessage)
 					},
 					(error: Error) => {
 						// The dialog shows the error while it is open; after it closes, only a toast can.
-						if (!dialogRef.current?.isConnected) toast.error(error.message)
+						if (dialogRef.current?.isConnected) setShownError(error.message)
+						else toast.error(error.message)
 					}
 				)
 			}}

@@ -73,7 +73,7 @@ describe('public UTR pages', () => {
 		).toContain('Token list unavailable')
 		expect(
 			renderPage(UniversalTokenRatingJoinPage, { exchangeOptions: [], marketMakerOptions: [], scoringConfig: null })
-		).toContain('Token to claim*')
+		).toContain('Token to claim')
 		expect(
 			renderPage(UniversalTokenRatingTokenPage, {
 				live: {

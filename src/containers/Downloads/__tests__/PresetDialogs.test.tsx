@@ -147,20 +147,24 @@ test('catalog navigation preserves visible search and category deselection witho
 	expect(document.querySelectorAll('[role="tabpanel"]')).toHaveLength(1)
 })
 
-test.each([
-	['Rename First preset', 'Enter'],
-	['Rename First preset', ' '],
-	['Delete First preset', 'Enter'],
-	['Delete First preset', ' ']
-])('%s keeps native %j activation so the key opens its dialog', async (name, key) => {
-	// happy-dom does not turn Enter/Space into a button click, so the row handler cancelling
-	// the keydown (which blocks that click in browsers) is the observable failure.
-	const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
-	await act(async () => {
-		button(name).focus()
-		button(name).dispatchEvent(event)
+test('a saved preset offers Run, Rename and Delete as separate buttons, none nested in another', async () => {
+	const run = button('Run preset First preset')
+	expect(run.tagName).toBe('BUTTON')
+	for (const name of ['Run preset First preset', 'Rename First preset', 'Delete First preset']) {
+		expect(button(name).parentElement!.closest('button, [role="button"]')).toBeNull()
+	}
+	expect(document.querySelectorAll('[aria-label="Rename First preset"]')).toHaveLength(1)
+})
+
+test('Clear all on the recent strip hands focus to the selected tab', async () => {
+	writeAppStorage({
+		...readAppStorage(),
+		RECENT_DOWNLOADS: [{ id: 'r', name: 'Recent run', kind: 'dataset', slug: 'protocols', columns: [], createdAt: 3 }]
 	})
-	expect(event.defaultPrevented).toBe(false)
+	await act(async () => root.render(catalog()))
+	await click(button('Clear all'))
+	await waitForUi(() => expect(container.textContent).not.toContain('Recent run'))
+	expect(document.activeElement).toBe(button('Saved'))
 })
 
 // Wired the way the preview modals save a preset.
@@ -170,11 +174,8 @@ function SaveHarness() {
 		<SavePresetDialog
 			suggestedName=""
 			existingNames={savedDownloads.map((preset) => preset.name)}
-			onSave={(name, replaceExisting) =>
-				saveDownload(
-					{ id: 'new', name, kind: 'dataset', slug: 'protocols', columns: [], createdAt: 3 },
-					{ replaceByName: replaceExisting }
-				)
+			onSave={(name) =>
+				saveDownload({ id: 'new', name, kind: 'dataset', slug: 'protocols', columns: [], createdAt: 3 })
 			}
 			onClose={() => {}}
 		/>

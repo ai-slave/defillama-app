@@ -103,7 +103,7 @@ test('signed out, attaching a file opens sign-in instead of adding an attachment
 
 test('a Research pick made while signed out is the mode the question is asked in after sign-in', async () => {
 	await composer()
-	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][aria-label="Research"]')!.click())
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][value="research"]')!.click())
 	await send('Write a report on restaking')
 	await signInDialog('Sign in to ask for free: “Write a report on restaking”')
 

@@ -14,6 +14,7 @@ import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 
 const RESEARCH_SEARCH_LIMIT = 10
 const LATEST_RESEARCH_LIMIT = 6
@@ -333,16 +334,19 @@ const SECTION_OPTIONS = SECTION_FILTERS.map((filter) => ({ value: filter.value ?
 
 function SearchResultsHeader({
 	data,
+	failed,
 	query,
 	section,
 	activeSection
 }: {
 	data: ResearchSearchResponse | undefined
+	/** The list below says the search failed; the count stays quiet instead of claiming one is running. */
+	failed: boolean
 	query: string
 	section: SearchContentType | null
 	activeSection: SectionFilter | undefined
 }) {
-	let resultCount = 'Searching…'
+	let resultCount = failed ? '' : 'Searching…'
 	if (data) {
 		resultCount = query
 			? `${formatNumber(data.totalItems)} ${data.totalItems === 1 ? 'result' : 'results'}`
@@ -364,7 +368,8 @@ function SearchResultsHeader({
 function SearchResults({
 	data,
 	isLoading,
-	error,
+	failed,
+	retrying,
 	query,
 	section,
 	activeSection,
@@ -374,7 +379,8 @@ function SearchResults({
 }: {
 	data: ResearchSearchResponse | undefined
 	isLoading: boolean
-	error: Error | null
+	failed: boolean
+	retrying: boolean
 	onRetry: () => void
 	query: string
 	section: SearchContentType | null
@@ -382,25 +388,25 @@ function SearchResults({
 	onSelectTopic: (query: string) => void
 	onSelectResult: () => void
 }) {
-	if (isLoading) {
-		return (
-			<div className="flex min-h-64 items-center justify-center" role="status" aria-live="polite">
-				<LoadingIndicator label="Searching Research and newsletters" />
-			</div>
-		)
-	}
-
-	if (error) {
+	if (failed) {
 		return (
 			<div className="p-2">
 				<InlineStatus variant="error">
 					<span className="flex flex-wrap items-center justify-between gap-2">
 						Couldn&rsquo;t load search results.
-						<Button type="button" size="sm" onClick={onRetry}>
+						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={onRetry}>
 							Try again
 						</Button>
 					</span>
 				</InlineStatus>
+			</div>
+		)
+	}
+
+	if (isLoading) {
+		return (
+			<div className="flex min-h-64 items-center justify-center" role="status" aria-live="polite">
+				<LoadingIndicator label="Searching Research and newsletters" />
 			</div>
 		)
 	}
@@ -450,12 +456,13 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 	const resultLimit = debouncedQuery ? RESEARCH_SEARCH_LIMIT : LATEST_RESEARCH_LIMIT
 	const activeSection = SECTION_FILTERS.find((filter) => filter.value === section)
 
-	const { data, isLoading, error, refetch } = useQuery({
+	const searchQuery = useQuery({
 		queryKey: ['research', 'search-dialog', debouncedQuery, section, resultLimit],
 		queryFn: () => searchResearchContent(debouncedQuery, section, resultLimit),
 		retry: false,
 		staleTime: 60_000
 	})
+	const { data, isLoading, isFetching, refetch } = searchQuery
 
 	return (
 		<>
@@ -481,12 +488,19 @@ function ResearchSearch({ onSelectResult }: { onSelectResult: () => void }) {
 					/>
 				</div>
 			</DialogToolbar>
-			<SearchResultsHeader data={data} query={debouncedQuery} section={section} activeSection={activeSection} />
+			<SearchResultsHeader
+				data={data}
+				failed={queryReadFailed(searchQuery)}
+				query={debouncedQuery}
+				section={section}
+				activeSection={activeSection}
+			/>
 			<DialogBody kind="list">
 				<SearchResults
 					data={data}
 					isLoading={isLoading}
-					error={error}
+					failed={queryReadFailed(searchQuery)}
+					retrying={isFetching}
 					query={debouncedQuery}
 					section={section}
 					activeSection={activeSection}

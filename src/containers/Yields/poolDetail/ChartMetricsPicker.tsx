@@ -1,5 +1,6 @@
 // "Add Metrics" picker: the shared metrics dialog, and the selected series as removable chips beside it.
 import { ChartMetricsDialog, type ChartMetricOption as SharedChartMetricOption } from '~/components/ChartMetricsDialog'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { SealGlyph } from '../Tables/Measured'
@@ -49,6 +50,9 @@ export function ChartMetricsPicker({
 					key={option.key}
 					type="button"
 					onClick={() => onToggle(option)}
+					// The chip leaves once the chart drops its series. It hands focus to the next chip, else the previous one,
+					// which for the first chip is the Add Metrics button.
+					ref={passFocusOnLeave((chip) => neighbourRowControl(chip, chip))}
 					className={metricChipStyles}
 					style={{ borderColor: option.color }}
 				>

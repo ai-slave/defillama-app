@@ -1,17 +1,19 @@
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { type UploadResult, type UploadScope, useImageUpload } from './useImageUpload'
 
 type Props = {
 	scope: UploadScope
 	articleId?: string | null
-	currentUrl?: string | null
+	currentUrl: string | null
 	onUploaded: (result: UploadResult) => void
-	onCleared?: () => void
+	onCleared: () => void
+	/** What the image is, lower case, e.g. "sponsor logo": it names every control. */
 	label: string
 	helperText?: string
-	previewShape?: 'square' | 'wide'
+	previewShape: 'square' | 'wide'
 }
 
 export function ImageUploadButton({
@@ -22,9 +24,11 @@ export function ImageUploadButton({
 	onCleared,
 	label,
 	helperText,
-	previewShape = 'wide'
+	previewShape
 }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null)
+	// The upload control that stays or appears once the image is removed.
+	const uploadRef = useRef<HTMLButtonElement>(null)
 	const { uploadFile, isUploading, errorMessage } = useImageUpload({ scope, articleId })
 
 	const handleFile = async (file: File | null | undefined) => {
@@ -42,6 +46,9 @@ export function ImageUploadButton({
 	) : null
 
 	const open = () => inputRef.current?.click()
+	// Remove leaves with the image, so the upload control takes its focus.
+	const clear = () => keepFocus(onCleared, () => uploadRef.current)
+	const name = label.toLowerCase()
 	const isSquare = previewShape === 'square'
 
 	return (
@@ -50,7 +57,7 @@ export function ImageUploadButton({
 				ref={inputRef}
 				type="file"
 				accept="image/png,image/jpeg,image/webp,image/gif"
-				className="sr-only"
+				hidden
 				onChange={(e) => handleFile(e.target.files?.[0])}
 			/>
 
@@ -61,7 +68,7 @@ export function ImageUploadButton({
 							type="button"
 							onClick={open}
 							disabled={isUploading}
-							aria-label="Replace avatar"
+							aria-label={`Replace ${name}`}
 							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{/* eslint-disable-next-line @next/next/no-img-element */}
@@ -87,11 +94,25 @@ export function ImageUploadButton({
 					)}
 					<div className="flex min-w-0 flex-col gap-2 pt-1">
 						<div className="flex flex-wrap gap-2">
-							<Button type="button" size="sm" onClick={open} pendingLabel={isUploading ? 'Uploading…' : null}>
-								{currentUrl ? 'Replace' : `Upload ${label.toLowerCase()}`}
+							<Button
+								ref={uploadRef}
+								type="button"
+								size="sm"
+								onClick={open}
+								pendingLabel={isUploading ? 'Uploading…' : null}
+								aria-label={currentUrl ? `Replace ${name}` : undefined}
+							>
+								{currentUrl ? 'Replace' : `Upload ${name}`}
 							</Button>
-							{currentUrl && onCleared ? (
-								<Button type="button" size="sm" variant="ghost" disabled={isUploading} onClick={onCleared}>
+							{currentUrl ? (
+								<Button
+									type="button"
+									size="sm"
+									variant="ghost"
+									disabled={isUploading}
+									onClick={clear}
+									aria-label={`Remove ${name}`}
+								>
 									Remove
 								</Button>
 							) : null}
@@ -107,7 +128,7 @@ export function ImageUploadButton({
 								type="button"
 								onClick={open}
 								disabled={isUploading}
-								aria-label="Replace cover image"
+								aria-label={`Replace ${name}`}
 								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 disabled:cursor-not-allowed"
 							>
 								{/* eslint-disable-next-line @next/next/no-img-element */}
@@ -121,27 +142,37 @@ export function ImageUploadButton({
 								</span>
 							</button>
 							<div className="flex flex-wrap gap-2">
-								<Button type="button" size="sm" onClick={open} pendingLabel={isUploading ? 'Uploading…' : null}>
+								<Button
+									type="button"
+									size="sm"
+									onClick={open}
+									pendingLabel={isUploading ? 'Uploading…' : null}
+									aria-label={`Replace ${name}`}
+								>
 									Replace
 								</Button>
-								{onCleared ? (
-									<Button type="button" size="sm" variant="ghost" disabled={isUploading} onClick={onCleared}>
-										Remove
-									</Button>
-								) : null}
+								<Button
+									type="button"
+									size="sm"
+									variant="ghost"
+									disabled={isUploading}
+									onClick={clear}
+									aria-label={`Remove ${name}`}
+								>
+									Remove
+								</Button>
 							</div>
 						</div>
 					) : (
 						<button
+							ref={uploadRef}
 							type="button"
 							disabled={isUploading}
 							onClick={open}
 							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="image-plus" className="size-5" />
-							<span className="text-xs font-medium">
-								{isUploading ? 'Uploading…' : `Upload ${label.toLowerCase()}`}
-							</span>
+							<span className="text-xs font-medium">{isUploading ? 'Uploading…' : `Upload ${name}`}</span>
 						</button>
 					)}
 					{status}

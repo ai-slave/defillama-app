@@ -60,3 +60,28 @@ test('a failed copy explains itself inside the dialog instead of a toast', async
 	expect(copyButton().textContent).toBe('Copy code')
 	expect(toast.error).not.toHaveBeenCalled()
 })
+
+test('reopening keeps the chosen theme and drops the last copy failure', async () => {
+	const render = (open: boolean) =>
+		act(async () =>
+			root.render(
+				<EmbedSnippetDialog
+					open={open}
+					onClose={() => {}}
+					heading="Embed card"
+					snippetFor={(theme) => `<iframe ${theme}>`}
+				/>
+			)
+		)
+	writeText.mockRejectedValue(new Error('Denied'))
+	const light = Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent === 'Light')!
+	await act(async () => light.click())
+	await act(async () => copyButton().click())
+	await waitForUi(() => expect(document.body.querySelector('[role="alert"]')).not.toBeNull())
+
+	await render(false)
+	await waitForUi(() => expect(document.body.querySelector('[role="dialog"]')).toBeNull())
+	await render(true)
+	await waitForUi(() => expect(document.body.querySelector('textarea')?.value).toBe('<iframe light>'))
+	expect(document.body.querySelector('[role="alert"]')).toBeNull()
+})

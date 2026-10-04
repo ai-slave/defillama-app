@@ -290,3 +290,23 @@ test('focus lands on the outcome when the claim removes the button that had it',
 	await waitForText('ABCD1234')
 	expect(document.activeElement).toBe(document.querySelector('output'))
 })
+
+test('a failed claim keeps its error on screen while the retry runs', async () => {
+	await render()
+	await openAndVerify()
+	vi.mocked(fetch).mockResolvedValueOnce(new Response('<html>Unavailable</html>', { status: 502 }))
+	await click('Reveal my code')
+	await waitForText('Invite codes are temporarily unavailable. Please try again later.')
+
+	const retry = Promise.withResolvers<Response>()
+	vi.mocked(fetch).mockReturnValueOnce(retry.promise)
+	await click('Verify qfex_invite')
+	await click('Try again')
+	await waitForUi(() => expect(document.querySelector('[aria-busy="true"]')).not.toBeNull())
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+		'Invite codes are temporarily unavailable. Please try again later.'
+	)
+
+	await act(async () => retry.resolve(Response.json(claimResponse)))
+	await waitForText('ABCD1234')
+})

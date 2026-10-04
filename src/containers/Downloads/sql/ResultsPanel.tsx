@@ -1,5 +1,4 @@
 import { TabList } from '@ariakit/react'
-import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
@@ -20,11 +19,10 @@ interface ResultsPanelProps {
 	busyLabel?: string | null
 	chartConfig: ChartConfig | undefined
 	onChartConfigChange: (next: ChartConfig | null) => void
-	preferredView?: ResultsView
-	onConsumePreferredView?: () => void
 	durationMs?: number | null
-	view?: ResultsView
-	onViewChange?: (next: ResultsView) => void
+	/** The host keeps the view with its result (a tab, a notebook cell, a dashboard card), so it outlives a rerun. */
+	view: ResultsView
+	onViewChange: (next: ResultsView) => void
 	viewToggleLabel?: string
 }
 
@@ -34,35 +32,15 @@ export function ResultsPanel({
 	busyLabel,
 	chartConfig,
 	onChartConfigChange,
-	preferredView,
-	onConsumePreferredView,
 	durationMs,
-	view: controlledView,
+	view,
 	onViewChange,
 	viewToggleLabel
 }: ResultsPanelProps) {
-	const [internalView, setInternalView] = useState<ResultsView>(preferredView ?? 'table')
-	const isControlled = controlledView !== undefined
-	const view = isControlled ? controlledView : internalView
-	const setViewState = isControlled ? (onViewChange ?? (() => {})) : setInternalView
 	const setView = (next: ResultsView) => {
 		// Picking the chart view stores its default config, so a share link made from it opens on the chart.
 		if (next === 'chart' && !chartConfig && result) onChartConfigChange(defaultChartConfig(classifyColumns(result)))
-		setViewState(next)
-	}
-
-	const resultId = result ? `${result.columns.map((c) => c.name).join('|')}:${result.rows.length}` : ''
-	const [prevResultId, setPrevResultId] = useState(resultId)
-	if (prevResultId !== resultId) {
-		setPrevResultId(resultId)
-		if (!isControlled) {
-			if (preferredView) {
-				setInternalView(preferredView)
-				onConsumePreferredView?.()
-			} else {
-				setInternalView('table')
-			}
-		}
+		onViewChange(next)
 	}
 
 	const busy = running || !!busyLabel

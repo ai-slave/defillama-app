@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { ANNOUNCEMENT_DISMISSALS_COOKIE_NAME } from '~/utils/cookies'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { LlamaAIMobileAppGate } from '../LlamaAIMobileAppGate'
 
 const viewport = { mobile: true }
@@ -59,6 +60,24 @@ test.each(['Close', 'Continue on the web', 'Download on the App Store'])(
 		expect(host.textContent).toContain('Chat content')
 	}
 )
+
+test('leaving the promotion hands focus to the page instead of dropping it', async () => {
+	await act(async () =>
+		root.render(
+			<main>
+				<LlamaAIMobileAppGate>Chat content</LlamaAIMobileAppGate>
+			</main>
+		)
+	)
+	const continueButton = [...document.querySelectorAll('button')].find(
+		(button) => button.textContent === 'Continue on the web'
+	)!
+	await act(async () => continueButton.focus())
+	await act(async () => continueButton.click())
+	await act(async () => {
+		await waitForUi(() => expect(document.activeElement).toBe(host.querySelector('main')))
+	})
+})
 
 test('desktop visitors see chat without dismissing the promotion', async () => {
 	viewport.mobile = false

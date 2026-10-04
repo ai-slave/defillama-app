@@ -1,13 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 
 function CheckIcon() {
 	return (
@@ -465,23 +460,18 @@ export default function SheetsContainer() {
 	const subscribeModalStore = Ariakit.useDialogStore()
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 
-	const onGoogleSheetsButtonClick = () => {
+	// Opens the add-on's marketplace page for subscribers, else the upgrade path.
+	const openAddOn = (url: string) => {
 		if (!isAuthenticated || !hasActiveSubscription) {
 			setSignupSource('sheets')
 			subscribeModalStore.show()
 			return
 		}
-		window.open('https://workspace.google.com/marketplace/app/defillama_sheets/571407189628', '_blank')
+		window.open(url, '_blank')
 	}
-
-	const onExcelButtonClick = () => {
-		if (!isAuthenticated || !hasActiveSubscription) {
-			setSignupSource('sheets')
-			subscribeModalStore.show()
-			return
-		}
-		window.open('https://marketplace.microsoft.com/en-us/product/WA200009711', '_blank')
-	}
+	const onGoogleSheetsButtonClick = () =>
+		openAddOn('https://workspace.google.com/marketplace/app/defillama_sheets/571407189628')
+	const onExcelButtonClick = () => openAddOn('https://marketplace.microsoft.com/en-us/product/WA200009711')
 
 	return (
 		<>
@@ -575,9 +565,7 @@ export default function SheetsContainer() {
 			<SectionSeparator />
 			<TemplatesSection />
 
-			<Suspense fallback={null}>
-				<SubscribeProModal dialogStore={subscribeModalStore} />
-			</Suspense>
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</>
 	)
 }

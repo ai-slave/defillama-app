@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useRef } from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
+import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { Dashboard } from '../dashboardTypes'
@@ -19,8 +20,6 @@ export function EditDashboardButton({ href }: { href: string }) {
 				variant="primary"
 				icon={<Icon name="pencil" height={16} width={16} />}
 				loading={navigation.isPending}
-				accessibleWhenDisabled
-				disabled={navigation.isPending}
 				onClick={() => navigation.mutate()}
 			>
 				{navigation.isPending ? 'Opening editor…' : 'Edit'}
@@ -93,6 +92,9 @@ export function CopyDashboardButton({
 	)
 }
 
+// A finished undo removes the button with the AI changes; focus that was on it goes to the page, not the body.
+const focusPageOnLeave = passFocusOnLeave(() => pageContent())
+
 export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void> }) {
 	const buttonRef = useRef<HTMLButtonElement>(null)
 	const undo = useMutation({
@@ -102,18 +104,14 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 		}
 	})
 	return (
-		<div className="flex min-w-0 flex-col gap-1">
+		<div ref={focusPageOnLeave} className="flex min-w-0 flex-col gap-1">
 			<ProButton
 				type="button"
 				variant="secondary"
 				icon={<Icon name="arrow-left" height={16} width={16} />}
 				loading={undo.isPending}
 				ref={buttonRef}
-				accessibleWhenDisabled
-				disabled={undo.isPending}
-				onClick={() => {
-					if (!undo.isPending) undo.mutate()
-				}}
+				onClick={() => undo.mutate()}
 				aria-label="Undo AI changes"
 			>
 				{undo.isPending ? 'Undoing…' : 'Undo AI changes'}

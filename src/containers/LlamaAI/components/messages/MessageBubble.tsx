@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState, type ComponentProps, type RefCallback } from 'react'
+import { Suspense, useMemo, useRef, useState, type ComponentProps, type RefCallback } from 'react'
 import { stepsForMessage } from '~/containers/LlamaAI/agentSteps'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertArtifact, AlertArtifactLoading } from '~/containers/LlamaAI/components/AlertArtifact'
@@ -29,6 +29,7 @@ import { readFilePreview, readUrlPreview, type AttachmentPreview } from '~/conta
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -431,15 +432,23 @@ function MessageBubbleContent({
 }) {
 	const [previewImage, setPreviewImage] = useState<string | null>(null)
 	const [pastedPreview, setPastedPreview] = useState<AttachmentPreview | null>(null)
-	const [isEditing, setIsEditing] = useState(false)
+	// The text being edited, or null while the message is not being edited.
+	const [editDraft, setEditDraft] = useState<string | null>(null)
+	const isEditing = editDraft !== null
+	const draftText = editDraft ?? ''
 	const [isSaving, setIsSaving] = useState(false)
-	const [draftText, setDraftText] = useState(message.content || '')
+	const editButtonRef = useRef<HTMLButtonElement>(null)
 	const hackerMode = useHackerMode()
 	const advancedProvenance = useAdvancedProvenance()
+	// Closing the editor removes the field and its buttons with focus; the Edit button takes it back.
+	const closeEditor = () =>
+		keepFocus(
+			() => setEditDraft(null),
+			() => editButtonRef.current
+		)
 	const handleCancelEdit = () => {
 		if (isSaving) return
-		setIsEditing(false)
-		setDraftText(message.content || '')
+		closeEditor()
 	}
 	const handleSaveEdit = async () => {
 		const next = draftText.trim()
@@ -449,7 +458,7 @@ function MessageBubbleContent({
 		const submitEdit = () => onEditMessage?.(message.id, next, message)
 		try {
 			await submitEdit()
-			setIsEditing(false)
+			closeEditor()
 		} catch {
 			// textarea stays open with draft preserved; parent rolled back state and surfaced an error
 		}
@@ -542,7 +551,7 @@ function MessageBubbleContent({
 					{isEditing ? (
 						<textarea
 							value={draftText}
-							onChange={(event) => setDraftText(event.target.value)}
+							onChange={(event) => setEditDraft(event.target.value)}
 							onKeyDown={(event) => {
 								if (event.key === 'Enter' && event.shiftKey !== enterToSend && !event.nativeEvent.isComposing) {
 									event.preventDefault()
@@ -593,10 +602,10 @@ function MessageBubbleContent({
 							size="sm"
 							variant="primary"
 							onClick={handleSaveEdit}
-							disabled={isSaving || !draftText.trim() || draftText.trim() === message.content?.trim()}
+							disabled={!draftText.trim() || draftText.trim() === message.content?.trim()}
+							pendingLabel={isSaving ? 'Saving…' : null}
 						>
-							{isSaving ? <LoadingSpinner size={12} /> : null}
-							{isSaving ? 'Saving…' : 'Save'}
+							Save
 						</Button>
 					</div>
 				) : hasControls ? (
@@ -619,10 +628,8 @@ function MessageBubbleContent({
 											size="sm"
 											variant="ghost"
 											square
-											onClick={() => {
-												setIsEditing(true)
-												setDraftText(message.content || '')
-											}}
+											ref={editButtonRef}
+											onClick={() => setEditDraft(message.content || '')}
 											aria-label="Edit message"
 										/>
 									}
@@ -760,6 +767,7 @@ function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 		<button
 			type="button"
 			onClick={toggleDashboardPanel}
+			aria-expanded={isDashboardPanelOpen}
 			className="my-2 flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface px-3 py-2.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 		>
 			<Icon name="layout-grid" className="size-4 shrink-0 text-link" />

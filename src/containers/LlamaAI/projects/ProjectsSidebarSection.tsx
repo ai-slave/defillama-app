@@ -12,6 +12,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
+import { queryReadFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { useProjectList } from './hooks'
 import { ProjectSidebarRow } from './ProjectSidebarRow'
@@ -52,7 +53,9 @@ export function ProjectsSidebarSection({
 	const isLocked = tier === 'free'
 	const createStore = Ariakit.useDialogStore()
 	const createButtonRef = useRef<HTMLButtonElement>(null)
-	const { data, isLoading, error, isFetching, refetch } = useProjectList(!isLocked)
+	const projectList = useProjectList(!isLocked)
+	const { data, isFetching, refetch } = projectList
+	const failed = queryReadFailed(projectList)
 	const projects = data ?? EMPTY_PROJECTS
 	const visible = useMemo(() => {
 		const next = projects.slice(0, VISIBLE_LIMIT)
@@ -127,10 +130,10 @@ export function ProjectsSidebarSection({
 						<span className="min-w-0 truncate">New project</span>
 					</Ariakit.DialogDisclosure>
 
-					{error ? (
+					{failed ? (
 						<RetryNotice message="Couldn't load projects." retrying={isFetching} onRetry={() => void refetch()} />
 					) : null}
-					{isLoading ? (
+					{projectList.isLoading && !failed ? (
 						<ul role="status" aria-label="Loading projects" className="flex flex-col">
 							{[0, 1, 2].map((i) => (
 								<li key={i} className="-mx-2 flex h-8 items-center gap-1.5 px-2 py-1.5">
@@ -140,7 +143,7 @@ export function ProjectsSidebarSection({
 							))}
 						</ul>
 					) : visible.length === 0 ? (
-						!error ? (
+						!failed ? (
 							<p className="px-2 py-1.5 body-sm text-tertiary">No projects yet</p>
 						) : null
 					) : (

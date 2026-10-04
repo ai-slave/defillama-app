@@ -13,6 +13,7 @@ export type CriteriaDrawerState = {
 	axis: 'disclosure' | 'performance'
 	criteria: Array<UtrCriterionBreakdown>
 	docs: Array<UtrCriterionDoc>
+	/** The criterion the sheet opens on; null opens on the list. */
 	activeKey: string | null
 }
 
@@ -47,7 +48,6 @@ type CriteriaDrawerProps = {
 	lastEditedAt?: string | null
 	disclosures?: UtrDisclosures | null
 	grading?: UtrGradingConfig | null
-	onSelect: (key: string) => void
 	onClose: () => void
 }
 
@@ -70,13 +70,13 @@ function CriteriaSheetContent({
 	assetLabel,
 	lastEditedAt,
 	disclosures,
-	grading,
-	onSelect
+	grading
 }: Omit<CriteriaDrawerProps, 'state' | 'onClose'> & { state: CriteriaDrawerState }) {
 	// Below md one pane shows at a time. Opening from a criterion lands on its detail.
 	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>(state.activeKey ? 'detail' : 'list')
+	const [activeKey, setActiveKey] = useState(state.activeKey)
 	const navRef = useRef<HTMLElement>(null)
-	const active = state.criteria.find((criterion) => criterion.key === state.activeKey) ?? state.criteria[0]
+	const active = state.criteria.find((criterion) => criterion.key === activeKey) ?? state.criteria[0]
 	const activeIndex = state.criteria.indexOf(active)
 	const doc = state.docs.find((entry) => entry.key === active.key) ?? null
 	const activeCopy = getCriterionDrawerCopy(state.axis, active.key, active.label, doc?.definition)
@@ -125,7 +125,7 @@ function CriteriaSheetContent({
 									type="button"
 									aria-current={current ? 'true' : undefined}
 									onClick={() => {
-										onSelect(criterion.key)
+										setActiveKey(criterion.key)
 										setNarrowPane('detail')
 									}}
 									className={`hover-wash flex min-h-11 cursor-pointer items-center rounded-md px-3 py-2 text-left body-md md:min-h-9 md:body-sm ${

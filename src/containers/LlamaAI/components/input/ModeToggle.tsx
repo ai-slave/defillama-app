@@ -78,7 +78,6 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 			options={[
 				{
 					value: 'quick',
-					ariaLabel: 'Quick',
 					label: (
 						<span className="flex items-center gap-1">
 							<Icon name="sparkles" height={14} width={14} />
@@ -89,7 +88,6 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 				},
 				{
 					value: 'fact_checked',
-					ariaLabel: 'Fact-checked',
 					label: (
 						<span className="flex items-center gap-1">
 							<Icon name="check" height={14} width={14} />
@@ -115,7 +113,6 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 				},
 				{
 					value: 'research',
-					ariaLabel: 'Research',
 					label: (
 						<span className="flex items-center gap-1">
 							<Icon name="search" height={14} width={14} />

@@ -121,3 +121,13 @@ test('arrow selection changes the request, All types restores mixed content, and
 	await click(trigger)
 	expect(radio('All types').getAttribute('aria-checked')).toBe('true')
 })
+
+test('a failed search does not claim to be searching', async () => {
+	http.serve({
+		[articlesUrl]: () => new Response('down', { status: 503 }),
+		'/api/public/research/newsletters': () => new Response('down', { status: 503 })
+	})
+	await click(container.querySelector<HTMLButtonElement>('button')!)
+	await waitForUi(() => expect(document.querySelector('[role="dialog"] [role="alert"]')).not.toBeNull())
+	expect(document.querySelector('[role="dialog"] [aria-live="polite"]')?.textContent).toBe('')
+})

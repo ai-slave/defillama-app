@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { mapWithConcurrency } from '../async'
+import { handleSimpleFetchResponse, httpErrorMessage, mapWithConcurrency } from '../async'
 
 const jsonResponse = (value: unknown) =>
 	new Response(JSON.stringify(value), {
@@ -189,5 +189,32 @@ describe('fetchJson singleflight', () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SLOW_TIMEOUT_MS', '55000')
 		expect(getFastJsonTimeoutMs()).toBe(3500)
 		expect(getSlowJsonTimeoutMs()).toBe(55_000)
+	})
+})
+
+describe('httpErrorMessage', () => {
+	const messageFor = (response: Response) =>
+		handleSimpleFetchResponse(response).then(
+			() => 'resolved',
+			(error: unknown) => httpErrorMessage(error, 'Something went wrong')
+		)
+
+	test('shows the reason the server gave', async () => {
+		expect(await messageFor(Response.json({ error: 'Seat limit reached' }, { status: 400 }))).toBe('Seat limit reached')
+	})
+
+	test('shows the status text of a failure without a body', async () => {
+		expect(await messageFor(new Response(null, { status: 500, statusText: 'Internal Server Error' }))).toBe(
+			'Internal Server Error'
+		)
+	})
+
+	test('falls back for a failure with neither a body nor a status text', async () => {
+		expect(await messageFor(new Response(null, { status: 503 }))).toBe('Something went wrong')
+	})
+
+	test('shows any other error as it is, and falls back for a value that is not an error', () => {
+		expect(httpErrorMessage(new Error('Network down'), 'Something went wrong')).toBe('Network down')
+		expect(httpErrorMessage('offline', 'Something went wrong')).toBe('Something went wrong')
 	})
 })

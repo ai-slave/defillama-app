@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { subscriptionStatusQueryKey } from '~/auth/subscriptionStatus'
 import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
@@ -107,4 +108,17 @@ test('a dashboard that fails to load leaves the loader for its failure', async (
 	})
 	await open('private-dashboard')
 	await waitForUi(() => expect(heading()).toBe('Dashboard Not Found'))
+})
+
+test('a failed subscription read does not hold a public dashboard behind the loader', async () => {
+	const publicDashboard = { ...privateDashboard, visibility: 'public' }
+	session.client.removeQueries({ queryKey: subscriptionStatusQueryKey('owner') })
+	session.serve({
+		'/subscription/status': fixtureStatus(503, { message: 'Unavailable' }),
+		'/api/dynamic/pro-dashboard/private-dashboard/stream': () =>
+			new Response(`${JSON.stringify({ type: 'dashboard', data: publicDashboard })}\n{"type":"done"}\n`)
+	})
+	await open('private-dashboard')
+	await waitForUi(() => expect(session.urls().some((url) => url.includes('/subscription/status'))).toBe(true))
+	await waitForUi(() => expect(container.textContent).toBe('Dashboard body'))
 })

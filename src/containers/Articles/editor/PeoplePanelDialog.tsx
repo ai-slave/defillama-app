@@ -3,8 +3,8 @@ import { useMutationState, type MutationKey } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
-import { keepFocus } from '~/ui/focus'
+import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -22,7 +22,7 @@ type Props = {
 	store: Ariakit.DialogStore
 	articleId: string | null
 	onSubmit: (config: ArticlePeoplePanelConfig) => void
-	initialConfig?: ArticlePeoplePanelConfig | null
+	initialConfig: ArticlePeoplePanelConfig | null
 }
 
 const getImageButtonId = (groupId: string, rowId: string) => `${groupId}-${rowId}-image`
@@ -38,6 +38,9 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 			item
 		}))
 	)
+	// The panel as the reader edits it: leaving with it changed asks first, and an outside tap never drops it.
+	const draftSnapshot = JSON.stringify({ label, items: items.map(({ item }) => item) })
+	const [openedSnapshot] = useState(draftSnapshot)
 	// Set by an insert with a person still missing an image; each row's error then follows its own image.
 	const [showErrors, setShowErrors] = useState(false)
 
@@ -51,28 +54,26 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		})
 	}
 
-	const peopleRef = useRef<HTMLDivElement>(null)
 	const addPersonRef = useRef<HTMLButtonElement>(null)
-	// The removed row's × hands focus to the × that takes its place or the one above; with one person left,
-	// nothing more can go, so Add person takes it.
-	const removeItem = (idx: number) =>
+	// The removed row's × hands focus to the next row's ×, else the one above; with one person left, nothing more can
+	// go, so Add person takes it.
+	const removeItem = (idx: number, remove: HTMLElement) => {
+		const next = items.length > 2 ? neighbourRowControl(remove.closest('fieldset')!, remove) : addPersonRef.current
 		keepFocus(
-			() => setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))),
-			() => {
-				const removeButtons = peopleRef.current!.querySelectorAll<HTMLElement>('[data-person-remove]')
-				return removeButtons.length > 1 ? removeButtons[Math.min(idx, removeButtons.length - 1)] : addPersonRef.current
-			}
+			() => setItems((prev) => prev.filter((_, i) => i !== idx)),
+			() => next
 		)
+	}
 
 	const addItem = () => {
 		setItems((prev) => [...prev, { id: crypto.randomUUID(), item: makeEmptyPeoplePanelItem() }])
 	}
 
 	const moveItem = (idx: number, direction: -1 | 1) => {
+		// The end rows' arrows are disabled, so the target always exists.
 		setItems((prev) => {
 			const next = [...prev]
 			const target = idx + direction
-			if (target < 0 || target >= next.length) return prev
 			;[next[idx], next[target]] = [next[target], next[idx]]
 			return next
 		})
@@ -110,6 +111,11 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 	return (
 		<Dialog store={store} size="md" unmountOnHide portal>
 			<form onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+				<DialogDiscardGuard
+					when={draftSnapshot !== openedSnapshot}
+					title="Discard this people panel?"
+					description="The people and bios you entered are not added to the article."
+				/>
 				<DialogHeader title={initialConfig ? 'Edit people panel' : 'Insert people panel'} />
 				<DialogBody>
 					{!articleId ? (
@@ -125,7 +131,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						<Input id={labelId} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Moderated by:" />
 					</div>
 
-					<div ref={peopleRef} className="flex flex-col gap-3">
+					<div className="flex flex-col gap-3">
 						<div className="flex items-center justify-between gap-2">
 							<h3 className="label-sm text-secondary">People</h3>
 							<span className="body-sm text-tertiary tabular-nums">
@@ -143,7 +149,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 								articleId={articleId}
 								showErrors={showErrors}
 								onChange={(patch) => updateItem(id, patch)}
-								onRemove={() => removeItem(idx)}
+								onRemove={(remove) => removeItem(idx, remove)}
 								onMove={(dir) => moveItem(idx, dir)}
 							/>
 						))}
@@ -153,13 +159,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						</Button>
 					</div>
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button
 						type="submit"
 						size="md"
@@ -183,7 +183,7 @@ type RowProps = {
 	articleId: string | null
 	showErrors: boolean
 	onChange: (patch: Partial<ArticlePeoplePanelItem>) => void
-	onRemove: () => void
+	onRemove: (remove: HTMLElement) => void
 	onMove: (direction: -1 | 1) => void
 }
 
@@ -370,9 +370,8 @@ function PersonRow({
 							square
 							accessibleWhenDisabled
 							disabled={total === 1}
-							onClick={onRemove}
+							onClick={(event) => onRemove(event.currentTarget)}
 							aria-label={`Remove person ${person}`}
-							data-person-remove
 						/>
 					}
 				>

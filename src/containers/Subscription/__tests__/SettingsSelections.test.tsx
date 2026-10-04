@@ -66,7 +66,7 @@ let subscribed: boolean
 beforeEach(() => {
 	subscribed = true
 })
-test('visibility arrows update only the local draft; cancel and reopen discard it', async () => {
+test('visibility arrows update only the local draft; a confirmed discard and reopen drop it', async () => {
 	await dashboard(true)
 	const dialog = document.querySelector('[role="dialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Dashboard settings')
@@ -75,6 +75,13 @@ test('visibility arrows update only the local draft; cancel and reopen discard i
 	expect(radio('private').checked).toBe(true)
 	expect(save).not.toHaveBeenCalled()
 	await press(radio('private'), 'Escape')
+	// The changed visibility is unsaved work, so Escape asks first.
+	expect(close).not.toHaveBeenCalled()
+	await act(async () =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')]
+			.find((button) => button.textContent === 'Discard')!
+			.click()
+	)
 	expect(close).toHaveBeenCalledOnce()
 	await dashboard(false)
 	await dashboard(true)
@@ -162,7 +169,9 @@ test('dashboard deletion keeps its confirmation open on error and closes setting
 	await waitForUi(() => expect(button('Deleting…')).toBeDefined())
 	expect(close).not.toHaveBeenCalled()
 	await act(async () => request.reject(new Error('Offline')))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not delete'))
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe('Offline')
+	)
 	await act(async () => button('Delete').click())
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(remove).toHaveBeenCalledTimes(2)

@@ -16,6 +16,8 @@ export function ToggleSwitch({ checked, onClick, disabled, 'aria-label': ariaLab
 			checked={checked}
 			onChange={onClick}
 			disabled={disabled}
+			// A switch that locks while its own change runs keeps focus.
+			accessibleWhenDisabled
 			className={`flex w-10 cursor-pointer items-center rounded-full p-0.5 transition-colors ${
 				checked ? 'justify-end bg-sub-brand-primary' : 'bg-sub-border-muted dark:bg-sub-dark-card'
 			} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}

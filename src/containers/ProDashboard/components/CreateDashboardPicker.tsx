@@ -1,18 +1,28 @@
 import * as Ariakit from '@ariakit/react'
-import { useMutation, useQuery, type MutationStatus } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { Suspense, lazy, useId, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/Chains/api'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBackButton, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBackButton,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import {
 	DASHBOARD_NAME_MAX_LENGTH,
@@ -37,6 +47,7 @@ import {
 const ComparisonWizard = lazy(() => import('./ComparisonWizard').then((m) => ({ default: m.ComparisonWizard })))
 
 type PickerMode = 'picker' | 'scratch' | 'comparison'
+type CreateDashboardData = Parameters<CreateDashboardPickerProps['onCreate']>[0]
 
 interface CreateDashboardPickerProps {
 	dialogStore: Ariakit.DialogStore
@@ -56,23 +67,28 @@ interface CreateDashboardPickerProps {
 
 export function CreateDashboardPicker(props: CreateDashboardPickerProps) {
 	const open = Ariakit.useStoreState(props.dialogStore, 'open')
-	return <CreateDashboardPickerInner key={open ? 'open' : 'closed'} {...props} />
+	return <CreateDashboardPickerInner key={useOpeningKey(open)} {...props} />
 }
 
 function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, team }: CreateDashboardPickerProps) {
 	const router = useRouter()
-	const open = Ariakit.useStoreState(dialogStore, 'open')
-	const [mode, setMode] = useState<PickerMode>('picker')
+	// `from` is the step Back left, whose card takes focus again on the choices.
+	const [view, setView] = useState<{ mode: PickerMode; from: PickerMode | null }>(() => ({
+		mode: comparisonPreset ? 'comparison' : 'picker',
+		from: null
+	}))
 	// The keyed picker gives each opening its own feedback lifetime.
 	const dialogRef = useRef<HTMLDivElement>(null)
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success replaces the form.
+	const [creationError, setCreationError] = useState<string | null>(null)
 	const creation = useMutation({
-		mutationFn: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => onCreate(data),
+		mutationFn: (data: CreateDashboardData) => onCreate(data),
 		onError: (error) => {
-			if (!dialogRef.current?.isConnected) toast.error(error.message)
+			if (dialogRef.current?.isConnected) setCreationError(error.message)
+			else toast.error(error.message)
 		}
 	})
-	const submitCreation = (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => {
-		if (creation.isPending || creation.isSuccess) return
+	const submitCreation = (data: CreateDashboardData) => {
 		creation.mutate(data, {
 			onSuccess: (dashboard) => {
 				// Keep the saved link visible if navigation is cancelled or fails, without allowing a duplicate creation.
@@ -85,10 +101,8 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 			}
 		})
 	}
-	const [comparisonPresetHandled, setComparisonPresetHandled] = useState(false)
 	const formId = useId()
 	const pending = creation.isPending
-	const locked = creation.isPending
 	// The pending state lives on the button that started it; this region only announces it.
 	const announcement = (
 		<span role="status" className="sr-only">
@@ -98,11 +112,11 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	// The free-tier limit is refused before the request, so its message is the only thing that tells the
 	// user why; a retry cannot succeed, so it offers the upgrade instead of keeping the draft for one.
 	const { isAtDashboardLimit } = useFreeTierStatus()
-	const creationFeedback = creation.isError ? (
+	const creationFeedback = creationError ? (
 		<InlineStatus variant="error">
 			{isAtDashboardLimit ? (
 				<div className="flex flex-wrap items-center justify-between gap-2">
-					<span>{creation.error.message}</span>
+					<span>{creationError}</span>
 					<Button
 						as={BasicLink}
 						variant="primary"
@@ -115,18 +129,13 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 				</div>
 			) : (
 				<>
-					{creation.error.message}
+					{creationError}
 					<span className="block">Your choices are still here.</span>
 				</>
 			)}
 		</InlineStatus>
 	) : null
-	const effectiveMode: PickerMode = comparisonPreset && !comparisonPresetHandled ? 'comparison' : mode
-
-	const handleBackToPicker = () => {
-		setComparisonPresetHandled(true)
-		setMode('picker')
-	}
+	const handleBackToPicker = () => setView({ mode: 'picker', from: view.mode })
 
 	// Creation navigates to the new dashboard; this step shows while that runs, or when it fails,
 	// and replaces the form so nothing can create a second dashboard.
@@ -139,22 +148,16 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						Your dashboard is saved.
 					</Ariakit.DialogDescription>
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
-							Close
-						</Ariakit.DialogDismiss>
-					}
-				>
-					<Button
-						as={BasicLink}
-						href={`/pro/${dashboardUrlKey(creation.data)}/edit`}
-						variant="primary"
-						size="md"
+				<DialogFooter dismiss={<DialogCancelButton>Close</DialogCancelButton>}>
+					{/* Ariakit's autoFocus: the step replaces the control that created it, and a link ignores the DOM one. */}
+					<Ariakit.Focusable
 						autoFocus
+						render={
+							<Button as={BasicLink} href={`/pro/${dashboardUrlKey(creation.data)}/edit`} variant="primary" size="md" />
+						}
 					>
 						Open dashboard
-					</Button>
+					</Ariakit.Focusable>
 				</DialogFooter>
 				{announcement}
 			</Dialog>
@@ -163,29 +166,18 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 
 	// Every step renders the same Dialog, so switching steps keeps one open surface; closing remounts the
 	// keyed picker, which resets the step.
-	if (effectiveMode === 'scratch') {
+	if (view.mode === 'scratch') {
 		return (
 			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" pending={pending} portal unmountOnHide>
-				<DialogHeader
-					title="Create new dashboard"
-					leading={<DialogBackButton label="Back to dashboard choices" onClick={handleBackToPicker} />}
+				<CreateDashboardModalContent
+					formId={formId}
+					onCreate={submitCreation}
+					onBack={handleBackToPicker}
+					locked={pending}
+					feedback={creationFeedback}
+					team={team ?? null}
 				/>
-				<DialogBody>
-					<CreateDashboardModalContent
-						formId={formId}
-						onCreate={submitCreation}
-						status={creation.status}
-						team={team ?? null}
-					/>
-					{creationFeedback}
-				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Ariakit.DialogDismiss type="button" disabled={pending} render={<Button size="md" />}>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button
 						type="submit"
 						form={formId}
@@ -202,7 +194,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		)
 	}
 
-	if (effectiveMode === 'comparison') {
+	if (view.mode === 'comparison') {
 		return (
 			<Dialog
 				ref={dialogRef}
@@ -226,7 +218,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 					}
 				>
 					<ComparisonWizard
-						creationStatus={creation.status}
+						creating={pending}
 						onComplete={submitCreation}
 						onExit={handleBackToPicker}
 						feedback={creationFeedback}
@@ -242,63 +234,55 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		<Dialog ref={dialogRef} store={dialogStore} size="lg" scope="pro" pending={pending} portal unmountOnHide>
 			<DialogHeader title="Create new dashboard" />
 			<DialogBody>
-				<fieldset className="contents">
-					<Ariakit.DialogDescription className="body-sm text-secondary">
-						How would you like to create your dashboard?
-					</Ariakit.DialogDescription>
+				<Ariakit.DialogDescription className="body-sm text-secondary">
+					How would you like to create your dashboard?
+				</Ariakit.DialogDescription>
 
-					<div className="grid gap-4 sm:grid-cols-2">
-						<button
-							type="button"
-							disabled={locked}
-							onClick={() => {
-								setComparisonPresetHandled(true)
-								setMode('scratch')
-							}}
-							className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
-						>
-							<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
-								<Icon name="file-plus" height={20} width={20} />
-							</div>
-							<div>
-								<span className="block label-md text-primary">From scratch</span>
-								<span className="mt-1 block body-sm text-tertiary">
-									Create an empty dashboard and add charts manually
-								</span>
-							</div>
-						</button>
+				<div className="grid gap-4 sm:grid-cols-2">
+					<Ariakit.Button
+						type="button"
+						disabled={pending}
+						autoFocus={view.from === 'scratch'}
+						onClick={() => setView({ mode: 'scratch', from: null })}
+						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
+					>
+						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
+							<Icon name="file-plus" height={20} width={20} />
+						</div>
+						<div>
+							<span className="block label-md text-primary">From scratch</span>
+							<span className="mt-1 block body-sm text-tertiary">
+								Create an empty dashboard and add charts manually
+							</span>
+						</div>
+					</Ariakit.Button>
 
-						<button
-							type="button"
-							disabled={locked}
-							onClick={() => {
-								setComparisonPresetHandled(true)
-								setMode('comparison')
-							}}
-							className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
-						>
-							<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
-								<Icon name="bar-chart-2" height={20} width={20} />
-							</div>
-							<div>
-								<span className="block label-md text-primary">Comparison</span>
-								<span className="mt-1 block body-sm text-tertiary">
-									Compare chains or protocols with pre-built charts
-								</span>
-							</div>
-						</button>
-					</div>
+					<Ariakit.Button
+						type="button"
+						disabled={pending}
+						autoFocus={view.from === 'comparison'}
+						onClick={() => setView({ mode: 'comparison', from: null })}
+						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
+					>
+						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
+							<Icon name="bar-chart-2" height={20} width={20} />
+						</div>
+						<div>
+							<span className="block label-md text-primary">Comparison</span>
+							<span className="mt-1 block body-sm text-tertiary">
+								Compare chains or protocols with pre-built charts
+							</span>
+						</div>
+					</Ariakit.Button>
+				</div>
 
-					<div className="border-t border-subtle pt-4">
-						<h3 className="mb-3 label-sm text-secondary">Or use a template</h3>
-						{open ? (
-							<DashboardTemplates
-								onCreate={submitCreation}
-								pendingName={locked ? creation.variables.dashboardName : null}
-							/>
-						) : null}
-					</div>
-				</fieldset>
+				<div className="border-t border-subtle pt-4">
+					<h3 className="mb-3 label-sm text-secondary">Or use a template</h3>
+					<DashboardTemplates
+						onCreate={submitCreation}
+						pendingName={pending ? creation.variables.dashboardName : null}
+					/>
+				</div>
 				{creationFeedback}
 			</DialogBody>
 			{announcement}
@@ -311,7 +295,7 @@ function DashboardTemplates({
 	pendingName
 }: {
 	pendingName: string | null
-	onCreate: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => void
+	onCreate: (data: CreateDashboardData) => void
 }) {
 	const id = useId()
 	const { hasActiveSubscription } = useAuthContext()
@@ -354,8 +338,7 @@ function DashboardTemplates({
 					: undefined
 		const needsCatalog = !parameterized && !dimension
 		const queryMissing = query && query.data === undefined
-		const failed =
-			(needsCatalog && protocolCatalog.status === 'error') || (queryMissing && query.isError && !query.isFetching)
+		const failed = (needsCatalog && protocolCatalog.status === 'error') || (queryMissing && queryReadFailed(query))
 		const loading = !failed && ((needsCatalog && protocolCatalog.status === 'loading') || queryMissing)
 		const empty = !parameterized && !failed && !loading && selection.length === 0
 		return { template, selection, failed: !!failed, loading: !!loading, empty }
@@ -363,12 +346,13 @@ function DashboardTemplates({
 	const anyFailed = cards.some((card) => card.failed)
 
 	// One failure notice covers every template it blocks; the cards stay listed but cannot start.
+	const failedQueries = sourceQueries.filter((query) => query.data === undefined && queryReadFailed(query))
 	const retry = () => {
 		if (protocolCatalog.status === 'error') protocolCatalog.retry()
-		for (const query of sourceQueries) {
-			if (query.data === undefined && query.isError) void query.refetch()
-		}
+		for (const query of failedQueries) void query.refetch()
 	}
+	const retrying =
+		(protocolCatalog.status === 'error' && protocolCatalog.retrying) || failedQueries.some((query) => query.isFetching)
 
 	return (
 		<div className="flex flex-col gap-3">
@@ -376,7 +360,7 @@ function DashboardTemplates({
 				<InlineStatus variant="error">
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<span>Could not load template data.</span>
-						<Button type="button" size="sm" onClick={retry}>
+						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={retry}>
 							Try again
 						</Button>
 					</div>
@@ -434,31 +418,38 @@ function DashboardTemplates({
 	)
 }
 
-// The form owns its fields; its submit button sits in the dialog footer and joins it through `form={formId}`.
+// The form owns its fields and its discard question; its submit button sits in the dialog footer and joins it
+// through `form={formId}`.
 function CreateDashboardModalContent({
 	formId,
 	onCreate,
-	status,
+	onBack,
+	locked,
+	feedback,
 	team
 }: {
 	formId: string
-	status: MutationStatus
-	onCreate: (data: {
-		dashboardName: string
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-		teamId?: string
-	}) => void
+	onCreate: (data: CreateDashboardData) => void
+	onBack: () => void
+	locked: boolean
+	feedback: ReactNode
 	team: DashboardTeam | null
 }) {
 	const id = useId()
 	const { hasActiveSubscription } = useAuthContext()
-	const [visibility, setVisibility] = useState<'private' | 'public'>(hasActiveSubscription ? 'private' : 'public')
+	const defaultVisibility = hasActiveSubscription ? 'private' : 'public'
+	const [visibility, setVisibility] = useState<'private' | 'public'>(defaultVisibility)
 	const canCreateInTeam = !!team && hasActiveSubscription
 	const [createIn, setCreateIn] = useState<'personal' | 'team'>('personal')
 	const [tags, setTags] = useState<Array<string>>([])
 	const [description, setDescription] = useState('')
+	const [nameLength, setNameLength] = useState(0)
+	const dirty =
+		nameLength > 0 ||
+		tags.length > 0 ||
+		description !== '' ||
+		visibility !== defaultVisibility ||
+		createIn !== 'personal'
 
 	const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -486,82 +477,99 @@ function CreateDashboardModalContent({
 	}
 
 	return (
-		<form id={formId} onSubmit={handleCreate}>
-			<fieldset disabled={status === 'pending' || status === 'success'} className="flex flex-col gap-4">
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-						Dashboard name
-					</label>
-					{/* Ariakit's autoFocus, so the step starts on the name instead of the header controls. */}
-					<Ariakit.Focusable
-						autoFocus
-						render={
-							<Input
-								id={`${id}-name`}
-								name="dashboardName"
-								type="text"
-								maxLength={DASHBOARD_NAME_MAX_LENGTH}
-								onInput={(e) => e.currentTarget.setCustomValidity('')}
-								placeholder="Enter dashboard name"
-								required
-							/>
-						}
-					/>
-				</div>
-
-				{team ? (
-					<div className="flex flex-col gap-1.5">
-						<p id={`${id}-owner`} className={dashboardFieldLabelStyles}>
-							Create in
-						</p>
-						<SegmentedControl
-							aria-labelledby={`${id}-owner`}
-							label="Create in"
-							variant="field"
-							size="md"
-							value={createIn}
-							onValueChange={(value) => setCreateIn(value)}
-							options={[
-								{
-									value: 'personal',
-									label: (
-										<>
-											<Icon name="user" height={14} width={14} />
-											My dashboards
-										</>
-									)
-								},
-								{
-									value: 'team',
-									disabled: !canCreateInTeam,
-									label: (
-										<>
-											<Icon name="users" height={14} width={14} />
-											<span className="truncate">{team.name}</span>
-											{hasActiveSubscription ? null : '(Pro)'}
-										</>
-									)
+		<>
+			<DialogDiscardGuard
+				when={dirty && !locked}
+				title="Discard this dashboard?"
+				description="The dashboard is not created yet. Leaving discards what you entered."
+			/>
+			<DialogHeader
+				title="Create new dashboard"
+				leading={<DialogBackButton label="Back to dashboard choices" onClick={onBack} />}
+			/>
+			<DialogBody>
+				<form id={formId} onSubmit={handleCreate}>
+					<fieldset disabled={locked} className="flex flex-col gap-4">
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
+								Dashboard name
+							</label>
+							{/* Ariakit's autoFocus, so the step starts on the name instead of the header controls. */}
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										id={`${id}-name`}
+										name="dashboardName"
+										type="text"
+										maxLength={DASHBOARD_NAME_MAX_LENGTH}
+										onInput={(e) => {
+											e.currentTarget.setCustomValidity('')
+											setNameLength(e.currentTarget.value.length)
+										}}
+										placeholder="Enter dashboard name"
+										required
+									/>
 								}
-							]}
-						/>
-						<p className={dashboardFieldHintStyles}>
-							{createIn === 'team' && canCreateInTeam
-								? 'Teammates with a seat can edit it. It stays with the team if you leave.'
-								: canCreateInTeam
-									? 'Only you can edit it. You can share it with your team later from Settings.'
-									: 'Only you can edit it. Team dashboards need a seat or Pro.'}
-						</p>
-					</div>
-				) : null}
+							/>
+						</div>
 
-				<VisibilityField
-					value={visibility}
-					onChange={setVisibility}
-					sharedWithTeam={canCreateInTeam && createIn === 'team'}
-				/>
-				<TagsField tags={tags} onChange={setTags} />
-				<DescriptionField value={description} onChange={setDescription} />
-			</fieldset>
-		</form>
+						{team ? (
+							<div className="flex flex-col gap-1.5">
+								<p id={`${id}-owner`} className={dashboardFieldLabelStyles}>
+									Create in
+								</p>
+								<SegmentedControl
+									aria-labelledby={`${id}-owner`}
+									label="Create in"
+									variant="field"
+									size="md"
+									value={createIn}
+									onValueChange={(value) => setCreateIn(value)}
+									options={[
+										{
+											value: 'personal',
+											label: (
+												<>
+													<Icon name="user" height={14} width={14} />
+													My dashboards
+												</>
+											)
+										},
+										{
+											value: 'team',
+											disabled: !canCreateInTeam,
+											label: (
+												<>
+													<Icon name="users" height={14} width={14} />
+													<span className="truncate">{team.name}</span>
+													{hasActiveSubscription ? null : '(Pro)'}
+												</>
+											)
+										}
+									]}
+								/>
+								<p className={dashboardFieldHintStyles}>
+									{createIn === 'team' && canCreateInTeam
+										? 'Teammates with a seat can edit it. It stays with the team if you leave.'
+										: canCreateInTeam
+											? 'Only you can edit it. You can share it with your team later from Settings.'
+											: 'Only you can edit it. Team dashboards need a seat or Pro.'}
+								</p>
+							</div>
+						) : null}
+
+						<VisibilityField
+							value={visibility}
+							onChange={setVisibility}
+							sharedWithTeam={canCreateInTeam && createIn === 'team'}
+						/>
+						<TagsField tags={tags} onChange={setTags} />
+						<DescriptionField value={description} onChange={setDescription} />
+					</fieldset>
+				</form>
+				{feedback}
+			</DialogBody>
+		</>
 	)
 }

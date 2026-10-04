@@ -29,6 +29,7 @@ import {
 	isStablecoinChartDateVisible,
 	sumStablecoinPegBalances
 } from '~/containers/Stablecoins/utils'
+import { queryReadFailed } from '~/utils/query'
 import type { StablecoinAssetChartType } from '../../../types'
 
 type StablecoinAssetPresentation =
@@ -212,14 +213,7 @@ export function useStablecoinAssetChartData(
 ): UseStablecoinAssetChartDataResult {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
-	const {
-		data: rawData,
-		isLoading,
-		isFetching,
-		errorUpdatedAt,
-		dataUpdatedAt,
-		refetch
-	} = useQuery({
+	const chartQuery = useQuery({
 		queryKey: ['pro-dashboard', 'stablecoin-asset-chart-data', stablecoinSlug],
 		queryFn: async () => {
 			if (!stablecoinSlug) return null
@@ -240,6 +234,7 @@ export function useStablecoinAssetChartData(
 		refetchInterval: 5 * 60 * 1000,
 		enabled: !!stablecoinSlug && streamDone
 	})
+	const { data: rawData, isLoading, isFetching, refetch } = chartQuery
 	const canonicalHistory = useMemo(() => {
 		if (!rawData || (chartType !== 'chainMcaps' && chartType !== 'chainDominance')) return null
 		return collectCanonicalStablecoinArea(getStablecoinAssetChartParams(rawData), { seriesMode: 'history' })
@@ -253,7 +248,7 @@ export function useStablecoinAssetChartData(
 		[rawData, chartType, periodBounds, selectionOptions, canonicalHistory]
 	)
 	const isInactive = rawData ? isInactiveStablecoin(rawData.peggedAssetData) : false
-	const readFailed = errorUpdatedAt > dataUpdatedAt
+	const readFailed = queryReadFailed(chartQuery)
 	const prepareCsvDataset = useCallback(() => {
 		if (!rawData) throw new Error('Stablecoin asset data is unavailable')
 		return buildStablecoinAssetCsvDataset(rawData, chartType, periodBounds, selectionOptions, canonicalHistory)

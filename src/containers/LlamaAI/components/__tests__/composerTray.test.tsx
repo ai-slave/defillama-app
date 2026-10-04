@@ -155,3 +155,13 @@ test('a full queue says so on the composer', async () => {
 	})
 	expect(tray()).toEqual({ text: 'Queue is full (max 5). Wait for a message to send first.', buttons: [] })
 })
+
+test('a strip that leaves while one of its buttons has focus hands focus to the prompt field', async () => {
+	const failure = { label: 'Retry' as const, notice: 'Your last prompt failed.', onActivate: vi.fn() }
+	await draw({ kind: 'blocked', failure })
+	const retry = [...host.querySelectorAll('button')].find((el) => el.textContent === 'Retry')!
+	await act(async () => retry.focus())
+	await draw({ kind: 'direct' })
+	expect(tray()).toBeNull()
+	expect(document.activeElement).toBe(host.querySelector('textarea[name="prompt"]'))
+})

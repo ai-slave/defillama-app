@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
-import { type CSSProperties, lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { type CSSProperties, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { VirtualizedMultiSelect, VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
@@ -17,16 +17,19 @@ import { formatNumber } from '~/utils/numberFormat'
 import { ActionFeedbackStatus, useActionFeedback } from './ActionFeedback'
 import { parseCsv } from './csvParse'
 import type { DatasetDefinition } from './datasets'
+import { fetchDownloadCsv } from './fetchDownloadCsv'
 import { SavePresetDialog } from './PresetDialogs'
 import {
+	type ColumnKind,
+	type ColumnMeta,
 	downloadPreviewHasTime,
-	formatDownloadPreviewDate,
-	formatDownloadPreviewCurrency,
-	formatDownloadPreviewNumber,
-	formatDownloadPreviewPercent,
-	parseDownloadPreviewDate
+	parseDownloadPreviewDate,
+	parseNumericValue,
+	formatCellValue,
+	getCellTone
 } from './previewFormatting'
 import { PreviewHeaderActions } from './PreviewHeaderActions'
+import { PlaceholderRows, PREVIEW_ROW_HEIGHT, PreviewPaywall } from './PreviewPaywall'
 import { createPreviewSearchIndex, filterPreviewRows } from './previewSearch'
 import { RowLimitPicker } from './RowLimitPicker'
 import {
@@ -42,13 +45,6 @@ import { SavedPresetNotice } from './SavedPresetNotice'
 import { buildShareUrl } from './urlState'
 import { usePreviewTableScroller } from './usePreviewTableScroller'
 
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
-
-const ROW_HEIGHT = 36
 const COLUMN_DETECTION_SAMPLE_SIZE = 200
 const COLUMN_WIDTH_SAMPLE_SIZE = 40
 const EMPTY_SELECTION = new Set<number>()
@@ -62,29 +58,11 @@ type PreviewRow = {
 	values: Array<string>
 }
 
-type ColumnKind = 'text' | 'number' | 'currency' | 'percent' | 'date'
 type SortDirection = 'asc' | 'desc'
-
-interface ColumnMeta {
-	index: number
-	header: string
-	kind: ColumnKind
-	align: 'start' | 'end'
-	width: number
-}
 
 interface SortState {
 	index: number
 	direction: SortDirection
-}
-
-function parseNumericValue(value: string): number | null {
-	const trimmed = value.trim()
-	if (!trimmed) return null
-	const normalized = trimmed.replace(/[$,%\s]/g, '').replace(/,/g, '')
-	if (!normalized) return null
-	const parsed = Number(normalized)
-	return Number.isFinite(parsed) ? parsed : null
 }
 
 function detectColumnKind(header: string, values: Array<string>): ColumnKind {
@@ -111,35 +89,6 @@ function getColumnWidth(header: string, kind: ColumnKind, values: Array<string>,
 	if (kind === 'currency' || kind === 'number' || kind === 'percent') return isFirst ? 200 : 140
 	const estimated = Math.max(140, Math.min(300, sampleMaxLength * 8 + 24))
 	return isFirst ? Math.max(200, estimated) : estimated
-}
-
-function formatCellValue(value: string, column: ColumnMeta): string {
-	if (!value) return ''
-	if (column.kind === 'currency') {
-		const numeric = parseNumericValue(value)
-		return numeric === null ? value : formatDownloadPreviewCurrency(numeric)
-	}
-	if (column.kind === 'number') {
-		const numeric = parseNumericValue(value)
-		return numeric === null ? value : formatDownloadPreviewNumber(numeric)
-	}
-	if (column.kind === 'percent') {
-		const numeric = parseNumericValue(value)
-		return numeric === null ? value : formatDownloadPreviewPercent(numeric)
-	}
-	if (column.kind === 'date') {
-		return formatDownloadPreviewDate(value, column.header) ?? value
-	}
-	return value
-}
-
-function getCellTone(value: string, column: ColumnMeta): string {
-	if (column.kind !== 'percent') return ''
-	const numeric = parseNumericValue(value)
-	if (numeric === null) return ''
-	if (numeric > 0) return 'text-success'
-	if (numeric < 0) return 'text-error'
-	return ''
 }
 
 function getInitialSortDirection(kind: ColumnKind): SortDirection {
@@ -223,18 +172,14 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	} = useQuery({
 		queryKey: ['downloads-preview', dataset.slug, selectedChain, isPreview],
 		queryFn: async () => {
-			const sep = chainQueryParam ? '&' : '?'
-			const nonce = isPreview ? `${sep}_n=${Math.random().toString(36).slice(2)}` : ''
-			const url = `/api/private/downloads/${dataset.slug}${chainQueryParam}${nonce}`
-			const response = isPreview ? await fetch(url) : await authorizedFetch(url)
-			if (!response || !response.ok) {
-				const errorData = await response?.json().catch(() => null)
-				throw new Error(errorData?.error ?? `Download failed (${response?.status})`)
-			}
+			const text = await fetchDownloadCsv(`/api/private/downloads/${dataset.slug}${chainQueryParam}`, {
+				isPreview: !!isPreview,
+				authorizedFetch
+			})
 			if (isTrial) {
 				void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			}
-			return response.text()
+			return text
 		},
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -363,7 +308,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	const rowVirtualizer = useVirtualItems({
 		count: displayedRows.length,
 		getScrollElement: () => scrollerRef.current,
-		estimateSize: () => ROW_HEIGHT,
+		estimateSize: () => PREVIEW_ROW_HEIGHT,
 		overscan: 10
 	})
 
@@ -450,7 +395,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 	)
 
 	const handleSavePreset = useCallback(
-		(name: string, replaceExisting: boolean) => {
+		(name: string) => {
 			const configBase = extractDatasetConfig({
 				slug: dataset.slug,
 				headers,
@@ -460,15 +405,12 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 				exclude: excludeState,
 				rowLimit
 			})
-			saveDownload(
-				{
-					...configBase,
-					id: generatePresetId(),
-					name,
-					createdAt: Date.now()
-				},
-				{ replaceByName: replaceExisting }
-			)
+			saveDownload({
+				...configBase,
+				id: generatePresetId(),
+				name,
+				createdAt: Date.now()
+			})
 			setShowSaveDialog(false)
 			report('save-preset', true, `Saved preset "${name}"`)
 		},
@@ -807,47 +749,13 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 										/>
 									) : null}
 								</div>
-								{isPreview ? (
-									<>
-										<div
-											className="pointer-events-none absolute inset-x-0 bottom-0 z-40"
-											style={{
-												top: '20%',
-												backdropFilter: 'blur(4px)',
-												WebkitBackdropFilter: 'blur(4px)',
-												maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)',
-												WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
-											}}
-										/>
-										<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
-											<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-												<p className="text-sm font-semibold text-pro-text-primary">
-													This is a preview — subscribe to download full datasets
-												</p>
-												<p className="text-xs text-pro-text-tertiary">
-													Get access to all rows, all columns, and unlimited CSV downloads
-												</p>
-												<Link
-													href="/subscribe"
-													className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
-												>
-													<Icon name="arrow-up-right" className="size-4" />
-													Subscribe
-												</Link>
-											</div>
-										</div>
-									</>
-								) : null}
+								{isPreview ? <PreviewPaywall /> : null}
 							</div>
 						)}
 					</div>
 				</DialogBody>
 			</Dialog>
-			{isPreview ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			{isPreview ? <LazySubscribeProModal dialogStore={subscribeModalStore} /> : null}
 			{showSaveDialog ? (
 				<SavePresetDialog
 					suggestedName={suggestedPresetName}
@@ -857,60 +765,5 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 				/>
 			) : null}
 		</>
-	)
-}
-
-function PlaceholderRows({
-	columnMeta,
-	gridTemplate,
-	tableWidth,
-	rows,
-	cols
-}: {
-	columnMeta: Array<ColumnMeta>
-	gridTemplate: string
-	tableWidth: number
-	rows: Array<PreviewRow>
-	cols: Set<number>
-}) {
-	if (rows.length === 0) return null
-	const duplicated = [...rows, ...rows]
-	return (
-		<div style={{ minWidth: `${tableWidth}px` }}>
-			{duplicated.map((row, rowIdx) => {
-				const isOdd = (rows.length + rowIdx) % 2 === 1
-				return (
-					<div
-						// oxlint-disable-next-line react/no-array-index-key -- Filler intentionally repeats source rows, so source IDs would collide.
-						key={`placeholder-${rowIdx}`}
-						style={{ display: 'grid', gridTemplateColumns: gridTemplate, height: `${ROW_HEIGHT}px` }}
-					>
-						{columnMeta.map((column, position) => {
-							const rawValue = row.values[column.index] ?? ''
-							const displayValue = formatCellValue(rawValue, column)
-							const isSticky = position === 0
-							const isSelected = cols.has(column.index)
-							const tone = isSelected ? getCellTone(rawValue, column) : ''
-							return (
-								<div
-									key={column.index}
-									className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
-									style={{
-										textAlign: column.align,
-										position: isSticky ? 'sticky' : undefined,
-										left: isSticky ? 0 : undefined,
-										zIndex: isSticky ? 1 : undefined,
-										background: isSticky ? 'var(--bg-overlay)' : isOdd ? 'var(--bg-primary)' : undefined,
-										boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
-									}}
-								>
-									{displayValue}
-								</div>
-							)
-						})}
-					</div>
-				)
-			})}
-		</div>
 	)
 }

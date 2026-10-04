@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type UseMutationResult } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useRef, useState, type RefObject } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import {
@@ -17,11 +17,16 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
 const SPONSORS_QUERY_KEY = ['research', 'admin', 'sponsors'] as const
+
+// An unlinked report's row leaves once the list reloads; its Unlink hands focus to the next row's, the one above, or
+// the page.
+const passUnlinkFocus = passFocusOnLeave((node) => neighbourRowControl(node.closest('li')!, node) ?? pageContent())
 
 function payloadFromEntity(entity: SponsorEntitySelection): ResearchSponsorPayload {
 	return {
@@ -35,17 +40,12 @@ function mutationMessage(error: unknown, fallback: string) {
 	return error instanceof ArticleApiError ? error.message : fallback
 }
 
-function SponsorPanel({
-	sponsor,
-	fallbackFocus
-}: {
-	sponsor: ResearchSponsorAdmin
-	fallbackFocus: RefObject<HTMLHeadingElement | null>
-}) {
+function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 	const [confirmDelete, setConfirmDelete] = useState(false)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [editing, setEditing] = useState(false)
+	const editToggleRef = useRef<HTMLButtonElement>(null)
 	const linkedIds = new Set(sponsor.reports.map((report) => report.id))
 
 	const invalidate = () => queryClient.invalidateQueries({ queryKey: SPONSORS_QUERY_KEY })
@@ -69,6 +69,13 @@ function SponsorPanel({
 		mutationFn: () => deleteResearchSponsor(sponsor.id, authorizedFetch),
 		onSuccess: invalidate
 	})
+	// Owned here, not by the editor: Cancel edit waits while a save runs, so the save's error always has the editor
+	// to show in.
+	const updateMutation = useMutation({
+		mutationFn: (entity: SponsorEntitySelection) =>
+			updateResearchSponsor(sponsor.id, payloadFromEntity(entity), authorizedFetch),
+		onSuccess: invalidate
+	})
 
 	return (
 		<Card as="section" padding="md" className="grid gap-4">
@@ -85,19 +92,21 @@ function SponsorPanel({
 					</Link>
 				</div>
 				<div className="flex items-center gap-2">
-					<Button size="sm" type="button" onClick={() => setEditing((value) => !value)}>
-						{editing ? 'Cancel edit' : 'Change page'}
-					</Button>
 					<Button
+						ref={editToggleRef}
 						size="sm"
-						variant="destructive"
 						type="button"
-						disabled={deleteMutation.isPending}
+						aria-expanded={editing}
+						disabled={updateMutation.isPending}
+						accessibleWhenDisabled
 						onClick={() => {
-							deleteMutation.reset()
-							setConfirmDelete(true)
+							updateMutation.reset()
+							setEditing((value) => !value)
 						}}
 					>
+						{editing ? 'Cancel edit' : 'Change page'}
+					</Button>
+					<Button size="sm" variant="destructive" type="button" onClick={() => setConfirmDelete(true)}>
 						Remove
 					</Button>
 				</div>
@@ -112,10 +121,21 @@ function SponsorPanel({
 					mutation={deleteMutation}
 					variables={undefined}
 					onClose={() => setConfirmDelete(false)}
-					fallbackFocus={fallbackFocus}
 				/>
 			) : null}
-			{editing ? <SponsorPageEditor sponsor={sponsor} onSaved={() => setEditing(false)} /> : null}
+			{editing ? (
+				<SponsorPageEditor
+					sponsor={sponsor}
+					update={updateMutation}
+					// The saved editor closes with its Save button, so the toggle that opened it takes focus.
+					onSaved={() =>
+						keepFocus(
+							() => setEditing(false),
+							() => editToggleRef.current
+						)
+					}
+				/>
+			) : null}
 
 			<div className="grid gap-2 border-t border-subtle pt-4">
 				<div>
@@ -156,8 +176,9 @@ function SponsorPanel({
 								size="sm"
 								variant="ghost"
 								type="button"
-								disabled={unlinkMutation.isPending && unlinkMutation.variables === report.id}
+								pendingLabel={unlinkMutation.isPending && unlinkMutation.variables === report.id ? 'Unlinking…' : null}
 								onClick={() => unlinkMutation.mutate(report.id)}
+								ref={passUnlinkFocus}
 							>
 								<Icon name="x" height={12} width={12} /> Unlink
 							</Button>
@@ -170,7 +191,6 @@ function SponsorPanel({
 }
 
 export function ResearchSponsorsAdminView() {
-	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [selectedEntity, setSelectedEntity] = useState<SponsorEntitySelection | null>(null)
@@ -198,9 +218,7 @@ export function ResearchSponsorsAdminView() {
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 ref={headingRef} tabIndex={-1} className="heading-lg text-primary">
-					Sponsored reports
-				</h1>
+				<h1 className="heading-lg text-primary">Sponsored reports</h1>
 				<p className="max-w-[72ch] body-md text-secondary">
 					Link Research articles to canonical protocol, chain, or CEX pages. Public pages show up to three published
 					articles, newest first.
@@ -212,21 +230,23 @@ export function ResearchSponsorsAdminView() {
 					<h2 className="heading-xs text-primary">Add a sponsor page</h2>
 					<p className="body-sm text-secondary">Search by company name, then confirm the exact DefiLlama page.</p>
 				</div>
-				<fieldset
-					disabled={createMutation.isPending}
-					className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
-				>
-					<SponsorEntityPicker value={selectedEntity} onChange={setSelectedEntity} />
+				<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+					{/* Only the picker locks: a disabled fieldset would also disable the button that holds focus. */}
+					<fieldset disabled={createMutation.isPending} className="min-w-0">
+						<SponsorEntityPicker value={selectedEntity} onChange={setSelectedEntity} />
+					</fieldset>
 					<Button
 						size="md"
 						variant="primary"
 						type="button"
-						disabled={!selectedEntity || createMutation.isPending}
+						disabled={!selectedEntity}
+						accessibleWhenDisabled
+						pendingLabel={createMutation.isPending ? 'Adding…' : null}
 						onClick={() => selectedEntity && createMutation.mutate(selectedEntity)}
 					>
 						Add sponsor
 					</Button>
-				</fieldset>
+				</div>
 			</Card>
 
 			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading sponsor pages…</div> : null}
@@ -243,36 +263,28 @@ export function ResearchSponsorsAdminView() {
 				</div>
 			) : null}
 			{data?.map((sponsor) => (
-				<SponsorPanel key={sponsor.id} sponsor={sponsor} fallbackFocus={headingRef} />
+				<SponsorPanel key={sponsor.id} sponsor={sponsor} />
 			))}
 		</div>
 	)
 }
 
-function SponsorPageEditor({ sponsor, onSaved }: { sponsor: ResearchSponsorAdmin; onSaved: () => void }) {
-	const { authorizedFetch } = useAuthContext()
-	const queryClient = useQueryClient()
-	const formRef = useRef<HTMLFormElement>(null)
+function SponsorPageEditor({
+	sponsor,
+	update,
+	onSaved
+}: {
+	sponsor: ResearchSponsorAdmin
+	update: UseMutationResult<unknown, Error, SponsorEntitySelection>
+	onSaved: () => void
+}) {
 	const [replacement, setReplacement] = useState<SponsorEntitySelection | null>(null)
-	const update = useMutation({
-		// Reopened editors keep separate UI state, but saves to the same sponsor must stay ordered.
-		scope: { id: `research-sponsor-update:${sponsor.id}` },
-		mutationFn: (entity: SponsorEntitySelection) =>
-			updateResearchSponsor(sponsor.id, payloadFromEntity(entity), authorizedFetch),
-		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: SPONSORS_QUERY_KEY })
-		},
-		onError: (error) => {
-			if (!formRef.current?.isConnected) toast.error(mutationMessage(error, 'Failed to update sponsor page'))
-		}
-	})
 	return (
 		<form
-			ref={formRef}
 			className="grid gap-3 border-t border-subtle pt-4"
 			onSubmit={(event) => {
 				event.preventDefault()
-				if (!replacement || update.isPending) return
+				if (!replacement) return
 				update.mutate(replacement, { onSuccess: onSaved })
 			}}
 		>

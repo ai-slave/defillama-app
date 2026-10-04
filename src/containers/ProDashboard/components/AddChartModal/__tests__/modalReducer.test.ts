@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
-import { initializeFromEditItem, modalReducer, resolveChartTypesForSubjectTab } from '../modalReducer'
+import { hasDraftChanges, initializeFromEditItem, modalReducer, resolveChartTypesForSubjectTab } from '../modalReducer'
 
 test('defaults to manual and preserves the chosen mode on reset', () => {
 	const state = initializeFromEditItem(null)
@@ -185,4 +185,32 @@ test('a closed manual form or builder mode leaves the chart types empty', () => 
 		modalReducer({ ...openManualForm(), chartMode: 'builder' }, { type: 'SET_SELECTED_CHART_TYPES', payload: [] })
 			.selectedChartTypes
 	).toEqual([])
+})
+
+test('picking another yield pool starts its chart on TVL and APY, picking the same pool keeps the type', () => {
+	const pool = { configID: 'pool-1', name: 'USDC', project: 'aave-v3', chain: 'Ethereum' }
+	const editing = initializeFromEditItem({
+		id: 'yields',
+		kind: 'yields',
+		poolConfigId: 'pool-1',
+		poolName: 'USDC',
+		project: 'aave-v3',
+		chain: 'Ethereum',
+		chartType: 'borrow-apy'
+	})
+	expect(modalReducer(editing, { type: 'SET_SELECTED_YIELD_POOL', payload: pool }).selectedYieldChartType).toBe(
+		'borrow-apy'
+	)
+	expect(
+		modalReducer(editing, { type: 'SET_SELECTED_YIELD_POOL', payload: { ...pool, configID: 'pool-2' } })
+			.selectedYieldChartType
+	).toBe('tvl-apy')
+})
+
+test('picking a table type is browsing, not work to ask about, while a typed text card is', () => {
+	const opened = initializeFromEditItem(null)
+	const picked = modalReducer(opened, { type: 'SET_SELECTED_TABLE_TYPE', payload: 'chains' })
+	expect(picked.selectedTableType).toBe('chains')
+	expect(hasDraftChanges(picked, opened)).toBe(false)
+	expect(hasDraftChanges(modalReducer(picked, { type: 'SET_TEXT_CONTENT', payload: '# Notes' }), opened)).toBe(true)
 })

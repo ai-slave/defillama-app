@@ -607,7 +607,9 @@ const NAVIGATION_FIELDS = new Set<keyof ModalState>([
 	'chartMode',
 	'manualFormOpen',
 	'selectedChartType',
-	'selectedChartTypes'
+	'selectedChartTypes',
+	// Like a chart category, a table type is one click to pick again; what is set up inside it is the draft.
+	'selectedTableType'
 ])
 
 /** Whether leaving would lose something the reader entered since the dialog opened, in any tab. */
@@ -750,7 +752,10 @@ function reduceModalAction(state: ModalState, action: ModalAction): ModalState {
 			return { ...state, metricChartType: action.payload }
 
 		case 'SET_SELECTED_YIELD_POOL':
-			return { ...state, selectedYieldPool: action.payload }
+			// Chart types depend on the pool's data, so another pool starts on the one every pool has.
+			return action.payload?.configID === state.selectedYieldPool?.configID
+				? { ...state, selectedYieldPool: action.payload }
+				: { ...state, selectedYieldPool: action.payload, selectedYieldChartType: 'tvl-apy' }
 
 		case 'SET_SELECTED_YIELD_CHART_TYPE':
 			return { ...state, selectedYieldChartType: action.payload }
@@ -877,7 +882,8 @@ function reduceModalAction(state: ModalState, action: ModalAction): ModalState {
 				customData: {
 					...state.customData,
 					csvText: action.payload,
-					storedRows: null,
+					// The shown rows stay until the next parse replaces them; an emptied box shows none.
+					previewRows: action.payload.trim() ? state.customData.previewRows : null,
 					error: '',
 					isPreparing: action.payload.trim().length > 0
 				}

@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -16,7 +16,6 @@ import type { TeamSubscription } from './types'
 import { UnconfirmedTeamWriteError, useTeam } from './useTeam'
 
 interface ManageSeatsModalProps {
-	isOpen: boolean
 	onClose: () => void
 	subscription: TeamSubscription
 }
@@ -31,7 +30,7 @@ function getUnitPrice(type: string, billingInterval: 'month' | 'year'): { amount
 	return { amount: seatPrice(type, billingInterval), suffix: `/${billingInterval}` }
 }
 
-export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsModalProps) {
+export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProps) {
 	const {
 		canChangeTeamBilling,
 		billingWait,
@@ -71,16 +70,24 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 		pending || isTeamRefreshError || billingWait || hasChange ? null : 'Change the seat count to update'
 
 	const seats = subscription.seats.seatCount
-	const seatsError = !setSeatsMutation.isError
+	// Not the mutation's own error: that one clears as soon as a retry starts. Kept as the error, not its message: the
+	// unconfirmed copy names the seats the team shows now. A cancellation's failure belongs to its confirmation; any
+	// other count's to the form.
+	const [failure, setFailure] = useState<{ error: Error; cancel: boolean } | null>(null)
+	const failedCancel = failure?.cancel === true
+	const seatsError = !failure
 		? null
-		: setSeatsMutation.error instanceof UnconfirmedTeamWriteError
+		: failure.error instanceof UnconfirmedTeamWriteError
 			? `We couldn't confirm this change. Your team currently shows ${seats} ${label} seat${seats === 1 ? '' : 's'}.`
-			: setSeatsMutation.error.message
+			: failure.error.message
 
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		if (!canChangeTeamBilling) return
-		setSeatsMutation.mutate({ subscriptionType: subscription.type, seatCount }, { onSuccess: onClose })
+		setSeatsMutation.mutate(
+			{ subscriptionType: subscription.type, seatCount },
+			{ onSuccess: onClose, onError: (error) => setFailure({ error, cancel: false }) }
+		)
 	}
 
 	const handleConfirmCancel = () => {
@@ -92,20 +99,14 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 					setShowCancelConfirm(false)
 					onClose()
 					toast.success('Subscription will cancel at the end of the current period')
-				}
+				},
+				onError: (error) => setFailure({ error, cancel: true })
 			}
 		)
 	}
 
-	const handleClose = () => {
-		if (pending) return
-		setSeatsMutation.reset()
-		setSeatInput(String(subscription.seats.seatCount))
-		onClose()
-	}
-
 	return (
-		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={pending} portal unmountOnHide>
+		<Dialog size="sm" open onClose={onClose} pending={pending} portal unmountOnHide>
 			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={`Manage ${label} seats`} />
 				<DialogBody>
@@ -218,7 +219,8 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 								variant="destructive"
 								size="md"
 								onClick={() => {
-									setSeatsMutation.reset()
+									// A fresh confirmation starts without the last one's failure; a retry inside one keeps it.
+									if (failedCancel) setFailure(null)
 									setShowCancelConfirm(true)
 								}}
 								disabled={!canChangeTeamBilling}
@@ -234,15 +236,11 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 							message="Couldn't refresh team billing. Refresh before making another change."
 						/>
 					) : null}
-					{seatsError && !showCancelConfirm ? <InlineStatus variant="error">{seatsError}</InlineStatus> : null}
+					{seatsError && !failedCancel ? <InlineStatus variant="error">{seatsError}</InlineStatus> : null}
 				</DialogBody>
 				<DialogFooter
 					leading={footerStatus ? <p className="body-sm text-tertiary">{footerStatus}</p> : null}
-					dismiss={
-						<Button type="button" size="md" onClick={handleClose} disabled={pending}>
-							Cancel
-						</Button>
-					}
+					dismiss={<DialogCancelButton />}
 				>
 					<Button
 						type="submit"
@@ -262,10 +260,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 
 			<ConfirmDialog
 				open={showCancelConfirm}
-				onClose={() => {
-					setSeatsMutation.reset()
-					setShowCancelConfirm(false)
-				}}
+				onClose={() => setShowCancelConfirm(false)}
 				portal
 				unmountOnHide
 				title={`Cancel ${label} subscription`}
@@ -281,7 +276,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 				waitingLabel={billingWait}
 				// A lock blocks the confirm button, so it shows where a failure would, and wins over the failure that
 				// led to it: after a failed cancel whose team refresh also fails, retrying is no longer possible.
-				error={showCancelConfirm ? ((pending ? null : billingLockReason) ?? seatsError) : null}
+				error={(pending ? null : billingLockReason) ?? (failedCancel ? seatsError : null)}
 				onConfirm={handleConfirmCancel}
 			/>
 		</Dialog>

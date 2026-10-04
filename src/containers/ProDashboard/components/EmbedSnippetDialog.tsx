@@ -41,11 +41,29 @@ interface EmbedSnippetDialogProps {
 }
 
 export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: EmbedSnippetDialogProps) {
+	// The theme outlives a closing; the copy result belongs to one opening, so it lives in the unmounted content.
 	const [theme, setTheme] = useState<EmbedTheme>('dark')
+	return (
+		<Dialog size="sm" scope="pro" open={open} onClose={onClose} portal unmountOnHide>
+			<EmbedSnippetContent heading={heading} snippet={snippetFor(theme)} theme={theme} onThemeChange={setTheme} />
+		</Dialog>
+	)
+}
+
+function EmbedSnippetContent({
+	heading,
+	snippet,
+	theme,
+	onThemeChange
+}: {
+	heading: string
+	snippet: string
+	theme: EmbedTheme
+	onThemeChange: (theme: EmbedTheme) => void
+}) {
 	// The copy result shows in the dialog itself: "Copied" on the button for 2s, or an inline error.
 	const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const snippet = snippetFor(theme)
 	const copySnippet = async () => {
 		if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 		try {
@@ -58,17 +76,7 @@ export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: Embed
 		copiedTimeoutRef.current = setTimeout(() => setCopyStatus('idle'), 2000)
 	}
 	return (
-		<Dialog
-			size="sm"
-			scope="pro"
-			open={open}
-			onClose={() => {
-				setCopyStatus('idle')
-				onClose()
-			}}
-			portal
-			unmountOnHide
-		>
+		<>
 			<DialogHeader title={heading} />
 			<DialogBody>
 				<div className="flex items-center justify-between gap-2">
@@ -82,7 +90,7 @@ export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: Embed
 								variant="toggle"
 								data-active={theme === option}
 								aria-pressed={theme === option}
-								onClick={() => setTheme(option)}
+								onClick={() => onThemeChange(option)}
 							>
 								{EMBED_THEME_LABELS[option]}
 							</Button>
@@ -118,6 +126,9 @@ export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: Embed
 					{copyStatus === 'copied' ? 'Copied' : 'Copy code'}
 				</Button>
 			</DialogFooter>
-		</Dialog>
+			<span role="status" className="sr-only">
+				{copyStatus === 'copied' ? 'Embed code copied' : ''}
+			</span>
+		</>
 	)
 }

@@ -3,13 +3,14 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
 import { useProDashboardDashboard } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { ProButton } from '../ui'
-import { ConfirmationModal } from './ConfirmationModal'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
 
 interface DashboardOverflowMenuProps {
@@ -64,10 +65,7 @@ export function DashboardOverflowMenu({
 		},
 		onError: (error) => toast.error(error.message, { id: 'dashboard-duplicate' })
 	})
-	const deletion = useMutation({
-		mutationFn: () => onDelete!(),
-		onSuccess: () => setShowDeleteConfirm(false)
-	})
+	const deletion = useMutation({ mutationFn: () => onDelete!() })
 
 	if (!onOpenSettings && !onDuplicate && !onNewDashboard && !onDelete && !moveTeam) return null
 
@@ -79,8 +77,16 @@ export function DashboardOverflowMenu({
 					aria-label="Dashboard actions"
 					title="Dashboard actions"
 				>
-					<Icon name="ellipsis" height={16} width={16} />
+					{/* The menu closes on a pick, so a running duplicate or move shows on the button that reopens it. */}
+					{duplicate.isPending || move.isPending ? (
+						<LoadingSpinner size={14} />
+					) : (
+						<Icon name="ellipsis" height={16} width={16} />
+					)}
 				</Ariakit.MenuButton>
+				<span role="status" className="sr-only">
+					{duplicate.isPending ? 'Duplicating dashboard…' : move.isPending ? 'Moving dashboard…' : ''}
+				</span>
 				<MenuSurface variant="actions" aria-label="Dashboard actions">
 					{onOpenSettings ? (
 						<MenuItem aria-label="Dashboard Settings" onClick={onOpenSettings}>
@@ -132,10 +138,7 @@ export function DashboardOverflowMenu({
 							<MenuItem
 								className="text-data-down"
 								data-umami-event="dashboard-delete"
-								onClick={() => {
-									deletion.reset()
-									setShowDeleteConfirm(true)
-								}}
+								onClick={() => setShowDeleteConfirm(true)}
 							>
 								<Icon name="trash-2" height={14} width={14} />
 								<span>Delete dashboard…</span>
@@ -144,20 +147,18 @@ export function DashboardOverflowMenu({
 					) : null}
 				</MenuSurface>
 			</Ariakit.MenuProvider>
-			<ConfirmationModal
-				isOpen={showDeleteConfirm}
-				onClose={() => setShowDeleteConfirm(false)}
-				onConfirm={() => {
-					if (!deletion.isPending) deletion.mutate()
-				}}
-				closeOnConfirm={false}
-				pending={deletion.isPending}
-				pendingText="Deleting…"
-				error={deletion.isError ? 'Could not delete the dashboard. Try again.' : null}
-				title="Delete dashboard"
-				message={`Deleting “${dashboardName}” cannot be undone.`}
-				confirmText="Delete"
-			/>
+			{showDeleteConfirm ? (
+				<ConfirmActionDialog
+					scope="pro"
+					title="Delete dashboard"
+					description={`Deleting “${dashboardName}” cannot be undone.`}
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deletion}
+					variables={undefined}
+					onClose={() => setShowDeleteConfirm(false)}
+				/>
+			) : null}
 		</>
 	)
 }

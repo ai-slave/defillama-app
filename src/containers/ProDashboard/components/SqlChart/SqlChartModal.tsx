@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
@@ -22,7 +21,15 @@ import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	DialogToolbar,
+	useRefusal
+} from '~/ui/Dialog'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
@@ -192,19 +199,6 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 		[schemaLoading, run]
 	)
 
-	const dialogStore = Ariakit.useDialogStore({
-		open: isOpen,
-		setOpen: (open) => {
-			if (open) return
-			runControllerRef.current?.abort()
-			onClose()
-		},
-		// Ariakit reports mounted = false once the exit transition ends, never on a first render that starts closed.
-		setMounted: (mounted) => {
-			if (!mounted) onClosed()
-		}
-	})
-
 	const editorLineCount = sql.split('\n').length
 	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`
 
@@ -219,7 +213,12 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 	})
 	const { running, locked: savePending, stage: loadingStage, canSave } = controls
 
-	const [refusal, setRefusal] = useState<{ draft: string; reason: string } | null>(null)
+	// The draft as it opened: leaving with the query, name, card or chart settings changed asks first.
+	const draftSnapshot = sqlDraftSnapshot(state, { sql, name, rowCap, displayMode })
+	const [openedSnapshot] = useState(draftSnapshot)
+	const dirty = draftSnapshot !== openedSnapshot
+	// A refusal describes the draft that was refused; any edit since clears it.
+	const [refusalReason, setRefusal] = useRefusal(draftSnapshot)
 
 	const handleSave = useCallback(async () => {
 		if (!canSave || runControllerRef.current) return
@@ -255,15 +254,12 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 			tables: config.query.tableSources,
 			chartConfig: outcome.chartConfig
 		})
-		saveDownload(
-			{
-				id: generatePresetId(),
-				name: config.name ?? defaultPresetName(queryInput),
-				createdAt: Date.now(),
-				...queryInput
-			},
-			{ replaceByName: true }
-		)
+		saveDownload({
+			id: generatePresetId(),
+			name: config.name ?? defaultPresetName(queryInput),
+			createdAt: Date.now(),
+			...queryInput
+		})
 		onSaved()
 		if (!editItem) requestDashboardItemReveal(config.id)
 	}, [
@@ -280,15 +276,10 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 		handleAddSqlChart,
 		placement,
 		saveDownload,
-		onSaved
+		onSaved,
+		setRefusal
 	])
 
-	// The draft as it opened: leaving with the query, name, card or chart settings changed asks first.
-	const draftSnapshot = sqlDraftSnapshot(state, { sql, name, rowCap, displayMode })
-	// A refusal describes the draft that was refused; any edit since clears it.
-	const refusalReason = refusal?.draft === draftSnapshot ? refusal.reason : null
-	const [openedSnapshot] = useState(draftSnapshot)
-	const dirty = draftSnapshot !== openedSnapshot
 	// Below lg one pane shows at a time; a run that finishes there brings its results into view.
 	const [pane, setPane] = useState<SqlPane>('query')
 	const isNarrow = useMedia('(max-width: 1023px)')
@@ -298,230 +289,241 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 		})
 
 	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			{/* An outside tap never drops the query; Cancel, × and Escape ask first once it has changed. */}
-			<Dialog size="xl" workspace scope="pro" unmountOnHide portal hideOnInteractOutside={false}>
-				{/* Leaving during Save stops its run instead, so it never asks. */}
-				<DialogDiscardGuard
-					when={dirty && !savePending}
-					title="Discard this SQL chart?"
-					description="Your query and card settings are not saved to the dashboard."
-				/>
-				<DialogHeader
-					title={editItem ? 'Edit SQL chart' : 'New SQL chart'}
-					actions={
-						<Button
-							variant="secondary"
-							size="md"
-							onClick={() => (running ? stopQuery() : runAndShow(sql))}
-							disabled={controls.run.disabled}
-							accessibleWhenDisabled
-						>
-							{running ? (
-								<LoadingSpinner size={14} />
-							) : (
-								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-									<path d="M8 5v14l11-7z" />
-								</svg>
-							)}
-							{controls.run.label}
-							{!running ? (
-								<span aria-hidden className="flex items-center gap-0.5 pointer-coarse:hidden">
-									<Keycap muted>⌘</Keycap>
-									<Keycap muted>↵</Keycap>
-								</span>
-							) : null}
-						</Button>
-					}
-				/>
-				<div className="lg:hidden">
-					<DialogToolbar>
-						<SegmentedControl<SqlPane>
-							label="Editor view"
-							options={SQL_PANES}
-							value={pane}
-							onValueChange={setPane}
-							variant="solid-responsive"
-							size="md"
-						/>
-					</DialogToolbar>
-				</div>
-
-				{/* Save owns this snapshot; keep Cancel and its status outside the locked editing region. */}
-				<div
-					inert={savePending}
-					className="flex min-h-0 min-w-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_540px]"
-				>
-					<div
-						className={`min-h-0 min-w-0 flex-1 flex-col lg:flex lg:overflow-y-auto ${pane === 'reference' ? 'hidden' : 'flex'}`}
-					>
-						<div
-							className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:pb-0 ${pane === 'query' ? 'flex' : 'hidden'}`}
-						>
-							<label className="flex shrink-0 flex-col gap-1">
-								<span className="text-xs font-medium text-pro-text-secondary">Card name (optional)</span>
-								<input
-									type="text"
-									value={name}
-									readOnly={savePending}
-									onChange={(e) => setName(e.target.value)}
-									className="shrink-0 rounded-md border border-pro-cards-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
-								/>
-							</label>
-
-							<div className="shrink-0">
-								<Editor
-									ref={editorRef}
-									value={sql}
-									onChange={setSql}
-									onRun={() => runAndShow(sql)}
-									tables={loadedTables}
-									height={editorHeight}
-									readOnly={savePending}
-									autoFocus={!isNarrow}
-								/>
-							</div>
-
-							{loadingStage || engineLoading || engineError || controls.queryChanged ? (
-								<div className="flex shrink-0 flex-wrap items-center gap-3">
-									{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
-									{engineLoading ? (
-										<span className="text-xs text-pro-text-tertiary">
-											Loading the in-browser SQL engine… queries run locally, this takes a few seconds the first time.
-										</span>
-									) : null}
-									{engineError ? (
-										<span role="alert" className="text-xs text-error">
-											SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
-										</span>
-									) : null}
-									{controls.queryChanged ? (
-										<span className="text-xs text-pro-text-tertiary">Query changed — Save will run it again.</span>
-									) : null}
-								</div>
-							) : null}
-
-							{queryError ? (
-								<div
-									role="alert"
-									className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error"
-								>
-									{queryError}
-								</div>
-							) : null}
-						</div>
-						<div
-							className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex ${pane === 'results' ? 'flex' : 'hidden'}`}
-						>
-							{resultRowCount !== null && resultRowCount > rowCap ? (
-								<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
-									Result has {formatNumber(resultRowCount)} rows. The card will show the first {formatNumber(rowCap)}{' '}
-									rows.
-								</div>
-							) : null}
-
-							<ResultsPanel
-								result={result}
-								running={running}
-								busyLabel={loadingStage}
-								chartConfig={chartConfig}
-								onChartConfigChange={(next) => dispatch({ type: 'chartConfigChanged', chartConfig: next ?? undefined })}
-								durationMs={durationMs}
-								view={displayMode}
-								onViewChange={setDisplayMode}
-								viewToggleLabel="Display as"
-							/>
-							<div className="flex shrink-0 flex-wrap items-center gap-4">
-								<span className="text-xs text-pro-text-tertiary">
-									{displayMode === 'table' ? 'Card shows the result as a table.' : 'Card shows the result as a chart.'}
-								</span>
-								<label className="flex items-center gap-2 text-xs text-pro-text-tertiary">
-									Rows to display
-									<input
-										type="number"
-										min={SQL_SNAPSHOT_ROW_CAP_MIN}
-										max={SQL_SNAPSHOT_ROW_CAP_MAX}
-										step={1}
-										value={rowCap}
-										readOnly={savePending}
-										onChange={(e) => {
-											const next = Number(e.target.value)
-											if (Number.isFinite(next)) setRowCap(next)
-										}}
-										onBlur={() => setRowCap((prev) => clampRowCap(prev))}
-										title={`How many query result rows the card can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The card keeps a preview of the query result and refreshes it when requested.`}
-										className="w-20 rounded-md border border-pro-cards-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
-									/>
-								</label>
-							</div>
-						</div>
-					</div>
-
-					<div
-						className={`min-h-0 flex-col p-4 max-lg:flex-1 lg:flex lg:pl-0 ${pane === 'reference' ? 'flex' : 'hidden'}`}
-					>
-						<SqlChartModalSidebar
-							chartOptionsMap={chartOptionsMap}
-							loadedTables={loadedTables}
-							onLoadTable={async (source) => {
-								if (runControllerRef.current) return null
-								dispatch({ type: 'sourceLoadStarted' })
-								const controller = new AbortController()
-								runControllerRef.current = controller
-								return loadTable(source, controller.signal).finally(() => {
-									if (runControllerRef.current === controller) runControllerRef.current = null
-								})
-							}}
-							schemaLoading={schemaLoading}
-							schemaError={schemaError}
-							schemaParams={schemaParams}
-							setSchemaParams={setSchemaParams}
-							busyTaskId={state.execution?.taskId ?? null}
-							savedQueries={savedQueries}
-							onApplyExample={(example: ExampleQuery) =>
-								applyQuery(`example:${example.title}`, example.title, example.sql, example.tables)
-							}
-							onApplySaved={(query: QuerySavedConfig) =>
-								applyQuery(`saved:${query.id}`, query.name, query.sql, query.tables, true)
-							}
-							onReplaceSql={setSql}
-							onInsertAtCursor={(text) => editorRef.current?.insertSnippet(text)}
-							onApplyAndRun={(snippet) => {
-								if (runControllerRef.current || schemaLoading) return
-								setSql(snippet)
-								void run(snippet)
-							}}
-						/>
-					</div>
-				</div>
-
-				<DialogFooter
-					leading={
-						refusalReason ? (
-							<span role="alert" className="text-xs text-error">
-								{refusalReason}
-							</span>
-						) : (
-							<span role="status" className="text-xs text-pro-text-tertiary">
-								{controls.status}
-							</span>
-						)
-					}
-					dismiss={<DialogCancelButton />}
-				>
-					{/* While saving, the same button stops the run that the save started. */}
+		// An outside tap never drops the query; Cancel, × and Escape ask first once it has changed.
+		<Dialog
+			size="xl"
+			workspace
+			scope="pro"
+			open={isOpen}
+			onClose={() => {
+				runControllerRef.current?.abort()
+				onClose()
+			}}
+			onClosed={onClosed}
+			unmountOnHide
+			portal
+			hideOnInteractOutside={false}
+		>
+			{/* Leaving during Save stops its run instead, so it never asks. */}
+			<DialogDiscardGuard
+				when={dirty && !savePending}
+				title="Discard this SQL chart?"
+				description="Your query and card settings are not saved to the dashboard."
+			/>
+			<DialogHeader
+				title={editItem ? 'Edit SQL chart' : 'New SQL chart'}
+				actions={
 					<Button
-						variant="primary"
+						variant="secondary"
 						size="md"
-						onClick={() => (savePending ? stopQuery() : void handleSave())}
-						disabled={controls.save.disabled}
+						onClick={() => (running ? stopQuery() : runAndShow(sql))}
+						disabled={controls.run.disabled}
 						accessibleWhenDisabled
 					>
-						{savePending ? <LoadingSpinner size={14} /> : null}
-						{controls.save.label}
+						{running ? (
+							<LoadingSpinner size={14} />
+						) : (
+							<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+								<path d="M8 5v14l11-7z" />
+							</svg>
+						)}
+						{controls.run.label}
+						{!running ? (
+							<span aria-hidden className="flex items-center gap-0.5 pointer-coarse:hidden">
+								<Keycap muted>⌘</Keycap>
+								<Keycap muted>↵</Keycap>
+							</span>
+						) : null}
 					</Button>
-				</DialogFooter>
-			</Dialog>
-		</Ariakit.DialogProvider>
+				}
+			/>
+			<div className="lg:hidden">
+				<DialogToolbar>
+					<SegmentedControl<SqlPane>
+						label="Editor view"
+						options={SQL_PANES}
+						value={pane}
+						onValueChange={setPane}
+						variant="solid-responsive"
+						size="md"
+					/>
+				</DialogToolbar>
+			</div>
+
+			{/* Save owns this snapshot; keep Cancel and its status outside the locked editing region. */}
+			<div
+				inert={savePending}
+				className="flex min-h-0 min-w-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_540px]"
+			>
+				<div
+					className={`min-h-0 min-w-0 flex-1 flex-col lg:flex lg:overflow-y-auto ${pane === 'reference' ? 'hidden' : 'flex'}`}
+				>
+					<div
+						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:pb-0 ${pane === 'query' ? 'flex' : 'hidden'}`}
+					>
+						<label className="flex shrink-0 flex-col gap-1">
+							<span className="text-xs font-medium text-pro-text-secondary">Card name (optional)</span>
+							<input
+								type="text"
+								value={name}
+								readOnly={savePending}
+								onChange={(e) => setName(e.target.value)}
+								className="shrink-0 rounded-md border border-pro-cards-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+							/>
+						</label>
+
+						<div className="shrink-0">
+							<Editor
+								ref={editorRef}
+								value={sql}
+								onChange={setSql}
+								onRun={() => runAndShow(sql)}
+								tables={loadedTables}
+								height={editorHeight}
+								readOnly={savePending}
+								autoFocus={!isNarrow}
+							/>
+						</div>
+
+						{loadingStage || engineLoading || engineError || controls.queryChanged ? (
+							<div className="flex shrink-0 flex-wrap items-center gap-3">
+								{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
+								{engineLoading ? (
+									<span className="text-xs text-pro-text-tertiary">
+										Loading the in-browser SQL engine… queries run locally, this takes a few seconds the first time.
+									</span>
+								) : null}
+								{engineError ? (
+									<span role="alert" className="text-xs text-error">
+										SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
+									</span>
+								) : null}
+								{controls.queryChanged ? (
+									<span className="text-xs text-pro-text-tertiary">Query changed — Save will run it again.</span>
+								) : null}
+							</div>
+						) : null}
+
+						{queryError ? (
+							<div
+								role="alert"
+								className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error"
+							>
+								{queryError}
+							</div>
+						) : null}
+					</div>
+					<div
+						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex ${pane === 'results' ? 'flex' : 'hidden'}`}
+					>
+						{resultRowCount !== null && resultRowCount > rowCap ? (
+							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
+								Result has {formatNumber(resultRowCount)} rows. The card will show the first {formatNumber(rowCap)}{' '}
+								rows.
+							</div>
+						) : null}
+
+						<ResultsPanel
+							result={result}
+							running={running}
+							busyLabel={loadingStage}
+							chartConfig={chartConfig}
+							onChartConfigChange={(next) => dispatch({ type: 'chartConfigChanged', chartConfig: next ?? undefined })}
+							durationMs={durationMs}
+							view={displayMode}
+							onViewChange={setDisplayMode}
+							viewToggleLabel="Display as"
+						/>
+						<div className="flex shrink-0 flex-wrap items-center gap-4">
+							<span className="text-xs text-pro-text-tertiary">
+								{displayMode === 'table' ? 'Card shows the result as a table.' : 'Card shows the result as a chart.'}
+							</span>
+							<label className="flex items-center gap-2 text-xs text-pro-text-tertiary">
+								Rows to display
+								<input
+									type="number"
+									min={SQL_SNAPSHOT_ROW_CAP_MIN}
+									max={SQL_SNAPSHOT_ROW_CAP_MAX}
+									step={1}
+									value={rowCap}
+									readOnly={savePending}
+									onChange={(e) => {
+										const next = Number(e.target.value)
+										if (Number.isFinite(next)) setRowCap(next)
+									}}
+									onBlur={() => setRowCap((prev) => clampRowCap(prev))}
+									title={`How many query result rows the card can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The card keeps a preview of the query result and refreshes it when requested.`}
+									className="w-20 rounded-md border border-pro-cards-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
+								/>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div
+					className={`min-h-0 flex-col p-4 max-lg:flex-1 lg:flex lg:pl-0 ${pane === 'reference' ? 'flex' : 'hidden'}`}
+				>
+					<SqlChartModalSidebar
+						chartOptionsMap={chartOptionsMap}
+						loadedTables={loadedTables}
+						onLoadTable={async (source) => {
+							if (runControllerRef.current) return null
+							dispatch({ type: 'sourceLoadStarted' })
+							const controller = new AbortController()
+							runControllerRef.current = controller
+							return loadTable(source, controller.signal).finally(() => {
+								if (runControllerRef.current === controller) runControllerRef.current = null
+							})
+						}}
+						schemaLoading={schemaLoading}
+						schemaError={schemaError}
+						schemaParams={schemaParams}
+						setSchemaParams={setSchemaParams}
+						busyTaskId={state.execution?.taskId ?? null}
+						savedQueries={savedQueries}
+						onApplyExample={(example: ExampleQuery) =>
+							applyQuery(`example:${example.title}`, example.title, example.sql, example.tables)
+						}
+						onApplySaved={(query: QuerySavedConfig) =>
+							applyQuery(`saved:${query.id}`, query.name, query.sql, query.tables, true)
+						}
+						onReplaceSql={setSql}
+						onInsertAtCursor={(text) => editorRef.current?.insertSnippet(text)}
+						onApplyAndRun={(snippet) => {
+							if (runControllerRef.current || schemaLoading) return
+							setSql(snippet)
+							void run(snippet)
+						}}
+					/>
+				</div>
+			</div>
+
+			<DialogFooter
+				leading={
+					refusalReason ? (
+						<span role="alert" className="text-xs text-error">
+							{refusalReason}
+						</span>
+					) : (
+						<span role="status" className="text-xs text-pro-text-tertiary">
+							{controls.status}
+						</span>
+					)
+				}
+				dismiss={<DialogCancelButton />}
+			>
+				{/* While saving, the same button stops the run that the save started. */}
+				<Button
+					variant="primary"
+					size="md"
+					onClick={() => (savePending ? stopQuery() : void handleSave())}
+					disabled={controls.save.disabled}
+					accessibleWhenDisabled
+				>
+					{savePending ? <LoadingSpinner size={14} /> : null}
+					{controls.save.label}
+				</Button>
+			</DialogFooter>
+		</Dialog>
 	)
 }

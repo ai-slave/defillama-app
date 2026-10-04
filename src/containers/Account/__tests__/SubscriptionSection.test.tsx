@@ -233,11 +233,16 @@ test('the extra usage switch stays locked until the plan read shows the new sett
 	await act(async () => overageSwitch()!.click())
 	await waitFor(() => expect(answerRead).toBeTypeOf('function'))
 
-	expect(overageSwitch()!.disabled).toBe(true)
+	// Locked but focusable: the press that locked it keeps focus, and another press sends nothing.
+	expect(overageSwitch()!.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => overageSwitch()!.click())
+	expect(session.requests.filter((request) => request.url.href.endsWith('/subscription/enable-overage'))).toHaveLength(
+		1
+	)
 
 	await act(async () => answerRead(Response.json({ subscription: { ...apiSubscription, overage: true } })))
 	await waitFor(() => expect(overageSwitch()!.getAttribute('aria-checked')).toBe('true'))
-	expect(overageSwitch()!.disabled).toBe(false)
+	expect(overageSwitch()!.hasAttribute('aria-disabled')).toBe(false)
 })
 
 const lostAnswers = [
@@ -280,6 +285,30 @@ test.each(lostAnswers)('a cancellation whose answer %s says it could not confirm
 			"We couldn't confirm the cancellation. Check your plan before trying again."
 		)
 	)
+})
+
+test('a cancellation retry keeps the unconfirmed error on screen while it runs', async () => {
+	session.serve({
+		'/subscription/status': { subscription: apiSubscription },
+		'/subscription/cancel': fixtureStatus(504, { message: 'Gateway timeout' })
+	})
+	await render()
+	await waitFor(() => expect(button('Cancel subscription')).toBeDefined())
+	await act(async () => button('Cancel subscription')!.click())
+	await waitFor(() => expect(button('Confirm cancellation')).toBeDefined())
+	await act(async () => button('Confirm cancellation')!.click())
+	const alert = () => document.querySelector('[role=alertdialog] [role=alert]')?.textContent
+	await waitFor(() =>
+		expect(alert()).toBe("We couldn't confirm the cancellation. Check your plan before trying again.")
+	)
+
+	session.serve({ '/subscription/cancel': () => new Promise<Response>(() => {}) })
+	await act(async () => button('Confirm cancellation')!.click())
+
+	await waitFor(() =>
+		expect(document.querySelector('[role=alertdialog] [role=status]')?.textContent).toBe('Cancelling…')
+	)
+	expect(alert()).toBe("We couldn't confirm the cancellation. Check your plan before trying again.")
 })
 
 test('a LlamaPay top-up opens its checkout in this tab, where no popup blocker can swallow it', async () => {

@@ -137,6 +137,8 @@ export type WatchlistStore = Record<string, Record<string, string>>
 type SettingsStore = Partial<Record<SettingKey, boolean>>
 
 export type CustomColumnDef = {
+	/** The column's table key, which its stored visibility is keyed by. */
+	id: string
 	name: string
 	formula: string
 	formatType: 'auto' | 'number' | 'usd' | 'percent' | 'string' | 'boolean'
@@ -177,6 +179,9 @@ export function parseCustomColumns(value: unknown): Array<CustomColumnDef> {
 		}
 
 		columns.push({
+			// Columns saved before ids existed were keyed by position; that key becomes their id, so their stored
+			// visibility still applies, and the next write stores it.
+			id: 'id' in entry && typeof entry.id === 'string' ? entry.id : `custom_formula_${columns.length}`,
 			name: entry.name,
 			formula: entry.formula,
 			formatType: entry.formatType,
@@ -602,15 +607,11 @@ function setSavedDownloads(next: Array<SavedDownload>) {
 	writeAppStorage({ ...readAppStorage(), [SAVED_DOWNLOADS]: next })
 }
 
-function saveDownload(config: SavedDownload, options?: { replaceByName?: boolean }) {
+// A preset saved under a taken name (case-insensitive) replaces it, so names stay unique.
+function saveDownload(config: SavedDownload) {
 	const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
-	if (options?.replaceByName) {
-		const key = presetNameKey(config.name)
-		const without = current.filter((c) => presetNameKey(c.name) !== key)
-		setSavedDownloads([config, ...without])
-		return
-	}
-	setSavedDownloads([config, ...current])
+	const key = presetNameKey(config.name)
+	setSavedDownloads([config, ...current.filter((c) => presetNameKey(c.name) !== key)])
 }
 
 function updateDownload(id: string, patch: Partial<SavedDownload>) {
@@ -677,34 +678,10 @@ export function useCustomColumns() {
 		() => '[]'
 	)
 
-	const customColumns = useMemo(() => {
-		try {
-			const parsed: unknown = JSON.parse(snapshot)
-			return parseCustomColumns(parsed)
-		} catch {
-			return []
-		}
-	}, [snapshot])
+	// The snapshot is the parsed columns serialized above, so reading it back needs no second parse.
+	const customColumns = useMemo(() => JSON.parse(snapshot) as Array<CustomColumnDef>, [snapshot])
 
-	function addCustomColumn(col: CustomColumnDef) {
-		setCustomColumns([...customColumns, col])
-	}
-
-	function editCustomColumn(index: number, col: CustomColumnDef) {
-		setCustomColumns(customColumns.map((c, i) => (i === index ? col : c)))
-	}
-
-	function deleteCustomColumn(index: number) {
-		setCustomColumns(customColumns.filter((_, i) => i !== index))
-	}
-
-	return {
-		customColumns,
-		setCustomColumns,
-		addCustomColumn,
-		editCustomColumn,
-		deleteCustomColumn
-	}
+	return { customColumns, setCustomColumns }
 }
 
 export function useSavedDownloads() {
@@ -762,7 +739,7 @@ export function useRecentDownloads() {
 	}
 }
 
-export function useLlamaAIWelcome(_isSubscribed?: boolean): [boolean, () => void] {
+export function useLlamaAIWelcome(): [boolean, () => void] {
 	const snapshot = useSyncExternalStore(
 		subscribeToLocalStorage,
 		() => {

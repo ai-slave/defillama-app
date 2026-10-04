@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { DialogBackButton, DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
@@ -9,6 +10,7 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { tw } from '~/ui/tw'
+import { queryReadFailed } from '~/utils/query'
 import {
 	deleteArticleRevision,
 	getArticleRevision,
@@ -32,6 +34,8 @@ type Props = {
 	onClose: () => void
 	articleId: string
 	authorizedFetch: AuthorizedFetch
+	/** Sends the editor's unsaved edits, so a restore never drops them unseen. Resolves false when that save fails. */
+	saveEdits: () => Promise<boolean>
 	onRestored: (article: ArticleDocument) => void
 }
 
@@ -262,7 +266,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	)
 }
 
-export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onRestored }: Props) {
+export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, saveEdits, onRestored }: Props) {
 	const [selectedIdState, setSelectedIdState] = useState<string | null>(null)
 	const [filter, setFilter] = useState<FilterKey>('all')
 	const [confirming, setConfirming] = useState<null | 'restore' | 'delete'>(null)
@@ -272,7 +276,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>('list')
 	const listRef = useRef<HTMLDivElement | null>(null)
 	const restoreRef = useRef<HTMLButtonElement | null>(null)
-	const deleteRef = useRef<HTMLButtonElement | null>(null)
+	// Not the mutation's own error: that one clears while a retry runs.
+	const [restoreError, setRestoreError] = useState<string | null>(null)
 	const queryClient = useQueryClient()
 	const revisionsQueryKey = useMemo(() => ['research', 'article-revisions', articleId] as const, [articleId])
 	const revisionsQuery = useInfiniteQuery({
@@ -298,11 +303,20 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	const selectedRevision = selectedRevisionQuery.data ?? null
 	const restoreRevisionMutation = useMutation({
 		mutationKey: articleWriteKey(articleId),
-		mutationFn: (revisionId: string) => restoreArticleRevisionToPending(articleId, revisionId, authorizedFetch),
+		mutationFn: async (revisionId: string) => {
+			// The restore replaces the editor's document; edits it has not saved yet go to the history first.
+			if (!(await saveEdits())) throw new Error('Save the latest edits before restoring.')
+			return restoreArticleRevisionToPending(articleId, revisionId, authorizedFetch).catch((error: unknown) => {
+				throw new Error("Couldn't restore this revision. Try again.", { cause: error })
+			})
+		},
 		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const deleteRevisionMutation = useMutation({
-		mutationFn: (revisionId: string) => deleteArticleRevision(articleId, revisionId, authorizedFetch),
+		mutationFn: (revisionId: string) =>
+			deleteArticleRevision(articleId, revisionId, authorizedFetch).catch((error: unknown) => {
+				throw new Error("Couldn't delete this revision. Try again.", { cause: error })
+			}),
 		onSuccess: (_, revisionId) =>
 			queryClient.setQueryData<typeof revisionsQuery.data>(revisionsQueryKey, (current) =>
 				current
@@ -318,15 +332,11 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	})
 	const isRestoring = restoreRevisionMutation.isPending
 
-	// Each confirmation starts without the error of an earlier attempt. Neither can open while its request runs,
+	// The restore confirmation starts without the error of an earlier attempt. It cannot open while its request runs,
 	// because the open confirmation cannot close until the request settles.
 	const askRestore = () => {
-		restoreRevisionMutation.reset()
+		setRestoreError(null)
 		setConfirming('restore')
-	}
-	const askDelete = () => {
-		deleteRevisionMutation.reset()
-		setConfirming('delete')
 	}
 
 	// A restore belongs to this opening. The drawer cannot close while it runs, and its result replaces the
@@ -340,14 +350,9 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				onClose()
 				// The drawer is closing, so the confirmation can toast.
 				toast.success('Restored as pending')
-			}
+			},
+			onError: (error) => setRestoreError(error.message)
 		})
-	}
-
-	// The entry leaves the list from the mutation's own onSuccess; a failure keeps the confirmation open.
-	const handleDelete = () => {
-		if (!selectedId) return
-		deleteRevisionMutation.mutate(selectedId, { onSuccess: () => setConfirming(null) })
 	}
 
 	const liveAnchorId = useMemo(() => {
@@ -383,12 +388,15 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 
 	const selectedIndex = useMemo(() => filtered.findIndex((entry) => entry.id === selectedId), [filtered, selectedId])
 
-	// The next row is already rendered, so the keyboard move scrolls it into view without waiting for the commit.
-	const moveSelection = (delta: number) => {
+	// The next row is already rendered, so the keyboard move reaches it without waiting for the commit. A move made
+	// from the list takes focus to the new row; one made elsewhere only scrolls it into view.
+	const moveSelection = (delta: number, focusRow: boolean) => {
 		if (filtered.length === 0) return
 		const next = filtered[Math.min(filtered.length - 1, Math.max(0, selectedIndex + delta))]
 		setSelectedIdState(next.id)
-		listRef.current?.querySelector<HTMLElement>(`[data-revision-id="${next.id}"]`)?.scrollIntoView({ block: 'nearest' })
+		const row = listRef.current?.querySelector<HTMLElement>(`[data-revision-id="${next.id}"] button`)
+		if (focusRow) row?.focus()
+		else row?.scrollIntoView({ block: 'nearest' })
 	}
 
 	const previewArticle = useMemo<LocalArticleDocument | null>(() => {
@@ -445,11 +453,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			? 'self'
 			: 'missing'
 
-	const baseId = useMemo(() => {
-		if (baseMode === 'previous') return baseAvailability.previous
-		if (baseMode === 'live') return baseAvailability.live
-		return baseAvailability.pending
-	}, [baseMode, baseAvailability])
+	const baseId = baseAvailability[baseMode]
 
 	const baseRevisionQuery = useQuery({
 		queryKey: ['research', 'article-revision', articleId, baseId],
@@ -491,12 +495,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 					)
 				)
 					return
-				if (event.key === 'j' || event.key === 'ArrowDown') {
+				// The arrows move through the list only from inside it; elsewhere they scroll the preview as usual.
+				const inList = listRef.current?.contains(target) === true
+				if (event.key === 'j' || (inList && event.key === 'ArrowDown')) {
 					event.preventDefault()
-					moveSelection(1)
-				} else if (event.key === 'k' || event.key === 'ArrowUp') {
+					moveSelection(1, inList)
+				} else if (event.key === 'k' || (inList && event.key === 'ArrowUp')) {
 					event.preventDefault()
-					moveSelection(-1)
+					moveSelection(-1, inList)
 				} else if (event.key === 'r' && selectedRevision) {
 					event.preventDefault()
 					askRestore()
@@ -559,14 +565,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						</div>
 
 						<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
-							{revisionsQuery.isLoading ? (
-								<SurfaceBodyLoadingStatus label="Loading revisions" />
-							) : revisionsQuery.isLoadingError ? (
+							{queryReadFailed(revisionsQuery) && !revisionsQuery.data ? (
 								<LoadError
 									message="Couldn't load the revision history."
 									retrying={revisionsQuery.isFetching}
 									onRetry={() => void revisionsQuery.refetch()}
 								/>
+							) : revisionsQuery.isLoading ? (
+								<SurfaceBodyLoadingStatus label="Loading revisions" />
 							) : grouped.length === 0 ? (
 								<SurfaceBodyStatus variant="empty">
 									{filter === 'all'
@@ -684,9 +690,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 								isLive={isLive}
 								isPendingAnchor={selectedId === pendingAnchorId}
 								restoreRef={restoreRef}
-								deleteRef={deleteRef}
 								onAskRestore={askRestore}
-								onAskDelete={askDelete}
+								onAskDelete={() => setConfirming('delete')}
 								viewMode={viewMode}
 								onChangeView={setViewMode}
 								baseMode={baseMode}
@@ -696,14 +701,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 							/>
 						) : null}
 						<div className="min-h-0 flex-1 overflow-y-auto">
-							{revisionsQuery.isLoading || selectedRevisionQuery.isLoading ? (
-								<SurfaceBodyLoadingStatus label="Loading revision" />
-							) : selectedRevisionQuery.isLoadingError ? (
+							{queryReadFailed(selectedRevisionQuery) && !selectedRevisionQuery.data ? (
 								<LoadError
 									message="Couldn't load this revision."
 									retrying={selectedRevisionQuery.isFetching}
 									onRetry={() => void selectedRevisionQuery.refetch()}
 								/>
+							) : revisionsQuery.isLoading || selectedRevisionQuery.isLoading ? (
+								<SurfaceBodyLoadingStatus label="Loading revision" />
 							) : !previewArticle ? (
 								<SurfaceBodyStatus variant="empty">No revision selected.</SurfaceBodyStatus>
 							) : viewMode === 'diff' ? (
@@ -711,7 +716,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 									<SurfaceBodyStatus variant="empty">
 										{BASE_UNAVAILABLE_TEXT[baseMode][baseUnavailable]}
 									</SurfaceBodyStatus>
-								) : baseRevisionQuery.isLoadingError ? (
+								) : queryReadFailed(baseRevisionQuery) && !baseRevisionQuery.data ? (
 									<LoadError
 										message="Couldn't load the revision to compare against."
 										retrying={baseRevisionQuery.isFetching}
@@ -743,21 +748,21 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				description="This snapshot loads into the editor as a pending edit."
 				confirmLabel="Restore"
 				pendingLabel={isRestoring ? 'Restoring…' : null}
-				error={restoreRevisionMutation.isError ? "Couldn't restore this revision. Try again." : null}
+				error={restoreError}
 				onConfirm={handleRestore}
 			/>
-			<ConfirmDialog
-				open={confirming === 'delete'}
-				onClose={() => setConfirming(null)}
-				unmountOnHide
-				finalFocus={deleteRef}
-				title="Delete this revision?"
-				description="The snapshot is removed from the history permanently."
-				confirmLabel="Delete"
-				pendingLabel={deleteRevisionMutation.isPending ? 'Deleting…' : null}
-				error={deleteRevisionMutation.isError ? "Couldn't delete this revision. Try again." : null}
-				onConfirm={handleDelete}
-			/>
+			{/* The entry leaves the list from the mutation's own onSuccess. */}
+			{confirming === 'delete' && selectedId ? (
+				<ConfirmActionDialog
+					title="Delete this revision?"
+					description="The snapshot is removed from the history permanently."
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteRevisionMutation}
+					variables={selectedId}
+					onClose={() => setConfirming(null)}
+				/>
+			) : null}
 		</SideSheet>
 	)
 }
@@ -784,7 +789,6 @@ function PreviewSpecimenHeader({
 	isLive,
 	isPendingAnchor,
 	restoreRef,
-	deleteRef,
 	onAskRestore,
 	onAskDelete,
 	viewMode,
@@ -800,7 +804,6 @@ function PreviewSpecimenHeader({
 	isLive: boolean
 	isPendingAnchor: boolean
 	restoreRef: RefObject<HTMLButtonElement | null>
-	deleteRef: RefObject<HTMLButtonElement | null>
 	onAskRestore: () => void
 	onAskDelete: () => void
 	viewMode: ViewMode
@@ -891,7 +894,6 @@ function PreviewSpecimenHeader({
 							type="button"
 							size="md"
 							variant="destructive"
-							ref={deleteRef}
 							disabled={!revision || isLive}
 							accessibleWhenDisabled
 							onClick={onAskDelete}

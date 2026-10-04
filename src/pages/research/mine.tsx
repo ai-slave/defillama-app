@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
@@ -50,7 +50,6 @@ function StatusDot({ status }: { status: ArticleDocument['status'] }) {
 
 function MyArticlesContent() {
 	const [deleteTarget, setDeleteTarget] = useState<ArticleDocument | null>(null)
-	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -134,11 +133,6 @@ function MyArticlesContent() {
 	const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
 	const rangeEnd = Math.min(safePage * PAGE_SIZE, filtered.length)
 
-	const handleDelete = (article: ArticleDocument) => {
-		deleteArticleMutation.reset()
-		setDeleteTarget(article)
-	}
-
 	const showLoading = loaders.userLoading || (isAuthenticated && isLoading)
 
 	return (
@@ -153,7 +147,6 @@ function MyArticlesContent() {
 					mutation={deleteArticleMutation}
 					variables={deleteTarget.id}
 					onClose={() => setDeleteTarget(null)}
-					fallbackFocus={headingRef}
 				/>
 			) : null}
 			<header className="grid gap-6 border-b border-medium pb-6">
@@ -162,13 +155,7 @@ function MyArticlesContent() {
 						<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 							Research · Workspace
 						</span>
-						<h1
-							ref={headingRef}
-							tabIndex={-1}
-							className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl"
-						>
-							My research
-						</h1>
+						<h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">My research</h1>
 						{!showLoading ? (
 							<p className="text-sm text-secondary">
 								<span className="text-primary tabular-nums">{draftCount}</span> draft
@@ -434,7 +421,7 @@ function MyArticlesContent() {
 												aria-label="Delete"
 												title="Delete"
 												disabled={isDeleting}
-												onClick={() => handleDelete(article)}
+												onClick={() => setDeleteTarget(article)}
 												className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
 											>
 												<Icon name="x" className="size-3.5" />

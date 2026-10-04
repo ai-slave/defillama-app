@@ -21,10 +21,10 @@ function trigger() {
 	return document.querySelector<HTMLButtonElement>('button[role="combobox"]')!
 }
 
-/** The rows a user picks from, without the "Select all" row that leads a multi-select list. */
+/** The options a user picks from, without the "Select all" row that leads a multi-select list or each row's "Only". */
 function options() {
 	return [...document.querySelectorAll<HTMLElement>('[role="option"]')].filter(
-		(option) => !option.textContent?.startsWith('Select all')
+		(option) => !option.textContent?.startsWith('Select all') && option.textContent !== 'Only'
 	)
 }
 
@@ -204,11 +204,36 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		expect(trigger().getAttribute('aria-expanded')).toBe('true')
 	})
 
+	test('See more in a multi-select moves focus to the first newly shown option', async () => {
+		const many = Array.from({ length: 25 }, (_, i) => ({ key: `protocol-${i + 1}`, name: `Protocol ${i + 1}` }))
+		await act(async () =>
+			root.render(
+				<SelectWithCombobox
+					allValues={many}
+					selectedValues={[]}
+					setSelectedValues={() => {}}
+					label="Protocols"
+					variant="filter"
+					size="md"
+				/>
+			)
+		)
+		await click(trigger())
+		const seeMore = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+			(option) => option.textContent === 'See more…'
+		)!
+		await click(seeMore)
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		// The search field keeps DOM focus; the focused option is its active descendant.
+		const active = document.activeElement!.getAttribute('aria-activedescendant')!
+		expect(document.getElementById(active)?.textContent).toBe('Protocol 21')
+	})
+
 	test('a list under 12 options opens without a search field', async () => {
 		await act(async () => root.render(<ControlledMetricsShort />))
 		await click(trigger())
 		expect(document.querySelector('input')).toBeNull()
-		expect(options().map((option) => option.textContent)).toEqual(['TVLOnly', 'FeesOnly', 'VolumeOnly'])
+		expect(options().map((option) => option.textContent)).toEqual(['TVL', 'Fees', 'Volume'])
 	})
 
 	test('renders the empty state with the typed filter', async () => {

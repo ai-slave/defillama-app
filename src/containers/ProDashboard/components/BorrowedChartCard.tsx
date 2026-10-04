@@ -57,19 +57,13 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		chartType,
 		getProtocolInfo(protocol)?.misrepresentedTokens
 	)
-	const {
-		data: borrowedData,
-		isLoading,
-		readFailed,
-		isFetching,
-		refetch,
-		hasSourceData
-	} = useBorrowedChartData({
+	const borrowedQuery = useBorrowedChartData({
 		protocol,
 		chartType,
 		enabled: streamDone && !suppressTokenBreakdown,
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME
 	})
+	const { data: borrowedData, isLoading, readFailed, hasSourceData } = borrowedQuery
 	const seriesNames = borrowedData.seriesNames
 	const pieSeriesNames = useMemo(
 		() => borrowedData.pieSeries.peers.map((peer) => peer.name),
@@ -172,7 +166,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	)
 
 	if (readFailed && !hasSourceData) {
-		return renderStatusShell(<ProCardError retry={{ run: refetch, pending: isFetching }} />)
+		return renderStatusShell(<ProCardError retry={borrowedQuery} />)
 	}
 
 	if (isLoading || (!streamDone && !hasSourceData && !suppressTokenBreakdown)) {
@@ -257,7 +251,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={{ run: refetch, pending: isFetching }} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={borrowedQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

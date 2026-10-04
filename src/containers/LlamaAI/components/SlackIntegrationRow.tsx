@@ -122,6 +122,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 		link.state.workspaces.some((w) => w.team_id === disconnectTarget.team_id)
 	if (disconnectTarget && !targetListed) setDisconnectTarget(null)
 	const rowRef = useRef<HTMLDivElement>(null)
+	const error = link.startError ?? (link.state.status === 'error' ? link.state.message : null)
 
 	return (
 		<div ref={rowRef} className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
@@ -133,7 +134,10 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						<p className="m-0 mt-0.5 body-sm text-secondary">{description}</p>
 					</div>
 				</div>
-				{(link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading') && (
+				{(link.state.status === 'idle' ||
+					link.state.status === 'starting' ||
+					link.state.status === 'loading' ||
+					link.state.status === 'error') && (
 					<ConnectButton
 						// Cancelling a pending link removes the block that held focus.
 						ref={takeLostFocus}
@@ -192,16 +196,20 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						/>
 					))}
 					<div className="flex justify-end">
-						<ConnectButton onClick={() => link.connect()} label="Add another workspace" />
+						<ConnectButton
+							onClick={() => link.connect()}
+							disabled={link.isStarting}
+							label={link.isStarting ? 'Opening…' : 'Add another workspace'}
+						/>
 					</div>
 				</div>
 			)}
 
-			{link.state.status === 'error' && (
+			{error ? (
 				<div className="mt-3">
-					<InlineStatus variant="error">{link.state.message}</InlineStatus>
+					<InlineStatus variant="error">{error}</InlineStatus>
 				</div>
-			)}
+			) : null}
 			<ConfirmDialog
 				open={disconnectTarget !== null}
 				onClose={() => setDisconnectTarget(null)}

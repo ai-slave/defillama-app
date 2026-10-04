@@ -31,11 +31,13 @@ export function AddSourcesMenu({
 	const githubStore = Ariakit.useDialogStore()
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const folderInputRef = useRef<HTMLInputElement>(null)
+	// The menu item that opened a dialog is gone once it closes, so the dialog returns focus to the menu's trigger.
+	const triggerRef = useRef<HTMLButtonElement>(null)
 
 	return (
 		<>
 			<Ariakit.MenuProvider placement="bottom-start">
-				<Ariakit.MenuButton disabled={isUploading} render={trigger as React.ReactElement} />
+				<Ariakit.MenuButton ref={triggerRef} disabled={isUploading} render={trigger as React.ReactElement} />
 				<MenuSurface variant="actions" gutter={gutter} className={menuClassName ?? 'w-60'}>
 					{onAddPhotosFiles ? (
 						<>
@@ -104,8 +106,8 @@ export function AddSourcesMenu({
 					</div>
 				</Ariakit.Portal>
 			) : null}
-			<AddTextContentModal dialogStore={addTextStore} projectId={projectId} />
-			<GitHubConnectModal dialogStore={githubStore} projectId={projectId} />
+			<AddTextContentModal dialogStore={addTextStore} projectId={projectId} finalFocus={triggerRef} />
+			<GitHubConnectModal dialogStore={githubStore} projectId={projectId} finalFocus={triggerRef} />
 		</>
 	)
 }

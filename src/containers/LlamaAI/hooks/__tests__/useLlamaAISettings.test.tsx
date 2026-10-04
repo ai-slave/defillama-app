@@ -85,7 +85,7 @@ describe('useLlamaAISettings', () => {
 
 		let save!: Promise<boolean>
 		await act(async () => {
-			save = hook.actions.setCustomInstructions('Account A private notes')
+			save = hook.saveSettings({ customInstructions: 'Account A private notes' })
 		})
 		await waitForUi(() => expect(releaseSave).toBeTypeOf('function'))
 		await act(async () => auth.logout())
@@ -123,14 +123,14 @@ describe('useLlamaAISettings', () => {
 		let firstSave!: Promise<boolean>
 		let secondSave!: Promise<boolean>
 		await act(async () => {
-			firstSave = hook.actions.setEnableMemory(false)
+			firstSave = hook.saveSettings({ enableMemory: false })
 		})
 		await waitForUi(() => expect(puts).toHaveLength(1))
 		await act(async () => root.unmount())
 		root = createRoot(container)
 		await mount()
 		await act(async () => {
-			secondSave = hook.actions.setEnableMemory(true)
+			secondSave = hook.saveSettings({ enableMemory: true })
 		})
 		// The second save waits behind the first instead of racing it to the server.
 		expect(puts).toHaveLength(1)
@@ -159,7 +159,7 @@ describe('useLlamaAISettings', () => {
 
 		let save!: Promise<boolean>
 		await act(async () => {
-			save = hook.actions.setCustomInstructions('New instructions')
+			save = hook.saveSettings({ customInstructions: 'New instructions' })
 		})
 		expect(await within(save)).toBe(true)
 		await waitForUi(() => expect(hook.settings.customInstructions).toBe('New instructions'))

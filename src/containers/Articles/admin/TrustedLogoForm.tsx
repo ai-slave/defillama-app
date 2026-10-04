@@ -8,6 +8,7 @@ import { ArticleApiError, createTrustedLogo, listTrustedLogos, updateTrustedLogo
 import type { TrustedLogo, TrustedLogoPayload } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
+import { queryReadFailed } from '~/utils/query'
 
 type FormState = {
 	name: string
@@ -89,6 +90,22 @@ export function TrustedLogoForm({ logoId }: Props) {
 	})
 
 	const update = (patch: Partial<FormState>) => setState((prev) => ({ ...prev, ...patch }))
+
+	// A failed list read is not a missing logo: say so and offer the retry.
+	if (logoId && queryReadFailed(logosQuery) && !logosQuery.data) {
+		return (
+			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+				<h1 className="text-xl font-semibold text-primary">Couldn't load the logos</h1>
+				<Button
+					size="sm"
+					onClick={() => void logosQuery.refetch()}
+					pendingLabel={logosQuery.isFetching ? 'Retrying…' : null}
+				>
+					Try again
+				</Button>
+			</div>
+		)
+	}
 
 	if (logoId && logosQuery.isLoading) {
 		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>

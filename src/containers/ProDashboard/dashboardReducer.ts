@@ -28,14 +28,9 @@ export interface DashboardState {
 	dashboardVisibility: 'private' | 'public'
 	dashboardTags: Array<string>
 	dashboardDescription: string
-	showGenerateDashboardModal: boolean
-	showIterateDashboardModal: boolean
 }
 
-export type DashboardSaveBaseline = Omit<
-	DashboardState,
-	'currentDashboard' | 'showGenerateDashboardModal' | 'showIterateDashboardModal' | 'history'
->
+export type DashboardSaveBaseline = Omit<DashboardState, 'currentDashboard' | 'history'>
 
 export type DashboardAction =
 	| {
@@ -56,8 +51,6 @@ export type DashboardAction =
 	| { type: 'SET_DASHBOARD_VISIBILITY'; payload: 'private' | 'public' }
 	| { type: 'SET_DASHBOARD_TAGS'; payload: Array<string> }
 	| { type: 'SET_DASHBOARD_DESCRIPTION'; payload: string }
-	| { type: 'SET_SHOW_GENERATE_DASHBOARD_MODAL'; payload: boolean }
-	| { type: 'SET_SHOW_ITERATE_DASHBOARD_MODAL'; payload: boolean }
 	| { type: 'APPLY_DASHBOARD'; payload: Dashboard }
 	| { type: 'SAVE_DASHBOARD'; payload: Dashboard; submitted: DashboardSaveBaseline }
 
@@ -75,9 +68,7 @@ const INITIAL_DASHBOARD_STATE: DashboardState = {
 	currentDashboard: null,
 	dashboardVisibility: 'private',
 	dashboardTags: [],
-	dashboardDescription: '',
-	showGenerateDashboardModal: false,
-	showIterateDashboardModal: false
+	dashboardDescription: ''
 }
 
 function stateFromDashboard(dashboard: Dashboard): DashboardState {
@@ -244,12 +235,6 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 		case 'SET_DASHBOARD_DESCRIPTION':
 			return { ...state, dashboardDescription: action.payload }
 
-		case 'SET_SHOW_GENERATE_DASHBOARD_MODAL':
-			return { ...state, showGenerateDashboardModal: action.payload }
-
-		case 'SET_SHOW_ITERATE_DASHBOARD_MODAL':
-			return { ...state, showIterateDashboardModal: action.payload }
-
 		case 'SAVE_DASHBOARD':
 			if (state.dashboardId !== action.submitted.dashboardId) return state
 			return reconcileDashboard(state, action.payload, action.submitted)
@@ -262,11 +247,7 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 			if (state.currentDashboard?.id === dashboard.id) {
 				return reconcileDashboard(state, dashboard, stateFromDashboard(state.currentDashboard))
 			}
-			return {
-				...stateFromDashboard(dashboard),
-				showGenerateDashboardModal: state.showGenerateDashboardModal,
-				showIterateDashboardModal: state.showIterateDashboardModal
-			}
+			return stateFromDashboard(dashboard)
 		}
 
 		default:

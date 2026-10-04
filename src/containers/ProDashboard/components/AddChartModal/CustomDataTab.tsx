@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from 'react'
-import { useAuthContext } from '~/auth'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { ChartToolbar } from '~/containers/Downloads/sql/chart/ChartToolbar'
 import { type ChartConfig as DownloadChartConfig, defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
@@ -41,17 +40,11 @@ function describeError(error: unknown): string {
 }
 
 export function CustomDataTab(props: CustomDataTabProps) {
-	const { hasActiveSubscription } = useAuthContext()
-
-	if (!hasActiveSubscription) {
-		return (
-			<PremiumFeatureGate featureName="Custom data" paywallReason="pro-feature">
-				<CustomDataForm {...props} />
-			</PremiumFeatureGate>
-		)
-	}
-
-	return <CustomDataForm {...props} />
+	return (
+		<PremiumFeatureGate featureName="Custom data" paywallReason="pro-feature">
+			<CustomDataForm {...props} />
+		</PremiumFeatureGate>
+	)
 }
 
 function CustomDataForm({
@@ -107,6 +100,8 @@ function CustomDataForm({
 	const applyTypedCsv = useDebouncedCallback(applyCsv, TYPED_CSV_PARSE_DELAY_MS)
 
 	const handleTextChange = (text: string) => {
+		// Rows still encoding belong to the text before this edit; they must not land as the stored rows.
+		encodeToken.current += 1
 		onTextChange(text)
 		if (!text.trim()) {
 			applyTypedCsv.cancel()

@@ -1,3 +1,4 @@
+import { useDialogLeave } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { ProButton } from '../../ui'
 
@@ -6,6 +7,8 @@ interface SqlHandoffPanelProps {
 }
 
 export function SqlHandoffPanel({ onOpenSqlEditor }: SqlHandoffPanelProps) {
+	// Saving from the editor closes Add card too, so a draft in another tab is confirmed before the editor opens.
+	const leave = useDialogLeave()
 	return (
 		<div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="text-base font-semibold text-pro-text-primary">SQL cards are built in the SQL editor</h3>
@@ -15,7 +18,7 @@ export function SqlHandoffPanel({ onOpenSqlEditor }: SqlHandoffPanelProps) {
 			<p className="text-sm text-pro-text-secondary">
 				When the query returns what you want, add it to this dashboard without leaving the editor.
 			</p>
-			<ProButton type="button" onClick={onOpenSqlEditor} variant="primary">
+			<ProButton type="button" onClick={() => leave(onOpenSqlEditor)} variant="primary">
 				<Icon name="code" height={16} width={16} />
 				Open SQL editor
 			</ProButton>

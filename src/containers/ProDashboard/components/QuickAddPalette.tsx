@@ -166,16 +166,6 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	const { loading, error, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { handleAppendItems } = useProDashboardEditorActions()
 	const { items } = useProDashboardItemsState()
-	const dialogStore = Ariakit.useDialogStore({
-		open,
-		setOpen: (nextOpen) => {
-			if (!nextOpen) handleClose()
-		},
-		// Ariakit reports mounted = false once the exit transition ends, never on a first render that starts closed.
-		setMounted: (mounted) => {
-			if (!mounted) onClosed?.()
-		}
-	})
 	const combobox = Ariakit.useComboboxStore({ open: true, value, setValue })
 	const activeId = Ariakit.useStoreState(combobox, 'activeId')
 
@@ -316,7 +306,9 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		<Dialog
 			size="md"
 			scope="pro"
-			store={dialogStore}
+			open={open}
+			onClose={handleClose}
+			onClosed={onClosed}
 			portal
 			unmountOnHide
 			autoFocusOnHide={() => !openingEditorRef.current}

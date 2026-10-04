@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { lazy, startTransition, Suspense, useMemo, useRef, useState } from 'react'
+import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
@@ -162,11 +162,10 @@ export default function Tokens() {
 				<PanelStatus variant="empty" className="min-h-[380px]">
 					{!isAuthenticated ? (
 						<>
-							An{' '}
+							An active subscription is required to view token usage.{' '}
 							<button type="button" onClick={signInDialogStore.show} className="underline">
-								active subscription
-							</button>{' '}
-							is required to view token usage.
+								Sign in
+							</button>
 						</>
 					) : (
 						<>
@@ -261,7 +260,7 @@ export default function Tokens() {
 					</Suspense>
 				</Panel>
 			)}
-			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
+			<SignInModal store={signInDialogStore} />
 		</Layout>
 	)
 }
@@ -347,8 +346,6 @@ export function TokenUsageSearch() {
 
 	const [open, setOpen] = useState(false)
 
-	const comboboxRef = useRef<HTMLDivElement>(null)
-
 	return (
 		<Ariakit.ComboboxProvider
 			inputValue={searchValue}
@@ -401,7 +398,7 @@ export function TokenUsageSearch() {
 				) : !data?.length ? (
 					<NoResults />
 				) : (
-					<Ariakit.ComboboxList ref={comboboxRef}>
+					<Ariakit.ComboboxList>
 						{data.map((tokenResult) => (
 							<Ariakit.ComboboxItem
 								key={tokenResult.id}

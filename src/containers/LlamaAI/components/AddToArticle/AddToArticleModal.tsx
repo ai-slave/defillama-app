@@ -18,10 +18,12 @@ import {
 	type ArticleExportRequest
 } from '~/containers/LlamaAI/utils/articleExport'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogCancelButton, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 
 const LAST_TARGET_KEY = 'llamaai-last-article-target'
 const NOTHING_SELECTED = 'Select at least one item to include.'
@@ -118,17 +120,7 @@ export function AddToArticleModal({ dialogStore, request, sessionTitle }: AddToA
 	)
 }
 
-function readLastArticleId() {
-	return typeof window === 'undefined' ? null : window.sessionStorage.getItem(LAST_TARGET_KEY)
-}
-
-const toggleSet = (setter: React.Dispatch<React.SetStateAction<Set<string>>>, id: string) =>
-	setter((prev) => {
-		const next = new Set(prev)
-		if (next.has(id)) next.delete(id)
-		else next.add(id)
-		return next
-	})
+type ExportTarget = { kind: 'draft'; id: string | null } | { kind: 'new' }
 
 function AddToArticleForm({
 	open,
@@ -143,13 +135,22 @@ function AddToArticleForm({
 	const { uploadFile } = useImageUpload({ scope: 'article-inline' })
 
 	const [search, setSearch] = useState('')
-	const [isCreatingNew, setIsCreatingNew] = useState(false)
-	const [selectedArticleId, setSelectedArticleId] = useState<string | null>(readLastArticleId)
+	const [target, setTarget] = useState<ExportTarget>(() => ({
+		kind: 'draft',
+		id: window.sessionStorage.getItem(LAST_TARGET_KEY)
+	}))
+	const isCreatingNew = target.kind === 'new'
 	const [newTitle, setNewTitle] = useState(sessionTitle ?? '')
 	const [includeText, setIncludeText] = useState(true)
-	const [excludedCharts, setExcludedCharts] = useState<Set<string>>(new Set())
-	const [excludedTables, setExcludedTables] = useState<Set<number>>(new Set())
-	const [excludedImages, setExcludedImages] = useState<Set<string>>(new Set())
+	// Parts left out of the export, keyed `chart:<id>`, `table:<index>` and `image:<id>`.
+	const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set())
+	const toggleExcluded = (key: string) =>
+		setExcluded((prev) => {
+			const next = new Set(prev)
+			if (next.has(key)) next.delete(key)
+			else next.add(key)
+			return next
+		})
 
 	const drafts = useQuery({
 		queryKey: ['my-articles-for-export'],
@@ -160,7 +161,8 @@ function AddToArticleForm({
 	})
 
 	const draftItems = drafts.data?.items ?? EMPTY_ARTICLE_DOCUMENTS
-	const effectiveArticleId = draftItems.some((draft) => draft.id === selectedArticleId) ? selectedArticleId : null
+	const effectiveArticleId =
+		target.kind === 'draft' && draftItems.some((draft) => draft.id === target.id) ? target.id : null
 	const filtered = useMemo(() => {
 		if (!search.trim()) return draftItems
 		return matchSorter(draftItems, search, { keys: ['title'] })
@@ -203,15 +205,17 @@ function AddToArticleForm({
 		return summarizeSelectionHtml(request.html, request.charts)
 	}, [request])
 
+	// The last failed export, not the mutation's error: that one clears as soon as a retry starts.
+	const [exportError, setExportError] = useState<string | null>(null)
 	const mutation = useMutation({
 		mutationFn: async () => {
 			const buildExportBlocks = await loadExportBlocks()
 
 			const include: ArticleExportInclude = {
 				text: request.kind === 'message' ? includeText : true,
-				chartIds: chartEntries.filter(([id]) => !excludedCharts.has(id)).map(([id]) => id),
-				imageIds: imageEntries.filter(([id]) => !excludedImages.has(id)).map(([id]) => id),
-				tableIndices: tableEntries.filter(({ index }) => !excludedTables.has(index)).map(({ index }) => index)
+				chartIds: chartEntries.filter(([id]) => !excluded.has(`chart:${id}`)).map(([id]) => id),
+				imageIds: imageEntries.filter(([id]) => !excluded.has(`image:${id}`)).map(([id]) => id),
+				tableIndices: tableEntries.filter(({ index }) => !excluded.has(`table:${index}`)).map(({ index }) => index)
 			}
 
 			const saveChart =
@@ -226,7 +230,7 @@ function AddToArticleForm({
 					: undefined
 
 			const hasImages = include.imageIds.length > 0
-			let targetArticleId: string | null = isCreatingNew ? null : effectiveArticleId
+			let targetArticleId = effectiveArticleId
 			let createdEmptyDraft: Awaited<ReturnType<typeof createArticleWithBlocks>> | null = null
 			if (isCreatingNew && hasImages) {
 				createdEmptyDraft = await createArticleWithBlocks(newTitle, [], authorizedFetch)
@@ -251,7 +255,7 @@ function AddToArticleForm({
 			return { article, notes, isNew: isCreatingNew }
 		},
 		onSuccess: ({ article, notes, isNew }) => {
-			if (typeof window !== 'undefined') window.sessionStorage.setItem(LAST_TARGET_KEY, article.id)
+			window.sessionStorage.setItem(LAST_TARGET_KEY, article.id)
 			dialogStore.hide()
 			const suffix = notes.length > 0 ? ` (${notes.join('; ')})` : ''
 			showViewToast(
@@ -262,19 +266,19 @@ function AddToArticleForm({
 		},
 		onError: (error) => {
 			console.error('Article export failed:', error)
+			setExportError(
+				error.message === NOTHING_SELECTED
+					? NOTHING_SELECTED
+					: isCreatingNew
+						? "Couldn't create the draft. Try again."
+						: "Couldn't add to the article. Try again."
+			)
 		}
 	})
 
 	const canSubmit = isCreatingNew ? newTitle.trim().length > 0 : effectiveArticleId !== null
 	const isSubmitting = mutation.isPending
 
-	const exportError = mutation.error
-		? mutation.error.message === NOTHING_SELECTED
-			? NOTHING_SELECTED
-			: isCreatingNew
-				? "Couldn't create the draft. Try again."
-				: "Couldn't add to the article. Try again."
-		: null
 	const disabledReason = canSubmit
 		? null
 		: isCreatingNew
@@ -286,176 +290,164 @@ function AddToArticleForm({
 			<form
 				onSubmit={(e) => {
 					e.preventDefault()
-					if (canSubmit && !isSubmitting) mutation.mutate()
+					if (!canSubmit || isSubmitting) return
+					// The fields lock while the export runs; the footer's submit, outside them, holds focus and its label.
+					;(e.nativeEvent as SubmitEvent).submitter?.focus()
+					mutation.mutate()
 				}}
 				className="flex min-h-0 flex-auto flex-col"
 			>
 				<DialogHeader title="Add to article" />
 				<DialogBody>
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={`${fieldId}-search`} className="label-sm text-secondary">
-							Add to a draft
-						</label>
-						<div className="relative">
-							<Icon name="search" aria-hidden="true" className={`${searchFieldIconStyles} size-4`} />
-							<Input
-								ref={searchRef}
-								id={`${fieldId}-search`}
-								type="text"
-								onInput={(e) => setSearch(e.currentTarget.value)}
-								placeholder="Search drafts…"
-								className={searchFieldInputPlacementStyles}
-							/>
-						</div>
-					</div>
-
-					<div className="max-h-56 overflow-y-auto overscroll-contain">
-						{drafts.isError ? (
-							<InlineStatus variant="error">
-								<div className="flex flex-wrap items-center justify-between gap-2">
-									<span>Couldn&apos;t load your drafts.</span>
-									<Button
-										type="button"
-										size="sm"
-										pendingLabel={drafts.isFetching ? 'Retrying…' : null}
-										onClick={() => {
-											// The list replaces this button, so focus waits in the search field above it.
-											searchRef.current?.focus()
-											void drafts.refetch()
-										}}
-									>
-										Try again
-									</Button>
-								</div>
-							</InlineStatus>
-						) : drafts.isLoading ? (
-							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-								<LoadingIndicator label="Loading drafts" />
-							</div>
-						) : filtered.length === 0 ? (
-							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
-								{search.trim() ? 'No matches found' : 'No drafts yet'}
-							</p>
-						) : (
-							<div className="flex flex-col gap-0.5">
-								{filtered.map((article) => (
-									<SelectableRow
-										key={article.id}
-										selected={!isCreatingNew && effectiveArticleId === article.id}
-										onClick={() => {
-											setSelectedArticleId(article.id)
-											setIsCreatingNew(false)
-										}}
-										trailing={
-											<span className="shrink-0 label-sm text-tertiary">
-												{article.status === 'published'
-													? 'published'
-													: new Date(article.updatedAt).toLocaleDateString()}
-											</span>
-										}
-									>
-										{article.title}
-									</SelectableRow>
-								))}
-							</div>
-						)}
-					</div>
-
-					{isCreatingNew ? (
+					{/* Locked while the export runs, so the article it goes to and its parts cannot change under it. */}
+					<fieldset disabled={isSubmitting} className="contents">
 						<div className="flex flex-col gap-1.5">
-							<label htmlFor={`${fieldId}-title`} className="label-sm text-secondary">
-								New article title
+							<label htmlFor={`${fieldId}-search`} className="label-sm text-secondary">
+								Add to a draft
 							</label>
-							{/* Replaces the button that revealed it, so focus follows into the field. */}
-							<Input
-								id={`${fieldId}-title`}
-								type="text"
-								name="newArticleTitle"
-								autoFocus
-								required
-								value={newTitle}
-								readOnly={isSubmitting}
-								onChange={(e) => setNewTitle(e.target.value)}
-								placeholder="e.g. Weekly DeFi recap"
-								className="w-full"
-							/>
-						</div>
-					) : (
-						<Button type="button" size="md" onClick={() => setIsCreatingNew(true)} className="w-full">
-							<Icon name="plus" className="size-4" />
-							<span>Create new article</span>
-						</Button>
-					)}
-
-					{exportSummary.length > 0 ? (
-						<div className="border-t border-subtle pt-4">
-							<p className="mb-1.5 label-sm text-secondary">Exporting</p>
-							<div className="flex flex-col gap-1">
-								{exportSummary.map((item) => (
-									<p key={item.label} className="flex items-center gap-2.5 px-3 py-1 body-sm text-secondary">
-										<Icon name={item.icon} className="size-4 shrink-0 text-tertiary" />
-										<span className="truncate">{item.label}</span>
-									</p>
-								))}
+							<div className="relative">
+								<Icon name="search" aria-hidden="true" className={`${searchFieldIconStyles} size-4`} />
+								<Input
+									ref={searchRef}
+									id={`${fieldId}-search`}
+									type="text"
+									onInput={(e) => setSearch(e.currentTarget.value)}
+									placeholder="Search drafts…"
+									className={searchFieldInputPlacementStyles}
+								/>
 							</div>
 						</div>
-					) : null}
 
-					{request.kind === 'message' ? (
-						<div className="border-t border-subtle pt-4">
-							<p className="mb-1.5 label-sm text-secondary">Include from this answer</p>
-							<div className="flex flex-col gap-0.5">
-								<SelectableRow selected={includeText} onClick={() => setIncludeText((v) => !v)}>
-									Text
-								</SelectableRow>
-								{tableEntries.map(({ index, rows, title }) => (
-									<SelectableRow
-										key={`table-${index}`}
-										selected={!excludedTables.has(index)}
-										onClick={() =>
-											setExcludedTables((prev) => {
-												const next = new Set(prev)
-												if (next.has(index)) next.delete(index)
-												else next.add(index)
-												return next
-											})
-										}
-									>
-										Table · {title || `${rows} row${rows === 1 ? '' : 's'}`}
-									</SelectableRow>
-								))}
-								{chartEntries.map(([id, entry]) => (
-									<SelectableRow
-										key={id}
-										selected={!excludedCharts.has(id)}
-										onClick={() => toggleSet(setExcludedCharts, id)}
-									>
-										Chart · {entry?.config?.title || id}
-									</SelectableRow>
-								))}
-								{imageEntries.map(([id]) => (
-									<SelectableRow
-										key={id}
-										selected={!excludedImages.has(id)}
-										onClick={() => toggleSet(setExcludedImages, id)}
-									>
-										Image · {id}
-									</SelectableRow>
-								))}
-							</div>
+						<div className="max-h-56 overflow-y-auto overscroll-contain">
+							{queryReadFailed(drafts) ? (
+								<InlineStatus variant="error">
+									<div className="flex flex-wrap items-center justify-between gap-2">
+										<span>Couldn&apos;t load your drafts.</span>
+										<Button
+											// The list replaces this button once the retry loads it, so focus moves to the search field above.
+											ref={passFocusOnLeave(() => searchRef.current)}
+											type="button"
+											size="sm"
+											pendingLabel={drafts.isFetching ? 'Retrying…' : null}
+											onClick={() => void drafts.refetch()}
+										>
+											Try again
+										</Button>
+									</div>
+								</InlineStatus>
+							) : drafts.isLoading ? (
+								<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
+									<LoadingIndicator label="Loading drafts" />
+								</div>
+							) : filtered.length === 0 ? (
+								<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
+									{search.trim() ? 'No matches found' : 'No drafts yet'}
+								</p>
+							) : (
+								<div className="flex flex-col gap-0.5">
+									{filtered.map((article) => (
+										<SelectableRow
+											key={article.id}
+											selected={effectiveArticleId === article.id}
+											onClick={() => setTarget({ kind: 'draft', id: article.id })}
+											trailing={
+												<span className="shrink-0 label-sm text-tertiary">
+													{article.status === 'published'
+														? 'published'
+														: new Date(article.updatedAt).toLocaleDateString()}
+												</span>
+											}
+										>
+											{article.title}
+										</SelectableRow>
+									))}
+								</div>
+							)}
 						</div>
-					) : null}
 
+						{isCreatingNew ? (
+							<div className="flex flex-col gap-1.5">
+								<label htmlFor={`${fieldId}-title`} className="label-sm text-secondary">
+									New article title
+								</label>
+								{/* Replaces the button that revealed it, so focus follows into the field. */}
+								<Input
+									id={`${fieldId}-title`}
+									type="text"
+									name="newArticleTitle"
+									autoFocus
+									required
+									value={newTitle}
+									onChange={(e) => setNewTitle(e.target.value)}
+									placeholder="e.g. Weekly DeFi recap"
+									className="w-full"
+								/>
+							</div>
+						) : (
+							<Button type="button" size="md" onClick={() => setTarget({ kind: 'new' })} className="w-full">
+								<Icon name="plus" className="size-4" />
+								<span>Create new article</span>
+							</Button>
+						)}
+
+						{exportSummary.length > 0 ? (
+							<div className="border-t border-subtle pt-4">
+								<p className="mb-1.5 label-sm text-secondary">Exporting</p>
+								<div className="flex flex-col gap-1">
+									{exportSummary.map((item) => (
+										<p key={item.label} className="flex items-center gap-2.5 px-3 py-1 body-sm text-secondary">
+											<Icon name={item.icon} className="size-4 shrink-0 text-tertiary" />
+											<span className="truncate">{item.label}</span>
+										</p>
+									))}
+								</div>
+							</div>
+						) : null}
+
+						{request.kind === 'message' ? (
+							<div className="border-t border-subtle pt-4">
+								<p className="mb-1.5 label-sm text-secondary">Include from this answer</p>
+								<div className="flex flex-col gap-0.5">
+									<SelectableRow selected={includeText} onClick={() => setIncludeText((v) => !v)}>
+										Text
+									</SelectableRow>
+									{tableEntries.map(({ index, rows, title }) => (
+										<SelectableRow
+											key={`table-${index}`}
+											selected={!excluded.has(`table:${index}`)}
+											onClick={() => toggleExcluded(`table:${index}`)}
+										>
+											Table · {title || `${rows} row${rows === 1 ? '' : 's'}`}
+										</SelectableRow>
+									))}
+									{chartEntries.map(([id, entry]) => (
+										<SelectableRow
+											key={id}
+											selected={!excluded.has(`chart:${id}`)}
+											onClick={() => toggleExcluded(`chart:${id}`)}
+										>
+											Chart · {entry?.config?.title || id}
+										</SelectableRow>
+									))}
+									{imageEntries.map(([id]) => (
+										<SelectableRow
+											key={id}
+											selected={!excluded.has(`image:${id}`)}
+											onClick={() => toggleExcluded(`image:${id}`)}
+										>
+											Image · {id}
+										</SelectableRow>
+									))}
+								</div>
+							</div>
+						) : null}
+					</fieldset>
 					{exportError ? <InlineStatus variant="error">{exportError}</InlineStatus> : null}
 				</DialogBody>
 
 				<DialogFooter
 					leading={disabledReason ? <p className="body-sm text-secondary">{disabledReason}</p> : null}
-					dismiss={
-						<Ariakit.DialogDismiss disabled={isSubmitting} render={<Button type="button" size="md" />}>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
+					dismiss={<DialogCancelButton />}
 				>
 					<Button
 						type="submit"

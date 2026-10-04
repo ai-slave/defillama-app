@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -110,6 +110,8 @@ function ReportSession({
 		}
 	})
 	const pending = report.isPending
+	// Kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [failed, setFailed] = useState(false)
 	const messageId = useId()
 	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
 	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
@@ -139,7 +141,8 @@ function ReportSession({
 					if (!form.isConnected) toast.success('Report sent')
 				},
 				() => {
-					if (!form.isConnected) toast.error("Couldn't send the report")
+					if (form.isConnected) setFailed(true)
+					else toast.error("Couldn't send the report")
 				}
 			)
 	}
@@ -205,21 +208,9 @@ function ReportSession({
 							<span>How can we contact you? (optional)</span>
 							<input readOnly={pending} name="contact" placeholder="Email address" className={inputStyles} />
 						</label>
-						{report.isError ? (
-							<InlineStatus variant="error">Couldn&rsquo;t send the report. Try again.</InlineStatus>
-						) : null}
+						{failed ? <InlineStatus variant="error">Couldn&rsquo;t send the report. Try again.</InlineStatus> : null}
 					</DialogBody>
-					<DialogFooter
-						dismiss={
-							<Ariakit.DialogDismiss
-								disabled={pending}
-								accessibleWhenDisabled
-								render={<Button type="button" size="md" />}
-							>
-								Cancel
-							</Ariakit.DialogDismiss>
-						}
-					>
+					<DialogFooter dismiss={<DialogCancelButton />}>
 						<Button
 							type="submit"
 							name="submit-btn"

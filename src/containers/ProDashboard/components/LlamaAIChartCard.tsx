@@ -9,6 +9,7 @@ import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatDate } from '~/utils/dateFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useProDashboardDashboard, useProDashboardPermissions, useProDashboardTime } from '../ProDashboardAPIContext'
 import type { LlamaAIChartConfig } from '../types'
 import { ProBadge, ProButton, ProMeta } from '../ui'
@@ -37,7 +38,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 	const hasInlineData = !!(config.inlineChartConfig && config.inlineChartData)
 	const source = getLlamaAIChartSource(config, dashboardId, AI_SERVER)
 
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const chartQuery = useQuery({
 		queryKey: source?.key ?? ['pro-dashboard', 'chart-disabled', config.id],
 		queryFn:
 			source && !loaders.userLoading && !hasInlineData
@@ -51,9 +52,8 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 		refetchOnMount: 'always',
 		refetchInterval: (query) => (query.state.data?.refreshPending ? 5000 : false)
 	})
-	const readFailed = errorUpdatedAt > dataUpdatedAt
-	// Retrying reads the chart again; it never repeats the refresh request.
-	const retryRead = { run: () => void refetch(), pending: isFetching }
+	const { data, isLoading } = chartQuery
+	const readFailed = queryReadFailed(chartQuery)
 	const refreshRequest = getLlamaAIChartRefreshRequest(config, dashboardId, AI_SERVER)
 	const isOwner = !!user?.id && user.id === dashboardOwnerId
 	const refreshMutation = useMutation({
@@ -68,7 +68,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 			return response.json()
 		},
 		onSuccess: async () => {
-			await refetch()
+			await chartQuery.refetch()
 		}
 	})
 	const canRefresh = !!refreshRequest && !!data?.refreshAvailable && isOwner
@@ -145,7 +145,8 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 
 	// A failed read with a chart already loaded keeps that chart, and an open refresh confirmation with it.
 	if (readFailed && !data) {
-		return renderStatusShell(<ProCardError retry={retryRead} />)
+		// Retrying reads the chart again; it never repeats the refresh request.
+		return renderStatusShell(<ProCardError retry={chartQuery} />)
 	}
 
 	if (isLoading || loaders.userLoading) {
@@ -200,7 +201,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				}
 			/>
 			<div className="flex flex-col gap-2 px-3 pb-3">
-				{readFailed ? <ProCardRefreshFailed retry={retryRead} /> : null}
+				{readFailed ? <ProCardRefreshFailed retry={chartQuery} /> : null}
 				{ownerNotice ? <ProCardNotice tone="warning">{ownerNotice}</ProCardNotice> : null}
 				{data.refreshError && !ownerNotice ? (
 					<ProCardNotice tone="warning">Couldn&apos;t refresh. Showing the last published snapshot.</ProCardNotice>

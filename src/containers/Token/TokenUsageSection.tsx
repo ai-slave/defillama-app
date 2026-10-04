@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type PaginationState, type SortingState } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
 import { startTransition, Suspense, useMemo, useState } from 'react'
+import { useAuthContext } from '~/auth'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -27,7 +28,7 @@ import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
-import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
+import { TokenPrivateSectionGate } from './TokenPrivateSectionGate'
 import { buildTokenUsageRows, filterTokenUsageRows, type TokenUsageSectionRow } from './TokenUsageSection.utils'
 
 const tableFeaturesConfig = paginatedTableFeatures
@@ -106,8 +107,7 @@ export function TokenUsageSection({
 	initialIncludeCentralizedExchanges = false,
 	initialPageSize = DEFAULT_TABLE_PAGE_SIZE
 }: TokenUsageSectionProps) {
-	const access = useTokenPrivateSectionAccess()
-	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = access
+	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useGetChartInstance()
 	const [includeCentralizedExchanges, setIncludeCentralizedExchanges] = useState(initialIncludeCentralizedExchanges)
 	const [view, setView] = useState<TokenUsageView>('list')
@@ -178,7 +178,6 @@ export function TokenUsageSection({
 
 	return (
 		<TokenPrivateSectionGate
-			access={access}
 			title="Token Usage"
 			sectionId={TOKEN_USAGE_SECTION_ID}
 			contentLabel="token usage"

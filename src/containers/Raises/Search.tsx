@@ -65,7 +65,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 									className={popoverSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
-									See more...
+									See more…
 								</Ariakit.ComboboxItem>
 							) : null}
 						</Ariakit.ComboboxList>

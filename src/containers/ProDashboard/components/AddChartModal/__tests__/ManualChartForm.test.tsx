@@ -40,12 +40,14 @@ const solanaTvl: ChartRuntimeView = {
 }
 
 const onChartCreationModeChange = vi.fn()
+const onRemoveFromComposer = vi.fn()
 
 function renderForm(overrides: {
 	composerItems: Array<ChartRuntimeView>
 	chartCreationMode: 'separate' | 'combined'
 	manualFormOpen?: boolean
 	isEditingItem?: boolean
+	selectedChartTab?: 'chain' | 'income-statement'
 }) {
 	return act(async () =>
 		root.render(
@@ -53,7 +55,7 @@ function renderForm(overrides: {
 				<AppMetadataProvider>
 					<DashboardTestProvider catalog={{ chains }}>
 						<UnifiedChartTab
-							selectedChartTab="chain"
+							selectedChartTab={overrides.selectedChartTab ?? 'chain'}
 							selectedChartTypes={['tvl']}
 							chainOptions={[
 								{ value: 'Ethereum', label: 'Ethereum' },
@@ -75,7 +77,9 @@ function renderForm(overrides: {
 							onChartCreationModeChange={onChartCreationModeChange}
 							onComposerItemColorChange={vi.fn()}
 							onAddToComposer={vi.fn()}
-							onRemoveFromComposer={vi.fn()}
+							onRemoveFromComposer={onRemoveFromComposer}
+							// The category's own form is CategoryChartForm's; these tests read only what surrounds it.
+							categoryForm={<p>category form</p>}
 						/>
 					</DashboardTestProvider>
 				</AppMetadataProvider>
@@ -139,4 +143,33 @@ test('the category grid stays until a category is picked', async () => {
 	await renderForm({ composerItems: [], chartCreationMode: 'combined', manualFormOpen: false })
 	expect(document.querySelector('[data-testid="combined-preview"]')).toBeNull()
 	expect(document.body.textContent).toContain('Yields')
+})
+
+test('Clear removes the picked chart type only from the subject being listed', async () => {
+	const aaveTvl: ChartRuntimeView = {
+		id: 'aave-tvl',
+		kind: 'chart',
+		subjectType: 'protocol',
+		protocol: 'aave',
+		type: 'tvl',
+		...runtime
+	}
+	await renderForm({ composerItems: [ethereumTvl, aaveTvl, solanaTvl], chartCreationMode: 'combined' })
+
+	const clear = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Clear')!
+	await act(async () => {
+		clear.click()
+	})
+
+	expect(onRemoveFromComposer.mock.calls).toEqual([['ethereum-tvl'], ['solana-tvl']])
+})
+
+test('a single-card category shows no series composer for series it would not save', async () => {
+	await renderForm({
+		composerItems: [ethereumTvl, solanaTvl],
+		chartCreationMode: 'combined',
+		selectedChartTab: 'income-statement'
+	})
+	expect(document.body.textContent).not.toContain('Combine into one chart')
+	expect(document.body.textContent).not.toContain('Ethereum - TVL')
 })

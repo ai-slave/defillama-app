@@ -41,7 +41,7 @@ vi.mock('~/containers/LlamaAI/components/ChatSurface', () => ({
 vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('~/containers/LlamaAI/components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/SettingsModal', () => ({ SettingsModal: () => null }))
-vi.mock('~/containers/LlamaAI/components/TokenLimitModal', () => ({ TokenLimitModal: () => null }))
+vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
 import LlamaAIPage from '~/pages/ai/chat/[[...sessionId]]'
 

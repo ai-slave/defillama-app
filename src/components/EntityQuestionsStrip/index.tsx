@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useCallback, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { freeLabelBOnly, useLlamaAIFreeLabel } from '~/components/LlamaAIFreeLabel'
@@ -10,6 +10,7 @@ import {
 	setPendingSuggestedFlag
 } from '~/containers/LlamaAI/pendingPrompt'
 import { useQuestionSignIn } from '~/containers/LlamaAI/useQuestionSignIn'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -60,6 +61,27 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 			observer.disconnect()
 		}
 	}, [])
+
+	// An arrow leaves once the track reaches its end; the other arrow takes its focus, else the track's first question.
+	const arrows = useRef<{ previous: HTMLButtonElement | null; next: HTMLButtonElement | null }>({
+		previous: null,
+		next: null
+	})
+	const arrowRef = useCallback(
+		(side: 'previous' | 'next') => (node: HTMLButtonElement | null) => {
+			if (!node) return
+			arrows.current[side] = node
+			const other = side === 'previous' ? 'next' : 'previous'
+			const leave = passFocusOnLeave(() => arrows.current[other] ?? trackRef.current?.querySelector('button'))(node)
+			return () => {
+				arrows.current[side] = null
+				leave?.()
+			}
+		},
+		[]
+	)
+	const previousArrowRef = useMemo(() => arrowRef('previous'), [arrowRef])
+	const nextArrowRef = useMemo(() => arrowRef('next'), [arrowRef])
 
 	const scrollBy = (dir: -1 | 1) => {
 		const el = trackRef.current
@@ -131,6 +153,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 					{edges.left ? (
 						<div className="pointer-events-none absolute inset-y-0 left-0 flex w-16 items-center bg-linear-to-l from-transparent to-page">
 							<button
+								ref={previousArrowRef}
 								type="button"
 								onClick={() => scrollBy(-1)}
 								aria-label="Previous questions"
@@ -142,7 +165,13 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 					) : null}
 					{edges.right ? (
 						<div className="pointer-events-none absolute inset-y-0 right-0 flex w-16 items-center justify-end bg-linear-to-r from-transparent to-page">
-							<button type="button" onClick={() => scrollBy(1)} aria-label="More questions" className={arrowStyles}>
+							<button
+								ref={nextArrowRef}
+								type="button"
+								onClick={() => scrollBy(1)}
+								aria-label="More questions"
+								className={arrowStyles}
+							>
 								<Icon name="chevron-right" height={14} width={14} />
 							</button>
 						</div>

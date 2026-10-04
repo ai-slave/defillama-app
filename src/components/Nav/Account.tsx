@@ -9,6 +9,7 @@ import { Button, buttonStyles } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
+import { queryReadFailed } from '~/utils/query'
 
 // A retry that succeeds leaves; the account link above it stays, so it takes focus.
 const focusAccountOnLeave = passFocusOnLeave((retry) =>
@@ -23,9 +24,9 @@ export function Account() {
 		() => subscriptionStatusQueryOptions({ userId: subscriptionUserId, token: subscriptionToken }),
 		[subscriptionUserId, subscriptionToken]
 	)
-	const { data, errorUpdatedAt, dataUpdatedAt, isFetching, refetch } = useQuery(subscriptionQueryConfig)
-	// Attempt times, not isError: design.md → Status states.
-	const failed = errorUpdatedAt > dataUpdatedAt
+	const subscriptionQuery = useQuery(subscriptionQueryConfig)
+	const { data, isFetching, refetch } = subscriptionQuery
+	const failed = queryReadFailed(subscriptionQuery)
 	// With no status at all, the failure is the account's subtitle and outranks the provider's loading state.
 	const unavailable = failed && data === undefined
 	const isClient = useIsClient()

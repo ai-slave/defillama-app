@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useState, type ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
@@ -16,7 +15,6 @@ interface PremiumFeatureGateProps {
 export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature', children }: PremiumFeatureGateProps) {
 	const { hasActiveSubscription, loaders } = useAuthContext()
 	const [paywallOpen, setPaywallOpen] = useState(false)
-	const paywallDialogStore = Ariakit.useDialogStore({ open: paywallOpen, setOpen: setPaywallOpen })
 
 	if (hasActiveSubscription) {
 		return <>{children}</>
@@ -56,7 +54,7 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 				</ProButton>
 			</div>
 
-			{paywallOpen ? <DashboardPaywallModal dialogStore={paywallDialogStore} reason={paywallReason} /> : null}
+			{paywallOpen ? <DashboardPaywallModal reason={paywallReason} onClose={() => setPaywallOpen(false)} /> : null}
 		</>
 	)
 }

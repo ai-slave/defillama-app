@@ -10,13 +10,14 @@ import type { ArticleDocument } from '~/containers/Articles/types'
 interface ResearchSpotlightColumnProps {
 	title: string
 	articles: Array<ArticleDocument>
-	sharedHeight?: number
 }
 
 const DEFAULT_CONTAINER_HEIGHT = 'h-[calc(105px_*_4_+_12px_*_3)]'
 const DEFAULT_DESKTOP_HEIGHT = 'lg:h-[calc(93px_*_5_+_24px_*_4)]'
 
-export function ResearchSpotlightColumn({ title, articles, sharedHeight }: ResearchSpotlightColumnProps) {
+// Matches the height its shared-height section measures from the column beside it.
+export function ResearchSpotlightColumn({ title, articles }: ResearchSpotlightColumnProps) {
+	const { height: sharedHeight } = useSharedHeight()
 	const containerHeight = sharedHeight
 		? `${DEFAULT_CONTAINER_HEIGHT} lg:h-(--shared-height,_calc(93px_*_5_+_24px_*_4))`
 		: `${DEFAULT_CONTAINER_HEIGHT} ${DEFAULT_DESKTOP_HEIGHT}`
@@ -49,7 +50,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 											{article.coverImage?.url ? (
 												<img
 													src={article.coverImage.url}
-													alt={article.coverImage.alt}
+													alt={article.coverImage.alt ?? ''}
 													className="h-full w-full object-cover"
 													loading="lazy"
 													decoding="async"
@@ -58,9 +59,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 										</div>
 
 										<div className="flex grow flex-col justify-between gap-1.75 pr-3">
-											<div
-												className={`line-clamp-3 leading-[135%] font-medium text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70 ${'text-base'}`}
-											>
+											<div className="line-clamp-3 text-base leading-[135%] font-medium text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
 												{i === 0 && (
 													<InViewAnalytics
 														eventParams={[article, 'widget_impression', 'DefiLlama Research Spotlight column']}
@@ -84,15 +83,4 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 			</div>
 		</div>
 	)
-}
-
-interface ResearchSpotlightColumnWithHeightProps {
-	title: string
-	articles: Array<ArticleDocument>
-}
-
-export function ResearchSpotlightColumnWithHeight({ title, articles }: ResearchSpotlightColumnWithHeightProps) {
-	const { height } = useSharedHeight()
-
-	return <ResearchSpotlightColumn title={title} articles={articles} sharedHeight={height} />
 }

@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProDashboardAPIProvider, useProDashboardUI } from '../../ProDashboardAPIContext'
@@ -168,7 +169,7 @@ test.each([
 })
 
 test.each(['catalog', 'category', 'dimension'] as const)(
-	'%s failure shows one retry for the templates and creates nothing partial',
+	'%s failure shows one retry for the templates, keeps it while the retry runs, and creates nothing partial',
 	async (source) => {
 		api[source].mockRejectedValue(new Error('Unavailable'))
 		await mount()
@@ -190,12 +191,12 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 			retry.focus()
 			retry.click()
 		})
-		// The notice leaves once the refetch starts, which React Query reports on its next notify tick.
+		// The notice stays while the retry runs, with its Try again waiting and focused.
 		await act(async () => {
-			await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+			await waitForUi(() => expect(accessibleName(retry)).toBe('Retrying…'))
 		})
-		// The notice took its Try again with it, so the dialog hands focus to its first control instead of the page.
-		expect(document.activeElement).toBe(button('Close dialog'))
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load template data.')
+		expect(document.activeElement).toBe(retry)
 		await act(async () =>
 			response.resolve(
 				source === 'catalog'
@@ -206,6 +207,9 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 			)
 		)
 		await ready(name)
+		expect(document.querySelector('[role="alert"]')).toBeNull()
+		// The notice took its Try again with it, so the dialog hands focus to its first control instead of the page.
+		expect(document.activeElement).toBe(button('Close dialog'))
 		await click(name)
 		expect(savedFilters()).toEqual(
 			source === 'catalog'

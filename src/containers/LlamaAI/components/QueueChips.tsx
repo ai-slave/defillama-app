@@ -5,7 +5,7 @@ import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/us
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { passFocusOnLeave } from '~/ui/focus'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -82,11 +82,25 @@ function QueueChipEditor({
 			{status?.error ? <p className="m-0 body-sm text-error">{status.error}</p> : null}
 			{paused && !status?.error ? <p className="m-0 body-sm text-tertiary">Queue paused while you edit</p> : null}
 			<div className="flex items-center gap-1.5">
-				<Button type="submit" aria-label="Save" accessibleWhenDisabled disabled={busy} variant="primary" size="sm">
-					{status?.action === 'saving_edit' ? <LoadingSpinner size={12} /> : 'Save'}
+				<Button
+					type="submit"
+					accessibleWhenDisabled
+					disabled={busy}
+					pendingLabel={status?.action === 'saving_edit' ? 'Saving…' : null}
+					variant="primary"
+					size="sm"
+				>
+					Save
 				</Button>
-				<Button type="button" aria-label="Cancel" accessibleWhenDisabled disabled={busy} size="sm" onClick={onCancel}>
-					{status?.action === 'canceling_edit' ? <LoadingSpinner size={12} /> : 'Cancel'}
+				<Button
+					type="button"
+					accessibleWhenDisabled
+					disabled={busy}
+					pendingLabel={status?.action === 'canceling_edit' ? 'Canceling…' : null}
+					size="sm"
+					onClick={onCancel}
+				>
+					Cancel
 				</Button>
 			</div>
 		</form>
@@ -104,7 +118,7 @@ export function QueueChips({
 }: {
 	surface: QueueSurface
 	quotaResetTime?: string | null
-	promptInputRef?: RefObject<HTMLTextAreaElement | null>
+	promptInputRef: RefObject<HTMLTextAreaElement | null>
 }) {
 	const clearStore = Ariakit.useDialogStore()
 	const returnFocus = useRef<HTMLElement | null>(null)
@@ -145,15 +159,13 @@ export function QueueChips({
 	let foldedCount = 0
 	for (let index = 0; index < rows.length; index++) if (isFolded(rows[index], index)) foldedCount++
 	// A row that leaves with focus (dismissed, sent) hands it to the next row, else the one before, else the composer.
-	const focusNeighbourOnLeave = passFocusOnLeave(
-		(row) => (row.nextElementSibling ?? row.previousElementSibling ?? promptInputRef?.current) as HTMLElement | null
-	)
+	const focusNeighbourOnLeave = passFocusOnLeave((row) => neighbourRowControl(row, row) ?? promptInputRef.current)
 
 	return (
 		<div className="flex flex-col gap-1.5">
 			{showQueueActions ? (
 				// Continuing the queue removes this bar with its focused button; the composer takes focus.
-				<div ref={passFocusOnLeave(() => promptInputRef?.current)} className="flex items-center justify-between gap-2">
+				<div ref={passFocusOnLeave(() => promptInputRef.current)} className="flex items-center justify-between gap-2">
 					<p className="m-0 body-sm text-tertiary">{isPaused ? 'Queue paused' : 'Clear was not confirmed'}</p>
 					<div className="flex items-center gap-1.5">
 						{isPaused ? (
@@ -202,7 +214,7 @@ export function QueueChips({
 				pendingLabel={null}
 				error={null}
 				onConfirm={() => {
-					returnFocus.current = promptInputRef?.current ?? returnFocus.current
+					returnFocus.current = promptInputRef.current ?? returnFocus.current
 					clearStore.hide()
 					onClear()
 				}}
@@ -229,7 +241,9 @@ export function QueueChips({
 									/>
 								)}
 								<div className="min-w-0 flex-1">
-									<p className="m-0 truncate body-sm text-primary">{item.payload.message}</p>
+									<p id={`queue-row-${rowKey}`} className="m-0 truncate body-sm text-primary">
+										{item.payload.message}
+									</p>
 									<p className={`m-0 body-sm ${failed ? 'text-error' : 'text-tertiary'}`}>
 										{adding ? 'Adding…' : failed ? item.error : 'Waiting'}
 									</p>
@@ -237,19 +251,25 @@ export function QueueChips({
 								{!adding ? (
 									<div ref={focusRowOnLeave} className="flex shrink-0 items-center gap-1">
 										{failed ? (
-											<Button type="button" aria-label="Retry" size="sm" onClick={() => onRetry(item.id)}>
+											<Button
+												type="button"
+												aria-describedby={`queue-row-${rowKey}`}
+												size="sm"
+												onClick={() => onRetry(item.id)}
+											>
 												Retry
 											</Button>
 										) : null}
 										<Button
 											type="button"
-											aria-label="Dismiss"
+											aria-describedby={`queue-row-${rowKey}`}
 											variant="ghost"
 											size="sm"
 											square
 											onClick={() => onDismiss(item.id)}
 										>
 											<Icon name="x" height={14} width={14} />
+											<span className="sr-only">Dismiss</span>
 										</Button>
 									</div>
 								) : null}
@@ -313,7 +333,9 @@ export function QueueChips({
 							<li key={rowKey} ref={focusNeighbourOnLeave} tabIndex={-1} className={ROW}>
 								<Icon name="clock" height={14} width={14} className="shrink-0 text-tertiary" />
 								<div className="min-w-0 flex-1">
-									<p className="m-0 truncate body-sm text-primary">{message}</p>
+									<p id={`queue-row-${rowKey}`} className="m-0 truncate body-sm text-primary">
+										{message}
+									</p>
 									<p className="m-0 body-sm text-tertiary">
 										{index > 0 && isHeadBlocked ? 'waiting for the message above' : `#${index + 1}`}
 									</p>
@@ -322,35 +344,31 @@ export function QueueChips({
 								<div className="flex shrink-0 items-center gap-1">
 									<Button
 										type="button"
-										aria-label="Edit"
+										aria-describedby={`queue-row-${rowKey}`}
 										accessibleWhenDisabled
 										disabled={busy}
+										pendingLabel={status?.action === 'opening_edit' ? 'Opening editor…' : null}
 										variant="ghost"
 										size="sm"
 										square
 										onClick={() => onEditStart(item.id)}
 									>
-										{status?.action === 'opening_edit' ? (
-											<LoadingSpinner size={12} />
-										) : (
-											<Icon name="pencil" height={16} width={16} />
-										)}
+										<Icon name="pencil" height={16} width={16} />
+										<span className="sr-only">Edit</span>
 									</Button>
 									<Button
 										type="button"
-										aria-label="Dismiss"
+										aria-describedby={`queue-row-${rowKey}`}
 										accessibleWhenDisabled
 										disabled={busy}
+										pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
 										variant="ghost"
 										size="sm"
 										square
 										onClick={() => onDismiss(item.id)}
 									>
-										{status?.action === 'dismissing' ? (
-											<LoadingSpinner size={12} />
-										) : (
-											<Icon name="x" height={14} width={14} />
-										)}
+										<Icon name="x" height={14} width={14} />
+										<span className="sr-only">Dismiss</span>
 									</Button>
 								</div>
 							</li>
@@ -366,6 +384,7 @@ export function QueueChips({
 							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
 							<div className="min-w-0 flex-1">
 								<p
+									id={`queue-row-${rowKey}`}
 									className={`m-0 body-sm text-primary ${status?.unsavedDraft ? 'break-words whitespace-pre-wrap select-text' : 'truncate'}`}
 								>
 									{message}
@@ -383,36 +402,33 @@ export function QueueChips({
 								{canRetry ? (
 									<Button
 										type="button"
-										aria-label="Retry"
+										aria-describedby={`queue-row-${rowKey}`}
 										data-primary={retryPrimary ? 'true' : undefined}
 										accessibleWhenDisabled
 										disabled={busy || !!status?.unsavedDraft}
+										pendingLabel={status?.action === 'retrying' ? 'Retrying…' : null}
 										variant={retryPrimary ? 'primary' : 'secondary'}
 										size="sm"
+										square
 										onClick={() => onRetry(item.id)}
 									>
-										{status?.action === 'retrying' ? (
-											<LoadingSpinner size={12} />
-										) : (
-											<Icon name="repeat" height={16} width={16} />
-										)}
+										<Icon name="repeat" height={16} width={16} />
+										<span className="sr-only">Retry</span>
 									</Button>
 								) : null}
 								<Button
 									type="button"
-									aria-label="Dismiss"
+									aria-describedby={`queue-row-${rowKey}`}
 									accessibleWhenDisabled
 									disabled={busy}
+									pendingLabel={status?.action === 'dismissing' ? 'Dismissing…' : null}
 									variant="ghost"
 									size="sm"
 									square
 									onClick={() => onDismiss(item.id)}
 								>
-									{status?.action === 'dismissing' ? (
-										<LoadingSpinner size={12} />
-									) : (
-										<Icon name="x" height={14} width={14} />
-									)}
+									<Icon name="x" height={14} width={14} />
+									<span className="sr-only">Dismiss</span>
 								</Button>
 							</div>
 						</li>

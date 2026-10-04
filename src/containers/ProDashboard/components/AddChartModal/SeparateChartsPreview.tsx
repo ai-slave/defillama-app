@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { Button } from '~/ui/Button'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { DASHBOARD_CHART_GROUPING } from '../../utils'
@@ -58,8 +59,28 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 										/>
 									</Suspense>
 								) : (
-									<div className="flex size-full items-center justify-center text-xs text-pro-text-tertiary">
-										{item.isLoading ? 'Loading chart data…' : 'No data'}
+									<div className="flex size-full flex-col items-center justify-center gap-1.5 text-xs text-pro-text-tertiary">
+										{item.hasError ? (
+											<>
+												<p role="alert" className="text-data-down">
+													Couldn't load this series.
+												</p>
+												{item.canRetry ? (
+													<Button
+														type="button"
+														size="sm"
+														pendingLabel={item.isFetching ? 'Retrying…' : null}
+														onClick={item.refetch}
+													>
+														Try again
+													</Button>
+												) : null}
+											</>
+										) : item.isLoading ? (
+											'Loading chart data…'
+										) : (
+											'No data'
+										)}
 									</div>
 								)}
 							</div>

@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import {
 	draftEquityFiltersToActive,
+	setEquityDraftOperator,
 	filterEquityCompanies,
 	parseEquityFiltersQuery,
 	serializeEquityFiltersQuery,
 	type EquityActiveFilter,
-	type EquityDraftFilter
+	type EquityDraftFilter,
+	type EquityDraftNumericFilter
 } from '../filters'
 import type { IEquitiesListCompanyRow } from '../types'
 
@@ -102,8 +104,10 @@ describe('filterEquityCompanies', () => {
 
 	test('normalizes draft filters into valid applied filters', () => {
 		const filters: Array<EquityDraftFilter> = [
-			{ kind: 'numericRange', id: 'marketCap', minValue: 1_000_000_000, maxValue: 500_000_000 },
-			{ kind: 'numericRange', id: 'trailingPE', maxValue: 20 },
+			{ kind: 'numeric', id: 'marketCap', operator: 'between', value: '', minValue: '1b', maxValue: '500m' },
+			{ kind: 'numeric', id: 'trailingPE', operator: 'between', value: '', minValue: '', maxValue: '20' },
+			{ kind: 'numeric', id: 'holdersYield', operator: '>', value: '2.5%', minValue: '', maxValue: '' },
+			{ kind: 'numeric', id: 'revenueTTM', operator: '>=', value: 'abc', minValue: '', maxValue: '' },
 			{ kind: 'categorical', id: 'sector', mode: 'include', values: [] },
 			{ kind: 'categorical', id: 'industry', mode: 'exclude', values: ['Hardware'] }
 		]
@@ -111,8 +115,28 @@ describe('filterEquityCompanies', () => {
 		expect(draftEquityFiltersToActive(filters)).toEqual([
 			{ kind: 'numericRange', id: 'marketCap', minValue: 500_000_000, maxValue: 1_000_000_000 },
 			{ kind: 'numeric', id: 'trailingPE', operator: '<=', value: 20 },
+			{ kind: 'numeric', id: 'holdersYield', operator: '>', value: 2.5 },
 			{ kind: 'categorical', id: 'industry', mode: 'exclude', values: ['Hardware'] }
 		])
+	})
+})
+
+test('typed text carries across switching between one value and a range', () => {
+	const typed: EquityDraftNumericFilter = {
+		kind: 'numeric',
+		id: 'marketCap',
+		operator: '>=',
+		value: '10b',
+		minValue: '',
+		maxValue: ''
+	}
+	const range = setEquityDraftOperator(typed, 'between')
+	expect(range).toEqual({ ...typed, operator: 'between', value: '', minValue: '10b' })
+	expect(setEquityDraftOperator({ ...range, minValue: '', maxValue: '50b' }, '<')).toEqual({
+		...typed,
+		operator: '<',
+		value: '50b',
+		maxValue: '50b'
 	})
 })
 

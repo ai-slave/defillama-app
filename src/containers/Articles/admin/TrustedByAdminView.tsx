@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
@@ -11,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import type * as React from 'react'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
@@ -51,7 +52,6 @@ function linkHost(linkUrl: string): string {
 
 export function TrustedByAdminView() {
 	const [deleteTarget, setDeleteTarget] = useState<{ kind: 'logo' | 'mention'; id: string; name: string } | null>(null)
-	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidate = useResearchLandingRevalidation()
@@ -182,7 +182,6 @@ export function TrustedByAdminView() {
 					mutation={deleteTarget.kind === 'logo' ? deleteLogoMutation : deleteMentionMutation}
 					variables={deleteTarget.id}
 					onClose={() => setDeleteTarget(null)}
-					fallbackFocus={headingRef}
 				/>
 			) : null}
 			<header className="pt-2 pb-2">
@@ -192,9 +191,7 @@ export function TrustedByAdminView() {
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 ref={headingRef} tabIndex={-1} className="mt-2 text-3xl font-semibold tracking-tight text-primary">
-					Trusted By
-				</h1>
+				<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Trusted By</h1>
 				<p className="mt-1 text-sm text-secondary">
 					Manage the logos and social media mentions shown in the Trusted By section on /research.
 				</p>
@@ -234,10 +231,7 @@ export function TrustedByAdminView() {
 										disabled={reorderLogosMutation.isPending}
 										onToggle={(enabled) => toggleLogoMutation.mutate({ id: logo.id, enabled })}
 										togglePending={toggleLogoMutation.isPending}
-										onDelete={() => {
-											deleteLogoMutation.reset()
-											setDeleteTarget({ kind: 'logo', id: logo.id, name: logo.name })
-										}}
+										onDelete={() => setDeleteTarget({ kind: 'logo', id: logo.id, name: logo.name })}
 										deletePending={deleteLogoMutation.isPending}
 									/>
 								))}
@@ -289,7 +283,6 @@ export function TrustedByAdminView() {
 												onToggle={(enabled) => toggleMentionMutation.mutate({ id: mention.id, enabled })}
 												togglePending={toggleMentionMutation.isPending}
 												onDelete={() => {
-													deleteMentionMutation.reset()
 													setDeleteTarget({
 														kind: 'mention',
 														id: mention.id,
@@ -446,12 +439,13 @@ function SortableLogoRow({
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
 				<label className="flex items-center gap-1.5 text-xs text-secondary">
-					<input
-						type="checkbox"
+					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. */}
+					<Ariakit.Checkbox
 						checked={logo.enabled}
 						onChange={(e) => onToggle(e.target.checked)}
 						disabled={togglePending}
-						className="size-4 accent-link"
+						accessibleWhenDisabled
+						className="size-4 accent-link aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 					/>
 					Enabled
 				</label>
@@ -543,12 +537,13 @@ function SortableMentionRow({
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
 				<label className="flex items-center gap-1.5 text-xs text-secondary">
-					<input
-						type="checkbox"
+					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. */}
+					<Ariakit.Checkbox
 						checked={mention.enabled}
 						onChange={(e) => onToggle(e.target.checked)}
 						disabled={togglePending}
-						className="size-4 accent-link"
+						accessibleWhenDisabled
+						className="size-4 accent-link aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 					/>
 					Enabled
 				</label>

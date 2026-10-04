@@ -1,5 +1,6 @@
 import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { downloadCSV } from '~/utils/download'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
@@ -14,7 +15,6 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unifiedTable/config/types'
 import { toastRefusal } from '../../useDashboardActions'
 import { BoundParameterBadge } from '../BoundParameterBadge'
-import { ConfirmationModal } from '../ConfirmationModal'
 import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../ProCardStatus'
 import { TablePagination } from '../Table/TablePagination'
 import { sanitizeConfigColumns } from './config/metricCapabilities'
@@ -410,11 +410,10 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	}, [onEdit])
 
 	const canCustomizeColumns = Boolean(!isReadOnly && onEdit)
-	const retryRows = { run: () => void unifiedTable.refetch(), pending: unifiedTable.isFetching }
 
 	return (
 		<div className="flex h-full w-full flex-col overflow-hidden p-0">
-			{unifiedTable.loadError === 'refresh' ? <ProCardRefreshFailed retry={retryRows} /> : null}
+			{unifiedTable.loadError === 'refresh' ? <ProCardRefreshFailed retry={unifiedTable} /> : null}
 			<UnifiedTableHeader
 				title={title}
 				titleBadge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
@@ -441,7 +440,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{unifiedTable.loadError === 'initial' ? (
 					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
-						<ProCardError title="Couldn't load this table" retry={retryRows} />
+						<ProCardError title="Couldn't load this table" retry={unifiedTable} />
 					</div>
 				) : unifiedTable.isLoading ? (
 					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
@@ -481,17 +480,23 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 					showPageSizes
 				/>
 			</div>
-			<ConfirmationModal
-				isOpen={showDuplicateConfirm}
+			<ConfirmDialog
+				open={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
-				onConfirm={() => {
-					const duplicateId = handleDuplicateUnifiedTable(config)
-					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
-				}}
+				unmountOnHide
+				scope="pro"
 				title="Duplicate table"
-				message="Create a duplicate of this table in the dashboard?"
-				confirmText="Duplicate"
+				description="Create a duplicate of this table in the dashboard?"
+				confirmLabel="Duplicate"
+				pendingLabel={null}
+				error={null}
 				tone="primary"
+				onConfirm={() => {
+					const duplicated = handleDuplicateUnifiedTable(config)
+					setShowDuplicateConfirm(false)
+					toastRefusal(duplicated)
+					if (duplicated.status === 'saved') requestDashboardItemReveal(duplicated.ids[0], { scroll: 'nearest' })
+				}}
 			/>
 		</div>
 	)

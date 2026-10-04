@@ -20,7 +20,7 @@ interface NotebookViewProps {
 	onCellSourceChange: (cellId: string, source: string) => void
 	onCellFocus: (cellId: string) => void
 	onCellChartConfig: (cellId: string, config: ChartConfig | null) => void
-	onCellPreferredView: (cellId: string, view: ResultsView | undefined) => void
+	onCellViewChange: (cellId: string, view: ResultsView) => void
 	onRunCell: (cellId: string) => Promise<void> | void
 	onCancelCell: (cellId: string) => void
 	onRunCellAndAdvance: (cellId: string) => Promise<void> | void
@@ -44,7 +44,7 @@ export function NotebookView({
 	onCellSourceChange,
 	onCellFocus,
 	onCellChartConfig,
-	onCellPreferredView,
+	onCellViewChange,
 	onRunCell,
 	onCancelCell,
 	onRunCellAndAdvance,
@@ -373,7 +373,7 @@ export function NotebookView({
 								onMoveDown={() => onMoveCell(cell.id, 'down')}
 								onConvertType={(nextType) => onConvertCellType(cell.id, nextType)}
 								onChartConfigChange={(next) => onCellChartConfig(cell.id, next)}
-								onPreferredViewChange={(view) => onCellPreferredView(cell.id, view)}
+								onViewChange={(view) => onCellViewChange(cell.id, view)}
 								onDragStart={handleDragStart}
 								onDragEnd={handleDragEnd}
 							/>

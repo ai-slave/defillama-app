@@ -24,9 +24,7 @@ type ArticleEditorHeaderProps = {
 	/** The editor's clock, which also decides `articleIsScheduled`. */
 	nowSec: number
 	articleViewHref: string
-	deletePending: boolean
 	hasPendingEdits: boolean
-	isDiscarding: boolean
 	isOwner: boolean
 	isPublished: boolean
 	isPublishing: boolean
@@ -57,13 +55,11 @@ export function ArticleEditorHeader({
 	beginSlugEdit,
 	cancelSlugEdit,
 	commitSlugEdit,
-	deletePending,
 	handleDeleteArticle,
 	handleDiscardPending,
 	handlePublish,
 	handleUnpublish,
 	hasPendingEdits,
-	isDiscarding,
 	isOwner,
 	isPublished,
 	isPublishing,
@@ -153,7 +149,8 @@ export function ArticleEditorHeader({
 				</span>
 			</nav>
 
-			<div className="flex items-center gap-2">
+			{/* Wraps instead of shrinking: a published article with pending edits has more actions than a phone row fits. */}
+			<div className="flex flex-wrap items-center gap-2">
 				<button
 					type="button"
 					aria-live="polite"
@@ -177,9 +174,7 @@ export function ArticleEditorHeader({
 					}
 					disabled={pillState === 'saving' || pillState === 'idle'}
 					onClick={() => void saveArticle()}
-					className={`hidden items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors disabled:cursor-default ${
-						hasPendingEdits ? 'lg:flex' : 'sm:flex'
-					} ${
+					className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors disabled:cursor-default ${
 						pillState === 'error'
 							? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
 							: pillState === 'unsaved'
@@ -187,8 +182,11 @@ export function ArticleEditorHeader({
 								: 'border-transparent text-secondary hover:border-medium hover:bg-research-tint-hover disabled:hover:border-transparent disabled:hover:bg-transparent'
 					}`}
 				>
-					<span aria-hidden className={`size-1.5 rounded-full ${PILL_DOT[pillState]}`} />
-					<span className="tabular-nums">{pillText[pillState]}</span>
+					<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${PILL_DOT[pillState]}`} />
+					{/* Narrow headers keep only the dot, so the save state stays visible without crowding the actions. */}
+					<span className={`tabular-nums ${hasPendingEdits ? 'max-lg:sr-only' : 'max-sm:sr-only'}`}>
+						{pillText[pillState]}
+					</span>
 					{pillState === 'unsaved' || pillState === 'error' ? (
 						<kbd
 							aria-hidden
@@ -216,6 +214,7 @@ export function ArticleEditorHeader({
 								key={item.mode}
 								type="button"
 								aria-pressed={active}
+								aria-label={item.label}
 								title={item.label}
 								onClick={() => onViewModeChange(item.mode)}
 								className={`flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium transition-colors ${
@@ -235,6 +234,7 @@ export function ArticleEditorHeader({
 					<button
 						type="button"
 						onClick={onOpenHistory}
+						aria-label="Revision history"
 						title="Revision history"
 						className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-link/40 hover:text-primary"
 					>
@@ -248,15 +248,15 @@ export function ArticleEditorHeader({
 							<>
 								<button
 									type="button"
-									disabled={isPublishing || isDiscarding}
+									disabled={isPublishing}
 									onClick={handleDiscardPending}
 									className="flex h-9 items-center gap-1.5 rounded-md border border-medium bg-surface px-3 text-xs font-medium text-secondary transition-colors hover:border-error/50 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
 								>
-									{isDiscarding ? 'Discarding…' : 'Discard'}
+									Discard
 								</button>
 								<button
 									type="button"
-									disabled={isPublishing || isDiscarding}
+									disabled={isPublishing}
 									onClick={handlePublish}
 									className="flex h-9 items-center gap-1.5 rounded-md bg-success px-3.5 text-xs font-medium text-on-brand shadow-publish transition-all hover:bg-success hover:shadow-publish-hover disabled:cursor-not-allowed disabled:opacity-50"
 								>
@@ -351,7 +351,6 @@ export function ArticleEditorHeader({
 								type="button"
 								aria-label="Delete draft"
 								title="Delete draft"
-								disabled={deletePending}
 								onClick={handleDeleteArticle}
 								className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-tertiary transition-colors hover:border-error/40 hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
 							>

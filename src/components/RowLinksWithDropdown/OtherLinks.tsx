@@ -78,7 +78,7 @@ export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', is
 									className={popoverSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
-									See more...
+									See more…
 								</Ariakit.ComboboxItem>
 							) : null}
 						</Ariakit.ComboboxList>

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { BasicLink } from '~/components/Link'
@@ -24,6 +24,7 @@ import { StoreButtons } from '~/containers/MobileApp'
 import { LlamaAIMobileAppPromotion } from '~/containers/MobileApp/LlamaAIMobileAppGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
@@ -84,7 +85,9 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 		if (hasPendingPrompt()) void router.push('/ai/chat')
 	})
 
-	if (isAuthenticated && hasActiveSubscription) return null
+	// A subscriber needs no free questions, but the sign-in stays mounted: signing in as one hides the section, and the
+	// dialog still has to finish that sign-in and hand the waiting question to the chat.
+	const hidden = isAuthenticated && hasActiveSubscription
 
 	const questions = landingQuestions?.length ? landingQuestions : FALLBACK_QUESTIONS
 	const displayed = questions.slice(0, 9)
@@ -109,102 +112,105 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 	}
 
 	return (
-		<section id="free-questions" className="relative z-10 mx-auto max-w-5xl px-4 pb-20 md:px-8 md:pb-28">
-			<div className="mb-6 text-center">
-				<h2 className="mb-2 text-[1.75rem] font-extrabold tracking-[-0.02em] text-primary md:text-[2rem]">
-					Try LlamaAI for free
-				</h2>
-				<p className="text-sm text-secondary">{`New here? ${WELCOME_WEEK_ALLOWANCE}.`}</p>
-				<p className="text-sm text-tertiary">
-					{`After that: ${FREE_DAILY_ALLOWANCE} and ${FREE_RESEARCH_ALLOWANCE}.`}{' '}
-					{isAuthenticated ? null : (
-						<>
+		<>
+			{hidden ? null : (
+				<section id="free-questions" className="relative z-10 mx-auto max-w-5xl px-4 pb-20 md:px-8 md:pb-28">
+					<div className="mb-6 text-center">
+						<h2 className="mb-2 text-[1.75rem] font-extrabold tracking-[-0.02em] text-primary md:text-[2rem]">
+							Try LlamaAI for free
+						</h2>
+						<p className="text-sm text-secondary">{`New here? ${WELCOME_WEEK_ALLOWANCE}.`}</p>
+						<p className="text-sm text-tertiary">
+							{`After that: ${FREE_DAILY_ALLOWANCE} and ${FREE_RESEARCH_ALLOWANCE}.`}{' '}
+							{isAuthenticated ? null : (
+								<>
+									<button
+										type="button"
+										onClick={() => {
+											setSignupSource('llamaai-landing')
+											signIn.open(null)
+										}}
+										className="font-medium text-ai-gold underline decoration-ai-gold/40 transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
+									>
+										Sign in
+									</button>{' '}
+									to start.
+								</>
+							)}
+						</p>
+					</div>
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+						{displayed.map((q, i) => (
 							<button
 								type="button"
-								onClick={() => {
-									setSignupSource('llamaai-landing')
-									signIn.open(null)
-								}}
-								className="font-medium text-ai-gold underline decoration-ai-gold/40 transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
+								// oxlint-disable-next-line react/no-array-index-key -- Landing suggestions are a read-only snapshot with no IDs; text and tags may repeat.
+								key={i}
+								onClick={() => handleClick(q)}
+								className={clsx(
+									'group flex flex-col items-start gap-3 rounded-xl border border-medium bg-ai-white p-4 text-left transition-all duration-200',
+									'hover:-translate-y-0.5 hover:border-ai-gold/50 hover:shadow-ai-halo',
+									'dark:border-subtle dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-halo-faint'
+								)}
 							>
-								Sign in
-							</button>{' '}
-							to start.
-						</>
-					)}
-				</p>
-			</div>
-			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-				{displayed.map((q, i) => (
-					<button
-						type="button"
-						// oxlint-disable-next-line react/no-array-index-key -- Landing suggestions are a read-only snapshot with no IDs; text and tags may repeat.
-						key={i}
-						onClick={() => handleClick(q)}
-						className={clsx(
-							'group flex flex-col items-start gap-3 rounded-xl border border-medium bg-ai-white p-4 text-left transition-all duration-200',
-							'hover:-translate-y-0.5 hover:border-ai-gold/50 hover:shadow-ai-halo',
-							'dark:border-subtle dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-halo-faint'
-						)}
-					>
-						<span className="inline-block rounded-full border border-ai-gold/30 bg-ai-gold/8 px-2.5 py-0.5 text-[11px] font-semibold text-ai-gold dark:border-ai-gold-bright/30 dark:bg-ai-gold-bright/8 dark:text-ai-gold-bright">
-							{q.tag}
-						</span>
-						<span className="flex-1 text-sm leading-snug text-secondary">{q.text}</span>
-						<span className="flex items-center gap-1 text-[13px] font-semibold text-ai-gold opacity-0 transition-opacity duration-200 group-hover:opacity-100 dark:text-ai-gold-bright">
-							Ask this
-							<Icon name="arrow-right" height={12} width={12} />
-						</span>
-					</button>
-				))}
-			</div>
+								<span className="inline-block rounded-full border border-ai-gold/30 bg-ai-gold/8 px-2.5 py-0.5 text-[11px] font-semibold text-ai-gold dark:border-ai-gold-bright/30 dark:bg-ai-gold-bright/8 dark:text-ai-gold-bright">
+									{q.tag}
+								</span>
+								<span className="flex-1 text-sm leading-snug text-secondary">{q.text}</span>
+								<span className="flex items-center gap-1 text-[13px] font-semibold text-ai-gold opacity-0 transition-opacity duration-200 group-hover:opacity-100 dark:text-ai-gold-bright">
+									Ask this
+									<Icon name="arrow-right" height={12} width={12} />
+								</span>
+							</button>
+						))}
+					</div>
 
-			<form
-				className="mt-6"
-				onSubmit={(e) => {
-					e.preventDefault()
-					const form = e.currentTarget
-					const input = form.elements.namedItem('freeform') as HTMLInputElement
-					const value = input.value.trim()
-					if (!value) return
-					trackUmamiEvent('llamaai-landing-freeform-submit', { question: value.slice(0, 50) })
-					if (!loaders.userLoading && isAuthenticated) {
-						setPendingPrompt(value)
-						setPendingEntrySource('landing')
-						void router.push('/ai/chat')
-					} else {
-						setPendingPrompt(value)
-						setPendingEntrySource('landing')
-						setSignupSource('llamaai-landing')
-						signIn.open(value)
-					}
-				}}
-			>
-				<div
-					className={clsx(
-						'flex items-center gap-2 rounded-xl border border-medium bg-ai-white px-4 py-3 transition-all duration-200',
-						'focus-within:border-ai-gold/50 focus-within:shadow-ai-focus-gold',
-						'dark:border-subtle dark:bg-ai-ink-raised dark:focus-within:border-ai-gold-bright/30 dark:focus-within:shadow-ai-focus-gold-dark'
-					)}
-				>
-					<input
-						name="freeform"
-						type="text"
-						placeholder="Or ask your own question..."
-						className="flex-1 bg-transparent text-sm text-secondary outline-hidden placeholder:text-tertiary"
-					/>
-					<button
-						type="submit"
-						className="flex min-h-8 shrink-0 items-center gap-1 rounded-lg bg-ai-gold-cta px-3 py-1.5 label-sm text-ai-on-gold-strong transition-shadow duration-200 hover:shadow-ai-gold-spark"
+					<form
+						className="mt-6"
+						onSubmit={(e) => {
+							e.preventDefault()
+							const form = e.currentTarget
+							const input = form.elements.namedItem('freeform') as HTMLInputElement
+							const value = input.value.trim()
+							if (!value) return
+							trackUmamiEvent('llamaai-landing-freeform-submit', { question: value.slice(0, 50) })
+							if (!loaders.userLoading && isAuthenticated) {
+								setPendingPrompt(value)
+								setPendingEntrySource('landing')
+								void router.push('/ai/chat')
+							} else {
+								setPendingPrompt(value)
+								setPendingEntrySource('landing')
+								setSignupSource('llamaai-landing')
+								signIn.open(value)
+							}
+						}}
 					>
-						Ask
-						<Icon name="arrow-right" height={14} width={14} />
-					</button>
-				</div>
-			</form>
-
+						<div
+							className={clsx(
+								'flex items-center gap-2 rounded-xl border border-medium bg-ai-white px-4 py-3 transition-all duration-200',
+								'focus-within:border-ai-gold/50 focus-within:shadow-ai-focus-gold',
+								'dark:border-subtle dark:bg-ai-ink-raised dark:focus-within:border-ai-gold-bright/30 dark:focus-within:shadow-ai-focus-gold-dark'
+							)}
+						>
+							<input
+								name="freeform"
+								type="text"
+								placeholder="Or ask your own question..."
+								className="flex-1 bg-transparent text-sm text-secondary outline-hidden placeholder:text-tertiary"
+							/>
+							<button
+								type="submit"
+								className="flex min-h-8 shrink-0 items-center gap-1 rounded-lg bg-ai-gold-cta px-3 py-1.5 label-sm text-ai-on-gold-strong transition-shadow duration-200 hover:shadow-ai-gold-spark"
+							>
+								Ask
+								<Icon name="arrow-right" height={14} width={14} />
+							</button>
+						</div>
+					</form>
+				</section>
+			)}
 			<SignInModal {...signIn.dialogProps} prompt="Sign in to get your answer — free" />
-		</section>
+		</>
 	)
 }
 
@@ -337,38 +343,43 @@ function CTAButton({ className = '', label }: { className?: string; label?: stri
 function ExampleShowcase() {
 	const [current, setCurrent] = useState(0)
 	const [isTransitioning, setIsTransitioning] = useState(false)
-	const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+	// Hovering or focusing the showcase holds its example, so it never changes under the reader.
+	const [hovered, setHovered] = useState(false)
+	const [focused, setFocused] = useState(false)
+	const paused = hovered || focused
 
-	const goTo = useCallback((index: number) => {
+	const goTo = (index: number) => {
 		setIsTransitioning(true)
 		setTimeout(() => {
 			setCurrent(index)
 			setIsTransitioning(false)
 		}, 200)
-	}, [])
+	}
 
-	const resetInterval = useCallback(() => {
-		if (intervalRef.current) clearInterval(intervalRef.current)
-		intervalRef.current = setInterval(() => {
+	// The next example after 6s; picking one restarts the wait, since it changes `current`.
+	useEffect(() => {
+		if (paused) return
+		const timer = setTimeout(() => {
 			setIsTransitioning(true)
 			setTimeout(() => {
-				setCurrent((prev) => (prev + 1) % EXAMPLE_CONVERSATIONS.length)
+				setCurrent((current + 1) % EXAMPLE_CONVERSATIONS.length)
 				setIsTransitioning(false)
 			}, 200)
 		}, 6000)
-	}, [])
-
-	useEffect(() => {
-		resetInterval()
-		return () => {
-			if (intervalRef.current) clearInterval(intervalRef.current)
-		}
-	}, [resetInterval])
+		return () => clearTimeout(timer)
+	}, [paused, current])
 
 	const example = EXAMPLE_CONVERSATIONS[current]
 
 	return (
-		<div>
+		<div
+			onMouseEnter={() => setHovered(true)}
+			onMouseLeave={() => setHovered(false)}
+			onFocus={() => setFocused(true)}
+			onBlur={(event) => {
+				if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
+			}}
+		>
 			<div className="mb-3 flex items-start gap-2.5 px-1">
 				<div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-subtle bg-surface-elevated-1 text-sm dark:bg-ai-ink-raised">
 					👤
@@ -424,23 +435,26 @@ function ExampleShowcase() {
 				</div>
 			</a>
 
-			<div className="mt-3 flex items-center justify-center gap-2">
+			<div className="mt-1 flex items-center justify-center">
 				{EXAMPLE_CONVERSATIONS.map((conversation, i) => (
+					// The padding is the tap area; the bar inside is the mark.
 					<button
 						type="button"
 						key={conversation.id}
-						onClick={() => {
-							goTo(i)
-							resetInterval()
-						}}
-						className={clsx(
-							'h-1.5 rounded-full transition-all duration-300',
-							i === current
-								? 'w-6 bg-ai-gold dark:bg-ai-gold-bright'
-								: 'w-1.5 bg-surface-elevated-1 hover:bg-surface-elevated-2'
-						)}
+						onClick={() => goTo(i)}
+						aria-current={i === current ? 'true' : undefined}
+						className="group rounded-full px-1 py-2"
 						aria-label={`Show example ${i + 1}`}
-					/>
+					>
+						<span
+							className={clsx(
+								'block h-1.5 rounded-full transition-all duration-300',
+								i === current
+									? 'w-6 bg-ai-gold dark:bg-ai-gold-bright'
+									: 'w-1.5 bg-ai-gold/45 group-hover:bg-ai-gold/80 dark:bg-ai-gold-bright/45 dark:group-hover:bg-ai-gold-bright/80'
+							)}
+						/>
+					</button>
 				))}
 			</div>
 		</div>
@@ -894,6 +908,8 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								) : (
 									// oxlint-disable-next-line react/iframe-missing-sandbox -- YouTube embeds require allow-scripts + allow-same-origin which the rule forbids
 									<iframe
+										// Replaces the Play button that had focus, so the player takes it.
+										ref={takeLostFocus}
 										src="https://www.youtube.com/embed/rEJz1gfC0Oc?si=0DD5sxzyUpC7GO14&autoplay=1"
 										title="LlamaAI Demo"
 										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

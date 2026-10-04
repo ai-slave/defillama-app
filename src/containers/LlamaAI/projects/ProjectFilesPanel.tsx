@@ -7,6 +7,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { queryReadFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
@@ -81,14 +82,19 @@ export function ProjectFilesPanel({
 
 	const files = filesQuery.data?.files ?? []
 	const githubSources = sources.filter((s) => s.adapter_type === 'github')
-	const isInitialLoading = !filesQuery.error && (filesQuery.isLoading || (sourcesQuery.isLoading && files.length === 0))
+	const filesFailed = queryReadFailed(filesQuery)
+	const isInitialLoading = !filesFailed && (filesQuery.isLoading || (sourcesQuery.isLoading && files.length === 0))
 
-	const fileErrorNotice = filesQuery.error ? (
+	const fileErrorNotice = filesFailed ? (
 		<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
 			<p>Couldn&apos;t load files.</p>
-			<Button type="button" size="sm" disabled={filesQuery.isFetching} onClick={() => void filesQuery.refetch()}>
-				{filesQuery.isFetching ? <LoadingSpinner size={12} /> : null}
-				{filesQuery.isFetching ? 'Retrying…' : 'Retry files'}
+			<Button
+				type="button"
+				size="sm"
+				pendingLabel={filesQuery.isFetching ? 'Retrying…' : null}
+				onClick={() => void filesQuery.refetch()}
+			>
+				Retry files
 			</Button>
 		</div>
 	) : null
@@ -144,17 +150,16 @@ export function ProjectFilesPanel({
 			</header>
 
 			<UploadSelectionNotice feedback={feedback} onDismiss={dismissFeedback} />
-			{sourcesQuery.error ? (
+			{queryReadFailed(sourcesQuery) ? (
 				<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
 					<p>Couldn&apos;t load connected sources.</p>
 					<Button
 						type="button"
 						size="sm"
-						disabled={sourcesQuery.isFetching}
+						pendingLabel={sourcesQuery.isFetching ? 'Retrying…' : null}
 						onClick={() => void sourcesQuery.refetch()}
 					>
-						{sourcesQuery.isFetching ? <LoadingSpinner size={12} /> : null}
-						{sourcesQuery.isFetching ? 'Retrying…' : 'Retry sources'}
+						Retry sources
 					</Button>
 				</div>
 			) : null}
@@ -186,7 +191,6 @@ export function ProjectFilesPanel({
 											square
 											aria-label={`Disconnect ${source.mount_path}`}
 											onClick={(event) => {
-												disconnect.reset()
 												setDeleteTarget({
 													kind: 'source',
 													id: source.id,
@@ -214,9 +218,9 @@ export function ProjectFilesPanel({
 						<button
 							type="button"
 							onClick={onPick}
-							disabled={isInitialLoading || !!filesQuery.error || isUploading}
-							aria-hidden={isInitialLoading || !!filesQuery.error || undefined}
-							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary focus-visible:focus-ring enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 ${isInitialLoading || filesQuery.error ? 'invisible' : ''}`}
+							disabled={isInitialLoading || filesFailed || isUploading}
+							aria-hidden={isInitialLoading || filesFailed || undefined}
+							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary focus-visible:focus-ring enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 ${isInitialLoading || filesFailed ? 'invisible' : ''}`}
 						>
 							<Icon name="file-plus" height={16} width={16} className="text-tertiary" />
 							<span>Drop files here or choose files</span>
@@ -260,7 +264,6 @@ export function ProjectFilesPanel({
 													square
 													aria-label={`Delete ${file.path}`}
 													onClick={(event) => {
-														deleteFile.reset()
 														setDeleteTarget({
 															kind: 'file',
 															id: file.id,

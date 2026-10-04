@@ -173,8 +173,7 @@ describe('the subscription page', () => {
 				passwordConfirm: 'password123',
 				turnstileToken: 'fixture-token',
 				promotionalEmails: 'off',
-				signal: new AbortController().signal,
-				canAccept: () => true
+				signal: new AbortController().signal
 			})
 		})
 		await waitForUi(async () => {

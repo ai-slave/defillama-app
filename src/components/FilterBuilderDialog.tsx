@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { Fragment, useDeferredValue, useState, type ReactNode } from 'react'
-import { flushSync } from 'react-dom'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
+import { keepFocus, neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
@@ -33,6 +33,7 @@ export function FilterBuilderDialog({ appliedCount, children }: { appliedCount: 
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.DialogDisclosure
 				render={<Button type="button" size="md" />}
+				data-filter-builder
 				aria-label={appliedCount > 0 ? `Filters, ${appliedCount} applied` : undefined}
 			>
 				<span>Filters</span>
@@ -108,7 +109,7 @@ export function FilterBuilderContent({
 						Clear all
 					</Button>
 				}
-				dismiss={<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>}
+				dismiss={<DialogCancelButton />}
 			>
 				<Button
 					type="button"
@@ -195,12 +196,17 @@ export function FilterBrowser<I extends string>({
 									onClick={(event) => {
 										// The chip leaves the list once its filter is added. Focus moves to the chip that takes its
 										// place, so a keyboard can add several in a row; with no chip left, the dialog's net takes it.
-										const pane = event.currentTarget.closest('[data-filter-pane]')!
-										const chips = [...pane.querySelectorAll<HTMLElement>('[data-filter-chip]')]
+										const chips = [
+											...event.currentTarget
+												.closest('[data-filter-pane]')!
+												.querySelectorAll<HTMLElement>('[data-filter-chip]')
+										]
 										const index = chips.indexOf(event.currentTarget)
-										flushSync(() => onAdd(filter.id))
-										const next = [...pane.querySelectorAll<HTMLElement>('[data-filter-chip]')]
-										;(next[index] ?? next[index - 1])?.focus()
+										const next = chips[index + 1] ?? chips[index - 1]
+										keepFocus(
+											() => onAdd(filter.id),
+											() => next
+										)
 									}}
 									data-filter-chip
 									className={metricOptionChipStyles}
@@ -246,16 +252,19 @@ export function ActiveFilterCard({
 					aria-label={`Remove ${label} filter`}
 					onClick={(event) => {
 						// The card leaves with its button. Focus moves to the next card's remove button, else the previous
-						// card's, else the first control that adds a filter back.
+						// card's, else the first control that adds a filter back, found after the filter returns to that list.
 						const pane = event.currentTarget.closest('[data-filter-pane]')!
 						const removes = [...pane.querySelectorAll<HTMLElement>('[data-filter-remove]')]
 						const index = removes.indexOf(event.currentTarget)
-						flushSync(onRemove)
-						const next = [...pane.querySelectorAll<HTMLElement>('[data-filter-remove]')]
-						const browse = pane.parentElement!.querySelector<HTMLElement>(
-							'[data-filter-pane="browse"] input, [data-filter-pane="browse"] [data-filter-chip]'
+						const next = removes[index + 1] ?? removes[index - 1]
+						keepFocus(
+							onRemove,
+							() =>
+								next ??
+								pane.parentElement!.querySelector<HTMLElement>(
+									'[data-filter-pane="browse"] input, [data-filter-pane="browse"] [data-filter-chip]'
+								)
 						)
-						;(next[index] ?? next[index - 1] ?? browse)?.focus()
 					}}
 					data-filter-remove
 					className="ml-auto"
@@ -265,6 +274,50 @@ export function ActiveFilterCard({
 			</div>
 			{children}
 		</Card>
+	)
+}
+
+export interface ActiveFilterPill {
+	id: string
+	label: string
+	onRemove: () => void
+}
+
+// A pill leaves once its filter clears, after the URL updates. Focus moves to the next pill, else the previous one, else
+// the Filters button nearest the strip.
+const focusNeighbourPillOnLeave = passFocusOnLeave((pill) => {
+	const next = neighbourRowControl(pill, pill)
+	if (next) return next
+	for (let region = pill.parentElement; region; region = region.parentElement) {
+		const trigger = region.querySelector<HTMLElement>('[data-filter-builder]')
+		if (trigger) return trigger
+	}
+	return null
+})
+
+/** The applied filters beside a table, each a pill that clears its filter. */
+export function ActiveFilterPills({ pills }: { pills: Array<ActiveFilterPill> }) {
+	if (pills.length === 0) return null
+
+	return (
+		<div className="flex flex-wrap gap-1">
+			{pills.map((pill) => (
+				<Button
+					key={pill.id}
+					ref={focusNeighbourPillOnLeave}
+					type="button"
+					variant="filter"
+					size="sm"
+					data-active="true"
+					className="group"
+					onClick={pill.onRemove}
+				>
+					<span className="sr-only">Remove </span>
+					<span>{pill.label}</span>
+					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" aria-hidden="true" />
+				</Button>
+			))}
+		</div>
 	)
 }
 

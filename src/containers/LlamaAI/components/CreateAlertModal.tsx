@@ -36,7 +36,6 @@ import {
 import type { DeliveryChannel } from '~/containers/LlamaAI/components/alerts/types'
 import {
 	alertFieldLabelClass,
-	alertSelectClass,
 	AlertsHeaderIcon,
 	PriceInput,
 	PRICE_OPERATOR_OPTIONS,
@@ -54,12 +53,21 @@ import {
 	useTokenSearch
 } from '~/containers/ProDashboard/components/datasets/TokenUsageDataset/useTokenSearch'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { queryReadFailed } from '~/utils/query'
 
 interface CreateAlertModalProps {
 	dialogStore: Ariakit.DialogStore
@@ -132,10 +140,7 @@ function CreateAlertDialog(props: CreateAlertModalProps) {
 	const queryClient = useQueryClient()
 	const initialPromptRef = useRef<HTMLTextAreaElement>(null)
 	const createAlertMutation: CreateAlertMutation = useMutation({
-		mutationFn: async (body: CreateAlertBody) => {
-			if (!authorizedFetch) throw new Error('Not authenticated')
-			return await createManualAlert(authorizedFetch, body)
-		},
+		mutationFn: (body: CreateAlertBody) => createManualAlert(authorizedFetch, body),
 		// The alert exists whatever happened to the dialog, so the cache belongs here.
 		onSuccess: (_data, variables) => {
 			trackUmamiEvent('llamaai-alert-created', { type: variables.trigger.type, source: 'form' })
@@ -198,8 +203,10 @@ function CreateAlertModalForm({
 
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>('email')
 	const [pickedSlack, setPickedSlack] = useState<SlackTarget | null>(null)
-	// A retried channel list focuses the select that replaces the retry button, so focus never drops to the page.
-	const focusChannelsOnLoadRef = useRef(false)
+	const [title, setTitle] = useState('')
+	// Typed text is the work closing would drop; a prefilled price level is not.
+	const hasTypedWork =
+		prompt.trim() !== '' || title.trim() !== '' || priceValue !== (prefill ? roundPriceValue(prefill.value) : '')
 
 	const { data: tokenOptionsResponse, isPlaceholderData: isSearchingTokens } = useTokenSearch(tokenSearchInput, true)
 	const tokenOptions = tokenOptionsResponse ?? EMPTY_TOKEN_OPTIONS
@@ -287,10 +294,9 @@ function CreateAlertModalForm({
 		if (submitBlockReason || isPending) return
 		// The fields lock while creating; the footer's submit, outside them, holds focus and its "Creating…" label.
 		;(e.nativeEvent as SubmitEvent).submitter?.focus()
-		const titleValue = new FormData(e.currentTarget).get('title')
 		const slackChannelName = slackChannels?.find((c) => c.id === slackChannelId)?.name ?? null
 		const body = buildCreateAlertBody({
-			title: (typeof titleValue === 'string' ? titleValue.trim() : '') || derivedTitle,
+			title: title.trim() || derivedTitle,
 			triggerType,
 			prompt,
 			schedule: { frequency, hour, dayOfWeek, timezone },
@@ -391,6 +397,11 @@ function CreateAlertModalForm({
 	return (
 		<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 			<DialogHeader title="New alert" subtitle="Get pinged when things move" leading={<AlertsHeaderIcon />} />
+			<DialogDiscardGuard
+				when={hasTypedWork}
+				title="Discard this alert?"
+				description="The alert you started is not created."
+			/>
 			<DialogBody>
 				{/* Locked while the create runs, so the outcome step describes the alert that was sent. */}
 				<fieldset disabled={isPending} className="contents">
@@ -506,7 +517,7 @@ function CreateAlertModalForm({
 									value={frequency}
 									aria-label="Frequency"
 									onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
-									className={alertSelectClass}
+									className={inputStyles}
 								>
 									<option value="daily">Daily</option>
 									<option value="weekly">Weekly</option>
@@ -516,7 +527,7 @@ function CreateAlertModalForm({
 										value={dayOfWeek}
 										aria-label="Day of week"
 										onChange={(e) => setDayOfWeek(Number(e.target.value))}
-										className={alertSelectClass}
+										className={inputStyles}
 									>
 										{DAYS_OF_WEEK.map((day, idx) => (
 											<option key={day} value={idx}>
@@ -530,7 +541,7 @@ function CreateAlertModalForm({
 									value={hour}
 									aria-label="Hour"
 									onChange={(e) => setHour(Number(e.target.value))}
-									className={alertSelectClass}
+									className={inputStyles}
 								>
 									{Array.from({ length: 24 }, (_, h) => (
 										<option key={h} value={h}>
@@ -542,7 +553,7 @@ function CreateAlertModalForm({
 									value={timezone}
 									aria-label="Timezone"
 									onChange={(e) => setTimezone(e.target.value)}
-									className={alertSelectClass}
+									className={inputStyles}
 								>
 									{timezoneOptions.map((tz) => (
 										<option key={tz.value} value={tz.value}>
@@ -592,7 +603,7 @@ function CreateAlertModalForm({
 													channelId: workspace?.default_channel_id ?? ''
 												})
 											}}
-											className={alertSelectClass}
+											className={inputStyles}
 										>
 											<option value="" disabled>
 												Pick workspace
@@ -605,29 +616,24 @@ function CreateAlertModalForm({
 										</select>
 									) : null}
 									{slackTeamId ? (
-										slackChannelsQuery.isLoading ? (
-											<span className="body-sm text-tertiary">Loading channels…</span>
-										) : slackChannelsQuery.isError ? (
+										// A failed read keeps its notice through the retry, so the retry shows "Retrying…".
+										queryReadFailed(slackChannelsQuery) ? (
 											<RetryNotice
 												message="Couldn't load Slack channels."
 												retrying={slackChannelsQuery.isFetching}
-												onRetry={() => {
-													focusChannelsOnLoadRef.current = true
-													void slackChannelsQuery.refetch()
-												}}
+												onRetry={() => void slackChannelsQuery.refetch()}
 											/>
+										) : slackChannelsQuery.isLoading ? (
+											<span className="body-sm text-tertiary">Loading channels…</span>
 										) : (
 											<select
-												ref={(select) => {
-													if (!select || !focusChannelsOnLoadRef.current) return
-													focusChannelsOnLoadRef.current = false
-													select.focus()
-												}}
+												// A retried channel list takes the focus its Try again drops as it leaves.
+												ref={takeLostFocus}
 												value={slackChannelId}
 												aria-label="Slack channel"
 												// The workspace travels with the channel, so a later workspace change cannot inherit it.
 												onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
-												className={alertSelectClass}
+												className={inputStyles}
 											>
 												<option value="" disabled>
 													Pick channel
@@ -659,7 +665,14 @@ function CreateAlertModalForm({
 						<label htmlFor={titleId} className={alertFieldLabelClass}>
 							Name (optional)
 						</label>
-						<Input id={titleId} name="title" placeholder={derivedTitle} className="w-full" />
+						<Input
+							id={titleId}
+							name="title"
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							placeholder={derivedTitle}
+							className="w-full"
+						/>
 					</div>
 
 					{onJustAsk ? (
@@ -686,11 +699,7 @@ function CreateAlertModalForm({
 						{submitBlockReason ?? `${triggerSummary} → ${channelSummary}`}
 					</p>
 				}
-				dismiss={
-					<Button type="button" size="md" disabled={isPending} onClick={() => dialogStore.hide()}>
-						Cancel
-					</Button>
-				}
+				dismiss={<DialogCancelButton />}
 			>
 				<Button
 					type="submit"

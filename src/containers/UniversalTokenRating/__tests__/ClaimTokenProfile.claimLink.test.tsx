@@ -33,7 +33,10 @@ const render = () =>
 			</QueryClientProvider>
 		)
 	)
-const tokenSelect = () => container.querySelector<HTMLSelectElement>('select[aria-label="Token to claim"]')!
+const tokenSelect = () => {
+	const label = [...container.querySelectorAll('label')].find((el) => el.textContent === 'Token to claim')!
+	return document.getElementById(label.htmlFor) as HTMLSelectElement
+}
 
 beforeEach(() => {
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })

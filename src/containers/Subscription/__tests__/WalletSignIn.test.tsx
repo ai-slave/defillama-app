@@ -126,7 +126,7 @@ beforeEach(async () => {
 					closable={false}
 					onBack={() => store.dispatch({ kind: 'navigate', screen: 'signin' })}
 				/>
-				<WalletSignInForm dialogStore={dialogStore} store={store} onAuthenticated={onAuthenticated} />
+				<WalletSignInForm store={store} onAuthenticated={onAuthenticated} />
 			</Dialog>
 		) : (
 			<p>Email sign-in</p>

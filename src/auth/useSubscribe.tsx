@@ -8,8 +8,9 @@ import { subscriptionStatusQueryOptions, type Subscription } from '~/auth/subscr
 import { AUTH_SERVER } from '~/constants'
 import { holdEndTrial } from '~/containers/Account/endTrialHold'
 import { scheduleConfirmationReads } from '~/containers/Account/utils'
-import { handleSimpleFetchResponse } from '~/utils/async'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb from '~/utils/pocketbase'
+import { queryReadFailed } from '~/utils/query'
 
 interface SubscriptionRequest {
 	redirectUrl: string
@@ -48,20 +49,8 @@ const defaultInactiveSubscription: Subscription = {
 	provider: ''
 }
 
-const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage: string): string => {
-	if (!message) return fallbackMessage
-	if (!message.startsWith('[HTTP] [error]')) return message
-	const colonIndex = message.indexOf(':')
-	if (colonIndex === -1) return fallbackMessage
-	const details = message.slice(colonIndex + 1).trim()
-	return details || fallbackMessage
-}
-
 const OVERAGE_UNCONFIRMED = "We couldn't confirm the change. The switch shows your current setting."
 const CANCEL_UNCONFIRMED = "We couldn't confirm the cancellation. Check your plan before trying again."
-
-const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
-	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
 
 const parseFetchedApiKey = (payload: unknown): string | null => {
 	if (payload == null || typeof payload !== 'object') return null
@@ -96,7 +85,7 @@ async function fetchPastDueSubscription({
 	if (response.status === 404) return null
 
 	const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-		throw new Error(getErrorMessage(error, 'Failed to check payment status'))
+		throw new Error(httpErrorMessage(error, 'Failed to check payment status'))
 	})
 	const data: SubscriptionResponse = await normalized.json()
 	return data.subscription ?? null
@@ -136,7 +125,7 @@ export const useSubscribe = () => {
 			}
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to create subscription'))
+				throw new Error(httpErrorMessage(error, 'Failed to create subscription'))
 			})
 
 			return normalizedResponse.json()
@@ -144,48 +133,24 @@ export const useSubscribe = () => {
 	})
 
 	const handleSubscribe = useCallback(
-		async (
-			paymentMethod: 'stripe' | 'llamapay',
-			type: 'api' | 'llamafeed',
-			onSuccess?: (checkoutUrl: string) => void,
-			billingInterval: 'year' | 'month' = 'month',
-			useEmbedded = false,
-			isTrial = false
-		) => {
+		async (paymentMethod: 'stripe' | 'llamapay', type: 'api' | 'llamafeed', billingInterval: 'year' | 'month') => {
 			if (!isAuthenticated) {
 				toast.error('Sign in to subscribe')
 				return
 			}
 
-			const subscriptionType = type || 'api'
-
-			const subscriptionData: SubscriptionRequest = {
+			const result = await createSubscription.mutateAsync({
 				redirectUrl: `${window.location.origin}/welcome`,
 				cancelUrl: `${window.location.origin}/subscription?subscription=cancelled`,
 				provider: paymentMethod,
-				subscriptionType,
+				subscriptionType: type,
 				billingInterval,
-				isTrial,
+				isTrial: false,
 				referralCode: getReferrer()
-			}
-
-			const result = await createSubscription.mutateAsync(subscriptionData).catch((error) => {
-				console.log('Subscription error:', error)
-				throw error
 			})
 
-			// For embedded mode, return the result instead of redirecting
-			if (useEmbedded) {
-				return result
-			}
-
 			// Navigate to checkout URL in same window
-			if (result.checkoutUrl) {
-				if (onSuccess) {
-					onSuccess(result.checkoutUrl)
-				}
-				window.location.href = result.checkoutUrl
-			}
+			if (result.checkoutUrl) window.location.href = result.checkoutUrl
 		},
 		[isAuthenticated, createSubscription]
 	)
@@ -223,7 +188,7 @@ export const useSubscribe = () => {
 			const result: SubscriptionCreateResponse = await handleSimpleFetchResponse(response)
 				.then((res) => res.json())
 				.catch((error) => {
-					throw new Error(getErrorMessage(error, 'Failed to create top-up link'))
+					throw new Error(httpErrorMessage(error, 'Failed to create top-up link'))
 				})
 
 			// Same tab, like subscribing: a new tab opened after these awaits is no longer a user gesture, and Safari blocks
@@ -232,7 +197,7 @@ export const useSubscribe = () => {
 		},
 		onError: (error) => {
 			console.log('Top-up error:', error)
-			toast.error(getErrorMessage(error, 'Failed to create top-up link'))
+			toast.error(httpErrorMessage(error, 'Failed to create top-up link'))
 		}
 	})
 
@@ -255,8 +220,9 @@ export const useSubscribe = () => {
 
 	const llamafeedSubscription = subscriptionData?.type === 'llamafeed' ? subscriptionData : defaultInactiveSubscription
 
-	const isSubscriptionLoading = isAuthenticated && subscriptionQuery.data === undefined && !subscriptionQuery.isError
-	const isSubscriptionError = isAuthenticated && subscriptionQuery.isError
+	// Attempt times keep a failure, not a loading state, on screen while its retry runs.
+	const isSubscriptionError = isAuthenticated && queryReadFailed(subscriptionQuery)
+	const isSubscriptionLoading = isAuthenticated && subscriptionQuery.data === undefined && !isSubscriptionError
 
 	const trialAvailabilityQuery = useQuery({
 		queryKey: ['subscription', 'trial-available', user?.id],
@@ -266,7 +232,7 @@ export const useSubscribe = () => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/subscription/trial-available`)
 				.then(handleSimpleFetchResponse)
 				.catch((error) => {
-					throw new Error(getErrorMessage(error, 'Failed to check trial availability'))
+					throw new Error(httpErrorMessage(error, 'Failed to check trial availability'))
 				})
 			return response.json()
 		},
@@ -286,7 +252,7 @@ export const useSubscribe = () => {
 				.then((res) => res.json())
 				.then(parseFetchedApiKey)
 				.catch((error) => {
-					throw new Error(getErrorMessage(error, 'Failed to fetch API key'))
+					throw new Error(httpErrorMessage(error, 'Failed to fetch API key'))
 				}),
 		staleTime: 24 * 60 * 60 * 1000, // 24 hours
 		refetchOnWindowFocus: false,
@@ -302,7 +268,7 @@ export const useSubscribe = () => {
 				.then((res) => res.json())
 				.then(parseGeneratedApiKey)
 				.catch((error) => {
-					throw new Error(getErrorMessage(error, 'Failed to generate API key'))
+					throw new Error(httpErrorMessage(error, 'Failed to generate API key'))
 				})
 
 			queryClient.setQueryData(apiKeyQueryKey, newApiKey)
@@ -371,7 +337,7 @@ export const useSubscribe = () => {
 				.then(handleSimpleFetchResponse)
 				.then((res) => res.json())
 				.catch((error) => {
-					throw new Error(getErrorMessage(error, 'Failed to open the billing portal'))
+					throw new Error(httpErrorMessage(error, 'Failed to open the billing portal'))
 				})
 
 			if (!data?.url) {
@@ -381,7 +347,7 @@ export const useSubscribe = () => {
 		},
 		onError: (error) => {
 			console.log('Failed to create portal session:', error)
-			toast.error(getErrorMessage(error, 'Failed to open the billing portal. Try again.'))
+			toast.error(httpErrorMessage(error, 'Failed to open the billing portal. Try again.'))
 		}
 	})
 
@@ -424,7 +390,7 @@ export const useSubscribe = () => {
 			if (response.status >= 500) throw unconfirmed()
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to end trial subscription'))
+				throw new Error(httpErrorMessage(error, 'Failed to end trial subscription'))
 			})
 			holdEndTrial(accountId)
 			return normalizedResponse.json()
@@ -457,7 +423,7 @@ export const useSubscribe = () => {
 			// A 5xx, like a lost response, can come after the server applied the change.
 			if (response.status >= 500) throw new Error(OVERAGE_UNCONFIRMED)
 			await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, `Failed to ${enabled ? 'enable' : 'disable'} extra usage charges`))
+				throw new Error(httpErrorMessage(error, `Failed to ${enabled ? 'enable' : 'disable'} extra usage charges`))
 			})
 		},
 		// Returned, so the switch stays locked until the refetch shows the setting the server now holds. A failure is
@@ -497,7 +463,7 @@ export const useSubscribe = () => {
 			if (response.status >= 500) throw new Error(CANCEL_UNCONFIRMED)
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to cancel subscription'))
+				throw new Error(httpErrorMessage(error, 'Failed to cancel subscription'))
 			})
 
 			return normalizedResponse.json()
@@ -533,7 +499,8 @@ export const useSubscribe = () => {
 		isSubscriptionError,
 		isSubscriptionRetrying: subscriptionQuery.isFetching,
 		refetchSubscription: subscriptionQuery.refetch,
-		isPastDueError: pastDueSubscriptionQuery.isError && pastDueSubscriptionQuery.data == null,
+		isPastDueError: queryReadFailed(pastDueSubscriptionQuery) && pastDueSubscriptionQuery.data == null,
+		isPastDueRetrying: pastDueSubscriptionQuery.isFetching,
 		refetchPastDueSubscription: pastDueSubscriptionQuery.refetch,
 		apiKey,
 		generateNewKeyMutation,

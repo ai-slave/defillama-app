@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
@@ -54,9 +55,10 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 	if (!safeUrl) return null
 
 	return (
-		<button
+		<Ariakit.Button
 			type="button"
 			disabled={downloadMarkdownMutation.isPending}
+			accessibleWhenDisabled
 			onClick={() => {
 				trackUmamiEvent('llamaai-download', {
 					kind: 'artifact-md',
@@ -68,7 +70,7 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 				})
 				downloadMarkdownMutation.mutate({ url: safeUrl, filename: mdExport.filename })
 			}}
-			className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3 text-left not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60"
+			className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3 text-left not-aria-disabled:hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 		>
 			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-muted">
 				<Icon name="file-text" className="size-5 text-link-on-tint" />
@@ -89,6 +91,6 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 			<span className="flex shrink-0 items-center gap-1 label-sm text-link">
 				<Icon name="download-paper" className="size-3.5" />.{fileExtension(mdExport.filename)}
 			</span>
-		</button>
+		</Ariakit.Button>
 	)
 }

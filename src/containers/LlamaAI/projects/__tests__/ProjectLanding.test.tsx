@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectLanding } from '../ProjectLanding'
@@ -173,8 +174,10 @@ test('chat loading, failure and retry never present a false empty state', async 
 
 	let finishRetry = () => {}
 	sessionsReply = () => new Promise((resolve) => (finishRetry = () => resolve({ sessions: [] })))
-	await act(async () => button('Retry chats').click())
-	await until(() => expect(container.textContent).toContain('Loading chats'))
+	const retry = button('Retry chats')
+	await act(async () => retry.click())
+	await until(() => expect(accessibleName(retry)).toBe('Retrying…'))
+	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats.")
 	expect(container.textContent).not.toContain('No chats yet')
 	await act(async () => finishRetry())
 	await until(() => expect(container.textContent).toContain('No chats yet'))
@@ -199,6 +202,47 @@ test('blank and streaming submissions are disabled; rejected submissions keep th
 	onSubmit.mockReturnValue(true)
 	await act(async () => submit.click())
 	expect(composer().value).toBe('')
+})
+
+test('a second Enter while a send is on its way sends it once and keeps the text until it is accepted', async () => {
+	await renderLoaded()
+	const accepted = Promise.withResolvers<boolean>()
+	onSubmit.mockReturnValue(accepted.promise)
+	await act(async () => type(composer(), 'Question'))
+	const enter = () => composer().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+	await act(async () => enter())
+	await act(async () => enter())
+	expect(onSubmit).toHaveBeenCalledTimes(1)
+	expect(composer().readOnly).toBe(true)
+	await act(async () => accepted.resolve(true))
+	expect(composer().value).toBe('')
+	expect(composer().readOnly).toBe(false)
+})
+
+test('an attachment that cannot be read keeps the draft, says so and leaves the composer editable', async () => {
+	await renderLoaded()
+	await act(async () => type(composer(), 'Question'))
+	const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
+	await act(async () => {
+		Object.defineProperty(input, 'files', { value: [new File(['png'], 'chart.png', { type: 'image/png' })] })
+		input.dispatchEvent(new Event('change', { bubbles: true }))
+	})
+	vi.spyOn(FileReader.prototype, 'readAsDataURL').mockImplementation(function (this: FileReader) {
+		queueMicrotask(() => this.dispatchEvent(new ProgressEvent('error')))
+	})
+	try {
+		await act(async () => composer().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+		await until(() =>
+			expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+				"Couldn't read an attachment. Remove it or attach it again, then send."
+			)
+		)
+	} finally {
+		vi.restoreAllMocks()
+	}
+	expect(onSubmit).not.toHaveBeenCalled()
+	expect(composer().value).toBe('Question')
+	expect(composer().readOnly).toBe(false)
 })
 
 test('only the route-selected panel is visible while tab navigation is pending', async () => {
@@ -228,4 +272,78 @@ test('keeps retry available for temporary project failures', async () => {
 	detailReply = () => project('project-1', 'Research', 'Saved instructions')
 	await act(async () => button('Try again').click())
 	await until(() => expect(tabs()).toHaveLength(2))
+})
+
+test('deleting a chat hands focus to the next chat once the list drops it', async () => {
+	const chat = (sessionId: string, title: string) => ({
+		sessionId,
+		title,
+		createdAt: '2026-09-01T00:00:00Z',
+		lastActivity: null,
+		isPinned: false,
+		pinnedAt: null,
+		isPublic: false,
+		shareToken: null
+	})
+	let chats = [chat('first', 'First chat'), chat('second', 'Second chat')]
+	sessionsReply = () => ({ sessions: chats })
+	session.serve({
+		[`${AI_SERVER}/user/sessions/first`]: () => {
+			chats = [chats[1]]
+			return new Response(null, { status: 204 })
+		}
+	})
+	await renderLoaded()
+	await until(() => expect(container.textContent).toContain('Second chat'))
+	const remove = container.querySelector<HTMLButtonElement>('button[aria-label="Delete First chat"]')!
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
+	const confirm = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')].find(
+			(b) => b.textContent === 'Delete'
+		)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await act(async () => confirm.click())
+	await until(() => expect(container.textContent).not.toContain('First chat'))
+	await until(() =>
+		expect(document.activeElement).toBe(container.querySelector('button[aria-label="Delete Second chat"]'))
+	)
+})
+
+test('cancelling a chat delete returns focus to its Delete button', async () => {
+	sessionsReply = () => ({
+		sessions: [
+			{
+				sessionId: 'first',
+				title: 'First chat',
+				createdAt: '2026-09-01T00:00:00Z',
+				lastActivity: null,
+				isPinned: false,
+				pinnedAt: null,
+				isPublic: false,
+				shareToken: null
+			}
+		]
+	})
+	await renderLoaded()
+	await until(() => expect(container.textContent).toContain('First chat'))
+	const remove = container.querySelector<HTMLButtonElement>('button[aria-label="Delete First chat"]')!
+	await act(async () => {
+		remove.focus()
+		remove.click()
+	})
+	const cancel = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')].find(
+			(b) => b.textContent === 'Cancel'
+		)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await act(async () => cancel.click())
+	await until(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	await until(() => expect(document.activeElement).toBe(remove))
 })

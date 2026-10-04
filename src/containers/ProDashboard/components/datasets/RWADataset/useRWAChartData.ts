@@ -14,6 +14,7 @@ import {
 import type { IFetchedRWAProject, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
 import { toRwaPositionalChartDataset } from '~/containers/RWA/breakdownDataset'
 import { tokenIconUrl } from '~/utils/icons'
+import { queryReadFailed } from '~/utils/query'
 import { getProRwaBreakdownQueryKey } from '../../../rwaBreakdown'
 import { sumRwaMetricBreakdown } from '../../../rwaMetrics'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric } from '../../../types'
@@ -36,7 +37,7 @@ export function useRWABreakdownChartData(
 	const authToken = useContext(ProxyAuthTokenContext)
 	const selectedChain = chain && chain !== 'All' ? chain : null
 
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const chartQuery = useQuery({
 		queryKey: getProRwaBreakdownQueryKey(breakdown, metric, chain),
 		enabled: streamDone,
 		queryFn: async () => {
@@ -69,11 +70,12 @@ export function useRWABreakdownChartData(
 		retry: 1
 	})
 
+	const { data, isLoading, isFetching, refetch } = chartQuery
 	return {
 		chartDataset: data ?? null,
 		isLoading: isLoading || (!streamDone && data === undefined),
 		isFetching,
-		readFailed: errorUpdatedAt > dataUpdatedAt,
+		readFailed: queryReadFailed(chartQuery),
 		refetch
 	}
 }
@@ -122,7 +124,7 @@ export function useRWAAssetChartData(assetId: string | null) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
 
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const chartQuery = useQuery({
 		queryKey: ['pro-dashboard', 'rwa-asset-chart', assetId],
 		enabled: streamDone && !!assetId,
 		queryFn: async () => {
@@ -137,11 +139,12 @@ export function useRWAAssetChartData(assetId: string | null) {
 		retry: 1
 	})
 
+	const { data, isLoading, isFetching, refetch } = chartQuery
 	return {
 		chartDataset: data ?? null,
 		isLoading: isLoading || (assetId !== null && !streamDone && data === undefined),
 		isFetching,
-		readFailed: errorUpdatedAt > dataUpdatedAt,
+		readFailed: queryReadFailed(chartQuery),
 		refetch
 	}
 }

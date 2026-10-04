@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import type { ArticlePdf } from '../types'
@@ -9,12 +10,12 @@ type Props = {
 	articleId: string | null | undefined
 	currentPdf: ArticlePdf | null | undefined
 	onUploaded: (result: PdfUploadResult) => void
-	onCleared?: () => void
+	onCleared: () => void
 	helperText?: string
 }
 
 function formatSize(bytes: number): string {
-	if (!Number.isFinite(bytes) || bytes <= 0) return '—'
+	if (bytes <= 0) return '—'
 	if (bytes < 1024) return `${bytes} B`
 	if (bytes < 1024 * 1024) return `${formatFixedNumber(bytes / 1024, 1)} KB`
 	return `${formatFixedNumber(bytes / 1024 / 1024, 1)} MB`
@@ -22,6 +23,8 @@ function formatSize(bytes: number): string {
 
 export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, helperText }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null)
+	// Remove leaves with the file, so the upload control that replaces it takes its focus.
+	const uploadRef = useRef<HTMLButtonElement>(null)
 	const { uploadFile, isUploading, errorMessage } = usePdfUpload({ articleId })
 
 	const handleFile = async (file: File | null | undefined) => {
@@ -40,7 +43,7 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 				ref={inputRef}
 				type="file"
 				accept="application/pdf,.pdf"
-				className="sr-only"
+				hidden
 				onChange={(e) => handleFile(e.target.files?.[0])}
 			/>
 			{currentPdf ? (
@@ -72,15 +75,20 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 						>
 							Replace PDF
 						</Button>
-						{onCleared ? (
-							<Button type="button" size="sm" variant="ghost" disabled={disabled} onClick={onCleared}>
-								Remove
-							</Button>
-						) : null}
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							disabled={disabled}
+							onClick={() => keepFocus(onCleared, () => uploadRef.current)}
+						>
+							Remove
+						</Button>
 					</div>
 				</div>
 			) : (
 				<button
+					ref={uploadRef}
 					type="button"
 					disabled={disabled}
 					onClick={open}

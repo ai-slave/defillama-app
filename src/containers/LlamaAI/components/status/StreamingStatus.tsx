@@ -47,6 +47,7 @@ export function SpawnProgressCard({
 			<button
 				type="button"
 				onClick={() => setIsExpanded(!isExpanded)}
+				aria-expanded={isExpanded}
 				className="flex items-center gap-2 text-left sm:gap-3"
 			>
 				<img src={LLAMA_AI_ANIMATION_SRC} alt="" className="size-6 shrink-0" loading="eager" fetchPriority="high" />
@@ -59,7 +60,11 @@ export function SpawnProgressCard({
 					{completed}/{total} done
 				</p>
 
-				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 font-mono text-xs text-tertiary tabular-nums">
+				{/* Out of the button's name, so a screen reader is not re-read the name every second. */}
+				<time
+					aria-hidden
+					className="flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 font-mono text-xs text-tertiary tabular-nums"
+				>
 					{formatTime(elapsed)}
 				</time>
 

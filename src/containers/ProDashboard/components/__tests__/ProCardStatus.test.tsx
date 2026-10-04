@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardNotice, ProCardRefreshFailed } from '../ProCardStatus'
 
 let root: Root
@@ -44,13 +45,33 @@ test('the loading state shows a skeleton for the card shape', async () => {
 test('the error state is an alert and calls back from Try again', async () => {
 	const onRetry = vi.fn()
 	await act(async () =>
-		root.render(<ProCardError detail="The request failed" retry={{ run: onRetry, pending: false }} />)
+		root.render(<ProCardError detail="The request failed" retry={{ refetch: onRetry, isFetching: false }} />)
 	)
 	const alert = container.querySelector('[role="alert"]')
 	expect(alert?.textContent).toContain("Couldn't load this card")
 	expect(alert?.textContent).toContain('The request failed')
 	await act(async () => buttonLabelled('Try again').click())
 	expect(onRetry).toHaveBeenCalledOnce()
+})
+
+test('a Try again that loads the content outside any card hands focus to the page content', async () => {
+	// A list on a page, not a card: no focusable region around the retry.
+	function Harness() {
+		const [failed, setFailed] = useState(true)
+		return (
+			<main>
+				{failed ? <ProCardError retry={{ refetch: () => setFailed(false), isFetching: false }} /> : <p>Loaded</p>}
+			</main>
+		)
+	}
+	await act(async () => root.render(<Harness />))
+	const retry = buttonLabelled('Try again')
+	await act(async () => {
+		retry.focus()
+		retry.click()
+	})
+	expect(container.textContent).toBe('Loaded')
+	await waitForUi(() => expect(document.activeElement?.tagName).toBe('MAIN'))
 })
 
 test('the error state has no Try again without a retry callback', async () => {
@@ -103,7 +124,7 @@ test('a permanent configuration error can be announced as a status instead of an
 
 test('a failed refresh warns without hiding the data and retries', async () => {
 	const onRetry = vi.fn()
-	await act(async () => root.render(<ProCardRefreshFailed retry={{ run: onRetry, pending: false }} />))
+	await act(async () => root.render(<ProCardRefreshFailed retry={{ refetch: onRetry, isFetching: false }} />))
 	const status = container.querySelector('[role="status"]')
 	expect(status?.textContent).toContain("Couldn't refresh this card")
 	expect(container.querySelector('[role="alert"]')).toBeNull()

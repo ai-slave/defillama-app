@@ -4,9 +4,10 @@ import { useDeferredValue, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 
 interface SavedChart {
@@ -32,8 +33,10 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	const deferredSearchQuery = useDeferredValue(searchQuery)
 	const [deleteTarget, setDeleteTarget] = useState<SavedChart | null>(null)
 	const searchRef = useRef<HTMLInputElement>(null)
+	// Where the delete confirm returns focus: its trigger, or the search field once the deleted card took the trigger.
+	const returnFocus = useRef<HTMLElement | null>(null)
 
-	const { data, isLoading, error, refetch } = useQuery({
+	const savedCharts = useQuery({
 		queryKey: ['pro-dashboard', 'saved-charts-list', user?.id],
 		queryFn: async () => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`)
@@ -48,14 +51,14 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	const deleteMutation = useMutation({
 		mutationFn: async (chartId: string) => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts/${chartId}`, { method: 'DELETE' })
-			if (!res.ok) throw new Error('Failed to delete chart')
+			if (!res.ok) throw new Error('The chart could not be deleted. Try again.')
 		},
 		onSuccess: (_, chartId) => {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'saved-charts-list'] })
 			if (selectedChart?.id === chartId) onChartSelect(null)
-			setDeleteTarget(null)
 		}
 	})
+	const data = savedCharts.data
 
 	if (!user) {
 		return <SurfaceBodyStatus variant="empty">Sign in to access your saved LlamaAI charts</SurfaceBodyStatus>
@@ -69,18 +72,23 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 		)
 	}
 
-	if (isLoading) return <SurfaceBodyLoadingStatus label="Loading saved charts" />
-
-	if (error) {
+	// A failed refresh keeps the loaded list (and an open delete confirm); only a list that never loaded shows the error.
+	if (queryReadFailed(savedCharts) && !data) {
 		return (
 			<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
 				The saved charts could not load.
-				<Button size="sm" onClick={() => void refetch()}>
+				<Button
+					size="sm"
+					pendingLabel={savedCharts.isFetching ? 'Retrying…' : null}
+					onClick={() => void savedCharts.refetch()}
+				>
 					Try again
 				</Button>
 			</SurfaceBodyStatus>
 		)
 	}
+
+	if (savedCharts.isLoading) return <SurfaceBodyLoadingStatus label="Loading saved charts" />
 
 	if (!data?.length) {
 		return (
@@ -134,8 +142,8 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 									size="sm"
 									square
 									aria-label={`Delete ${chart.title}`}
-									onClick={() => {
-										deleteMutation.reset()
+									onClick={(event) => {
+										returnFocus.current = event.currentTarget
 										setDeleteTarget(chart)
 									}}
 									className="relative"
@@ -165,20 +173,22 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 				</p>
 			) : null}
 
-			<ConfirmDialog
-				open={deleteTarget !== null}
-				onClose={() => setDeleteTarget(null)}
-				portal
-				unmountOnHide
-				// The deleted card's button is gone, so a finished delete returns focus to the search field.
-				finalFocus={deleteMutation.isSuccess ? searchRef : undefined}
-				title="Delete chart?"
-				description="The chart is deleted from LlamaAI. Dashboards that use it show an error instead."
-				confirmLabel="Delete"
-				pendingLabel={deleteMutation.isPending ? 'Deleting…' : null}
-				error={deleteMutation.isError ? 'The chart could not be deleted. Try again.' : null}
-				onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-			/>
+			{deleteTarget ? (
+				<ConfirmActionDialog
+					portal
+					title="Delete chart?"
+					description="The chart is deleted from LlamaAI. Dashboards that use it show an error instead."
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteMutation}
+					variables={deleteTarget.id}
+					finalFocus={returnFocus}
+					onClose={() => setDeleteTarget(null)}
+					onSuccess={() => {
+						returnFocus.current = searchRef.current
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }

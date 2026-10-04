@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { ComparisonType } from '../types'
@@ -35,11 +36,13 @@ export function SelectTypeStep() {
 			</div>
 
 			<div className="grid gap-4 sm:grid-cols-2">
-				{TYPE_OPTIONS.map((option) => {
+				{TYPE_OPTIONS.map((option, index) => {
 					const isSelected = state.comparisonType === option.type
 					return (
-						<button
+						// The control that opened this step leaves with the step before; the step starts on its choice.
+						<Ariakit.Button
 							key={option.type}
+							autoFocus={state.comparisonType === null ? index === 0 : isSelected}
 							type="button"
 							aria-pressed={isSelected}
 							onClick={() => actions.setComparisonType(option.type)}
@@ -64,7 +67,7 @@ export function SelectTypeStep() {
 									Selected
 								</div>
 							) : null}
-						</button>
+						</Ariakit.Button>
 					)
 				})}
 			</div>

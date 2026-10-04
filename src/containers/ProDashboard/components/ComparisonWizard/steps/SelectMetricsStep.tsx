@@ -9,7 +9,7 @@ import { MetricCard } from '../components/MetricCard'
 export function SelectMetricsStep() {
 	const { state, actions, availableMetrics } = useComparisonWizardContext()
 	// Availability comes from app metadata: until it loads every metric reads as unavailable.
-	const { loading: metadataLoading, error: metadataError, retry: retryMetadata } = useAppMetadata()
+	const { loading: metadataLoading, error: metadataError, retry: retryMetadata, retrying } = useAppMetadata()
 	const [showInvalid, setShowInvalid] = useState(false)
 
 	const validMetrics = useMemo(() => availableMetrics.filter((m) => m.isValid), [availableMetrics])
@@ -36,7 +36,7 @@ export function SelectMetricsStep() {
 				<InlineStatus variant="error">
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<span>Could not check which metrics the selected {typeLabel} have.</span>
-						<Button type="button" size="sm" onClick={retryMetadata}>
+						<Button type="button" size="sm" pendingLabel={retrying ? 'Retrying…' : null} onClick={retryMetadata}>
 							Try again
 						</Button>
 					</div>
@@ -73,21 +73,27 @@ export function SelectMetricsStep() {
 						</span>
 						{/* -mr-2.25 (px-2 + 1px border) puts the last label on the cards' edge; -my-1 keeps the row 16px. */}
 						<div className="-my-1 -mr-2.25 flex items-center">
-							{state.selectedMetrics.length < validMetrics.length ? (
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									onClick={() => actions.selectAllMetrics(validMetrics.map((m) => m.metric))}
-								>
-									Select all
-								</Button>
-							) : null}
-							{state.selectedMetrics.length > 0 ? (
-								<Button type="button" variant="ghost" size="sm" onClick={() => actions.clearMetrics()}>
-									Clear
-								</Button>
-							) : null}
+							{/* Both stay rendered, disabled when they have nothing to do, so the pressed one keeps focus. */}
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								disabled={state.selectedMetrics.length >= validMetrics.length}
+								accessibleWhenDisabled
+								onClick={() => actions.selectAllMetrics(validMetrics.map((m) => m.metric))}
+							>
+								Select all
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								disabled={state.selectedMetrics.length === 0}
+								accessibleWhenDisabled
+								onClick={() => actions.clearMetrics()}
+							>
+								Clear
+							</Button>
 						</div>
 					</div>
 
@@ -99,7 +105,6 @@ export function SelectMetricsStep() {
 									metric={metric}
 									isSelected={state.selectedMetrics.includes(metric.metric)}
 									onToggle={() => actions.toggleMetric(metric.metric)}
-									disabled={!metric.isValid}
 									itemLabel={typeLabel}
 								/>
 							))}

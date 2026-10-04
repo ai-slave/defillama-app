@@ -26,6 +26,7 @@ import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -68,14 +69,15 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const [isEditing, setIsEditing] = useState(false)
 	const formRef = useRef<HTMLFormElement>(null)
 	const renameRef = useRef<HTMLButtonElement>(null)
-	const closeRename = () => {
-		const restoreFocus = formRef.current?.contains(document.activeElement)
-		setIsEditing(false)
-		if (restoreFocus) requestAnimationFrame(() => renameRef.current?.focus())
-	}
+	// The rename form leaves with focus; the Rename button that opened it takes it back.
+	const closeRename = () =>
+		keepFocus(
+			() => setIsEditing(false),
+			() => renameRef.current
+		)
 	const [confirmPrivate, setConfirmPrivate] = useState(false)
 	const menuContentRef = useRef<HTMLDivElement>(null)
-	const deleteStore = Ariakit.useDialogStore()
+	const [confirmDelete, setConfirmDelete] = useState(false)
 	const menuRef = useRef<HTMLButtonElement>(null)
 
 	const copyLink = useMutation({
@@ -120,9 +122,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const updateTitle = useUpdateSessionTitle()
 	// The parent also clears queue and prompt-failure state; each row owns its pending feedback.
 	const deletion = useMutation({
-		mutationFn: () => onDelete(session.sessionId, session.projectId),
-		onError: (error) => {
-			if (!deleteStore.getState().contentElement?.isConnected) toast.error(error.message)
+		mutationFn: () => {
+			trackUmamiEvent('llamaai-session-delete')
+			return onDelete(session.sessionId, session.projectId)
 		}
 	})
 
@@ -188,12 +190,6 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		} catch (error) {
 			if (!formRef.current?.isConnected) toast.error(getErrorMessage(error))
 		}
-	}
-
-	const handleDelete = () => {
-		if (deletion.isPending) return
-		trackUmamiEvent('llamaai-session-delete')
-		deletion.mutate(undefined, { onSuccess: () => deleteStore.hide() })
 	}
 
 	if (isEditing) {
@@ -275,7 +271,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					}
 					handleSessionClick(session.sessionId)
 				}}
-				disabled={isEditing || deletion.isPending || isRestoring}
+				disabled={deletion.isPending || isRestoring}
 				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:opacity-60"
 			>
 				{session.isPinned ? <Icon name="pin" height={14} width={14} className="shrink-0 text-tertiary" /> : null}
@@ -391,10 +387,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							</MenuItem>
 							<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 							<MenuItem
-								onClick={() => {
-									deletion.reset()
-									deleteStore.show()
-								}}
+								onClick={() => setConfirmDelete(true)}
 								disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
 								data-deleting={deletion.isPending}
 								className="border-b border-subtle text-error! last-of-type:border-b-0"
@@ -432,14 +425,15 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					finalFocus={menuRef}
 				/>
 			) : null}
-			<DeleteSessionDialog
-				store={deleteStore}
-				title={`Delete “${session.title}”?`}
-				pending={deletion.isPending}
-				error={deletion.error}
-				onConfirm={handleDelete}
-				finalFocus={menuRef}
-			/>
+			{confirmDelete ? (
+				<DeleteSessionDialog
+					title={`Delete “${session.title}”?`}
+					mutation={deletion}
+					variables={undefined}
+					onClose={() => setConfirmDelete(false)}
+					finalFocus={menuRef}
+				/>
+			) : null}
 			{isRestoring ? (
 				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-surface/70">
 					<LoadingSpinner size={12} />

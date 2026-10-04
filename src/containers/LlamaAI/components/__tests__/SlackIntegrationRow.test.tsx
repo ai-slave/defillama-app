@@ -150,3 +150,30 @@ test('cancelling a pending link hands focus to Add to Slack', async () => {
 	await press(button('Cancel')!)
 	await waitForUi(() => expect(document.activeElement).toBe(button('Add to Slack')))
 })
+
+test('a failed link start keeps the workspaces listed and the button that retries it', async () => {
+	session.serve({ 'https://ai.llama.fi/slack/status': { links: [workspace], pending: null } })
+	session.serveInOrder('https://ai.llama.fi/slack/link/start', [
+		() => Response.json({ error: 'Slack is unavailable' }, { status: 503 })
+	])
+	await renderRow()
+	await waitForUi(() => expect(button('Add another workspace')).toBeDefined())
+	await press(button('Add another workspace')!)
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	expect(container.textContent).toContain('Llama Research')
+	expect(button('Add another workspace')).toBeDefined()
+})
+
+test('Add another workspace keeps the workspaces listed and waits with focus while it starts', async () => {
+	session.serve({
+		'https://ai.llama.fi/slack/status': { links: [workspace], pending: null },
+		'https://ai.llama.fi/slack/link/start': () => new Promise<Response>(() => {})
+	})
+	await renderRow()
+	await waitForUi(() => expect(button('Add another workspace')).toBeDefined())
+	const add = button('Add another workspace')!
+	await press(add)
+	await waitForUi(() => expect(add.textContent).toBe('Opening…'))
+	expect(container.textContent).toContain('Llama Research')
+	expect(document.activeElement).toBe(add)
+})

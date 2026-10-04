@@ -1,32 +1,22 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useTeam } from './useTeam'
 
-interface InviteMemberModalProps {
-	isOpen: boolean
-	onClose: () => void
-}
-
-export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
+export function InviteMemberModal({ onClose }: { onClose: () => void }) {
 	const { inviteMemberMutation } = useTeam()
 	const emailId = useId()
 	const pending = inviteMemberMutation.isPending
-
-	const handleClose = () => {
-		if (pending) return
-		inviteMemberMutation.reset()
-		onClose()
-	}
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success closes.
+	const [error, setError] = useState<string | null>(null)
 
 	const handleInvite = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (pending) return
 		const email = String(new FormData(event.currentTarget).get('email')).trim()
 		inviteMemberMutation.mutate(
 			{ email },
@@ -35,13 +25,14 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 				onSuccess: () => {
 					onClose()
 					toast.success('Invite sent')
-				}
+				},
+				onError: (failure) => setError(failure.message)
 			}
 		)
 	}
 
 	return (
-		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={pending} portal unmountOnHide>
+		<Dialog size="sm" open onClose={onClose} pending={pending} portal unmountOnHide>
 			<form onSubmit={handleInvite} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title="Invite member" />
 				<DialogBody>
@@ -72,17 +63,9 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 							/>
 						</div>
 					</div>
-					{inviteMemberMutation.isError ? (
-						<InlineStatus variant="error">{inviteMemberMutation.error.message}</InlineStatus>
-					) : null}
+					{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Button type="button" size="md" onClick={handleClose} disabled={pending}>
-							Cancel
-						</Button>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>
 						Send invite
 					</Button>

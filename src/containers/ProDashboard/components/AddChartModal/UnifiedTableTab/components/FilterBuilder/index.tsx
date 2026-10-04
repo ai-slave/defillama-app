@@ -1,7 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
+import { Button } from '~/ui/Button'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { inputStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	FILTER_CATEGORIES,
@@ -10,8 +13,11 @@ import {
 	getFiltersByCategory,
 	getFiltersForProtocols,
 	type FilterCategory,
+	type BooleanFilterConfig,
 	type FilterConfig,
-	type NumericOperator
+	type NumericOperator,
+	type NumericRangeFilterConfig,
+	type NumericSingleFilterConfig
 } from './filterConfig'
 
 interface FilterBuilderProps {
@@ -19,20 +25,24 @@ interface FilterBuilderProps {
 	onFiltersChange: (filters: UnifiedTableFilters) => void
 }
 
-interface ActiveFilter {
-	config: FilterConfig
-	operator: NumericOperator | undefined
-	value: number | undefined
-	minValue: number | undefined
-	maxValue: number | undefined
-	enabled: boolean | undefined
+// A filter as the editor holds it. A range keeps only the bounds its operator saves: >= a minimum, <= a maximum,
+// between both.
+type RangeFilter = {
+	type: 'numeric-range'
+	config: NumericRangeFilterConfig
+	operator: NumericOperator
+	min: number | undefined
+	max: number | undefined
 }
+type ActiveFilter =
+	| { type: 'boolean'; config: BooleanFilterConfig }
+	| { type: 'numeric-single'; config: NumericSingleFilterConfig; value: number | undefined }
+	| RangeFilter
 
+// A saved filter stores only a minimum and a maximum, so strict > and < would come back as >= and <=.
 const OPERATORS: Array<{ value: NumericOperator; label: string }> = [
 	{ value: '>=', label: '>=' },
-	{ value: '>', label: '>' },
 	{ value: '<=', label: '<=' },
-	{ value: '<', label: '<' },
 	{ value: 'between', label: 'between' }
 ]
 
@@ -53,54 +63,30 @@ function parseNumberWithAbbreviation(input: string): number | undefined {
 	return base
 }
 
+function filterHasValue(filter: ActiveFilter) {
+	if (filter.type === 'boolean') return true
+	if (filter.type === 'numeric-single') return filter.value !== undefined
+	return filter.min !== undefined || filter.max !== undefined
+}
+
 function filtersToActiveFilters(filters: UnifiedTableFilters | undefined): Array<ActiveFilter> {
 	if (!filters) return []
 
 	const result: Array<ActiveFilter> = []
-	const relevantConfigs = getFiltersForProtocols()
-
-	for (const config of relevantConfigs) {
+	for (const config of getFiltersForProtocols()) {
 		if (config.type === 'boolean') {
-			if (filters[config.booleanKey]) {
-				result.push({
-					config,
-					enabled: true,
-					operator: undefined,
-					value: undefined,
-					minValue: undefined,
-					maxValue: undefined
-				})
-			}
+			if (filters[config.booleanKey]) result.push({ type: 'boolean', config })
 		} else if (config.type === 'numeric-single') {
 			const value = filters[config.minKey]
-			if (value !== undefined) {
-				result.push({
-					config,
-					value,
-					enabled: undefined,
-					operator: undefined,
-					minValue: undefined,
-					maxValue: undefined
-				})
-			}
-		} else if (config.type === 'numeric-range') {
-			const minValue = filters[config.minKey]
-			const maxValue = filters[config.maxKey]
-
-			if (minValue !== undefined || maxValue !== undefined) {
-				let operator: NumericOperator = '>'
-				if (minValue !== undefined && maxValue !== undefined) {
-					operator = 'between'
-				} else if (maxValue !== undefined) {
-					operator = '<='
-				} else {
-					operator = '>='
-				}
-				result.push({ config, operator, minValue, maxValue, value: undefined, enabled: undefined })
-			}
+			if (value !== undefined) result.push({ type: 'numeric-single', config, value })
+		} else {
+			const min = filters[config.minKey]
+			const max = filters[config.maxKey]
+			if (min === undefined && max === undefined) continue
+			const operator = min !== undefined && max !== undefined ? 'between' : max !== undefined ? '<=' : '>='
+			result.push({ type: 'numeric-range', config, operator, min, max })
 		}
 	}
-
 	return result
 }
 
@@ -122,23 +108,13 @@ function activeFilterToTableFilters(
 	}
 
 	for (const filter of activeFilters) {
-		const { config, operator, value, minValue, maxValue, enabled } = filter
-
-		if (config.type === 'boolean' && enabled) {
-			result[config.booleanKey] = true
-		} else if (config.type === 'numeric-single' && value !== undefined) {
-			result[config.minKey] = value
-		} else if (config.type === 'numeric-range') {
-			if (operator === 'between') {
-				if (minValue !== undefined) result[config.minKey] = minValue
-				if (maxValue !== undefined) result[config.maxKey] = maxValue
-			} else if (operator === '>' || operator === '>=') {
-				if (value !== undefined) result[config.minKey] = value
-				else if (minValue !== undefined) result[config.minKey] = minValue
-			} else if (operator === '<' || operator === '<=') {
-				if (value !== undefined) result[config.maxKey] = value
-				else if (maxValue !== undefined) result[config.maxKey] = maxValue
-			}
+		if (filter.type === 'boolean') {
+			result[filter.config.booleanKey] = true
+		} else if (filter.type === 'numeric-single') {
+			if (filter.value !== undefined) result[filter.config.minKey] = filter.value
+		} else {
+			if (filter.min !== undefined) result[filter.config.minKey] = filter.min
+			if (filter.max !== undefined) result[filter.config.maxKey] = filter.max
 		}
 	}
 
@@ -183,44 +159,31 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
 
 const FILTERS_BY_CATEGORY = getFiltersByCategory()
 const EMPTY_CATEGORY_FILTERS: Array<FilterConfig> = []
+let TOTAL_FILTERS_AVAILABLE = 0
+for (const categoryFilters of FILTERS_BY_CATEGORY.values()) TOTAL_FILTERS_AVAILABLE += categoryFilters.length
 
 function buildDisplayValue(filter: ActiveFilter): string {
-	const { config, operator, value, minValue, maxValue } = filter
-	const format = config.format || 'currency'
-
-	if (config.type === 'boolean') {
-		return 'Enabled'
+	if (filter.type === 'boolean') return 'Enabled'
+	const format = filter.config.format || 'currency'
+	if (filter.type === 'numeric-single') {
+		return filter.value === undefined ? 'Not set' : `= ${formatFilterValue(filter.value, format)}`
 	}
-
-	if (config.type === 'numeric-single' && value !== undefined) {
-		return `= ${formatFilterValue(value, format)}`
-	}
-
-	if (operator === 'between' && minValue !== undefined && maxValue !== undefined) {
-		return `${formatFilterValue(minValue, format)} - ${formatFilterValue(maxValue, format)}`
-	}
-
-	if (minValue !== undefined && maxValue === undefined) {
-		return `${operator || '>='} ${formatFilterValue(minValue, format)}`
-	}
-
-	if (maxValue !== undefined && minValue === undefined) {
-		return `${operator || '<='} ${formatFilterValue(maxValue, format)}`
-	}
-
-	if (value !== undefined) {
-		return `${operator || '>='} ${formatFilterValue(value, format)}`
-	}
-
+	const { min, max } = filter
+	if (min !== undefined && max !== undefined)
+		return `${formatFilterValue(min, format)} - ${formatFilterValue(max, format)}`
+	if (min !== undefined) return `>= ${formatFilterValue(min, format)}`
+	if (max !== undefined) return `<= ${formatFilterValue(max, format)}`
 	return 'Not set'
 }
 
-function getInitialInputs(currentFilter: ActiveFilter) {
+// The text each field starts from: the single value is the range's bound for its operator.
+function getInitialInputs(filter: ActiveFilter) {
+	if (filter.type === 'boolean') return { value: '', minValue: '', maxValue: '' }
+	if (filter.type === 'numeric-single') return { value: filter.value?.toString() ?? '', minValue: '', maxValue: '' }
 	return {
-		value:
-			currentFilter.value?.toString() || currentFilter.minValue?.toString() || currentFilter.maxValue?.toString() || '',
-		minValue: currentFilter.minValue?.toString() || '',
-		maxValue: currentFilter.maxValue?.toString() || ''
+		value: (filter.operator === '<=' ? filter.max : filter.min)?.toString() ?? '',
+		minValue: filter.min?.toString() ?? '',
+		maxValue: filter.max?.toString() ?? ''
 	}
 }
 
@@ -233,6 +196,8 @@ interface FilterItemEditorProps {
 	onEndEdit: () => void
 }
 
+// The pill and its editor replace each other, and an added filter replaces its row in the list: each one that mounts
+// takes the focus the control it replaced dropped (its first field, or the pill after Done).
 function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, onEndEdit }: FilterItemEditorProps) {
 	const { config } = filter
 	const [localInputs, setLocalInputs] = useState(() => getInitialInputs(filter))
@@ -244,89 +209,58 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	const prefix = config.format === 'currency' ? '$' : ''
 	const suffix = config.format === 'percent' ? '%' : ''
 
+	// Reads a typed bound: undefined clears it, null means the text is not a number the filter accepts yet.
+	const parseBound = (input: string) => {
+		if (input === '') return undefined
+		const parsed = parseNumberWithAbbreviation(input)
+		return parsed !== undefined && parsed >= minAllowed ? parsed : null
+	}
+
 	const handleValueChange = (input: string) => {
 		setLocalInputs((prev) => ({ ...prev, value: input }))
-		const parsed = parseNumberWithAbbreviation(input)
-		if (parsed !== undefined && parsed >= minAllowed) {
-			if (filter.operator === '>' || filter.operator === '>=' || !filter.operator) {
-				onUpdate({ ...filter, value: parsed, minValue: parsed })
-			} else {
-				onUpdate({ ...filter, value: parsed, maxValue: parsed })
-			}
-		} else if (input === '') {
-			onUpdate({ ...filter, value: undefined, minValue: undefined, maxValue: undefined })
-		}
+		const value = parseBound(input)
+		if (value === null || filter.type === 'boolean') return
+		if (filter.type === 'numeric-single') onUpdate({ ...filter, value })
+		else onUpdate(filter.operator === '<=' ? { ...filter, max: value } : { ...filter, min: value })
 	}
 
-	const handleMinValueChange = (input: string) => {
-		setLocalInputs((prev) => ({ ...prev, minValue: input }))
-		const parsed = parseNumberWithAbbreviation(input)
-		if (parsed !== undefined && parsed >= minAllowed) {
-			const currentMax = filter.maxValue
-			if (currentMax !== undefined && parsed > currentMax) {
-				onUpdate({ ...filter, minValue: currentMax, maxValue: parsed })
-				setLocalInputs((prev) => ({ ...prev, minValue: currentMax.toString(), maxValue: parsed.toString() }))
-			} else {
-				onUpdate({ ...filter, minValue: parsed })
-			}
-		} else if (input === '') {
-			onUpdate({ ...filter, minValue: undefined })
-		}
-	}
-
-	const handleMaxValueChange = (input: string) => {
-		setLocalInputs((prev) => ({ ...prev, maxValue: input }))
-		const parsed = parseNumberWithAbbreviation(input)
-		if (parsed !== undefined && parsed >= minAllowed) {
-			const currentMin = filter.minValue
-			if (currentMin !== undefined && parsed < currentMin) {
-				onUpdate({ ...filter, minValue: parsed, maxValue: currentMin })
-				setLocalInputs((prev) => ({ ...prev, minValue: parsed.toString(), maxValue: currentMin.toString() }))
-			} else {
-				onUpdate({ ...filter, maxValue: parsed })
-			}
-		} else if (input === '') {
-			onUpdate({ ...filter, maxValue: undefined })
-		}
-	}
-
-	const handleOperatorChange = (operator: NumericOperator) => {
-		const currentValue = filter.value ?? filter.minValue ?? filter.maxValue
-		if (operator === 'between') {
-			onUpdate({
-				...filter,
-				operator,
-				value: undefined,
-				minValue: filter.minValue ?? currentValue,
-				maxValue: filter.maxValue ?? currentValue
-			})
+	// A minimum typed above the maximum (or the reverse) swaps the two.
+	const handleBoundChange = (range: RangeFilter, bound: 'min' | 'max', input: string) => {
+		const inputKey = bound === 'min' ? 'minValue' : 'maxValue'
+		setLocalInputs((prev) => ({ ...prev, [inputKey]: input }))
+		const value = parseBound(input)
+		if (value === null) return
+		const other = bound === 'min' ? range.max : range.min
+		const crossed = value !== undefined && other !== undefined && (bound === 'min' ? value > other : value < other)
+		if (!crossed) {
+			onUpdate({ ...range, [bound]: value })
 			return
 		}
+		const min = Math.min(value, other)
+		const max = Math.max(value, other)
+		onUpdate({ ...range, min, max })
+		setLocalInputs((prev) => ({ ...prev, minValue: min.toString(), maxValue: max.toString() }))
+	}
 
-		if (operator === '>' || operator === '>=') {
-			onUpdate({
-				...filter,
-				operator,
-				value: currentValue,
-				minValue: currentValue,
-				maxValue: undefined
-			})
-			return
-		}
-
-		onUpdate({
-			...filter,
-			operator,
-			value: currentValue,
-			maxValue: currentValue,
-			minValue: undefined
-		})
+	const handleOperatorChange = (range: RangeFilter, operator: NumericOperator) => {
+		const current = range.operator === '<=' ? range.max : range.operator === '>=' ? range.min : (range.min ?? range.max)
+		const next: RangeFilter =
+			operator === 'between'
+				? { ...range, operator, min: range.min ?? current, max: range.max ?? current }
+				: operator === '>='
+					? { ...range, operator, min: current, max: undefined }
+					: { ...range, operator, min: undefined, max: current }
+		onUpdate(next)
+		// The fields swap with the operator, so they show the bounds it kept rather than starting empty.
+		setLocalInputs(getInitialInputs(next))
 	}
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter' || e.key === 'Escape') {
-			onEndEdit()
-		}
+		if (e.key !== 'Enter' && e.key !== 'Escape') return
+		// Escape closes this editor only; the enclosing dialog stays open.
+		e.preventDefault()
+		e.stopPropagation()
+		onEndEdit()
 	}
 
 	const handleStartEdit = () => {
@@ -334,20 +268,19 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 		onStartEdit()
 	}
 
-	const isBetween = filter.operator === 'between'
 	const displayValue = buildDisplayValue(filter)
-	const hasValue = filter.value !== undefined || filter.minValue !== undefined || filter.maxValue !== undefined
+	const hasValue = filterHasValue(filter)
 	const categoryLabel = CATEGORY_LABELS[config.category]
 	const categoryBadge = (
-		<span className="rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
+		<span className="rounded-full bg-surface px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
 			{categoryLabel}
 		</span>
 	)
 
-	if (config.type === 'boolean') {
+	if (filter.type === 'boolean') {
 		return (
 			<div
-				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-brand/60' : ''}`}
+				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]}`}
 			>
 				<div className="flex min-w-0 flex-col gap-0.5">
 					<div className="flex items-center gap-1.5">
@@ -365,7 +298,8 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				<button
 					type="button"
 					onClick={onRemove}
-					className="rounded-sm p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100!"
+					aria-label={`Remove ${config.label} filter`}
+					className="rounded-sm p-0.5 opacity-0 transition-opacity group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100!"
 				>
 					<Icon name="x" className="size-3" />
 				</button>
@@ -376,9 +310,14 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (!isEditing && hasValue) {
 		return (
 			<div
-				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-brand/60' : ''}`}
+				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]}`}
 			>
-				<button type="button" onClick={handleStartEdit} className="flex min-w-0 flex-1 items-start gap-1.5 text-left">
+				<button
+					ref={takeLostFocus}
+					type="button"
+					onClick={handleStartEdit}
+					className="flex min-w-0 flex-1 items-start gap-1.5 text-left"
+				>
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<div className="flex items-center gap-1.5">
 							<span className="truncate text-xs font-semibold">{config.label}</span>
@@ -395,7 +334,8 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				<button
 					type="button"
 					onClick={onRemove}
-					className="rounded-sm p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100!"
+					aria-label={`Remove ${config.label} filter`}
+					className="rounded-sm p-0.5 opacity-0 transition-opacity group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100! focus-visible:opacity-100!"
 				>
 					<Icon name="x" className="size-3" />
 				</button>
@@ -403,10 +343,10 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 		)
 	}
 
-	if (config.type === 'numeric-single') {
+	if (filter.type === 'numeric-single') {
 		return (
 			<div
-				className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-brand/60' : ''}`}
+				className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} shadow-sm ring-1 ring-brand/60`}
 			>
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-1.5">
@@ -418,7 +358,12 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						) : null}
 						{categoryBadge}
 					</div>
-					<button type="button" onClick={onRemove} className="rounded-sm p-0.5 opacity-60 hover:opacity-100">
+					<button
+						type="button"
+						onClick={onRemove}
+						aria-label={`Remove ${config.label} filter`}
+						className="rounded-sm p-0.5 opacity-60 hover:opacity-100"
+					>
 						<Icon name="x" className="size-3" />
 					</button>
 				</div>
@@ -430,44 +375,50 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						value={localValue}
 						onChange={(e) => handleValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
+						ref={takeLostFocus}
+						aria-label={`${config.label} value`}
 						placeholder="e.g. 10, 1k, 1m"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className={`${inputStyles} min-w-0 flex-1`}
 					/>
 					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
 				</div>
-				<button
-					type="button"
-					onClick={onEndEdit}
-					className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-xs opacity-70 transition-opacity hover:opacity-100"
-				>
+				<Button size="sm" onClick={onEndEdit}>
 					Done
-				</button>
+				</Button>
 			</div>
 		)
 	}
 
 	return (
 		<div
-			className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-brand/60' : ''}`}
+			className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} shadow-sm ring-1 ring-brand/60`}
 		>
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate text-xs font-semibold">{config.label}</span>
 					{categoryBadge}
 				</div>
-				<button type="button" onClick={onRemove} className="rounded-sm p-0.5 opacity-60 hover:opacity-100">
+				<button
+					type="button"
+					onClick={onRemove}
+					aria-label={`Remove ${config.label} filter`}
+					className="rounded-sm p-0.5 opacity-60 hover:opacity-100"
+				>
 					<Icon name="x" className="size-3" />
 				</button>
 			</div>
 			<Ariakit.ComboboxProvider
-				selectedValue={filter.operator || '>='}
+				selectedValue={filter.operator}
 				setSelectedValue={(value) => {
 					const operator = OPERATORS.find((option) => option.value === value)?.value
 					if (!operator) throw new Error(`Unsupported numeric filter operator: ${value}`)
-					handleOperatorChange(operator)
+					handleOperatorChange(filter, operator)
 				}}
 			>
-				<Ariakit.ComboboxSelect className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden focus:border-current/50">
+				<Ariakit.ComboboxSelect
+					aria-label={`${config.label} operator`}
+					className={`${inputStyles} flex w-full cursor-pointer items-center justify-between`}
+				>
 					<Ariakit.ComboboxSelectedValue />
 					<Ariakit.ComboboxSelectArrow />
 				</Ariakit.ComboboxSelect>
@@ -488,27 +439,30 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					))}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
-			{isBetween ? (
+			{filter.operator === 'between' ? (
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
 						value={localMinValue}
-						onChange={(e) => handleMinValueChange(e.target.value)}
+						onChange={(e) => handleBoundChange(filter, 'min', e.target.value)}
 						onKeyDown={handleKeyDown}
+						ref={takeLostFocus}
+						aria-label={`${config.label} minimum`}
 						placeholder="Min"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className={`${inputStyles} min-w-0 flex-1`}
 					/>
 					<span className="text-xs opacity-70">-</span>
 					<input
 						type="text"
 						inputMode="decimal"
 						value={localMaxValue}
-						onChange={(e) => handleMaxValueChange(e.target.value)}
+						onChange={(e) => handleBoundChange(filter, 'max', e.target.value)}
 						onKeyDown={handleKeyDown}
+						aria-label={`${config.label} maximum`}
 						placeholder="Max"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className={`${inputStyles} min-w-0 flex-1`}
 					/>
 					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
 				</div>
@@ -521,19 +475,17 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						value={localValue}
 						onChange={(e) => handleValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
+						ref={takeLostFocus}
+						aria-label={`${config.label} value`}
 						placeholder="e.g. 10, 1k, 1m"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className={`${inputStyles} min-w-0 flex-1`}
 					/>
 					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
 				</div>
 			)}
-			<button
-				type="button"
-				onClick={onEndEdit}
-				className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-xs opacity-70 transition-opacity hover:opacity-100"
-			>
+			<Button size="sm" onClick={onEndEdit}>
 				Done
-			</button>
+			</Button>
 		</div>
 	)
 }
@@ -570,15 +522,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 		return result
 	}, [search])
 
-	const totalFiltersAvailable = useMemo(() => {
-		let total = 0
-		for (const categoryFilters of FILTERS_BY_CATEGORY.values()) {
-			total += categoryFilters.length
-		}
-		return total
-	}, [])
-
-	const inactiveFiltersCount = Math.max(totalFiltersAvailable - activeFilterIds.size, 0)
+	const inactiveFiltersCount = Math.max(TOTAL_FILTERS_AVAILABLE - activeFilterIds.size, 0)
 
 	const visibleAvailableCount = useMemo(
 		() =>
@@ -593,40 +537,22 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 		if (activeFilterIds.has(config.id)) return
 
 		if (config.type === 'boolean') {
-			const newFilter: ActiveFilter = {
-				config,
-				enabled: true,
-				operator: undefined,
-				value: undefined,
-				minValue: undefined,
-				maxValue: undefined
-			}
-			const newFilters = activeFilterToTableFilters([...savedFilters, newFilter], filters)
-			onFiltersChange(newFilters)
-		} else {
-			const newFilter: ActiveFilter = {
-				config,
-				operator: '>=',
-				value: undefined,
-				minValue: undefined,
-				maxValue: undefined,
-				enabled: undefined
-			}
-			setPendingFilters((prev) => [...prev, newFilter])
-			setEditingFilterId(config.id)
+			onFiltersChange(activeFilterToTableFilters([...savedFilters, { type: 'boolean', config }], filters))
+			return
 		}
+		const newFilter: ActiveFilter =
+			config.type === 'numeric-single'
+				? { type: 'numeric-single', config, value: undefined }
+				: { type: 'numeric-range', config, operator: '>=', min: undefined, max: undefined }
+		setPendingFilters((prev) => [...prev, newFilter])
+		setEditingFilterId(config.id)
 	}
 
 	const handleUpdateFilter = (updatedFilter: ActiveFilter) => {
 		const isPending = pendingFilters.some((f) => f.config.id === updatedFilter.config.id)
 
 		if (isPending) {
-			const hasValue =
-				updatedFilter.value !== undefined ||
-				updatedFilter.minValue !== undefined ||
-				updatedFilter.maxValue !== undefined
-
-			if (hasValue) {
+			if (filterHasValue(updatedFilter)) {
 				setPendingFilters((prev) => prev.filter((f) => f.config.id !== updatedFilter.config.id))
 				const newFilters = activeFilterToTableFilters([...savedFilters, updatedFilter], filters)
 				onFiltersChange(newFilters)
@@ -731,6 +657,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						<button
 							type="button"
 							onClick={() => setSearch('')}
+							aria-label="Clear search"
 							className="absolute top-1/2 right-2.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm hover:bg-pro-cards-bg"
 						>
 							<Icon name="x" className="size-3 text-pro-text-tertiary" />
@@ -840,7 +767,8 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 									onRemove={() => handleRemoveFilter(filter.config.id)}
 									isEditing={isEditing}
 									onStartEdit={() => setEditingFilterId(filter.config.id)}
-									onEndEdit={() => setEditingFilterId(null)}
+									// A new filter closed without a value adds nothing, so it leaves the list.
+									onEndEdit={() => (isPending ? handleRemoveFilter(filter.config.id) : setEditingFilterId(null))}
 								/>
 							)
 						})

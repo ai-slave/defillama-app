@@ -7,6 +7,7 @@ import { useAuthContext } from '~/auth'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -150,29 +151,8 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 		return counts
 	}, [activeTab])
 
-	const handleCardClick = useCallback(
-		(dataset: DatasetDefinition) => {
-			if (isAuthenticated && hasActiveSubscription && isTrial) {
-				setOpened({ kind: 'trialLimit' })
-				return
-			}
-
-			setOpened({ kind: 'dataset', dataset })
-		},
-		[isAuthenticated, hasActiveSubscription, isTrial]
-	)
-
-	const handleChartCardClick = useCallback(
-		(dataset: ChartDatasetDefinition) => {
-			if (isAuthenticated && hasActiveSubscription && isTrial) {
-				setOpened({ kind: 'trialLimit' })
-				return
-			}
-
-			setOpened({ kind: 'chart', dataset })
-		},
-		[isAuthenticated, hasActiveSubscription, isTrial]
-	)
+	const openCard = (next: CatalogView) =>
+		setOpened(isAuthenticated && hasActiveSubscription && isTrial ? { kind: 'trialLimit' } : next)
 
 	const handleRunPreset = useCallback(
 		(preset: SavedDownload) => {
@@ -336,7 +316,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													key={dataset.slug}
 													type="button"
 													disabled={disabled}
-													onClick={() => handleCardClick(dataset)}
+													onClick={() => openCard({ kind: 'dataset', dataset })}
 													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
@@ -403,7 +383,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 													key={dataset.slug}
 													type="button"
 													disabled={disabled}
-													onClick={() => handleChartCardClick(dataset)}
+													onClick={() => openCard({ kind: 'chart', dataset })}
 													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 												>
 													<div className="flex items-start justify-between gap-3">
@@ -616,6 +596,11 @@ function resolvedLabel(preset: SavedDownload): string {
 	return preset.paramLabel ?? preset.param
 }
 
+// Clear all removes the strip with it; the selected download type tab, its sibling below, takes focus.
+const focusTypeTabOnLeave = passFocusOnLeave((node) =>
+	node.closest('section')?.parentElement?.querySelector<HTMLElement>('[role="tablist"] [aria-selected="true"]')
+)
+
 function RecentDownloadsStrip({
 	recents,
 	onRun,
@@ -637,6 +622,7 @@ function RecentDownloadsStrip({
 					</span>
 				</div>
 				<button
+					ref={focusTypeTabOnLeave}
 					type="button"
 					onClick={onClear}
 					className="text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
@@ -838,44 +824,30 @@ function SavedDownloadRow({
 		? { prefix: 'ran', value: preset.lastRunAt }
 		: { prefix: 'saved', value: preset.createdAt }
 
-	const handleRowActivate = (event: React.MouseEvent | React.KeyboardEvent) => {
-		const target = event.target as HTMLElement
-		if (target.closest('[data-row-action]')) return
-		onRun(preset)
-	}
+	const actionButton =
+		'pointer-events-auto flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors'
 
 	return (
-		<li
-			// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- the row keeps list semantics and is operable through its own onKeyDown; it holds buttons, so it cannot be one.
-			role="button"
-			tabIndex={0}
-			aria-label={`Run preset ${preset.name}`}
-			onClick={handleRowActivate}
-			onKeyDown={(e) => {
-				if (e.target !== e.currentTarget) return
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault()
-					handleRowActivate(e)
-				}
-			}}
-			className="group relative flex cursor-pointer items-center gap-3 border-t border-subtle py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden"
-		>
+		<li className="group relative flex items-center gap-3 border-t border-subtle py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row">
 			<span
-				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-hover:opacity-100 group-focus-visible:opacity-100`}
+				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-focus-within:opacity-100 group-hover:opacity-100`}
 				aria-hidden="true"
 			/>
 
-			<div className="flex min-w-0 flex-1 flex-col gap-1">
-				<div className="flex items-baseline gap-2">
-					<span
-						className={`shrink-0 text-[10px] font-semibold tracking-wider uppercase ${style.fg}`}
-						aria-hidden="true"
-					>
+			{/* The run button stretches over the whole row, so a tap anywhere outside Rename and Delete runs the preset. */}
+			<button
+				type="button"
+				onClick={() => onRun(preset)}
+				aria-label={`Run preset ${preset.name}`}
+				className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 text-left after:absolute after:inset-0"
+			>
+				<span className="flex items-baseline gap-2">
+					<span className={`shrink-0 text-[10px] font-semibold tracking-wider uppercase ${style.fg}`}>
 						{style.label}
 					</span>
 					<span className="truncate text-[15px] font-semibold text-pro-text-primary">{preset.name}</span>
-				</div>
-				<div className="flex min-w-0 items-center gap-2 text-[11.5px] text-pro-text-tertiary">
+				</span>
+				<span className="flex min-w-0 items-center gap-2 text-[11.5px] text-pro-text-tertiary">
 					<span className="truncate text-pro-text-secondary">{sourceLabel}</span>
 					{description ? (
 						<>
@@ -885,24 +857,21 @@ function SavedDownloadRow({
 							<span className="truncate">{description}</span>
 						</>
 					) : null}
-				</div>
-			</div>
+				</span>
+			</button>
 
-			<div className="relative flex h-8 shrink-0 items-center justify-end pl-2 sm:min-w-[12rem]">
-				<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-opacity sm:group-focus-within:opacity-0 sm:group-hover:opacity-0">
+			{/* Clicks between the actions fall through to the run button. A touch screen cannot hover, so it always shows them. */}
+			<div className="pointer-events-none relative flex h-8 shrink-0 items-center justify-end gap-2 pl-2 sm:min-w-[12rem]">
+				<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-opacity pointer-fine:group-focus-within:opacity-0 pointer-fine:group-hover:opacity-0">
 					<span className="hidden text-pro-text-tertiary/60 sm:inline">{timestamp.prefix} </span>
 					<RelativeTime value={timestamp.value} input="milliseconds" />
 				</span>
 
-				<div className="absolute inset-y-0 right-0 hidden items-center gap-0.5 pl-2 opacity-0 transition-opacity sm:flex sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+				<div className="flex items-center gap-0.5 transition-opacity pointer-fine:absolute pointer-fine:inset-y-0 pointer-fine:right-0 pointer-fine:pl-2 pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100">
 					<button
 						type="button"
-						data-row-action
-						onClick={(e) => {
-							e.stopPropagation()
-							onRenameRequest(preset)
-						}}
-						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:text-pro-text-primary focus-visible:text-pro-text-primary focus-visible:outline-hidden"
+						onClick={() => onRenameRequest(preset)}
+						className={`${actionButton} hover:text-pro-text-primary focus-visible:text-pro-text-primary`}
 						aria-label={`Rename ${preset.name}`}
 						title="Rename"
 					>
@@ -910,12 +879,8 @@ function SavedDownloadRow({
 					</button>
 					<button
 						type="button"
-						data-row-action
-						onClick={(e) => {
-							e.stopPropagation()
-							onDeleteRequest(preset)
-						}}
-						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-error/10 hover:text-error focus-visible:bg-error/10 focus-visible:text-error focus-visible:outline-hidden"
+						onClick={() => onDeleteRequest(preset)}
+						className={`${actionButton} hover:bg-error/10 hover:text-error focus-visible:bg-error/10 focus-visible:text-error`}
 						aria-label={`Delete ${preset.name}`}
 						title="Delete"
 					>
@@ -923,38 +888,11 @@ function SavedDownloadRow({
 					</button>
 					<span
 						aria-hidden="true"
-						className="ml-1 inline-flex items-center gap-1 rounded-md bg-brand px-2.5 py-1 text-[11px] font-medium text-on-brand shadow-sm"
+						className="ml-1 hidden items-center gap-1 rounded-md bg-brand px-2.5 py-1 text-[11px] font-medium text-on-brand shadow-sm pointer-fine:inline-flex"
 					>
 						<Icon name="download-cloud" className="size-3" />
 						Run
 					</span>
-				</div>
-
-				<div className="ml-2 flex items-center gap-0.5 sm:hidden">
-					<button
-						type="button"
-						data-row-action
-						onClick={(e) => {
-							e.stopPropagation()
-							onRenameRequest(preset)
-						}}
-						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary"
-						aria-label={`Rename ${preset.name}`}
-					>
-						<Icon name="pencil" className="size-3.5" />
-					</button>
-					<button
-						type="button"
-						data-row-action
-						onClick={(e) => {
-							e.stopPropagation()
-							onDeleteRequest(preset)
-						}}
-						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary"
-						aria-label={`Delete ${preset.name}`}
-					>
-						<Icon name="trash-2" className="size-3.5" />
-					</button>
 				</div>
 			</div>
 		</li>

@@ -67,8 +67,14 @@ async function press(el: HTMLElement) {
 		el.click()
 	})
 }
+/** The field a visible label names, as a reader finds it. */
+function field(label: string) {
+	const found = [...container.querySelectorAll('label')].find((el) => accessibleName(el) === label)
+	if (!found) throw new Error(`Missing label: ${label}`)
+	return document.getElementById(found.htmlFor) as HTMLInputElement
+}
 async function type(label: string, value: string) {
-	const input = container.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!
+	const input = field(label)
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
 		input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -127,9 +133,7 @@ test('dismissing an upload error hands focus to the attach control', async () =>
 	expect(document.activeElement).toBe(attachInput())
 })
 
-test('Submit keeps focus while the request runs, and the confirmation takes it once the request succeeds', async () => {
-	const answer = Promise.withResolvers<Response>()
-	http.serve({ '/api/public/utr/claim': () => answer.promise })
+async function fillRequiredFields() {
 	await type('First name', 'Ada')
 	await type('Last name', 'Lovelace')
 	await type('Position at organization', 'CEO')
@@ -137,6 +141,40 @@ test('Submit keeps focus while the request runs, and the confirmation takes it o
 	for (const checkbox of container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {
 		await act(async () => checkbox.click())
 	}
+}
+
+test('a missing required field is marked invalid and reads its error', async () => {
+	await press(button('Submit Disclosure Details'))
+	const firstName = field('First name')
+	expect(firstName.getAttribute('aria-required')).toBe('true')
+	expect(firstName.getAttribute('aria-invalid')).toBe('true')
+	expect(document.getElementById(firstName.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'First name is required'
+	)
+	await type('First name', 'Ada')
+	expect(firstName.hasAttribute('aria-invalid')).toBe(false)
+	expect(firstName.hasAttribute('aria-describedby')).toBe(false)
+})
+
+test('a failed submit stays on screen while its retry runs', async () => {
+	const retry = Promise.withResolvers<Response>()
+	const answers = [Promise.resolve(Response.json({ error: 'Forgd is unavailable' }, { status: 503 })), retry.promise]
+	http.serve({ '/api/public/utr/claim': () => answers.shift()! })
+	await fillRequiredFields()
+	const submit = button('Submit Disclosure Details')
+	await press(submit)
+	await waitForUi(() => expect(container.textContent).toContain('Forgd is unavailable'))
+	await press(submit)
+	await waitForUi(() => expect(submit.getAttribute('aria-busy')).toBe('true'))
+	expect(container.textContent).toContain('Forgd is unavailable')
+	await act(async () => retry.resolve(Response.json({ id: 'claim-1' })))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Request received'))
+})
+
+test('Submit keeps focus while the request runs, and the confirmation takes it once the request succeeds', async () => {
+	const answer = Promise.withResolvers<Response>()
+	http.serve({ '/api/public/utr/claim': () => answer.promise })
+	await fillRequiredFields()
 	const submit = button('Submit Disclosure Details')
 	await press(submit)
 	await waitForUi(() => expect(submit.getAttribute('aria-busy')).toBe('true'))

@@ -8,7 +8,6 @@ export async function signInWithPassword({
 	password,
 	turnstileToken,
 	signal,
-	canAccept,
 	onAuthenticated
 }: {
 	email: string
@@ -16,7 +15,7 @@ export async function signInWithPassword({
 	turnstileToken: string
 } & AuthRequest) {
 	return acceptAuthSession(
-		{ signal, canAccept, onAuthenticated },
+		{ signal, onAuthenticated },
 		async () => {
 			let response: Response
 			try {

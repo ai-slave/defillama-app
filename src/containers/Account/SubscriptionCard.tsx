@@ -1,3 +1,4 @@
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 interface SubscriptionCardProps {
@@ -12,8 +13,8 @@ interface SubscriptionCardProps {
 	onManage: () => void
 	onCancel: () => void
 	onTopup?: () => void
-	isManageLoading?: boolean
-	isTopupLoading?: boolean
+	isManageLoading: boolean
+	isTopupLoading: boolean
 }
 
 function InfoRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
@@ -103,32 +104,27 @@ export function SubscriptionCard({
 			) : isManageable ? (
 				<div className="flex gap-2">
 					{onTopup && (
-						<button
-							type="button"
+						<Button
+							variant="primary"
+							size="md"
 							onClick={onTopup}
-							disabled={isTopupLoading}
-							className="flex h-8 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 label-sm whitespace-nowrap text-on-brand disabled:opacity-50"
+							pendingLabel={isTopupLoading ? 'Opening LlamaPay…' : null}
 						>
-							{isTopupLoading ? 'Loading...' : 'Top up'}
-							{!isTopupLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
-						</button>
+							Top up
+							<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
+						</Button>
 					)}
-					<button
-						type="button"
+					<Button
+						size="md"
 						onClick={onManage}
-						disabled={isManageLoading}
-						className="flex h-8 items-center gap-1 rounded-lg border border-sub-border-muted px-3 label-sm whitespace-nowrap text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
+						pendingLabel={isManageLoading ? `Opening ${provider === 'stripe' ? 'Stripe' : 'LlamaPay'}…` : null}
 					>
-						{isManageLoading ? 'Loading...' : manageLabel}
-						{!isManageLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
-					</button>
-					<button
-						type="button"
-						onClick={onCancel}
-						className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 label-sm whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
-					>
+						{manageLabel}
+						<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
+					</Button>
+					<Button size="md" onClick={onCancel}>
 						Cancel subscription
-					</button>
+					</Button>
 				</div>
 			) : null}
 		</div>

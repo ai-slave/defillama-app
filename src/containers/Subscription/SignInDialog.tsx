@@ -1,4 +1,4 @@
-import type * as Ariakit from '@ariakit/react'
+import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
@@ -23,7 +23,6 @@ import { Turnstile } from '~/containers/Subscription/Turnstile'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
-import { pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -65,21 +64,8 @@ export function SignInDialog({
 	onAuthenticated?: () => void
 }) {
 	return (
-		<Dialog
-			size="sm"
-			store={store}
-			getPersistentElements={() => document.querySelectorAll('w3m-modal')}
-			unmountOnHide
-			// Ariakit hands over the trigger only while it is still on the page. A sign-in, here or in another tab, can
-			// remove it (Sign in gives way to the account), so focus goes on to the page content instead of the body.
-			autoFocusOnHide={(trigger) => {
-				if (trigger) return true
-				pageContent()?.focus()
-				return false
-			}}
-		>
+		<Dialog size="sm" store={store} getPersistentElements={() => document.querySelectorAll('w3m-modal')} unmountOnHide>
 			<SignInFlow
-				dialogStore={store}
 				initialStep={initialStep}
 				suppressVerifyEmailPrompt={suppressVerifyEmailPrompt}
 				prompt={prompt}
@@ -90,37 +76,48 @@ export function SignInDialog({
 	)
 }
 
+/** The sign-in screens. Inside a dialog it hides the dialog once signed in and can be closed; on its own (the
+    Sheets sign-in page) nothing can close it. */
 export function SignInFlow({
-	dialogStore,
 	initialStep = 'signin',
 	suppressVerifyEmailPrompt,
 	prompt,
 	question,
-	onAuthenticated,
-	closeable = true
+	onAuthenticated
 }: {
-	dialogStore: Ariakit.DialogStore
 	initialStep?: 'signin' | 'signup'
 	suppressVerifyEmailPrompt?: boolean
 	prompt?: string
 	question?: string
 	onAuthenticated?: () => void
-	closeable?: boolean
 }) {
 	const [flowStore] = useState(() => createSignInFlowStore(initialStep))
 	useEffect(() => flowStore.cancelAuthRequest, [flowStore])
 	const state = useSyncExternalStore(flowStore.subscribe, flowStore.getSnapshot, flowStore.getServerSnapshot)
+	const { isAuthenticated } = useAuthContext()
 	const [offerVariant] = useState(() => (question ? readExperimentVariant(OFFER_EXPERIMENT_ID) : null))
 	useEffect(() => {
 		if (offerVariant) trackExperimentExposure(OFFER_EXPERIMENT_ID, offerVariant)
 	}, [offerVariant])
 	const showOffer = offerVariant === 'b'
-	const finishAuthentication = useCallback(() => {
+	const hostDialog = Ariakit.useDialogContext()
+	const closeable = hostDialog !== undefined
+	// Follows the host dialog's open state. Hiding aborts the request in flight, so a response that lands later (during
+	// the fade too) never signs in. Any close with a session from another tab (×, Escape or Continue) finishes it once.
+	const dialog = Ariakit.useDialogStore({
+		store: hostDialog,
+		setOpen: (open) => {
+			if (open) return
+			flowStore.cancelAuthRequest()
+			if (isAuthenticated && !flowStore.getSnapshot().finished) finishAuthentication()
+		}
+	})
+	const finishAuthentication = () => {
 		flowStore.dispatch({ kind: 'authenticated' })
 		if (offerVariant) trackExperimentAction(OFFER_EXPERIMENT_ID, offerVariant, 'signin-complete')
 		onAuthenticated?.()
-		dialogStore.hide()
-	}, [dialogStore, flowStore, offerVariant, onAuthenticated])
+		dialog.hide()
+	}
 	const trackSignupClick = offerVariant
 		? () => trackExperimentAction(OFFER_EXPERIMENT_ID, offerVariant, 'signup-click')
 		: undefined
@@ -134,7 +131,6 @@ export function SignInFlow({
 	) : (
 		`Sign in to ask for free: ${quoteQuestion(question)}`
 	)
-	const { isAuthenticated } = useAuthContext()
 
 	// Keyed by title, so each step's title takes focus on mount and a step change is announced.
 	const header = (title: string) => (
@@ -166,9 +162,7 @@ export function SignInFlow({
 
 	// The reset screen names its own outcome in the header, so it renders the header itself.
 	if (state.kind === 'forgot')
-		return (
-			<ForgotPasswordScreen dialogStore={dialogStore} store={flowStore} initialEmail={state.email} header={header} />
-		)
+		return <ForgotPasswordScreen store={flowStore} initialEmail={state.email} header={header} />
 
 	return (
 		<>
@@ -186,18 +180,16 @@ export function SignInFlow({
 			<DialogBody>
 				{state.kind === 'googleLink' ? (
 					<GoogleLinkForm
-						dialogStore={dialogStore}
 						challenge={state.challenge}
 						error={state.error?.message}
 						store={flowStore}
 						onVerified={finishAuthentication}
 					/>
 				) : state.kind === 'wallet' ? (
-					<WalletSignIn dialogStore={dialogStore} store={flowStore} onAuthenticated={finishAuthentication} />
+					<WalletSignIn store={flowStore} onAuthenticated={finishAuthentication} />
 				) : (
 					<div key={state.kind}>
 						<AuthScreen
-							dialogStore={dialogStore}
 							suppressVerifyEmailPrompt={suppressVerifyEmailPrompt}
 							state={state}
 							store={flowStore}
@@ -318,7 +310,6 @@ function PasswordField({
 }
 
 function AuthScreen({
-	dialogStore,
 	state,
 	store,
 	onAuthenticated,
@@ -326,7 +317,6 @@ function AuthScreen({
 	signupFirst = false,
 	onSignupClick
 }: {
-	dialogStore: Ariakit.DialogStore
 	state: Extract<SignInFlowState, { kind: 'signin' | 'signup' }>
 	store: SignInFlowStore
 	suppressVerifyEmailPrompt?: boolean
@@ -380,11 +370,10 @@ function AuthScreen({
 				promotionalEmails,
 				suppressVerifyEmailPrompt,
 				signal,
-				onAuthenticated,
-				canAccept: () => dialogStore.getState().open
+				onAuthenticated
 			})
 			.catch((error: Error) => {
-				if (!signal.aborted && dialogStore.getState().open) {
+				if (!signal.aborted) {
 					setCaptchaRetry((retry) => retry + 1)
 					store.dispatch({ error: error.message, kind: 'failed' })
 				}
@@ -407,11 +396,10 @@ function AuthScreen({
 				turnstileToken: token,
 				signal,
 				suppressVerifyEmailPrompt,
-				onAuthenticated,
-				canAccept: () => dialogStore.getState().open
+				onAuthenticated
 			})
 			.catch((error: Error) => {
-				if (!signal.aborted && dialogStore.getState().open) {
+				if (!signal.aborted) {
 					setCaptchaRetry((retry) => retry + 1)
 					store.dispatch({ error: error.message, kind: 'failed' })
 				}
@@ -432,13 +420,12 @@ function AuthScreen({
 		void signInWithGithubMutation
 			.mutateAsync({
 				signal,
-				canAccept: () => dialogStore.getState().open,
 				popup,
 				suppressVerifyEmailPrompt,
 				onAuthenticated
 			})
 			.catch(() => {
-				if (!signal.aborted && dialogStore.getState().open)
+				if (!signal.aborted)
 					store.dispatch({ kind: 'failed', method: 'github', error: 'GitHub sign-in did not finish.' })
 			})
 			.finally(() => popup.close())
@@ -453,11 +440,10 @@ function AuthScreen({
 				.mutateAsync({
 					code,
 					signal,
-					onAuthenticated,
-					canAccept: () => dialogStore.getState().open
+					onAuthenticated
 				})
 				.catch((caughtError) => {
-					if (!signal.aborted && dialogStore.getState().open)
+					if (!signal.aborted)
 						store.dispatch({
 							error: caughtError instanceof Error ? caughtError.message : 'Could not sign in with Google.',
 							method: 'google',
@@ -465,11 +451,11 @@ function AuthScreen({
 						})
 					return null
 				})
-			if (!result || signal.aborted || !dialogStore.getState().open) return
+			if (!result || signal.aborted) return
 			if (result.kind === 'link_verification_required')
 				store.dispatch({ challenge: result, kind: 'googleLinkRequired' })
 		},
-		[dialogStore, isPending, onAuthenticated, signInWithGoogleMutation, store]
+		[isPending, onAuthenticated, signInWithGoogleMutation, store]
 	)
 
 	const signupLayout = signupFirst && !isSignup
@@ -741,12 +727,10 @@ function AuthScreen({
 }
 
 function ForgotPasswordScreen({
-	dialogStore,
 	store,
 	initialEmail,
 	header
 }: {
-	dialogStore: Ariakit.DialogStore
 	store: SignInFlowStore
 	initialEmail: string
 	header: (title: string) => ReactNode
@@ -757,7 +741,7 @@ function ForgotPasswordScreen({
 	const reset = useMutation({
 		mutationFn: async ({ email, signal, token }: { email: string; signal: AbortSignal; token: string }) => {
 			await requestPasswordReset(email, token, signal)
-			return !signal.aborted && dialogStore.getState().open ? email : null
+			return signal.aborted ? null : email
 		},
 		// A sent token is spent whatever the outcome, so the widget restarts after every attempt.
 		onSettled: () => setCaptchaRetry((retry) => retry + 1)

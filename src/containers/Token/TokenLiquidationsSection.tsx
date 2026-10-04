@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -11,7 +12,7 @@ import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
 import { DeferredTokenLiquidationsTable } from './deferred/DeferredTokenLiquidationsTable'
-import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
+import { TokenPrivateSectionGate } from './TokenPrivateSectionGate'
 
 const TOKEN_LIQUIDATIONS_SECTION_ID = 'token-liquidations'
 const TABS = [
@@ -143,8 +144,7 @@ async function fetchTokenLiquidationsRows(
 }
 
 export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string }) {
-	const access = useTokenPrivateSectionAccess()
-	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = access
+	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('protocols')
 	const handleSetActiveTab = (tab: (typeof TABS)[number]['id']) => setActiveTab(tab)
 	const { data, error, isLoading } = useQuery({
@@ -168,7 +168,6 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 
 	return (
 		<TokenPrivateSectionGate
-			access={access}
 			title="Liquidations"
 			sectionId={TOKEN_LIQUIDATIONS_SECTION_ID}
 			contentLabel="token liquidations"

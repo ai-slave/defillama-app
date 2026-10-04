@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
@@ -30,24 +30,26 @@ import type { DeliveryChannel, PriceTrigger } from '~/containers/LlamaAI/compone
 import {
 	alertFieldLabelClass,
 	alertInputClass,
-	alertSelectClass,
 	PriceInput,
 	SegmentedToggle,
 	PRICE_OPERATOR_OPTIONS,
 	DELIVERY_OPTIONS,
 	SettingsIntegrationsLink
 } from '~/containers/LlamaAI/components/alerts/ui'
+import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
-import { keepFocus, takeLostFocus } from '~/ui/focus'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { queryReadFailed } from '~/utils/query'
 
 export function AlertArtifactLoading() {
 	return (
@@ -103,12 +105,8 @@ export function AlertArtifact({
 	const [timezone, setTimezone] = useState(alertIntent.timezone ?? 'UTC')
 	const [priceOp, setPriceOp] = useState<'above' | 'below'>(trigger?.op ?? 'above')
 	const [priceValue, setPriceValue] = useState(trigger ? roundPriceValue(trigger.value) : '')
-	const [savedDbId, setSavedDbId] = useState<string | null>(savedAlertIds?.includes(alertId) ? alertId : null)
-	const [savedNextRunAt, setSavedNextRunAt] = useState<string | null>(null)
 	const [hasRetriedTest, setHasRetriedTest] = useState(false)
-	const [testResult, setTestResult] = useState<TestSentState>(null)
 	const [promptExpanded, setPromptExpanded] = useState(false)
-	const savedStatusRef = useRef<HTMLParagraphElement>(null)
 
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alertIntent.deliveryChannel || 'email')
 	const isSlack = deliveryChannel === 'slack'
@@ -144,32 +142,16 @@ export function AlertArtifact({
 		intentChannelId: alertIntent.slackChannelId,
 		intentChannelName: alertIntent.slackChannelName
 	})
-	const isSaved = savedDbId !== null
 	const priceValidationError = trigger ? validatePriceTrigger({ tokenNk: trigger.token_nk, value: priceValue }) : null
 	const editedTrigger: PriceTrigger | null = trigger ? { ...trigger, op: priceOp, value: Number(priceValue) } : null
 
-	const alertDetailQuery = useQuery<{ alert?: { test_sent?: boolean } }>({
-		queryKey: ['llamaai-alert-detail', savedDbId],
-		queryFn: async () => {
-			const res = await authorizedFetch(`${AI_SERVER}/alerts/${savedDbId}`)
-			if (!res?.ok) throw new Error('Failed to load alert')
-			return res.json()
-		},
-		enabled: !!savedDbId,
-		staleTime: 30_000
-	})
-
-	// A test sent in this session wins over the server's record of an earlier one, so the button can
-	// report which happened. Derived rather than copied in, so a saved alert shows its history on the
-	// first render instead of after one.
-	const testSent: TestSentState = testResult ?? (alertDetailQuery.data?.alert?.test_sent === true ? 'already' : null)
-
 	const {
 		mutate: saveAlert,
+		data: savedAlert,
 		isPending: isSaving,
 		error: saveError
-	} = useMutation({
-		mutationFn: async (payload: ArtifactSaveBody) => {
+	} = useMutation<{ id: string; nextRunAt?: string; next_run_at?: string }, Error, ArtifactSaveBody>({
+		mutationFn: async (payload) => {
 			const res = await authorizedFetch(`${AI_SERVER}/alerts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -182,18 +164,23 @@ export function AlertArtifact({
 			}
 			return res.json()
 		},
-		onSuccess: (data: any) => {
+		onSuccess: () => {
 			trackUmamiEvent('llamaai-alert-created', { type: isPriceAlert ? 'price' : 'schedule', source: 'artifact' })
-			const nextRunAt = data.nextRunAt ?? data.next_run_at
-			// The saved card replaces the form and its Save button; its status line takes focus.
-			keepFocus(
-				() => {
-					setSavedDbId(data.id)
-					if (typeof nextRunAt === 'string' && nextRunAt) setSavedNextRunAt(nextRunAt)
-				},
-				() => savedStatusRef.current
-			)
 		}
+	})
+	const savedDbId = savedAlert?.id ?? (savedAlertIds?.includes(alertId) ? alertId : null)
+	const savedNextRunAt = savedAlert?.nextRunAt || savedAlert?.next_run_at || null
+	const isSaved = savedDbId !== null
+
+	const alertDetailQuery = useQuery<{ alert?: { test_sent?: boolean } }>({
+		queryKey: ['llamaai-alert-detail', savedDbId],
+		queryFn: async () => {
+			const res = await authorizedFetch(`${AI_SERVER}/alerts/${savedDbId}`)
+			if (!res?.ok) throw new Error('Failed to load alert')
+			return res.json()
+		},
+		enabled: !!savedDbId,
+		staleTime: 30_000
 	})
 
 	const testMutation = useMutation<{ alreadySent: boolean }, Error, string>({
@@ -205,11 +192,13 @@ export function AlertArtifact({
 			const data: { success: boolean; error?: string } = await res.json()
 			if (!data.success) throw new Error(data.error ?? 'Test failed')
 			return { alreadySent: false }
-		},
-		onSuccess: (data) => {
-			setTestResult(data.alreadySent ? 'already' : 'sent')
 		}
 	})
+	const testResult: TestSentState = testMutation.data ? (testMutation.data.alreadySent ? 'already' : 'sent') : null
+	// A test sent in this session wins over the server's record of an earlier one, so the button can
+	// report which happened. Derived rather than copied in, so a saved alert shows its history on the
+	// first render instead of after one.
+	const testSent: TestSentState = testResult ?? (alertDetailQuery.data?.alert?.test_sent === true ? 'already' : null)
 
 	const readinessBlock = getDeliveryReadinessBlock({
 		channel: deliveryChannel,
@@ -307,7 +296,12 @@ export function AlertArtifact({
 
 			{isSaved ? (
 				<>
-					<p ref={savedStatusRef} tabIndex={-1} className="m-0 flex items-center gap-1.5 text-xs text-success">
+					<p
+						// The saved card replaces the form and its Save button; the status line of a save made here takes focus.
+						ref={savedAlert ? takeLostFocus : undefined}
+						tabIndex={-1}
+						className="m-0 flex items-center gap-1.5 text-xs text-success"
+					>
 						<Icon name="check" className="size-3.5 shrink-0" />
 						{isPriceAlert
 							? 'Watching continuously — fires within seconds of crossing'
@@ -414,6 +408,7 @@ export function AlertArtifact({
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
 						placeholder="Alert title"
+						aria-label="Alert title"
 						className={alertInputClass}
 					/>
 
@@ -454,7 +449,8 @@ export function AlertArtifact({
 							<select
 								value={frequency}
 								onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
-								className={alertSelectClass}
+								aria-label="Frequency"
+								className={inputStyles}
 							>
 								<option value="daily">Daily</option>
 								<option value="weekly">Weekly</option>
@@ -464,7 +460,8 @@ export function AlertArtifact({
 								<select
 									value={dayOfWeek}
 									onChange={(e) => setDayOfWeek(Number(e.target.value))}
-									className={alertSelectClass}
+									aria-label="Day of week"
+									className={inputStyles}
 								>
 									{DAYS_OF_WEEK.map((day, idx) => (
 										<option key={day} value={idx}>
@@ -476,7 +473,12 @@ export function AlertArtifact({
 
 							<span className="text-xs text-tertiary">at</span>
 
-							<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className={alertSelectClass}>
+							<select
+								value={hour}
+								onChange={(e) => setHour(Number(e.target.value))}
+								aria-label="Hour"
+								className={inputStyles}
+							>
 								{Array.from({ length: 24 }, (_, h) => (
 									<option key={`llamai-alert-h${h}`} value={h}>
 										{h.toString().padStart(2, '0')}:00
@@ -484,7 +486,12 @@ export function AlertArtifact({
 								))}
 							</select>
 
-							<select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={alertSelectClass}>
+							<select
+								value={timezone}
+								onChange={(e) => setTimezone(e.target.value)}
+								aria-label="Timezone"
+								className={inputStyles}
+							>
 								{timezoneOptions.map((tz) => (
 									<option key={tz.value} value={tz.value}>
 										{tz.label}
@@ -515,7 +522,8 @@ export function AlertArtifact({
 												const nextWorkspace = activeWorkspaces.find((w) => w.team_id === nextTeamId)
 												setPickedSlack({ teamId: nextTeamId, channelId: nextWorkspace?.default_channel_id ?? '' })
 											}}
-											className={alertSelectClass}
+											aria-label="Slack workspace"
+											className={inputStyles}
 										>
 											<option value="" disabled>
 												Pick workspace
@@ -528,16 +536,23 @@ export function AlertArtifact({
 										</select>
 									) : null}
 									{slackTeamId ? (
-										slackChannelsQuery.isLoading ? (
+										queryReadFailed(slackChannelsQuery) ? (
+											<RetryNotice
+												message="Couldn't load Slack channels."
+												retrying={slackChannelsQuery.isFetching}
+												onRetry={() => void slackChannelsQuery.refetch()}
+											/>
+										) : slackChannelsQuery.isLoading ? (
 											<span className="body-sm text-secondary">Loading channels…</span>
-										) : slackChannelsQuery.isError ? (
-											<span className="body-sm text-error">Failed to load channels</span>
 										) : (
 											<select
+												// A retried channel list takes the focus its Try again drops as it leaves.
+												ref={takeLostFocus}
 												value={slackChannelId}
 												// The workspace travels with the channel, so a later workspace change cannot inherit it.
 												onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
-												className={alertSelectClass}
+												aria-label="Slack channel"
+												className={inputStyles}
 											>
 												<option value="" disabled>
 													Pick channel

@@ -61,6 +61,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		[chartType, customTimePeriod, timePeriod]
 	)
 
+	const chartRead = useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
 	const {
 		presentation,
 		chainsUnique,
@@ -69,10 +70,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		isInactive,
 		prepareCsvDataset,
 		isLoading,
-		isFetching,
-		readFailed,
-		refetch
-	} = useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
+		readFailed
+	} = chartRead
 
 	const chainColors = useMemo(() => {
 		const colors: Record<string, string> = {}
@@ -199,8 +198,6 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const hasChartData =
 		(filteredDataset?.source.length ?? 0) > 0 ||
 		(pieSeries != null && (pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0))
-	const retryChartData = { run: () => void refetch(), pending: isFetching }
-
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
 			<ProCardHeader
@@ -215,7 +212,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	)
 
 	if (readFailed && !hasChartData) {
-		return renderStatusShell(<ProCardError retry={retryChartData} />)
+		return renderStatusShell(<ProCardError retry={chartRead} />)
 	}
 
 	if (isLoading) {
@@ -326,7 +323,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={retryChartData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

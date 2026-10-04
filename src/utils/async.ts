@@ -363,3 +363,13 @@ export async function handleSimpleFetchResponse(res: Response): Promise<Response
 	}
 	return res
 }
+
+/** The message to show for a failed request: the server's reason when `handleSimpleFetchResponse` read one, else the
+    status text of its `[HTTP] [error] [status]: text` message, else the fallback. Other errors show their own message. */
+export function httpErrorMessage(error: unknown, fallbackMessage: string): string {
+	if (!(error instanceof Error) || !error.message) return fallbackMessage
+	if (!error.message.startsWith('[HTTP] [error]')) return error.message
+	const colonIndex = error.message.indexOf(':')
+	if (colonIndex === -1) return fallbackMessage
+	return error.message.slice(colonIndex + 1).trim() || fallbackMessage
+}

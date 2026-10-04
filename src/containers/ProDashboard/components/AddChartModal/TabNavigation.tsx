@@ -3,7 +3,6 @@ import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { Tab } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
-import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { ProBadge, proTabStyles } from '../../ui'
 import type { MainTabType } from './types'
 
@@ -15,31 +14,23 @@ const ALL_TABS: Array<{
 	mobileLabel: string
 	editLabel: string
 }> = [
-	{ id: 'charts', label: 'Charts', subtitle: '', mobileLabel: 'Charts', editLabel: 'Chart' },
+	{ id: 'charts', label: 'Charts', mobileLabel: 'Charts', editLabel: 'Chart' },
 	{ id: 'metric', label: 'Metric', mobileLabel: 'Metric', editLabel: 'Metric' },
 	{ id: 'table', label: 'Table', mobileLabel: 'Table', editLabel: 'Table' },
 	{ id: 'text', label: 'Text', subtitle: '(Markdown)', mobileLabel: 'Text', editLabel: 'Text' },
-	{ id: 'llamaai', label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI', editLabel: 'LlamaAI chart' },
-	{ id: 'custom-data', label: 'Custom data', subtitle: '', mobileLabel: 'Data', editLabel: 'Custom data' },
-	{ id: 'sql', label: 'SQL', subtitle: '', mobileLabel: 'SQL', editLabel: 'SQL' }
+	{ id: 'llamaai', label: 'LlamaAI', mobileLabel: 'LlamaAI', editLabel: 'LlamaAI chart' },
+	{ id: 'custom-data', label: 'Custom data', mobileLabel: 'Data', editLabel: 'Custom data' },
+	{ id: 'sql', label: 'SQL', mobileLabel: 'SQL', editLabel: 'SQL' }
 ]
 
 export const MAIN_TAB_VALUES = ALL_TABS.map((tab) => tab.id)
 
 export function getMainTabEditLabel(tab: MainTabType): string {
-	return ALL_TABS.find((entry) => entry.id === tab)?.editLabel ?? 'Chart'
+	return ALL_TABS.find((entry) => entry.id === tab)!.editLabel
 }
 
-interface TabNavigationProps {
-	editItem?: DashboardItemConfig | null | undefined
-	isSqlAllowed?: boolean
-}
-
-export function TabNavigation({ editItem, isSqlAllowed }: TabNavigationProps) {
+export function TabNavigation({ isSqlAllowed }: { isSqlAllowed: boolean }) {
 	const { hasActiveSubscription } = useAuthContext()
-
-	if (editItem) return null
-
 	return (
 		<Ariakit.TabList
 			aria-label="Card type"
@@ -51,11 +42,7 @@ export function TabNavigation({ editItem, isSqlAllowed }: TabNavigationProps) {
 				const lockLabel = requiresApiPlan ? 'API' : requiresPro ? 'Pro' : null
 				const lockTooltip = requiresApiPlan ? 'Requires the API plan' : 'Requires a Pro subscription'
 				return (
-					<Tab
-						value={tab.id}
-						key={tab.id}
-						className={`${proTabStyles} disabled:cursor-not-allowed disabled:opacity-50`}
-					>
+					<Tab value={tab.id} key={tab.id} className={proTabStyles}>
 						<span className="flex items-center justify-center gap-1.5">
 							<span className="lg:hidden">{tab.mobileLabel}</span>
 							<span className="hidden lg:inline">{tab.label}</span>

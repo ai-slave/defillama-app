@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useDeferredValue,
 	useMemo,
+	useRef,
 	useState,
 	type Dispatch,
 	type SetStateAction
@@ -12,6 +13,7 @@ import {
 import { selectTriggerStyles } from '~/components/Select/types'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles, searchFieldIconStyles } from '~/ui/Input'
 import { popoverRowStyles, popoverScrollAreaStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -56,7 +58,8 @@ export interface SchemaBrowserProps {
 	loadedTables: Array<RegisteredTable>
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	onReplaceSql: (snippet: string) => void
-	onInsertAtCursor: (text: string) => void
+	/** Null while no editor can take a column name (a notebook tab): the columns are listed, not offered. */
+	onInsertAtCursor: ((text: string) => void) | null
 	loading: string | null
 	/** The last table that failed to load; its row shows why. */
 	loadError: TableLoadError | null
@@ -278,10 +281,12 @@ export function SearchField({
 	label: string
 	placeholder: string
 }) {
+	const inputRef = useRef<HTMLInputElement>(null)
 	return (
 		<div className="relative">
 			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 			<Input
+				ref={inputRef}
 				type="text"
 				inputMode="search"
 				aria-label={label}
@@ -296,7 +301,12 @@ export function SearchField({
 					variant="ghost"
 					size="sm"
 					square
-					onClick={() => onChange('')}
+					onClick={() =>
+						keepFocus(
+							() => onChange(''),
+							() => inputRef.current
+						)
+					}
 					aria-label="Clear search"
 					className="absolute top-1/2 right-1.5 -translate-y-1/2"
 				>
@@ -337,7 +347,7 @@ function CategorySection({
 	loadedByKey: Map<string, RegisteredTable>
 	chartOptionsMap: ChartOptionsMap
 	onReplaceSql: (snippet: string) => void
-	onInsertAtCursor: (text: string) => void
+	onInsertAtCursor: ((text: string) => void) | null
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	loading: string | null
 	loadError: TableLoadError | null
@@ -413,7 +423,7 @@ function FlatRow({
 	entry: Extract<SchemaEntry, { kind: 'flat' }>
 	loaded: RegisteredTable | undefined
 	onReplaceSql: (snippet: string) => void
-	onInsertAtCursor: (text: string) => void
+	onInsertAtCursor: ((text: string) => void) | null
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	loading: string | null
 	loadError: TableLoadError | null
@@ -453,7 +463,7 @@ function FlatRow({
 			</div>
 
 			{columns.length > 0 ? (
-				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
+				<ColumnChips columns={columns} onInsertColumn={onInsertAtCursor} />
 			) : (
 				<p className="body-sm text-tertiary">Columns show once the table loads.</p>
 			)}
@@ -478,7 +488,7 @@ function TsRow({
 	options: Array<{ label: string; value: string; category?: string; isChild?: boolean }>
 	loadedByKey: Map<string, RegisteredTable>
 	onReplaceSql: (snippet: string) => void
-	onInsertAtCursor: (text: string) => void
+	onInsertAtCursor: ((text: string) => void) | null
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	loading: string | null
 	loadError: TableLoadError | null
@@ -534,7 +544,7 @@ function TsRow({
 			<ParamCombobox paramLabel={entry.dataset.paramLabel} options={options} value={param} onChange={setParam} />
 
 			{columns.length > 0 ? (
-				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
+				<ColumnChips columns={columns} onInsertColumn={onInsertAtCursor} />
 			) : shape === 'dynamic' ? (
 				<p className="body-sm text-tertiary">Columns depend on the response and show once the table loads.</p>
 			) : null}
@@ -550,22 +560,37 @@ function ColumnChips({
 	onInsertColumn
 }: {
 	columns: Array<{ name: string; type?: string }>
-	onInsertColumn: (name: string) => void
+	onInsertColumn: ((name: string) => void) | null
 }) {
+	const chip = 'inline-flex min-h-6 items-center gap-1 rounded-md border border-subtle px-1.5 mono-sm text-primary'
 	return (
-		<ul aria-label="Columns, select one to insert it in the editor" className="flex flex-wrap gap-1.5">
-			{columns.map((c) => (
-				<li key={c.name}>
-					<button
-						type="button"
-						onClick={() => onInsertColumn(c.name)}
-						className="touch-target hover-wash inline-flex min-h-6 items-center gap-1 rounded-md border border-subtle px-1.5 mono-sm text-primary hover:border-brand"
-					>
+		<ul
+			aria-label={onInsertColumn ? 'Columns, select one to insert it in the editor' : 'Columns'}
+			className="flex flex-wrap gap-1.5"
+		>
+			{columns.map((c) => {
+				const content = (
+					<>
 						{c.type ? <TypeBadge kind={inferColumnKind(c.type)} /> : null}
 						{c.name}
-					</button>
-				</li>
-			))}
+					</>
+				)
+				return (
+					<li key={c.name}>
+						{onInsertColumn ? (
+							<button
+								type="button"
+								onClick={() => onInsertColumn(c.name)}
+								className={`touch-target hover-wash hover:border-brand ${chip}`}
+							>
+								{content}
+							</button>
+						) : (
+							<span className={chip}>{content}</span>
+						)}
+					</li>
+				)
+			})}
 		</ul>
 	)
 }
@@ -596,6 +621,8 @@ function RowActions({
 				size="sm"
 				onClick={onLoad}
 				disabled={!isLoading && (!canLoad || alreadyLoaded)}
+				// Load turns into a disabled Loaded once its table lands, so it keeps focus.
+				accessibleWhenDisabled
 				pendingLabel={isLoading ? 'Loading…' : null}
 			>
 				{alreadyLoaded ? 'Loaded' : 'Load'}
@@ -619,6 +646,7 @@ function ParamCombobox({
 	onChange: (next: string) => void
 }) {
 	const [search, setSearch] = useState('')
+	const triggerRef = useRef<HTMLButtonElement>(null)
 
 	const matches = useMemo(() => {
 		if (!search) return options.slice(0, 200)
@@ -648,7 +676,10 @@ function ParamCombobox({
 				}}
 			>
 				<Ariakit.ComboboxLabel className="body-sm text-secondary">{paramLabel}</Ariakit.ComboboxLabel>
-				<Ariakit.ComboboxSelect className={`${selectTriggerStyles('filter', 'sm')} max-w-[240px] min-w-40`}>
+				<Ariakit.ComboboxSelect
+					ref={triggerRef}
+					className={`${selectTriggerStyles('filter', 'sm')} max-w-[240px] min-w-40`}
+				>
 					<span className={`truncate ${current ? '' : 'text-secondary'}`}>{current?.label ?? `Pick a ${noun}`}</span>
 					<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 				</Ariakit.ComboboxSelect>
@@ -681,7 +712,17 @@ function ParamCombobox({
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{value ? (
-				<Button type="button" variant="ghost" size="sm" onClick={() => onChange('')}>
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={() =>
+						keepFocus(
+							() => onChange(''),
+							() => triggerRef.current
+						)
+					}
+				>
 					Clear
 				</Button>
 			) : null}

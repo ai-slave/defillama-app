@@ -141,3 +141,44 @@ test('removing a saved column that has no visibility entry hides it', async () =
 
 	expect(headers()).not.toContain('DeFi TVL')
 })
+
+const pressed = (text: string) =>
+	Array.from(container.querySelectorAll('button'))
+		.find((button) => button.textContent?.trim() === text)!
+		.getAttribute('aria-pressed')
+
+test('the preset button follows the columns the card shows, saved or undone', async () => {
+	await render({})
+	expect(pressed('Essential')).toBe('true')
+	await render({ columnOrder: ['name', 'tvl'], columnVisibility: { name: true, tvl: true } })
+	expect(pressed('Essential')).toBe('false')
+	await render({})
+	expect(pressed('Essential')).toBe('true')
+})
+
+test('moving a column swaps it with the next shown column, skipping hidden ones', async () => {
+	await render({
+		columnOrder: ['name', 'tvl', 'protocols', 'users'],
+		columnVisibility: { name: true, tvl: true, protocols: false, users: true }
+	})
+	await click('Customize Table')
+	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Move DeFi TVL down"]')!.click())
+
+	expect(headers().slice(0, 3)).toEqual(['Chain', 'Active Addresses', 'DeFi TVL'])
+})
+
+test('Done hands focus back to Customize Table, which says whether the panel is open', async () => {
+	await render({})
+	const customize = Array.from(container.querySelectorAll('button')).find((button) =>
+		button.textContent?.includes('Customize Table')
+	)!
+	await click('Customize Table')
+	expect(customize.getAttribute('aria-expanded')).toBe('true')
+	const done = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Done')!
+	await act(async () => {
+		done.focus()
+		done.click()
+	})
+	expect(document.activeElement).toBe(customize)
+	expect(customize.getAttribute('aria-expanded')).toBe('false')
+})

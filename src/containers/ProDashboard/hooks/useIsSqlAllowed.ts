@@ -21,7 +21,9 @@ export function useIsSqlAllowed(): SqlAllowedState {
 	const isLlama = !!user?.flags?.is_llama
 	const isAllowed = isAuthenticated && (isApiPlan || isLlama)
 	const loading = loaders.userLoading || (isAuthenticated && isSubscriptionLoading && !isLlama)
-	const isUnknown = isAuthenticated && isSubscriptionError && !isLlama
+	// Only a subscription that never loaded is unknown (the session still reads as loading); a failed refresh keeps
+	// the last answer, so it never unmounts an open SQL tab.
+	const isUnknown = isAuthenticated && isSubscriptionError && loaders.userLoading && !isLlama
 
 	return {
 		isAllowed,

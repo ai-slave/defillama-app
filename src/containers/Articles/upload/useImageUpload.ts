@@ -30,52 +30,57 @@ export type UploadResult = {
 const MAX_BYTES = 8 * 1024 * 1024
 const ALLOWED_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 
-export class ImageUploadError extends Error {
+export class UploadError extends Error {
 	status: number
-	constructor(message: string, status = 400) {
+	constructor(message: string, status: number) {
 		super(message)
-		this.name = 'ImageUploadError'
+		this.name = 'UploadError'
 		this.status = status
 	}
 }
 
-function uploadUrl() {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}/uploads/image`
+/** Client checks and the server's 4xx reasons name the fix; anything else is a plain retry. */
+export function uploadErrorMessage(error: Error | null, retry: string) {
+	if (!error) return null
+	return error instanceof UploadError && error.status < 500 ? error.message : retry
 }
 
-function validateClient(file: File): string | null {
-	if (!file) return 'No file selected'
-	if (file.size === 0) return 'Empty file'
-	if (file.size > MAX_BYTES) return 'File exceeds 8 MB limit'
-	if (!ALLOWED_MIMES.has(file.type)) return 'Allowed formats: PNG, JPEG, WebP, GIF'
-	return null
-}
-
-async function fileToBase64(file: File): Promise<string> {
-	const buf = await file.arrayBuffer()
-	const bytes = new Uint8Array(buf)
+/** Sends a file as base64 JSON to an upload route, the shape both image and PDF uploads use. */
+export async function postUpload<T>(
+	authorizedFetch: (url: string, init?: RequestInit) => Promise<Response | null>,
+	route: 'image' | 'pdf',
+	file: File,
+	fields: Record<string, string>
+): Promise<T> {
+	const bytes = new Uint8Array(await file.arrayBuffer())
 	let binary = ''
 	const chunkSize = 0x80_00
 	for (let i = 0; i < bytes.length; i += chunkSize) {
 		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
 	}
-	return btoa(binary)
+	const response = await authorizedFetch(`${FEATURES_SERVER.replace(/\/$/, '')}/uploads/${route}`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ ...fields, dataBase64: btoa(binary) })
+	})
+	if (!response) throw new UploadError('Please sign in to continue', 401)
+	const text = await response.text()
+	const data = text ? JSON.parse(text) : null
+	if (!response.ok) {
+		const message =
+			data && typeof data === 'object' && typeof data.error === 'string'
+				? data.error
+				: response.statusText || 'Upload failed'
+		throw new UploadError(message, response.status)
+	}
+	return data as T
 }
 
-export function buildUploadPayload(args: {
-	scope: UploadScope
-	filename: string
-	mimeType: string
-	dataBase64: string
-	articleId?: string | null
-}) {
-	return {
-		scope: args.scope,
-		...(args.articleId ? { articleId: args.articleId } : {}),
-		filename: args.filename,
-		mimeType: args.mimeType,
-		dataBase64: args.dataBase64
-	}
+function validateClient(file: File): string | null {
+	if (file.size === 0) return 'Empty file'
+	if (file.size > MAX_BYTES) return 'File exceeds 8 MB limit'
+	if (!ALLOWED_MIMES.has(file.type)) return 'Allowed formats: PNG, JPEG, WebP, GIF'
+	return null
 }
 
 export function useImageUpload(args: { scope: UploadScope; articleId?: string | null; mutationKey?: MutationKey }) {
@@ -91,33 +96,13 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 			articleId: string | null | undefined
 		}): Promise<UploadResult> => {
 			const clientError = validateClient(file)
-			if (clientError) throw new ImageUploadError(clientError, 400)
-
-			const dataBase64 = await fileToBase64(file)
-			const payload = buildUploadPayload({
+			if (clientError) throw new UploadError(clientError, 400)
+			return postUpload<UploadResult>(authorizedFetch, 'image', file, {
 				scope: args.scope,
-				articleId,
+				...(articleId ? { articleId } : {}),
 				filename: file.name,
-				mimeType: file.type,
-				dataBase64
+				mimeType: file.type
 			})
-
-			const response = await authorizedFetch(uploadUrl(), {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			})
-			if (!response) throw new ImageUploadError('Please sign in to continue', 401)
-			const text = await response.text()
-			const data = text ? JSON.parse(text) : null
-			if (!response.ok) {
-				const message =
-					data && typeof data === 'object' && typeof data.error === 'string'
-						? data.error
-						: response.statusText || 'Upload failed'
-				throw new ImageUploadError(message, response.status)
-			}
-			return data as UploadResult
 		}
 	})
 	const { mutateAsync } = upload
@@ -143,11 +128,6 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 		uploadFile,
 		uploadWithToast,
 		isUploading: upload.isPending,
-		// Client checks and the server's 4xx reasons name the fix; anything else is a plain retry.
-		errorMessage: upload.error
-			? upload.error instanceof ImageUploadError && upload.error.status < 500
-				? upload.error.message
-				: "Couldn't upload this image. Try again."
-			: null
+		errorMessage: uploadErrorMessage(upload.error, "Couldn't upload this image. Try again.")
 	}
 }

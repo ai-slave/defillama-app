@@ -7,7 +7,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AgenticSidebar } from '../AgenticSidebar'
-const api = vi.hoisted(() => ({ bulk: vi.fn(), open: vi.fn() }))
+const api = vi.hoisted(() => ({ bulk: vi.fn(), open: vi.fn(), hideSidebar: vi.fn() }))
 const viewport = vi.hoisted(() => ({ scroll: (_offset: number, _isScrolling: boolean) => {} }))
 // Heavy children these tests do not read.
 vi.mock('~/containers/LlamaAI/projects/ProjectsSidebarSection', () => ({ ProjectsSidebarSection: () => null }))
@@ -35,7 +35,7 @@ vi.mock('@tanstack/react-virtual', async (importOriginal) => {
 const session = installSubscriberSession('user')
 const chrome = {
 	toggleSidebar: () => {},
-	hideSidebar: () => {},
+	hideSidebar: api.hideSidebar,
 	toggleFullscreen: () => {},
 	isFullscreen: false,
 	fullscreenLocked: false,
@@ -56,6 +56,7 @@ const sessions: Array<ChatSession> = ['Alpha', 'Beta', 'Gamma'].map((title) => (
 beforeEach(() => {
 	api.bulk.mockReset()
 	api.open.mockReset()
+	api.hideSidebar.mockReset()
 	session.serve({
 		'https://features.llama.fi/user/ai-balance': {
 			freeRemaining: '0.25',
@@ -180,7 +181,7 @@ test('removed selections do not count toward deletion and a failed bulk delete c
 	await click('Delete')
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(checked()).toEqual(['Beta', 'Gamma'])
-	await click('Retry deletion')
+	await click('Delete')
 	await waitForUi(() => expect(api.bulk).toHaveBeenCalledTimes(2))
 	expect(api.bulk).toHaveBeenLastCalledWith(['Beta', 'Gamma'])
 })
@@ -202,4 +203,49 @@ test('virtual rows refresh when scrolling away from and back to the start', asyn
 	await act(async () => viewport.scroll(0, false))
 	expect(history.textContent).toContain('Chat 000')
 	expect(history.textContent).not.toContain('Chat 050')
+})
+
+test('on a phone, tapping the bulk delete confirm keeps the sidebar and its confirm open', async () => {
+	// The sidebar hides on a tap outside it below 1024px.
+	Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 375 })
+	try {
+		await render()
+		await click('Select')
+		await click('Select all')
+		await click('Delete (3)')
+		const confirm = document.querySelector('[role="alertdialog"]')!
+		await act(async () => {
+			confirm.querySelector('button')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+		})
+		expect(api.hideSidebar).not.toHaveBeenCalled()
+		await act(async () => document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })))
+		expect(api.hideSidebar).toHaveBeenCalledOnce()
+	} finally {
+		Reflect.deleteProperty(document.documentElement, 'clientWidth')
+	}
+})
+
+test("a chat's open menu stays open when the chat gets new activity", async () => {
+	await render()
+	await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Actions for Beta"]')!.click())
+	await waitForUi(() => expect(document.querySelector('[role="menu"]')).not.toBeNull())
+	await render(sessions.map((item) => (item.sessionId === 'Beta' ? { ...item, lastActivity: '2026-09-08' } : item)))
+	expect(document.querySelector('[role="menu"]')).not.toBeNull()
+})
+
+test('a finished bulk delete hands focus to the Select toggle that replaces its footer', async () => {
+	api.bulk.mockResolvedValue(undefined)
+	await render()
+	await click('Select')
+	await act(async () =>
+		[...document.querySelectorAll('label')]
+			.find((l) => l.textContent === 'Alpha')!
+			.querySelector('input')!
+			.click()
+	)
+	await click('Delete (1)')
+	await click('Delete')
+	await render(sessions.slice(1))
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Select')))
 })

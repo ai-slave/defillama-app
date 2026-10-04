@@ -51,6 +51,9 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	const manageButtonRef = useRef<HTMLButtonElement>(null)
 	const [showManageModal, setShowManageModal] = useState(false)
 	const [showUpgradeConfirm, setShowUpgradeConfirm] = useState(false)
+	// Not the mutation's own error: that one clears as soon as a retry starts. Kept as the error, not its message:
+	// the unconfirmed copy names the billing the team shows now.
+	const [upgradeError, setUpgradeError] = useState<Error | null>(null)
 
 	const label = getSubscriptionLabel(subscription.type)
 	const unit = seatPrice(subscription.type, subscription.billingInterval)
@@ -69,9 +72,11 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 			{ subscriptionType: subscription.type },
 			{
 				onSuccess: () => {
+					setUpgradeError(null)
 					setShowUpgradeConfirm(false)
 					toast.success('Subscription upgraded to yearly billing')
-				}
+				},
+				onError: setUpgradeError
 			}
 		)
 	}
@@ -136,18 +141,14 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 
 			{showManageModal && (
 				<Suspense fallback={null}>
-					<ManageSeatsModal
-						isOpen={showManageModal}
-						onClose={() => setShowManageModal(false)}
-						subscription={subscription}
-					/>
+					<ManageSeatsModal onClose={() => setShowManageModal(false)} subscription={subscription} />
 				</Suspense>
 			)}
 
 			<ConfirmDialog
 				open={showUpgradeConfirm}
 				onClose={() => {
-					upgradeSeatsMutation.reset()
+					setUpgradeError(null)
 					setShowUpgradeConfirm(false)
 				}}
 				portal
@@ -163,10 +164,10 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				waitingLabel={billingWait}
 				// A lock blocks the confirm button, so it shows where a failure would.
 				error={
-					upgradeSeatsMutation.isError
-						? upgradeSeatsMutation.error instanceof UnconfirmedTeamWriteError
+					upgradeError
+						? upgradeError instanceof UnconfirmedTeamWriteError
 							? `We couldn't confirm this upgrade. Your ${label} plan currently bills ${isMonthly ? 'monthly' : 'yearly'}.`
-							: upgradeSeatsMutation.error.message
+							: upgradeError.message
 						: upgradeSeatsMutation.isPending
 							? null
 							: billingLockReason
@@ -301,7 +302,7 @@ export function TeamSeatsCard() {
 
 			{showPurchaseModal && (
 				<Suspense fallback={null}>
-					<PurchaseSeatsModal isOpen={showPurchaseModal} onClose={() => setShowPurchaseModal(false)} />
+					<PurchaseSeatsModal onClose={() => setShowPurchaseModal(false)} />
 				</Suspense>
 			)}
 		</div>

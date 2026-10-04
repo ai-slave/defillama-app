@@ -1,15 +1,14 @@
 import * as Ariakit from '@ariakit/react'
-import type { FormEvent, RefObject } from 'react'
+import { useState, type FormEvent, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
 import { InlineStatus } from '~/ui/Status'
 import type { TeamMember, TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
 interface AssignSubscriptionModalProps {
-	finalFocus?: RefObject<HTMLElement | null>
-	isOpen: boolean
+	finalFocus: RefObject<HTMLElement | null>
 	onClose: () => void
 	member: TeamMember
 }
@@ -20,21 +19,16 @@ function getSubscriptionLabel(type: string): string {
 	return type
 }
 
-export function AssignSubscriptionModal({ isOpen, onClose, member, finalFocus }: AssignSubscriptionModalProps) {
+export function AssignSubscriptionModal({ onClose, member, finalFocus }: AssignSubscriptionModalProps) {
 	const { teamSubscriptions, assignMemberMutation } = useTeam()
 	const pending = assignMemberMutation.isPending
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success closes.
+	const [error, setError] = useState<string | null>(null)
 
 	const availableSubscriptions = teamSubscriptions.filter((sub: TeamSubscription) => sub.seats.availableSeats > 0)
 
-	const handleClose = () => {
-		if (pending) return
-		assignMemberMutation.reset()
-		onClose()
-	}
-
 	const handleAssign = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (pending) return
 		const subscriptionType = new FormData(event.currentTarget).get('subscriptionType')
 		if (!subscriptionType) return
 		assignMemberMutation.mutate(
@@ -43,21 +37,14 @@ export function AssignSubscriptionModal({ isOpen, onClose, member, finalFocus }:
 				onSuccess: () => {
 					onClose()
 					toast.success('Subscription assigned')
-				}
+				},
+				onError: (failure) => setError(failure.message)
 			}
 		)
 	}
 
 	return (
-		<Dialog
-			size="sm"
-			open={isOpen}
-			onClose={handleClose}
-			pending={pending}
-			finalFocus={finalFocus}
-			portal
-			unmountOnHide
-		>
+		<Dialog size="sm" open onClose={onClose} pending={pending} finalFocus={finalFocus} portal unmountOnHide>
 			<form onSubmit={handleAssign} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title="Assign subscription" />
 				<DialogBody>
@@ -102,17 +89,9 @@ export function AssignSubscriptionModal({ isOpen, onClose, member, finalFocus }:
 						</div>
 					)}
 
-					{assignMemberMutation.isError ? (
-						<InlineStatus variant="error">{assignMemberMutation.error.message}</InlineStatus>
-					) : null}
+					{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Button type="button" size="md" onClick={handleClose} disabled={pending}>
-							Cancel
-						</Button>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button
 						type="submit"
 						variant="primary"

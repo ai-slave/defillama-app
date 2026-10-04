@@ -6,6 +6,7 @@ import { Select } from '~/components/Select/Select'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { downloadCSV } from '~/utils/download'
+import type { QueryRetry } from '~/utils/query'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
 import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
@@ -47,8 +48,7 @@ interface ChartRendererProps {
 	dataset: MultiSeriesChartDataset
 	isLoading: boolean
 	hasError: boolean
-	isFetching: boolean
-	refetch: () => void
+	retry: QueryRetry
 	color: string
 	onChartReady: (instance: echarts.ECharts | null) => void
 }
@@ -65,8 +65,7 @@ function ChartRenderer({
 	dataset,
 	isLoading,
 	hasError,
-	isFetching,
-	refetch,
+	retry,
 	color,
 	onChartReady
 }: ChartRendererProps) {
@@ -108,16 +107,7 @@ function ChartRenderer({
 	}
 
 	if (hasError) {
-		return (
-			<ProCardError
-				retry={{
-					run: () => {
-						refetch()
-					},
-					pending: isFetching
-				}}
-			/>
-		)
+		return <ProCardError retry={retry} />
 	}
 
 	if (dataset.source.length === 0) {
@@ -269,8 +259,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 					dataset={chartDataset}
 					isLoading={chartState.isLoading}
 					hasError={chartState.hasError}
-					isFetching={chartState.isFetching}
-					refetch={chartState.refetch}
+					retry={chartState}
 					color={chartColor}
 					onChartReady={handleChartReady}
 				/>

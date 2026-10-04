@@ -46,6 +46,7 @@ function renderLanding(session: ReturnType<typeof installSubscriberSession>) {
 					onOpenAlerts={() => {}}
 					isAlertsModalOpen={false}
 					enterToSend
+					holdWalkthrough={false}
 				/>
 			</session.Wrapper>
 		)

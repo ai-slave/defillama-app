@@ -3,6 +3,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { consumePendingPrompt } from '~/containers/LlamaAI/pendingPrompt'
+import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -46,6 +47,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	document.body.innerHTML = ''
 	sessionStorage.clear()
+	api.router.push.mockClear()
 })
 
 const dialogText = () =>
@@ -79,4 +81,50 @@ test('signed out, the Sign in link on /ai still says what signing in is for', as
 	await act(async () => signIn.click())
 
 	expect(await dialogText()).toContain('Sign in to get your answer — free')
+})
+
+async function askSignedOut(question: string) {
+	const input = await waitForUi(() => {
+		const el = document.querySelector<HTMLInputElement>('input[name="freeform"]')
+		expect(el).not.toBeNull()
+		return el!
+	})
+	input.value = question
+	await act(async () => {
+		input.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	})
+	await dialogText()
+}
+const closeSignIn = () =>
+	act(async () =>
+		document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Close dialog"]')!.click()
+	)
+
+test('closing the sign-in after signing in from another tab still sends the waiting question to the chat', async () => {
+	await askSignedOut('Which chains grew the most this month?')
+	await act(async () => pb.authStore.save(session.token, session.record as never))
+	await waitForUi(() => expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe("You're signed in"))
+	await closeSignIn()
+	expect(api.router.push).toHaveBeenCalledWith('/ai/chat')
+	expect(consumePendingPrompt()).toBe('Which chains grew the most this month?')
+})
+
+test('closing the sign-in without signing in drops the waiting question', async () => {
+	await askSignedOut('Which chains grew the most this month?')
+	await closeSignIn()
+	expect(api.router.push).not.toHaveBeenCalled()
+	expect(consumePendingPrompt()).toBeNull()
+})
+
+test('signing in as a subscriber hides the free questions, and closing the sign-in still sends the waiting question', async () => {
+	session.serve({
+		'/subscription/status': { subscription: { status: 'active', expires_at: '2100-01-01', type: 'pro' } }
+	})
+	await askSignedOut('Which chains grew the most this month?')
+	await act(async () => pb.authStore.save(session.token, session.record as never))
+	await waitForUi(() => expect(document.getElementById('free-questions')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe("You're signed in"))
+	await closeSignIn()
+	expect(api.router.push).toHaveBeenCalledWith('/ai/chat')
+	expect(consumePendingPrompt()).toBe('Which chains grew the most this month?')
 })

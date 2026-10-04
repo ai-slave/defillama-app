@@ -73,3 +73,18 @@ test('a confirmed delete removes the chart and hands focus to the search field',
 	expect(deleteButton('Uniswap fees')).not.toBeNull()
 	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Search saved charts'))
 })
+
+test('a failed refresh keeps the loaded charts and an open delete confirmation', async () => {
+	await renderTab(() => new Response(null, { status: 500 }))
+	await act(async () => deleteButton('Aave TVL')!.click())
+	await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete chart?'))
+
+	session.serve({ [`${AI_SERVER}/charts`]: () => new Response(null, { status: 503 }) })
+	await act(async () => session.client.refetchQueries({ queryKey: ['pro-dashboard', 'saved-charts-list'] }))
+	// The query reports its failure to the tab on the next tick.
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 20)))
+
+	expect(deleteButton('Uniswap fees')).not.toBeNull()
+	expect(confirmation()?.textContent).toContain('Delete chart?')
+	expect(document.body.textContent).not.toContain('The saved charts could not load.')
+})

@@ -133,7 +133,7 @@ describe('admin drafts around saves', () => {
 		await type('C')
 		await act(async () => save.resolve({ ...article, reportDescription: 'B' }))
 
-		await waitForUi(() => expect(button('Save').disabled).toBe(false), { timeout: 500 })
+		await waitForUi(() => expect(button('Save').getAttribute('aria-disabled')).toBeNull(), { timeout: 500 })
 		expect(textarea().value).toBe('C')
 		expect(container.textContent).not.toContain('changed elsewhere')
 	})
@@ -146,7 +146,7 @@ describe('admin drafts around saves', () => {
 		await click('Save')
 
 		await waitForUi(() => expect(textarea().value).toBe('B'), { timeout: 500 })
-		expect(button('Save').disabled).toBe(true)
+		expect(button('Save').getAttribute('aria-disabled')).toBe('true')
 	})
 
 	test('highlight controls: uploading a sponsor logo keeps unsaved highlight text', async () => {
@@ -204,6 +204,19 @@ describe('admin drafts around saves', () => {
 
 		await waitForUi(() => expect(textarea().value).toBe('New highlight'), { timeout: 500 })
 		expect(logo()).toBe('/uploads/saved-logo.png')
-		expect(button('Save highlight text').disabled).toBe(true)
+		expect(button('Save highlight text').getAttribute('aria-disabled')).toBe('true')
+	})
+
+	test('highlight controls: clearing the override hands focus from Clear override to the highlight field', async () => {
+		patches.metadata.push(() => ({ metadata: { highlightText: null } }))
+		await render(<ReportHighlightControls article={article} pending={false} invalidate={vi.fn()} />)
+
+		await act(async () => {
+			button('Clear override').focus()
+			button('Clear override').click()
+		})
+
+		await waitForUi(() => expect(container.textContent).not.toContain('Clear override'), { timeout: 500 })
+		expect(document.activeElement).toBe(textarea())
 	})
 })

@@ -17,11 +17,8 @@ interface ApiAccessCardProps {
 	isUsageStatsLoading: boolean
 	isUsageStatsError: boolean
 	generateNewKeyMutation: UseMutationResult<string, Error, void>
-	canManageOverage?: boolean
-	isOverageEnabled?: boolean
-	onToggleOverage?: () => void
-	isOverageToggleLoading?: boolean
-	overageError?: string | null
+	/** The extra-usage switch, only for the account's own Stripe API subscription. */
+	overage?: { enabled: boolean; onToggle: () => void; isPending: boolean; error: string | null } | null
 }
 
 export function ApiAccessCard({
@@ -31,13 +28,12 @@ export function ApiAccessCard({
 	isUsageStatsLoading,
 	isUsageStatsError,
 	generateNewKeyMutation,
-	canManageOverage,
-	isOverageEnabled,
-	onToggleOverage,
-	isOverageToggleLoading,
-	overageError
+	overage
 }: ApiAccessCardProps) {
 	const [confirmRegenerate, setConfirmRegenerate] = useState(false)
+	// The first key's failure. Not the mutation's own error: that one clears as soon as a retry starts. Success
+	// replaces the Generate step.
+	const [generateError, setGenerateError] = useState<string | null>(null)
 	const copy = useMutation({
 		mutationFn: async () => {
 			await navigator.clipboard.writeText(apiKey!)
@@ -71,15 +67,17 @@ export function ApiAccessCard({
 					<Button
 						variant="primary"
 						size="md"
-						onClick={() => generateNewKeyMutation.mutate()}
+						onClick={() =>
+							generateNewKeyMutation.mutate(undefined, { onError: (error) => setGenerateError(error.message) })
+						}
 						pendingLabel={generateNewKeyMutation.isPending ? 'Generating…' : null}
 					>
 						<Icon name="key" height={14} width={14} />
 						Generate API key
 					</Button>
-					{generateNewKeyMutation.error ? (
+					{generateError ? (
 						<p role="alert" className="text-sm text-error">
-							{generateNewKeyMutation.error.message}
+							{generateError}
 						</p>
 					) : null}
 				</div>
@@ -116,10 +114,7 @@ export function ApiAccessCard({
 						</Button>
 						<Button
 							size="sm"
-							onClick={() => {
-								generateNewKeyMutation.reset()
-								setConfirmRegenerate(true)
-							}}
+							onClick={() => setConfirmRegenerate(true)}
 							pendingLabel={generateNewKeyMutation.isPending ? 'Regenerating…' : null}
 						>
 							<Icon name="repeat" height={14} width={14} />
@@ -175,17 +170,17 @@ export function ApiAccessCard({
 			</div>
 
 			{/* Overage */}
-			{canManageOverage && (
+			{overage && (
 				<div className="flex flex-col gap-2 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 					<div className="flex items-center justify-between gap-4">
 						<span className="text-sm text-sub-text-primary">
 							Allow extra usage charges{' '}
-							<span className="text-sub-text-muted">({isOverageEnabled ? 'Enabled' : 'Disabled'})</span>
+							<span className="text-sub-text-muted">({overage.enabled ? 'Enabled' : 'Disabled'})</span>
 						</span>
 						<ToggleSwitch
-							checked={Boolean(isOverageEnabled)}
-							onClick={onToggleOverage}
-							disabled={isOverageToggleLoading}
+							checked={overage.enabled}
+							onClick={overage.onToggle}
+							disabled={overage.isPending}
 							aria-label="Allow extra usage charges"
 						/>
 					</div>
@@ -195,9 +190,9 @@ export function ApiAccessCard({
 						<br />
 						We will notify you via email if you approach your plan limits.
 					</p>
-					{overageError ? (
+					{overage.error ? (
 						<p role="alert" className="text-xs leading-4 text-error">
-							{overageError}
+							{overage.error}
 						</p>
 					) : null}
 				</div>

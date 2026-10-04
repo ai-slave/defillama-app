@@ -7,13 +7,12 @@ import pb from '~/utils/pocketbase'
 
 let requests: Array<{ signal: AbortSignal; resolve: (response: Response) => void }>
 const response = (id: string) => new Response(JSON.stringify({ token: `token-${id}`, record: { id } }))
-const attempt = (signal = new AbortController().signal, canAccept = () => true) =>
+const attempt = (signal = new AbortController().signal) =>
 	signInWithPassword({
 		email: 'person@example.com',
 		password: 'password',
 		turnstileToken: 'captcha-token',
-		signal,
-		canAccept
+		signal
 	})
 
 beforeEach(() => {
@@ -54,20 +53,12 @@ test('sends the captcha token to the features server and preserves the caller ab
 	expect(pb.authStore.token).toBe('')
 })
 
-test('accepts one complete session, but does not accept a response after the sheet closes', async () => {
-	let open = true
-	const cancelled = attempt(undefined, () => open)
-	await vi.waitFor(() => expect(requests).toHaveLength(1))
-	open = false
-	requests[0].resolve(response('closed'))
-	expect(await cancelled).toBeNull()
-	expect(pb.authStore.token).toBe('')
-
+test('accepts one complete session', async () => {
 	const changes = vi.fn()
 	const unsubscribe = pb.authStore.onChange(changes)
 	const accepted = attempt()
-	await vi.waitFor(() => expect(requests).toHaveLength(2))
-	requests[1].resolve(response('accepted'))
+	await vi.waitFor(() => expect(requests).toHaveLength(1))
+	requests[0].resolve(response('accepted'))
 	expect(await accepted).toMatchObject({ id: 'accepted' })
 	expect(changes).toHaveBeenCalledExactlyOnceWith('token-accepted', expect.objectContaining({ id: 'accepted' }))
 	unsubscribe()

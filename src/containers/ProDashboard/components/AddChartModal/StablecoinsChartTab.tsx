@@ -41,20 +41,20 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC
 
 interface StablecoinsChartTabProps {
 	selectedStablecoinChain: string
-	selectedStablecoinChartType: string
+	selectedStablecoinChartType: StablecoinChartType
 	stablecoinMode: 'chain' | 'asset'
 	selectedStablecoinAsset: string | null
 	selectedStablecoinAssetId: string | null
-	selectedStablecoinAssetChartType: string
+	selectedStablecoinAssetChartType: StablecoinAssetChartType
 	onSelectedStablecoinChainChange: (chain: string) => void
-	onSelectedStablecoinChartTypeChange: (chartType: string) => void
+	onSelectedStablecoinChartTypeChange: (chartType: StablecoinChartType) => void
 	onStablecoinModeChange: (mode: 'chain' | 'asset') => void
 	onSelectedStablecoinAssetChange: (asset: string | null) => void
 	onSelectedStablecoinAssetIdChange: (id: string | null) => void
-	onSelectedStablecoinAssetChartTypeChange: (chartType: string) => void
+	onSelectedStablecoinAssetChartTypeChange: (chartType: StablecoinAssetChartType) => void
 }
 
-const STABLECOIN_CHAIN_CHART_TYPES = [
+const STABLECOIN_CHAIN_CHART_TYPES: Array<{ value: StablecoinChartType; label: string }> = [
 	{ value: 'totalMcap', label: 'Total Market Cap' },
 	{ value: 'tokenMcaps', label: 'Token Market Caps' },
 	{ value: 'pie', label: 'Pie' },
@@ -63,7 +63,7 @@ const STABLECOIN_CHAIN_CHART_TYPES = [
 	{ value: 'tokenInflows', label: 'Token Inflows' }
 ]
 
-const STABLECOIN_ASSET_CHART_TYPES = [
+const STABLECOIN_ASSET_CHART_TYPES: Array<{ value: StablecoinAssetChartType; label: string }> = [
 	{ value: 'totalCirc', label: 'Total Circulating' },
 	{ value: 'chainMcaps', label: 'By chain' },
 	{ value: 'chainPie', label: 'Pie' },
@@ -80,32 +80,6 @@ const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
 const BAR_EXPORT_BUTTONS = { csv: true, png: false, filename: 'bar-chart-data' }
 
-function normalizeStablecoinChartType(chartType: string): StablecoinChartType {
-	switch (chartType) {
-		case 'totalMcap':
-		case 'tokenMcaps':
-		case 'pie':
-		case 'dominance':
-		case 'usdInflows':
-		case 'tokenInflows':
-			return chartType
-		default:
-			return 'totalMcap'
-	}
-}
-
-function normalizeStablecoinAssetChartType(chartType: string): StablecoinAssetChartType {
-	switch (chartType) {
-		case 'totalCirc':
-		case 'chainMcaps':
-		case 'chainPie':
-		case 'chainDominance':
-			return chartType
-		default:
-			return 'totalCirc'
-	}
-}
-
 export function StablecoinsChartTab({
 	selectedStablecoinChain,
 	selectedStablecoinChartType,
@@ -120,8 +94,8 @@ export function StablecoinsChartTab({
 	onSelectedStablecoinAssetIdChange,
 	onSelectedStablecoinAssetChartTypeChange
 }: StablecoinsChartTabProps) {
-	const chainChartType = normalizeStablecoinChartType(selectedStablecoinChartType)
-	const assetChartType = normalizeStablecoinAssetChartType(selectedStablecoinAssetChartType)
+	const chainChartType = selectedStablecoinChartType
+	const assetChartType = selectedStablecoinAssetChartType
 	const { data: chainsListData, isLoading: chainsLoading } = useStablecoinChainsList()
 	const { data: assetsListData, isLoading: assetsLoading } = useStablecoinAssetsList()
 	const chainsList = chainsListData ?? EMPTY_CHAIN_LIST

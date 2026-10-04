@@ -12,10 +12,12 @@ import { fetchChainsCategories } from '~/containers/Chains/api'
 import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { chartBuilderHasExactRemainder } from '../../chartBuilderCapabilities'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -24,6 +26,7 @@ import {
 	fetchProtocolChainBreakdownData,
 	type ProtocolBreakdownMetric
 } from '../../services/ProtocolChartBuilderData'
+import { ProSegmented } from '../../ui'
 import { buildProTreemapData } from '../../utils/treemap'
 import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
@@ -112,6 +115,10 @@ const LIMIT_OPTIONS = [
 	{ value: '20', label: 'Top 20' }
 ]
 
+// The builder's checkbox, in the Pro info accent.
+const builderCheckboxStyles =
+	'flex size-3 shrink-0 items-center justify-center rounded-[2px] border border-pro-cards-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20'
+
 const MODE_OPTIONS: Array<{ value: ChartBuilderConfig['mode']; label: string }> = [
 	{ value: 'chains', label: 'Group by protocol' }, // group by protocol filter by chains
 	{ value: 'protocol', label: 'Group by chains' } // group by chains filter by protocol
@@ -199,12 +206,13 @@ export function ChartBuilderTab({
 		)
 	}, [chartBuilder.mode, chartBuilder.metric])
 
+	const isChainsMode = chartBuilder.mode === 'chains'
 	const chainFilterMode = chartBuilder.chainFilterMode
 	const categoryFilterMode = chartBuilder.categoryFilterMode
 	const chainCategoryFilterMode = chartBuilder.chainCategoryFilterMode
 	const protocolCategoryFilterMode = chartBuilder.protocolCategoryFilterMode
 
-	const { data: previewData, isLoading: previewLoading } = useQuery({
+	const preview = useQuery({
 		queryKey: [
 			'pro-dashboard',
 			'chartBuilder',
@@ -292,6 +300,8 @@ export function ChartBuilderTab({
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
+	const previewData = preview.data
+	const previewLoading = preview.isLoading
 
 	const seriesColors = chartBuilder.seriesColors
 	let hasCustomSeriesColors = false
@@ -448,30 +458,6 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ chains })
 	}
 
-	const handleCategoriesChange = (categories: Array<string>) => {
-		onChartBuilderChange({ categories })
-	}
-
-	const handleChainCategoriesChange = (chainCategories: Array<string>) => {
-		onChartBuilderChange({ chainCategories })
-	}
-
-	const handleProtocolCategoriesChange = (protocolCategories: Array<string>) => {
-		onChartBuilderChange({ protocolCategories })
-	}
-
-	const handleLimitChange = (option: VirtualizedSelectOption) => {
-		onChartBuilderChange({ limit: parseInt(option.value, 10) || 10 })
-	}
-
-	const handleChartTypeChange = (type: ChartBuilderConfig['chartType']) => {
-		onChartBuilderChange({ chartType: type })
-	}
-
-	const handleDisplayChange = (display: 'timeSeries' | 'percentage') => {
-		onChartBuilderChange({ displayAs: display })
-	}
-
 	const handleTreemapValueChange = (option: VirtualizedSelectOption) => {
 		const nextValue = option.value
 		if (nextValue === 'sum7d' || nextValue === 'sum30d' || nextValue === 'latest') {
@@ -479,22 +465,6 @@ export function ChartBuilderTab({
 			return
 		}
 		onChartBuilderChange({ treemapValue: 'latest' })
-	}
-
-	const handleChainFilterModeChange = (mode: 'include' | 'exclude') => {
-		onChartBuilderChange({ chainFilterMode: mode })
-	}
-
-	const handleCategoryFilterModeChange = (mode: 'include' | 'exclude') => {
-		onChartBuilderChange({ categoryFilterMode: mode })
-	}
-
-	const handleChainCategoryFilterModeChange = (mode: 'include' | 'exclude') => {
-		onChartBuilderChange({ chainCategoryFilterMode: mode })
-	}
-
-	const handleProtocolCategoryFilterModeChange = (mode: 'include' | 'exclude') => {
-		onChartBuilderChange({ protocolCategoryFilterMode: mode })
 	}
 
 	const handleModeChange = (mode: 'chains' | 'protocol') => {
@@ -522,20 +492,9 @@ export function ChartBuilderTab({
 	}
 
 	const handleSeriesColorReset = (seriesName: string) => {
-		const current = chartBuilder.seriesColors || {}
-		if (!(seriesName in current)) {
-			return
-		}
-		const next = { ...current }
+		const next = { ...chartBuilder.seriesColors }
 		delete next[seriesName]
 		onChartBuilderChange({ seriesColors: next })
-	}
-
-	const handleResetAllSeriesColors = () => {
-		if (!hasCustomSeriesColors) {
-			return
-		}
-		onChartBuilderChange({ seriesColors: {} })
 	}
 
 	const selectableProtocolOptions =
@@ -602,157 +561,84 @@ export function ChartBuilderTab({
 
 					<div className="border-t border-pro-cards-border pt-1.5">
 						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Mode</h4>
-						<Ariakit.RadioProvider
-							orientation="both"
+						<ProSegmented
+							label="Grouping mode"
+							options={MODE_OPTIONS}
 							value={chartBuilder.mode}
-							setValue={(next) => {
-								const option = MODE_OPTIONS.find((item) => item.value === next)
-								if (option && next !== chartBuilder.mode) handleModeChange(option.value)
-							}}
-						>
-							<Ariakit.RadioGroup
-								aria-label="Grouping mode"
-								className="mb-1.5 rounded-lg border border-pro-cards-border p-0.5"
-							>
-								<div className="grid grid-cols-2 gap-0.5">
-									{MODE_OPTIONS.map((option) => (
-										<label
-											key={option.value}
-											className={`relative cursor-pointer rounded-md px-2 py-1.5 text-center text-xs font-medium transition-all duration-200 has-focus-visible:focus-ring ${
-												chartBuilder.mode === option.value
-													? 'bg-pro-accent text-on-brand shadow-sm'
-													: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-											}`}
-										>
-											<Ariakit.Radio value={option.value} className="sr-only" />
-											{option.label}
-										</label>
-									))}
-								</div>
-							</Ariakit.RadioGroup>
-						</Ariakit.RadioProvider>
+							onValueChange={handleModeChange}
+							className="mb-1.5"
+						/>
 					</div>
 
 					<div className="border-t border-pro-cards-border pt-1.5">
 						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Filters</h4>
 
-						{chartBuilder.mode === 'chains' ? (
-							<>
-								<div className="mb-1.5 flex flex-col gap-1.5">
-									<VirtualizedMultiSelect
-										label="Chains filter"
-										labelAction={<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />}
-										options={selectableChainFilterOptions}
-										selectedValues={chartBuilder.chains}
-										onChange={handleChainsChange}
-										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude…' : 'Select chains…'}
-										isLoading={protocolsLoading || chainOptions.length === 0}
-										maxSelections={10}
+						{isChainsMode ? null : isProtocolUnsupportedMetric ? (
+							<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
+								<p className="text-xs text-pro-text-tertiary">This metric is available only for all protocols.</p>
+							</div>
+						) : (
+							<div className="mb-1.5 flex flex-col gap-1.5">
+								<VirtualizedSelect
+									variant="field"
+									label="Protocol"
+									options={selectableProtocolOptions}
+									selectedValue={chartBuilder.protocol || null}
+									onChange={handleProtocolChange}
+									placeholder="Select protocol…"
+									isLoading={protocolsLoading}
+								/>
+								{protocolParameter.boundVariable ? (
+									<BoundParameterChip
+										label={protocolParameter.boundVariable.label}
+										onUnbind={protocolParameter.unbind}
 									/>
-									{chainParameter.boundVariable ? (
-										<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
-									) : null}
-								</div>
+								) : null}
+							</div>
+						)}
 
-								<div className="mb-1.5">
-									<VirtualizedMultiSelect
-										label="Categories filter"
-										labelAction={
-											<FilterModeToggle value={categoryFilterMode} onChange={handleCategoryFilterModeChange} />
-										}
-										options={categoryOptions}
-										selectedValues={chartBuilder.categories}
-										onChange={handleCategoriesChange}
-										placeholder={
-											categoryFilterMode === 'exclude' ? 'Select categories to exclude…' : 'Select categories…'
-										}
-										maxSelections={5}
+						<div className="mb-1.5 flex flex-col gap-1.5">
+							<VirtualizedMultiSelect
+								label="Chains filter"
+								labelAction={
+									<FilterModeToggle
+										value={chainFilterMode}
+										onChange={(mode) => onChartBuilderChange({ chainFilterMode: mode })}
 									/>
-								</div>
+								}
+								options={selectableChainFilterOptions}
+								selectedValues={chartBuilder.chains}
+								onChange={handleChainsChange}
+								placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude…' : 'Select chains…'}
+								isLoading={protocolsLoading || chainOptions.length === 0}
+								maxSelections={10}
+							/>
+							{chainParameter.boundVariable ? (
+								<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+							) : null}
+						</div>
 
-								<div className="mb-1.5">
-									<VirtualizedSelect
-										variant="field"
-										label="Number of protocols"
-										options={LIMIT_OPTIONS}
-										selectedValue={chartBuilder.limit.toString()}
-										onChange={handleLimitChange}
-										placeholder="Select limit…"
-									/>
-								</div>
-
-								<div className="mb-1">
-									<Ariakit.CheckboxProvider value={chartBuilder.hideOthers || false}>
-										<label className="flex cursor-pointer items-center gap-1.5">
-											<Ariakit.Checkbox
-												onChange={(e) => onChartBuilderChange({ hideOthers: e.target.checked })}
-												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border border-pro-cards-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
-											/>
-											<span className="text-xs text-pro-text-secondary">
-												Hide "Others" (show only top {chartBuilder.limit})
-											</span>
-										</label>
-									</Ariakit.CheckboxProvider>
-								</div>
-
-								<div className="mb-1">
-									<Ariakit.CheckboxProvider value={chartBuilder.groupByParent || false}>
-										<label htmlFor={groupByParentId} className="flex cursor-pointer items-center gap-1.5">
-											<Ariakit.Checkbox
-												id={groupByParentId}
-												onChange={(e) =>
-													onChartBuilderChange({
-														groupByParent: e.target.checked
-													})
-												}
-												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border border-pro-cards-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
-											/>
-											<span className="text-xs text-pro-text-secondary">Group by parent protocol</span>
-										</label>
-									</Ariakit.CheckboxProvider>
-								</div>
-							</>
+						{isChainsMode ? (
+							<div className="mb-1.5">
+								<VirtualizedMultiSelect
+									label="Categories filter"
+									labelAction={
+										<FilterModeToggle
+											value={categoryFilterMode}
+											onChange={(mode) => onChartBuilderChange({ categoryFilterMode: mode })}
+										/>
+									}
+									options={categoryOptions}
+									selectedValues={chartBuilder.categories}
+									onChange={(categories) => onChartBuilderChange({ categories })}
+									placeholder={
+										categoryFilterMode === 'exclude' ? 'Select categories to exclude…' : 'Select categories…'
+									}
+									maxSelections={5}
+								/>
+							</div>
 						) : (
 							<>
-								{isProtocolUnsupportedMetric ? (
-									<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
-										<p className="text-xs text-pro-text-tertiary">This metric is available only for all protocols.</p>
-									</div>
-								) : (
-									<div className="mb-1.5 flex flex-col gap-1.5">
-										<VirtualizedSelect
-											variant="field"
-											label="Protocol"
-											options={selectableProtocolOptions}
-											selectedValue={chartBuilder.protocol || null}
-											onChange={handleProtocolChange}
-											placeholder="Select protocol…"
-											isLoading={protocolsLoading}
-										/>
-										{protocolParameter.boundVariable ? (
-											<BoundParameterChip
-												label={protocolParameter.boundVariable.label}
-												onUnbind={protocolParameter.unbind}
-											/>
-										) : null}
-									</div>
-								)}
-
-								<div className="mb-1.5 flex flex-col gap-1.5">
-									<VirtualizedMultiSelect
-										label="Chains filter"
-										labelAction={<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />}
-										options={selectableChainFilterOptions}
-										selectedValues={chartBuilder.chains}
-										onChange={handleChainsChange}
-										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude…' : 'Select chains…'}
-										isLoading={protocolsLoading || chainOptions.length === 0}
-										maxSelections={10}
-									/>
-									{chainParameter.boundVariable ? (
-										<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
-									) : null}
-								</div>
 								{!isProtocolUnsupportedMetric && chartBuilder.metric !== 'tvl' && !chartBuilder.protocol ? (
 									<div className="mb-1.5">
 										<VirtualizedMultiSelect
@@ -760,12 +646,12 @@ export function ChartBuilderTab({
 											labelAction={
 												<FilterModeToggle
 													value={protocolCategoryFilterMode}
-													onChange={handleProtocolCategoryFilterModeChange}
+													onChange={(mode) => onChartBuilderChange({ protocolCategoryFilterMode: mode })}
 												/>
 											}
 											options={categoryOptions}
 											selectedValues={chartBuilder.protocolCategories ?? EMPTY_CATEGORIES}
-											onChange={handleProtocolCategoriesChange}
+											onChange={(protocolCategories) => onChartBuilderChange({ protocolCategories })}
 											placeholder={
 												protocolCategoryFilterMode === 'exclude'
 													? 'Select protocol categories to exclude…'
@@ -781,12 +667,12 @@ export function ChartBuilderTab({
 										labelAction={
 											<FilterModeToggle
 												value={chainCategoryFilterMode}
-												onChange={handleChainCategoryFilterModeChange}
+												onChange={(mode) => onChartBuilderChange({ chainCategoryFilterMode: mode })}
 											/>
 										}
 										options={chainCategoryOptions}
 										selectedValues={chartBuilder.chainCategories ?? EMPTY_CATEGORIES}
-										onChange={handleChainCategoriesChange}
+										onChange={(chainCategories) => onChartBuilderChange({ chainCategories })}
 										placeholder={
 											chainCategoryFilterMode === 'exclude'
 												? 'Select chain categories to exclude…'
@@ -795,41 +681,54 @@ export function ChartBuilderTab({
 										maxSelections={5}
 									/>
 								</div>
-								<div className="mb-1.5">
-									<VirtualizedSelect
-										variant="field"
-										label="Number of chains"
-										options={LIMIT_OPTIONS}
-										selectedValue={chartBuilder.limit.toString()}
-										onChange={handleLimitChange}
-										placeholder="Select limit…"
-									/>
-								</div>
-								{!hasExactRemainder ? (
-									<p className="mb-1 text-xs text-pro-text-secondary">
-										This source returns exact Top {chartBuilder.limit} chain series only.
-									</p>
-								) : !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
-									<div className="mb-1">
-										<Ariakit.CheckboxProvider value={chartBuilder.hideOthers || false}>
-											<label className="flex cursor-pointer items-center gap-1.5">
-												<Ariakit.Checkbox
-													onChange={(e) =>
-														onChartBuilderChange({
-															hideOthers: e.target.checked
-														})
-													}
-													className="flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5] data-checked:bg-[#28a2b5]"
-												/>
-												<span className="text-xs text-pro-text-secondary">
-													Hide "Others" (show only top {chartBuilder.limit})
-												</span>
-											</label>
-										</Ariakit.CheckboxProvider>
-									</div>
-								) : null}
 							</>
 						)}
+
+						<div className="mb-1.5">
+							<VirtualizedSelect
+								variant="field"
+								label={isChainsMode ? 'Number of protocols' : 'Number of chains'}
+								options={LIMIT_OPTIONS}
+								selectedValue={chartBuilder.limit.toString()}
+								onChange={(option) => onChartBuilderChange({ limit: parseInt(option.value, 10) || 10 })}
+								placeholder="Select limit…"
+							/>
+						</div>
+
+						{!hasExactRemainder ? (
+							<p className="mb-1 text-xs text-pro-text-secondary">
+								This source returns exact Top {chartBuilder.limit} chain series only.
+							</p>
+						) : isChainsMode || !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
+							<div className="mb-1">
+								<Ariakit.CheckboxProvider value={chartBuilder.hideOthers || false}>
+									<label className="flex cursor-pointer items-center gap-1.5">
+										<Ariakit.Checkbox
+											onChange={(e) => onChartBuilderChange({ hideOthers: e.target.checked })}
+											className={builderCheckboxStyles}
+										/>
+										<span className="text-xs text-pro-text-secondary">
+											Hide "Others" (show only top {chartBuilder.limit})
+										</span>
+									</label>
+								</Ariakit.CheckboxProvider>
+							</div>
+						) : null}
+
+						{isChainsMode ? (
+							<div className="mb-1">
+								<Ariakit.CheckboxProvider value={chartBuilder.groupByParent || false}>
+									<label htmlFor={groupByParentId} className="flex cursor-pointer items-center gap-1.5">
+										<Ariakit.Checkbox
+											id={groupByParentId}
+											onChange={(e) => onChartBuilderChange({ groupByParent: e.target.checked })}
+											className={builderCheckboxStyles}
+										/>
+										<span className="text-xs text-pro-text-secondary">Group by parent protocol</span>
+									</label>
+								</Ariakit.CheckboxProvider>
+							</div>
+						) : null}
 					</div>
 
 					<div className="border-t border-pro-cards-border pt-1.5">
@@ -839,7 +738,7 @@ export function ChartBuilderTab({
 							value={chartBuilder.chartType}
 							setValue={(next) => {
 								const option = CHART_TYPE_OPTIONS.find((item) => item.value === next)
-								if (option && next !== chartBuilder.chartType) handleChartTypeChange(option.value)
+								if (option && next !== chartBuilder.chartType) onChartBuilderChange({ chartType: option.value })
 							}}
 						>
 							<Ariakit.RadioGroup aria-label="Chart type" className="grid grid-cols-2 gap-1 sm:grid-cols-4">
@@ -876,37 +775,12 @@ export function ChartBuilderTab({
 
 					<div className="border-t border-pro-cards-border pt-1.5">
 						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Display value as</h4>
-						<Ariakit.RadioProvider
-							orientation="both"
+						<ProSegmented
+							label="Display value as"
+							options={hasExactRemainder ? DISPLAY_OPTIONS : DISPLAY_OPTIONS.slice(0, 1)}
 							value={displayAs}
-							setValue={(next) => {
-								const option = DISPLAY_OPTIONS.find((item) => item.value === next)
-								if (option && next !== displayAs) handleDisplayChange(option.value)
-							}}
-						>
-							<Ariakit.RadioGroup
-								aria-label="Display value as"
-								className="rounded-lg border border-pro-cards-border p-0.5"
-							>
-								<div className="grid grid-cols-2 gap-0.5">
-									{DISPLAY_OPTIONS.map((option) =>
-										!hasExactRemainder && option.value === 'percentage' ? null : (
-											<label
-												key={option.value}
-												className={`relative cursor-pointer rounded-md px-2 py-1.5 text-center text-xs font-medium transition-colors duration-200 has-focus-visible:focus-ring ${
-													displayAs === option.value
-														? 'bg-pro-accent text-on-brand shadow-sm'
-														: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-												}`}
-											>
-												<Ariakit.Radio value={option.value} className="sr-only" />
-												{option.label}
-											</label>
-										)
-									)}
-								</div>
-							</Ariakit.RadioGroup>
-						</Ariakit.RadioProvider>
+							onValueChange={(display) => onChartBuilderChange({ displayAs: display })}
+						/>
 					</div>
 				</div>
 
@@ -925,7 +799,19 @@ export function ChartBuilderTab({
 						className="relative flex flex-1 items-center justify-center rounded-md border border-pro-cards-border bg-pro-cards-bg"
 						style={{ minHeight: '450px' }}
 					>
-						{previewLoading ? (
+						{queryReadFailed(preview) && !previewData ? (
+							<div role="alert" className="flex flex-col items-center gap-2 text-center">
+								<p className="text-sm text-data-down">Couldn't load the preview.</p>
+								<Button
+									type="button"
+									size="sm"
+									pendingLabel={preview.isFetching ? 'Retrying…' : null}
+									onClick={() => void preview.refetch()}
+								>
+									Try again
+								</Button>
+							</div>
+						) : previewLoading ? (
 							<div className="flex flex-col items-center gap-2 text-center text-pro-text-tertiary">
 								<LoadingSpinner size={24} />
 								<p className="text-sm text-pro-text-secondary">Loading preview…</p>
@@ -954,6 +840,8 @@ export function ChartBuilderTab({
 									)}
 								</Suspense>
 							</div>
+						) : previewData ? (
+							<p className="text-sm text-pro-text-secondary">No data for these settings.</p>
 						) : (
 							<div className="text-center">
 								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 text-pro-text-tertiary" />
@@ -971,7 +859,7 @@ export function ChartBuilderTab({
 								<h4 className="text-xs font-medium text-pro-text-secondary">Series colors</h4>
 								<button
 									type="button"
-									onClick={handleResetAllSeriesColors}
+									onClick={() => onChartBuilderChange({ seriesColors: {} })}
 									disabled={!hasCustomSeriesColors}
 									className={`text-xs font-medium transition-colors disabled:cursor-not-allowed ${
 										hasCustomSeriesColors
@@ -1005,6 +893,7 @@ export function ChartBuilderTab({
 												type="button"
 												onClick={() => handleSeriesColorReset(series.name)}
 												disabled={!hasOverride}
+												aria-label={`Reset color for ${series.name}`}
 												className={`text-xs font-medium transition-colors disabled:cursor-not-allowed ${
 													hasOverride
 														? 'text-pro-text-tertiary hover:text-pro-text-primary'

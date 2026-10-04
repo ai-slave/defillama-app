@@ -389,14 +389,10 @@ function NotebookHeader() {
 					<Keycap>⌘</Keycap>
 					<Keycap>↵</Keycap>
 				</span>
-				<button
-					type="button"
-					onClick={(e) => e.preventDefault()}
-					className="inline-flex items-center gap-1.5 rounded-md bg-sub-brand-primary px-3 py-1 text-[11.5px] font-semibold text-on-brand transition-colors hover:bg-sub-brand-primary/90"
-				>
+				<span className="inline-flex items-center gap-1.5 rounded-md bg-sub-brand-primary px-3 py-1 text-[11.5px] font-semibold text-on-brand">
 					<PlayGlyph />
 					Run all
-				</button>
+				</span>
 			</div>
 		</div>
 	)
@@ -453,14 +449,10 @@ function SqlNotebookCell() {
 				badge="sql"
 				action={
 					<>
-						<button
-							type="button"
-							onClick={(e) => e.preventDefault()}
-							className="inline-flex items-center gap-1 rounded-md bg-sub-brand-primary px-2 py-0.5 text-[10.5px] font-semibold text-on-brand"
-						>
+						<span className="inline-flex items-center gap-1 rounded-md bg-sub-brand-primary px-2 py-0.5 text-[10.5px] font-semibold text-on-brand">
 							<PlayGlyph size={4} />
 							Run
-						</button>
+						</span>
 						<span className="hidden items-center gap-1 sm:inline-flex">
 							<Keycap muted>⌘</Keycap>
 							<Keycap muted>↵</Keycap>
@@ -598,14 +590,10 @@ function AddCellBar() {
 
 function AddCellChip({ dot, label }: { dot: string; label: string }) {
 	return (
-		<button
-			type="button"
-			onClick={(e) => e.preventDefault()}
-			className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-hover-row/40 hover:text-pro-text-primary"
-		>
+		<span className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5">
 			<span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
 			<span className="font-mono">{label}</span>
-		</button>
+		</span>
 	)
 }
 

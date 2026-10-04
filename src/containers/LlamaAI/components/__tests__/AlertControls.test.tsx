@@ -4,6 +4,7 @@ import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { PriceAlertEditor } from '../alerts/PriceAlertEditor'
 import { PRICE_OPERATOR_OPTIONS, SegmentedToggle } from '../alerts/ui'
 import { CreateAlertModal } from '../CreateAlertModal'
@@ -232,28 +233,17 @@ test('while an alert is being created its fields cannot change what the outcome 
 	expect(dialog.textContent).toContain('Fires once when BTC goes below $50,000, delivered to your email.')
 })
 
-test('segmented radios do not notify on mount or external changes and respect disabled state', async () => {
+test('segmented radios do not notify on mount or external changes, only on a pick', async () => {
 	const onChange = vi.fn()
-	const render = async (value: 'above' | 'below', disabled: boolean) =>
+	const render = async (value: 'above' | 'below') =>
 		act(async () =>
 			root.render(
-				<SegmentedToggle
-					label="Comparison"
-					options={PRICE_OPERATOR_OPTIONS}
-					value={value}
-					onChange={onChange}
-					disabled={disabled}
-				/>
+				<SegmentedToggle label="Comparison" options={PRICE_OPERATOR_OPTIONS} value={value} onChange={onChange} />
 			)
 		)
-	await render('above', false)
-	await render('below', false)
+	await render('above')
+	await render('below')
 	expect(onChange).not.toHaveBeenCalled()
-	await render('below', true)
-	await act(async () => radio('Comparison', 'Above').click())
-	await press(radio('Comparison', 'Below'), 'ArrowLeft')
-	expect(onChange).not.toHaveBeenCalled()
-	await render('below', false)
 	await press(radio('Comparison', 'Below'), 'ArrowLeft')
 	expect(onChange).toHaveBeenCalledExactlyOnceWith('above')
 })
@@ -349,4 +339,56 @@ test('a price alert searches tokens on the server, sends the picked one, and loc
 		expect.objectContaining({ trigger: expect.objectContaining({ token_nk: 'coingecko:usd-coin', value: 1.05 }) })
 	])
 	await act(async () => save.resolve(Response.json({ id: 'new', alertExpression: '', nextRunAt: '' })))
+})
+
+function buttonNamed(name: string) {
+	return [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name
+	)!
+}
+
+test('closing a started alert asks first, and keeping it returns to the draft', async () => {
+	const store = await mountModal()
+	await input('textarea', 'Summarize Aave fees')
+	await act(async () => buttonNamed('Cancel').click())
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this alert?')
+	await act(async () => buttonNamed('Keep editing').click())
+	expect(store.getState().open).toBe(true)
+	expect(document.querySelector('textarea')!.value).toBe('Summarize Aave fees')
+	await act(async () => buttonNamed('Cancel').click())
+	await act(async () => {
+		buttonNamed('Discard').click()
+		await settle()
+	})
+	expect(store.getState().open).toBe(false)
+})
+
+test('a retried Slack channel list keeps its error while retrying, then the channel picker takes focus', async () => {
+	const retry = Promise.withResolvers<Response>()
+	let online = false
+	session.serve({
+		[`${AI}/slack/workspaces`]: {
+			workspaces: [{ team_id: 'T1', team_name: 'Llama Research', default_channel_id: 'C1', revoked: false }]
+		},
+		[`${AI}/slack/channels?team_id=T1`]: () => (online ? retry.promise : new Response('offline', { status: 503 }))
+	})
+	await mountModal()
+	await press(radio('Delivery channel', 'Email'), 'End')
+	await act(async () => {
+		await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Slack channels'))
+	})
+	online = true
+	const tryAgain = buttonNamed('Try again')
+	await act(async () => {
+		tryAgain.focus()
+		tryAgain.click()
+	})
+	await act(async () => {
+		await waitForUi(() => expect(tryAgain.textContent).toContain('Retrying…'))
+	})
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Slack channels')
+	await act(async () => retry.resolve(Response.json({ channels: [{ id: 'C1', name: 'alerts', is_private: false }] })))
+	await act(async () => {
+		await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('[aria-label="Slack channel"]')))
+	})
 })

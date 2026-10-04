@@ -119,7 +119,7 @@ test('pending toggles block repeats, even after opening edit, and roll back on f
 	await settle(() => expect(toggle().getAttribute('aria-disabled')).toBe('true'))
 	expect(toggle().getAttribute('aria-busy')).toBe('true')
 	await act(async () => {
-		document.querySelector<HTMLButtonElement>('button[aria-label="Edit"]')!.click()
+		document.querySelector<HTMLButtonElement>('button[aria-label="Edit Weekly yields"]')!.click()
 		toggle().click()
 	})
 	const patches = alertRequests().filter((request) => request.init?.method === 'PATCH')
@@ -180,7 +180,7 @@ test('a failed toggle preserves other alert changes and allows retry without dup
 	)
 	await act(async () => patches[0].resolve(new Response('nope', { status: 500 })))
 	await settle(() => expect(checked()).toEqual(['true', 'false']))
-	expect(first.getAttribute('aria-label')).toBe('Alert enabled')
+	expect(first.getAttribute('aria-label')).toBe('First report enabled')
 	expect(first.getAttribute('aria-disabled')).not.toBe('true')
 	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't update the alert. Try again.")
 	await act(async () => first.click())
@@ -218,17 +218,21 @@ function buttonNamed(scope: ParentNode, name: string) {
 	return [...scope.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
 }
 
-test('a failed delete keeps the alert and says so in the confirmation; a retry that succeeds removes it', async () => {
+test('a failed delete keeps the alert and says so in the confirmation, also while its retry runs; a retry that succeeds removes it', async () => {
 	let deleteStatus = 500
+	const retry = Promise.withResolvers<void>()
 	session.serve({
 		[ALERTS_URL]: () => Response.json({ alerts: deleteStatus === 500 ? [alert] : [] }),
-		[`${ALERTS_URL}/alert`]: (_url: URL, init?: RequestInit) =>
-			init?.method === 'DELETE' ? new Response(null, { status: deleteStatus }) : Response.json(alert)
+		[`${ALERTS_URL}/alert`]: async (_url: URL, init?: RequestInit) => {
+			if (init?.method !== 'DELETE') return Response.json(alert)
+			if (deleteStatus !== 500) await retry.promise
+			return new Response(null, { status: deleteStatus })
+		}
 	})
 	await render()
 	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
 	const confirmDelete = () => [...document.querySelectorAll('button')].findLast((b) => accessibleName(b) === 'Delete')!
-	await act(async () => buttonNamed(document, 'Delete').click())
+	await act(async () => buttonNamed(document, 'Delete Weekly yields').click())
 	await act(async () => confirmDelete().click())
 	await settle(() =>
 		expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe(
@@ -238,6 +242,11 @@ test('a failed delete keeps the alert and says so in the confirmation; a retry t
 	expect(document.querySelector('h3')?.textContent).toBe('Weekly yields')
 	deleteStatus = 204
 	await act(async () => confirmDelete().click())
+	await settle(() => expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Deleting…'))
+	expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe(
+		"Couldn't delete the alert. Try again."
+	)
+	await act(async () => retry.resolve())
 	await settle(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	expect(document.body.textContent).not.toContain('Weekly yields')
 })
@@ -254,7 +263,7 @@ test('a price alert saved with its name cleared takes the name a new alert of th
 	})
 	await render()
 	await settle(() => expect(document.body.textContent).toContain('My BTC alert'))
-	await act(async () => buttonNamed(document, 'Edit').click())
+	await act(async () => buttonNamed(document, 'Edit My BTC alert').click())
 	const name = [...document.querySelectorAll('input')].find((input) => input.value === 'My BTC alert')!
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, '')
@@ -287,7 +296,7 @@ test('deleting an alert moves focus to the next alert', async () => {
 	})
 	await render()
 	await settle(() => expect(checked()).toEqual(['true', 'true']))
-	await press(buttonNamed(document, 'Delete'))
+	await press(buttonNamed(document, 'Delete First report'))
 	await press([...document.querySelectorAll('button')].findLast((b) => accessibleName(b) === 'Delete')!)
 	await settle(() => expect(document.querySelectorAll('h3')).toHaveLength(1))
 	await settle(() => expect(document.activeElement).toBe(toggle()))
@@ -301,10 +310,29 @@ test.each(['Save', 'Cancel'])('closing the alert editor with %s returns focus to
 	})
 	await render()
 	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
-	await press(buttonNamed(document, 'Edit'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
 	await press(buttonNamed(document, action))
 	await settle(() => expect(document.querySelector('form')).toBeNull())
-	expect(document.activeElement).toBe(buttonNamed(document, 'Edit'))
+	expect(document.activeElement).toBe(buttonNamed(document, 'Edit Weekly yields'))
+})
+
+test('a failed alert save keeps its error while the retry runs', async () => {
+	let saves = 0
+	const retry = Promise.withResolvers<Response>()
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert`]: () => (++saves === 1 ? new Response(null, { status: 500 }) : retry.promise)
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
+	await press(buttonNamed(document, 'Save'))
+	await settle(() => expect(document.body.textContent).toContain("Couldn't save the alert. Try again."))
+	await press(buttonNamed(document, 'Save'))
+	await settle(() => expect(saves).toBe(2))
+	expect(document.body.textContent).toContain("Couldn't save the alert. Try again.")
+	await act(async () => retry.resolve(Response.json({})))
+	await settle(() => expect(document.querySelector('form')).toBeNull())
 })
 
 test('re-arming a fired price alert moves focus to the editor it opens', async () => {
@@ -325,6 +353,29 @@ test('re-arming a fired price alert moves focus to the editor it opens', async (
 	expect(document.activeElement).toBe(document.querySelector('input[name="title"]'))
 })
 
+test('re-arming from the actions menu moves focus to the editor instead of back to the menu button', async () => {
+	const fired: Alert = {
+		...alert,
+		enabled: false,
+		trigger: { type: 'price', token_nk: 'coingecko:bitcoin', op: 'above', value: 100_000, recurring: false }
+	}
+	session.serve({
+		[ALERTS_URL]: { alerts: [fired] },
+		[`${ALERTS_URL}/alert`]: () => new Promise<Response>(() => {})
+	})
+	await render()
+	await settle(() => expect(buttonNamed(document, `Actions for alert ${fired.title}`)).toBeDefined())
+	await press(buttonNamed(document, `Actions for alert ${fired.title}`))
+	await settle(() => expect(document.querySelector('[role="menuitem"]')).not.toBeNull())
+	const rearm = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+		(item) => item.textContent === 'Re-arm alert'
+	)!
+	await press(rearm)
+
+	await settle(() => expect(document.querySelector('[role="menu"]')).toBeNull())
+	expect(document.activeElement).toBe(document.querySelector('input[name="title"]'))
+})
+
 test('a run opened from history keeps focus while it loads, on its detail, and back on its row', async () => {
 	const detail = Promise.withResolvers<Response>()
 	const run = { id: 'run', executed_at: '2026-09-10T09:00:00Z', status: 'success', duration_ms: 1200, chart_count: 0 }
@@ -335,7 +386,7 @@ test('a run opened from history keeps focus while it loads, on its detail, and b
 	})
 	await render()
 	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
-	await press(buttonNamed(document, 'View history'))
+	await press(buttonNamed(document, 'View history of Weekly yields'))
 	await settle(() => expect(document.getElementById('alert-run-run')).not.toBeNull())
 	const row = document.getElementById('alert-run-run')!
 	await press(row)
@@ -381,7 +432,7 @@ test('an edit that fails after the Alerts dialog closes says so in a toast', asy
 	})
 	await render()
 	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
-	await press(buttonNamed(document, 'Edit'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
 	await press(buttonNamed(document, 'Save'))
 	await settle(() => expect(alertRequests().some((request) => request.init?.method === 'PATCH')).toBe(true))
 	await act(async () => dialogStore.hide())
@@ -409,16 +460,86 @@ test('a retry that clears the list notice leaves focus in the dialog', async () 
 	await settle(() => expect(document.activeElement).toBe(closeButton()))
 })
 
-test('a retry that loads the alerts in place of the error leaves focus in the dialog', async () => {
+test('a retry from a failed first load keeps the error and waits in Try again until the alerts load in its place', async () => {
+	const retry = Promise.withResolvers<Response>()
 	let online = false
 	session.serve({
-		[ALERTS_URL]: () => (online ? Response.json({ alerts: [alert] }) : new Response('offline', { status: 503 }))
+		[ALERTS_URL]: () => (online ? retry.promise : new Response('offline', { status: 503 }))
 	})
 	await render()
 	await settle(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
 	expect(document.body.textContent).not.toContain('Weekly yields')
 	online = true
-	await press(buttonNamed(document, 'Try again'))
+	const tryAgain = buttonNamed(document, 'Try again')
+	await press(tryAgain)
+	await settle(() => expect(accessibleName(tryAgain)).toBe('Retrying…'))
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts")
+
+	await act(async () => retry.resolve(Response.json({ alerts: [alert] })))
 	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
 	await settle(() => expect(document.activeElement).toBe(closeButton()))
+})
+
+test('closing Alerts with a changed alert editor asks first; an untouched editor closes directly', async () => {
+	session.serve({ [ALERTS_URL]: { alerts: [alert] } })
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
+	await press(closeButton())
+	expect(dialogStore.getState().open).toBe(false)
+
+	await act(async () => dialogStore.show())
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
+	const name = document.querySelector<HTMLInputElement>('input[name="title"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, 'Daily yields')
+		name.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await press(closeButton())
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard alert changes?')
+	await press(buttonNamed(document, 'Keep editing'))
+	expect(dialogStore.getState().open).toBe(true)
+	expect(document.querySelector<HTMLInputElement>('input[name="title"]')!.value).toBe('Daily yields')
+
+	// Discarding closes the dialog; the next opening starts without the dropped edit, so it closes directly.
+	await press(closeButton())
+	await press(buttonNamed(document, 'Discard'))
+	expect(dialogStore.getState().open).toBe(false)
+	await act(async () => dialogStore.show())
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(closeButton())
+	expect(dialogStore.getState().open).toBe(false)
+})
+
+test('a schedule edit survives opening a run from history and coming back, and closing still asks to discard it', async () => {
+	const run = { id: 'run', executed_at: '2026-09-10T09:00:00Z', status: 'success', duration_ms: 1200, chart_count: 0 }
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert/executions`]: { executions: [run] },
+		[`${ALERTS_URL}/alert/executions/run`]: {
+			...run,
+			alertTitle: alert.title,
+			generated_summary: 'All good',
+			generated_charts: []
+		}
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
+	const frequency = () => document.querySelector<HTMLSelectElement>('select[aria-label="Frequency"]')!
+	await act(async () => {
+		frequency().value = 'weekly'
+		frequency().dispatchEvent(new Event('input', { bubbles: true }))
+		frequency().dispatchEvent(new Event('change', { bubbles: true }))
+	})
+	await press(buttonNamed(document, 'View history of Weekly yields'))
+	await settle(() => expect(document.getElementById('alert-run-run')).not.toBeNull())
+	await press(document.getElementById('alert-run-run')!)
+	await settle(() => expect(buttonNamed(document, 'Back to history')).toBeDefined())
+	await press(buttonNamed(document, 'Back to history'))
+
+	expect(frequency().value).toBe('weekly')
+	await press(closeButton())
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard alert changes?')
 })

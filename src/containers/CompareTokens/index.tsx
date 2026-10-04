@@ -8,7 +8,7 @@ import { Select } from '~/components/Select/Select'
 import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { inputStyles } from '~/ui/Input'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -39,7 +39,8 @@ export function CompareTokens({
 	protocols: Array<CompareTokenProtocol>
 }) {
 	const router = useRouter()
-	const [isModalOpen, setIsModalOpen] = useState(0)
+	// Which of the two tokens the search dialog replaces; the dialog's store owns whether it is open.
+	const [pickingSlot, setPickingSlot] = useState<0 | 1>(0)
 	const coinParam = router.query?.coin
 	const typeParam = router.query?.type
 
@@ -96,32 +97,13 @@ export function CompareTokens({
 		<>
 			<h1 className="relative mx-auto mt-2 w-full max-w-sm text-center heading-sm lg:-left-[116px]">Compare Tokens</h1>
 			<div className="relative mx-auto flex w-full max-w-sm flex-col items-center gap-2 lg:-left-[116px]">
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-					<div className="relative w-full sm:max-w-[280px]">
-						{selectedCoins[0] != null ? (
-							<img
-								alt=""
-								src={geckoTokenIconUrl(selectedCoins[0].id)}
-								height={16}
-								width={16}
-								loading="lazy"
-								onError={(e) => applyLogoFallback(e.currentTarget)}
-								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
-							/>
-						) : (
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						)}
-						<Input
-							value={selectedCoins[0]?.name ?? ''}
-							onClick={() => {
-								setIsModalOpen(1)
-								dialogStore.toggle()
-							}}
-							readOnly
-							placeholder="Search coins..."
-							className={searchFieldInputPlacementStyles}
-						/>
-					</div>
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+					<CoinPicker
+						label="First token"
+						coin={selectedCoins[0]}
+						dialogStore={dialogStore}
+						onPick={() => setPickingSlot(0)}
+					/>
 					<button
 						type="button"
 						onClick={() => {
@@ -135,31 +117,12 @@ export function CompareTokens({
 						<Icon name="repeat" height={16} width={16} />
 						<span className="sr-only">Switch tokens</span>
 					</button>
-					<div className="relative w-full sm:max-w-[280px]">
-						{selectedCoins[1] != null ? (
-							<img
-								alt=""
-								src={geckoTokenIconUrl(selectedCoins[1].id)}
-								height={16}
-								width={16}
-								loading="lazy"
-								onError={(e) => applyLogoFallback(e.currentTarget)}
-								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
-							/>
-						) : (
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						)}
-						<Input
-							value={selectedCoins[1]?.name ?? ''}
-							onClick={() => {
-								setIsModalOpen(2)
-								dialogStore.toggle()
-							}}
-							readOnly
-							placeholder="Search coins..."
-							className={searchFieldInputPlacementStyles}
-						/>
-					</div>
+					<CoinPicker
+						label="Second token"
+						coin={selectedCoins[1]}
+						dialogStore={dialogStore}
+						onPick={() => setPickingSlot(1)}
+					/>
 				</div>
 				<Select
 					heading="Compare by"
@@ -221,13 +184,57 @@ export function CompareTokens({
 					selectedTokens={EMPTY_SELECTED_COINS}
 					selectToken={(coin) => {
 						const newCoins = coins.slice()
-						newCoins[isModalOpen - 1] = coin.id
+						newCoins[pickingSlot] = coin.id
 						void pushShallowQuery(router, { coin: newCoins })
-						setIsModalOpen(0)
-						dialogStore.toggle()
+						dialogStore.hide()
 					}}
 				/>
 			</div>
 		</>
+	)
+}
+
+/** Opens the shared token search for one side of the comparison. The disclosure gets focus back when the search closes. */
+function CoinPicker({
+	label,
+	coin,
+	dialogStore,
+	onPick
+}: {
+	label: string
+	coin: IResponseCGTokenRankingsDatasetItem | undefined
+	dialogStore: Ariakit.DialogStore
+	onPick: () => void
+}) {
+	return (
+		<div className="flex w-full flex-col gap-1.5 sm:max-w-[280px]">
+			<span className="body-sm text-secondary">{label}</span>
+			<Ariakit.DialogDisclosure
+				store={dialogStore}
+				onClick={onPick}
+				aria-label={`${label}: ${coin?.name ?? 'none'}`}
+				className={`${inputStyles} flex w-full cursor-pointer items-center justify-start gap-2 overflow-hidden text-left`}
+			>
+				{coin != null ? (
+					<>
+						<img
+							alt=""
+							src={geckoTokenIconUrl(coin.id)}
+							height={16}
+							width={16}
+							loading="lazy"
+							onError={(e) => applyLogoFallback(e.currentTarget)}
+							className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
+						/>
+						<span className="min-w-0 truncate">{coin.name}</span>
+					</>
+				) : (
+					<>
+						<Icon name="search" height={16} width={16} className="shrink-0 text-tertiary" />
+						<span className="text-tertiary">Search coins...</span>
+					</>
+				)}
+			</Ariakit.DialogDisclosure>
+		</div>
 	)
 }

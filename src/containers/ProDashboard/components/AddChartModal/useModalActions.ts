@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { useRefusal } from '~/ui/Dialog'
 import { normalizeChartBuilderConfig } from '../../chartBuilderCapabilities'
 import { isChainTokenChartType } from '../../chartSource'
 import { createChartConfig } from '../../dashboardConfig/classicChartConfig'
@@ -18,7 +19,7 @@ import { getItemIconUrl } from '../../utils'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
-import type { ChartBuilderUpdate, ChartTabType, MainTabType, ModalState } from './types'
+import type { ChartBuilderUpdate, ChartTabType, MainTabType } from './types'
 import { useModalState } from './useModalState'
 
 export function useModalActions(
@@ -322,16 +323,18 @@ export function useModalActions(
 	)
 
 	// A refused add or edit says why beside the button, for as long as the form is the one that was refused.
-	const [rejection, setRejection] = useState<{ state: ModalState; reason: string } | null>(null)
-	const submitError = rejection?.state === state ? rejection.reason : null
+	const [submitError, setRefusal] = useRefusal(state)
 
 	const handleSubmit = useCallback(() => {
 		let appendedIds: Array<string> = []
 		if (editItem) {
 			const newItem = buildEditedDashboardItem({ editItem, state, protocols, chains })
-			const edited = newItem ? handleEditItem(editItem.id, newItem) : null
-			if (edited?.status === 'refused') {
-				setRejection({ state, reason: edited.reason })
+			// A form the builder cannot turn into a card keeps the edit open instead of closing as if it saved.
+			const edited = newItem
+				? handleEditItem(editItem.id, newItem)
+				: ({ status: 'refused', reason: 'Finish choosing what this card shows to save it.' } as const)
+			if (edited.status === 'refused') {
+				setRefusal({ draft: state, reason: edited.reason })
 				return
 			}
 		} else {
@@ -341,7 +344,7 @@ export function useModalActions(
 				placement
 			)
 			if (appended.status === 'refused') {
-				setRejection({ state, reason: appended.reason })
+				setRefusal({ draft: state, reason: appended.reason })
 				return
 			}
 			appendedIds = appended.ids
@@ -350,7 +353,7 @@ export function useModalActions(
 		onClose()
 		const revealId = appendedIds[0]
 		if (revealId) requestDashboardItemReveal(revealId)
-	}, [editItem, state, chains, protocols, handleEditItem, handleAppendItems, onClose, placement])
+	}, [editItem, state, chains, protocols, handleEditItem, handleAppendItems, onClose, placement, setRefusal])
 
 	const uiActions = useMemo(
 		() => ({
@@ -401,3 +404,6 @@ export function useModalActions(
 		submitError
 	}
 }
+
+export type ModalActions = ReturnType<typeof useModalActions>['actions']
+export type ModalComputed = ReturnType<typeof useModalActions>['computed']

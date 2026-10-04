@@ -1,5 +1,12 @@
 import type { ReactNode } from 'react'
+import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+
+/** A ref for a notice around the composer that its own action or new state removes (a dismissed tip, a retried
+    prompt): when it leaves holding focus, the composer's prompt field takes it. One chat page has one prompt field. */
+export const focusComposerOnLeave = passFocusOnLeave(() =>
+	document.querySelector<HTMLTextAreaElement>('textarea[name="prompt"]')
+)
 
 /**
  * A strip docked on the composer's top edge for conversation state that blocks or shapes the next prompt, with
@@ -17,6 +24,7 @@ export function ComposerTray({
 }) {
 	return (
 		<div
+			ref={focusComposerOnLeave}
 			role="status"
 			data-composer-tray=""
 			// Full width with the negative margin cancelling the column's gap: the strip becomes the composer's header,

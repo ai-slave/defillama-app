@@ -134,7 +134,7 @@ test.each(['popup_closed', 'popup_failed_to_open'])('recovers after %s so the us
 	}
 })
 
-test('does not exchange a denied authorization and lets the user retry', async () => {
+test('does not exchange a denied authorization and keeps its error on screen while the retry waits', async () => {
 	const google = installGooglePopup()
 	const onCode = vi.fn()
 	const view = await mountButton({ loading: false, onCode })
@@ -146,6 +146,15 @@ test('does not exchange a denied authorization and lets the user retry', async (
 		)
 		expect(view.button.disabled).toBe(false)
 		expect(onCode).not.toHaveBeenCalled()
+		await act(async () => view.button.click())
+		expect(view.button.getAttribute('aria-busy')).toBe('true')
+		expect(view.button.textContent).toContain('Waiting for Google…')
+		expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
+			'Google sign-in did not finish. Try again.'
+		)
+		await act(async () => google.options.callback({ code: 'retry-code' }))
+		expect(onCode).toHaveBeenCalledWith('retry-code')
+		expect(view.container.querySelector('[role="alert"]')).toBeNull()
 	} finally {
 		await view.unmount()
 	}

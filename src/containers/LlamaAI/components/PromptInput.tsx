@@ -295,8 +295,6 @@ export function PromptInput({
 		setSubmitError((current) => (current ? null : current))
 	}, [])
 
-	const prepareImagesForSubmit = toSubmittedAttachments
-
 	const shouldResetSubmittedDraft = useCallback(
 		(promptValue: string, imagesToSend: Array<{ id: string }>) => {
 			if (valueRef.current !== promptValue) return false
@@ -343,7 +341,7 @@ export function PromptInput({
 				setSubmitError(null)
 				resetInput(imagesToSend)
 				try {
-					const images = await prepareImagesForSubmit(imagesToSend)
+					const images = await toSubmittedAttachments(imagesToSend)
 					const result = await handleSubmit(promptValue, finalEntities, images)
 					if (!wasAccepted(result)) {
 						setSubmitError(rejectionMessage(result))
@@ -364,7 +362,7 @@ export function PromptInput({
 
 			if (hasImages) {
 				try {
-					const images = await prepareImagesForSubmit(imagesToSend)
+					const images = await toSubmittedAttachments(imagesToSend)
 					const accepted = await Promise.resolve(
 						handleSubmit(promptValue, finalEntities, images, undefined, suggestedFlag)
 					)
@@ -533,7 +531,10 @@ export function PromptInput({
 						size="sm"
 						variant="ghost"
 						square
-						onClick={onClearQuotedText}
+						onClick={() => {
+							onClearQuotedText?.()
+							promptInputRef.current?.focus()
+						}}
 						aria-label="Clear quoted text"
 					>
 						<Icon name="x" height={14} width={14} />

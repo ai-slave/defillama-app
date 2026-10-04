@@ -44,7 +44,7 @@ export function useActiveTip(): {
 	tip: TipDTO | null
 	isResolved: boolean
 	markSeen: (tip: TipDTO) => void
-	dismissTip: (tip: TipDTO) => Promise<void>
+	dismissTip: (tip: TipDTO) => void
 	clickTip: (tip: TipDTO, action: string) => Promise<void>
 } {
 	const { tip: serverTip, queryState } = useLlamaAISettings()
@@ -106,17 +106,18 @@ export function useActiveTip(): {
 		[postTip]
 	)
 
+	// The tip leaves at once, so "Not now" and × never wait on the request; a failed dismissal only lets the tip come
+	// back on a later visit.
 	const dismissTip = useCallback(
-		async (t: TipDTO) => {
+		(t: TipDTO) => {
 			trackUmamiEvent('llamaai-tip-dismiss', { tipId: t.id, variant: t.variant, family: t.family })
-			try {
-				await postTipAsync({ tipId: t.id, kind: 'dismiss' })
-				clearTipInCache()
-			} catch (error) {
-				console.error('Failed to dismiss LlamaAI tip', error)
-			}
+			clearTipInCache()
+			postTip(
+				{ tipId: t.id, kind: 'dismiss' },
+				{ onError: (error) => console.error('Failed to dismiss LlamaAI tip', error) }
+			)
 		},
-		[clearTipInCache, postTipAsync]
+		[clearTipInCache, postTip]
 	)
 
 	const clickTip = useCallback(

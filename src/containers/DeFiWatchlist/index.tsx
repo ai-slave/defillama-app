@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
+import { startTransition, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
@@ -16,35 +16,27 @@ import { ChainsByCategoryTable } from '~/containers/ChainsByCategory/Table'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
-import {
-	getUserFacingErrorMessage,
-	useEmailNotifications,
-	type MetricType,
-	type NotificationSettings
-} from '~/hooks/useEmailNotifications'
+import { useEmailNotifications, type MetricType, type NotificationSettings } from '~/hooks/useEmailNotifications'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { InlineStatus, PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
+import { httpErrorMessage } from '~/utils/async'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import type { IChainsByCategoryData } from '../ChainsByCategory/types'
 import { chainMetrics, protocolMetrics } from './constants'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 const EMPTY_SAVED_PROTOCOLS: Array<IProtocol> = []
 const EMPTY_SAVED_CHAINS: IChainsByCategoryData['chains'] = []
@@ -253,14 +245,15 @@ export function PortfolioNotifications({
 }) {
 	const [settingsOpen, setSettingsOpen] = useState(false)
 	const [confirmingDelete, setConfirmingDelete] = useState(false)
+	// Delete and Enable leave with the preferences, so a successful delete closes onto the setup button.
+	const settingsButtonRef = useRef<HTMLButtonElement>(null)
 	const settingsOpening = useOpeningKey(settingsOpen)
 	const isClient = useIsClient()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
-	const { preferences, isLoading, error, refetch, savePreferences, updateStatus, deletePreferences } =
+	const { preferences, isLoading, isFetching, readFailed, refetch, savePreferences, updateStatus, deletePreferences } =
 		useEmailNotifications(selectedPortfolio)
 	const isChangingPreferences = savePreferences.isPending || updateStatus.isPending || deletePreferences.isPending
-	const [shouldRenderModal, setShouldRenderModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
+	const subscribeModalStore = Ariakit.useDialogStore()
 	const hasWatchlist = filteredProtocols.length > 0 || filteredChains.length > 0
 
 	const { protocolsCount, protocolsFirstMetrics, chainsCount, chainsFirstMetrics } = useMemo(() => {
@@ -309,7 +302,7 @@ export function PortfolioNotifications({
 		// The toasts hang on the promise, not on mutate's callbacks, so they still show after the reader leaves the page.
 		updateStatus.mutateAsync({ portfolioName: selectedPortfolio, active }).then(
 			() => toast.success(active ? 'Notification preferences enabled' : 'Notification preferences disabled'),
-			(statusError) => toast.error(getUserFacingErrorMessage(statusError, 'Failed to update notification status'))
+			(statusError) => toast.error(httpErrorMessage(statusError, 'Failed to update notification status'))
 		)
 	}
 
@@ -319,7 +312,7 @@ export function PortfolioNotifications({
 				<div className="mb-2">
 					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
 					{/* A failed read is unknown, not "none": offering setup would POST over the saved preferences. */}
-					{error ? (
+					{readFailed ? (
 						<InlineStatus variant="error">
 							<div className="flex flex-wrap items-center justify-between gap-2">
 								<span>
@@ -328,7 +321,12 @@ export function PortfolioNotifications({
 										? ", so they can't be changed yet."
 										: ", so they can't be changed and the portfolio can't be deleted yet."}
 								</span>
-								<Button type="button" size="sm" onClick={() => void refetch()}>
+								<Button
+									type="button"
+									size="sm"
+									pendingLabel={isFetching ? 'Retrying…' : null}
+									onClick={() => void refetch()}
+								>
 									Try again
 								</Button>
 							</div>
@@ -360,7 +358,7 @@ export function PortfolioNotifications({
 					)}
 				</div>
 
-				{error ? null : preferences?.settings ? (
+				{readFailed ? null : preferences?.settings ? (
 					<div className="mb-3 rounded-lg bg-surface-elevated-1 p-3">
 						<div className="space-y-1 body-xs text-secondary">
 							{protocolsCount > 0 ? (
@@ -385,9 +383,10 @@ export function PortfolioNotifications({
 					</div>
 				) : null}
 
-				{error ? null : (
+				{readFailed ? null : (
 					<div className="flex flex-wrap items-center gap-2">
 						<Button
+							ref={settingsButtonRef}
 							size="md"
 							type="button"
 							onClick={handleNotificationsButtonClick}
@@ -429,13 +428,10 @@ export function PortfolioNotifications({
 					</div>
 				)}
 			</Card>
-			{shouldRenderModal ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 			{confirmingDelete ? (
 				<ConfirmActionDialog
+					finalFocus={settingsButtonRef}
 					title="Delete email notifications?"
 					description={`Weekly emails for the "${selectedPortfolio}" portfolio stop, and its notification settings are removed.`}
 					confirmLabel="Delete"
@@ -443,7 +439,7 @@ export function PortfolioNotifications({
 					mutation={deletePreferences}
 					variables={{ portfolioName: selectedPortfolio }}
 					onClose={() => setConfirmingDelete(false)}
-					onSuccess={() => toast.success('Notification preferences deleted')}
+					successMessage="Notification preferences deleted"
 				/>
 			) : null}
 			<Dialog
@@ -525,6 +521,8 @@ function NotificationSettingsForm({
 	const [protocolPicks, setProtocolPicks] = useState(() => savedMetrics(savedSettings?.protocols))
 	const [chainPicks, setChainPicks] = useState(() => savedMetrics(savedSettings?.chains))
 	const [submitted, setSubmitted] = useState(false)
+	// The last save failure, kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [failure, setFailure] = useState<string | null>(null)
 
 	const settings = buildNotificationSettings(
 		protocolPicks,
@@ -544,8 +542,9 @@ function NotificationSettingsForm({
 				const form = event.currentTarget
 				// The dialog locks while saving, but leaving the page unmounts it; then only a toast can tell.
 				save.mutateAsync({ portfolioName: selectedPortfolio, settings, frequency: 'weekly' }).then(onSaved, (error) => {
-					if (!form.isConnected)
-						toast.error(getUserFacingErrorMessage(error, 'Failed to save notification preferences'))
+					const message = httpErrorMessage(error, 'Failed to save notification preferences')
+					if (form.isConnected) setFailure(message)
+					else toast.error(message)
 				})
 			}}
 		>
@@ -573,23 +572,9 @@ function NotificationSettingsForm({
 					disabled={save.isPending}
 				/>
 				{submitted && isEmpty ? <InlineStatus variant="error">Pick at least one metric to email.</InlineStatus> : null}
-				{save.error ? (
-					<InlineStatus variant="error">
-						{getUserFacingErrorMessage(save.error, 'Failed to save notification preferences')}
-					</InlineStatus>
-				) : null}
+				{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
 			</DialogBody>
-			<DialogFooter
-				dismiss={
-					<Ariakit.DialogDismiss
-						disabled={save.isPending}
-						accessibleWhenDisabled
-						render={<Button type="button" size="md" />}
-					>
-						Cancel
-					</Ariakit.DialogDismiss>
-				}
-			>
+			<DialogFooter dismiss={<DialogCancelButton />}>
 				<Button type="submit" variant="primary" size="md" pendingLabel={save.isPending ? 'Saving…' : null}>
 					{savedSettings ? 'Update settings' : 'Enable notifications'}
 				</Button>
@@ -652,6 +637,13 @@ function MetricChoices({
 
 function PortfolioSelection() {
 	const [open, setOpen] = useState(false)
+	// Fixed when Delete opens: the delete removes the portfolio before its confirmation closes, and the confirmation
+	// must not turn into the next portfolio's.
+	const [deleting, setDeleting] = useState<{ portfolio: string; notifications: boolean } | null>(null)
+	const newButtonRef = useRef<HTMLButtonElement>(null)
+	// A cancel returns to Delete. A delete removes it with the portfolio, so the delete points this at New, since the
+	// default portfolio it falls back to has no Delete.
+	const deleteFinalFocusRef = useRef<HTMLElement | null>(null)
 
 	const { portfolios, selectedPortfolio, addPortfolio, removePortfolio, setSelectedPortfolio } = useBookmarks('defi')
 	const { setSelectedPortfolio: setSelectedChainPortfolio } = useBookmarks('chains')
@@ -659,7 +651,7 @@ function PortfolioSelection() {
 	const {
 		preferences: notificationPreferences,
 		isLoading: isLoadingNotificationPreferences,
-		error: notificationPreferencesError,
+		readFailed: notificationPreferencesFailed,
 		deletePreferences: deleteNotificationPreferences
 	} = useEmailNotifications(selectedPortfolio)
 
@@ -673,26 +665,21 @@ function PortfolioSelection() {
 		setSelectedChainPortfolio(name)
 	}
 
-	const removeSelectedPortfolio = () => {
-		removePortfolio(selectedPortfolio)
+	const removePortfolioNamed = (portfolio: string) => {
+		removePortfolio(portfolio)
 		setSelectedChainPortfolio(DEFAULT_PORTFOLIO_NAME)
 	}
+	// The portfolio leaves with its notifications as one accepted action, so the removal sits in the mutation's own
+	// callback, which also runs once the page has unmounted.
+	const deletePortfolioWithNotifications = useMutation<void, Error, { portfolioName: string }>({
+		mutationFn: (variables) => deleteNotificationPreferences.mutateAsync(variables),
+		onSuccess: (_data, { portfolioName }) => removePortfolioNamed(portfolioName)
+	})
 
-	const handleRemovePortfolio = () => {
-		// Only portfolios with saved notifications have server preferences, and the server refuses to delete
-		// them without an active subscription (its email job skips those accounts too). A failed subscription
-		// read is not a lapse: userLoading stays on until a read succeeds, and the server decides instead.
-		if (!notificationPreferences || (!hasActiveSubscription && !loaders.userLoading)) return removeSelectedPortfolio()
-		// Keep the portfolio until the server delete succeeds: once it is gone, nothing in the UI can stop its emails.
-		// The promise, not mutate's callbacks, so the outcome lands even after the reader leaves the page.
-		deleteNotificationPreferences.mutateAsync({ portfolioName: selectedPortfolio }).then(
-			() => {
-				removeSelectedPortfolio()
-				toast.success('Notification preferences deleted')
-			},
-			(error) => toast.error(getUserFacingErrorMessage(error, 'Failed to delete notifications'))
-		)
-	}
+	// Only portfolios with saved notifications have server preferences, and the server refuses to delete them without
+	// an active subscription (its email job skips those accounts too). A failed subscription read is not a lapse:
+	// userLoading stays on until a read succeeds, and the server decides instead.
+	const deletesNotifications = notificationPreferences != null && (hasActiveSubscription || loaders.userLoading)
 
 	return (
 		<Card padding="none">
@@ -706,7 +693,7 @@ function PortfolioSelection() {
 					className={`${portfolioActionButtonClassName} min-w-[100px] justify-between`}
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={handleAddPortfolio} />
-				<Button type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
+				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
 					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>
 				</Button>
@@ -715,14 +702,14 @@ function PortfolioSelection() {
 						variant="destructive"
 						size="md"
 						type="button"
-						onClick={handleRemovePortfolio}
+						onClick={() => {
+							deleteFinalFocusRef.current = null
+							setDeleting({ portfolio: selectedPortfolio, notifications: deletesNotifications })
+						}}
 						// A failed read is unknown, not "no notifications": deleting locally could leave their emails running.
 						// The notifications card below says so and offers the retry.
 						disabled={
-							loaders.subscriptionInitialCheck ||
-							isLoadingNotificationPreferences ||
-							notificationPreferencesError != null ||
-							deleteNotificationPreferences.isPending
+							loaders.subscriptionInitialCheck || isLoadingNotificationPreferences || notificationPreferencesFailed
 						}
 						title="Delete current portfolio"
 					>
@@ -731,6 +718,44 @@ function PortfolioSelection() {
 					</Button>
 				) : null}
 			</TableToolbar>
+			{/* Outside the Delete button: it leaves with the portfolio while the dialog closes. Focus then lands on New,
+			    since the default portfolio has no Delete. */}
+			{deleting ? (
+				deleting.notifications ? (
+					// Keeps the portfolio until the server delete succeeds: once it is gone, nothing in the UI can stop
+					// its emails.
+					<ConfirmActionDialog
+						finalFocus={deleteFinalFocusRef}
+						title="Delete portfolio?"
+						description={`"${deleting.portfolio}", everything saved in it and its weekly email notifications are removed. This cannot be undone.`}
+						confirmLabel="Delete"
+						pendingLabel="Deleting…"
+						mutation={deletePortfolioWithNotifications}
+						variables={{ portfolioName: deleting.portfolio }}
+						onClose={() => setDeleting(null)}
+						onSuccess={() => {
+							deleteFinalFocusRef.current = newButtonRef.current
+						}}
+						successMessage="Notification preferences deleted"
+					/>
+				) : (
+					<ConfirmDialog
+						open
+						onClose={() => setDeleting(null)}
+						finalFocus={deleteFinalFocusRef}
+						title="Delete portfolio?"
+						description={`"${deleting.portfolio}" and everything saved in it are removed. This cannot be undone.`}
+						confirmLabel="Delete"
+						pendingLabel={null}
+						error={null}
+						onConfirm={() => {
+							setDeleting(null)
+							deleteFinalFocusRef.current = newButtonRef.current
+							removePortfolioNamed(deleting.portfolio)
+						}}
+					/>
+				)
+			) : null}
 		</Card>
 	)
 }

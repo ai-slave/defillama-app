@@ -10,6 +10,7 @@ import type {
 } from '~/containers/Subscription/types'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
 
 const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
 
@@ -77,6 +78,8 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 				</span>
 			) : (
 				<span className="shrink-0">
+					{/* The icon is the only sign of whether the plan has the feature, so it carries a name. */}
+					<span className="sr-only">{item.availability === 'check' ? 'Included: ' : 'Not included: '}</span>
 					{item.availability === 'check' ? (
 						<Icon name="check" height={24} width={24} className="text-sub-brand-secondary sm:h-5 sm:w-5" />
 					) : item.availability === 'x' ? (
@@ -622,14 +625,15 @@ export function ComparisonCell({
 			{isIncluded ? (
 				<Icon name="check" height={24} width={24} className="text-sub-brand-secondary" aria-hidden="true" />
 			) : isLimited ? (
-				<span className="group relative cursor-help">
+				// Focusable so keyboards reach the limit's explanation, and tappable on touch, not hover-only.
+				<Tooltip
+					content={tooltip}
+					tabIndex={tooltip ? 0 : undefined}
+					placement="top"
+					className="cursor-help rounded-sm px-1"
+				>
 					<span className="text-[13px] font-medium text-warning">Limited</span>
-					{tooltip ? (
-						<span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg bg-sub-dark-page px-3 py-2 text-xs leading-4 font-normal text-on-brand opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-sub-dark-card">
-							{tooltip}
-						</span>
-					) : null}
-				</span>
+				</Tooltip>
 			) : (
 				<Icon
 					name="minus"

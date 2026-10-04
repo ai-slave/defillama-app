@@ -7,23 +7,21 @@ import { Dialog, DialogBody } from '~/ui/Dialog'
 import { InlineStatus } from '~/ui/Status'
 
 export function OAuthWelcomeDialog({
-	isOpen,
-	isSaving = false,
-	error = null,
+	isSaving,
 	onContinue,
 	onSignOut
 }: {
-	isOpen: boolean
-	isSaving?: boolean
-	error?: string | null
-	onContinue: (promotionalEmails: 'on' | 'off') => void
+	isSaving: boolean
+	onContinue: (promotionalEmails: 'on' | 'off', onError: (error: Error) => void) => void
 	onSignOut: () => void
 }) {
 	const [acceptedTerms, setAcceptedTerms] = useState(false)
 	const [promotionalEmails, setPromotionalEmails] = useState(true)
+	// Not the mutation's own error: that one clears when a retry starts. Success closes the dialog.
+	const [error, setError] = useState<string | null>(null)
 
 	return (
-		<Dialog size="sm" open={isOpen} portal unmountOnHide hideOnEscape={false} hideOnInteractOutside={false}>
+		<Dialog size="sm" open portal unmountOnHide hideOnEscape={false} hideOnInteractOutside={false}>
 			<AuthDialogHeader title="Thanks for signing up!" closable={false} />
 			<DialogBody>
 				<Ariakit.DialogDescription className="body-sm text-secondary">
@@ -69,7 +67,7 @@ export function OAuthWelcomeDialog({
 					className="w-full"
 					disabled={!acceptedTerms}
 					pendingLabel={isSaving ? 'Saving…' : null}
-					onClick={() => onContinue(promotionalEmails ? 'on' : 'off')}
+					onClick={() => onContinue(promotionalEmails ? 'on' : 'off', (failure) => setError(failure.message))}
 				>
 					Continue
 				</Button>

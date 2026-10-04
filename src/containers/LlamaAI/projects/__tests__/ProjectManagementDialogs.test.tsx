@@ -82,15 +82,17 @@ afterEach(async () => {
 async function mount(mode: 'create' | 'rename' | 'delete') {
 	function Harness() {
 		const store = Ariakit.useDialogStore()
+		const open = Ariakit.useStoreState(store, 'open')
 		return (
 			<>
 				<Ariakit.DialogDisclosure store={store}>Open project dialog</Ariakit.DialogDisclosure>
 				{mode === 'delete' ? (
-					<DeleteProjectModal dialogStore={store} project={project} onDeleted={api.deleted} />
+					open ? (
+						<DeleteProjectModal project={project} onClose={store.hide} onDeleted={api.deleted} />
+					) : null
 				) : (
 					<CreateProjectModal
 						dialogStore={store}
-						mode={mode}
 						project={mode === 'rename' ? project : null}
 						onCreated={api.created}
 					/>
@@ -123,8 +125,9 @@ async function fill(input: HTMLInputElement | HTMLTextAreaElement, value: string
 	})
 }
 
-test('rename errors preserve both drafts, pending blocks duplicate submission, and retry saves', async () => {
+test('rename errors preserve both drafts, pending blocks duplicate submission, and a retry keeps the error until it saves', async () => {
 	let reject!: (error: Error) => void
+	const retry = Promise.withResolvers<{ project: Project }>()
 	api.request
 		.mockImplementationOnce(
 			() =>
@@ -132,7 +135,7 @@ test('rename errors preserve both drafts, pending blocks duplicate submission, a
 					reject = fail
 				})
 		)
-		.mockResolvedValue({ project: { ...project, name: 'Draft name' } })
+		.mockReturnValueOnce(retry.promise)
 	await mount('rename')
 	const input = document.querySelector<HTMLInputElement>('input')!
 	const description = document.querySelector<HTMLTextAreaElement>('textarea')!
@@ -152,6 +155,10 @@ test('rename errors preserve both drafts, pending blocks duplicate submission, a
 	expect(input.value).toBe('Draft name')
 	expect(description.value).toBe('Draft description')
 	await click('Save')
+	// The failure stays on screen while its retry runs.
+	await waitForUi(() => expect(button('Saving…')).toBeDefined())
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't save the project. Try again.")
+	await act(async () => retry.resolve({ project: { ...project, name: 'Draft name' } }))
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
 	expect(api.request).toHaveBeenLastCalledWith('/projects/qa', {
 		method: 'PATCH',
@@ -172,7 +179,7 @@ test('delete cancellation, failure and retry retain the named project and comple
 	)
 	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('QA Project')
 	expect(api.deleted).not.toHaveBeenCalled()
-	await click('Retry deletion')
+	await click('Delete project')
 	await waitForUi(() => expect(api.deleted).toHaveBeenCalledTimes(1))
 })
 
@@ -200,13 +207,17 @@ test('at the plan cap, creating says why it is unavailable instead of sending', 
 	expect(api.request).not.toHaveBeenCalled()
 })
 
-test('canceling and reopening creation clears the abandoned draft and stale error', async () => {
+test('canceling a typed project asks first, and reopening starts without the abandoned draft or error', async () => {
 	api.request.mockRejectedValueOnce(new Error('Offline'))
 	await mount('create')
 	await fill(document.querySelector<HTMLInputElement>('input')!, 'Abandoned')
 	await click('Create project')
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 	await click('Cancel')
+	// A typed name is work, so Cancel asks before dropping it.
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard this project?')
+	await click('Discard')
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
 	await click('Open project dialog')
 	expect(document.querySelector<HTMLInputElement>('input')!.value).toBe('')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -241,7 +252,6 @@ test('project rows keep independent rename drafts when another row is pending or
 						projectId="qa"
 						onSelect={() => {}}
 						onDelete={() => {}}
-						isDeleting={false}
 					/>
 				))}
 			</Providers>
@@ -276,15 +286,18 @@ test.each(['success', 'failure'] as const)(
 		)
 		function Harness({ id }: { id: string }) {
 			const store = Ariakit.useDialogStore()
+			const open = Ariakit.useStoreState(store, 'open')
 			return (
 				<>
 					<Ariakit.DialogDisclosure store={store}>Open project dialog</Ariakit.DialogDisclosure>
-					<DeleteProjectModal
-						key={id}
-						dialogStore={store}
-						project={{ ...project, id, name: id }}
-						onDeleted={api.deleted}
-					/>
+					{open ? (
+						<DeleteProjectModal
+							key={id}
+							project={{ ...project, id, name: id }}
+							onClose={store.hide}
+							onDeleted={api.deleted}
+						/>
+					) : null}
 				</>
 			)
 		}
@@ -361,11 +374,19 @@ test.each([true, false])(
 		await waitForUi(() => expect(container.textContent).toContain('Renamed project'))
 		await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
 		expect(api.push).not.toHaveBeenCalled()
-		await click('Actions for project Renamed project')
-		await chooseAction('Delete project')
-		await waitForUi(() =>
-			expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Attached sessions remain')
-		)
+		const openDeleteConfirm = async () => {
+			await act(async () => button('Actions for project Renamed project').focus())
+			await click('Actions for project Renamed project')
+			await chooseAction('Delete project')
+			await waitForUi(() =>
+				expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Attached sessions remain')
+			)
+		}
+		await openDeleteConfirm()
+		// A cancel returns to the project's menu, not to New project.
+		await click('Cancel')
+		await waitForUi(() => expect(document.activeElement).toBe(button('Actions for project Renamed project')))
+		await openDeleteConfirm()
 		await click('Delete project')
 		await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 		await click('Deleting…')
@@ -378,3 +399,39 @@ test.each([true, false])(
 		await waitForUi(() => expect(document.activeElement).toBe(button('New project')))
 	}
 )
+
+test('a failed chat rename keeps its error while the retry saves', async () => {
+	const retry = Promise.withResolvers<Record<string, never>>()
+	api.request.mockRejectedValueOnce(new Error('Offline')).mockReturnValueOnce(retry.promise)
+	await act(async () =>
+		root.render(
+			<Providers>
+				<ProjectSessionItem
+					session={{
+						sessionId: 'Alpha',
+						title: 'Alpha',
+						createdAt: '2026-09-07',
+						lastActivity: '2026-09-07',
+						isPinned: false,
+						pinnedAt: null,
+						isPublic: false,
+						shareToken: null
+					}}
+					projectId="qa"
+					onSelect={() => {}}
+					onDelete={() => {}}
+				/>
+			</Providers>
+		)
+	)
+	await click('Rename Alpha')
+	const input = document.querySelector<HTMLInputElement>('input[name="newTitle"]')!
+	await fill(input, 'Alpha draft')
+	await act(async () => input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await act(async () => input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await waitForUi(() => expect(button('Saving…')).toBeDefined())
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline')
+	await act(async () => retry.resolve({}))
+	await waitForUi(() => expect(document.querySelector('input[name="newTitle"]')).toBeNull())
+})

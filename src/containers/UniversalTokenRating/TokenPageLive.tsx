@@ -1298,7 +1298,6 @@ export function TokenPageLive({
 				lastEditedAt={asset.lastEditedAt}
 				disclosures={disclosures}
 				grading={scoringConfig?.grading}
-				onSelect={(key) => setCriteriaDrawer((current) => (current ? { ...current, activeKey: key } : current))}
 				onClose={() => setCriteriaDrawer(null)}
 			/>
 		</div>

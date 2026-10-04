@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import {
 	ActiveFilterCard,
+	ActiveFilterPills,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog
@@ -114,4 +115,35 @@ test('removing a filter hands focus to the next card, else the previous one, els
 	await click(control('Remove Price filter'))
 	expect(document.activeElement).toBe(chips()[0])
 	expect(accessibleName(chips()[0])).toBe('Price')
+})
+
+// A table page as it applies filters: the Filters button, then the applied filters as pills that clear them.
+function AppliedFilters() {
+	const [applied, setApplied] = useState<Array<FilterId>>(['price', 'volume', 'holders'])
+	return (
+		<>
+			<FilterBuilderDialog appliedCount={applied.length}>{null}</FilterBuilderDialog>
+			<ActiveFilterPills
+				pills={applied.map((id) => ({
+					id,
+					label: FILTERS.find((filter) => filter.id === id)!.label,
+					onRemove: () => setApplied(applied.filter((other) => other !== id))
+				}))}
+			/>
+		</>
+	)
+}
+
+test('a removed filter pill hands focus to the next pill, else the previous one, else the Filters button', async () => {
+	await act(async () => root.render(<AppliedFilters />))
+
+	await click(control('Remove Volume'))
+	expect(control('Remove Volume')).toBeUndefined()
+	expect(document.activeElement).toBe(control('Remove Holders'))
+
+	await click(control('Remove Holders'))
+	expect(document.activeElement).toBe(control('Remove Price'))
+
+	await click(control('Remove Price'))
+	expect(document.activeElement).toBe(control('Filters'))
 })

@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from 'react'
+import { useReducer, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import type { DashboardGrouping } from '../../../types'
@@ -8,10 +8,9 @@ import type {
 	ComparisonWizardState,
 	DisplayMode,
 	MetricSettings,
-	WizardAction,
-	WizardStep
+	WizardAction
 } from '../types'
-import { getNextStep, getPrevStep } from '../types'
+import { getNextStep, getPrevStep, MAX_COMPARISON_ITEMS } from '../types'
 
 const WIZARD_DEFAULTS: Omit<ComparisonWizardState, 'visibility'> = {
 	step: 'select-type',
@@ -19,8 +18,8 @@ const WIZARD_DEFAULTS: Omit<ComparisonWizardState, 'visibility'> = {
 	selectedItems: [],
 	selectedMetrics: [],
 	metricsForCards: [],
-	dashboardName: '',
-	tags: [],
+	dashboardName: null,
+	tags: null,
 	description: '',
 	grouping: 'day',
 	displayMode: 'default',
@@ -45,7 +44,7 @@ export function createInitialWizardState({
 	const items = comparisonPreset.items
 		.map((item) => item.trim())
 		.filter(Boolean)
-		.slice(0, 10)
+		.slice(0, MAX_COMPARISON_ITEMS)
 	// A preset with items skips straight to metrics; one without still skips the type step.
 	return {
 		...state,
@@ -60,36 +59,19 @@ function reducer(state: ComparisonWizardState, action: WizardAction): Comparison
 		case 'SET_STEP':
 			return { ...state, step: action.step }
 		case 'SET_COMPARISON_TYPE':
-			return {
-				...state,
-				comparisonType: action.comparisonType,
-				selectedItems: [],
-				selectedMetrics: []
-			}
+			// Picking the type already chosen keeps the selections made for it.
+			if (action.comparisonType === state.comparisonType) return state
+			return { ...state, comparisonType: action.comparisonType, selectedItems: [], selectedMetrics: [] }
 		case 'SET_SELECTED_ITEMS':
-			return {
-				...state,
-				selectedItems: action.items,
-				selectedMetrics: [],
-				metricsForCards: []
-			}
+			return { ...state, selectedItems: action.items, selectedMetrics: [], metricsForCards: [] }
 		case 'TOGGLE_SELECTED_ITEM': {
 			const isRemoving = state.selectedItems.includes(action.item)
-			if (isRemoving) {
-				return {
-					...state,
-					selectedItems: state.selectedItems.filter((i) => i !== action.item),
-					selectedMetrics: [],
-					metricsForCards: []
-				}
-			}
-			const maxItems = action.maxItems ?? 10
-			if (state.selectedItems.length >= maxItems) {
-				return state
-			}
+			if (!isRemoving && state.selectedItems.length >= MAX_COMPARISON_ITEMS) return state
 			return {
 				...state,
-				selectedItems: [...state.selectedItems, action.item],
+				selectedItems: isRemoving
+					? state.selectedItems.filter((i) => i !== action.item)
+					: [...state.selectedItems, action.item],
 				selectedMetrics: [],
 				metricsForCards: []
 			}
@@ -114,8 +96,6 @@ function reducer(state: ComparisonWizardState, action: WizardAction): Comparison
 				: [...state.metricsForCards, action.metric]
 			return { ...state, metricsForCards }
 		}
-		case 'SET_METRICS_FOR_CARDS':
-			return { ...state, metricsForCards: action.metrics }
 		case 'SET_METRIC_SETTINGS':
 			return { ...state, metricSettings: { ...state.metricSettings, ...action.settings } }
 		case 'SET_DASHBOARD_NAME':
@@ -124,10 +104,6 @@ function reducer(state: ComparisonWizardState, action: WizardAction): Comparison
 			return { ...state, visibility: action.visibility }
 		case 'SET_TAGS':
 			return { ...state, tags: action.tags }
-		case 'ADD_TAG':
-			return state.tags.includes(action.tag) ? state : { ...state, tags: [...state.tags, action.tag] }
-		case 'REMOVE_TAG':
-			return { ...state, tags: state.tags.filter((t) => t !== action.tag) }
 		case 'SET_DESCRIPTION':
 			return { ...state, description: action.description }
 		case 'SET_GROUPING':
@@ -136,165 +112,86 @@ function reducer(state: ComparisonWizardState, action: WizardAction): Comparison
 			return { ...state, displayMode: action.displayMode }
 		case 'SET_INCLUDE_TABLE':
 			return { ...state, includeTable: action.include }
-		default:
-			return state
+	}
+}
+
+function defaultDashboardName(displayNames: Array<string>) {
+	if (displayNames.length === 0) return 'Comparison'
+	if (displayNames.length === 1) return displayNames[0]
+	if (displayNames.length === 2) return displayNames.join(' vs ')
+	return `${displayNames[0]} vs ${displayNames.length - 1} competitors`
+}
+
+/** What the current step still needs before Next or Create, or null when it can continue. */
+function blockedReason(state: ComparisonWizardState, dashboardName: string) {
+	switch (state.step) {
+		case 'select-type':
+			return state.comparisonType === null ? 'Choose chains or protocols' : null
+		case 'select-items':
+			if (state.selectedItems.length > 0) return null
+			return state.comparisonType === 'chains' ? 'Pick at least 1 chain' : 'Pick at least 1 protocol'
+		case 'select-metrics':
+			return state.selectedMetrics.length > 0 ? null : 'Pick at least 1 metric'
+		case 'preview':
+			return dashboardName.trim() ? null : 'Enter a dashboard name'
 	}
 }
 
 // The preset seeds the first state only; the picker remounts the wizard for each opening.
 export function useComparisonWizard(comparisonPreset: ComparisonPreset | undefined) {
 	const { hasActiveSubscription } = useAuthContext()
-	const [state, dispatch] = useReducer(reducer, { hasActiveSubscription, comparisonPreset }, createInitialWizardState)
+	const [initialState] = useState(() => createInitialWizardState({ hasActiveSubscription, comparisonPreset }))
+	const [state, dispatch] = useReducer(reducer, initialState)
 	const { getProtocolInfo } = useProDashboardCatalog()
 
-	const setStep = useCallback((step: WizardStep) => dispatch({ type: 'SET_STEP', step }), [])
-
-	const setComparisonType = useCallback(
-		(comparisonType: ComparisonType) => dispatch({ type: 'SET_COMPARISON_TYPE', comparisonType }),
-		[]
+	// Until the reader edits them, the name and tags follow the selection, so going back to change it updates both.
+	const displayNames = state.selectedItems.map((item) =>
+		state.comparisonType === 'chains' ? item : getProtocolInfo(item)?.name || item
 	)
+	const dashboardName = state.dashboardName ?? defaultDashboardName(displayNames)
+	const tags = state.tags ?? displayNames
 
-	const setSelectedItems = useCallback((items: Array<string>) => dispatch({ type: 'SET_SELECTED_ITEMS', items }), [])
+	// Moving between steps alone loses nothing; any other change is work the dialog asks about before dropping.
+	let dirty = false
+	for (const key in state) {
+		if (
+			key !== 'step' &&
+			state[key as keyof ComparisonWizardState] !== initialState[key as keyof ComparisonWizardState]
+		)
+			dirty = true
+	}
 
-	const toggleSelectedItem = useCallback(
-		(item: string, maxItems?: number) =>
-			dispatch({ type: 'TOGGLE_SELECTED_ITEM', item, ...(maxItems === undefined ? {} : { maxItems }) }),
-		[]
-	)
-
-	const toggleMetric = useCallback((metric: string) => dispatch({ type: 'TOGGLE_METRIC', metric }), [])
-
-	const clearMetrics = useCallback(() => dispatch({ type: 'CLEAR_METRICS' }), [])
-
-	const selectAllMetrics = useCallback(
-		(metrics: Array<string>) => dispatch({ type: 'SELECT_ALL_METRICS', metrics }),
-		[]
-	)
-
-	const toggleMetricForCard = useCallback((metric: string) => dispatch({ type: 'TOGGLE_METRIC_FOR_CARD', metric }), [])
-
-	const setMetricsForCards = useCallback(
-		(metrics: Array<string>) => dispatch({ type: 'SET_METRICS_FOR_CARDS', metrics }),
-		[]
-	)
-
-	const setMetricSettings = useCallback(
-		(settings: Partial<MetricSettings>) => dispatch({ type: 'SET_METRIC_SETTINGS', settings }),
-		[]
-	)
-
-	const setDashboardName = useCallback((name: string) => dispatch({ type: 'SET_DASHBOARD_NAME', name }), [])
-
-	const setVisibility = useCallback(
-		(visibility: 'private' | 'public') => dispatch({ type: 'SET_VISIBILITY', visibility }),
-		[]
-	)
-
-	const setTags = useCallback((tags: Array<string>) => dispatch({ type: 'SET_TAGS', tags }), [])
-
-	const addTag = useCallback((tag: string) => dispatch({ type: 'ADD_TAG', tag }), [])
-
-	const removeTag = useCallback((tag: string) => dispatch({ type: 'REMOVE_TAG', tag }), [])
-
-	const setDescription = useCallback((description: string) => dispatch({ type: 'SET_DESCRIPTION', description }), [])
-
-	const setGrouping = useCallback((grouping: DashboardGrouping) => dispatch({ type: 'SET_GROUPING', grouping }), [])
-
-	const setDisplayMode = useCallback(
-		(displayMode: DisplayMode) => dispatch({ type: 'SET_DISPLAY_MODE', displayMode }),
-		[]
-	)
-
-	const setIncludeTable = useCallback((include: boolean) => dispatch({ type: 'SET_INCLUDE_TABLE', include }), [])
-
-	const goToNextStep = useCallback(() => {
-		const next = getNextStep(state.step)
-		if (next) {
-			if (next === 'preview') {
-				const displayNames = state.selectedItems.map((item) => {
-					if (state.comparisonType === 'chains') return item
-					return getProtocolInfo(item)?.name || item
-				})
-				if (!state.dashboardName) {
-					const firstName = displayNames.slice(0, 1).join('')
-					const defaultName =
-						displayNames.length === 0
-							? 'Comparison'
-							: displayNames.length === 1
-								? firstName
-								: displayNames.length === 2
-									? displayNames.join(' vs ')
-									: `${firstName} vs ${displayNames.length - 1} competitors`
-					setDashboardName(defaultName)
-				}
-				if (state.tags.length === 0) {
-					setTags(displayNames)
-				}
-			}
-			setStep(next)
-		}
-	}, [
-		state.step,
-		state.dashboardName,
-		state.selectedItems,
-		state.comparisonType,
-		state.tags.length,
-		getProtocolInfo,
-		setStep,
-		setDashboardName,
-		setTags
-	])
-
-	const goToPrevStep = useCallback(() => {
-		const prev = getPrevStep(state.step)
-		if (prev) setStep(prev)
-	}, [state.step, setStep])
-
-	const canProceed = (() => {
-		switch (state.step) {
-			case 'select-type':
-				return state.comparisonType !== null
-			case 'select-items':
-				return state.selectedItems.length > 0
-			case 'select-metrics':
-				return state.selectedMetrics.length > 0
-			case 'preview':
-				return state.dashboardName.trim().length > 0
-			default:
-				return false
-		}
-	})()
-
-	const canGoBack = getPrevStep(state.step) !== null
+	const goTo = (next: ComparisonWizardState['step'] | null) => {
+		if (next) dispatch({ type: 'SET_STEP', step: next })
+	}
 
 	return {
 		state,
 		actions: {
-			setStep,
-			setComparisonType,
-			setSelectedItems,
-			toggleSelectedItem,
-			toggleMetric,
-			clearMetrics,
-			selectAllMetrics,
-			toggleMetricForCard,
-			setMetricsForCards,
-			setMetricSettings,
-			setDashboardName,
-			setVisibility,
-			setTags,
-			addTag,
-			removeTag,
-			setDescription,
-			setGrouping,
-			setDisplayMode,
-			setIncludeTable,
-			goToNextStep,
-			goToPrevStep
+			setComparisonType: (comparisonType: ComparisonType) => dispatch({ type: 'SET_COMPARISON_TYPE', comparisonType }),
+			setSelectedItems: (items: Array<string>) => dispatch({ type: 'SET_SELECTED_ITEMS', items }),
+			toggleSelectedItem: (item: string) => dispatch({ type: 'TOGGLE_SELECTED_ITEM', item }),
+			toggleMetric: (metric: string) => dispatch({ type: 'TOGGLE_METRIC', metric }),
+			clearMetrics: () => dispatch({ type: 'CLEAR_METRICS' }),
+			selectAllMetrics: (metrics: Array<string>) => dispatch({ type: 'SELECT_ALL_METRICS', metrics }),
+			toggleMetricForCard: (metric: string) => dispatch({ type: 'TOGGLE_METRIC_FOR_CARD', metric }),
+			setMetricSettings: (settings: Partial<MetricSettings>) => dispatch({ type: 'SET_METRIC_SETTINGS', settings }),
+			setDashboardName: (name: string) => dispatch({ type: 'SET_DASHBOARD_NAME', name }),
+			setVisibility: (visibility: 'private' | 'public') => dispatch({ type: 'SET_VISIBILITY', visibility }),
+			setTags: (nextTags: Array<string>) => dispatch({ type: 'SET_TAGS', tags: nextTags }),
+			setDescription: (description: string) => dispatch({ type: 'SET_DESCRIPTION', description }),
+			setGrouping: (grouping: DashboardGrouping) => dispatch({ type: 'SET_GROUPING', grouping }),
+			setDisplayMode: (displayMode: DisplayMode) => dispatch({ type: 'SET_DISPLAY_MODE', displayMode }),
+			setIncludeTable: (include: boolean) => dispatch({ type: 'SET_INCLUDE_TABLE', include }),
+			goToNextStep: () => goTo(getNextStep(state.step)),
+			goToPrevStep: () => goTo(getPrevStep(state.step))
 		},
 		derived: {
-			canProceed,
-			canGoBack
+			dashboardName,
+			tags,
+			blockedReason: blockedReason(state, dashboardName),
+			canGoBack: getPrevStep(state.step) !== null,
+			dirty
 		}
 	}
 }

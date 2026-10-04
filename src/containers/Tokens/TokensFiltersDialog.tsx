@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
 	ActiveFilterCard,
+	ActiveFilterPills,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog,
@@ -8,8 +9,6 @@ import {
 	NoActiveFilters
 } from '~/components/FilterBuilderDialog'
 import { parseEquityFilterNumber } from '~/containers/Equities/filters'
-import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
 import {
 	formatTokensActiveFilter,
 	getTokensFilterConfig,
@@ -139,24 +138,13 @@ export function TokensActiveFilterPills({
 	filters: Array<TokensActiveFilter>
 	onRemove: (id: TokensFilterField) => void
 }) {
-	if (filters.length === 0) return null
-
 	return (
-		<div className="flex flex-wrap gap-1">
-			{filters.map((filter) => (
-				<Button
-					key={filter.id}
-					type="button"
-					variant="filter"
-					size="sm"
-					data-active="true"
-					className="group"
-					onClick={() => onRemove(filter.id)}
-				>
-					<span>{formatTokensActiveFilter(filter)}</span>
-					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</Button>
-			))}
-		</div>
+		<ActiveFilterPills
+			pills={filters.map((filter) => ({
+				id: filter.id,
+				label: formatTokensActiveFilter(filter),
+				onRemove: () => onRemove(filter.id)
+			}))}
+		/>
 	)
 }

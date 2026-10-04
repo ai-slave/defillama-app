@@ -12,7 +12,7 @@ import {
 } from 'react'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { catchLostFocus } from '~/ui/focus'
+import { catchLostFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
 
@@ -93,9 +93,7 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
     the reader confirms. */
 type LeaveGuard = (proceed: () => void) => void
 
-/** The surface's lock (`pending`), its close and its leave guard, read by the ×, Cancel, the back control and guarded
-    tabs. */
-const DialogSurfaceContext = createContext<{
+type DialogSurface = {
 	pending: boolean
 	/** Closes this surface. Inside a TabPanel the nearest Ariakit dialog context is the panel's own store, so a control
 	    that closes the dialog uses this instead. */
@@ -103,9 +101,37 @@ const DialogSurfaceContext = createContext<{
 	setGuard: (guard: LeaveGuard | null) => void
 	/** Hands `proceed` to the guard and returns true when one is mounted; otherwise returns false. */
 	attemptLeave: (proceed: () => void) => boolean
-}>({ pending: false, close: () => {}, attemptLeave: () => false, setGuard: () => {} })
+	/** Whether the surface is still open, for a step that may have closed it. */
+	isOpen: () => boolean
+	/** Focuses the caller's finalFocus, else the control that opened the surface, else the page content. For a guard's
+	    Discard that closes the surface: Ariakit skips its own return while focus sits on Discard, outside the surface. */
+	returnFocus: () => void
+}
+
+// What a raw Ariakit.Dialog's children read: nothing locks or guards it, and its own store closes it.
+const NO_SURFACE: DialogSurface = {
+	pending: false,
+	close: () => {},
+	attemptLeave: () => false,
+	setGuard: () => {},
+	isOpen: () => false,
+	returnFocus: () => {}
+}
+
+/** The surface's lock (`pending`), its close and its leave guard, read by the ×, Cancel, the back control and guarded
+    tabs. */
+const DialogSurfaceContext = createContext<DialogSurface>(NO_SURFACE)
 
 type SurfaceDismissProps = Pick<SurfaceProps, 'pending' | 'hideOnEscape' | 'hideOnInteractOutside'>
+
+/** Where focus goes when a surface closes. Ariakit hands over the trigger (or finalFocus) only while it can still take
+    focus. Once an update removed it, focus goes to the page content instead of the body. Under a dialog that is still
+    open the page is inert, so the focus call does nothing and that dialog's own net (catchLostFocus) catches it. */
+function returnFocusOnHide(trigger: HTMLElement | null) {
+	if (trigger) return true
+	pageContent()?.focus()
+	return false
+}
 
 /** The dismissal shared by Dialog and SideSheet: `pending` stops Escape, outside taps and the ×; a mounted
     DialogDiscardGuard turns Escape and the × into its own prompt and ignores outside taps. The guard is read when the
@@ -114,15 +140,21 @@ function SurfaceDialog({
 	pending = false,
 	hideOnEscape = true,
 	hideOnInteractOutside = true,
+	autoFocusOnHide = returnFocusOnHide,
 	ref,
 	...props
 }: SurfaceDismissProps & Omit<ComponentProps<typeof Ariakit.Dialog>, 'hideOnEscape' | 'hideOnInteractOutside'>) {
 	const guardRef = useRef<LeaveGuard | null>(null)
 	// A dialog under Ariakit.DialogProvider gets its store from context, not from a prop.
 	const contextStore = Ariakit.useDialogContext()
+	const nodeRef = useRef<HTMLDivElement | null>(null)
+	// The control focus came from when it entered the surface: the one that opened it (the click capture below makes
+	// that the pressed button in Safari and Firefox too). Recorded per opening, as a surface may stay mounted.
+	const openerRef = useRef<HTMLElement | null>(null)
 	// Stable, so a render never resets the net in the commit that removes the focused control.
 	const surfaceRef = useCallback(
 		(node: HTMLDivElement | null) => {
+			nodeRef.current = node
 			const release = catchLostFocus(node)
 			if (typeof ref === 'function') ref(node)
 			else if (ref) ref.current = node
@@ -152,6 +184,18 @@ function SurfaceDialog({
 			if (!guardRef.current) return false
 			guardRef.current(proceed)
 			return true
+		},
+		isOpen: () => !!nodeRef.current?.hasAttribute('data-open'),
+		returnFocus: () => {
+			const { finalFocus } = props
+			const named = finalFocus instanceof HTMLElement ? finalFocus : finalFocus?.current
+			const opener = openerRef.current
+			const target = named?.isConnected
+				? named
+				: opener instanceof HTMLElement && opener.isConnected
+					? opener
+					: pageContent()
+			target?.focus()
 		}
 	}
 	return (
@@ -168,15 +212,43 @@ function SurfaceDialog({
 					!pending &&
 					(typeof hideOnInteractOutside === 'function' ? hideOnInteractOutside(event) : hideOnInteractOutside)
 				}
+				autoFocusOnHide={autoFocusOnHide}
 				{...props}
+				onFocusCapture={(event) => {
+					// Not focus coming back from inside: from the surface itself, or from a dialog stacked over it in its portal.
+					const from = event.relatedTarget
+					const dialog = event.currentTarget
+					if (
+						from instanceof HTMLElement &&
+						!dialog.contains(from) &&
+						!document.getElementById(dialog.dataset.dialogPortal ?? '')?.contains(from)
+					)
+						openerRef.current = from
+					props.onFocusCapture?.(event)
+				}}
+				onClickCapture={(event) => {
+					// Safari and Firefox on macOS leave focus where it was when a button is clicked. A dialog that the click
+					// opens takes the focused element as its trigger, often this surface's ×, and returns focus there on close
+					// instead of to the button or the caller's target. So the button takes focus first, as in Chrome. Focus in a
+					// text field stays: a button beside one (clear, show password) acts on the field.
+					const control = (event.target as Element).closest('button, a[href]')
+					const active = document.activeElement
+					if (
+						control instanceof HTMLElement &&
+						control !== active &&
+						!active?.matches('input, textarea, [contenteditable]')
+					)
+						control.focus()
+					props.onClickCapture?.(event)
+				}}
 				ref={surfaceRef}
 			/>
 		</DialogSurfaceContext>
 	)
 }
 
-/** Asks before the dialog drops work: while `when` holds, Escape, the ×, DialogCancelButton and useDialogLeave steps
-    open a confirmation that runs the step only on its confirm, and an outside tap does nothing. */
+/** Asks before the dialog drops work: while `when` holds, Escape, the ×, DialogCancelButton, DialogBackButton and
+    useDialogLeave steps open a confirmation that runs the step only on its confirm, and an outside tap does nothing. */
 export function DialogDiscardGuard({
 	when,
 	title,
@@ -190,7 +262,7 @@ export function DialogDiscardGuard({
 	confirmLabel?: string
 	cancelLabel?: string
 }) {
-	const { setGuard } = useContext(DialogSurfaceContext)
+	const { setGuard, isOpen, returnFocus } = useContext(DialogSurfaceContext)
 	// The step that leaving would take (close the dialog, switch a tab), held while the reader confirms it.
 	const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
 	return (
@@ -210,6 +282,12 @@ export function DialogDiscardGuard({
 				onClose={() => setPendingLeave(null)}
 				portal
 				unmountOnHide
+				autoFocusOnHide={(trigger) => {
+					if (isOpen()) return returnFocusOnHide(trigger)
+					// Discard closed the guarded surface, taking the control that asked (its ×, a field) with it.
+					returnFocus()
+					return false
+				}}
 				title={title}
 				description={description}
 				confirmLabel={confirmLabel}
@@ -263,6 +341,7 @@ export function Dialog({
 	canvas = false,
 	workspace = false,
 	scope,
+	onClosed,
 	...props
 }: SurfaceProps & {
 	size: DialogSize
@@ -272,18 +351,42 @@ export function Dialog({
 	/** Only for a body of bg-surface cards, like the Metrics browser. */
 	canvas?: boolean
 	scope?: keyof typeof DIALOG_SCOPE
+	/** For a controlled dialog (`open` and `onClose`): runs once the exit animation has ended, for a caller that keeps
+	    heavy content mounted until then. */
+	onClosed?: () => void
 }) {
 	const surface = canvas
 		? `${dialogCanvasSurfaceStyles} ${fullSheet ? 'max-sm:h-(--sheet-height)' : ''}`
 		: fullSheet
 			? dialogFullSheetSurfaceStyles
 			: dialogSurfaceStyles
-	return (
-		<SurfaceDialog
-			className={`${surface} ${dialogWidthStyles[size]} ${workspace ? dialogWorkspaceStyles : ''} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
-			{...props}
-		/>
+	const className =
+		`${surface} ${dialogWidthStyles[size]} ${workspace ? dialogWorkspaceStyles : ''} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()
+	return onClosed ? (
+		<ClosedReportingSurfaceDialog className={className} onClosed={onClosed} {...props} />
+	) : (
+		<SurfaceDialog className={className} {...props} />
 	)
+}
+
+/** A controlled surface on its own store, the only way Ariakit reports the end of the exit animation. */
+function ClosedReportingSurfaceDialog({
+	open,
+	onClose,
+	onClosed,
+	...props
+}: ComponentProps<typeof SurfaceDialog> & { onClosed: () => void }) {
+	const store = Ariakit.useDialogStore({
+		open,
+		setOpen: (next) => {
+			if (!next) onClose?.(new Event('close'))
+		},
+		// Ariakit reports mounted = false once the exit animation ends, never on a first render that starts closed.
+		setMounted: (mounted) => {
+			if (!mounted) onClosed()
+		}
+	})
+	return <SurfaceDialog store={store} {...props} />
 }
 
 /** A key that changes each time `open` turns true. Key a dialog's stateful component by it instead of resetting
@@ -416,15 +519,18 @@ type DialogCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof Ariakit.Dialo
 }
 
 export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...props }: DialogCloseButtonProps) {
-	const { pending, attemptLeave } = useContext(DialogSurfaceContext)
-	const store = Ariakit.useDialogContext()!
+	const surface = useContext(DialogSurfaceContext)
 	return (
 		<Ariakit.DialogDismiss
 			onClick={(event) => {
-				// DialogDismiss skips its hide when the click is already handled; the guard hides once confirmed.
-				if (attemptLeave(() => store.hide())) event.preventDefault()
+				// A raw Ariakit.Dialog has no surface, so DialogDismiss hides its store.
+				if (surface === NO_SURFACE) return
+				// The surface closes the dialog itself: inside a TabPanel, DialogDismiss would hide the panel. A mounted
+				// guard closes it once confirmed.
+				event.preventDefault()
+				if (!surface.attemptLeave(surface.close)) surface.close()
 			}}
-			disabled={pending}
+			disabled={surface.pending}
 			accessibleWhenDisabled
 			render={<Button type="button" variant="ghost" size="md" square className={`-mr-2 ${className ?? ''}`.trim()} />}
 			aria-label={ariaLabel}
@@ -436,18 +542,19 @@ export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...pr
 }
 
 /** The footer's Cancel: it closes the way the × does, through a mounted DialogDiscardGuard, and is disabled while the
-    surface is pending. */
-export function DialogCancelButton() {
+    surface is pending. Name the safe choice when "Cancel" would be ambiguous, e.g. "Keep editing". */
+export function DialogCancelButton({ children = 'Cancel' }: { children?: ReactNode }) {
 	const { pending, close } = useContext(DialogSurfaceContext)
 	const leave = useDialogLeave()
 	return (
 		<Button size="md" disabled={pending} accessibleWhenDisabled onClick={() => leave(close)}>
-			Cancel
+			{children}
 		</Button>
 	)
 }
 
-/** The header's back control, mirroring DialogCloseButton on the left: its icon sits on the content edge. */
+/** The header's back control, mirroring DialogCloseButton on the left: its icon sits on the content edge. Like Cancel,
+    it leaves through a mounted DialogDiscardGuard, so a step with work in it asks before Back drops it. */
 export function DialogBackButton({
 	label,
 	onClick,
@@ -459,6 +566,7 @@ export function DialogBackButton({
 	disabled?: boolean
 }) {
 	const { pending } = useContext(DialogSurfaceContext)
+	const leave = useDialogLeave()
 	return (
 		<Button
 			variant="ghost"
@@ -468,11 +576,19 @@ export function DialogBackButton({
 			disabled={pending || disabled}
 			accessibleWhenDisabled
 			aria-label={label}
-			onClick={onClick}
+			onClick={() => leave(onClick)}
 		>
 			<Icon name="arrow-left" className="size-4" aria-hidden="true" />
 		</Button>
 	)
+}
+
+/** A refused submit's reason, shown for as long as the draft is the one that was refused: any edit makes a new draft
+    and clears it. Record the draft the refusal describes, which may differ from the rendered one when the submit
+    adapted it. */
+export function useRefusal<Draft>(draft: Draft) {
+	const [refusal, setRefusal] = useState<{ draft: Draft; reason: string } | null>(null)
+	return [refusal?.draft === draft ? refusal.reason : null, setRefusal] as const
 }
 
 type DialogFooterProps = {

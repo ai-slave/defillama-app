@@ -1,7 +1,7 @@
 import type { NextRouter } from 'next/router'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import type { ExcludeQueryKey } from '~/components/Select/types'
-import { isTrueQueryParam, parseNumberQueryParam } from '~/utils/routerQuery'
+import { isTrueQueryParam, parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAOverviewMode } from './constants'
@@ -54,6 +54,13 @@ export function getRwaExcludeQueryKey(key: RWASelectFilterKey | RWAAttributeFilt
 }
 
 /** The picker options a row belongs to. The options list and the row filter both read it, so they cannot disagree. */
+/** Removes the keys from the URL, as a filter pill or reset does. */
+export function clearRwaFilterQueryKeys(router: NextRouter, keys: ReadonlyArray<string>) {
+	const updates: Record<string, undefined> = {}
+	for (const key of keys) updates[key] = undefined
+	void pushShallowQuery(router, updates)
+}
+
 export function getRwaRowFilterValues(row: RWAOverviewDisplayRow, key: RWASelectFilterKey): Array<string> {
 	switch (key) {
 		case 'types':

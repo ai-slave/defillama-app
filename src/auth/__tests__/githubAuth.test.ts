@@ -62,7 +62,7 @@ async function connect() {
 test.each([false, true])('keeps the SDK write private until acceptance; cancelled=%s', async (cancelled) => {
 	const controller = new AbortController()
 	const onAuthenticated = vi.fn()
-	const request = { signal: controller.signal, canAccept: () => true, popup, onAuthenticated }
+	const request = { signal: controller.signal, popup, onAuthenticated }
 	const result = acceptAuthSession(request, () => authenticateGithub(request))
 	await connect()
 	source!.dispatchEvent(
@@ -84,7 +84,7 @@ test.each([false, true])('keeps the SDK write private until acceptance; cancelle
 
 test('cancels the SDK realtime subscription while waiting for GitHub', async () => {
 	const controller = new AbortController()
-	const request = { signal: controller.signal, canAccept: () => true, popup }
+	const request = { signal: controller.signal, popup }
 	const result = acceptAuthSession(request, () => authenticateGithub(request))
 	await connect()
 	controller.abort()

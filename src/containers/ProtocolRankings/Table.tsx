@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import {
 	createColumnHelper,
 	functionalUpdate,
@@ -34,6 +33,7 @@ import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/lo
 import type { TablePageRequestResult } from '~/hooks/useTablePages'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -200,66 +200,44 @@ function ChainProtocolsTableInner({
 		[availableColumnOptions]
 	)
 
-	const [customColumnModalEditIndex, setCustomColumnModalEditIndex] = useState<number | null>(null)
-	const [customColumnModalInitialValues, setCustomColumnModalInitialValues] = useState<
-		Partial<CustomColumnDef> | undefined
-	>(undefined)
+	// The custom column the dialog edits: an existing one by id, a new one (id null), or none while closed.
+	const [editingColumn, setEditingColumn] = useState<{ id: string | null } | null>(null)
+	const [deletingColumn, setDeletingColumn] = useState<CustomColumnDef | null>(null)
+	// A cancelled delete returns to its Delete button. A confirmed one removes that button, so the confirm sets this to
+	// Add Custom Column, which stays in the open picker.
+	const deleteFinalFocusRef = useRef<HTMLElement | null>(null)
+	const addColumnButtonRef = useRef<HTMLButtonElement>(null)
 	const presetSelection = useMemo(
 		() => getTablePresetSelection(selectedMetricPreset, selectedPeriod),
 		[selectedMetricPreset, selectedPeriod]
 	)
 
-	const customColumnDialogStore = Ariakit.useDialogStore()
-	const customColumnDialogOpen = Ariakit.useStoreState(customColumnDialogStore, 'open')
-	const handleAddCustomColumn = () => {
-		setCustomColumnModalEditIndex(null)
-		setCustomColumnModalInitialValues(undefined)
-		customColumnDialogStore.toggle()
-	}
-	const handleEditCustomColumn = (idx: number) => {
-		setCustomColumnModalEditIndex(idx)
-		setCustomColumnModalInitialValues(customColumns[idx])
-		customColumnDialogStore.toggle()
-	}
-	const handleDeleteCustomColumn = (idx: number) => {
-		const next = customColumns.filter((_, i) => i !== idx)
-		setCustomColumns(next)
-	}
-	const handleSaveCustomColumn = (def: CustomColumnDef) => {
-		let next: Array<CustomColumnDef>
-		let newColumnKey: string | undefined
-		if (customColumnModalEditIndex === null) {
-			next = [...customColumns, def]
-			newColumnKey = `custom_formula_${customColumns.length}`
-		} else {
-			next = customColumns.map((col, i) => (i === customColumnModalEditIndex ? def : col))
+	const handleSaveCustomColumn = (def: Omit<CustomColumnDef, 'id'>) => {
+		const editedId = editingColumn?.id
+		setEditingColumn(null)
+		if (editedId) {
+			setCustomColumns(customColumns.map((column) => (column.id === editedId ? { ...def, id: editedId } : column)))
+			return
 		}
+		const added = { ...def, id: `custom_formula_${crypto.randomUUID()}` }
+		const next = [...customColumns, added]
 		setCustomColumns(next)
-		customColumnDialogStore.toggle()
-
-		if (newColumnKey) {
-			clearPresetSelection()
-			const allKeys = [...columnOptions.map((c) => c.key), ...next.map((_, idx) => `custom_formula_${idx}`)]
-			const ops = presetSelection
-				? getProtocolRankingPresetColumnVisibility(presetSelection, tablePresets)
-				: parseProtocolTableColumnVisibility(localStorage.getItem(tableColumnOptionsKey))
-			for (const key of allKeys) {
-				if (key === newColumnKey) {
-					ops[key] = true
-				} else if (!Object.hasOwn(ops, key)) {
-					ops[key] = false
-				}
-			}
-			setStorageItem(tableColumnOptionsKey, JSON.stringify(ops))
+		clearPresetSelection()
+		const ops = presetSelection
+			? getProtocolRankingPresetColumnVisibility(presetSelection, tablePresets)
+			: parseProtocolTableColumnVisibility(localStorage.getItem(tableColumnOptionsKey))
+		for (const key of [...columnOptions.map((c) => c.key), ...next.map((column) => column.id)]) {
+			if (key === added.id) ops[key] = true
+			else if (!Object.hasOwn(ops, key)) ops[key] = false
 		}
+		setStorageItem(tableColumnOptionsKey, JSON.stringify(ops))
 	}
 
 	const { mergedColumns, columnVisibility, selectedColumns } = useMemo(() => {
-		const customColumnOptions = customColumns.map((col, idx) => ({
+		const customColumnOptions = customColumns.map((col) => ({
 			name: col.name,
-			key: `custom_formula_${idx}`,
+			key: col.id,
 			isCustom: true,
-			customIndex: idx,
 			formula: col.formula,
 			formatType: col.formatType
 		}))
@@ -268,7 +246,7 @@ function ChainProtocolsTableInner({
 		const columnVisibility = presetSelection
 			? getProtocolRankingPresetColumnVisibility(presetSelection, tablePresets)
 			: {
-					...getProtocolRankingDefaultColumnVisibility(customColumnOptions.length),
+					...getProtocolRankingDefaultColumnVisibility(customColumns.map((column) => column.id)),
 					...parseProtocolTableColumnVisibility(columnsInStorage)
 				}
 		if (presetSelection) {
@@ -286,10 +264,7 @@ function ChainProtocolsTableInner({
 
 	const setColumnOptions = (newColumns: Array<string>) => {
 		clearPresetSelection()
-		const allKeys = [
-			...columnOptions.map((column) => column.key),
-			...customColumns.map((_, idx) => `custom_formula_${idx}`)
-		]
+		const allKeys = [...columnOptions.map((column) => column.key), ...customColumns.map((column) => column.id)]
 		const ops = Object.fromEntries(allKeys.map((key) => [key, newColumns.includes(key)]))
 		setStorageItem(tableColumnOptionsKey, JSON.stringify(ops))
 	}
@@ -368,8 +343,8 @@ function ChainProtocolsTableInner({
 	)
 
 	const allColumns = useMemo(() => {
-		const customColumnDefs = customColumns.map((col, idx) => {
-			const columnId = `custom_formula_${idx}`
+		const customColumnDefs = customColumns.map((col) => {
+			const columnId = col.id
 			const displayFormat = col.determinedFormat || col.formatType
 			const evaluate = createFormulaEvaluator(replaceAliases(col.formula))
 
@@ -590,13 +565,51 @@ function ChainProtocolsTableInner({
 				variant="filter"
 				size="md"
 				customFooter={
-					<button className={popoverFooterActionStyles} onClick={handleAddCustomColumn} type="button">
-						<Icon name="plus" height={14} width={14} />
-						Add Custom Column
-					</button>
+					<>
+						{/* Outside the option list, so Tab reaches them: list rows keep focus in the search field. */}
+						{customColumns.length > 0 ? (
+							<ul aria-label="Custom columns" className="max-h-32 shrink-0 overflow-y-auto border-t border-subtle py-1">
+								{customColumns.map((column) => (
+									<li key={column.id} className="flex items-center gap-1 px-3">
+										<span className="mr-auto min-w-0 truncate body-sm">{column.name}</span>
+										<Button
+											type="button"
+											variant="ghost"
+											size="md"
+											square
+											aria-label={`Edit ${column.name}`}
+											onClick={() => setEditingColumn({ id: column.id })}
+										>
+											<Icon name="settings" height={16} width={16} />
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="md"
+											square
+											aria-label={`Delete ${column.name}`}
+											onClick={() => {
+												deleteFinalFocusRef.current = null
+												setDeletingColumn(column)
+											}}
+										>
+											<Icon name="trash-2" height={16} width={16} />
+										</Button>
+									</li>
+								))}
+							</ul>
+						) : null}
+						<button
+							ref={addColumnButtonRef}
+							className={popoverFooterActionStyles}
+							onClick={() => setEditingColumn({ id: null })}
+							type="button"
+						>
+							<Icon name="plus" height={14} width={14} />
+							Add Custom Column
+						</button>
+					</>
 				}
-				onEditCustomColumn={handleEditCustomColumn}
-				onDeleteCustomColumn={handleDeleteCustomColumn}
 			/>
 			<TVLRange
 				size="md"
@@ -671,13 +684,28 @@ function ChainProtocolsTableInner({
 					retry={remoteRankings.retry}
 				/>
 			) : null}
-			{customColumnDialogOpen ? (
-				<CustomColumnModal
-					dialogStore={customColumnDialogStore}
-					onSave={handleSaveCustomColumn}
-					sampleRow={sampleRow}
-					key={`custom-index-${customColumnModalEditIndex}`}
-					{...customColumnModalInitialValues}
+			<CustomColumnModal
+				open={editingColumn !== null}
+				onClose={() => setEditingColumn(null)}
+				column={customColumns.find((column) => column.id === editingColumn?.id) ?? null}
+				onSave={handleSaveCustomColumn}
+				sampleRow={sampleRow}
+			/>
+			{deletingColumn ? (
+				<ConfirmDialog
+					open
+					onClose={() => setDeletingColumn(null)}
+					finalFocus={deleteFinalFocusRef}
+					title="Delete custom column?"
+					description={`"${deletingColumn.name}" and its formula are removed. This cannot be undone.`}
+					confirmLabel="Delete"
+					pendingLabel={null}
+					error={null}
+					onConfirm={() => {
+						deleteFinalFocusRef.current = addColumnButtonRef.current
+						setDeletingColumn(null)
+						setCustomColumns(customColumns.filter((column) => column.id !== deletingColumn.id))
+					}}
 				/>
 			) : null}
 		</div>
@@ -1961,12 +1989,12 @@ const defaultColumns = JSON.stringify({
 	revenue_24h: true
 })
 
-export function getProtocolRankingDefaultColumnVisibility(customColumnCount = 0): Record<string, boolean> {
+export function getProtocolRankingDefaultColumnVisibility(customColumnIds: Array<string>): Record<string, boolean> {
 	const configuredDefaults = parseProtocolTableColumnVisibility(defaultColumns)
 	const visibility = Object.fromEntries(
 		columnOptions.map((column) => [column.key, configuredDefaults[column.key] === true])
 	)
-	for (let index = 0; index < customColumnCount; index++) visibility[`custom_formula_${index}`] = false
+	for (const id of customColumnIds) visibility[id] = false
 	return visibility
 }
 

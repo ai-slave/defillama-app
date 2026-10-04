@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Input, textareaStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tag } from '~/ui/Tag'
@@ -11,7 +11,7 @@ import type { ArticleEmbedAspectRatio, ArticleEmbedConfig } from '../types'
 type Props = {
 	store: Ariakit.DialogStore
 	onInsert: (config: ArticleEmbedConfig) => void
-	initialConfig?: ArticleEmbedConfig | null
+	initialConfig: ArticleEmbedConfig | null
 }
 
 const ASPECT_OPTIONS: Array<{ value: ArticleEmbedAspectRatio; label: string }> = [
@@ -30,6 +30,10 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 	const [title, setTitle] = useState(initialConfig?.title ?? '')
 	const [caption, setCaption] = useState(initialConfig?.caption ?? '')
 	const [aspectRatio, setAspectRatio] = useState<ArticleEmbedAspectRatio | null>(initialConfig?.aspectRatio ?? null)
+
+	// Leaving with the fields changed asks first, and an outside tap never drops them.
+	const draftSnapshot = JSON.stringify({ rawUrl, title, caption, aspectRatio })
+	const [openedSnapshot] = useState(draftSnapshot)
 
 	const detection: EmbedDetection | null = useMemo(() => detectEmbed(rawUrl), [rawUrl])
 	const invalid = rawUrl.trim().length > 0 && !detection
@@ -57,6 +61,11 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 	return (
 		<Dialog store={store} size="md" unmountOnHide portal>
 			<form onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+				<DialogDiscardGuard
+					when={draftSnapshot !== openedSnapshot}
+					title="Discard this embed?"
+					description="The link and details you entered are not added to the article."
+				/>
 				<DialogHeader title={initialConfig ? 'Edit embed' : 'Insert embed'} />
 				<DialogBody>
 					<div className="flex flex-col gap-1.5">
@@ -139,13 +148,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 						/>
 					</div>
 				</DialogBody>
-				<DialogFooter
-					dismiss={
-						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button type="submit" size="md" variant="primary" disabled={!detection}>
 						{initialConfig ? 'Update embed' : 'Insert embed'}
 					</Button>

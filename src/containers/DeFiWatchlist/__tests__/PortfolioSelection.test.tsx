@@ -72,9 +72,19 @@ async function createPortfolio(session: Session, name: string) {
 	await waitFor(() => expect(portfolioToolbar()).toContain(name))
 }
 
+const confirmDialog = () => document.querySelector('[role="alertdialog"]')
+const dialogButton = (name: string) =>
+	[...confirmDialog()!.querySelectorAll('button')].find((element) => element.textContent?.trim() === name)!
+
+async function confirmDelete() {
+	await waitFor(() => expect(confirmDialog()).not.toBeNull())
+	await act(async () => dialogButton('Delete').click())
+}
+
 async function deletePortfolio() {
 	await waitFor(() => expect(deletePortfolioButton()!.disabled).toBe(false))
 	await act(async () => deletePortfolioButton()!.click())
+	await confirmDelete()
 }
 
 const preferenceDeletes = (session: Session) =>
@@ -117,6 +127,51 @@ describe('subscriber', () => {
 		expect(preferenceDeletes(session)).toEqual(['Research'])
 	})
 
+	test('a notification delete accepted after the page unmounts still removes the portfolio', async () => {
+		const accepted = Promise.withResolvers<Response>()
+		session.serve({
+			'/watchlist/preferences': (_url: URL, init?: RequestInit) =>
+				init?.method === 'DELETE' ? accepted.promise : { preferences: savedPreferences }
+		})
+		await createPortfolio(session, 'Research')
+		await deletePortfolio()
+		await waitFor(() => expect(preferenceDeletes(session)).toEqual(['Research']))
+
+		await act(async () => root.render(<session.Wrapper>{null}</session.Wrapper>))
+		await act(async () => accepted.resolve(new Response(null, { status: 204 })))
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<DefiWatchlistContainer protocolOptions={[]} chainOptions={[]} />
+				</session.Wrapper>
+			)
+		)
+		await waitFor(() => expect(portfolioToolbar()).toContain('Portfolio'))
+		expect(portfolioToolbar()).not.toContain('Research')
+	})
+
+	test('Delete asks first: Cancel keeps the portfolio and its notifications and returns to Delete, and a confirmed delete hands focus to New', async () => {
+		servePreferences(session, savedPreferences, () => new Response(null, { status: 204 }))
+		await createPortfolio(session, 'Research')
+		await waitFor(() => expect(deletePortfolioButton()!.disabled).toBe(false))
+		await act(async () => {
+			deletePortfolioButton()!.focus()
+			deletePortfolioButton()!.click()
+		})
+		await waitFor(() => expect(confirmDialog()?.textContent).toContain('weekly email notifications are removed'))
+
+		await act(async () => dialogButton('Cancel').click())
+		await waitFor(() => expect(confirmDialog()).toBeNull())
+		expect(portfolioToolbar()).toContain('Research')
+		expect(preferenceDeletes(session)).toEqual([])
+		await waitFor(() => expect(document.activeElement).toBe(deletePortfolioButton()))
+
+		await deletePortfolio()
+		await waitFor(() => expect(portfolioToolbar()).not.toContain('Research'))
+		expect(preferenceDeletes(session)).toEqual(['Research'])
+		await waitFor(() => expect(document.activeElement).toBe(button('New')))
+	})
+
 	test('the portfolio cannot be deleted until its saved notifications load', async () => {
 		const load = Promise.withResolvers<void>()
 		session.serve({
@@ -143,10 +198,10 @@ describe('subscriber', () => {
 		await createPortfolio(session, 'Research')
 		await deletePortfolio()
 
-		await waitFor(() => expect(document.body.textContent).toContain('Temporary failure'))
+		await waitFor(() => expect(confirmDialog()?.textContent).toContain('Temporary failure'))
 		expect(portfolioToolbar()).toContain('Research')
 
-		await deletePortfolio()
+		await confirmDelete()
 		await waitFor(() => expect(portfolioToolbar()).not.toContain('Research'))
 		expect(preferenceDeletes(session)).toEqual(['Research', 'Research'])
 	})
@@ -203,6 +258,7 @@ describe('subscriber whose subscription check fails', () => {
 			await createPortfolio(session, 'Research')
 			await waitForUi(() => expect(deletePortfolioButton()!.disabled).toBe(false), { timeout: 2000 })
 			await act(async () => deletePortfolioButton()!.click())
+			await confirmDelete()
 
 			await waitFor(() => expect(portfolioToolbar()).not.toContain('Research'))
 			expect(preferenceDeletes(session)).toEqual(['Research'])

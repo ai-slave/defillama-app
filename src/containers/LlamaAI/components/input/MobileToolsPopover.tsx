@@ -78,6 +78,9 @@ export function MobileToolsPopover({
 				modal={!walkthroughActive}
 				unmountOnHide={!walkthroughActive}
 				hideOnInteractOutside={!walkthroughActive}
+				// The tour opens this drawer under its own card. Marked as outside the drawer, the card would ignore Escape
+				// while the drawer ignores a key pressed in the card, so the tour's layer counts as part of the drawer.
+				getPersistentElements={() => document.querySelectorAll('[data-walkthrough="tour-layer"]')}
 			>
 				<Ariakit.MenuItem
 					data-walkthrough="mobile-upload-item"

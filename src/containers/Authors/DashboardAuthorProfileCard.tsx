@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -381,14 +382,15 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 				<p className={`text-xs ${validationError ? 'text-warning' : 'text-sub-text-muted'}`}>
 					{validationError || 'Profile changes appear on public dashboard pages after saving.'}
 				</p>
-				<button
+				<Ariakit.Button
 					type="button"
 					disabled={!isDirty || updateMutation.isPending || !!validationError}
+					accessibleWhenDisabled
 					onClick={save}
-					className="rounded-lg bg-sub-brand-primary px-4 py-2 text-sm font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-50"
+					className="rounded-lg bg-sub-brand-primary px-4 py-2 text-sm font-medium text-on-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 				>
 					{updateMutation.isPending ? 'Saving…' : 'Save profile'}
-				</button>
+				</Ariakit.Button>
 			</div>
 		</div>
 	)

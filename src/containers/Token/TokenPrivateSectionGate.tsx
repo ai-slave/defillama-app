@@ -9,20 +9,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { getTokenPrivateSectionView } from './TokenPrivateSectionGate.utils'
 
-export function useTokenPrivateSectionAccess() {
-	const signInDialogStore = Ariakit.useDialogStore()
-	const auth = useAuthContext()
-
-	return {
-		...auth,
-		signInDialogStore
-	}
-}
-
-type TokenPrivateSectionAccess = ReturnType<typeof useTokenPrivateSectionAccess>
-
 export function TokenPrivateSectionGate({
-	access,
 	title,
 	sectionId,
 	contentLabel,
@@ -34,7 +21,6 @@ export function TokenPrivateSectionGate({
 	bodyClassName = 'flex flex-1 flex-col p-2',
 	children
 }: {
-	access: TokenPrivateSectionAccess
 	title: string
 	sectionId: string
 	contentLabel: string
@@ -47,7 +33,8 @@ export function TokenPrivateSectionGate({
 	children: ReactNode
 }) {
 	const router = useRouter()
-	const { hasActiveSubscription, isAuthenticated, loaders, signInDialogStore } = access
+	const { hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
+	const signInDialogStore = Ariakit.useDialogStore()
 	const view = getTokenPrivateSectionView({
 		isAuthenticated,
 		hasActiveSubscription,
@@ -118,7 +105,7 @@ export function TokenPrivateSectionGate({
 				</div>
 			</Panel>
 
-			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
+			<SignInModal store={signInDialogStore} />
 		</>
 	)
 }

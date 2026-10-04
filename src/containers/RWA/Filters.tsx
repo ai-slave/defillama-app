@@ -2,6 +2,8 @@ import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
 import {
 	ActiveFilterCard,
+	ActiveFilterPills,
+	type ActiveFilterPill,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog,
@@ -14,13 +16,13 @@ import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
 import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import type { RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
 import {
+	clearRwaFilterQueryKeys,
 	getRwaExcludeQueryKey,
 	getRwaInclusionQueryValue,
 	hasActiveInclusionOverride,
@@ -152,12 +154,6 @@ type RWARangeFilterConfig = {
 	minQueryKey: string
 	maxQueryKey: string
 	onSubmitRange: (minValue: string | number | null, maxValue: string | number | null) => void
-}
-
-type RWAActiveFilterPill = {
-	id: string
-	label: string
-	onRemove: () => void
 }
 
 type RWAInclusionFilterConfig = {
@@ -308,14 +304,6 @@ function getRwaAttributeFilters({
 	]
 }
 
-function clearRwaFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: ReadonlyArray<string>) {
-	const resetUpdates: Record<string, undefined> = {}
-	for (const key of keys) {
-		resetUpdates[key] = undefined
-	}
-	void pushShallowQuery(router, resetUpdates)
-}
-
 function getSelectOptionKeys(values: SelectValues): Array<string> {
 	return values.map((value) => (typeof value === 'string' ? value : value.key))
 }
@@ -435,11 +423,11 @@ function serializeRwaFilterDraft(
 					includeQueryKey,
 					excludeQueryKey,
 					getSelectOptionKeys(allValues),
-					draft.selectValues[definition.id] ?? []
+					draft.selectValues[definition.id]
 				)
 			)
 		} else if (definition.kind === 'range') {
-			const range = draft.ranges[definition.id] ?? { min: '', max: '' }
+			const range = draft.ranges[definition.id]
 			const min = parseNumberInput(range.min)
 			const max = parseNumberInput(range.max)
 			updates[definition.config.minQueryKey] = min == null ? undefined : String(min)
@@ -452,7 +440,7 @@ function serializeRwaFilterDraft(
 					queryKey,
 					getRwaExcludeQueryKey(queryKey),
 					[...RWA_ATTRIBUTE_FILTER_STATES],
-					draft.attributeStates[definition.id] ?? []
+					draft.attributeStates[definition.id]
 				)
 			)
 		}
@@ -464,8 +452,8 @@ function serializeRwaFilterDraft(
 function getRwaActiveFilterPills(
 	props: RWAOverviewFiltersProps,
 	router: ReturnType<typeof useRouter>
-): Array<RWAActiveFilterPill> {
-	const activeFilters: Array<RWAActiveFilterPill> = []
+): Array<ActiveFilterPill> {
+	const activeFilters: Array<ActiveFilterPill> = []
 
 	for (const config of getRwaSelectFilters(props)) {
 		if (!config.enabled || !isSelectFilterNarrowed(config, config.selectedValues)) continue
@@ -504,29 +492,6 @@ function getRwaActiveFilterPills(
 	}
 
 	return activeFilters
-}
-
-function RWAActiveFilterPills({ pills }: { pills: Array<RWAActiveFilterPill> }) {
-	if (pills.length === 0) return null
-
-	return (
-		<div className="flex flex-wrap gap-1">
-			{pills.map((pill) => (
-				<Button
-					key={pill.id}
-					type="button"
-					variant="filter"
-					size="sm"
-					data-active="true"
-					className="group"
-					onClick={pill.onRemove}
-				>
-					<span>{pill.label}</span>
-					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</Button>
-			))}
-		</div>
-	)
 }
 
 function RWAIncludeDraftSection({
@@ -571,7 +536,9 @@ export function RWAOverviewFilterControls(props: RWAOverviewFiltersProps) {
 	return (
 		<>
 			<RWAIncludeInTvlSelect defaultInclusion={props.defaultInclusion} size="md" />
-			<RWAFiltersDialog {...props} selectedFilterCount={selectedFilterCount} />
+			<FilterBuilderDialog appliedCount={selectedFilterCount}>
+				<RWAFiltersSession {...props} />
+			</FilterBuilderDialog>
 		</>
 	)
 }
@@ -585,28 +552,15 @@ export function RWAOverviewFilters(props: RWAOverviewFiltersProps & { leading?: 
 
 	if (!props.enabled) return null
 
-	const activeFilterPills = getRwaActiveFilterPills(props, router)
-
 	return (
 		<Card padding="sm" className="flex flex-wrap items-center gap-2">
 			{props.leading}
-			<RWAActiveFilterPills pills={activeFilterPills} />
+			<ActiveFilterPills pills={getRwaActiveFilterPills(props, router)} />
 			<div className="flex flex-wrap items-center gap-2 sm:ml-auto">
 				<RWAOverviewFilterControls {...props} />
 				<RWAListYourAssetsButton />
 			</div>
 		</Card>
-	)
-}
-
-function RWAFiltersDialog({
-	selectedFilterCount,
-	...props
-}: RWAOverviewFiltersProps & { selectedFilterCount: number }) {
-	return (
-		<FilterBuilderDialog appliedCount={selectedFilterCount}>
-			<RWAFiltersSession {...props} />
-		</FilterBuilderDialog>
 	)
 }
 
@@ -628,19 +582,7 @@ function RWAFiltersSession(props: RWAOverviewFiltersProps) {
 	return (
 		<FilterBuilderContent
 			draftCount={draftCount}
-			browse={
-				<FilterBrowser
-					groups={groups}
-					onAdd={(id) =>
-						setDraft((current) =>
-							addDraftFilter(
-								current,
-								filterDefinitions.find((definition) => definition.id === id)!
-							)
-						)
-					}
-				/>
-			}
+			browse={<FilterBrowser groups={groups} onAdd={(id) => setDraft((current) => addDraftFilter(current, id))} />}
 			active={
 				<>
 					<RWAIncludeDraftSection inclusionFilters={inclusionFilters} draft={draft} onDraftChange={setDraft} />
@@ -681,35 +623,9 @@ function DialogPanelSection({ title, children }: { title: string; children: Reac
 	)
 }
 
-function addDraftFilter(draft: RWAFilterDraft, definition: RWAFilterDefinition): RWAFilterDraft {
-	if (draft.activeIds.includes(definition.id)) return draft
-
-	const nextDraft = { ...draft, activeIds: draft.activeIds.concat(definition.id) }
-	if (definition.kind === 'select' && !(definition.id in draft.selectValues)) {
-		return {
-			...nextDraft,
-			selectValues: { ...draft.selectValues, [definition.id]: definition.config.selectedValues.slice() }
-		}
-	}
-	if (definition.kind === 'range' && !(definition.id in draft.ranges)) {
-		return {
-			...nextDraft,
-			ranges: {
-				...draft.ranges,
-				[definition.id]: {
-					min: numberToDraftInput(definition.config.min),
-					max: numberToDraftInput(definition.config.max)
-				}
-			}
-		}
-	}
-	if (definition.kind === 'attribute' && !(definition.id in draft.attributeStates)) {
-		return {
-			...nextDraft,
-			attributeStates: { ...draft.attributeStates, [definition.id]: definition.config.selectedStates.slice() }
-		}
-	}
-	return nextDraft
+function addDraftFilter(draft: RWAFilterDraft, id: string): RWAFilterDraft {
+	// The draft already holds every filter's current values, so an added filter starts from them.
+	return { ...draft, activeIds: draft.activeIds.concat(id) }
 }
 
 function removeDraftFilter(draft: RWAFilterDraft, id: string): RWAFilterDraft {
@@ -751,7 +667,7 @@ function RWASelectDraftEditor({
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
-	const selectedValues = draft.selectValues[definition.id] ?? []
+	const selectedValues = draft.selectValues[definition.id]
 
 	return (
 		<SelectWithCombobox
@@ -785,14 +701,14 @@ function RWARangeDraftEditor({
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
-	const range = draft.ranges[definition.id] ?? { min: '', max: '' }
+	const range = draft.ranges[definition.id]
 
 	const updateRange = (key: keyof RWARangeDraft, value: string) => {
 		onDraftChange((current) => ({
 			...current,
 			ranges: {
 				...current.ranges,
-				[definition.id]: { ...(current.ranges[definition.id] ?? { min: '', max: '' }), [key]: value }
+				[definition.id]: { ...current.ranges[definition.id], [key]: value }
 			}
 		}))
 	}
@@ -826,7 +742,7 @@ function RWAAttributeDraftEditor({
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
-	const selectedStates = draft.attributeStates[definition.id] ?? [...RWA_ATTRIBUTE_FILTER_STATES]
+	const selectedStates = draft.attributeStates[definition.id]
 
 	return (
 		<div className="flex flex-wrap gap-1">
@@ -841,16 +757,13 @@ function RWAAttributeDraftEditor({
 						aria-pressed={isSelected}
 						data-active={isSelected}
 						onClick={() =>
-							onDraftChange((current) => {
-								const currentStates = current.attributeStates[definition.id] ?? [...RWA_ATTRIBUTE_FILTER_STATES]
-								return {
-									...current,
-									attributeStates: {
-										...current.attributeStates,
-										[definition.id]: toggleAttributeFilterState(currentStates, state)
-									}
+							onDraftChange((current) => ({
+								...current,
+								attributeStates: {
+									...current.attributeStates,
+									[definition.id]: toggleAttributeFilterState(current.attributeStates[definition.id], state)
 								}
-							})
+							}))
 						}
 					>
 						{ATTRIBUTE_FILTER_STATE_LABELS[state]}

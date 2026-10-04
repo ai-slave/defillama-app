@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { Select } from '~/components/Select/Select'
+import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { ProSegmented, proInputStyles } from '../ui'
 import {
@@ -26,6 +28,7 @@ export function MyDashboardsControls({
 	onSortChange,
 	onVisibilityChange
 }: MyDashboardsControlsProps) {
+	const searchRef = useRef<HTMLInputElement>(null)
 	const selectedSort = MY_DASHBOARDS_SORT_OPTIONS.find((option) => option.key === sort) ?? MY_DASHBOARDS_SORT_OPTIONS[0]
 
 	return (
@@ -38,6 +41,7 @@ export function MyDashboardsControls({
 					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-pro-text-tertiary"
 				/>
 				<input
+					ref={searchRef}
 					type="text"
 					aria-label="Search my dashboards"
 					value={query}
@@ -48,7 +52,13 @@ export function MyDashboardsControls({
 				{query ? (
 					<button
 						type="button"
-						onClick={() => onQueryChange('')}
+						// The button leaves with the text it clears; focus goes back to the search box.
+						onClick={() =>
+							keepFocus(
+								() => onQueryChange(''),
+								() => searchRef.current
+							)
+						}
 						className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-pro-hover-fill hover:text-pro-text-primary"
 					>
 						<Icon name="x" height={12} width={12} />

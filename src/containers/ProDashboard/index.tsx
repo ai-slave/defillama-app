@@ -251,17 +251,10 @@ function ProDashboardContent() {
 	const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false)
 	const { authorizedFetch, isAuthenticated, hasActiveSubscription, user } = useAuthContext()
 	const { isAtDashboardLimit, isFreeUser } = useFreeTierStatus()
-	const [paywallState, setPaywallState] = useState<{ open: boolean; reason: PaywallReason }>({
-		open: false,
-		reason: 'pro-feature'
-	})
-	const paywallDialogStore = Ariakit.useDialogStore({
-		open: paywallState.open,
-		setOpen: (open) => setPaywallState((prev) => ({ ...prev, open }))
-	})
+	const [paywallReason, setPaywallReason] = useState<PaywallReason | null>(null)
 	const showPaywall = (reason: PaywallReason) => {
 		setSignupSource('pro-dashboard')
-		setPaywallState({ open: true, reason })
+		setPaywallReason(reason)
 	}
 	const router = useRouter()
 	const mode = useDashboardMode()
@@ -347,13 +340,7 @@ function ProDashboardContent() {
 		canUndo,
 		deleteDashboard
 	} = useProDashboardDashboard()
-	const {
-		createDashboardDialogStore,
-		showGenerateDashboardModal,
-		setShowGenerateDashboardModal,
-		showIterateDashboardModal,
-		setShowIterateDashboardModal
-	} = useProDashboardUI()
+	const { createDashboardDialogStore, aiDialog, setAiDialog } = useProDashboardUI()
 	const createDashboardDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
 	const { flush: flushAutoSave, state: autoSaveState, saving: autoSaving } = useProDashboardSave()
 	const autoSaveFailed = autoSaveState?.status === 'error'
@@ -427,13 +414,8 @@ function ProDashboardContent() {
 		setAddPlacement(undefined)
 		setAddDraftItem(null)
 	}
-	const closeAddModalSession = () => {
-		if (!addModalSession) {
-			clearAddModalState()
-			return
-		}
-		setAddModalSession({ key: addModalSession.key, open: false })
-	}
+	// Add card clears its state once its exit ends (onClosed); a SQL save with no Add card under it closes nothing.
+	const closeAddModalSession = () => setAddModalSession((current) => (current ? { ...current, open: false } : null))
 	const openQuickAdd = (placement?: DashboardItemPlacement) =>
 		setQuickAddSession((current) =>
 			current?.open
@@ -466,7 +448,7 @@ function ProDashboardContent() {
 	}
 
 	const openIterateDashboardOrPaywall = () => {
-		if (hasActiveSubscription) setShowIterateDashboardModal(true)
+		if (hasActiveSubscription) setAiDialog('iterate')
 		else showPaywall('llamaai')
 	}
 	const openDashboardSettings = () => setShowSettingsModal(true)
@@ -797,7 +779,6 @@ function ProDashboardContent() {
 					<Rating
 						sessionId={currentRatingSession.sessionId}
 						mode={currentRatingSession.mode}
-						variant="banner"
 						prompt={currentRatingSession.prompt}
 						onSubmit={submitRating}
 					/>
@@ -919,9 +900,7 @@ function ProDashboardContent() {
 			{!protocolsLoading && !hasAnyItems ? (
 				<EmptyState
 					onAddChart={() => openQuickAdd()}
-					onGenerateWithAI={
-						hasActiveSubscription ? () => setShowIterateDashboardModal(true) : () => showPaywall('llamaai')
-					}
+					onGenerateWithAI={hasActiveSubscription ? () => setAiDialog('iterate') : () => showPaywall('llamaai')}
 					isReadOnly={isReadOnly}
 					{...(isReadOnly && canEditDashboard && dashboardId ? { editHref: dashboardModeHref('edit') } : {})}
 				/>
@@ -952,18 +931,18 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={showGenerateDashboardModal ? <ProDialogFallback width="md" /> : null}>
+			<Suspense fallback={aiDialog === 'generate' ? <ProDialogFallback width="md" /> : null}>
 				<GenerateDashboardModal
-					isOpen={showGenerateDashboardModal}
-					onClose={() => setShowGenerateDashboardModal(false)}
+					isOpen={aiDialog === 'generate'}
+					onClose={() => setAiDialog(null)}
 					onGenerate={handleGenerateDashboard}
 				/>
 			</Suspense>
 
-			<Suspense fallback={showIterateDashboardModal ? <ProDialogFallback width="md" /> : null}>
+			<Suspense fallback={aiDialog === 'iterate' ? <ProDialogFallback width="md" /> : null}>
 				<GenerateDashboardModal
-					isOpen={showIterateDashboardModal}
-					onClose={() => setShowIterateDashboardModal(false)}
+					isOpen={aiDialog === 'iterate'}
+					onClose={() => setAiDialog(null)}
 					mode="iterate"
 					existingDashboard={{
 						dashboardName,
@@ -977,9 +956,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			{paywallState.open ? (
-				<DashboardPaywallModal dialogStore={paywallDialogStore} reason={paywallState.reason} />
-			) : null}
+			{paywallReason ? <DashboardPaywallModal reason={paywallReason} onClose={() => setPaywallReason(null)} /> : null}
 		</div>
 	)
 }

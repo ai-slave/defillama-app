@@ -1,8 +1,8 @@
 import { useRef, useState, type RefObject } from 'react'
-import toast from 'react-hot-toast'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { formatDate, parseDateTimestamp } from '~/utils/dateFormat'
 import { InviteMemberModal } from './InviteMemberModal'
@@ -14,7 +14,10 @@ const RESEND_COOLDOWN_MS = 60_000
 function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: RefObject<HTMLElement | null> }) {
 	const { revokeInviteMutation, resendInviteMutation } = useTeam()
 	const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
+	const revokeFocusRef = useRef<HTMLElement | null>(null)
 	const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
+	// Not the mutation's own error: that one clears as soon as a retry starts.
+	const [resendError, setResendError] = useState<string | null>(null)
 	const isResending = resendInviteMutation.isPending && resendInviteMutation.variables?.inviteId === invite.id
 	// The account page renders on the client only, so no page clock is needed. A resend switches the clock to
 	// seconds while it runs, so the cooldown starts against a current second.
@@ -25,10 +28,15 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 	if (cooldownUntil !== null && !onCooldown) setCooldownUntil(null)
 
 	const handleResend = () => {
-		if (onCooldown || isResending) return
 		resendInviteMutation.mutate(
 			{ inviteId: invite.id },
-			{ onSuccess: () => setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS) }
+			{
+				onSuccess: () => {
+					setResendError(null)
+					setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS)
+				},
+				onError: (error) => setResendError(error.message)
+			}
 		)
 	}
 
@@ -49,9 +57,9 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 								: `Expires ${formatDate(invite.expiresAt) ?? 'Unknown'}`}
 						</span>
 					</div>
-					{resendInviteMutation.isError ? (
+					{resendError ? (
 						<p role="alert" className="mt-1 body-sm text-data-down">
-							{resendInviteMutation.error.message}
+							{resendError}
 						</p>
 					) : null}
 				</div>
@@ -60,6 +68,8 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 						// The cooldown label says why it is disabled. It starts while the button has focus, so the button
 						// stays focusable.
 						<Button
+							// The invite can expire while Resend has focus, and the button leaves with it.
+							ref={focusRegionOnLeave}
 							type="button"
 							size="md"
 							pendingLabel={isResending ? 'Sending…' : null}
@@ -71,39 +81,37 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 							{onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}
 						</Button>
 					)}
-					<Button type="button" size="md" onClick={() => setShowRevokeConfirm(true)}>
+					<Button
+						type="button"
+						size="md"
+						onClick={(event) => {
+							revokeFocusRef.current = event.currentTarget
+							setShowRevokeConfirm(true)
+						}}
+					>
 						<Icon name="x" height={14} width={14} />
 						Revoke
 					</Button>
 				</div>
 			</div>
 
-			<ConfirmDialog
-				open={showRevokeConfirm}
-				onClose={() => {
-					revokeInviteMutation.reset()
-					setShowRevokeConfirm(false)
-				}}
-				portal
-				unmountOnHide
-				finalFocus={finalFocus}
-				title="Revoke invite"
-				description={`Are you sure you want to revoke the invite for ${invite.email}?`}
-				confirmLabel="Revoke"
-				pendingLabel={revokeInviteMutation.isPending ? 'Revoking…' : null}
-				error={revokeInviteMutation.isError ? revokeInviteMutation.error.message : null}
-				onConfirm={() => {
-					// Success drops this row, and mutate() callbacks with it; the returned promise still settles.
-					revokeInviteMutation.mutateAsync({ inviteId: invite.id }).then(
-						() => {
-							setShowRevokeConfirm(false)
-							toast.success('Invite revoked')
-						},
-						// The dialog shows the failure from the mutation state.
-						() => {}
-					)
-				}}
-			/>
+			{showRevokeConfirm ? (
+				<ConfirmActionDialog
+					finalFocus={revokeFocusRef}
+					title="Revoke invite"
+					description={`Are you sure you want to revoke the invite for ${invite.email}?`}
+					confirmLabel="Revoke"
+					pendingLabel="Revoking…"
+					mutation={revokeInviteMutation}
+					variables={{ inviteId: invite.id }}
+					onClose={() => setShowRevokeConfirm(false)}
+					onSuccess={() => {
+						// Success removes this row and its Revoke button.
+						revokeFocusRef.current = finalFocus.current
+					}}
+					successMessage="Invite revoked"
+				/>
+			) : null}
 		</>
 	)
 }
@@ -142,7 +150,7 @@ export function TeamInvitesCard() {
 				</div>
 			)}
 
-			{showInviteModal && <InviteMemberModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} />}
+			{showInviteModal ? <InviteMemberModal onClose={() => setShowInviteModal(false)} /> : null}
 		</div>
 	)
 }

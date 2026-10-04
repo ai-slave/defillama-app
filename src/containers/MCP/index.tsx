@@ -141,31 +141,38 @@ function TerminalMock() {
 	)
 }
 
+/** Copies `text`, says "Copied!" for two seconds, and names what it copies for screen readers. */
+function CopyButton({ text, label, className }: { text: string; label: string; className?: string }) {
+	const [copied, setCopied] = useState(false)
+	return (
+		<Button
+			onClick={async () => {
+				try {
+					await navigator.clipboard.writeText(text)
+					trackUmamiEvent('mcp-copy', { label })
+					setCopied(true)
+					setTimeout(() => setCopied(false), 2000)
+				} catch {
+					// Clipboard access can be denied; the copy control just does nothing.
+				}
+			}}
+			aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
+			variant="ghost"
+			size="sm"
+			className={className}
+		>
+			{copied ? 'Copied!' : 'Copy'}
+		</Button>
+	)
+}
+
 function CopyBox({ text, label }: { text: string; label: string }) {
 	return (
 		<div className="mx-auto max-w-3xl">
 			<Card padding="none" className="overflow-hidden">
 				<div className="flex items-center justify-between border-b border-subtle px-4 py-2.5">
 					<span className="label-sm text-link">{label}</span>
-					<Button
-						onClick={async (e) => {
-							const btn = e.currentTarget
-							try {
-								await navigator.clipboard.writeText(text)
-								trackUmamiEvent('mcp-copy', { label })
-								btn.textContent = 'Copied!'
-								setTimeout(() => {
-									btn.textContent = 'Copy'
-								}, 2000)
-							} catch {
-								// Clipboard access can be denied; the copy control just does nothing.
-							}
-						}}
-						variant="ghost"
-						size="sm"
-					>
-						Copy
-					</Button>
+					<CopyButton text={text} label={label} />
 				</div>
 				<div className="p-4">
 					<p className="font-jetbrains text-sm leading-relaxed text-primary">{text}</p>
@@ -180,20 +187,7 @@ function CodeBlock({ children, label }: { children: string; label: string }) {
 		<Card padding="none" className="overflow-hidden">
 			<div className="flex items-center justify-between border-b border-subtle px-4 py-2">
 				<span className="label-sm text-tertiary">{label}</span>
-				<Button
-					onClick={async () => {
-						try {
-							await navigator.clipboard.writeText(children)
-							trackUmamiEvent('mcp-copy', { label })
-						} catch {
-							// Clipboard access can be denied; the copy control just does nothing.
-						}
-					}}
-					variant="ghost"
-					size="sm"
-				>
-					Copy
-				</Button>
+				<CopyButton text={children} label={label} />
 			</div>
 			<pre className="overflow-x-auto p-4 mono-md text-secondary">{children}</pre>
 		</Card>
@@ -267,6 +261,7 @@ function ManualSetup() {
 							type="button"
 							key={c.name}
 							onClick={() => setActive(i)}
+							aria-pressed={active === i}
 							className={`shrink-0 px-4 py-2.5 label-sm transition-colors ${
 								active === i ? 'border-b-2 border-brand text-link' : 'text-secondary hover:text-primary'
 							}`}
@@ -276,21 +271,11 @@ function ManualSetup() {
 					))}
 				</div>
 				<div className="relative">
-					<Button
-						onClick={async () => {
-							try {
-								await navigator.clipboard.writeText(clientConfigs[active].code)
-								trackUmamiEvent('mcp-copy', { label: clientConfigs[active].name })
-							} catch {
-								// Clipboard access can be denied; the copy control just does nothing.
-							}
-						}}
-						variant="ghost"
-						size="sm"
+					<CopyButton
+						text={clientConfigs[active].code}
+						label={clientConfigs[active].name}
 						className="absolute top-2 right-3"
-					>
-						Copy
-					</Button>
+					/>
 					<pre className="overflow-x-auto p-4 mono-md text-secondary">{clientConfigs[active].code}</pre>
 				</div>
 			</Card>

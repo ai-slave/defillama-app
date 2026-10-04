@@ -80,6 +80,22 @@ test('editing a chart blocks separate mode once a second series is added', () =>
 	expect(resolveSubmitBlocker({ ...editing, chartCreationMode: 'separate' })).toBeNull()
 })
 
+test('editing a multi card blocks separate mode while it holds more than one series', () => {
+	const series: Array<ChartConfig> = [
+		{ id: 'ethereum-tvl', kind: 'chart', subjectType: 'chain', chain: 'Ethereum', type: 'tvl' },
+		{ id: 'solana-tvl', kind: 'chart', subjectType: 'chain', chain: 'Solana', type: 'tvl' }
+	]
+	const editItem = { id: 'multi-card', kind: 'multi', items: series } satisfies DashboardItemConfig
+	const editing = chartOnTab({
+		selectedChartTab: 'chain',
+		manualFormOpen: true,
+		composerItems: series,
+		chartCreationMode: 'separate'
+	})
+
+	expect(resolveSubmitBlocker(editing, editItem)).toBe('Keep one series, or switch to One chart')
+})
+
 test('the chart builder asks for a metric', () => {
 	const base = state({ selectedMainTab: 'charts', chartMode: 'builder' })
 	const metric = '' as typeof base.chartBuilder.metric

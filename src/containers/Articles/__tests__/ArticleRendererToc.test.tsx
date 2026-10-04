@@ -73,9 +73,13 @@ test('scrolling back above the header shows the full contents with every group c
 	)
 	expect(tocLinks()).toEqual(['Fees', 'Revenue'])
 
-	const feesGroup = [...toc()!.querySelectorAll('button')].find((button) => button.textContent === 'Fees')!
+	const feesGroup = toc()!.querySelector<HTMLButtonElement>('button[aria-label="Fees subsections"]')!
+	expect(feesGroup.getAttribute('aria-expanded')).toBe('false')
 	await act(async () => feesGroup.click())
+	expect(feesGroup.getAttribute('aria-expanded')).toBe('true')
 	expect(tocLinks()).toEqual(['Fees', 'Lending fees', 'Revenue'])
+	// The group's link is its own control, not nested inside the disclosure.
+	expect(toc()!.querySelector('button a')).toBeNull()
 
 	await scrollTo(0)
 	await waitForUi(() => expect(toc()).toBeNull())

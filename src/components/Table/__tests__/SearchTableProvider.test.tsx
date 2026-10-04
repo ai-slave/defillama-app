@@ -311,11 +311,6 @@ test('requests a controlled filter once while its owner has not applied it', asy
 	}
 })
 
-const columnOption = (name: string) =>
-	Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(
-		(element) => element.firstElementChild?.textContent === name
-	)
-
 // Ariakit opens and selects on the full pointer sequence, not on click alone.
 async function press(element: HTMLElement) {
 	await act(async () => {
@@ -342,14 +337,11 @@ test('Hacks keeps the Name column when "Only" picks one metric', async () => {
 		)
 		await press(document.querySelector<HTMLElement>('[aria-label="Columns dropdown"]')!)
 		const pickerOptions = Array.from(
-			document.querySelectorAll('[role="option"]'),
+			document.querySelectorAll('[role="option"]:not([aria-label^="Only "])'),
 			(option) => option.firstElementChild?.textContent
 		)
 		expect(pickerOptions).toEqual(['Select all, all selected', 'Total Hacked', 'Returned Funds', 'Net User Loss'])
-		const onlyButton = Array.from(columnOption('Net User Loss')!.querySelectorAll('button')).find(
-			(button) => button.textContent === 'Only'
-		)!
-		await act(async () => onlyButton.click())
+		await act(async () => document.querySelector<HTMLElement>('[aria-label="Only Net User Loss"]')!.click())
 		expect(Array.from(container.querySelectorAll('thead th'), (header) => header.textContent)).toEqual([
 			'Name',
 			'Net User Loss'

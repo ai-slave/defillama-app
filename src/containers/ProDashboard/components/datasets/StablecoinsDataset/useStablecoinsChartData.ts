@@ -23,6 +23,7 @@ import {
 } from '~/containers/Stablecoins/chartSeries'
 import type { IBuildStablecoinChartDataParams } from '~/containers/Stablecoins/utils'
 import { sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
+import { queryReadFailed } from '~/utils/query'
 import type { StablecoinChartType } from '../../../types'
 
 interface UseStablecoinsChartDataResult {
@@ -219,14 +220,7 @@ export function useStablecoinsChartData(
 ): UseStablecoinsChartDataResult {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
-	const {
-		data: rawData,
-		isLoading,
-		isFetching,
-		errorUpdatedAt,
-		dataUpdatedAt,
-		refetch
-	} = useQuery({
+	const chartQuery = useQuery({
 		queryKey: ['pro-dashboard', 'stablecoins-chart-data', chain],
 		enabled: enabled && streamDone,
 		queryFn: async () => {
@@ -248,6 +242,7 @@ export function useStablecoinsChartData(
 		staleTime: 5 * 60 * 1000,
 		refetchInterval: 5 * 60 * 1000
 	})
+	const { data: rawData, isLoading, isFetching, dataUpdatedAt, refetch } = chartQuery
 
 	const computeSignature = [chain, chartType, dataUpdatedAt].join('::')
 	const { value: collected, isComputing } = useIdleChartComputation({
@@ -279,7 +274,7 @@ export function useStablecoinsChartData(
 		prepareCsvDataset,
 		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
 		isFetching,
-		readFailed: errorUpdatedAt > dataUpdatedAt,
+		readFailed: queryReadFailed(chartQuery),
 		refetch
 	}
 }

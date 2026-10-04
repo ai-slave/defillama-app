@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { refreshSession } from '~/auth/authStore'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
 import pb from '~/utils/pocketbase'
 
@@ -19,29 +19,26 @@ export function EmailChangeModal(props: EmailChangeModalProps) {
 
 function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 	const emailId = useId()
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success replaces the form.
+	const [error, setError] = useState<string | null>(null)
 	const requestEmailChange = useMutation({
 		mutationFn: async (nextEmail: string) => {
 			await pb.collection('users').requestEmailChange(nextEmail)
 			// The change request already succeeded; refreshSession only updates the cached user state, so
 			// its failure must not fail the change.
 			await refreshSession().catch(() => {})
-		}
+		},
+		onError: () => setError('Could not send the confirmation email. Check the address and try again.')
 	})
 	const pending = requestEmailChange.isPending
 
-	const handleClose = () => {
-		if (pending) return
-		onClose()
-	}
-
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (pending) return
 		requestEmailChange.mutate(new FormData(event.currentTarget).get('email') as string)
 	}
 
 	return (
-		<Dialog size="sm" open={isOpen} onClose={handleClose} pending={pending} portal unmountOnHide>
+		<Dialog size="sm" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
 			{requestEmailChange.isSuccess ? (
 				<>
 					<DialogHeader title="Confirmation link sent" />
@@ -58,7 +55,7 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 							variant="primary"
 							size="md"
 							autoFocus
-							onClick={handleClose}
+							onClick={onClose}
 							aria-describedby={`${emailId}-success`}
 						>
 							Done
@@ -82,31 +79,23 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 										readOnly={pending}
 										id={emailId}
 										name="email"
-										aria-describedby={requestEmailChange.isError ? `${emailId}-error` : undefined}
-										aria-invalid={requestEmailChange.isError || undefined}
+										aria-describedby={error ? `${emailId}-error` : undefined}
+										aria-invalid={error ? true : undefined}
 										required
-										onChange={() => {
-											if (requestEmailChange.isError) requestEmailChange.reset()
-										}}
+										onChange={() => setError(null)}
 										placeholder="your.new.email@example.com"
 										className="w-full"
 									/>
 								}
 							/>
-							{requestEmailChange.isError ? (
+							{error ? (
 								<p id={`${emailId}-error`} role="alert" className="body-sm text-data-down">
-									Could not send the confirmation email. Check the address and try again.
+									{error}
 								</p>
 							) : null}
 						</div>
 					</DialogBody>
-					<DialogFooter
-						dismiss={
-							<Button type="button" size="md" onClick={handleClose} disabled={pending}>
-								Cancel
-							</Button>
-						}
-					>
+					<DialogFooter dismiss={<DialogCancelButton />}>
 						<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>
 							Confirm email
 						</Button>

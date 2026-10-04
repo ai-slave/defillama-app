@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
 	ActiveFilterCard,
+	ActiveFilterPills,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog,
@@ -9,21 +10,17 @@ import {
 } from '~/components/FilterBuilderDialog'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import {
 	activeEquityFiltersToDraft,
-	countActiveEquityFilters,
 	createDefaultEquityDraftFilter,
 	draftEquityFiltersToActive,
 	EQUITY_FILTER_CATEGORIES,
 	EQUITY_FILTER_CONFIGS,
 	formatEquityActiveFilter,
 	getEquityCategoricalFilterConfig,
-	getEquityDraftNumericOperator,
 	getEquityNumericFilterConfig,
-	parseEquityFilterNumber,
+	setEquityDraftOperator,
 	type EquityActiveFilter,
 	type EquityCategoricalFilterConfig,
 	type EquityCategoricalFilterField,
@@ -48,18 +45,6 @@ const CATEGORICAL_VALUE_LABELS: Record<EquityCategoricalFilterField, string> = {
 const CATEGORY_LABELS = Object.fromEntries(
 	EQUITY_FILTER_CATEGORIES.map((category) => [category.key, category.label])
 ) as Record<EquityFilterCategory, string>
-
-function replaceFilter(filters: Array<EquityDraftFilter>, nextFilter: EquityDraftFilter): Array<EquityDraftFilter> {
-	const next = filters.slice()
-	const index = next.findIndex((filter) => filter.id === nextFilter.id)
-	if (index === -1) next.push(nextFilter)
-	else next[index] = nextFilter
-	return next
-}
-
-function removeFilter(filters: Array<EquityDraftFilter>, id: string): Array<EquityDraftFilter> {
-	return filters.filter((filter) => filter.id !== id)
-}
 
 function OperatorSelect({
 	value,
@@ -109,22 +94,6 @@ function ModeToggle({
 	)
 }
 
-function getInitialNumericInputs(filter: EquityDraftNumericFilter) {
-	if (filter.kind === 'numericRange') {
-		return {
-			value: '',
-			minValue: filter.minValue?.toString() ?? '',
-			maxValue: filter.maxValue?.toString() ?? ''
-		}
-	}
-
-	return {
-		value: filter.value?.toString() ?? '',
-		minValue: '',
-		maxValue: ''
-	}
-}
-
 function NumericFilterEditor({
 	config,
 	filter,
@@ -136,73 +105,8 @@ function NumericFilterEditor({
 	onUpdate: (filter: EquityDraftFilter) => void
 	onRemove: () => void
 }) {
-	const [inputs, setInputs] = useState(() => getInitialNumericInputs(filter))
-	const operator = getEquityDraftNumericOperator(filter)
-	const isBetween = operator === 'between'
 	const prefix = config.format === 'currency' ? '$' : undefined
 	const suffix = config.format === 'percent' ? '%' : undefined
-
-	const updateValue = (input: string) => {
-		setInputs((prev) => ({ ...prev, value: input }))
-		const value = parseEquityFilterNumber(input)
-		const comparisonOperator = operator === 'between' ? '>=' : operator
-		onUpdate(
-			value === undefined
-				? { kind: 'numeric', id: filter.id, operator: comparisonOperator }
-				: { kind: 'numeric', id: filter.id, operator: comparisonOperator, value }
-		)
-	}
-
-	const updateMinValue = (input: string) => {
-		setInputs((prev) => ({ ...prev, minValue: input }))
-		const value = parseEquityFilterNumber(input)
-		onUpdate({
-			kind: 'numericRange',
-			id: filter.id,
-			...(value === undefined ? {} : { minValue: value }),
-			...(filter.kind === 'numericRange' && filter.maxValue !== undefined ? { maxValue: filter.maxValue } : {})
-		})
-	}
-
-	const updateMaxValue = (input: string) => {
-		setInputs((prev) => ({ ...prev, maxValue: input }))
-		const value = parseEquityFilterNumber(input)
-		onUpdate({
-			kind: 'numericRange',
-			id: filter.id,
-			...(filter.kind === 'numericRange' && filter.minValue !== undefined ? { minValue: filter.minValue } : {}),
-			...(value === undefined ? {} : { maxValue: value })
-		})
-	}
-
-	const updateOperator = (nextOperator: EquityNumericOperator) => {
-		const currentValue = filter.kind === 'numericRange' ? (filter.minValue ?? filter.maxValue) : filter.value
-		if (nextOperator === 'between') {
-			onUpdate({
-				kind: 'numericRange',
-				id: filter.id,
-				...(filter.kind === 'numericRange' && filter.minValue !== undefined
-					? { minValue: filter.minValue }
-					: currentValue !== undefined
-						? { minValue: currentValue }
-						: {}),
-				...(filter.kind === 'numericRange' && filter.maxValue !== undefined ? { maxValue: filter.maxValue } : {})
-			})
-			setInputs((prev) => ({
-				...prev,
-				minValue: prev.minValue || prev.value,
-				value: ''
-			}))
-			return
-		}
-
-		onUpdate(
-			currentValue === undefined
-				? { kind: 'numeric', id: filter.id, operator: nextOperator }
-				: { kind: 'numeric', id: filter.id, operator: nextOperator, value: currentValue }
-		)
-		setInputs((prev) => ({ ...prev, value: prev.value || prev.minValue || prev.maxValue }))
-	}
 
 	return (
 		<ActiveFilterCard
@@ -212,21 +116,24 @@ function NumericFilterEditor({
 			onRemove={onRemove}
 		>
 			<div className="flex items-center gap-2">
-				<OperatorSelect value={operator} onChange={updateOperator} />
-				{isBetween ? (
+				<OperatorSelect
+					value={filter.operator}
+					onChange={(operator) => onUpdate(setEquityDraftOperator(filter, operator))}
+				/>
+				{filter.operator === 'between' ? (
 					<>
 						<FilterNumberInput
 							label={`${config.label} minimum`}
-							value={inputs.minValue}
-							onChange={updateMinValue}
+							value={filter.minValue}
+							onChange={(minValue) => onUpdate({ ...filter, minValue })}
 							placeholder="Min"
 							prefix={prefix}
 							suffix={suffix}
 						/>
 						<FilterNumberInput
 							label={`${config.label} maximum`}
-							value={inputs.maxValue}
-							onChange={updateMaxValue}
+							value={filter.maxValue}
+							onChange={(maxValue) => onUpdate({ ...filter, maxValue })}
 							placeholder="Max"
 							prefix={prefix}
 							suffix={suffix}
@@ -235,8 +142,8 @@ function NumericFilterEditor({
 				) : (
 					<FilterNumberInput
 						label={`${config.label} value`}
-						value={inputs.value}
-						onChange={updateValue}
+						value={filter.value}
+						onChange={(value) => onUpdate({ ...filter, value })}
 						placeholder="10b, 500m, 20"
 						prefix={prefix}
 						suffix={suffix}
@@ -324,7 +231,7 @@ interface EquitiesFiltersDialogProps {
 
 export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersChange }: EquitiesFiltersDialogProps) {
 	return (
-		<FilterBuilderDialog appliedCount={countActiveEquityFilters(filters)}>
+		<FilterBuilderDialog appliedCount={filters.length}>
 			<EquitiesFiltersSession
 				categoricalOptions={categoricalOptions}
 				filters={filters}
@@ -362,8 +269,10 @@ function EquitiesFiltersSession({ categoricalOptions, filters, onFiltersChange }
 							key={filter.id}
 							filter={filter}
 							categoricalOptions={categoricalOptions}
-							onUpdate={(nextFilter) => setDraftFilters((current) => replaceFilter(current, nextFilter))}
-							onRemove={() => setDraftFilters((current) => removeFilter(current, filter.id))}
+							onUpdate={(next) =>
+								setDraftFilters((current) => current.map((item) => (item.id === next.id ? next : item)))
+							}
+							onRemove={() => setDraftFilters((current) => current.filter((item) => item.id !== filter.id))}
 						/>
 					))
 				) : (
@@ -383,24 +292,13 @@ export function EquityActiveFilterPills({
 	filters: Array<EquityActiveFilter>
 	onRemove: (id: string) => void
 }) {
-	if (filters.length === 0) return null
-
 	return (
-		<div className="flex flex-wrap gap-1">
-			{filters.map((filter) => (
-				<Button
-					key={filter.id}
-					type="button"
-					variant="filter"
-					size="sm"
-					data-active="true"
-					className="group"
-					onClick={() => onRemove(filter.id)}
-				>
-					<span>{formatEquityActiveFilter(filter)}</span>
-					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</Button>
-			))}
-		</div>
+		<ActiveFilterPills
+			pills={filters.map((filter) => ({
+				id: filter.id,
+				label: formatEquityActiveFilter(filter),
+				onRemove: () => onRemove(filter.id)
+			}))}
+		/>
 	)
 }

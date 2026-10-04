@@ -141,7 +141,7 @@ test('deletion runs through the confirmation dialog and reports a failure there'
 	expect(document.body.textContent).toContain('Deleting “Original” cannot be undone.')
 	await act(async () => button('Delete')!.click())
 	await waitForUi(() =>
-		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not delete')
+		expect(document.body.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe('Offline')
 	)
 	expect(close).not.toHaveBeenCalled()
 	await act(async () => button('Delete')!.click())
@@ -205,5 +205,63 @@ test('a failed move keeps the dialog open after the settings save', async () => 
 		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
 	)
 	expect(save).toHaveBeenCalledOnce()
+	expect(close).not.toHaveBeenCalled()
+})
+
+test('a save retry keeps the failure on screen while it runs', async () => {
+	save.mockRejectedValueOnce(new Error('Unavailable')).mockReturnValueOnce(new Promise(() => {}))
+	await renderSettings()
+	await submit()
+	await waitForUi(() =>
+		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
+	)
+	await submit()
+
+	await waitForUi(() => expect(document.querySelector('[role="status"]')?.textContent).toBe('Saving dashboard changes'))
+	expect(document.body.querySelector('[role="alert"]')?.textContent).toBe(
+		'Could not save changes. Your draft is still here. Try again.'
+	)
+})
+
+test('Cancel asks before discarding changed settings and closes at once when nothing changed', async () => {
+	await renderSettings(['lending'])
+	await act(async () => button('Cancel')!.click())
+	expect(close).toHaveBeenCalledOnce()
+
+	close.mockClear()
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][value="private"]')!.click())
+	await act(async () => button('Cancel')!.click())
+	expect(document.body.textContent).toContain('Discard your changes?')
+	expect(close).not.toHaveBeenCalled()
+})
+
+test('a typed tag never added with Enter is saved when the reader moves on to Save', async () => {
+	await renderSettings()
+	await act(async () => {
+		tagInput().focus()
+		tagInput().value = 'Lending'
+	})
+	await act(async () => button('Save changes')!.focus())
+	await act(async () => button('Save changes')!.click())
+	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'public', tags: ['lending'] })
+})
+
+test('Escape adds a typed tag instead of dropping it, and the next Escape asks before discarding', async () => {
+	await renderSettings()
+	const pressEscape = () =>
+		act(async () =>
+			document.activeElement!.dispatchEvent(
+				new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+			)
+		)
+	await act(async () => {
+		tagInput().focus()
+		tagInput().value = 'Lending'
+	})
+	await pressEscape()
+	expect(document.querySelector('[aria-label="Remove tag lending"]')).not.toBeNull()
+	expect(close).not.toHaveBeenCalled()
+	await pressEscape()
+	await waitForUi(() => expect(document.body.textContent).toContain('Discard your changes?'))
 	expect(close).not.toHaveBeenCalled()
 })

@@ -149,7 +149,7 @@ export function GoogleSignInButton({
 
 	const requestCode = () => {
 		if (!window.google || clientRef.current || loading || disabled) return
-		setError(null)
+		// The last failure stays on screen while a retry waits for Google; a code clears it.
 		onStart()
 		const finish = () => {
 			if (clientRef.current !== client) return false
@@ -167,6 +167,7 @@ export function GoogleSignInButton({
 					setError('Google sign-in did not finish. Try again.')
 					return
 				}
+				setError(null)
 				latest.current.onCode(response.code)
 			},
 			error_callback: (response) => {

@@ -1,3 +1,6 @@
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, test } from 'vitest'
 import { BreakdownTable, type BreakdownRowConfig, sortBreakdownRows } from '../BreakdownTable'
@@ -35,4 +38,21 @@ test('sorts rows by a numeric column with missing values last in both directions
 	expect(labels({ key: 'rank', dir: 'asc' })).toEqual(['bidAskDepth50', 'bidAskDepth50Uptime', 'askDepth50'])
 	expect(labels({ key: 'metric', dir: 'asc' })).toEqual(['askDepth50', 'bidAskDepth50', 'bidAskDepth50Uptime'])
 	expect(labels(null)).toEqual(['bidAskDepth50', 'bidAskDepth50Uptime', 'askDepth50'])
+})
+
+test('a sorted column header tells screen readers its direction', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	await act(async () => root.render(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={DATA} />))
+	const rankHeader = () => [...container.querySelectorAll('th')].find((th) => th.textContent?.startsWith('Rank'))!
+	expect(rankHeader().getAttribute('aria-sort')).toBeNull()
+
+	await act(async () => rankHeader().querySelector('button')!.click())
+	expect(rankHeader().getAttribute('aria-sort')).toBe('descending')
+	await act(async () => rankHeader().querySelector('button')!.click())
+	expect(rankHeader().getAttribute('aria-sort')).toBe('ascending')
+
+	await act(async () => root.unmount())
+	container.remove()
 })

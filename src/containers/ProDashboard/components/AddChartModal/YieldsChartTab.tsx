@@ -1,16 +1,18 @@
-import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from 'react'
+import { lazy, Suspense, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import { useYieldsData } from '~/containers/ProDashboard/components/datasets/YieldsDataset/useYieldsData'
 import type { ProYieldRow } from '~/containers/ProDashboard/yieldData'
 import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalization'
 import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/queries.client'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
-import { normalizeYieldChartType } from '../../types'
+import { queryReadFailed } from '~/utils/query'
+import { normalizeYieldChartType, type YieldChartType } from '../../types'
 import { getItemIconUrl } from '../../utils'
 import { useYieldChartTransformations } from '../useYieldChartTransformations'
 import {
@@ -40,8 +42,8 @@ interface YieldsChartTabProps {
 			chain: string
 		} | null
 	) => void
-	selectedYieldChartType: string
-	onSelectedYieldChartTypeChange: (chartType: string) => void
+	selectedYieldChartType: YieldChartType
+	onSelectedYieldChartTypeChange: (chartType: YieldChartType) => void
 	selectedYieldChains: Array<string>
 	selectedYieldProjects: Array<string>
 	selectedYieldCategories: Array<string>
@@ -59,62 +61,8 @@ interface YieldsChartTabProps {
 type SortColumn = 'tvl' | 'apy'
 type SortDirection = 'desc' | 'asc'
 
-interface YieldsChartUiState {
-	chainSearch: string
-	projectSearch: string
-	tokenSearch: string
-	poolSearch: string
-	sortColumn: SortColumn
-	sortDirection: SortDirection
-	showPoolPicker: boolean
-}
-
-type YieldsChartUiAction =
-	| { type: 'set_chain_search'; value: string }
-	| { type: 'set_project_search'; value: string }
-	| { type: 'set_token_search'; value: string }
-	| { type: 'set_pool_search'; value: string }
-	| { type: 'toggle_sort'; column: SortColumn }
-	| { type: 'set_show_pool_picker'; value: boolean }
-
-const getInitialYieldsChartUiState = (
-	selectedYieldPool: YieldsChartTabProps['selectedYieldPool']
-): YieldsChartUiState => ({
-	chainSearch: '',
-	projectSearch: '',
-	tokenSearch: '',
-	poolSearch: '',
-	sortColumn: 'tvl',
-	sortDirection: 'desc',
-	showPoolPicker: !selectedYieldPool
-})
-
-const yieldsChartUiReducer = (state: YieldsChartUiState, action: YieldsChartUiAction): YieldsChartUiState => {
-	switch (action.type) {
-		case 'set_chain_search':
-			return { ...state, chainSearch: action.value }
-		case 'set_project_search':
-			return { ...state, projectSearch: action.value }
-		case 'set_token_search':
-			return { ...state, tokenSearch: action.value }
-		case 'set_pool_search':
-			return { ...state, poolSearch: action.value }
-		case 'toggle_sort':
-			if (state.sortColumn === action.column) {
-				return {
-					...state,
-					sortDirection: state.sortDirection === 'desc' ? 'asc' : 'desc'
-				}
-			}
-			return { ...state, sortColumn: action.column, sortDirection: 'desc' }
-		case 'set_show_pool_picker':
-			return action.value ? { ...state, showPoolPicker: true } : { ...state, poolSearch: '', showPoolPicker: false }
-		default:
-			return state
-	}
-}
-
 const EMPTY_YIELDS_DATA: Array<ProYieldRow> = []
+const BORROW_CHART_TYPES = new Set(['borrow-apy', 'net-borrow-apy'])
 
 export function YieldsChartTab({
 	selectedYieldPool,
@@ -134,22 +82,25 @@ export function YieldsChartTab({
 	onMinTvlChange,
 	onMaxTvlChange
 }: YieldsChartTabProps) {
-	const { data: yieldsDataResponse, isLoading: yieldsLoading } = useYieldsData()
-	const yieldsData = yieldsDataResponse ?? EMPTY_YIELDS_DATA
-	const [uiState, dispatchUi] = useReducer(yieldsChartUiReducer, selectedYieldPool, getInitialYieldsChartUiState)
-	const { chainSearch, projectSearch, tokenSearch, poolSearch, sortColumn, sortDirection, showPoolPicker } = uiState
-	const deferredChainSearch = useDeferredValue(chainSearch)
-	const deferredProjectSearch = useDeferredValue(projectSearch)
-	const deferredTokenSearch = useDeferredValue(tokenSearch)
+	const yieldsQuery = useYieldsData()
+	const yieldsLoading = yieldsQuery.isLoading
+	const yieldsData = yieldsQuery.data ?? EMPTY_YIELDS_DATA
+	const [poolSearch, setPoolSearch] = useState('')
 	const deferredPoolSearch = useDeferredValue(poolSearch)
-	const chainListRef = useRef<HTMLDivElement | null>(null)
-	const projectListRef = useRef<HTMLDivElement | null>(null)
-	const tokenListRef = useRef<HTMLDivElement | null>(null)
+	const [sort, setSort] = useState<{ column: SortColumn; direction: SortDirection }>({
+		column: 'tvl',
+		direction: 'desc'
+	})
+	const sortColumn = sort.column
+	const sortDirection = sort.direction
+	// The picker shows until a pool is picked, and again while the reader changes it.
+	const [changingPool, setChangingPool] = useState(false)
+	const showPoolPicker = !selectedYieldPool || changingPool
+	const closePoolPicker = () => {
+		setChangingPool(false)
+		setPoolSearch('')
+	}
 	const poolListRef = useRef<HTMLDivElement | null>(null)
-	const tokenSearchInputRef = useRef<HTMLInputElement | null>(null)
-	const chainPopover = usePopoverStore({ placement: 'bottom-start' })
-	const projectPopover = usePopoverStore({ placement: 'bottom-start' })
-	const tokenPopover = usePopoverStore({ placement: 'bottom-start' })
 
 	const chainOptions = useMemo(() => {
 		const chainTvlMap = new Map<string, number>()
@@ -160,7 +111,7 @@ export function YieldsChartTab({
 		}
 		return Array.from(chainTvlMap.entries())
 			.sort((a, b) => b[1] - a[1])
-			.map(([chain]) => ({ value: chain, label: chain }))
+			.map(([chain]) => ({ value: chain, label: chain, logo: getItemIconUrl('chain', null, chain) }))
 	}, [yieldsData])
 
 	const projectOptions = useMemo(() => {
@@ -173,7 +124,7 @@ export function YieldsChartTab({
 		}
 		return Array.from(projectTvlMap.entries())
 			.sort((a, b) => b[1] - a[1])
-			.map(([project]) => ({ value: project, label: project }))
+			.map(([project]) => ({ value: project, label: project, logo: getItemIconUrl('protocol', null, project) }))
 	}, [yieldsData])
 
 	const categoryOptions = useMemo(() => {
@@ -201,72 +152,6 @@ export function YieldsChartTab({
 		return tokenOptionList
 	}, [yieldsData])
 
-	const filteredChainOptions = useMemo(() => {
-		if (!deferredChainSearch) return chainOptions
-		return matchSorter(chainOptions, deferredChainSearch, { keys: ['label'] })
-	}, [chainOptions, deferredChainSearch])
-
-	const filteredProjectOptions = useMemo(() => {
-		if (!deferredProjectSearch) return projectOptions
-		return matchSorter(projectOptions, deferredProjectSearch, {
-			keys: ['label']
-		})
-	}, [projectOptions, deferredProjectSearch])
-
-	const filteredTokenOptions = useMemo(() => {
-		if (!deferredTokenSearch) return tokenOptions
-		return matchSorter(tokenOptions, deferredTokenSearch, { keys: ['label'] })
-	}, [tokenOptions, deferredTokenSearch])
-
-	const chainVirtualizer = useVirtualItems({
-		count: filteredChainOptions.length,
-		getScrollElement: () => chainListRef.current,
-		estimateSize: () => 44,
-		overscan: 8
-	})
-
-	const projectVirtualizer = useVirtualItems({
-		count: filteredProjectOptions.length,
-		getScrollElement: () => projectListRef.current,
-		estimateSize: () => 44,
-		overscan: 8
-	})
-
-	const tokenVirtualizer = useVirtualItems({
-		count: filteredTokenOptions.length,
-		getScrollElement: () => tokenListRef.current,
-		estimateSize: () => 44,
-		overscan: 8
-	})
-
-	const handleChainPopoverToggle = () => {
-		setTimeout(() => chainVirtualizer.measure(), 0)
-	}
-
-	const handleProjectPopoverToggle = () => {
-		setTimeout(() => projectVirtualizer.measure(), 0)
-	}
-
-	const handleTokenPopoverToggle = () => {
-		setTimeout(() => tokenVirtualizer.measure(), 0)
-	}
-
-	const toggleChain = (value: string) => {
-		if (selectedYieldChains.includes(value)) {
-			onSelectedYieldChainsChange(selectedYieldChains.filter((v) => v !== value))
-		} else {
-			onSelectedYieldChainsChange([...selectedYieldChains, value])
-		}
-	}
-
-	const toggleProject = (value: string) => {
-		if (selectedYieldProjects.includes(value)) {
-			onSelectedYieldProjectsChange(selectedYieldProjects.filter((v) => v !== value))
-		} else {
-			onSelectedYieldProjectsChange([...selectedYieldProjects, value])
-		}
-	}
-
 	const normalizedSelectedTokenSet = useMemo(() => {
 		const tokens = new Set<string>()
 		for (const token of selectedYieldTokens) tokens.add(normalizeYieldToken(token))
@@ -275,16 +160,6 @@ export function YieldsChartTab({
 	const selectedYieldChainSet = useMemo(() => new Set(selectedYieldChains), [selectedYieldChains])
 	const selectedYieldProjectSet = useMemo(() => new Set(selectedYieldProjects), [selectedYieldProjects])
 	const selectedYieldCategorySet = useMemo(() => new Set(selectedYieldCategories), [selectedYieldCategories])
-
-	const toggleToken = (value: string) => {
-		const normalizedValue = normalizeYieldToken(value)
-
-		if (normalizedSelectedTokenSet.has(normalizedValue)) {
-			onSelectedYieldTokensChange(selectedYieldTokens.filter((token) => normalizeYieldToken(token) !== normalizedValue))
-		} else {
-			onSelectedYieldTokensChange([...selectedYieldTokens, normalizedValue])
-		}
-	}
 
 	const filteredPools = useMemo(() => {
 		return yieldsData.filter((pool) => {
@@ -353,7 +228,11 @@ export function YieldsChartTab({
 	})
 
 	const toggleSort = (column: SortColumn) => {
-		dispatchUi({ type: 'toggle_sort', column })
+		setSort((previous) =>
+			previous.column === column
+				? { column, direction: previous.direction === 'desc' ? 'asc' : 'desc' }
+				: { column, direction: 'desc' }
+		)
 	}
 
 	const selectedPoolData = useMemo(() => {
@@ -361,22 +240,20 @@ export function YieldsChartTab({
 		return yieldsData.find((pool) => pool.configID === selectedYieldPool.configID) ?? null
 	}, [selectedYieldPool, yieldsData])
 
-	const { data: selectedYieldChartData, isLoading: selectedYieldChartLoading } = useYieldChartData(
-		selectedYieldPool?.configID || null
-	)
+	const supplyHistory = useYieldChartData(selectedYieldPool?.configID || null)
+	const selectedYieldChartData = supplyHistory.data
 
 	const hasBorrowMarket =
 		selectedPoolData != null &&
 		(selectedPoolData.apyBorrow != null ||
 			selectedPoolData.totalBorrowUsd != null ||
 			selectedPoolData.totalAvailableUsd != null)
-	const { data: borrowChartData, isLoading: borrowChartLoading } = useYieldChartLendBorrow(
-		selectedYieldPool?.configID || null,
-		hasBorrowMarket
-	)
+	const borrowHistory = useYieldChartLendBorrow(selectedYieldPool?.configID || null, hasBorrowMarket)
+	const borrowChartData = borrowHistory.data
+	const borrowChartLoading = borrowHistory.isLoading
 
 	const availableChartTypes = useMemo(() => {
-		const types: Array<{ value: string; label: string; available: boolean }> = [
+		const types: Array<{ value: YieldChartType; label: string; available: boolean }> = [
 			{ value: 'tvl-apy', label: 'TVL & Supply APY', available: true }
 		]
 
@@ -419,371 +296,60 @@ export function YieldsChartTab({
 		return types
 	}, [selectedYieldChartData, borrowChartData])
 
-	useEffect(() => {
-		if (!selectedYieldPool) return
-
-		const borrowTypes = ['borrow-apy', 'net-borrow-apy']
-		const isBorrowType = borrowTypes.includes(selectedYieldChartType)
-
-		if (isBorrowType && borrowChartLoading) return
-		if (!isBorrowType && selectedYieldChartLoading) return
-
-		const currentTypeAvailable = availableChartTypes.find((t) => t.value === selectedYieldChartType && t.available)
-		if (!currentTypeAvailable) {
-			onSelectedYieldChartTypeChange('tvl-apy')
-		}
-	}, [
-		selectedYieldPool,
-		availableChartTypes,
-		selectedYieldChartType,
-		onSelectedYieldChartTypeChange,
-		borrowChartLoading,
-		selectedYieldChartLoading
-	])
-
 	const { dataset: yieldsChartDataset, latestData: latestYieldData } = useYieldChartTransformations({
 		chartType: normalizeYieldChartType(selectedYieldChartType),
 		chartData: selectedYieldChartData,
 		borrowData: borrowChartData
 	})
 
-	const borrowTypes = ['borrow-apy', 'net-borrow-apy']
-	const isPreviewLoading = borrowTypes.includes(selectedYieldChartType) ? borrowChartLoading : selectedYieldChartLoading
+	const previewHistory = BORROW_CHART_TYPES.has(selectedYieldChartType) ? borrowHistory : supplyHistory
+	const isPreviewLoading = previewHistory.isLoading
 
 	return (
 		<div className="flex flex-col gap-4">
-			{yieldsLoading ? (
+			{queryReadFailed(yieldsQuery) && !yieldsQuery.data ? (
+				<InlineStatus variant="error">
+					<div className="flex flex-wrap items-center justify-between gap-2">
+						<span>Couldn't load the yield pools.</span>
+						<Button
+							type="button"
+							size="sm"
+							pendingLabel={yieldsQuery.isFetching ? 'Retrying…' : null}
+							onClick={() => void yieldsQuery.refetch()}
+						>
+							Try again
+						</Button>
+					</div>
+				</InlineStatus>
+			) : yieldsLoading ? (
 				<div className="flex h-32 items-center justify-center">
 					<LocalLoader />
 				</div>
 			) : (
 				<div className="flex flex-col gap-4">
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-						<div className="flex flex-col">
-							<span className="mb-1 block text-xs font-medium text-pro-text-secondary">Chains</span>
-							<PopoverDisclosure
-								store={chainPopover}
-								onClick={handleChainPopoverToggle}
-								className="flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-							>
-								<span className={selectedYieldChains.length > 0 ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>
-									{selectedYieldChains.length > 0
-										? `${selectedYieldChains.length} chain${selectedYieldChains.length > 1 ? 's' : ''} selected`
-										: 'All chains'}
-								</span>
-								<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
-							</PopoverDisclosure>
-							<Popover
-								store={chainPopover}
-								modal={false}
-								portal
-								gutter={4}
-								flip={false}
-								className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-overlay-sm"
-								style={{ width: 'var(--popover-anchor-width)' }}
-							>
-								<div className="p-2.5">
-									<div className="relative mb-2.5">
-										<Icon
-											name="search"
-											width={12}
-											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
-										/>
-										<input
-											onInput={(e) =>
-												dispatchUi({
-													type: 'set_chain_search',
-													value: e.currentTarget.value
-												})
-											}
-											placeholder="Search chains..."
-											className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-										/>
-									</div>
-									<div className="h-[240px] overflow-y-auto rounded-md" ref={chainListRef}>
-										<div
-											className="p-1"
-											style={{
-												height: chainVirtualizer.totalSize,
-												position: 'relative'
-											}}
-										>
-											{chainVirtualizer.items.map((row) => {
-												const option = filteredChainOptions[row.index]
-												if (!option) return null
-												const isActive = selectedYieldChains.includes(option.value)
-												const iconUrl = getItemIconUrl('chain', null, option.value)
-												return (
-													<button
-														type="button"
-														key={option.value}
-														onClick={() => toggleChain(option.value)}
-														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
-															isActive
-																? 'bg-brand/10 font-semibold text-brand shadow-sm'
-																: 'text-pro-text-secondary hover:text-pro-text-primary'
-														}`}
-														style={{
-															position: 'absolute',
-															top: 0,
-															left: 0,
-															width: '100%',
-															transform: `translateY(${row.start}px)`
-														}}
-													>
-														<div className="flex min-w-0 items-center gap-2.5">
-															{iconUrl ? (
-																<img
-																	src={iconUrl}
-																	alt={option.label}
-																	width={20}
-																	height={20}
-																	className="size-5 rounded-full object-cover ring-1 ring-pro-cards-border"
-																/>
-															) : null}
-															<span className="truncate">{option.label}</span>
-														</div>
-														{isActive ? (
-															<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
-														) : null}
-													</button>
-												)
-											})}
-										</div>
-									</div>
-									{selectedYieldChains.length > 0 ? (
-										<div className="mt-2.5 flex items-center justify-between rounded-md border border-pro-cards-border px-2.5 py-2">
-											<span className="text-xs font-medium text-pro-text-secondary">
-												{selectedYieldChains.length} selected
-											</span>
-											<button
-												type="button"
-												onClick={() => onSelectedYieldChainsChange([])}
-												className="text-xs font-medium text-pro-text-tertiary transition-colors hover:text-brand"
-											>
-												Clear
-											</button>
-										</div>
-									) : null}
-								</div>
-							</Popover>
-						</div>
-
-						<div className="flex flex-col">
-							<span className="mb-1 block text-xs font-medium text-pro-text-secondary">Projects</span>
-							<PopoverDisclosure
-								store={projectPopover}
-								onClick={handleProjectPopoverToggle}
-								className="flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-							>
-								<span className={selectedYieldProjects.length > 0 ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>
-									{selectedYieldProjects.length > 0
-										? `${selectedYieldProjects.length} project${selectedYieldProjects.length > 1 ? 's' : ''} selected`
-										: 'All projects'}
-								</span>
-								<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
-							</PopoverDisclosure>
-							<Popover
-								store={projectPopover}
-								modal={false}
-								portal
-								gutter={4}
-								flip={false}
-								className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-overlay-sm"
-								style={{ width: 'var(--popover-anchor-width)' }}
-							>
-								<div className="p-2.5">
-									<div className="relative mb-2.5">
-										<Icon
-											name="search"
-											width={12}
-											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
-										/>
-										<input
-											onInput={(e) =>
-												dispatchUi({
-													type: 'set_project_search',
-													value: e.currentTarget.value
-												})
-											}
-											placeholder="Search projects..."
-											className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-										/>
-									</div>
-									<div className="h-[240px] overflow-y-auto rounded-md" ref={projectListRef}>
-										<div
-											className="p-1"
-											style={{
-												height: projectVirtualizer.totalSize,
-												position: 'relative'
-											}}
-										>
-											{projectVirtualizer.items.map((row) => {
-												const option = filteredProjectOptions[row.index]
-												if (!option) return null
-												const isActive = selectedYieldProjects.includes(option.value)
-												const iconUrl = getItemIconUrl('protocol', null, option.value)
-												return (
-													<button
-														type="button"
-														key={option.value}
-														onClick={() => toggleProject(option.value)}
-														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
-															isActive
-																? 'bg-brand/10 font-semibold text-brand shadow-sm'
-																: 'text-pro-text-secondary hover:text-pro-text-primary'
-														}`}
-														style={{
-															position: 'absolute',
-															top: 0,
-															left: 0,
-															width: '100%',
-															transform: `translateY(${row.start}px)`
-														}}
-													>
-														<div className="flex min-w-0 items-center gap-2.5">
-															{iconUrl ? (
-																<img
-																	src={iconUrl}
-																	alt={option.label}
-																	width={20}
-																	height={20}
-																	className="size-5 rounded-full object-cover ring-1 ring-pro-cards-border"
-																/>
-															) : null}
-															<span className="truncate">{option.label}</span>
-														</div>
-														{isActive ? (
-															<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
-														) : null}
-													</button>
-												)
-											})}
-										</div>
-									</div>
-									{selectedYieldProjects.length > 0 ? (
-										<div className="mt-2.5 flex items-center justify-between rounded-md border border-pro-cards-border px-2.5 py-2">
-											<span className="text-xs font-medium text-pro-text-secondary">
-												{selectedYieldProjects.length} selected
-											</span>
-											<button
-												type="button"
-												onClick={() => onSelectedYieldProjectsChange([])}
-												className="text-xs font-medium text-pro-text-tertiary transition-colors hover:text-brand"
-											>
-												Clear
-											</button>
-										</div>
-									) : null}
-								</div>
-							</Popover>
-						</div>
-
-						<div className="flex flex-col">
-							<span className="mb-1 block text-xs font-medium text-pro-text-secondary">Tokens</span>
-							<PopoverDisclosure
-								store={tokenPopover}
-								onClick={handleTokenPopoverToggle}
-								className="flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-							>
-								<span className={selectedYieldTokens.length > 0 ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>
-									{selectedYieldTokens.length > 0
-										? `${selectedYieldTokens.length} token${selectedYieldTokens.length > 1 ? 's' : ''} selected`
-										: 'All tokens'}
-								</span>
-								<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
-							</PopoverDisclosure>
-							<Popover
-								store={tokenPopover}
-								modal={false}
-								portal
-								gutter={4}
-								flip={false}
-								className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-overlay-sm"
-								style={{ width: 'var(--popover-anchor-width)' }}
-							>
-								<div className="p-2.5">
-									<div className="relative mb-2.5">
-										<Icon
-											name="search"
-											width={12}
-											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
-										/>
-										<input
-											ref={tokenSearchInputRef}
-											onInput={(e) =>
-												dispatchUi({
-													type: 'set_token_search',
-													value: e.currentTarget.value
-												})
-											}
-											placeholder="Search tokens..."
-											className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-										/>
-									</div>
-									<div className="h-[240px] overflow-y-auto rounded-md" ref={tokenListRef}>
-										<div
-											className="p-1"
-											style={{
-												height: tokenVirtualizer.totalSize,
-												position: 'relative'
-											}}
-										>
-											{tokenVirtualizer.items.map((row) => {
-												const option = filteredTokenOptions[row.index]
-												if (!option) return null
-												const isActive = normalizedSelectedTokenSet.has(option.value)
-												return (
-													<button
-														type="button"
-														key={option.value}
-														onClick={() => toggleToken(option.value)}
-														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
-															isActive
-																? 'bg-brand/10 font-semibold text-brand shadow-sm'
-																: 'text-pro-text-secondary hover:text-pro-text-primary'
-														}`}
-														style={{
-															position: 'absolute',
-															top: 0,
-															left: 0,
-															width: '100%',
-															transform: `translateY(${row.start}px)`
-														}}
-													>
-														<span className="truncate">{option.label}</span>
-														{isActive ? (
-															<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
-														) : null}
-													</button>
-												)
-											})}
-										</div>
-									</div>
-									{selectedYieldTokens.length > 0 ? (
-										<div className="mt-2.5 flex items-center justify-between rounded-md border border-pro-cards-border px-2.5 py-2">
-											<span className="text-xs font-medium text-pro-text-secondary">
-												{selectedYieldTokens.length} selected
-											</span>
-											<button
-												type="button"
-												onClick={() => {
-													onSelectedYieldTokensChange([])
-													if (tokenSearchInputRef.current) tokenSearchInputRef.current.value = ''
-													dispatchUi({ type: 'set_token_search', value: '' })
-												}}
-												className="text-xs font-medium text-pro-text-tertiary transition-colors hover:text-brand"
-											>
-												Clear
-											</button>
-										</div>
-									) : null}
-								</div>
-							</Popover>
-						</div>
+						<VirtualizedMultiSelect
+							label="Chains"
+							options={chainOptions}
+							selectedValues={selectedYieldChains}
+							onChange={onSelectedYieldChainsChange}
+							placeholder="All chains"
+						/>
+						<VirtualizedMultiSelect
+							label="Projects"
+							options={projectOptions}
+							selectedValues={selectedYieldProjects}
+							onChange={onSelectedYieldProjectsChange}
+							placeholder="All projects"
+						/>
+						{/* Saved cards may hold tokens in another spelling; the picker reads and writes the normalized ones. */}
+						<VirtualizedMultiSelect
+							label="Tokens"
+							options={tokenOptions}
+							selectedValues={[...normalizedSelectedTokenSet]}
+							onChange={onSelectedYieldTokensChange}
+							placeholder="All tokens"
+						/>
 
 						<VirtualizedMultiSelect
 							label="Categories"
@@ -798,6 +364,7 @@ export function YieldsChartTab({
 							<div className="flex gap-1">
 								<input
 									type="number"
+									aria-label="Minimum TVL"
 									placeholder="Min"
 									value={minTvl ?? ''}
 									onChange={(e) => onMinTvlChange(e.target.value ? Number(e.target.value) : null)}
@@ -805,6 +372,7 @@ export function YieldsChartTab({
 								/>
 								<input
 									type="number"
+									aria-label="Maximum TVL"
 									placeholder="Max"
 									value={maxTvl ?? ''}
 									onChange={(e) => onMaxTvlChange(e.target.value ? Number(e.target.value) : null)}
@@ -862,7 +430,7 @@ export function YieldsChartTab({
 								<div className="flex items-center gap-2">
 									<button
 										type="button"
-										onClick={() => dispatchUi({ type: 'set_show_pool_picker', value: true })}
+										onClick={() => setChangingPool(true)}
 										className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-pro-text-primary"
 									>
 										Change pool
@@ -871,7 +439,7 @@ export function YieldsChartTab({
 										type="button"
 										onClick={() => {
 											onSelectedYieldPoolChange(null)
-											dispatchUi({ type: 'set_show_pool_picker', value: true })
+											setChangingPool(false)
 										}}
 										className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs font-medium text-pro-text-tertiary transition-colors hover:border-error/40 hover:text-error"
 									>
@@ -892,12 +460,7 @@ export function YieldsChartTab({
 											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
 										/>
 										<input
-											onInput={(e) =>
-												dispatchUi({
-													type: 'set_pool_search',
-													value: e.currentTarget.value
-												})
-											}
+											onInput={(e) => setPoolSearch(e.currentTarget.value)}
 											placeholder="Search pools..."
 											aria-label="Search pools"
 											className="w-36 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
@@ -911,7 +474,7 @@ export function YieldsChartTab({
 								{selectedYieldPool ? (
 									<button
 										type="button"
-										onClick={() => dispatchUi({ type: 'set_show_pool_picker', value: false })}
+										onClick={closePoolPicker}
 										className="text-xs font-medium text-brand transition-colors hover:text-brand/80"
 									>
 										Cancel
@@ -923,6 +486,7 @@ export function YieldsChartTab({
 								<p className="text-pro-text-tertiary">Pool</p>
 								<button
 									type="button"
+									aria-pressed={sortColumn === 'tvl'}
 									onClick={() => toggleSort('tvl')}
 									className={`flex items-center justify-end gap-1 ${
 										sortColumn === 'tvl' ? 'text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
@@ -938,6 +502,7 @@ export function YieldsChartTab({
 								</button>
 								<button
 									type="button"
+									aria-pressed={sortColumn === 'apy'}
 									onClick={() => toggleSort('apy')}
 									className={`flex items-center justify-end gap-1 ${
 										sortColumn === 'apy' ? 'text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
@@ -975,6 +540,7 @@ export function YieldsChartTab({
 												<button
 													type="button"
 													key={pool.configID}
+													aria-pressed={isSelected}
 													onClick={() => {
 														onSelectedYieldPoolChange({
 															configID: pool.configID,
@@ -982,10 +548,7 @@ export function YieldsChartTab({
 															project: pool.project,
 															chain: pool.chains[0]
 														})
-														dispatchUi({
-															type: 'set_show_pool_picker',
-															value: false
-														})
+														closePoolPicker()
 													}}
 													className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left text-xs transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
 														isSelected ? 'bg-brand/10' : ''
@@ -1080,12 +643,13 @@ export function YieldsChartTab({
 						{selectedYieldPool ? (
 							<div className="flex flex-wrap gap-1.5 border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
 								{availableChartTypes.map((type) => {
-									const isLoading = borrowChartLoading && ['borrow-apy', 'net-borrow-apy'].includes(type.value)
+									const isLoading = borrowChartLoading && BORROW_CHART_TYPES.has(type.value)
 									const isActive = selectedYieldChartType === type.value
 									return (
 										<button
 											type="button"
 											key={type.value}
+											aria-pressed={isActive}
 											onClick={() => type.available && onSelectedYieldChartTypeChange(type.value)}
 											disabled={!type.available || isLoading}
 											className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
@@ -1136,7 +700,19 @@ export function YieldsChartTab({
 								) : null}
 
 								<div className="h-[280px]">
-									{isPreviewLoading ? (
+									{queryReadFailed(previewHistory) && !previewHistory.data ? (
+										<div role="alert" className="flex h-full flex-col items-center justify-center gap-2">
+											<p className="text-sm text-data-down">Couldn't load this pool's history.</p>
+											<Button
+												type="button"
+												size="sm"
+												pendingLabel={previewHistory.isFetching ? 'Retrying…' : null}
+												onClick={() => void previewHistory.refetch()}
+											>
+												Try again
+											</Button>
+										</div>
+									) : isPreviewLoading ? (
 										<div className="flex h-full items-center justify-center">
 											<LocalLoader />
 										</div>

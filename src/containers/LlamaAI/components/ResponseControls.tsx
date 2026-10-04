@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
 import { FeedbackDialog } from '~/containers/LlamaAI/components/FeedbackForm'
 import { PDFExportButton } from '~/containers/LlamaAI/components/PDFExportButton'
@@ -46,44 +46,6 @@ const ARTIFACT_FETCH_TIMEOUT_MS = 10_000
 // Every control in the row is an icon-only ghost button so the row reads as one toolbar.
 const CONTROL = buttonStyles({ variant: 'ghost', size: 'md', square: true })
 
-interface ResponseControlsState {
-	copyStatus: 'idle' | 'pending' | 'copied' | 'error'
-	showFeedback: boolean
-	selectedRating: Rating
-	submittedRating: Rating
-}
-
-type ResponseControlsAction =
-	| { type: 'setCopyStatus'; value: ResponseControlsState['copyStatus'] }
-	| { type: 'setShowFeedback'; value: boolean }
-	| { type: 'setSelectedRating'; value: Rating }
-	| { type: 'setSubmittedRating'; value: Rating }
-	| { type: 'openFeedbackWithRating'; value: Rating }
-
-const createInitialState = (initialRating: Rating): ResponseControlsState => ({
-	copyStatus: 'idle',
-	showFeedback: false,
-	selectedRating: initialRating,
-	submittedRating: initialRating
-})
-
-function responseControlsReducer(state: ResponseControlsState, action: ResponseControlsAction): ResponseControlsState {
-	switch (action.type) {
-		case 'setCopyStatus':
-			return { ...state, copyStatus: action.value }
-		case 'setShowFeedback':
-			return { ...state, showFeedback: action.value }
-		case 'setSelectedRating':
-			return { ...state, selectedRating: action.value }
-		case 'setSubmittedRating':
-			return { ...state, submittedRating: action.value }
-		case 'openFeedbackWithRating':
-			return { ...state, selectedRating: action.value, showFeedback: true }
-		default:
-			return state
-	}
-}
-
 // Mounts only after hydration: "today" is the reader's local day, which the server cannot know.
 function CompletedTime({ completedAt }: { completedAt: Date }) {
 	const nowSeconds = useNowSeconds()
@@ -113,15 +75,17 @@ export function ResponseControls({
 	const openArticleExport = useArticleExport()
 	const detailsPopover = Ariakit.usePopoverStore({ placement: 'top' })
 	const [isDarkMode] = useDarkModeManager()
-	const [state, dispatch] = useReducer(responseControlsReducer, initialRating || null, createInitialState)
-	const { copyStatus, showFeedback, selectedRating, submittedRating } = state
-	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+	const [copyStatus, setCopyStatus] = useState<'idle' | 'pending' | 'copied' | 'error'>('idle')
+	const [submittedRating, setSubmittedRating] = useState<Rating>(initialRating ?? null)
+	// The rating the open feedback dialog started from; it stays through the dialog's fade-out.
+	const [feedback, setFeedback] = useState<{ open: boolean; rating: Rating }>({ open: false, rating: null })
 
+	// "Copied" reverts to the copy label after two seconds.
 	useEffect(() => {
-		return () => {
-			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
-		}
-	}, [])
+		if (copyStatus !== 'copied') return
+		const timer = setTimeout(() => setCopyStatus('idle'), 2000)
+		return () => clearTimeout(timer)
+	}, [copyStatus])
 
 	const copyLabel =
 		copyStatus === 'pending'
@@ -135,40 +99,15 @@ export function ResponseControls({
 	const isRatedAsGood = submittedRating === 'good'
 	const isRatedAsBad = submittedRating === 'bad'
 
-	const setShowFeedback = useCallback((value: boolean) => {
-		dispatch({ type: 'setShowFeedback', value })
-	}, [])
+	const rate = (rating: 'good' | 'bad') => {
+		if (submittedRating) return
+		trackUmamiEvent('llamaai-feedback-submit', { rating })
+		setFeedback({ open: true, rating })
+	}
 
-	const setSelectedRating = useCallback((value: Rating) => {
-		dispatch({ type: 'setSelectedRating', value })
-	}, [])
-
-	const setSubmittedRating = useCallback((value: Rating) => {
-		dispatch({ type: 'setSubmittedRating', value })
-	}, [])
-
-	const handleOpenFeedbackWithRating = useCallback((value: Rating) => {
-		dispatch({ type: 'openFeedbackWithRating', value })
-	}, [])
-
-	const handleRateGood = useCallback(() => {
-		trackUmamiEvent('llamaai-feedback-submit', { rating: 'good' })
-		handleOpenFeedbackWithRating('good')
-	}, [handleOpenFeedbackWithRating])
-
-	const handleRateBad = useCallback(() => {
-		trackUmamiEvent('llamaai-feedback-submit', { rating: 'bad' })
-		handleOpenFeedbackWithRating('bad')
-	}, [handleOpenFeedbackWithRating])
-
-	const handleOpenGeneralFeedback = useCallback(() => {
-		handleOpenFeedbackWithRating(null)
-	}, [handleOpenFeedbackWithRating])
-
-	const handleCopy = useCallback(async () => {
+	const handleCopy = async () => {
 		if (!content || copyStatus === 'pending') return
-		if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
-		dispatch({ type: 'setCopyStatus', value: 'pending' })
+		setCopyStatus('pending')
 		trackUmamiEvent('llamaai-copy-response')
 		const context = copyContext?.()
 		const source: CopyMessageSource = {
@@ -183,11 +122,6 @@ export function ResponseControls({
 				return res.text()
 			}),
 			captureChart: (chartId: string) => captureChartImage(chartId, isDarkMode)
-		}
-		const markCopied = () => {
-			dispatch({ type: 'setCopyStatus', value: 'copied' })
-			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
-			copiedTimeoutRef.current = setTimeout(() => dispatch({ type: 'setCopyStatus', value: 'idle' }), 2000)
 		}
 		// A logical test with an optional chain cannot be lowered inside a try. Decided before it, which is
 		// still synchronous and so still inside the user gesture.
@@ -209,16 +143,16 @@ export function ResponseControls({
 			} else {
 				await navigator.clipboard.writeText(await buildCopyMarkdown(content, source))
 			}
-			markCopied()
+			setCopyStatus('copied')
 		} catch {
 			try {
 				await navigator.clipboard.writeText(await buildCopyMarkdown(content, source))
-				markCopied()
+				setCopyStatus('copied')
 			} catch {
-				dispatch({ type: 'setCopyStatus', value: 'error' })
+				setCopyStatus('error')
 			}
 		}
-	}, [content, copyContext, isDarkMode, copyStatus])
+	}
 
 	if (!messageId) return null
 
@@ -234,7 +168,8 @@ export function ResponseControls({
 							render={
 								<button
 									type="button"
-									disabled={copyStatus === 'pending'}
+									// Focusable while pending, so focus stays on the control instead of falling to the page.
+									aria-disabled={copyStatus === 'pending' || undefined}
 									aria-label={copyLabel}
 									aria-busy={copyStatus === 'pending'}
 									onClick={() => {
@@ -269,8 +204,9 @@ export function ResponseControls({
 								render={
 									<button
 										type="button"
-										onClick={handleRateGood}
-										disabled={showFeedback || isRatedAsGood || isRatedAsBad}
+										onClick={() => rate('good')}
+										aria-pressed={isRatedAsGood}
+										aria-disabled={submittedRating !== null || undefined}
 									/>
 								}
 								className={CONTROL}
@@ -283,8 +219,9 @@ export function ResponseControls({
 								render={
 									<button
 										type="button"
-										onClick={handleRateBad}
-										disabled={showFeedback || isRatedAsGood || isRatedAsBad}
+										onClick={() => rate('bad')}
+										aria-pressed={isRatedAsBad}
+										aria-disabled={submittedRating !== null || undefined}
 									/>
 								}
 								className={CONTROL}
@@ -295,12 +232,7 @@ export function ResponseControls({
 						</>
 					) : null}
 					{content && sessionId && !readOnly ? (
-						<PDFExportButton
-							sessionId={sessionId}
-							messageId={messageId}
-							exportType="single_message"
-							className={CONTROL}
-						/>
+						<PDFExportButton sessionId={sessionId} messageId={messageId} className={CONTROL} />
 					) : null}
 					{messageMetadata?.outputTokens != null ? (
 						<Ariakit.PopoverProvider store={detailsPopover}>
@@ -327,8 +259,10 @@ export function ResponseControls({
 							render={
 								<button
 									type="button"
-									onClick={handleOpenGeneralFeedback}
-									disabled={showFeedback || !!submittedRating}
+									onClick={() => {
+										if (!submittedRating) setFeedback({ open: true, rating: null })
+									}}
+									aria-disabled={submittedRating !== null || undefined}
 								/>
 							}
 							className={CONTROL}
@@ -377,11 +311,10 @@ export function ResponseControls({
 				</div>
 			</div>
 			<FeedbackDialog
-				open={showFeedback}
-				setOpen={setShowFeedback}
+				open={feedback.open}
+				setOpen={(open) => setFeedback((current) => ({ ...current, open }))}
 				messageId={messageId}
-				selectedRating={selectedRating}
-				setSelectedRating={setSelectedRating}
+				initialRating={feedback.rating}
 				onRatingSubmitted={setSubmittedRating}
 			/>
 		</>

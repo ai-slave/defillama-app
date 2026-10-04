@@ -112,7 +112,11 @@ describe('RevisionHistoryDrawer', () => {
 		)
 	}
 
-	async function renderDrawer(onClose: () => void = vi.fn(), onRestored: () => void = vi.fn()) {
+	async function renderDrawer(
+		onClose: () => void = vi.fn(),
+		onRestored: () => void = vi.fn(),
+		saveEdits: () => Promise<boolean> = async () => true
+	) {
 		await act(async () => {
 			root.render(
 				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -120,6 +124,7 @@ describe('RevisionHistoryDrawer', () => {
 						onClose={onClose}
 						articleId="article-1"
 						authorizedFetch={authorizedFetch}
+						saveEdits={saveEdits}
 						onRestored={onRestored}
 					/>
 				</QueryClientProvider>
@@ -224,6 +229,41 @@ describe('RevisionHistoryDrawer', () => {
 		expect(confirm()!.querySelector('[role="alert"]')).toBeNull()
 	})
 
+	test('a restore that fails again keeps its error on screen while the new attempt runs', async () => {
+		let attempt = 0
+		http.serve({
+			'/articles/article-1/revisions/rev-4/restore-pending': () => {
+				attempt += 1
+				return attempt === 1
+					? fixtureStatus(500, { error: 'Restore is unavailable' })()
+					: new Promise<Response>(() => {})
+			}
+		})
+		await renderDrawer()
+		await askRestore()
+		await click(button('Restore'))
+		const confirm = () => confirmation('Restore as pending?')!
+		await waitForUi(() => expect(confirm().querySelector('[role="alert"]')).not.toBeNull())
+		await click(button('Restore', confirm()))
+		await waitForUi(() => expect(confirm().textContent).toContain('Restoring…'))
+		expect(confirm().querySelector('[role="alert"]')?.textContent).toBe("Couldn't restore this revision. Try again.")
+	})
+
+	test('a restore saves the editor’s unsaved edits first, and a failed save restores nothing', async () => {
+		http.serve({ '/articles/article-1/revisions/rev-4/restore-pending': { article: { id: 'article-1' } } })
+		const onRestored = vi.fn()
+		await renderDrawer(vi.fn(), onRestored, async () => false)
+		await askRestore()
+		await click(button('Restore'))
+		await waitForUi(() =>
+			expect(confirmation('Restore as pending?')?.querySelector('[role="alert"]')?.textContent).toBe(
+				'Save the latest edits before restoring.'
+			)
+		)
+		expect(http.requests.filter((request) => request.url.pathname.endsWith('/restore-pending'))).toHaveLength(0)
+		expect(onRestored).not.toHaveBeenCalled()
+	})
+
 	test('a running restore shows Restoring… and nothing closes the drawer or its confirmation', async () => {
 		http.serve({ '/articles/article-1/revisions/rev-4/restore-pending': () => new Promise<Response>(() => {}) })
 		const onClose = vi.fn()
@@ -311,23 +351,55 @@ describe('RevisionHistoryDrawer', () => {
 		expect(sheetText()).not.toContain("The live revision can't be deleted.")
 	})
 
-	test('moving the selection with the keyboard scrolls the newly selected revision into view', async () => {
+	test('J outside the list scrolls the newly selected revision into view', async () => {
 		// happy-dom has no layout, so record which row asked to be scrolled.
 		const scrolled: Array<string | null> = []
 		const scrollIntoView = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(function (
 			this: HTMLElement
 		) {
-			scrolled.push(this.getAttribute('data-revision-id'))
+			scrolled.push(this.closest('[data-revision-id]')?.getAttribute('data-revision-id') ?? null)
 		})
 		await renderDrawer()
 		await waitForUi(() => expect(sheetText()).toContain('Revision 4'))
 		scrolled.length = 0
 		await act(async () =>
-			sheet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+			sheet().dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true, cancelable: true }))
 		)
 		await flush()
 		expect(scrolled).toEqual(['rev-3'])
 		scrollIntoView.mockRestore()
+	})
+
+	test('the arrow keys in the list move focus with the selection, and leave the preview pane alone', async () => {
+		await renderDrawer()
+		await waitForUi(() => expect(sheetText()).toContain('Revision 4'))
+		const row = (id: string) => document.querySelector<HTMLElement>(`[data-revision-id="${id}"] button`)!
+		const press = async (target: HTMLElement, key: string) => {
+			await act(async () => {
+				target.focus()
+				target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+			})
+			await flush()
+		}
+		await press(row('rev-4'), 'ArrowDown')
+		expect(document.activeElement).toBe(row('rev-3'))
+		expect(row('rev-3').getAttribute('aria-current')).toBe('true')
+
+		await press(button('Restore as pending'), 'ArrowDown')
+		expect(row('rev-3').getAttribute('aria-current')).toBe('true')
+	})
+
+	test('a cancelled delete hands focus back to Delete', async () => {
+		await renderDrawer()
+		await selectRevision('rev-2')
+		await waitForUi(() => expect(sheetText()).toContain('Revision 2'))
+		await act(async () => {
+			button('Delete').focus()
+			button('Delete').click()
+		})
+		await waitForUi(() => expect(confirmation('Delete this revision?')).toBeDefined())
+		await click(button('Cancel', confirmation('Delete this revision?')!))
+		await waitForUi(() => expect(document.activeElement).toBe(button('Delete')))
 	})
 
 	test('history owns focus and shortcuts; Escape closes the confirmation before the drawer', async () => {
@@ -344,6 +416,7 @@ describe('RevisionHistoryDrawer', () => {
 						<RevisionHistoryDrawer
 							articleId="article-1"
 							authorizedFetch={authorizedFetch}
+							saveEdits={async () => true}
 							onRestored={vi.fn()}
 							onClose={() => {
 								onClose()

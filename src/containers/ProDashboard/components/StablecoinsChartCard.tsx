@@ -59,17 +59,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		}),
 		[selectionIntent]
 	)
-	const {
-		chartPayload,
-		pieSeries,
-		seriesNames,
-		defaultSeries,
-		prepareCsvDataset,
-		isLoading,
-		isFetching,
-		readFailed,
-		refetch
-	} = useStablecoinsChartData(chain, chartType, true, selectionOptions)
+	const chartRead = useStablecoinsChartData(chain, chartType, true, selectionOptions)
+	const { chartPayload, pieSeries, seriesNames, defaultSeries, prepareCsvDataset, isLoading, readFailed } = chartRead
 	const runtimeSeries = useMemo(() => getStablecoinRuntimeSeries(chartPayload), [chartPayload])
 	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
 		marketCapSeries: null,
@@ -148,8 +139,6 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(320, cardHeightScale)
 
-	const retryChartData = { run: () => void refetch(), pending: isFetching }
-
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
 			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<ProMeta items={[`${chainLabel} Stablecoins`]} />} />
@@ -160,7 +149,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	)
 
 	if (readFailed && !hasChartData) {
-		return renderStatusShell(<ProCardError retry={retryChartData} />)
+		return renderStatusShell(<ProCardError retry={chartRead} />)
 	}
 
 	if (isLoading) {
@@ -178,7 +167,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={retryChartData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTypeLabel}

@@ -38,7 +38,6 @@ export function PrimaryNavGroup({
 	icon,
 	pages,
 	asPath,
-	onClick,
 	defaultOpen = true,
 	alignLabels = false
 }: {
@@ -47,7 +46,6 @@ export function PrimaryNavGroup({
 	icon?: NavIconName
 	pages: Array<{ name: string; route: string }>
 	asPath: string
-	onClick?: () => void
 	defaultOpen?: boolean
 	alignLabels?: boolean
 }) {
@@ -68,7 +66,6 @@ export function PrimaryNavGroup({
 						name={page.name}
 						route={page.route}
 						asPath={asPath}
-						onClick={onClick}
 						isOld={page.route === route && pages.some((sibling) => sibling.route.startsWith(`${route}/`))}
 						hideIcon={alignLabels}
 					/>
@@ -91,7 +88,6 @@ export function LinkToPage({
 	isNew,
 	asPath,
 	umamiEvent,
-	onClick,
 	isOld,
 	hideIcon
 }: {
@@ -103,7 +99,6 @@ export function LinkToPage({
 	isNew?: boolean
 	asPath: string
 	umamiEvent?: string
-	onClick?: () => void
 	isOld?: boolean
 	hideIcon?: boolean
 }) {
@@ -122,14 +117,7 @@ export function LinkToPage({
 			target={isExternal ? '_blank' : undefined}
 			rel={isExternal ? 'noopener noreferrer' : undefined}
 			className={navLinkStyles}
-			onClick={
-				isLlamaAI
-					? () => {
-							freeLabel.trackEntryClick()
-							onClick?.()
-						}
-					: onClick
-			}
+			onClick={isLlamaAI ? freeLabel.trackEntryClick : undefined}
 		>
 			<NavItemContent
 				name={name}

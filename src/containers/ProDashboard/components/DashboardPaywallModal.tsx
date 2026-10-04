@@ -8,8 +8,8 @@ import { FREE_TIER_MAX_DASHBOARDS } from '../hooks/useFreeTierStatus'
 export type PaywallReason = 'dashboard-limit' | 'llamaai' | 'private-dashboard' | 'pro-feature'
 
 interface DashboardPaywallModalProps {
-	dialogStore: Ariakit.DialogStore
-	reason?: PaywallReason
+	reason: PaywallReason
+	onClose: () => void
 }
 
 const REASON_CONFIG: Record<PaywallReason, { title: string; description: string; features: Array<string> }> = {
@@ -55,11 +55,12 @@ const REASON_CONFIG: Record<PaywallReason, { title: string; description: string;
 	}
 }
 
-export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: DashboardPaywallModalProps) {
+// Mounted for one opening: the caller renders it while it holds a reason.
+export function DashboardPaywallModal({ reason, onClose }: DashboardPaywallModalProps) {
 	const config = REASON_CONFIG[reason]
 
 	return (
-		<Dialog size="sm" scope="pro" store={dialogStore} portal unmountOnHide>
+		<Dialog size="sm" scope="pro" open onClose={onClose} portal unmountOnHide>
 			<DialogHeader title={config.title} />
 			<DialogBody>
 				<Ariakit.DialogDescription className="body-sm text-secondary">{config.description}</Ariakit.DialogDescription>

@@ -7,8 +7,7 @@ import { EmbeddedCardCheckout } from '~/containers/Subscription/shared/EmbeddedC
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
-import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -46,12 +45,7 @@ const radioOptionStyles =
 const radioOptionSelectedStyles = 'border border-brand bg-brand-muted text-link-on-tint'
 const radioOptionIdleStyles = 'border border-medium text-primary'
 
-interface PurchaseSeatsModalProps {
-	isOpen: boolean
-	onClose: () => void
-}
-
-export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps) {
+export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 	const radioId = useId()
 	const queryClient = useQueryClient()
 	const { user } = useAuthContext()
@@ -70,9 +64,11 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 	const [seatInput, setSeatInput] = useState('1')
 	const seatCount = Number(seatInput)
 	const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month')
+	// Not the mutation's own error: that one clears as soon as a retry starts. Kept as the error and its plan, not
+	// a message: the unconfirmed copy names the seats the team shows now.
+	const [purchaseError, setPurchaseError] = useState<{ error: Error; subscriptionType: string } | null>(null)
 	const checkoutClientSecret =
 		purchaseSeatsMutation.data?.action === 'checkout_created' ? purchaseSeatsMutation.data.clientSecret : null
-	const [confirmLeave, setConfirmLeave] = useState(false)
 
 	const lockedInterval = getExistingInterval(teamSubscriptions, subscriptionType)
 	const typeLabel = subscriptionType === 'api' ? 'API' : 'Pro'
@@ -106,39 +102,33 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 			},
 			{
 				onSuccess: (result) => {
+					setPurchaseError(null)
 					if (result.action !== 'seats_added') return
 					onClose()
 					toast.success(`${result.seatsAdded} seat${result.seatsAdded === 1 ? '' : 's'} added`)
-				}
+				},
+				onError: (error, variables) => setPurchaseError({ error, subscriptionType: variables.subscriptionType })
 			}
 		)
 	}
 
 	const handleClose = () => {
-		if (pending) return
-		purchaseSeatsMutation.reset()
+		// A payment submitted just before Leave still completes and its webhook lags, so the team is read a few times.
+		if (checkoutClientSecret) scheduleConfirmationReads(queryClient, ['team'])
 		onClose()
 	}
 
-	// A payment submitted just before Leave still completes and its webhook lags, so the team is read a few times.
-	const leaveCheckout = () => {
-		setConfirmLeave(false)
-		handleClose()
-		scheduleConfirmationReads(queryClient, ['team'])
-	}
-
 	return (
-		<Dialog
-			size={checkoutClientSecret ? 'md' : 'sm'}
-			open={isOpen}
-			// Closing mid-payment asks first: leaving drops the checkout and whatever was entered in it.
-			onClose={checkoutClientSecret ? () => setConfirmLeave(true) : handleClose}
-			pending={pending}
-			// Stripe owns the payment's submit state, so a stray tap outside must not drop a payment mid-submit.
-			hideOnInteractOutside={!checkoutClientSecret}
-			portal
-			unmountOnHide
-		>
+		<Dialog size={checkoutClientSecret ? 'md' : 'sm'} open onClose={handleClose} pending={pending} portal unmountOnHide>
+			{/* Closing mid-payment asks first: leaving drops the checkout and whatever was entered in it. The guard also
+			    ignores outside taps, since Stripe owns the payment's submit state. */}
+			<DialogDiscardGuard
+				when={checkoutClientSecret !== null}
+				title="Leave checkout?"
+				description="Your seats aren't purchased until the payment finishes. Leaving closes this checkout."
+				cancelLabel="Keep paying"
+				confirmLabel="Leave"
+			/>
 			<form onSubmit={handlePurchase} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={checkoutClientSecret ? 'Complete payment' : 'Purchase seats'} />
 				<DialogBody>
@@ -333,24 +323,18 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									appear.
 								</InlineStatus>
 							) : null}
-							{purchaseSeatsMutation.isError ? (
+							{purchaseError ? (
 								<InlineStatus variant="error">
-									{purchaseSeatsMutation.error instanceof UnconfirmedTeamWriteError
-										? getUnconfirmedPurchaseMessage(teamSubscriptions, purchaseSeatsMutation.variables.subscriptionType)
-										: purchaseSeatsMutation.error.message}
+									{purchaseError.error instanceof UnconfirmedTeamWriteError
+										? getUnconfirmedPurchaseMessage(teamSubscriptions, purchaseError.subscriptionType)
+										: purchaseError.error.message}
 								</InlineStatus>
 							) : null}
 						</>
 					)}
 				</DialogBody>
 				{checkoutClientSecret ? null : (
-					<DialogFooter
-						dismiss={
-							<Button type="button" size="md" onClick={handleClose} disabled={pending}>
-								Cancel
-							</Button>
-						}
-					>
+					<DialogFooter dismiss={<DialogCancelButton />}>
 						<Button
 							type="submit"
 							variant="primary"
@@ -367,19 +351,6 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 					{pending ? 'Processing request' : ''}
 				</span>
 			</form>
-			<ConfirmDialog
-				open={confirmLeave}
-				onClose={() => setConfirmLeave(false)}
-				portal
-				unmountOnHide
-				title="Leave checkout?"
-				description="Your seats aren't purchased until the payment finishes. Leaving closes this checkout."
-				cancelLabel="Keep paying"
-				confirmLabel="Leave"
-				pendingLabel={null}
-				error={null}
-				onConfirm={leaveCheckout}
-			/>
 		</Dialog>
 	)
 }

@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useState } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
@@ -8,7 +9,7 @@ import { InlineStatus } from '~/ui/Status'
 interface CancelSubscriptionModalProps {
 	isOpen: boolean
 	onClose: () => void
-	variant?: 'trial' | 'subscription' | 'pastDue'
+	variant: 'trial' | 'subscription' | 'pastDue'
 }
 
 const CANCEL_BODY_TEXT = {
@@ -25,34 +26,28 @@ export function CancelSubscriptionModal(props: CancelSubscriptionModalProps) {
 	return <CancelSubscriptionDialog key={useOpeningKey(props.isOpen)} {...props} />
 }
 
-function CancelSubscriptionDialog({ isOpen, onClose, variant = 'trial' }: CancelSubscriptionModalProps) {
+function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscriptionModalProps) {
 	const isTrial = variant === 'trial'
-	// The modal owns the cancellation: the mutation is the single source of the
-	// pending/success/error state, and all feedback renders inside the dialog.
+	// The modal owns the cancellation, and all feedback renders inside the dialog.
 	const { cancelSubscriptionMutation } = useSubscribe()
 	const isLoading = cancelSubscriptionMutation.isPending
 	const cancelled = cancelSubscriptionMutation.isSuccess
 	const cancelledImmediately = Boolean(cancelSubscriptionMutation.data?.cancelled_immediately)
-	const error = cancelSubscriptionMutation.isError
-		? cancelSubscriptionMutation.error.message || 'Failed to cancel subscription. Try again or contact support.'
-		: null
-
-	const handleClose = () => {
-		if (isLoading) return
-		onClose()
-	}
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success replaces the form.
+	const [error, setError] = useState<string | null>(null)
 
 	const handleConfirm = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (isLoading) return
 		const formData = new FormData(e.currentTarget)
 		const message = ((formData.get('message') as string) ?? '').trim()
-		cancelSubscriptionMutation.mutate(message || undefined)
+		cancelSubscriptionMutation.mutate(message || undefined, {
+			onError: (failure) => setError(failure.message || 'Failed to cancel subscription. Try again or contact support.')
+		})
 	}
 
 	// A confirmation: no ×, the choice is the footer, and Cancel stays visible at every width.
 	return (
-		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={handleClose} pending={isLoading} portal unmountOnHide>
+		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={onClose} pending={isLoading} portal unmountOnHide>
 			{cancelled ? (
 				<>
 					<DialogHeader
@@ -67,7 +62,7 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant = 'trial' }: Cancel
 						</Ariakit.DialogDescription>
 					</DialogBody>
 					<DialogFooter>
-						<Button type="button" variant="primary" size="md" autoFocus onClick={handleClose}>
+						<Button type="button" variant="primary" size="md" autoFocus onClick={onClose}>
 							Close
 						</Button>
 					</DialogFooter>

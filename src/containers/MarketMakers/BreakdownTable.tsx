@@ -82,25 +82,26 @@ const BORDER = 'border-subtle'
 
 function HeadCell({
 	children,
-	align,
 	sortKey,
 	sort,
 	onSort
 }: {
 	children: string
-	align: 'left' | 'center'
 	sortKey?: SortKey
 	sort?: Sort | null
 	onSort?: (key: SortKey) => void
 }) {
 	const dir = sortKey && sort?.key === sortKey ? sort.dir : false
 	return (
-		<th className={`border-b ${BORDER} px-3 py-2 text-left label-sm text-tertiary`}>
+		<th
+			className={`border-b ${BORDER} px-3 py-2 text-left label-sm text-tertiary`}
+			aria-sort={dir ? (dir === 'asc' ? 'ascending' : 'descending') : undefined}
+		>
 			{sortKey && onSort ? (
 				<button
 					type="button"
 					onClick={() => onSort(sortKey)}
-					className={`flex items-center gap-1 ${align === 'center' ? 'justify-start' : ''} cursor-pointer select-none`}
+					className="flex cursor-pointer items-center gap-1 select-none"
 				>
 					{children}
 					<SortArrow dir={dir} />
@@ -186,16 +187,16 @@ export function BreakdownTable({
 				<table className="w-full border-collapse">
 					<thead>
 						<tr>
-							<HeadCell align="left" sortKey="metric" sort={sort} onSort={onSort}>
+							<HeadCell sortKey="metric" sort={sort} onSort={onSort}>
 								Metric
 							</HeadCell>
-							<HeadCell align="left" sortKey="value" sort={sort} onSort={onSort}>
+							<HeadCell sortKey="value" sort={sort} onSort={onSort}>
 								Value
 							</HeadCell>
-							<HeadCell align="center" sortKey="percentile" sort={sort} onSort={onSort}>
+							<HeadCell sortKey="percentile" sort={sort} onSort={onSort}>
 								Percentile
 							</HeadCell>
-							<HeadCell align="center" sortKey="rank" sort={sort} onSort={onSort}>
+							<HeadCell sortKey="rank" sort={sort} onSort={onSort}>
 								Rank
 							</HeadCell>
 						</tr>

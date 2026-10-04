@@ -5,7 +5,7 @@ import type {
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 
 type FilterFormat = 'currency' | 'percent' | 'number'
-export type NumericOperator = '>' | '>=' | '<' | '<=' | 'between'
+export type NumericOperator = '>=' | '<=' | 'between'
 
 interface FilterConfigBase {
 	id: string

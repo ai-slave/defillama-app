@@ -35,7 +35,6 @@ export function ProjectSourceDeleteDialog({
 				returnFocus.current = fallbackFocus.current
 			}}
 			finalFocus={returnFocus}
-			fallbackFocus={fallbackFocus}
 		/>
 	)
 }

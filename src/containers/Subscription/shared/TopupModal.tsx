@@ -41,7 +41,6 @@ export function TopupForm({
 	const [amount, setAmount] = useState('10')
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
 	const [isRedirecting, setIsRedirecting] = useState(false)
-	const leave = useDialogLeave()
 	const errorSlotRef = useRef<HTMLDivElement>(null)
 	// Back replaces the card step along with itself, so it hands focus to the amount field the reader returns to.
 	const amountInputRef = useRef<HTMLInputElement>(null)
@@ -56,6 +55,7 @@ export function TopupForm({
 		return errorSlotRef.current != null && (!dialog || dialog.hasAttribute('data-open'))
 	}
 	const topupMutation = useCreateTopup(isOnScreen)
+	const leave = useDialogLeave()
 
 	const parsedAmount = parseFloat(amount)
 	const isValidAmount =
@@ -205,7 +205,13 @@ export function TopupForm({
 					<fieldset className="flex flex-col gap-2">
 						<legend className="mb-2 label-sm text-secondary">Payment method</legend>
 						<div className="grid grid-cols-2 gap-2">
-							<Button type="button" size="md" onClick={handleStripe} disabled={!isValidAmount || isPaymentPending}>
+							<Button
+								type="button"
+								size="md"
+								onClick={handleStripe}
+								disabled={!isValidAmount || isPaymentPending}
+								accessibleWhenDisabled
+							>
 								<Icon name="credit-card" height={14} width={14} />
 								Pay with card
 							</Button>
@@ -242,11 +248,7 @@ export function TopupForm({
 				<DialogHeader
 					leading={
 						step === 'stripe' ? (
-							<DialogBackButton
-								label="Back to amount"
-								onClick={() => leave(goBack)}
-								disabled={topupMutation.isPending}
-							/>
+							<DialogBackButton label="Back to amount" onClick={goBack} disabled={topupMutation.isPending} />
 						) : null
 					}
 					title={step === 'stripe' ? 'Complete payment' : 'Top up balance'}
@@ -272,6 +274,7 @@ export function TopupForm({
 						variant="ghost"
 						size="sm"
 						className="-ml-2"
+						// A plain button, unlike DialogBackButton, so it asks the checkout guard itself.
 						onClick={() => leave(goBack)}
 						disabled={topupMutation.isPending}
 					>

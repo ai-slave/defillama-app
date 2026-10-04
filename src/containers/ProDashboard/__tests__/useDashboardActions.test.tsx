@@ -7,7 +7,7 @@ import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { DashboardAction, DashboardState } from '../dashboardReducer'
 import type { CustomDataConfig, MultiChartConfig, SectionConfig, SqlChartConfig, TextConfig } from '../types'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
-import { type DashboardWriteResult, useDashboardActions } from '../useDashboardActions'
+import { buildDefaultUnifiedTableConfig, type DashboardWriteResult, useDashboardActions } from '../useDashboardActions'
 
 const toast = vi.hoisted(() => ({ error: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toast }))
@@ -75,11 +75,15 @@ function dashboardState(overrides: Partial<DashboardState> = {}): DashboardState
 		dashboardVisibility: 'private',
 		dashboardTags: [],
 		dashboardDescription: '',
-		showGenerateDashboardModal: false,
-		showIterateDashboardModal: false,
 		...overrides
 	}
 }
+
+test('a new protocols table keeps the parameter bindings chosen in the modal', () => {
+	expect(
+		buildDefaultUnifiedTableConfig({ params: { chains: ['Ethereum'] }, bindings: { chains: 'chain' } })
+	).toMatchObject({ kind: 'unified-table', params: { chains: ['Ethereum'] }, bindings: { chains: 'chain' } })
+})
 
 describe('useDashboardActions', () => {
 	let container: HTMLDivElement
@@ -184,26 +188,16 @@ describe('useDashboardActions', () => {
 	test('duplicates a unified table right after the original and reports the copy id', async () => {
 		const { actions, autoSave } = await renderActions(dashboardState({ items: [UNIFIED_TABLE, FIRST, SECOND] }))
 
-		let duplicateId: string | null | undefined
+		let duplicated: DashboardWriteResult | undefined
 		act(() => {
-			duplicateId = actions.handleDuplicateUnifiedTable(UNIFIED_TABLE)
+			duplicated = actions.handleDuplicateUnifiedTable(UNIFIED_TABLE)
 		})
+		const duplicateId = duplicated?.status === 'saved' ? duplicated.ids[0] : undefined
 
 		const savedItems = autoSave.mock.calls[0]?.[0]
 		expect(savedItems?.map((item) => item.id)).toEqual([UNIFIED_TABLE.id, duplicateId, FIRST.id, SECOND.id])
 		expect(duplicateId).not.toBe(UNIFIED_TABLE.id)
 		expect(savedItems?.[1]).toEqual({ ...UNIFIED_TABLE, id: duplicateId })
-	})
-
-	test('handleAddUnifiedTable keeps the parameter bindings chosen in the modal', async () => {
-		const { actions, autoSave } = await renderActions()
-		act(() => actions.handleAddUnifiedTable({ params: { chains: ['Ethereum'] }, bindings: { chains: 'chain' } }))
-		const added = autoSave.mock.calls[0]?.[0]?.at(-1)
-		expect(added).toMatchObject({
-			kind: 'unified-table',
-			params: { chains: ['Ethereum'] },
-			bindings: { chains: 'chain' }
-		})
 	})
 
 	async function renderActions(
@@ -240,11 +234,6 @@ describe('useDashboardActions', () => {
 			'added',
 			'tab-two'
 		])
-
-		act(() => actions.handleAddUnifiedTable(UNIFIED_TABLE))
-		const withTable = autoSave.mock.calls[1]?.[0].map((item) => item.id)
-		expect(withTable?.at(-1)).toBe('tab-two')
-		expect(withTable?.[4]).toMatch(/^unified-table-/)
 	})
 
 	test('duplicates land right after their source and placement overrides the tab', async () => {
@@ -336,6 +325,22 @@ describe('useDashboardActions', () => {
 		})
 		expect(results).toEqual([{ status: 'saved', ids: ['third'] }])
 		expect(autoSave).toHaveBeenCalledOnce()
+	})
+
+	test('a duplicate that would push the document over the size limit is refused and leaves the dashboard as it was', async () => {
+		const large: MultiChartConfig = { id: 'large', kind: 'multi', name: 'x'.repeat(500_000), items: [] }
+		const { actions, autoSave } = await renderActions(dashboardState({ items: [large] }))
+
+		let result: DashboardWriteResult | undefined
+		act(() => {
+			result = actions.handleDuplicateMultiChart(large)
+		})
+
+		expect(result).toEqual({
+			status: 'refused',
+			reason: expect.stringMatching(/^Dashboard is too large \(\d+ KB\)\. Remove rows or a card\.$/)
+		})
+		expect(autoSave).not.toHaveBeenCalled()
 	})
 
 	test('undo dispatches UNDO and autosaves the restored snapshot with its variables', async () => {

@@ -50,7 +50,7 @@ test('directory results remain inline and visible through filtering, empty resul
 test('see more expands results and a new query restores the page size', async () => {
 	await act(async () => root.render(<Directory protocols={protocols} />))
 	const more = [...container.querySelectorAll<HTMLElement>('[role="option"]')].find(
-		(el) => el.textContent === 'See more...'
+		(el) => el.textContent === 'See more…'
 	)!
 	await act(async () => more.click())
 	expect(container.querySelectorAll('[role="option"]')).toHaveLength(25)

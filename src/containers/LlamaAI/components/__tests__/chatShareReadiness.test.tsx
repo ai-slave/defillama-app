@@ -42,7 +42,7 @@ vi.mock('../sidebar/AgenticSidebar', () => ({
 }))
 vi.mock('../AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('../SettingsModal', () => ({ SettingsModal: () => null }))
-vi.mock('../TokenLimitModal', () => ({ TokenLimitModal: () => null }))
+vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('../DeepLinkPromptModal', () => ({ DeepLinkPromptModal: () => null }))
 vi.mock('../TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
 vi.mock('../ConversationView', () => ({

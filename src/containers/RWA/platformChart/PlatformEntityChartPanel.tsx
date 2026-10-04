@@ -10,6 +10,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles } from '~/ui/MetricChip'
 import { LoadingIndicator } from '~/ui/Status'
@@ -28,6 +29,13 @@ import {
 	type RWAPlatformChartPeriod
 } from './metrics'
 import { usePlatformEntityChart, type RWAPlatformEntityChartData } from './usePlatformEntityChart'
+
+// A chip leaves once its metric turns off, after the URL updates. Focus moves to the next chip, else the previous one,
+// else the metrics button before the chips.
+const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
+	const next = neighbourRowControl(chip, chip)
+	return next?.querySelector<HTMLElement>('input') ?? next
+})
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -179,7 +187,11 @@ function EntityChartToolbar({
 						}}
 					/>
 					{RWA_PLATFORM_CHART_METRICS.filter((metric) => selected.includes(metric.key)).map((metric) => (
-						<label key={metric.key} className="relative flex cursor-pointer flex-nowrap items-center gap-1">
+						<label
+							key={metric.key}
+							ref={focusNeighbourChipOnLeave}
+							className="relative flex cursor-pointer flex-nowrap items-center gap-1"
+						>
 							<input
 								type="checkbox"
 								value={metric.key}

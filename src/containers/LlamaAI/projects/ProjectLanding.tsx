@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
@@ -15,12 +14,14 @@ import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
+import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { queryReadFailed } from '~/utils/query'
 import { useFileDropTarget } from '../components/FileDrop'
 import { AddSourcesMenu } from './AddSourcesMenu'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -66,19 +67,28 @@ export function ProjectLanding({
 	const usage = useProjectUsage()
 	const project = useProjectDetail(projectId)
 	const projectSessions = useProjectSessions(projectId)
+	const sessionsFailed = queryReadFailed(projectSessions)
 	const projectMenuRef = useRef<HTMLButtonElement>(null)
 	const renameStore = Ariakit.useDialogStore()
-	const deleteStore = Ariakit.useDialogStore()
+	const [confirmDelete, setConfirmDelete] = useState(false)
 	const clearUnseenCompletion = useClearUnseenCompletion()
 	const deleteSession = useDeleteSession()
-	const sessionDeleteStore = Ariakit.useDialogStore()
-	const [sessionToDelete, setSessionToDelete] = useState<(typeof sessions)[number] | null>(null)
+	// The chat a confirmation would delete, and the next chat's Delete button, which takes focus once it is gone.
+	const [sessionToDelete, setSessionToDelete] = useState<{
+		session: (typeof sessions)[number]
+		next: HTMLElement | null | undefined
+	} | null>(null)
+	// Where that confirmation returns focus: the Delete button that opened it, or after a deletion, the next chat.
+	const deleteFocusRef = useRef<HTMLElement | null>(null)
 	const tab = initialTab
 	const [prompt, setPrompt] = usePromptDraft(`project:${projectId}`)
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
 	const imageUpload = useImageUpload()
 	useFileDropTarget('Attach files to message', imageUpload.addDroppedFiles, tab === 'chats' && !!project.data)
 	const shiftHeldRef = useRef(false)
+	// While a send is on its way, a second Enter cannot send it twice and the field holds the text being sent. A send
+	// whose attachments could not be read stops there, keeps the draft and says why.
+	const [send, setSend] = useState<'idle' | 'sending' | 'readFailed'>('idle')
 	const sessionById = useMemo(() => new Map(sessionList.map((session) => [session.sessionId, session])), [sessionList])
 	const sessions = useMemo(
 		() =>
@@ -121,7 +131,7 @@ export function ProjectLanding({
 		}
 	}, [])
 
-	if (project.isLoading) {
+	if (project.isLoading && !queryReadFailed(project)) {
 		return (
 			<div role="status" className="flex h-full items-center justify-center gap-2 body-sm text-secondary">
 				<LoadingSpinner size={14} /> Loading project…
@@ -145,9 +155,13 @@ export function ProjectLanding({
 							: 'Failed to load project'}
 				</p>
 				{notFound ? null : (
-					<Button type="button" size="md" onClick={() => void project.refetch()} disabled={project.isFetching}>
-						{project.isFetching ? <LoadingSpinner size={12} /> : null}
-						{project.isFetching ? 'Retrying…' : 'Try again'}
+					<Button
+						type="button"
+						size="md"
+						pendingLabel={project.isFetching ? 'Retrying…' : null}
+						onClick={() => void project.refetch()}
+					>
+						Try again
 					</Button>
 				)}
 				<Button as={BasicLink} href="/ai/projects" size="sm" variant="ghost">
@@ -160,10 +174,17 @@ export function ProjectLanding({
 	const handleSubmit = async () => {
 		const trimmed = prompt.trim()
 		const imagesToSend = [...imageUpload.selectedImages]
-		if ((!trimmed && imagesToSend.length === 0) || isStreaming) return
+		if ((!trimmed && imagesToSend.length === 0) || isStreaming || send === 'sending') return
 		if (imageUpload.uploadMessage) return
-		const images = imagesToSend.length > 0 ? await toSubmittedAttachments(imagesToSend) : undefined
+		setSend('sending')
+		// null: an attachment could not be read; the draft and attachments stay for another try.
+		const images = imagesToSend.length > 0 ? await toSubmittedAttachments(imagesToSend).catch(() => null) : undefined
+		if (images === null) {
+			setSend('readFailed')
+			return
+		}
 		const accepted = await Promise.resolve(onSubmit(trimmed, undefined, images))
+		setSend('idle')
 		if (accepted === false) return
 		setPrompt('')
 		imageUpload.clearImages()
@@ -172,12 +193,6 @@ export function ProjectLanding({
 	const handlePickSession = (session: (typeof sessions)[number]) => {
 		if (session.hasUnseenCompletion) clearUnseenCompletion(session.sessionId, projectId)
 		onPickSession(session.sessionId)
-	}
-
-	const handleDeleteSession = (session: (typeof sessions)[number]) => {
-		deleteSession.reset()
-		setSessionToDelete(session)
-		sessionDeleteStore.show()
 	}
 
 	const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -243,7 +258,7 @@ export function ProjectLanding({
 								</Ariakit.MenuButton>
 								<MenuSurface variant="actions" gutter={6} className="w-52">
 									<MenuItem onClick={renameStore.show}>Rename project</MenuItem>
-									<MenuItem onClick={deleteStore.show} className="text-error!">
+									<MenuItem onClick={() => setConfirmDelete(true)} className="text-error!">
 										Delete project
 									</MenuItem>
 								</MenuSurface>
@@ -347,6 +362,7 @@ export function ProjectLanding({
 										onChange={(e) => setPrompt(e.target.value)}
 										onKeyDown={handleKey}
 										onPaste={handlePaste}
+										readOnly={send === 'sending'}
 										rows={1}
 										aria-label={`New chat in ${project.data.name}`}
 										placeholder="New chat in this project…"
@@ -365,28 +381,34 @@ export function ProjectLanding({
 										<Icon name="arrow-up" height={16} width={16} />
 									</button>
 								</div>
+								{send === 'readFailed' ? (
+									<div className="mt-2">
+										<InlineStatus variant="error">
+											Couldn&apos;t read an attachment. Remove it or attach it again, then send.
+										</InlineStatus>
+									</div>
+								) : null}
 							</form>
 							<section>
-								{projectSessions.error ? (
+								{sessionsFailed ? (
 									<div role="alert" className="mb-3 flex flex-wrap items-center gap-2 body-sm text-error">
 										<p>Couldn&apos;t load chats.</p>
 										<Button
 											type="button"
 											size="sm"
-											disabled={projectSessions.isFetching}
+											pendingLabel={projectSessions.isFetching ? 'Retrying…' : null}
 											onClick={() => void projectSessions.refetch()}
 										>
-											{projectSessions.isFetching ? <LoadingSpinner size={12} /> : null}
-											{projectSessions.isFetching ? 'Retrying…' : 'Retry chats'}
+											Retry chats
 										</Button>
 									</div>
 								) : null}
-								{projectSessions.isLoading ? (
+								{projectSessions.isLoading && !sessionsFailed ? (
 									<div role="status" aria-live="polite" className="flex justify-center py-8">
 										<LoadingIndicator label="Loading chats" />
 									</div>
 								) : sessions.length === 0 ? (
-									!projectSessions.error ? (
+									!sessionsFailed ? (
 										<div className="flex flex-col gap-1 py-4 text-center">
 											<h2 className="label-md text-primary">No chats yet</h2>
 											<p className="body-sm text-secondary">
@@ -403,8 +425,10 @@ export function ProjectLanding({
 												session={session}
 												projectId={projectId}
 												onSelect={() => handlePickSession(session)}
-												onDelete={() => handleDeleteSession(session)}
-												isDeleting={deleteSession.isPending && deleteSession.variables?.sessionId === session.sessionId}
+												onDelete={(trigger) => {
+													deleteFocusRef.current = trigger
+													setSessionToDelete({ session, next: neighbourRowControl(trigger.closest('li')!, trigger) })
+												}}
 											/>
 										))}
 									</ul>
@@ -413,39 +437,35 @@ export function ProjectLanding({
 						</TabPanel>
 					</Tabs>
 
-					<DeleteSessionDialog
-						store={sessionDeleteStore}
-						title={`Delete “${sessionToDelete?.title ?? 'chat'}”?`}
-						pending={deleteSession.isPending}
-						error={deleteSession.error}
-						onConfirm={() => {
-							if (!sessionToDelete || deleteSession.isPending) return
-							void deleteSession
-								.mutateAsync({ sessionId: sessionToDelete.sessionId, projectId })
-								.then(() => {
-									if (projectMenuRef.current?.isConnected) sessionDeleteStore.hide()
-								})
-								.catch((error) => {
-									if (!sessionDeleteStore.getState().contentElement?.isConnected) toast.error(error.message)
-								})
-						}}
-					/>
+					{sessionToDelete ? (
+						<DeleteSessionDialog
+							title={`Delete “${sessionToDelete.session.title}”?`}
+							mutation={deleteSession}
+							variables={{ sessionId: sessionToDelete.session.sessionId, projectId }}
+							onClose={() => setSessionToDelete(null)}
+							onSuccess={() => {
+								deleteFocusRef.current = sessionToDelete.next ?? projectMenuRef.current
+							}}
+							finalFocus={deleteFocusRef}
+						/>
+					) : null}
 					<CreateProjectModal
 						key={`rename-${projectId}`}
 						finalFocus={projectMenuRef}
 						dialogStore={renameStore}
-						mode="rename"
 						project={project.data}
 					/>
-					<DeleteProjectModal
-						key={`delete-${projectId}`}
-						finalFocus={projectMenuRef}
-						dialogStore={deleteStore}
-						project={project.data}
-						onDeleted={() => {
-							if (projectMenuRef.current?.isConnected) void router.push('/ai/projects')
-						}}
-					/>
+					{confirmDelete ? (
+						<DeleteProjectModal
+							key={projectId}
+							finalFocus={projectMenuRef}
+							project={project.data}
+							onClose={() => setConfirmDelete(false)}
+							onDeleted={() => {
+								if (projectMenuRef.current?.isConnected) void router.push('/ai/projects')
+							}}
+						/>
+					) : null}
 				</div>
 			</div>
 		</SessionListFocusContext.Provider>

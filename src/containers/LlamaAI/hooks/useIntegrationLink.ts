@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import {
 	confirmTelegramLink,
@@ -24,7 +24,8 @@ export type IntegrationLinkState =
 	| { status: 'starting' }
 	| { status: 'awaiting_tg'; token: string; deepLink: string }
 	| { status: 'awaiting_code'; token: string }
-	| { status: 'confirming' }
+	// Which prompt sent the confirmation, so that prompt stays on screen with its button pending.
+	| { status: 'confirming'; step: 'code' | 'switch' }
 	| {
 			status: 'switch_confirm'
 			token: string
@@ -34,105 +35,68 @@ export type IntegrationLinkState =
 	  }
 	| { status: 'error'; message: string }
 
-export type IntegrationLinkLocalState =
-	| { status: 'idle' }
-	| { status: 'awaiting_code'; token: string }
-	| {
-			status: 'switch_confirm'
-			token: string
-			short_code: string
-			currentTelegramUsername: string | null
-			expiresAt: string
-	  }
-	| { status: 'error'; message: string }
-
-type IntegrationLinkSwitchConfirmState = Extract<IntegrationLinkLocalState, { status: 'switch_confirm' }>
 type Options = { initialStatus?: TelegramStatus | null; initialTgloginToken?: string | null }
 type ConfirmTelegramLinkResult = Awaited<ReturnType<typeof confirmTelegramLink>>
 type ConfirmTelegramLinkVariables = { token: string; short_code: string; force?: boolean }
+type ConfirmState = {
+	isPending: boolean
+	data: ConfirmTelegramLinkResult | undefined
+	variables: ConfirmTelegramLinkVariables | undefined
+	error: Error | null
+}
 
 export function getTelegramStatusRefetchInterval(status: TelegramStatus | null | undefined) {
 	return status?.pending ? POLL_MS : false
 }
 
+function getSwitchConfirmation(confirm: ConfirmState) {
+	const { data, variables } = confirm
+	if (!data || !('status' in data) || data.status !== 'requires_switch_confirmation' || !variables) return null
+	return {
+		status: 'switch_confirm',
+		token: variables.token,
+		short_code: variables.short_code,
+		currentTelegramUsername: data.currentTelegramUsername,
+		expiresAt: data.expiresAt
+	} satisfies IntegrationLinkState
+}
+
 export function deriveTelegramLinkState({
 	status,
-	localState,
+	statusError,
 	isLoading,
 	isStarting,
-	isConfirming
+	confirm,
+	initialTgloginToken
 }: {
 	status: TelegramStatus | null | undefined
-	localState: IntegrationLinkLocalState
+	statusError: Error | null
 	isLoading: boolean
 	isStarting: boolean
-	isConfirming: boolean
+	confirm: ConfirmState
+	initialTgloginToken: string | null | undefined
 }): IntegrationLinkState {
-	// Local mutation state wins over query state so confirmation prompts and
-	// forced-switch errors remain visible while polling catches up.
-	if (localState.status === 'error') return localState
-	if (isStarting) return { status: 'starting' }
-	if (isConfirming) return { status: 'confirming' }
-	if (localState.status === 'awaiting_code' || localState.status === 'switch_confirm') return localState
+	const switchConfirmation = getSwitchConfirmation(confirm)
+	const confirmLinked = !!(confirm.data && 'linked' in confirm.data && confirm.data.linked)
+	// The confirmation's own outcome wins over query state, so its prompts and a forced switch's error stay visible
+	// while polling catches up.
+	if (!switchConfirmation && !confirmLinked) {
+		if (confirm.variables?.force && confirm.error)
+			return { status: 'error', message: confirm.error.message || 'Switch failed' }
+		if (!initialTgloginToken && !status && statusError) {
+			return { status: 'error', message: statusError.message || 'Failed to load Telegram status' }
+		}
+	}
+	// Switch account starts from a linked account, which stays on screen while its button waits.
+	if (isStarting && status?.link.state !== 'linked') return { status: 'starting' }
+	if (confirm.isPending) return { status: 'confirming', step: confirm.variables?.force ? 'switch' : 'code' }
+	if (switchConfirmation) return switchConfirmation
+	if (!confirmLinked && initialTgloginToken) return { status: 'awaiting_code', token: initialTgloginToken }
 	if (status?.pending) return { status: 'awaiting_tg', token: status.pending.token, deepLink: status.pending.deepLink }
 	if (status?.link.state === 'linked') {
 		return { status: 'linked', username: status.link.telegramUsername, linkedAt: status.link.linkedAt }
 	}
 	if (isLoading) return { status: 'loading' }
-	return { status: 'idle' }
-}
-
-function getSwitchConfirmation(
-	result: ConfirmTelegramLinkResult | undefined,
-	variables: ConfirmTelegramLinkVariables | undefined
-): IntegrationLinkSwitchConfirmState | null {
-	if (!result || !('status' in result) || result.status !== 'requires_switch_confirmation' || !variables) return null
-	return {
-		status: 'switch_confirm',
-		token: variables.token,
-		short_code: variables.short_code,
-		currentTelegramUsername: result.currentTelegramUsername,
-		expiresAt: result.expiresAt
-	}
-}
-
-function getMutationErrorState(
-	error: Error | null,
-	fallback: string
-): Extract<IntegrationLinkLocalState, { status: 'error' }> | null {
-	if (!error) return null
-	return { status: 'error', message: error.message || fallback }
-}
-
-export function deriveTelegramLocalState({
-	switchConfirmation,
-	confirmLinked,
-	initialTgloginToken,
-	startError,
-	confirmError,
-	confirmWasForced,
-	statusError,
-	hasStatusData
-}: {
-	switchConfirmation: IntegrationLinkSwitchConfirmState | null
-	confirmLinked: boolean
-	initialTgloginToken: string | null | undefined
-	startError: Error | null
-	confirmError: Error | null
-	confirmWasForced: boolean
-	statusError: Error | null
-	hasStatusData: boolean
-}): IntegrationLinkLocalState {
-	if (switchConfirmation) return switchConfirmation
-	if (confirmLinked) return { status: 'idle' }
-
-	const mutationError =
-		(confirmWasForced ? getMutationErrorState(confirmError, 'Switch failed') : null) ??
-		getMutationErrorState(startError, 'Failed to start linking')
-	if (mutationError) return mutationError
-
-	if (initialTgloginToken) return { status: 'awaiting_code', token: initialTgloginToken }
-	if (!hasStatusData) return getMutationErrorState(statusError, 'Failed to load Telegram status') ?? { status: 'idle' }
 	return { status: 'idle' }
 }
 
@@ -178,9 +142,13 @@ export function useIntegrationLink(opts: Options = {}) {
 		staleTime: 30_000
 	})
 
+	// Not the mutation's own error: that one clears as soon as a retry starts, and the retry runs under it.
+	const [startError, setStartError] = useState<string | null>(null)
 	const startMutation = useMutation({
 		mutationFn: () => startTelegramLink(authorizedFetch),
+		onError: (error) => setStartError(error.message || 'Failed to start linking'),
 		onSuccess: (result) => {
+			setStartError(null)
 			const previous = queryClient.getQueryData<TelegramStatus>(statusQueryKey)
 			const status: TelegramStatus = {
 				link: previous?.link ?? { state: 'unlinked' },
@@ -215,8 +183,10 @@ export function useIntegrationLink(opts: Options = {}) {
 	})
 
 	const connect = useCallback(() => {
+		// Connect also retries after a failed switch, whose error would otherwise outrank the new link.
+		confirmMutation.reset()
 		startMutation.mutate()
-	}, [startMutation])
+	}, [confirmMutation, startMutation])
 
 	const disconnect = useCallback(() => {
 		unlinkMutation.mutate()
@@ -231,7 +201,7 @@ export function useIntegrationLink(opts: Options = {}) {
 	)
 
 	const confirmSwitch = useCallback(async () => {
-		const switchConfirmation = getSwitchConfirmation(confirmMutation.data, confirmMutation.variables)
+		const switchConfirmation = getSwitchConfirmation(confirmMutation)
 		if (!switchConfirmation) return false
 		const { token, short_code } = switchConfirmation
 		try {
@@ -253,29 +223,21 @@ export function useIntegrationLink(opts: Options = {}) {
 		confirmMutation.reset()
 	}, [confirmMutation])
 
-	const switchConfirmation = getSwitchConfirmation(confirmMutation.data, confirmMutation.variables)
-	const localState = deriveTelegramLocalState({
-		switchConfirmation,
-		confirmLinked: !!(confirmMutation.data && 'linked' in confirmMutation.data && confirmMutation.data.linked),
-		initialTgloginToken: opts.initialTgloginToken,
-		startError: startMutation.error,
-		confirmError: confirmMutation.error,
-		confirmWasForced: !!confirmMutation.variables?.force,
-		statusError: statusQuery.error,
-		hasStatusData: !!statusQuery.data
-	})
-
 	const state = deriveTelegramLinkState({
 		status: statusQuery.data,
-		localState,
+		statusError: statusQuery.error,
 		isLoading: statusQuery.isLoading,
 		isStarting: startMutation.isPending,
-		isConfirming: confirmMutation.isPending
+		confirm: confirmMutation,
+		initialTgloginToken: opts.initialTgloginToken
 	})
 
 	return {
 		state,
+		// Beside the state, not instead of it: the linked account and the button that retries stay on screen.
+		startError,
 		connect,
+		isStarting: startMutation.isPending,
 		disconnect,
 		isDisconnecting: unlinkMutation.isPending,
 		disconnectFailed: unlinkMutation.isError,

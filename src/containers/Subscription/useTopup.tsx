@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AUTH_SERVER } from '~/constants'
-import { handleSimpleFetchResponse } from '~/utils/async'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
+import { queryReadFailed } from '~/utils/query'
 
 interface AiBalance {
 	freeRemaining: string
@@ -28,27 +29,10 @@ export const TOPUP_CONFIG = {
 	quickAmounts: [5, 10, 25, 50]
 } as const
 
-const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage: string): string => {
-	if (!message) return fallbackMessage
-	if (!message.startsWith('[HTTP] [error]')) return message
-	const colonIndex = message.indexOf(':')
-	if (colonIndex === -1) return fallbackMessage
-	const details = message.slice(colonIndex + 1).trim()
-	return details || fallbackMessage
-}
-
-const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
-	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
-
 export const useAiBalance = () => {
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()!
 
-	const {
-		data: balance,
-		isLoading,
-		isError,
-		refetch
-	} = useQuery<AiBalance>({
+	const balanceQuery = useQuery<AiBalance>({
 		queryKey: [AI_BALANCE_QUERY_KEY, user?.id],
 		queryFn: async () => {
 			const data = await authorizedFetch(`${AUTH_SERVER}/user/ai-balance`, {
@@ -64,9 +48,10 @@ export const useAiBalance = () => {
 		refetchOnWindowFocus: false
 	})
 
+	const { data: balance, isLoading, isFetching, refetch } = balanceQuery
 	const totalAvailable = balance ? parseFloat(balance.freeRemaining) + parseFloat(balance.toppedUpBalance) : 0
 
-	return { balance, totalAvailable, isLoading, isError, refetch }
+	return { balance, totalAvailable, isLoading, isFetching, readFailed: queryReadFailed(balanceQuery), refetch }
 }
 
 /** `isErrorShown` says whether the form that started the top-up still shows its error inline. */
@@ -97,7 +82,7 @@ export const useCreateTopup = (isErrorShown: () => boolean) => {
 			}
 
 			const normalizedResponse = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to create topup'))
+				throw new Error(httpErrorMessage(error, 'Failed to create topup'))
 			})
 
 			return normalizedResponse.json()

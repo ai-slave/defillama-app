@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { memo, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { flushSync } from 'react-dom'
+import { memo, useId, useRef, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
@@ -11,11 +10,11 @@ import { useAgentHomeData } from '~/containers/LlamaAI/hooks/useAgentHomeData'
 import type {
 	EffortOption,
 	LlamaAISettings,
-	LlamaAISettingsActions,
-	ModelOption
+	ModelOption,
+	SaveLlamaAISettings
 } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
-	notifyNotificationPermissionChanged,
+	requestNotificationPermission,
 	useNotificationPermission
 } from '~/containers/LlamaAI/hooks/useNotificationPermission'
 import {
@@ -42,6 +41,7 @@ import { Switch } from '~/ui/Switch'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
+import { queryReadFailed } from '~/utils/query'
 import { BalanceSettings } from './BalanceSettings'
 import { RetryNotice } from './RetryNotice'
 
@@ -96,21 +96,21 @@ type InstructionsDraft = { text: string; saved: string | null }
 interface SettingsModalProps {
 	dialogStore: Ariakit.DialogStore
 	settings: LlamaAISettings
-	actions: LlamaAISettingsActions
-	availableModels?: Array<ModelOption>
-	availableEfforts?: Array<EffortOption>
-	telegramStatus?: TelegramStatus | null
-	isSettingsLoading?: boolean
-	initialState?: SettingsInitialState | null
-	onInitialStateConsumed?: () => void
-	mobileNotificationPreference?: WebMobilePreference
-	setMobileNotificationEnabled?: WebMobilePushEnabledMutation
+	saveSettings: SaveLlamaAISettings
+	availableModels: Array<ModelOption>
+	availableEfforts: Array<EffortOption>
+	telegramStatus: TelegramStatus | null
+	isSettingsLoading: boolean
+	initialState: SettingsInitialState | null
+	onInitialStateConsumed: () => void
+	mobileNotificationPreference: WebMobilePreference
+	setMobileNotificationEnabled: WebMobilePushEnabledMutation
 }
 
 export const SettingsModal = memo(function SettingsModal({
 	dialogStore,
 	settings,
-	actions,
+	saveSettings,
 	availableModels,
 	availableEfforts,
 	telegramStatus,
@@ -140,6 +140,8 @@ export const SettingsModal = memo(function SettingsModal({
 	// blank. Constraining the selection here keeps one source of truth for which tab is showing.
 	const activeTab: TabId = selectedTab === 'lab' && !isDark ? 'persona' : selectedTab
 	const agentHome = useAgentHomeData(isOpen && activeTab === 'memory')
+	const memoriesFailed = queryReadFailed(agentHome.memories)
+	const skillsFailed = queryReadFailed(agentHome.skills)
 	const openingKey = useOpeningKey(isOpen)
 	// A failed save shows at the end of the tab it came from, in whichever opening is on screen when it fails; each
 	// opening starts clean. A save that fails while the dialog is closed, such as the instructions saved on close, can
@@ -150,10 +152,13 @@ export const SettingsModal = memo(function SettingsModal({
 		setSaveErrorOpening(openingKey)
 		setSaveError(null)
 	}
+	// The error stays while its retry runs and leaves once a save from the same tab lands.
 	const save = async (tab: TabId, message: string, request: Promise<boolean>) => {
-		setSaveError(null)
 		const accepted = await request
-		if (accepted) return true
+		if (accepted) {
+			setSaveError((current) => (current?.tab === tab ? null : current))
+			return true
+		}
 		if (dialogStore.getState().open) setSaveError({ tab, message })
 		else toast.error(message)
 		return false
@@ -193,7 +198,7 @@ export const SettingsModal = memo(function SettingsModal({
 			request = save(
 				'persona',
 				"Couldn't save your instructions. Try again.",
-				actions.setCustomInstructions(nextValue).catch(() => false)
+				saveSettings({ customInstructions: nextValue })
 			)
 			instructionsSaveRef.current = { value: nextValue, request }
 		}
@@ -215,16 +220,18 @@ export const SettingsModal = memo(function SettingsModal({
 		})
 	}
 
-	useEffect(() => {
-		if (isOpen) trackUmamiEvent('llamaai-settings-open')
-	}, [isOpen])
-
-	const handleClear = () => {
+	// Clearing saved instructions erases them for every chat, so it asks first; an unsaved draft clears at once.
+	const [confirmingClear, setConfirmingClear] = useState(false)
+	const clearInstructions = () => {
 		const cleared = { text: '', saved: null }
 		setInstructionsDraft(cleared)
 		void commitDraft(cleared)
 		// Clear leaves once nothing is saved or typed; the emptied field keeps focus.
 		instructionsRef.current?.focus()
+	}
+	const handleClear = () => {
+		if (savedInstructions.length > 0) setConfirmingClear(true)
+		else clearInstructions()
 	}
 
 	const saveSetting = (tab: TabId, request: Promise<boolean>) =>
@@ -232,49 +239,43 @@ export const SettingsModal = memo(function SettingsModal({
 
 	const handleMemoryToggle = () => {
 		trackUmamiEvent('llamaai-memory-toggle')
-		saveSetting('persona', actions.setEnableMemory(!settings.enableMemory))
+		saveSetting('persona', saveSettings({ enableMemory: !settings.enableMemory }))
 	}
 
 	const handlePremiumToolsToggle = () => {
 		trackUmamiEvent('llamaai-premium-tools-toggle')
-		saveSetting('capabilities', actions.setEnablePremiumTools(!settings.enablePremiumTools))
+		saveSetting('capabilities', saveSettings({ enablePremiumTools: !settings.enablePremiumTools }))
 	}
 
 	const handleHackerToggle = () => {
 		trackUmamiEvent('llamaai-hacker-mode-toggle')
-		saveSetting('lab', actions.setHackerMode(!settings.hackerMode))
+		saveSetting('lab', saveSettings({ hackerMode: !settings.hackerMode }))
 	}
 
 	const handleSoundToggle = () => {
 		trackUmamiEvent('llamaai-sound-notifications-toggle')
-		saveSetting('app', actions.setEnableSoundNotifications(!settings.enableSoundNotifications))
+		saveSetting('app', saveSettings({ enableSoundNotifications: !settings.enableSoundNotifications }))
 	}
 
 	const handleMobileNotificationToggle = () => {
-		if (
-			!mobileNotificationPreference ||
-			!isWebMobileToggleVisible(mobileNotificationPreference) ||
-			!setMobileNotificationEnabled ||
-			setMobileNotificationEnabled.isPending
-		)
-			return
+		if (!isWebMobileToggleVisible(mobileNotificationPreference) || setMobileNotificationEnabled.isPending) return
 		trackUmamiEvent('llamaai-mobile-notifications-toggle')
 		void setMobileNotificationEnabled.mutateAsync(!mobileNotificationPreference.enabled).catch(() => undefined)
 	}
 
 	const handleEnterToSendToggle = () => {
 		trackUmamiEvent('llamaai-enter-to-send-toggle')
-		saveSetting('app', actions.setEnterToSend(!settings.enterToSend))
+		saveSetting('app', saveSettings({ enterToSend: !settings.enterToSend }))
 	}
 
 	const handleAdvancedProvenanceToggle = () => {
 		trackUmamiEvent('llamaai-advanced-provenance-toggle')
-		saveSetting('app', actions.setAdvancedProvenance(!settings.advancedProvenance))
+		saveSetting('app', saveSettings({ advancedProvenance: !settings.advancedProvenance }))
 	}
 
 	const handleShowBalanceInSidebarToggle = () => {
 		trackUmamiEvent('llamaai-sidebar-balance-toggle')
-		saveSetting('balance', actions.setShowBalanceInSidebar(!settings.showBalanceInSidebar))
+		saveSetting('balance', saveSettings({ showBalanceInSidebar: !settings.showBalanceInSidebar }))
 	}
 
 	// The reader's text, or null while the field shows the saved cap. A committed cap shows until its save settles;
@@ -291,39 +292,38 @@ export const SettingsModal = memo(function SettingsModal({
 		const shown = formatFixedNumber(parsed, 2)
 		setSpendCapEdit(shown)
 		trackUmamiEvent('llamaai-spend-cap-change')
-		void save('capabilities', "Couldn't save your spend cap. Try again.", actions.setSpendCapPerMessage(parsed)).then(
-			() => setSpendCapEdit((edit) => (edit === shown ? null : edit))
-		)
+		void save(
+			'capabilities',
+			"Couldn't save your spend cap. Try again.",
+			saveSettings({ spendCapPerMessage: parsed })
+		).then(() => setSpendCapEdit((edit) => (edit === shown ? null : edit)))
 	}
 
 	const handleNotifToggle = () => {
 		if (notifPermission !== 'default' || isRequestingNotif) return
 		trackUmamiEvent('llamaai-notify-settings-enable')
 		setIsRequestingNotif(true)
-		Notification.requestPermission()
-			.then((next) => {
-				notifyNotificationPermissionChanged()
-				if (next !== 'granted') markNotifBannerDismissed()
-			})
-			.catch(() => markNotifBannerDismissed())
-			.finally(() => setIsRequestingNotif(false))
+		void requestNotificationPermission(markNotifBannerDismissed).finally(() => setIsRequestingNotif(false))
 	}
 
 	const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const nextModel = e.target.value
-		saveSetting('capabilities', actions.setModel(nextModel))
+		saveSetting('capabilities', saveSettings({ model: nextModel }))
 		if (settings.effort && !isEffortAvailableForModel(settings.effort, nextModel)) {
-			saveSetting('capabilities', actions.setEffort(''))
+			saveSetting('capabilities', saveSettings({ effort: '' }))
 		}
 	}
 
 	const handleEffortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const nextEffort = e.target.value
 		if (nextEffort && !isEffortAvailableForModel(nextEffort, settings.model)) return
-		saveSetting('capabilities', actions.setEffort(nextEffort))
+		saveSetting('capabilities', saveSettings({ effort: nextEffort }))
 	}
 
+	// Where the confirmation returns focus when its trigger will not survive; null returns it to the trigger.
+	const memoryRemovalFocus = useRef<HTMLElement | null>(null)
 	const openMemoryRemoval = (removal: MemoryRemoval) => {
+		memoryRemovalFocus.current = null
 		setMemoryRemoval(removal)
 		// An error from an earlier removal belongs to that confirmation, not this one.
 		if (removal.kind === 'entry') agentHome.deleteMemoryMutation.reset()
@@ -340,21 +340,30 @@ export const SettingsModal = memo(function SettingsModal({
 		}
 		// The confirmation closes before the refetch that removes the entry's row lands, so it closes onto the next
 		// entry's Delete, else the previous one's, instead of the doomed one. The last entry leaves it to the net.
-		const next = neighbourRowControl(removeMemoryDialog.getState().disclosureElement)
+		// Ariakit takes the trigger from focus: a press that did not focus the entry's Delete leaves no row to go from.
+		const trigger = removeMemoryDialog.getState().disclosureElement
+		const row = trigger?.closest('li')
+		const next = row ? neighbourRowControl(row, trigger!) : null
 		agentHome.deleteMemoryMutation.mutate(memoryRemoval.id, {
 			onSuccess: () => {
-				flushSync(closeMemoryRemoval)
-				next?.focus()
+				memoryRemovalFocus.current = next ?? null
+				closeMemoryRemoval()
 			}
 		})
 	}
+	// The last failed archive or restore, not the mutations' own errors: those clear as soon as a retry starts.
+	const [skillMoveError, setSkillMoveError] = useState<{ action: 'archive' | 'restore'; name: string } | null>(null)
+	const skillMutations = { archive: agentHome.archiveSkillMutation, restore: agentHome.restoreSkillMutation }
 	// An archived or restored skill leaves its list once the skills refetch, and its button hands focus on first.
-	const moveSkill = (mutation: typeof agentHome.archiveSkillMutation, name: string, button: HTMLButtonElement) => {
-		const next = neighbourRowControl(button)
-		mutation.mutate(name, {
+	// A retry from the error has no row button; its notice hands focus on as it leaves.
+	const moveSkill = (action: 'archive' | 'restore', name: string, button: HTMLButtonElement | null) => {
+		const next = button ? neighbourRowControl(button.closest('li')!, button) : null
+		skillMutations[action].mutate(name, {
 			onSuccess: () => {
-				if (document.activeElement === button) next?.focus()
-			}
+				setSkillMoveError((current) => (current?.action === action ? null : current))
+				if (button && document.activeElement === button) next?.focus()
+			},
+			onError: () => setSkillMoveError({ action, name })
 		})
 	}
 
@@ -381,72 +390,70 @@ export const SettingsModal = memo(function SettingsModal({
 	if (isDark) tabs.push({ id: 'lab', label: 'Lab', icon: 'flame' })
 
 	let mobileNotificationRow: React.ReactNode = null
-	if (mobileNotificationPreference) {
-		switch (mobileNotificationPreference.kind) {
-			case 'signed-out':
-				break
-			case 'loading':
-				mobileNotificationRow = (
-					<>
-						<RowDivider />
-						<div role="status" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
-							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-								<p className="m-0 label-md text-primary">Mobile notifications</p>
-								<p className="m-0 body-sm text-secondary">Loading your mobile notification preference…</p>
-							</div>
-							<LoadingSpinner size={16} />
+	switch (mobileNotificationPreference.kind) {
+		case 'signed-out':
+			break
+		case 'loading':
+			mobileNotificationRow = (
+				<>
+					<RowDivider />
+					<div role="status" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
+						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+							<p className="m-0 label-md text-primary">Mobile notifications</p>
+							<p className="m-0 body-sm text-secondary">Loading your mobile notification preference…</p>
 						</div>
-					</>
-				)
-				break
-			case 'error':
-				mobileNotificationRow = (
-					<>
-						<RowDivider />
-						<div role="alert" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
-							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-								<p className="m-0 label-md text-primary">Mobile notifications</p>
-								<p className="m-0 body-sm text-secondary">
-									Couldn't load mobile notifications. {mobileNotificationPreference.message}
-								</p>
-							</div>
-							<Button type="button" size="sm" onClick={mobileNotificationPreference.retry}>
-								Try again
-							</Button>
+						<LoadingSpinner size={16} />
+					</div>
+				</>
+			)
+			break
+		case 'error':
+			mobileNotificationRow = (
+				<>
+					<RowDivider />
+					<div role="alert" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
+						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+							<p className="m-0 label-md text-primary">Mobile notifications</p>
+							<p className="m-0 body-sm text-secondary">
+								Couldn't load mobile notifications. {mobileNotificationPreference.message}
+							</p>
 						</div>
-					</>
-				)
-				break
-			case 'known':
-				if (!mobileNotificationPreference.available) break
-				mobileNotificationRow = (
-					<>
-						<RowDivider />
-						{/* Replaces the error row whose Try again had focus. */}
-						<div ref={focusSwitchIfLost}>
-							<ToggleRow
-								label="Mobile notifications"
-								description={
-									setMobileNotificationEnabled?.error
-										? "Couldn't update mobile notifications. Try again."
-										: setMobileNotificationEnabled?.isPending
-											? 'Updating your mobile notification preference…'
-											: mobileNotificationPreference.enabled
-												? 'Notify your phone when you leave a web chat before LlamaAI finishes.'
-												: 'Get notified on your phone when a web response finishes after you leave.'
-								}
-								checked={mobileNotificationPreference.enabled}
-								onClick={handleMobileNotificationToggle}
-								interactive={!!setMobileNotificationEnabled && !setMobileNotificationEnabled.isPending}
-							/>
-						</div>
-					</>
-				)
-				break
-			default: {
-				const _exhaustive: never = mobileNotificationPreference
-				void _exhaustive
-			}
+						<Button type="button" size="sm" onClick={mobileNotificationPreference.retry}>
+							Try again
+						</Button>
+					</div>
+				</>
+			)
+			break
+		case 'known':
+			if (!mobileNotificationPreference.available) break
+			mobileNotificationRow = (
+				<>
+					<RowDivider />
+					{/* Replaces the error row whose Try again had focus. */}
+					<div ref={focusSwitchIfLost}>
+						<ToggleRow
+							label="Mobile notifications"
+							description={
+								setMobileNotificationEnabled.error
+									? "Couldn't update mobile notifications. Try again."
+									: setMobileNotificationEnabled.isPending
+										? 'Updating your mobile notification preference…'
+										: mobileNotificationPreference.enabled
+											? 'Notify your phone when you leave a web chat before LlamaAI finishes.'
+											: 'Get notified on your phone when a web response finishes after you leave.'
+							}
+							checked={mobileNotificationPreference.enabled}
+							onClick={handleMobileNotificationToggle}
+							interactive={!setMobileNotificationEnabled.isPending}
+						/>
+					</div>
+				</>
+			)
+			break
+		default: {
+			const _exhaustive: never = mobileNotificationPreference
+			void _exhaustive
 		}
 	}
 
@@ -529,6 +536,8 @@ export const SettingsModal = memo(function SettingsModal({
 												if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
 													return
 												}
+												// Focus moving into the Clear confirmation is not the reader leaving the draft.
+												if (confirmingClear) return
 												void commitDraft(instructionsDraft)
 											}}
 										>
@@ -564,6 +573,23 @@ export const SettingsModal = memo(function SettingsModal({
 														Clear
 													</Button>
 												) : null}
+												<ConfirmDialog
+													open={confirmingClear}
+													onClose={() => setConfirmingClear(false)}
+													// Clearing removes the Clear button; the emptied field takes focus.
+													finalFocus={instructionsRef}
+													portal
+													unmountOnHide
+													title="Clear your instructions?"
+													description="LlamaAI stops following your saved custom instructions in every chat."
+													confirmLabel="Clear"
+													pendingLabel={null}
+													error={null}
+													onConfirm={() => {
+														setConfirmingClear(false)
+														clearInstructions()
+													}}
+												/>
 											</div>
 											<div className="flex min-h-6 items-center justify-between gap-3 mono-sm text-tertiary">
 												<span>
@@ -692,7 +718,7 @@ export const SettingsModal = memo(function SettingsModal({
 										</div>
 									</div>
 
-									{availableModels && availableModels.length > 0 ? (
+									{availableModels.length > 0 ? (
 										<div>
 											<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
 											<div className="mt-3 space-y-3 rounded-lg border border-subtle bg-surface p-4">
@@ -709,7 +735,7 @@ export const SettingsModal = memo(function SettingsModal({
 														</option>
 													))}
 												</SelectField>
-												{availableEfforts && availableEfforts.length > 0 ? (
+												{availableEfforts.length > 0 ? (
 													<SelectField
 														id="llamaai-effort-select"
 														label="Reasoning effort"
@@ -795,7 +821,7 @@ export const SettingsModal = memo(function SettingsModal({
 
 							{activeTab === 'memory' && (
 								<div className="space-y-6">
-									{agentHome.memories.error ? (
+									{memoriesFailed ? (
 										<RetryNotice
 											message="Couldn't load memories."
 											retrying={agentHome.memories.isFetching}
@@ -816,7 +842,7 @@ export const SettingsModal = memo(function SettingsModal({
 												<MemoryList
 													entries={agentHome.memories.data?.user}
 													isLoading={agentHome.memories.isLoading}
-													loadFailed={!!agentHome.memories.error}
+													loadFailed={memoriesFailed}
 													emptyText="Nothing remembered yet."
 													onDelete={(id) => openMemoryRemoval({ kind: 'entry', id })}
 												/>
@@ -840,7 +866,7 @@ export const SettingsModal = memo(function SettingsModal({
 												<MemoryList
 													entries={agentHome.memories.data?.memory}
 													isLoading={agentHome.memories.isLoading}
-													loadFailed={!!agentHome.memories.error}
+													loadFailed={memoriesFailed}
 													emptyText="No notes yet."
 													onDelete={(id) => openMemoryRemoval({ kind: 'entry', id })}
 												/>
@@ -861,39 +887,31 @@ export const SettingsModal = memo(function SettingsModal({
 													title="Skills"
 													subtitle="Workflows saved in your workspace. Archive one to stop the assistant using it."
 												/>
-												{agentHome.skills.error ? (
+												{skillsFailed ? (
 													<RetryNotice
 														message="Couldn't load skills."
 														retrying={agentHome.skills.isFetching}
 														onRetry={() => void agentHome.skills.refetch()}
 													/>
 												) : null}
-												{agentHome.archiveSkillMutation.error ? (
+												{skillMoveError ? (
 													<RetryNotice
-														message="Couldn't archive this skill."
-														retrying={agentHome.archiveSkillMutation.isPending}
-														onRetry={() =>
-															agentHome.archiveSkillMutation.mutate(agentHome.archiveSkillMutation.variables!)
+														message={`Couldn't ${skillMoveError.action} this skill.`}
+														retrying={
+															skillMutations[skillMoveError.action].isPending &&
+															skillMutations[skillMoveError.action].variables === skillMoveError.name
 														}
+														onRetry={() => moveSkill(skillMoveError.action, skillMoveError.name, null)}
 													/>
 												) : null}
-												{agentHome.restoreSkillMutation.error ? (
-													<RetryNotice
-														message="Couldn't restore this skill."
-														retrying={agentHome.restoreSkillMutation.isPending}
-														onRetry={() =>
-															agentHome.restoreSkillMutation.mutate(agentHome.restoreSkillMutation.variables!)
-														}
-													/>
-												) : null}
-												{!agentHome.skills.error || (agentHome.skills.data?.active.length ?? 0) > 0 ? (
+												{!skillsFailed || (agentHome.skills.data?.active.length ?? 0) > 0 ? (
 													<SettingsCard>
 														{agentHome.skills.isLoading ? (
 															<div role="status" aria-live="polite" className="px-4 py-3.5">
 																<LoadingIndicator />
 															</div>
 														) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
-															!agentHome.skills.error ? (
+															!skillsFailed ? (
 																<p className="px-4 py-3.5 body-sm text-secondary">No skills yet.</p>
 															) : null
 														) : (
@@ -918,9 +936,7 @@ export const SettingsModal = memo(function SettingsModal({
 																					type="button"
 																					size="sm"
 																					variant="ghost"
-																					onClick={(event) =>
-																						moveSkill(agentHome.archiveSkillMutation, skill.name, event.currentTarget)
-																					}
+																					onClick={(event) => moveSkill('archive', skill.name, event.currentTarget)}
 																					// Focusable while another skill archives: the archived row hands focus to it.
 																					disabled={agentHome.archiveSkillMutation.isPending}
 																					accessibleWhenDisabled
@@ -955,9 +971,7 @@ export const SettingsModal = memo(function SettingsModal({
 																		type="button"
 																		size="sm"
 																		variant="ghost"
-																		onClick={(event) =>
-																			moveSkill(agentHome.restoreSkillMutation, skill.name, event.currentTarget)
-																		}
+																		onClick={(event) => moveSkill('restore', skill.name, event.currentTarget)}
 																		// Focusable while another skill restores: the restored row hands focus to it.
 																		disabled={agentHome.restoreSkillMutation.isPending}
 																		accessibleWhenDisabled
@@ -981,6 +995,7 @@ export const SettingsModal = memo(function SettingsModal({
 									)}
 									<ConfirmDialog
 										store={removeMemoryDialog}
+										finalFocus={memoryRemovalFocus}
 										portal
 										unmountOnHide
 										title={memoryRemovalCopy.title}
@@ -1087,8 +1102,17 @@ function MemoryList({
 						<li key={entry.id}>
 							{i > 0 ? <RowDivider /> : null}
 							<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-								<p className="m-0 min-w-0 flex-1 body-md whitespace-pre-wrap text-primary">{entry.text}</p>
-								<Button type="button" size="sm" variant="ghost" onClick={() => onDelete(entry.id)} className="shrink-0">
+								<p id={`memory-${entry.id}`} className="m-0 min-w-0 flex-1 body-md whitespace-pre-wrap text-primary">
+									{entry.text}
+								</p>
+								<Button
+									type="button"
+									size="sm"
+									variant="ghost"
+									onClick={() => onDelete(entry.id)}
+									aria-describedby={`memory-${entry.id}`}
+									className="shrink-0"
+								>
 									Delete
 								</Button>
 							</div>

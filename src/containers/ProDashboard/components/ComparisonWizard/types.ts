@@ -23,9 +23,11 @@ export interface ComparisonWizardState {
 	selectedItems: Array<string>
 	selectedMetrics: Array<string>
 	metricsForCards: Array<string>
-	dashboardName: string
+	/** null until the reader edits it: the wizard names the dashboard after the selection. */
+	dashboardName: string | null
 	visibility: 'private' | 'public'
-	tags: Array<string>
+	/** null until the reader edits them: the tags are the selected names. */
+	tags: Array<string> | null
 	description: string
 	grouping: DashboardGrouping
 	displayMode: DisplayMode
@@ -47,22 +49,21 @@ export type WizardAction =
 	| { type: 'SET_STEP'; step: WizardStep }
 	| { type: 'SET_COMPARISON_TYPE'; comparisonType: ComparisonType }
 	| { type: 'SET_SELECTED_ITEMS'; items: Array<string> }
-	| { type: 'TOGGLE_SELECTED_ITEM'; item: string; maxItems?: number }
+	| { type: 'TOGGLE_SELECTED_ITEM'; item: string }
 	| { type: 'TOGGLE_METRIC'; metric: string }
 	| { type: 'CLEAR_METRICS' }
 	| { type: 'SELECT_ALL_METRICS'; metrics: Array<string> }
 	| { type: 'TOGGLE_METRIC_FOR_CARD'; metric: string }
-	| { type: 'SET_METRICS_FOR_CARDS'; metrics: Array<string> }
 	| { type: 'SET_METRIC_SETTINGS'; settings: Partial<MetricSettings> }
 	| { type: 'SET_DASHBOARD_NAME'; name: string }
 	| { type: 'SET_VISIBILITY'; visibility: 'private' | 'public' }
 	| { type: 'SET_TAGS'; tags: Array<string> }
-	| { type: 'ADD_TAG'; tag: string }
-	| { type: 'REMOVE_TAG'; tag: string }
 	| { type: 'SET_DESCRIPTION'; description: string }
 	| { type: 'SET_GROUPING'; grouping: DashboardGrouping }
 	| { type: 'SET_DISPLAY_MODE'; displayMode: DisplayMode }
 	| { type: 'SET_INCLUDE_TABLE'; include: boolean }
+
+export const MAX_COMPARISON_ITEMS = 10
 
 export const WIZARD_STEPS: Array<WizardStep> = ['select-type', 'select-items', 'select-metrics', 'preview']
 

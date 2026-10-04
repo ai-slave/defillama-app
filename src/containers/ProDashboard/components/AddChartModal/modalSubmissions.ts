@@ -230,8 +230,6 @@ function buildNewChart({
 
 function buildNewComparisonItems({
 	state,
-	protocols,
-	chains,
 	existingItems,
 	idFactory
 }: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
@@ -257,64 +255,25 @@ function buildNewComparisonItems({
 
 		const items: Array<DashboardItemConfig> = []
 		for (const chart of state.composerItems) {
-			const item =
-				chart.subjectType === 'chain'
-					? buildNewChart({
-							item: chart.chain,
-							itemType: 'chain',
-							chartType: chart.type,
-							idFactory,
-							...(chart.geckoId === undefined ? {} : { geckoId: chart.geckoId }),
-							...(chart.color === undefined ? {} : { color: chart.color }),
-							...(chart.dataType === undefined ? {} : { dataType: chart.dataType }),
-							...(chart.grouping === undefined ? {} : { grouping: chart.grouping }),
-							...(chart.showCumulative === undefined ? {} : { showCumulative: chart.showCumulative })
-						})
-					: buildNewChart({
-							item: chart.protocol,
-							itemType: 'protocol',
-							chartType: chart.type,
-							idFactory,
-							...(chart.geckoId === undefined ? {} : { geckoId: chart.geckoId }),
-							...(chart.color === undefined ? {} : { color: chart.color }),
-							...(chart.dataType === undefined ? {} : { dataType: chart.dataType }),
-							...(chart.grouping === undefined ? {} : { grouping: chart.grouping }),
-							...(chart.showCumulative === undefined ? {} : { showCumulative: chart.showCumulative })
-						})
+			const item = buildNewChart({
+				...(chart.subjectType === 'chain'
+					? { item: chart.chain, itemType: 'chain' as const }
+					: { item: chart.protocol, itemType: 'protocol' as const }),
+				chartType: chart.type,
+				idFactory,
+				...(chart.geckoId === undefined ? {} : { geckoId: chart.geckoId }),
+				...(chart.color === undefined ? {} : { color: chart.color }),
+				...(chart.dataType === undefined ? {} : { dataType: chart.dataType }),
+				...(chart.grouping === undefined ? {} : { grouping: chart.grouping }),
+				...(chart.showCumulative === undefined ? {} : { showCumulative: chart.showCumulative })
+			})
 			if (item) items.push(item)
 		}
 		return items
 	}
 
-	if (state.chartCreationMode !== 'separate' || state.selectedChartTypes.length === 0) return []
-	const items: Array<DashboardItemConfig> = []
-	if (state.selectedChartTab === 'chain' && state.selectedChain) {
-		const chain = chains.find((item) => item.name === state.selectedChain)
-		for (const chartType of state.selectedChartTypes) {
-			const item = buildNewChart({
-				item: state.selectedChain,
-				itemType: 'chain',
-				chartType,
-				idFactory,
-				...(isChainTokenChartType(chartType) && chain?.gecko_id !== undefined ? { geckoId: chain.gecko_id } : {})
-			})
-			if (item) items.push(item)
-		}
-	} else if (state.selectedChartTab === 'protocol' && state.selectedProtocol) {
-		const protocol = protocols.find((item) => item.slug === state.selectedProtocol)
-		for (const chartType of state.selectedChartTypes) {
-			const item = buildNewChart({
-				item: state.selectedProtocol,
-				itemType: 'protocol',
-				chartType,
-				idFactory,
-				...(protocol?.geckoId === undefined ? {} : { geckoId: protocol.geckoId }),
-				...(chartType === 'unlocks' ? { dataType: 'documented' } : {})
-			})
-			if (item) items.push(item)
-		}
-	}
-	return items
+	// The subject tabs submit only once a series is picked (resolveSubmitBlocker), so there is nothing else to add.
+	return []
 }
 
 function buildNewManualChart(input: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
@@ -674,7 +633,7 @@ function buildEditedManualChart({
 	const layout = { id: editItem.id, ...getDashboardItemLayout(editItem) }
 	const soleComposerChart = state.composerItems.length === 1 ? state.composerItems[0] : undefined
 	if (
-		editItem.kind === 'chart' &&
+		(editItem.kind === 'chart' || state.chartCreationMode === 'separate') &&
 		(state.selectedChartTab === 'chain' || state.selectedChartTab === 'protocol') &&
 		soleComposerChart
 	) {

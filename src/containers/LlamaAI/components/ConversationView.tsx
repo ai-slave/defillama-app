@@ -651,7 +651,16 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 	const scrollToBottomButton = (
 		<Tooltip
 			content="Scroll to bottom"
-			render={<button type="button" onClick={scrollToBottom} />}
+			render={
+				<button
+					type="button"
+					onClick={() => {
+						scrollToBottom()
+						// The button hides once the thread is at the bottom; the composer there takes focus.
+						promptInputRef.current?.focus({ preventScroll: true })
+					}}
+				/>
+			}
 			className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay-sm not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 		>
 			<Icon name="arrow-down" height={16} width={16} />
@@ -865,6 +874,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 			{readOnly ? (
 				<div
+					// Hidden, it is also out of the tab order and the accessibility tree.
+					inert={!showScrollToBottom}
 					className={`pointer-events-none sticky bottom-8 z-10 mx-auto -mb-2 ${showScrollToBottom ? 'opacity-100' : 'opacity-0'}`}
 				>
 					{scrollToBottomButton}
@@ -879,7 +890,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 					{/* Anchored to the composer's top edge, so a taller composer (a notice, queued prompts, a quote,
 					    several lines of text) carries the scroll button and the tip up with it. */}
 					<div className="pointer-events-none absolute right-0 bottom-[calc(100%+8px)] left-0 z-20 flex flex-col items-center gap-2">
-						<div className={showScrollToBottom ? 'opacity-100' : 'opacity-0'}>{scrollToBottomButton}</div>
+						<div inert={!showScrollToBottom} className={showScrollToBottom ? 'opacity-100' : 'opacity-0'}>
+							{scrollToBottomButton}
+						</div>
 						{!isSharedView && !hasComposerTray ? (
 							<div className="pointer-events-auto w-full">
 								<TipOrNotifyBanner

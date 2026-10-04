@@ -53,13 +53,8 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const { metric, chartView, breakdown, chain } = config
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const {
-		chartDataset: rawDataset,
-		isLoading,
-		isFetching,
-		readFailed,
-		refetch
-	} = useRWABreakdownChartData(breakdown, metric, chain)
+	const chartRead = useRWABreakdownChartData(breakdown, metric, chain)
+	const { chartDataset: rawDataset, isLoading, readFailed } = chartRead
 
 	const timeSeriesDataset = useMemo(() => {
 		if (!rawDataset || chartView !== 'timeSeries') return null
@@ -104,8 +99,6 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const chartHeight = scaledPx(320, cardHeightScale)
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
-	const retryChartData = { run: () => void refetch(), pending: isFetching }
-
 	const title = `RWA ${metricLabel} - ${viewLabel}`
 	const subtitle = <ProMeta items={[chainLabel, chain ? null : `by ${breakdownLabel}`]} />
 
@@ -119,7 +112,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	)
 
 	if (readFailed && rawDataset === null) {
-		return renderStatusShell(<ProCardError retry={retryChartData} />)
+		return renderStatusShell(<ProCardError retry={chartRead} />)
 	}
 
 	if (isLoading) {
@@ -130,7 +123,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={retryChartData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={chartRead} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={title}

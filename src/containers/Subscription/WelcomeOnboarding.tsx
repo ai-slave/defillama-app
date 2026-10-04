@@ -6,6 +6,7 @@ import { useAuthContext } from '~/auth'
 import { subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { AI_SERVER } from '~/constants'
 import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
+import { SignInModal } from '~/containers/Subscription/SignInModal'
 import {
 	persistSlackAcquisitionIfFirst,
 	readSlackAcquisition,
@@ -83,8 +84,6 @@ const ONBOARDING_OPTIONS = [
 
 const PRIORITY_ORDER = ['llamaai', 'dashboards', 'csv', 'llamafeed', 'sheets', 'verified-yields'] as const
 
-// The return URL is user-editable, so only a plan the checkout sells is trusted as the purchase.
-
 // `window.sessionStorage` throws by itself when browser policy denies storage, so the access has to be
 // guarded and not just the getItem call. Both effects below read through this.
 function getSessionStorage(): Storage | null {
@@ -113,6 +112,18 @@ function readTrialCheckoutMarker(storage: Storage): { variant: string } | null {
 }
 
 export function WelcomeOnboarding() {
+	const signInDialogStore = Ariakit.useDialogStore()
+	// Mounted beside the steps, not in the signed-out one, so a sign-in from another tab keeps the dialog's "You're
+	// signed in" step.
+	return (
+		<>
+			<WelcomeOnboardingSteps onSignIn={signInDialogStore.show} />
+			<SignInModal store={signInDialogStore} />
+		</>
+	)
+}
+
+function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 	const queryClient = useQueryClient()
 	const router = useRouter()
 	const { user, authToken, isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
@@ -128,7 +139,8 @@ export function WelcomeOnboarding() {
 	const redirectStatus = queryValue(router.query.redirect_status)
 	const isPaymentFailed = redirectStatus === 'failed' || redirectStatus === 'requires_payment_method'
 	const isPaymentProcessing = redirectStatus === 'processing'
-	// Null on a plain visit or an older link without the plan: any active plan then confirms, as before.
+	// Null on a plain visit or an older link without the plan: any active plan then confirms, as before. The return URL
+	// is user-editable, so only a plan the checkout sells is trusted as the purchase.
 	const purchase =
 		!isPaymentFailed && returnPlan && returnInterval && PURCHASABLE_PLANS.has(returnPlan)
 			? { plan: returnPlan, interval: returnInterval }
@@ -253,8 +265,9 @@ export function WelcomeOnboarding() {
 		}
 
 		// Always clean up the returnUrl regardless of path taken
-		const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('onboarding_returnUrl') : null
-		if (returnUrl) sessionStorage.removeItem('onboarding_returnUrl')
+		const session = getSessionStorage()
+		const returnUrl = session?.getItem('onboarding_returnUrl') ?? null
+		if (returnUrl) session!.removeItem('onboarding_returnUrl')
 
 		if (features.length === 1) {
 			const option = ONBOARDING_OPTIONS.find((o) => o.id === features[0])
@@ -306,7 +319,25 @@ export function WelcomeOnboarding() {
 		)
 	}
 
-	if (!isConfirmed && isAuthenticated) {
+	if (!isAuthenticated) {
+		return (
+			<div className="flex min-h-[60vh] items-center justify-center px-4">
+				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
+					<h2 className="heading-sm text-on-brand">Sign in to continue</h2>
+					<p className="body-md text-sub-text-muted">Sign in with the account you subscribed with to see your plan.</p>
+					<button
+						type="button"
+						onClick={onSignIn}
+						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+					>
+						Sign in
+					</button>
+				</div>
+			</div>
+		)
+	}
+
+	if (!isConfirmed) {
 		// The automatic re-reads above are bounded, so once they run out the page stops promising more.
 		const checking = confirmationReads < CONFIRMATION_READS
 		return (

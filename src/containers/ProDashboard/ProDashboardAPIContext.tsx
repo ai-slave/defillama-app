@@ -15,7 +15,7 @@ import {
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
 import pb from '~/utils/pocketbase'
-import type { ChartDataPrerequisite } from './chartRuntime'
+import { type ChartDataPrerequisite, getProtocolCatalogPrerequisite } from './chartRuntime'
 import {
 	getDashboardHydrationState,
 	getDashboardUpdatedAtMs,
@@ -223,8 +223,6 @@ type ProDashboardEditorActionsContextType = Omit<
 	| 'setDashboardVisibility'
 	| 'setDashboardTags'
 	| 'setDashboardDescription'
-	| 'setShowGenerateDashboardModal'
-	| 'setShowIterateDashboardModal'
 	| 'setItems'
 	| 'setVariables'
 	| 'setAnnotations'
@@ -270,10 +268,9 @@ interface ProDashboardHistoryContextType {
 
 interface ProDashboardUIContextType {
 	createDashboardDialogStore: DialogStore
-	showGenerateDashboardModal: boolean
-	setShowGenerateDashboardModal: (show: boolean) => void
-	showIterateDashboardModal: boolean
-	setShowIterateDashboardModal: (show: boolean) => void
+	/** The LlamaAI dialog that is open: generate a new dashboard, or iterate on this one. */
+	aiDialog: 'generate' | 'iterate' | null
+	setAiDialog: (dialog: 'generate' | 'iterate' | null) => void
 }
 
 const ProDashboardSaveContext = createContext<ReturnType<typeof useAutoSave> | null>(null)
@@ -324,7 +321,8 @@ export function ProDashboardAPIProvider({
 	const { authToken, isAuthenticated, user, hasActiveSubscription, loaders } = useAuthContext()
 	const hasMounted = useIsClient()
 	const hasStoredToken = typeof window !== 'undefined' && pb.authStore.isValid && !!pb.authStore.token
-	const authReady = hasMounted && !loaders.userLoading && (!hasStoredToken || !!authToken)
+	// The stream needs the signed-in account, not its subscription: a failed subscription read must not stop it.
+	const authReady = hasMounted && !loaders.sessionLoading && (!hasStoredToken || !!authToken)
 	const streamVariableOverrides = useMemo(() => readInitialVariableOverrides(), [])
 	const initialDashboardEditedAt = initialDashboard?.editedAt
 	const streamOptions = useMemo(
@@ -446,10 +444,10 @@ function ProDashboardAPIProviderInner({
 		currentDashboard,
 		dashboardVisibility,
 		dashboardTags,
-		dashboardDescription,
-		showGenerateDashboardModal,
-		showIterateDashboardModal
+		dashboardDescription
 	} = state
+	// Which dialog is open is page UI, not dashboard data: it stays out of the document and its history.
+	const [aiDialog, setAiDialog] = useState<'generate' | 'iterate' | null>(null)
 	const createDashboardDialogStore = Ariakit.useDialogStore()
 	const createDashboardDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
 	const needsProtocolCatalog =
@@ -458,18 +456,29 @@ function ProDashboardAPIProviderInner({
 		!dashboardReady || dashboardStreamNeedsProtocolCatalog(items.slice(0, INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
 	const {
 		data: protocolsAndChains,
-		isError: protocolCatalogHasError,
+		errorUpdatedAt: protocolCatalogErrorAt,
+		dataUpdatedAt: protocolCatalogDataAt,
 		isFetching: protocolCatalogFetching,
 		refetch: refetchProtocolCatalog
 	} = useProtocolsAndChains({ enabled: needsProtocolCatalog, waitForStream: waitForStreamedProtocolCatalog })
-	const retryProtocolCatalog = useCallback(() => {
-		void refetchProtocolCatalog()
-	}, [refetchProtocolCatalog])
-	const protocolCatalog = useMemo<ChartDataPrerequisite>(() => {
-		if (!needsProtocolCatalog || protocolsAndChains !== undefined) return { status: 'ready' }
-		if (protocolCatalogHasError && !protocolCatalogFetching) return { status: 'error', retry: retryProtocolCatalog }
-		return { status: 'loading' }
-	}, [needsProtocolCatalog, protocolCatalogHasError, protocolCatalogFetching, protocolsAndChains, retryProtocolCatalog])
+	const protocolCatalog = useMemo(
+		() =>
+			getProtocolCatalogPrerequisite(needsProtocolCatalog, {
+				data: protocolsAndChains,
+				errorUpdatedAt: protocolCatalogErrorAt,
+				dataUpdatedAt: protocolCatalogDataAt,
+				isFetching: protocolCatalogFetching,
+				refetch: refetchProtocolCatalog
+			}),
+		[
+			needsProtocolCatalog,
+			protocolsAndChains,
+			protocolCatalogErrorAt,
+			protocolCatalogDataAt,
+			protocolCatalogFetching,
+			refetchProtocolCatalog
+		]
+	)
 	const protocolsLoading = protocolCatalog.status === 'loading'
 	const protocols = protocolsAndChains?.protocols ?? EMPTY_PROTOCOLS
 	const rawChains = protocolsAndChains?.chains ?? EMPTY_CHAINS
@@ -608,8 +617,6 @@ function ProDashboardAPIProviderInner({
 		setDashboardVisibility,
 		setDashboardTags,
 		setDashboardDescription,
-		setShowGenerateDashboardModal,
-		setShowIterateDashboardModal,
 		setItems,
 		setVariables,
 		setAnnotations,
@@ -1329,20 +1336,8 @@ function ProDashboardAPIProviderInner({
 	}, [streamProgressItemIds, stream.error, stream.isDone, stream.isStreaming, stream.readyItemIds])
 
 	const uiContextValue = useMemo(
-		() => ({
-			createDashboardDialogStore,
-			showGenerateDashboardModal,
-			setShowGenerateDashboardModal,
-			showIterateDashboardModal,
-			setShowIterateDashboardModal
-		}),
-		[
-			createDashboardDialogStore,
-			showGenerateDashboardModal,
-			setShowGenerateDashboardModal,
-			showIterateDashboardModal,
-			setShowIterateDashboardModal
-		]
+		() => ({ createDashboardDialogStore, aiDialog, setAiDialog }),
+		[createDashboardDialogStore, aiDialog]
 	)
 
 	return (

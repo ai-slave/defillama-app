@@ -141,3 +141,91 @@ test('the code and switch prompts hand focus to the control of the step that rep
 		expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))
 	)
 })
+
+test('a failed Switch account keeps the linked account and the button that retries it', async () => {
+	session.serve({ [`${TELEGRAM}/status`]: linked })
+	session.serveInOrder(`${TELEGRAM}/link/start`, [() => Response.json({ error: 'Telegram is down' }, { status: 503 })])
+	await press(button('Switch account')!)
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	expect(container.textContent).toContain('Linked as @llamafan')
+	expect(button('Switch account')).toBeDefined()
+})
+
+test('a Switch account retry keeps the start error on screen while it opens', async () => {
+	session.serve({ [`${TELEGRAM}/status`]: linked })
+	session.serveInOrder(`${TELEGRAM}/link/start`, [
+		() => Response.json({ error: 'Telegram is down' }, { status: 503 }),
+		() => new Promise<Response>(() => {})
+	])
+	const switchAccount = button('Switch account')!
+	await press(switchAccount)
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	const failure = document.querySelector('[role="alert"]')!.textContent
+	await press(switchAccount)
+
+	await waitForUi(() => expect(switchAccount.textContent).toContain('Opening…'))
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(failure)
+})
+
+test('Switch account keeps the linked account and waits with focus while it starts', async () => {
+	session.serve({
+		[`${TELEGRAM}/status`]: linked,
+		[`${TELEGRAM}/link/start`]: () => new Promise<Response>(() => {})
+	})
+	const switchAccount = button('Switch account')!
+	await press(switchAccount)
+	await waitForUi(() => expect(switchAccount.textContent).toContain('Opening…'))
+	expect(container.textContent).toContain('Linked as @llamafan')
+	expect(document.activeElement).toBe(switchAccount)
+})
+
+async function typeCode(value: string) {
+	const code = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(code, value)
+		code.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
+test('a wrong code keeps its message while the next code is checked', async () => {
+	const second = Promise.withResolvers<Response>()
+	session.serve({ [`${TELEGRAM}/status`]: unlinked })
+	session.serveInOrder(`${TELEGRAM}/link/confirm`, [
+		() => Response.json({ error: 'bad code' }, { status: 400 }),
+		() => second.promise
+	])
+	await renderRow({ initialStatus: unlinked, initialTgloginToken: 'token' })
+	await typeCode('123456')
+	await press(button('Confirm')!)
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+			"That code didn't work. Check it in Telegram and try again."
+		)
+	)
+	await typeCode('654321')
+	await press(button('Confirm')!)
+	await waitForUi(() => expect(button('Confirming…')).toBeDefined())
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+		"That code didn't work. Check it in Telegram and try again."
+	)
+})
+
+test('a confirmed switch hands focus to the linked account', async () => {
+	session.serve({ [`${TELEGRAM}/status`]: unlinked })
+	session.serveInOrder(`${TELEGRAM}/link/confirm`, [
+		() =>
+			Response.json({
+				status: 'requires_switch_confirmation',
+				currentTelegramUsername: 'oldllama',
+				expiresAt: '2100-01-01'
+			}),
+		() => Response.json({ linked: true, telegramUsername: 'newllama', switched: true })
+	])
+	await renderRow({ initialStatus: unlinked, initialTgloginToken: 'token' })
+	await typeCode('123456')
+	await press(button('Confirm')!)
+	await waitForUi(() => expect(document.activeElement).toBe(button('Yes, switch')))
+	await press(button('Yes, switch')!)
+	await waitForUi(() => expect(container.textContent).toContain('Linked as @newllama'))
+	expect(document.activeElement).toBe(button('Switch account'))
+})

@@ -205,3 +205,22 @@ test.each([
 	})
 	await waitForUi(() => expect(document.body.textContent).toContain(message))
 })
+
+test('a failed report keeps its error on screen while the retry sends', async () => {
+	const retry = Promise.withResolvers<{ message: string }>()
+	mocks.fetchJson.mockRejectedValueOnce(new Error('Offline')).mockReturnValueOnce(retry.promise)
+	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+	await submitReport('TVL')
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
+	)
+
+	const form = document.querySelector('form')!
+	await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	expect(mocks.fetchJson).toHaveBeenCalledTimes(2)
+	await waitForUi(() => expect(document.querySelector('form')?.textContent).toContain('Sending…'))
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Couldn’t send the report. Try again.')
+
+	await act(async () => retry.resolve({ message: 'success' }))
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Report sent'))
+})

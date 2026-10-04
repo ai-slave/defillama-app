@@ -1,4 +1,3 @@
-import type * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useId, useState } from 'react'
 import { type Connector, useConfig, useConnection, useConnectors } from 'wagmi'
@@ -20,7 +19,6 @@ import { Button } from '~/ui/Button'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 
 export type WalletSignInProps = {
-	dialogStore: Ariakit.DialogStore
 	store: SignInFlowStore
 	onAuthenticated: () => void
 }
@@ -39,7 +37,7 @@ export function WalletSignIn(props: WalletSignInProps) {
 	)
 }
 
-export function WalletSignInForm({ dialogStore, store, onAuthenticated }: WalletSignInProps) {
+export function WalletSignInForm({ store, onAuthenticated }: WalletSignInProps) {
 	const config = useConfig()
 	const connection = useConnection()
 	const connectors = useConnectors()
@@ -100,7 +98,7 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 			const current = getConnection(config)
 			return current.address === address && current.chainId === chainId && current.connector?.uid === connector.uid
 		}
-		// Remember any change, including switching away and back before the request finishes.
+		// Any change aborts the request, so switching away and back before it finishes still invalidates it.
 		const stopWatching = watchConnection(config, {
 			onChange: () => {
 				if (!sameWallet() && !signal.aborted) {
@@ -116,7 +114,6 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 				address,
 				connectorId: connector.id,
 				signal,
-				canAccept: () => dialogStore.getState().open && sameWallet(),
 				signMessage: async (message) => {
 					try {
 						return await signMessage(config, { message, account: address, connector })

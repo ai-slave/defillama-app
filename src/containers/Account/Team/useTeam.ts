@@ -3,24 +3,13 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
-import { handleSimpleFetchResponse } from '~/utils/async'
+import { handleSimpleFetchResponse, httpErrorMessage } from '~/utils/async'
 import pb from '~/utils/pocketbase'
+import { queryReadFailed } from '~/utils/query'
 import { scheduleConfirmationReads } from '../utils'
 import type { PurchaseSeatsResponse, Team } from './types'
 
-const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage: string): string => {
-	if (!message) return fallbackMessage
-	if (!message.startsWith('[HTTP] [error]')) return message
-	const colonIndex = message.indexOf(':')
-	if (colonIndex === -1) return fallbackMessage
-	const details = message.slice(colonIndex + 1).trim()
-	return details || fallbackMessage
-}
-
 const SIGNED_OUT_MESSAGE = "You're signed out. Sign in and try again."
-
-const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
-	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
 
 // A 4xx is the server's definite answer. No answer, or a 5xx such as a gateway timeout, leaves the outcome
 // unknown: the billing write may have been applied before the failure.
@@ -28,11 +17,11 @@ export class UnconfirmedTeamWriteError extends Error {}
 
 async function sendTeamWrite(request: Promise<Response | null>, fallbackMessage: string): Promise<Response> {
 	const response = await request.catch((error) => {
-		throw new UnconfirmedTeamWriteError(getErrorMessage(error, fallbackMessage))
+		throw new UnconfirmedTeamWriteError(httpErrorMessage(error, fallbackMessage))
 	})
 	if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 	return handleSimpleFetchResponse(response).catch((error) => {
-		const message = getErrorMessage(error, fallbackMessage)
+		const message = httpErrorMessage(error, fallbackMessage)
 		throw response.status >= 500 ? new UnconfirmedTeamWriteError(message) : new Error(message)
 	})
 }
@@ -54,6 +43,18 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	const isTeamUpdating = useIsMutating({ mutationKey }) > 0
 	const scope = { id: `team:${currentUserId}` }
 	const refetch = () => queryClient.invalidateQueries({ queryKey: teamQueryKey })
+	// A team write whose failure is the server's answer. Billing writes go through sendTeamWrite instead.
+	const postTeam = async (path: string, fallbackMessage: string, body?: object) => {
+		const response = await authorizedFetch(`${AUTH_SERVER}/team/${path}`, {
+			method: 'POST',
+			...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})
+		})
+		if (!response) throw new Error(SIGNED_OUT_MESSAGE)
+		const normalized = await handleSimpleFetchResponse(response).catch((error) => {
+			throw new Error(httpErrorMessage(error, fallbackMessage))
+		})
+		return normalized.json()
+	}
 	const reconcileTeam = (_data: unknown, error: Error | null) => {
 		// Show request errors immediately; successful actions wait for canonical seats.
 		if (error) {
@@ -138,9 +139,10 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		staleTime: Infinity
 	})
 
-	const isTeamLoading = teamQuery.isLoading
-	// A refetch failure keeps showing the cached team; error means nothing is known.
-	const isTeamError = teamQuery.isError && teamQuery.data == null
+	// A refetch failure keeps showing the cached team; error means nothing is known. Attempt times keep the error, not a
+	// loading state, on screen while its retry runs.
+	const isTeamError = queryReadFailed(teamQuery) && teamQuery.data == null
+	const isTeamLoading = teamQuery.isLoading && !isTeamError
 	const isTeamRetrying = teamQuery.isFetching
 	const isAdmin = team?.isAdmin === true
 	const members = team?.members ?? []
@@ -157,18 +159,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async ({ name }: { name: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/create`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name })
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to create team'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { name: string }) => postTeam('create', 'Failed to create team', data),
 		onSuccess: () => {
 			toast.success('Team created')
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
@@ -184,18 +175,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async ({ name }: { name: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/update`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name })
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to update team'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { name: string }) => postTeam('update', 'Failed to update team', data),
 		onSuccess: (_data, { name }) => {
 			// A rename owns only the name; other team operations may finish while it is pending.
 			queryClient.setQueryData<Team | null>(teamQueryKey, (old) => (old ? { ...old, name } : old))
@@ -284,18 +264,8 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async (data: { userId: string; subscriptionType: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/member/assign`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to assign member'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { userId: string; subscriptionType: string }) =>
+			postTeam('member/assign', 'Failed to assign member', data),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
@@ -307,18 +277,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async (data: { userId: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/member/unassign`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to unassign member'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { userId: string }) => postTeam('member/unassign', 'Failed to unassign member', data),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
@@ -330,18 +289,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async (data: { email: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to send invite'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { email: string }) => postTeam('invite', 'Failed to send invite', data),
 		onSettled: reconcileTeam
 	})
 
@@ -350,18 +298,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async (data: { inviteId: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/resend`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to resend invite'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { inviteId: string }) => postTeam('invite/resend', 'Failed to resend invite', data),
 		onSuccess: () => {
 			// The row's Resend button flips into its cooldown label, which is the feedback.
 			return refetch()
@@ -376,18 +313,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async (data: { inviteId: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/revoke`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to revoke invite'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { inviteId: string }) => postTeam('invite/revoke', 'Failed to revoke invite', data),
 		onSettled: reconcileTeam
 	})
 
@@ -396,18 +322,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async (data: { userId: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/member/remove`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to remove member'))
-			})
-			return normalized.json()
-		},
+		mutationFn: (data: { userId: string }) => postTeam('member/remove', 'Failed to remove member', data),
 		onSettled: reconcileTeam
 	})
 
@@ -416,16 +331,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		mutationKey,
 		scope,
 		retry: false,
-		mutationFn: async () => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/leave`, {
-				method: 'POST'
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to leave team'))
-			})
-			return normalized.json()
-		},
+		mutationFn: () => postTeam('leave', 'Failed to leave team'),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
@@ -439,7 +345,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		canChangeTeamBilling: billingWait === null && billingLockReason === null,
 		billingWait,
 		billingLockReason,
-		isTeamRefreshError: teamQuery.isError && teamQuery.data != null,
+		isTeamRefreshError: queryReadFailed(teamQuery) && teamQuery.data != null,
 		team,
 		isTeamLoading,
 		isTeamError,

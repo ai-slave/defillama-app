@@ -42,10 +42,10 @@ const UNITLESS_CHART_OPTIONS = {
 interface BorrowedChartTabProps {
 	selectedBorrowedProtocol: string | null
 	selectedBorrowedProtocolName: string | null
-	selectedBorrowedChartType: string
+	selectedBorrowedChartType: BorrowedChartType
 	onSelectedBorrowedProtocolChange: (protocol: string | null) => void
 	onSelectedBorrowedProtocolNameChange: (name: string | null) => void
-	onSelectedBorrowedChartTypeChange: (chartType: string) => void
+	onSelectedBorrowedChartTypeChange: (chartType: BorrowedChartType) => void
 	protocolOptions: Array<VirtualizedSelectOption>
 	protocolsLoading: boolean
 }
@@ -60,9 +60,7 @@ export function BorrowedChartTab({
 	protocolOptions,
 	protocolsLoading
 }: BorrowedChartTabProps) {
-	const activeChartType = BORROWED_CHART_TYPES.some((type) => type.value === selectedBorrowedChartType)
-		? (selectedBorrowedChartType as BorrowedChartType)
-		: 'chainsBorrowed'
+	const activeChartType = selectedBorrowedChartType
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const protocolMisrepresentsTokens =
 		selectedBorrowedProtocol != null && getProtocolInfo(selectedBorrowedProtocol)?.misrepresentedTokens === true

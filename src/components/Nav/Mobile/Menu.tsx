@@ -32,7 +32,6 @@ export function Menu({
 	asPath: string
 }) {
 	const [show, setShow] = useState(false)
-	const handleClose = () => setShow(false)
 
 	return (
 		<Ariakit.DialogProvider open={show} setOpen={setShow}>
@@ -51,7 +50,11 @@ export function Menu({
 				<nav
 					ref={observeMenu}
 					data-menu-layout="mobile"
-					onClickCapture={trackMenuClick}
+					onClickCapture={(event) => {
+						trackMenuClick(event)
+						// Any link in the drawer navigates, so following one closes the drawer.
+						if (event.target instanceof Element && event.target.closest('a[href]')) setShow(false)
+					}}
 					onAuxClickCapture={trackMenuClick}
 					className="flex flex-1 flex-col"
 				>
@@ -62,9 +65,9 @@ export function Menu({
 							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 label-sm text-secondary">{category}</p>}
 							<hr className="border-subtle" />
 							{category === 'Main' ? (
-								<PrimaryNavLinks pages={pages} asPath={asPath} onClick={handleClose} />
+								<PrimaryNavLinks pages={pages} asPath={asPath} />
 							) : (
-								<NavItems pages={pages} asPath={asPath} onClick={handleClose} />
+								<NavItems pages={pages} asPath={asPath} />
 							)}
 						</div>
 					))}
@@ -93,43 +96,27 @@ export function Menu({
 														name={pageName}
 														key={`mobile-nav-old-${pageName}-${pageRoute}`}
 														asPath={asPath}
-														onClick={handleClose}
 														isOld
 													/>
 												))}
 											</div>
 										</details>
 									) : route ? (
-										<LinkToPage
-											route={route}
-											name={name}
-											key={`mobile-nav-old-${name}-${route}`}
-											asPath={asPath}
-											onClick={handleClose}
-										/>
+										<LinkToPage route={route} name={name} key={`mobile-nav-old-${name}-${route}`} asPath={asPath} />
 									) : null}
 								</React.Fragment>
 							))}
 						</div>
 					</details>
 
-					{pinnedPages.length > 0 ? (
-						<PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} onClose={handleClose} />
-					) : null}
+					{pinnedPages.length > 0 ? <PinnedPagesSection pinnedPages={pinnedPages} asPath={asPath} /> : null}
 
 					{userDashboards.length > 0 || dashboardsStatus ? (
 						<div className="group mb-3 flex flex-col first:mb-auto" data-nav-dashboards>
 							<p className="mb-1 label-sm text-secondary">Your Dashboards</p>
 							<hr className="border-subtle" />
 							{userDashboards.map(({ name, route, icon }) => (
-								<LinkToPage
-									route={route}
-									name={name}
-									icon={icon}
-									key={`mobile-nav-${name}-${route}`}
-									asPath={asPath}
-									onClick={handleClose}
-								/>
+								<LinkToPage route={route} name={name} icon={icon} key={`mobile-nav-${name}-${route}`} asPath={asPath} />
 							))}
 							{dashboardsStatus ? <div className="pt-2">{dashboardsStatus}</div> : null}
 						</div>
@@ -140,14 +127,7 @@ export function Menu({
 							<p className="mb-1 label-sm text-secondary">{category}</p>
 							<hr className="border-subtle" />
 							{pages.map(({ name, route, icon }) => (
-								<LinkToPage
-									route={route}
-									name={name}
-									icon={icon}
-									key={`mobile-nav-${name}-${route}`}
-									asPath={asPath}
-									onClick={handleClose}
-								/>
+								<LinkToPage route={route} name={name} icon={icon} key={`mobile-nav-${name}-${route}`} asPath={asPath} />
 							))}
 						</div>
 					))}
@@ -161,15 +141,7 @@ export function Menu({
 	)
 }
 
-function PinnedPagesSection({
-	pinnedPages,
-	asPath,
-	onClose
-}: {
-	pinnedPages: Array<TNavLink>
-	asPath: string
-	onClose: () => void
-}) {
+function PinnedPagesSection({ pinnedPages, asPath }: { pinnedPages: Array<TNavLink>; asPath: string }) {
 	const [isReordering, setIsReordering] = useState(false)
 
 	// Reordering ends as soon as there is nothing left to reorder, in the same render. Self-terminating:
@@ -206,7 +178,6 @@ function PinnedPagesSection({
 							icon={page.icon}
 							attention={page.attention}
 							asPath={asPath}
-							onClick={onClose}
 						/>
 					))}
 				</div>

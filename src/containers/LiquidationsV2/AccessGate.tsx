@@ -103,33 +103,34 @@ export function LiquidationsAccessGate(props: LiquidationsShellChromeProps) {
 	const signInDialogStore = Ariakit.useDialogStore()
 	const { isAuthenticated, loaders } = useAuthContext()
 
-	if (loaders.userLoading) {
-		return <LiquidationsShellLoader {...props} />
-	}
-
+	// The sign-in stays mounted through the account load, so a sign-in from another tab ends on its own step.
 	return (
 		<>
-			<LiquidationsShellCard {...props}>
-				{!isAuthenticated ? (
-					<p className="body-md text-secondary">
-						An{' '}
-						<button type="button" onClick={signInDialogStore.show} className="underline">
-							active subscription
-						</button>{' '}
-						is required to view liquidations data.
-					</p>
-				) : (
-					<p className="body-md text-secondary">
-						An{' '}
-						<BasicLink href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`} className="underline">
-							active subscription
-						</BasicLink>{' '}
-						is required to view liquidations data.
-					</p>
-				)}
-			</LiquidationsShellCard>
+			{loaders.userLoading ? (
+				<LiquidationsShellLoader {...props} />
+			) : (
+				<LiquidationsShellCard {...props}>
+					{!isAuthenticated ? (
+						<p className="body-md text-secondary">
+							An{' '}
+							<button type="button" onClick={signInDialogStore.show} className="underline">
+								active subscription
+							</button>{' '}
+							is required to view liquidations data.
+						</p>
+					) : (
+						<p className="body-md text-secondary">
+							An{' '}
+							<BasicLink href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`} className="underline">
+								active subscription
+							</BasicLink>{' '}
+							is required to view liquidations data.
+						</p>
+					)}
+				</LiquidationsShellCard>
+			)}
 
-			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
+			<SignInModal store={signInDialogStore} />
 		</>
 	)
 }

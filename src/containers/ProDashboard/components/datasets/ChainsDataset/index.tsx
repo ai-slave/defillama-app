@@ -15,7 +15,8 @@ import { orderedFilteredTableFeatures } from '~/components/Table/features/ordere
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
-import { ProCardLoading } from '../../ProCardStatus'
+import { queryReadFailed } from '~/utils/query'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { buildChainShareTotals, CHAIN_SHARE_METRICS, getChainMetricShare } from './chainShares'
@@ -109,6 +110,14 @@ const CHAIN_COLUMN_IDS = [
 	...CHAIN_SHARE_METRICS.map((metric) => `${metric.key}_share`)
 ]
 
+function matchingChainColumnPreset(activeColumns: Array<string>): string | null {
+	const shown = activeColumns.join()
+	for (const key in CHAIN_COLUMN_PRESETS) {
+		if (CHAIN_COLUMN_PRESETS[key as keyof typeof CHAIN_COLUMN_PRESETS].join() === shown) return key
+	}
+	return null
+}
+
 function presetVisibility(presetColumns: Array<string>): ColumnVisibilityState {
 	const visibility: ColumnVisibilityState = {}
 	for (const id of CHAIN_COLUMN_IDS) visibility[id] = presetColumns.includes(id)
@@ -156,12 +165,18 @@ export function ChainsDataset({
 		pageIndex: 0,
 		pageSize: 10
 	})
-	const [selectedPreset, setSelectedPreset] = React.useState<string | null>(
-		savedColumnOrder || savedColumnVisibility ? null : 'essential'
-	)
 	const [showColumnPanel, setShowColumnPanel] = React.useState(false)
+	const customizeRef = React.useRef<HTMLButtonElement>(null)
+	// The shown columns in table order; a column missing from the order is drawn after it.
+	const activeColumns = [
+		...columnOrder.filter((id) => columnVisibility[id] !== false),
+		...CHAIN_COLUMN_IDS.filter((id) => columnVisibility[id] !== false && !columnOrder.includes(id))
+	]
+	// The preset follows the columns, so undo, redo and a saved card mark the preset they show.
+	const selectedPreset = matchingChainColumnPreset(activeColumns)
 
-	const { data, isLoading, error } = useChainsData(category)
+	const chainsQuery = useChainsData(category)
+	const { data, isLoading } = chainsQuery
 
 	const totals = React.useMemo(() => buildChainShareTotals(data), [data])
 
@@ -221,14 +236,10 @@ export function ChainsDataset({
 
 	const applyPreset = (preset: string) => {
 		const presetColumns = getChainColumnPreset(preset)
-		if (presetColumns) {
-			setSelectedPreset(preset)
-			writeColumns(presetColumns, presetVisibility(presetColumns))
-		}
+		if (presetColumns) writeColumns(presetColumns, presetVisibility(presetColumns))
 	}
 
 	const toggleColumnVisibility = (columnId: string) => {
-		setSelectedPreset(null)
 		// A column missing from the map is drawn, so toggling it hides it.
 		const newVisibility = { ...columnVisibility, [columnId]: columnVisibility[columnId] === false }
 		// A newly shown column joins the end of the order.
@@ -238,7 +249,6 @@ export function ChainsDataset({
 
 	// Show All appends the newly shown columns to the order; Hide All keeps the chain name.
 	const setAllColumnsVisible = (visible: boolean) => {
-		setSelectedPreset(null)
 		const newVisibility: ColumnVisibilityState = {}
 		for (const id of CHAIN_COLUMN_IDS) newVisibility[id] = visible || id === 'name'
 		const hidden = visible ? CHAIN_COLUMN_IDS.filter((id) => !columnOrder.includes(id)) : []
@@ -277,104 +287,72 @@ export function ChainsDataset({
 		[instance]
 	)
 
-	const moveColumnUp = (columnId: string) => {
-		const currentOrder = [...columnOrder]
-		const index = currentOrder.indexOf(columnId)
-		if (index > 0) {
-			const column = currentOrder[index]
-			if (!column) return
-			currentOrder.splice(index, 1)
-			currentOrder.splice(index - 1, 0, column)
-			writeColumns(currentOrder, columnVisibility)
-		}
-	}
-
-	const moveColumnDown = (columnId: string) => {
-		const currentOrder = [...columnOrder]
-		const index = currentOrder.indexOf(columnId)
-		if (index < currentOrder.length - 1) {
-			const column = currentOrder[index]
-			if (!column) return
-			currentOrder.splice(index, 1)
-			currentOrder.splice(index + 1, 0, column)
-			writeColumns(currentOrder, columnVisibility)
-		}
-	}
-
-	if (isLoading) {
-		return (
-			<div className="isolate flex h-full w-full flex-col">
-				<ChainsTableHeader
-					selectedPreset="essential"
-					setSelectedPreset={() => {}}
-					applyPreset={() => {}}
-					showColumnSelector={false}
-					setShowColumnSelector={() => {}}
-					handleExportCSV={() => {}}
-				/>
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
-					<ProCardLoading variant="table" label="Loading chains data…" />
-				</div>
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="isolate flex h-full w-full flex-col">
-				<ChainsTableHeader
-					selectedPreset="essential"
-					setSelectedPreset={() => {}}
-					applyPreset={() => {}}
-					showColumnSelector={false}
-					setShowColumnSelector={() => {}}
-					handleExportCSV={() => {}}
-				/>
-				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
-					<div className="text-center text-pro-text-secondary">Failed to load chains data</div>
-				</div>
-			</div>
-		)
+	// Moves a shown column past its shown neighbour; hidden columns between them keep their places.
+	const moveColumn = (columnId: string, delta: -1 | 1) => {
+		const neighbour = activeColumns[activeColumns.indexOf(columnId) + delta]
+		const order = [...columnOrder]
+		for (const id of [columnId, neighbour]) if (!order.includes(id)) order.push(id)
+		const from = order.indexOf(columnId)
+		const to = order.indexOf(neighbour)
+		order[from] = neighbour
+		order[to] = columnId
+		writeColumns(order, columnVisibility)
 	}
 
 	return (
 		<div className="isolate flex h-full w-full flex-col">
 			<ChainsTableHeader
 				selectedPreset={selectedPreset}
-				setSelectedPreset={setSelectedPreset}
 				applyPreset={applyPreset}
 				showColumnSelector={showColumnPanel}
 				setShowColumnSelector={setShowColumnPanel}
+				customizeRef={customizeRef}
 				handleExportCSV={handleExportCSV}
 			/>
 
-			<ColumnManagementPanel
-				showColumnPanel={showColumnPanel}
-				setShowColumnPanel={setShowColumnPanel}
-				columns={columnOptions}
-				columnVisibility={columnVisibility}
-				columnOrder={columnOrder}
-				toggleColumnVisibility={toggleColumnVisibility}
-				setAllColumnsVisible={setAllColumnsVisible}
-				moveColumnUp={moveColumnUp}
-				moveColumnDown={moveColumnDown}
-			/>
+			{showColumnPanel ? (
+				<ColumnManagementPanel
+					columns={columnOptions}
+					columnVisibility={columnVisibility}
+					activeColumns={activeColumns}
+					toggleColumnVisibility={toggleColumnVisibility}
+					setAllColumnsVisible={setAllColumnsVisible}
+					moveColumn={moveColumn}
+					onDone={() => {
+						customizeRef.current?.focus()
+						setShowColumnPanel(false)
+					}}
+				/>
+			) : null}
 
-			<div className="min-h-0 flex-1">
-				<TableBody table={instance} />
-			</div>
+			{queryReadFailed(chainsQuery) && !data ? (
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col justify-center">
+					<ProCardError title="Couldn't load chains data" retry={chainsQuery} />
+				</div>
+			) : isLoading ? (
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading chains data…" />
+				</div>
+			) : (
+				<>
+					{queryReadFailed(chainsQuery) ? <ProCardRefreshFailed retry={chainsQuery} /> : null}
+					<div className="min-h-0 flex-1">
+						<TableBody table={instance} />
+					</div>
 
-			<TablePagination
-				pageSize={pagination.pageSize}
-				pageIndex={pagination.pageIndex}
-				pageCount={instance.getPageCount()}
-				canPreviousPage={instance.getCanPreviousPage()}
-				canNextPage={instance.getCanNextPage()}
-				previousPage={instance.previousPage}
-				nextPage={instance.nextPage}
-				setPageSize={instance.setPageSize}
-				showPageSizes={(data?.length ?? 0) > 10}
-			/>
+					<TablePagination
+						pageSize={pagination.pageSize}
+						pageIndex={pagination.pageIndex}
+						pageCount={instance.getPageCount()}
+						canPreviousPage={instance.getCanPreviousPage()}
+						canNextPage={instance.getCanNextPage()}
+						previousPage={instance.previousPage}
+						nextPage={instance.nextPage}
+						setPageSize={instance.setPageSize}
+						showPageSizes={(data?.length ?? 0) > 10}
+					/>
+				</>
+			)}
 		</div>
 	)
 }

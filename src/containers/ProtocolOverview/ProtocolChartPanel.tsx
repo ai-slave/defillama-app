@@ -15,6 +15,7 @@ import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/L
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -36,7 +37,13 @@ import {
 import type { IProtocolOverviewPageData } from './types'
 import { useFetchProtocolChartData } from './useFetchProtocolChartData'
 
-const getQueryValueOnRemove = (isDefaultEnabled: boolean): 'false' | null => (isDefaultEnabled ? 'false' : null)
+const getQueryValueOnRemove = (isDefaultEnabled: boolean) => (isDefaultEnabled ? 'false' : undefined)
+
+// A removed chip hands focus to the next chip, else the previous one, which for the first chip is Add Metrics.
+const focusNeighbourChipOnLeave = passFocusOnLeave((chip) => {
+	const next = neighbourRowControl(chip, chip)
+	return next?.querySelector<HTMLElement>('input') ?? next
+})
 
 const ProtocolChart = lazy(() => import('./Chart'))
 
@@ -157,14 +164,14 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		(option: ProtocolMetricOption) => {
 			if (option.type === 'events') {
 				void pushShallowQuery(router, {
-					events: toggledMetrics.events === 'true' ? (getQueryValueOnRemove(true) ?? undefined) : 'true'
+					events: toggledMetrics.events === 'true' ? getQueryValueOnRemove(true) : 'true'
 				})
 				return
 			}
 			void pushShallowQuery(router, {
 				[protocolCharts[option.key]]:
 					toggledMetrics[protocolCharts[option.key]] === 'true'
-						? (getQueryValueOnRemove(defaultEnabledCharts[option.key] === true) ?? undefined)
+						? getQueryValueOnRemove(defaultEnabledCharts[option.key] === true)
 						: 'true'
 			})
 		},
@@ -175,15 +182,14 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		const updates: Record<string, string | undefined> = {}
 		for (const chart of props.availableCharts) {
 			if (toggledMetrics[protocolCharts[chart]] === 'true') {
-				updates[protocolCharts[chart]] = getQueryValueOnRemove(defaultEnabledCharts[chart] === true) ?? undefined
+				updates[protocolCharts[chart]] = getQueryValueOnRemove(defaultEnabledCharts[chart] === true)
 			}
 		}
 		if (hasEvents && toggledMetrics.events === 'true') {
-			updates.events = getQueryValueOnRemove(true) ?? undefined
+			updates.events = getQueryValueOnRemove(true)
 		}
-		if (Object.keys(updates).length > 0) {
-			void pushShallowQuery(router, updates)
-		}
+		// Clear all is disabled while nothing is picked, so updates is never empty here.
+		void pushShallowQuery(router, updates)
 	}, [router, props.availableCharts, toggledMetrics, defaultEnabledCharts, hasEvents])
 
 	return (
@@ -202,6 +208,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							<label
 								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
 								key={`add-or-remove-metric-${tchart}`}
+								ref={focusNeighbourChipOnLeave}
 							>
 								<input
 									type="checkbox"
@@ -209,8 +216,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 									checked
 									onChange={() => {
 										void pushShallowQuery(router, {
-											[protocolCharts[tchart]]:
-												getQueryValueOnRemove(defaultEnabledCharts[tchart] === true) ?? undefined
+											[protocolCharts[tchart]]: getQueryValueOnRemove(defaultEnabledCharts[tchart] === true)
 										})
 									}}
 									className="peer absolute size-[1em] opacity-[0.00001]"
@@ -233,14 +239,17 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							</label>
 						))}
 						{shouldShowEnabledEventsChip ? (
-							<label className="relative flex cursor-pointer flex-nowrap items-center gap-1">
+							<label
+								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
+								ref={focusNeighbourChipOnLeave}
+							>
 								<input
 									type="checkbox"
 									value="events"
 									checked
 									onChange={() => {
 										void pushShallowQuery(router, {
-											events: toggledMetrics.events === 'true' ? (getQueryValueOnRemove(true) ?? undefined) : 'true'
+											events: getQueryValueOnRemove(true)
 										})
 									}}
 									className="peer absolute size-[1em] opacity-[0.00001]"

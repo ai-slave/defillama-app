@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense, useState } from 'react'
+import { type ComponentProps, lazy, type ReactNode, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import type { Subscription } from '~/auth/useSubscribe'
@@ -7,6 +7,7 @@ import { SubscriptionLoadError } from '~/containers/Subscription/shared/Subscrip
 import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
 import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
 import { ApiAccessCard } from './ApiAccessCard'
@@ -66,7 +67,7 @@ function SubscriptionCardWithProps({
 	onCancel: () => void
 	onTopup?: () => void
 	isManageLoading: boolean
-	isTopupLoading?: boolean
+	isTopupLoading: boolean
 }) {
 	const isCancelPending = subscription.metadata?.isCanceled === 'true'
 	const expiryDate = parseExpiryDate(subscription.expires_at)
@@ -196,15 +197,15 @@ function PastDueSubscriptionCard({
 			</div>
 			<div className="flex flex-wrap gap-2">
 				{canUpdatePayment && (
-					<button
-						type="button"
+					<Button
+						variant="primary"
+						size="md"
 						onClick={onUpdatePayment}
-						disabled={isUpdateLoading}
-						className="flex h-9 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 label-md whitespace-nowrap text-on-brand disabled:opacity-50"
+						pendingLabel={isUpdateLoading ? 'Opening Stripe…' : null}
 					>
-						{isUpdateLoading ? 'Loading...' : 'Update payment on Stripe'}
-						{!isUpdateLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
-					</button>
+						Update payment on Stripe
+						<Icon name="circle-external-link" height={16} width={16} className="shrink-0" />
+					</Button>
 				)}
 				{onCancel && (
 					<button
@@ -278,8 +279,12 @@ export function SubscriptionSection() {
 	const { balance, isLoading: isAiBalanceLoading } = useAiBalance()
 	const [isTopupModalOpen, setIsTopupModalOpen] = useState(false)
 	const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
-	const [isCancelSubscriptionModalOpen, setIsCancelSubscriptionModalOpen] = useState(false)
-	const [isCancelSubModalOpen, setIsCancelSubModalOpen] = useState(false)
+	// The promise the cancel dialog makes is fixed when it opens, so a refetch cannot rewrite it mid-flow.
+	const [cancelDialog, setCancelDialog] = useState<{
+		open: boolean
+		variant: ComponentProps<typeof CancelSubscriptionModal>['variant']
+	}>({ open: false, variant: 'subscription' })
+	const openCancelDialog = (variant: typeof cancelDialog.variant) => setCancelDialog({ open: true, variant })
 	const yearlyUpgrade = useStripeCheckout()
 	const {
 		apiSubscription,
@@ -289,6 +294,7 @@ export function SubscriptionSection() {
 		isSubscriptionRetrying,
 		refetchSubscription,
 		isPastDueError,
+		isPastDueRetrying,
 		refetchPastDueSubscription,
 		credits,
 		usageStats,
@@ -317,9 +323,10 @@ export function SubscriptionSection() {
 			<button
 				type="button"
 				onClick={() => void refetchPastDueSubscription()}
+				aria-busy={isPastDueRetrying || undefined}
 				className="underline hover:text-sub-brand-primary"
 			>
-				Retry
+				{isPastDueRetrying ? 'Retrying…' : 'Retry'}
 			</button>
 		</p>
 	) : null
@@ -348,7 +355,7 @@ export function SubscriptionSection() {
 
 	const handleCancelSubscription = () => {
 		if (activeSubscription?.provider === 'stripe') {
-			setIsCancelSubModalOpen(true)
+			openCancelDialog(isActivePastDue ? 'pastDue' : 'subscription')
 		} else if (activeSubscription?.provider === 'llamapay') {
 			window.open('https://subscriptions.llamapay.io/', '_blank')
 		}
@@ -374,13 +381,6 @@ export function SubscriptionSection() {
 	// The overage endpoints only operate on the user's own Stripe API subscription;
 	// seat-derived team records look like Stripe but have no Stripe subscription behind them.
 	const canManageOverage = hasApiSubscription && apiSubscription?.provider === 'stripe' && !apiSubscription?.team_id
-	const isOverageToggleLoading = setOverageMutation.isPending
-	const overageError = setOverageMutation.isError ? setOverageMutation.error.message : null
-
-	const handleToggleOverage = () => {
-		if (!isOverageToggleLoading) setOverageMutation.mutate(!isOverageEnabled)
-	}
-
 	// The cancel endpoint targets the active subscription first, so cancelling from
 	// the overdue warning is only offered when the overdue record IS that subscription.
 	const isActivePastDue = activePastDueSubscription != null && activePastDueSubscription.id === activeSubscription?.id
@@ -392,7 +392,7 @@ export function SubscriptionSection() {
 					await createPortalSession()
 				}
 			}}
-			onCancel={isActivePastDue ? () => setIsCancelSubModalOpen(true) : null}
+			onCancel={isActivePastDue ? () => openCancelDialog('pastDue') : null}
 			isUpdateLoading={createPortalSessionMutation.isPending}
 		/>
 	) : null
@@ -424,16 +424,12 @@ export function SubscriptionSection() {
 	// would unmount the success pane as soon as the refetch lands.
 	const dialogs = (
 		<>
-			<CancelSubscriptionModal
-				isOpen={isCancelSubscriptionModalOpen}
-				onClose={() => setIsCancelSubscriptionModalOpen(false)}
-			/>
 			{/* The server cancels a past-due subscription at once and any other at the period's end, so the warning's Cancel
-			    and the plan card's Cancel open the same dialog with the same promise. */}
+			    and the plan card's Cancel open the same promise. */}
 			<CancelSubscriptionModal
-				isOpen={isCancelSubModalOpen}
-				onClose={() => setIsCancelSubModalOpen(false)}
-				variant={isPastDue || isActivePastDue ? 'pastDue' : 'subscription'}
+				isOpen={cancelDialog.open}
+				variant={cancelDialog.variant}
+				onClose={() => setCancelDialog((dialog) => ({ ...dialog, open: false }))}
 			/>
 			<EndTrialModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
 			{isTopupModalOpen ? <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} /> : null}
@@ -500,7 +496,7 @@ export function SubscriptionSection() {
 							await createPortalSession()
 						}
 					}}
-					onCancel={() => setIsCancelSubModalOpen(true)}
+					onCancel={() => openCancelDialog('pastDue')}
 					isUpdateLoading={createPortalSessionMutation.isPending}
 				/>
 			</>
@@ -515,7 +511,7 @@ export function SubscriptionSection() {
 					<TrialSubscriptionCard
 						trialEndDate={parseExpiryDate(llamafeedSubscription.expires_at)}
 						isCancelPending={llamafeedSubscription.metadata?.isCanceled === 'true'}
-						onCancel={() => setIsCancelSubscriptionModalOpen(true)}
+						onCancel={() => openCancelDialog('trial')}
 					/>
 					<TrialUpgradeBanner onUpgrade={() => setIsUpgradeModalOpen(true)} />
 				</div>
@@ -559,11 +555,16 @@ export function SubscriptionSection() {
 					isUsageStatsLoading={isUsageStatsLoading}
 					isUsageStatsError={isUsageStatsError}
 					generateNewKeyMutation={generateNewKeyMutation}
-					canManageOverage={canManageOverage}
-					isOverageEnabled={isOverageEnabled}
-					onToggleOverage={handleToggleOverage}
-					isOverageToggleLoading={isOverageToggleLoading}
-					overageError={overageError}
+					overage={
+						canManageOverage
+							? {
+									enabled: isOverageEnabled,
+									onToggle: () => setOverageMutation.mutate(!isOverageEnabled),
+									isPending: setOverageMutation.isPending,
+									error: setOverageMutation.error?.message ?? null
+								}
+							: null
+					}
 				/>
 				{balanceCard}
 			</>

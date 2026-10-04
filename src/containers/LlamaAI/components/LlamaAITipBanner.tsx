@@ -6,6 +6,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { focusComposerOnLeave } from './ComposerTray'
 
 export function LlamaAITipBanner() {
 	const { tip, markSeen, dismissTip, clickTip } = useActiveTip()
@@ -32,7 +33,10 @@ export function LlamaAITipBanner() {
 	return (
 		// The impression is recorded by the element that shows the tip; markSeen sends it once per tip.
 		<div
-			ref={() => markSeen(tip)}
+			ref={(node) => {
+				if (node) markSeen(tip)
+				return focusComposerOnLeave(node)
+			}}
 			className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5"
 		>
 			<Tooltip
@@ -52,14 +56,7 @@ export function LlamaAITipBanner() {
 					{tip.cta.label}
 				</button>
 			)}
-			<Button
-				type="button"
-				variant="ghost"
-				size="md"
-				square
-				onClick={() => void dismissTip(tip)}
-				aria-label="Dismiss tip"
-			>
+			<Button type="button" variant="ghost" size="md" square onClick={() => dismissTip(tip)} aria-label="Dismiss tip">
 				<Icon name="x" height={16} width={16} />
 			</Button>
 		</div>

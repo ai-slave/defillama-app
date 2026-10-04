@@ -128,6 +128,21 @@ async function press(node: HTMLElement) {
 		node.click()
 	})
 }
+/** Opens a picker from its trigger with the keyboard and clicks the option. */
+async function pickOption(trigger: HTMLElement, label: string) {
+	await act(async () => {
+		trigger.focus()
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	})
+	const option = await waitForUi(() => {
+		const found = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
+			(row) => row.textContent === label
+		)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await act(async () => option.click())
+}
 const announced = () => [...document.querySelectorAll('[role="status"]')].map((node) => node.textContent).join('|')
 
 test('a copied link is announced inside the modal instead of in a toast', async () => {
@@ -177,6 +192,24 @@ test('removing a selected protocol hands focus to the next row; with one left th
 	expect(document.activeElement).toBe(button('Protocol: Gamma'))
 	expect(document.querySelector('[aria-label="Remove Gamma"]')).toBeNull()
 })
+
+test.each(['suggestion', 'picker'] as const)(
+	'picking a protocol from the empty combined report by %s lands on the metric picker',
+	async (via) => {
+		await render(
+			<MultiMetricModal
+				chartOptionsMap={{ 'protocol-tvl-chart': options }}
+				authorizedFetch={fetchCsv}
+				onClose={() => {}}
+				isPreview={false}
+			/>
+		)
+		const trigger = await waitForUi(() => button('Pick a protocol'))
+		if (via === 'suggestion') await press(button('Alpha'))
+		else await pickOption(trigger, 'Alpha')
+		await waitForUi(() => expect(accessibleName(document.activeElement!)).toBe('Metrics: None'))
+	}
+)
 
 test('each selected metric offers its own download, named for the metric', async () => {
 	await renderMetrics()
@@ -248,7 +281,11 @@ test('the phone Selected toggle counts the selected protocols, says whether the 
 	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('true')
 	await press(button('Remove Alpha'))
 	expect([...document.querySelectorAll('button')].some((node) => node.textContent?.startsWith('Selected'))).toBe(false)
-	expect(button('Protocol: Beta')).toBeTruthy()
+	const trigger = button('Protocol: Beta')
+
+	// A second pick later brings the toggle back on the table, not on the list it last showed.
+	await pickOption(trigger, 'Gamma')
+	expect(button('Selected (2)').getAttribute('aria-pressed')).toBe('false')
 })
 
 test('previewing a protocol from the phone Selected list switches back to the table', async () => {

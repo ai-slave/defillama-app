@@ -62,7 +62,7 @@ function Harness() {
 	dialog = Ariakit.useDialogStore({ defaultOpen: true })
 	return (
 		<Ariakit.DialogProvider store={dialog}>
-			{hideOnAuthentication && token ? null : <SignInFlow dialogStore={dialog} onAuthenticated={onAuthenticated} />}
+			{hideOnAuthentication && token ? null : <SignInFlow onAuthenticated={onAuthenticated} />}
 		</Ariakit.DialogProvider>
 	)
 }

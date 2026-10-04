@@ -16,6 +16,7 @@ import {
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
+import { queryReadFailed } from '~/utils/query'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
 import { formatProjectBytes } from './format'
@@ -36,13 +37,12 @@ export function ProjectsGrid() {
 	const isLocked = tier === 'free'
 	const usage = useProjectUsage(!isLocked)
 	const createRef = useRef<HTMLButtonElement>(null)
-	const renameRef = useRef<HTMLButtonElement>(null)
-	const deleteRef = useRef<HTMLButtonElement>(null)
+	const returnFocusRef = useRef<HTMLButtonElement>(null)
 	const searchRef = useRef<HTMLInputElement>(null)
 	const createStore = Ariakit.useDialogStore()
 	const renameStore = Ariakit.useDialogStore()
-	const deleteStore = Ariakit.useDialogStore()
-	const { data, isLoading, error, refetch } = useProjectList(!isLocked)
+	const projectList = useProjectList(!isLocked)
+	const { data } = projectList
 	const [query, setQuery] = useState('')
 	// Both clear controls leave once the search is empty; the search field takes focus.
 	const clearSearch = () => {
@@ -182,20 +182,25 @@ export function ProjectsGrid() {
 				</div>
 			) : null}
 
-			{isLoading ? (
-				<div className="flex justify-center py-10">
-					<LoadingSpinner size={16} />
-				</div>
-			) : error ? (
+			{queryReadFailed(projectList) ? (
 				<div
 					role="alert"
 					className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary"
 				>
 					<Icon name="alert-triangle" height={24} width={24} className="text-error" />
 					<p>Couldn&apos;t load projects.</p>
-					<Button type="button" size="md" onClick={() => void refetch()}>
+					<Button
+						type="button"
+						size="md"
+						pendingLabel={projectList.isFetching ? 'Retrying…' : null}
+						onClick={() => void projectList.refetch()}
+					>
 						Retry
 					</Button>
+				</div>
+			) : projectList.isLoading ? (
+				<div className="flex justify-center py-10">
+					<LoadingSpinner size={16} />
 				</div>
 			) : !hasProjects ? (
 				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary">
@@ -239,17 +244,12 @@ export function ProjectsGrid() {
 										<Tooltip
 											content="Rename project"
 											render={
-												<Button
+												<Ariakit.DialogDisclosure
+													store={renameStore}
 													type="button"
-													size="sm"
-													variant="ghost"
-													square
 													aria-label={`Rename ${p.name}`}
-													onClick={(e) => {
-														renameRef.current = e.currentTarget
-														setProjectToRename(p)
-														renameStore.show()
-													}}
+													onClick={() => setProjectToRename(p)}
+													render={<Button size="sm" variant="ghost" square />}
 												/>
 											}
 										>
@@ -265,9 +265,8 @@ export function ProjectsGrid() {
 													square
 													aria-label={`Delete ${p.name}`}
 													onClick={(e) => {
-														deleteRef.current = e.currentTarget
+														returnFocusRef.current = e.currentTarget
 														setProjectToDelete(p)
-														deleteStore.show()
 													}}
 												/>
 											}
@@ -290,21 +289,19 @@ export function ProjectsGrid() {
 			)}
 
 			<CreateProjectModal dialogStore={createStore} onCreated={onCreated} />
-			<CreateProjectModal
-				key={`rename-${projectToRename?.id}`}
-				finalFocus={renameRef}
-				dialogStore={renameStore}
-				mode="rename"
-				project={projectToRename}
-			/>
-			<DeleteProjectModal
-				key={`delete-${projectToDelete?.id}`}
-				finalFocus={deleteRef}
-				fallbackFocus={createRef}
-				dialogStore={deleteStore}
-				project={projectToDelete}
-				onDeleted={() => setProjectToDelete(null)}
-			/>
+			<CreateProjectModal key={`rename-${projectToRename?.id}`} dialogStore={renameStore} project={projectToRename} />
+			{projectToDelete ? (
+				<DeleteProjectModal
+					key={projectToDelete.id}
+					finalFocus={returnFocusRef}
+					project={projectToDelete}
+					onClose={() => setProjectToDelete(null)}
+					onDeleted={() => {
+						// The deleted card takes its Delete button with it; New project stays.
+						returnFocusRef.current = createRef.current
+					}}
+				/>
+			) : null}
 		</div>
 	)
 }

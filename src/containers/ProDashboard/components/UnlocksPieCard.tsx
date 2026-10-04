@@ -4,6 +4,7 @@ import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
+import { queryReadFailed } from '~/utils/query'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
 import { ProMeta } from '../ui'
@@ -31,13 +32,14 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const includeSupplyMeta = chartType === 'locked-unlocked'
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const pieQuery = useQuery({
 		queryKey: ['pro-dashboard', 'unlocks-pie', protocol, includeSupplyMeta],
 		queryFn: () => getProtocolEmissionsPieData(slug(protocol), includeSupplyMeta),
 		enabled: streamDone && Boolean(protocol),
 		staleTime: 60 * 60 * 1000
 	})
-	const readFailed = errorUpdatedAt > dataUpdatedAt
+	const { data, isLoading } = pieQuery
+	const readFailed = queryReadFailed(pieQuery)
 
 	const chartData = useMemo(() => {
 		if (chartType === 'allocation') {
@@ -74,8 +76,6 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const cardHeightScale = useCardHeightScale()
 	const chartHeight = scaledPx(320, cardHeightScale)
 
-	const retryPieData = { run: () => void refetch(), pending: isFetching }
-
 	const renderStatusShell = (status: ReactNode) => (
 		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
 			<ProCardHeader titleAs="h3" title={chartTitle} subtitle={<ProMeta items={[protocolName]} />} />
@@ -86,7 +86,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	)
 
 	if (readFailed && data === undefined) {
-		return renderStatusShell(<ProCardError retry={retryPieData} />)
+		return renderStatusShell(<ProCardError retry={pieQuery} />)
 	}
 
 	if (isLoading || (!streamDone && data === undefined)) {
@@ -95,7 +95,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 
 	return (
 		<div className="flex h-full flex-col p-0">
-			{readFailed ? <ProCardRefreshFailed retry={retryPieData} /> : null}
+			{readFailed ? <ProCardRefreshFailed retry={pieQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={chartTitle}

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
@@ -13,11 +13,15 @@ import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/unifi
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedTable/config/layoutPolicy'
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
-import { DialogCancelButton, DialogFooter } from '~/ui/Dialog'
+import { DialogCancelButton, DialogFooter, useRefusal } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
+import { requestDashboardItemReveal } from '../../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
+import { buildDefaultUnifiedTableConfig, type DashboardItemPlacement } from '../../../useDashboardActions'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
 import { EquitiesFilingsDataset } from '../../datasets/EquitiesDataset/EquitiesFilingsDataset'
 import { EquitiesFinancialsDataset } from '../../datasets/EquitiesDataset/EquitiesFinancialsDataset'
@@ -42,16 +46,15 @@ import { PresetPicker } from './components/PresetPicker'
 import { PresetSelector } from './components/PresetSelector'
 import { SimpleTableConfig } from './components/SimpleTableConfig'
 import { usePresetRecommendations } from './hooks/usePresetRecommendations'
+import type { useUnifiedTableWizard } from './hooks/useUnifiedTableWizard'
 import type { FilterPreset } from './presets/filterPresets'
-import { useUnifiedTableWizardContext } from './WizardContext'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 interface UnifiedTableTabProps {
+	/** Add card owns the wizard for its whole opening, so a table draft survives tab changes and counts toward its
+	    discard question. */
+	wizard: ReturnType<typeof useUnifiedTableWizard>
+	/** Where a new table lands: after or before a card, or at the end of the tab. */
+	placement: DashboardItemPlacement | undefined
 	onClose: () => void
 	chainOptions: Array<{ label: string; value: string }>
 	editItem?: DashboardItemConfig | null | undefined
@@ -237,12 +240,24 @@ export function UnifiedTableTab({
 	onTokensChange,
 	includeCex,
 	onIncludeCexChange,
-	protocolsLoading
+	protocolsLoading,
+	wizard,
+	placement
 }: UnifiedTableTabProps) {
-	const { handleAddUnifiedTable, handleEditItem } = useProDashboardEditorActions()
+	const { handleAppendItems, handleEditItem } = useProDashboardEditorActions()
 	const chainParameter = useModalFieldBinding('chains', 'chain')
 	const {
-		state: { chains, rowHeaders, filters, activePresetId, columnOrder, columnVisibility, sorting, customColumns },
+		state: {
+			chains,
+			rowHeaders,
+			filters,
+			activePresetId,
+			columnOrder,
+			columnVisibility,
+			sorting,
+			customColumns,
+			customColumnDraft
+		},
 		actions: {
 			setChains,
 			setRowHeaders,
@@ -252,16 +267,13 @@ export function UnifiedTableTab({
 			setSorting,
 			addCustomColumn,
 			updateCustomColumn,
-			removeCustomColumn
+			removeCustomColumn,
+			setCustomColumnDraft
 		},
 		derived: { draftConfig }
-	} = useUnifiedTableWizardContext()
+	} = wizard
 	const { hasActiveSubscription } = useAuthContext()
-	const [shouldRenderSubscribeModal, setShouldRenderSubscribeModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({
-		open: shouldRenderSubscribeModal,
-		setOpen: setShouldRenderSubscribeModal
-	})
+	const subscribeModalStore = Ariakit.useDialogStore()
 	// Only a protocols table edits through this tab's wizard; other table cards edit in SimpleTableConfig.
 	const tableEditItem = editItem?.kind === 'unified-table' ? editItem : undefined
 	const [showRwaSelector, setShowRwaSelector] = useState(false)
@@ -402,8 +414,7 @@ export function UnifiedTableTab({
 	const visibleColumnsCount = columnOrder.filter((id) => id !== 'name' && (columnVisibility[id] ?? true)).length
 
 	// A refused add or edit keeps the tab open and says why, for as long as the draft is the one that was refused.
-	const [refusal, setRefusal] = useState<{ draft: typeof draftConfig; reason: string } | null>(null)
-	const refusalReason = refusal?.draft === draftConfig ? refusal.reason : null
+	const [refusalReason, setRefusal] = useRefusal(draftConfig)
 
 	const handleAdd = () => {
 		const boundVariableId = chainParameter.boundVariable?.id ?? null
@@ -412,12 +423,17 @@ export function UnifiedTableTab({
 					tableEditItem.id,
 					applyUnifiedTableBinding({ ...tableEditItem, ...draftConfig }, boundVariableId)
 				)
-			: handleAddUnifiedTable(applyUnifiedTableBinding(draftConfig, boundVariableId))
+			: handleAppendItems(
+					() => [buildDefaultUnifiedTableConfig(applyUnifiedTableBinding(draftConfig, boundVariableId))],
+					placement
+				)
 		if (written.status === 'refused') {
 			setRefusal({ draft: draftConfig, reason: written.reason })
 			return
 		}
 		onClose()
+		// Like every other card Add card adds, a new table scrolls into view once the dialog is gone.
+		if (!tableEditItem) requestDashboardItemReveal(written.ids[0])
 	}
 
 	const handleApplyPreset = (preset: FilterPreset) => {
@@ -562,6 +578,8 @@ export function UnifiedTableTab({
 							onAddCustomColumn={addCustomColumn}
 							onUpdateCustomColumn={updateCustomColumn}
 							onRemoveCustomColumn={removeCustomColumn}
+							customColumnDraft={customColumnDraft}
+							onCustomColumnDraftChange={setCustomColumnDraft}
 							sorting={sorting}
 							onSortingChange={handleSortingChange}
 							onSortingReset={() => handleSortingChange(presetSortingFallback)}
@@ -869,11 +887,7 @@ export function UnifiedTableTab({
 					</div>
 				</div>
 
-				{shouldRenderSubscribeModal ? (
-					<Suspense fallback={null}>
-						<SubscribeProModal dialogStore={subscribeModalStore} />
-					</Suspense>
-				) : null}
+				<LazySubscribeProModal dialogStore={subscribeModalStore} />
 			</div>
 		)
 	}
@@ -922,37 +936,27 @@ export function UnifiedTableTab({
 					) : null}
 				</header>
 
-				<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-pro-cards-border p-1 shadow-sm">
-					{tabOptions.map((tab) => {
-						const isActive = tab.key === activeTab
-						return (
-							<button
-								key={tab.key}
-								type="button"
-								onClick={() => setActiveTab(tab.key)}
-								className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-									isActive
-										? 'bg-brand/10 text-pro-text-primary shadow-sm ring-1 ring-brand/60'
-										: 'text-pro-text-secondary hover:bg-pro-cards-bg hover:text-pro-text-primary'
-								}`}
-							>
-								<span className="truncate" title={tab.label}>
-									{tab.label}
-								</span>
+				<SegmentedControl<TabKey>
+					label="Table section"
+					variant="default"
+					size="md"
+					className="mb-3"
+					value={activeTab}
+					onValueChange={setActiveTab}
+					options={tabOptions.map((tab) => ({
+						value: tab.key,
+						label: (
+							<span className="flex items-center gap-2">
+								<span className="truncate">{tab.label}</span>
 								{tab.badge ? (
-									<span
-										className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-xs font-medium ${
-											isActive ? 'bg-brand/20 text-brand' : 'bg-pro-cards-border text-pro-text-tertiary'
-										}`}
-										title={tab.badge?.toString()}
-									>
+									<span className="max-w-[160px] truncate rounded-full bg-pro-cards-border px-2 py-0.5 text-xs font-medium text-pro-text-tertiary">
 										{tab.badge}
 									</span>
 								) : null}
-							</button>
+							</span>
 						)
-					})}
-				</div>
+					}))}
+				/>
 
 				<div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4" data-unified-table-scroll="true">
 					<div className="flex h-full flex-col gap-3">{tabContent[activeTab]}</div>

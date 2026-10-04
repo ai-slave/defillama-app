@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
+import { queryReadFailed } from '~/utils/query'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
@@ -19,7 +20,7 @@ export function useTeamDashboards({ page, limit, enabled = true }: UseTeamDashbo
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 	const router = useRouter()
 
-	const { data, isLoading, isFetching, errorUpdatedAt, dataUpdatedAt, refetch } = useQuery({
+	const dashboardsQuery = useQuery({
 		queryKey: ['pro-dashboard', 'team-dashboards', user?.id, page, limit],
 		queryFn: async () => {
 			if (!isAuthenticated) {
@@ -30,6 +31,8 @@ export function useTeamDashboards({ page, limit, enabled = true }: UseTeamDashbo
 		staleTime: 1000 * 60 * 5,
 		enabled: isAuthenticated && enabled
 	})
+
+	const { data, isLoading, isFetching, refetch } = dashboardsQuery
 
 	const goToPage = useCallback(
 		(newPage: number) => {
@@ -42,7 +45,7 @@ export function useTeamDashboards({ page, limit, enabled = true }: UseTeamDashbo
 		dashboards: data?.items ?? EMPTY_DASHBOARDS,
 		isLoading,
 		isFetching,
-		readFailed: errorUpdatedAt > dataUpdatedAt,
+		readFailed: queryReadFailed(dashboardsQuery),
 		page: data?.page || page,
 		totalPages: data?.totalPages || 1,
 		totalItems: data?.totalItems || 0,

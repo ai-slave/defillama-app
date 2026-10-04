@@ -112,9 +112,10 @@ test.each(['success', 'failure'] as const)(
 		// The pending state reaches React on a TanStack notify tick, after the save request starts.
 		await waitForUi(() => {
 			expect(savedTags()).toEqual([[]])
-			expect(originalInput.readOnly).toBe(true)
+			expect(originalInput.closest('fieldset')!.disabled).toBe(true)
 		})
-		expect(document.activeElement).toBe(originalInput)
+		// The fields lock while saving; focus waits on the pending Save.
+		expect(document.activeElement).toBe(document.querySelector('button[type="submit"]'))
 		await render(false)
 		await render(true)
 		const draft = tagInput()

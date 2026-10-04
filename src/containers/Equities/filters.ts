@@ -157,21 +157,15 @@ export type EquityActiveFilter =
 	| EquityActiveNumericRangeFilter
 	| EquityActiveCategoricalFilter
 
-export type EquityDraftNumericComparisonFilter = {
+// The typed text, parsed on Apply, so 10b or a half-typed value stays as written.
+export type EquityDraftNumericFilter = {
 	kind: 'numeric'
 	id: EquityNumericFilterId
-	operator: EquityComparisonOperator
-	value?: number
+	operator: EquityNumericOperator
+	value: string
+	minValue: string
+	maxValue: string
 }
-
-export type EquityDraftNumericRangeFilter = {
-	kind: 'numericRange'
-	id: EquityNumericFilterId
-	minValue?: number
-	maxValue?: number
-}
-
-export type EquityDraftNumericFilter = EquityDraftNumericComparisonFilter | EquityDraftNumericRangeFilter
 
 export type EquityDraftCategoricalFilter = {
 	kind: 'categorical'
@@ -208,11 +202,17 @@ export function createDefaultEquityDraftFilter(config: EquityFilterConfig): Equi
 		return { kind: 'categorical', id: config.id, mode: 'include', values: [] }
 	}
 
-	return { kind: 'numeric', id: config.id, operator: '>=' }
+	return { kind: 'numeric', id: config.id, operator: '>=', value: '', minValue: '', maxValue: '' }
 }
 
-export function getEquityDraftNumericOperator(filter: EquityDraftNumericFilter): EquityNumericOperator {
-	return filter.kind === 'numericRange' ? 'between' : filter.operator
+/** The filter under another operator. Typed text carries across a switch between one value and a range. */
+export function setEquityDraftOperator(
+	filter: EquityDraftNumericFilter,
+	operator: EquityNumericOperator
+): EquityDraftNumericFilter {
+	return operator === 'between'
+		? { ...filter, operator, minValue: filter.minValue || filter.value, value: '' }
+		: { ...filter, operator, value: filter.value || filter.minValue || filter.maxValue }
 }
 
 function toNonEmptyArray<T>(values: Array<T>): NonEmptyArray<T> | null {
@@ -363,27 +363,19 @@ export function draftEquityFilterToActive(filter: EquityDraftFilter): EquityActi
 		return values ? { kind: 'categorical', id: filter.id, mode: filter.mode, values } : null
 	}
 
-	if (filter.kind === 'numericRange') {
-		if (filter.minValue !== undefined && filter.maxValue !== undefined) {
-			const minValue = Math.min(filter.minValue, filter.maxValue)
-			const maxValue = Math.max(filter.minValue, filter.maxValue)
-			return { kind: 'numericRange', id: filter.id, minValue, maxValue }
+	if (filter.operator === 'between') {
+		const min = parseEquityFilterNumber(filter.minValue)
+		const max = parseEquityFilterNumber(filter.maxValue)
+		if (min !== undefined && max !== undefined) {
+			return { kind: 'numericRange', id: filter.id, minValue: Math.min(min, max), maxValue: Math.max(min, max) }
 		}
-
-		if (filter.minValue !== undefined) {
-			return { kind: 'numeric', id: filter.id, operator: '>=', value: filter.minValue }
-		}
-
-		if (filter.maxValue !== undefined) {
-			return { kind: 'numeric', id: filter.id, operator: '<=', value: filter.maxValue }
-		}
-
+		if (min !== undefined) return { kind: 'numeric', id: filter.id, operator: '>=', value: min }
+		if (max !== undefined) return { kind: 'numeric', id: filter.id, operator: '<=', value: max }
 		return null
 	}
 
-	return filter.value !== undefined
-		? { kind: 'numeric', id: filter.id, operator: filter.operator, value: filter.value }
-		: null
+	const value = parseEquityFilterNumber(filter.value)
+	return value !== undefined ? { kind: 'numeric', id: filter.id, operator: filter.operator, value } : null
 }
 
 export function draftEquityFiltersToActive(filters: Array<EquityDraftFilter>): Array<EquityActiveFilter> {
@@ -396,15 +388,27 @@ export function draftEquityFiltersToActive(filters: Array<EquityDraftFilter>): A
 }
 
 export function activeEquityFiltersToDraft(filters: Array<EquityActiveFilter>): Array<EquityDraftFilter> {
-	// Numeric/range filters are immutable value objects and can be reused as-is; categorical
-	// filters need a defensive copy of their mutable `values` array.
-	return filters.map((filter) =>
-		filter.kind === 'categorical' ? { ...filter, values: filter.values.slice() } : filter
-	)
-}
-
-export function countActiveEquityFilters(filters: Array<EquityActiveFilter>): number {
-	return filters.length
+	return filters.map((filter): EquityDraftFilter => {
+		if (filter.kind === 'categorical') return filter
+		if (filter.kind === 'numericRange') {
+			return {
+				kind: 'numeric',
+				id: filter.id,
+				operator: 'between',
+				value: '',
+				minValue: String(filter.minValue),
+				maxValue: String(filter.maxValue)
+			}
+		}
+		return {
+			kind: 'numeric',
+			id: filter.id,
+			operator: filter.operator,
+			value: String(filter.value),
+			minValue: '',
+			maxValue: ''
+		}
+	})
 }
 
 export function formatEquityFilterValue(value: number, format: EquityFilterFormat): string {

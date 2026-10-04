@@ -1,8 +1,7 @@
-import type { MutationStatus } from '@tanstack/react-query'
 import { Button } from '~/ui/Button'
 import { DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import type { ComparisonType, WizardStep } from '../types'
+import type { WizardStep } from '../types'
 import { getStepIndex, WIZARD_STEPS } from '../types'
 
 const STEP_LABELS: Record<WizardStep, string> = {
@@ -20,15 +19,19 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 				const isActive = index === currentIndex
 				const isCompleted = index < currentIndex
 				return (
-					<div key={step} className="flex items-center gap-2">
+					<div key={step} aria-current={isActive ? 'step' : undefined} className="flex items-center gap-2">
 						<div
 							className={`flex size-8 items-center justify-center rounded-full label-sm transition-colors ${
 								isActive ? 'bg-brand text-on-brand' : isCompleted ? 'bg-brand/20 text-brand' : 'text-tertiary'
 							}`}
 						>
-							{isCompleted ? <Icon name="check" height={14} width={14} /> : index + 1}
+							{isCompleted ? (
+								<Icon name="check" height={14} width={14} role="img" aria-label={`Step ${index + 1} done`} />
+							) : (
+								index + 1
+							)}
 						</div>
-						<span className={`hidden label-sm sm:inline ${isActive ? 'text-primary' : 'text-tertiary'}`}>
+						<span className={`label-sm sm:inline ${isActive ? 'text-primary' : 'hidden text-tertiary'}`}>
 							{STEP_LABELS[step]}
 						</span>
 						{index < WIZARD_STEPS.length - 1 ? (
@@ -41,38 +44,23 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 	)
 }
 
-// Mirrors the wizard's canProceed rules, so a disabled Next says what the step still needs.
-function blockedReason(step: WizardStep, comparisonType: ComparisonType | null) {
-	switch (step) {
-		case 'select-type':
-			return 'Choose chains or protocols'
-		case 'select-items':
-			return comparisonType === 'chains' ? 'Pick at least 1 chain' : 'Pick at least 1 protocol'
-		case 'select-metrics':
-			return 'Pick at least 1 metric'
-		case 'preview':
-			return 'Enter a dashboard name'
-	}
-}
-
 interface WizardNavigationProps {
 	currentStep: WizardStep
-	comparisonType: ComparisonType | null
-	canProceed: boolean
+	/** What the step still needs, said beside a disabled Next or Create. */
+	blockedReason: string | null
 	onNext: () => void
 	onBack: () => void
 	onGenerate: () => void
-	creationStatus: MutationStatus
+	creating: boolean
 }
 
 export function WizardNavigation({
 	currentStep,
-	comparisonType,
-	canProceed,
+	blockedReason,
 	onNext,
 	onBack,
 	onGenerate,
-	creationStatus
+	creating
 }: WizardNavigationProps) {
 	const isLastStep = currentStep === 'preview'
 
@@ -80,11 +68,11 @@ export function WizardNavigation({
 		<DialogFooter
 			leading={
 				<>
-					<Button type="button" size="md" onClick={onBack} disabled={creationStatus === 'pending'}>
+					<Button type="button" size="md" onClick={onBack} disabled={creating}>
 						<Icon name="arrow-left" height={14} width={14} />
 						Back
 					</Button>
-					{canProceed ? null : <p className="body-sm text-secondary">{blockedReason(currentStep, comparisonType)}</p>}
+					{blockedReason ? <p className="body-sm text-secondary">{blockedReason}</p> : null}
 				</>
 			}
 		>
@@ -94,14 +82,23 @@ export function WizardNavigation({
 					variant="primary"
 					size="md"
 					onClick={onGenerate}
-					disabled={!canProceed}
-					pendingLabel={creationStatus === 'pending' ? 'Creating…' : null}
+					disabled={blockedReason !== null}
+					accessibleWhenDisabled
+					pendingLabel={creating ? 'Creating…' : null}
 				>
 					<Icon name="plus" height={14} width={14} />
 					Create dashboard
 				</Button>
 			) : (
-				<Button type="button" variant="primary" size="md" onClick={onNext} disabled={!canProceed}>
+				// Kept focusable while disabled: a step that starts incomplete disables Next under the focus that moved there.
+				<Button
+					type="button"
+					variant="primary"
+					size="md"
+					onClick={onNext}
+					disabled={blockedReason !== null}
+					accessibleWhenDisabled
+				>
 					Next
 					<Icon name="arrow-right" height={14} width={14} />
 				</Button>

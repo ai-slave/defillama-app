@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo, useState } from 'react'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import { queryReadFailed } from '~/utils/query'
 import { useAppMetadata } from '../AppMetadataContext'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -42,20 +43,14 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	}
 
 	const streamDone = useContext(StreamDoneContext)
-	const {
-		data: incomeStatement,
-		isLoading,
-		isFetching,
-		errorUpdatedAt,
-		dataUpdatedAt,
-		refetch
-	} = useQuery({
+	const incomeStatementQuery = useQuery({
 		queryKey: ['pro-dashboard', 'income-statement', config.protocol],
 		queryFn: () => getProtocolIncomeStatement({ metadata }),
 		enabled: streamDone && Boolean(config.protocol && displayName && metadata.fees && metadata.revenue),
 		staleTime: 60 * 60 * 1000
 	})
-	const readFailed = errorUpdatedAt > dataUpdatedAt
+	const { data: incomeStatement, isLoading } = incomeStatementQuery
+	const readFailed = queryReadFailed(incomeStatementQuery)
 
 	const hasData = useMemo(() => {
 		if (!incomeStatement?.data) return false
@@ -68,11 +63,10 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const iconUrl = getItemIconUrl('protocol', protocolInfo, config.protocol)
 	const queryRequired = Boolean(config.protocol && displayName && metadata.fees && metadata.revenue)
 	const showLoader = metadataLoading || isLoading || (queryRequired && !streamDone && incomeStatement === undefined)
-	const retryIncomeStatement = { run: () => void refetch(), pending: isFetching }
 
 	return (
 		<div className="flex min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
-			{readFailed && incomeStatement !== undefined ? <ProCardRefreshFailed retry={retryIncomeStatement} /> : null}
+			{readFailed && incomeStatement !== undefined ? <ProCardRefreshFailed retry={incomeStatementQuery} /> : null}
 			<ProCardHeader
 				titleAs="h3"
 				title={`${displayName} Income statement`}
@@ -91,7 +85,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{readFailed && incomeStatement === undefined ? (
-					<ProCardError retry={retryIncomeStatement} />
+					<ProCardError retry={incomeStatementQuery} />
 				) : showLoader ? (
 					<ProCardLoading />
 				) : !incomeStatement || !hasData ? (

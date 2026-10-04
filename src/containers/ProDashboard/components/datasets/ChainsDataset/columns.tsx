@@ -20,6 +20,35 @@ const renderChange = (value: number | null) => (
 	</span>
 )
 
+type UsdColumnKey =
+	| 'bridgedTvl'
+	| 'stablesMcap'
+	| 'totalVolume24h'
+	| 'totalVolume30d'
+	| 'totalFees24h'
+	| 'totalFees30d'
+	| 'totalAppRevenue24h'
+	| 'totalAppRevenue30d'
+	| 'totalRevenue30d'
+	| 'mcap'
+
+// The secondary money columns differ only in header, field and width.
+const usdColumn = (
+	header: string,
+	id: UsdColumnKey,
+	size: number
+): ColumnDef<typeof tableFeaturesConfig, ChainsDatasetRow> => ({
+	header,
+	id,
+	accessorFn: (row) => row[id] ?? undefined,
+	size,
+	cell: ({ row }) => (
+		<span className="text-pro-text-secondary">
+			{formatUsd(row.original[id], USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+		</span>
+	)
+})
+
 export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, ChainsDatasetRow>> = [
 	{
 		header: 'Chain',
@@ -86,105 +115,15 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 			</span>
 		)
 	},
-	{
-		header: 'Bridged TVL',
-		id: 'bridgedTvl',
-		accessorFn: (row) => row.bridgedTvl ?? undefined,
-		size: 120,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.bridgedTvl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: 'Stables',
-		id: 'stablesMcap',
-		accessorFn: (row) => row.stablesMcap ?? undefined,
-		size: 120,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.stablesMcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '24h DEXs Volume',
-		id: 'totalVolume24h',
-		accessorFn: (row) => row.totalVolume24h ?? undefined,
-		size: 150,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '30d DEXs Volume',
-		id: 'totalVolume30d',
-		accessorFn: (row) => row.totalVolume30d ?? undefined,
-		size: 150,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalVolume30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '24h Chain Fees',
-		id: 'totalFees24h',
-		accessorFn: (row) => row.totalFees24h ?? undefined,
-		size: 130,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalFees24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '30d Chain Fees',
-		id: 'totalFees30d',
-		accessorFn: (row) => row.totalFees30d ?? undefined,
-		size: 130,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalFees30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '24h App Revenue',
-		id: 'totalAppRevenue24h',
-		accessorFn: (row) => row.totalAppRevenue24h ?? undefined,
-		size: 120,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalAppRevenue24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '30d App Revenue',
-		id: 'totalAppRevenue30d',
-		accessorFn: (row) => row.totalAppRevenue30d ?? undefined,
-		size: 140,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalAppRevenue30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
-	{
-		header: '30d Chain Revenue',
-		id: 'totalRevenue30d',
-		accessorFn: (row) => row.totalRevenue30d ?? undefined,
-		size: 140,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.totalRevenue30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	},
+	usdColumn('Bridged TVL', 'bridgedTvl', 120),
+	usdColumn('Stables', 'stablesMcap', 120),
+	usdColumn('24h DEXs Volume', 'totalVolume24h', 150),
+	usdColumn('30d DEXs Volume', 'totalVolume30d', 150),
+	usdColumn('24h Chain Fees', 'totalFees24h', 130),
+	usdColumn('30d Chain Fees', 'totalFees30d', 130),
+	usdColumn('24h App Revenue', 'totalAppRevenue24h', 120),
+	usdColumn('30d App Revenue', 'totalAppRevenue30d', 140),
+	usdColumn('30d Chain Revenue', 'totalRevenue30d', 140),
 	{
 		header: 'Mcap / DeFi TVL',
 		id: 'mcaptvl',
@@ -196,15 +135,5 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 			</span>
 		)
 	},
-	{
-		header: 'Market Cap',
-		id: 'mcap',
-		accessorFn: (row) => row.mcap ?? undefined,
-		size: 140,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
-	}
+	usdColumn('Market Cap', 'mcap', 140)
 ]

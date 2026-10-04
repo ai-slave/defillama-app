@@ -54,7 +54,7 @@ function ResearchWidgetWithScrollbarScroller({ articles }: { articles: Array<Art
 								{article.coverImage ? (
 									<img
 										src={article.coverImage.url}
-										alt={article.coverImage.alt}
+										alt={article.coverImage.alt ?? ''}
 										className="h-full w-full object-cover"
 										loading="lazy"
 										decoding="async"

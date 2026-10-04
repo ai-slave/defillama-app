@@ -33,7 +33,7 @@ import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDash
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
@@ -493,11 +493,7 @@ function AddToDashboardDialog({
 
 				<DialogFooter
 					leading={blockedReason ? <p className="body-sm text-tertiary">{blockedReason}</p> : null}
-					dismiss={
-						<Ariakit.DialogDismiss disabled={isSubmitting} render={<Button type="button" size="md" />}>
-							Cancel
-						</Ariakit.DialogDismiss>
-					}
+					dismiss={<DialogCancelButton />}
 				>
 					<Button
 						type="submit"

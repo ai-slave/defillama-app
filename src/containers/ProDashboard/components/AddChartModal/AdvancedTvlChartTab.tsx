@@ -32,10 +32,10 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 interface AdvancedTvlChartTabProps {
 	selectedAdvancedTvlProtocol: string | null
 	selectedAdvancedTvlProtocolName: string | null
-	selectedAdvancedTvlChartType: string
+	selectedAdvancedTvlChartType: AdvancedTvlChartType
 	onSelectedAdvancedTvlProtocolChange: (protocol: string | null) => void
 	onSelectedAdvancedTvlProtocolNameChange: (name: string | null) => void
-	onSelectedAdvancedTvlChartTypeChange: (chartType: string) => void
+	onSelectedAdvancedTvlChartTypeChange: (chartType: AdvancedTvlChartType) => void
 	protocolOptions: Array<VirtualizedSelectOption>
 	protocolsLoading: boolean
 }
@@ -69,21 +69,6 @@ const EMPTY_STACKS: Array<string> = []
 const EMPTY_BREAKDOWN: ProtocolBreakdownChart = []
 const selectBasicTvlDataset = (data: IProtocolValueChart | null) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
 
-function parseAdvancedTvlChartType(chartType: string): AdvancedTvlChartType {
-	switch (chartType) {
-		case 'tvl':
-		case 'chainsTvl':
-		case 'tokenValuesUsd':
-		case 'tokensPie':
-		case 'tokenBalances':
-		case 'usdInflows':
-		case 'tokenInflows':
-			return chartType
-		default:
-			throw new Error(`Unsupported advanced TVL chart type: ${chartType}`)
-	}
-}
-
 export function AdvancedTvlChartTab({
 	selectedAdvancedTvlProtocol,
 	selectedAdvancedTvlProtocolName,
@@ -96,7 +81,7 @@ export function AdvancedTvlChartTab({
 }: AdvancedTvlChartTabProps) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const chartType = parseAdvancedTvlChartType(selectedAdvancedTvlChartType)
+	const chartType = selectedAdvancedTvlChartType
 	const protocolMisrepresentsTokens =
 		selectedAdvancedTvlProtocol != null && getProtocolInfo(selectedAdvancedTvlProtocol)?.misrepresentedTokens === true
 	const suppressTokenBreakdowns = shouldSuppressAdvancedTvlTokenBreakdown(chartType, protocolMisrepresentsTokens)

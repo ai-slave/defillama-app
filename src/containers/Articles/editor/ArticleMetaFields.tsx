@@ -15,22 +15,16 @@ export function MetaSwitch({
 	checked,
 	onCheckedChange,
 	label,
-	description,
-	disabled
+	description
 }: {
 	checked: boolean
 	onCheckedChange: (next: boolean) => void
 	label: string
 	description?: string
-	disabled?: boolean
 }) {
 	const id = useId()
 	return (
-		<label
-			className={`group flex items-start justify-between gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:border-medium hover:bg-page/40 ${
-				disabled ? 'pointer-events-none opacity-50' : 'cursor-pointer'
-			}`}
-		>
+		<label className="group flex cursor-pointer items-start justify-between gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:border-medium hover:bg-page/40">
 			<span className="grid min-w-0 gap-0.5">
 				<span id={`${id}-label`} className="label-md text-primary">
 					{label}
@@ -44,7 +38,6 @@ export function MetaSwitch({
 			<Ariakit.Checkbox
 				checked={checked}
 				onChange={(event) => onCheckedChange(event.currentTarget.checked)}
-				disabled={disabled}
 				role="switch"
 				aria-checked={checked}
 				aria-labelledby={`${id}-label`}

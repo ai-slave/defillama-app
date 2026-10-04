@@ -258,6 +258,7 @@ test('a co-author removal keeps the sheet open until it settles, then shows its 
 		review.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
 	await click(button('Close dialog', review))
+	await click(button('Keep editing', review))
 	expect(review.hidden).toBe(false)
 	await act(async () => held.resolve(fixtureStatus(500)()))
 	await waitForUi(() => expect(review.textContent).toContain("Couldn't remove this co-author. Try again."))
@@ -288,4 +289,37 @@ test('a co-author removal that fails after the reader left the editor reports it
 	root = createRoot(container)
 	await act(async () => held.resolve(fixtureStatus(500)()))
 	await waitForUi(() => expect(toasts.error).toHaveBeenCalledWith("Couldn't remove this co-author. Try again."))
+})
+
+test('a discard that fails again keeps its error on screen while the new attempt runs', async () => {
+	article = {
+		...article,
+		status: 'published',
+		pending: { ...article, title: 'Pending headline' } as ArticleSnapshotPayload
+	}
+	await mount()
+	await click(button('Discard'))
+	const confirm = () => openDialog('Discard pending changes?')
+	await click(button('Discard changes', confirm()))
+	await waitForUi(() => expect(confirm().textContent).toContain("Couldn't discard the pending changes. Try again."))
+	articleWrite = () => new Promise<Response>(() => {})
+	await click(button('Discard changes', confirm()))
+	await waitForUi(() => expect(confirm().textContent).toContain('Discarding…'))
+	expect(confirm().textContent).toContain("Couldn't discard the pending changes. Try again.")
+})
+
+test('making a co-author the owner keeps the edits not saved yet', async () => {
+	articleWrite = () => ({ article: { ...article, viewerRole: 'collaborator' } })
+	await mount()
+	const title = document.querySelector<HTMLTextAreaElement>('[aria-label="Article title"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(title, 'Unsaved headline')
+		title.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await click(button('Publish'))
+	await waitForUi(() => expect(button('Make owner')).toBeTruthy())
+	await click(button('Make owner'))
+	await click(button('Make owner', openDialog('Make Sam the owner?')))
+	await waitForUi(() => expect(openDialog('Review & publish').querySelector('[aria-label="Remove Sam"]')).toBeNull())
+	expect(title.value).toBe('Unsaved headline')
 })

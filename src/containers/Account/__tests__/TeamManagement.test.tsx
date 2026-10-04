@@ -92,13 +92,17 @@ function Harness({ kind }: { kind: 'invite' | 'manage' | 'purchase' | 'assign' }
 			</button>
 			{open ? (
 				kind === 'invite' ? (
-					<InviteMemberModal isOpen onClose={() => setOpen(false)} />
+					<InviteMemberModal onClose={() => setOpen(false)} />
 				) : kind === 'manage' ? (
-					<ManageSeatsModal isOpen onClose={() => setOpen(false)} subscription={currentTeam!.subscriptions[0]} />
+					<ManageSeatsModal onClose={() => setOpen(false)} subscription={currentTeam!.subscriptions[0]} />
 				) : kind === 'assign' ? (
-					<AssignSubscriptionModal isOpen onClose={() => setOpen(false)} member={currentTeam!.members[0]} />
+					<AssignSubscriptionModal
+						finalFocus={{ current: null }}
+						onClose={() => setOpen(false)}
+						member={currentTeam!.members[0]}
+					/>
 				) : (
-					<PurchaseSeatsModal isOpen onClose={() => setOpen(false)} />
+					<PurchaseSeatsModal onClose={() => setOpen(false)} />
 				)
 			) : null}
 		</>
@@ -356,6 +360,25 @@ test('cancellation sends zero only after confirmation and preserves access until
 	await act(async () => confirmButton('Cancel Pro subscription', 'Cancel subscription').click())
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 0 })
+})
+
+test('a refused cancel shows its error in the confirmation, and reopening it after Keep subscription starts clean', async () => {
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST' ? Response.json({ message: 'Card declined' }, { status: 402 }) : Response.json({ team })
+	)
+	await mount(<Harness kind="manage" />)
+	await click('Cancel subscription')
+	await act(async () => confirmButton('Cancel Pro subscription', 'Cancel subscription').click())
+	await waitForUi(() =>
+		expect(namedDialog('Cancel Pro subscription').querySelector('[role=alert]')?.textContent).toBe('Card declined')
+	)
+	await act(async () => confirmButton('Cancel Pro subscription', 'Keep subscription').click())
+	await waitForUi(() => expect(namedDialog('Cancel Pro subscription')).toBeUndefined())
+
+	await click('Cancel subscription')
+	await waitForUi(() => expect(namedDialog('Cancel Pro subscription')).toBeTruthy())
+	expect(namedDialog('Cancel Pro subscription').querySelector('[role=alert]')).toBeNull()
+	expect(posts()).toHaveLength(1)
 })
 
 test('a cancel confirmation locked by a failed team refresh after a failed cancel says why', async () => {
@@ -1257,4 +1280,129 @@ test('cancelling team creation returns focus to Create team', async () => {
 	await act(async () => button('Cancel').focus())
 	await click('Cancel')
 	expect(document.activeElement).toBe(button('Create team'))
+})
+
+test('creating a team hands the focus of Create to the team region that replaces the form', async () => {
+	let created = false
+	api.fetch.mockImplementation(async (url: string, options?: RequestInit) => {
+		if (options?.method === 'POST') {
+			created = true
+			return Response.json({ team })
+		}
+		return Response.json({ team: created ? team : null })
+	})
+	session.client.setQueryData(['team', 'user'], null)
+	await mount(<TeamTab />)
+	await click('Create team')
+	await change(document.querySelector<HTMLInputElement>('#create-team-name')!, 'New team')
+	await act(async () => button('Create').focus())
+	await click('Create')
+
+	await waitForUi(() => expect(button('Purchase seats')).toBeTruthy())
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Team management'))
+})
+
+// The first team write is refused with `message`; every later one stays in flight.
+function refuseOnceThenHang(message: string) {
+	let writes = 0
+	api.fetch.mockImplementation(async (_url, options) => {
+		if (options?.method !== 'POST') return Response.json({ team })
+		writes += 1
+		return writes === 1 ? Response.json({ message }, { status: 400 }) : new Promise<Response>(() => {})
+	})
+}
+const alertText = () => document.querySelector('[role=alert]')?.textContent
+
+test('a retried team creation keeps its failure on screen while it runs', async () => {
+	refuseOnceThenHang('Team name taken')
+	await mount(<CreateTeamCard />)
+	await click('Create team')
+	await change(document.querySelector<HTMLInputElement>('#create-team-name')!, 'New team')
+	await click('Create')
+	await waitForUi(() => expect(alertText()).toBe('Team name taken'))
+	await click('Create')
+	await waitForUi(() => expect(button('Creating…').getAttribute('aria-busy')).toBe('true'))
+	expect(alertText()).toBe('Team name taken')
+})
+
+test('a retried invite keeps its failure on screen while it sends', async () => {
+	refuseOnceThenHang('Invite unavailable')
+	await mount(<Harness kind="invite" />)
+	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'colleague@example.com')
+	await click('Send invite')
+	await waitForUi(() => expect(alertText()).toBe('Invite unavailable'))
+	await click('Send invite')
+	await waitForUi(() => expect(button('Sending…').getAttribute('aria-busy')).toBe('true'))
+	expect(alertText()).toBe('Invite unavailable')
+})
+
+test('a retried assignment keeps its failure on screen while it runs', async () => {
+	refuseOnceThenHang('No seats available')
+	await mount(<Harness kind="assign" />)
+	await act(async () => document.querySelector<HTMLInputElement>('input[type=radio]')!.click())
+	await click('Assign')
+	await waitForUi(() => expect(alertText()).toBe('No seats available'))
+	await click('Assign')
+	await waitForUi(() => expect(button('Assigning…').getAttribute('aria-busy')).toBe('true'))
+	expect(alertText()).toBe('No seats available')
+})
+
+test('a retried purchase keeps its failure on screen while it runs', async () => {
+	useFakeTimeouts()
+	refuseOnceThenHang('Card declined')
+	await mount(<Harness kind="purchase" />)
+	await click('Purchase seats')
+	await waitForUi(() => expect(alertText()).toBe('Card declined'))
+	await waitForUi(() => expect(button('Purchase seats').hasAttribute('aria-busy')).toBe(false))
+	await click('Purchase seats')
+	await waitForUi(() => expect(button('Processing…').getAttribute('aria-busy')).toBe('true'))
+	expect(alertText()).toBe('Card declined')
+})
+
+test('a retried seat change keeps its failure on screen while it runs', async () => {
+	useFakeTimeouts()
+	refuseOnceThenHang('Card declined')
+	await mount(<Harness kind="manage" />)
+	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '4')
+	await click('Update seats')
+	await waitForUi(() => expect(alertText()).toBe('Card declined'))
+	await waitForUi(() => expect(button('Update seats').hasAttribute('aria-busy')).toBe(false))
+	await click('Update seats')
+	await waitForUi(() => expect(button('Updating…').getAttribute('aria-busy')).toBe('true'))
+	expect(alertText()).toBe('Card declined')
+})
+
+test('a retried yearly upgrade keeps its failure on screen while it runs', async () => {
+	useFakeTimeouts()
+	refuseOnceThenHang('Card declined')
+	await mount(<TeamSeatsCard />)
+	await click('Upgrade to yearly')
+	await act(async () => confirmButton('Upgrade Pro to yearly', 'Upgrade to yearly').click())
+	const alert = () => namedDialog('Upgrade Pro to yearly').querySelector('[role=alert]')?.textContent
+	await waitForUi(() => expect(alert()).toBe('Card declined'))
+	await waitForUi(() => expect(confirmButton('Upgrade Pro to yearly', 'Upgrade to yearly')).toBeDefined())
+	await act(async () => confirmButton('Upgrade Pro to yearly', 'Upgrade to yearly').click())
+	await waitForUi(() =>
+		expect(confirmButton('Upgrade Pro to yearly', 'Upgrading…').getAttribute('aria-busy')).toBe('true')
+	)
+	expect(alert()).toBe('Card declined')
+})
+
+test('a retried invite resend keeps its failure on screen while it sends', async () => {
+	team.pendingInvites = [
+		{
+			id: 'invite',
+			email: 'invite@example.com',
+			status: 'pending',
+			createdAt: '2099-01-01T00:00:00Z',
+			expiresAt: '2099-01-08T18:00:00Z'
+		}
+	]
+	refuseOnceThenHang('Resend unavailable')
+	await mount(<TeamInvitesCard />)
+	await click('Resend')
+	await waitForUi(() => expect(alertText()).toBe('Resend unavailable'))
+	await click('Resend')
+	await waitForUi(() => expect(button('Sending…').getAttribute('aria-busy')).toBe('true'))
+	expect(alertText()).toBe('Resend unavailable')
 })

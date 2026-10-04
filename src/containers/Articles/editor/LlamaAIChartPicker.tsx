@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/core'
 import { matchSorter } from 'match-sorter'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { isChartDataRow } from '~/containers/LlamaAI/chartTypes'
@@ -14,6 +14,7 @@ import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
+import { queryReadFailed } from '~/utils/query'
 import { createLlamaAIChartAttrs } from '../llamaaiChart'
 
 interface SavedChartListItem {
@@ -44,18 +45,22 @@ function parseSavedChartList(value: unknown): Array<SavedChartListItem> {
 	return charts
 }
 
-// Owns the throw and the optional-chained response check, which the compiler cannot lower inside a try.
-// Snapshot at insert time: the article keeps this data forever; no live link. Null: the chart has no usable data.
+// Snapshot at insert time: the article keeps this data forever; no live link.
 async function loadInsertableChart(
 	authorizedFetch: (url: string, init?: RequestInit) => Promise<Response | null>,
-	chartId: string,
-	signal: AbortSignal
+	chartId: string
 ) {
-	const res = await authorizedFetch(`${AI_SERVER}/charts/${chartId}`, { signal })
-	if (!res?.ok) throw new Error('Failed to load chart data')
-	const detail = await res.json()
-	if (!isChartDataRow(detail)) return null
-	return createLlamaAIChartAttrs(detail.chartConfig, detail.chartData)
+	let detail: unknown
+	try {
+		const res = await authorizedFetch(`${AI_SERVER}/charts/${chartId}`)
+		if (!res?.ok) throw new Error('Failed to load chart data')
+		detail = await res.json()
+	} catch (error) {
+		throw new Error("Couldn't insert this chart. Try again.", { cause: error })
+	}
+	const attrs = isChartDataRow(detail) ? createLlamaAIChartAttrs(detail.chartConfig, detail.chartData) : null
+	if (!attrs) throw new Error('This chart has no data to insert.')
+	return attrs
 }
 
 // The API sends the renderer's type ("area", "bar"); readers see "Area chart".
@@ -63,6 +68,7 @@ function chartTypeLabel(type: string | undefined) {
 	return type ? `${type[0].toUpperCase()}${type.slice(1)} chart` : 'Chart'
 }
 
+// ArticlesAccessGate renders the editor only for a signed-in reader, so the picker never needs a sign-in state.
 export function LlamaAIChartPickerDialog({
 	dialogStore,
 	editor
@@ -70,56 +76,34 @@ export function LlamaAIChartPickerDialog({
 	dialogStore: Ariakit.DialogStore
 	editor: Editor | null
 }) {
-	const { isAuthenticated } = useAuthContext()
-	const open = Ariakit.useStoreState(dialogStore, 'open')
-	const [search, setSearch] = useState('')
-	return open ? (
-		<SavedChartPickerSession
-			key={isAuthenticated ? 'signed-in' : 'signed-out'}
-			dialogStore={dialogStore}
-			editor={editor}
-			search={search}
-			setSearch={setSearch}
-		/>
+	// Each opening is its own session: an insertion an earlier opening started settles into nothing.
+	return Ariakit.useStoreState(dialogStore, 'open') ? (
+		<SavedChartPickerSession dialogStore={dialogStore} editor={editor} />
 	) : null
 }
 
-function SavedChartPickerSession({
-	dialogStore,
-	editor,
-	search,
-	setSearch
-}: {
-	dialogStore: Ariakit.DialogStore
-	editor: Editor | null
-	search: string
-	setSearch: (value: string) => void
-}) {
-	const { authorizedFetch, isAuthenticated } = useAuthContext()
+function SavedChartPickerSession({ dialogStore, editor }: { dialogStore: Ariakit.DialogStore; editor: Editor | null }) {
+	const { authorizedFetch } = useAuthContext()
 	const isSmallScreen = useMedia('(max-width: 639px)')
 	const searchRef = useRef<HTMLInputElement>(null)
-	const [insertingId, setInsertingId] = useState<string | null>(null)
-	// Shown under the row that failed; the next insertion clears it.
+	const [search, setSearch] = useState('')
+	// Shown under the row that failed. Not the mutation's own error, which clears while a retry runs.
 	const [insertError, setInsertError] = useState<{ id: string; message: string } | null>(null)
-	const insertion = useRef<AbortController | null>(null)
-	useEffect(
-		() => () => {
-			insertion.current?.abort()
-			insertion.current = null
-		},
-		[]
-	)
+	const insertMutation = useMutation({
+		mutationFn: (item: SavedChartListItem) => loadInsertableChart(authorizedFetch, item.id)
+	})
+	const insertingId = insertMutation.isPending ? insertMutation.variables.id : null
 
-	const { data, isLoading, isError, isFetching, refetch } = useQuery({
+	const chartsQuery = useQuery({
 		queryKey: ['llamaai-saved-charts-picker'],
 		queryFn: async ({ signal }) => {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`, { signal })
 			if (!res?.ok) throw new Error('Failed to load saved charts')
 			return parseSavedChartList(await res.json())
 		},
-		enabled: isAuthenticated,
 		staleTime: 60_000
 	})
+	const { data, isLoading, isFetching, refetch } = chartsQuery
 
 	const charts = useMemo(() => {
 		const all = data ?? []
@@ -127,71 +111,50 @@ function SavedChartPickerSession({
 		return matchSorter(all, search, { keys: ['title'] })
 	}, [data, search])
 
-	const handleInsert = async (item: SavedChartListItem) => {
-		if (!isAuthenticated || !editor || !editor.isEditable || insertion.current) return
-		const controller = new AbortController()
-		insertion.current = controller
-		setInsertingId(item.id)
-		setInsertError(null)
-		const dialogStillOpen = () => !controller.signal.aborted && dialogStore.getState().open
-		const editorStillReady = () => dialogStillOpen() && !editor.isDestroyed && editor.isEditable
-		// The finalizer guarded an early return, so the body settles in its own function first and the
-		// clean-up follows it. The swallowing catch is what makes that the same thing.
-		const insert = async () => {
-			try {
-				const attrs = await loadInsertableChart(authorizedFetch, item.id, controller.signal)
-				if (!attrs) {
-					if (dialogStillOpen()) setInsertError({ id: item.id, message: 'This chart has no data to insert.' })
-					return
-				}
-				if (!editorStillReady()) return
+	// The per-call callbacks belong to this opening: closing the picker unmounts it, and React Query drops them.
+	const handleInsert = (item: SavedChartListItem) => {
+		if (!editor || insertMutation.isPending) return
+		if (insertError?.id !== item.id) setInsertError(null)
+		insertMutation.mutate(item, {
+			onSuccess: (attrs) => {
+				if (editor.isDestroyed || !editor.isEditable) return
 				editor
 					.chain()
 					.focus()
 					.insertLlamaAIChart({ ...attrs, savedChartId: item.id })
 					.run()
 				dialogStore.hide()
-			} catch {
-				if (dialogStillOpen()) setInsertError({ id: item.id, message: "Couldn't insert this chart. Try again." })
-			}
-		}
-		await insert()
-		if (insertion.current === controller) {
-			insertion.current = null
-			setInsertingId(null)
-		}
+			},
+			onError: (error) => setInsertError({ id: item.id, message: error.message })
+		})
 	}
 
 	return (
 		<Dialog store={dialogStore} size="md" fullSheet unmountOnHide portal>
 			<DialogHeader title="Insert from LlamaAI" />
-			{isAuthenticated ? (
-				<DialogToolbar>
-					<label className="relative block">
-						<span className="sr-only">Search saved charts</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
-						<Ariakit.Focusable
-							autoFocus={!isSmallScreen}
-							render={
-								<Input
-									ref={searchRef}
-									name="llamaai-chart-search"
-									inputMode="search"
-									placeholder="Search your saved charts…"
-									value={search}
-									onChange={(e) => setSearch(e.target.value)}
-									className={searchFieldInputPlacementStyles}
-								/>
-							}
-						/>
-					</label>
-				</DialogToolbar>
-			) : null}
+			<DialogToolbar>
+				<label className="relative block">
+					<span className="sr-only">Search saved charts</span>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					{/* Phones skip the autofocus: the keyboard would cover the list before anyone asked to search. */}
+					<Ariakit.Focusable
+						autoFocus={!isSmallScreen}
+						render={
+							<Input
+								ref={searchRef}
+								name="llamaai-chart-search"
+								inputMode="search"
+								placeholder="Search your saved charts…"
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						}
+					/>
+				</label>
+			</DialogToolbar>
 			<DialogBody kind="list">
-				{!isAuthenticated ? (
-					<SurfaceBodyStatus variant="empty">Sign in to insert your saved charts.</SurfaceBodyStatus>
-				) : isError ? (
+				{queryReadFailed(chartsQuery) ? (
 					<SurfaceBodyStatus variant="error">
 						<div className="flex flex-col items-center gap-3">
 							<p>Couldn&apos;t load your saved charts.</p>
@@ -232,7 +195,7 @@ function SavedChartPickerSession({
 										disabled={insertingId !== null && !inserting}
 										aria-disabled={inserting || undefined}
 										aria-busy={inserting || undefined}
-										onClick={() => void handleInsert(item)}
+										onClick={() => handleInsert(item)}
 										className="flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 aria-busy:cursor-progress"
 									>
 										<Icon name="bar-chart-2" className="size-4 shrink-0 text-tertiary" aria-hidden="true" />

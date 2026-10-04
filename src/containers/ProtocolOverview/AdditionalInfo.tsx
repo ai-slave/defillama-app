@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
@@ -10,6 +10,7 @@ import { Menu } from '~/components/Menu'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredResearchReportsCard'
 import { TokenLogo } from '~/components/TokenLogo'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
@@ -24,12 +25,6 @@ import type { IProtocolOverviewPageData } from './types'
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((module) => ({
-		default: module.SubscribeProModal
-	}))
-)
 
 interface SectionHeaderProps {
 	id: string
@@ -526,8 +521,7 @@ export function Hacks(props: Pick<IProtocolOverviewPageData, 'hacks' | 'id' | 'n
 
 function Competitors(props: IProtocolOverviewPageData) {
 	const competitors = props.competitors ?? EMPTY_COMPETITORS
-	const [shouldRenderModal, setShouldRenderModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
+	const subscribeModalStore = Ariakit.useDialogStore()
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
 	const baseChartForComparison = useMemo(
 		() =>
@@ -599,11 +593,7 @@ function Competitors(props: IProtocolOverviewPageData) {
 					>{`${similarProtocol.name}${similarProtocol.tvl ? ` (${formatUsd(similarProtocol.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })})` : ''}`}</a>
 				))}
 			</div>
-			{shouldRenderModal ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</Card>
 	)
 }

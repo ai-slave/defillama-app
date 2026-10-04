@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
+import { getChartDataPrerequisite, getProtocolCatalogPrerequisite, toChartRuntimeState } from '../chartRuntime'
 
 describe('classic chart runtime state', () => {
 	test('waits for streamed data before reporting a load failure', () => {
@@ -48,7 +48,7 @@ describe('classic chart runtime state', () => {
 			isLoading: true,
 			hasError: false
 		})
-		expect(toChartRuntimeState(query, true, { status: 'error', retry: retryCatalog })).toEqual({
+		expect(toChartRuntimeState(query, true, { status: 'error', retry: retryCatalog, retrying: false })).toEqual({
 			data: [],
 			isLoading: false,
 			hasError: true,
@@ -56,6 +56,41 @@ describe('classic chart runtime state', () => {
 			isFetching: false,
 			refetch: retryCatalog
 		})
+	})
+
+	test('a protocol catalog that failed keeps its error on every protocol card while Try again reads it', () => {
+		const refetchCatalog = vi.fn()
+		const chartQuery = {
+			data: undefined,
+			isLoading: false,
+			isFetching: false,
+			errorUpdatedAt: 0,
+			dataUpdatedAt: 0,
+			refetch: vi.fn()
+		}
+		// A retry from a failure with no data: the query is pending again, so isError is false while it runs.
+		const catalog = getProtocolCatalogPrerequisite(true, {
+			data: undefined,
+			errorUpdatedAt: 2000,
+			dataUpdatedAt: 0,
+			isFetching: true,
+			refetch: refetchCatalog
+		})
+
+		const card = toChartRuntimeState(chartQuery, true, catalog)
+		expect(card).toMatchObject({ data: [], isLoading: false, hasError: true, canRetry: true, isFetching: true })
+		card.refetch()
+		expect(refetchCatalog).toHaveBeenCalledOnce()
+		expect(chartQuery.refetch).not.toHaveBeenCalled()
+		expect(
+			getProtocolCatalogPrerequisite(true, {
+				data: { protocols: [], chains: [] },
+				errorUpdatedAt: 2000,
+				dataUpdatedAt: 3000,
+				isFetching: false,
+				refetch: refetchCatalog
+			})
+		).toEqual({ status: 'ready' })
 	})
 
 	test('keeps protocols outside canonical v2 membership unavailable without retrying their source', () => {

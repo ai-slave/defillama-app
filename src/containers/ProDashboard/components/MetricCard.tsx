@@ -169,7 +169,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		}
 
 		if (isError) {
-			return <ProCardError retry={{ run: refetch, pending: isFetching }} />
+			return <ProCardError retry={{ refetch, isFetching }} />
 		}
 
 		return (

@@ -6,7 +6,15 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -116,7 +124,7 @@ interface GenerateDashboardModalProps {
 }
 
 export function GenerateDashboardModal(props: GenerateDashboardModalProps) {
-	return <GenerateDashboardModalInner key={props.isOpen ? 'open' : 'closed'} {...props} />
+	return <GenerateDashboardModalInner key={useOpeningKey(props.isOpen)} {...props} />
 }
 
 function GenerateDashboardModalInner({
@@ -130,12 +138,13 @@ function GenerateDashboardModalInner({
 	const router = useRouter()
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()
 	const formRef = useRef<HTMLFormElement>(null)
-	const save = useMutation({
-		mutationFn: onGenerate,
-		onError: (error) => {
-			if (!formRef.current?.isConnected) toast.error(asSentence(error.message))
-		}
-	})
+	// The last failed generation or save, not the mutations' own errors: those clear as soon as a retry starts.
+	const [error, setError] = useState<string | null>(null)
+	const showError = (failure: Error) => {
+		if (formRef.current?.isConnected) setError(asSentence(failure.message))
+		else toast.error(asSentence(failure.message))
+	}
+	const save = useMutation({ mutationFn: onGenerate, onError: showError })
 	const saveGeneratedDashboard = (payload: GeneratedDashboardInput) => {
 		save.mutate(payload, {
 			// Close first, so the notices never toast over the dialog.
@@ -183,19 +192,19 @@ function GenerateDashboardModalInner({
 				...(aiGenerationContext ? { aiGenerationContext } : {})
 			}
 		},
-		onError: (error) => {
-			// Each opening owns its form. A request can still fail after navigating away.
-			if (!formRef.current?.isConnected) toast.error(asSentence(error.message))
-		}
+		// A generation that lands answers any earlier failure; its save reports its own.
+		onSuccess: () => setError(null),
+		// Each opening owns its form. A request can still fail after navigating away.
+		onError: showError
 	})
 	const pending = generation.isPending || save.isPending
 	const pendingLabel = save.isPending ? 'Saving' : mode === 'iterate' ? 'Updating' : 'Generating'
 	// Keep the generated payload intact until saved or explicitly discarded.
 	const fieldsLocked = pending || !!generation.data
-	const error = save.error ?? generation.error
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
 	const [tags, setTags] = useState<Array<string>>([])
 	const [promptLength, setPromptLength] = useState(0)
+	const [nameLength, setNameLength] = useState(0)
 
 	const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -265,6 +274,15 @@ function GenerateDashboardModalInner({
 	return (
 		<Dialog size="md" scope="pro" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
 			<form ref={formRef} onSubmit={handleGenerate} className="flex min-h-0 flex-auto flex-col">
+				<DialogDiscardGuard
+					when={nameLength > 0 || promptLength > 0 || tags.length > 0 || !!generation.data}
+					title={generation.data ? 'Discard the generated dashboard?' : 'Discard this prompt?'}
+					description={
+						generation.data
+							? 'The generated dashboard is not saved yet. Leaving discards it.'
+							: 'Leaving discards what you typed.'
+					}
+				/>
 				<DialogHeader title={mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'} />
 				<DialogBody>
 					<div className="flex flex-col gap-4">
@@ -282,7 +300,10 @@ function GenerateDashboardModalInner({
 											name="dashboardName"
 											type="text"
 											maxLength={DASHBOARD_NAME_MAX_LENGTH}
-											onInput={(e) => e.currentTarget.setCustomValidity('')}
+											onInput={(e) => {
+												e.currentTarget.setCustomValidity('')
+												setNameLength(e.currentTarget.value.length)
+											}}
 											placeholder="e.g. Ethereum vs Arbitrum"
 											readOnly={fieldsLocked}
 											required
@@ -348,7 +369,7 @@ function GenerateDashboardModalInner({
 
 					{error ? (
 						<InlineStatus variant="error">
-							{asSentence(error.message)}
+							{error}
 							<span className="block">
 								{generation.data
 									? 'Your generated dashboard is ready. Retry saving it without generating again.'
@@ -367,6 +388,7 @@ function GenerateDashboardModalInner({
 								onClick={() => {
 									generation.reset()
 									save.reset()
+									setError(null)
 									// This button leaves with the result; the prompt it unlocks is what the reader edits next.
 									document.getElementById(`${id}-prompt`)?.focus()
 								}}
@@ -375,11 +397,7 @@ function GenerateDashboardModalInner({
 							</Button>
 						) : null
 					}
-					dismiss={
-						<Button type="button" size="md" onClick={onClose} disabled={pending}>
-							Cancel
-						</Button>
-					}
+					dismiss={<DialogCancelButton />}
 				>
 					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? `${pendingLabel}…` : null}>
 						<Icon name="sparkles" height={16} width={16} />

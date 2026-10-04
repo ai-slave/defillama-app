@@ -122,11 +122,9 @@ describe('RWA overview filter dialog helpers', () => {
 
 	test('seeds a newly added select filter with current values instead of an empty None selection', () => {
 		const props = makeProps()
-		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
-		const platforms = definitions.find((definition) => definition.id === 'platforms')
 
-		const nextDraft = RWA_FILTERS_TEST_UTILS.addDraftFilter(draft, platforms!)
+		const nextDraft = RWA_FILTERS_TEST_UTILS.addDraftFilter(draft, 'platforms')
 		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, nextDraft)
 
 		expect(nextDraft.activeIds).toEqual(['platforms'])

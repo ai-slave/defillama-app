@@ -1,74 +1,51 @@
 import * as React from 'react'
+import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 
 interface Column {
 	id: string
 	name: string
-	category?: string
 }
 
 interface ColumnManagementPanelProps {
-	showColumnPanel: boolean
-	setShowColumnPanel: (show: boolean) => void
 	columns: Array<Column>
 	columnVisibility: Record<string, boolean>
-	columnOrder: Array<string>
+	/** The shown columns, in table order. */
+	activeColumns: Array<string>
 	toggleColumnVisibility: (columnId: string) => void
 	setAllColumnsVisible: (visible: boolean) => void
-	moveColumnUp?: (columnId: string) => void
-	moveColumnDown?: (columnId: string) => void
+	moveColumn: (columnId: string, delta: -1 | 1) => void
+	onDone: () => void
 }
 
 export function ColumnManagementPanel({
-	showColumnPanel,
-	setShowColumnPanel,
 	columns,
 	columnVisibility,
-	columnOrder,
+	activeColumns,
 	toggleColumnVisibility,
 	setAllColumnsVisible,
-	moveColumnUp,
-	moveColumnDown
+	moveColumn,
+	onDone
 }: ColumnManagementPanelProps) {
 	const [searchTerm, setSearchTerm] = React.useState('')
+	const searchRef = React.useRef<HTMLInputElement>(null)
 
-	const filteredColumns = React.useMemo(() => {
-		return columns.filter((column) => column.name && column.name.toLowerCase().includes(searchTerm.toLowerCase()))
-	}, [columns, searchTerm])
+	const filteredColumns = columns.filter(
+		(column) => column.name && column.name.toLowerCase().includes(searchTerm.toLowerCase())
+	)
+	const columnGroups = [
+		{ title: 'Percentage Share', columns: filteredColumns.filter((col) => col.id.endsWith('_share')) },
+		{ title: 'Standard Metrics', columns: filteredColumns.filter((col) => !col.id.endsWith('_share')) }
+	].filter((group) => group.columns.length > 0)
 
-	const percentageShareColumns = React.useMemo(() => {
-		return filteredColumns.filter((col) => col.id.endsWith('_share'))
-	}, [filteredColumns])
-
-	const standardColumns = React.useMemo(() => {
-		return filteredColumns.filter((col) => !col.id.endsWith('_share'))
-	}, [filteredColumns])
-
-	const columnGroups = React.useMemo(() => {
-		const groups = [
-			{
-				title: 'Percentage Share',
-				columns: percentageShareColumns,
-				show: percentageShareColumns.length > 0
-			},
-			{
-				title: 'Standard Metrics',
-				columns: standardColumns,
-				show: standardColumns.length > 0
-			}
-		]
-		return groups.filter((group) => group.show)
-	}, [percentageShareColumns, standardColumns])
-
-	const activeColumns = React.useMemo(() => {
-		const orderedVisibleColumns = columnOrder.filter((id) => columnVisibility[id] !== false)
-		const unorderedVisibleColumns = columns
-			.filter((col) => columnVisibility[col.id] !== false && !columnOrder.includes(col.id))
-			.map((col) => col.id)
-		return [...orderedVisibleColumns, ...unorderedVisibleColumns]
-	}, [columnOrder, columnVisibility, columns])
-
-	if (!showColumnPanel) return null
+	// Hiding or adding a column moves its row to the other list; focus stays in the list the reader is working in.
+	const toggleFromRow = (event: React.MouseEvent<HTMLButtonElement>, row: Element, columnId: string) => {
+		const next = neighbourRowControl(row, event.currentTarget)
+		keepFocus(
+			() => toggleColumnVisibility(columnId),
+			() => next ?? searchRef.current
+		)
+	}
 
 	return (
 		<div className="mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
@@ -100,9 +77,10 @@ export function ColumnManagementPanel({
 					className="absolute top-1/2 left-3 -translate-y-1/2 transform text-pro-text-tertiary"
 				/>
 				<input
+					ref={searchRef}
 					type="text"
+					aria-label="Search columns"
 					placeholder="Search columns..."
-					defaultValue={searchTerm}
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
 					className="w-full rounded-md border border-pro-cards-border bg-pro-glass-bg py-2 pr-3 pl-9 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 				/>
@@ -120,6 +98,7 @@ export function ColumnManagementPanel({
 							const column = columns.find((col) => col.id === columnId)
 							if (!column) return null
 
+							// The arrows stay rendered at the ends, so the pressed one keeps focus after a move.
 							const isFirst = index === 0
 							const isLast = index === activeColumns.length - 1
 
@@ -138,29 +117,33 @@ export function ColumnManagementPanel({
 										) : null}
 									</div>
 									<div className="flex items-center gap-1">
-										{moveColumnUp && !isFirst ? (
-											<button
-												type="button"
-												onClick={() => moveColumnUp(columnId)}
-												className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-												title="Move up"
-											>
-												<Icon name="chevron-up" height={10} width={10} />
-											</button>
-										) : null}
-										{moveColumnDown && !isLast ? (
-											<button
-												type="button"
-												onClick={() => moveColumnDown(columnId)}
-												className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-												title="Move down"
-											>
-												<Icon name="chevron-down" height={10} width={10} />
-											</button>
-										) : null}
 										<button
 											type="button"
-											onClick={() => toggleColumnVisibility(columnId)}
+											aria-disabled={isFirst}
+											onClick={() => {
+												if (!isFirst) moveColumn(columnId, -1)
+											}}
+											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary aria-disabled:opacity-40"
+											aria-label={`Move ${column.name} up`}
+										>
+											<Icon name="chevron-up" height={10} width={10} />
+										</button>
+										<button
+											type="button"
+											aria-disabled={isLast}
+											onClick={() => {
+												if (!isLast) moveColumn(columnId, 1)
+											}}
+											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary aria-disabled:opacity-40"
+											aria-label={`Move ${column.name} down`}
+										>
+											<Icon name="chevron-down" height={10} width={10} />
+										</button>
+										<button
+											type="button"
+											onClick={(event) =>
+												toggleFromRow(event, event.currentTarget.parentElement!.parentElement!, columnId)
+											}
 											className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 											disabled={columnId === 'name'}
 											aria-label={`Hide ${column.name}`}
@@ -191,7 +174,7 @@ export function ColumnManagementPanel({
 											<button
 												type="button"
 												key={column.id}
-												onClick={() => toggleColumnVisibility(column.id)}
+												onClick={(event) => toggleFromRow(event, event.currentTarget, column.id)}
 												className="flex w-full items-center gap-2 rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 text-left transition-colors hover:bg-pro-hover-fill"
 											>
 												<Icon name="plus" height={10} width={10} className="text-pro-text-tertiary" />
@@ -216,7 +199,7 @@ export function ColumnManagementPanel({
 				</span>
 				<button
 					type="button"
-					onClick={() => setShowColumnPanel(false)}
+					onClick={onDone}
 					className="rounded-md border border-brand bg-brand px-3 py-1 text-on-brand transition-colors hover:bg-brand-muted"
 				>
 					Done

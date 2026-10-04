@@ -167,7 +167,7 @@ export function MultiSelectCombobox({
 							className={popoverSeeMoreStyles}
 							onClick={handleSeeMore}
 						>
-							See more...
+							See more…
 						</Ariakit.ComboboxItem>
 					) : null}
 				</Ariakit.ComboboxList>

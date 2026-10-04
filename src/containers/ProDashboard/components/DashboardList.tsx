@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
 import type { Dashboard } from '../dashboardTypes'
 import { ProButton, proPanelStyles } from '../ui'
@@ -20,13 +19,12 @@ export function DashboardList({
 	onDeleteDashboard,
 	emptyMessage
 }: DashboardListProps) {
-	const listRef = useRef<HTMLDivElement>(null)
 	if (isLoading) {
 		return <LoadingSkeleton viewMode="grid" items={8} />
 	}
 
 	return (
-		<div ref={listRef} tabIndex={-1} aria-label="Your dashboards">
+		<div>
 			{dashboards.length === 0 && emptyMessage ? (
 				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
 					<Icon name="search" height={32} width={32} className="text-pro-text-tertiary" />
@@ -48,13 +46,7 @@ export function DashboardList({
 			) : (
 				<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 					{dashboards.map((dashboard) => (
-						<DashboardCard
-							fallbackFocus={listRef}
-							key={dashboard.id}
-							dashboard={dashboard}
-							onDelete={onDeleteDashboard}
-							viewMode="grid"
-						/>
+						<DashboardCard key={dashboard.id} dashboard={dashboard} onDelete={onDeleteDashboard} viewMode="grid" />
 					))}
 				</div>
 			)}

@@ -1,13 +1,14 @@
 import * as React from 'react'
+import { DeletePortfolioButton } from '~/components/DeletePortfolioButton'
 import { Menu } from '~/components/Menu'
 import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
-import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { queryReadFailed } from '~/utils/query'
 import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '../constants'
 import { resolveEarnColumnAccess } from '../Filters/columnOptions'
 import { useYieldsPaginatedTable } from '../queries.client'
@@ -49,6 +50,7 @@ export function YieldsWatchlistContainer() {
 	const rows = rowsQuery.data?.rows ?? []
 
 	const [open, setOpen] = React.useState(false)
+	const newButtonRef = React.useRef<HTMLButtonElement>(null)
 
 	return (
 		<>
@@ -67,6 +69,7 @@ export function YieldsWatchlistContainer() {
 					/>
 					<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
 					<Button
+						ref={newButtonRef}
 						onClick={() => setOpen(true)}
 						variant="secondary"
 						size="md"
@@ -75,20 +78,26 @@ export function YieldsWatchlistContainer() {
 						<Icon name="folder-plus" className="size-3.5" />
 						<span>New</span>
 					</Button>
-					{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
-						<Button
-							onClick={() => removePortfolio(selectedPortfolio)}
-							variant="destructive"
-							size="md"
-							data-umami-event="yields-watchlist-portfolio-delete"
-						>
-							<Icon name="trash-2" className="size-3.5" />
-							<span>Delete</span>
-						</Button>
-					) : null}
+					<DeletePortfolioButton
+						portfolio={selectedPortfolio}
+						onDelete={removePortfolio}
+						finalFocus={newButtonRef}
+						umamiEvent="yields-watchlist-portfolio-delete"
+					/>
 				</PanelHeader>
 
-				{!isClient || (savedPoolIds.length > 0 && !rowsQuery.data && !rowsQuery.isError) ? (
+				{savedPoolIds.length > 0 && !rowsQuery.data && queryReadFailed(rowsQuery) ? (
+					<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
+						<p>Couldn&apos;t load your saved pools. They are still saved.</p>
+						<Button
+							size="md"
+							pendingLabel={rowsQuery.isFetching ? 'Retrying…' : null}
+							onClick={() => void rowsQuery.refetch()}
+						>
+							Try again
+						</Button>
+					</SurfaceBodyStatus>
+				) : !isClient || (savedPoolIds.length > 0 && !rowsQuery.data) ? (
 					<SurfaceBodyLoadingStatus label="Loading saved pools" />
 				) : rows.length > 0 ? (
 					<PaginatedYieldsPoolTable data={rows} appearance="embedded" defaultColumns={defaultColumns} />

@@ -5,13 +5,10 @@ interface MetricCardProps {
 	metric: MetricWithAvailability
 	isSelected: boolean
 	onToggle: () => void
-	disabled?: boolean
-	itemLabel?: string
+	itemLabel: string
 }
 
-export function MetricCard({ metric, isSelected, onToggle, disabled, itemLabel = 'items' }: MetricCardProps) {
-	const isDisabled = disabled || !metric.isValid
-
+export function MetricCard({ metric, isSelected, onToggle, itemLabel }: MetricCardProps) {
 	return (
 		// The whole card is the checkbox, so the box inside is only its indicator.
 		<button
@@ -19,7 +16,7 @@ export function MetricCard({ metric, isSelected, onToggle, disabled, itemLabel =
 			role="checkbox"
 			aria-checked={isSelected}
 			onClick={onToggle}
-			disabled={isDisabled}
+			disabled={!metric.isValid}
 			className={`group flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
 				isSelected ? 'border-brand bg-brand-faint' : 'border-subtle not-disabled:hover:border-brand/40'
 			}`}

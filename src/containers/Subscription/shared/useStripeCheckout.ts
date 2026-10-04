@@ -86,6 +86,9 @@ export function useStripeCheckout() {
 	const { authorizedFetch, user, authToken } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [isOpen, setIsOpen] = useState(false)
+	// The failure a retry is answering. A retry resets the session, so without it the error would leave the screen
+	// while the retry runs.
+	const [retryingAfter, setRetryingAfter] = useState<Error | null>(null)
 
 	const session = useMutation({
 		retry: false,
@@ -191,11 +194,17 @@ export function useStripeCheckout() {
 	return {
 		isOpen,
 		session,
+		/** The failure on screen: the session's own, or the one a running retry answers. */
+		failure: session.error ?? retryingAfter,
 		open: (request: CheckoutRequest) => {
 			setIsOpen(true)
+			setRetryingAfter(null)
 			session.mutate(request)
 		},
-		retry: () => session.mutate(session.variables!),
+		retry: () => {
+			setRetryingAfter(session.error)
+			session.mutate(session.variables!, { onSettled: () => setRetryingAfter(null) })
+		},
 		close: () => setIsOpen(false)
 	}
 }

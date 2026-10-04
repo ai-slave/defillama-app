@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -9,14 +9,13 @@ import { SwitchToEmailModal } from './SwitchToEmailModal'
 import { isWalletEmail, truncateAddress } from './utils'
 
 export function AuthenticationCard() {
-	const { user, resetPasswordMutation, promptVerifyEmail } = useAuthContext()
+	const { user, promptVerifyEmail } = useAuthContext()
 
 	const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
 	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 	const [isSwitchToEmailModalOpen, setIsSwitchToEmailModalOpen] = useState(false)
-	const [passwordCooldownMsg, setPasswordCooldownMsg] = useState('')
-	const passwordResetSentAt = useRef(0)
-	const PASSWORD_COOLDOWN_MS = 60_000
+	// When the last reset link went out; the dialog's wait runs from it across openings.
+	const [passwordResetSentAt, setPasswordResetSentAt] = useState<number | null>(null)
 
 	const walletEmail = isWalletEmail(user?.email)
 	const isEmailUnverified = !walletEmail && user?.verified === false
@@ -25,34 +24,6 @@ export function AuthenticationCard() {
 
 	const handleChangeEmail = () => {
 		setIsEmailModalOpen(true)
-	}
-
-	const handleChangePassword = () => {
-		if (!user?.email) return
-		// A new opening starts without the last opening's failure; the reset mutation is shared, so the dialog cannot.
-		resetPasswordMutation.reset()
-		setPasswordCooldownMsg('')
-		setIsPasswordModalOpen(true)
-	}
-
-	// The modal collects the captcha token; the reset email goes through the features server.
-	const handleSendPasswordReset = (turnstileToken: string) => {
-		if (!user?.email) return
-		const elapsed = Date.now() - passwordResetSentAt.current
-		if (elapsed < PASSWORD_COOLDOWN_MS) {
-			const secondsLeft = Math.ceil((PASSWORD_COOLDOWN_MS - elapsed) / 1000)
-			setPasswordCooldownMsg(`Wait ${secondsLeft}s before resending.`)
-			return
-		}
-		setPasswordCooldownMsg('')
-		resetPasswordMutation.mutate(
-			{ email: user.email, turnstileToken },
-			{
-				onSuccess: () => {
-					passwordResetSentAt.current = Date.now()
-				}
-			}
-		)
 	}
 
 	const handleVerifyEmail = () => {
@@ -113,12 +84,7 @@ export function AuthenticationCard() {
 								<Button type="button" size="md" onClick={handleChangeEmail}>
 									Change email
 								</Button>
-								<Button
-									type="button"
-									size="md"
-									onClick={handleChangePassword}
-									disabled={resetPasswordMutation.isPending}
-								>
+								<Button type="button" size="md" onClick={() => setIsPasswordModalOpen(true)}>
 									Change password
 								</Button>
 							</div>
@@ -154,9 +120,8 @@ export function AuthenticationCard() {
 				isOpen={isPasswordModalOpen}
 				onClose={() => setIsPasswordModalOpen(false)}
 				email={user?.email ?? ''}
-				onSend={handleSendPasswordReset}
-				isPending={resetPasswordMutation.isPending}
-				cooldownMessage={passwordCooldownMsg}
+				sentAtSeconds={passwordResetSentAt}
+				onSent={setPasswordResetSentAt}
 			/>
 
 			<EmailChangeModal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />

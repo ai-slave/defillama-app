@@ -20,7 +20,6 @@ const request = () =>
 		address,
 		connectorId: 'io.rabby',
 		signal: controller.signal,
-		canAccept: () => true,
 		signMessage,
 		onStage,
 		onAuthenticated

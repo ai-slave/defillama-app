@@ -397,6 +397,30 @@ describe('research SSR data loading', () => {
 		expect(html).not.toContain("Couldn't load research")
 	})
 
+	test('keeps the server-rendered landing page visible when its background refetch fails', async () => {
+		const result = await getResearchServerSideProps({
+			req: { method: 'GET' },
+			res: { setHeader: vi.fn() },
+			resolvedUrl: '/research'
+		} as never)
+		if (!('props' in result)) throw new Error('expected props')
+		const props = await Promise.resolve(result.props)
+		const queryClient = createQueryClient()
+		queryClient.setQueryData(['research-landing'], {
+			landingData: props.landingData,
+			landingBanner: props.landingBanner,
+			trustedBy: props.trustedBy
+		})
+		queryClient
+			.getQueryCache()
+			.find({ queryKey: ['research-landing'] })!
+			.setState({ error: new Error('Background refetch failed'), status: 'error' })
+
+		const html = renderWithQueryClient(<ArticlesPage {...props} />, queryClient)
+		expect(html).toContain('Canonical Research')
+		expect(html).not.toContain('Couldn&#x27;t load research')
+	})
+
 	test('returns notFound for missing articles and redirects non-canonical article urls', async () => {
 		http.serve({ '/articles/missing': fixtureStatus(404) })
 		const notFoundSetHeader = vi.fn()

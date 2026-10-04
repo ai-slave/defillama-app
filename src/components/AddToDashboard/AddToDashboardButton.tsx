@@ -1,20 +1,14 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import type { MultiChartConfig } from '~/containers/ProDashboard/types'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 import { AddToDashboardModal } from './AddToDashboardModal'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 
 interface AddToDashboardButtonProps {
 	chartConfig: DashboardChartConfig | null
@@ -38,11 +32,7 @@ export function AddToDashboardButton({
 	disabled
 }: AddToDashboardButtonProps) {
 	const dashboardDialogStore = Ariakit.useDialogStore()
-	const [shouldRenderModal, setShouldRenderModal] = useState(false)
-	const subscribeDialogStore = Ariakit.useDialogStore({
-		open: shouldRenderModal,
-		setOpen: setShouldRenderModal
-	})
+	const subscribeDialogStore = Ariakit.useDialogStore()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const isClient = useIsClient()
 
@@ -93,11 +83,7 @@ export function AddToDashboardButton({
 						{...(llamaAIChart === undefined ? {} : { llamaAIChart })}
 						{...(unsupportedMetrics === undefined ? {} : { unsupportedMetrics })}
 					/>
-					{shouldRenderModal ? (
-						<Suspense fallback={null}>
-							<SubscribeProModal dialogStore={subscribeDialogStore} />
-						</Suspense>
-					) : null}
+					<LazySubscribeProModal dialogStore={subscribeDialogStore} />
 				</>
 			) : null}
 		</>

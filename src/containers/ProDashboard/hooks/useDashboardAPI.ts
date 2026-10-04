@@ -11,6 +11,7 @@ import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import { queryReadFailed } from '~/utils/query'
 import type { Dashboard } from '../dashboardTypes'
 import {
 	DashboardError,
@@ -70,12 +71,12 @@ export function useGetLiteDashboards() {
 
 	const liteDashboards = parseStoredLiteDashboards(liteDashboardsInStorage)
 
-	const { isLoading, errorUpdatedAt, dataUpdatedAt, isFetching, refetch } = useQuery({
+	const liteQuery = useQuery({
 		...liteDashboardsQuery(authorizedFetch, user?.id),
 		enabled: isAuthenticated && !!user?.id
 	})
-	// Attempt times, not isError: design.md → Status states.
-	const failed = errorUpdatedAt > dataUpdatedAt
+	const { isLoading, isFetching, refetch } = liteQuery
+	const failed = queryReadFailed(liteQuery)
 
 	return {
 		data: liteDashboards,

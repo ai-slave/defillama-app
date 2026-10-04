@@ -1,165 +1,78 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { buttonStyles } from '~/ui/Button'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
+import { AI_SERVER } from '~/constants'
+import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
-import { useAuthContext } from '~/auth'
-import { setSignupSource } from '~/auth/signupSource'
-import { AI_SERVER } from '~/constants'
+const TOAST_ID = 'pdf-export'
 
-function formatPdfError(error: unknown): string {
-	if (!error) return 'Failed to generate PDF'
-	if (typeof error === 'string') return error
-	if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
-		return (error as any).message
-	}
-	try {
-		return JSON.stringify(error)
-	} catch {
-		return 'Failed to generate PDF'
-	}
-}
-
-interface PDFExportButtonProps {
-	sessionId: string | null
-	messageId?: string | null
-	exportType: 'single_message' | 'full_conversation'
-	className?: string
-}
-
-export function PDFExportButton({ sessionId, messageId, exportType, className }: PDFExportButtonProps) {
-	const [isLoading, setIsLoading] = useState(false)
+export function PDFExportButton({
+	sessionId,
+	messageId,
+	className
+}: {
+	sessionId: string
+	messageId: string
+	className: string
+}) {
 	const { loaders, authorizedFetch, hasActiveSubscription } = useAuthContext()
-	const [shouldRenderModal, setShouldRenderModal] = useState(false)
-	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
-	const loading = loaders.userLoading || isLoading
+	const subscribeModalStore = Ariakit.useDialogStore()
 	const menu = Ariakit.useMenuStore()
-
-	const handlePDFExport = async (isDark: boolean) => {
-		if (loading) return
-		if (!sessionId) return
-
-		// A conditional and two coalesces, none of which the compiler can lower inside the try below.
-		const trackingContext = {
-			theme: isDark ? ('dark' as const) : ('light' as const),
-			sessionId: sessionId ?? '',
-			messageId: messageId ?? ''
-		}
-
-		if (hasActiveSubscription) {
-			try {
-				setIsLoading(true)
-
-				// Kept nested: a `&&` inside this try/catch is a value block the React Compiler cannot
-				// lower, and merging these two stopped the component compiling.
-				if (exportType === 'single_message') {
-					// oxlint-disable-next-line unicorn/no-lonely-if -- see above
-					if (!messageId) {
-						toast.error('Unable to export this message. Please try again from a specific message.', {
-							id: 'pdf-export'
-						})
-						setIsLoading(false)
-						return
-					}
-				}
-
-				toast.loading('Generating PDF...', { id: 'pdf-export' })
-
-				const requestBody: any = {
+	const pdfExport = useMutation({
+		mutationFn: async (isDark: boolean) => {
+			toast.loading('Generating PDF...', { id: TOAST_ID })
+			const response = await authorizedFetch(`${AI_SERVER}/export/pdf`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
 					sessionId,
-					exportType,
-					options: {
-						includeTimestamps: true,
-						includeCitations: true,
-						paperSize: 'A4',
-						isDark
-					}
-				}
-
-				if (exportType === 'single_message') {
-					requestBody.messageId = messageId
-				}
-
-				const response = await authorizedFetch(`${AI_SERVER}/export/pdf`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(requestBody)
+					exportType: 'single_message',
+					messageId,
+					options: { includeTimestamps: true, includeCitations: true, paperSize: 'A4', isDark }
 				})
+			})
+			const data: { success?: boolean; pdfUrl: string; error?: string } = await response.json()
+			if (!response.ok || !data.success) throw new Error(data.error || 'Failed to generate PDF')
+			const pdfResponse = await fetch(data.pdfUrl)
+			if (!pdfResponse.ok) throw new Error(`Failed to download PDF (${pdfResponse.status})`)
+			const url = URL.createObjectURL(await pdfResponse.blob())
+			const a = document.createElement('a')
+			a.href = url
+			a.download = `llama-ai-export-${Date.now()}.pdf`
+			document.body.appendChild(a)
+			a.click()
+			a.remove()
+			URL.revokeObjectURL(url)
+			trackUmamiEvent('llamaai-download', {
+				kind: 'pdf',
+				filename: a.download,
+				exportType: 'single_message',
+				theme: isDark ? 'dark' : 'light',
+				sessionId,
+				messageId
+			})
+		},
+		onSuccess: () => toast.success('PDF downloaded!', { id: TOAST_ID }),
+		onError: (error) => toast.error(error.message, { id: TOAST_ID })
+	})
+	const loading = loaders.userLoading || pdfExport.isPending
 
-				if (!response) {
-					toast.error('Not authenticated', { id: 'pdf-export' })
-					setIsLoading(false)
-					return
-				}
-
-				const data = await response.json()
-
-				let hasError = false
-				if (!response.ok) {
-					hasError = true
-				}
-				if (!data.success) {
-					hasError = true
-				}
-
-				if (hasError) {
-					const pdfErrorMsg = formatPdfError(data.error)
-					console.error('PDF export error:', pdfErrorMsg)
-					toast.error(pdfErrorMsg, { id: 'pdf-export' })
-					setIsLoading(false)
-					return
-				}
-
-				const pdfResponse = await fetch(data.pdfUrl)
-				if (!pdfResponse.ok) {
-					toast.error(`Failed to download PDF (${pdfResponse.status})`, { id: 'pdf-export' })
-					setIsLoading(false)
-					return
-				}
-
-				const blob = await pdfResponse.blob()
-				const url = window.URL.createObjectURL(blob)
-				const a = document.createElement('a')
-				const pdfFilename = `llama-ai-export-${Date.now()}.pdf`
-				a.href = url
-				a.download = pdfFilename
-				document.body.appendChild(a)
-				a.click()
-				document.body.removeChild(a)
-				window.URL.revokeObjectURL(url)
-				trackUmamiEvent('llamaai-download', {
-					kind: 'pdf',
-					filename: pdfFilename,
-					exportType,
-					...trackingContext
-				})
-				toast.success('PDF downloaded!', { id: 'pdf-export' })
-				setIsLoading(false)
-			} catch (error) {
-				const errorMsg = formatPdfError(error)
-				console.error('PDF export error:', error)
-				toast.error(errorMsg, { id: 'pdf-export' })
-				setIsLoading(false)
-			}
-		} else {
-			setSignupSource('llamaai-pdf')
-			subscribeModalStore.show()
+	const exportPdf = (isDark: boolean) => {
+		if (loading) return
+		if (hasActiveSubscription) {
+			pdfExport.mutate(isDark)
+			return
 		}
+		setSignupSource('llamaai-pdf')
+		subscribeModalStore.show()
 	}
-
-	if (!sessionId) return null
 
 	return (
 		<>
@@ -169,21 +82,21 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 					render={
 						<Ariakit.MenuButton
 							store={menu}
-							aria-label={isLoading ? 'Exporting PDF' : 'Export PDF options'}
+							aria-label={pdfExport.isPending ? 'Exporting PDF' : 'Export PDF options'}
+							// Focusable while the export runs, so focus stays on the control instead of falling to the page.
 							disabled={loading}
+							accessibleWhenDisabled
 						/>
 					}
-					className={className ?? buttonStyles({ size: 'md', square: true })}
+					className={className}
 				>
-					{isLoading ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
+					{pdfExport.isPending ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
 				</Tooltip>
 				<MenuSurface variant="actions" className="w-44">
 					<MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="light"
-						onClick={() => {
-							void handlePDFExport(false)
-						}}
+						onClick={() => exportPdf(false)}
 						disabled={loading}
 						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
@@ -193,9 +106,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 					<MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="dark"
-						onClick={() => {
-							void handlePDFExport(true)
-						}}
+						onClick={() => exportPdf(true)}
 						disabled={loading}
 						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
@@ -204,11 +115,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 					</MenuItem>
 				</MenuSurface>
 			</Ariakit.MenuProvider>
-			{shouldRenderModal ? (
-				<Suspense fallback={null}>
-					<SubscribeProModal dialogStore={subscribeModalStore} />
-				</Suspense>
-			) : null}
+			<LazySubscribeProModal dialogStore={subscribeModalStore} />
 		</>
 	)
 }

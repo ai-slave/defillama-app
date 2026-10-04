@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useState } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
@@ -6,7 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from './endTrialHold'
 
-const DEFAULT_BENEFITS = [
+const BENEFITS = [
 	'Unlimited CSV downloads',
 	'Unlimited AI questions',
 	'5 deep research questions per day',
@@ -18,11 +19,8 @@ interface EndTrialModalProps {
 	onClose: () => void
 	title?: string
 	description?: string
-	benefitsTitle?: string
-	benefits?: Array<string>
 	confirmLabel?: string
 	secondaryHref?: string
-	secondaryLabel?: string
 }
 
 // Each opening starts fresh, and a closing dialog keeps its last step through the fade-out.
@@ -35,29 +33,21 @@ function EndTrialDialog({
 	onClose,
 	title = 'Upgrade to full access',
 	description,
-	benefitsTitle = 'Benefits of converting now:',
-	benefits = DEFAULT_BENEFITS,
 	confirmLabel = 'Confirm & upgrade now',
-	secondaryHref,
-	secondaryLabel
+	secondaryHref
 }: EndTrialModalProps) {
-	// The modal owns the upgrade: the mutation is the single source of the
-	// pending/success/error state, and all feedback renders inside the dialog.
+	// The modal owns the upgrade, and all feedback renders inside the dialog.
 	const { endTrialMutation } = useSubscribe()
 	const upgraded = endTrialMutation.isSuccess
-	const error = endTrialMutation.isError ? endTrialMutation.error.message : null
+	// Not the mutation's own error: that one clears as soon as a retry starts. Success replaces the form.
+	const [error, setError] = useState<string | null>(null)
 	const isLoading = endTrialMutation.isPending
 	// An upgrade sent from any opener still charges until the trial reads as ended, so a reopened dialog cannot send another.
 	const isApplying = useEndTrialApplying()
 
-	const handleClose = () => {
-		if (isLoading) return
-		onClose()
-	}
-
 	// A charge-now confirmation: no ×, the choice is the footer, and Close stays visible at every width.
 	return (
-		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={handleClose} pending={isLoading} portal unmountOnHide>
+		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={onClose} pending={isLoading} portal unmountOnHide>
 			<DialogHeader title={upgraded ? 'Upgrade successful' : title} closable={false} />
 			{upgraded ? (
 				<>
@@ -67,7 +57,7 @@ function EndTrialDialog({
 						</Ariakit.DialogDescription>
 					</DialogBody>
 					<DialogFooter>
-						<Button type="button" variant="primary" size="md" autoFocus onClick={handleClose}>
+						<Button type="button" variant="primary" size="md" autoFocus onClick={onClose}>
 							Close
 						</Button>
 					</DialogFooter>
@@ -78,9 +68,9 @@ function EndTrialDialog({
 						{description ? <p className="body-sm text-secondary">{description}</p> : null}
 
 						<div className="flex flex-col gap-2">
-							<p className="body-sm text-secondary">{benefitsTitle}</p>
+							<p className="body-sm text-secondary">Benefits of converting now:</p>
 							<ul className="flex flex-col gap-1 body-sm text-primary">
-								{benefits.map((b) => (
+								{BENEFITS.map((b) => (
 									<li key={b} className="flex items-center gap-2">
 										<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
 										<span>{b}</span>
@@ -111,7 +101,7 @@ function EndTrialDialog({
 									href={isLoading ? undefined : secondaryHref}
 									aria-disabled={isLoading || undefined}
 								>
-									{secondaryLabel ?? 'View all plans'}
+									View all plans
 								</Button>
 							) : null
 						}
@@ -131,7 +121,7 @@ function EndTrialDialog({
 							size="md"
 							pendingLabel={isLoading ? 'Processing…' : null}
 							disabled={isApplying}
-							onClick={() => endTrialMutation.mutate()}
+							onClick={() => endTrialMutation.mutate(undefined, { onError: (failure) => setError(failure.message) })}
 						>
 							{confirmLabel}
 						</Button>

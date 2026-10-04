@@ -241,20 +241,13 @@ function ProContent({
 		void router.replace({ pathname: '/pro', query: { tab: nextTab } }, undefined, { shallow: true, scroll: false })
 	}
 
-	const [paywallState, setPaywallState] = useState<{ open: boolean; reason: PaywallReason }>({
-		open: false,
-		reason: 'pro-feature'
-	})
-	const paywallDialogStore = Ariakit.useDialogStore({
-		open: paywallState.open,
-		setOpen: (open) => setPaywallState((prev) => ({ ...prev, open }))
-	})
+	const [paywallReason, setPaywallReason] = useState<PaywallReason | null>(null)
 	const showPaywall = (reason: PaywallReason) => {
 		setSignupSource('pro-dashboard')
-		setPaywallState({ open: true, reason })
+		setPaywallReason(reason)
 	}
 	const { deleteDashboard, handleCreateDashboard, handleGenerateDashboard } = useProDashboardDashboard()
-	const { createDashboardDialogStore, showGenerateDashboardModal, setShowGenerateDashboardModal } = useProDashboardUI()
+	const { createDashboardDialogStore, aiDialog, setAiDialog } = useProDashboardUI()
 	const { isAtDashboardLimit } = useFreeTierStatus()
 	const createDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
 
@@ -389,7 +382,7 @@ function ProContent({
 								!isAuthenticated
 									? () => router.push('/pro/preview')
 									: hasActiveSubscription
-										? () => setShowGenerateDashboardModal(true)
+										? () => setAiDialog('generate')
 										: () => showPaywall('llamaai')
 							}
 							data-umami-event="dashboard-llamaai-generate"
@@ -448,34 +441,31 @@ function ProContent({
 							/>
 						) : null}
 
-						{/* The list's region: a Try again that loads the list hands focus here as it leaves. */}
-						<div tabIndex={-1}>
-							{myDashboardsFailed ? (
-								<div className={`${proPanelStyles} flex flex-col py-12`}>
-									<ProCardError
-										title="Couldn't load your dashboards."
-										retry={{ run: () => void refetchMyDashboards(), pending: isFetchingMyDashboards }}
-									/>
-								</div>
-							) : (
-								<DashboardList
-									dashboards={visibleMyDashboards}
-									isLoading={isLoadingMyDashboards}
-									onCreateNew={() => createDashboardDialogStore.show()}
-									onDeleteDashboard={deleteDashboard}
-									{...(myDashboardsControlsActive && myDashboardsTotalItems > 0
-										? {
-												emptyMessage: {
-													title: myDashboardsControls.query.trim()
-														? `No dashboards match “${myDashboardsControls.query.trim()}”`
-														: 'No dashboards match these filters',
-													onClearFilters: clearMyDashboardsControls
-												}
-											}
-										: {})}
+						{myDashboardsFailed ? (
+							<div className={`${proPanelStyles} flex flex-col py-12`}>
+								<ProCardError
+									title="Couldn't load your dashboards."
+									retry={{ refetch: refetchMyDashboards, isFetching: isFetchingMyDashboards }}
 								/>
-							)}
-						</div>
+							</div>
+						) : (
+							<DashboardList
+								dashboards={visibleMyDashboards}
+								isLoading={isLoadingMyDashboards}
+								onCreateNew={() => createDashboardDialogStore.show()}
+								onDeleteDashboard={deleteDashboard}
+								{...(myDashboardsControlsActive && myDashboardsTotalItems > 0
+									? {
+											emptyMessage: {
+												title: myDashboardsControls.query.trim()
+													? `No dashboards match “${myDashboardsControls.query.trim()}”`
+													: 'No dashboards match these filters',
+												onClearFilters: clearMyDashboardsControls
+											}
+										}
+									: {})}
+							/>
+						)}
 
 						{!myDashboardsControlsActive && myDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
@@ -557,23 +547,21 @@ function ProContent({
 							/>
 						) : null}
 
-						<div tabIndex={-1}>
-							{teamDashboardsFailed ? (
-								<div className={`${proPanelStyles} flex flex-col py-12`}>
-									<ProCardError
-										title="Couldn't load team dashboards"
-										retry={{ run: () => void refetchTeamDashboards(), pending: isFetchingTeamDashboards }}
-									/>
-								</div>
-							) : (
-								<DashboardList
-									dashboards={teamDashboards}
-									isLoading={isLoadingTeamDashboards}
-									onCreateNew={() => createDashboardDialogStore.show()}
-									onDeleteDashboard={deleteDashboard}
+						{teamDashboardsFailed ? (
+							<div className={`${proPanelStyles} flex flex-col py-12`}>
+								<ProCardError
+									title="Couldn't load team dashboards"
+									retry={{ refetch: refetchTeamDashboards, isFetching: isFetchingTeamDashboards }}
 								/>
-							)}
-						</div>
+							</div>
+						) : (
+							<DashboardList
+								dashboards={teamDashboards}
+								isLoading={isLoadingTeamDashboards}
+								onCreateNew={() => createDashboardDialogStore.show()}
+								onDeleteDashboard={deleteDashboard}
+							/>
+						)}
 
 						{teamDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
@@ -632,17 +620,15 @@ function ProContent({
 					/>
 				</Suspense>
 
-				<Suspense fallback={showGenerateDashboardModal ? <ProDialogFallback width="md" /> : null}>
+				<Suspense fallback={aiDialog === 'generate' ? <ProDialogFallback width="md" /> : null}>
 					<GenerateDashboardModal
-						isOpen={showGenerateDashboardModal}
-						onClose={() => setShowGenerateDashboardModal(false)}
+						isOpen={aiDialog === 'generate'}
+						onClose={() => setAiDialog(null)}
 						onGenerate={handleGenerateDashboard}
 					/>
 				</Suspense>
 
-				{paywallState.open ? (
-					<DashboardPaywallModal dialogStore={paywallDialogStore} reason={paywallState.reason} />
-				) : null}
+				{paywallReason ? <DashboardPaywallModal reason={paywallReason} onClose={() => setPaywallReason(null)} /> : null}
 			</div>
 		</Tabs>
 	)

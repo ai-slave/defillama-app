@@ -1,11 +1,12 @@
 import type { AuthRecord, RecordModel } from 'pocketbase'
 import pb from '~/utils/pocketbase'
 
-export type AuthRequest = { signal: AbortSignal; canAccept: () => boolean; onAuthenticated?: () => void }
+/** `signal` aborts once the request is no longer wanted, such as when its sign-in dialog hides. */
+export type AuthRequest = { signal: AbortSignal; onAuthenticated?: () => void }
 
 // Transport cancellation is insufficient: the server can finish after the sheet closes.
 export async function runAuthRequest<T>(
-	{ signal, canAccept }: AuthRequest,
+	{ signal }: AuthRequest,
 	request: (isCurrent: () => boolean) => Promise<T>,
 	accept: (result: T) => void
 ) {
@@ -14,7 +15,7 @@ export async function runAuthRequest<T>(
 	const unsubscribe = pb.authStore.onChange((token) => {
 		if (token !== initialToken) sessionChanged = true
 	})
-	const isCurrent = () => !signal.aborted && !sessionChanged && canAccept()
+	const isCurrent = () => !signal.aborted && !sessionChanged
 	try {
 		if (!isCurrent()) return null
 		const result = await request(isCurrent)

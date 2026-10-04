@@ -99,15 +99,21 @@ test('email confirmation locks the address during submission and identifies the 
 	await act(async () => request.resolve(emailSent()))
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('first@example.com'))
 })
-test('a failed email request can retry unchanged and does not claim the address is already used', async () => {
-	emailReplies.push(offline)
+test('a failed email request can retry unchanged, keeping its error while the retry sends', async () => {
+	const retry = Promise.withResolvers<Response>()
+	emailReplies.push(offline, () => retry.promise)
 	await mount(<EmailHarness />)
 	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'first@example.com')
 	await click('Confirm email')
-	await waitForUi(() => expect(document.querySelector('[role=alert]')).not.toBeNull())
-	expect(document.body.textContent).not.toContain('already associated')
+	const failure = 'Could not send the confirmation email. Check the address and try again.'
+	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toBe(failure))
 	expect(button('Confirm email').disabled).toBe(false)
 	await click('Confirm email')
+	await waitForUi(() =>
+		expect(document.querySelector('[role=dialog] button[aria-busy=true]')?.textContent).toContain('Sending…')
+	)
+	expect(document.querySelector('[role=alert]')?.textContent).toBe(failure)
+	await act(async () => retry.resolve(emailSent()))
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('A confirmation link'))
 	expect(emailRequests()).toEqual(['first@example.com', 'first@example.com'])
 })
@@ -201,20 +207,22 @@ test('failed team rename does not roll back a newer member cache update', async 
 	expect(container.textContent).not.toContain('Failed rename')
 	await act(async () => refresh.resolve({ team: { ...team, members: [member] } }))
 })
-test('team rename failure preserves its draft for retry and Cancel restores the rename control', async () => {
+test('team rename failure preserves its draft and its error through the retry, and Cancel restores the rename control', async () => {
 	renameReply = offline
 	await mount(<TeamInfoCard />)
 	await click('Rename team')
 	await change(container.querySelector('input')!, 'Retry name')
 	await click('Save')
-	await waitForUi(() => expect(container.querySelector('[role=alert]')).not.toBeNull())
+	await waitForUi(() => expect(container.querySelector('[role=alert]')?.textContent).toBe('Offline'))
 	expect(container.querySelector('input')!.value).toBe('Retry name')
 	expect(button('Save').disabled).toBe(false)
-	renameReply = () => {
-		team = { ...team, name: 'Retry name' }
-		return { team }
-	}
+	const retry = Promise.withResolvers<unknown>()
+	renameReply = () => retry.promise
 	await click('Save')
+	await waitForUi(() => expect(container.querySelector('button[aria-busy=true]')?.textContent).toContain('Saving…'))
+	expect(container.querySelector('[role=alert]')?.textContent).toBe('Offline')
+	team = { ...team, name: 'Retry name' }
+	await act(async () => retry.resolve({ team }))
 	await waitForUi(() => expect(container.querySelector('input')).toBeNull())
 	await click('Rename team')
 	await click('Cancel')

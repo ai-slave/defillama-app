@@ -1,6 +1,5 @@
 import type { AsyncDuckDBConnection } from '@duckdb/duckdb-wasm'
 import { useCallback, useState } from 'react'
-import { slug as toSlug } from '~/utils'
 import { chartDatasetsBySlug } from '../chart-datasets'
 import { datasetsBySlug } from '../datasets'
 import { queryDuckDB } from './duckdb/query'
@@ -218,14 +217,11 @@ function isAbortError(err: unknown): boolean {
 	return typeof err === 'object' && err !== null && (err as { name?: string }).name === 'AbortError'
 }
 
-async function withAbort<T>(promise: Promise<T>, signal?: AbortSignal, onAbort?: () => void): Promise<T> {
+async function withAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
 	if (!signal) return promise
 	throwIfAborted(signal)
 	return await new Promise<T>((resolve, reject) => {
-		const onSignalAbort = () => {
-			onAbort?.()
-			reject(new DOMException('Cancelled', 'AbortError'))
-		}
+		const onSignalAbort = () => reject(new DOMException('Cancelled', 'AbortError'))
 		signal.addEventListener('abort', onSignalAbort, { once: true })
 		promise.then(
 			(value) => {
@@ -305,5 +301,3 @@ export function prettyLabelForSource(source: TableSource): string {
 	if (def) return `${def.name} · ${label}`
 	return `${source.slug} · ${label}`
 }
-
-export { toSlug }

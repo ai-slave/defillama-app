@@ -135,6 +135,39 @@ test('does not overwrite a newer session with a late confirmation', async () => 
 	expect(pb.authStore.record?.id).toBe('account-b')
 })
 
+test('a successful switch keeps the account signed in while the dialog confirms it', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtConfirmStep()
+	confirmCalls[0].resolve(Response.json({ token: token('wallet-user-email') }))
+	await settle()
+
+	// A token without its record reads as signed out, and the account page swaps itself for a loader.
+	expect(pb.authStore.record?.id).toBe('wallet-user')
+	expect(pb.authStore.token).toBe(token('wallet-user-email'))
+})
+
+test('a token refresh of the same account during the switch still ends on the success step', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtConfirmStep()
+	await act(async () => pb.authStore.save(token('wallet-user-refreshed'), record('wallet-user')))
+	confirmCalls[0].resolve(Response.json({ token: token('wallet-user-email') }))
+	await settle()
+
+	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Switch successful')
+	expect(pb.authStore.token).toBe(token('wallet-user-email'))
+})
+
+test('closing the code step after typing asks before dropping the entered code', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	await act(async () => setInput(document.querySelector<HTMLInputElement>('input[placeholder="000000"]')!, '123'))
+	await act(async () => button('Cancel')!.click())
+
+	await settle()
+	expect([...document.querySelectorAll('h2')].map((heading) => heading.textContent)).toContain('Discard the switch?')
+	expect(document.querySelector<HTMLInputElement>('input[placeholder="000000"]')!.value).toBe('123')
+})
+
 const button = (label: string) =>
 	[...document.querySelectorAll('button')].find((element) => accessibleName(element) === label)
 
@@ -191,6 +224,18 @@ test('a failed code request shows its reason inside the dialog', async () => {
 	expect(document.querySelector('input[type="email"]')).not.toBeNull()
 })
 
+test('retrying a failed code request keeps its reason on screen while the retry sends', async () => {
+	codeReplies.push(Promise.resolve(Response.json({ error: 'Email already in use' }, { status: 409 })))
+	codeReplies.push(new Promise<Response>(() => {}))
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	await act(async () => submitForm(document.querySelector('input[type="email"]')!))
+	await settle()
+
+	expect(document.querySelector('[role=dialog] button[type=submit]')?.getAttribute('aria-busy')).toBe('true')
+	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe('Email already in use')
+})
+
 test('mismatched passwords are reported under the confirmation field without sending the switch', async () => {
 	pb.authStore.save(token('wallet-user'), record('wallet-user'))
 	await renderModalAtCodeStep()
@@ -228,6 +273,20 @@ test('a general switch failure shows at the end of the form and leaves every fie
 		'Failed to switch authentication method'
 	)
 	expect(confirmFields().map((input) => input.getAttribute('aria-invalid'))).toEqual([null, null, null])
+})
+
+test('retrying a failed switch keeps its error on screen while the retry runs', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtConfirmStep()
+	confirmCalls[0].resolve(Response.json({ error: 'Failed to switch authentication method' }, { status: 500 }))
+	await settle()
+	await act(async () => submitForm(confirmFields()[0]))
+	await settle()
+
+	expect(confirmCalls).toHaveLength(2)
+	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(
+		'Failed to switch authentication method'
+	)
 })
 
 test('a rejected code is reported under the code field only', async () => {

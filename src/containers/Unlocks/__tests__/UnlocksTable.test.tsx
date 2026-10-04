@@ -103,7 +103,10 @@ test('a saved column pick that hid Name still shows Name, and the picker does no
 
 	await click(document.querySelector<HTMLButtonElement>('button[aria-label="Columns dropdown"]')!)
 	expect(
-		Array.from(document.querySelectorAll('[role="option"]'), (option) => option.firstElementChild?.textContent)
+		Array.from(
+			document.querySelectorAll('[role="option"]:not([aria-label^="Only "])'),
+			(option) => option.firstElementChild?.textContent
+		)
 	).toEqual([
 		'Select all, some selected',
 		'Price',

@@ -5,7 +5,7 @@ const primaryPresets = ['Fees', 'Revenue', 'Spot', 'Perps', 'TVL'] as const
 
 describe('Protocol Rankings period presets', () => {
 	test('hides custom columns and columns outside the configured defaults', () => {
-		const visibility = getProtocolRankingDefaultColumnVisibility(2)
+		const visibility = getProtocolRankingDefaultColumnVisibility(['custom_formula_0', 'custom_formula_1'])
 
 		expect(visibility).toMatchObject({ tvl: true, fees_7d: false, custom_formula_0: false, custom_formula_1: false })
 	})

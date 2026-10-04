@@ -28,7 +28,8 @@ function resolveManualChartBlocker(state: ModalState, editItem: DashboardItemCon
 			return state.selectedUnlocksProtocol ? null : 'Pick a protocol'
 		case 'chain':
 		case 'protocol':
-			if (editItem?.kind === 'chart' && state.chartCreationMode === 'separate' && state.composerItems.length > 1) {
+			// An edit writes back one card, so separate mode can keep only one series, whatever the card was.
+			if (editItem && state.chartCreationMode === 'separate' && state.composerItems.length > 1) {
 				return 'Keep one series, or switch to One chart'
 			}
 			if (state.composerItems.length > 0) return null

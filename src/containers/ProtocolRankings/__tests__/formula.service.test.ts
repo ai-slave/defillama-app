@@ -56,7 +56,24 @@ describe('custom column storage boundary', () => {
 				{ name: 'Bad determined format', formula: 'mcap', formatType: 'auto', determinedFormat: 'auto' },
 				null
 			])
-		).toEqual([{ name: 'Ratio', formula: 'mcap / tvl', formatType: 'number', determinedFormat: 'percent' }])
+		).toEqual([
+			{
+				id: 'custom_formula_0',
+				name: 'Ratio',
+				formula: 'mcap / tvl',
+				formatType: 'number',
+				determinedFormat: 'percent'
+			}
+		])
+	})
+
+	test('a column saved before ids keeps its old positional key as its id, and a stored id wins', () => {
+		expect(
+			parseCustomColumns([
+				{ id: 'custom_formula_abc', name: 'Saved', formula: 'tvl', formatType: 'usd' },
+				{ name: 'Legacy', formula: 'mcap', formatType: 'usd' }
+			]).map((column) => column.id)
+		).toEqual(['custom_formula_abc', 'custom_formula_1'])
 	})
 
 	test('discards malformed roots', () => {

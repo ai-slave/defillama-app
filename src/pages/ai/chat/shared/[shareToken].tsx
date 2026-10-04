@@ -17,6 +17,7 @@ import { LlamaAIRouteProvider, type LlamaAIRouteState } from '~/contexts/LlamaAI
 import Layout from '~/layout'
 import { LoadingDots } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
+import pb from '~/utils/pocketbase'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 interface SharedSession {
@@ -84,7 +85,13 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 	const { user } = useAuthContext()
 	const [pendingMessage, setPendingMessage] = useState<string | null>(null)
 	const [routeOverride, setRouteOverride] = useState<LlamaAIRouteState>({ kind: 'unknown' })
-	const signInDialogStore = Ariakit.useDialogStore()
+	const signInDialogStore = Ariakit.useDialogStore({
+		// Closing sign-in without a session drops the question, so a later sign-in never sends it. Reads the session
+		// itself: this runs before the dialog finishes a sign-in from another tab on the same close.
+		setOpen: (open) => {
+			if (!open && !pb.authStore.isValid) setPendingMessage(null)
+		}
+	})
 
 	const ogImageUrl = `${AI_SERVER}/user/og/${shareToken}`
 	const title = sessionTitle || 'AI Crypto Analysis - LlamaAI'
@@ -185,7 +192,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 						initialPrompt={initialPrompt}
 					/>
 				</LlamaAIRouteProvider>
-				<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
+				<SignInModal store={signInDialogStore} />
 			</LlamaAIMobileAppGate>
 		</Layout>
 	)

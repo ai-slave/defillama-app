@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { ChartMetricsDialog } from '~/components/ChartMetricsDialog'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
@@ -18,6 +18,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { metricChipStyles } from '~/ui/MetricChip'
@@ -121,7 +122,8 @@ function TokenPriceAlertButton({
 }) {
 	const dialogStore = Ariakit.useDialogStore()
 	const signInDialogStore = Ariakit.useDialogStore()
-	const [hasOpened, setHasOpened] = useState(false)
+	// The alert modal loads with its first opening and leaves once its exit animation ends.
+	const alertModalMounted = Ariakit.useStoreState(dialogStore, 'mounted')
 	const { isAuthenticated } = useAuthContext()
 
 	if (geckoId == null || currentPrice == null || currentPrice <= 0) return null
@@ -144,7 +146,6 @@ function TokenPriceAlertButton({
 								signInDialogStore.show()
 								return
 							}
-							setHasOpened(true)
 							dialogStore.show()
 						}}
 					/>
@@ -152,7 +153,7 @@ function TokenPriceAlertButton({
 			>
 				<Icon name="calendar-plus" className="size-4" />
 			</Tooltip>
-			{hasOpened ? (
+			{alertModalMounted ? (
 				<CreateAlertModal
 					dialogStore={dialogStore}
 					initialTab="price"
@@ -167,7 +168,6 @@ function TokenPriceAlertButton({
 			) : null}
 			<SignInModal
 				store={signInDialogStore}
-				hideWhenAuthenticated={false}
 				prompt={`Sign in to set price alerts for ${overview.symbol.toUpperCase()}`}
 			/>
 		</>
@@ -574,6 +574,8 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 								key={chart}
 								type="button"
 								aria-label={`Remove ${getChartLabel(chart, overview.symbol)}`}
+								// The chip leaves with its series: focus moves to the next chip, else the previous one or Add Metrics.
+								ref={passFocusOnLeave((chip) => neighbourRowControl(chip, chip))}
 								onClick={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
 								className={metricChipStyles}
 								style={{ borderColor: TOKEN_OVERVIEW_CHART_COLORS[chart] }}

@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
 import { getDisplayAliases } from '~/utils/chainNormalizer'
 import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
+import { queryReadFailed } from '~/utils/query'
 import { getAvailableChainChartTypes } from './appMetadataChartTypes'
 import { StreamDoneContext } from './queries'
 import {
@@ -63,6 +64,8 @@ type AppMetadataContextType = {
 	loading: boolean
 	error: string | undefined
 	retry: () => void
+	// The retry's read is running; the failure stays in `error` until it succeeds.
+	retrying: boolean
 	protocolsBySlug: Map<string, ProtocolRecord>
 	hasProtocolBuilderMetric: (slug: string, metric: BuilderMetric) => boolean
 	availableProtocolChartTypes: (slug: string, opts?: { hasGeckoId?: boolean }) => Array<ProtocolChartType>
@@ -168,10 +171,12 @@ const appMetadataQuery = {
 
 export function AppMetadataProvider({ children }: { children: React.ReactNode }) {
 	// Reads the cache and owns the derived indexes and retry; consumers decide whether to fetch.
-	const { data: rawData, error: queryError, refetch } = useQuery({ ...appMetadataQuery, enabled: false })
+	const metadataQuery = useQuery({ ...appMetadataQuery, enabled: false })
+	const { data: rawData, isFetching, refetch } = metadataQuery
 	const dashboardStreamDone = useContext(StreamDoneContext)
 
-	const error = queryError ? String(queryError.message) : undefined
+	// A retry clears the query's error while it runs, so the failure reads attempt times and keeps a fixed message.
+	const error = queryReadFailed(metadataQuery) ? "Couldn't load metric metadata." : undefined
 	const protocolsRaw = rawData?.protocols ?? null
 	const chainsRaw = rawData?.chains ?? null
 	const pfPsRaw = rawData?.pfPs
@@ -277,19 +282,20 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 	const value: AppMetadataContextValue = useMemo(
 		() => ({
 			dashboardStreamDone,
-			loading: rawData === undefined && !queryError,
+			loading: rawData === undefined && !error,
 			error,
 			protocolsBySlug,
 			hasProtocolBuilderMetric,
 			availableProtocolChartTypes,
 			chainsByName,
 			availableChainChartTypes,
-			retry: () => void refetch()
+			retry: () => void refetch(),
+			retrying: isFetching
 		}),
 		[
 			dashboardStreamDone,
 			rawData,
-			queryError,
+			isFetching,
 			error,
 			protocolsBySlug,
 			chainsByName,

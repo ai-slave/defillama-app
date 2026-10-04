@@ -4,6 +4,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/EChar
 import { Select } from '~/components/Select/Select'
 import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricGroups'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { capitalizeFirstLetter } from '~/utils'
 import { downloadCSV } from '~/utils/download'
@@ -19,11 +20,11 @@ import {
 	type MultiChartConfig
 } from '../types'
 import { ProMeta, ProSegmented } from '../ui'
+import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
-import { ConfirmationModal } from './ConfirmationModal'
 import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
 import {
 	buildMultiChartCardSeries,
@@ -399,7 +400,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					<ProCardNotice
 						tone="warning"
 						{...(failedItemRetries.length > 0
-							? { retry: { run: retryFailedItems, pending: retryingFailedItems } }
+							? { retry: { refetch: retryFailedItems, isFetching: retryingFailedItems } }
 							: {})}
 					>
 						{failedItems.length} {failedItems.length === 1 ? 'series is' : 'series are'} unavailable.
@@ -422,7 +423,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						<ProCardError
 							title="Failed to load chart data"
 							detail={`${failedItems.length} of ${limitedItems.length} charts failed`}
-							retry={{ run: retryFailedItems, pending: retryingFailedItems }}
+							retry={{ refetch: retryFailedItems, isFetching: retryingFailedItems }}
 						/>
 					) : (
 						<ProCardEmpty message="No chart data available" />
@@ -454,17 +455,23 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					</Suspense>
 				)}
 			</div>
-			<ConfirmationModal
-				isOpen={showDuplicateConfirm}
+			<ConfirmDialog
+				open={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
-				onConfirm={() => {
-					const duplicateId = handleDuplicateMultiChart(multi)
-					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
-				}}
+				unmountOnHide
+				scope="pro"
 				title="Duplicate chart"
-				message="Create a duplicate of this chart in the dashboard?"
-				confirmText="Duplicate"
+				description="Create a duplicate of this chart in the dashboard?"
+				confirmLabel="Duplicate"
+				pendingLabel={null}
+				error={null}
 				tone="primary"
+				onConfirm={() => {
+					const duplicated = handleDuplicateMultiChart(multi)
+					setShowDuplicateConfirm(false)
+					toastRefusal(duplicated)
+					if (duplicated.status === 'saved') requestDashboardItemReveal(duplicated.ids[0], { scroll: 'nearest' })
+				}}
 			/>
 		</div>
 	)

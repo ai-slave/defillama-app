@@ -1,12 +1,21 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { type RefObject, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { TokenLogo } from '~/components/TokenLogo'
 import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
@@ -44,7 +53,9 @@ function InterestSelect({
 	const selected = INTEREST_OPTIONS.find((option) => option.value === value)
 	return (
 		<Ariakit.ComboboxProvider selectedValue={value} setSelectedValue={onChange}>
+			{/* The form's first field. */}
 			<Ariakit.ComboboxSelect
+				autoFocus
 				aria-invalid={invalid}
 				className={`${inputStyles} flex w-full items-center justify-between gap-2`}
 			>
@@ -161,47 +172,28 @@ export function ConnectDialog({
 	/** Recorded by the click that opened this form; null until that request answers, or if it failed. */
 	clickId: string | null
 }) {
-	// One session per opening: a new opening starts a new request, and the dialog locks while one runs.
+	// One form per opening: a new opening starts a new request, and the dialog locks while one runs.
 	const key = useOpeningKey(open)
-	return <ConnectSession key={key} open={open} onClose={onClose} {...form} />
+	return <ConnectForm key={key} open={open} onClose={onClose} {...form} />
 }
 
-function ConnectSession({
+function ConnectForm({
 	open,
 	onClose,
-	...form
-}: {
-	open: boolean
-	onClose: () => void
-} & Omit<Parameters<typeof ConnectDialogForm>[0], 'submit'>) {
-	const submit = useSubmitLead('connect')
-	return (
-		<Dialog
-			size="md"
-			open={open}
-			onClose={onClose}
-			pending={submit.isPending}
-			// A tap outside would discard a half-filled form.
-			hideOnInteractOutside={false}
-			portal
-			unmountOnHide
-		>
-			<ConnectDialogForm {...form} submit={submit} />
-		</Dialog>
-	)
-}
-
-function ConnectDialogForm({
-	submit,
 	marketMakerId,
 	marketMakerName,
 	clickId
 }: {
-	submit: ReturnType<typeof useSubmitLead>
+	open: boolean
+	onClose: () => void
 	marketMakerId: string | null
 	marketMakerName: string
 	clickId: string | null
 }) {
+	const submit = useSubmitLead('connect')
+	// The last failure, kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [failure, setFailure] = useState<string | null>(null)
+	const dialogRef = useRef<HTMLDivElement>(null)
 	const [interest, setInterest] = useState('')
 	const [tokenStatus, setTokenStatus] = useState<TokenStatus>('pre-tge')
 	const [projectName, setProjectName] = useState('')
@@ -242,26 +234,40 @@ function ConnectDialogForm({
 	const showError = (key: string) => (submitAttempted || touched[key] ? errors[key] : null)
 	const markTouched = (key: string) => () => setTouched((prev) => ({ ...prev, [key]: true }))
 
+	const dirty =
+		interest !== '' ||
+		tokenStatus !== 'pre-tge' ||
+		projectName !== '' ||
+		tokenTicker !== '' ||
+		selectedToken !== null ||
+		manualToken ||
+		fullName !== '' ||
+		email !== ''
+
 	const onSubmit = () => {
-		if (submit.isPending) return
 		if (!isValid) {
-			setSubmitAttempted(true)
+			// The errors appear above, away from Submit, so focus moves to the first field that needs fixing.
+			flushSync(() => setSubmitAttempted(true))
+			dialogRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
 			return
 		}
-		submit.mutate({
-			interest,
-			token_status: tokenStatus,
-			project_name: hasToken ? (listedToken?.name ?? projectName) : null,
-			token_ticker: hasToken ? (listedToken?.symbol ?? tokenTicker) : null,
-			coingecko_id: listedToken?.id ?? null,
-			full_name: fullName,
-			email: email.trim(),
-			market_maker_id: marketMakerId,
-			market_maker_name: marketMakerName,
-			click_id: clickId,
-			source_url: typeof window === 'undefined' ? null : window.location.href,
-			hp: honeypot
-		})
+		submit.mutate(
+			{
+				interest,
+				token_status: tokenStatus,
+				project_name: hasToken ? (listedToken?.name ?? projectName) : null,
+				token_ticker: hasToken ? (listedToken?.symbol ?? tokenTicker) : null,
+				coingecko_id: listedToken?.id ?? null,
+				full_name: fullName,
+				email: email.trim(),
+				market_maker_id: marketMakerId,
+				market_maker_name: marketMakerName,
+				click_id: clickId,
+				source_url: typeof window === 'undefined' ? null : window.location.href,
+				hp: honeypot
+			},
+			{ onError: (error) => setFailure(error.message) }
+		)
 	}
 
 	const changeTokenStatus = (value: TokenStatus) => {
@@ -270,173 +276,168 @@ function ConnectDialogForm({
 		setManualToken(false)
 	}
 
-	if (submit.isSuccess) {
-		return (
-			<LeadSuccess
-				title="Request received"
-				message={`The Forgd team will review your request and use the contact details you provided to put you in touch with ${marketMakerName}.`}
-			/>
-		)
-	}
-
 	return (
-		<>
-			<DialogHeader title={`Get in touch with ${marketMakerName}`} />
-			<DialogBody>
-				<p className="body-sm text-secondary">
-					Share your details and Forgd will put you in direct contact with {marketMakerName}.
-				</p>
-				<LeadField label="What are you interested in?" error={showError('interest')}>
-					<InterestSelect value={interest} invalid={showError('interest') != null} onChange={setInterest} />
-				</LeadField>
-				<div className="flex flex-col gap-1.5">
-					<span className="label-sm text-primary">What is the status of your token?</span>
-					<SegmentedControl
-						value={tokenStatus}
-						onValueChange={changeTokenStatus}
-						options={TOKEN_STATUS_OPTIONS}
-						label="Token status"
-						variant="default"
-						size="md"
-						className="w-full!"
-						buttonClassName="inline-flex flex-1 basis-0 items-center justify-center"
+		<Dialog ref={dialogRef} size="md" open={open} onClose={onClose} pending={submit.isPending} portal unmountOnHide>
+			{submit.isSuccess ? (
+				<LeadSuccess
+					title="Request received"
+					message={`The Forgd team will review your request and use the contact details you provided to put you in touch with ${marketMakerName}.`}
+				/>
+			) : (
+				<>
+					<DialogDiscardGuard
+						when={dirty}
+						title="Discard this request?"
+						description="The details you entered are lost."
 					/>
-				</div>
-				{tokenStatus === 'listed' && !manualToken ? (
-					<div className="flex flex-col gap-1.5">
-						<span className="label-sm text-primary">Your token</span>
-						{selectedToken ? (
-							<div className={`${inputStyles} flex items-center justify-between gap-2`}>
-								<span className="flex min-w-0 items-center gap-2">
-									<TokenLogo src={selectedToken.logo} size={20} />
-									<span className="truncate">{selectedToken.name}</span>
-									<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
-								</span>
-								<button
-									ref={changeTokenRef}
-									type="button"
-									onClick={() =>
-										keepFocus(
-											() => setSelectedToken(null),
-											() => tokenSearchRef.current
-										)
-									}
-									aria-label="Change token"
-									className="shrink-0 text-secondary hover:text-primary"
-								>
-									<Icon name="x" height={14} width={14} />
-								</button>
+					<DialogHeader title={`Get in touch with ${marketMakerName}`} />
+					<DialogBody>
+						<p className="body-sm text-secondary">
+							Share your details and Forgd will put you in direct contact with {marketMakerName}.
+						</p>
+						<LeadField label="What are you interested in?" error={showError('interest')}>
+							<InterestSelect value={interest} invalid={showError('interest') != null} onChange={setInterest} />
+						</LeadField>
+						<div className="flex flex-col gap-1.5">
+							<span className="label-sm text-primary">What is the status of your token?</span>
+							<SegmentedControl
+								value={tokenStatus}
+								onValueChange={changeTokenStatus}
+								options={TOKEN_STATUS_OPTIONS}
+								label="Token status"
+								variant="default"
+								size="md"
+								className="w-full!"
+								buttonClassName="inline-flex flex-1 basis-0 items-center justify-center"
+							/>
+						</div>
+						{tokenStatus === 'listed' && !manualToken ? (
+							<div className="flex flex-col gap-1.5">
+								<span className="label-sm text-primary">Your token</span>
+								{selectedToken ? (
+									<div className={`${inputStyles} flex items-center justify-between gap-2`}>
+										<span className="flex min-w-0 items-center gap-2">
+											<TokenLogo src={selectedToken.logo} size={20} />
+											<span className="truncate">{selectedToken.name}</span>
+											<span className="shrink-0 text-tertiary">{selectedToken.symbol}</span>
+										</span>
+										<button
+											ref={changeTokenRef}
+											type="button"
+											onClick={() =>
+												keepFocus(
+													() => setSelectedToken(null),
+													() => tokenSearchRef.current
+												)
+											}
+											aria-label="Change token"
+											className="shrink-0 text-secondary hover:text-primary"
+										>
+											<Icon name="x" height={14} width={14} />
+										</button>
+									</div>
+								) : (
+									<TokenCombobox
+										inputRef={tokenSearchRef}
+										invalid={showError('token') != null}
+										onSelect={(token) =>
+											keepFocus(
+												() => setSelectedToken(token),
+												() => changeTokenRef.current
+											)
+										}
+										onManual={() =>
+											keepFocus(
+												() => setManualToken(true),
+												() => projectNameRef.current
+											)
+										}
+									/>
+								)}
+								{showError('token') ? <span className="body-sm text-error">{showError('token')}</span> : null}
 							</div>
-						) : (
-							<TokenCombobox
-								inputRef={tokenSearchRef}
-								invalid={showError('token') != null}
-								onSelect={(token) =>
+						) : null}
+						{showManualFields ? (
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<LeadField label="Project name" error={showError('projectName')}>
+									<Input
+										ref={projectNameRef}
+										value={projectName}
+										onChange={(e) => setProjectName(e.target.value)}
+										onBlur={markTouched('projectName')}
+										aria-invalid={showError('projectName') != null}
+										maxLength={200}
+										placeholder="Project"
+									/>
+								</LeadField>
+								<LeadField label="Token ticker" error={showError('tokenTicker')}>
+									<Input
+										value={tokenTicker}
+										onChange={(e) => setTokenTicker(e.target.value)}
+										onBlur={markTouched('tokenTicker')}
+										aria-invalid={showError('tokenTicker') != null}
+										maxLength={32}
+										placeholder="ABC"
+									/>
+								</LeadField>
+							</div>
+						) : null}
+						{tokenStatus === 'listed' && manualToken ? (
+							<button
+								type="button"
+								onClick={() =>
 									keepFocus(
-										() => setSelectedToken(token),
-										() => changeTokenRef.current
+										() => setManualToken(false),
+										() => tokenSearchRef.current
 									)
 								}
-								onManual={() =>
-									keepFocus(
-										() => setManualToken(true),
-										() => projectNameRef.current
-									)
-								}
-							/>
-						)}
-						{showError('token') ? <span className="body-sm text-error">{showError('token')}</span> : null}
-					</div>
-				) : null}
-				{showManualFields ? (
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<LeadField label="Project name" error={showError('projectName')}>
-							<Input
-								ref={projectNameRef}
-								value={projectName}
-								onChange={(e) => setProjectName(e.target.value)}
-								onBlur={markTouched('projectName')}
-								aria-invalid={showError('projectName') != null}
-								maxLength={200}
-								placeholder="Project"
-							/>
-						</LeadField>
-						<LeadField label="Token ticker" error={showError('tokenTicker')}>
-							<Input
-								value={tokenTicker}
-								onChange={(e) => setTokenTicker(e.target.value)}
-								onBlur={markTouched('tokenTicker')}
-								aria-invalid={showError('tokenTicker') != null}
-								maxLength={32}
-								placeholder="ABC"
-							/>
-						</LeadField>
-					</div>
-				) : null}
-				{tokenStatus === 'listed' && manualToken ? (
-					<button
-						type="button"
-						onClick={() =>
-							keepFocus(
-								() => setManualToken(false),
-								() => tokenSearchRef.current
-							)
-						}
-						className="w-fit body-sm text-link hover:underline"
-					>
-						Back to token search
-					</button>
-				) : null}
-				<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">
-					<span className="label-sm text-tertiary">Contact information</span>
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<LeadField label="Full name" error={showError('fullName')}>
-							<Input
-								value={fullName}
-								onChange={(e) => setFullName(e.target.value)}
-								onBlur={markTouched('fullName')}
-								aria-invalid={showError('fullName') != null}
-								maxLength={200}
-								placeholder="Your name"
-							/>
-						</LeadField>
-						<LeadField label="Email" error={showError('email')}>
-							<Input
-								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								onBlur={markTouched('email')}
-								aria-invalid={showError('email') != null}
-								maxLength={320}
-								placeholder="you@project.xyz"
-							/>
-						</LeadField>
-					</div>
-				</div>
-				<LeadHoneypot value={honeypot} onChange={setHoneypot} />
-				{submit.isError ? <InlineStatus variant="error">{submit.error.message}</InlineStatus> : null}
-			</DialogBody>
-			<DialogFooter
-				dismiss={
-					<Ariakit.DialogDismiss
-						disabled={submit.isPending}
-						accessibleWhenDisabled
-						render={<Button type="button" size="md" />}
-					>
-						Cancel
-					</Ariakit.DialogDismiss>
-				}
-			>
-				<Button
-					type="button"
-					variant="primary"
-					size="md"
-					pendingLabel={submit.isPending ? 'Submitting…' : null}
-					onClick={onSubmit}
-				>
-					Submit request
-				</Button>
-			</DialogFooter>
-		</>
+								className="w-fit body-sm text-link hover:underline"
+							>
+								Back to token search
+							</button>
+						) : null}
+						<div className="flex flex-col gap-1.5 border-t border-subtle pt-4">
+							<span className="label-sm text-tertiary">Contact information</span>
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<LeadField label="Full name" error={showError('fullName')}>
+									<Input
+										value={fullName}
+										onChange={(e) => setFullName(e.target.value)}
+										onBlur={markTouched('fullName')}
+										aria-invalid={showError('fullName') != null}
+										maxLength={200}
+										placeholder="Your name"
+									/>
+								</LeadField>
+								<LeadField label="Email" error={showError('email')}>
+									<Input
+										type="email"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										onBlur={markTouched('email')}
+										aria-invalid={showError('email') != null}
+										maxLength={320}
+										placeholder="you@project.xyz"
+									/>
+								</LeadField>
+							</div>
+						</div>
+						<LeadHoneypot value={honeypot} onChange={setHoneypot} />
+						{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
+					</DialogBody>
+					<DialogFooter dismiss={<DialogCancelButton />}>
+						<Button
+							type="button"
+							variant="primary"
+							size="md"
+							pendingLabel={submit.isPending ? 'Submitting…' : null}
+							onClick={onSubmit}
+						>
+							Submit request
+						</Button>
+					</DialogFooter>
+				</>
+			)}
+		</Dialog>
 	)
 }

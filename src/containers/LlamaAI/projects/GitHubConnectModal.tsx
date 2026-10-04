@@ -1,15 +1,17 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useId, useMemo, useRef, useState, type RefObject } from 'react'
+import { useId, useMemo, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
+import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
+import { queryReadFailed } from '~/utils/query'
 import {
 	useConnectGithubSource,
 	useGithubBranches,
@@ -115,20 +117,6 @@ function GitHubConnectForm({
 		}
 	})
 
-	// A retry that succeeds replaces its own button, so focus moves to the control that loaded in its place.
-	const focusAfterRetry = useRef(false)
-	const focusIfRetried = (element: HTMLElement | null) => {
-		if (!element || !focusAfterRetry.current) return
-		focusAfterRetry.current = false
-		element.focus()
-	}
-	const retry = (query: { refetch: () => Promise<{ isError: boolean }> }) => {
-		focusAfterRetry.current = true
-		void query.refetch().then((result) => {
-			if (result.isError) focusAfterRetry.current = false
-		})
-	}
-
 	const filteredRepos = useMemo(() => {
 		const all = repos.data ?? []
 		const q = repoQuery?.trim().toLowerCase()
@@ -217,16 +205,16 @@ function GitHubConnectForm({
 				}
 			/>
 			<DialogBody>
-				{installs.isLoading ? (
-					<div role="status" aria-live="polite">
-						<LoadingIndicator label="Loading installations" />
-					</div>
-				) : installs.isError ? (
+				{queryReadFailed(installs) ? (
 					<LoadError
 						message="Couldn't load your GitHub installations."
 						retrying={installs.isFetching}
-						onRetry={() => retry(installs)}
+						onRetry={() => void installs.refetch()}
 					/>
+				) : installs.isLoading ? (
+					<div role="status" aria-live="polite">
+						<LoadingIndicator label="Loading installations" />
+					</div>
 				) : needsInstall ? (
 					<p className="body-sm text-secondary">
 						No GitHub apps installed yet. Install LlamaAI Workspace on your GitHub account to grant repo access.
@@ -238,7 +226,8 @@ function GitHubConnectForm({
 								Installation
 							</label>
 							<select
-								ref={focusIfRetried}
+								// A retry that succeeds replaces its button with this control, which takes the focus it drops.
+								ref={takeLostFocus}
 								id={installId}
 								disabled={fieldsLocked}
 								value={effectiveInstallId ?? ''}
@@ -260,16 +249,16 @@ function GitHubConnectForm({
 							<label htmlFor={repoInputId} className="label-sm text-secondary">
 								Repository
 							</label>
-							{repos.isLoading ? (
-								<div role="status" aria-live="polite">
-									<LoadingIndicator label="Loading repositories" />
-								</div>
-							) : repos.isError ? (
+							{queryReadFailed(repos) ? (
 								<LoadError
 									message="Couldn't load the repositories for this installation."
 									retrying={repos.isFetching}
-									onRetry={() => retry(repos)}
+									onRetry={() => void repos.refetch()}
 								/>
+							) : repos.isLoading ? (
+								<div role="status" aria-live="polite">
+									<LoadingIndicator label="Loading repositories" />
+								</div>
 							) : (
 								<Ariakit.ComboboxProvider
 									inputValue={repoQuery ?? selectedRepo}
@@ -280,7 +269,7 @@ function GitHubConnectForm({
 									}}
 								>
 									<Ariakit.Combobox
-										ref={focusIfRetried}
+										ref={takeLostFocus}
 										id={repoInputId}
 										disabled={fieldsLocked}
 										placeholder="owner/repo"
@@ -324,16 +313,16 @@ function GitHubConnectForm({
 							</label>
 							{!repoMeta ? (
 								<p className="body-sm text-tertiary">Pick a repository first.</p>
+							) : queryReadFailed(branches) ? (
+								<LoadError
+									message="Couldn't load the branches for this repository."
+									retrying={branches.isFetching}
+									onRetry={() => void branches.refetch()}
+								/>
 							) : branches.isLoading ? (
 								<div role="status" aria-live="polite">
 									<LoadingIndicator label="Loading branches" />
 								</div>
-							) : branches.isError ? (
-								<LoadError
-									message="Couldn't load the branches for this repository."
-									retrying={branches.isFetching}
-									onRetry={() => retry(branches)}
-								/>
 							) : (
 								<Ariakit.ComboboxProvider
 									inputValue={branchQuery ?? effectiveBranch}
@@ -346,7 +335,7 @@ function GitHubConnectForm({
 									}}
 								>
 									<Ariakit.Combobox
-										ref={focusIfRetried}
+										ref={takeLostFocus}
 										id={branchInputId}
 										disabled={fieldsLocked}
 										placeholder="main"
@@ -411,16 +400,7 @@ function GitHubConnectForm({
 						</Button>
 					) : null
 				}
-				dismiss={
-					<Ariakit.DialogDismiss
-						type="button"
-						disabled={connect.isPending}
-						accessibleWhenDisabled
-						render={<Button size="md" />}
-					>
-						Cancel
-					</Ariakit.DialogDismiss>
-				}
+				dismiss={<DialogCancelButton />}
 			>
 				{hasInstalls ? (
 					<Button
@@ -435,7 +415,7 @@ function GitHubConnectForm({
 					</Button>
 				) : needsInstall ? (
 					<Button
-						ref={focusIfRetried}
+						ref={takeLostFocus}
 						type="button"
 						size="md"
 						variant="primary"

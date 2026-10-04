@@ -95,7 +95,7 @@ let container: HTMLDivElement
 let root: ReturnType<typeof createRoot>
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	push.mockClear()
+	push.mockReset().mockResolvedValue(true)
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -141,6 +141,28 @@ describe('RWAPlatformEntityChartPanel', () => {
 
 		await act(async () => container.querySelector<HTMLInputElement>('input[value="liveAssets"]')!.click())
 		expect(push.mock.calls).toEqual([shallowPush({ metrics: 'activeMcap,events' })])
+	})
+
+	test('a chip that turns its metric off hands focus to the next chip, else the previous one', async () => {
+		push.mockImplementation(async (url: { query: Record<string, string> }) => {
+			await render(url.query)
+			return true
+		})
+		const chip = (metric: string) => container.querySelector<HTMLInputElement>(`input[value="${metric}"]`)!
+		const remove = async (metric: string) =>
+			act(async () => {
+				chip(metric).focus()
+				chip(metric).click()
+			})
+		await render({ metrics: 'activeMcap,liveAssets,events' })
+
+		await remove('liveAssets')
+		expect(chips()).toEqual(['activeMcap', 'events'])
+		expect(document.activeElement).toBe(chip('events'))
+
+		await remove('events')
+		expect(chips()).toEqual(['activeMcap'])
+		expect(document.activeElement).toBe(chip('activeMcap'))
 	})
 
 	test('adds a metric from the Add Metrics dialog', async () => {

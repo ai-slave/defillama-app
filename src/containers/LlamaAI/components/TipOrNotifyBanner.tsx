@@ -6,6 +6,7 @@ import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { focusComposerOnLeave } from './ComposerTray'
 
 export function TipOrNotifyBanner({
 	premiumResponseId,
@@ -34,7 +35,10 @@ function LowBalanceTip({ answerRunning }: { answerRunning: boolean }) {
 	const [dismissed, setDismissed] = useState(false)
 	if (dismissed || !balance || totalAvailable >= 1) return <DefaultTip answerRunning={answerRunning} />
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5">
+		<div
+			ref={focusComposerOnLeave}
+			className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5"
+		>
 			<p className="min-w-0 flex-1 body-sm text-secondary">Your external data balance is low.</p>
 			<Button type="button" size="sm" onClick={() => actions.openSettingsModal?.('balance')}>
 				Top up

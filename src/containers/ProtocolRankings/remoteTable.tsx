@@ -132,8 +132,7 @@ export function useRemoteProtocolRankingsTable({
 	const query = useMemo<ProtocolRankingQuery>(() => {
 		const sortEntry = sorting[0]
 		const sortId = sortEntry?.id ?? DEFAULT_PROTOCOL_RANKING_QUERY.sort
-		const customIndex = sortId.startsWith('custom_formula_') ? Number(sortId.slice('custom_formula_'.length)) : -1
-		const customColumn = Number.isInteger(customIndex) && customIndex >= 0 ? customColumns[customIndex] : undefined
+		const customColumn = customColumns.find((column) => column.id === sortId)
 		return {
 			search,
 			minTvl,

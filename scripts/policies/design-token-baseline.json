@@ -20,7 +20,7 @@
 		"arbitrary-dialog-width": 0,
 		"dialog-button-pinned-height": 0,
 		"hand-rolled-spinner": 0,
-		"ascii-ellipsis": 139,
+		"ascii-ellipsis": 137,
 		"raw-scope-note": 0,
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
@@ -32,14 +32,14 @@
 		"raw-type-pair": 15
 	},
 	"product": {
-		"hex-in-classname": 24,
+		"hex-in-classname": 22,
 		"dark-hex-variant": 8,
 		"arbitrary-font-size": 527,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
 		"product-token-leak": 0,
-		"builtin-palette-color": 156,
+		"builtin-palette-color": 144,
 		"arbitrary-color-function": 1,
 		"arbitrary-shadow": 0,
 		"product-utility-leak": 0,
@@ -52,7 +52,7 @@
 		"arbitrary-dialog-width": 0,
 		"dialog-button-pinned-height": 0,
 		"hand-rolled-spinner": 20,
-		"ascii-ellipsis": 52,
+		"ascii-ellipsis": 46,
 		"raw-scope-note": 0,
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
@@ -61,6 +61,6 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 1108
+		"raw-type-pair": 1078
 	}
 }

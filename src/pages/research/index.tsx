@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
-import { ArticleApiError, getLandingBanner, getResearchLanding, getTrustedBySection } from '~/containers/Articles/api'
+import { getLandingBanner, getResearchLanding, getTrustedBySection } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { ResearchBanner } from '~/containers/Articles/landing/ResearchBanner'
 import { ResearchCollections } from '~/containers/Articles/landing/ResearchCollections'
@@ -17,7 +17,7 @@ import ResearchSearch from '~/containers/Articles/landing/ResearchSearch'
 import { ResearchSectionWithSharedHeightProvider } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
 import { ResearchSocialMediaMentions } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import { ResearchSpotlight } from '~/containers/Articles/landing/ResearchSpotlight'
-import { ResearchSpotlightColumnWithHeight } from '~/containers/Articles/landing/ResearchSpotlightColumn'
+import { ResearchSpotlightColumn } from '~/containers/Articles/landing/ResearchSpotlightColumn'
 import { ResearchTrustedByCarousel } from '~/containers/Articles/landing/ResearchTrustedByCarousel'
 import {
 	RESEARCH_WIDGET_SCROLLER_HEIGHT,
@@ -33,7 +33,6 @@ import {
 import type { ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import { getResearchNewsletterItems } from '~/containers/Articles/newsletterFeed.server'
 import { ArticleBannerStrip } from '~/containers/Articles/renderer/ArticleBannerStrip'
-import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -164,31 +163,15 @@ function ArticlesLandingInner({
 		refetchOnMount: 'always'
 	})
 
-	const landingData = landingQuery.data?.landingData
-
-	const isLoading = landingQuery.isLoading
-	const error = landingQuery.error
-
-	if (isLoading) {
-		return <ResearchLoader />
-	}
-
-	if (error) {
-		const message = error instanceof ArticleApiError ? error.message : 'Failed to load articles'
-		return (
-			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-error/30 bg-error/5 p-6">
-				<h1 className="heading-sm text-primary">Couldn&apos;t load research</h1>
-				<p className="text-sm text-error">{message}</p>
-			</div>
-		)
-	}
+	// The server's data seeds the query, so a failed background refetch keeps the page it already shows.
+	const landingData = landingQuery.data.landingData
 
 	return (
 		<div className="pb-5">
 			<ResearchHero
 				title="Bespoke Digital Asset Research and Market Intelligence"
 				subtitle="Independent and trusted in-depth analysis of digital asset markets for institutional strategy and decision-making."
-				reports={landingData?.heroReports ?? []}
+				reports={landingData.heroReports}
 			/>
 
 			<div className="relative overflow-hidden">
@@ -229,41 +212,41 @@ function ArticlesLandingInner({
 				/>
 
 				<div className="relative z-1 mx-auto w-full max-w-7xl space-y-7.5 px-4 sm:px-6 lg:space-y-17.5 lg:px-8">
-					<ResearchLatest articles={landingData?.latest ?? []} initialData={landingQuery.data?.landingBanner} />
+					<ResearchLatest articles={landingData.latest} initialData={landingQuery.data.landingBanner} />
 
-					<ResearchPromoBanner initialData={landingQuery.data?.landingBanner} />
+					<ResearchPromoBanner initialData={landingQuery.data.landingBanner} />
 
-					<ResearchSpotlight title="In the spotlight" articles={landingData?.spotlight ?? []} />
+					<ResearchSpotlight title="In the spotlight" articles={landingData.spotlight} />
 
 					{newsletterItems.length > 0 ? (
-						<ResearchNewsletters newsletters={newsletterItems} interviews={landingData?.interviews ?? []} />
+						<ResearchNewsletters newsletters={newsletterItems} interviews={landingData.interviews} />
 					) : (
-						<ResearchInterviews title="Interviews" articles={landingData?.interviews ?? []} />
+						<ResearchInterviews title="Interviews" articles={landingData.interviews} />
 					)}
 
 					<div id="reports">
-						{(landingData?.highlight ?? []).length > 0 ? (
+						{landingData.highlight.length > 0 ? (
 							<div className="grid grid-cols-1 gap-9 lg:grid-cols-[725fr_403fr]">
 								<ResearchReportHighlight
-									highlight={(landingData?.highlight ?? [])[0]}
-									sharedHeight={(landingData?.insights ?? []).length > 0 ? RESEARCH_WIDGET_SCROLLER_HEIGHT : undefined}
+									highlight={landingData.highlight[0]}
+									sharedHeight={landingData.insights.length > 0 ? RESEARCH_WIDGET_SCROLLER_HEIGHT : undefined}
 								/>
 								<div className="flex flex-col gap-y-16">
-									<ResearchWidgetWithScrollbar id="insights" title="Insights" articles={landingData?.insights ?? []} />
+									<ResearchWidgetWithScrollbar id="insights" title="Insights" articles={landingData.insights} />
 								</div>
 							</div>
 						) : null}
 					</div>
 
-					<ResearchBanner initialData={landingQuery.data?.landingBanner} />
+					<ResearchBanner initialData={landingQuery.data.landingBanner} />
 
 					<div id="clients">
 						<TitleLine title="Trusted by" />
 
 						<div className="mt-6 space-y-12">
-							<ResearchTrustedByCarousel logos={landingQuery.data?.trustedBy?.logos} />
+							<ResearchTrustedByCarousel logos={landingQuery.data.trustedBy?.logos} />
 
-							<ResearchSocialMediaMentions mentions={landingQuery.data?.trustedBy?.mentions} />
+							<ResearchSocialMediaMentions mentions={landingQuery.data.trustedBy?.mentions} />
 						</div>
 					</div>
 
@@ -273,20 +256,17 @@ function ArticlesLandingInner({
 								<ResearchGridWithScrollbar
 									id="more-reports"
 									title="More reports"
-									articles={landingData?.moreReports ?? []}
+									articles={landingData.moreReports}
 									pageWidget="DL Research More Reports widget"
 								/>
 							</div>
 							<div className="flex flex-col gap-y-16">
-								<ResearchSpotlightColumnWithHeight
-									title="Explore Spotlights"
-									articles={landingData?.spotlightColumn ?? []}
-								/>
+								<ResearchSpotlightColumn title="Explore Spotlights" articles={landingData.spotlightColumn} />
 							</div>
 						</div>
 					</ResearchSectionWithSharedHeightProvider>
 
-					<ResearchCollections title="Collections" articles={landingData?.collections ?? []} />
+					<ResearchCollections title="Collections" articles={landingData.collections} />
 				</div>
 			</div>
 

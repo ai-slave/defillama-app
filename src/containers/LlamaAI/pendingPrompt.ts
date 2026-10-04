@@ -1,26 +1,9 @@
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { notifyKeyChange, subscribeToStorageKey } from '~/contexts/localStorageStore'
 
-// A prompt, page context or project handed from another page to /ai/chat, which consumes it once on arrival.
+// A prompt or page context handed from another page to /ai/chat, which consumes it once on arrival.
 const PENDING_PROMPT_KEY = 'llamaai-pending-prompt'
 const PENDING_PAGE_CONTEXT_KEY = 'llamaai-pending-page-context'
-const PENDING_PROJECT_ID_KEY = 'llamaai-pending-project-id'
-
-export function setPendingProjectId(projectId: string | null) {
-	if (typeof window === 'undefined') return
-	if (projectId) {
-		localStorage.setItem(PENDING_PROJECT_ID_KEY, projectId)
-	} else {
-		localStorage.removeItem(PENDING_PROJECT_ID_KEY)
-	}
-}
-
-export function consumePendingProjectId(): string | null {
-	if (typeof window === 'undefined') return null
-	const id = localStorage.getItem(PENDING_PROJECT_ID_KEY)
-	if (id) localStorage.removeItem(PENDING_PROJECT_ID_KEY)
-	return id
-}
 
 export function setPendingPrompt(prompt: string) {
 	if (typeof window === 'undefined') return

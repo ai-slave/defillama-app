@@ -1,19 +1,18 @@
-import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState, type RefObject } from 'react'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
 import { presetNameKey, type SavedDownload } from './savedDownloads'
 
 interface SavePresetDialogProps {
 	suggestedName: string
 	existingNames: Array<string>
-	onSave: (name: string, replaceExisting: boolean) => void
+	/** Saving under a taken name (case-insensitive) replaces that preset. */
+	onSave: (name: string) => void
 	onClose: () => void
 	title?: string
 	description?: string
-	submitLabel?: string
 	placeholder?: string
 }
 
@@ -21,7 +20,6 @@ interface SavePresetDialogProps {
 export function SavePresetDialog({
 	title = 'Save preset',
 	description = 'Saved presets let you re-run this download with the same columns and filters.',
-	submitLabel = 'Save',
 	placeholder = 'e.g. Aave fees, weekly',
 	...props
 }: SavePresetDialogProps) {
@@ -30,7 +28,7 @@ export function SavePresetDialog({
 			{...props}
 			title={title}
 			description={description}
-			submitLabel={submitLabel}
+			submitLabel="Save"
 			placeholder={placeholder}
 			onNameTaken="replace"
 		/>
@@ -82,6 +80,7 @@ function PresetNameDialog({
 	onNameTaken
 }: Required<Omit<SavePresetDialogProps, 'description'>> & {
 	description?: string
+	submitLabel: string
 	onNameTaken: 'replace' | 'reject'
 }) {
 	const id = useId()
@@ -106,7 +105,7 @@ function PresetNameDialog({
 					onSubmit={(event) => {
 						event.preventDefault()
 						if (!trimmed || rejected) return
-						onSave(trimmed, takenName !== undefined)
+						onSave(trimmed)
 					}}
 				/>
 			}
@@ -135,7 +134,7 @@ function PresetNameDialog({
 					) : null}
 				</div>
 			</DialogBody>
-			<DialogFooter dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>}>
+			<DialogFooter dismiss={<DialogCancelButton />}>
 				<Button type="submit" size="md" variant="primary" disabled={!trimmed || rejected}>
 					{takenName !== undefined && !rejected ? 'Replace' : submitLabel}
 				</Button>

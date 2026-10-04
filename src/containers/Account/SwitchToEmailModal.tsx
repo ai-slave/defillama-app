@@ -1,10 +1,18 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useId, useRef, useState } from 'react'
+import { useId, useState } from 'react'
 import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
-import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import {
+	Dialog,
+	DialogBody,
+	DialogCancelButton,
+	DialogDiscardGuard,
+	DialogFooter,
+	DialogHeader,
+	useOpeningKey
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -77,12 +85,6 @@ async function confirmSwitchToEmail({
 	return (await response.json()) as SwitchToEmailResponse
 }
 
-// A logical expression cannot be lowered inside a catch, and all three handlers here format a caught
-// error the same way. Reads `message` off whatever was thrown, as the previous inline `any` casts did.
-function switchErrorMessage(error: unknown, fallback: string) {
-	return (error as { message?: string } | null | undefined)?.message || fallback
-}
-
 // Each opening starts fresh, and a closing dialog keeps its last step through the fade-out.
 export function SwitchToEmailModal(props: SwitchToEmailModalProps) {
 	return <SwitchToEmailDialog key={useOpeningKey(props.isOpen)} {...props} />
@@ -95,97 +97,72 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 	const [otp, setOtp] = useState('')
 	const [password, setPassword] = useState('')
 	const [passwordConfirm, setPasswordConfirm] = useState('')
+	// A failed request's error stays while its retry runs; a sent code or an edit to a field clears it.
 	const [error, setError] = useState<FormError | null>(null)
-	const [codeResent, setCodeResent] = useState(false)
 	const [showPassword, setShowPassword] = useState(false)
 	const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
 	// When the last code went out; the resend countdown runs from it.
 	const [codeSentAt, setCodeSentAt] = useState<number | null>(null)
-	// The whole flow is pinned to the session it started in: every request uses the
-	// token captured at the first OTP send, and a session change in the meantime
-	// discards the result instead of writing into the newer account.
-	const sessionTokenRef = useRef('')
-	const requestOtpMutation = useMutation({ mutationFn: requestSwitchToEmailOtp })
-	const confirmMutation = useMutation({ mutationFn: confirmSwitchToEmail })
+	// The whole flow is pinned to the account it started in: every request uses the token captured at the first code
+	// send, and an account change in the meantime discards the result instead of writing into the newer account. A
+	// refresh of the same account's token is not a change.
+	const [flowSession, setFlowSession] = useState({ token: '', accountId: '' })
+	const requestOtpMutation = useMutation({
+		mutationFn: requestSwitchToEmailOtp,
+		onSuccess: () => {
+			setCodeSentAt(Math.floor(Date.now() / 1000))
+			setError(null)
+		},
+		onError: (requestError) =>
+			setError({ field: 'form', message: requestError.message || 'Failed to send verification code. Try again.' })
+	})
+	const confirmMutation = useMutation({
+		mutationFn: confirmSwitchToEmail,
+		onSuccess: (data) => {
+			// The account changed while the confirmation was pending: the switch went through server-side, but this
+			// dialog belongs to an account that is no longer signed in, so it closes instead of announcing success.
+			if (pb.authStore.record?.id !== flowSession.accountId) {
+				onClose()
+				return
+			}
+			// Keep the record with the new token: a token alone reads as signed out until the refresh lands, which
+			// swaps the account page for its loader and unmounts this dialog before its success step.
+			if (data.token) pb.authStore.save(data.token, pb.authStore.record)
+			setStep('success')
+		},
+		onError: (confirmError) => {
+			const message = confirmError.message || 'Failed to switch to email authentication. Try again.'
+			// The server names the code "OTP" in each of its code rejections: missing, malformed, invalid or expired.
+			setError({ field: /\bOTP\b/.test(message) ? 'otp' : 'form', message })
+		}
+	})
 	// Neither request can be cancelled, so the dialog stays open until it settles; a late result
 	// therefore always lands in the opening that started it.
 	const isLoading = requestOtpMutation.isPending || confirmMutation.isPending
 	const confirmIncomplete = otp.length !== 6 || !password || !passwordConfirm
 
-	const handleRequestOtp = async (e: React.FormEvent) => {
+	const handleRequestOtp = (e: React.FormEvent) => {
 		e.preventDefault()
-		if (!email || isLoading) return
-
-		setError(null)
-		sessionTokenRef.current = pb.authStore.token
-
-		try {
-			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
-			setCodeSentAt(Math.floor(Date.now() / 1000))
-			setStep('confirm')
-		} catch (requestError) {
-			setError({
-				field: 'form',
-				message: switchErrorMessage(requestError, 'Failed to send verification code. Try again.')
-			})
-		}
+		const session = { token: pb.authStore.token, accountId: pb.authStore.record?.id ?? '' }
+		setFlowSession(session)
+		requestOtpMutation.mutate({ email, sessionToken: session.token }, { onSuccess: () => setStep('confirm') })
 	}
 
-	const handleConfirm = async (e: React.FormEvent) => {
+	const handleConfirm = (e: React.FormEvent) => {
 		e.preventDefault()
-		if (!otp || !password || !passwordConfirm || isLoading) return
-
 		if (password !== passwordConfirm) {
 			setError({ field: 'passwordConfirm', message: 'Passwords do not match.' })
 			return
 		}
-
 		if (password.length < 8) {
 			setError({ field: 'password', message: 'Password must be at least 8 characters.' })
 			return
 		}
-
-		setError(null)
-		setCodeResent(false)
-
-		const sessionToken = sessionTokenRef.current
-
-		try {
-			const data = await confirmMutation.mutateAsync({ sessionToken, email, otp, password, passwordConfirm })
-
-			// The session changed while the confirmation was pending: the switch went
-			// through server-side, but this dialog belongs to a session that no longer
-			// exists — close quietly instead of overwriting or announcing success.
-			if (pb.authStore.token !== sessionToken) {
-				onClose()
-				return
-			}
-
-			if (data.token) {
-				pb.authStore.save(data.token)
-			}
-
-			setStep('success')
-		} catch (confirmError) {
-			const message = switchErrorMessage(confirmError, 'Failed to switch to email authentication. Try again.')
-			// The server names the code "OTP" in each of its code rejections: missing, malformed, invalid or expired.
-			setError({ field: /\bOTP\b/.test(message) ? 'otp' : 'form', message })
-		}
+		confirmMutation.mutate({ sessionToken: flowSession.token, email, otp, password, passwordConfirm })
 	}
 
-	const handleResendOtp = async () => {
-		if (isLoading) return
-
-		setError(null)
-		setCodeResent(false)
-
-		try {
-			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
-			setCodeSentAt(Math.floor(Date.now() / 1000))
-			setCodeResent(true)
-		} catch (resendError) {
-			setError({ field: 'form', message: switchErrorMessage(resendError, 'Failed to resend verification code.') })
-		}
+	const handleResendOtp = () => {
+		requestOtpMutation.mutate({ email, sessionToken: flowSession.token })
 	}
 
 	const handleSuccessDone = () => {
@@ -198,12 +175,6 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 		if (error) setError(null)
 	}
 
-	const cancelButton = (
-		<Button type="button" size="md" disabled={isLoading} onClick={onClose}>
-			Cancel
-		</Button>
-	)
-
 	return (
 		<Dialog
 			size="sm"
@@ -214,6 +185,11 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 			portal
 			unmountOnHide
 		>
+			<DialogDiscardGuard
+				when={step === 'confirm' && Boolean(otp || password || passwordConfirm)}
+				title="Discard the switch?"
+				description="The code and password you entered are lost, and switching again sends a new code."
+			/>
 			{step === 'email' && (
 				<form onSubmit={handleRequestOtp} className="flex min-h-0 flex-auto flex-col">
 					<DialogHeader title="Switch to email" />
@@ -237,6 +213,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 										readOnly={isLoading}
 										value={email}
 										aria-invalid={error ? true : undefined}
+										aria-describedby={error ? `${fieldId}-email-error` : undefined}
 										onChange={(e) => {
 											setEmail(e.target.value)
 											clearError()
@@ -248,11 +225,15 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							/>
 						</div>
 
-						{error ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
+						{error ? (
+							<div id={`${fieldId}-email-error`}>
+								<InlineStatus variant="error">{error.message}</InlineStatus>
+							</div>
+						) : null}
 					</DialogBody>
 					<DialogFooter
 						leading={!email ? <p className="body-sm text-tertiary">Enter an email address</p> : null}
-						dismiss={cancelButton}
+						dismiss={<DialogCancelButton />}
 					>
 						<Button
 							type="submit"
@@ -314,11 +295,6 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 								disabled={isLoading}
 								pending={requestOtpMutation.isPending}
 							/>
-							{codeResent ? (
-								<p role="status" className="body-sm text-secondary">
-									Code sent. Check your inbox.
-								</p>
-							) : null}
 						</div>
 
 						<div className="flex flex-col gap-1.5">
@@ -401,7 +377,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 								<p className="body-sm text-tertiary">Enter the code and your password twice</p>
 							) : null
 						}
-						dismiss={cancelButton}
+						dismiss={<DialogCancelButton />}
 					>
 						<Button
 							type="submit"

@@ -17,25 +17,24 @@ function AuthActions({
 	const isClient = useIsClient()
 	const { isAuthenticated, loaders } = useAuthContext()
 
-	if (!isClient || loaders.userLoading) {
-		return (
-			<div
-				className={`animate-pulse rounded-lg bg-sub-border-slate-100 dark:bg-sub-border-strong ${skeletonClassName}`}
-			/>
-		)
-	}
-
-	if (isAuthenticated) {
-		return (
-			<BasicLink href="/account" className={`flex items-center gap-1.5 font-medium ${accountClassName}`}>
-				<img src="/assets/account_avatar.png" alt="" className="size-6 rounded-full" />
-				<span>My Account</span>
-				<Icon name="chevron-right" height={16} width={16} />
-			</BasicLink>
-		)
-	}
-
-	return <SignInModal text="Sign-in" className={signInClassName} />
+	// The sign-in stays mounted through every auth state, so a sign-in from another tab ends on its own step instead of
+	// vanishing with the signed-out branch. Its trigger hides itself while the account loads and once signed in.
+	return (
+		<>
+			{!isClient || loaders.userLoading ? (
+				<div
+					className={`animate-pulse rounded-lg bg-sub-border-slate-100 dark:bg-sub-border-strong ${skeletonClassName}`}
+				/>
+			) : isAuthenticated ? (
+				<BasicLink href="/account" className={`flex items-center gap-1.5 font-medium ${accountClassName}`}>
+					<img src="/assets/account_avatar.png" alt="" className="size-6 rounded-full" />
+					<span>My Account</span>
+					<Icon name="chevron-right" height={16} width={16} />
+				</BasicLink>
+			) : null}
+			{isClient ? <SignInModal text="Sign-in" className={signInClassName} /> : null}
+		</>
+	)
 }
 
 export function SubscriptionHeader() {
