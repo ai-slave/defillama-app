@@ -11,7 +11,7 @@ import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useFetchChainChartData } from '~/containers/ChainOverview/useFetchChainChartData'
 import { useIsClient } from '~/hooks/useIsClient'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -135,10 +135,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 	return (
 		<div className="col-span-full flex min-h-[360px] flex-col">
 			{isFetchingChartData || !router.isReady || !isClient ? (
-				<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center">
-					<LocalLoader />
-					<span className="sr-only">Loading chart data</span>
-				</div>
+				<SurfaceBodyLoadingStatus label="Loading chart data" />
 			) : activeAddressesNotice === 'fill' ? (
 				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
 			) : (

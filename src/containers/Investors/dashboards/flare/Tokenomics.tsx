@@ -349,13 +349,13 @@ export default function Tokenomics() {
 													{w.wallet.slice(0, 6)}…{w.wallet.slice(-4)}
 												</a>
 											</td>
-											<td className="p-3 text-right font-mono text-xs text-pro-text-secondary tabular-nums">
+											<td className="p-3 text-right text-xs text-pro-text-secondary tabular-nums">
 												{formatNumber(w.feesToken, { maximumFractionDigits: 0 })} {w.feeToken}
 											</td>
-											<td className="p-3 text-right font-mono text-xs text-pro-text-primary tabular-nums">
+											<td className="p-3 text-right text-xs text-pro-text-primary tabular-nums">
 												{w.feesUsdFormatted}
 											</td>
-											<td className="p-3 text-right font-mono text-xs text-pro-text-secondary tabular-nums">
+											<td className="p-3 text-right text-xs text-pro-text-secondary tabular-nums">
 												{formatNumber(w.txCount)}
 											</td>
 										</tr>

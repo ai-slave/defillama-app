@@ -83,7 +83,7 @@ export function ScoreBar({
 	return (
 		<span className={`inline-flex items-center gap-2 ${className}`.trim()}>
 			{showValue ? (
-				<span className="min-w-[5ch] text-left font-jetbrains tabular-nums">
+				<span className="min-w-[5ch] text-left tabular-nums">
 					{score == null
 						? 'N/A'
 						: formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}

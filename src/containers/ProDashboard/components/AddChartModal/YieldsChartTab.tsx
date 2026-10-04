@@ -8,8 +8,7 @@ import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
-import { InlineStatus } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { normalizeYieldChartType, type YieldChartType } from '../../types'
@@ -322,8 +321,8 @@ export function YieldsChartTab({
 					</div>
 				</InlineStatus>
 			) : yieldsLoading ? (
-				<div className="flex h-32 items-center justify-center">
-					<LocalLoader />
+				<div role="status" aria-live="polite" className="flex h-32 items-center justify-center">
+					<LoadingIndicator />
 				</div>
 			) : (
 				<div className="flex flex-col gap-4">
@@ -713,14 +712,14 @@ export function YieldsChartTab({
 											</Button>
 										</div>
 									) : isPreviewLoading ? (
-										<div className="flex h-full items-center justify-center">
-											<LocalLoader />
+										<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
+											<LoadingIndicator />
 										</div>
 									) : (
 										<Suspense
 											fallback={
-												<div className="flex h-full items-center justify-center">
-													<LocalLoader />
+												<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
+													<LoadingIndicator />
 												</div>
 											}
 										>

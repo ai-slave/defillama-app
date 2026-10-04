@@ -164,7 +164,7 @@ export function UnifiedVirtualTable({
 											compact
 												? 'flex items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
 												: ''
-										}`}
+										} ${textAlign === 'end' ? 'tabular-nums' : ''}`}
 										style={{
 											textAlign,
 											justifyContent: compact

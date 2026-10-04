@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
-import { LocalLoader } from '~/ui/Loaders'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import type { ChartOptionsMap } from './chart-datasets'
 import { DownloadsCatalog as SimpleCatalog } from './DownloadsCatalog'
@@ -9,11 +9,7 @@ import { ModeToggle, type DownloadsMode } from './sql/ModeToggle'
 
 const SqlWorkspace = dynamic(() => import('./sql/SqlWorkspace').then((m) => m.SqlWorkspace), {
 	ssr: false,
-	loading: () => (
-		<div className="flex min-h-[60vh] items-center justify-center">
-			<LocalLoader />
-		</div>
-	)
+	loading: () => <PanelLoadingStatus label="Loading SQL Studio" />
 })
 
 interface DownloadsCatalogProps {

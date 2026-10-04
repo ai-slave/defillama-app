@@ -9,8 +9,9 @@ import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Se
 import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
@@ -257,21 +258,13 @@ export function UnlocksChartTab({
 	const selectedChartLabel = UNLOCKS_CHART_TYPES.find((t) => t.value === selectedUnlocksChartType)?.label || ''
 	let chartContent: ReactNode
 	if (isLoading) {
-		chartContent = (
-			<div className="flex h-[320px] items-center justify-center">
-				<LocalLoader />
-			</div>
-		)
+		chartContent = <SurfaceBodyLoadingStatus />
 	} else if (selectedUnlocksChartType === 'total') {
 		if (totalDataset.source.length === 0) {
-			chartContent = (
-				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-					No unlocks data.
-				</div>
-			)
+			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<div className="h-[320px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={totalDataset}
 						charts={totalCharts}
@@ -287,14 +280,10 @@ export function UnlocksChartTab({
 		}
 	} else if (selectedUnlocksChartType === 'schedule') {
 		if (scheduleDataset.source.length === 0 || stacks.length === 0) {
-			chartContent = (
-				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-					No unlocks data.
-				</div>
-			)
+			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<div className="h-[320px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
 						dataset={scheduleDataset}
 						charts={scheduleCharts}
@@ -308,38 +297,26 @@ export function UnlocksChartTab({
 		}
 	} else if (selectedUnlocksChartType === 'allocation') {
 		if (allocationPieChart.chartData.length === 0) {
-			chartContent = (
-				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-					No unlocks data.
-				</div>
-			)
+			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<div className="h-[320px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<PieChart chartData={allocationPieChart.chartData} stackColors={allocationPieChartColors} />
 				</Suspense>
 			)
 		}
 	} else if (selectedUnlocksChartType === 'locked-unlocked') {
 		if (lockedUnlockedPieChartData.length === 0) {
-			chartContent = (
-				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-					No unlocks data.
-				</div>
-			)
+			chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 		} else {
 			chartContent = (
-				<Suspense fallback={<div className="h-[320px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<PieChart chartData={lockedUnlockedPieChartData} stackColors={LOCKED_UNLOCKED_COLORS} valueSymbol="%" />
 				</Suspense>
 			)
 		}
 	} else {
-		chartContent = (
-			<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-				No unlocks data.
-			</div>
-		)
+		chartContent = <SurfaceBodyStatus variant="empty">No unlocks data.</SurfaceBodyStatus>
 	}
 
 	return (

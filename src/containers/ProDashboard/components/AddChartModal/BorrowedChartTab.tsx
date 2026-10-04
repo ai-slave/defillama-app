@@ -8,8 +8,9 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -149,22 +150,12 @@ export function BorrowedChartTab({
 
 	let chartContent: ReactElement | null = null
 	if (isLoading) {
-		chartContent = (
-			<div className="flex h-[320px] items-center justify-center">
-				<LocalLoader />
-			</div>
-		)
+		chartContent = <SurfaceBodyLoadingStatus />
 	} else {
 		switch (selectedBorrowedChartType) {
 			case 'chainsBorrowed':
 				chartContent = (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							title=""
 							dataset={visibleDataset}
@@ -181,13 +172,7 @@ export function BorrowedChartTab({
 				break
 			case 'tokenBorrowedUsd':
 				chartContent = (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							title=""
 							dataset={visibleDataset}
@@ -204,26 +189,14 @@ export function BorrowedChartTab({
 				break
 			case 'tokensBorrowedPie':
 				chartContent = (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart chartData={piePresentation.chartData} stackColors={piePresentation.stackColors} />
 					</Suspense>
 				)
 				break
 			case 'tokenBorrowedRaw':
 				chartContent = (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							title=""
 							dataset={visibleDataset}
@@ -317,11 +290,11 @@ export function BorrowedChartTab({
 						</div>
 
 						{!hasData && !isLoading ? (
-							<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-								No data available for this chart type.
+							<div className="flex min-h-[400px] flex-col">
+								<SurfaceBodyStatus variant="empty">No data available for this chart type.</SurfaceBodyStatus>
 							</div>
 						) : (
-							<div className="h-[320px]">{chartContent}</div>
+							<div className="flex min-h-[400px] flex-col">{chartContent}</div>
 						)}
 					</div>
 				) : (

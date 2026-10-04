@@ -66,7 +66,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 				<span className="text-right">Orders</span>
 			</div>
 
-			<div className="flex flex-col font-mono text-xs">
+			<div className="flex flex-col text-xs tabular-nums">
 				{reversedAsks.map((level) => {
 					const pct = (level.sz / maxSize) * 100
 					return (
@@ -134,7 +134,7 @@ function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 				<span className="text-right">Side</span>
 			</div>
 
-			<div className="min-h-0 flex-1 overflow-y-auto font-mono text-xs">
+			<div className="min-h-0 flex-1 overflow-y-auto text-xs tabular-nums">
 				{trades.map((trade) => {
 					const isBuy = trade.side === 'B'
 					return (

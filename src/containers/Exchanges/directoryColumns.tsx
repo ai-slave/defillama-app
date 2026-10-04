@@ -97,7 +97,7 @@ export function TierBadge({ tier }: { tier: string }) {
 		// Fixed height, not padding: the cell is a fixed-height <td> with overflow:hidden,
 		// so a padding-sized badge clips its own top and bottom border.
 		<span
-			className="inline-flex h-[18px] min-w-[22px] items-center justify-center rounded-sm border border-current px-1.5 mono-sm-bold"
+			className="inline-flex h-[18px] min-w-[22px] items-center justify-center rounded-sm border border-current px-1.5 title-sm"
 			style={{ color }}
 		>
 			{tier}

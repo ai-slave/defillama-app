@@ -478,7 +478,7 @@ export function UpcomingEvent({
 									eventSummaries.map((summary) => (
 										<div key={summary.label} className="flex items-center justify-between gap-3">
 											<div className="flex min-w-0 flex-col items-start">
-												<span className="inline-flex items-baseline gap-1 mono-sm-bold whitespace-nowrap text-primary">
+												<span className="inline-flex items-baseline gap-1 title-sm whitespace-nowrap text-primary">
 													{summary.usdValue !== null
 														? formatUsd(summary.usdValue, {
 																compact: true,
@@ -495,7 +495,7 @@ export function UpcomingEvent({
 											</div>
 											{summary.percentageFloat !== null ? (
 												<div className="flex shrink-0 flex-col items-end">
-													<span className="mono-sm-bold text-primary">
+													<span className="title-sm text-primary">
 														{formatPercent(summary.percentageFloat, { input: 'percent', compact: true })}
 													</span>
 													<span className="label-sm whitespace-nowrap text-tertiary">of float</span>

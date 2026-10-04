@@ -108,7 +108,7 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 													<td
 														key={cell.id}
 														className={`border-r border-subtle px-1 py-2 last:border-r-0 sm:px-2 ${
-															cell.column.columnDef.meta?.align === 'end' ? 'text-right' : 'text-left'
+															cell.column.columnDef.meta?.align === 'end' ? 'text-right tabular-nums' : 'text-left'
 														}`}
 														style={{
 															minWidth: cellIndex === 0 ? '120px' : '60px',

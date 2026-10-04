@@ -71,7 +71,7 @@ export function TableRow<F extends SortingFeatures & VisibilityFeatures, T exten
 									data-chainpage={isChainPage}
 									className={`truncate border-t border-r border-subtle p-3 ${
 										compact ? 'border-r-0 px-5 py-2' : ''
-									} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
+									} ${textAlign === 'end' ? 'tabular-nums' : ''} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
 									style={{
 										textAlign,
 										verticalAlign: compact ? 'middle' : undefined,

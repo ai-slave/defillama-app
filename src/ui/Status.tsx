@@ -32,10 +32,8 @@ export function PanelStatus({ children, variant, className }: PanelStatusProps) 
 	)
 }
 
-/** Default in-panel loading indicator (design.md → Status states): quiet
-    tertiary text matching the empty/error copy. The pulsing-logo LocalLoader
-    is reserved for route-level full-page loads — one per viewport, never per
-    card/panel. */
+/** The app's loading indicator (design.md → Status states): quiet tertiary
+    text matching the empty/error copy. */
 export function LoadingIndicator({ label = 'Loading' }: { label?: string }) {
 	return (
 		<span className="flex items-center gap-1 body-sm text-tertiary">

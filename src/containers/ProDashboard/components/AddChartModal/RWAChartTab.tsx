@@ -10,7 +10,8 @@ import {
 } from '~/containers/ProDashboard/components/datasets/RWADataset/useRWAChartData'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
-import { LocalLoader } from '~/ui/Loaders'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
@@ -339,15 +340,11 @@ function OverviewPreview({
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
 	if (isLoading || !chartDataset) {
-		return (
-			<div className="flex h-[320px] items-center justify-center">
-				<LocalLoader />
-			</div>
-		)
+		return <SurfaceBodyLoadingStatus />
 	}
 
 	return (
-		<Suspense fallback={<div className="min-h-[320px]" />}>
+		<Suspense fallback={<ChartPanelBodyFallback />}>
 			{chartView === 'timeSeries' && timeSeriesDataset ? (
 				<MultiSeriesChart
 					dataset={timeSeriesDataset}
@@ -362,9 +359,7 @@ function OverviewPreview({
 			) : chartView === 'treemap' && treemapData.length > 0 ? (
 				<TreemapChart treeData={treemapData} variant="rwa" height="320px" valueLabel={getChartMetricLabel(metric)} />
 			) : (
-				<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
-					No data available
-				</div>
+				<SurfaceBodyStatus variant="empty">No data available</SurfaceBodyStatus>
 			)}
 		</Suspense>
 	)
@@ -375,23 +370,15 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: A
 	const charts = useMemo(() => buildProRwaAssetChartSeries(chartDataset, metrics), [chartDataset, metrics])
 
 	if (!assetId) {
-		return (
-			<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
-				Select an asset to see preview
-			</div>
-		)
+		return <SurfaceBodyStatus variant="empty">Select an asset to see preview</SurfaceBodyStatus>
 	}
 
 	if (isLoading || !chartDataset) {
-		return (
-			<div className="flex h-[320px] items-center justify-center">
-				<LocalLoader />
-			</div>
-		)
+		return <SurfaceBodyLoadingStatus />
 	}
 
 	return (
-		<Suspense fallback={<div className="min-h-[320px]" />}>
+		<Suspense fallback={<ChartPanelBodyFallback />}>
 			<MultiSeriesChart dataset={chartDataset} charts={charts} hideDefaultLegend={false} />
 		</Suspense>
 	)

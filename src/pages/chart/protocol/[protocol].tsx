@@ -7,7 +7,7 @@ import { resolveEmbedTvlSettings, resolveProtocolChartQuery } from '~/containers
 import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { useFetchProtocolChartData } from '~/containers/ProtocolOverview/useFetchProtocolChartData'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -137,10 +137,7 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 			{isActiveAddressesHidden && !hasVisibleCharts && loadingCharts.length === 0 ? (
 				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
 			) : !hasVisibleCharts && loadingCharts.length > 0 ? (
-				<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center">
-					<LocalLoader />
-					<span className="sr-only">Loading chart data</span>
-				</div>
+				<SurfaceBodyLoadingStatus label="Loading chart data" />
 			) : (
 				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
 					{isActiveAddressesHidden ? (

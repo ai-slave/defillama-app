@@ -95,7 +95,7 @@ export function StickyTable<T extends RowData>({ table }: { table: ReactTable<So
 											<td
 												key={cell.id}
 												style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index), ...cellStyle }}
-												className={`border-b border-subtle px-3 py-3 align-middle ${cell.column.columnDef.meta?.cellClassName ?? ''} ${cellClass ?? ''}`}
+												className={`border-b border-subtle px-3 py-3 align-middle ${align === 'end' ? 'tabular-nums' : ''} ${cell.column.columnDef.meta?.cellClassName ?? ''} ${cellClass ?? ''}`}
 											>
 												<FlexRender cell={cell} />
 											</td>

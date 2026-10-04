@@ -86,7 +86,15 @@ export function TokenPageTableBodyCell({
 	...props
 }: TokenPageTableCellProps & TdHTMLAttributes<HTMLTableCellElement>) {
 	return (
-		<td className={clsx('px-3 py-2 align-middle', getTableTextAlignClass(textAlign), className)} {...props}>
+		<td
+			className={clsx(
+				'px-3 py-2 align-middle',
+				getTableTextAlignClass(textAlign),
+				textAlign === 'end' && 'tabular-nums',
+				className
+			)}
+			{...props}
+		>
 			{children}
 		</td>
 	)

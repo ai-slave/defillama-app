@@ -227,7 +227,7 @@ function MetadataTable({
 							{columns.map((column) => (
 								<td
 									key={column.key}
-									className={`border-b border-subtle px-3 py-2 ${column.align === 'right' ? 'font-jetbrains' : ''}`}
+									className={`border-b border-subtle px-3 py-2 ${column.align === 'right' ? 'tabular-nums' : ''}`}
 									style={{ textAlign: column.align === 'right' ? 'right' : 'left' }}
 								>
 									<MetadataTableCell

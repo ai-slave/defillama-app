@@ -4,7 +4,7 @@ import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Se
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
@@ -124,13 +124,9 @@ export function IncomeStatementChartTab({
 				{hasSelection ? (
 					<div className="bg-pro-cards-bg p-3">
 						{isLoading ? (
-							<div className="flex h-[360px] items-center justify-center">
-								<LocalLoader />
-							</div>
+							<SurfaceBodyLoadingStatus />
 						) : !incomeStatement || !hasData ? (
-							<div className="flex h-[360px] items-center justify-center text-center text-pro-text-tertiary">
-								No income statement data available.
-							</div>
+							<SurfaceBodyStatus variant="empty">No income statement data available.</SurfaceBodyStatus>
 						) : (
 							<div>
 								<IncomeStatement

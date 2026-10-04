@@ -7,7 +7,8 @@ import { SubscriptionLoadError } from '~/containers/Subscription/shared/Subscrip
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner, LocalLoader } from '~/ui/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
@@ -132,11 +133,7 @@ export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 	})
 
 	if (access === 'loading') {
-		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<LocalLoader />
-			</div>
-		)
+		return <PanelLoadingStatus label="Loading SQL Studio" />
 	}
 
 	if (access === 'unknown') {

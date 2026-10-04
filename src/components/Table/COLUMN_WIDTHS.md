@@ -49,9 +49,9 @@ Notes:
   by that content, not the header; measure the real cell, don't trim them blindly.
 - Fonts: the table is `text-sm` (14px) and the app font is **proportional Inter** (`--font-inter`,
   `public/fonts/inter.woff2`). Header is `font-medium`; for Inter the advance widths are
-  effectively constant across weight, so 400 vs 500 doesn't change the result. Ordinary
-  numeric cells do not use `mono-*` or `tabular-nums`; those are reserved for the explicit
-  metric/code and changing-value cases documented in `design.md`.
+  effectively constant across weight, so 400 vs 500 doesn't change the result. Numeric
+  (end-aligned) cells render with `tabular-nums`, so measure them with that feature on;
+  cells never use `mono-*` (`design.md` → Typography).
 - **Buffer is optional, default 0.** The 24px of `px-3` padding already keeps text well
   clear of the column edge — adding more just makes columns loose. A column whose content
   - padding ≈ its width is already correct; don't pad it out. The only case for a few px:

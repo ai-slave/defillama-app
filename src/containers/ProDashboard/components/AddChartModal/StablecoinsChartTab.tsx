@@ -29,8 +29,9 @@ import {
 } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -324,16 +325,12 @@ export function StablecoinsChartTab({
 
 	const renderChainChart = () => {
 		if (isLoading) {
-			return (
-				<div className="flex h-[320px] items-center justify-center">
-					<LocalLoader />
-				</div>
-			)
+			return <SurfaceBodyLoadingStatus />
 		}
 
 		if (chainChartType === 'pie') {
 			return (
-				<Suspense fallback={<LocalLoader />}>
+				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<PieChart
 						chartData={chainPiePresentation.chartData}
 						stackColors={{ ...chainPiePresentation.stackColors, ...stackColors }}
@@ -354,7 +351,7 @@ export function StablecoinsChartTab({
 			chainChartType === 'usdInflows' || chainChartType === 'tokenInflows' ? BAR_EXPORT_BUTTONS : AREA_EXPORT_BUTTONS
 
 		return (
-			<Suspense fallback={<LocalLoader />}>
+			<Suspense fallback={<ChartPanelExportShellFallback />}>
 				<MultiSeriesChart
 					title=""
 					dataset={chainChartPayload.dataset}
@@ -375,24 +372,14 @@ export function StablecoinsChartTab({
 
 	const renderAssetChart = () => {
 		if (isLoading) {
-			return (
-				<div className="flex h-[320px] items-center justify-center">
-					<LocalLoader />
-				</div>
-			)
+			return <SurfaceBodyLoadingStatus />
 		}
 
 		switch (assetChartType) {
 			case 'totalCirc':
 				if (!assetDataset) return null
 				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							title=""
 							dataset={assetDataset}
@@ -408,13 +395,7 @@ export function StablecoinsChartTab({
 			case 'chainMcaps':
 				if (!assetDataset) return null
 				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							title=""
 							dataset={assetDataset}
@@ -429,13 +410,7 @@ export function StablecoinsChartTab({
 				)
 			case 'chainPie':
 				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
 							chartData={assetPiePresentation.chartData}
 							stackColors={{ ...assetPiePresentation.stackColors, ...assetChainColors }}
@@ -446,13 +421,7 @@ export function StablecoinsChartTab({
 			case 'chainDominance':
 				if (!assetDataset) return null
 				return (
-					<Suspense
-						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LocalLoader />
-							</div>
-						}
-					>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart
 							title=""
 							valueSymbol="%"
@@ -642,7 +611,9 @@ export function StablecoinsChartTab({
 								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by chain'}
 							</p>
 						</div>
-						<div className="h-[320px]">{stablecoinMode === 'chain' ? renderChainChart() : renderAssetChart()}</div>
+						<div className="flex min-h-[400px] flex-col">
+							{stablecoinMode === 'chain' ? renderChainChart() : renderAssetChart()}
+						</div>
 					</div>
 				) : (
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">

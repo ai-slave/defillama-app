@@ -51,7 +51,7 @@ function PercentileCell({ percentile }: { percentile: number | null }) {
 	const width = Math.max(0, Math.min(100, percentile ?? 0))
 	return (
 		<span className="flex items-center justify-between gap-2">
-			<span className="font-jetbrains tabular-nums">
+			<span className="tabular-nums">
 				{percentile == null
 					? 'N/A'
 					: formatPercent(percentile, {
@@ -104,7 +104,7 @@ export function CategoryBreakdownTable({
 						{columns.map((column) => (
 							<td key={column.key} className="border-l border-subtle px-4 py-2">
 								<span className="flex items-center justify-between gap-2">
-									<span className="font-jetbrains tabular-nums">
+									<span className="tabular-nums">
 										{column.score == null
 											? 'N/A'
 											: formatNumber(column.score, {

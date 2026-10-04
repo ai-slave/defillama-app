@@ -187,12 +187,12 @@ function FeeActivationTable({ rows }: { rows: Array<FeeActivationRow> }) {
 				{rows.map((row, index) => {
 					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
 					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
-					const numCell = `${cell} text-right font-jetbrains tabular-nums`
+					const numCell = `${cell} text-right tabular-nums`
 					return [
 						<div key={`${row.chain}-chain`} className={cell}>
 							{row.chain}
 						</div>,
-						<div key={`${row.chain}-date`} className={`${cell} font-jetbrains tabular-nums`}>
+						<div key={`${row.chain}-date`} className={`${cell} tabular-nums`}>
 							{(row.activationDate || '').slice(0, 10)}
 						</div>,
 						<div key={`${row.chain}-pf`} className={numCell}>

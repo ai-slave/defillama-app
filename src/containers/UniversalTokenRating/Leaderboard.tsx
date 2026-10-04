@@ -76,7 +76,7 @@ function breakdownValue(column: BreakdownColumn, mode: BreakdownMode, gradingSca
 		return <GradeBadge score={column.score} scale={10} grade={column.grade} gradingScale={gradingScale} />
 	if (mode === 'score')
 		return (
-			<span className="font-jetbrains tabular-nums">
+			<span className="tabular-nums">
 				{column.score == null
 					? 'N/A'
 					: formatNumber(column.score, {
@@ -88,7 +88,7 @@ function breakdownValue(column: BreakdownColumn, mode: BreakdownMode, gradingSca
 			</span>
 		)
 	return (
-		<span className="font-jetbrains tabular-nums">
+		<span className="tabular-nums">
 			{column.percentile == null
 				? 'N/A'
 				: formatPercent(column.percentile, {
@@ -365,7 +365,7 @@ export function Leaderboard({
 										toggleExpanded(row.asset)
 									}}
 								>
-									<td className="border-b border-subtle px-3 py-2.5 font-jetbrains tabular-nums" style={stickyStyle(0)}>
+									<td className="border-b border-subtle px-3 py-2.5 tabular-nums" style={stickyStyle(0)}>
 										{row.scores.rank}
 									</td>
 									<td className="border-b border-subtle px-3 py-2.5" style={stickyStyle(1)}>
@@ -392,7 +392,7 @@ export function Leaderboard({
 										<span className="flex items-center gap-3">
 											<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
 											<span
-												className={`font-jetbrains tabular-nums ${
+												className={`tabular-nums ${
 													(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
 												}`}
 											>
@@ -416,7 +416,7 @@ export function Leaderboard({
 											gradingScale={grading?.performance.scale}
 										/>
 									</td>
-									<td className="border-b border-subtle px-3 py-2.5 font-jetbrains whitespace-nowrap tabular-nums">
+									<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap tabular-nums">
 										{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
 									</td>
 									<td className="border-b border-subtle px-3 py-2.5">

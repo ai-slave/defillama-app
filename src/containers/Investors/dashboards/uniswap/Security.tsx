@@ -157,7 +157,7 @@ function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 						return (
 							<Fragment key={key}>
 								<div className={cell}>{report.repo}</div>
-								<div className={`${cell} font-jetbrains`}>{report.version}</div>
+								<div className={cell}>{report.version}</div>
 								<div className={cell}>
 									<a
 										href={report.url}

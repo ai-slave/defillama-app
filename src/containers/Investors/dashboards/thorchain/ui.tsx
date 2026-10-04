@@ -543,7 +543,7 @@ export function ApiTable({ table, maxHeight }: { table: ApiTableData; maxHeight?
 						<div
 							key={`${i}-${c.key}`}
 							className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary ${
-								c.format && c.format !== 'text' ? 'font-jetbrains tabular-nums' : ''
+								c.format && c.format !== 'text' ? 'tabular-nums' : ''
 							} ${i % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
 							style={{ textAlign: c.align ?? 'left' }}
 						>

@@ -268,14 +268,14 @@ function HeroMock() {
 					className="grid border-b border-sub-line/40 last:border-b-0"
 					style={{ gridTemplateColumns: heroGridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 font-mono text-[11px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 text-[11px] text-sub-text-muted tabular-nums">
 						{row.num}
 					</div>
 					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 font-mono text-xs">
 						<span className="block max-w-full min-w-0 truncate whitespace-nowrap">{highlightFormula(row.formula)}</span>
 					</div>
 					<div
-						className={`flex items-center px-3 py-2.5 font-mono text-xs text-sub-live ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''} font-bold`}
+						className={`flex items-center px-3 py-2.5 text-xs text-sub-live tabular-nums ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''} font-bold`}
 					>
 						{row.value}
 					</div>
@@ -328,7 +328,7 @@ type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number
 type MockRow = { num: string; cells: Array<MockCell> }
 
 const cellClass = (variant?: 'value' | 'formula') =>
-	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? '' : 'text-sub-text-soft'
+	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? 'font-mono' : 'text-sub-text-soft'
 
 function MockTable({
 	formulaBar,
@@ -366,7 +366,7 @@ function MockTable({
 					className="border-b border-sub-line/40 bg-sub-dark-card/40"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 text-[10px] text-sub-text-muted tabular-nums">
 						{headers.num}
 					</div>
 					{headers.labels.map((label, i) => (
@@ -385,14 +385,14 @@ function MockTable({
 					className="border-b border-sub-line/40 last:border-b-0"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 text-[10px] text-sub-text-muted tabular-nums">
 						{row.num}
 					</div>
 					{row.cells.map((cell, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 text-[11px] whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -402,14 +402,14 @@ function MockTable({
 			))}
 			{footer ? (
 				<div className="border-t border-sub-line/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 text-[10px] text-sub-text-muted tabular-nums">
 						{footer.num}
 					</div>
 					{footer.cells.map((cell, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 text-[11px] whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}

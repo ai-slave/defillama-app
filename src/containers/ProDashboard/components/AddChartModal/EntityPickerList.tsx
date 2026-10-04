@@ -3,7 +3,7 @@ import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 import { getItemIconUrl } from '../../utils'
 
 interface EntityOption {
@@ -88,8 +88,12 @@ export function EntityPickerList({
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-				<LocalLoader />
+			<div
+				role="status"
+				aria-live="polite"
+				className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-pro-cards-border bg-pro-cards-bg"
+			>
+				<LoadingIndicator />
 			</div>
 		)
 	}

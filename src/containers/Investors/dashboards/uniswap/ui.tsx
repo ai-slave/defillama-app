@@ -445,7 +445,7 @@ export function MiniTable({
 									// oxlint-disable-next-line react/no-array-index-key -- Cells retain their fixed schema position within the keyed row.
 									key={cellIndex}
 									className={`truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${
-										align === 'right' ? 'text-right font-jetbrains tabular-nums' : ''
+										align === 'right' ? 'text-right tabular-nums' : ''
 									} ${rowIndex % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
 								>
 									{cell}

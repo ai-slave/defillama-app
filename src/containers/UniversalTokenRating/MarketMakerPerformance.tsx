@@ -124,13 +124,13 @@ function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProv
 							>
 								<td className="px-4 py-2.5 label-md">{provider.name}</td>
 								<td className="px-3 py-2.5 text-secondary">{normalizedEngagementType(provider.engagementType)}</td>
-								<td className="px-3 py-2.5 text-right mono-sm">
+								<td className="px-3 py-2.5 text-right tabular-nums">
 									{formatPercent(provider.avgSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 								</td>
-								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth50)}</td>
-								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth100)}</td>
-								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth200)}</td>
-								<td className="px-4 py-2.5 text-right mono-sm">{usd(provider.avgFillVolumeTotal)}</td>
+								<td className="px-3 py-2.5 text-right tabular-nums">{usd(provider.avgBidAskDepth50)}</td>
+								<td className="px-3 py-2.5 text-right tabular-nums">{usd(provider.avgBidAskDepth100)}</td>
+								<td className="px-3 py-2.5 text-right tabular-nums">{usd(provider.avgBidAskDepth200)}</td>
+								<td className="px-4 py-2.5 text-right tabular-nums">{usd(provider.avgFillVolumeTotal)}</td>
 							</tr>
 						))}
 					</tbody>
@@ -334,12 +334,12 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 										{metric.dailyBreakdown.map((point) => (
 											<tr key={point.date} className="border-b border-subtle last:border-b-0">
 												<td className="px-3 py-2">{point.date.slice(0, 10)}</td>
-												<td className="px-3 py-2 text-right mono-sm">
+												<td className="px-3 py-2 text-right tabular-nums">
 													{unit === 'percent'
 														? (formatPercent(point.marketMakersPercentage, UTR_PERCENT_OPTIONS) ?? 'N/A')
 														: usd(point.marketMakers)}
 												</td>
-												<td className="px-3 py-2 text-right mono-sm">
+												<td className="px-3 py-2 text-right tabular-nums">
 													{unit === 'percent'
 														? (formatPercent(point.allOthersPercentage, UTR_PERCENT_OPTIONS) ?? 'N/A')
 														: usd(point.allOthers)}
@@ -409,19 +409,19 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 												<span className="body-xs text-tertiary">{normalizedEngagementType(entry.engagementType)}</span>
 											</span>
 										</td>
-										<td className="px-3 py-2.5 text-right mono-sm">
+										<td className="px-3 py-2.5 text-right tabular-nums">
 											{formatPercent(entry.performance?.avgBidAskSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
-										<td className="px-3 py-2.5 text-right mono-sm">
+										<td className="px-3 py-2.5 text-right tabular-nums">
 											{formatPercent(entry.performance?.avgDepth50, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
-										<td className="px-3 py-2.5 text-right mono-sm">
+										<td className="px-3 py-2.5 text-right tabular-nums">
 											{formatPercent(entry.performance?.avgDepth100, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
-										<td className="px-3 py-2.5 text-right mono-sm">
+										<td className="px-3 py-2.5 text-right tabular-nums">
 											{formatPercent(entry.performance?.avgDepth200, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
-										<td className="px-3 py-2.5 text-right mono-sm">
+										<td className="px-3 py-2.5 text-right tabular-nums">
 											{formatPercent(entry.performance?.avgUptime, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
 										<td className="px-4 py-2.5 text-right">
@@ -470,13 +470,13 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 								{(provider?.breakdown ?? []).map((entry) => (
 									<tr key={entry.date} className="border-b border-subtle last:border-b-0">
 										<td className="px-3 py-2">{entry.date.slice(0, 10)}</td>
-										<td className="px-3 py-2 text-right mono-sm">
+										<td className="px-3 py-2 text-right tabular-nums">
 											{formatPercent(entry.uptimeRatio, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
-										<td className="px-3 py-2 text-right mono-sm">
+										<td className="px-3 py-2 text-right tabular-nums">
 											{formatPercent(entry.targetSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
-										<td className="px-3 py-2 text-right mono-sm">
+										<td className="px-3 py-2 text-right tabular-nums">
 											{formatPercent(entry.reportedSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 										</td>
 										<td className="px-3 py-2 text-right">

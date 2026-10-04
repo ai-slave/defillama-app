@@ -29,7 +29,3 @@ export function LoadingSpinner({ size }: { size: number }) {
 		</span>
 	)
 }
-
-export function LocalLoader() {
-	return <img src="/assets/logo_white.webp" alt="logo of defillama" width={40} height={40} className="animate-loader" />
-}

@@ -85,7 +85,7 @@ export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T
 											key={cell.id}
 											className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary transition-colors ${
 												rowIdx % 2 === 1 ? 'bg-pro-cards-bg' : ''
-											}`}
+											} ${align === 'end' ? 'tabular-nums' : ''}`}
 											style={{ textAlign: align }}
 										>
 											<FlexRender cell={cell} />

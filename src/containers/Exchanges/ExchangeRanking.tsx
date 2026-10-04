@@ -50,7 +50,7 @@ function ScoreBar({ score, emphasis = false }: { score: number | null; emphasis?
 				/>
 			</span>
 			<span
-				className={`w-7 text-right ${emphasis ? 'mono-md-bold' : 'mono-sm'} ${measured ? '' : 'text-tertiary'}`}
+				className={`w-7 text-right tabular-nums ${emphasis ? 'title-md' : ''} ${measured ? '' : 'text-tertiary'}`}
 				style={measured && emphasis ? { color: scoreColor(score) } : undefined}
 			>
 				{measured ? Math.round(score) : 'n/a'}
@@ -120,7 +120,7 @@ function RankingRow({
 	return (
 		<>
 			<tr className="border-t border-subtle">
-				<td className="py-2 pr-2 text-right mono-sm text-tertiary">{row.overallRank}</td>
+				<td className="py-2 pr-2 text-right text-tertiary tabular-nums">{row.overallRank}</td>
 				<td className="py-2 pr-3">
 					<span className="flex items-center gap-2">
 						<TokenLogo
@@ -341,7 +341,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 									<th key={pillar.key} className="pr-4 pb-1 font-normal">
 										<Tooltip content={pillar.what}>
 											<span className="underline decoration-dotted">
-												{pillar.label} <span className="mono-sm">{pillar.weight}</span>
+												{pillar.label} {pillar.weight}
 											</span>
 										</Tooltip>
 									</th>

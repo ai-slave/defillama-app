@@ -74,11 +74,9 @@ export default function Overview() {
 											</a>
 										</td>
 										<td className="p-3 text-pro-text-label">{p.category ?? '-'}</td>
-										<td className="p-3 text-right font-mono text-xs text-pro-text-primary tabular-nums">
-											{p.tvlFormatted}
-										</td>
+										<td className="p-3 text-right text-xs text-pro-text-primary tabular-nums">{p.tvlFormatted}</td>
 										<td
-											className={`p-3 text-right font-mono text-xs tabular-nums ${p.change24h >= 0 ? 'text-success' : 'text-error'}`}
+											className={`p-3 text-right text-xs tabular-nums ${p.change24h >= 0 ? 'text-success' : 'text-error'}`}
 										>
 											{p.change24hFormatted}
 										</td>

@@ -735,7 +735,7 @@ export function DataTable<Row extends object>({
 								<td
 									key={col.key}
 									className={`px-3 py-2.5 first:pl-0 last:pr-0 ${col.wrap ? (fit ? '' : 'min-w-[170px]') : 'whitespace-nowrap'} ${
-										col.right ? 'text-right font-mono text-pro-text-primary tabular-nums' : 'text-pro-text-secondary'
+										col.right ? 'text-right text-pro-text-primary tabular-nums' : 'text-pro-text-secondary'
 									} ${bodyCell(index === 0, rowIndex === keyedRows.length - 1)}`}
 								>
 									{cellValue(col.render ? col.render(row) : Reflect.get(row, col.key))}
@@ -756,9 +756,9 @@ export function DataTable<Row extends object>({
 									<td
 										key={col.key}
 										className={`px-3 first:pl-0 last:pr-0 ${row.muted ? 'pt-1.5' : 'pt-3 text-pro-text-primary'} ${
-											// A total's figures are the emphasised mono weight; its label keeps the text font's medium.
+											// A total's figures take the title weight so they read above the rows; its label keeps medium.
 											col.right
-												? `text-right font-mono tabular-nums ${row.muted ? '' : 'font-bold'}`
+												? `text-right tabular-nums ${row.muted ? '' : 'font-semibold'}`
 												: row.muted
 													? ''
 													: 'font-medium'

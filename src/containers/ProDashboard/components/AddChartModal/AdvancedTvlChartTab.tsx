@@ -16,8 +16,9 @@ import {
 	fetchProtocolValueChart
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { LocalLoader } from '~/ui/Loaders'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../../services/protocolTvl'
@@ -218,11 +219,7 @@ export function AdvancedTvlChartTab({
 
 	const chartContent = (() => {
 		if (isLoading) {
-			return (
-				<div className="flex h-[320px] items-center justify-center">
-					<LocalLoader />
-				</div>
-			)
+			return <SurfaceBodyLoadingStatus />
 		}
 
 		const hasData =
@@ -230,21 +227,11 @@ export function AdvancedTvlChartTab({
 				? advancedData.pieSeries.peers.length > 0 || advancedData.pieSeries.upstreamOthersValue > 0
 				: canonicalDataset.source.length > 0
 		if (!hasData) {
-			return (
-				<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-					No data available for this chart type.
-				</div>
-			)
+			return <SurfaceBodyStatus variant="empty">No data available for this chart type.</SurfaceBodyStatus>
 		}
 
 		return (
-			<Suspense
-				fallback={
-					<div className="flex h-[320px] items-center justify-center">
-						<LocalLoader />
-					</div>
-				}
-			>
+			<Suspense fallback={<ChartPanelExportShellFallback />}>
 				{chartType === 'tokensPie' ? (
 					<PieChart
 						chartData={piePresentation.chartData}
@@ -346,7 +333,7 @@ export function AdvancedTvlChartTab({
 							) : null}
 						</div>
 
-						<div className="h-[320px]">{chartContent}</div>
+						<div className="flex min-h-[400px] flex-col">{chartContent}</div>
 					</div>
 				) : (
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
