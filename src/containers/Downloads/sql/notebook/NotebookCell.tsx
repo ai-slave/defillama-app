@@ -3,6 +3,7 @@ import type { Ref } from 'react'
 import { useCallback, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import type { ChartConfig } from '../chartConfig'
 import { Keycap } from '../primitives'
 import type { NotebookCell as NotebookCellType, NotebookCellType as CellType, ResultsView } from '../useSqlTabs'
@@ -262,68 +263,59 @@ function CellMenu({
 			>
 				<Icon name="ellipsis" className="size-3.5" />
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				gutter={4}
-				className="z-40 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
-			>
+			<MenuSurface variant="actions" gutter={4}>
 				{cellType === 'sql' ? (
 					<>
-						<Ariakit.MenuItem
+						<MenuItem
 							disabled={isFirst}
 							onClick={onRunAbove}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+							className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 						>
-							<Icon name="chevron-up" className="size-3 text-pro-text-tertiary" />
+							<Icon name="chevron-up" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 							Run cells above
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
+						</MenuItem>
+						<MenuItem
 							disabled={isLast}
 							onClick={onRunBelow}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+							className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 						>
-							<Icon name="chevron-down" className="size-3 text-pro-text-tertiary" />
+							<Icon name="chevron-down" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 							Run cells below
-						</Ariakit.MenuItem>
-						<div className="my-1 h-px bg-border-subtle" />
+						</MenuItem>
 					</>
 				) : null}
-				<Ariakit.MenuItem
+				<MenuItem
 					disabled={isFirst}
 					onClick={onMoveUp}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+					className={`${cellType === 'sql' ? 'border-t border-subtle' : ''} aria-disabled:cursor-not-allowed aria-disabled:opacity-40`}
 				>
-					<Icon name="arrow-up" className="size-3 text-pro-text-tertiary" />
+					<Icon name="arrow-up" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					Move up
-				</Ariakit.MenuItem>
-				<Ariakit.MenuItem
+				</MenuItem>
+				<MenuItem
 					disabled={isLast}
 					onClick={onMoveDown}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+					className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 				>
-					<Icon name="arrow-down" className="size-3 text-pro-text-tertiary" />
+					<Icon name="arrow-down" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					Move down
-				</Ariakit.MenuItem>
-				<div className="my-1 h-px bg-border-subtle" />
-				{otherTypes.map((t) => (
-					<Ariakit.MenuItem
-						key={t}
-						onClick={() => onConvertType(t)}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
-					>
-						<Icon name="repeat" className="size-3 text-pro-text-tertiary" />
+				</MenuItem>
+				{otherTypes.map((t, i) => (
+					<MenuItem key={t} onClick={() => onConvertType(t)} className={i === 0 ? 'border-t border-subtle' : undefined}>
+						<Icon name="repeat" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Convert to {t === 'sql' ? 'SQL' : t === 'markdown' ? 'Markdown' : 'Chart'}
-					</Ariakit.MenuItem>
+					</MenuItem>
 				))}
-				<div className="my-1 h-px bg-border-subtle" />
-				<Ariakit.MenuItem
+				<MenuItem
+					destructive
 					disabled={!canDelete}
 					onClick={onDelete}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-error hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
+					className="border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 				>
-					<Icon name="trash-2" className="size-3" />
+					<Icon name="trash-2" className="size-3.5 shrink-0" />
 					Delete cell
-				</Ariakit.MenuItem>
-			</Ariakit.Menu>
+				</MenuItem>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

@@ -6,6 +6,8 @@ import { listArticles, type ArticleListResponse } from '~/containers/Articles/ap
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
+import { popoverMeasuredRowStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
@@ -106,12 +108,10 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 						</button>
 					) : null}
 				</div>
-				<Ariakit.ComboboxPopover
-					gutter={6}
+				<ComboboxSurface
+					variant="search-results"
 					sameWidth
-					portal
-					unmountOnHide
-					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
+					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
 					{isFetching && items.length === 0 ? (
 						<p className="p-3 text-center text-xs text-tertiary">Searching…</p>
@@ -132,15 +132,17 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 								onChange(article)
 								setOpen(false)
 							}}
-							className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
+							className={popoverMeasuredRowStyles}
 						>
-							<span className="truncate text-sm text-primary">{article.title}</span>
-							<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
-								{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
+							<span className="grid min-w-0 gap-0.5">
+								<span className="truncate">{article.title}</span>
+								<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
+									{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
+								</span>
 							</span>
 						</Ariakit.ComboboxItem>
 					))}
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{value && selectedLabel ? (
 				<p className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">

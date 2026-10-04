@@ -10,6 +10,10 @@ import { SchemaDrawer } from '../SchemaDrawer'
 import { UpsellGate } from '../UpsellGate'
 import { useTableRegistry, type RegisteredTable } from '../useTableRegistry'
 
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
+
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/downloads?mode=sql' }) }))
 const flatDescription = datasets.find((dataset) => dataset.slug === 'hacks')!.description
 const chartDescription = chartDatasets.find((dataset) => dataset.slug === 'protocol-tvl-chart')!.description
@@ -172,7 +176,7 @@ test('a time series keeps its parameter across a tab switch and shows a failure 
 
 	await act(async () => control(document.body, 'Cookbook').click())
 	await act(async () => control(document.body, 'Schema').click())
-	expect(row().querySelector('[role="combobox"]')!.textContent).toBe('Aave')
+	expect(row().querySelector('[role="combobox"]')!.textContent).toBe('Protocol: Aave')
 	expect(row().querySelector('[aria-busy="true"]')?.textContent).toContain('Loading…')
 
 	await act(async () => fail())
@@ -240,12 +244,12 @@ test('clearing the schema search hands focus back to the search field', async ()
 test("clearing a time series' parameter hands focus to its picker", async () => {
 	await act(async () => root.render(<Browser />))
 	const row = schemaRow(chartDescription)
-	expect(row.querySelector('[role="combobox"]')!.textContent).toBe('Aave')
+	expect(row.querySelector('[role="combobox"]')!.textContent).toBe('Protocol: Aave')
 	await act(async () => {
 		buttonIn(row, 'Clear').focus()
 		buttonIn(row, 'Clear').click()
 	})
-	expect(row.querySelector('[role="combobox"]')!.textContent).toBe('Pick a protocol')
+	expect(row.querySelector('[role="combobox"]')!.textContent).toBe('Protocol: Pick a protocol')
 	expect(document.activeElement).toBe(row.querySelector('[role="combobox"]'))
 })
 

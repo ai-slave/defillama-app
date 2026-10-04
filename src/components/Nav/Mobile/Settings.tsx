@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
+import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
@@ -15,12 +16,12 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 
 	return (
 		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues}>
-			<Ariakit.ComboboxSelect className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25">
+			<ComboboxSelectTrigger className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25">
 				<span className="sr-only">Open Settings Menu</span>
 				<Icon name="settings" height={16} width={16} />
-			</Ariakit.ComboboxSelect>
+			</ComboboxSelectTrigger>
 			{/* Stays mounted: mobile nav control that must open instantly (#2640). */}
-			<ComboboxSurface heading="Settings" unmountOnHide={false}>
+			<ComboboxSurface variant="panel" heading="Settings" unmountOnHide={false}>
 				{tvlOptions.map((option) => (
 					<Ariakit.ComboboxItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
 						{option.name}

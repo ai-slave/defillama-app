@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { Icon } from '~/ui/Icon'
 import { popoverSingleSelectCheckStyles, popoverRowWithBorderStyles } from '~/ui/Popover'
@@ -36,11 +37,11 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 			</div>
 			<div className="min-[713px]:hidden">
 				<Ariakit.ComboboxProvider selectedValue={mode} setSelectedValue={(value) => setMode(value as DisplayMode)}>
-					<Ariakit.ComboboxSelect className={selectTriggerStyles('filter', 'md')}>
+					<ComboboxSelectTrigger className={selectTriggerStyles('filter', 'md')}>
 						{SHORT[mode]}
 						<Ariakit.ComboboxSelectArrow />
-					</Ariakit.ComboboxSelect>
-					<ComboboxSurface variant="list" heading="Show as" className="min-w-[11rem]">
+					</ComboboxSelectTrigger>
+					<ComboboxSurface variant="panel" heading="Show as" className="min-w-[11rem]">
 						{DISPLAY_MODES.map((option) => (
 							<Ariakit.ComboboxItem key={option} value={option} className={popoverRowWithBorderStyles}>
 								<span>{LABELS[option]}</span>

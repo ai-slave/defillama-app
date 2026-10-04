@@ -135,11 +135,7 @@ export function DashboardOverflowMenu({
 					{onDelete ? (
 						<>
 							<Ariakit.MenuSeparator className="my-1 border-subtle" />
-							<MenuItem
-								className="text-data-down"
-								data-umami-event="dashboard-delete"
-								onClick={() => setShowDeleteConfirm(true)}
-							>
+							<MenuItem destructive data-umami-event="dashboard-delete" onClick={() => setShowDeleteConfirm(true)}>
 								<Icon name="trash-2" height={14} width={14} />
 								<span>Delete dashboard…</span>
 							</MenuItem>

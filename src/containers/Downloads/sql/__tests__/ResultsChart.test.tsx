@@ -7,6 +7,10 @@ import type { ChartConfig } from '../chartConfig'
 import type { QueryResult } from '../exportResults'
 import { ResultsChart } from '../ResultsChart'
 
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
+
 // The toolbar shows the chart configuration; drawing the chart is not under test.
 vi.mock('../chart', () => ({ ChartRouter: () => null }))
 vi.mock('../chart/ChartExportButton', () => ({ ChartExportButton: () => null }))
@@ -33,7 +37,11 @@ function Tab({ shown }: { shown: QueryResult }) {
 }
 
 const render = (next: QueryResult) => act(async () => root.render(<Tab shown={next} />))
-const xColumn = () => container.querySelector('[aria-label="x"]')?.textContent
+// The x picker chip reads "x: <column>".
+const xColumn = () =>
+	[...container.querySelectorAll('[role="combobox"]')]
+		.find((el) => el.textContent?.startsWith('x: '))
+		?.textContent?.slice('x: '.length)
 const numberFormat = () =>
 	container.querySelector<HTMLInputElement>('[aria-label="Number format"] input:checked')?.parentElement?.textContent
 const pickNumberFormat = (label: string) =>

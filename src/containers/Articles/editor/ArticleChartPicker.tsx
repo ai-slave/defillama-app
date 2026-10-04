@@ -415,16 +415,14 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							variant="field"
 							size="md"
 						/>
-						<div>
-							<span className="mb-1 block label-xs tracking-wide text-tertiary uppercase">Metric to add</span>
-							<ChartTypePills
-								chartTypes={chartTypeOptions}
-								selectedType={currentMetric}
-								onSelect={setCurrentMetric}
-								isLoading={metaLoading}
-								mode={tab}
-							/>
-						</div>
+						<ChartTypePills
+							label="Metric to add"
+							chartTypes={chartTypeOptions}
+							selectedType={currentMetric}
+							onSelect={setCurrentMetric}
+							isLoading={metaLoading}
+							mode={tab}
+						/>
 						<div className="relative">
 							<Icon name="search" aria-hidden className={`${searchFieldIconStyles} size-4`} />
 							<Input

@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { popoverMenuItemStyles, popoverTreeRowStyles } from './Popover'
+import { popoverDestructiveMenuItemStyles, popoverMenuItemStyles, popoverTreeRowStyles } from './Popover'
 import { type SurfaceOwnProps, surfaceProps, surfaceTitleRow } from './PopoverSurface'
 
 /* ----------------------------------------------------------------------------
@@ -12,8 +12,9 @@ import { type SurfaceOwnProps, surfaceProps, surfaceTitleRow } from './PopoverSu
    body-sm, hover wash, 44px touch target on phones), `tree` (the indented
    hierarchy row used by the protocol switcher), or `none` when the caller owns
    the whole row recipe (radio/checkbox rows, select rows). `className` is
-   layout only, e.g. `border-b border-subtle` to group items or `text-data-down`
-   for a destructive action.
+   layout only, e.g. `border-b border-subtle` to group items; a destructive
+   action passes `destructive`, because an appended color class loses to the
+   recipe's `text-primary`.
 ---------------------------------------------------------------------------- */
 
 type MenuSurfaceProps = SurfaceOwnProps & Omit<Ariakit.MenuProps, 'className' | 'wrapperProps' | 'title'>
@@ -50,9 +51,12 @@ const ROW_STYLES: Record<MenuItemRow, string> = {
 	tree: popoverTreeRowStyles
 }
 
-type MenuItemProps = Ariakit.MenuItemProps & { row?: MenuItemRow }
+type MenuItemProps = Ariakit.MenuItemProps & {
+	row?: MenuItemRow
+	/** Deletes or removes something: red text. */ destructive?: boolean
+}
 
-export function MenuItem({ row = 'menu', className, ...props }: MenuItemProps) {
-	const recipe = ROW_STYLES[row]
+export function MenuItem({ row = 'menu', destructive = false, className, ...props }: MenuItemProps) {
+	const recipe = destructive ? popoverDestructiveMenuItemStyles : ROW_STYLES[row]
 	return <Ariakit.MenuItem {...props} className={className ? `${recipe} ${className}`.trim() : recipe} />
 }

@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Icon as SharedIcon } from '~/ui/Icon'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
@@ -276,61 +277,36 @@ export function ArticleEditorHeader({
 									▾
 								</span>
 							</Ariakit.MenuButton>
-							<Ariakit.Menu
-								gutter={6}
-								className="z-50 grid min-w-[180px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
-							>
-								<Ariakit.MenuItem
-									render={
-										<Link
-											href={articleViewHref}
-											target="_blank"
-											rel="noreferrer"
-											className="flex items-center justify-between rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-										/>
-									}
+							<MenuSurface variant="actions" gutter={6}>
+								<MenuItem
+									render={<Link href={articleViewHref} target="_blank" rel="noreferrer" />}
+									className="justify-between"
 								>
 									<span className="flex items-center gap-2">
 										<Icon name="eye" className="size-3.5" />
 										View live
 									</span>
 									<Icon name="external" className="size-3 text-tertiary" />
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
-									onClick={onOpenMeta}
-									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-								>
+								</MenuItem>
+								<MenuItem onClick={onOpenMeta}>
 									<Icon name="sliders" className="size-3.5" />
 									Edit listing
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
-									onClick={onOpenHistory}
-									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-								>
+								</MenuItem>
+								<MenuItem onClick={onOpenHistory}>
 									<Icon name="check" className="size-3.5" />
 									Revision history
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
-									onClick={handleUnpublish}
-									disabled={isPublishing}
-									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-								>
+								</MenuItem>
+								<MenuItem onClick={handleUnpublish} disabled={isPublishing}>
 									<Icon name="undo" className="size-3.5" />
 									Move to drafts
-								</Ariakit.MenuItem>
+								</MenuItem>
 								{isOwner ? (
-									<>
-										<span aria-hidden className="my-1 h-px bg-border-medium" />
-										<Ariakit.MenuItem
-											onClick={handleDeleteArticle}
-											className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-error data-[active-item]:bg-error/10"
-										>
-											<Icon name="trash" className="size-3.5" />
-											Delete
-										</Ariakit.MenuItem>
-									</>
+									<MenuItem destructive onClick={handleDeleteArticle} className="border-t border-subtle">
+										<Icon name="trash" className="size-3.5" />
+										Delete
+									</MenuItem>
 								) : null}
-							</Ariakit.Menu>
+							</MenuSurface>
 						</Ariakit.MenuProvider>
 					</>
 				) : article.id ? (

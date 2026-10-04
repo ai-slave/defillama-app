@@ -135,12 +135,12 @@ export function ProjectSidebarRow({
 								Rename project
 							</MenuItem>
 							<MenuItem
+								destructive
 								onClick={() => {
 									// A cancel returns to the menu that opened the confirmation.
 									deleteReturnFocus.current = projectMenuRef.current
 									setConfirmDelete(true)
 								}}
-								className="text-error!"
 							>
 								<Icon name="trash-2" height={14} width={14} />
 								Delete project

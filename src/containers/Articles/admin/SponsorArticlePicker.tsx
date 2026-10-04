@@ -7,6 +7,8 @@ import type { ResearchSponsorArticleSearchResult } from '~/containers/Articles/t
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
+import { popoverMeasuredRowStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 type Props = {
 	excludedIds: ReadonlySet<string>
@@ -43,12 +45,10 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 					className={`${inputStyles} w-full pl-9 aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 				/>
 			</div>
-			<Ariakit.ComboboxPopover
-				gutter={6}
+			<ComboboxSurface
+				variant="search-results"
 				sameWidth
-				portal
-				unmountOnHide
-				className="z-50 flex max-h-80 flex-col overflow-auto rounded-lg border border-medium bg-overlay py-1 shadow-md outline-hidden"
+				className="max-h-[min(320px,var(--popover-available-height))]"
 			>
 				{isFetching && items.length === 0 ? <p className="p-3 body-sm text-tertiary">Searching…</p> : null}
 				{!isFetching && items.length === 0 ? (
@@ -66,20 +66,22 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 							setSearchValue('')
 							setOpen(false)
 						}}
-						className="grid cursor-pointer gap-1 px-3 py-2 data-active-item:bg-hover-row"
+						className={popoverMeasuredRowStyles}
 					>
-						<span className="line-clamp-2 label-md text-primary">{article.title}</span>
-						<span className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
-							<span>{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'}</span>
-							<span aria-hidden>·</span>
-							<span className="truncate">/{article.slug}</span>
-							<span className={article.lifecycleStatus === 'published' ? 'text-data-up' : 'text-warning'}>
-								{article.lifecycleStatus}
+						<span className="grid min-w-0 gap-1">
+							<span className="line-clamp-2 label-md text-primary">{article.title}</span>
+							<span className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
+								<span>{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'}</span>
+								<span aria-hidden>·</span>
+								<span className="truncate">/{article.slug}</span>
+								<span className={article.lifecycleStatus === 'published' ? 'text-data-up' : 'text-warning'}>
+									{article.lifecycleStatus}
+								</span>
 							</span>
 						</span>
 					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

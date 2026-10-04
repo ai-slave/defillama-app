@@ -4,7 +4,9 @@ import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { ArticleMultiPicker } from '~/containers/Articles/admin/ArticleMultiPicker'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
 import {
@@ -41,6 +43,8 @@ import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButto
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
 	if (state.kind === 'image-square') {
@@ -284,7 +288,7 @@ export function BannerForm({ banner }: Props) {
 									update({ section: next as ArticleSection })
 								}}
 							>
-								<Ariakit.ComboboxSelect
+								<ComboboxSelectTrigger
 									aria-label="Banner section"
 									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 text-sm transition-colors focus-visible:border-link focus-visible:outline-hidden data-[state=open]:border-link ${
 										errors.section
@@ -298,25 +302,17 @@ export function BannerForm({ banner }: Props) {
 										{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
 									</span>
 									<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
-								</Ariakit.ComboboxSelect>
-								<Ariakit.ComboboxPopover
-									gutter={6}
-									sameWidth
-									portal
-									unmountOnHide
-									className="z-[90] flex flex-col overflow-hidden rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
-								>
+								</ComboboxSelectTrigger>
+								<ComboboxSurface variant="panel" heading="Section" sameWidth>
 									{ARTICLE_SECTIONS.map((section) => (
-										<Ariakit.ComboboxItem
-											key={section}
-											value={section}
-											className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
-										>
+										<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
 											<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-											<Ariakit.ComboboxItemCheck className="shrink-0 text-link" />
+											<span className={popoverSingleSelectCheckStyles(state.section === section)} aria-hidden>
+												{state.section === section ? <SelectCheckIcon /> : null}
+											</span>
 										</Ariakit.ComboboxItem>
 									))}
-								</Ariakit.ComboboxPopover>
+								</ComboboxSurface>
 							</Ariakit.ComboboxProvider>
 							{errors.section ? <p className="text-xs text-error">{errors.section}</p> : null}
 						</div>

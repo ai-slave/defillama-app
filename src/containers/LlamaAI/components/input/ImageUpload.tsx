@@ -6,6 +6,7 @@ import { readFilePreview, type AttachmentPreview } from '~/containers/LlamaAI/ut
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
@@ -57,15 +58,9 @@ function UploadStatus({
 						</button>
 					) : null}
 				</div>
-				<Ariakit.Popover
-					gutter={6}
-					portal
-					unmountOnHide
-					aria-label={`Upload error for ${name}`}
-					className="z-50 max-w-64 rounded-lg border border-medium bg-overlay p-3 text-xs leading-5 break-words text-primary shadow-overlay-sm"
-				>
-					{upload.error}
-				</Ariakit.Popover>
+				<PopoverSurface variant="panel" heading={`Upload error for ${name}`} className="sm:max-w-64">
+					<p className="p-3 body-sm break-words text-primary">{upload.error}</p>
+				</PopoverSurface>
 			</Ariakit.PopoverProvider>
 		)
 	}

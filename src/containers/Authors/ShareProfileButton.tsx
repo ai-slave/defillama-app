@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 
 export function ShareProfileButton({ slug, displayName }: { slug: string; displayName: string }) {
 	const [copied, setCopied] = useState(false)
@@ -42,12 +43,8 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 				Share
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				gutter={8}
-				className="z-50 rounded-lg border border-medium bg-surface p-3 shadow-lg"
-				style={{ minWidth: '280px' }}
-			>
-				<div className="flex flex-col gap-3">
+			<PopoverSurface variant="panel" heading="Share profile" gutter={8} className="w-70">
+				<div className="flex flex-col gap-3 p-3">
 					<div className="flex flex-col gap-1.5">
 						<p className="text-xs font-medium text-secondary">Profile link</p>
 						<div className="flex gap-2">
@@ -98,7 +95,7 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 						</div>
 					</div>
 				</div>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

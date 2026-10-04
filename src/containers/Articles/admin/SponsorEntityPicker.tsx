@@ -5,6 +5,8 @@ import type { ArticleEntitySuggestionItem } from '~/containers/Articles/entitySu
 import type { ResearchSponsorEntityType } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
+import { popoverMeasuredRowStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 const ALLOWED_TYPES = new Set<ResearchSponsorEntityType>(['protocol', 'chain', 'cex'])
 
@@ -68,12 +70,10 @@ export function SponsorEntityPicker({
 						</button>
 					) : null}
 				</div>
-				<Ariakit.ComboboxPopover
-					gutter={6}
+				<ComboboxSurface
+					variant="search-results"
 					sameWidth
-					portal
-					unmountOnHide
-					className="z-50 flex max-h-72 flex-col overflow-auto rounded-lg border border-medium bg-overlay py-1 shadow-md outline-hidden"
+					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
 					{query.length === 0 ? <p className="p-3 body-sm text-tertiary">Type a page name to search.</p> : null}
 					{query.length > 0 && isFetching && items.length === 0 ? (
@@ -92,7 +92,7 @@ export function SponsorEntityPicker({
 								setSearchValue('')
 								setOpen(false)
 							}}
-							className="flex cursor-pointer items-center gap-3 px-3 py-2 text-secondary data-active-item:bg-hover-row data-active-item:text-primary"
+							className={popoverMeasuredRowStyles}
 						>
 							<span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-subtle bg-surface">
 								{item.logo ? (
@@ -110,7 +110,7 @@ export function SponsorEntityPicker({
 							</span>
 						</Ariakit.ComboboxItem>
 					))}
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{value ? (
 				<p className="body-sm text-secondary">

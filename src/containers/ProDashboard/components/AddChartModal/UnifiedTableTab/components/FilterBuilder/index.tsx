@@ -1,5 +1,5 @@
-import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { Button } from '~/ui/Button'
 import { takeLostFocus } from '~/ui/focus'
@@ -45,6 +45,7 @@ const OPERATORS: Array<{ value: NumericOperator; label: string }> = [
 	{ value: '<=', label: '<=' },
 	{ value: 'between', label: 'between' }
 ]
+const OPERATOR_OPTIONS = OPERATORS.map((option) => ({ key: option.value, name: option.label }))
 
 function parseNumberWithAbbreviation(input: string): number | undefined {
 	const cleaned = input.trim().toLowerCase()
@@ -407,38 +408,22 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					<Icon name="x" className="size-3" />
 				</button>
 			</div>
-			<Ariakit.ComboboxProvider
-				selectedValue={filter.operator}
-				setSelectedValue={(value) => {
+			<Select
+				allValues={OPERATOR_OPTIONS}
+				label={filter.operator}
+				labelType="none"
+				heading="Operator"
+				selectedValues={filter.operator}
+				setSelectedValues={(value) => {
 					const operator = OPERATORS.find((option) => option.value === value)?.value
 					if (!operator) throw new Error(`Unsupported numeric filter operator: ${value}`)
 					handleOperatorChange(filter, operator)
 				}}
-			>
-				<Ariakit.ComboboxSelect
-					aria-label={`${config.label} operator`}
-					className={`${inputStyles} flex w-full cursor-pointer items-center justify-between`}
-				>
-					<Ariakit.ComboboxSelectedValue />
-					<Ariakit.ComboboxSelectArrow />
-				</Ariakit.ComboboxSelect>
-				<Ariakit.ComboboxPopover
-					portal
-					gutter={4}
-					sameWidth
-					className="z-100 rounded-sm border border-pro-cards-border bg-pro-cards-bg py-1 shadow-lg"
-				>
-					{OPERATORS.map((op) => (
-						<Ariakit.ComboboxItem
-							key={op.value}
-							value={op.value}
-							className="cursor-pointer px-2.5 py-1 text-xs text-pro-text-primary hover:bg-(--cards-bg2) data-active-item:bg-(--cards-bg2)"
-						>
-							{op.label}
-						</Ariakit.ComboboxItem>
-					))}
-				</Ariakit.ComboboxPopover>
-			</Ariakit.ComboboxProvider>
+				variant="input"
+				size="md"
+				className="w-full justify-between"
+				triggerProps={{ 'aria-label': `${config.label} operator` }}
+			/>
 			{filter.operator === 'between' ? (
 				<div className="flex items-center gap-1.5">
 					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}

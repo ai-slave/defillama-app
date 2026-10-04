@@ -1,12 +1,16 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { ComboboxSelectTrigger } from '~/components/Select/ComboboxSelectTrigger'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { DialogBody, DialogCancelButton, DialogFooter, DialogHeader, SideSheet, useOpeningKey } from '~/ui/Dialog'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
+import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { InlineStatus } from '~/ui/Status'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
 import type { ArticleGuestAuthor, ArticleImage, ArticleSection, LocalArticleDocument } from '../types'
@@ -242,7 +246,7 @@ function MetaSheet({
 									updateArticle('section', (next || null) as ArticleSection | null)
 								}}
 							>
-								<Ariakit.ComboboxSelect
+								<ComboboxSelectTrigger
 									aria-label="Article section"
 									aria-invalid={publishErrors.section ? true : undefined}
 									className={`${inputStyles} flex items-center justify-between gap-2 text-left ${article.section ? '' : 'text-tertiary'}`}
@@ -251,25 +255,17 @@ function MetaSheet({
 										{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'Select a section…'}
 									</span>
 									<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
-								</Ariakit.ComboboxSelect>
-								<Ariakit.ComboboxPopover
-									gutter={6}
-									sameWidth
-									portal
-									unmountOnHide
-									className="z-[90] flex flex-col overflow-hidden rounded-md border border-medium bg-overlay py-1 body-md shadow-xl outline-hidden"
-								>
+								</ComboboxSelectTrigger>
+								<ComboboxSurface variant="panel" heading="Section" sameWidth>
 									{ARTICLE_SECTIONS.map((section) => (
-										<Ariakit.ComboboxItem
-											key={section}
-											value={section}
-											className="flex min-h-9 cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
-										>
+										<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
 											<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-											<Ariakit.ComboboxItemCheck className="shrink-0 text-link" />
+											<span className={popoverSingleSelectCheckStyles(article.section === section)} aria-hidden>
+												{article.section === section ? <SelectCheckIcon /> : null}
+											</span>
 										</Ariakit.ComboboxItem>
 									))}
-								</Ariakit.ComboboxPopover>
+								</ComboboxSurface>
 							</Ariakit.ComboboxProvider>
 							<MetaFieldHint error={publishErrors.section}>
 								Required. Drives the URL path:{' '}

@@ -6,6 +6,8 @@ import { listArticles, type ArticleListResponse } from '~/containers/Articles/ap
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
+import { popoverMeasuredRowStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
@@ -99,12 +101,10 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-3 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary"
 					/>
 				</div>
-				<Ariakit.ComboboxPopover
-					gutter={6}
+				<ComboboxSurface
+					variant="search-results"
 					sameWidth
-					portal
-					unmountOnHide
-					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
+					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
 					{isFetching && items.length === 0 ? (
 						<p className="p-3 text-center text-xs text-tertiary">Searching…</p>
@@ -120,19 +120,19 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 								value={article.title}
 								setValueOnClick={false}
 								onClick={() => addArticle(article)}
-								className="flex cursor-pointer items-start justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
+								className={popoverMeasuredRowStyles}
 							>
 								<span className="grid min-w-0 gap-0.5">
-									<span className="truncate text-sm text-primary">{article.title}</span>
+									<span className="truncate">{article.title}</span>
 									<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
 										{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 									</span>
 								</span>
-								{selected ? <Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-link" /> : null}
+								{selected ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
 							</Ariakit.ComboboxItem>
 						)
 					})}
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 
 			{value.length > 0 ? (

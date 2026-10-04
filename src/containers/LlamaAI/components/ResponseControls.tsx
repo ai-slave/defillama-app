@@ -20,7 +20,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDateTime, formatLocalTime } from '~/utils/dateFormat'
@@ -243,14 +243,12 @@ export function ResponseControls({
 							>
 								<Icon name="circle-help" height={16} width={16} />
 							</Tooltip>
-							<Ariakit.Popover className={`${popoverHovercardSurfaceStyles} p-3`} portal gutter={8}>
-								<div className="flex flex-col gap-1.5 text-primary">
-									<div className="flex justify-between gap-4">
-										<span className="text-tertiary">Output</span>
-										<span className="font-mono tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
-									</div>
+							<PopoverSurface variant="panel" heading="Response details" gutter={8}>
+								<div className="flex justify-between gap-4 p-3 body-sm text-primary">
+									<span className="text-tertiary">Output</span>
+									<span className="font-mono tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
 								</div>
-							</Ariakit.Popover>
+							</PopoverSurface>
 						</Ariakit.PopoverProvider>
 					) : null}
 					{!readOnly ? (

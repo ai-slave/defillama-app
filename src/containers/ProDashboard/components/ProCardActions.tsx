@@ -339,7 +339,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 									<Ariakit.MenuSeparator />
 								) : null}
 								<Ariakit.MenuGroup>
-									<MenuItem className="text-error" onClick={onRemove} data-umami-event="dashboard-card-remove">
+									<MenuItem destructive onClick={onRemove} data-umami-event="dashboard-card-remove">
 										<Icon name="trash-2" height={14} width={14} />
 										Remove card
 									</MenuItem>

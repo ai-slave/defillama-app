@@ -1,24 +1,11 @@
-import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import {
-	startTransition,
-	useCallback,
-	useDeferredValue,
-	useMemo,
-	useRef,
-	useState,
-	type Dispatch,
-	type SetStateAction
-} from 'react'
-import { selectTriggerStyles } from '~/components/Select/types'
+import { useCallback, useDeferredValue, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles, searchFieldIconStyles } from '~/ui/Input'
-import { popoverRowStyles, popoverScrollAreaStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
-import { PopoverHeader } from '~/ui/PopoverHeader'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tag } from '~/ui/Tag'
@@ -645,18 +632,7 @@ function ParamCombobox({
 	value: string
 	onChange: (next: string) => void
 }) {
-	const [search, setSearch] = useState('')
 	const triggerRef = useRef<HTMLButtonElement>(null)
-
-	const matches = useMemo(() => {
-		if (!search) return options.slice(0, 200)
-		return matchSorter(options, search, {
-			keys: ['label', 'value'],
-			threshold: matchSorter.rankings.CONTAINS
-		}).slice(0, 200)
-	}, [options, search])
-
-	const current = options.find((o) => o.value === value)
 	const noun = paramLabel.toLowerCase()
 
 	if (options.length === 0) {
@@ -665,52 +641,15 @@ function ParamCombobox({
 
 	return (
 		<div className="flex flex-wrap items-center gap-2">
-			<Ariakit.ComboboxProvider
-				resetValueOnHide
-				setInputValue={(v) => {
-					startTransition(() => setSearch(v))
-				}}
-				selectedValue={value}
-				setSelectedValue={(next) => {
-					if (typeof next === 'string') onChange(next)
-				}}
-			>
-				<Ariakit.ComboboxLabel className="body-sm text-secondary">{paramLabel}</Ariakit.ComboboxLabel>
-				<Ariakit.ComboboxSelect
-					ref={triggerRef}
-					className={`${selectTriggerStyles('filter', 'sm')} max-w-[240px] min-w-40`}
-				>
-					<span className={`truncate ${current ? '' : 'text-secondary'}`}>{current?.label ?? `Pick a ${noun}`}</span>
-					<Ariakit.ComboboxSelectArrow className="text-tertiary" />
-				</Ariakit.ComboboxSelect>
-				<ComboboxSurface heading={paramLabel} className="max-h-80 w-[min(320px,90vw)]">
-					<PopoverHeader
-						search={
-							<Ariakit.ComboboxInput autoSelect placeholder={`Search ${noun}s`} className={`w-full ${inputStyles}`} />
-						}
-					/>
-					<Ariakit.ComboboxList className={popoverScrollAreaStyles}>
-						{matches.length === 0 ? (
-							<p className="px-3 py-6 text-center body-sm text-tertiary">No matches.</p>
-						) : (
-							matches.map((opt) => (
-								<Ariakit.ComboboxItem
-									key={opt.value}
-									value={opt.value}
-									className={`${popoverRowStyles} ${opt.isChild ? 'pl-6 text-secondary' : ''}`}
-								>
-									<span className="truncate">{opt.label}</span>
-									<Ariakit.ComboboxItemSelected>
-										{(selected) => (
-											<Icon name="check" className={popoverSingleSelectCheckStyles(selected)} aria-hidden="true" />
-										)}
-									</Ariakit.ComboboxItemSelected>
-								</Ariakit.ComboboxItem>
-							))
-						)}
-					</Ariakit.ComboboxList>
-				</ComboboxSurface>
-			</Ariakit.ComboboxProvider>
+			<VirtualizedSelect
+				variant="chip"
+				label={paramLabel}
+				placeholder={`Pick a ${noun}`}
+				options={options}
+				selectedValue={value || null}
+				onChange={(option) => onChange(option.value)}
+				triggerRef={triggerRef}
+			/>
 			{value ? (
 				<Button
 					type="button"

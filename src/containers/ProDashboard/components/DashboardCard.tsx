@@ -73,10 +73,7 @@ function DashboardCardActionsMenu({ name, onDelete }: { name: string; onDelete: 
 				<Icon name="ellipsis" height={16} width={16} />
 			</Ariakit.MenuButton>
 			<MenuSurface variant="actions" gutter={6}>
-				<MenuItem
-					className="text-data-down"
-					onClick={(event) => onDelete(triggerRef.current ?? (event.currentTarget as HTMLElement))}
-				>
+				<MenuItem destructive onClick={(event) => onDelete(triggerRef.current ?? (event.currentTarget as HTMLElement))}>
 					Delete…
 				</MenuItem>
 			</MenuSurface>

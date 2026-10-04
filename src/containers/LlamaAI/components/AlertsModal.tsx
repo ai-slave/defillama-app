@@ -582,7 +582,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 									<Icon name="pencil" height={14} width={14} />
 									{editing ? 'Cancel editing' : 'Edit alert'}
 								</MenuItem>
-								<MenuItem className="text-error" onClick={() => switchMode('deleting')}>
+								<MenuItem destructive onClick={() => switchMode('deleting')}>
 									<Icon name="trash-2" height={14} width={14} />
 									Delete alert
 								</MenuItem>

@@ -9,6 +9,10 @@ import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import { ChartToolbar } from '../ChartToolbar'
 
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
+
 const columns: Array<ClassifiedColumn> = [
 	{ name: 'date', coarse: 'date', fine: 'date', index: 0 },
 	{ name: 'chain', coarse: 'category', fine: 'text', index: 1 },
@@ -109,8 +113,14 @@ async function press(el: HTMLElement, key: string) {
 		el.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true, cancelable: true }))
 	})
 }
+/** A column picker chip, which reads "label: value". */
+function picker(label: string) {
+	return [...document.querySelectorAll<HTMLButtonElement>('[role="combobox"]')].find((el) =>
+		el.textContent?.startsWith(`${label}: `)
+	)!
+}
 function choice(name: string) {
-	return [...document.querySelectorAll<HTMLElement>('[role="menu"]:not([hidden]) [role="menuitemradio"]')].find(
+	return [...document.querySelectorAll<HTMLElement>('[role="listbox"] [role="option"]')].find(
 		(el) => el.textContent === name
 	)!
 }
@@ -161,24 +171,24 @@ test('external values and disabled selected chart types do not write configurati
 	expect(onChange).not.toHaveBeenCalled()
 })
 
-test('scalar menus expose selected values, close on selection, and retain split none and disabled series behavior', async () => {
+test('column pickers expose selected values, close on selection, and retain split none and disabled series behavior', async () => {
 	await render(<Harness config={{ ...initial, yCols: ['value0'] }} />)
-	await click(button('split by'))
-	expect(choice('none').getAttribute('aria-checked')).toBe('true')
+	await click(picker('split by'))
+	expect(choice('none').getAttribute('aria-selected')).toBe('true')
 	await click(choice('chain'))
 	expect(current.splitByCol).toBe('chain')
 	expect(button('Y series').disabled).toBe(true)
-	expect(document.activeElement).toBe(button('split by'))
-	await click(button('split by'))
-	expect(choice('chain').getAttribute('aria-checked')).toBe('true')
+	expect(document.activeElement).toBe(picker('split by'))
+	await click(picker('split by'))
+	expect(choice('chain').getAttribute('aria-selected')).toBe('true')
 	await click(choice('none'))
 	expect(current.splitByCol).toBeNull()
 	expect(button('Y series').disabled).toBe(false)
-	await click(button('x'))
-	expect(choice('date').getAttribute('aria-checked')).toBe('true')
-	await press(choice('chain'), 'Enter')
+	await click(picker('x'))
+	expect(choice('date').getAttribute('aria-selected')).toBe('true')
+	await click(choice('chain'))
 	expect(current.xCol).toBe('chain')
-	expect(document.activeElement).toBe(button('x'))
+	expect(document.activeElement).toBe(picker('x'))
 })
 
 test('series settings allow empty selection and retain focus when controls disappear', async () => {
@@ -282,9 +292,11 @@ test('a custom color leaves one palette entry point and arrow navigation selects
 
 test('choosing a numeric X column removes it from Y and preserves the remaining series', async () => {
 	await render(<Harness config={{ ...initial, xCol: null }} classified={columns.slice(2, 4)} />)
-	await click(button('x'))
+	await click(picker('x'))
 	expect(
-		[...document.querySelectorAll('[role="menuitemradio"]')].every((el) => el.getAttribute('aria-checked') === 'false')
+		[...document.querySelectorAll('[role="listbox"] [role="option"]')].every(
+			(el) => el.getAttribute('aria-selected') !== 'true'
+		)
 	).toBe(true)
 	await click(choice('value0'))
 	expect(current.xCol).toBe('value0')

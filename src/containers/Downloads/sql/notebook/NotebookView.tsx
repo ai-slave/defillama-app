@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import type { ChartConfig } from '../chartConfig'
 import type { CellVirtualTable, CompletionContext } from '../completions'
 import { registerSqlCompletions, registerSqlHovers } from '../completions'
@@ -439,15 +440,11 @@ function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; 
 				<Icon name="plus" className="size-3" />
 				{variant === 'end' ? 'Add cell' : null}
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				gutter={4}
-				unmountOnHide
-				className="z-40 min-w-[160px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
-			>
+			<MenuSurface variant="actions" gutter={4}>
 				<AddMenuItem onClick={() => onAdd('sql')} label="SQL" hint="Query" tone="primary" />
 				<AddMenuItem onClick={() => onAdd('chart')} label="Chart" hint="Visualize" tone="gold" />
 				<AddMenuItem onClick={() => onAdd('markdown')} label="Markdown" hint="Narrate" tone="purple" />
-			</Ariakit.Menu>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }
@@ -465,13 +462,10 @@ function AddMenuItem({
 }) {
 	const dot = tone === 'primary' ? 'bg-brand' : tone === 'gold' ? 'bg-pro-premium-300' : 'bg-pro-ai-300'
 	return (
-		<Ariakit.MenuItem
-			onClick={onClick}
-			className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
-		>
+		<MenuItem onClick={onClick}>
 			<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${dot}`} />
 			<span className="flex-1 font-medium">{label}</span>
 			<span className="text-[10.5px] text-pro-text-tertiary">{hint}</span>
-		</Ariakit.MenuItem>
+		</MenuItem>
 	)
 }

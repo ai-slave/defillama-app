@@ -464,6 +464,12 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		id: 'menu-item-color-class',
+		description:
+			"status color class on a MenuItem — it never shows, because Tailwind emits the row recipe's .text-primary after it; pass `destructive` for a delete or remove row",
+		pattern: /<MenuItem\b[^>]*?className=[^>]*?\btext-(?:error|data-down|data-up|warning)\b/g
+	},
+	{
 		id: 'raw-dialog-surface',
 		description:
 			'Ariakit.Dialog rendered directly — use Dialog or SideSheet from src/ui/Dialog.tsx (a size, the shared header and footer, the focus net); the tracked exceptions are the mobile nav sheet, the image lightbox, the onboarding tour, the chat history drawer and the mobile-app gate',

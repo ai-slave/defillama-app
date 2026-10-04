@@ -258,7 +258,7 @@ export function ProjectLanding({
 								</Ariakit.MenuButton>
 								<MenuSurface variant="actions" gutter={6} className="w-52">
 									<MenuItem onClick={renameStore.show}>Rename project</MenuItem>
-									<MenuItem onClick={() => setConfirmDelete(true)} className="text-error!">
+									<MenuItem destructive onClick={() => setConfirmDelete(true)}>
 										Delete project
 									</MenuItem>
 								</MenuSurface>

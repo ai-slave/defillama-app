@@ -86,8 +86,11 @@ test('stopping disables retry and hides removal without dropping the failed file
 test('opens the full failure reason without retrying or removing the file', async () => {
 	await render({ status: 'error', progress: 0, error: 'Too many concurrent uploads. Try again shortly.' })
 	await act(async () => button('Upload error for demo.csv').click())
-	const details = document.querySelector('[role="dialog"][aria-label="Upload error for demo.csv"]')
-	expect(details?.textContent).toContain('Too many concurrent uploads. Try again shortly.')
+	const details = document.querySelector('[role="dialog"]')!
+	expect(document.getElementById(details.getAttribute('aria-labelledby')!)?.textContent).toBe(
+		'Upload error for demo.csv'
+	)
+	expect(details.textContent).toContain('Too many concurrent uploads. Try again shortly.')
 	expect(retry).not.toHaveBeenCalled()
 	expect(remove).not.toHaveBeenCalled()
 })

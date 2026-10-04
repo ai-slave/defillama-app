@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { useState, type ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { useArticleEditable } from '../useArticleEditable'
 import { normalizeImageHref, type ArticleImageAttrs } from './ArticleImage.shared'
 
@@ -31,19 +32,9 @@ function ImageDetailsPopover({
 				{label}
 				<span aria-hidden className={`size-1.5 rounded-full ${hasValue ? 'bg-link' : 'bg-tertiary/40'}`} />
 			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				aria-label={title}
-				portal
-				fixed
-				gutter={8}
-				overflowPadding={8}
-				fitViewport
-				unmountOnHide
-				className="z-[70] w-80 max-w-[calc(100vw-16px)] overflow-y-auto rounded-md border border-medium bg-surface p-3 shadow-lg"
-				style={{ maxHeight: 'var(--popover-available-height)' }}
-			>
-				{children}
-			</Ariakit.Popover>
+			<PopoverSurface variant="panel" heading={title} fixed gutter={8} className="w-80">
+				<div className="p-3">{children}</div>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

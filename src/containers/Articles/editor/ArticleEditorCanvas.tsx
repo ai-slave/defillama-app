@@ -2,7 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { isNodeSelection } from '@tiptap/core'
 import { EditorContent, type Editor } from '@tiptap/react'
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus'
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { NestedDrawerHeader } from '~/ui/PopoverSurface'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ArticleCalloutTone } from '../types'
@@ -26,6 +28,41 @@ const CALLOUT_TONE_LABELS: Record<ArticleCalloutTone, string> = {
 	warning: 'Warning',
 	pullquote: 'Pullquote',
 	bio: 'Interview Bio'
+}
+
+/** The Callout row of an insert menu and the tone flyout it opens. */
+function CalloutMenu({
+	insertCallout,
+	children
+}: {
+	insertCallout: (tone: ArticleCalloutTone) => boolean | undefined
+	children: ReactNode
+}) {
+	const menu = Ariakit.useMenuStore()
+	return (
+		<Ariakit.MenuProvider store={menu}>
+			<MenuItem render={<Ariakit.MenuButton />} className="justify-between">
+				{children}
+				<span aria-hidden className="text-tertiary">
+					›
+				</span>
+			</MenuItem>
+			<MenuSurface variant="nested" aria-label="Callout" gutter={4}>
+				<NestedDrawerHeader
+					title="Callout"
+					backLabel="Back to insert menu"
+					onBack={menu.hide}
+					closeLabel="Close insert menus"
+					onClose={menu.hideAll}
+				/>
+				{CALLOUT_TONES.map((tone) => (
+					<MenuItem key={tone} onClick={() => insertCallout(tone)}>
+						{CALLOUT_TONE_LABELS[tone]}
+					</MenuItem>
+				))}
+			</MenuSurface>
+		</Ariakit.MenuProvider>
+	)
 }
 
 type ArticleEditorCanvasProps = {
@@ -287,90 +324,52 @@ export function ArticleEditorCanvas({
 							>
 								<Icon name="plus" className="size-3.5" />
 							</Ariakit.MenuButton>
-							<Ariakit.Menu
-								gutter={6}
-								className="z-50 grid min-w-[200px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
-							>
+							{/* Portalled like every surface, so its phone sheet is not trapped under the rail in FloatingMenu's z-30
+							    layer. Pressing "+" sets tiptap's preventHide, so the editor blur that opening the menu causes keeps it shown. */}
+							<MenuSurface variant="actions" gutter={6} className="min-w-[200px]">
 								{blockItems.map((item) => (
-									<Ariakit.MenuItem
-										key={item.label}
-										onClick={item.run}
-										className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-									>
+									<MenuItem key={item.label} onClick={item.run} className="justify-between">
 										<span>{item.label}</span>
 										{item.hint ? <span className="font-jetbrains text-[10px] text-tertiary">{item.hint}</span> : null}
-									</Ariakit.MenuItem>
+									</MenuItem>
 								))}
-								<span aria-hidden className="my-1 h-px bg-border-medium" />
-								<Ariakit.MenuItem
-									onClick={onOpenChartPicker}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-								>
+								<MenuItem onClick={onOpenChartPicker} className="justify-between border-t border-subtle">
 									<span>DefiLlama chart</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">↗</span>
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
+								</MenuItem>
+								<MenuItem
 									onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
+									className="justify-between"
 								>
 									<span>Table</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">3×3</span>
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
-									onClick={onOpenEmbedPicker}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-								>
+								</MenuItem>
+								<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
 									<span>Embed</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">URL</span>
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
+								</MenuItem>
+								<MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
+									className="justify-between"
 								>
 									<span>Image</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">Upload</span>
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
+								</MenuItem>
+								<MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
+									className="justify-between"
 								>
 									<span>People panel</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">Bios</span>
-								</Ariakit.MenuItem>
-								<Ariakit.MenuProvider>
-									<Ariakit.MenuItem
-										render={
-											<Ariakit.MenuButton className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link">
-												<span>Callout</span>
-												<span aria-hidden className="text-tertiary">
-													›
-												</span>
-											</Ariakit.MenuButton>
-										}
-									/>
-									<Ariakit.Menu
-										gutter={4}
-										className="z-50 grid min-w-[140px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
-									>
-										{CALLOUT_TONES.map((tone) => (
-											<Ariakit.MenuItem
-												key={tone}
-												onClick={() => insertCallout(tone)}
-												className="rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-											>
-												{CALLOUT_TONE_LABELS[tone]}
-											</Ariakit.MenuItem>
-										))}
-									</Ariakit.Menu>
-								</Ariakit.MenuProvider>
-								<Ariakit.MenuItem
-									onClick={insertCitation}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-								>
+								</MenuItem>
+								<CalloutMenu insertCallout={insertCallout}>
+									<span>Callout</span>
+								</CalloutMenu>
+								<MenuItem onClick={insertCitation} className="justify-between">
 									<span>Citation</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">[n]</span>
-								</Ariakit.MenuItem>
-							</Ariakit.Menu>
+								</MenuItem>
+							</MenuSurface>
 						</Ariakit.MenuProvider>
 					</FloatingMenu>
 				) : null}
@@ -466,93 +465,58 @@ export function ArticleEditorCanvas({
 									<Icon name="more" className="size-4" />
 									<span className="hidden sm:inline">Insert</span>
 								</Ariakit.MenuButton>
-								<Ariakit.Menu
-									portal
-									gutter={8}
-									className="z-50 grid min-w-[200px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
-								>
-									<Ariakit.MenuItem
+								<MenuSurface variant="actions" className="min-w-[200px]">
+									<MenuItem
 										onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
+										className="justify-between"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="table" className="size-3.5" />
 											Table
 										</span>
 										<span className="font-jetbrains text-[10px] text-tertiary">3×3</span>
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
-										onClick={onOpenEmbedPicker}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-									>
+									</MenuItem>
+									<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
 										<span className="flex items-center gap-2">
 											<Icon name="embed" className="size-3.5" />
 											Embed
 										</span>
 										<span className="font-jetbrains text-[10px] text-tertiary">URL</span>
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
+									</MenuItem>
+									<MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
+										className="justify-between"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="image" className="size-3.5" />
 											Image
 										</span>
 										<span className="font-jetbrains text-[10px] text-tertiary">Upload</span>
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
+									</MenuItem>
+									<MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
+										className="justify-between border-b border-subtle"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="people" className="size-3.5" />
 											People panel
 										</span>
 										<span className="font-jetbrains text-[10px] text-tertiary">Bios</span>
-									</Ariakit.MenuItem>
-									<span aria-hidden className="my-1 h-px bg-border-medium" />
-									<Ariakit.MenuProvider>
-										<Ariakit.MenuItem
-											render={
-												<Ariakit.MenuButton className="flex w-full items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link">
-													<span className="flex items-center gap-2">
-														<Icon name="callout" className="size-3.5" />
-														Callout
-													</span>
-													<span aria-hidden className="text-tertiary">
-														›
-													</span>
-												</Ariakit.MenuButton>
-											}
-										/>
-										<Ariakit.Menu
-											portal
-											gutter={4}
-											className="z-50 grid min-w-[140px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
-										>
-											{CALLOUT_TONES.map((tone) => (
-												<Ariakit.MenuItem
-													key={tone}
-													onClick={() => insertCallout(tone)}
-													className="rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-												>
-													{CALLOUT_TONE_LABELS[tone]}
-												</Ariakit.MenuItem>
-											))}
-										</Ariakit.Menu>
-									</Ariakit.MenuProvider>
-									<Ariakit.MenuItem
-										onClick={insertCitation}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
-									>
+									</MenuItem>
+									<CalloutMenu insertCallout={insertCallout}>
+										<span className="flex items-center gap-2">
+											<Icon name="callout" className="size-3.5" />
+											Callout
+										</span>
+									</CalloutMenu>
+									<MenuItem onClick={insertCitation} className="justify-between">
 										<span className="flex items-center gap-2">
 											<Icon name="cite" className="size-3.5" />
 											Citation
 										</span>
 										<span className="font-jetbrains text-[10px] text-tertiary">[n]</span>
-									</Ariakit.MenuItem>
-								</Ariakit.Menu>
+									</MenuItem>
+								</MenuSurface>
 							</Ariakit.MenuProvider>
 						</div>
 

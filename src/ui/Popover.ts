@@ -27,7 +27,13 @@ export const popoverRowStyles = `${popoverMeasuredRowStyles} cv-auto-37 max-sm:c
 
 export const popoverRowWithBorderStyles = `${popoverRowStyles} border-b border-subtle last-of-type:border-b-0`
 
-export const popoverMenuItemStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
+const menuItemRowStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
+
+export const popoverMenuItemStyles = `${menuItemRowStyles} text-primary`
+
+/* Its own recipe, not `text-error` appended to the row: Tailwind emits `.text-primary` after `.text-error`, so an
+   appended color class never wins. */
+export const popoverDestructiveMenuItemStyles = `${menuItemRowStyles} text-error`
 
 export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row max-sm:min-h-11`
 

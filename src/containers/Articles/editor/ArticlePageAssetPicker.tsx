@@ -7,6 +7,8 @@ import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { popoverRowStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { PageAssetSearchHit } from '../pageAssetMarket'
@@ -98,12 +100,10 @@ export function ArticlePageAssetPicker({
 						className={searchFieldInputStyles}
 					/>
 				</div>
-				<Ariakit.ComboboxPopover
-					gutter={6}
+				<ComboboxSurface
+					variant="search-results"
 					sameWidth
-					portal
-					unmountOnHide
-					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-overlay py-1 shadow-xl outline-hidden"
+					className="max-h-[min(256px,var(--popover-available-height))]"
 				>
 					{isFetching && hits.length === 0 ? <p className="p-3 text-center body-sm text-tertiary">Searching…</p> : null}
 					{!isFetching && isError ? (
@@ -119,14 +119,20 @@ export function ArticlePageAssetPicker({
 							value={hit.geckoId}
 							setValueOnClick={false}
 							onClick={() => addAsset(hit)}
-							className="flex min-h-9 cursor-pointer items-center gap-2 px-3 py-2 data-active-item:bg-research-tint"
+							className={popoverRowStyles}
 						>
-							<TokenLogo src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)} size={20} alt={hit.symbol} />
-							<span className="label-md text-primary">{hit.symbol}</span>
-							<span className="truncate body-sm text-tertiary">{hit.name}</span>
+							<span className="flex min-w-0 items-center gap-2">
+								<TokenLogo
+									src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)}
+									size={20}
+									alt={hit.symbol}
+								/>
+								<span className="label-md text-primary">{hit.symbol}</span>
+								<span className="truncate body-sm text-tertiary">{hit.name}</span>
+							</span>
 						</Ariakit.ComboboxItem>
 					))}
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 
 			{value.length > 0 ? (

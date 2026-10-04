@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tab, tabIds } from '~/ui/Tabs'
 import type { QueryTab } from './useSqlTabs'
 
@@ -152,8 +153,8 @@ export function QueryTabBar({
 			/>
 
 			{menu && menuTab ? (
-				<Ariakit.Menu
-					portal
+				<MenuSurface
+					variant="actions"
 					store={menuStore}
 					aria-label={`Actions for ${menuTab.title}`}
 					finalFocus={menu.trigger}
@@ -172,80 +173,76 @@ export function QueryTabBar({
 							: undefined
 					}
 					gutter={2}
-					className="z-50 min-w-[200px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
+					className="min-w-[200px]"
 				>
-					<Ariakit.MenuItem
+					<MenuItem
 						onClick={() => {
 							setRenamingId(menu.id)
 							menuStore.hide()
 						}}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 					>
-						<Icon name="pencil" className="size-3 text-pro-text-tertiary" />
+						<Icon name="pencil" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Rename
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
+					</MenuItem>
+					<MenuItem
 						onClick={() => {
 							pendingFocus.current = 'selected'
 							onDuplicate(menu.id)
 							menuStore.hide()
 						}}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 					>
-						<Icon name="copy" className="size-3 text-pro-text-tertiary" />
+						<Icon name="copy" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Duplicate
-					</Ariakit.MenuItem>
+					</MenuItem>
 					{menuTab.mode === 'query' && onConvertToNotebook ? (
-						<Ariakit.MenuItem
+						<MenuItem
 							onClick={() => {
 								pendingFocus.current = menu.id
 								onConvertToNotebook(menu.id)
 								menuStore.hide()
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
 						>
-							<Icon name="layers" className="size-3 text-pro-text-tertiary" />
+							<Icon name="layers" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 							Convert to notebook
-						</Ariakit.MenuItem>
+						</MenuItem>
 					) : null}
-					<div className="my-1 h-px bg-border-subtle" />
-					<Ariakit.MenuItem
+					<MenuItem
 						disabled={!canClose}
 						onClick={() => {
 							pendingFocus.current = 'selected'
 							onClose(menu.id)
 							menuStore.hide()
 						}}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-40 data-active-item:bg-hover-row"
+						className="border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 					>
-						<Icon name="x" className="size-3 text-pro-text-tertiary" />
+						<Icon name="x" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Close
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
+					</MenuItem>
+					<MenuItem
 						disabled={tabs.length <= 1}
 						onClick={() => {
 							pendingFocus.current = 'selected'
 							onCloseOthers(menu.id)
 							menuStore.hide()
 						}}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-40 data-active-item:bg-hover-row"
+						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 					>
-						<Icon name="x" className="size-3 text-pro-text-tertiary" />
+						<Icon name="x" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Close others
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
+					</MenuItem>
+					<MenuItem
 						disabled={menuIndex === -1 || menuIndex >= tabs.length - 1}
 						onClick={() => {
 							pendingFocus.current = menu.id
 							onCloseToRight(menu.id)
 							menuStore.hide()
 						}}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-40 data-active-item:bg-hover-row"
+						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 					>
-						<Icon name="arrow-right" className="size-3 text-pro-text-tertiary" />
+						<Icon name="arrow-right" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Close tabs to the right
-					</Ariakit.MenuItem>
-				</Ariakit.Menu>
+					</MenuItem>
+				</MenuSurface>
 			) : null}
 		</div>
 	)
@@ -261,27 +258,17 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 			>
 				<Icon name="plus" className="size-3.5" />
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				portal
-				gutter={4}
-				className="z-50 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
-			>
-				<Ariakit.MenuItem
-					onClick={onNewTab}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
-				>
-					<Icon name="file-text" className="size-3 text-pro-text-tertiary" />
+			<MenuSurface variant="actions" gutter={4}>
+				<MenuItem onClick={onNewTab}>
+					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					<span className="flex-1">New query tab</span>
 					<span className="font-mono text-[10px] text-pro-text-tertiary">⌘T</span>
-				</Ariakit.MenuItem>
-				<Ariakit.MenuItem
-					onClick={onNewNotebook}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row data-active-item:bg-hover-row"
-				>
-					<Icon name="layers" className="size-3 text-pro-text-tertiary" />
+				</MenuItem>
+				<MenuItem onClick={onNewNotebook}>
+					<Icon name="layers" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					<span className="flex-1">New notebook tab</span>
-				</Ariakit.MenuItem>
-			</Ariakit.Menu>
+				</MenuItem>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }
