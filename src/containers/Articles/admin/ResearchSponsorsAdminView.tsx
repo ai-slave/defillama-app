@@ -9,16 +9,23 @@ import {
 	deleteResearchSponsor,
 	linkResearchSponsorReport,
 	listResearchSponsors,
+	setArticleClient,
 	unlinkResearchSponsorReport,
 	updateResearchSponsor
 } from '~/containers/Articles/api'
-import type { ResearchSponsorAdmin, ResearchSponsorPayload } from '~/containers/Articles/types'
-import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
+import type {
+	ArticleClientRelation,
+	ResearchSponsorAdmin,
+	ResearchSponsorAdminReport,
+	ResearchSponsorPayload
+} from '~/containers/Articles/types'
+import { ARTICLE_CLIENT_RELATION_LABELS, ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
@@ -35,6 +42,14 @@ function payloadFromEntity(entity: SponsorEntitySelection): ResearchSponsorPaylo
 		entitySlug: entity.slug
 	}
 }
+
+type RelationValue = ArticleClientRelation | 'none'
+
+const RELATION_OPTIONS: ReadonlyArray<SegmentedControlOption<RelationValue>> = [
+	{ value: 'none', label: 'None' },
+	{ value: 'sponsored', label: ARTICLE_CLIENT_RELATION_LABELS.sponsored },
+	{ value: 'collaboration', label: ARTICLE_CLIENT_RELATION_LABELS.collaboration }
+]
 
 function mutationMessage(error: unknown, fallback: string) {
 	return error instanceof ArticleApiError ? error.message : fallback
@@ -64,6 +79,12 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			toast.success('Research article unlinked')
 		},
 		onError: (error) => toast.error(mutationMessage(error, 'Failed to unlink article'))
+	})
+	const relationMutation = useMutation({
+		mutationFn: ({ articleId, relation }: { articleId: string; relation: ArticleClientRelation | null }) =>
+			setArticleClient(articleId, { sponsorId: sponsor.id, relation }, authorizedFetch),
+		onSuccess: invalidate,
+		onError: (error) => toast.error(mutationMessage(error, 'Failed to update relation'))
 	})
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteResearchSponsor(sponsor.id, authorizedFetch),
@@ -115,7 +136,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			{confirmDelete ? (
 				<ConfirmActionDialog
 					title={`Remove ${sponsor.displayName}?`}
-					description="This removes the sponsor page and all its report links. The articles themselves stay unchanged."
+					description="This removes the client and its links to articles. The articles themselves stay unchanged."
 					confirmLabel="Remove"
 					pendingLabel="Removing…"
 					mutation={deleteMutation}
@@ -140,7 +161,10 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			<div className="grid gap-2 border-t border-subtle pt-4">
 				<div>
 					<h3 className="label-md text-primary">Linked Research articles</h3>
-					<p className="body-sm text-secondary">Drafts stay hidden publicly until they are published.</p>
+					<p className="body-sm text-secondary">
+						An article has one client: linking it here moves it from any other client. Drafts stay hidden publicly until
+						they are published.
+					</p>
 				</div>
 				<SponsorArticlePicker
 					excludedIds={linkedIds}
@@ -172,6 +196,11 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 									</span>
 								</p>
 							</div>
+							<ReportRelationControl
+								report={report}
+								disabled={relationMutation.isPending && relationMutation.variables?.articleId === report.id}
+								onChange={(relation) => relationMutation.mutate({ articleId: report.id, relation })}
+							/>
 							<Button
 								size="sm"
 								variant="ghost"
@@ -204,9 +233,9 @@ export function ResearchSponsorsAdminView() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: SPONSORS_QUERY_KEY })
 			setSelectedEntity(null)
-			toast.success('Sponsor page added')
+			toast.success('Client added')
 		},
-		onError: (mutationError) => toast.error(mutationMessage(mutationError, 'Failed to add sponsor page'))
+		onError: (mutationError) => toast.error(mutationMessage(mutationError, 'Failed to add client'))
 	})
 
 	return (
@@ -218,16 +247,17 @@ export function ResearchSponsorsAdminView() {
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="heading-lg text-primary">Sponsored reports</h1>
+				<h1 className="heading-lg text-primary">Clients</h1>
 				<p className="max-w-[72ch] body-md text-secondary">
-					Link Research articles to canonical protocol, chain, or CEX pages. Public pages show up to three published
-					articles, newest first.
+					Each client is tied to its protocol, chain, or CEX page. Linked articles show the client and its relation,
+					readers can filter Research by client, and the client's page shows up to three published articles, newest
+					first.
 				</p>
 			</header>
 
 			<Card as="section" padding="md" className="grid gap-4">
 				<div>
-					<h2 className="heading-xs text-primary">Add a sponsor page</h2>
+					<h2 className="heading-xs text-primary">Add a client</h2>
 					<p className="body-sm text-secondary">Search by company name, then confirm the exact DefiLlama page.</p>
 				</div>
 				<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
@@ -244,28 +274,49 @@ export function ResearchSponsorsAdminView() {
 						pendingLabel={createMutation.isPending ? 'Adding…' : null}
 						onClick={() => selectedEntity && createMutation.mutate(selectedEntity)}
 					>
-						Add sponsor
+						Add client
 					</Button>
 				</div>
 			</Card>
 
-			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading sponsor pages…</div> : null}
+			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading clients…</div> : null}
 			{error ? (
 				<Card padding="md" className="grid gap-2">
-					<h2 className="heading-xs text-primary">Couldn't load sponsor pages</h2>
-					<p className="body-sm text-data-down">{mutationMessage(error, 'Failed to load sponsor pages')}</p>
+					<h2 className="heading-xs text-primary">Couldn't load clients</h2>
+					<p className="body-sm text-data-down">{mutationMessage(error, 'Failed to load clients')}</p>
 				</Card>
 			) : null}
 			{!isLoading && !error && data?.length === 0 ? (
 				<div className="rounded-lg border border-dashed border-medium bg-surface p-8 text-center">
-					<p className="label-md text-primary">No sponsor pages configured</p>
-					<p className="mt-1 body-sm text-secondary">Use the search above to create the first association.</p>
+					<p className="label-md text-primary">No clients yet</p>
+					<p className="mt-1 body-sm text-secondary">Use the search above to add the first client.</p>
 				</div>
 			) : null}
 			{data?.map((sponsor) => (
 				<SponsorPanel key={sponsor.id} sponsor={sponsor} />
 			))}
 		</div>
+	)
+}
+
+function ReportRelationControl({
+	report,
+	disabled,
+	onChange
+}: {
+	report: ResearchSponsorAdminReport
+	disabled: boolean
+	onChange: (relation: ArticleClientRelation | null) => void
+}) {
+	return (
+		<SegmentedControl
+			label={`Client relation for ${report.title}`}
+			variant="default"
+			size="sm"
+			options={RELATION_OPTIONS.map((option) => ({ ...option, disabled }))}
+			value={report.relation ?? 'none'}
+			onValueChange={(relation) => onChange(relation === 'none' ? null : relation)}
+		/>
 	)
 }
 

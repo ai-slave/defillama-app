@@ -15,6 +15,7 @@ import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedCon
 import { InlineStatus } from '~/ui/Status'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
 import type {
+	ArticleClient,
 	ArticleGuestAuthor,
 	ArticleGuestAuthorType,
 	ArticleImage,
@@ -24,6 +25,7 @@ import type {
 import { ARTICLE_SECTIONS, ARTICLE_SECTION_LABELS, ARTICLE_SECTION_SLUGS } from '../types'
 import { ImageUploadButton } from '../upload/ImageUploadButton'
 import { PdfUploadButton } from '../upload/PdfUploadButton'
+import { ArticleClientField } from './ArticleClientField'
 import { Icon } from './ArticleEditorIcon'
 import type { ArticleFieldUpdater, PublishResult } from './ArticleEditorTypes'
 import { formatArticleDate, fromDateTimeLocal, slugFromTitle, toDateTimeLocal } from './ArticleEditorUtils'
@@ -73,6 +75,7 @@ type ArticleMetaDialogProps = {
 	store: DialogStore
 	handlePublish: (opts?: { goLiveAt?: string | null }) => Promise<PublishResult>
 	saveArticle: (opts?: { silent?: boolean }) => Promise<boolean>
+	setClient: (client: ArticleClient | null) => void
 	updateArticle: ArticleFieldUpdater
 }
 
@@ -102,6 +105,7 @@ function MetaSheet({
 	isSaving,
 	publishErrors,
 	saveArticle,
+	setClient,
 	store,
 	updateArticle
 }: ArticleMetaDialogProps) {
@@ -302,6 +306,10 @@ function MetaSheet({
 								</span>
 							</MetaFieldHint>
 						</div>
+					</MetaSection>
+
+					<MetaSection title="Client">
+						<ArticleClientField articleId={article.id} client={article.client ?? null} onSaved={setClient} />
 					</MetaSection>
 
 					{article.section === 'report' ? (

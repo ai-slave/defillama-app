@@ -195,6 +195,19 @@ export type ArticleCollaborator = {
 	hidden: boolean
 }
 
+export type ArticleClientRelation = 'sponsored' | 'collaboration'
+
+export const ARTICLE_CLIENT_RELATION_LABELS: Record<ArticleClientRelation, string> = {
+	sponsored: 'Sponsored',
+	collaboration: 'Collaboration'
+}
+
+export type ArticleClient = {
+	id: string
+	displayName: string
+	relation: ArticleClientRelation | null
+}
+
 export type LocalArticleDocument = {
 	id?: string
 	contentVersion: ArticleVersion
@@ -230,6 +243,7 @@ export type LocalArticleDocument = {
 	tags: Array<string>
 	editorialTags?: Array<string>
 	editorialTagMetadata?: ArticleEditorialTagMetadata | null
+	client?: ArticleClient | null
 	interviewees?: Array<ArticleInterviewee>
 	section?: ArticleSection | null
 	displayDate?: string | null
@@ -261,6 +275,7 @@ export type ArticleSnapshotPayload = Omit<
 	| 'coAuthors'
 	| 'viewerRole'
 	| 'editorialTagMetadata'
+	| 'client'
 	| 'pending'
 	| 'pendingUpdatedAt'
 	| 'pendingActorPbUserId'
@@ -467,6 +482,12 @@ export type ResearchSponsorArticleSearchResult = SponsoredResearchReportSummary 
 
 export type ResearchSponsorAdminReport = ResearchSponsorArticleSearchResult & {
 	linkedAt: string
+	relation: ArticleClientRelation | null
+}
+
+export type ResearchClientSummary = {
+	id: string
+	displayName: string
 }
 
 export type ResearchSponsorAdmin = ResearchSponsorSummary & {

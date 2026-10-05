@@ -92,6 +92,39 @@ describe('ArticleRenderer', () => {
 		expect(html).not.toContain('href="/research"')
 	})
 
+	test('names the client and its relation in the header, linking to that client in the archive', () => {
+		const normalized = normalizeLocalArticleDocument(
+			{
+				title: 'Starknet privacy report',
+				status: 'published',
+				section: 'report',
+				contentJson: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body.' }] }] }
+			},
+			null,
+			ARTICLE_NOW
+		)
+		expect(normalized.ok).toBe(true)
+		if (!normalized.ok) return
+		const render = (relation: 'sponsored' | 'collaboration' | null) =>
+			renderToStaticMarkup(
+				<QueryClientProvider client={new QueryClient()}>
+					<ArticleRenderer article={{ ...normalized.value, client: { id: 'c1', displayName: 'Starknet', relation } }} />
+				</QueryClientProvider>
+			)
+
+		const clientLink = (text: string) => new RegExp(`<a[^>]*href="/research\\?client=c1"[^>]*>${text}</a>`)
+		expect(render('sponsored')).toMatch(clientLink('Sponsored by Starknet'))
+		expect(render('collaboration')).toMatch(clientLink('In collaboration with Starknet'))
+		expect(render(null)).toMatch(clientLink('Starknet'))
+		expect(
+			renderToStaticMarkup(
+				<QueryClientProvider client={new QueryClient()}>
+					<ArticleRenderer article={normalized.value} />
+				</QueryClientProvider>
+			)
+		).not.toContain('/research?client=')
+	})
+
 	test('renders custom article primitives without the editor', () => {
 		const normalized = normalizeLocalArticleDocument(
 			{

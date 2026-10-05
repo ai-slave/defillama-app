@@ -4,12 +4,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	ArticleApiError,
 	listArticles,
 	listArticleSections,
+	listResearchClients,
 	type ArticleSectionListResponse
 } from '~/containers/Articles/api'
+import { articleClientLabel, researchClientHref } from '~/containers/Articles/clientLabel'
 import {
 	type ResearchSearchQuery,
 	useResearchSearchParams
@@ -21,7 +24,7 @@ import {
 	readingMinutes
 } from '~/containers/Articles/landing/utils'
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
-import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
+import type { ArticleDocument, ArticleSection, ResearchClientSummary } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { focusRegionOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -36,11 +39,18 @@ function resolveCover(article: ArticleDocument | null | undefined) {
 	return article?.coverImage?.url || null
 }
 
-function buildSearchUrl(pathname: string, params: { q?: string; tag?: string; section?: string; page?: number }) {
+const ALL_CLIENTS = 'all'
+const RESEARCH_CLIENTS_QUERY_KEY = ['research', 'clients'] as const
+
+function buildSearchUrl(
+	pathname: string,
+	params: { q?: string; tag?: string; section?: string; client?: string; page?: number }
+) {
 	const search = new URLSearchParams()
 	if (params.q) search.set('q', params.q)
 	if (params.tag) search.set('tag', params.tag)
 	if (params.section) search.set('section', params.section)
+	if (params.client) search.set('client', params.client)
 	if (params.page && params.page > 1) search.set('page', String(params.page))
 	const qs = search.toString()
 	return qs ? `${pathname}?${qs}` : pathname
@@ -96,7 +106,7 @@ function ByLine({ article }: { article: ArticleDocument }) {
 
 function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuery; routePath: string }) {
 	const router = useRouter()
-	const { query, tag, section } = searchQuery
+	const { query, tag, section, client } = searchQuery
 	const [draft, setDraft] = useState(query)
 	// Every new URL query (a submit, a section or tag link, Back/Forward) replaces the draft. Keying the draft by the
 	// query it was typed against would bring a discarded draft back when the reader returns to that query.
@@ -109,7 +119,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const nextQuery = draft.trim()
-		const href = buildSearchUrl(routePath, { q: nextQuery, tag, section })
+		const href = buildSearchUrl(routePath, { q: nextQuery, tag, section, client })
 		router.push(href, undefined, { shallow: false, scroll: false })
 	}
 
@@ -147,7 +157,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 }
 
 function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQuery; pathname: string }) {
-	const { query: q, tag, section: activeSection } = searchQuery
+	const { query: q, tag, section: activeSection, client } = searchQuery
 	const labelId = useId()
 	const { data } = useQuery<ArticleSectionListResponse>({
 		queryKey: ['research', 'sections'],
@@ -159,7 +169,8 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 		buildSearchUrl(pathname, {
 			q,
 			tag,
-			section: sectionSlug
+			section: sectionSlug,
+			client
 		})
 
 	// The current section draws its accent and underline from aria-current.
@@ -231,6 +242,14 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 						</p>
 					) : null}
 				</Link>
+				{article.client ? (
+					<Link
+						href={researchClientHref(article.client.id)}
+						className="w-fit label-xs tracking-[0.18em] text-research-accent-strong uppercase transition-colors hover:text-research-heading dark:text-research-accent-soft dark:hover:text-research-ink"
+					>
+						{articleClientLabel(article.client)}
+					</Link>
+				) : null}
 				<ByLine article={article} />
 			</div>
 		</li>
@@ -260,6 +279,7 @@ function Pagination({
 			q: searchQuery.query,
 			tag: searchQuery.tag,
 			section: searchQuery.section,
+			client: searchQuery.client,
 			page: next
 		})
 		router.push(href, undefined, { shallow: false, scroll: false })
@@ -313,8 +333,8 @@ function Pagination({
 	)
 }
 
-function EmptyState({ query, tag, section }: { query: string; tag: string; section: string }) {
-	const hasFilters = Boolean(query || tag || section)
+function EmptyState({ query, tag, section, client }: { query: string; tag: string; section: string; client: string }) {
+	const hasFilters = Boolean(query || tag || section || client)
 	return (
 		<div className="grid place-items-center px-4 py-20 text-center">
 			<div className="grid max-w-md gap-3">
@@ -336,7 +356,7 @@ function EmptyState({ query, tag, section }: { query: string; tag: string; secti
 	)
 }
 
-function ResultsTitle({ query, tag }: { query: string; tag: string }) {
+function ResultsTitle({ query, tag, clientName }: { query: string; tag: string; clientName: string | null }) {
 	const cls =
 		'text-[clamp(22px,2.6vw,30px)] leading-[120%] font-medium tracking-tight text-research-heading dark:text-research-ink'
 	if (query) {
@@ -355,14 +375,73 @@ function ResultsTitle({ query, tag }: { query: string; tag: string }) {
 			</h1>
 		)
 	}
+	if (clientName) {
+		return (
+			<h1 className={cls}>
+				<span className="text-research-heading/45 dark:text-on-brand/45">Client </span>
+				<span>{clientName}</span>
+			</h1>
+		)
+	}
 	return <h1 className={cls}>All Research</h1>
+}
+
+function ClientFilter({
+	searchQuery,
+	pathname,
+	clients
+}: {
+	searchQuery: ResearchSearchQuery
+	pathname: string
+	clients: Array<ResearchClientSummary>
+}) {
+	const router = useRouter()
+	const { query: q, tag, section, client } = searchQuery
+	if (clients.length === 0) return null
+	const selectedName = client
+		? (clients.find((option) => option.id === client)?.displayName ?? 'Unknown client')
+		: 'All clients'
+
+	return (
+		<SelectWithCombobox
+			allValues={[
+				{ key: ALL_CLIENTS, name: 'All clients' },
+				...clients.map((option) => ({ key: option.id, name: option.displayName }))
+			]}
+			selectedValues={[client || ALL_CLIENTS]}
+			selectedLabels={[selectedName]}
+			setSelectedValues={(values) => {
+				const next = values[0]
+				if (!next) return
+				const href = buildSearchUrl(pathname, {
+					q,
+					tag,
+					section,
+					client: next === ALL_CLIENTS ? undefined : next
+				})
+				router.push(href, undefined, { shallow: false, scroll: false })
+			}}
+			label="Client"
+			labelType="regular"
+			singleSelect
+			variant="filter"
+			size="md"
+			className="w-fit"
+		/>
+	)
 }
 
 export default function ResearchSearch() {
 	const router = useRouter()
 	const { searchQuery, clearSearchParams } = useResearchSearchParams()
-	const { query, tag, section, page } = searchQuery
+	const { query, tag, section, client, page } = searchQuery
 	const PAGE_SIZE = 24
+	const { data: clients = [] } = useQuery({
+		queryKey: RESEARCH_CLIENTS_QUERY_KEY,
+		queryFn: () => listResearchClients(),
+		retry: false
+	})
+	const clientName = clients.find((option) => option.id === client)?.displayName ?? null
 
 	const {
 		data: response,
@@ -381,7 +460,8 @@ export default function ResearchSearch() {
 				page,
 				query,
 				tags: tag ? [tag] : undefined,
-				section: section as ArticleSection
+				section: section as ArticleSection,
+				client: client || undefined
 			})
 		},
 		retry: false,
@@ -418,7 +498,7 @@ export default function ResearchSearch() {
 					</button>
 				</div>
 
-				<ResultsTitle query={query} tag={tag} />
+				<ResultsTitle query={query} tag={tag} clientName={clientName} />
 
 				<div className="flex items-center gap-x-3 text-research-heading/55 dark:text-on-brand/55">
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
@@ -434,6 +514,7 @@ export default function ResearchSearch() {
 
 				<SearchBar searchQuery={searchQuery} routePath={router.pathname} />
 				<SectionsPills searchQuery={searchQuery} pathname={router.pathname} />
+				<ClientFilter searchQuery={searchQuery} pathname={router.pathname} clients={clients} />
 			</header>
 
 			{/* A failed read shows where the results go, so the search bar and filters stay usable. */}
@@ -476,7 +557,7 @@ export default function ResearchSearch() {
 					) : null}
 				</>
 			) : (
-				<EmptyState query={query} tag={tag} section={section} />
+				<EmptyState query={query} tag={tag} section={section} client={client} />
 			)}
 		</div>
 	)

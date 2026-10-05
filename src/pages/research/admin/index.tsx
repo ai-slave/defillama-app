@@ -89,10 +89,10 @@ export default function ResearchAdminHubPage() {
 								href="/research/admin/sponsors"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Reports</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Sponsored reports</span>
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Clients</span>
+								<span className="text-lg font-semibold text-primary group-hover:text-link">Clients</span>
 								<span className="text-sm text-secondary">
-									Link Research articles to protocol, chain, and CEX pages.
+									Keep the client list and link each Research article to its client.
 								</span>
 							</Link>
 						</div>

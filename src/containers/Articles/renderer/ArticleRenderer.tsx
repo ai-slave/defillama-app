@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import styles from '../ArticleStyles.module.css'
 import { validateArticleChartConfig } from '../chartAdapters'
+import { articleClientLabel, researchClientHref } from '../clientLabel'
 import { normalizeArticleContentJson } from '../document'
 import { validateArticlePeoplePanel } from '../editor/peoplePanel'
 import { validateEmbedConfig } from '../embedProviders'
@@ -996,6 +997,14 @@ export function ArticleRenderer({
 					</h1>
 					{article.subtitle ? (
 						<p className="text-base leading-snug text-secondary md:text-lg">{article.subtitle}</p>
+					) : null}
+					{article.client ? (
+						<Link
+							href={researchClientHref(article.client.id)}
+							className="w-fit label-sm tracking-[0.08em] text-link uppercase hover:underline"
+						>
+							{articleClientLabel(article.client)}
+						</Link>
 					) : null}
 					{article.section === 'report' && article.reportPdf ? (
 						<div>

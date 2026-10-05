@@ -15,6 +15,7 @@ export type ResearchSearchQuery = {
 	query: string
 	tag: string
 	section: string
+	client: string
 	page: number
 }
 
@@ -26,12 +27,14 @@ export function useResearchSearchParams() {
 			query: getQueryParam(router.query.q).trim(),
 			tag: getQueryParam(router.query.tag).trim(),
 			section: getQueryParam(router.query.section).trim(),
+			client: getQueryParam(router.query.client).trim(),
 			page: getPageParam(router.query.page)
 		}),
-		[router.query.q, router.query.tag, router.query.section, router.query.page]
+		[router.query.q, router.query.tag, router.query.section, router.query.client, router.query.page]
 	)
 
-	const showSearch = router.isReady && Boolean(searchQuery.query || searchQuery.tag || searchQuery.section)
+	const showSearch =
+		router.isReady && Boolean(searchQuery.query || searchQuery.tag || searchQuery.section || searchQuery.client)
 
 	const clearSearchParams = useCallback(() => {
 		void router.replace({ pathname: router.pathname, query: {} }, undefined, { scroll: false })

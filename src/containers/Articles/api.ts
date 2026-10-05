@@ -2,6 +2,8 @@ import { FEATURES_SERVER } from '~/constants'
 import type { EditorialTagOrderItem } from './editorialTagOrder'
 import type {
 	ArticleAuthorProfile,
+	ArticleClient,
+	ArticleClientRelation,
 	ArticlePublicAuthorProfile,
 	ArticleCollaborator,
 	ArticleDocument,
@@ -18,6 +20,7 @@ import type {
 	SocialMention,
 	SocialMentionPayload,
 	TrustedByLookupResult,
+	ResearchClientSummary,
 	ResearchSponsorAdmin,
 	ResearchSponsorArticleSearchResult,
 	ResearchSponsorEntityType,
@@ -149,6 +152,7 @@ export async function listArticles(
 		entityType?: string
 		entitySlug?: string
 		section?: ArticleSection
+		client?: string
 		sort?: 'featured' | 'newest' | 'displayDate'
 	} = {},
 	fetchFn: FetchLike = fetch
@@ -162,6 +166,7 @@ export async function listArticles(
 	appendSearchParam(search, 'entityType', params.entityType)
 	appendSearchParam(search, 'entitySlug', params.entitySlug)
 	appendSearchParam(search, 'section', params.section)
+	appendSearchParam(search, 'client', params.client)
 	appendSearchParam(search, 'sort', params.sort)
 	return parseResponse(await fetchFn(articleUrlWithCacheNonce(`/articles?${search}`)))
 }
@@ -955,4 +960,26 @@ export async function unlinkResearchSponsorReport(
 			{ method: 'DELETE' }
 		)
 	)
+}
+
+export async function listResearchClients(fetchFn: FetchLike = fetch): Promise<Array<ResearchClientSummary>> {
+	const data = await parseResponse<{ clients: Array<ResearchClientSummary> }>(
+		await fetchFn(articleUrlWithCacheNonce('/research/clients'))
+	)
+	return data.clients
+}
+
+export async function setArticleClient(
+	articleId: string,
+	payload: { sponsorId: string | null; relation: ArticleClientRelation | null },
+	authorizedFetch: AuthorizedFetch
+): Promise<ArticleClient | null> {
+	const data = await parseResponse<{ client: ArticleClient | null }>(
+		await authorizedFetch(articleUrl(`/research/articles/${encodeURIComponent(articleId)}/client`), {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		})
+	)
+	return data.client
 }

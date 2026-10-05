@@ -33,7 +33,13 @@ import {
 	validateLocalArticleForPublish
 } from '../document'
 import { ResearchLoader } from '../ResearchLoader'
-import type { ArticleCalloutTone, ArticleChartConfig, ArticleEmbedConfig, LocalArticleDocument } from '../types'
+import type {
+	ArticleCalloutTone,
+	ArticleChartConfig,
+	ArticleClient,
+	ArticleEmbedConfig,
+	LocalArticleDocument
+} from '../types'
 import { ARTICLE_SECTION_SLUGS } from '../types'
 import { type UploadResult, useImageUpload } from '../upload/useImageUpload'
 import { ArticleChartPickerDialog } from './ArticleChartPicker'
@@ -309,6 +315,10 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		},
 		[markArticleDirty]
 	)
+
+	const setClient = useCallback((client: ArticleClient | null) => {
+		setArticle((current) => ({ ...current, client }))
+	}, [])
 
 	const saveArticle = async (opts: { silent?: boolean } = {}) => {
 		if (!editor) return false
@@ -828,6 +838,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		if (normalized.ok === false) return { ...article, contentJson }
 		return {
 			...normalized.value,
+			client: article.client,
 			coAuthors: article.coAuthors,
 			editorialTagMetadata: article.editorialTagMetadata,
 			pending: article.pending,
@@ -1051,6 +1062,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				isSaving={isSaving}
 				publishErrors={publishErrors}
 				saveArticle={saveArticle}
+				setClient={setClient}
 				store={metaDialog}
 				updateArticle={updateArticle}
 			/>

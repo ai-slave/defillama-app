@@ -6,8 +6,8 @@ import Layout from '~/layout'
 export default function ResearchSponsorsAdminPage() {
 	return (
 		<Layout
-			title="Sponsored Reports - Research Admin - DefiLlama"
-			description="Link DefiLlama Research articles to sponsor pages."
+			title="Clients - Research Admin - DefiLlama"
+			description="Link DefiLlama Research articles to their clients."
 			canonicalUrl="/research/admin/sponsors"
 			noIndex
 			hideDesktopSearch

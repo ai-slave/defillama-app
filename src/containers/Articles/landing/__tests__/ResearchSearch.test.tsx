@@ -28,7 +28,10 @@ beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	router.query = { q: 'aave' }
 	router.push.mockReset()
-	http.serve({ [`${FEATURES_SERVER}/articles`]: { items: [], totalItems: 0, totalPages: 1 } })
+	http.serve({
+		[`${FEATURES_SERVER}/articles`]: { items: [], totalItems: 0, totalPages: 1 },
+		[`${FEATURES_SERVER}/research/clients`]: { clients: [] }
+	})
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.append(container)
@@ -184,4 +187,55 @@ test('the section links mark the URL section as the current page, and All when n
 
 	await navigate('/research?q=aave&section=report')
 	expect(current()).toEqual(['report'])
+})
+
+test('a client filter narrows the results, names the client, survives paging, and clears back to all clients', async () => {
+	router.query = { client: 'c1' }
+	http.serve({
+		[`${FEATURES_SERVER}/research/clients`]: {
+			clients: [
+				{ id: 'c1', displayName: 'Starknet' },
+				{ id: 'c2', displayName: 'Aave' }
+			]
+		},
+		[`${FEATURES_SERVER}/articles`]: {
+			...pageOf(1),
+			items: [
+				{ ...pageOf(1).items[0], client: { id: 'c1', displayName: 'Starknet', relation: 'sponsored' } },
+				{
+					...pageOf(1).items[0],
+					id: 'b1',
+					title: 'Joint study',
+					slug: 'b1',
+					client: { id: 'c1', displayName: 'Starknet', relation: 'collaboration' }
+				}
+			]
+		}
+	})
+	await render()
+	await waitForUi(() => expect(container.textContent).toContain('Article on page 1'))
+
+	const articleRequest = http.requests.find((request) => request.url.pathname === '/articles')!
+	expect(articleRequest.url.searchParams.get('client')).toBe('c1')
+	expect(container.querySelector('h1')?.textContent).toBe('Client Starknet')
+	const clientLinks = [...container.querySelectorAll('li a')].filter(
+		(a) => a.getAttribute('href') === '/research?client=c1'
+	)
+	expect(clientLinks.map((a) => a.textContent)).toEqual(['Sponsored by Starknet', 'In collaboration with Starknet'])
+
+	await act(async () => nextButton().click())
+	expect(router.push).toHaveBeenLastCalledWith('/research?client=c1&page=2', undefined, {
+		shallow: false,
+		scroll: false
+	})
+
+	const trigger = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Starknet'))!
+	await act(async () => trigger.click())
+	const allClients = await waitForUi(() => {
+		const option = [...document.querySelectorAll('[role="option"]')].find((o) => o.textContent === 'All clients')
+		expect(option).toBeDefined()
+		return option as HTMLElement
+	})
+	await act(async () => allClients.click())
+	expect(router.push).toHaveBeenLastCalledWith('/research', undefined, { shallow: false, scroll: false })
 })
