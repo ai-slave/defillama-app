@@ -154,8 +154,7 @@ export function UtrGradeHovercard({
 	return (
 		<Hovercard
 			content={<UtrPopover name={name} utr={utr} rights={rights} />}
-			// Below the chip, so phones get the full width.
-			placement="bottom-start"
+			placement="right-start"
 			className={`h-5 w-fit min-w-8 justify-center rounded-sm px-1 label-xs font-semibold ${utrGradeColor(utr.grade).tinted} ${utrGradeColor(utr.grade).text}`}
 			contentClassName="p-2.5 sm:p-3"
 			// An impression is the card being seen: hovered open on desktop, tapped open on touch.

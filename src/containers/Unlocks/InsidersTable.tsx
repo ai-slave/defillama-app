@@ -80,6 +80,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 					if (allocations.length === 0) return <span>{sections.join(', ')}</span>
 					return (
 						<Hovercard
+							placement="right-start"
 							className="max-w-full"
 							contentClassName="w-80 max-w-(--popover-available-width) p-3"
 							content={

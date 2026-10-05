@@ -240,7 +240,7 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	const anchored = (onUpgrade?: () => void) => (
 		<Hovercard
 			contentClassName="p-3"
-			placement="top-end"
+			placement="right-start"
 			content={
 				<MeasuredCard
 					rows={cardRows}
@@ -278,7 +278,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 				{(onUpgrade) => (
 					<Hovercard
 						contentClassName="p-3"
-						placement="top-end"
+						placement="right-start"
 						content={
 							<span className="flex w-80 max-w-(--popover-available-width) flex-col">
 								<MeasuredExitOffer poolName={row.pool} onUpgrade={onUpgrade} />
@@ -318,7 +318,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 	return (
 		<Hovercard
 			contentClassName="p-3"
-			placement="top-end"
+			placement="right-start"
 			content={
 				<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2 text-left body-sm">
 					{/* The status is the headline, its stamp beside it as in the APY card; the line itself is the
@@ -486,6 +486,7 @@ export function TotalApyCell({
 
 	return (
 		<Hovercard
+			placement="right-start"
 			className="max-w-full"
 			contentClassName="p-3"
 			content={
@@ -562,6 +563,7 @@ export function SignedApyCell({
 
 	return (
 		<Hovercard
+			placement="right-start"
 			className="max-w-full"
 			contentClassName="max-w-96 p-3"
 			content={

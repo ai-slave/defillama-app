@@ -8,7 +8,10 @@ export function ProtocolChainsHovercard({ chains, className }: { chains: Array<s
 
 	return (
 		<Hovercard
-			className={className ?? 'body-sm text-secondary'}
+			// self-start: the label sits under the name in a flex column, where a stretched anchor would span the
+			// name's width and push the card away from the label.
+			className={`self-start ${className ?? 'body-sm text-secondary'}`}
+			placement="right-start"
 			contentClassName="w-max max-w-[min(20rem,var(--popover-available-width))] p-3"
 			content={
 				<span className="flex flex-col gap-1">

@@ -30,6 +30,7 @@ function LeafAssetTypeCell({ asset }: { asset: RWAOverviewDisplayRow }) {
 	if (assetClasses.length === 0) return <span className="truncate">{assetGroup}</span>
 	return (
 		<Hovercard
+			placement="right-start"
 			content={
 				<span className="flex flex-col gap-1">
 					<span>

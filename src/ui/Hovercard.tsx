@@ -21,6 +21,12 @@ interface IHovercard {
 	onOpen?: () => void
 }
 
+// A side card tries the other side, then below and above, before squeezing into a narrow viewport.
+const SIDE_FALLBACKS: Record<string, string> = {
+	right: 'left-start bottom-start top-start',
+	left: 'right-start bottom-start top-start'
+}
+
 /**
  * Hover/focus card for structured or long content (lists, breakdowns, definitions, previews). Unlike a text
  * `<Tooltip>` it can be hovered into, dismissed with Escape, and reached by keyboard via the built-in
@@ -34,7 +40,12 @@ interface IHovercard {
  *
  * Anchor: inline-flex, so it sizes to its content and follows the parent's `text-align`. Put truncating text in an
  * inner `<span className="truncate">` with `max-w-full` on the anchor; a bar that fills its cell adds `w-full`; an
- * anchor with no text (a pie, a bar) adds `align-middle` so it leaves the text baseline.
+ * anchor with no text (a pie, a bar) adds `align-middle` so it leaves the text baseline. In a `flex-col` parent the
+ * anchor stretches to the column's width, and a side card opens past the widest sibling; add `self-start`.
+ *
+ * Placement: an anchor in a table cell opens to the side (`right-start`, or `left-start` near the table's end). A card
+ * above or below covers the neighbouring row, and Ariakit keeps it open while the pointer moves toward it, so it
+ * swallows the click on that row. A side card that has no room falls back below.
  *
  * Width: the surface caps itself with Ariakit's `--popover-available-width` and `--popover-available-height` and
  * keeps 16px from the viewport edges. The content owns its preferred width: `w-max` for compact vertical lists,
@@ -77,6 +88,7 @@ export function Hovercard({
 				className={`${popoverHovercardSurfaceStyles} ${contentClassName ?? 'p-3'}`}
 				gutter={6}
 				overflowPadding={16}
+				flip={SIDE_FALLBACKS[placement.split('-')[0]] ?? true}
 				portal
 				unmountOnHide
 				hideOnInteractOutside

@@ -183,6 +183,7 @@ function PerksValue({ perks }: { perks: Array<string> }) {
 			<PerkChips perks={perks.slice(0, visible)} />
 			{hidden.length > 0 ? (
 				<Hovercard
+					placement="right-start"
 					render={<button type="button" />}
 					className={`${perkChipStyles} text-primary`}
 					content={
@@ -286,6 +287,7 @@ export function buildCardsColumns(
 							)}
 							{card.cardId === 'gnosis-pay' ? (
 								<Hovercard
+									placement="right-start"
 									render={
 										<Button variant="ghost" size="sm" square aria-label="Gnosis Pay card discontinuation warning" />
 									}

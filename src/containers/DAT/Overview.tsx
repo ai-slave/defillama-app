@@ -189,6 +189,7 @@ const overviewColumns = columnHelper.columns([
 
 				return (
 					<Hovercard
+						placement="right-start"
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} />}
 						contentClassName="w-72 max-w-(--popover-available-width) p-3"
 						render={<button type="button" />}

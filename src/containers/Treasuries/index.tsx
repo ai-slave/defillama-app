@@ -100,6 +100,7 @@ const columns = columnHelper.columns([
 
 			return (
 				<Hovercard
+					placement="right-start"
 					content={<BreakdownTooltipContent dominance={dominance} protocolName={info.row.original.name} />}
 					contentClassName="w-max max-w-[min(20rem,var(--popover-available-width))] p-3"
 					render={<button type="button" />}
