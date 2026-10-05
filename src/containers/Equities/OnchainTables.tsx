@@ -245,14 +245,6 @@ const tokensColumns = tokensColumnHelper.columns([
 	})
 ])
 
-function EmptyState({ children }: { children: React.ReactNode }) {
-	return (
-		<div className="rounded-lg border border-dashed border-subtle bg-surface p-3 body-sm text-secondary">
-			<p>{children}</p>
-		</div>
-	)
-}
-
 export function EquitiesMarketsTable({
 	markets,
 	ticker
@@ -328,14 +320,15 @@ export function EquitiesMarketsTable({
 					size="md"
 				/>
 			</TableToolbar>
-			{rows.length === 0 ? (
-				<EmptyState>
-					{activeVenue === 'all'
+			<PaginatedTable
+				table={table}
+				pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+				emptyMessage={
+					activeVenue === 'all'
 						? `No on-chain markets found for ${ticker}.`
-						: `No ${activeVenue} markets found for ${ticker}.`}
-				</EmptyState>
-			) : null}
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
+						: `No ${activeVenue} markets found for ${ticker}.`
+				}
+			/>
 		</Panel>
 	)
 }
@@ -366,8 +359,11 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: Array<IEquitie
 					size="md"
 				/>
 			</TableToolbar>
-			{tokens.length === 0 ? <EmptyState>No tokenized assets found for {ticker}.</EmptyState> : null}
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
+			<PaginatedTable
+				table={table}
+				pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+				emptyMessage={`No tokenized assets found for ${ticker}.`}
+			/>
 		</Panel>
 	)
 }

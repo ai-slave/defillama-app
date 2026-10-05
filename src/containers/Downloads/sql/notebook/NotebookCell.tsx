@@ -266,19 +266,11 @@ function CellMenu({
 			<MenuSurface variant="actions" gutter={4}>
 				{cellType === 'sql' ? (
 					<>
-						<MenuItem
-							disabled={isFirst}
-							onClick={onRunAbove}
-							className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
-						>
+						<MenuItem disabled={isFirst} onClick={onRunAbove}>
 							<Icon name="chevron-up" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 							Run cells above
 						</MenuItem>
-						<MenuItem
-							disabled={isLast}
-							onClick={onRunBelow}
-							className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
-						>
+						<MenuItem disabled={isLast} onClick={onRunBelow}>
 							<Icon name="chevron-down" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 							Run cells below
 						</MenuItem>
@@ -287,16 +279,12 @@ function CellMenu({
 				<MenuItem
 					disabled={isFirst}
 					onClick={onMoveUp}
-					className={`${cellType === 'sql' ? 'border-t border-subtle' : ''} aria-disabled:cursor-not-allowed aria-disabled:opacity-40`}
+					className={`${cellType === 'sql' ? 'border-t border-subtle' : ''}`}
 				>
 					<Icon name="arrow-up" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					Move up
 				</MenuItem>
-				<MenuItem
-					disabled={isLast}
-					onClick={onMoveDown}
-					className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
-				>
+				<MenuItem disabled={isLast} onClick={onMoveDown}>
 					<Icon name="arrow-down" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					Move down
 				</MenuItem>
@@ -306,12 +294,7 @@ function CellMenu({
 						Convert to {t === 'sql' ? 'SQL' : t === 'markdown' ? 'Markdown' : 'Chart'}
 					</MenuItem>
 				))}
-				<MenuItem
-					destructive
-					disabled={!canDelete}
-					onClick={onDelete}
-					className="border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
-				>
+				<MenuItem destructive disabled={!canDelete} onClick={onDelete} className="border-t border-subtle">
 					<Icon name="trash-2" className="size-3.5 shrink-0" />
 					Delete cell
 				</MenuItem>

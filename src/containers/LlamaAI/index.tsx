@@ -217,7 +217,7 @@ function getPromptDraftScope(sessionId: string | null, projectId: string | null)
 	return projectId ? `project:${projectId}` : 'new'
 }
 
-const SHARE_TOOLTIP = 'Share conversation'
+const SHARE_TOOLTIP = 'Make public and share'
 const SHARE_PENDING_TOOLTIP = 'Available once the conversation is saved.'
 
 type RecoveryController = {

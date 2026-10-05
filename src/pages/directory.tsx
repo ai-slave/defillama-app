@@ -224,7 +224,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 										focusOnHover
 										hideOnClick={false}
 										setValueOnClick={false}
-										className={`${popoverMenuItemStyles} gap-4 aria-disabled:bg-hover-row aria-disabled:opacity-50 aria-selected:bg-hover-row`}
+										className={`${popoverMenuItemStyles} gap-4 aria-disabled:bg-hover-row aria-selected:bg-hover-row`}
 									>
 										{option.logo ? <TokenLogo src={option.logo} alt={`Logo of ${option.name}`} /> : null}
 										<span>{option.name}</span>

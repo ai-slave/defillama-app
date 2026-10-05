@@ -463,10 +463,11 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		// `[^<]` reads past arrow functions (`=>`) in earlier props and stops at the first child element.
 		id: 'menu-item-color-class',
 		description:
 			"status color class on a MenuItem — it never shows, because Tailwind emits the row recipe's .text-primary after it; pass `destructive` for a delete or remove row",
-		pattern: /<MenuItem\b[^>]*?className=[^>]*?\btext-(?:error|data-down|data-up|warning)\b/g
+		pattern: /<MenuItem\b[^<]*?className=\{?[`"'][^`"']*\btext-(?:error|data-down|data-up|warning)\b/g
 	},
 	{
 		id: 'raw-dialog-surface',

@@ -5,7 +5,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { getInvestorsProjects, type InvestorsSite } from './config'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
-import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
+import { CustomOnlyContent, InvestorsContent, TabLabel } from './DashboardTabsContent'
 import { Logo } from './Logo'
 import { scrollToPageTop } from './scrollToPageTop'
 import { useInvestorsSite } from './SiteContext'
@@ -16,22 +16,6 @@ type ShellProject = {
 	customOnly: boolean
 	id: string
 	dashboardId: string
-	comingSoon: boolean
-}
-
-function ProjectComingSoon() {
-	return (
-		<div className="flex flex-1 items-center justify-center p-8">
-			<div className="relative w-full max-w-2xl">
-				<SkeletonTable />
-				<div className="absolute inset-0 flex items-center justify-center">
-					<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 text-sm font-semibold tracking-wide text-pro-text-secondary shadow-lg">
-						Coming Soon
-					</span>
-				</div>
-			</div>
-		</div>
-	)
 }
 
 function InvestorsShell({
@@ -44,15 +28,7 @@ function InvestorsShell({
 	customServerData?: Record<string, unknown>
 }) {
 	const [isDark, toggleTheme] = useDarkModeManager()
-	const allProjects = useMemo<Array<ShellProject>>(
-		() => [
-			...getInvestorsProjects(site.projectIds).map((project) => ({ ...project, comingSoon: false })),
-			...(site.comingSoonProjectIds.length > 0
-				? [{ id: 'your-project', name: 'Your Project', dashboardId: '', comingSoon: true, customOnly: false }]
-				: [])
-		],
-		[site]
-	)
+	const allProjects = useMemo<Array<ShellProject>>(() => getInvestorsProjects(site.projectIds), [site])
 
 	const isSingleProtocol = !!protocol
 	const visibleProjects = useMemo(
@@ -63,10 +39,7 @@ function InvestorsShell({
 
 	// One module query per project, in visibleProjects order.
 	const moduleQueries = useQueries({
-		queries: visibleProjects.map((project) => ({
-			...dashboardModuleQuery(project.dashboardId),
-			enabled: !project.comingSoon
-		}))
+		queries: visibleProjects.map((project) => dashboardModuleQuery(project.dashboardId))
 	})
 	const [activeTab, setActiveTab] = useState<string | null>(null)
 	const [activeProject, setActiveProject] = useState(defaultProject)
@@ -116,7 +89,7 @@ function InvestorsShell({
 					<nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
 						{visibleProjects.map((project, index) => {
 							const isActive = activeProject === project.id
-							const isExpanded = isSingleProtocol || (expandedProject === project.id && !project.comingSoon)
+							const isExpanded = isSingleProtocol || expandedProject === project.id
 
 							return (
 								<div key={project.id}>
@@ -124,15 +97,13 @@ function InvestorsShell({
 										type="button"
 										onClick={() => {
 											if (isSingleProtocol) return
-											if (isActive && !project.comingSoon) {
+											if (isActive) {
 												setExpandedProject(isExpanded ? null : project.id)
 											} else {
 												scrollToPageTop()
 												setActiveProject(project.id)
-												setExpandedProject(project.comingSoon ? expandedProject : project.id)
-												if (!project.comingSoon) {
-													setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
-												}
+												setExpandedProject(project.id)
+												setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
 												closeSidebar()
 											}
 										}}
@@ -160,11 +131,6 @@ function InvestorsShell({
 											</svg>
 										)}
 										{project.name}
-										{project.comingSoon && (
-											<span className="ml-auto rounded-full bg-sl-btn-inactive-bg px-1.5 py-0.5 text-[10px] font-normal text-pro-text-tertiary">
-												Soon
-											</span>
-										)}
 									</button>
 
 									{isExpanded && (
@@ -271,9 +237,7 @@ function InvestorsShell({
 							<HeaderComponent />
 						</Suspense>
 					)}
-					{activeProjectConfig?.comingSoon ? (
-						<ProjectComingSoon />
-					) : activeProjectConfig?.customOnly ? (
+					{activeProjectConfig?.customOnly ? (
 						<CustomOnlyContent
 							tabs={tabs}
 							activeTab={resolvedTab}

@@ -95,7 +95,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListC
 				data-lgonly
 				alt={`Logo of ${row.original.ticker}`}
 			/>
-			<BasicLink href={row.original.href} className="font-medium text-link">
+			<BasicLink href={row.original.href} className="label-md text-link hover:underline">
 				{row.original.ticker}
 			</BasicLink>
 		</span>

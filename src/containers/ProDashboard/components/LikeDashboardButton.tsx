@@ -20,10 +20,10 @@ export function LikeDashboardButton({
 	const isLiked = liked ?? !!currentDashboard.liked
 	return (
 		<Tooltip
-			content="Like dashboard"
+			content="Star dashboard"
 			render={
 				<ProButton
-					aria-label="Like dashboard"
+					aria-label="Star dashboard"
 					aria-pressed={isLiked}
 					type="button"
 					variant="ghost"
@@ -37,7 +37,7 @@ export function LikeDashboardButton({
 			}
 		>
 			<span>{likeCount ?? currentDashboard.likeCount ?? 0}</span>
-			<span className="sr-only">Likes</span>
+			<span className="sr-only">Stars</span>
 		</Tooltip>
 	)
 }

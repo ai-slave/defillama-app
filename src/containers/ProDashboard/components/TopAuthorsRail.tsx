@@ -47,7 +47,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 				items={[
 					`${compact(entry.dashboardCount)} dashboards`,
 					`${compact(entry.totalViews)} views`,
-					`${compact(entry.totalLikes)} likes`
+					`${compact(entry.totalLikes)} stars`
 				]}
 			/>
 		</BasicLink>

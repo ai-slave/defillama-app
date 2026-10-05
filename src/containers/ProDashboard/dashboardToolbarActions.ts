@@ -6,7 +6,6 @@ export type DashboardToolbarActionId =
 	| 'undo'
 	| 'redo'
 	| 'refresh-sql'
-	| 'settings'
 
 export interface DashboardToolbarActionState {
 	isReadOnly: boolean
@@ -14,20 +13,18 @@ export interface DashboardToolbarActionState {
 	canUndoAi: boolean
 	canUndoEdit: boolean
 	canRedoEdit: boolean
-	hasDashboardId: boolean
 	showSqlRefresh: boolean
 	isLoadingEdits: boolean
 }
 
-const SHEET_ORDER: ReadonlyArray<DashboardToolbarActionId> = [
+const PHONE_MENU_ORDER: ReadonlyArray<DashboardToolbarActionId> = [
 	'add-card',
 	'add-section',
 	'edit-with-ai',
 	'undo-ai',
 	'undo',
 	'redo',
-	'refresh-sql',
-	'settings'
+	'refresh-sql'
 ]
 
 export const DESKTOP_TOOLBAR_ORDER: ReadonlyArray<DashboardToolbarActionId> = [
@@ -58,13 +55,11 @@ function isToolbarActionVisible(id: DashboardToolbarActionId, state: DashboardTo
 			return canEdit && state.hasAnyItems && state.canRedoEdit
 		case 'refresh-sql':
 			return state.showSqlRefresh
-		case 'settings':
-			return canAct && state.hasDashboardId
 	}
 }
 
 export function visibleDashboardToolbarActions(state: DashboardToolbarActionState): Array<DashboardToolbarActionId> {
-	return SHEET_ORDER.filter((id) => isToolbarActionVisible(id, state))
+	return PHONE_MENU_ORDER.filter((id) => isToolbarActionVisible(id, state))
 }
 
 export interface DesktopToolbarAction {

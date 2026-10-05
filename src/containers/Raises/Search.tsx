@@ -131,7 +131,7 @@ function Row({ name, setOpen }: { name: string; setOpen: (open: boolean) => void
 			hideOnClick={false}
 			setValueOnClick={false}
 			disabled={loading}
-			className={`${popoverMenuItemStyles} aria-disabled:opacity-50`}
+			className={popoverMenuItemStyles}
 		>
 			<span>{name}</span>
 			{loading ? <LoadingSpinner size={12} /> : null}

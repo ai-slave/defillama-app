@@ -49,6 +49,9 @@ interface AgenticSessionItemProps {
 
 // Rendered from a list in the projects sidebar, where the compiler caches the row callback rather than
 // each row, so memo is what keeps untouched sessions from re-rendering.
+// The copy waits on the publish; when publishing fails, that failure is reported once, by the publish.
+const PUBLISH_FAILED = new Error('Publishing failed')
+
 export const AgenticSessionItem = memo(function AgenticSessionItem({
 	session,
 	isActive,
@@ -80,11 +83,20 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const [confirmDelete, setConfirmDelete] = useState(false)
 	const menuRef = useRef<HTMLButtonElement>(null)
 
+	// Safari only accepts a clipboard write that starts inside the click, so a link still being created arrives as a
+	// promise and the write waits for it.
 	const copyLink = useMutation({
-		mutationFn: () => navigator.clipboard.writeText(`${window.location.origin}/ai/chat/shared/${session.shareToken}`),
+		mutationFn: (shareToken: string | Promise<string>) =>
+			navigator.clipboard.write([
+				new ClipboardItem({
+					'text/plain': Promise.resolve(shareToken).then(
+						(token) => new Blob([`${window.location.origin}/ai/chat/shared/${token}`], { type: 'text/plain' })
+					)
+				})
+			]),
 		onSuccess: () => trackUmamiEvent('llamaai-session-share'),
-		onError: () => {
-			if (!menuContentRef.current?.isConnected) toast.error('Failed to copy link')
+		onError: (error) => {
+			if (error !== PUBLISH_FAILED && !menuContentRef.current?.isConnected) toast.error('Failed to copy link')
 		}
 	})
 	// Fast consecutive copies can batch away the pending render; each attempt needs a fresh timer.
@@ -95,11 +107,15 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		return () => clearTimeout(timer)
 	}, [successfulCopyAttempt, copyLink.reset])
 
+	// `makePublic` asks for a public link; without it the endpoint toggles, which only Make private uses.
 	const visibility = useMutation({
-		mutationFn: async () => {
+		mutationFn: async (makePublic: boolean): Promise<{ shareToken: string }> => {
 			const response = assertResponse(
 				await authorizedFetch(`${AI_SERVER}/user/sessions/${session.sessionId}/share`, {
-					method: 'PUT'
+					method: 'PUT',
+					...(makePublic
+						? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forcePublic: true }) }
+						: {})
 				}),
 				'Failed to update session visibility'
 			)
@@ -342,55 +358,71 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								<Icon name="pin" height={14} width={14} className="shrink-0" />
 								{session.isPinned ? 'Unpin' : 'Pin to top'}
 							</MenuItem>
+							{/* A link only opens for others once the conversation is public, so a private one publishes first. */}
 							<MenuItem
 								onClick={() => {
-									copyLink.mutate()
+									if (session.isPublic) {
+										copyLink.mutate(session.shareToken!)
+										return
+									}
+									copyLink.mutate(
+										visibility.mutateAsync(true).then(
+											(data) => data.shareToken,
+											() => Promise.reject(PUBLISH_FAILED)
+										)
+									)
 								}}
 								hideOnClick={false}
 								accessibleWhenDisabled
-								disabled={!session.isPublic || !session.shareToken || visibility.isPending || copyLink.isPending}
-								className="border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+								disabled={
+									visibility.isPending ||
+									copyLink.isPending ||
+									(session.isPublic && !session.shareToken) ||
+									updateTitle.isPending ||
+									deletion.isPending ||
+									isRestoring
+								}
+								className="border-b border-subtle last-of-type:border-b-0"
 							>
-								{copyLink.isSuccess ? (
+								{visibility.isPending || copyLink.isPending ? (
+									<LoadingSpinner size={14} />
+								) : copyLink.isSuccess ? (
 									<Icon name="check-circle" height={14} width={14} className="shrink-0" />
 								) : (
 									<Icon name="copy" height={14} width={14} className="shrink-0" />
 								)}
-								{!session.isPublic
-									? 'Make public to share'
+								{visibility.isPending
+									? 'Making public…'
 									: copyLink.isPending
 										? 'Copying…'
 										: copyLink.isSuccess
 											? 'Link copied'
-											: 'Copy link'}
+											: session.isPublic
+												? 'Copy link'
+												: 'Make public and copy link'}
 							</MenuItem>
-							<MenuItem
-								onClick={() => {
-									if (session.isPublic) {
+							{session.isPublic ? (
+								<MenuItem
+									onClick={() => {
 										visibility.reset()
 										setConfirmPrivate(true)
-									} else {
-										visibility.mutate()
-									}
-								}}
-								hideOnClick={false}
-								accessibleWhenDisabled
-								disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
-								className="border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-							>
-								{visibility.isPending ? (
-									<LoadingSpinner size={14} />
-								) : (
-									<Icon name={session.isPublic ? 'eye' : 'link'} height={14} width={14} className="shrink-0" />
-								)}
-								{session.isPublic ? 'Make private' : 'Make public'}
-							</MenuItem>
+									}}
+									hideOnClick={false}
+									accessibleWhenDisabled
+									disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
+									className="border-b border-subtle last-of-type:border-b-0"
+								>
+									<Icon name="eye" height={14} width={14} className="shrink-0" />
+									Make private
+								</MenuItem>
+							) : null}
 							<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 							<MenuItem
 								onClick={() => setConfirmDelete(true)}
 								disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
 								data-deleting={deletion.isPending}
-								className="border-b border-subtle text-error! last-of-type:border-b-0"
+								destructive
+								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								{deletion.isPending ? (
 									<LoadingSpinner size={14} />
@@ -400,7 +432,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								Delete session
 							</MenuItem>
 						</Ariakit.MenuList>
-						{copyLink.error ? (
+						{copyLink.error && copyLink.error !== PUBLISH_FAILED ? (
 							<p role="alert" className="px-3 py-2 body-sm text-error">
 								Could not copy the link. Please try again.
 							</p>
@@ -420,7 +452,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					confirmLabel="Make private"
 					pendingLabel="Updating…"
 					mutation={visibility}
-					variables={undefined}
+					variables={false}
 					onClose={() => setConfirmPrivate(false)}
 					finalFocus={menuRef}
 				/>

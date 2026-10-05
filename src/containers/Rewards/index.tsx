@@ -26,7 +26,6 @@ import {
 	searchFieldInlineWrapperStyles,
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
-import { NoResults } from '~/ui/NoResults'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { getABGroupFromCookie } from '~/utils/abTesting'
 import { REWARDS_EVENTS, trackRewardsEvent } from '~/utils/analytics/rewards'
@@ -263,9 +262,6 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 					tableClassName="min-w-max!"
 					renderSubComponent={renderProgramDetails}
 				/>
-				{view.rows.length === 0 ? (
-					<NoResults>No programs match these filters. Try another status or reset the filters.</NoResults>
-				) : null}
 			</Panel>
 			<p className="px-2 body-sm text-secondary">
 				Programs and eligibility can change. Check the linked terms before participating. Some links are referral links;

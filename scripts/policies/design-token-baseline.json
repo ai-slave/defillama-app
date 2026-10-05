@@ -21,7 +21,7 @@
 		"arbitrary-dialog-width": 0,
 		"dialog-button-pinned-height": 0,
 		"hand-rolled-spinner": 0,
-		"ascii-ellipsis": 137,
+		"ascii-ellipsis": 135,
 		"raw-scope-note": 0,
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
@@ -35,7 +35,7 @@
 	"product": {
 		"hex-in-classname": 22,
 		"dark-hex-variant": 8,
-		"arbitrary-font-size": 522,
+		"arbitrary-font-size": 521,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
@@ -63,6 +63,6 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 1075
+		"raw-type-pair": 1069
 	}
 }

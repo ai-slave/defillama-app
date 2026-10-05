@@ -120,9 +120,15 @@ function CustomDataForm({
 			onError(describeError(error))
 			return
 		}
+		// A read that finishes after a later edit or file belongs to the earlier input and is dropped.
+		const token = encodeToken.current + 1
+		encodeToken.current = token
 		const reader = new FileReader()
-		reader.addEventListener('error', () => onError('Could not read this file.'))
+		reader.addEventListener('error', () => {
+			if (encodeToken.current === token) onError('Could not read this file.')
+		})
 		reader.addEventListener('load', () => {
+			if (encodeToken.current !== token) return
 			const text = typeof reader.result === 'string' ? reader.result : ''
 			onTextChange(text)
 			applyCsv(text, file.name)

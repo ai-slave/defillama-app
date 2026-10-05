@@ -169,7 +169,7 @@ function getInvestorsRewrite(request: NextRequest) {
 
 	const { pathname } = request.nextUrl
 	const isSingleProject = site.projectIds.length === 1
-	const hasLandingPage = site.landingProjectIds.length > 1 || site.comingSoonProjectIds.length > 0
+	const hasLandingPage = site.landingProjectIds.length > 1
 	const destination = request.nextUrl.clone()
 
 	if (pathname === '/') {

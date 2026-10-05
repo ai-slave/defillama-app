@@ -109,7 +109,7 @@ test('refreshes rows and pagination controls when only the supplied data changes
 		expect(container.querySelector('tbody')?.textContent).toContain('Replacement')
 		expect(container.textContent).not.toContain('Page 1 of 2')
 		await act(async () => root.render(<Fixture rows={[]} />))
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(0)
+		expect(container.querySelector('tbody')?.textContent).toBe('No results found')
 	} finally {
 		await act(async () => root.unmount())
 	}

@@ -11,7 +11,6 @@ const editorWithEverything: DashboardToolbarActionState = {
 	canUndoAi: true,
 	canUndoEdit: true,
 	canRedoEdit: true,
-	hasDashboardId: true,
 	showSqlRefresh: true,
 	isLoadingEdits: false
 }
@@ -26,7 +25,7 @@ test('a viewer keeps the SQL refresh the dashboard needs', () => {
 	expect(visibleDashboardToolbarActions({ ...editorWithEverything, isReadOnly: true })).toEqual(['refresh-sql'])
 })
 
-test('an editor with everything available lists the actions in sheet order', () => {
+test('an editor with everything available lists the actions in phone menu order', () => {
 	expect(visibleDashboardToolbarActions(editorWithEverything)).toEqual([
 		'add-card',
 		'add-section',
@@ -34,21 +33,14 @@ test('an editor with everything available lists the actions in sheet order', () 
 		'undo-ai',
 		'undo',
 		'redo',
-		'refresh-sql',
-		'settings'
+		'refresh-sql'
 	])
 })
 
-test('an empty dashboard offers only the card and settings entry points', () => {
+test('an empty dashboard offers only the card entry point', () => {
 	expect(
 		visibleDashboardToolbarActions({ ...editorWithEverything, hasAnyItems: false, showSqlRefresh: false })
-	).toEqual(['add-card', 'settings'])
-})
-
-test('an unsaved dashboard has no settings to open yet', () => {
-	expect(
-		visibleDashboardToolbarActions({ ...editorWithEverything, hasAnyItems: false, hasDashboardId: false })
-	).toEqual(['add-card', 'refresh-sql'])
+	).toEqual(['add-card'])
 })
 
 test('a dashboard still loading its edits keeps the card actions reachable while read-only', () => {
@@ -59,7 +51,7 @@ test('a dashboard still loading its edits keeps the card actions reachable while
 			isLoadingEdits: true,
 			showSqlRefresh: false
 		})
-	).toEqual(['add-card', 'add-section', 'settings'])
+	).toEqual(['add-card', 'add-section'])
 })
 
 test('history actions appear only once their direction is available', () => {
@@ -71,7 +63,7 @@ test('history actions appear only once their direction is available', () => {
 			canRedoEdit: false,
 			showSqlRefresh: false
 		})
-	).toEqual(['add-card', 'add-section', 'edit-with-ai', 'settings'])
+	).toEqual(['add-card', 'add-section', 'edit-with-ai'])
 })
 
 test('the desktop row keeps undo and redo mounted and disables the unavailable direction', () => {

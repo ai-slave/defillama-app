@@ -11,7 +11,7 @@ interface MoveToProjectMenuItemProps {
 	currentProjectId?: string | null
 }
 
-const PARENT_ITEM_CLASS = `${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60`
+const PARENT_ITEM_CLASS = `${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0`
 
 export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: MoveToProjectMenuItemProps) {
 	const menu = Ariakit.useMenuStore()
@@ -69,12 +69,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 							{projects.data.map((p) => {
 								const isCurrentProject = p.id === currentProjectId
 								return (
-									<MenuItem
-										key={p.id}
-										onClick={() => void onMove(p.id)}
-										disabled={isCurrentProject || move.isPending}
-										className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
-									>
+									<MenuItem key={p.id} onClick={() => void onMove(p.id)} disabled={isCurrentProject || move.isPending}>
 										<Icon
 											name={isCurrentProject ? 'check' : 'folder'}
 											height={14}
@@ -89,7 +84,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 								<MenuItem
 									onClick={() => void onMove(null)}
 									disabled={move.isPending}
-									className="border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+									className="border-t border-subtle"
 								>
 									<Icon name="x" height={14} width={14} className="shrink-0 opacity-70" />
 									<span className="min-w-0 flex-1 truncate text-left">Remove from project</span>

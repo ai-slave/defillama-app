@@ -43,10 +43,10 @@ export function useDashboardEngagement(dashboardId: string | null) {
 				}
 			)
 			queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'liked-dashboards'] })
-			toast.success(data.liked ? 'Dashboard liked!' : 'Like removed')
+			toast.success(data.liked ? 'Dashboard starred' : 'Star removed')
 		},
 		onError: (error: unknown) => {
-			toast.error(error instanceof Error ? error.message : 'Failed to update like')
+			toast.error(error instanceof Error ? error.message : 'Failed to update star')
 		}
 	})
 
@@ -57,7 +57,7 @@ export function useDashboardEngagement(dashboardId: string | null) {
 		toggleLike: () => {
 			if (!dashboardId) return
 			if (!isAuthenticated) {
-				toast.error('Please sign in to like dashboards')
+				toast.error('Please sign in to star dashboards')
 				return
 			}
 			likeMutation.mutate(dashboardId)

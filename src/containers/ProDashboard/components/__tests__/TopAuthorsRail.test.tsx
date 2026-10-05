@@ -72,5 +72,5 @@ test('author cards carry their handle and compact counts', async () => {
 	await waitForUi(() => expect(container.textContent).toContain('@llama'))
 	expect(container.textContent).toContain('12 dashboards')
 	expect(container.textContent).toContain('15.4K views')
-	expect(container.textContent).toContain('2.3K likes')
+	expect(container.textContent).toContain('2.3K stars')
 })

@@ -21,7 +21,7 @@ export function CardLikeButton({
 			type="button"
 			size="sm"
 			variant="ghost"
-			aria-label="Like dashboard"
+			aria-label="Star dashboard"
 			aria-pressed={isLiked}
 			disabled={isLiking}
 			onClick={(event: React.MouseEvent) => {
@@ -30,7 +30,7 @@ export function CardLikeButton({
 				toggleLike()
 			}}
 			className="z-10 tabular-nums"
-			title={isLiked ? 'Unlike dashboard' : 'Like dashboard'}
+			title={isLiked ? 'Unstar dashboard' : 'Star dashboard'}
 		>
 			{isLiking ? (
 				<LoadingSpinner size={14} />

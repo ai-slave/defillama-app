@@ -30,7 +30,7 @@ test('a running duplicate is announced after its menu closes', async () => {
 		root.render(
 			<QueryClientProvider client={new QueryClient()}>
 				<DashboardTestProvider>
-					<DashboardOverflowMenu onDuplicate={() => copy.promise} />
+					<DashboardOverflowMenu phoneActions={[]} onDuplicate={() => copy.promise} />
 				</DashboardTestProvider>
 			</QueryClientProvider>
 		)

@@ -213,7 +213,7 @@ export function QueryTabBar({
 							onClose(menu.id)
 							menuStore.hide()
 						}}
-						className="border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+						className="border-t border-subtle"
 					>
 						<Icon name="x" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Close
@@ -225,7 +225,6 @@ export function QueryTabBar({
 							onCloseOthers(menu.id)
 							menuStore.hide()
 						}}
-						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 					>
 						<Icon name="x" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Close others
@@ -237,7 +236,6 @@ export function QueryTabBar({
 							onCloseToRight(menu.id)
 							menuStore.hide()
 						}}
-						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 					>
 						<Icon name="arrow-right" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 						Close tabs to the right

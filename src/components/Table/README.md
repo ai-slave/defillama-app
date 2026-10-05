@@ -92,6 +92,7 @@ headers.forEach((th, i) => {
 - The sort caret is a 10px `SortIcon` after the label with `gap-1`; the active caret is `text-brand`, inactive carets `text-tertiary/50`.
 - Comparable rows expose sortable headers, default to the page's stated ranking, keep nulls last in both directions, and recompute the rank and CSV order from the active sort. Fixed sequences such as period matrices and calendars do not sort.
 - The identity column stays sticky when metric columns scroll horizontally. Wide tables sit in a `min-w-0 max-w-full overflow-x-auto overscroll-x-contain` scroller.
+- An empty row model renders one full-width `NoResults` row under the headers (`TableEmptyRow`), so the toolbar, search and headers stay usable. Pages never add their own message beside the table; `PaginatedTable` takes `emptyMessage` for page-specific text and hides the row while `interactionDisabled` shows its loading overlay. A page status that replaces the whole table, such as a full-panel `SurfaceBodyStatus`, stays the page's.
 - Row and cell borders use `border-subtle`.
 - `PaginatedTable` has no border of its own: the surrounding `Panel` or `Card` is the table's only rounded border, and the pagination row attaches with `border-t border-subtle p-2`.
 - `PaginatedTable` body cells wrap unless the column sets `truncate`. `stickyHeader` is only for long directories that need persistent column context.

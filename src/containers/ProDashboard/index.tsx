@@ -29,9 +29,8 @@ import { ChartSyncToggle } from './components/ChartSyncToggle'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
 import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
-import { DashboardActionsSheet, type DashboardSheetAction } from './components/DashboardActionsSheet'
 import { DashboardLoadProgress } from './components/DashboardLoadProgress'
-import { DashboardOverflowMenu } from './components/DashboardOverflowMenu'
+import { type DashboardMenuAction, DashboardOverflowMenu } from './components/DashboardOverflowMenu'
 import { DashboardVariablesBar } from './components/DashboardVariablesBar'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
@@ -185,10 +184,9 @@ function AuthorProfileSetupNotice() {
 	)
 }
 
-type DashboardToolbarAction = DashboardSheetAction & {
+type DashboardToolbarAction = DashboardMenuAction & {
 	variant: ProButtonVariant
 	square?: boolean
-	umami?: string
 	busy?: boolean
 }
 
@@ -528,8 +526,7 @@ function ProDashboardContent() {
 			disabled: sqlRefreshActive,
 			busy: sqlRefreshActive,
 			title: 'Re-run every SQL chart and table on this dashboard and update the results for everyone.'
-		},
-		settings: { label: 'Settings', icon: 'settings', onSelect: openDashboardSettings, variant: 'secondary' }
+		}
 	}
 	const toolbarActionState = {
 		isReadOnly,
@@ -537,13 +534,12 @@ function ProDashboardContent() {
 		canUndoAi: canUndo,
 		canUndoEdit,
 		canRedoEdit,
-		hasDashboardId: !!dashboardId,
 		showSqlRefresh,
 		isLoadingEdits: isLoadingDashboardEdits
 	}
 	const visibleActionIds = visibleDashboardToolbarActions(toolbarActionState)
 	const desktopActions = desktopDashboardToolbarActions(toolbarActionState)
-	const sheetActions: Array<DashboardSheetAction> = canUseToolbarActions
+	const phoneActions: Array<DashboardMenuAction> = canUseToolbarActions
 		? visibleActionIds.filter((id) => id !== 'refresh-sql').map((id) => toolbarActionById[id])
 		: []
 
@@ -611,6 +607,7 @@ function ProDashboardContent() {
 						</>
 					) : null}
 					<DashboardOverflowMenu
+						phoneActions={phoneActions}
 						{...(!isReadOnly && dashboardId ? { onOpenSettings: openDashboardSettings } : {})}
 						{...(isAuthenticated && dashboardId ? { onDuplicate: copyDashboard } : {})}
 						{...(isAuthenticated && dashboardId && isAtDashboardLimit
@@ -629,7 +626,6 @@ function ProDashboardContent() {
 							? { moveTeam: { team: dashboardTeam, myTeam, isCreator: isDashboardOwner, onMove: moveDashboardTeam } }
 							: {})}
 					/>
-					<DashboardActionsSheet actions={sheetActions} />
 					{isAuthenticated ? (
 						<>
 							<span role="status" className="sr-only">

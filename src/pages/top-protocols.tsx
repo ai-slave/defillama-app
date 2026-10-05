@@ -28,7 +28,6 @@ import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
-import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
@@ -234,7 +233,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						size="md"
 					/>
 				</TableToolbar>
-				{table.getFilteredRowModel().rows.length > 0 ? <VirtualTable table={table} /> : <NoResults />}
+				<VirtualTable table={table} />
 			</Panel>
 		</Layout>
 	)

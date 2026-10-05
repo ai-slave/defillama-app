@@ -98,7 +98,6 @@ export function PDFExportButton({
 						data-umami-event-theme="light"
 						onClick={() => exportPdf(false)}
 						disabled={loading}
-						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<Icon name="sun" height={14} width={14} className="shrink-0" />
 						Light mode
@@ -108,7 +107,6 @@ export function PDFExportButton({
 						data-umami-event-theme="dark"
 						onClick={() => exportPdf(true)}
 						disabled={loading}
-						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<Icon name="moon" height={14} width={14} className="shrink-0" />
 						Dark mode

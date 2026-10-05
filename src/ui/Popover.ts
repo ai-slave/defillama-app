@@ -37,7 +37,7 @@ export const popoverRowStyles = `${popoverMeasuredRowStyles} cv-auto-37 max-sm:c
 
 export const popoverRowWithBorderStyles = `${popoverRowStyles} border-b border-subtle last-of-type:border-b-0`
 
-const menuItemRowStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
+const menuItemRowStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm hover:bg-hover-row focus-visible:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
 
 export const popoverMenuItemStyles = `${menuItemRowStyles} text-primary`
 

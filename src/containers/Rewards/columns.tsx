@@ -47,7 +47,7 @@ export const columns = helper.columns([
 					{row.original.protocolHref ? (
 						<Link
 							href={row.original.protocolHref}
-							className="label-md text-link"
+							className="label-md text-link hover:underline"
 							data-reward-protocol-id={row.original.programId}
 							data-reward-project-path={row.original.projectPath ?? undefined}
 						>

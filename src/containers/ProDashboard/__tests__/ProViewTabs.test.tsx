@@ -29,7 +29,7 @@ vi.mock('~/containers/ProDashboard/components/FollowingShelves', () => ({
 	FollowingShelves: () => <input aria-label="Following filter" />
 }))
 vi.mock('~/containers/ProDashboard/components/LikedDashboards', () => ({
-	LikedDashboards: () => <input aria-label="Favorites filter" />
+	LikedDashboards: () => <input aria-label="Starred filter" />
 }))
 vi.mock('~/containers/ProDashboard/components/MyProfileTab', () => ({
 	MyProfileTab: () => <input aria-label="Profile draft" />
@@ -120,9 +120,9 @@ test('arrows only focus; activation replaces the URL once without mounting Profi
 test('URL changes retain dashboard panel state but unmount Profile when leaving it', async () => {
 	await render()
 	const discovery = container.querySelector<HTMLInputElement>('[aria-label="Discovery filter"]')!
-	const favorites = container.querySelector<HTMLInputElement>('[aria-label="Favorites filter"]')!
+	const favorites = container.querySelector<HTMLInputElement>('[aria-label="Starred filter"]')!
 	discovery.value = 'retained search'
-	favorites.value = 'retained favorites'
+	favorites.value = 'retained starred'
 	const visit = async (tab: string) => {
 		router.query = { tab }
 		await render()
@@ -135,8 +135,8 @@ test('URL changes retain dashboard panel state but unmount Profile when leaving 
 	await visit('discover')
 	expect(container.querySelector('[aria-label="Discovery filter"]')).toBe(discovery)
 	expect(discovery.value).toBe('retained search')
-	expect(container.querySelector('[aria-label="Favorites filter"]')).toBe(favorites)
-	expect(favorites.value).toBe('retained favorites')
+	expect(container.querySelector('[aria-label="Starred filter"]')).toBe(favorites)
+	expect(favorites.value).toBe('retained starred')
 	expect(container.querySelector('[aria-label="Profile draft"]')).toBeNull()
 	expect(router.replace).not.toHaveBeenCalled()
 })
@@ -149,7 +149,7 @@ test('signed-out private links show Discover and restore the requested view afte
 	expect(tabs()).toHaveLength(1)
 	expect(tabs()[0].getAttribute('aria-selected')).toBe('true')
 	expect(panel(tabs()[0]).hidden).toBe(false)
-	expect(container.querySelector('[aria-label="Favorites filter"]')).toBeNull()
+	expect(container.querySelector('[aria-label="Starred filter"]')).toBeNull()
 	expect(listRequests()).toEqual([])
 
 	await act(async () => pb.authStore.save(token, record))
@@ -202,7 +202,7 @@ test('a viewer without a team gets no Team tab and no team request', async () =>
 	expect(tabs().map((tab) => tab.textContent)).toEqual([
 		'Discover',
 		'My Dashboards',
-		'Favorites',
+		'Starred',
 		'Following',
 		'My Profile'
 	])
@@ -224,7 +224,7 @@ test('a team member opens the Team tab on the team scope', async () => {
 		'Discover',
 		'My Dashboards',
 		'Team',
-		'Favorites',
+		'Starred',
 		'Following',
 		'My Profile'
 	])

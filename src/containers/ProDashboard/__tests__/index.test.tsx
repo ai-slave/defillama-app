@@ -164,6 +164,30 @@ function menuItem(label: string) {
 async function openDashboardMenu() {
 	await act(async () => document.body.querySelector<HTMLButtonElement>('[aria-label="Dashboard actions"]')!.click())
 }
+/** The "Actions" button is the phone trigger; from md the "…" button replaces it. */
+async function openPhoneMenu() {
+	await act(async () => button('Actions')!.click())
+}
+function openMenu() {
+	return document.body.querySelector<HTMLElement>('[role="menu"]')
+}
+function menuItemName(item: HTMLElement) {
+	const labelledBy = item.getAttribute('aria-labelledby')
+	return (
+		item.getAttribute('aria-label') ??
+		(labelledBy ? document.getElementById(labelledBy)!.textContent : item.textContent)
+	)
+}
+function menuItemNames(menu: HTMLElement) {
+	return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]')).map((item) => menuItemName(item)?.trim())
+}
+function phoneMenuItem(name: string) {
+	const item = Array.from(openMenu()!.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+		(node) => menuItemName(node)?.trim() === name
+	)
+	expect(item).toBeDefined()
+	return item!
+}
 async function pressKey(target: EventTarget, key: string, init: KeyboardEventInit = {}) {
 	await act(async () => {
 		target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }))
@@ -321,7 +345,7 @@ describe('an editor', () => {
 		expect(cardEditor()?.querySelector('textarea')?.value).toBe('')
 	})
 
-	test('an empty editor keeps settings in the dashboard menu, its sheet and the empty state', async () => {
+	test('an empty editor reaches settings from the dashboard menu and the empty state', async () => {
 		await renderDashboard({ items: [], mode: 'edit' })
 		expect(button('Parameter')).toBeUndefined()
 		expect(button('Annotations')).toBeUndefined()
@@ -333,51 +357,57 @@ describe('an editor', () => {
 		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).not.toBeNull()
 		expect(button('Add your first card')).toBeDefined()
 		expect(document.body.querySelectorAll('[aria-label="What you can add next"] li')).toHaveLength(3)
-		await act(async () => button('Actions')!.click())
-		const dialog = document.body.querySelector('[role="dialog"]')!
-		expect(
-			Array.from(dialog.querySelectorAll('button'))
-				.map((node) => node.textContent?.trim())
-				.filter(Boolean)
-		).toEqual(['Add card', 'Settings'])
 	})
 
-	test('mobile editor actions close the sheet and run the selected action', async () => {
+	test('the phone menu lists the editor actions, then every dashboard action once', async () => {
+		await renderDashboard({ items: [note], mode: 'edit', owned: {} })
+		const desktopNames = (await openDashboardMenu(), menuItemNames(openMenu()!))
+		expect(desktopNames).toEqual(['Dashboard Settings', 'Duplicate', 'New dashboard', 'Delete dashboard…'])
+		await pressKey(openMenu()!, 'Escape')
+		await openPhoneMenu()
+		expect(menuItemNames(openMenu()!)).toEqual([
+			'Add card',
+			'Add section',
+			'Edit with LlamaAI',
+			'Undo AI changes',
+			...desktopNames
+		])
+	})
+
+	test('a phone menu action closes the menu and runs', async () => {
 		await renderDashboard({ items: [note], mode: 'edit' })
-		await act(async () => button('Actions')!.click())
-		const dialog = document.body.querySelector('[role="dialog"]')!
-		expect(
-			Array.from(dialog.querySelectorAll('button'))
-				.map((node) => node.textContent?.trim())
-				.filter(Boolean)
-		).toEqual(['Add card', 'Add section', 'Edit with LlamaAI', 'Undo AI changes', 'Settings'])
-		expect(dialog.textContent).not.toContain('Group cards into a section')
-		await act(async () =>
-			Array.from(dialog.querySelectorAll('button'))
-				.find((node) => node.textContent?.trim() === 'Undo AI changes')!
-				.click()
-		)
+		await openPhoneMenu()
+		expect(openMenu()!.textContent).not.toContain('Group cards into a section')
+		await act(async () => phoneMenuItem('Undo AI changes').click())
 		expect(actions.undoAIGeneration).toHaveBeenCalledOnce()
-		expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+		await waitForUi(() => expect(openMenu()).toBeNull())
 	})
 
-	test('a loading editor lists the card actions in the sheet but refuses them', async () => {
+	test('deleting from the phone menu asks first', async () => {
+		await renderDashboard({ items: [note], mode: 'edit', owned: {} })
+		await openPhoneMenu()
+		await act(async () => phoneMenuItem('Delete dashboard…').click())
+		const confirm = await waitForUi(() => {
+			const dialog = document.body.querySelector('[role="alertdialog"], [role="dialog"]')
+			expect(dialog?.querySelector('h2')?.textContent).toBe('Delete dashboard')
+			return dialog!
+		})
+		expect(confirm.textContent).toContain('Deleting “Fixture” cannot be undone.')
+	})
+
+	test('a loading editor lists the card actions in the phone menu but refuses them', async () => {
 		await renderDashboard({ items: [note], mode: 'edit', loading: true })
-		await act(async () => button('Actions')!.click())
-		const dialog = document.body.querySelector('[role="dialog"]')!
-		const rows = Array.from(dialog.querySelectorAll('button')).filter((node) =>
-			['Add card', 'Add section'].includes(node.textContent?.trim() ?? '')
-		)
-		expect(rows.map((node) => node.textContent?.trim())).toEqual(['Add card', 'Add section'])
+		await openPhoneMenu()
+		const rows = [phoneMenuItem('Add card'), phoneMenuItem('Add section')]
 		expect(rows.map((node) => node.getAttribute('aria-disabled'))).toEqual(['true', 'true'])
-		// The sheet is phone-only, so the reason is visible text tied to each row, not a title tooltip.
+		// Phones never show a title tooltip, so the reason is visible text tied to each row.
 		expect(rows.map((node) => document.getElementById(node.getAttribute('aria-describedby')!)?.textContent)).toEqual([
 			'Loading dashboard…',
 			'Loading dashboard…'
 		])
 		await act(async () => rows[0]!.click())
 		await act(async () => rows[1]!.click())
-		expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
+		expect(openMenu()).not.toBeNull()
 		expect(appendItems).not.toHaveBeenCalled()
 	})
 

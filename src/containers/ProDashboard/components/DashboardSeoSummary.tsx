@@ -34,7 +34,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 			value: updatedDate ? <time dateTime={updatedDate}>{updatedDate}</time> : 'Unknown'
 		},
 		{ label: 'Views', value: formatNumber(dashboard.viewCount ?? 0) },
-		{ label: 'Likes', value: formatNumber(dashboard.likeCount ?? 0) }
+		{ label: 'Stars', value: formatNumber(dashboard.likeCount ?? 0) }
 	]
 
 	return (

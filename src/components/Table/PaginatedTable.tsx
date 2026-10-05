@@ -43,6 +43,7 @@ import type {
 } from './features/contracts'
 import { getPaginationControls } from './paginationControls'
 import { TableColumnGroup } from './TableColumnGroup'
+import { TableEmptyRow } from './TableEmptyRow'
 import { useTableCells } from './useTableCells'
 
 interface PaginatedTableProps<F extends PaginationFeatures & SortingFeatures & VisibilityFeatures, T extends RowData> {
@@ -54,6 +55,8 @@ interface PaginatedTableProps<F extends PaginationFeatures & SortingFeatures & V
 	stickyHeader?: boolean
 	interactionDisabled?: boolean
 	loadingLabel?: string
+	/** Replaces "No results found" in the row shown when the row model is empty. */
+	emptyMessage?: ReactNode
 	/** Render an expanded panel beneath a row when `row_getIsExpanded(row)` is true. Spans all columns. */
 	renderSubComponent?: (row: Row<F, T>) => ReactNode
 }
@@ -131,7 +134,8 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 	tableClassName,
 	stickyHeader = false,
 	interactionDisabled = false,
-	loadingLabel = 'Loading data...',
+	loadingLabel = 'Loading data…',
+	emptyMessage,
 	renderSubComponent
 }: PaginatedTableProps<F, T>) {
 	const { rows, rowCount, visibleLeafColumns, headerGroups, pagination, pageCount, canPreviousPage, canNextPage } =
@@ -252,22 +256,25 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 	const tableContent = (
 		<TokenPageTableScroller className="bg-surface" onScroll={stickyHeader ? handleTableScroll : undefined}>
 			{interactionDisabled ? <SurfaceLoadingOverlay label={loadingLabel} /> : null}
-			<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
-				<img
-					src="/assets/defillama-dark-neutral.webp"
-					alt="defillama"
-					height={53}
-					width={155}
-					className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
-				/>
-				<img
-					src="/assets/defillama-light-neutral.webp"
-					alt="defillama"
-					height={53}
-					width={155}
-					className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
-				/>
-			</div>
+			{/* The watermark sits at mid-height, where an empty table shows its message. */}
+			{rows.length > 0 ? (
+				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
+					<img
+						src="/assets/defillama-dark-neutral.webp"
+						alt="defillama"
+						height={53}
+						width={155}
+						className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30 dark:hidden"
+					/>
+					<img
+						src="/assets/defillama-light-neutral.webp"
+						alt="defillama"
+						height={53}
+						width={155}
+						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
+					/>
+				</div>
+			) : null}
 			<TokenPageTable
 				className={`z-10 bg-surface ${tableClassName ?? ''}`}
 				style={{ tableLayout: 'fixed', width: '100%' }}
@@ -277,6 +284,10 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 				<Subscribe source={table.store}>
 					{() => (
 						<tbody>
+							{/* While interaction is disabled the loading overlay speaks for the empty table. */}
+							{rows.length === 0 && !interactionDisabled ? (
+								<TableEmptyRow colSpan={visibleLeafColumns.length}>{emptyMessage}</TableEmptyRow>
+							) : null}
 							{rows.map((row, rowIndex) => {
 								const isExpanded = renderSubComponent != null && row_getIsExpanded(row)
 								return (

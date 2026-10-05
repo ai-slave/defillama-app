@@ -105,6 +105,6 @@ describe('PaginatedTable', () => {
 
 		const disabled = await render(<TestTable interactionDisabled />)
 		expect(sortButtons(disabled).map((button) => button.getAttribute('aria-disabled'))).toEqual(['true'])
-		expect(disabled.querySelector('[role="status"]')?.textContent).toBe('Loading data...')
+		expect(disabled.querySelector('[role="status"]')?.textContent).toBe('Loading data…')
 	})
 })

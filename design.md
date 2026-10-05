@@ -221,7 +221,7 @@ Each component's header comment holds its own rules. Read it before using the co
 | An anchored form, panel or list                 | `PopoverSurface` (`variant`: `actions`, `panel`, `list`, `nested`)                 | `src/ui/PopoverSurface.tsx`                                          |
 | Results under an on-page input                  | `ComboboxSurface variant="search-results"`                                         | `src/ui/PopoverSurface.tsx`                                          |
 | The search block above a popover list           | `PopoverHeader`                                                                    | `src/ui/PopoverHeader.tsx`                                           |
-| An empty result in a list, popover or table     | `NoResults`                                                                        | `src/ui/NoResults.tsx`                                               |
+| An empty result in a list, popover or table     | `NoResults`; the shared table renderers add it as a row themselves                 | `src/ui/NoResults.tsx`                                               |
 | Short hover text, an icon-only control's label  | `Tooltip`                                                                          | `src/ui/Tooltip.tsx`                                                 |
 | Structured hover content                        | `Hovercard`; a chain list: `ProtocolChainsHovercard`                               | `src/ui/Hovercard.tsx`, `src/components/ProtocolChainsHovercard.tsx` |
 | A definition beside a label                     | `QuestionHelper`                                                                   | `src/ui/QuestionHelper.tsx`                                          |

@@ -16,6 +16,7 @@ import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 import { TableColumnGroup } from './TableColumnGroup'
+import { TableEmptyRow } from './TableEmptyRow'
 import type { TableCssVars, TableLayout } from './types'
 
 interface StickyHeaderLayout {
@@ -380,7 +381,13 @@ export function TableFrame<F extends SortingFeatures & VisibilityFeatures, T ext
 					{renderHeaderRows()}
 				</thead>
 
-				{children}
+				{rowCount === 0 ? (
+					<tbody>
+						<TableEmptyRow colSpan={visibleLeafColumns.length} />
+					</tbody>
+				) : (
+					children
+				)}
 			</table>
 
 			{stickyHeaderLayout ? (

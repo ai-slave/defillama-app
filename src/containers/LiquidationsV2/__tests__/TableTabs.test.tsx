@@ -160,13 +160,13 @@ test.each(cases)(
 		await sortByCollateral()
 		expect(rowNames()).toEqual([...firstRows].reverse())
 		await type('no matching rows')
-		expect(rowNames()).toEqual([])
+		expect(rowNames()).toEqual(['No results found'])
 
 		await press(first, 'ArrowRight')
 		expect(document.activeElement).toBe(second)
 		expectPanel(first)
 		expect(search().value).toBe('no matching rows')
-		expect(rowNames()).toEqual([])
+		expect(rowNames()).toEqual(['No results found'])
 
 		await press(second, 'Enter')
 		expect(document.activeElement).toBe(second)
@@ -215,7 +215,7 @@ test('token liquidations keeps search and sorting across views without losing fo
 	// "um" matches both chains and neither protocol.
 	await sortByCollateral()
 	await type('um')
-	expect(rowNames()).toEqual([])
+	expect(rowNames()).toEqual(['No results found'])
 
 	await press(first, 'ArrowRight')
 	expectPanel(first)

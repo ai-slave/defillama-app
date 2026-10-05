@@ -271,12 +271,12 @@ export function ResponseControls({
 					) : null}
 					{sessionId && !readOnly && onShare ? (
 						<Tooltip
-							content="Share"
+							content="Make public and share"
 							render={<button type="button" onClick={() => onShare(messageId)} />}
 							className={CONTROL}
 						>
 							<Icon name="share" height={16} width={16} />
-							<span className="sr-only">Share</span>
+							<span className="sr-only">Make public and share</span>
 						</Tooltip>
 					) : null}
 					{openArticleExport && articleExportRequest && !readOnly ? (

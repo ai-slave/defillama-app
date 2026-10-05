@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
@@ -27,22 +28,20 @@ export function PaymentButton({
 	const { handleSubscribe, loading } = useSubscribe()
 	const { isAuthenticated, user, promptVerifyEmail } = useAuthContext()
 	const checkout = useStripeCheckout()
+	const signIn = Ariakit.useDialogStore()
 	const [cryptoError, setCryptoError] = useState<string | null>(null)
 
 	const isStripe = paymentMethod === 'stripe'
 	const icon = isStripe ? 'card' : 'wallet'
 	const text = isStripe ? 'Pay with Card' : 'Pay with Crypto'
 
-	if (!isAuthenticated) {
-		return (
-			<SignInModal
-				text={text}
-				className="group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple bg-sub-purple py-3.5 font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md dark:border-sub-purple dark:bg-sub-purple dark:hover:bg-sub-purple-hover"
-			/>
-		)
-	}
-
+	// Signed out, the button opens sign-in and the reader presses it again to pay. The dialog stays mounted through
+	// sign-in, so a new account still sees its verify-email step.
 	const handleClick = () => {
+		if (!isAuthenticated) {
+			signIn.show()
+			return
+		}
 		if (needsVerificationBeforeCheckout(user)) {
 			promptVerifyEmail(user?.id)
 			return
@@ -65,7 +64,7 @@ export function PaymentButton({
 					onClick={handleClick}
 					disabled={loading === paymentMethod}
 					className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple bg-sub-purple py-3 text-sm font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 sm:py-3.5 dark:border-sub-purple dark:bg-sub-purple dark:hover:bg-sub-purple-hover ${type === 'api' && !isStripe ? 'shadow-sub-purple-glow-strong' : ''}`}
-					data-umami-event={`subscribe-${paymentMethod}-${type ?? ''}`}
+					data-umami-event={isAuthenticated ? `subscribe-${paymentMethod}-${type ?? ''}` : undefined}
 				>
 					{icon ? <Icon name={icon} height={14} width={14} className="sm:h-4 sm:w-4" /> : null}
 					<span className="wrap-break-word">{text}</span>
@@ -73,6 +72,7 @@ export function PaymentButton({
 				{cryptoError ? <InlineStatus variant="error">{cryptoError}</InlineStatus> : null}
 			</div>
 
+			<SignInModal store={signIn} />
 			{isStripe ? (
 				<Suspense fallback={null}>
 					<StripeCheckoutModal checkout={checkout} />

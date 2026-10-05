@@ -63,7 +63,10 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 						alt={`Logo of ${row.original.project}`}
 						data-lgonly
 					/>
-					<BasicLink href={`/yields/pool/${row.original.configID}`} className="truncate text-sm font-medium text-link">
+					<BasicLink
+						href={`/yields/pool/${row.original.configID}`}
+						className="truncate label-md text-link hover:underline"
+					>
 						{row.original.pool}
 					</BasicLink>
 					{row.original.poolMeta ? <span className="text-xs text-secondary">{row.original.poolMeta}</span> : null}
@@ -74,7 +77,10 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 		columnHelper.accessor('project', {
 			header: 'Protocol',
 			cell: ({ row }) => (
-				<BasicLink href={`/yields?protocol=${encodeURIComponent(row.original.project)}`} className="text-sm text-link">
+				<BasicLink
+					href={`/yields?protocol=${encodeURIComponent(row.original.project)}`}
+					className="text-sm text-link hover:underline"
+				>
 					{row.original.project}
 				</BasicLink>
 			),

@@ -360,7 +360,7 @@ function ProContent({
 						) : null}
 						{isAuthenticated ? (
 							<Tab type="button" value="favorites" data-umami-event="dashboard-open-favorites" className={proTabStyles}>
-								Favorites
+								Starred
 							</Tab>
 						) : null}
 						{isAuthenticated ? (

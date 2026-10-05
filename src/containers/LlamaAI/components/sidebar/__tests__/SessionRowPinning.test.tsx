@@ -295,6 +295,15 @@ async function openShareMenu(isPublic: boolean) {
 	await act(async () => trigger.click())
 	return trigger
 }
+/** The clipboard, read the way a browser reads a ClipboardItem: `text` receives each written link once its promise settles. */
+function mockClipboard() {
+	const text = vi.fn<(value: string) => Promise<void>>()
+	const write = vi.spyOn(navigator.clipboard, 'write').mockImplementation(async (items) => {
+		const blob = await items[0].getType('text/plain')
+		return text(await blob.text())
+	})
+	return { text, write }
+}
 const namedButton = (name: string) =>
 	[...document.querySelectorAll<HTMLElement>('button,[role=menuitem]')].find((el) => accessibleName(el) === name)!
 
@@ -323,7 +332,8 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
 })
 
-test('making a chat public reports failure in the menu without adding a private-action confirmation', async () => {
+test('making a private chat public copies its new link, and a failure stays in the menu without a confirmation', async () => {
+	const copy = mockClipboard().text.mockResolvedValue(undefined)
 	auth.serveInOrder(
 		`${AI}/user/sessions/chat/share`,
 		[
@@ -331,26 +341,44 @@ test('making a chat public reports failure in the menu without adding a private-
 				throw new TypeError('Failed to fetch')
 			}
 		],
-		{ isPublic: true }
+		{ isPublic: true, shareToken: 'new-share' }
 	)
 	const trigger = await openShareMenu(false)
-	await act(async () => namedButton('Make public').click())
+	expect(namedButton('Copy link')).toBeUndefined()
+	expect(namedButton('Make private')).toBeUndefined()
+	await act(async () => namedButton('Make public and copy link').click())
 	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update visibility')
 	)
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	expect(copy).not.toHaveBeenCalled()
 	await reopenMenu(trigger)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	await act(async () => namedButton('Make public').click())
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+	await act(async () => namedButton('Make public and copy link').click())
+	await waitForUi(() => expect(namedButton('Link copied')).toBeDefined())
+	expect(copy).toHaveBeenCalledExactlyOnceWith(`${window.location.origin}/ai/chat/shared/new-share`)
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
+})
+
+test('Make public and copy link starts the clipboard write inside the click, before publishing returns', async () => {
+	// Safari and every iOS browser reject a clipboard write that starts after the click's task ends.
+	const publish = Promise.withResolvers<Response>()
+	auth.serve({ [`${AI}/user/sessions/chat/share`]: () => publish.promise })
+	const { text, write } = mockClipboard()
+	text.mockResolvedValue(undefined)
+	await openShareMenu(false)
+	await act(async () => namedButton('Make public and copy link').click())
+	expect(write).toHaveBeenCalledTimes(1)
+	expect(text).not.toHaveBeenCalled()
+	await act(async () => publish.resolve(Response.json({ isPublic: true, shareToken: 'new-share' })))
+	await waitForUi(() => expect(namedButton('Link copied')).toBeDefined())
+	expect(text).toHaveBeenCalledExactlyOnceWith(`${window.location.origin}/ai/chat/shared/new-share`)
 })
 
 test('copy failures stay inline while the menu is open and remain visible if it closes during a request', async () => {
 	const request = Promise.withResolvers<void>()
-	const copy = vi
-		.spyOn(navigator.clipboard, 'writeText')
-		.mockRejectedValueOnce(new Error('Denied'))
+	const copy = mockClipboard()
+		.text.mockRejectedValueOnce(new Error('Denied'))
 		.mockReturnValueOnce(request.promise)
 		.mockResolvedValueOnce(undefined)
 	const trigger = await openShareMenu(true)
@@ -379,7 +407,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 
 test('repeated link copies restart success feedback without clearing a later pending copy', async () => {
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
-	const copy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+	const copy = mockClipboard().text.mockResolvedValue(undefined)
 	await openShareMenu(true)
 	await act(async () => namedButton('Copy link').click())
 	await act(async () => {
@@ -434,12 +462,12 @@ test.each(['copy', 'visibility'] as const)(
 	async (action) => {
 		const copyRequest = Promise.withResolvers<void>()
 		const visibilityRequest = Promise.withResolvers<Response>()
-		const copy = vi.spyOn(navigator.clipboard, 'writeText').mockReturnValue(copyRequest.promise)
+		const copy = mockClipboard().text.mockReturnValue(copyRequest.promise)
 		auth.serve({ [`${AI}/user/sessions/chat/share`]: () => visibilityRequest.promise })
 		const trigger = await openShareMenu(action === 'copy')
-		await act(async () => namedButton(action === 'copy' ? 'Copy link' : 'Make public').click())
+		await act(async () => namedButton(action === 'copy' ? 'Copy link' : 'Make public and copy link').click())
 		await reopenMenu(trigger)
-		const pendingItem = namedButton(action === 'copy' ? 'Copying…' : 'Make public')
+		const pendingItem = namedButton(action === 'copy' ? 'Copying…' : 'Making public…')
 		expect(pendingItem.getAttribute('aria-disabled')).toBe('true')
 		await act(async () => pendingItem.click())
 		expect(copy.mock.calls).toEqual(action === 'copy' ? [[`${window.location.origin}/ai/chat/shared/test-share`]] : [])

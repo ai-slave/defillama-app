@@ -108,6 +108,7 @@ beforeEach(async () => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	vi.unstubAllGlobals()
 })
 
 describe('a subscriber', () => {
@@ -142,6 +143,34 @@ describe('a subscriber', () => {
 		await typeCsv(CSV)
 		await waitForTypedParse()
 		expect(parsedCount).toBe(1)
+		expect(latest?.customData.storedRows).toEqual([
+			[Date.UTC(2026, 0, 1), 10],
+			[Date.UTC(2026, 0, 2), 20]
+		])
+	})
+
+	test('a file read that finishes after the CSV was edited does not replace the edit', async () => {
+		// The reader finishes only when the test says so, to land after the edit.
+		const reads: Array<() => void> = []
+		vi.stubGlobal(
+			'FileReader',
+			class extends EventTarget {
+				result: string | null = null
+				readAsText() {
+					reads.push(() => {
+						this.result = 'day,value\n2026-02-01,99'
+						this.dispatchEvent(new Event('load'))
+					})
+				}
+			}
+		)
+		await renderTab()
+		const input = document.querySelector<HTMLInputElement>('input[type="file"]')!
+		Object.defineProperty(input, 'files', { value: [new File(['ignored'], 'old.csv', { type: 'text/csv' })] })
+		await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })))
+		await pasteCsv(CSV)
+		await act(async () => reads[0]())
+		expect(latest?.customData.csvText).toBe(CSV)
 		expect(latest?.customData.storedRows).toEqual([
 			[Date.UTC(2026, 0, 1), 10],
 			[Date.UTC(2026, 0, 2), 20]

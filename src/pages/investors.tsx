@@ -403,11 +403,6 @@ const PROJECT_CARD_CONTENT = {
 	}
 } satisfies Partial<Record<InvestorsProjectId, LandingCardContent>>
 
-const COMING_SOON_ICONS: Partial<Record<InvestorsProjectId, ReactNode>> = {
-	flare: <FlareIcon />,
-	thorchain: <ThorchainIcon />
-}
-
 function ProjectFallbackIcon({ name }: { name: string }) {
 	return (
 		<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted text-sm font-semibold text-sl-accent">
@@ -474,7 +469,7 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 export const getServerSideProps: GetServerSideProps<{ investorsSiteId: InvestorsSiteId }> = async (context) => {
 	const site = getInvestorsSiteWithPathFallback(context.req.headers.host, context.req.headers['x-forwarded-host'])
 	if (!site) return { notFound: true }
-	if (site.landingProjectIds.length <= 1 && site.projectIds.length === 1 && site.comingSoonProjectIds.length === 0) {
+	if (site.landingProjectIds.length <= 1 && site.projectIds.length === 1) {
 		return {
 			redirect: {
 				destination: `/${site.defaultProjectId}`,
@@ -558,21 +553,6 @@ export default function InvestorsPage() {
 					<div className="mt-4 grid auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
 						{getInvestorsProjects(site.landingProjectIds).map((project) => (
 							<ProjectCard key={project.id} project={project} />
-						))}
-
-						{getInvestorsProjects(site.comingSoonProjectIds).map((project) => (
-							<div
-								key={project.id}
-								className="relative isolate flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border border-pro-cards-border bg-pro-cards-bg p-5 text-center"
-							>
-								<span className="flex size-14 items-center justify-center opacity-50">
-									{COMING_SOON_ICONS[project.id] ?? <ProjectFallbackIcon name={project.name} />}
-								</span>
-								<span className="text-base font-semibold text-pro-text-primary/60">{project.name}</span>
-								<span className="text-xs font-light tracking-[0.2em] text-pro-text-primary/60 uppercase">
-									Coming Soon
-								</span>
-							</div>
 						))}
 					</div>
 				</section>

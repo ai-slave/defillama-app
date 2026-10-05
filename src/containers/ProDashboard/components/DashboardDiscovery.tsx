@@ -24,9 +24,9 @@ const itemsPerPageOptions = [
 	{ key: '100', name: '100' }
 ] as const
 const sortOptions = [
-	{ key: 'popular', name: 'Most Popular' },
-	{ key: 'recent', name: 'Recently Created' },
-	{ key: 'likes', name: 'Most Liked' },
+	{ key: 'popular', name: 'Most popular' },
+	{ key: 'recent', name: 'Recently created' },
+	{ key: 'likes', name: 'Most starred' },
 	{ key: 'trending', name: 'Trending' }
 ] as const
 type SortOption = (typeof sortOptions)[number]

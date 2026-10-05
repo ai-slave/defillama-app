@@ -22,7 +22,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 			return (
 				<span className="relative flex items-center gap-2 pl-6">
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
-					<BasicLink href={`/stablecoin/${row.original.slug}`} className="truncate text-sm font-medium text-link">
+					<BasicLink href={`/stablecoin/${row.original.slug}`} className="truncate label-md text-link hover:underline">
 						{name}
 						{symbol && symbol !== '-' ? <span className="text-pro-text-tertiary"> ({symbol})</span> : null}
 					</BasicLink>

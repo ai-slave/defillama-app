@@ -40,7 +40,6 @@ export type InvestorsSite = Readonly<{
 	projectIds: ReadonlyArray<InvestorsProjectId>
 	landingProjectIds: ReadonlyArray<InvestorsProjectId>
 	defaultProjectId: InvestorsProjectId
-	comingSoonProjectIds: ReadonlyArray<InvestorsProjectId>
 	umamiWebsiteId: string
 	umamiDomains: ReadonlyArray<string>
 }>
@@ -52,7 +51,6 @@ export const INVESTORS_SITES: Readonly<Record<InvestorsSiteId, InvestorsSite>> =
 		projectIds: INVESTORS_DOMAIN_PROJECT_IDS,
 		landingProjectIds: INVESTORS_LIVE_PROJECT_IDS,
 		defaultProjectId: 'spark',
-		comingSoonProjectIds: [],
 		umamiWebsiteId: '11de15eb-61d0-41c5-9e73-0bf496cc653c',
 		umamiDomains: ['investors.defillama.com']
 	},
@@ -62,7 +60,6 @@ export const INVESTORS_SITES: Readonly<Record<InvestorsSiteId, InvestorsSite>> =
 		projectIds: ENTERPRISE_DOMAIN_PROJECT_IDS,
 		landingProjectIds: [...INVESTORS_LIVE_PROJECT_IDS, ...ENTERPRISE_DOMAIN_PROJECT_IDS],
 		defaultProjectId: 'odyssey-ecosystem',
-		comingSoonProjectIds: [],
 		umamiWebsiteId: '1c194e22-d31d-4816-b803-8074419f1b3e',
 		umamiDomains: ['enterprise.defillama.com']
 	}

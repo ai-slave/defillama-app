@@ -16,10 +16,8 @@ export function LikedDashboards() {
 		return (
 			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
 				<Icon name="star" height={32} width={32} className="text-pro-text-tertiary" />
-				<h2 className="text-center text-base font-semibold text-pro-text-primary">No favorite dashboards yet</h2>
-				<p className="text-center text-sm text-pro-text-secondary">
-					Star dashboards you like and they will show up here.
-				</p>
+				<h2 className="text-center text-base font-semibold text-pro-text-primary">No starred dashboards yet</h2>
+				<p className="text-center text-sm text-pro-text-secondary">Dashboards you star show up here.</p>
 				<div className="mt-7">
 					<ProButton as={BasicLink} href="/pro?tab=discover" size="lg" variant="secondary">
 						Browse dashboards
