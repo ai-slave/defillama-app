@@ -16,6 +16,7 @@ import {
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 type ArchiveFilter = ArticleSection | 'all'
@@ -514,28 +515,24 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 									</p>
 								</div>
 								{archiveTabs.length > 1 ? (
-									<div className="flex flex-wrap gap-1.5">
-										{archiveTabs.map((tab) => {
-											const label = tab === 'all' ? 'All' : ARTICLE_SECTION_LABELS[tab]
-											const count = tab === 'all' ? rest.length : (sectionCounts.get(tab) ?? 0)
-											const isActive = archiveFilter === tab
-											return (
-												<button
-													key={tab}
-													type="button"
-													onClick={() => setArchiveFilter(tab)}
-													className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors ${
-														isActive
-															? 'border-link/60 bg-research-tint text-link'
-															: 'border-medium bg-transparent text-secondary hover:border-link/40 hover:text-link'
-													}`}
-												>
-													<span>{label}</span>
-													<span className="tabular-nums">{count}</span>
-												</button>
+									<SegmentedControl<ArchiveFilter>
+										label="Archive section"
+										variant="chips"
+										size="sm"
+										options={archiveTabs.map((tab) => ({
+											value: tab,
+											label: (
+												<>
+													{tab === 'all' ? 'All' : ARTICLE_SECTION_LABELS[tab]}{' '}
+													<span className="tabular-nums">
+														{tab === 'all' ? rest.length : (sectionCounts.get(tab) ?? 0)}
+													</span>
+												</>
 											)
-										})}
-									</div>
+										}))}
+										value={archiveFilter}
+										onValueChange={setArchiveFilter}
+									/>
 								) : null}
 								<ul className="grid">
 									{filteredArchive.map((article) => (

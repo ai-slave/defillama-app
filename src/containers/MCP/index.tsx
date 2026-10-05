@@ -6,6 +6,8 @@ import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const toolCategories = [
@@ -249,35 +251,32 @@ const clientConfigs = [
 	}
 ]
 
+const clientNames = clientConfigs.map((c) => c.name)
+
 function ManualSetup() {
-	const [active, setActive] = useState(0)
+	const [active, setActive] = useState(clientNames[0])
 	return (
 		<div className="mt-10">
 			<h3 className="mb-4 text-center label-sm text-tertiary">Or add manually to your client config</h3>
 			<Card padding="none" className="mx-auto max-w-2xl overflow-hidden">
-				<div className="flex scrollbar-none overflow-x-auto border-b border-subtle">
-					{clientConfigs.map((c, i) => (
-						<button
-							type="button"
-							key={c.name}
-							onClick={() => setActive(i)}
-							aria-pressed={active === i}
-							className={`shrink-0 px-4 py-2.5 label-sm transition-colors ${
-								active === i ? 'border-b-2 border-brand text-link' : 'text-secondary hover:text-primary'
-							}`}
-						>
-							{c.name}
-						</button>
+				<Tabs value={active} onValueChange={setActive} values={clientNames}>
+					<div className="border-b border-subtle p-2">
+						<SegmentedControl
+							semantics="tabs"
+							label="MCP client"
+							variant="default"
+							size="md"
+							className="max-w-full"
+							options={clientNames.map((name) => ({ value: name, label: name }))}
+						/>
+					</div>
+					{clientConfigs.map((c) => (
+						<TabPanel key={c.name} value={c.name} unmountOnHide className="flex items-start gap-2 pr-3">
+							<pre className="min-w-0 flex-1 overflow-x-auto p-4 mono-md text-secondary">{c.code}</pre>
+							<CopyButton text={c.code} label={c.name} className="mt-2 shrink-0" />
+						</TabPanel>
 					))}
-				</div>
-				<div className="relative">
-					<CopyButton
-						text={clientConfigs[active].code}
-						label={clientConfigs[active].name}
-						className="absolute top-2 right-3"
-					/>
-					<pre className="overflow-x-auto p-4 mono-md text-secondary">{clientConfigs[active].code}</pre>
-				</div>
+				</Tabs>
 			</Card>
 		</div>
 	)

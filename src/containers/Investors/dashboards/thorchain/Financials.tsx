@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { readInvestorApiJson } from '../../api.types'
@@ -25,7 +26,6 @@ import {
 	PageLoader,
 	PlaceholderCard,
 	SectionHeader,
-	SegToggle,
 	useAdapterSeries,
 	useThorchainData,
 	useThorchainDefs,
@@ -65,13 +65,15 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 			title={title}
 			subtitle={subtitle}
 			control={
-				<SegToggle
+				<ProSegmented<typeof view>
+					size="sm"
+					label={`${title} view`}
 					options={[
 						{ value: 'table', label: 'Table' },
 						{ value: 'sankey', label: 'Sankey' }
 					]}
 					value={view}
-					onChange={(v) => setView(v)}
+					onValueChange={setView}
 				/>
 			}
 		>

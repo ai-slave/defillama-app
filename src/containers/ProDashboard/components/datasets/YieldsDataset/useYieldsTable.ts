@@ -248,7 +248,11 @@ export function useYieldsTable({
 		},
 		onSortingChange: setSorting,
 		enableSortingRemoval: false,
-		onColumnOrderChange: setColumnOrder,
+		// A reorder leaves the preset's layout, so the preset unchecks and picking it again restores the order.
+		onColumnOrderChange: (updater) => {
+			setColumnOrder(updater)
+			setSelectedPreset(null)
+		},
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
@@ -307,6 +311,7 @@ export function useYieldsTable({
 		nextOrder.splice(index, 1)
 		nextOrder.splice(index - 1, 0, column)
 		setColumnOrder(nextOrder)
+		setSelectedPreset(null)
 		onColumnsChange(nextOrder, columnVisibility)
 	}
 
@@ -320,6 +325,7 @@ export function useYieldsTable({
 		nextOrder.splice(index, 1)
 		nextOrder.splice(index + 1, 0, column)
 		setColumnOrder(nextOrder)
+		setSelectedPreset(null)
 		onColumnsChange(nextOrder, columnVisibility)
 	}
 

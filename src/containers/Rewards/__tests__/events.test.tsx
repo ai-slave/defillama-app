@@ -89,12 +89,14 @@ describe('Rewards interaction events', () => {
 
 	test('tracks each status change and skips clicks on the active pill', async () => {
 		await render()
-		await click('[aria-label="Lifecycle"] button', 'All')
-		await click('[aria-label="Lifecycle"] button', 'Live')
+		await click('[role="radiogroup"][aria-label="Status"] label', 'All')
+		await click('[role="radiogroup"][aria-label="Status"] label', 'Live')
 		router.query = { status: 'Live' }
 		await render()
-		await click('[aria-label="Lifecycle"] button', 'Live')
-		await click('[aria-label="Lifecycle"] button', 'All')
+		const checkedStatus = container.querySelector('[role="radiogroup"][aria-label="Status"] input:checked')!
+		expect(checkedStatus.closest('label')!.textContent).toBe('Live 1')
+		await click('[role="radiogroup"][aria-label="Status"] label', 'Live')
+		await click('[role="radiogroup"][aria-label="Status"] label', 'All')
 		expect(events('rewards-filter-status')).toEqual([
 			['rewards-filter-status', { ...context, value: 'Live' }],
 			['rewards-filter-status', { ...context, value: 'All' }]
@@ -112,7 +114,7 @@ describe('Rewards interaction events', () => {
 	test('preserves queued interactions across filtering and flushes them once in order', async () => {
 		delete window.umami
 		await render()
-		await click('[aria-label="Lifecycle"] button', 'Live')
+		await click('[role="radiogroup"][aria-label="Status"] label', 'Live')
 		router.query = { status: 'Live' }
 		await render()
 		expect(container.querySelectorAll('tbody a[data-reward-program-id]')).toHaveLength(1)
@@ -132,7 +134,7 @@ describe('Rewards interaction events', () => {
 	test('discards queued interactions when Rewards unmounts before Umami is ready', async () => {
 		delete window.umami
 		await render()
-		await click('[aria-label="Lifecycle"] button', 'Live')
+		await click('[role="radiogroup"][aria-label="Status"] label', 'Live')
 		await act(async () => root.unmount())
 		window.umami = { track, identify: vi.fn() }
 		window.dispatchEvent(new Event('umami-ready'))

@@ -1,17 +1,9 @@
 import { lazy, useState } from 'react'
 import type { ISankeyChartProps } from '~/components/ECharts/SankeyChart/types'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
-import {
-	BarListCard,
-	ChartCard,
-	KpiGrid,
-	PageLoader,
-	SectionHeader,
-	SegToggle,
-	TimeAreaCard,
-	useUniswapData
-} from './ui'
+import { BarListCard, ChartCard, KpiGrid, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
 interface TopPoolRow {
 	pool: string
@@ -215,13 +207,15 @@ export default function Liquidity() {
 					subtitle={tvlView === 'chain' ? TVL_SUBTITLES[1] : TVL_SUBTITLES[0]}
 					subtitles={TVL_SUBTITLES}
 					control={
-						<SegToggle<'total' | 'chain'>
+						<ProSegmented<'total' | 'chain'>
+							size="sm"
+							label="TVL breakdown"
 							options={[
 								{ value: 'total', label: 'Total' },
 								{ value: 'chain', label: 'By Chain' }
 							]}
 							value={tvlView}
-							onChange={setTvlView}
+							onValueChange={setTvlView}
 						/>
 					}
 				/>
@@ -245,7 +239,17 @@ export default function Liquidity() {
 					// data; a stack has to keep its zero baseline to read as composition.
 					level={resolvedLpView === 'all'}
 					{...(lpOptions.length > 1
-						? { control: <SegToggle<LpView> options={lpOptions} value={resolvedLpView} onChange={setLpView} /> }
+						? {
+								control: (
+									<ProSegmented<LpView>
+										size="sm"
+										label="LP positions breakdown"
+										options={lpOptions}
+										value={resolvedLpView}
+										onValueChange={setLpView}
+									/>
+								)
+							}
 						: {})}
 				/>
 				{/* Two standalone custody charts: the full-history weekly split as a stacked

@@ -1,14 +1,15 @@
 import type { RefObject } from 'react'
 import { Icon } from '~/ui/Icon'
+import { ProSegmented } from '../../../ui'
 import { CSVExportButton } from '../../CSVExportButton'
 
-const PRESET_BUTTONS = [
-	{ key: 'essential', label: 'Essential' },
-	{ key: 'defi', label: 'DeFi' },
-	{ key: 'volume', label: 'Volume' },
-	{ key: 'advanced', label: 'Advanced' },
-	{ key: 'shares', label: 'Market Share' }
-] as const
+const PRESET_OPTIONS = [
+	{ value: 'essential', label: 'Essential' },
+	{ value: 'defi', label: 'DeFi' },
+	{ value: 'volume', label: 'Volume' },
+	{ value: 'advanced', label: 'Advanced' },
+	{ value: 'shares', label: 'Market Share' }
+]
 
 interface ChainsTableHeaderProps {
 	selectedPreset: string | null
@@ -32,23 +33,12 @@ export function ChainsTableHeader({
 		<div className="mb-4">
 			<div className="flex flex-wrap items-center justify-end gap-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<div className="flex items-center gap-2">
-						{PRESET_BUTTONS.map((preset) => (
-							<button
-								type="button"
-								key={preset.key}
-								aria-pressed={selectedPreset === preset.key}
-								onClick={() => applyPreset(preset.key)}
-								className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
-									selectedPreset === preset.key
-										? 'border-brand bg-brand text-on-brand'
-										: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-primary hover:bg-pro-hover-fill'
-								}`}
-							>
-								{preset.label}
-							</button>
-						))}
-					</div>
+					<ProSegmented
+						label="Column preset"
+						value={selectedPreset}
+						onValueChange={applyPreset}
+						options={PRESET_OPTIONS}
+					/>
 
 					<div className="flex items-center gap-2">
 						<CSVExportButton onClick={handleExportCSV} smol />

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { ApiTrendChart } from './ChainBreakdownChart'
 import type { Chart, Kpi as KpiT } from './transform'
 import {
@@ -7,7 +8,6 @@ import {
 	PageLoader,
 	PlaceholderCard,
 	SectionHeader,
-	SegToggle,
 	TimeAreaCard,
 	TimeBarCard,
 	useThorchainData
@@ -60,10 +60,12 @@ export default function Volume() {
 
 	const walletChart = data.uniqueWalletsCharts?.[walletView]
 	const walletToggle = (
-		<SegToggle<WalletView>
+		<ProSegmented<WalletView>
+			size="sm"
+			label="Unique wallets period"
 			options={WALLET_VIEWS.filter((v) => data.uniqueWalletsCharts?.[v.value])}
 			value={walletView}
-			onChange={setWalletView}
+			onValueChange={setWalletView}
 		/>
 	)
 

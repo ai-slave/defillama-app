@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { LpPerformanceInsights } from './LiquidityProviders'
@@ -361,134 +362,143 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 	)
 }
 
+const UPTIME_VIEWS = ['comparison', 'breakdown'] as const
+type UptimeView = (typeof UPTIME_VIEWS)[number]
+const UPTIME_VIEW_OPTIONS: ReadonlyArray<{ value: UptimeView; label: string }> = [
+	{ value: 'comparison', label: 'Uptime Comparison' },
+	{ value: 'breakdown', label: 'Uptime Breakdown' }
+]
+
 function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
-	const [mode, setMode] = useState<'comparison' | 'breakdown'>('comparison')
+	const [mode, setMode] = useState<UptimeView>('comparison')
 	const [providerName, setProviderName] = useState(rows[0]?.name ?? '')
 	const provider = rows.find((entry) => entry.name === providerName) ?? rows[0] ?? null
 	return (
 		<Panel padding="none">
-			<PanelHeader>
-				<PanelTitle as="h3">Uptime Calculations</PanelTitle>
-				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link-on-tint">
-					Prev. 30D
-				</span>
-				<SegmentedControl
-					label="Uptime view"
-					variant="default"
-					size="md"
-					value={mode}
-					onValueChange={(value) => setMode(value as 'comparison' | 'breakdown')}
-					options={[
-						{ value: 'comparison', label: 'Uptime Comparison' },
-						{ value: 'breakdown', label: 'Uptime Breakdown' }
-					]}
-				/>
-			</PanelHeader>
-			{mode === 'comparison' ? (
-				<div className="overflow-x-auto">
-					<table className="w-full min-w-[760px] body-sm">
-						<thead>
-							<tr className="border-b border-subtle text-left label-sm text-secondary">
-								<th className="px-4 py-2.5">Market Maker</th>
-								<th className="px-3 py-2.5 text-right">Avg. spread</th>
-								<th className="px-3 py-2.5 text-right">Depth ±0.50%</th>
-								<th className="px-3 py-2.5 text-right">Depth ±1.00%</th>
-								<th className="px-3 py-2.5 text-right">Depth ±2.00%</th>
-								<th className="px-3 py-2.5 text-right">Combined uptime</th>
-								<th className="px-4 py-2.5 text-right">Status</th>
-							</tr>
-						</thead>
-						<tbody>
-							{rows.map((entry) => {
-								const achieved = (entry.performance?.avgUptime ?? 0) >= (entry.uptimeObligation ?? 0)
-								return (
-									<tr key={entry.name} className="border-b border-subtle last:border-b-0">
-										<td className="px-4 py-2.5">
-											<span className="flex flex-col gap-0.5">
-												<strong className="label-md">{entry.name}</strong>
-												<span className="body-xs text-tertiary">{normalizedEngagementType(entry.engagementType)}</span>
-											</span>
-										</td>
-										<td className="px-3 py-2.5 text-right tabular-nums">
-											{formatPercent(entry.performance?.avgBidAskSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2.5 text-right tabular-nums">
-											{formatPercent(entry.performance?.avgDepth50, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2.5 text-right tabular-nums">
-											{formatPercent(entry.performance?.avgDepth100, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2.5 text-right tabular-nums">
-											{formatPercent(entry.performance?.avgDepth200, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2.5 text-right tabular-nums">
-											{formatPercent(entry.performance?.avgUptime, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-4 py-2.5 text-right">
-											<span
-												className={`rounded-full px-2 py-1 body-xs ${
-													achieved ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
-												}`}
-											>
-												{achieved ? 'Achieved' : 'Lagging'}
-											</span>
-										</td>
+			<Tabs<UptimeView> value={mode} values={UPTIME_VIEWS} onValueChange={setMode}>
+				<PanelHeader>
+					<PanelTitle as="h3">Uptime Calculations</PanelTitle>
+					<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link-on-tint">
+						Prev. 30D
+					</span>
+					<SegmentedControl
+						semantics="tabs"
+						label="Uptime view"
+						variant="default"
+						size="md"
+						options={UPTIME_VIEW_OPTIONS}
+					/>
+				</PanelHeader>
+				<TabPanel value={mode}>
+					{mode === 'comparison' ? (
+						<div className="overflow-x-auto">
+							<table className="w-full min-w-[760px] body-sm">
+								<thead>
+									<tr className="border-b border-subtle text-left label-sm text-secondary">
+										<th className="px-4 py-2.5">Market Maker</th>
+										<th className="px-3 py-2.5 text-right">Avg. spread</th>
+										<th className="px-3 py-2.5 text-right">Depth ±0.50%</th>
+										<th className="px-3 py-2.5 text-right">Depth ±1.00%</th>
+										<th className="px-3 py-2.5 text-right">Depth ±2.00%</th>
+										<th className="px-3 py-2.5 text-right">Combined uptime</th>
+										<th className="px-4 py-2.5 text-right">Status</th>
 									</tr>
-								)
-							})}
-						</tbody>
-					</table>
-				</div>
-			) : (
-				<div className="flex flex-col gap-3 p-4">
-					<label className="flex flex-wrap items-center gap-2 label-md">
-						Provider
-						<select
-							className="min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 body-sm"
-							value={provider?.name ?? ''}
-							onChange={(event) => setProviderName(event.target.value)}
-						>
-							{rows.map((entry) => (
-								<option key={entry.name} value={entry.name}>
-									{entry.name}
-								</option>
-							))}
-						</select>
-					</label>
-					<div className="max-h-[360px] overflow-auto rounded-lg border border-subtle">
-						<table className="w-full min-w-[620px] body-sm">
-							<thead className="sticky top-0 bg-surface">
-								<tr className="border-b border-subtle text-left label-sm text-secondary">
-									<th className="px-3 py-2">Date</th>
-									<th className="px-3 py-2 text-right">Uptime</th>
-									<th className="px-3 py-2 text-right">Spread target</th>
-									<th className="px-3 py-2 text-right">Spread reported</th>
-									<th className="px-3 py-2 text-right">Spread status</th>
-								</tr>
-							</thead>
-							<tbody>
-								{(provider?.breakdown ?? []).map((entry) => (
-									<tr key={entry.date} className="border-b border-subtle last:border-b-0">
-										<td className="px-3 py-2">{entry.date.slice(0, 10)}</td>
-										<td className="px-3 py-2 text-right tabular-nums">
-											{formatPercent(entry.uptimeRatio, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2 text-right tabular-nums">
-											{formatPercent(entry.targetSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2 text-right tabular-nums">
-											{formatPercent(entry.reportedSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
-										</td>
-										<td className="px-3 py-2 text-right">
-											{entry.achievedSpread == null ? 'N/A' : entry.achievedSpread ? 'Achieved' : 'Lagging'}
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			)}
+								</thead>
+								<tbody>
+									{rows.map((entry) => {
+										const achieved = (entry.performance?.avgUptime ?? 0) >= (entry.uptimeObligation ?? 0)
+										return (
+											<tr key={entry.name} className="border-b border-subtle last:border-b-0">
+												<td className="px-4 py-2.5">
+													<span className="flex flex-col gap-0.5">
+														<strong className="label-md">{entry.name}</strong>
+														<span className="body-xs text-tertiary">
+															{normalizedEngagementType(entry.engagementType)}
+														</span>
+													</span>
+												</td>
+												<td className="px-3 py-2.5 text-right tabular-nums">
+													{formatPercent(entry.performance?.avgBidAskSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2.5 text-right tabular-nums">
+													{formatPercent(entry.performance?.avgDepth50, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2.5 text-right tabular-nums">
+													{formatPercent(entry.performance?.avgDepth100, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2.5 text-right tabular-nums">
+													{formatPercent(entry.performance?.avgDepth200, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2.5 text-right tabular-nums">
+													{formatPercent(entry.performance?.avgUptime, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-4 py-2.5 text-right">
+													<span
+														className={`rounded-full px-2 py-1 body-xs ${
+															achieved ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
+														}`}
+													>
+														{achieved ? 'Achieved' : 'Lagging'}
+													</span>
+												</td>
+											</tr>
+										)
+									})}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<div className="flex flex-col gap-3 p-4">
+							<label className="flex flex-wrap items-center gap-2 label-md">
+								Provider
+								<select
+									className="min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 body-sm"
+									value={provider?.name ?? ''}
+									onChange={(event) => setProviderName(event.target.value)}
+								>
+									{rows.map((entry) => (
+										<option key={entry.name} value={entry.name}>
+											{entry.name}
+										</option>
+									))}
+								</select>
+							</label>
+							<div className="max-h-[360px] overflow-auto rounded-lg border border-subtle">
+								<table className="w-full min-w-[620px] body-sm">
+									<thead className="sticky top-0 bg-surface">
+										<tr className="border-b border-subtle text-left label-sm text-secondary">
+											<th className="px-3 py-2">Date</th>
+											<th className="px-3 py-2 text-right">Uptime</th>
+											<th className="px-3 py-2 text-right">Spread target</th>
+											<th className="px-3 py-2 text-right">Spread reported</th>
+											<th className="px-3 py-2 text-right">Spread status</th>
+										</tr>
+									</thead>
+									<tbody>
+										{(provider?.breakdown ?? []).map((entry) => (
+											<tr key={entry.date} className="border-b border-subtle last:border-b-0">
+												<td className="px-3 py-2">{entry.date.slice(0, 10)}</td>
+												<td className="px-3 py-2 text-right tabular-nums">
+													{formatPercent(entry.uptimeRatio, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2 text-right tabular-nums">
+													{formatPercent(entry.targetSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2 text-right tabular-nums">
+													{formatPercent(entry.reportedSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+												</td>
+												<td className="px-3 py-2 text-right">
+													{entry.achievedSpread == null ? 'N/A' : entry.achievedSpread ? 'Achieved' : 'Lagging'}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					)}
+				</TabPanel>
+			</Tabs>
 		</Panel>
 	)
 }

@@ -1,6 +1,5 @@
 // A venue or category change resets the markets table through a key on DeferredTokenMarketsTable. The category
 // filter sits outside that key, so it stays mounted and keeps focus.
-import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import { Suspense, useMemo, useReducer } from 'react'
@@ -19,8 +18,8 @@ import type { Segment } from '~/containers/Markets/segments'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
-import { TabLink } from '~/ui/Tab'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { fetchTokenMarkets } from './api'
 import { DeferredTokenMarketsTable } from './deferred/DeferredTokenMarketsTable'
@@ -32,16 +31,16 @@ const TOKEN_MARKETS_SECTION_ID = 'token-markets'
 
 type VenueTabId = 'all' | 'cex' | 'dex'
 
-const VENUE_TABS: ReadonlyArray<{ id: VenueTabId; label: string }> = [
-	{ id: 'all', label: 'All' },
-	{ id: 'cex', label: 'CEX' },
-	{ id: 'dex', label: 'DEX' }
+const VENUE_TABS: ReadonlyArray<{ value: VenueTabId; label: string }> = [
+	{ value: 'all', label: 'All' },
+	{ value: 'cex', label: 'CEX' },
+	{ value: 'dex', label: 'DEX' }
 ]
 
-const CATEGORY_TABS: ReadonlyArray<{ id: Segment; label: string }> = [
-	{ id: 'spot', label: 'Spot' },
-	{ id: 'linear_perp', label: 'USD Perp' },
-	{ id: 'inverse_perp', label: 'COIN Perp' }
+const CATEGORY_TABS: ReadonlyArray<{ value: Segment; label: string }> = [
+	{ value: 'spot', label: 'Spot' },
+	{ value: 'linear_perp', label: 'USD Perp' },
+	{ value: 'inverse_perp', label: 'COIN Perp' }
 ]
 
 const EMPTY_TOTALS: MarketCategoryTotals = { pair_count: 0, total_volume_24h: 0, total_oi_usd: null }
@@ -159,7 +158,7 @@ function getCategoryTotals(data: TokenMarketsResponse, venue: VenueTabId, catego
 function getAvailableCategories(data: TokenMarketsResponse, venue: VenueTabId): Array<Segment> {
 	const categories: Array<Segment> = []
 	for (const tab of CATEGORY_TABS) {
-		if (getCategoryRows(data, venue, tab.id).length > 0) categories.push(tab.id)
+		if (getCategoryRows(data, venue, tab.value).length > 0) categories.push(tab.value)
 	}
 	return categories
 }
@@ -182,15 +181,15 @@ export function resolveTokenMarketsSelection(
 	venueTab: VenueTabId,
 	categoryTab: Segment
 ) {
-	const visibleVenueTabs = VENUE_TABS.filter((tab) => availableCategoriesByVenue[tab.id].length > 0)
-	const selectedVenueTab = visibleVenueTabs.some((tab) => tab.id === venueTab)
+	const visibleVenueTabs = VENUE_TABS.filter((tab) => availableCategoriesByVenue[tab.value].length > 0)
+	const selectedVenueTab = visibleVenueTabs.some((tab) => tab.value === venueTab)
 		? venueTab
-		: (visibleVenueTabs[0]?.id ?? venueTab)
+		: (visibleVenueTabs[0]?.value ?? venueTab)
 	const available = new Set(availableCategoriesByVenue[selectedVenueTab])
-	const visibleCategoryTabs = CATEGORY_TABS.filter((tab) => available.has(tab.id))
-	const selectedCategoryTab: Segment = visibleCategoryTabs.some((tab) => tab.id === categoryTab)
+	const visibleCategoryTabs = CATEGORY_TABS.filter((tab) => available.has(tab.value))
+	const selectedCategoryTab: Segment = visibleCategoryTabs.some((tab) => tab.value === categoryTab)
 		? categoryTab
-		: (visibleCategoryTabs[0]?.id ?? categoryTab)
+		: (visibleCategoryTabs[0]?.value ?? categoryTab)
 	return {
 		visibleVenueTabs,
 		selectedVenueTab,
@@ -250,48 +249,11 @@ function HeaderStrip({
 	)
 }
 
-function MarketFilter<T extends string>({
-	options,
-	value,
-	onChange,
-	label
-}: {
-	options: ReadonlyArray<{ id: T; label: string }>
-	value: T
-	onChange: (id: T) => void
-	label: string
-}) {
-	return (
-		<Ariakit.RadioProvider
-			value={value}
-			setValue={(next) => {
-				const option = options.find((option) => option.id === next)
-				if (option && option.id !== value) onChange(option.id)
-			}}
-			orientation="both"
-		>
-			<Ariakit.RadioGroup className="flex items-center overflow-x-auto" aria-label={label}>
-				{options.map((option) => (
-					<TabLink
-						as="label"
-						key={option.id}
-						data-active={value === option.id}
-						className="has-focus-visible:focus-ring"
-					>
-						<Ariakit.Radio value={option.id} className="sr-only" />
-						{option.label}
-					</TabLink>
-				))}
-			</Ariakit.RadioGroup>
-		</Ariakit.RadioProvider>
-	)
-}
-
 interface TokenMarketsSectionProps {
 	geckoId: string
 	tokenSymbol: string
 	/** 'section' (default) renders the full page card with an anchored heading. 'embedded' renders just the
-	 *  tabs + table for use inside another surface (e.g. an expandable table row). */
+	 *  filters + table for use inside another surface (e.g. an expandable table row). */
 	variant?: 'section' | 'embedded'
 }
 
@@ -410,25 +372,29 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	const content = (
 		<>
-			{/* Above the tabs and independent of them: this is the venue comparison for the
+			{/* Above the filters and independent of them: this is the venue comparison for the
 			    token, not a picture of whichever rows the table is filtered to. */}
 			<TokenDepthChart pairs={perpDepthPairs} slippage={tokenSlippage} symbol={tokenSymbol.toUpperCase()} />
 
-			<MarketFilter
+			<SegmentedControl
 				options={visibleVenueTabs}
 				value={selectedVenueTab}
-				onChange={(id) => setVenueTab(id)}
+				onValueChange={setVenueTab}
 				label="Market venue"
+				variant="default"
+				size="md"
 			/>
 
 			<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
 			<div className="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)]">
 				<div className="col-start-1 row-start-1 min-w-0 p-2 pb-0 sm:pb-2">
-					<MarketFilter
+					<SegmentedControl
 						options={visibleCategoryTabs}
 						value={selectedCategoryTab}
-						onChange={(id) => setCategoryTab(id)}
+						onValueChange={setCategoryTab}
 						label="Market category"
+						variant="default"
+						size="md"
 					/>
 				</div>
 				{/* Reset table state per venue/category without replacing the focused filter. */}

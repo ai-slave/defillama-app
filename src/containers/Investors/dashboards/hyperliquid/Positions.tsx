@@ -14,6 +14,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
@@ -36,6 +37,25 @@ const tableFeaturesConfig = tableFeatures({
 })
 
 type VaultFilter = 'All' | 'A' | 'B'
+
+const VAULT_OPTIONS = [
+	{ value: 'All', label: 'All' },
+	{ value: 'A', label: 'A' },
+	{ value: 'B', label: 'B' }
+] as const
+
+const PORTFOLIO_WINDOW_OPTIONS = [
+	{ value: 'day', label: 'Day' },
+	{ value: 'week', label: 'Week' },
+	{ value: 'month', label: 'Month' },
+	{ value: 'allTime', label: 'All time' }
+] as const
+
+const FUNDING_WINDOW_OPTIONS = [
+	{ value: '24h', label: '24h' },
+	{ value: '7d', label: '7d' },
+	{ value: '30d', label: '30d' }
+] as const
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const PORTFOLIO_CHARTS: NonNullable<IMultiSeriesChartProps['charts']> = [
@@ -516,16 +536,12 @@ export default function Positions() {
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Vault:</div>
-				{(['All', 'A', 'B'] as Array<VaultFilter>).map((value) => (
-					<button
-						type="button"
-						key={value}
-						onClick={() => setVaultFilter(value)}
-						className={`rounded-sm px-3 py-1.5 text-xs ${vaultFilter === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-pro-text-label'}`}
-					>
-						{value}
-					</button>
-				))}
+				<ProSegmented<VaultFilter>
+					label="Vault"
+					options={VAULT_OPTIONS}
+					value={vaultFilter}
+					onValueChange={setVaultFilter}
+				/>
 
 				<div className="ml-auto text-xs text-pro-text-label">Snapshot: {kpis.snapshotTime}</div>
 			</div>
@@ -543,32 +559,24 @@ export default function Positions() {
 
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Portfolio Window:</div>
-				{(['day', 'week', 'month', 'allTime'] as const).map((value) => (
-					<button
-						type="button"
-						key={value}
-						onClick={() => setPortfolioWindow(value)}
-						className={`rounded-sm px-3 py-1.5 text-xs ${portfolioWindow === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-pro-text-label'}`}
-					>
-						{value}
-					</button>
-				))}
+				<ProSegmented<typeof portfolioWindow>
+					label="Portfolio window"
+					options={PORTFOLIO_WINDOW_OPTIONS}
+					value={portfolioWindow}
+					onValueChange={setPortfolioWindow}
+				/>
 			</div>
 
 			<PortfolioTrend points={portfolio.points} window={portfolioWindow} />
 
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Funding Window:</div>
-				{(['24h', '7d', '30d'] as const).map((value) => (
-					<button
-						type="button"
-						key={value}
-						onClick={() => setFundingWindow(value)}
-						className={`rounded-sm px-3 py-1.5 text-xs ${fundingWindow === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-pro-text-label'}`}
-					>
-						{value}
-					</button>
-				))}
+				<ProSegmented<typeof fundingWindow>
+					label="Funding window"
+					options={FUNDING_WINDOW_OPTIONS}
+					value={fundingWindow}
+					onValueChange={setFundingWindow}
+				/>
 			</div>
 
 			<DataTable

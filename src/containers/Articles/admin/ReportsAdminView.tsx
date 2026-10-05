@@ -16,6 +16,8 @@ import {
 import type { ArticleDocument, ArticleImage, ArticlePdf } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { PdfUploadButton } from '~/containers/Articles/upload/PdfUploadButton'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+
 function articleEditHref(article: ArticleDocument): string {
 	return `/research/edit/${encodeURIComponent(article.id)}`
 }
@@ -245,6 +247,12 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 
 type StatusFilter = 'all' | 'published' | 'draft'
 
+const STATUS_FILTERS: ReadonlyArray<SegmentedControlOption<StatusFilter>> = [
+	{ value: 'all', label: 'All' },
+	{ value: 'published', label: 'Published' },
+	{ value: 'draft', label: 'Drafts' }
+]
+
 export function ReportsAdminView() {
 	const { authorizedFetch } = useAuthContext()
 	const [filter, setFilter] = useState<StatusFilter>('all')
@@ -296,20 +304,14 @@ export function ReportsAdminView() {
 						live.
 					</p>
 				</div>
-				<div className="inline-flex overflow-hidden rounded-md border border-medium bg-surface text-xs">
-					{(['all', 'published', 'draft'] as const).map((value) => (
-						<button
-							key={value}
-							type="button"
-							onClick={() => setFilter(value)}
-							className={`px-3 py-1.5 transition-colors ${
-								filter === value ? 'bg-research-tint text-link' : 'text-secondary hover:text-primary'
-							}`}
-						>
-							{value === 'all' ? 'All' : value === 'published' ? 'Published' : 'Drafts'}
-						</button>
-					))}
-				</div>
+				<SegmentedControl<StatusFilter>
+					label="Status"
+					variant="default"
+					size="md"
+					options={STATUS_FILTERS}
+					value={filter}
+					onValueChange={setFilter}
+				/>
 			</header>
 
 			{filtered.length === 0 ? (

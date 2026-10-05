@@ -63,7 +63,7 @@ export function CardsTable({ rows, reference }: { rows: Array<CardTierRow>; refe
 			>
 				<Card padding="none">
 					<TableToolbar>
-						<div className="mr-auto flex items-center overflow-x-auto">
+						<div className="mr-auto flex min-w-0 items-center">
 							<SegmentedControl<CardsColumnGroup>
 								value={columnGroup}
 								onValueChange={(nextGroup) => {

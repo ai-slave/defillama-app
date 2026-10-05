@@ -2,15 +2,22 @@ import { type SortingState, useTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { sortedTableFeatures } from '~/components/Table/features/sorting'
 import { Button } from '~/ui/Button'
-import { Panel, PanelHeader } from '~/ui/Panel'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import type { ColumnConfig, DisplayMode, Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'
 import { StickyTable } from '../StickyTable'
 import type { LeaderboardRow } from '../types'
 import { buildRankColumns } from './columns'
-import { ShowAsControl } from './ShowAsControl'
 import { ThresholdSelect } from './ThresholdSelect'
+
+// How every metric cell reads: the raw value, its percentile, or its rank. Short labels keep it one row on phones.
+const SHOW_AS_OPTIONS: ReadonlyArray<{ value: DisplayMode; label: string }> = [
+	{ value: 'value', label: 'Value' },
+	{ value: 'percentile', label: 'Percentile' },
+	{ value: 'rank', label: 'Rank' }
+]
 
 interface IRankTableProps {
 	rows: Array<LeaderboardRow>
@@ -54,10 +61,18 @@ export function RankTable({
 	return (
 		<Panel padding="none">
 			<PanelHeader>
-				<h2 className="heading-xs">Rank</h2>
+				<PanelTitle>Rank</PanelTitle>
 				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}
 				<div className="ml-auto flex flex-wrap items-center gap-1.5">
-					<ShowAsControl mode={mode} setMode={setMode} />
+					<SegmentedControl
+						value={mode}
+						onValueChange={setMode}
+						options={SHOW_AS_OPTIONS}
+						label="Show as"
+						leading="Show as"
+						variant="default"
+						size="md"
+					/>
 					<RefineButton onClick={onRefine} />
 				</div>
 			</PanelHeader>

@@ -60,12 +60,10 @@ export function AuthenticationCard() {
 									<span className="body-sm text-sub-text-muted">Not set up</span>
 								</div>
 								<Button type="button" size="md" onClick={() => setIsSwitchToEmailModalOpen(true)}>
-									Enable email auth
+									Add email sign-in
 								</Button>
 							</div>
-							<p className="body-sm text-sub-text-muted">
-								Add email &amp; password as another way to log in to your account.
-							</p>
+							<p className="body-sm text-sub-text-muted">Add an email and password as another way to sign in.</p>
 						</div>
 					</>
 				) : (

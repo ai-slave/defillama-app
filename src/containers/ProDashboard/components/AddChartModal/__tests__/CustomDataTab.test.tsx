@@ -91,10 +91,12 @@ async function pasteCsv(text: string) {
 	await waitForTypedParse()
 }
 
-function button(label: string) {
-	const found = Array.from(document.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)
-	if (!found) throw new Error(`Expected a "${label}" button`)
-	return found
+function displayMode(label: string) {
+	const option = Array.from(document.querySelectorAll('[role="radiogroup"][aria-label="Display as"] label')).find(
+		(node) => node.textContent?.trim() === label
+	)
+	if (!option) throw new Error(`Expected a "${label}" display option`)
+	return option.querySelector<HTMLInputElement>('input[type="radio"]')!
 }
 
 beforeEach(async () => {
@@ -115,6 +117,8 @@ describe('a subscriber', () => {
 	signInAs('subscriber')
 
 	test('pasted CSV previews an auto-selected chart, switches to the grid and stores the rows', async () => {
+		const track = vi.fn()
+		vi.stubGlobal('umami', { track })
 		await renderTab()
 		expect(document.body.textContent).toContain('Paste or upload a CSV to preview it here.')
 
@@ -132,8 +136,12 @@ describe('a subscriber', () => {
 		])
 		expect(latest?.customData.error).toBe('')
 
-		await act(async () => button('Table').click())
+		expect(displayMode('Chart').checked).toBe(true)
+		await act(async () => displayMode('Table').click())
+		expect(displayMode('Table').checked).toBe(true)
+		expect(latest?.customData.displayMode).toBe('table')
 		expect(document.body.textContent).toContain('grid rows: 2')
+		expect(track).toHaveBeenCalledWith('custom-data-display-table', undefined)
 	})
 
 	test('typing twice within the debounce window parses the CSV once', async () => {

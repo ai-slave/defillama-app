@@ -27,6 +27,7 @@ import {
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { getABGroupFromCookie } from '~/utils/abTesting'
 import { REWARDS_EVENTS, trackRewardsEvent } from '~/utils/analytics/rewards'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -186,26 +187,26 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 						Add Your Rewards
 					</ExternalLinkButton>
 				</PanelHeader>
-				<div role="group" aria-label="Lifecycle" className="flex flex-wrap items-center gap-1.5 p-2">
-					<span className="mr-1 label-sm text-secondary">Status</span>
-					{LIFECYCLE_OPTIONS.filter(
-						(value) => value === 'All' || value === query.lifecycle || view.availableLifecycles.has(value)
-					).map((value) => (
-						<Button
-							key={value}
-							type="button"
-							size="md"
-							variant="toggle"
-							data-active={query.lifecycle === value}
-							aria-pressed={query.lifecycle === value}
-							onClick={() => {
-								if (value !== query.lifecycle) updateQuery({ lifecycle: value })
-							}}
-						>
-							{value}
-							<span className="body-xs text-tertiary">{view.lifecycleCounts[value]}</span>
-						</Button>
-					))}
+				{/* Baseline, not center: the label stays beside the first row when the chips wrap. */}
+				<div className="flex items-baseline gap-1.5 p-2">
+					<span className="mr-1 shrink-0 label-sm text-secondary">Status</span>
+					<SegmentedControl
+						label="Status"
+						variant="chips"
+						size="md"
+						value={query.lifecycle}
+						onValueChange={(lifecycle) => updateQuery({ lifecycle })}
+						options={LIFECYCLE_OPTIONS.filter(
+							(value) => value === 'All' || value === query.lifecycle || view.availableLifecycles.has(value)
+						).map((value) => ({
+							value,
+							label: (
+								<>
+									{value} <span className="body-xs text-tertiary">{view.lifecycleCounts[value]}</span>
+								</>
+							)
+						}))}
+					/>
 				</div>
 				<FeaturedCards programs={cards} />
 				<div role="group" aria-label="Reward type" className="flex flex-wrap items-center gap-1.5 p-2">

@@ -65,6 +65,10 @@ describe('standalone IR shell', () => {
 		return container.querySelector('p')?.textContent ?? null
 	}
 
+	function selectedTab() {
+		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? null
+	}
+
 	beforeEach(() => {
 		client = new QueryClient()
 		container = document.createElement('div')
@@ -94,9 +98,12 @@ describe('standalone IR shell', () => {
 		const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
 		await render('investors')
 		expect(shownContent()).toBe('Spark Overview')
+		expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-orientation')).toBe('vertical')
+		expect(selectedTab()).toBe('Overview')
 
 		await click('Metrics')
-		expect(shownContent()).toBe('Spark Metrics')
+		expect(selectedTab()).toBe('Metrics')
+		expect(container.querySelector('[role="tabpanel"] p')?.textContent).toBe('Spark Metrics')
 		expect(scroll).toHaveBeenCalledTimes(1)
 		// The open tab is already on screen, so it does not scroll.
 		await click('Metrics')
@@ -104,7 +111,24 @@ describe('standalone IR shell', () => {
 
 		await click('NEAR')
 		expect(shownContent()).toBe('NEAR Overview')
+		expect(selectedTab()).toBe('Overview')
 		expect(scroll).toHaveBeenCalledTimes(2)
+	})
+
+	test('the open project collapses and expands its tab list', async () => {
+		await render('investors')
+		const spark = () =>
+			Array.from(container.querySelectorAll('nav button')).find((node) => node.textContent === 'Spark')!
+		expect(spark().getAttribute('aria-expanded')).toBe('true')
+
+		await click('Spark')
+		expect(spark().getAttribute('aria-expanded')).toBe('false')
+		expect(container.querySelector('[role="tab"]')).toBeNull()
+		// Collapsing the list keeps the open tab on screen.
+		expect(shownContent()).toBe('Spark Overview')
+
+		await click('Spark')
+		expect(selectedTab()).toBe('Overview')
 	})
 
 	test('a project whose dashboard fails to load says so instead of an empty page', async () => {

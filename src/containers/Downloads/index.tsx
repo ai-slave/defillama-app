@@ -1,16 +1,43 @@
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
+import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import type { ChartOptionsMap } from './chart-datasets'
 import { DownloadsCatalog as SimpleCatalog } from './DownloadsCatalog'
-import { ModeToggle, type DownloadsMode } from './sql/ModeToggle'
 
 const SqlWorkspace = dynamic(() => import('./sql/SqlWorkspace').then((m) => m.SqlWorkspace), {
 	ssr: false,
 	loading: () => <PanelLoadingStatus label="Loading SQL Studio" />
 })
+
+type DownloadsMode = 'simple' | 'sql'
+
+const MODE_OPTIONS = [
+	{
+		value: 'simple',
+		label: (
+			<span className="inline-flex items-center gap-1.5">
+				<Icon name="download-cloud" className="size-3.5" />
+				Simple
+			</span>
+		)
+	},
+	{
+		value: 'sql',
+		label: (
+			<span className="inline-flex items-center gap-1.5">
+				<Icon name="code" className="size-3.5" />
+				SQL Studio
+				<span className="rounded-sm bg-pro-success-200/15 px-1 text-[10px] font-bold tracking-wider text-pro-success-300">
+					NEW
+				</span>
+			</span>
+		)
+	}
+] as const
 
 interface DownloadsCatalogProps {
 	chartOptionsMap: ChartOptionsMap
@@ -71,7 +98,7 @@ function ModeBand({ mode }: { mode: DownloadsMode }) {
 				</div>
 			)}
 			<div className={`shrink-0 ${isSql ? 'sm:ml-auto' : ''}`}>
-				<ModeToggle mode={mode} size="md" />
+				<SegmentedControl semantics="tabs" label="Downloads mode" variant="default" size="md" options={MODE_OPTIONS} />
 			</div>
 		</div>
 	)

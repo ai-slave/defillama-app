@@ -6,18 +6,10 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
 import { carryForwardCumulative, parseDateToUnix, sumDailySeries, type Chart } from './transform'
-import {
-	ChartCard,
-	DEX,
-	NETWORK_FEE_DATA_TYPES,
-	networkFeeQuery,
-	PALETTE,
-	SegToggle,
-	THOR_TEAL,
-	withNetworkFee
-} from './ui'
+import { ChartCard, DEX, NETWORK_FEE_DATA_TYPES, networkFeeQuery, PALETTE, THOR_TEAL, withNetworkFee } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -142,7 +134,9 @@ function TrendCard({
 		<ChartCard
 			title={title}
 			{...(subtitle !== undefined ? { subtitle } : {})}
-			control={<SegToggle options={VIEWS} value={view} onChange={setView} />}
+			control={
+				<ProSegmented size="sm" label={`${title} period`} options={VIEWS} value={view} onValueChange={setView} />
+			}
 		>
 			{isLoading ? (
 				<div className="flex h-[360px] items-center justify-center text-xs text-pro-text-tertiary">Loading…</div>

@@ -1,4 +1,5 @@
-import { useId, useRef, useState, type RefObject } from 'react'
+import { useTabContext } from '@ariakit/react'
+import { useId, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
@@ -143,18 +144,18 @@ function PresetNameDialog({
 	)
 }
 
+/** Opened from a saved list inside a tab panel. Deleting removes the row that opened it, so focus returns to the
+    panel's selected tab instead. */
 export function DeletePresetDialog({
 	preset,
-	finalFocus,
 	onDelete,
 	onClose
 }: {
 	preset: SavedDownload
-	/** Deleting removes the row that opened the dialog, so focus returns here instead. */
-	finalFocus: RefObject<HTMLElement | null>
 	onDelete: (id: string) => void
 	onClose: () => void
 }) {
+	const tabs = useTabContext()!
 	const returnFocusRef = useRef<HTMLElement | null>(null)
 	return (
 		<ConfirmDialog
@@ -169,7 +170,7 @@ export function DeletePresetDialog({
 			pendingLabel={null}
 			error={null}
 			onConfirm={() => {
-				returnFocusRef.current = finalFocus.current
+				returnFocusRef.current = tabs.item(tabs.getState().selectedId)?.element ?? null
 				onDelete(preset.id)
 				onClose()
 			}}

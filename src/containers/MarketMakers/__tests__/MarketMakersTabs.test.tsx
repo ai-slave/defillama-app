@@ -16,7 +16,7 @@ test('opens and closes section navigation while keeping the active destination',
 		await act(async () => toggle.click())
 		expect(toggle.getAttribute('aria-expanded')).toBe('true')
 		expect(
-			new Set([...container.querySelectorAll('a[data-active="true"]')].map((link) => link.getAttribute('href')))
+			new Set([...container.querySelectorAll('a[aria-current="page"]')].map((link) => link.getAttribute('href')))
 		).toEqual(new Set(['/market-makers/volume']))
 		expect(container.querySelector('a[href="/market-makers/depth"]')).not.toBeNull()
 		await act(async () => toggle.click())

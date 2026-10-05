@@ -35,12 +35,12 @@
 	"product": {
 		"hex-in-classname": 22,
 		"dark-hex-variant": 8,
-		"arbitrary-font-size": 521,
+		"arbitrary-font-size": 515,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
 		"product-token-leak": 0,
-		"builtin-palette-color": 144,
+		"builtin-palette-color": 143,
 		"arbitrary-color-function": 1,
 		"arbitrary-shadow": 0,
 		"product-utility-leak": 0,
@@ -63,6 +63,6 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 1069
+		"raw-type-pair": 1038
 	}
 }

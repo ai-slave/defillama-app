@@ -6,16 +6,24 @@ export function WatchListTabs() {
 	const router = useRouter()
 	const isTokensTab = router.pathname === '/watchlist' && router.query.tab === 'tokens'
 	return (
-		<nav className={`${tabTrackStyles} max-w-fit`}>
-			<TabLink as={BasicLink} href="/watchlist" data-active={router.pathname === '/watchlist' && !isTokensTab}>
+		<nav className={`${tabTrackStyles} max-w-fit`} aria-label="Watchlist">
+			<TabLink
+				as={BasicLink}
+				href="/watchlist"
+				aria-current={router.pathname === '/watchlist' && !isTokensTab ? 'page' : undefined}
+			>
 				DeFi
 			</TabLink>
 
-			<TabLink as={BasicLink} href="/yields/watchlist" data-active={router.pathname === '/yields/watchlist'}>
+			<TabLink
+				as={BasicLink}
+				href="/yields/watchlist"
+				aria-current={router.pathname === '/yields/watchlist' ? 'page' : undefined}
+			>
 				Yields
 			</TabLink>
 
-			<TabLink as={BasicLink} href="/watchlist?tab=tokens" data-active={isTokensTab}>
+			<TabLink as={BasicLink} href="/watchlist?tab=tokens" aria-current={isTokensTab ? 'page' : undefined}>
 				Tokens
 			</TabLink>
 		</nav>

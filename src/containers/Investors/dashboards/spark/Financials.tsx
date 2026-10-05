@@ -4,6 +4,7 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatPercent } from '~/utils/numberFormat'
 import { assignColors } from './api'
 import {
@@ -69,29 +70,16 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 
 type AADimension = 'byProtocol' | 'byNetwork' | 'byAsset'
 
-function ToggleButton({
-	active,
-	onClick,
-	children
-}: {
-	active: boolean
-	onClick: () => void
-	children: React.ReactNode
-}) {
-	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-				active
-					? 'bg-sl-accent-muted text-sl-accent'
-					: 'bg-pro-cards-bg text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-			} border border-pro-cards-border`}
-		>
-			{children}
-		</button>
-	)
-}
+const AA_VIEW_OPTIONS = [
+	{ value: 'breakdown', label: 'Breakdown' },
+	{ value: 'historical', label: 'Historical' }
+] as const
+
+const AA_DIMENSION_OPTIONS = [
+	{ value: 'byProtocol', label: 'By Protocol' },
+	{ value: 'byNetwork', label: 'By Network' },
+	{ value: 'byAsset', label: 'By Asset' }
+] as const
 
 function AllocatedAssetsSection({
 	allocatedAssets,
@@ -137,26 +125,20 @@ function AllocatedAssetsSection({
 				<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
 					<h3 className="text-sm font-medium text-pro-text-label">{allocatedAssets.title}</h3>
 					<div className="flex flex-wrap items-center gap-2">
-						<div className="flex gap-1">
-							<ToggleButton active={view === 'breakdown'} onClick={() => setView('breakdown')}>
-								Breakdown
-							</ToggleButton>
-							<ToggleButton active={view === 'historical'} onClick={() => setView('historical')}>
-								Historical
-							</ToggleButton>
-						</div>
-						<div className="h-5 w-px bg-pro-cards-border" />
-						<div className="flex gap-1">
-							<ToggleButton active={dimension === 'byProtocol'} onClick={() => onDimensionChange('byProtocol')}>
-								By Protocol
-							</ToggleButton>
-							<ToggleButton active={dimension === 'byNetwork'} onClick={() => onDimensionChange('byNetwork')}>
-								By Network
-							</ToggleButton>
-							<ToggleButton active={dimension === 'byAsset'} onClick={() => onDimensionChange('byAsset')}>
-								By Asset
-							</ToggleButton>
-						</div>
+						<ProSegmented<typeof view>
+							size="sm"
+							label="Allocated assets view"
+							options={AA_VIEW_OPTIONS}
+							value={view}
+							onValueChange={setView}
+						/>
+						<ProSegmented
+							size="sm"
+							label="Allocated assets grouping"
+							options={AA_DIMENSION_OPTIONS}
+							value={dimension}
+							onValueChange={onDimensionChange}
+						/>
 					</div>
 				</div>
 

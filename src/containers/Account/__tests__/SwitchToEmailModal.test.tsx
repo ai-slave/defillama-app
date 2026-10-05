@@ -113,7 +113,7 @@ test('saves the switched session while it is still the current one', async () =>
 	await settle()
 
 	expect(pb.authStore.token).toBe(token('switched-user'))
-	expect(document.body.textContent).toContain('Switch successful')
+	expect(document.body.textContent).toContain('Email sign-in added')
 })
 
 test('does not overwrite a newer session with a late confirmation', async () => {
@@ -153,7 +153,7 @@ test('a token refresh of the same account during the switch still ends on the su
 	confirmCalls[0].resolve(Response.json({ token: token('wallet-user-email') }))
 	await settle()
 
-	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Switch successful')
+	expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Email sign-in added')
 	expect(pb.authStore.token).toBe(token('wallet-user-email'))
 })
 
@@ -164,7 +164,7 @@ test('closing the code step after typing asks before dropping the entered code',
 	await act(async () => button('Cancel')!.click())
 
 	await settle()
-	expect([...document.querySelectorAll('h2')].map((heading) => heading.textContent)).toContain('Discard the switch?')
+	expect([...document.querySelectorAll('h2')].map((heading) => heading.textContent)).toContain('Discard email sign-in?')
 	expect(document.querySelector<HTMLInputElement>('input[placeholder="000000"]')!.value).toBe('123')
 })
 
@@ -185,7 +185,7 @@ test('resending the code labels only the resend as pending and confirms the new 
 	await settle()
 
 	expect(button('Sending code…')).toBeDefined()
-	expect(button('Complete switch')).toBeDefined()
+	expect(button('Add email')).toBeDefined()
 	await act(async () => resend.resolve(codeSent()))
 	await settle()
 

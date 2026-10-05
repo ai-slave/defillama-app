@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import {
 	ArticleApiError,
@@ -148,6 +148,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 
 function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQuery; pathname: string }) {
 	const { query: q, tag, section: activeSection } = searchQuery
+	const labelId = useId()
 	const { data } = useQuery<ArticleSectionListResponse>({
 		queryKey: ['research', 'sections'],
 		queryFn: () => listArticleSections(6),
@@ -158,38 +159,35 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 		buildSearchUrl(pathname, {
 			q,
 			tag,
-			section: sectionSlug && sectionSlug !== activeSection ? sectionSlug : undefined
+			section: sectionSlug
 		})
 
-	const linkBase = 'inline-flex items-center font-jetbrains text-[11px] tracking-[0.18em] uppercase transition-colors'
-	const inactive =
-		'text-research-heading/55 hover:text-research-accent-strong dark:text-on-brand/55 dark:hover:text-research-ink'
-	const active = 'text-research-accent-strong dark:text-research-ink'
+	// The current section draws its accent and underline from aria-current.
+	const linkStyles =
+		'relative inline-flex items-center font-jetbrains text-[11px] tracking-[0.18em] uppercase transition-colors text-research-heading/55 hover:text-research-accent-strong dark:text-on-brand/55 dark:hover:text-research-ink aria-[current=page]:text-research-accent-strong dark:aria-[current=page]:text-research-ink after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong after:opacity-0 aria-[current=page]:after:opacity-100 dark:after:bg-research-white'
 
 	return (
-		<div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-			<span className="font-jetbrains text-[10px] tracking-[0.24em] text-research-heading/40 uppercase dark:text-on-brand/40">
+		<nav aria-labelledby={labelId} className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+			<span
+				id={labelId}
+				className="font-jetbrains text-[10px] tracking-[0.24em] text-research-heading/40 uppercase dark:text-on-brand/40"
+			>
 				Sections
 			</span>
-			<Link
-				href={hrefForSection()}
-				className={`${linkBase} ${!activeSection ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong dark:after:bg-research-white` : inactive}`}
-			>
+			<Link href={hrefForSection()} aria-current={!activeSection ? 'page' : undefined} className={linkStyles}>
 				All
 			</Link>
-			{data?.sections?.map((s) => {
-				const isActive = s.section === activeSection
-				return (
-					<Link
-						key={s.section}
-						href={hrefForSection(s.section)}
-						className={`${linkBase} ${isActive ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong dark:after:bg-research-white` : inactive}`}
-					>
-						{humanizeTag(s.section)}
-					</Link>
-				)
-			})}
-		</div>
+			{data?.sections?.map((s) => (
+				<Link
+					key={s.section}
+					href={hrefForSection(s.section)}
+					aria-current={s.section === activeSection ? 'page' : undefined}
+					className={linkStyles}
+				>
+					{humanizeTag(s.section)}
+				</Link>
+			))}
+		</nav>
 	)
 }
 

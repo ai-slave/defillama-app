@@ -74,8 +74,13 @@ test('reopening keeps the chosen theme and drops the last copy failure', async (
 			)
 		)
 	writeText.mockRejectedValue(new Error('Denied'))
-	const light = Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent === 'Light')!
-	await act(async () => light.click())
+	const themeOption = (text: string) =>
+		Array.from(document.body.querySelectorAll('[role="radiogroup"][aria-labelledby] label'))
+			.find((node) => node.textContent === text)!
+			.querySelector<HTMLInputElement>('input[type="radio"]')!
+	expect(themeOption('Dark').checked).toBe(true)
+	await act(async () => themeOption('Light').click())
+	expect(themeOption('Light').checked).toBe(true)
 	await act(async () => copyButton().click())
 	await waitForUi(() => expect(document.body.querySelector('[role="alert"]')).not.toBeNull())
 
@@ -83,5 +88,6 @@ test('reopening keeps the chosen theme and drops the last copy failure', async (
 	await waitForUi(() => expect(document.body.querySelector('[role="dialog"]')).toBeNull())
 	await render(true)
 	await waitForUi(() => expect(document.body.querySelector('textarea')?.value).toBe('<iframe light>'))
+	expect(themeOption('Light').checked).toBe(true)
 	expect(document.body.querySelector('[role="alert"]')).toBeNull()
 })

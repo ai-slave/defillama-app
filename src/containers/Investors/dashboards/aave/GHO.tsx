@@ -3,6 +3,7 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import {
 	formatPercent,
 	formatUsd,
@@ -19,8 +20,7 @@ import {
 	KpiCard,
 	MetricStrip,
 	PageLoader,
-	SectionHeader,
-	WindowToggle
+	SectionHeader
 } from './shared'
 
 const tableFeaturesConfig = displayTableFeatures
@@ -203,10 +203,11 @@ export default function GHO() {
 			<div>
 				<div className="mb-4 flex items-center justify-between">
 					<SectionHeader title="GHO Borrow APY History" />
-					<WindowToggle
+					<ProSegmented<TimeWindow>
+						label="GHO borrow APY window"
 						options={WINDOW_OPTIONS}
 						value={selectedWindow}
-						onChange={(v) => setSelectedWindow(v as TimeWindow)}
+						onValueChange={setSelectedWindow}
 					/>
 				</div>
 

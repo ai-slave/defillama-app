@@ -2,6 +2,7 @@ import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatPercent } from '~/utils/numberFormat'
 import { useGrowthData, chartToModel, type LooprDailyRow } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
@@ -20,9 +21,9 @@ const CHAIN_COLORS: Record<string, string> = {
 }
 
 const SPEND_VENUES = [
-	{ id: 'aerodrome', label: 'Aerodrome' },
-	{ id: 'velodrome', label: 'Velodrome' },
-	{ id: 'votemarket', label: 'VoteMarket' }
+	{ value: 'aerodrome', label: 'Aerodrome' },
+	{ value: 'velodrome', label: 'Velodrome' },
+	{ value: 'votemarket', label: 'VoteMarket' }
 ]
 
 const ACTIVE_ACCOUNTS_CHART: IMultiSeriesChartProps['charts'] = [
@@ -73,35 +74,6 @@ const VSP_PRICE_CHART: IMultiSeriesChartProps['charts'] = [
 		color: '#a78bfa'
 	}
 ]
-
-function TabBtns({
-	active,
-	onChange,
-	options
-}: {
-	active: string
-	onChange: (v: string) => void
-	options: Array<{ id: string; label: string }>
-}) {
-	return (
-		<div className="mb-3 flex flex-wrap gap-1">
-			{options.map((o) => (
-				<button
-					type="button"
-					key={o.id}
-					onClick={() => onChange(o.id)}
-					className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
-						active === o.id
-							? 'bg-sl-accent text-on-brand'
-							: 'border border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:text-pro-text-primary'
-					}`}
-				>
-					{o.label}
-				</button>
-			))}
-		</div>
-	)
-}
 
 function dailyToPairs(
 	rows: Array<LooprDailyRow> | undefined,
@@ -514,7 +486,14 @@ export default function Growth() {
 						title={`${spendVenue} — weekly spend vs pool TVL`}
 						subtitle="Compare incentive outlay against the TVL it attracted"
 					>
-						<TabBtns active={spendVenue} onChange={setSpendVenue} options={SPEND_VENUES} />
+						<ProSegmented
+							size="sm"
+							label="Spend venue"
+							className="mb-3"
+							options={SPEND_VENUES}
+							value={spendVenue}
+							onValueChange={setSpendVenue}
+						/>
 						<MultiSeriesChart
 							key={spendVenue}
 							dataset={spendVsTvl.model.dataset}

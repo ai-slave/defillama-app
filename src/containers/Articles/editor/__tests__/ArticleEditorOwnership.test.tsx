@@ -254,18 +254,26 @@ test('a read answered before a restore but arriving after it does not bring the 
 	expect(title().value).toBe('Restored headline')
 })
 
-const modeButton = (label: string) => container.querySelector<HTMLButtonElement>(`button[title="${label}"]`)!
+const modeTab = (label: string) =>
+	[...container.querySelectorAll<HTMLElement>('[role="tablist"][aria-label="Editor mode"] [role="tab"]')].find(
+		(tab) => tab.textContent === label
+	)!
+const visiblePanel = () => container.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden])')!
 
-test('an article linked with ?view=preview opens in the preview, the Write toggle then wins, and the next article opens to write', async () => {
+test('an article linked with ?view=preview opens in the preview, the Write tab then wins, and the next article opens to write', async () => {
 	await open('article-a', 'preview')
-	expect(modeButton('Preview').getAttribute('aria-pressed')).toBe('true')
-	expect(container.textContent).toContain('Rendered proof')
+	expect(modeTab('Preview').getAttribute('aria-selected')).toBe('true')
+	expect(visiblePanel().getAttribute('aria-labelledby')).toBe(modeTab('Preview').id)
+	expect(visiblePanel().textContent).toContain('Rendered proof')
 	expect(title()).toBeNull()
 
-	await click(modeButton('Write'))
+	await click(modeTab('Write'))
+	expect(modeTab('Write').getAttribute('aria-selected')).toBe('true')
+	expect(visiblePanel().getAttribute('aria-labelledby')).toBe(modeTab('Write').id)
 	expect(title().value).toBe('Headline A')
+	expect(container.textContent).not.toContain('Rendered proof')
 
 	await open('article-b')
-	expect(modeButton('Write').getAttribute('aria-pressed')).toBe('true')
+	expect(modeTab('Write').getAttribute('aria-selected')).toBe('true')
 	expect(title().value).toBe('Headline B')
 })

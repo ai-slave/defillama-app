@@ -1,4 +1,3 @@
-import { TabList } from '@ariakit/react'
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
@@ -8,17 +7,18 @@ import type { ExampleQuery } from '~/containers/Downloads/sql/examples'
 import { ExamplesPanel } from '~/containers/Downloads/sql/ExamplesPanel'
 import { SchemaBrowser } from '~/containers/Downloads/sql/SchemaBrowser'
 import type { RegisteredTable, TableLoadError, TableSource } from '~/containers/Downloads/sql/useTableRegistry'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { SavedQueriesPanel } from './SavedQueriesPanel'
 
 const TABS = [
-	{ id: 'examples', label: 'Examples' },
-	{ id: 'schema', label: 'Schema' },
-	{ id: 'cookbook', label: 'Cookbook' },
-	{ id: 'saved', label: 'Saved' },
-	{ id: 'shortcuts', label: 'Shortcuts' }
+	{ value: 'examples', label: 'Examples' },
+	{ value: 'schema', label: 'Schema' },
+	{ value: 'cookbook', label: 'Cookbook' },
+	{ value: 'saved', label: 'Saved' },
+	{ value: 'shortcuts', label: 'Shortcuts' }
 ] as const
-type TabId = (typeof TABS)[number]['id']
+type TabId = (typeof TABS)[number]['value']
 
 interface SqlChartModalSidebarProps {
 	chartOptionsMap: ChartOptionsMap
@@ -57,33 +57,27 @@ export function SqlChartModalSidebar({
 
 	return (
 		<aside className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-medium bg-surface">
-			<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.id)}>
-				<TabList
-					aria-label="SQL reference section"
-					className="flex shrink-0 items-stretch border-b border-subtle text-sm"
-				>
-					{TABS.map((t) => {
-						const active = tab === t.id
-						return (
-							<Tab
-								key={t.id}
-								value={t.id}
-								type="button"
-								className={`relative flex flex-1 items-center justify-center gap-1.5 pt-2.5 pb-2 text-xs font-medium transition-colors ${
-									active ? 'text-brand' : 'text-secondary hover:text-primary'
-								}`}
-							>
-								{t.label}
-								{t.id === 'saved' && savedQueries.length > 0 ? (
-									<span className="label-xs text-tertiary tabular-nums">{savedQueries.length}</span>
-								) : null}
-								{active ? (
-									<span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />
-								) : null}
-							</Tab>
-						)
-					})}
-				</TabList>
+			<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.value)}>
+				<div className="shrink-0 border-b border-subtle p-2">
+					<SegmentedControl
+						semantics="tabs"
+						label="SQL reference section"
+						variant="default"
+						size="md"
+						options={TABS.map((option) =>
+							option.value === 'saved' && savedQueries.length > 0
+								? {
+										...option,
+										label: (
+											<>
+												Saved <span className="text-tertiary tabular-nums">{savedQueries.length}</span>
+											</>
+										)
+									}
+								: option
+						)}
+					/>
+				</div>
 
 				<TabPanel value={tab} className="min-h-0 flex-1 overflow-y-auto p-3">
 					{tab === 'examples' ? (

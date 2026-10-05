@@ -52,12 +52,15 @@ export function ChainOverview(props: IChainOverviewData) {
 			<RowLinksWithDropdown heading="Chains" links={props.allChains} activeLink={props.metadata.name} />
 			<div className="isolate flex flex-1 flex-col gap-2">
 				{investorRelations ? (
-					<nav className={`${tabTrackStyles} scrollbar-none min-h-10 shrink-0`}>
+					<nav
+						className={`${tabTrackStyles} scrollbar-none min-h-10 shrink-0`}
+						aria-label={`${props.metadata.name} pages`}
+					>
 						<TabLink
 							as="button"
 							type="button"
 							onClick={() => goToTab(undefined)}
-							data-active={!irActive}
+							aria-current={!irActive ? 'page' : undefined}
 							className="flex items-center"
 						>
 							Overview
@@ -66,7 +69,7 @@ export function ChainOverview(props: IChainOverviewData) {
 							as="button"
 							type="button"
 							onClick={() => goToTab('investor-relations')}
-							data-active={irActive}
+							aria-current={irActive ? 'page' : undefined}
 							data-umami-event="investor-relations-tab-click"
 							data-umami-event-entity-type="chain"
 							data-umami-event-entity={entitySlug}

@@ -50,8 +50,10 @@ test('category navigation updates one panel and selecting a prompt closes Explor
 	await act(async () => root.render(<CapabilityChips onPromptSelect={select} isPending={false} />))
 	const trigger = button('Explore')
 	await click(trigger)
+	// The categories are a vertical rail, so Down moves to the next one.
+	expect(document.querySelector('[role="tablist"]')?.getAttribute('aria-orientation')).toBe('vertical')
 	const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
-	await press(tabs[0], 'ArrowRight')
+	await press(tabs[0], 'ArrowDown')
 	await waitForUi(() => expect(tabs[1].getAttribute('aria-selected')).toBe('true'))
 	expect(document.activeElement).toBe(tabs[1])
 	const panel = document.querySelector('[role="tabpanel"]')!

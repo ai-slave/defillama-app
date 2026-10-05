@@ -7,8 +7,10 @@ import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
-import { SegmentedControl } from '~/ui/SegmentedControl'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
+import { ProSegmented } from '../../ui'
 import { assertCustomDataSizeAllowed, CustomDataParseError, parseCustomDataCsv } from '../CustomData/parseCustomDataCsv'
 import { CustomDataTooLargeError, encodeRows, useDecodedRows } from '../CustomData/rowsEncoding'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
@@ -16,6 +18,27 @@ import { ADD_CARD_PANES, type AddCardPane } from './panes'
 import type { CustomDataModalState } from './types'
 
 export const TYPED_CSV_PARSE_DELAY_MS = 300
+
+const DISPLAY_MODE_OPTIONS: Array<SegmentedControlOption<CustomDataModalState['displayMode']>> = [
+	{
+		value: 'chart',
+		label: (
+			<span className="flex items-center gap-1.5">
+				<Icon name="bar-chart-2" height={12} width={12} />
+				Chart
+			</span>
+		)
+	},
+	{
+		value: 'table',
+		label: (
+			<span className="flex items-center gap-1.5">
+				<Icon name="align-left" height={12} width={12} />
+				Table
+			</span>
+		)
+	}
+]
 
 interface CustomDataTabProps {
 	customData: CustomDataModalState
@@ -193,36 +216,16 @@ function CustomDataForm({
 				className={`min-h-0 flex-col gap-2 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
 			>
 				<div className="flex shrink-0 items-center gap-2">
-					<div className="flex rounded-lg border border-pro-cards-border p-0.5">
-						<button
-							type="button"
-							onClick={() => onDisplayModeChange('chart')}
-							aria-pressed={customData.displayMode === 'chart'}
-							data-umami-event="custom-data-display-chart"
-							className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-								customData.displayMode === 'chart'
-									? 'bg-pro-accent text-on-brand'
-									: 'text-pro-text-secondary hover:text-pro-text-primary'
-							}`}
-						>
-							<Icon name="bar-chart-2" height={12} width={12} />
-							Chart
-						</button>
-						<button
-							type="button"
-							onClick={() => onDisplayModeChange('table')}
-							aria-pressed={customData.displayMode === 'table'}
-							data-umami-event="custom-data-display-table"
-							className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-								customData.displayMode === 'table'
-									? 'bg-pro-accent text-on-brand'
-									: 'text-pro-text-secondary hover:text-pro-text-primary'
-							}`}
-						>
-							<Icon name="align-left" height={12} width={12} />
-							Table
-						</button>
-					</div>
+					<ProSegmented
+						label="Display as"
+						size="sm"
+						value={customData.displayMode}
+						onValueChange={(mode) => {
+							trackUmamiEvent(`custom-data-display-${mode}`)
+							onDisplayModeChange(mode)
+						}}
+						options={DISPLAY_MODE_OPTIONS}
+					/>
 					{result ? (
 						<span className="text-xs text-pro-text-tertiary">
 							{result.rows.length} {result.rows.length === 1 ? 'row' : 'rows'} · {result.columns.length} columns

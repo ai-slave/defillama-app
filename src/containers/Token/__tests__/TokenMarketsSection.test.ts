@@ -158,9 +158,9 @@ function select(
 ) {
 	const selection = resolveTokenMarketsSelection(getAvailableCategoriesByVenue(data), venue, category)
 	return {
-		venues: selection.visibleVenueTabs.map((tab) => tab.id),
+		venues: selection.visibleVenueTabs.map((tab) => tab.value),
 		venue: selection.selectedVenueTab,
-		categories: selection.visibleCategoryTabs.map((tab) => tab.id),
+		categories: selection.visibleCategoryTabs.map((tab) => tab.value),
 		category: selection.selectedCategoryTab,
 		sorting: selection.sorting
 	}

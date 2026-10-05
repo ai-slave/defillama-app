@@ -67,3 +67,22 @@ test('a pool list that fails to load says so instead of showing no pools', async
 	await waitForUi(() => expect(container.textContent).toContain("Couldn't load the yield pools."))
 	expect(container.textContent).not.toMatch(/\d+ pools?/)
 })
+
+test('picking a chart type is a radio choice that reports the new type', async () => {
+	// The pool list loads empty; the picked pool's history stays pending.
+	http.serve({
+		'/api/public/yields/earn': { rows: [] },
+		'/api/public/yields/borrow-markets': { rows: [] }
+	})
+	const onChartTypeChange = vi.fn()
+	await renderTab(onChartTypeChange)
+	const radio = () =>
+		[...container.querySelectorAll('[role="radiogroup"][aria-label="Chart type"] label')]
+			.find((label) => label.textContent === 'TVL & Supply APY')
+			?.querySelector<HTMLInputElement>('input[type="radio"]')
+	// Chart types stay disabled until the pool list settles.
+	await waitForUi(() => expect(radio()?.disabled).toBe(false))
+	expect(radio()!.checked).toBe(false)
+	await act(async () => radio()!.click())
+	expect(onChartTypeChange).toHaveBeenCalledWith('tvl-apy')
+})

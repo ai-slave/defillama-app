@@ -3,6 +3,7 @@ import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/co
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
 import {
 	BUCKET_DAYS,
@@ -13,7 +14,7 @@ import {
 	type Chart,
 	type TrendSeries
 } from './transform'
-import { ChartCard, createStackTooltipFormatter, SegToggle, seriesColor, useTooltipMaxItems } from './ui'
+import { ChartCard, createStackTooltipFormatter, seriesColor, useTooltipMaxItems } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -207,7 +208,13 @@ export function SeriesTrendChart({
 			control={
 				<>
 					{extraControl}
-					<SegToggle<View> options={viewOptions} value={view} onChange={setPicked} />
+					<ProSegmented<View>
+						size="sm"
+						label={`${title} period`}
+						options={viewOptions}
+						value={view}
+						onValueChange={setPicked}
+					/>
 				</>
 			}
 		>

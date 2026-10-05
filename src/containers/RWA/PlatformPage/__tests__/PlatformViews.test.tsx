@@ -1,19 +1,23 @@
 // @vitest-environment happy-dom
 
 /* Behavioural contracts only, nothing here asserts on layout or class names:
-   - the table mounts under Assets and Compliance with the view it is for, never under Information
-   - the panels stay in the document under a table view, hidden, and show under Information
+   - the view switch is a tab list whose tabs show their panel: the table under Assets and Compliance, the profile under Information
+   - the profile panel stays in the served HTML under a table view, hidden, for crawlers
    - About and Compliance render on a bare meta; Fees, Entity, Regulation and Milestones only with content
-   The Website link choice is covered by getRwaPlatformLinks in panels/__tests__/panelData.test.ts. */
+   The Website link choice is covered by getRwaPlatformLinks in panels/__tests__/panelData.test.ts.
+   Reading and writing the view in the URL is covered by view.test.ts. */
 
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tabs } from '~/ui/Tabs'
 import { foldRwaPlatformKpi } from '../../kpi/platformKpi'
 import { spotAsset } from '../../table/__tests__/fixtures'
 import type { RWAPlatformMeta } from '../api.types'
 import { RWAPlatformViews } from '../PlatformViews'
-import type { RWAPlatformView } from '../view'
+import { RWA_PLATFORM_VIEW_OPTIONS, RWA_PLATFORM_VIEWS, type RWAPlatformView } from '../view'
 
 const PROFILE_COPY = 'Ondo Finance is the largest pure-play RWA platform.'
 
@@ -40,29 +44,42 @@ const kpi = foldRwaPlatformKpi([spotAsset(), spotAsset({ id: 'b', canonicalMarke
 	includeBridgeTvl: true
 })
 
+/* The page's wiring: one Tabs provider over the strip's tab list and the panels. */
+function PlatformPage({ initialView, meta = bare }: { initialView: RWAPlatformView; meta?: RWAPlatformMeta }) {
+	const [view, setView] = useState(initialView)
+	return (
+		<Tabs<RWAPlatformView> value={view} values={RWA_PLATFORM_VIEWS} onValueChange={setView}>
+			<SegmentedControl
+				semantics="tabs"
+				options={RWA_PLATFORM_VIEW_OPTIONS}
+				label="Platform view"
+				variant="default"
+				size="md"
+			/>
+			<RWAPlatformViews
+				meta={meta}
+				kpi={kpi}
+				view={view}
+				renderTable={(tableView) => <div>the {tableView} table</div>}
+			/>
+		</Tabs>
+	)
+}
+
 describe('RWA platform views', () => {
 	let container: HTMLDivElement
 	let root: Root
-	const tableMounted = vi.fn()
 
-	const render = (view: RWAPlatformView, meta: RWAPlatformMeta = bare) =>
+	const render = (initialView: RWAPlatformView, meta?: RWAPlatformMeta) =>
 		act(async () => {
-			root.render(
-				<RWAPlatformViews
-					meta={meta}
-					kpi={kpi}
-					view={view}
-					renderTable={(tableView) => {
-						tableMounted(tableView)
-						return <div>the table</div>
-					}}
-				/>
-			)
+			root.render(<PlatformPage initialView={initialView} meta={meta} />)
 		})
+	const tab = (name: string) =>
+		[...container.querySelectorAll<HTMLElement>('[role="tab"]')].find((item) => item.textContent === name)!
+	const visiblePanel = () => container.querySelector('[role="tabpanel"]:not([hidden])')!
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		tableMounted.mockReset()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -71,26 +88,31 @@ describe('RWA platform views', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
-		vi.restoreAllMocks()
 	})
 
-	test('mounts the table under Assets and Compliance with the view it is for, never under Information', async () => {
+	test('switches between the platform views as tabs that show their own panel', async () => {
 		await render('assets')
-		expect(tableMounted).toHaveBeenLastCalledWith('assets')
-		await render('compliance')
-		expect(tableMounted).toHaveBeenLastCalledWith('compliance')
-		tableMounted.mockReset()
-		await render('information')
-		expect(tableMounted).not.toHaveBeenCalled()
-		expect(container.textContent).not.toContain('the table')
+		expect(container.querySelector('[role="tablist"]')!.getAttribute('aria-label')).toBe('Platform view')
+		expect(tab('Assets').getAttribute('aria-selected')).toBe('true')
+		expect(visiblePanel().textContent).toBe('the assets table')
+		expect(visiblePanel().getAttribute('aria-labelledby')).toBe(tab('Assets').id)
+
+		await act(async () => tab('Compliance').click())
+		expect(tab('Compliance').getAttribute('aria-selected')).toBe('true')
+		expect(visiblePanel().textContent).toBe('the compliance table')
+		expect(container.textContent).not.toContain('the assets table')
+
+		await act(async () => tab('Information').click())
+		expect(tab('Information').getAttribute('aria-selected')).toBe('true')
+		expect(visiblePanel().textContent).toContain(PROFILE_COPY)
+		expect(container.textContent).not.toContain('table')
 	})
 
-	test('keeps the panels in the document under a table view, hidden, and shows them under Information', async () => {
-		await render('assets')
-		expect(container.querySelector('[hidden]')?.textContent).toContain(PROFILE_COPY)
-		await render('information')
-		expect(container.querySelector('[hidden]')).toBeNull()
-		expect(container.textContent).toContain(PROFILE_COPY)
+	test('serves the profile copy under a table view, in a hidden panel', () => {
+		const html = renderToStaticMarkup(<PlatformPage initialView="assets" />)
+		const document = new DOMParser().parseFromString(html, 'text/html')
+		expect(document.querySelector('[role="tabpanel"][hidden]')!.textContent).toContain(PROFILE_COPY)
+		expect(document.querySelector('[role="tabpanel"]:not([hidden])')!.textContent).toBe('the assets table')
 	})
 
 	test('hides the panels a bare meta has nothing to say in', async () => {

@@ -1,4 +1,4 @@
-import { ButtonLink } from '~/components/Link'
+import { BasicLink } from '~/components/Link'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 
 const tabs = [
@@ -13,9 +13,9 @@ export type RWAPerpsTab = (typeof tabs)[number]['id']
 
 export function RWAPerpsTabNav({ active }: { active: RWAPerpsTab }) {
 	return (
-		<nav className={tabTrackStyles}>
+		<nav className={tabTrackStyles} aria-label="RWA perps pages">
 			{tabs.map((tab) => (
-				<TabLink as={ButtonLink} key={tab.id} href={tab.route} data-active={tab.id === active}>
+				<TabLink as={BasicLink} key={tab.id} href={tab.route} aria-current={tab.id === active ? 'page' : undefined}>
 					{tab.name}
 				</TabLink>
 			))}

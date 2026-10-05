@@ -16,6 +16,7 @@ import Layout from '~/layout'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
 
 type StatusFilter = 'all' | 'draft' | 'published'
@@ -25,6 +26,12 @@ type SectionFilter = ArticleSection | 'all'
 const FETCH_LIMIT = 100
 const PAGE_SIZE = 12
 const EMPTY_ARTICLES: Array<ArticleDocument> = []
+
+const STATUS_FILTERS: ReadonlyArray<{ value: StatusFilter; label: string }> = [
+	{ value: 'all', label: 'All' },
+	{ value: 'draft', label: 'Drafts' },
+	{ value: 'published', label: 'Published' }
+]
 
 const SORT_LABELS: Record<SortKey, string> = {
 	updated: 'Recently updated',
@@ -203,26 +210,24 @@ function MyArticlesContent() {
 				</div>
 
 				<div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-					<nav className="flex items-baseline gap-5 text-sm" aria-label="Status filter">
-						{(['all', 'draft', 'published'] as const).map((value) => {
-							const count = value === 'all' ? totalCount : value === 'draft' ? draftCount : publishedCount
-							const active = statusFilter === value
-							const label = value === 'all' ? 'All' : value === 'draft' ? 'Drafts' : 'Published'
-							return (
-								<button
-									key={value}
-									type="button"
-									onClick={() => setStatusFilter(value)}
-									className={`group relative -mb-px flex items-baseline gap-1.5 border-b-2 pb-2 transition-colors ${
-										active ? 'border-link text-primary' : 'border-transparent text-tertiary hover:text-primary'
-									}`}
-								>
-									<span className="font-medium">{label}</span>
-									<span className="font-jetbrains text-[11px] tabular-nums opacity-70">{count}</span>
-								</button>
+					<SegmentedControl<StatusFilter>
+						label="Status"
+						variant="default"
+						size="md"
+						options={STATUS_FILTERS.map(({ value, label }) => ({
+							value,
+							label: (
+								<>
+									{label}{' '}
+									<span className="tabular-nums opacity-70">
+										{value === 'all' ? totalCount : value === 'draft' ? draftCount : publishedCount}
+									</span>
+								</>
 							)
-						})}
-					</nav>
+						}))}
+						value={statusFilter}
+						onValueChange={setStatusFilter}
+					/>
 
 					<div className="ml-auto flex flex-wrap items-center gap-2">
 						<label className="relative flex items-center">
@@ -254,37 +259,18 @@ function MyArticlesContent() {
 				</div>
 
 				{availableSections.length > 0 ? (
-					<div className="-mt-2 flex flex-wrap items-center gap-1.5">
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Section</span>
-						<button
-							type="button"
-							onClick={() => setSectionFilter('all')}
-							className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
-								sectionFilter === 'all'
-									? 'border-link/40 bg-research-tint text-link'
-									: 'border-medium text-tertiary hover:text-primary'
-							}`}
-						>
-							Any
-						</button>
-						{availableSections.map((section) => {
-							const active = sectionFilter === section
-							return (
-								<button
-									key={section}
-									type="button"
-									onClick={() => setSectionFilter(active ? 'all' : section)}
-									className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
-										active
-											? 'border-link/40 bg-research-tint text-link'
-											: 'border-medium text-tertiary hover:text-primary'
-									}`}
-								>
-									{ARTICLE_SECTION_LABELS[section]}
-								</button>
-							)
-						})}
-					</div>
+					<SegmentedControl<SectionFilter>
+						label="Section"
+						variant="chips"
+						size="sm"
+						className="-mt-2"
+						options={[
+							{ value: 'all', label: 'Any section' },
+							...availableSections.map((section) => ({ value: section, label: ARTICLE_SECTION_LABELS[section] }))
+						]}
+						value={sectionFilter}
+						onValueChange={setSectionFilter}
+					/>
 				) : null}
 			</header>
 

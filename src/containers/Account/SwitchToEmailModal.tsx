@@ -79,7 +79,7 @@ async function confirmSwitchToEmail({
 
 	if (!response.ok) {
 		const errorData = (await response.json().catch(() => null)) as SwitchToEmailErrorResponse | null
-		throw new Error(errorData?.error || errorData?.message || 'Failed to switch to email authentication')
+		throw new Error(errorData?.error || errorData?.message || 'Failed to add email sign-in')
 	}
 
 	return (await response.json()) as SwitchToEmailResponse
@@ -131,7 +131,7 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 			setStep('success')
 		},
 		onError: (confirmError) => {
-			const message = confirmError.message || 'Failed to switch to email authentication. Try again.'
+			const message = confirmError.message || 'Failed to add email sign-in. Try again.'
 			// The server names the code "OTP" in each of its code rejections: missing, malformed, invalid or expired.
 			setError({ field: /\bOTP\b/.test(message) ? 'otp' : 'form', message })
 		}
@@ -187,12 +187,12 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 		>
 			<DialogDiscardGuard
 				when={step === 'confirm' && Boolean(otp || password || passwordConfirm)}
-				title="Discard the switch?"
-				description="The code and password you entered are lost, and switching again sends a new code."
+				title="Discard email sign-in?"
+				description="The code and password you entered are lost, and starting again sends a new code."
 			/>
 			{step === 'email' && (
 				<form onSubmit={handleRequestOtp} className="flex min-h-0 flex-auto flex-col">
-					<DialogHeader title="Switch to email" />
+					<DialogHeader title="Add email sign-in" />
 					<DialogBody>
 						<p className="body-sm text-secondary">
 							Enter the email address you'd like to use for signing in. We'll send you a verification code.
@@ -385,9 +385,9 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 							size="md"
 							// A resend in flight also holds the switch; its own control shows "Sending code…".
 							disabled={confirmIncomplete || requestOtpMutation.isPending}
-							pendingLabel={confirmMutation.isPending ? 'Switching…' : null}
+							pendingLabel={confirmMutation.isPending ? 'Adding…' : null}
 						>
-							Complete switch
+							Add email
 						</Button>
 					</DialogFooter>
 				</form>
@@ -395,11 +395,11 @@ function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailMod
 
 			{step === 'success' && (
 				<>
-					<DialogHeader title="Switch successful" closable={false} />
+					<DialogHeader title="Email sign-in added" closable={false} />
 					<DialogBody>
 						<p className="body-sm text-secondary">
-							Your account now uses email authentication. You can sign in with{' '}
-							<span className="font-medium text-primary">{email}</span> and your password going forward.
+							You can now sign in with <span className="font-medium text-primary">{email}</span> and your password, as
+							well as with your wallet.
 						</p>
 					</DialogBody>
 					<DialogFooter>

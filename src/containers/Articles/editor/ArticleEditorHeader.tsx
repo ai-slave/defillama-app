@@ -3,13 +3,31 @@ import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Icon as SharedIcon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
 import type { SavePillState } from './ArticleEditorTypes'
 import { formatArticleDate } from './ArticleEditorUtils'
 
-export type ArticleEditorViewMode = 'write' | 'preview'
+export const ARTICLE_EDITOR_VIEWS = ['write', 'preview'] as const
+export type ArticleEditorViewMode = (typeof ARTICLE_EDITOR_VIEWS)[number]
+
+// Below sm the label is screen-reader only, so a phone shows just the icon and the tab keeps its name.
+const EDITOR_VIEW_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleEditorViewMode>> = (
+	[
+		{ value: 'write', icon: 'pencil', text: 'Write' },
+		{ value: 'preview', icon: 'eye', text: 'Preview' }
+	] as const
+).map(({ value, icon, text }) => ({
+	value,
+	label: (
+		<span className="inline-flex items-center gap-1.5">
+			<Icon name={icon} className="size-3.5" />
+			<span className="max-sm:sr-only">{text}</span>
+		</span>
+	)
+}))
 
 const PILL_DOT: Record<SavePillState, string> = {
 	saving: 'bg-secondary animate-pulse',
@@ -33,7 +51,6 @@ type ArticleEditorHeaderProps = {
 	savedAt: string | null
 	slugDraft: string
 	slugEditing: boolean
-	viewMode: ArticleEditorViewMode
 	beginSlugEdit: () => void
 	cancelSlugEdit: () => void
 	commitSlugEdit: () => void
@@ -43,7 +60,6 @@ type ArticleEditorHeaderProps = {
 	handleUnpublish: () => Promise<void>
 	onOpenHistory: () => void
 	onOpenMeta: () => void
-	onViewModeChange: (mode: ArticleEditorViewMode) => void
 	saveArticle: () => Promise<boolean>
 	setSlugDraft: Dispatch<SetStateAction<string>>
 }
@@ -71,9 +87,7 @@ export function ArticleEditorHeader({
 	savedAt,
 	setSlugDraft,
 	slugDraft,
-	slugEditing,
-	viewMode,
-	onViewModeChange
+	slugEditing
 }: ArticleEditorHeaderProps) {
 	const savedLabel = savedAt ? formatRelativeTime(savedAt, { now: new Date(nowSec * 1000) }) : null
 	const savedExactLabel = savedAt ? formatDateTime(savedAt, { timeZone: 'local' }) : null
@@ -198,38 +212,13 @@ export function ArticleEditorHeader({
 					) : null}
 				</button>
 
-				<div
-					role="group"
-					aria-label="Editor mode"
-					className="flex h-9 items-center rounded-md border border-medium bg-surface p-0.5"
-				>
-					{(
-						[
-							{ mode: 'write', label: 'Write', icon: 'pencil' },
-							{ mode: 'preview', label: 'Preview', icon: 'eye' }
-						] as const
-					).map((item) => {
-						const active = viewMode === item.mode
-						return (
-							<button
-								key={item.mode}
-								type="button"
-								aria-pressed={active}
-								aria-label={item.label}
-								title={item.label}
-								onClick={() => onViewModeChange(item.mode)}
-								className={`flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium transition-colors ${
-									active
-										? 'bg-research-tint text-link'
-										: 'text-tertiary hover:bg-research-tint-hover hover:text-primary'
-								}`}
-							>
-								<Icon name={item.icon} className="size-3.5" />
-								<span className="hidden sm:inline">{item.label}</span>
-							</button>
-						)
-					})}
-				</div>
+				<SegmentedControl
+					semantics="tabs"
+					label="Editor mode"
+					variant="default"
+					size="md"
+					options={EDITOR_VIEW_OPTIONS}
+				/>
 
 				{article.id ? (
 					<button

@@ -172,8 +172,9 @@ test('offers a card permalink and an embed snippet for cards on a public dashboa
 		'<iframe src="https://defillama.com/pro/embed/fees-dash?item=chart-1&theme=dark" width="100%" height="558" style="border:0" loading="lazy"></iframe>'
 	)
 	await act(async () =>
-		Array.from(document.body.querySelectorAll<HTMLButtonElement>('button'))
+		Array.from(document.body.querySelectorAll('[role="radiogroup"] label'))
 			.find((node) => node.textContent === 'Light')!
+			.querySelector<HTMLInputElement>('input[type="radio"]')!
 			.click()
 	)
 	expect(textarea?.value).toContain('theme=light')

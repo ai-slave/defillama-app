@@ -7,6 +7,7 @@ import {
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
@@ -75,35 +76,6 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
-}
-
-function TimeframeToggle({
-	value,
-	onChange,
-	options
-}: {
-	value: string
-	onChange: (value: string) => void
-	options: Array<{ value: string; label: string }>
-}) {
-	return (
-		<div className="inline-flex gap-0.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-0.5">
-			{options.map((option) => (
-				<button
-					type="button"
-					key={option.value}
-					onClick={() => onChange(option.value)}
-					className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-						value === option.value
-							? 'bg-sl-accent text-on-brand'
-							: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-					}`}
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
-	)
 }
 
 const walletColumnHelper = createColumnHelper<typeof tableFeaturesConfig, WalletEntry>()
@@ -243,11 +215,10 @@ export default function Revenue() {
 
 			<div className="flex items-center justify-between">
 				<SectionHeader>Dashboard Timeframe</SectionHeader>
-				<TimeframeToggle
+				<ProSegmented<Timeframe>
+					label="Dashboard timeframe"
 					value={globalTimeframe}
-					onChange={(v) =>
-						setGlobalTimeframe(getValidTimeframeForAggregation(v as Timeframe, aggregation) as Timeframe)
-					}
+					onValueChange={(v) => setGlobalTimeframe(getValidTimeframeForAggregation(v, aggregation) as Timeframe)}
 					options={[
 						{ value: '7d', label: '7D' },
 						{ value: '30d', label: '30D' },
@@ -286,10 +257,10 @@ export default function Revenue() {
 
 			<div className="flex items-center justify-between">
 				<SectionHeader>Data Aggregation</SectionHeader>
-				<TimeframeToggle
+				<ProSegmented<Aggregation>
+					label="Data aggregation"
 					value={aggregation}
-					onChange={(v) => {
-						const nextAggregation = v as typeof aggregation
+					onValueChange={(nextAggregation) => {
 						setAggregation(nextAggregation)
 						setGlobalTimeframe(getValidTimeframeForAggregation(globalTimeframe, nextAggregation) as Timeframe)
 					}}
@@ -342,9 +313,10 @@ export default function Revenue() {
 			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-between">
 					<SectionHeader>Revenue vs Emissions</SectionHeader>
-					<TimeframeToggle
+					<ProSegmented<typeof emissionsView>
+						label="Revenue vs emissions view"
 						value={emissionsView}
-						onChange={(v) => setEmissionsView(v as typeof emissionsView)}
+						onValueChange={setEmissionsView}
 						options={[
 							{ value: 'percentage', label: '% of Emissions' },
 							{ value: 'absolute', label: 'Absolute' }

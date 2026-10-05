@@ -1,3 +1,7 @@
+// @vitest-environment happy-dom
+
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { MarketMakerPerformance } from '../MarketMakerPerformance'
@@ -47,5 +51,49 @@ describe('MarketMakerPerformance', () => {
 		expect(html).toContain('Keyrock')
 		expect(html).toContain('$1,000')
 		expect(html).toContain('1 active market maker')
+	})
+
+	test('switches the uptime tables as tabs', async () => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		const container = document.createElement('div')
+		document.body.appendChild(container)
+		const root = createRoot(container)
+		await act(async () =>
+			root.render(
+				<MarketMakerPerformance
+					metrics={null}
+					providers={[]}
+					breakdown={null}
+					uptimeCalculations={[
+						{
+							name: 'Keyrock',
+							engagementType: 'retainer',
+							uptimeObligation: 0.9,
+							performance: { avgUptime: 0.95 },
+							breakdown: [{ date: '2026-09-01T00:00:00Z', uptimeRatio: 0.97 }]
+						}
+					]}
+					criteria={[]}
+					onOpenCriterion={() => undefined}
+				/>
+			)
+		)
+		const tab = (name: string) =>
+			[...container.querySelectorAll<HTMLElement>('[role="tab"]')].find((item) => item.textContent === name)!
+		const panel = () => container.querySelector('[role="tabpanel"]:not([hidden])')!
+
+		expect(container.querySelector('[role="tablist"]')!.getAttribute('aria-label')).toBe('Uptime view')
+		expect(tab('Uptime Comparison').getAttribute('aria-selected')).toBe('true')
+		expect(panel().textContent).toContain('Achieved')
+		expect(panel().textContent).not.toContain('2026-09-01')
+
+		await act(async () => tab('Uptime Breakdown').click())
+		expect(tab('Uptime Breakdown').getAttribute('aria-selected')).toBe('true')
+		expect(panel().getAttribute('aria-labelledby')).toBe(tab('Uptime Breakdown').id)
+		expect(panel().textContent).toContain('2026-09-01')
+		expect(panel().textContent).not.toContain('Combined uptime')
+
+		await act(async () => root.unmount())
+		container.remove()
 	})
 })

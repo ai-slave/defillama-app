@@ -25,8 +25,12 @@ import { Icon } from '~/ui/Icon'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
+import { ProSegmented } from '../../../ui'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardLoading } from '../../ProCardStatus'
+
+const STATEMENT_OPTIONS = EQUITIES_STATEMENT_OPTIONS.map((option) => ({ value: option, label: option }))
+const PERIOD_OPTIONS = EQUITIES_STATEMENT_PERIOD_OPTIONS.map((option) => ({ value: option, label: option }))
 
 function formatStatementPeriodLabel(periodEnding: string): string {
 	return formatDate(periodEnding) ?? '-'
@@ -184,38 +188,20 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<div className="flex items-center gap-1 rounded-md border border-pro-cards-border p-0.5">
-							{EQUITIES_STATEMENT_OPTIONS.map((option) => (
-								<button
-									key={option}
-									type="button"
-									onClick={() => setStatementType(option)}
-									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										statementType === option
-											? 'bg-brand/10 text-brand'
-											: 'text-pro-text-secondary hover:text-pro-text-primary'
-									}`}
-								>
-									{option}
-								</button>
-							))}
-						</div>
-						<div className="flex items-center gap-1 rounded-md border border-pro-cards-border p-0.5">
-							{EQUITIES_STATEMENT_PERIOD_OPTIONS.map((option) => (
-								<button
-									key={option}
-									type="button"
-									onClick={() => setPeriodType(option)}
-									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										periodType === option
-											? 'bg-brand/10 text-brand'
-											: 'text-pro-text-secondary hover:text-pro-text-primary'
-									}`}
-								>
-									{option}
-								</button>
-							))}
-						</div>
+						<ProSegmented<EquitiesStatementOption>
+							label="Statement"
+							size="sm"
+							value={statementType}
+							onValueChange={setStatementType}
+							options={STATEMENT_OPTIONS}
+						/>
+						<ProSegmented<EquitiesStatementPeriodOption>
+							label="Period"
+							size="sm"
+							value={periodType}
+							onValueChange={setPeriodType}
+							options={PERIOD_OPTIONS}
+						/>
 						<CSVExportButton
 							onClick={() => {
 								const headers: Array<CsvCell> = ['Name']

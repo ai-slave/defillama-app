@@ -1,12 +1,13 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
+import { ViewTabs } from '~/components/ViewTabs'
 import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthorProfileCard'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
 import { LoadingIndicator } from '~/ui/Status'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { AuthenticationCard } from './AuthenticationCard'
 import { DeleteAccountCard } from './DeleteAccountCard'
 import { ReferralCard } from './ReferralCard'
@@ -17,6 +18,14 @@ import { TeamTab } from './Team/TeamTab'
 import { UserHeader } from './UserHeader'
 import { isWalletEmail, truncateAddress } from './utils'
 
+const ACCOUNT_TABS = [
+	{ id: 'account', label: 'Account' },
+	{ id: 'team', label: 'Team' },
+	{ id: 'profile', label: 'Profile' }
+] as const
+type AccountTab = (typeof ACCOUNT_TABS)[number]['id']
+const ACCOUNT_TAB_IDS = ACCOUNT_TABS.map((tab) => tab.id)
+
 export function ManageAccount() {
 	const isClient = useIsClient()
 	const router = useRouter()
@@ -24,17 +33,14 @@ export function ManageAccount() {
 
 	const queryTab = Array.isArray(router.query.tab) ? router.query.tab[0] : router.query.tab
 	const inviteToken = Array.isArray(router.query.token) ? router.query.token[0] : router.query.token
-	const selectedTabId = queryTab === 'team' || queryTab === 'profile' ? queryTab : 'account'
+	const selectedTabId: AccountTab = queryTab === 'team' || queryTab === 'profile' ? queryTab : 'account'
 
-	const tabStore = Ariakit.useTabStore({
-		selectedId: selectedTabId,
-		setSelectedId: (id) => {
-			if (!id) return
-			const { tab: _ignored, ...rest } = router.query
-			const nextQuery = id === 'account' ? rest : { ...rest, tab: id }
-			void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
-		}
-	})
+	// The URL holds the tab; Account is the default and leaves no `?tab`.
+	const selectTab = (tab: AccountTab) => {
+		const { tab: _ignored, ...rest } = router.query
+		const nextQuery = tab === 'account' ? rest : { ...rest, tab }
+		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
+	}
 
 	if (!isClient || loaders.userLoading || !router.isReady) {
 		return (
@@ -71,41 +77,10 @@ export function ManageAccount() {
 			<h1 className="heading-sm text-sub-text-primary">Manage account</h1>
 			<UserHeader displayName={displayName} onLogout={logout} />
 
-			<Ariakit.TabProvider store={tabStore}>
-				<Ariakit.TabList className="flex gap-4 border-b border-sub-border">
-					<Ariakit.Tab
-						id="account"
-						className={`pb-2.5 text-sm font-semibold transition-colors ${
-							selectedTabId === 'account'
-								? 'border-b-2 border-sub-brand-primary text-sub-brand-primary'
-								: 'text-sub-text-muted hover:text-sub-text-primary'
-						}`}
-					>
-						Account
-					</Ariakit.Tab>
-					<Ariakit.Tab
-						id="team"
-						className={`pb-2.5 text-sm font-semibold transition-colors ${
-							selectedTabId === 'team'
-								? 'border-b-2 border-sub-brand-primary text-sub-brand-primary'
-								: 'text-sub-text-muted hover:text-sub-text-primary'
-						}`}
-					>
-						Team
-					</Ariakit.Tab>
-					<Ariakit.Tab
-						id="profile"
-						className={`pb-2.5 text-sm font-semibold transition-colors ${
-							selectedTabId === 'profile'
-								? 'border-b-2 border-sub-brand-primary text-sub-brand-primary'
-								: 'text-sub-text-muted hover:text-sub-text-primary'
-						}`}
-					>
-						Profile
-					</Ariakit.Tab>
-				</Ariakit.TabList>
+			<Tabs value={selectedTabId} onValueChange={selectTab} values={ACCOUNT_TAB_IDS}>
+				<ViewTabs tabs={ACCOUNT_TABS} label="Account sections" />
 
-				<Ariakit.TabPanel tabId="account">
+				<TabPanel value="account">
 					<div className="flex flex-col gap-3">
 						<AuthenticationCard />
 						<ReferralCard />
@@ -114,16 +89,16 @@ export function ManageAccount() {
 						<SubscriptionSection />
 						<DeleteAccountCard />
 					</div>
-				</Ariakit.TabPanel>
+				</TabPanel>
 
-				<Ariakit.TabPanel tabId="team">
+				<TabPanel value="team">
 					<TeamTab />
-				</Ariakit.TabPanel>
+				</TabPanel>
 
-				<Ariakit.TabPanel tabId="profile">
+				<TabPanel value="profile">
 					<DashboardAuthorProfileCard />
-				</Ariakit.TabPanel>
-			</Ariakit.TabProvider>
+				</TabPanel>
+			</Tabs>
 		</div>
 	)
 }

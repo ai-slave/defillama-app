@@ -1,5 +1,6 @@
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
@@ -12,7 +13,6 @@ import {
 	DataTable,
 	InfoTip,
 	SectionHeader,
-	ToggleGroup,
 	usdCompact,
 	type FooterRow,
 	KPK_PERCENT_OPTIONS
@@ -49,14 +49,14 @@ export function CompositionSection({
 	const [isDark] = useDarkModeManager()
 
 	const options = useMemo(
-		() => Object.entries(comps ?? {}).flatMap(([key, comp]) => (comp ? [{ key, label: comp.title }] : [])),
+		() => Object.entries(comps ?? {}).flatMap(([key, comp]) => (comp ? [{ value: key, label: comp.title }] : [])),
 		[comps]
 	)
 
 	// A pick survives only while the payload still carries it; otherwise fall back.
 	const breakdown =
 		(picked && comps?.[picked] ? picked : undefined) ??
-		(comps?.[initialKey] ? initialKey : options[0]?.key) ??
+		(comps?.[initialKey] ? initialKey : options[0]?.value) ??
 		initialKey
 	// Memoised because the pre-range fallback mints an object, and `ranges` keys off it.
 	const ranged = useMemo(() => asRanged(comps?.[breakdown]), [comps, breakdown])
@@ -133,11 +133,16 @@ export function CompositionSection({
 			<SectionHeader title={title}>
 				{/* Omitted rather than rendered empty while the payload is still in flight. */}
 				{options.length > 0 && (
-					<ToggleGroup label={`${title} breakdown`} options={options} value={breakdown} onChange={setPicked} />
+					<ProSegmented label={`${title} breakdown`} options={options} value={breakdown} onValueChange={setPicked} />
 				)}
 				{/* A single span is not a choice, so it gets no control. */}
 				{ranges.length > 1 && range && (
-					<ToggleGroup<KpkRangeKey> label={`${title} range`} options={ranges} value={range} onChange={setPickedRange} />
+					<ProSegmented<KpkRangeKey>
+						label={`${title} range`}
+						options={ranges}
+						value={range}
+						onValueChange={setPickedRange}
+					/>
 				)}
 			</SectionHeader>
 			{subtitle && <p className="-mt-1 text-xs text-pro-text-secondary">{subtitle}</p>}

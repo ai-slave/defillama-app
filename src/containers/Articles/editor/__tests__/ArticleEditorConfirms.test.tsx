@@ -237,6 +237,21 @@ test('removing a guest co-author hands focus to the row that takes its place, th
 	expect(document.activeElement).toBe(button('Add guest co-author', review))
 })
 
+test('a guest co-author starts as a Person and picking Organization moves the one checked type', async () => {
+	await mount()
+	await click(button('Publish'))
+	const review = openDialog('Review & publish')
+	await click(button('Add guest co-author', review))
+	const group = review.querySelector<HTMLElement>('[role="radiogroup"][aria-label="Co-author type"]')!
+	const checked = () =>
+		[...group.querySelectorAll<HTMLInputElement>('input[type="radio"]')]
+			.filter((radio) => radio.checked)
+			.map((radio) => radio.closest('label')!.textContent)
+	expect(checked()).toEqual(['Person'])
+	await click(group.querySelector<HTMLInputElement>('input[value="Organization"]')!)
+	expect(checked()).toEqual(['Organization'])
+})
+
 test('publishing from the page with a missing field opens the review that marks it', async () => {
 	article = { ...article, status: 'published', tags: [], pending: { ...article, tags: [] } as ArticleSnapshotPayload }
 	await mount()

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Icon } from '~/ui/Icon'
+import { ProSegmented } from '../../../ui'
 import { CSVExportButton } from '../../CSVExportButton'
 
 interface YieldsTableHeaderProps {
@@ -29,7 +30,14 @@ export function YieldsTableHeader({
 	setShowFiltersPanel,
 	activeFilterCount
 }: YieldsTableHeaderProps) {
-	const presetKeys = React.useMemo(() => Object.keys(columnPresets), [columnPresets])
+	const presetOptions = React.useMemo(
+		() =>
+			Object.keys(columnPresets).map((preset) => ({
+				value: preset,
+				label: `${preset.slice(0, 1).toUpperCase()}${preset.slice(1)}`
+			})),
+		[columnPresets]
+	)
 
 	return (
 		<div className="mb-3 text-primary">
@@ -45,25 +53,18 @@ export function YieldsTableHeader({
 				</div>
 			</div>
 
-			<div className="flex items-center justify-between gap-2">
-				<div className="no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto">
-					{presetKeys.map((preset) => (
-						<button
-							type="button"
-							key={preset}
-							onClick={() => applyPreset(preset)}
-							className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
-								activePreset === preset
-									? 'border-brand bg-brand text-on-brand'
-									: 'hover:bg-surface-secondary border-subtle bg-surface'
-							}`}
-						>
-							{preset}
-						</button>
-					))}
+			{/* Wraps on a phone so the presets and the table actions each get a full row. */}
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<div className="min-w-0">
+					<ProSegmented
+						label="Column preset"
+						value={activePreset}
+						onValueChange={applyPreset}
+						options={presetOptions}
+					/>
 				</div>
 
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
 					{downloadCSV && <CSVExportButton onClick={downloadCSV} smol />}
 
 					<button

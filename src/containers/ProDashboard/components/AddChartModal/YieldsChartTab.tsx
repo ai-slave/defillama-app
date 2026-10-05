@@ -8,6 +8,7 @@ import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -638,32 +639,23 @@ export function YieldsChartTab({
 							</span>
 						</div>
 
-						{/* Chart Type Pills */}
 						{selectedYieldPool ? (
-							<div className="flex flex-wrap gap-1.5 border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
-								{availableChartTypes.map((type) => {
-									const isLoading = borrowChartLoading && BORROW_CHART_TYPES.has(type.value)
-									const isActive = selectedYieldChartType === type.value
-									return (
-										<button
-											type="button"
-											key={type.value}
-											aria-pressed={isActive}
-											onClick={() => type.available && onSelectedYieldChartTypeChange(type.value)}
-											disabled={!type.available || isLoading}
-											className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
-												isActive
-													? 'bg-brand text-on-brand shadow-sm'
-													: type.available
-														? 'text-pro-text-secondary hover:text-pro-text-primary'
-														: 'cursor-not-allowed text-pro-text-tertiary opacity-50'
-											}`}
-										>
-											{type.label}
-											{isLoading ? '...' : null}
-										</button>
-									)
-								})}
+							<div className="border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
+								<SegmentedControl
+									label="Chart type"
+									variant="chips"
+									size="sm"
+									value={selectedYieldChartType}
+									onValueChange={onSelectedYieldChartTypeChange}
+									options={availableChartTypes.map((type) => {
+										const isLoading = borrowChartLoading && BORROW_CHART_TYPES.has(type.value)
+										return {
+											value: type.value,
+											label: isLoading ? `${type.label}...` : type.label,
+											disabled: !type.available || isLoading
+										}
+									})}
+								/>
 							</div>
 						) : null}
 

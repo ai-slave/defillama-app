@@ -1,13 +1,16 @@
 import * as Ariakit from '@ariakit/react'
-import { useId } from 'react'
+import { useState } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
+import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { RAIL_TAB } from '../tabRailStyles'
 
 const CATEGORY_OPTIONS = CAPABILITIES.map(({ key, name }) => ({ key, name }))
+const CATEGORY_KEYS = CAPABILITIES.map(({ key }) => key)
 
 interface CapabilityBrowserProps {
 	onPromptSelect: (prompt: string, categoryKey?: string) => void
@@ -38,15 +41,9 @@ export function BrowserContent({
 	onPromptSelect: (prompt: string, categoryKey?: string) => void
 	hideDragHandle?: boolean
 }) {
-	const id = useId()
 	const isMobile = useMedia('(max-width: 639px)')
-	const tabs = Ariakit.useTabStore({
-		defaultSelectedId: `${id}-${CAPABILITIES[0].key}`,
-		selectOnMove: true,
-		orientation: 'both'
-	})
-	const selectedId = Ariakit.useStoreState(tabs, 'selectedId')
-	const activeCategory = CAPABILITIES.find((c) => `${id}-${c.key}` === selectedId) ?? CAPABILITIES[0]
+	const [categoryKey, setCategoryKey] = useState(CAPABILITIES[0].key)
+	const activeCategory = CAPABILITIES.find((c) => c.key === categoryKey)!
 
 	const handlePromptClick = (prompt: string) => {
 		trackUmamiEvent('llamaai-capability-prompt-click', {
@@ -57,7 +54,7 @@ export function BrowserContent({
 	}
 
 	return (
-		<Ariakit.TabProvider store={tabs}>
+		<Tabs value={categoryKey} onValueChange={setCategoryKey} values={CATEGORY_KEYS} selectOnMove orientation="vertical">
 			{!hideDragHandle ? (
 				<div className="flex shrink-0 items-center justify-between px-3 py-1 sm:hidden">
 					<span className="label-md text-primary">Explore</span>
@@ -72,7 +69,7 @@ export function BrowserContent({
 							allValues={CATEGORY_OPTIONS}
 							selectedValues={[activeCategory.key]}
 							setSelectedValues={([key]) => {
-								tabs.setSelectedId(`${id}-${key}`)
+								setCategoryKey(key)
 								trackUmamiEvent('llamaai-capability-category-view', { category: key })
 							}}
 							singleSelect
@@ -89,31 +86,31 @@ export function BrowserContent({
 				) : null}
 				<Ariakit.TabList
 					aria-label="Capability categories"
-					className="hidden shrink-0 sm:flex sm:w-48 sm:flex-col sm:gap-0.5 sm:overflow-y-auto sm:overscroll-contain sm:border-r sm:border-subtle sm:bg-page sm:p-1.5"
+					className="hidden shrink-0 sm:flex sm:w-48 sm:flex-col sm:gap-0.5 sm:overflow-y-auto sm:overscroll-contain sm:border-r sm:border-subtle sm:bg-page sm:p-2"
 				>
 					{CAPABILITIES.map((cap) => (
-						<Ariakit.Tab
+						<Tab
 							key={cap.key}
-							id={`${id}-${cap.key}`}
+							value={cap.key}
 							onClick={() => {
 								trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })
 							}}
-							className="group hover-wash flex shrink-0 items-center gap-2 rounded-lg border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-secondary not-disabled:not-aria-disabled:hover:text-primary aria-selected:border-brand aria-selected:bg-brand-muted aria-selected:text-link-on-tint sm:border-transparent sm:text-left"
+							className={RAIL_TAB}
 						>
-							<Icon name={cap.icon} height={14} width={14} className="shrink-0" />
+							<Icon name={cap.icon} className="size-3.5 shrink-0" />
 							<span className="truncate">{cap.name}</span>
 							{cap.badge ? (
 								<span className="ml-auto shrink-0 rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link-on-tint uppercase">
 									{cap.badge}
 								</span>
 							) : null}
-						</Ariakit.Tab>
+						</Tab>
 					))}
 				</Ariakit.TabList>
 
 				{/* Content panel */}
-				<Ariakit.TabPanel
-					tabId={selectedId ?? undefined}
+				<TabPanel
+					value={categoryKey}
 					aria-label={isMobile ? activeCategory.name : undefined}
 					className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
 				>
@@ -140,9 +137,9 @@ export function BrowserContent({
 							<li aria-hidden="true" className="h-1 shrink-0 max-sm:h-6" />
 						</ul>
 					</div>
-				</Ariakit.TabPanel>
+				</TabPanel>
 			</div>
-		</Ariakit.TabProvider>
+		</Tabs>
 	)
 }
 

@@ -1,7 +1,9 @@
 import { useRouter } from 'next/router'
 import { useCallback, useMemo } from 'react'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SummaryCardGrid } from '~/ui/SummaryStats'
+import { Tabs } from '~/ui/Tabs'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import { foldRwaPerpsTotals, rankRwaDefiProtocols } from './cards/cardData'
@@ -18,8 +20,13 @@ import { foldRwaPlatformKpi } from './kpi/platformKpi'
 import { getAssetChartTarget, RWAOverviewChartPanel } from './OverviewChartPanel'
 import { RWAPlatformEntityChartPanel } from './platformChart/PlatformEntityChartPanel'
 import { RWAPlatformViews } from './PlatformPage/PlatformViews'
-import { RWAPlatformViewSwitch } from './PlatformPage/PlatformViewSwitch'
-import { getRwaPlatformViewQuery, parseRwaPlatformView, RWA_PLATFORM_VIEW_QUERY_KEY } from './PlatformPage/view'
+import {
+	getRwaPlatformViewQuery,
+	parseRwaPlatformView,
+	RWA_PLATFORM_VIEW_OPTIONS,
+	RWA_PLATFORM_VIEW_QUERY_KEY,
+	RWA_PLATFORM_VIEWS
+} from './PlatformPage/view'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
 import {
 	getRwaChangePeriodQueryValue,
@@ -314,7 +321,16 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 			onIncludeCexChange={setIncludeCex}
 			{...(props.platformPage
 				? {
-						viewSwitch: <RWAPlatformViewSwitch value={platformView} onChange={handlePlatformViewChange} />,
+						// First in the strip, where the overview's Assets or Perps switch sits.
+						viewSwitch: (
+							<SegmentedControl
+								semantics="tabs"
+								options={RWA_PLATFORM_VIEW_OPTIONS}
+								label="Platform view"
+								variant="default"
+								size="md"
+							/>
+						),
 						showPerpsSwitch: false,
 						showGroupBy: platformView !== 'information'
 					}
@@ -337,7 +353,7 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 			: {})
 	}
 
-	return (
+	const page = (
 		<>
 			{/* <Announcement>
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
@@ -376,6 +392,14 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 				</>
 			)}
 		</>
+	)
+	/* A platform page's views are tabs: the provider spans the strip, which holds the tab list, and RWAPlatformViews. */
+	return props.platformPage ? (
+		<Tabs value={platformView} values={RWA_PLATFORM_VIEWS} onValueChange={handlePlatformViewChange}>
+			{page}
+		</Tabs>
+	) : (
+		page
 	)
 }
 

@@ -188,3 +188,21 @@ test('a viewer chip explains how many cards the parameter switches', async () =>
 	})
 	expect(document.body.textContent).toContain('Switches 2 bound cards')
 })
+
+test('the parameter type is a radio choice that relabels a new parameter', async () => {
+	await show(<DashboardVariablesBar />, { canEditVariables: true })
+	await act(async () => buttons('Parameter')[0].click())
+	const kind = (text: string) =>
+		Array.from(document.body.querySelectorAll('[role="radiogroup"][aria-labelledby] label'))
+			.find((node) => node.textContent === text)!
+			.querySelector<HTMLInputElement>('input[type="radio"]')!
+	await waitForUi(() => expect(kind('Chain').checked).toBe(true))
+	const label = () =>
+		Array.from(document.body.querySelectorAll<HTMLLabelElement>('label')).find((node) =>
+			node.textContent?.startsWith('Label')
+		)!.control as HTMLInputElement
+
+	await act(async () => kind('Protocol').click())
+	expect(kind('Protocol').checked).toBe(true)
+	expect(label().value).toBe('Protocol')
+})

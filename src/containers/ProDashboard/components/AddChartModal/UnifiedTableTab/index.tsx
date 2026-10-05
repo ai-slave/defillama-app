@@ -18,6 +18,7 @@ import { Button } from '~/ui/Button'
 import { DialogCancelButton, DialogFooter, useRefusal } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
 import { requestDashboardItemReveal } from '../../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
@@ -80,7 +81,8 @@ interface UnifiedTableTabProps {
 
 const PROTOCOL_ROW_HEADER_ORDER: Array<UnifiedRowHeaderType> = ['chain', 'category', 'parent-protocol']
 
-type TabKey = 'setup' | 'columns' | 'filters'
+const TAB_KEYS = ['setup', 'columns', 'filters'] as const
+type TabKey = (typeof TAB_KEYS)[number]
 
 const countActiveFilters = (filters: UnifiedTableFilters | undefined): number => {
 	if (!filters) return 0
@@ -936,31 +938,38 @@ export function UnifiedTableTab({
 					) : null}
 				</header>
 
-				<SegmentedControl<TabKey>
-					label="Table section"
-					variant="default"
-					size="md"
-					className="mb-3"
-					value={activeTab}
-					onValueChange={setActiveTab}
-					options={tabOptions.map((tab) => ({
-						value: tab.key,
-						label: (
-							<span className="flex items-center gap-2">
-								<span className="truncate">{tab.label}</span>
-								{tab.badge ? (
-									<span className="max-w-[160px] truncate rounded-full bg-pro-cards-border px-2 py-0.5 text-xs font-medium text-pro-text-tertiary">
-										{tab.badge}
-									</span>
-								) : null}
-							</span>
-						)
-					}))}
-				/>
+				<Tabs<TabKey> value={activeTab} values={TAB_KEYS} onValueChange={setActiveTab}>
+					{/* The default look scrolls if the row outgrows the dialog; the setup badge only shows from sm, so phones fit all three tabs. */}
+					<SegmentedControl
+						semantics="tabs"
+						label="Table section"
+						variant="default"
+						size="md"
+						className="mb-3"
+						options={tabOptions.map((tab) => ({
+							value: tab.key,
+							label: (
+								<span className="flex items-center gap-2">
+									<span className="truncate">{tab.label}</span>
+									{tab.badge ? (
+										<span className="max-w-[160px] truncate rounded-full bg-pro-cards-border px-2 py-0.5 text-xs font-medium text-pro-text-tertiary max-sm:hidden">
+											{tab.badge}
+										</span>
+									) : null}
+								</span>
+							)
+						}))}
+					/>
 
-				<div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4" data-unified-table-scroll="true">
-					<div className="flex h-full flex-col gap-3">{tabContent[activeTab]}</div>
-				</div>
+					{/* Only the active section mounts; drafts that must survive a switch live in the wizard. */}
+					<TabPanel
+						value={activeTab}
+						className="min-h-0 flex-1 overflow-y-auto pr-1 pb-4"
+						data-unified-table-scroll="true"
+					>
+						<div className="flex h-full flex-col gap-3">{tabContent[activeTab]}</div>
+					</TabPanel>
+				</Tabs>
 			</div>
 
 			<DialogFooter

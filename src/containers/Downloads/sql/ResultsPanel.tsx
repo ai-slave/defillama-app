@@ -1,7 +1,7 @@
-import { TabList } from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import { FormatSplitButton } from '../FormatSplitButton'
 import { defaultChartConfig, type ChartConfig } from './chartConfig'
@@ -91,7 +91,16 @@ export function ResultsPanel({
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
 						{viewToggleLabel ? <span className="text-xs font-medium text-secondary">{viewToggleLabel}</span> : null}
-						<ViewToggle view={view} disabled={isEmpty} />
+						<SegmentedControl
+							semantics="tabs"
+							label="Results view"
+							variant="default"
+							size="sm"
+							options={[
+								{ value: 'table', label: <ViewLabel icon="layout-grid" label="Table" />, disabled: isEmpty },
+								{ value: 'chart', label: <ViewLabel icon="bar-chart-2" label="Chart" />, disabled: isEmpty }
+							]}
+						/>
 						<FormatSplitButton
 							disabled={isEmpty}
 							label="Export"
@@ -111,48 +120,11 @@ export function ResultsPanel({
 	)
 }
 
-function ViewToggle({ view, disabled }: { view: ResultsView; disabled?: boolean }) {
+function ViewLabel({ icon, label }: { icon: 'layout-grid' | 'bar-chart-2'; label: string }) {
 	return (
-		<TabList
-			aria-label="Results view"
-			className={`inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5 ${
-				disabled ? 'opacity-50' : ''
-			}`}
-		>
-			<ToggleButton active={view === 'table'} value="table" disabled={disabled} label="Table" icon="layout-grid" />
-			<ToggleButton active={view === 'chart'} value="chart" disabled={disabled} label="Chart" icon="bar-chart-2" />
-		</TabList>
-	)
-}
-
-function ToggleButton({
-	active,
-	value,
-	disabled,
-	label,
-	icon
-}: {
-	active: boolean
-	value: ResultsView
-	disabled?: boolean
-	label: string
-	icon: 'layout-grid' | 'bar-chart-2'
-}) {
-	// Ariakit keeps a selected disabled tab focusable; empty results need native disabling.
-	return (
-		<Tab
-			value={value}
-			focusable={!disabled}
-			render={<button type="button" disabled={disabled} aria-label={label} />}
-			disabled={disabled}
-			className={`flex items-center gap-1.5 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors ${
-				active
-					? 'bg-brand text-on-brand shadow-sm'
-					: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-			}`}
-		>
-			<Icon name={icon} className="size-3" />
+		<span className="inline-flex items-center gap-1.5">
+			<Icon name={icon} className="size-3.5" />
 			{label}
-		</Tab>
+		</span>
 	)
 }

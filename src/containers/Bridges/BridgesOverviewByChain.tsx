@@ -24,6 +24,7 @@ import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatIsoDate } from '~/utils/dateFormat'
@@ -84,10 +85,12 @@ const CHART_VIEW_OPTIONS = [
 	{ key: 'netflow' as const, label: 'Net Flows By Chain' },
 	{ key: 'volume' as const, label: 'Bridge Volume' }
 ]
-const TABLE_VIEW_OPTIONS = [
-	{ key: 'bridges' as const, label: 'Bridges' },
-	{ key: 'messaging' as const, label: 'Messaging Protocols' },
-	{ key: 'largeTxs' as const, label: 'Large Txs' }
+const TABLE_VIEWS = ['bridges', 'messaging', 'largeTxs'] as const
+type TableView = (typeof TABLE_VIEWS)[number]
+const TABLE_VIEW_OPTIONS: ReadonlyArray<{ value: TableView; label: string }> = [
+	{ value: 'bridges', label: 'Bridges' },
+	{ value: 'messaging', label: 'Messaging Protocols' },
+	{ value: 'largeTxs', label: 'Large Txs' }
 ]
 
 const handleRouting = (selectedChain: string) => {
@@ -139,7 +142,7 @@ export function BridgesOverviewByChain({
 		selectedChain === 'All' ? 'Volumes' : 'Bridge Volume'
 	)
 	const [chartView, setChartView] = React.useState<'default' | 'netflow' | 'volume'>('netflow')
-	const [activeTab, setActiveTab] = React.useState<'bridges' | 'messaging' | 'largeTxs'>('bridges')
+	const [activeTab, setActiveTab] = React.useState<TableView>('bridges')
 	const [includeMessaging, setIncludeMessaging] = React.useState(false)
 	const [searchValue, setSearchValue] = React.useState('')
 	const deferredSearchValue = React.useDeferredValue(searchValue)
@@ -511,65 +514,68 @@ export function BridgesOverviewByChain({
 			</SummaryCardGrid>
 
 			<Panel padding="none">
-				<TableToolbar>
-					<SegmentedControl
-						value={activeTab}
-						onValueChange={(value) => setActiveTab(value as typeof activeTab)}
-						options={TABLE_VIEW_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
-						label="Table view"
-						variant="default"
-						size="md"
-						className="mr-auto"
-					/>
+				<Tabs<TableView> value={activeTab} values={TABLE_VIEWS} onValueChange={setActiveTab}>
+					<TableToolbar>
+						<SegmentedControl
+							semantics="tabs"
+							options={TABLE_VIEW_OPTIONS}
+							label="Table view"
+							variant="default"
+							size="md"
+							className="mr-auto"
+						/>
 
-					<TableToolbarControlGroup>
-						{activeTab === 'bridges' ? (
-							<Switch
-								label="Include Messaging Protocols"
-								value="include-messaging-protocols"
-								checked={includeMessaging}
-								onChange={() => setIncludeMessaging((prev) => !prev)}
-							/>
-						) : null}
-
-						{activeTab === 'largeTxs' ? null : (
-							<label className={searchFieldInlineWrapperStyles}>
-								<span className="sr-only">Search bridges</span>
-								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-								<Input
-									onInput={(e) => setSearchValue(e.currentTarget.value)}
-									placeholder="Search..."
-									className={searchFieldInputPlacementStyles}
+						<TableToolbarControlGroup>
+							{activeTab === 'bridges' ? (
+								<Switch
+									label="Include Messaging Protocols"
+									value="include-messaging-protocols"
+									checked={includeMessaging}
+									onChange={() => setIncludeMessaging((prev) => !prev)}
 								/>
-							</label>
-						)}
-						<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />
-					</TableToolbarControlGroup>
-				</TableToolbar>
+							) : null}
 
-				{activeTab === 'largeTxs' ? (
-					<>
-						<div className="flex flex-wrap items-center justify-end gap-2">
-							<p className="px-4 text-right italic opacity-60">
-								Displaying {largeTxsData.length} transactions from the past {selectedChain === 'All' ? '1d' : '7d'}
-							</p>
-						</div>
-						<BridgesLargeTxsTable ref={largeTxsTableRef} data={largeTxsData} />
-					</>
-				) : (
-					<BridgesTable
-						ref={bridgesTableRef}
-						data={bridgesTableData}
-						searchValue={deferredSearchValue}
-						csvFileName={
-							activeTab === 'messaging'
-								? 'messaging-protocols'
-								: includeMessaging
-									? 'bridges-and-messaging-protocols'
-									: 'bridges'
-						}
-					/>
-				)}
+							{activeTab === 'largeTxs' ? null : (
+								<label className={searchFieldInlineWrapperStyles}>
+									<span className="sr-only">Search bridges</span>
+									<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+									<Input
+										onInput={(e) => setSearchValue(e.currentTarget.value)}
+										placeholder="Search..."
+										className={searchFieldInputPlacementStyles}
+									/>
+								</label>
+							)}
+							<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />
+						</TableToolbarControlGroup>
+					</TableToolbar>
+
+					<TabPanel value={activeTab}>
+						{activeTab === 'largeTxs' ? (
+							<>
+								<div className="flex flex-wrap items-center justify-end gap-2">
+									<p className="px-4 text-right italic opacity-60">
+										Displaying {largeTxsData.length} transactions from the past {selectedChain === 'All' ? '1d' : '7d'}
+									</p>
+								</div>
+								<BridgesLargeTxsTable ref={largeTxsTableRef} data={largeTxsData} />
+							</>
+						) : (
+							<BridgesTable
+								ref={bridgesTableRef}
+								data={bridgesTableData}
+								searchValue={deferredSearchValue}
+								csvFileName={
+									activeTab === 'messaging'
+										? 'messaging-protocols'
+										: includeMessaging
+											? 'bridges-and-messaging-protocols'
+											: 'bridges'
+								}
+							/>
+						)}
+					</TabPanel>
+				</Tabs>
 			</Panel>
 		</>
 	)

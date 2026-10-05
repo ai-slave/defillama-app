@@ -14,6 +14,7 @@ import {
 import { Logo } from '~/containers/Investors/Logo'
 import { useInvestorsSite } from '~/containers/Investors/SiteContext'
 import { Icon } from '~/ui/Icon'
+import { tw } from '~/ui/tw'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 
 function SonicIcon() {
@@ -156,6 +157,10 @@ function LightbulbBoltIcon() {
 		</svg>
 	)
 }
+
+// Book a call is the primary action in both button blocks; the other action in each is secondary.
+const PRIMARY_CTA = tw`flex h-13 items-center justify-center gap-2 rounded-xl bg-sl-accent px-6 text-base font-medium text-on-brand transition-colors hover:bg-sl-accent-hover`
+const SECONDARY_CTA = tw`flex h-13 items-center justify-center gap-2 rounded-xl bg-black/5 px-6 text-base font-medium text-sl-accent transition-colors hover:bg-black/10 dark:bg-white/12 dark:text-white dark:hover:bg-white/25`
 
 const VALUE_PROPS = [
 	{
@@ -506,21 +511,16 @@ export default function InvestorsPage() {
 				</p>
 				<div className="ir-rise relative mt-9 flex flex-wrap items-center justify-center gap-2.5 [animation-delay:160ms]">
 					<a
-						href="https://t.me/defillama_research"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="flex h-13 items-center justify-center rounded-xl bg-sl-accent px-6 text-base font-medium text-on-brand transition-colors hover:bg-sl-accent-hover"
-					>
-						Get listed
-					</a>
-					<a
 						href="https://calendly.com/research-defillama/30min"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="flex h-13 items-center justify-center gap-2 rounded-xl bg-sl-accent px-6 text-base font-medium text-on-brand transition-colors hover:bg-sl-accent-hover"
+						className={PRIMARY_CTA}
 					>
 						Book a call
 						<CalendlyIcon />
+					</a>
+					<a href="https://t.me/defillama_research" target="_blank" rel="noopener noreferrer" className={SECONDARY_CTA}>
+						Get listed
 					</a>
 				</div>
 
@@ -607,15 +607,12 @@ export default function InvestorsPage() {
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex h-13 items-center justify-center gap-2 rounded-xl bg-black/5 px-6 text-base font-medium text-sl-accent transition-colors hover:bg-black/10 dark:bg-white/12 dark:text-white dark:hover:bg-white/25"
+								className={PRIMARY_CTA}
 							>
 								Book a call
 								<CalendlyIcon />
 							</a>
-							<a
-								href="mailto:sales@defillama.com"
-								className="flex h-13 items-center justify-center gap-2 rounded-xl bg-sl-accent px-6 text-base font-medium text-on-brand transition-colors hover:bg-sl-accent-hover"
-							>
+							<a href="mailto:sales@defillama.com" className={SECONDARY_CTA}>
 								Email us
 							</a>
 						</div>

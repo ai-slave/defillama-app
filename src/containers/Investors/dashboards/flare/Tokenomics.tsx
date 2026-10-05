@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
-import { ChartCard, KpiCard, NarrativeCallout, SectionHeader, ToggleButton } from './ui'
+import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -149,14 +150,16 @@ export default function Tokenomics() {
 											<p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">{protocolChart.subtitle}</p>
 										)}
 									</div>
-									<div className="flex gap-1 rounded-md border border-pro-cards-border p-0.5">
-										<ToggleButton active={protocolView === 'burned'} onClick={() => setProtocolView('burned')}>
-											Burned
-										</ToggleButton>
-										<ToggleButton active={protocolView === 'emitted'} onClick={() => setProtocolView('emitted')}>
-											Emitted
-										</ToggleButton>
-									</div>
+									<ProSegmented<typeof protocolView>
+										size="sm"
+										label="FLR by protocol flow"
+										options={[
+											{ value: 'burned', label: 'Burned' },
+											{ value: 'emitted', label: 'Emitted' }
+										]}
+										value={protocolView}
+										onValueChange={setProtocolView}
+									/>
 								</div>
 								<MultiSeriesChart
 									dataset={protocolChart.dataset}
@@ -190,14 +193,16 @@ export default function Tokenomics() {
 							FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.
 						</p>
 					</div>
-					<div className="flex gap-1 rounded-md border border-pro-cards-border p-0.5">
-						<ToggleButton active={burnView === 'daily'} onClick={() => setBurnView('daily')}>
-							Daily
-						</ToggleButton>
-						<ToggleButton active={burnView === 'cumulative'} onClick={() => setBurnView('cumulative')}>
-							Cumulative
-						</ToggleButton>
-					</div>
+					<ProSegmented<BurnView>
+						size="sm"
+						label="FLR burn period"
+						options={[
+							{ value: 'daily', label: 'Daily' },
+							{ value: 'cumulative', label: 'Cumulative' }
+						]}
+						value={burnView}
+						onValueChange={setBurnView}
+					/>
 				</div>
 				{burnView === 'daily' ? (
 					<MultiSeriesChart

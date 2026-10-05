@@ -177,8 +177,10 @@ describe('kpk Vaults tab', () => {
 	}
 
 	const clickChip = async (label: string) => {
-		const chip = [...container.querySelectorAll('button')].find((button) => button.textContent === label)!
-		await act(async () => chip.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		const chip = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+			(radio) => radio.labels?.[0]?.textContent === label
+		)!
+		await act(async () => chip.click())
 	}
 
 	const rowOf = (name: string) =>

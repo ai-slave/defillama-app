@@ -111,3 +111,15 @@ test('opens Token Rights and TVL while ignoring a retired governance flag', asyn
 	expect(push).toHaveBeenLastCalledWith('/protocol/tvl/aave')
 	expect(container.textContent).not.toContain('Governance')
 })
+// Most sub-pages are noindex (layoutSeo.ts), so the tabs are buttons: an href would lead crawlers into them.
+test('renders the sub-page tabs as buttons without hrefs and marks the current page', async () => {
+	await render('Aave', { ...metrics, tokenRights: true })
+	const nav = container.querySelector('nav[aria-label="Aave pages"]')!
+	expect(nav.querySelectorAll('a')).toHaveLength(0)
+	expect([...nav.querySelectorAll('button')].map((node) => node.textContent)).toEqual([
+		'Information',
+		'TVL',
+		'Token Rights'
+	])
+	expect([...nav.querySelectorAll('[aria-current="page"]')].map((node) => node.textContent)).toEqual(['Information'])
+})

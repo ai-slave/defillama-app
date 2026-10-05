@@ -66,7 +66,11 @@ describe('InvestorRelationsView', () => {
 	}
 
 	function tabButtons() {
-		return Array.from(container.querySelectorAll('button'), (b) => b.textContent?.trim())
+		return Array.from(container.querySelectorAll('[role="tab"]'), (node) => node.textContent?.trim())
+	}
+
+	function selectedTab() {
+		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? null
 	}
 
 	function shownContent() {
@@ -74,7 +78,7 @@ describe('InvestorRelationsView', () => {
 	}
 
 	async function clickTab(label: string) {
-		const button = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.trim() === label)
+		const button = Array.from(container.querySelectorAll('[role="tab"]')).find((b) => b.textContent?.trim() === label)
 		expect(button, `tab ${label}`).toBeDefined()
 		await act(async () => button!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
@@ -105,7 +109,11 @@ describe('InvestorRelationsView', () => {
 		expect(tabButtons()).toEqual(['A one', 'A two'])
 		expect(shownContent()).toBe('A one content')
 		await clickTab('A two')
-		expect(shownContent()).toBe('A two content')
+		expect(selectedTab()).toBe('A two')
+		// The panel is labelled by the tab that opened it.
+		const panel = container.querySelector('[role="tabpanel"]')!
+		expect(panel.querySelector('p')?.textContent).toBe('A two content')
+		expect(container.querySelector(`#${CSS.escape(panel.getAttribute('aria-labelledby')!)}`)?.textContent).toBe('A two')
 
 		// Switching dashboards must not show A's tabs under B's name while B loads.
 		await render('b')
@@ -117,11 +125,29 @@ describe('InvestorRelationsView', () => {
 		expect(shownContent()).toBe('B one content')
 	})
 
-	test('a controlled active tab hides the pill strip and drives the content', async () => {
+	test('an external tab is a link beside the tab list, not a tab', async () => {
+		registerModule('a')
+		await render('a')
+		await resolveModule('a', {
+			tabs: [
+				tab('a-1', 'A one'),
+				{ ...tab('treasury', 'Treasury'), externalHref: 'https://treasury.example' },
+				tab('a-2', 'A two')
+			]
+		})
+		expect(tabButtons()).toEqual(['A one', 'A two'])
+		const link = container.querySelector('a[href="https://treasury.example"]')!
+		expect(link.textContent).toBe('Treasury')
+		expect(link.closest('[role="tablist"]')).toBeNull()
+	})
+
+	test('a controlled active tab hides the tab strip and drives the content', async () => {
 		registerModule('a')
 		await render('a', 'a-2')
 		await resolveModule('a', { tabs: [tab('a-1', 'A one'), tab('a-2', 'A two')] })
 		expect(tabButtons()).toEqual([])
+		// The route nav above picks the tab, so the content is not a tab panel.
+		expect(container.querySelector('[role="tabpanel"]')).toBeNull()
 		expect(shownContent()).toBe('A two content')
 
 		await render('a', 'a-1')

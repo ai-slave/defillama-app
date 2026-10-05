@@ -56,6 +56,10 @@ export function BasicLink({ ref, onClick, href, ...props }: BasicLinkProps) {
 	)
 }
 
+/** Navigates without an href, so crawlers never follow it. Use it only where the target must not be crawled, such as
+ * the protocol and CEX sub-page tabs: most of those pages are noindex (ProtocolOverview/layoutSeo.ts), and real links
+ * would point crawlers at them on every protocol page. Anything else is a `BasicLink`. Cmd/Ctrl-click and
+ * middle-click still open a new tab. */
 export function ButtonLink({
 	href,
 	children,

@@ -6,6 +6,7 @@ import {
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
@@ -27,7 +28,6 @@ import {
 	PROTOCOL,
 	QUERY_OPTS,
 	SectionHeader,
-	SegToggle,
 	TimeAreaCard,
 	usdKpi,
 	useProtocolMetrics,
@@ -454,13 +454,15 @@ export default function Economics() {
 					stacked={lpView === 'chain'}
 					defaultView="cumulative"
 					extraControl={
-						<SegToggle<'total' | 'chain'>
+						<ProSegmented<'total' | 'chain'>
+							size="sm"
+							label="LP fees breakdown"
 							options={[
 								{ value: 'total', label: 'Total' },
 								{ value: 'chain', label: 'By Chain' }
 							]}
 							value={lpView}
-							onChange={setLpView}
+							onValueChange={setLpView}
 						/>
 					}
 				/>
@@ -477,13 +479,15 @@ export default function Economics() {
 					stacked={burnView === 'chain'}
 					defaultView="day"
 					extraControl={
-						<SegToggle<'total' | 'chain'>
+						<ProSegmented<'total' | 'chain'>
+							size="sm"
+							label="Protocol fees breakdown"
 							options={[
 								{ value: 'total', label: 'Total' },
 								{ value: 'chain', label: 'By Chain' }
 							]}
 							value={burnView}
-							onChange={setBurnView}
+							onValueChange={setBurnView}
 						/>
 					}
 				/>

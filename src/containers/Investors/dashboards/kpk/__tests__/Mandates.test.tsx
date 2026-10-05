@@ -272,8 +272,10 @@ describe('kpk Treasury mandates tab', () => {
 	}
 
 	const clickChip = async (label: string) => {
-		const chip = [...container.querySelectorAll('button')].find((button) => button.textContent === label)!
-		await act(async () => chip.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		const chip = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+			(radio) => radio.labels?.[0]?.textContent === label
+		)!
+		await act(async () => chip.click())
 	}
 
 	test('dates the headline, the positions report and the excess window on their own sources', async () => {

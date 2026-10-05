@@ -296,48 +296,6 @@ export function Card({ children, className = '' }: { children: React.ReactNode; 
 	)
 }
 
-export function ToggleGroup<T extends string>({
-	label,
-	options,
-	value,
-	onChange
-}: {
-	label: string
-	options: ReadonlyArray<{ key: T; label: string }>
-	value: T
-	onChange: (key: T) => void
-}) {
-	return (
-		// Two steps of neutral elevation, as the mockup has it. The selected chip stays
-		// neutral on purpose: mint and periwinkle mean "KPK" and "benchmark" in the data,
-		// and a control wearing either would read as a value.
-		<div
-			role="group"
-			aria-label={label}
-			className="flex flex-wrap gap-0.5 rounded-lg border border-pro-cards-border bg-surface-elevated-1 p-0.5"
-		>
-			{options.map((option) => {
-				const isActive = option.key === value
-				return (
-					<button
-						key={option.key}
-						type="button"
-						aria-pressed={isActive}
-						onClick={() => onChange(option.key)}
-						className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-							isActive
-								? 'bg-surface-elevated-2 text-pro-text-primary'
-								: 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						{option.label}
-					</button>
-				)
-			})}
-		</div>
-	)
-}
-
 export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
 	if (!refs?.length) return null
 	return (

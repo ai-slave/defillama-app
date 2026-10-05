@@ -166,3 +166,22 @@ test('a page that fails to load hands focus from the pressed Next to the page, a
 	expect(document.activeElement).toBe(main)
 	main.remove()
 })
+
+test('the section links mark the URL section as the current page, and All when none is picked', async () => {
+	http.serve({
+		[`${FEATURES_SERVER}/articles/sections`]: {
+			sections: [
+				{ section: 'spotlight', items: [] },
+				{ section: 'report', items: [] }
+			]
+		}
+	})
+	const current = () =>
+		[...container.querySelectorAll('nav[aria-labelledby] a[aria-current="page"]')].map((link) => link.textContent)
+	await render()
+	await waitForUi(() => expect(container.querySelectorAll('nav[aria-labelledby] a')).toHaveLength(3))
+	expect(current()).toEqual(['All'])
+
+	await navigate('/research?q=aave&section=report')
+	expect(current()).toEqual(['report'])
+})

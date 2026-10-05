@@ -1,14 +1,18 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 
 export const EMBED_ORIGIN = 'https://defillama.com'
 export const EMBED_THEMES = ['dark', 'light'] as const
 export type EmbedTheme = (typeof EMBED_THEMES)[number]
-const EMBED_THEME_LABELS: Record<EmbedTheme, string> = { dark: 'Dark', light: 'Light' }
+const EMBED_THEME_OPTIONS: Array<SegmentedControlOption<EmbedTheme>> = [
+	{ value: 'dark', label: 'Dark' },
+	{ value: 'light', label: 'Light' }
+]
 
 export function buildEmbedIframeSnippet({ src, height }: { src: string; height: number }): string {
 	return `<iframe src="${src}" width="100%" height="${height}" style="border:0" loading="lazy"></iframe>`
@@ -62,6 +66,7 @@ function EmbedSnippetContent({
 	onThemeChange: (theme: EmbedTheme) => void
 }) {
 	// The copy result shows in the dialog itself: "Copied" on the button for 2s, or an inline error.
+	const themeLabelId = useId()
 	const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const copySnippet = async () => {
@@ -79,23 +84,19 @@ function EmbedSnippetContent({
 		<>
 			<DialogHeader title={heading} />
 			<DialogBody>
-				<div className="flex items-center justify-between gap-2">
-					<span className="label-sm text-secondary">Theme</span>
-					<div role="group" aria-label="Embed theme" className="flex gap-1">
-						{EMBED_THEMES.map((option) => (
-							<Button
-								key={option}
-								type="button"
-								size="sm"
-								variant="toggle"
-								data-active={theme === option}
-								aria-pressed={theme === option}
-								onClick={() => onThemeChange(option)}
-							>
-								{EMBED_THEME_LABELS[option]}
-							</Button>
-						))}
-					</div>
+				<div className="flex flex-col gap-1.5">
+					<span id={themeLabelId} className="label-sm text-secondary">
+						Theme
+					</span>
+					<SegmentedControl
+						aria-labelledby={themeLabelId}
+						label="Embed theme"
+						variant="field"
+						size="md"
+						value={theme}
+						onValueChange={onThemeChange}
+						options={EMBED_THEME_OPTIONS}
+					/>
 				</div>
 				<textarea
 					readOnly

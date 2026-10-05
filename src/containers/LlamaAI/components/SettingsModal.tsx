@@ -44,6 +44,7 @@ import { formatFixedNumber } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { BalanceSettings } from './BalanceSettings'
 import { RetryNotice } from './RetryNotice'
+import { RAIL_TAB } from './tabRailStyles'
 
 const MAX_LENGTH = 5000
 
@@ -480,29 +481,17 @@ export const SettingsModal = memo(function SettingsModal({
 				    rail from sm. */}
 				<DialogBody kind="flush">
 					<div className="flex flex-col sm:min-h-[480px] sm:flex-row">
-						<div className="sticky top-0 z-10 shrink-0 border-b border-subtle bg-overlay sm:static sm:w-[180px] sm:border-r sm:border-b-0 sm:bg-page">
+						<div className="sticky top-0 z-10 shrink-0 border-b border-subtle bg-overlay sm:static sm:w-48 sm:border-r sm:border-b-0 sm:bg-page">
 							<Ariakit.TabList
 								aria-label="Settings sections"
-								className="flex gap-1 overflow-x-auto p-2 sm:sticky sm:top-0 sm:flex-col sm:gap-0.5 sm:overflow-visible sm:p-3"
+								className="flex gap-1 overflow-x-auto p-2 sm:sticky sm:top-0 sm:flex-col sm:gap-0.5 sm:overflow-visible"
 							>
-								{tabs.map((tab) => {
-									const isActive = activeTab === tab.id
-									return (
-										<Tab
-											key={tab.id}
-											type="button"
-											value={tab.id}
-											className={`group relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left label-sm ${
-												isActive
-													? 'bg-brand-muted text-link-on-tint'
-													: 'text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary'
-											}`}
-										>
-											<Icon name={tab.icon} className="size-3.5 shrink-0" />
-											<span>{tab.label}</span>
-										</Tab>
-									)
-								})}
+								{tabs.map((tab) => (
+									<Tab key={tab.id} type="button" value={tab.id} className={RAIL_TAB}>
+										<Icon name={tab.icon} className="size-3.5 shrink-0" />
+										<span>{tab.label}</span>
+									</Tab>
+								))}
 							</Ariakit.TabList>
 						</div>
 

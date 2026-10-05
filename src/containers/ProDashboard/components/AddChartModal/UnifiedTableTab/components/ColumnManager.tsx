@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { isColumnSupported } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
@@ -42,7 +42,8 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { ProSegmented } from '../../../../ui'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
 
 const AVAILABLE_VARIABLES = getAvailableVariables()
@@ -75,16 +76,16 @@ interface ColumnMeta {
 	group: ColumnGroupId
 }
 
-const GROUP_FILTERS: Array<{ id: ColumnGroupId | 'all'; label: string }> = [
-	{ id: 'all', label: 'All' },
-	{ id: 'meta', label: 'Meta' },
-	{ id: 'tvl', label: 'TVL' },
-	{ id: 'fees', label: 'Fees' },
-	{ id: 'volume', label: 'Volume' },
-	{ id: 'revenue', label: 'Revenue' },
-	{ id: 'ratios', label: 'Valuation' },
-	{ id: 'perps', label: 'Perps' },
-	{ id: 'custom', label: 'Custom' }
+const GROUP_FILTERS: Array<SegmentedControlOption<ColumnGroupId | 'all'>> = [
+	{ value: 'all', label: 'All' },
+	{ value: 'meta', label: 'Meta' },
+	{ value: 'tvl', label: 'TVL' },
+	{ value: 'fees', label: 'Fees' },
+	{ value: 'volume', label: 'Volume' },
+	{ value: 'revenue', label: 'Revenue' },
+	{ value: 'ratios', label: 'Valuation' },
+	{ value: 'perps', label: 'Perps' },
+	{ value: 'custom', label: 'Custom' }
 ]
 
 const GROUP_LABELS: Record<ColumnGroupId | 'all', string> = {
@@ -104,18 +105,18 @@ const GROUP_LABELS: Record<ColumnGroupId | 'all', string> = {
 	custom: 'Custom'
 }
 
-const FORMAT_OPTIONS: Array<{ id: ColumnFormat; label: string; description: string }> = [
-	{ id: 'usd', label: '$', description: 'Currency' },
-	{ id: 'percent', label: '%', description: 'Percent' },
-	{ id: 'ratio', label: 'x', description: 'Ratio' },
-	{ id: 'number', label: '#', description: 'Number' }
+const FORMAT_OPTIONS: Array<SegmentedControlOption<ColumnFormat>> = [
+	{ value: 'usd', label: '$', ariaLabel: 'Currency', tooltip: 'Currency' },
+	{ value: 'percent', label: '%', ariaLabel: 'Percent', tooltip: 'Percent' },
+	{ value: 'ratio', label: 'x', ariaLabel: 'Ratio', tooltip: 'Ratio' },
+	{ value: 'number', label: '#', ariaLabel: 'Number', tooltip: 'Number' }
 ]
 
-const AGGREGATION_OPTIONS: Array<{ id: ColumnAggregation; label: string; description: string }> = [
-	{ id: 'recalculate', label: 'Recalc', description: 'Re-evaluate expression on aggregated metrics (best for ratios)' },
-	{ id: 'sum', label: 'Sum', description: 'Sum individual row values (best for totals like 24h run-rate fees)' },
-	{ id: 'first', label: 'First', description: 'Use first row value only' },
-	{ id: 'none', label: 'None', description: 'Show dash (-) for grouped rows' }
+const AGGREGATION_OPTIONS: Array<SegmentedControlOption<ColumnAggregation>> = [
+	{ value: 'recalculate', label: 'Recalc', tooltip: 'Re-evaluate expression on aggregated metrics (best for ratios)' },
+	{ value: 'sum', label: 'Sum', tooltip: 'Sum individual row values (best for totals like 24h run-rate fees)' },
+	{ value: 'first', label: 'First', tooltip: 'Use first row value only' },
+	{ value: 'none', label: 'None', tooltip: 'Show dash (-) for grouped rows' }
 ]
 
 const EXAMPLE_PRESETS: Array<{ name: string; expression: string; format: ColumnFormat }> = [
@@ -206,6 +207,7 @@ export function ColumnManager({
 }: ColumnManagerProps) {
 	const { hasActiveSubscription } = useAuthContext()
 	const subscribeModalStore = Ariakit.useDialogStore()
+	const fieldId = useId()
 	const [uiState, setUIState] = useState<{
 		search: string
 		groupFilter: ColumnGroupId | 'all'
@@ -651,22 +653,15 @@ export function ColumnManager({
 			/>
 
 			<section className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-				<div className="flex flex-wrap gap-1 border-b border-pro-cards-border p-2">
-					{GROUP_FILTERS.map((filter) => (
-						<button
-							key={filter.id}
-							type="button"
-							aria-pressed={groupFilter === filter.id}
-							onClick={() => setGroupFilter(filter.id)}
-							className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-								groupFilter === filter.id
-									? 'bg-brand/15 text-brand'
-									: 'text-pro-text-tertiary hover:text-pro-text-secondary'
-							}`}
-						>
-							{filter.label}
-						</button>
-					))}
+				<div className="border-b border-pro-cards-border p-2">
+					<SegmentedControl
+						label="Column group"
+						variant="chips"
+						size="sm"
+						value={groupFilter}
+						onValueChange={setGroupFilter}
+						options={GROUP_FILTERS}
+					/>
 				</div>
 
 				<div className="border-b border-pro-cards-border p-2">
@@ -856,58 +851,35 @@ export function ColumnManager({
 						</div>
 						<p className="text-[9px] text-pro-text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
 
+						{/* Each field keeps 14rem, so on a phone they stack instead of squeezing four segments each. */}
 						<div className="flex flex-wrap gap-2">
-							<div className="flex-1">
-								<p className="mb-1 text-xs font-medium text-pro-text-secondary">Format</p>
-								<div className="flex gap-1">
-									{FORMAT_OPTIONS.map((opt) => (
-										<Tooltip
-											key={opt.id}
-											content={opt.description}
-											placement="bottom"
-											render={
-												<button
-													type="button"
-													aria-pressed={customFormat === opt.id}
-													onClick={() => setDraft({ ...draft, format: opt.id })}
-													className={`flex-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
-														customFormat === opt.id
-															? 'border-brand bg-brand/15 text-brand'
-															: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
-													}`}
-												/>
-											}
-										>
-											{opt.label}
-										</Tooltip>
-									))}
-								</div>
+							<div className="min-w-56 flex-1">
+								<p id={`${fieldId}-format`} className="mb-1 text-xs font-medium text-pro-text-secondary">
+									Format
+								</p>
+								<SegmentedControl
+									aria-labelledby={`${fieldId}-format`}
+									label="Format"
+									variant="field"
+									size="md"
+									value={customFormat}
+									onValueChange={(format) => setDraft({ ...draft, format })}
+									options={FORMAT_OPTIONS}
+								/>
 							</div>
-							<div className="flex-1">
-								<p className="mb-1 text-xs font-medium text-pro-text-secondary">Aggregation</p>
-								<div className="flex gap-1">
-									{AGGREGATION_OPTIONS.map((opt) => (
-										<Tooltip
-											key={opt.id}
-											content={opt.description}
-											placement="bottom"
-											render={
-												<button
-													type="button"
-													aria-pressed={resolvedCustomAggregation === opt.id}
-													onClick={() => setDraft({ ...draft, aggregation: opt.id })}
-													className={`flex-1 rounded-md border px-1 py-1 text-xs font-medium transition-colors ${
-														resolvedCustomAggregation === opt.id
-															? 'border-brand bg-brand/15 text-brand'
-															: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
-													}`}
-												/>
-											}
-										>
-											{opt.label}
-										</Tooltip>
-									))}
-								</div>
+							<div className="min-w-56 flex-1">
+								<p id={`${fieldId}-aggregation`} className="mb-1 text-xs font-medium text-pro-text-secondary">
+									Aggregation
+								</p>
+								<SegmentedControl
+									aria-labelledby={`${fieldId}-aggregation`}
+									label="Aggregation"
+									variant="field"
+									size="md"
+									value={resolvedCustomAggregation}
+									onValueChange={(aggregation) => setDraft({ ...draft, aggregation })}
+									options={AGGREGATION_OPTIONS}
+								/>
 							</div>
 						</div>
 
@@ -962,7 +934,7 @@ export function ColumnManager({
 											{col.format}
 										</span>
 										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 text-[9px] text-pro-text-tertiary">
-											{AGGREGATION_OPTIONS.find((a) => a.id === col.aggregation)?.label}
+											{AGGREGATION_OPTIONS.find((a) => a.value === col.aggregation)?.label}
 										</span>
 									</div>
 									<code className="block truncate text-xs text-pro-text-tertiary">{col.expression}</code>
@@ -1141,38 +1113,16 @@ function SortingSection({
 						</div>
 					</Popover>
 				</div>
-				<div className="flex overflow-hidden rounded-md border border-pro-cards-border">
-					<button
-						type="button"
-						onClick={() => onDirectionChange(false)}
-						aria-pressed={!!currentSortColumn && !isDescending}
-						disabled={!currentSortColumn}
-						className={`px-2 py-1 text-xs font-medium transition ${
-							!currentSortColumn
-								? 'cursor-not-allowed text-pro-text-tertiary'
-								: !isDescending
-									? 'bg-brand text-on-brand'
-									: 'text-pro-text-secondary'
-						}`}
-					>
-						Asc
-					</button>
-					<button
-						type="button"
-						onClick={() => onDirectionChange(true)}
-						aria-pressed={!!currentSortColumn && isDescending}
-						disabled={!currentSortColumn}
-						className={`border-l border-pro-cards-border px-2 py-1 text-xs font-medium transition ${
-							!currentSortColumn
-								? 'cursor-not-allowed text-pro-text-tertiary'
-								: isDescending
-									? 'bg-brand text-on-brand'
-									: 'text-pro-text-secondary'
-						}`}
-					>
-						Desc
-					</button>
-				</div>
+				<ProSegmented
+					label="Sort direction"
+					size="sm"
+					value={currentSortColumn ? (isDescending ? 'desc' : 'asc') : null}
+					onValueChange={(direction) => onDirectionChange(direction === 'desc')}
+					options={[
+						{ value: 'asc', label: 'Asc', disabled: !currentSortColumn },
+						{ value: 'desc', label: 'Desc', disabled: !currentSortColumn }
+					]}
+				/>
 				<button type="button" onClick={onReset} className="text-xs text-brand hover:underline">
 					Reset
 				</button>

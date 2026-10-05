@@ -86,30 +86,6 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
-export function ToggleButton({
-	active,
-	onClick,
-	children
-}: {
-	active: boolean
-	onClick: () => void
-	children: React.ReactNode
-}) {
-	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className={`rounded-md px-3 py-1 text-xs font-semibold tracking-wide transition-colors ${
-				active
-					? 'bg-sl-accent-muted text-sl-accent'
-					: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-			}`}
-		>
-			{children}
-		</button>
-	)
-}
-
 export function NarrativeCallout({ children }: { children: React.ReactNode }) {
 	return (
 		<div

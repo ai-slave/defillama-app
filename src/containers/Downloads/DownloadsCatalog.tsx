@@ -1,9 +1,9 @@
-import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { useCallback, useDeferredValue, useMemo, useRef, useState, type RefObject } from 'react'
+import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { ViewTabs } from '~/components/ViewTabs'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -12,7 +12,8 @@ import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -35,11 +36,11 @@ import {
 import { decodeDownloadConfig, encodeDownloadConfig } from './urlState'
 
 const ALL_TABS = [
-	{ value: 'datasets', label: 'Datasets' },
-	{ value: 'time-series', label: 'Time Series' },
-	{ value: 'saved', label: 'Saved' }
+	{ id: 'datasets', label: 'Datasets' },
+	{ id: 'time-series', label: 'Time Series' },
+	{ id: 'saved', label: 'Saved' }
 ] as const
-const TAB_VALUES = ALL_TABS.map((tab) => tab.value)
+const TAB_VALUES = ALL_TABS.map((tab) => tab.id)
 type CatalogTab = (typeof TAB_VALUES)[number]
 
 const ALL_CATEGORY = 'All'
@@ -101,7 +102,6 @@ function viewForConfig(config: SavedDownload, isTrialAccount: boolean): CatalogV
 }
 
 export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOptionsMap }) {
-	const savedTabRef = useRef<HTMLButtonElement>(null)
 	const { isAuthenticated, hasActiveSubscription, isTrial, loaders, authorizedFetch } = useAuthContext()
 	const { savedDownloads, deleteDownload, renameDownload } = useSavedDownloads()
 	const { recentDownloads, clearRecents } = useRecentDownloads()
@@ -217,25 +217,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					<RecentDownloadsStrip recents={recentDownloads} onRun={handleRunPreset} onClear={clearRecents} />
 				) : null}
 
-				<Ariakit.TabList
-					aria-label="Download type"
-					className="flex items-center gap-1 rounded-lg border border-subtle p-1"
-				>
-					{ALL_TABS.map((tab) => (
-						<Tab
-							value={tab.value}
-							key={tab.value}
-							ref={tab.value === 'saved' ? savedTabRef : undefined}
-							className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-								activeTab === tab.value
-									? 'bg-brand text-on-brand shadow-sm'
-									: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-							}`}
-						>
-							{tab.label}
-						</Tab>
-					))}
-				</Ariakit.TabList>
+				<ViewTabs tabs={ALL_TABS} label="Download type" />
 
 				<TabPanel value={activeTab} className="flex min-w-0 flex-col gap-6">
 					{activeTab !== 'saved' ? (
@@ -254,45 +236,20 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					) : null}
 
 					{activeTab !== 'saved' ? (
-						<div role="group" aria-label="Dataset categories" className="flex flex-wrap items-center gap-2">
-							<button
-								type="button"
-								aria-pressed={selectedCategory === ALL_CATEGORY}
-								onClick={() => setSelectedCategory(ALL_CATEGORY)}
-								className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-									selectedCategory === ALL_CATEGORY
-										? 'bg-brand text-on-brand shadow-sm'
-										: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-								}`}
-							>
-								All
-								<span
-									className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
-								>
-									{totalCount}
-								</span>
-							</button>
-							{currentCategories.map((category) => (
-								<button
-									key={category}
-									type="button"
-									aria-pressed={selectedCategory === category}
-									onClick={() => setSelectedCategory(selectedCategory === category ? ALL_CATEGORY : category)}
-									className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-										selectedCategory === category
-											? 'bg-brand text-on-brand shadow-sm'
-											: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-									}`}
-								>
-									{category}
-									<span
-										className={`ml-1.5 ${selectedCategory === category ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
-									>
-										{categoryCounts[category] ?? 0}
-									</span>
-								</button>
-							))}
-						</div>
+						<SegmentedControl
+							label="Dataset categories"
+							variant="chips"
+							size="md"
+							value={selectedCategory}
+							onValueChange={setSelectedCategory}
+							options={[
+								{ value: ALL_CATEGORY, label: <CategoryLabel name="All" count={totalCount} /> },
+								...currentCategories.map((category) => ({
+									value: category,
+									label: <CategoryLabel name={category} count={categoryCounts[category] ?? 0} />
+								}))
+							]}
+						/>
 					) : null}
 
 					{activeTab !== 'saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
@@ -427,7 +384,6 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						</div>
 					) : (
 						<SavedDownloadsContent
-							finalFocus={savedTabRef}
 							savedDownloads={savedDownloads}
 							onRun={handleRunPreset}
 							onRename={renameDownload}
@@ -681,14 +637,20 @@ function RecentDownloadsStrip({
 	)
 }
 
+function CategoryLabel({ name, count }: { name: string; count: number }) {
+	return (
+		<>
+			{name} <span className="text-tertiary tabular-nums">{count}</span>
+		</>
+	)
+}
+
 function SavedDownloadsContent({
-	finalFocus,
 	savedDownloads,
 	onRun,
 	onRename,
 	onDelete
 }: {
-	finalFocus: RefObject<HTMLButtonElement | null>
 	savedDownloads: Array<SavedDownload>
 	onRun: (preset: SavedDownload) => void
 	onRename: (id: string, name: string) => void
@@ -760,12 +722,7 @@ function SavedDownloadsContent({
 				/>
 			) : null}
 			{deletingPreset ? (
-				<DeletePresetDialog
-					preset={deletingPreset}
-					finalFocus={finalFocus}
-					onDelete={onDelete}
-					onClose={() => setDeletingPreset(null)}
-				/>
+				<DeletePresetDialog preset={deletingPreset} onDelete={onDelete} onClose={() => setDeletingPreset(null)} />
 			) : null}
 		</>
 	)

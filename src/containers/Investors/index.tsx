@@ -1,7 +1,10 @@
+import { TabList } from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
-import { Suspense, useCallback, useMemo, useState } from 'react'
+import { Fragment, Suspense, useCallback, useMemo, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
+import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { getInvestorsProjects, type InvestorsSite } from './config'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { dashboardModuleQuery, DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
@@ -43,7 +46,7 @@ function InvestorsShell({
 	})
 	const [activeTab, setActiveTab] = useState<string | null>(null)
 	const [activeProject, setActiveProject] = useState(defaultProject)
-	const [expandedProject, setExpandedProject] = useState<string | null>(defaultProject)
+	const [tabsOpen, setTabsOpen] = useState(true)
 	const [sidebarOpen, setSidebarOpen] = useState(false)
 
 	const closeSidebar = useCallback(() => setSidebarOpen(false), [])
@@ -56,209 +59,208 @@ function InvestorsShell({
 	const tabs = activeModule?.data?.tabs ?? DEFAULT_TABS
 	const HeaderComponent = activeModule?.data?.header
 	const resolvedTab = resolveActiveTab(tabs, activeTab)
+	const panelTabs = tabs.filter((tab) => !tab.externalHref)
 
 	return (
 		<CustomServerDataContext.Provider value={customServerData ?? {}}>
-			<div className="investors-dashboard col-span-full flex min-h-screen flex-col bg-pro-app-bg pro-dashboard md:flex-row">
-				{/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- a scrim over the sidebar; the close button and Escape are the keyboard paths. */}
-				{sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={closeSidebar} />}
+			<Tabs
+				value={resolvedTab}
+				onValueChange={(tab) => {
+					scrollToPageTop()
+					setActiveTab(tab)
+				}}
+				values={panelTabs.map((tab) => tab.id)}
+				orientation="vertical"
+			>
+				<div className="investors-dashboard col-span-full flex min-h-screen flex-col bg-pro-app-bg pro-dashboard md:flex-row">
+					{/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- a scrim over the sidebar; the close button and Escape are the keyboard paths. */}
+					{sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={closeSidebar} />}
 
-				<div className="sticky top-0 z-10 flex items-center gap-3 bg-pro-app-bg px-4 py-3 md:hidden">
-					<button
-						type="button"
-						onClick={() => setSidebarOpen(true)}
-						className="flex size-8 items-center justify-center rounded-md text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary"
-					>
-						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-							<path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-						</svg>
-					</button>
-					<Logo size="sm" href="/" />
-				</div>
-
-				<aside
-					className={`sl-sidebar fixed top-0 left-0 z-30 flex h-screen w-56 shrink-0 flex-col overflow-hidden px-3 pt-6 pb-4 transition-transform duration-200 ${
-						sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-					} md:z-10 md:translate-x-0`}
-				>
-					<div className="hidden flex-col items-center pb-3 md:flex">
-						<Logo href="/" />
-					</div>
-					<div className="mb-3 hidden h-px bg-sl-divider md:block" />
-
-					<nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
-						{visibleProjects.map((project, index) => {
-							const isActive = activeProject === project.id
-							const isExpanded = isSingleProtocol || expandedProject === project.id
-
-							return (
-								<div key={project.id}>
-									<button
-										type="button"
-										onClick={() => {
-											if (isSingleProtocol) return
-											if (isActive) {
-												setExpandedProject(isExpanded ? null : project.id)
-											} else {
-												scrollToPageTop()
-												setActiveProject(project.id)
-												setExpandedProject(project.id)
-												setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
-												closeSidebar()
-											}
-										}}
-										className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-semibold tracking-wide transition-colors ${
-											isActive
-												? 'text-sl-accent'
-												: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-										}`}
-									>
-										{!isSingleProtocol && (
-											<svg
-												width="12"
-												height="12"
-												viewBox="0 0 12 12"
-												fill="none"
-												className={`shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-											>
-												<path
-													d="M4.5 2.5L8 6L4.5 9.5"
-													stroke="currentColor"
-													strokeWidth="1.5"
-													strokeLinecap="round"
-													strokeLinejoin="round"
-												/>
-											</svg>
-										)}
-										{project.name}
-									</button>
-
-									{isExpanded && (
-										<div className="ml-3 flex flex-col gap-0.5 border-l border-sl-divider pt-1 pl-2">
-											{(moduleQueries[index].data?.tabs ?? DEFAULT_TABS).map((tab, idx, arr) => {
-												const isNewGroup = tab.group && (idx === 0 || arr[idx - 1]?.group !== tab.group)
-												const isSoloGroup = isNewGroup && arr.filter((t) => t.group === tab.group).length === 1
-
-												return (
-													<div key={tab.id}>
-														{isNewGroup && !isSoloGroup && (
-															<div
-																className={`px-3 text-[10px] font-bold tracking-[0.15em] text-pro-text-tertiary uppercase${idx === 0 ? '' : ' mt-3'}`}
-															>
-																{tab.group}
-															</div>
-														)}
-														{tab.externalHref ? (
-															<a
-																href={tab.externalHref}
-																target="_blank"
-																rel="noopener noreferrer"
-																title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
-																onClick={closeSidebar}
-																className={`flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left text-xs tracking-wide transition-colors ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'} text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary`}
-															>
-																<span className="flex-1">{tab.label}</span>
-																<svg
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	className="size-3 shrink-0 opacity-70"
-																	aria-hidden="true"
-																>
-																	<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-																	<polyline points="15 3 21 3 21 9" />
-																	<line x1="10" y1="14" x2="21" y2="3" />
-																</svg>
-															</a>
-														) : (
-															<button
-																type="button"
-																onClick={() => {
-																	if (resolvedTab !== tab.id) scrollToPageTop()
-																	setActiveTab(tab.id)
-																	closeSidebar()
-																}}
-																className={`w-full rounded-md px-3 py-1.5 text-left text-xs tracking-wide transition-colors ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'} ${
-																	resolvedTab === tab.id
-																		? 'bg-sl-accent-muted text-sl-accent'
-																		: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
-																}`}
-															>
-																<TabLabel tab={tab} />
-															</button>
-														)}
-													</div>
-												)
-											})}
-										</div>
-									)}
-								</div>
-							)
-						})}
-					</nav>
-
-					<div className="mt-auto flex items-center justify-end pt-4">
+					<div className="sticky top-0 z-10 flex items-center gap-3 bg-pro-app-bg px-4 py-3 md:hidden">
 						<button
 							type="button"
-							onClick={toggleTheme}
-							className="flex size-8 items-center justify-center rounded-lg text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+							onClick={() => setSidebarOpen(true)}
+							className="flex size-8 items-center justify-center rounded-md text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary"
 						>
-							{isDark ? (
-								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-									<circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-									<path
-										d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"
-										stroke="currentColor"
-										strokeWidth="1.5"
-										strokeLinecap="round"
-									/>
-								</svg>
-							) : (
-								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-									<path
-										d="M14 9.68A6.5 6.5 0 0 1 6.32 2 6.5 6.5 0 1 0 14 9.68Z"
-										stroke="currentColor"
-										strokeWidth="1.5"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
-							)}
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+								<path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+							</svg>
 						</button>
+						<Logo size="sm" href="/" />
 					</div>
-				</aside>
 
-				<div className="relative flex flex-1 flex-col gap-4 p-5 md:ml-56">
-					{HeaderComponent && (
-						<Suspense fallback={null}>
-							<HeaderComponent />
-						</Suspense>
-					)}
-					{activeProjectConfig?.customOnly ? (
-						<CustomOnlyContent
-							tabs={tabs}
-							activeTab={resolvedTab}
-							displayName={displayName}
-							hasCustomHeader={!!HeaderComponent}
-							hideDuplicateButton
-						/>
-					) : activeModule?.isError ? (
-						<TabStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</TabStatus>
-					) : activeModule?.isLoading ? null : (
-						<InvestorsContent
-							tabs={tabs}
-							activeTab={resolvedTab}
-							displayName={displayName}
-							dashboardId={dashboardId}
-							hasCustomHeader={!!HeaderComponent}
-							hideDuplicateButton
-						/>
-					)}
+					<aside
+						className={`sl-sidebar fixed top-0 left-0 z-30 flex h-screen w-56 shrink-0 flex-col overflow-hidden px-3 pt-6 pb-4 transition-transform duration-200 ${
+							sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+						} md:z-10 md:translate-x-0`}
+					>
+						<div className="hidden flex-col items-center pb-3 md:flex">
+							<Logo href="/" />
+						</div>
+						<div className="mb-3 hidden h-px bg-sl-divider md:block" />
+
+						<nav aria-label="Dashboards" className="flex flex-1 flex-col gap-1 overflow-y-auto">
+							{visibleProjects.map((project, index) => {
+								const isActive = activeProject === project.id
+								// Only the active project lists its tabs; a single-protocol site always shows them.
+								const isExpanded = isActive && (isSingleProtocol || tabsOpen)
+
+								return (
+									<div key={project.id}>
+										<button
+											type="button"
+											aria-expanded={isSingleProtocol ? undefined : isExpanded}
+											onClick={() => {
+												if (isSingleProtocol) return
+												if (isActive) {
+													setTabsOpen(!tabsOpen)
+												} else {
+													scrollToPageTop()
+													setActiveProject(project.id)
+													setTabsOpen(true)
+													setActiveTab(moduleQueries[index].data?.tabs?.[0]?.id ?? 'dashboard')
+													closeSidebar()
+												}
+											}}
+											className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-semibold tracking-wide transition-colors ${
+												isActive
+													? 'text-sl-accent'
+													: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
+											}`}
+										>
+											{!isSingleProtocol && (
+												<svg
+													width="12"
+													height="12"
+													viewBox="0 0 12 12"
+													fill="none"
+													className={`shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+												>
+													<path
+														d="M4.5 2.5L8 6L4.5 9.5"
+														stroke="currentColor"
+														strokeWidth="1.5"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+													/>
+												</svg>
+											)}
+											{project.name}
+										</button>
+
+										{isExpanded && (
+											<div className="ml-3 flex flex-col gap-0.5 border-l border-sl-divider pt-1 pl-2">
+												<TabList aria-label={`${project.name} dashboard`} className="flex flex-col gap-0.5">
+													{panelTabs.map((tab, idx) => {
+														const isNewGroup = tab.group && (idx === 0 || panelTabs[idx - 1]?.group !== tab.group)
+														const isSoloGroup =
+															isNewGroup && panelTabs.filter((t) => t.group === tab.group).length === 1
+
+														return (
+															<Fragment key={tab.id}>
+																{isNewGroup && !isSoloGroup && (
+																	<div
+																		className={`px-3 text-[10px] font-bold tracking-[0.15em] text-pro-text-tertiary uppercase${idx === 0 ? '' : ' mt-3'}`}
+																	>
+																		{tab.group}
+																	</div>
+																)}
+																<Tab
+																	value={tab.id}
+																	onClick={closeSidebar}
+																	className={`w-full rounded-md px-3 py-1.5 text-left text-xs tracking-wide text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary data-[active=true]:bg-sl-accent-muted data-[active=true]:text-sl-accent ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'}`}
+																>
+																	<TabLabel tab={tab} />
+																</Tab>
+															</Fragment>
+														)
+													})}
+												</TabList>
+												{tabs.map((tab) =>
+													tab.externalHref ? (
+														<a
+															key={tab.id}
+															href={tab.externalHref}
+															target="_blank"
+															rel="noopener noreferrer"
+															title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
+															onClick={closeSidebar}
+															className="flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left text-xs font-medium tracking-wide text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+														>
+															<span className="flex-1">{tab.label}</span>
+															<Icon name="external-link" className="size-3 shrink-0 opacity-70" />
+														</a>
+													) : null
+												)}
+											</div>
+										)}
+									</div>
+								)
+							})}
+						</nav>
+
+						<div className="mt-auto flex items-center justify-end pt-4">
+							<button
+								type="button"
+								onClick={toggleTheme}
+								className="flex size-8 items-center justify-center rounded-lg text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary"
+							>
+								{isDark ? (
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+										<circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+										<path
+											d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+										/>
+									</svg>
+								) : (
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+										<path
+											d="M14 9.68A6.5 6.5 0 0 1 6.32 2 6.5 6.5 0 1 0 14 9.68Z"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+								)}
+							</button>
+						</div>
+					</aside>
+
+					<div className="relative flex flex-1 flex-col gap-4 p-5 md:ml-56">
+						{HeaderComponent && (
+							<Suspense fallback={null}>
+								<HeaderComponent />
+							</Suspense>
+						)}
+						<TabPanel value={resolvedTab} className="flex flex-col gap-4">
+							{activeProjectConfig?.customOnly ? (
+								<CustomOnlyContent
+									tabs={tabs}
+									activeTab={resolvedTab}
+									displayName={displayName}
+									hasCustomHeader={!!HeaderComponent}
+									hideDuplicateButton
+								/>
+							) : activeModule?.isError ? (
+								<TabStatus variant="error">Couldn't load this dashboard. Reload the page to try again.</TabStatus>
+							) : activeModule?.isLoading ? null : (
+								<InvestorsContent
+									tabs={tabs}
+									activeTab={resolvedTab}
+									displayName={displayName}
+									dashboardId={dashboardId}
+									hasCustomHeader={!!HeaderComponent}
+									hideDuplicateButton
+								/>
+							)}
+						</TabPanel>
+					</div>
 				</div>
-			</div>
+			</Tabs>
 		</CustomServerDataContext.Provider>
 	)
 }

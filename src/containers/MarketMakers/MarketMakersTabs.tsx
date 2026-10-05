@@ -42,30 +42,31 @@ export function MarketMakersTabs({ active }: { active: string }) {
 				<div
 					className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
 				>
-					<div className="overflow-hidden">
-						<div className="flex flex-col gap-1 border-t border-subtle p-1">
+					{/* inert while collapsed, so the hidden links leave the tab order. */}
+					<div className="overflow-hidden" inert={!open}>
+						<nav className="flex flex-col gap-1 border-t border-subtle p-1" aria-label="Market makers pages">
 							{MARKET_MAKER_TABS.map((tab) => (
 								<BasicLink
 									key={tab.to}
 									href={tab.to}
-									data-active={tab.label === active}
-									className="hover-wash flex items-center gap-2 rounded-md px-2.5 py-2 label-md text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link"
+									aria-current={tab.label === active ? 'page' : undefined}
+									className="hover-wash flex items-center gap-2 rounded-md px-2.5 py-2 label-md text-primary aria-[current=page]:bg-brand-muted aria-[current=page]:text-link"
 								>
 									<tab.Icon />
 									{tab.label}
 								</BasicLink>
 							))}
-						</div>
+						</nav>
 					</div>
 				</div>
 			</Card>
-			<nav className={`${tabTrackStyles} hidden min-[713px]:flex`}>
+			<nav className={`${tabTrackStyles} hidden min-[713px]:flex`} aria-label="Market makers pages">
 				{MARKET_MAKER_TABS.map((tab) => (
 					<TabLink
 						as={BasicLink}
 						key={tab.to}
 						href={tab.to}
-						data-active={tab.label === active}
+						aria-current={tab.label === active ? 'page' : undefined}
 						className="flex items-center gap-1.5"
 					>
 						<tab.Icon className="size-3.5" />

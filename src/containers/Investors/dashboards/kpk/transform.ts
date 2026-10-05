@@ -65,8 +65,8 @@ export function asRanged(comp: CompositionPayload | undefined): KpkRangedComposi
 	return { title: comp.title, ranges: { max: comp } }
 }
 
-export function rangeOptions(ranged: KpkRangedComposition | undefined): Array<{ key: KpkRangeKey; label: string }> {
-	return KPK_RANGES.filter((key) => ranged?.ranges[key]).map((key) => ({ key, label: RANGE_LABELS[key] }))
+export function rangeOptions(ranged: KpkRangedComposition | undefined): Array<{ value: KpkRangeKey; label: string }> {
+	return KPK_RANGES.filter((key) => ranged?.ranges[key]).map((key) => ({ value: key, label: RANGE_LABELS[key] }))
 }
 
 export function defaultRange(ranged: KpkRangedComposition | undefined): KpkRangeKey | undefined {

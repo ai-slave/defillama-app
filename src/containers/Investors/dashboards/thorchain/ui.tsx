@@ -315,42 +315,12 @@ export function ChartCard({
 					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
 					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>}
 				</div>
-				<div className="flex items-center gap-3">
+				<div className="flex min-w-0 items-center gap-3">
 					{value && <p className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
 					{control}
 				</div>
 			</div>
 			{children}
-		</div>
-	)
-}
-
-export function SegToggle<T extends string>({
-	options,
-	value,
-	onChange
-}: {
-	options: Array<{ value: T; label: string }>
-	value: T
-	onChange: (v: T) => void
-}) {
-	// Wraps rather than overflowing: the 5-option wallet toggle doesn't fit a phone in one row.
-	return (
-		<div className="flex flex-wrap justify-end rounded-md border border-pro-cards-border p-0.5">
-			{options.map((o) => (
-				<button
-					key={o.value}
-					type="button"
-					onClick={() => onChange(o.value)}
-					className={`rounded-sm px-2 py-0.5 text-[11px] font-medium transition-colors ${
-						value === o.value
-							? 'bg-sl-accent-muted text-sl-accent'
-							: 'text-pro-text-tertiary hover:text-pro-text-primary'
-					}`}
-				>
-					{o.label}
-				</button>
-			))}
 		</div>
 	)
 }

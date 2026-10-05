@@ -203,7 +203,7 @@ export function ProtocolOverviewLayout({
 			) : null}
 
 			<div className="isolate flex flex-1 flex-col gap-2">
-				<div className={tabTrackStyles}>
+				<nav className={tabTrackStyles} aria-label={`${name} pages`}>
 					{(otherProtocols?.length ?? 0) > 1 ? (
 						<Ariakit.MenuProvider>
 							<Ariakit.MenuButton render={<Button size="sm" className="my-auto mr-4" />}>
@@ -243,32 +243,56 @@ export function ProtocolOverviewLayout({
 
 					{isCEX ? (
 						<>
-							<TabLink as={ButtonLink} href={`/cex/${slug(name)}`} data-active={!tab || tab === 'information'}>
+							<TabLink
+								as={ButtonLink}
+								href={`/cex/${slug(name)}`}
+								aria-current={!tab || tab === 'information' ? 'page' : undefined}
+							>
 								Information
 							</TabLink>
 							{metrics.tvl ? (
-								<TabLink as={ButtonLink} href={`/cex/assets/${slug(name)}`} data-active={tab === 'assets'}>
+								<TabLink
+									as={ButtonLink}
+									href={`/cex/assets/${slug(name)}`}
+									aria-current={tab === 'assets' ? 'page' : undefined}
+								>
 									Assets
 								</TabLink>
 							) : null}
 							{metrics.stablecoins ? (
-								<TabLink as={ButtonLink} href={`/cex/stablecoins/${slug(name)}`} data-active={tab === 'stablecoins'}>
+								<TabLink
+									as={ButtonLink}
+									href={`/cex/stablecoins/${slug(name)}`}
+									aria-current={tab === 'stablecoins' ? 'page' : undefined}
+								>
 									Stablecoin Info
 								</TabLink>
 							) : null}
 							{metrics.cryptoCards ? (
-								<TabLink as={ButtonLink} href={`/cex/card-details/${slug(name)}`} data-active={tab === 'cardDetails'}>
+								<TabLink
+									as={ButtonLink}
+									href={`/cex/card-details/${slug(name)}`}
+									aria-current={tab === 'cardDetails' ? 'page' : undefined}
+								>
 									Card Details
 								</TabLink>
 							) : null}
 						</>
 					) : (
 						<>
-							<TabLink as={ButtonLink} href={`/protocol/${slug(name)}`} data-active={!tab || tab === 'information'}>
+							<TabLink
+								as={ButtonLink}
+								href={`/protocol/${slug(name)}`}
+								aria-current={!tab || tab === 'information' ? 'page' : undefined}
+							>
 								Information
 							</TabLink>
 							{metrics.tvl ? (
-								<TabLink as={ButtonLink} href={`/protocol/tvl/${slug(name)}`} data-active={tab === 'tvl'}>
+								<TabLink
+									as={ButtonLink}
+									href={`/protocol/tvl/${slug(name)}`}
+									aria-current={tab === 'tvl' ? 'page' : undefined}
+								>
 									TVL
 								</TabLink>
 							) : null}
@@ -280,7 +304,7 @@ export function ProtocolOverviewLayout({
 									as={ButtonLink}
 									key={`${pt.id}-${name}`}
 									href={`${pt.route}/${slug(name)}`}
-									data-active={pt.id === tab}
+									aria-current={pt.id === tab ? 'page' : undefined}
 								>
 									{pt.name}
 								</TabLink>
@@ -293,7 +317,7 @@ export function ProtocolOverviewLayout({
 							<TabLink
 								as={ButtonLink}
 								href={getMainSiteIrBaseHref(irDashboard)}
-								data-active={tab === 'investorRelations'}
+								aria-current={tab === 'investorRelations' ? 'page' : undefined}
 								data-umami-event="investor-relations-tab-click"
 								data-umami-event-entity-type="protocol"
 								data-umami-event-entity={entitySlug}
@@ -308,7 +332,7 @@ export function ProtocolOverviewLayout({
 							</TabLink>
 						)
 					) : null}
-				</div>
+				</nav>
 				{tab !== 'investorRelations' && entityQuestions ? (
 					<EntityQuestionsStrip
 						questions={entityQuestions}

@@ -45,11 +45,10 @@ const grouping = (label: string) =>
 	[...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find((element) =>
 		element.textContent?.startsWith(label)
 	)!
-// A table section is a radio inside its labelled segment.
 const section = (name: string) =>
-	[...document.querySelectorAll('[aria-label="Table section"] label')]
-		.find((element) => element.textContent?.startsWith(name))!
-		.querySelector<HTMLInputElement>('input')!
+	[...document.querySelectorAll<HTMLButtonElement>('[role="tablist"][aria-label="Table section"] [role="tab"]')].find(
+		(element) => element.textContent?.startsWith(name)
+	)!
 const tab = (value: string) => document.querySelector<HTMLButtonElement>(`[role="tab"][id$="-tab-${value}"]`)!
 const discardQuestion = () => document.querySelector('[role="alertdialog"]')?.querySelector('h2')?.textContent ?? null
 
@@ -95,8 +94,10 @@ test('a grouping change to a saved protocols table asks before Escape drops it',
 test('a saved protocols table browsed without changes closes at once on Escape', async () => {
 	const onClose = await show(savedTable)
 	await click(section('Columns ('))
-	expect(section('Columns (').checked).toBe(true)
-	expect(document.querySelector('[aria-label="Search columns"]')).not.toBeNull()
+	expect(section('Columns (').getAttribute('aria-selected')).toBe('true')
+	const panel = document.getElementById(section('Columns (').getAttribute('aria-controls')!)!
+	expect(panel.getAttribute('role')).toBe('tabpanel')
+	expect(panel.querySelector('[aria-label="Search columns"]')).not.toBeNull()
 	await click(section('Grouping & views'))
 	expect(grouping('Category').getAttribute('aria-pressed')).toBe('false')
 

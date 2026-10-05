@@ -119,3 +119,34 @@ test('refresh all re-runs the card on the server and counts the failure its answ
 	await act(async () => failedRun.resolve({ ...stored, error: 'SQL run failed' }))
 	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 0, total: 1, failed: 1 }))
 })
+
+test('the card view tabs swap the result panel for the query panel', async () => {
+	session.serveInOrder('/api/private/pro-dashboard/sql-run', [stored])
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<DashboardTestProvider dashboard={{ dashboardId: 'd1' }}>
+					<SqlChartCard config={item} />
+				</DashboardTestProvider>
+			</session.Wrapper>
+		)
+	)
+	const tabs = [
+		...document.querySelectorAll<HTMLButtonElement>('[role="tablist"][aria-label="SQL card view"] [role="tab"]')
+	]
+	expect(tabs.map((tab) => [tab.textContent, tab.getAttribute('aria-selected')])).toEqual([
+		['Chart', 'true'],
+		['SQL', 'false']
+	])
+	const panel = () =>
+		document.getElementById(
+			tabs.find((tab) => tab.getAttribute('aria-selected') === 'true')!.getAttribute('aria-controls')!
+		)!
+	await waitForUi(() => expect(panel().textContent).toContain('No numeric columns in this result to chart.'))
+
+	await act(async () => tabs[1].click())
+	expect(tabs[1].getAttribute('aria-selected')).toBe('true')
+	expect(panel().getAttribute('aria-labelledby')).toBe(tabs[1].id)
+	expect(panel().textContent).toContain('Open in SQL Studio')
+	expect(panel().textContent).not.toContain('No numeric columns')
+})

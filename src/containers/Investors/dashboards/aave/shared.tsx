@@ -174,39 +174,6 @@ export function SectionHeader({ title, actions }: { title: string; actions?: Rea
 	)
 }
 
-/** Time window toggle buttons — matches select height (py-1.5 + text-sm line-height) */
-export function WindowToggle({
-	options,
-	value,
-	onChange
-}: {
-	options: Array<{ value: string; label: string }>
-	value: string
-	onChange: (v: string) => void
-}) {
-	return (
-		<div className="flex">
-			{options.map((w, i) => (
-				<button
-					type="button"
-					key={w.value}
-					onClick={() => onChange(w.value)}
-					className={`px-3 py-1.5 text-sm leading-tight font-medium transition-colors ${
-						i === 0 ? 'rounded-l-md' : ''
-					}${i === options.length - 1 ? 'rounded-r-md' : ''} ${
-						value === w.value
-							? 'bg-sl-accent text-on-brand'
-							: 'bg-pro-cards-bg text-pro-text-tertiary hover:text-pro-text-primary'
-					} ${value !== w.value ? 'border border-pro-cards-border' : ''}`}
-					style={i > 0 && value !== w.value ? { marginLeft: '-1px' } : undefined}
-				>
-					{w.label}
-				</button>
-			))}
-		</div>
-	)
-}
-
 export function Pagination<F extends PaginationFeatures, T extends TableRowData>({
 	table
 }: {

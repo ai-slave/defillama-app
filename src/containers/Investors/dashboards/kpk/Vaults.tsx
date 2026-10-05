@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import type { KpkVault } from './api'
@@ -20,7 +21,6 @@ import {
 	RowLink,
 	SectionHeader,
 	Spark,
-	ToggleGroup,
 	signClass,
 	signedBps,
 	usdFromMillions,
@@ -53,7 +53,7 @@ export default function Vaults() {
 	const [venue, setVenue] = useState<string>(ALL_VENUES)
 
 	const venueOptions = useMemo(
-		() => [{ key: ALL_VENUES, label: 'All' }, ...(data?.venues ?? []).map((name) => ({ key: name, label: name }))],
+		() => [{ value: ALL_VENUES, label: 'All' }, ...(data?.venues ?? []).map((name) => ({ value: name, label: name }))],
 		[data?.venues]
 	)
 
@@ -108,7 +108,7 @@ export default function Vaults() {
 
 			<section className="flex flex-col gap-3">
 				<SectionHeader title="Vaults">
-					<ToggleGroup label="Filter vaults by venue" options={venueOptions} value={venue} onChange={setVenue} />
+					<ProSegmented label="Filter vaults by venue" options={venueOptions} value={venue} onValueChange={setVenue} />
 				</SectionHeader>
 				<Card>
 					<DataTable<KpkVault>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import type { Chart, Kpi } from './transform'
-import { KpiGrid, PageLoader, PlaceholderCard, SectionHeader, SegToggle, TimeAreaCard, useThorchainData } from './ui'
+import { KpiGrid, PageLoader, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
 
 type PolView = 'rune' | 'usd'
 
@@ -44,10 +45,12 @@ export default function Network() {
 		{ value: 'usd', label: 'USD' }
 	]
 	const polToggle = (
-		<SegToggle<PolView>
+		<ProSegmented<PolView>
+			size="sm"
+			label="POL value denomination"
 			options={POL_VIEWS.filter((o) => data.polCharts?.[o.value])}
 			value={polView}
-			onChange={setPolView}
+			onValueChange={setPolView}
 		/>
 	)
 

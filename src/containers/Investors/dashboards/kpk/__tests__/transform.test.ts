@@ -152,7 +152,7 @@ describe('asRanged', () => {
 		const lifted = asRanged(comp)
 
 		expect(lifted).toEqual({ title: 'By venue', ranges: { max: comp } })
-		expect(rangeOptions(lifted)).toEqual([{ key: 'max', label: 'Max' }])
+		expect(rangeOptions(lifted)).toEqual([{ value: 'max', label: 'Max' }])
 		expect(asRanged(undefined)).toBeUndefined()
 	})
 })
@@ -165,9 +165,9 @@ describe('rangeOptions and defaultRange', () => {
 
 	test('offers a chip only for the ranges the payload carries, shortest first', () => {
 		expect(rangeOptions(ranged)).toEqual([
-			{ key: '1m', label: '1M' },
-			{ key: 'ytd', label: 'YTD' },
-			{ key: 'max', label: 'Max' }
+			{ value: '1m', label: '1M' },
+			{ value: 'ytd', label: 'YTD' },
+			{ value: 'max', label: 'Max' }
 		])
 	})
 

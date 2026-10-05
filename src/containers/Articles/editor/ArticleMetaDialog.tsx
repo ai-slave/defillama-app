@@ -11,9 +11,16 @@ import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
-import type { ArticleGuestAuthor, ArticleImage, ArticleSection, LocalArticleDocument } from '../types'
+import type {
+	ArticleGuestAuthor,
+	ArticleGuestAuthorType,
+	ArticleImage,
+	ArticleSection,
+	LocalArticleDocument
+} from '../types'
 import { ARTICLE_SECTIONS, ARTICLE_SECTION_LABELS, ARTICLE_SECTION_SLUGS } from '../types'
 import { ImageUploadButton } from '../upload/ImageUploadButton'
 import { PdfUploadButton } from '../upload/PdfUploadButton'
@@ -25,6 +32,27 @@ import { ArticlePageAssetPicker } from './ArticlePageAssetPicker'
 import type { useArticleCollaborators } from './useArticleCollaborators'
 
 type DialogStore = ReturnType<typeof Ariakit.useDialogStore>
+
+const GUEST_AUTHOR_TYPE_OPTIONS: ReadonlyArray<SegmentedControlOption<ArticleGuestAuthorType>> = [
+	{
+		value: 'Person',
+		label: (
+			<>
+				<Icon name="user" className="size-3.5" />
+				Person
+			</>
+		)
+	},
+	{
+		value: 'Organization',
+		label: (
+			<>
+				<Icon name="building" className="size-3.5" />
+				Organization
+			</>
+		)
+	}
+]
 
 // Publish checks fields that are edited on the page, not in this sheet; their errors are listed above the footer.
 const PAGE_FIELDS = ['title', 'coverImage', 'coverImage.caption', 'coverImage.credit', 'coverImage.copyright']
@@ -750,28 +778,19 @@ function MetaSheet({
 										aria-label={`Guest co-author ${index + 1}`}
 									>
 										<div className="flex items-center gap-2">
-											<div role="group" aria-label="Co-author type" className="flex gap-1">
-												{(['Person', 'Organization'] as const).map((type) => (
-													<Button
-														key={type}
-														type="button"
-														size="sm"
-														variant="ghost"
-														data-active={guest.type === type}
-														aria-pressed={guest.type === type}
-														onClick={() => updateGuestAuthor(index, { type })}
-													>
-														<Icon name={type === 'Organization' ? 'building' : 'user'} className="size-3.5" />
-														{type}
-													</Button>
-												))}
-											</div>
+											<SegmentedControl
+												label="Co-author type"
+												variant="field"
+												size="md"
+												options={GUEST_AUTHOR_TYPE_OPTIONS}
+												value={guest.type}
+												onValueChange={(type) => updateGuestAuthor(index, { type })}
+											/>
 											<Button
 												type="button"
 												size="sm"
 												variant="ghost"
 												square
-												className="ml-auto"
 												aria-label={`Remove guest co-author ${index + 1}`}
 												onClick={(event) => removeGuestAuthor(index, event.currentTarget)}
 											>

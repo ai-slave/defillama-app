@@ -30,7 +30,7 @@ export function IrTabMenu({
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
 				render={<TabLink as="button" type="button" className="group flex items-center gap-1.5" />}
-				data-active={active}
+				aria-current={active ? 'page' : undefined}
 				{...umamiProps}
 			>
 				<IrTabLabel
@@ -63,6 +63,7 @@ export function IrTabMenu({
 								key={tab.id}
 								render={<BasicLink href={tab.href} />}
 								data-active={isActive}
+								aria-current={isActive ? 'page' : undefined}
 								className={menuItemStyles}
 								{...umamiProps}
 								data-umami-event-ir-tab={tab.id}

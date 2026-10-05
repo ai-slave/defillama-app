@@ -1,6 +1,7 @@
 import { lazy, useMemo, useState } from 'react'
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatRatio } from '~/utils/numberFormat'
 import { useIncentivesData, chartToModel, type EpochRow, type SpendWindowRow } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
@@ -24,44 +25,15 @@ const PALETTE = [
 	'#e879f9'
 ]
 const VENUES = [
-	{ id: 'aerodrome', label: 'Aerodrome' },
-	{ id: 'velodrome', label: 'Velodrome' },
-	{ id: 'votemarket', label: 'VoteMarket' },
-	{ id: 'merkl', label: 'Merkl' },
-	{ id: 'lithos', label: 'Lithos' }
+	{ value: 'aerodrome', label: 'Aerodrome' },
+	{ value: 'velodrome', label: 'Velodrome' },
+	{ value: 'votemarket', label: 'VoteMarket' },
+	{ value: 'merkl', label: 'Merkl' },
+	{ value: 'lithos', label: 'Lithos' }
 ] as const
 
-type VenueId = (typeof VENUES)[number]['id']
+type VenueId = (typeof VENUES)[number]['value']
 type EpochTableRow = EpochRow | SpendWindowRow
-
-function TabBtns<T extends string>({
-	active,
-	onChange,
-	options
-}: {
-	active: T
-	onChange: (v: T) => void
-	options: ReadonlyArray<{ id: T; label: string }>
-}) {
-	return (
-		<div className="mb-3 flex flex-wrap gap-1">
-			{options.map((o) => (
-				<button
-					type="button"
-					key={o.id}
-					onClick={() => onChange(o.id)}
-					className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
-						active === o.id
-							? 'bg-sl-accent text-on-brand'
-							: 'border border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:text-pro-text-primary'
-					}`}
-				>
-					{o.label}
-				</button>
-			))}
-		</div>
-	)
-}
 
 function epochCols(id: VenueId): Array<Col<EpochTableRow>> {
 	if (id === 'aerodrome' || id === 'velodrome')
@@ -180,7 +152,14 @@ export default function Incentives() {
 
 			<SectionHeader>Weekly Spend per Pool</SectionHeader>
 			<ChartCard title="Per-pool weekly spend">
-				<TabBtns<VenueId> active={poolTab} onChange={setPoolTab} options={VENUES} />
+				<ProSegmented<VenueId>
+					size="sm"
+					label="Pool venue"
+					className="mb-3"
+					options={VENUES}
+					value={poolTab}
+					onValueChange={setPoolTab}
+				/>
 				{poolModel?.dataset.source.length ? (
 					<MultiSeriesChart
 						key={poolTab}
@@ -199,7 +178,14 @@ export default function Incentives() {
 
 			<SectionHeader>Epochs & Spend</SectionHeader>
 			<ChartCard title="Epoch breakdown">
-				<TabBtns<VenueId> active={epochTab} onChange={setEpochTab} options={VENUES} />
+				<ProSegmented<VenueId>
+					size="sm"
+					label="Epoch venue"
+					className="mb-3"
+					options={VENUES}
+					value={epochTab}
+					onValueChange={setEpochTab}
+				/>
 				<div key={epochTab}>
 					<SimpleTable<EpochTableRow>
 						getOccurrenceKey={(row) => JSON.stringify([row.period, 'pool' in row ? row.pool : null])}

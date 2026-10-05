@@ -17,12 +17,20 @@ import { Tooltip } from './Tooltip'
                  chart and table toolbars keep `default` so they never stretch.
    - field:      a choice that is a form field (visibility, owner): fills its
                  row with equal segments. Never a caller width override.
-   - chips:      spaced pill segments.
+   - chips:      spaced rounded-full pills with no box around the row, for
+                 a longer pick on its own row: a category or sector filter,
+                 a status, a content type, a table's column group. The row
+                 wraps, so every option stays visible on a phone; never put
+                 it inside a scroll wrapper.
    - solid / solid-responsive: the joined toggle group, no padding, solid
                  bg-brand selection. Only for explicit scope switches such as
                  All | Protocols | Chains. Class-only hosts compose
                  `TAG_GROUP_VARIANTS.solid` with `TAG_GROUP_SIZES.md`.
    - pro:        ProDashboard's own look (ProSegmented).
+   Out of room: default and responsive scroll inside their own box; pro
+   scrolls in ProSegmented's wrapper; chips wrap; field never scrolls, so
+   keep it to a few short options (stack two fields on a phone); solid
+   clips, so keep its set short.
    Toolbars use size md (32px). In a phone sheet's rows the padded variants
    are 44px with a 4px inset and body-md labels. A disabled option dims to
    60% with the not-allowed cursor, like Button; its reason stays in visible
@@ -39,7 +47,11 @@ import { Tooltip } from './Tooltip'
      focus and Enter or Space selects. Panels stay mounted while hidden
      unless the caller unmounts them.
    Never convert a value picker to tabs to make controls uniform. Page-level
-   route navigation is `TabLink` in ./Tab.tsx, never this control.
+   route navigation is `TabLink` in ./Tab.tsx, never this control; its
+   header says which tab look goes where.
+   A phone-only pane switch (Configure | Preview in a workspace dialog)
+   stays a radio: on desktop both panes show side by side, so they are not
+   tab panels, and the switch only picks which one fills a phone screen.
 ---------------------------------------------------------------------------- */
 export const TAG_GROUP_VARIANTS = {
 	default: {
@@ -49,9 +61,9 @@ export const TAG_GROUP_VARIANTS = {
 			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	chips: {
-		container: 'flex w-fit max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overflow-y-hidden',
+		container: 'flex w-fit max-w-full flex-wrap items-center gap-1.5',
 		button:
-			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
 	field: {
@@ -83,7 +95,7 @@ export const TAG_GROUP_VARIANTS = {
 	}
 } as const
 
-/* The scrolling variants (default, chips, responsive) keep each segment's touch target inside the row: a target
+/* The scrolling variants (default, responsive) keep each segment's touch target inside the row (chips wrap instead): a target
    reaching past a scroller's edge makes it scroll, which draws a scrollbar beside the last segment on touch screens.
    Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. */
 export const TAG_GROUP_SIZES = {
@@ -95,6 +107,14 @@ export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.co
 export const chartSegmentedControlButtonStyles = TAG_GROUP_VARIANTS.default.button
 
 export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
+
+/* An option with a tooltip sits inside the tooltip's anchor span, which becomes the row's flex item, so the span takes
+   the segment's stretch: equal segments in `field`, a stretched row below sm in the responsive variants. */
+const tooltipAnchorSizing: Partial<Record<TagGroupVariant, string>> = {
+	field: 'flex-1 basis-0',
+	responsive: 'max-sm:flex-1',
+	'solid-responsive': 'max-sm:flex-1'
+}
 type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS
 
 export type SegmentedControlOption<T extends string> = {
@@ -151,7 +171,14 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 		}
 		const control =
 			semantics === 'tabs' ? (
-				<Tab value={option.value} {...controlProps} />
+				<Tab
+					value={option.value}
+					{...controlProps}
+					className={clsx(
+						controlProps.className,
+						'disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
+					)}
+				/>
 			) : (
 				<label
 					className={clsx(
@@ -177,7 +204,13 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 			)
 		return (
 			<React.Fragment key={option.value}>
-				{option.tooltip ? <Tooltip content={option.tooltip}>{control}</Tooltip> : control}
+				{option.tooltip ? (
+					<Tooltip content={option.tooltip} className={tooltipAnchorSizing[variant]}>
+						{control}
+					</Tooltip>
+				) : (
+					control
+				)}
 			</React.Fragment>
 		)
 	})

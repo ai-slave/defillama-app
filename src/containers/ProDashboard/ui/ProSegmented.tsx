@@ -9,7 +9,7 @@ const PRO_SEGMENTED_SIZES: Record<TagGroupSize, string> = {
 
 const PRO_SEGMENTED_SURFACE = tw`border border-pro-cards-border`
 
-const PRO_SEGMENTED_BUTTON = tw`relative z-10 inline-flex items-center justify-center self-stretch text-pro-text-secondary transition-colors duration-120 ease-out-quart hover:text-pro-text-primary disabled:opacity-50 has-disabled:opacity-50 data-[active=true]:text-pro-info-400 dark:data-[active=true]:text-pro-info-200`
+const PRO_SEGMENTED_BUTTON = tw`relative z-10 inline-flex items-center justify-center self-stretch text-pro-text-secondary transition-colors duration-120 ease-out-quart hover:text-pro-text-primary disabled:opacity-60 has-disabled:opacity-60 data-[active=true]:text-pro-info-400 dark:data-[active=true]:text-pro-info-200`
 
 const PRO_SEGMENTED_INDICATOR = tw`pointer-events-none absolute inset-y-0.5 left-0 z-0 rounded-sm bg-pro-info-100 transition-[transform,width] duration-180 ease-out-quart data-[ready=false]:transition-none dark:bg-pro-info-300/20`
 
@@ -63,7 +63,11 @@ export function ProSegmented<T extends string>(props: ProSegmentedProps<T>) {
 		label
 	}
 	return (
-		<div ref={containerRef} className={`relative isolate w-fit max-w-full ${className ?? ''}`.trim()}>
+		// The wrapper scrolls, not the control inside it, so the indicator scrolls with the segments on a narrow screen.
+		<div
+			ref={containerRef}
+			className={`relative isolate w-fit max-w-full overflow-x-auto overflow-y-hidden ${className ?? ''}`.trim()}
+		>
 			<span
 				aria-hidden
 				data-ready={indicator?.ready ?? false}

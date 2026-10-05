@@ -41,11 +41,13 @@ test.each(['table', 'chart'] as const)(
 				)
 			)
 		}
+		// The selected tab stays focusable so the list keeps a keyboard stop; both announce disabled.
+		const disabled = (button: HTMLButtonElement) => button.getAttribute('aria-disabled') === 'true'
 		await render([])
 		const buttons = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
 		await act(async () => {
 			for (const button of buttons) {
-				expect(button.disabled).toBe(true)
+				expect(disabled(button)).toBe(true)
 				button.click()
 			}
 		})
@@ -54,11 +56,11 @@ test.each(['table', 'chart'] as const)(
 
 		// A refresh may keep the previous result visible and usable while running.
 		await render([[1]], true)
-		expect(buttons.every((button) => !button.disabled)).toBe(true)
+		expect(buttons.some(disabled)).toBe(false)
 		await act(async () => buttons[view === 'table' ? 1 : 0].click())
 		expect(onViewChange.mock.calls).toEqual([[view === 'table' ? 'chart' : 'table']])
 		await render([])
-		expect(buttons.every((button) => button.disabled)).toBe(true)
+		expect(buttons.every(disabled)).toBe(true)
 	}
 )
 

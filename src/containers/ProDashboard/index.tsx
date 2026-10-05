@@ -788,8 +788,10 @@ function ProDashboardContent() {
 							<Tooltip
 								content={!hasTimePeriodItems ? 'Add a chart card to enable the time period' : null}
 								placement="bottom"
+								// The anchor is shrink-0; capping it at the row lets the periods and Custom wrap on a phone.
+								className="max-w-full"
 							>
-								<div className="flex max-w-full min-w-0 items-center gap-2">
+								<div className="flex max-w-full min-w-0 flex-wrap items-center gap-2">
 									<ProSegmented
 										className="min-w-0"
 										label="Time period"

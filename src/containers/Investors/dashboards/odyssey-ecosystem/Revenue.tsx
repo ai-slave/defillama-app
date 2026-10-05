@@ -3,6 +3,7 @@ import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
@@ -12,32 +13,6 @@ import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd }
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
-
-function Toggle<T extends string>({
-	value,
-	onChange,
-	options
-}: {
-	value: T
-	onChange: (v: T) => void
-	options: Array<{ id: T; label: string }>
-}) {
-	return (
-		<div className="flex w-fit items-center rounded-md border border-pro-cards-border text-pro-text-secondary">
-			{options.map((o) => (
-				<button
-					key={o.id}
-					type="button"
-					onClick={() => onChange(o.id)}
-					className="px-3 py-1 text-xs transition-colors data-[active=true]:font-medium data-[active=true]:text-pro-text-primary"
-					data-active={value === o.id}
-				>
-					{o.label}
-				</button>
-			))}
-		</div>
-	)
-}
 
 const INCOME_STATEMENT_PROTOCOL = 'metronome-synth'
 const INCOME_STATEMENT_NAME = 'Metronome Synth'
@@ -268,12 +243,14 @@ export default function Revenue() {
 			) : (
 				<ChartCard title="Holder Buybacks" subtitle="Revenue routed to token holders (MET / VSP)">
 					<div className="mb-3 flex justify-end">
-						<Toggle<'daily' | 'monthly'>
+						<ProSegmented<'daily' | 'monthly'>
+							size="sm"
+							label="Holder buybacks period"
 							value={holderMode}
-							onChange={setHolderMode}
+							onValueChange={setHolderMode}
 							options={[
-								{ id: 'monthly', label: 'Monthly' },
-								{ id: 'daily', label: 'Daily' }
+								{ value: 'monthly', label: 'Monthly' },
+								{ value: 'daily', label: 'Daily' }
 							]}
 						/>
 					</div>

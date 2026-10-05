@@ -75,6 +75,11 @@ const click = (text: string) =>
 			.click()
 	)
 
+const preset = (text: string) =>
+	Array.from(container.querySelectorAll('[role="radiogroup"][aria-label="Column preset"] label'))
+		.find((label) => label.textContent?.trim() === text)!
+		.querySelector<HTMLInputElement>('input[type="radio"]')!
+
 test('saved columns redraw the table through undo and redo, and undoing them all returns to the essential preset', async () => {
 	await render({})
 	const unsaved = headers()
@@ -90,7 +95,7 @@ test('saved columns redraw the table through undo and redo, and undoing them all
 test('an editable card saves a preset and draws the columns the dashboard keeps', async () => {
 	const onColumnsChange = vi.fn()
 	await render({ onColumnsChange })
-	await click('Market Share')
+	await act(async () => preset('Market Share').click())
 
 	expect(onColumnsChange.mock.calls[0]?.[0]).toEqual([
 		'name',
@@ -106,7 +111,7 @@ test('an editable card saves a preset and draws the columns the dashboard keeps'
 test('a read-only card shows a column the viewer adds over its saved columns', async () => {
 	const onColumnsChange = vi.fn()
 	await render({ onColumnsChange })
-	await click('Market Share')
+	await act(async () => preset('Market Share').click())
 	const [columnOrder, columnVisibility] = onColumnsChange.mock.calls[0]!
 	await render({ columnOrder, columnVisibility })
 	await click('Customize Table')
@@ -142,18 +147,13 @@ test('removing a saved column that has no visibility entry hides it', async () =
 	expect(headers()).not.toContain('DeFi TVL')
 })
 
-const pressed = (text: string) =>
-	Array.from(container.querySelectorAll('button'))
-		.find((button) => button.textContent?.trim() === text)!
-		.getAttribute('aria-pressed')
-
-test('the preset button follows the columns the card shows, saved or undone', async () => {
+test('the preset radio follows the columns the card shows, saved or undone', async () => {
 	await render({})
-	expect(pressed('Essential')).toBe('true')
+	expect(preset('Essential').checked).toBe(true)
 	await render({ columnOrder: ['name', 'tvl'], columnVisibility: { name: true, tvl: true } })
-	expect(pressed('Essential')).toBe('false')
+	expect(preset('Essential').checked).toBe(false)
 	await render({})
-	expect(pressed('Essential')).toBe('true')
+	expect(preset('Essential').checked).toBe(true)
 })
 
 test('moving a column swaps it with the next shown column, skipping hidden ones', async () => {

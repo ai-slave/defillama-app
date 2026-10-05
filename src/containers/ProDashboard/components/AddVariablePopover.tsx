@@ -5,6 +5,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { tw } from '~/ui/tw'
 import { DASHBOARD_VARIABLE_LABEL_MAX_LENGTH, type DashboardVariableKind } from '../dashboardTypes'
 import {
@@ -22,7 +23,26 @@ export const VARIABLE_KIND_LABELS: Record<DashboardVariableKind, string> = {
 	protocol: 'Protocol'
 }
 
-const VARIABLE_KINDS: ReadonlyArray<DashboardVariableKind> = ['chain', 'protocol']
+const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>> = [
+	{
+		value: 'chain',
+		label: (
+			<>
+				<Icon name="chain" height={14} width={14} />
+				{VARIABLE_KIND_LABELS.chain}
+			</>
+		)
+	},
+	{
+		value: 'protocol',
+		label: (
+			<>
+				<Icon name="protocol" height={14} width={14} />
+				{VARIABLE_KIND_LABELS.protocol}
+			</>
+		)
+	}
+]
 
 type BindMode = 'matching' | 'all' | 'none'
 
@@ -83,6 +103,7 @@ export function AddVariablePopover() {
 	const canSubmit = trimmedLabel.length > 0 && value.length > 0
 	const valueLabel = options.find((option) => option.value === value)?.label ?? value
 	const bindGroupId = useId()
+	const kindGroupId = useId()
 
 	const selectKind = (nextKind: DashboardVariableKind) => {
 		setKind(nextKind)
@@ -115,23 +136,18 @@ export function AddVariablePopover() {
 						from each card’s editor.
 					</p>
 					<div className="flex flex-col gap-1">
-						<span className="label-sm text-pro-text-primary">Parameter type</span>
-						<div className="flex items-center gap-1">
-							{VARIABLE_KINDS.map((variableKind) => (
-								<Button
-									key={variableKind}
-									type="button"
-									size="sm"
-									variant="toggle"
-									data-active={kind === variableKind}
-									aria-pressed={kind === variableKind}
-									onClick={() => selectKind(variableKind)}
-								>
-									<Icon name={variableKind} height={14} width={14} />
-									<span>{VARIABLE_KIND_LABELS[variableKind]}</span>
-								</Button>
-							))}
-						</div>
+						<span id={kindGroupId} className="label-sm text-pro-text-primary">
+							Parameter type
+						</span>
+						<SegmentedControl
+							aria-labelledby={kindGroupId}
+							label="Parameter type"
+							variant="field"
+							size="md"
+							value={kind}
+							onValueChange={selectKind}
+							options={VARIABLE_KIND_OPTIONS}
+						/>
 					</div>
 					<label htmlFor={labelInputId} className="flex flex-col gap-1">
 						<span className="label-sm text-pro-text-primary">Label</span>

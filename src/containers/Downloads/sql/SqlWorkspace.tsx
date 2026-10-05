@@ -1,15 +1,15 @@
-import { TabList } from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
+import { ViewTabs } from '~/components/ViewTabs'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { PanelLoadingStatus } from '~/ui/Status'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { chartDatasets } from '../chart-datasets'
@@ -50,11 +50,8 @@ import {
 	type TableSource
 } from './useTableRegistry'
 
-const SQL_TABS = [
-	{ id: 'editor', label: 'Editor' },
-	{ id: 'saved', label: 'Saved' }
-] as const
-type SqlTab = (typeof SQL_TABS)[number]['id']
+const SQL_TABS = ['editor', 'saved'] as const
+type SqlTab = (typeof SQL_TABS)[number]
 
 const TOTAL_SCHEMA_COUNT = datasets.length + chartDatasets.length
 const PLAYBOOK_COLLAPSED_KEY = 'sql-studio:playbook-collapsed:v1'
@@ -165,7 +162,6 @@ function SqlWorkspaceInner({
 
 	const [sectionTab, setSectionTab] = useState<SqlTab>('editor')
 	const [schemaDrawerOpen, setSchemaDrawerOpen] = useState(false)
-	const savedTabRef = useRef<HTMLButtonElement>(null)
 	const [schemaParams, setSchemaParams] = useState<Record<string, string>>({})
 	const [savePresetOpen, setSavePresetOpen] = useState(false)
 	const [playbookCollapsed, setPlaybookCollapsed] = useState<boolean>(() =>
@@ -891,8 +887,14 @@ function SqlWorkspaceInner({
 				error={!!activeTab.runError || (activeTab.cells?.some((c) => !!c.runError) ?? false)}
 			/>
 
-			<Tabs<SqlTab> value={sectionTab} onValueChange={setSectionTab} values={SQL_TABS.map((item) => item.id)}>
-				<TabNav tab={sectionTab} savedCount={savedQueries.length} savedTabRef={savedTabRef} />
+			<Tabs<SqlTab> value={sectionTab} onValueChange={setSectionTab} values={SQL_TABS}>
+				<ViewTabs
+					label="SQL workspace section"
+					tabs={[
+						{ id: 'editor', label: 'Editor' },
+						{ id: 'saved', label: savedQueries.length > 0 ? `Saved (${savedQueries.length})` : 'Saved' }
+					]}
+				/>
 				<TabPanel value={sectionTab}>
 					{sectionTab === 'editor' ? (
 						<div
@@ -1046,7 +1048,6 @@ function SqlWorkspaceInner({
 						<SavedQueriesTab
 							savedQueries={savedQueries}
 							savedDownloads={savedDownloads}
-							savedTabRef={savedTabRef}
 							onOpen={onLoadSavedQuery}
 							onDelete={deleteDownload}
 							onRename={renameDownload}
@@ -1172,44 +1173,6 @@ function Divider() {
 	return <span aria-hidden className="h-3 w-px bg-border-subtle" />
 }
 
-function TabNav({
-	tab,
-	savedCount,
-	savedTabRef
-}: {
-	tab: SqlTab
-	savedCount: number
-	savedTabRef: RefObject<HTMLButtonElement | null>
-}) {
-	return (
-		<TabList aria-label="SQL workspace section" className="flex items-center gap-5 border-b border-subtle text-sm">
-			{SQL_TABS.map((t) => {
-				const active = tab === t.id
-				const showCount = t.id === 'saved' && savedCount > 0
-				return (
-					<Tab
-						key={t.id}
-						ref={t.id === 'saved' ? savedTabRef : undefined}
-						value={t.id}
-						type="button"
-						className={`group relative flex items-center gap-1.5 pb-2 font-medium transition-colors ${
-							active ? 'text-brand' : 'text-pro-text-secondary hover:text-pro-text-primary'
-						}`}
-					>
-						{t.label}
-						{showCount ? (
-							<span className="rounded-sm bg-hover-row px-1.5 py-px text-[10px] font-semibold text-pro-text-tertiary tabular-nums">
-								{savedCount}
-							</span>
-						) : null}
-						{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" /> : null}
-					</Tab>
-				)
-			})}
-		</TabList>
-	)
-}
-
 function EditorRunBar({
 	running,
 	canRun,
@@ -1292,7 +1255,6 @@ function EditorRunBar({
 function SavedQueriesTab({
 	savedQueries,
 	savedDownloads,
-	savedTabRef,
 	onOpen,
 	onDelete,
 	onRename,
@@ -1301,7 +1263,6 @@ function SavedQueriesTab({
 	savedQueries: Array<QuerySavedConfig>
 	/** Every preset kind, because a query's name must stay unique in the main Saved list too. */
 	savedDownloads: Array<SavedDownload>
-	savedTabRef: RefObject<HTMLButtonElement | null>
 	onOpen: (q: QuerySavedConfig) => void
 	onDelete: (id: string) => void
 	onRename: (id: string, name: string) => void
@@ -1387,14 +1348,7 @@ function SavedQueriesTab({
 					onClose={() => setRenaming(null)}
 				/>
 			) : null}
-			{deleting ? (
-				<DeletePresetDialog
-					preset={deleting}
-					finalFocus={savedTabRef}
-					onDelete={onDelete}
-					onClose={() => setDeleting(null)}
-				/>
-			) : null}
+			{deleting ? <DeletePresetDialog preset={deleting} onDelete={onDelete} onClose={() => setDeleting(null)} /> : null}
 		</>
 	)
 }

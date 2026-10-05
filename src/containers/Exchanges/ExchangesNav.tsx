@@ -62,17 +62,13 @@ export function ExchangesNav({ activePage, country = null }: { activePage: Excha
 							: page.href
 					if (pageId === activePage) {
 						return (
-							<TabLink as={BasicLink} key={pageId} href={href} data-active aria-current="page">
+							<TabLink as={BasicLink} key={pageId} href={href} aria-current="page">
 								{page.label}
 							</TabLink>
 						)
 					}
 					return (
-						<Tooltip
-							key={pageId}
-							content={page.description}
-							render={<TabLink as={BasicLink} href={href} data-active={false} />}
-						>
+						<Tooltip key={pageId} content={page.description} render={<TabLink as={BasicLink} href={href} />}>
 							{page.label}
 						</Tooltip>
 					)

@@ -35,7 +35,7 @@ export function YieldsTabs({ active, rightSlot }: { active: YieldsTabId; rightSl
 				{TABS.map((tab) => {
 					const href = apyQuery ? `${tab.href}?${apyQuery}` : tab.href
 					return (
-						<TabLink as={BasicLink} key={tab.id} href={href} data-active={tab.id === active}>
+						<TabLink as={BasicLink} key={tab.id} href={href} aria-current={tab.id === active ? 'page' : undefined}>
 							{tab.label}
 						</TabLink>
 					)

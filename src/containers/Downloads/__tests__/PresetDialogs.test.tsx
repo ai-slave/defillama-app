@@ -108,17 +108,21 @@ test('rename starts in the named input, retains edits through rerender, and canc
 	expect(document.querySelector<HTMLInputElement>('[role="dialog"] input')!.value).toBe('First preset')
 })
 
-test('catalog navigation preserves visible search and category deselection without activating on arrow focus', async () => {
+test('catalog navigation preserves visible search and the category pick without activating on arrow focus', async () => {
 	await click(button('Datasets'))
-	const categories = document.querySelector('[role="group"][aria-label="Dataset categories"]')!
-	const all = categories.querySelector<HTMLButtonElement>('button')!
-	const category = categories.querySelectorAll<HTMLButtonElement>('button')[1]!
-	await click(category)
-	expect(category.getAttribute('aria-pressed')).toBe('true')
-	expect(all.getAttribute('aria-pressed')).toBe('false')
-	await click(category)
-	expect(category.getAttribute('aria-pressed')).toBe('false')
-	expect(all.getAttribute('aria-pressed')).toBe('true')
+	const categories = document.querySelector('[role="radiogroup"][aria-label="Dataset categories"]')!
+	const radios = [...categories.querySelectorAll<HTMLInputElement>('input[type="radio"]')]
+	const names = radios.map((radio) => radio.closest('label')!.textContent)
+	expect(names[0]).toMatch(/^All \d+$/)
+	const sections = () => [...container.querySelectorAll('[role="tabpanel"] h2')].map((heading) => heading.textContent)
+	await click(radios[1])
+	expect(radios.map((radio) => radio.checked).slice(0, 2)).toEqual([false, true])
+	const picked = names[1]!.replace(/ \d+$/, '')
+	expect(sections()).toEqual([picked])
+	expect(container.textContent).toContain(`in ${picked}`)
+	await click(radios[0])
+	expect(radios.map((radio) => radio.checked).slice(0, 2)).toEqual([true, false])
+	expect(sections().length).toBeGreaterThan(1)
 
 	const input = document.querySelector<HTMLInputElement>('input[inputmode="search"]')!
 	await act(async () => {

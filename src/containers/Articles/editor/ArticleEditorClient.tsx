@@ -11,6 +11,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { InlineStatus, PanelStatus } from '~/ui/Status'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import {
 	ArticleApiError,
 	createArticle,
@@ -40,7 +41,7 @@ import { ArticleCoverImageEditor } from './ArticleCoverImageEditor'
 import { ArticleEditorCanvas } from './ArticleEditorCanvas'
 import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } from './ArticleEditorControls'
 import { CoverDetailsDialog } from './ArticleEditorDialogs'
-import { ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
+import { ARTICLE_EDITOR_VIEWS, ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
 import { ArticleEditorPreview } from './ArticleEditorPreview'
 import type { PublishResult } from './ArticleEditorTypes'
 import {
@@ -845,7 +846,6 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		() => (viewMode === 'preview' ? buildPreviewArticle() : null),
 		[buildPreviewArticle, viewMode]
 	)
-	const handleViewModeChange = useCallback((mode: ArticleEditorViewMode) => setViewMode(mode), [])
 
 	if (isLoading) {
 		return <ResearchLoader />
@@ -960,45 +960,44 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		<div
 			className={`${styles.root} article-editor-shell relative mx-auto w-full max-w-[760px] animate-fadein px-4 pb-32 sm:px-6`}
 		>
-			<ArticleEditorHeader
-				article={article}
-				articleIsScheduled={articleIsScheduled}
-				nowSec={nowSec}
-				articleViewHref={articleViewHref}
-				beginSlugEdit={beginSlugEdit}
-				cancelSlugEdit={cancelSlugEdit}
-				commitSlugEdit={commitSlugEdit}
-				handleDeleteArticle={() => setConfirmDelete(true)}
-				handleDiscardPending={() => setConfirmDiscard(true)}
-				handlePublish={() => void publishFromHeader()}
-				handleUnpublish={handleUnpublish}
-				hasPendingEdits={hasPendingEdits}
-				isOwner={isOwner}
-				isPublished={isPublished}
-				isPublishing={isPublishing}
-				onOpenHistory={() => setHistoryOpen(true)}
-				onOpenMeta={openMeta}
-				pillState={pillState}
-				saveArticle={saveArticle}
-				savedAt={savedAt}
-				setSlugDraft={setSlugDraft}
-				slugDraft={slugDraft}
-				slugEditing={slugEditing}
-				viewMode={viewMode}
-				onViewModeChange={handleViewModeChange}
-			/>
-
-			{viewMode === 'preview' ? (
-				<ArticleEditorPreview
-					article={previewArticle ?? article}
+			<Tabs<ArticleEditorViewMode> value={viewMode} onValueChange={setViewMode} values={ARTICLE_EDITOR_VIEWS}>
+				<ArticleEditorHeader
+					article={article}
+					articleIsScheduled={articleIsScheduled}
+					nowSec={nowSec}
 					articleViewHref={articleViewHref}
-					isDirty={isDirty}
-					onEdit={() => handleViewModeChange('write')}
-					readMins={readMins}
-					wordCount={wordCount}
+					beginSlugEdit={beginSlugEdit}
+					cancelSlugEdit={cancelSlugEdit}
+					commitSlugEdit={commitSlugEdit}
+					handleDeleteArticle={() => setConfirmDelete(true)}
+					handleDiscardPending={() => setConfirmDiscard(true)}
+					handlePublish={() => void publishFromHeader()}
+					handleUnpublish={handleUnpublish}
+					hasPendingEdits={hasPendingEdits}
+					isOwner={isOwner}
+					isPublished={isPublished}
+					isPublishing={isPublishing}
+					onOpenHistory={() => setHistoryOpen(true)}
+					onOpenMeta={openMeta}
+					pillState={pillState}
+					saveArticle={saveArticle}
+					savedAt={savedAt}
+					setSlugDraft={setSlugDraft}
+					slugDraft={slugDraft}
+					slugEditing={slugEditing}
 				/>
-			) : (
-				<>
+
+				<TabPanel value="preview" unmountOnHide>
+					<ArticleEditorPreview
+						article={previewArticle ?? article}
+						articleViewHref={articleViewHref}
+						isDirty={isDirty}
+						onEdit={() => setViewMode('write')}
+						readMins={readMins}
+						wordCount={wordCount}
+					/>
+				</TabPanel>
+				<TabPanel value="write" unmountOnHide>
 					<ArticleTitleFields article={article} updateArticle={updateArticle} />
 
 					<ArticleCoverImageEditor
@@ -1037,8 +1036,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 						unsetActiveEntityLink={unsetActiveEntityLink}
 						wordCount={wordCount}
 					/>
-				</>
-			)}
+				</TabPanel>
+			</Tabs>
 
 			<ArticleMetaDialog
 				article={article}
