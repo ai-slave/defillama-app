@@ -3,8 +3,8 @@ import * as React from 'react'
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
-import { getDismissedAnnouncements } from '~/utils/cookies'
+import { trackUmamiEvent, UMAMI_READY_EVENT, type UmamiEventAttributes } from '~/utils/analytics/umami'
+import { getDismissedAnnouncements, subscribeToAnnouncementDismissals } from '~/utils/cookies'
 import { ANNOUNCEMENT_REGISTRY } from './registry'
 import { isLaunchOpen, type ResolvedAnnouncement, resolveAnnouncement } from './resolveAnnouncement'
 import { useUserInterests } from './useUserInterests'
@@ -12,8 +12,7 @@ import { useUserInterests } from './useUserInterests'
 /**
  * The page-wide announcement slot on the home and chain pages. Chain-to-chain navigation keeps the page
  * component mounted, so the slot is keyed by path: each page view starts its own selection, dismissal,
- * and impression. The close button must persist its cookie before the slot unmounts: never
- * synchronously dismiss this view from a capture handler above the button.
+ * and impression.
  */
 export function TargetedAnnouncement() {
 	const { asPath, pathname } = useRouter()
@@ -41,6 +40,9 @@ function PageViewAnnouncement({ page }: { page: string }) {
 	// Closing any banner empties the slot for the rest of this page view, even if the profile arrives
 	// afterwards and would have picked a different one.
 	const [dismissedThisView, setDismissedThisView] = React.useState(false)
+	// Follows the dismissal cookie rather than the close click, so the banner's own button writes the
+	// cookie before the slot empties.
+	React.useEffect(() => subscribeToAnnouncementDismissals(() => setDismissedThisView(true)), [])
 
 	// Dismissals from earlier page views are read once per resolution, not subscribed to.
 	const resolved = React.useMemo(
@@ -56,28 +58,18 @@ function PageViewAnnouncement({ page }: { page: string }) {
 	)
 
 	if (dismissedThisView || !resolved) return null
-	return (
-		<AnnouncementSlot
-			key={resolved.banner.id}
-			resolved={resolved}
-			page={page}
-			trackImpressions={canTarget}
-			onDismiss={() => setDismissedThisView(true)}
-		/>
-	)
+	return <AnnouncementSlot key={resolved.banner.id} resolved={resolved} page={page} trackImpressions={canTarget} />
 }
 
 function AnnouncementSlot({
 	resolved,
 	page,
-	trackImpressions,
-	onDismiss
+	trackImpressions
 }: {
 	resolved: ResolvedAnnouncement
 	/** The route template (`/` or `/chain/[chain]`), so events group by page type rather than by chain. */
 	page: string
 	trackImpressions: boolean
-	onDismiss: () => void
 }) {
 	// Only the final choice counts as an impression; the fallback shown while the profile loads is not one.
 	// Umami loads lazily, so a banner that settles before the script is ready sends once it fires.
@@ -94,17 +86,11 @@ function AnnouncementSlot({
 		return () => window.removeEventListener(UMAMI_READY_EVENT, send)
 	}, [trackImpressions, resolved, page])
 
-	const onClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-		const target = event.target as HTMLElement
-		if (target.closest('[data-announcement-dismiss]')) {
-			trackUmamiEvent('announcement-dismiss', eventDataFor(resolved, page))
-			setTimeout(onDismiss, 0)
-		} else if (target.closest('a, button')) {
-			trackUmamiEvent('announcement-click', eventDataFor(resolved, page))
-		}
-	}
-
-	return <div onClickCapture={onClickCapture}>{resolved.banner.render()}</div>
+	const data = eventDataFor(resolved, page)
+	return resolved.banner.render({
+		cta: umamiEventAttributes('announcement-click', data),
+		dismiss: umamiEventAttributes('announcement-dismiss', data)
+	})
 }
 
 function eventDataFor(resolved: ResolvedAnnouncement, page: string) {
@@ -117,4 +103,10 @@ function eventDataFor(resolved: ResolvedAnnouncement, page: string) {
 		default:
 			return { id, version, page, kind: resolved.kind }
 	}
+}
+
+function umamiEventAttributes(event: string, data: Record<string, string>): UmamiEventAttributes {
+	const attributes: UmamiEventAttributes = { 'data-umami-event': event }
+	for (const key in data) attributes[`data-umami-event-${key}`] = data[key]
+	return attributes
 }

@@ -1,5 +1,5 @@
 import { useAuthContext } from '~/auth'
-import { Announcement } from '~/components/Announcement'
+import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
 import { Icon } from '~/ui/Icon'
 
 /** Shared with the announcement registry; bump the version to re-show the banner to everyone. */
@@ -11,12 +11,13 @@ export const INVESTOR_RELATIONS_ANNOUNCEMENT = { id: 'investor-relations', versi
  * investors site can attribute the visit. Indigo, so it reads as a different message from the other
  * home-slot banners.
  */
-export function InvestorRelationsAnnouncement() {
+export function InvestorRelationsAnnouncement({ track }: { track: AnnouncementTracking }) {
 	const { user } = useAuthContext()
 	return (
 		<Announcement
 			announcementId={INVESTOR_RELATIONS_ANNOUNCEMENT.id}
 			version={INVESTOR_RELATIONS_ANNOUNCEMENT.version}
+			dismissTracking={track.dismiss}
 			className="border border-ir-announcement-border bg-(image:--ir-announcement-bg) text-ir-announcement-text shadow-ir-announcement"
 			contentClassName="text-center"
 			dismissButtonClassName="hover:bg-ir-announcement-dismiss"
@@ -31,6 +32,7 @@ export function InvestorRelationsAnnouncement() {
 					<span className="hidden lg:inline"> Verified metrics, reports, and investor calls in one place.</span>
 				</span>
 				<a
+					{...track.cta}
 					href={`https://investors.defillama.com${user?.id ? `?referrer=${user.id}` : ''}`}
 					target="_blank"
 					rel="noopener noreferrer"

@@ -1,4 +1,4 @@
-import { Announcement } from '~/components/Announcement'
+import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 
@@ -9,11 +9,12 @@ export const LLAMAAI_MOBILE_APP_ANNOUNCEMENT = { id: 'llamaai-mobile-app', versi
  * Cross-sell for readers who already use LlamaAI on the web: the same assistant in the DefiLlama app.
  * Blue, so it reads as a different message from the cream and gold LlamaAI promo and the gold Verified APY one.
  */
-export function LlamaAIMobileAppAnnouncement() {
+export function LlamaAIMobileAppAnnouncement({ track }: { track: AnnouncementTracking }) {
 	return (
 		<Announcement
 			announcementId={LLAMAAI_MOBILE_APP_ANNOUNCEMENT.id}
 			version={LLAMAAI_MOBILE_APP_ANNOUNCEMENT.version}
+			dismissTracking={track.dismiss}
 			className="relative overflow-hidden border border-app-announcement-border bg-(image:--app-announcement-bg) text-app-announcement-text shadow-app-announcement"
 			contentClassName="text-center"
 			dismissButtonClassName="hover:bg-app-announcement-dismiss"
@@ -26,6 +27,7 @@ export function LlamaAIMobileAppAnnouncement() {
 				</span>
 				<span className="font-medium">LlamaAI is now in the DefiLlama app.</span>
 				<BasicLink
+					{...track.cta}
 					href="/app"
 					className="inline-flex items-center gap-1 rounded-full bg-app-announcement-link px-2.5 py-0.5 title-sm text-app-announcement-text ring-1 ring-app-announcement-ring transition-colors hover:bg-app-announcement-link-hover"
 				>

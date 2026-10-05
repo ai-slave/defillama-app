@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 
+import { readFileSync } from 'node:fs'
+import { runInNewContext } from 'node:vm'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { UserInterestsResponse } from '~/api/users.types'
 import { PageClockProvider } from '~/hooks/usePageClock'
 import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
@@ -13,6 +15,7 @@ import {
 	getDismissedAnnouncements
 } from '~/utils/cookies'
 import pb from '~/utils/pocketbase'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -33,7 +36,46 @@ function serveInterests(profile: UserInterestsResponse) {
 function interestsRequests() {
 	return session.urls().filter((url) => url === INTERESTS_URL).length
 }
-const impressions = () => track.mock.calls.filter(([event]) => event === 'announcement-impression')
+
+/**
+ * Runs the real Umami tracker on this document, so a `data-umami-event` click sends the way it does in
+ * production. Its payloads arrive through the `data-before-send` hook instead of the network.
+ */
+const trackerEvents: Array<[string, unknown]> = []
+beforeAll(() => {
+	const script = {
+		src: 'https://defillama.com/script2.js',
+		getAttribute: (name: string) => ({ 'data-website-id': 'test', 'data-before-send': 'captureUmami' })[name] ?? null
+	}
+	const bound = (target: object, key: string | symbol) => {
+		const value = Reflect.get(target, key)
+		return typeof value === 'function' ? value.bind(target) : value
+	}
+	const trackerDocument = new Proxy(document, {
+		get: (target, key) => (key === 'currentScript' ? script : bound(target, key))
+	})
+	const captureUmami = (type: string, payload: { name?: string; data?: unknown }) => {
+		if (type === 'event' && payload.name) trackerEvents.push([payload.name, payload.data])
+		return null
+	}
+	const ownKeys: Record<string | symbol, unknown> = {
+		document: trackerDocument,
+		history: { pushState: () => {}, replaceState: () => {} },
+		// The app's own sink stays `window.umami`; the tracker only needs to see one is installed.
+		umami: {},
+		captureUmami
+	}
+	const trackerWindow = new Proxy(window, {
+		get: (target, key) => (key in ownKeys ? ownKeys[key] : bound(target, key))
+	})
+	runInNewContext(readFileSync('public/script2.js', 'utf8'), { window: trackerWindow, fetch, setTimeout, URL })
+})
+beforeEach(() => {
+	trackerEvents.length = 0
+})
+/** Every event Umami receives: from `trackUmamiEvent` and from the tracker's attribute clicks. */
+const sent = () => [...track.mock.calls.map(([event, data]) => [event, data] as [string, unknown]), ...trackerEvents]
+const impressions = () => sent().filter(([event]) => event === 'announcement-impression')
 
 const clearCookie = () => {
 	document.cookie = `${ANNOUNCEMENT_DISMISSALS_COOKIE_NAME}=; expires=${new Date(0).toUTCString()}; path=/`
@@ -59,9 +101,10 @@ describe('TargetedAnnouncement', () => {
 	const waitForText = (expected: string) => waitForUi(() => expect(text()).toContain(expected), { timeout: 1000 })
 	const waitForImpression = () => waitForUi(() => expect(impressions()).toHaveLength(1), { timeout: 1000 })
 
+	// Clicks the X's icon, not the button itself, as a reader does.
 	function dismiss() {
-		const button = container.querySelector<HTMLButtonElement>('[data-announcement-dismiss]')!
-		return act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+		const icon = container.querySelector('button svg')!
+		return act(async () => icon.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
 
 	beforeEach(() => {
@@ -104,7 +147,7 @@ describe('TargetedAnnouncement', () => {
 			track.mockClear()
 			const link = container.querySelector<HTMLAnchorElement>('a[href="/ai"]')!
 			await act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
-			expect(track.mock.calls).toEqual([
+			expect(sent()).toEqual([
 				[
 					'announcement-click',
 					{ id: 'llamaai-promo', version: expect.any(String), page: '/chain/[chain]', kind: 'launch' }
@@ -232,7 +275,44 @@ describe('TargetedAnnouncement', () => {
 
 			await dismiss()
 			expect(text()).toBe('')
-			expect(track).toHaveBeenCalledWith('announcement-dismiss', expect.objectContaining({ id: 'llamaai-mobile-app' }))
+			expect(sent().filter(([event]) => event === 'announcement-dismiss')).toEqual([
+				[
+					'announcement-dismiss',
+					{
+						id: 'llamaai-mobile-app',
+						version: expect.any(String),
+						page: '/chain/[chain]',
+						kind: 'targeted',
+						category: 'llamaai'
+					}
+				]
+			])
+		})
+
+		test('the Verified APY unlock counts one banner click, and clicks inside its modal count none', async () => {
+			session.serve({
+				'/subscription/status': fixtureStatus(404, { message: 'No active subscription' }),
+				'/subscription/trial-available': { trialAvailable: false }
+			})
+			serveInterests({ interests: [{ category: 'yields', score: 0.5 }], segments: [] })
+			await render()
+			await waitForText('Verified APY')
+			const unlock = [...container.querySelectorAll('button')].find((button) => button.textContent?.includes('Unlock'))!
+			await act(async () => unlock.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+			const dialog = await waitForUi(
+				() => {
+					const element = document.querySelector('[role="dialog"]')
+					expect(element).not.toBeNull()
+					return element!
+				},
+				{ timeout: 2000 }
+			)
+			for (const button of dialog.querySelectorAll('button')) {
+				await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+			}
+			expect(sent().filter(([event]) => event === 'announcement-click')).toEqual([
+				['announcement-click', expect.objectContaining({ id: 'verified-apy', category: 'yields' })]
+			])
 		})
 
 		test('navigating to another chain resolves again and skips the banners dismissed earlier', async () => {

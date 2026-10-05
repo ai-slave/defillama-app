@@ -20,7 +20,7 @@
 
 - Before editing a folder, read the nearest `README.md` in it or its parents.
 - When fixing a reported problem, also fix what allowed it: the rule where it lives (design.md, a component header, a folder README), a shared `src/ui` component, or a policy check when the rule is mechanical. A fix at one call site leaves the same mistake on the next page.
-- Before calling UI work done, look at it in the browser at desktop width and at the 375px mobile preset, in light and dark mode. Tests do not show layout, wrapping or contrast.
+- Before calling UI work done, look at it in the browser at desktop width and at the 375px mobile preset. Check dark mode too when the change touches colors, tokens or surfaces. Tests do not show layout, wrapping or contrast.
 
 ## Before you change it, read
 

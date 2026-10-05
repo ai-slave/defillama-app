@@ -1,4 +1,4 @@
-import { Announcement } from '~/components/Announcement'
+import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 
@@ -10,11 +10,12 @@ export const ENTERPRISE_DATA_ANNOUNCEMENT = { id: 'enterprise-data', version: '2
  * funds already pay for Pro, and API and enterprise plans are the step beyond it. Teal, so it reads as
  * a different message from the other home-slot banners.
  */
-export function EnterpriseDataAnnouncement() {
+export function EnterpriseDataAnnouncement({ track }: { track: AnnouncementTracking }) {
 	return (
 		<Announcement
 			announcementId={ENTERPRISE_DATA_ANNOUNCEMENT.id}
 			version={ENTERPRISE_DATA_ANNOUNCEMENT.version}
+			dismissTracking={track.dismiss}
 			className="border border-data-announcement-border bg-(image:--data-announcement-bg) text-data-announcement-text shadow-data-announcement"
 			contentClassName="text-center"
 			dismissButtonClassName="hover:bg-data-announcement-dismiss"
@@ -29,6 +30,7 @@ export function EnterpriseDataAnnouncement() {
 					<span className="hidden lg:inline">: API access, bulk downloads, and enterprise plans</span>.
 				</span>
 				<BasicLink
+					{...track.cta}
 					href="/subscription"
 					className="inline-flex items-center gap-1 rounded-full bg-data-announcement-link px-2.5 py-0.5 title-sm text-data-announcement-text ring-1 ring-data-announcement-ring transition-colors hover:bg-data-announcement-link-hover"
 				>

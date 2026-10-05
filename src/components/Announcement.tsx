@@ -1,12 +1,16 @@
 import clsx from 'clsx'
 import * as React from 'react'
 import { Icon } from '~/ui/Icon'
+import type { UmamiEventAttributes } from '~/utils/analytics/umami'
 import {
 	createAnnouncementDismissalToken,
 	dismissAnnouncement,
 	isAnnouncementDismissed,
 	subscribeToAnnouncementDismissals
 } from '~/utils/cookies'
+
+/** Click events for a banner the page measures: its one call to action and its close button. */
+export type AnnouncementTracking = { cta: UmamiEventAttributes; dismiss: UmamiEventAttributes }
 
 type DismissibleAnnouncementProps = {
 	children: React.ReactNode
@@ -17,6 +21,8 @@ type DismissibleAnnouncementProps = {
 	contentClassName?: string
 	dismissButtonClassName?: string
 	dismissLabel?: string
+	/** Sends this event when the reader closes the banner. */
+	dismissTracking?: UmamiEventAttributes
 }
 
 type PermanentAnnouncementProps = {
@@ -28,6 +34,7 @@ type PermanentAnnouncementProps = {
 	dismissLabel?: string
 	announcementId?: never
 	version?: never
+	dismissTracking?: never
 }
 
 type AnnouncementProps = DismissibleAnnouncementProps | PermanentAnnouncementProps
@@ -39,7 +46,8 @@ export function Announcement(props: AnnouncementProps) {
 		className,
 		contentClassName,
 		dismissButtonClassName,
-		dismissLabel = 'Close'
+		dismissLabel = 'Close',
+		dismissTracking
 	} = props
 	const dismissalToken = props.notCancellable
 		? null
@@ -78,7 +86,7 @@ export function Announcement(props: AnnouncementProps) {
 			{!notCancellable ? (
 				<button
 					type="button"
-					data-announcement-dismiss
+					{...dismissTracking}
 					className={clsx(
 						'flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-surface-elevated-1',
 						dismissButtonClassName

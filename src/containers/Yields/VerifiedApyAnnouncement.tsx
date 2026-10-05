@@ -1,4 +1,4 @@
-import { Announcement } from '~/components/Announcement'
+import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
 import { SealGlyph } from './Tables/Measured'
 import { useSubscribeProModal } from './useSubscribeProModal'
 import { useVerifiedAccess } from './useVerifiedAccess'
@@ -16,9 +16,12 @@ export const VERIFIED_APY_ANNOUNCEMENT = { id: 'verified-apy', version: '2026-09
  */
 export function VerifiedApyAnnouncement({
 	placement = 'banner',
-	hasAccess: hasAccessFromProps = false
+	hasAccess: hasAccessFromProps = false,
+	track
 }: {
 	placement?: string
+	/** Set only in the home slot, which measures its banners. */
+	track?: AnnouncementTracking
 	/** The page's own verdict (server-rendered for a subscriber) so their HTML never carries the strip. */
 	hasAccess?: boolean
 }) {
@@ -36,6 +39,7 @@ export function VerifiedApyAnnouncement({
 				contentClassName="flex items-center gap-x-3 gap-y-2 py-0.5 pl-1.5 text-left sm:flex-wrap"
 				dismissButtonClassName="hover:bg-verified-announcement-dismiss"
 				dismissLabel="Dismiss"
+				dismissTracking={track?.dismiss}
 			>
 				<SealGlyph size={16} className="text-verified-announcement-seal" />
 				<span className="flex-1 sm:min-w-48">
@@ -47,6 +51,7 @@ export function VerifiedApyAnnouncement({
 				</span>
 				<button
 					type="button"
+					{...track?.cta}
 					onClick={show}
 					className="ml-auto shrink-0 rounded-lg bg-verified-announcement-button px-3 py-1.5 label-sm text-verified-announcement-button-text transition-colors hover:bg-verified-announcement-button-hover"
 				>

@@ -1,5 +1,6 @@
 import type * as React from 'react'
 import type { InterestCategory, UserSegment } from '~/api/users.types'
+import type { AnnouncementTracking } from '~/components/Announcement'
 import { VERIFIED_APY_ANNOUNCEMENT, VerifiedApyAnnouncement } from '../Yields/VerifiedApyAnnouncement'
 import { ENTERPRISE_DATA_ANNOUNCEMENT, EnterpriseDataAnnouncement } from './EnterpriseDataAnnouncement'
 import { INVESTOR_RELATIONS_ANNOUNCEMENT, InvestorRelationsAnnouncement } from './InvestorRelationsAnnouncement'
@@ -11,7 +12,7 @@ export interface BannerDefinition {
 	id: string
 	/** The date the copy or offer changed. Bumping it re-shows the banner to everyone who dismissed it. */
 	version: string
-	render: () => React.ReactNode
+	render: (track: AnnouncementTracking) => React.ReactNode
 	/** An upsell a subscriber already owns: never pick it for them. */
 	hideForSubscribers?: true
 }
@@ -37,26 +38,32 @@ export interface AnnouncementRegistry {
 	fallback: BannerDefinition
 }
 
-const llamaAIPromo: BannerDefinition = { ...LLAMAAI_PROMO_ANNOUNCEMENT, render: () => <LlamaAIPromoAnnouncement /> }
+const llamaAIPromo: BannerDefinition = {
+	...LLAMAAI_PROMO_ANNOUNCEMENT,
+	render: (track) => <LlamaAIPromoAnnouncement track={track} />
+}
 
 export const ANNOUNCEMENT_REGISTRY: AnnouncementRegistry = {
 	launch: llamaAIPromo,
 	segments: {
-		crypto_project: { ...INVESTOR_RELATIONS_ANNOUNCEMENT, render: () => <InvestorRelationsAnnouncement /> },
+		crypto_project: {
+			...INVESTOR_RELATIONS_ANNOUNCEMENT,
+			render: (track) => <InvestorRelationsAnnouncement track={track} />
+		},
 		// A fund reading yields is probably providing liquidity, which is what Verified APY is for.
 		fund_institutional: {
 			...ENTERPRISE_DATA_ANNOUNCEMENT,
 			deferTo: ['yields'],
-			render: () => <EnterpriseDataAnnouncement />
+			render: (track) => <EnterpriseDataAnnouncement track={track} />
 		}
 	},
 	targeted: {
 		yields: {
 			...VERIFIED_APY_ANNOUNCEMENT,
 			hideForSubscribers: true,
-			render: () => <VerifiedApyAnnouncement placement="home-banner" />
+			render: (track) => <VerifiedApyAnnouncement placement="home-banner" track={track} />
 		},
-		llamaai: { ...LLAMAAI_MOBILE_APP_ANNOUNCEMENT, render: () => <LlamaAIMobileAppAnnouncement /> }
+		llamaai: { ...LLAMAAI_MOBILE_APP_ANNOUNCEMENT, render: (track) => <LlamaAIMobileAppAnnouncement track={track} /> }
 	},
 	fallback: llamaAIPromo
 }

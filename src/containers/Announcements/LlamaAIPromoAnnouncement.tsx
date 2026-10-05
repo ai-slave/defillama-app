@@ -1,4 +1,4 @@
-import { Announcement } from '~/components/Announcement'
+import { Announcement, type AnnouncementTracking } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { WELCOME_WEEK_ALLOWANCE } from '~/containers/LlamaAI/freePlanCopy'
 
@@ -9,11 +9,12 @@ export const LLAMAAI_PROMO_ANNOUNCEMENT = { id: 'llamaai-promo', version: '2026-
  * Cream with a deep gold badge and the header's gold Try LlamaAI pill in light, LlamaAI ink in dark. Gold fills only the
  * badge and the pill, so it reads apart from the all-gold Verified APY banner and the blue app one.
  */
-export function LlamaAIPromoAnnouncement() {
+export function LlamaAIPromoAnnouncement({ track }: { track: AnnouncementTracking }) {
 	return (
 		<Announcement
 			announcementId={LLAMAAI_PROMO_ANNOUNCEMENT.id}
 			version={LLAMAAI_PROMO_ANNOUNCEMENT.version}
+			dismissTracking={track.dismiss}
 			className="relative overflow-hidden border border-llamaai-announcement-border bg-(image:--llamaai-announcement-bg) text-llamaai-announcement-text shadow-llamaai-announcement"
 			contentClassName="text-center"
 			dismissButtonClassName="hover:bg-llamaai-announcement-dismiss"
@@ -25,6 +26,7 @@ export function LlamaAIPromoAnnouncement() {
 				</span>
 				<span className="font-medium">{`Ask LlamaAI anything about DeFi — ${WELCOME_WEEK_ALLOWANCE}.`}</span>
 				<BasicLink
+					{...track.cta}
 					href="/ai"
 					className="inline-flex items-center rounded-full bg-llamaai-announcement-link px-2.5 py-0.5 title-sm text-llamaai-announcement-link-text ring-1 ring-llamaai-announcement-ring transition-colors hover:bg-llamaai-announcement-link-hover"
 				>
