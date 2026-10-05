@@ -12,7 +12,8 @@ import { useUserInterests } from './useUserInterests'
 /**
  * The page-wide announcement slot on the home and chain pages. Chain-to-chain navigation keeps the page
  * component mounted, so the slot is keyed by path: each page view starts its own selection, dismissal,
- * and impression.
+ * and impression. The close button must persist its cookie before the slot unmounts: never
+ * synchronously dismiss this view from a capture handler above the button.
  */
 export function TargetedAnnouncement() {
 	const { asPath, pathname } = useRouter()
@@ -97,7 +98,7 @@ function AnnouncementSlot({
 		const target = event.target as HTMLElement
 		if (target.closest('[data-announcement-dismiss]')) {
 			trackUmamiEvent('announcement-dismiss', eventDataFor(resolved, page))
-			onDismiss()
+			setTimeout(onDismiss, 0)
 		} else if (target.closest('a, button')) {
 			trackUmamiEvent('announcement-click', eventDataFor(resolved, page))
 		}

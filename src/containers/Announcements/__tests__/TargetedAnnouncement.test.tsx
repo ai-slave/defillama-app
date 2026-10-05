@@ -9,7 +9,8 @@ import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import {
 	ANNOUNCEMENT_DISMISSALS_COOKIE_NAME,
 	createAnnouncementDismissalToken,
-	dismissAnnouncement
+	dismissAnnouncement,
+	getDismissedAnnouncements
 } from '~/utils/cookies'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -128,6 +129,21 @@ describe('TargetedAnnouncement', () => {
 			})
 			expect(text()).toBe('')
 			expect(impressions()).toEqual([])
+		})
+
+		test('closing the promo persists its dismissal across page views', async () => {
+			pb.authStore.clear()
+			await render()
+			await waitForText(PROMO_TEXT)
+
+			await dismiss()
+			expect(getDismissedAnnouncements()).toContain(
+				createAnnouncementDismissalToken(LLAMAAI_PROMO_ANNOUNCEMENT.id, LLAMAAI_PROMO_ANNOUNCEMENT.version)
+			)
+
+			route.asPath = '/chain/arbitrum'
+			await render()
+			expect(text()).toBe('')
 		})
 
 		test('clock ticks keep the banner and count one impression', async () => {
