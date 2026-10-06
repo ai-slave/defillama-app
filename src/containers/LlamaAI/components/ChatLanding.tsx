@@ -52,7 +52,6 @@ export interface ChatLandingProps {
 	freeUsage?: FreeUsage | null
 	onFactCheckedGated?: () => void
 	onAttachmentsGated?: () => void
-	onOpenAlerts: () => void
 	isAlertsModalOpen: boolean
 	quotedText?: string | null
 	onClearQuotedText?: () => void
@@ -80,7 +79,6 @@ export function ChatLanding({
 	freeUsage,
 	onFactCheckedGated,
 	onAttachmentsGated,
-	onOpenAlerts,
 	isAlertsModalOpen,
 	quotedText,
 	onClearQuotedText,
@@ -189,7 +187,6 @@ export function ChatLanding({
 							factCheckedUsage={factCheckedUsage}
 							onFactCheckedGated={onFactCheckedGated}
 							onAttachmentsGated={onAttachmentsGated}
-							onOpenAlerts={onOpenAlerts}
 							quotedText={quotedText}
 							onClearQuotedText={onClearQuotedText}
 							enterToSend={enterToSend}
@@ -197,7 +194,7 @@ export function ChatLanding({
 						/>
 					</div>
 					<FreeUsageNote usage={freeUsage} showBonus={false} className="-mt-1 px-4 lg:hidden" />
-					<CapabilityRow promptInputRef={promptInputRef} onOpenAlerts={onOpenAlerts} />
+					<CapabilityRow promptInputRef={promptInputRef} />
 				</>
 			) : null}
 
@@ -215,13 +212,7 @@ export function ChatLanding({
 	)
 }
 
-function CapabilityRow({
-	promptInputRef,
-	onOpenAlerts
-}: {
-	promptInputRef: RefObject<HTMLTextAreaElement | null>
-	onOpenAlerts: () => void
-}) {
+function CapabilityRow({ promptInputRef }: { promptInputRef: RefObject<HTMLTextAreaElement | null> }) {
 	const rowRef = useRef<HTMLDivElement>(null)
 	const getAnchorRect = useCallback(() => {
 		const el = rowRef.current
@@ -236,25 +227,8 @@ function CapabilityRow({
 				{FEATURED_CAPABILITIES.map((cap) => (
 					<Capability key={cap.key} cap={cap} promptInputRef={promptInputRef} getAnchorRect={getAnchorRect} />
 				))}
-				<SetAlertChip onOpenAlerts={onOpenAlerts} />
 			</div>
 		</div>
-	)
-}
-
-function SetAlertChip({ onOpenAlerts }: { onOpenAlerts: () => void }) {
-	return (
-		<Button
-			type="button"
-			size="md"
-			onClick={() => {
-				trackUmamiEvent('llamaai-alerts-open', { source: 'landing' })
-				onOpenAlerts()
-			}}
-		>
-			<Icon name="calendar-plus" height={14} width={14} className="text-warning" />
-			Set an alert
-		</Button>
 	)
 }
 

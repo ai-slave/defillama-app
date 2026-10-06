@@ -722,6 +722,7 @@ function SidebarItem({
 	'data-umami-event'?: string
 	'data-umami-event-action'?: string
 	'data-umami-event-source'?: string
+	'data-walkthrough'?: string
 }) {
 	if (folded) {
 		return (
@@ -904,6 +905,7 @@ function AlertsItem({
 			folded={folded}
 			label="Alerts"
 			tooltip={typeof alertsCount === 'number' ? `Alerts (${alertsCount})` : 'Alerts'}
+			data-walkthrough="alerts-item"
 			icon={
 				<span className="relative flex shrink-0">
 					<Icon name="calendar-plus" height={16} width={16} />

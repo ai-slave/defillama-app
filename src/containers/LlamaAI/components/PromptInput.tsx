@@ -20,7 +20,6 @@ import { useMedia } from '~/hooks/useMedia'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { useFileDropTarget } from './FileDrop'
 
@@ -76,7 +75,6 @@ interface PromptInputProps {
 	onFactCheckedGated?: () => void
 	/** Set when attachments cannot be sent yet (signed out): attaching calls this instead of adding a file. */
 	onAttachmentsGated?: () => void
-	onOpenAlerts?: () => void
 	quotedText?: string | null
 	onClearQuotedText?: () => void
 	enterToSend: boolean
@@ -123,7 +121,6 @@ export function PromptInput({
 	factCheckedUsage,
 	onFactCheckedGated,
 	onAttachmentsGated,
-	onOpenAlerts,
 	quotedText,
 	onClearQuotedText,
 	enterToSend,
@@ -591,26 +588,6 @@ export function PromptInput({
 						isPending={isPending}
 						isStreaming={isStreaming}
 					/>
-					{onOpenAlerts ? (
-						<Tooltip
-							content="Create & manage alerts"
-							render={
-								<Button
-									type="button"
-									size="md"
-									variant="ghost"
-									onClick={() => {
-										trackUmamiEvent('llamaai-alerts-open', { source: 'toolbar' })
-										onOpenAlerts()
-									}}
-									data-walkthrough="alerts-button"
-								/>
-							}
-						>
-							<Icon name="calendar-plus" height={14} width={14} className="text-warning" />
-							Alerts
-						</Tooltip>
-					) : null}
 				</div>
 				<MobileToolsPopover
 					mode={mode}
@@ -618,7 +595,6 @@ export function PromptInput({
 					researchUsage={researchUsage}
 					factCheckedUsage={factCheckedUsage}
 					onFactCheckedGated={onFactCheckedGated}
-					onOpenAlerts={onOpenAlerts}
 					onPromptSelect={(prompt, categoryKey) => {
 						if (categoryKey === 'research') {
 							setMode('research')

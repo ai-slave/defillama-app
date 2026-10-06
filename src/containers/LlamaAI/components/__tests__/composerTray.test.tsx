@@ -60,7 +60,6 @@ async function draw(submitMode: PromptSubmitMode) {
 		handleActionClick: noop,
 		mode: 'quick',
 		setMode: noop,
-		onOpenAlerts: noop,
 		enterToSend: true
 	}
 	await act(async () =>

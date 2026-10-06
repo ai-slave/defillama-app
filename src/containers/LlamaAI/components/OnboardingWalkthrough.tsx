@@ -50,24 +50,18 @@ type Step =
 	| 'mobile-upload'
 	| 'mobile-research'
 	| 'mobile-explore'
-	| 'mobile-alerts'
 	| 'prompts'
 
 const DESKTOP_STEPS: Array<Step> = ['intro', 'explore', 'alerts', 'upload', 'research', 'prompts']
-const MOBILE_STEPS: Array<Step> = [
-	'intro',
-	'mobile-upload',
-	'mobile-explore',
-	'mobile-alerts',
-	'mobile-research',
-	'prompts'
-]
+// Below lg the sidebar is a closed drawer whose folded rail stays in the DOM hidden, so the alerts step is left out.
+const TABLET_STEPS: Array<Step> = ['intro', 'explore', 'upload', 'research', 'prompts']
+const MOBILE_STEPS: Array<Step> = ['intro', 'mobile-upload', 'mobile-explore', 'mobile-research', 'prompts']
 
 // Variant B: short walkthrough (intro → research → prompts)
 const DESKTOP_STEPS_SHORT: Array<Step> = ['intro', 'research', 'prompts']
 const MOBILE_STEPS_SHORT: Array<Step> = ['intro', 'mobile-research', 'prompts']
 
-const MOBILE_DRAWER_STEPS = new Set<Step>(['mobile-upload', 'mobile-research', 'mobile-explore', 'mobile-alerts'])
+const MOBILE_DRAWER_STEPS = new Set<Step>(['mobile-upload', 'mobile-research', 'mobile-explore'])
 const RESEARCH_STEPS = new Set<Step>(['research', 'mobile-research'])
 
 interface SpotlightConfig {
@@ -76,7 +70,7 @@ interface SpotlightConfig {
 	description: string
 	icon: 'layout-grid' | 'calendar-plus' | 'image-plus' | 'search' | 'plus'
 	tone: 'brand' | 'warning' | 'success'
-	position: 'above' | 'below'
+	placement: 'top' | 'right'
 }
 
 const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
@@ -87,16 +81,16 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, on-chain, and more.',
 		icon: 'layout-grid',
 		tone: 'brand',
-		position: 'above'
+		placement: 'top'
 	},
 	alerts: {
-		selectors: ['[data-walkthrough="alerts-button"]'],
+		selectors: ['[data-walkthrough="alerts-item"]'],
 		title: 'Scheduled alerts',
 		description:
-			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. This button is for managing them.',
+			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. Manage them here.',
 		icon: 'calendar-plus',
 		tone: 'warning',
-		position: 'above'
+		placement: 'right'
 	},
 	upload: {
 		selectors: ['[data-walkthrough="image-upload"]'],
@@ -104,7 +98,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		description: 'Upload images, PDFs, or CSVs and ask LlamaAI to analyze them — charts, reports, datasets, anything.',
 		icon: 'image-plus',
 		tone: 'success',
-		position: 'above'
+		placement: 'top'
 	},
 	research: {
 		selectors: ['[data-walkthrough="mode-toggle"]'],
@@ -112,7 +106,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		description: '', // Dynamic — set at render time based on isTrial
 		icon: 'search',
 		tone: 'brand',
-		position: 'above'
+		placement: 'top'
 	},
 	'mobile-upload': {
 		selectors: ['[data-walkthrough="mobile-upload-item"]'],
@@ -120,7 +114,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		description: 'Upload images, PDFs, or CSVs and ask LlamaAI to analyze them — charts, reports, datasets, anything.',
 		icon: 'image-plus',
 		tone: 'success',
-		position: 'above'
+		placement: 'top'
 	},
 	'mobile-research': {
 		selectors: ['[data-walkthrough="mobile-research-item"]'],
@@ -128,7 +122,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 		description: '', // Dynamic — set at render time based on isTrial
 		icon: 'search',
 		tone: 'brand',
-		position: 'above'
+		placement: 'top'
 	},
 	'mobile-explore': {
 		selectors: ['[data-walkthrough="mobile-explore-item"]'],
@@ -137,16 +131,7 @@ const SPOTLIGHT_CONFIGS: Partial<Record<Step, SpotlightConfig>> = {
 			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, on-chain, and more.',
 		icon: 'layout-grid',
 		tone: 'brand',
-		position: 'above'
-	},
-	'mobile-alerts': {
-		selectors: ['[data-walkthrough="mobile-alerts-item"]'],
-		title: 'Scheduled alerts',
-		description:
-			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. This button is for managing them.',
-		icon: 'calendar-plus',
-		tone: 'warning',
-		position: 'above'
+		placement: 'top'
 	}
 }
 
@@ -179,6 +164,7 @@ export function OnboardingWalkthrough({
 	const [step, setStep] = useState<Step>('intro')
 	const [spotlight, setSpotlight] = useState<{ step: Step; rect: DOMRect; expanded: boolean } | null>(null)
 	const isMobile = useMedia('(max-width: 639px)')
+	const isBelowLg = useMedia('(max-width: 1023px)')
 
 	// A/B experiment: full steps (A) vs short steps (B)
 	const { user, isTrial, hasActiveSubscription } = useAuthContext()
@@ -190,13 +176,16 @@ export function OnboardingWalkthrough({
 		trackUmamiEvent('llamaai-walkthrough-assigned', { variant })
 	}, [variant])
 
-	const steps = isMobile
-		? variant === 'B'
-			? MOBILE_STEPS_SHORT
-			: MOBILE_STEPS
-		: variant === 'B'
-			? DESKTOP_STEPS_SHORT
-			: DESKTOP_STEPS
+	const steps =
+		variant === 'B'
+			? isMobile
+				? MOBILE_STEPS_SHORT
+				: DESKTOP_STEPS_SHORT
+			: isMobile
+				? MOBILE_STEPS
+				: isBelowLg
+					? TABLET_STEPS
+					: DESKTOP_STEPS
 	const currentStep = RESEARCH_STEPS.has(step) && isResearchMode ? 'prompts' : step
 	const spotlightRect = spotlight?.step === currentStep ? spotlight.rect : null
 	const targetExpanded = spotlight?.step === currentStep && spotlight.expanded
@@ -469,7 +458,7 @@ export function OnboardingWalkthrough({
 						/>
 
 						{/* Tooltip card */}
-						<Ariakit.PopoverProvider key={currentStep} placement={config.position === 'above' ? 'top' : 'bottom'}>
+						<Ariakit.PopoverProvider key={currentStep} placement={config.placement}>
 							<Ariakit.Popover
 								open
 								getAnchorRect={() => spotlightRect}

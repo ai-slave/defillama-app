@@ -43,7 +43,6 @@ function renderLanding(session: ReturnType<typeof installSubscriberSession>) {
 					isStreaming={false}
 					mode="quick"
 					setMode={() => {}}
-					onOpenAlerts={() => {}}
 					isAlertsModalOpen={false}
 					enterToSend
 					holdWalkthrough={false}

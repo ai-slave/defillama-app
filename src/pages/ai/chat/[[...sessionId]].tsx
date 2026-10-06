@@ -145,7 +145,6 @@ function SignedOutChat() {
 								isStreaming={false}
 								mode={mode}
 								setMode={setMode}
-								onOpenAlerts={() => askToSignIn(null)}
 								onAttachmentsGated={() => askToSignIn(null)}
 								isAlertsModalOpen={false}
 								enterToSend

@@ -27,7 +27,7 @@ function Harness() {
 					<Ariakit.PopoverDismiss>Close capabilities</Ariakit.PopoverDismiss>
 				</Ariakit.Popover>
 			</Ariakit.PopoverProvider>
-			<Ariakit.DialogDisclosure store={alerts} data-walkthrough="alerts-button">
+			<Ariakit.DialogDisclosure store={alerts} data-walkthrough="alerts-item">
 				Alerts
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog store={alerts} aria-label="Alerts">
@@ -138,6 +138,27 @@ test('opening Alerts pauses the tour and closing it resumes the same step', asyn
 	await waitForUi(() => expect(button('Try this control')).toBeDefined())
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Step 3 of 6')
 	expect(complete).not.toHaveBeenCalled()
+})
+
+test('on a tablet the tour leaves out Alerts, whose sidebar row is mounted but hidden', async () => {
+	await act(async () => root.unmount())
+	vi.stubGlobal('matchMedia', (query: string) => ({
+		matches: query === '(max-width: 1023px)',
+		media: query,
+		addEventListener: () => {},
+		removeEventListener: () => {}
+	}))
+	try {
+		root = createRoot(container)
+		await act(async () => root.render(<Harness />))
+		await click('Show me around')
+		await click('Next')
+		await click('Try this control')
+		expect(document.activeElement).toBe(button('Upload'))
+		expect(document.querySelector('[role="status"]')?.textContent).toBe('Step 3 of 5')
+	} finally {
+		vi.unstubAllGlobals()
+	}
 })
 
 test('skipping the tour on a phone during a drawer step closes the tools drawer it opened', async () => {

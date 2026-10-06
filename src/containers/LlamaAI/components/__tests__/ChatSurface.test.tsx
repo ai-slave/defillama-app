@@ -54,7 +54,6 @@ function surface(promptInputRef: RefObject<HTMLTextAreaElement | null>, animateL
 		isStreaming: false,
 		mode: 'quick',
 		setMode: noop,
-		onOpenAlerts: noop,
 		isAlertsModalOpen: false,
 		enterToSend: true,
 		holdWalkthrough: false
@@ -96,7 +95,6 @@ function surface(promptInputRef: RefObject<HTMLTextAreaElement | null>, animateL
 		handleActionClick: noop,
 		mode: 'quick',
 		setMode: noop,
-		onOpenAlerts: noop,
 		enterToSend: true
 	}
 	return (

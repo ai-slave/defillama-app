@@ -112,7 +112,6 @@ export interface ConversationViewModel {
 	factCheckedUsage?: FactCheckedUsage | null
 	onFactCheckedGated?: () => void
 	factCheckPhase?: 'drafting' | 'verifying' | 'finalizing' | null
-	onOpenAlerts: () => void
 	quotedText?: string | null
 	onClearQuotedText?: () => void
 	enterToSend: boolean
@@ -435,7 +434,6 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		factCheckedUsage,
 		onFactCheckedGated,
 		factCheckPhase,
-		onOpenAlerts,
 		quotedText,
 		onClearQuotedText,
 		enterToSend,
@@ -960,7 +958,6 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 						researchUsage={researchUsage}
 						factCheckedUsage={factCheckedUsage}
 						onFactCheckedGated={onFactCheckedGated}
-						onOpenAlerts={onOpenAlerts}
 						quotedText={quotedText}
 						onClearQuotedText={onClearQuotedText}
 						enterToSend={enterToSend}

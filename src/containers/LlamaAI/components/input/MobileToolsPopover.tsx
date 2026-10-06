@@ -7,7 +7,6 @@ import { Icon } from '~/ui/Icon'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { NestedDrawerHeader, PopoverSurface } from '~/ui/PopoverSurface'
-import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {
 	mode: AgenticAnswerMode
@@ -15,7 +14,6 @@ interface MobileToolsPopoverProps {
 	researchUsage?: ResearchUsage | null
 	factCheckedUsage?: FactCheckedUsage | null
 	onFactCheckedGated?: () => void
-	onOpenAlerts?: () => void
 	onPromptSelect: (prompt: string, categoryKey?: string) => void
 	onImageUploadClick: () => void
 	isPending: boolean
@@ -32,7 +30,6 @@ export function MobileToolsPopover({
 	researchUsage,
 	factCheckedUsage,
 	onFactCheckedGated,
-	onOpenAlerts,
 	onPromptSelect,
 	onImageUploadClick,
 	isPending,
@@ -47,12 +44,6 @@ export function MobileToolsPopover({
 	const handlePromptSelect = (prompt: string, categoryKey?: string) => {
 		menu.hideAll()
 		onPromptSelect(prompt, categoryKey)
-	}
-
-	const handleOpenAlerts = () => {
-		menu.hideAll()
-		trackUmamiEvent('llamaai-alerts-open', { source: 'mobile' })
-		onOpenAlerts?.()
 	}
 
 	const handleImageUpload = () => {
@@ -174,18 +165,6 @@ export function MobileToolsPopover({
 						<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
 					</PopoverSurface>
 				</Ariakit.PopoverProvider>
-
-				{onOpenAlerts ? (
-					<Ariakit.MenuItem
-						data-walkthrough="mobile-alerts-item"
-						className={itemClassName}
-						hideOnClick={false}
-						onClick={handleOpenAlerts}
-					>
-						<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-warning" />
-						<span>Alerts</span>
-					</Ariakit.MenuItem>
-				) : null}
 			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
