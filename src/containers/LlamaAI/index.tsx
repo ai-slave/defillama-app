@@ -1912,6 +1912,9 @@ export function AgenticChat({
 			}
 			// The prompt owns the chat from here until its response closes.
 			// A failure after another request replaced it belongs to nobody and is dropped.
+			// Request and stream failures settle inside execute as a failed message with retry, so this catch
+			// only sees an unexpected throw. Preparing a prompt cannot throw in a supported browser: its only
+			// thrower, crypto.randomUUID, is missing just on non-secure pages, which the site does not support.
 			void executionCoordinator.run(sessionId, 'prompt', (operation) =>
 				execute(operation).catch((submissionError) => {
 					if (!operation.isCurrent()) return

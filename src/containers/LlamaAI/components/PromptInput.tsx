@@ -243,26 +243,24 @@ export function PromptInput({
 		if (!restoreRequest) return
 		if (lastRestoreKeyRef.current === restoreRequest.key) return
 
-		lastRestoreKeyRef.current = restoreRequest.key
-
-		if (value.trim().length > 0) {
-			onRestoreConsumed?.()
-			return
-		}
-
-		const { text, entities } = restoreRequest
+		const { key, text, entities } = restoreRequest
+		const fillsComposer = value.trim().length === 0
 		let cancelled = false
 
 		queueMicrotask(() => {
 			if (cancelled) return
-
-			restoreEntities(entities)
-			clearSearch()
-			applyPromptEdit({
-				nextValue: text,
-				selectionStart: text.length,
-				selectionEnd: text.length
-			})
+			// Used only once it runs: a cleanup that cancels this run, such as Strict Mode replaying a mount or a
+			// dependency change, leaves the request for the next run.
+			lastRestoreKeyRef.current = key
+			if (fillsComposer) {
+				restoreEntities(entities)
+				clearSearch()
+				applyPromptEdit({
+					nextValue: text,
+					selectionStart: text.length,
+					selectionEnd: text.length
+				})
+			}
 			onRestoreConsumed?.()
 		})
 

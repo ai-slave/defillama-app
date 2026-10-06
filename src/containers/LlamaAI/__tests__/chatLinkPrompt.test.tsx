@@ -97,7 +97,10 @@ test("a chat link's prompt fills the composer once the account loads, and the pr
 		subscription.resolve(Response.json({ subscription: { status: 'active', expires_at: '2100-01-01', type: 'pro' } }))
 	)
 	// Only the prompt leaves the URL; the share token waits for the first message sent.
-	await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?shareToken=shared-1&view=terminal'))
+	// The chat mounts once the account loads, importing its lazy modules; a cold import alone can pass a second.
+	await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?shareToken=shared-1&view=terminal'), {
+		timeout: 5000
+	})
 	// The shallow replace re-renders the page with the new URL.
 	await draw()
 	await waitForUi(() => expect(liveComposer()?.value).toBe('Compare these'))
