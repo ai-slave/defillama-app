@@ -9,7 +9,7 @@ const http = installTelemetrySink()
 import handler from '~/pages/api/public/markets/[token]'
 
 describe('/api/public/markets/[token]', () => {
-	test('caches and serves serialized token markets through the shared JSON route builder', async () => {
+	test('serves a repeated token request from cache', async () => {
 		http.serve({ [MARKETS_SERVER_URL]: { token: 'bitcoin', markets: [] } })
 		const req = {
 			method: 'GET',
@@ -22,9 +22,7 @@ describe('/api/public/markets/[token]', () => {
 		await handler(req, firstRes)
 		await handler(req, secondRes)
 
-		expect(http.urls().filter((url) => url.startsWith(MARKETS_SERVER_URL))).toEqual([
-			`${MARKETS_SERVER_URL}/tokens/by-id/cg-626974636f696e.json`
-		])
+		expect(http.urls().filter((url) => url.startsWith(MARKETS_SERVER_URL))).toHaveLength(1)
 		expect(firstRes.status).toHaveBeenCalledWith(200)
 		expect(firstRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))
 		expect(secondRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))

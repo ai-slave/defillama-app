@@ -2,7 +2,8 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { consumePendingPrompt } from '~/containers/LlamaAI/pendingPrompt'
+import { getSignupSource } from '~/auth/signupSource'
+import { hasPendingPrompt } from '~/containers/LlamaAI/pendingPrompt'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -75,11 +76,12 @@ test('signed out, the empty chat shows no walkthrough, sending quotes the questi
 
 	const dialog = await signInDialog('Sign in to ask for free: “What is Aave TVL?”')
 	expect(session.urls().some((url) => new URL(url).pathname.startsWith('/agentic'))).toBe(false)
-	expect(localStorage.getItem('llamaai-pending-prompt')).toBe('What is Aave TVL?')
-	expect(sessionStorage.getItem('signup_source')).toBe('llamaai-chat')
+	// The question itself reaching the chat after sign-in is owned by the Research pick test below.
+	expect(hasPendingPrompt()).toBe(true)
+	expect(getSignupSource()).toBe('llamaai-chat')
 
 	await act(async () => dialog.querySelector<HTMLButtonElement>('button[aria-label="Close dialog"]')!.click())
-	expect(consumePendingPrompt()).toBeNull()
+	expect(hasPendingPrompt()).toBe(false)
 })
 
 test('signed out, the chat keeps its sidebar, and history asks for sign-in instead of claiming there are no chats', async () => {

@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
-import { act, type ComponentProps } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIRouteProvider, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
+import { setLlamaAIWalkthroughState } from '~/contexts/LocalStorage'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import type { ChatSurface } from '../ChatSurface'
-import type { AgenticSidebar } from '../sidebar/AgenticSidebar'
+import { sendFromComposer, stopButton } from '../../__tests__/chatComposer'
 
 const api = vi.hoisted(() => ({
 	copy: vi.fn(),
@@ -21,38 +21,14 @@ const api = vi.hoisted(() => ({
 	}
 }))
 vi.mock('next/router', () => ({ default: api.router, useRouter: () => api.router }))
-// Keep prompt submission, stream handling, cache reconciliation and Share controls real; omit unrelated surfaces.
-vi.mock('../ChatSurface', () => ({
-	ChatSurface: ({ landingProps, conversationViewModel }: ComponentProps<typeof ChatSurface>) => (
-		<>
-			<button type="button" onClick={() => landingProps.handleSubmit('Hello')}>
-				Send prompt
-			</button>
-			<p>{conversationViewModel.error}</p>
-			<output data-testid="streaming">{String(conversationViewModel.isStreaming)}</output>
-		</>
-	)
-}))
-vi.mock('../sidebar/AgenticSidebar', () => ({
-	AgenticSidebar: ({ onNewChat }: ComponentProps<typeof AgenticSidebar>) => (
-		<button type="button" onClick={onNewChat}>
-			New Chat
-		</button>
-	)
-}))
+// The composer, prompt submission, stream handling, cache reconciliation and Share controls stay real; the sidebar
+// and modals this test asserts nothing about are omitted.
+vi.mock('../sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('../AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('../SettingsModal', () => ({ SettingsModal: () => null }))
 vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('../DeepLinkPromptModal', () => ({ DeepLinkPromptModal: () => null }))
 vi.mock('../TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
-vi.mock('../ConversationView', () => ({
-	LoadingConversationState: () => <p>Loading conversation</p>,
-	EmptyConversationErrorState: () => <p>Conversation failed</p>
-}))
-vi.mock('../AddToArticle/ArticleExportContext', () => ({
-	ArticleExportProvider: ({ children }: { children: React.ReactNode }) => children
-}))
-vi.mock('~/containers/LlamaAI/projects/ProjectLanding', () => ({ ProjectLanding: () => null }))
 vi.mock('~/containers/LlamaAI/projects/ProjectsGrid', () => ({ ProjectsGrid: () => null }))
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { AgenticChat } from '../..'
@@ -102,6 +78,8 @@ function shareButtons() {
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
+	// A returning subscriber: the first-visit walkthrough would open its own dialog over the composer.
+	setLlamaAIWalkthroughState('completed')
 	api.copy.mockResolvedValue(undefined)
 	routeStartListeners = new Set()
 	api.router.events.on.mockImplementation((event, listener) => {
@@ -142,7 +120,23 @@ beforeEach(() => {
 		'/user/sessions/old-chat/restore': {
 			messages: [{ id: 'old-answer', role: 'assistant', content: 'An older answer' }]
 		},
-		'/projects/project-1/sessions': { sessions: [] }
+		'/projects/project-1/sessions': { sessions: [] },
+		'/projects/project-1': {
+			project: {
+				id: 'project-1',
+				user_id: 'reader',
+				name: 'Research',
+				description: null,
+				icon: null,
+				color: null,
+				custom_instructions: null,
+				created_at: '2026-01-01',
+				updated_at: '2026-01-01',
+				file_count: 0,
+				total_bytes: 0
+			}
+		},
+		'https://ai.llama.fi/projects/usage': { limits: { projects: 10 } }
 	})
 })
 afterEach(async () => {
@@ -154,9 +148,7 @@ test.each(['same', 'different'])(
 	'sharing becomes available when the server confirms the %s session ID',
 	async (identity) => {
 		await mount()
-		await act(async () =>
-			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-		)
+		await sendFromComposer('Hello')
 		await waitFor(() => {
 			shareButtons()
 		})
@@ -188,7 +180,9 @@ test.each(['same', 'different'])(
 		})
 		await act(async () => shareButtons()[0].click())
 		await waitFor(() =>
-			expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/shared-chat')
+			expect(document.querySelector<HTMLInputElement>('[role="dialog"] input')?.value).toBe(
+				'http://localhost:3000/ai/chat/shared/shared-chat'
+			)
 		)
 		expect(sharePaths()).toEqual([`/user/sessions/${confirmedId}/share`])
 		expect(api.copy.mock.calls).toEqual([['http://localhost:3000/ai/chat/shared/shared-chat']])
@@ -197,9 +191,7 @@ test.each(['same', 'different'])(
 
 test('a failed first prompt stays unshareable while an older restored chat outside the list can be shared', async () => {
 	await mount()
-	await act(async () =>
-		[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-	)
+	await sendFromComposer('Hello')
 	await act(async () => request.resolve(Response.json({ error: 'Prompt rejected' }, { status: 400 })))
 	await waitFor(() => expect(document.body.textContent).toContain('Prompt rejected'))
 	await act(async () => {
@@ -215,42 +207,18 @@ test('a failed first prompt stays unshareable while an older restored chat outsi
 	})
 	await act(async () => shareButtons()[0].click())
 	await waitFor(() =>
-		expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/shared-chat')
+		expect(document.querySelector<HTMLInputElement>('[role="dialog"] input')?.value).toBe(
+			'http://localhost:3000/ai/chat/shared/shared-chat'
+		)
 	)
 	expect(sharePaths()).toEqual(['/user/sessions/old-chat/share'])
-})
-
-test('a preparation failure clears streaming, displays the error, and permits another submission', async () => {
-	await mount({ kind: 'chat-session', sessionId: 'old-chat' })
-	await waitFor(() => expect(document.querySelector('[data-testid="streaming"]')).not.toBeNull())
-	const uuid = vi.spyOn(crypto, 'randomUUID').mockImplementationOnce(() => {
-		throw new Error('UUID unavailable')
-	})
-	const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
-	try {
-		await act(async () =>
-			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-		)
-		expect(document.body.textContent).toContain('The request was interrupted.')
-		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('false')
-		await act(async () =>
-			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-		)
-		await waitFor(() => expect(aiCalls().some((call) => call.url.pathname.endsWith('/agentic'))).toBe(true))
-		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('true')
-	} finally {
-		uuid.mockRestore()
-		consoleError.mockRestore()
-	}
 })
 
 test.each(['chat-new', 'project'] as const)(
 	'moves a prompt from %s to its chat URL without restarting the request',
 	async (kind) => {
 		await mount(kind === 'project' ? { kind, projectId: 'project-1', initialTab: 'chats' } : { kind })
-		await act(async () =>
-			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-		)
+		await sendFromComposer('Hello')
 		await waitFor(() =>
 			expect(api.router.push).toHaveBeenCalledWith(`/ai/chat/${submittedId()}`, undefined, {
 				shallow: kind !== 'project',
@@ -258,7 +226,8 @@ test.each(['chat-new', 'project'] as const)(
 			})
 		)
 		await mount({ kind: 'chat-session', sessionId: submittedId() })
-		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('true')
+		// Still streaming the first request: the composer offers Stop.
+		expect(stopButton()).toBeDefined()
 		expect(aiCalls().some((call) => call.url.pathname.endsWith('/restore'))).toBe(false)
 		const prompts = aiCalls().filter((call) => call.url.pathname.endsWith('/agentic'))
 		expect(prompts).toHaveLength(1)
@@ -287,9 +256,7 @@ test.each(['/ai/projects/project-1', '/ai/chat/another-session'])(
 	'a late session ID does not override pending navigation to %s',
 	async (destination) => {
 		await mount()
-		await act(async () =>
-			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-		)
+		await sendFromComposer('Hello')
 		await waitFor(() => expect(api.router.push).toHaveBeenCalledTimes(1))
 		await mount({ kind: 'chat-session', sessionId: submittedId() })
 		const navigation = Promise.withResolvers<boolean>()

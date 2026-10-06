@@ -56,24 +56,19 @@ describe('RWAPlatformKeyMetrics', () => {
 		expect(between('Largest protocol', 'Net Flows 30d')).toContain('N/A')
 	})
 
-	test('shows the est. annual revenue with its confidence only when the index has it, and the suspicious badge with its reason', () => {
-		const markup = renderToStaticMarkup(
-			<RWAPlatformKeyMetrics
-				meta={{
-					...meta,
-					estAnnualRevenueUsd: 4_200_000,
-					revenueConfidence: 'Issuer-Disclosed',
-					suspicious: true,
-					suspiciousReason: 'Double counted'
-				}}
-				kpi={kpi}
-			/>
-		)
-		expect(markup).toContain('Est. Annual Revenue')
-		expect(markup).toContain('$4.2m')
-		expect(markup).toContain('Issuer-Disclosed')
-		expect(markup).toContain('Suspicious')
-		expect(markup).toContain('Double counted')
+	test('shows est. annual revenue and the suspicious badge only when the index flags them', () => {
+		const text = (platform: RWAPlatformMeta) => {
+			const root = document.createElement('div')
+			root.innerHTML = renderToStaticMarkup(<RWAPlatformKeyMetrics meta={platform} kpi={kpi} />)
+			return root.textContent
+		}
+		const flagged = text({ ...meta, estAnnualRevenueUsd: 4_200_000, revenueConfidence: null, suspicious: true })
+		expect(flagged).toContain('Est. Annual Revenue$4.2mConfidenceN/A')
+		expect(flagged).toContain('Suspicious')
+
+		const plain = text(meta)
+		expect(plain).not.toContain('Est. Annual Revenue')
+		expect(plain).not.toContain('Suspicious')
 	})
 
 	test('writes the csv rows the way the panel reads', () => {

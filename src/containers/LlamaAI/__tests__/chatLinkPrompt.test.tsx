@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { liveComposer, submitComposer } from './chatComposer'
 
 const api = vi.hoisted(() => ({
 	router: {
@@ -18,23 +19,8 @@ const api = vi.hoisted(() => ({
 	}
 }))
 vi.mock('next/router', () => ({ default: api.router, useRouter: () => api.router }))
-// Heavy surfaces this test asserts nothing about; prompt submission, restore and routing stay real.
+// Heavy surfaces this test asserts nothing about; the composer, prompt submission, restore and routing stay real.
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => children }))
-vi.mock('~/containers/LlamaAI/components/ChatSurface', () => ({
-	// Shows what the composer is asked to fill, and sends the reader's own prompt.
-	ChatSurface: ({
-		landingProps
-	}: {
-		landingProps: { handleSubmit: (prompt: string) => void; restoreRequest?: { text: string } | null }
-	}) => (
-		<>
-			<output data-testid="composer-prefill">{landingProps.restoreRequest?.text ?? ''}</output>
-			<button type="button" onClick={() => landingProps.handleSubmit('Hello')}>
-				Send prompt
-			</button>
-		</>
-	)
-}))
 vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('~/containers/LlamaAI/components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/SettingsModal', () => ({ SettingsModal: () => null }))
@@ -100,10 +86,7 @@ afterEach(async () => {
 	document.body.innerHTML = ''
 })
 
-const composerPrefill = () => document.querySelector('[data-testid="composer-prefill"]')?.textContent
-const sendButton = () => [...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')
-
-test("a chat link's prompt fills the composer once the account loads, and its share token goes with the first send", async () => {
+test("a chat link's prompt fills the composer once the account loads, and the prompt and its share token go out when the reader sends it", async () => {
 	goTo('/ai/chat/old-chat?prompt=Compare%20these&shareToken=shared-1&view=terminal')
 	await draw()
 	// The subscription read is still out, so the chat has not mounted; a frame passes meanwhile.
@@ -117,10 +100,10 @@ test("a chat link's prompt fills the composer once the account loads, and its sh
 	await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?shareToken=shared-1&view=terminal'))
 	// The shallow replace re-renders the page with the new URL.
 	await draw()
-	expect(composerPrefill()).toBe('Compare these')
+	await waitForUi(() => expect(liveComposer()?.value).toBe('Compare these'))
 	expect(agenticPosts()).toEqual([])
 
-	await act(async () => sendButton()!.click())
-	await waitForUi(() => expect(agenticPosts()).toMatchObject([{ message: 'Hello', shareToken: 'shared-1' }]))
+	await submitComposer()
+	await waitForUi(() => expect(agenticPosts()).toMatchObject([{ message: 'Compare these', shareToken: 'shared-1' }]))
 	await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?view=terminal'))
 })

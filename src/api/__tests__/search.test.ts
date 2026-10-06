@@ -40,12 +40,11 @@ test.each(['', ' ', '\t\n'])('skips search requests for blank token %j', async (
 	expect(fetchJson).not.toHaveBeenCalled()
 })
 
-test('sends the bearer token and returns the hits per query', async () => {
+test('returns the hits per query', async () => {
 	const { multiSearchApi } = await loadSearch('token')
 	fetchJson.mockResolvedValue({ results: [{ hits: [{ id: 'ethereum' }] }] })
 
 	expect(await multiSearchApi([query])).toEqual([[{ id: 'ethereum' }]])
-	expect(fetchJson.mock.lastCall?.[1].headers.Authorization).toBe('Bearer token')
 })
 
 test('propagates request failures when the search token is configured', async () => {

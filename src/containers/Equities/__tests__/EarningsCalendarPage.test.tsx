@@ -102,14 +102,15 @@ test('a failed refresh over a loaded calendar shows no error', async () => {
 	await mount()
 	await waitForUi(() => expect(button('Next week').getAttribute('aria-disabled')).toBeNull())
 
+	// Stands in for the 30-minute refetch interval; it settles after the hook's one retry.
 	api.calendar.mockRejectedValue(new Error('upstream down'))
 	await act(async () => {
-		await queryClient.refetchQueries({ queryKey: ['equities-earnings-calendar'] }).catch(() => {})
+		await queryClient.refetchQueries({ queryKey: ['equities-earnings-calendar'] })
 	})
-	await waitForUi(() => expect(queryClient.getQueryState(['equities-earnings-calendar'])?.error).not.toBeNull(), {
-		timeout: 1900
-	})
+	// React Query renders the settled refetch on a later task, which waitForUi flushes.
+	await waitForUi(() => expect(api.calendar).toHaveBeenCalledTimes(3))
 	expect(alertText()).toBeNull()
+	expect(button('Next week').getAttribute('aria-disabled')).toBeNull()
 }, 4000)
 
 test('a day in At stake this week opens its companies with cap and share of the day', async () => {

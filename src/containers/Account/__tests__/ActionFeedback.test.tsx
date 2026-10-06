@@ -364,7 +364,6 @@ test('sponsor deletion removes the row and hands focus to the page content', asy
 	await act(async () => confirm.click())
 	await waitForUi(() => expect(container.textContent).not.toContain('Original sponsor'))
 	await waitForUi(() => expect(document.activeElement?.tagName).toBe('MAIN'))
-	expect(deletedPaths()).toEqual(['/research/sponsors/s1'])
 })
 test.each([
 	['Delete Example logo', '/research/trusted-by/logos/l1'],

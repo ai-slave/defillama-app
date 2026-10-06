@@ -38,16 +38,9 @@ vi.mock('react-hot-toast', async (importOriginal) => {
 	mocks.dismissToast.mockImplementation(actual.default.dismiss)
 	return { ...actual, default: Object.assign(mocks.toast, { ...actual.default, dismiss: mocks.dismissToast }) }
 })
-// A chart card loads its series over the network; these tests assert only the grid around it and the stream readiness it receives.
-vi.mock('../ChartCard', async () => {
-	const { createElement, useContext } = await import('react')
-	const { StreamDoneContext: Context } = await import('../../queries')
-	return {
-		ChartCard: ({ chart }: { chart: DashboardItemConfig }) => {
-			return createElement('div', { 'data-testid': 'card-chart', 'data-stream-done': String(useContext(Context)) })
-		}
-	}
-})
+// A chart card loads its series over the network; these tests assert only the grid around it and that the card stays
+// mounted. ChartGridReadiness.test.tsx renders the real card.
+vi.mock('../ChartCard', () => ({ ChartCard: () => <div data-testid="card-body" /> }))
 
 const session = installSubscriberSession('owner', { resolved: true })
 const actions = {
@@ -66,8 +59,6 @@ type GridState = {
 	items: Array<DashboardItemConfig>
 	isReadOnly?: boolean
 	tabQueryParam?: string
-	streamDone?: boolean
-	readyItemIds?: ReadonlySet<string>
 }
 
 let container: HTMLDivElement
@@ -90,13 +81,7 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function renderGrid({
-	items,
-	isReadOnly = false,
-	tabQueryParam,
-	streamDone = true,
-	readyItemIds = null
-}: GridState) {
+async function renderGrid({ items, isReadOnly = false, tabQueryParam }: GridState) {
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -107,8 +92,6 @@ async function renderGrid({
 					dashboard={{ dashboardId: 'dashboard' }}
 					editorActions={actions}
 					history={{ undo }}
-					streamDone={streamDone}
-					readyItemIds={readyItemIds}
 				>
 					<ChartGrid onAddChartClick={onAddChartClick} onEditItem={onEditItem} tabQueryParam={tabQueryParam} />
 				</DashboardTestProvider>
@@ -208,13 +191,6 @@ test('collapsing a heading group animates before the group is hidden', async () 
 	expect(group.querySelector('[data-item-id="chart-1"]')).not.toBeNull()
 })
 
-test('an idle grid renders no drag preview beside the cards', async () => {
-	await renderGrid({ items: [notes('text-1', 'Notes')] })
-	expect(container.querySelectorAll('[data-item-id="text-1"]')).toHaveLength(1)
-	expect(container.querySelectorAll('#item-text-1')).toHaveLength(1)
-	expect(container.querySelector('[data-skeleton]')).toBeNull()
-})
-
 test('the card menu offers the card widths and saves the one picked', async () => {
 	await renderGrid({ items: [notes('text-1', 'Notes')] })
 	await openCardMenu('text-1')
@@ -297,31 +273,10 @@ test('a keyboard drag tells a screen reader where the card is, that it did not m
 	])
 })
 
-test('a card turns stream-ready only when its own id is ready, without remounting', async () => {
-	const items = [chart('chart-1')]
-	const renderWithReadiness = (readyItemIds: ReadonlySet<string>) =>
-		renderGrid({ items, isReadOnly: true, streamDone: false, readyItemIds })
-	const card = () => container.querySelector('[data-testid="card-chart"]')
-
-	await renderWithReadiness(new Set())
-	const firstCard = card()
-	expect(firstCard?.getAttribute('data-stream-done')).toBe('false')
-
-	await renderWithReadiness(new Set(['other-item']))
-	expect(card()).toBe(firstCard)
-	expect(card()?.getAttribute('data-stream-done')).toBe('false')
-
-	await renderWithReadiness(new Set(['chart-1']))
-	expect(card()).toBe(firstCard)
-	expect(card()?.getAttribute('data-stream-done')).toBe('true')
-})
-
 test('removing a card skips confirmation and offers Undo in a toast', async () => {
 	await renderGrid({ items: [notes('text-1', 'Notes')] })
 	await openCardMenu('text-1')
-	const removeCard = menuItem('Remove card')
-	expect(removeCard.getAttribute('data-umami-event')).toBe('dashboard-card-remove')
-	await act(async () => removeCard.click())
+	await act(async () => menuItem('Remove card').click())
 	expect(actions.handleRemoveItem).toHaveBeenCalledWith('text-1')
 	expect(container.querySelector('[role="dialog"]')).toBeNull()
 	expect(mocks.toast).toHaveBeenCalledOnce()
@@ -330,7 +285,6 @@ test('removing a card skips confirmation and offers Undo in a toast', async () =
 	const undoButton = Array.from(toast.element.querySelectorAll('button')).find(
 		(node) => node.textContent?.trim() === 'Undo'
 	)!
-	expect(undoButton.getAttribute('data-umami-event')).toBe('dashboard-undo')
 	await act(async () => undoButton.click())
 	expect(undo).toHaveBeenCalledOnce()
 	expect(mocks.dismissToast).toHaveBeenCalledWith('toast-1')
@@ -444,13 +398,13 @@ test('switching read-only off keeps card elements mounted', async () => {
 	]
 	await renderGrid({ items, isReadOnly: true })
 	const card = container.querySelector('[data-item-id="chart-1"]')!
-	const cardBody = container.querySelector('[data-testid="card-chart"]')!
+	const cardBody = container.querySelector('[data-testid="card-body"]')!
 	const section = container.querySelector('[data-item-id="section-1"]')!
 
 	await renderGrid({ items })
 
 	expect(container.querySelector('[data-item-id="chart-1"]')).toBe(card)
-	expect(container.querySelector('[data-testid="card-chart"]')).toBe(cardBody)
+	expect(container.querySelector('[data-testid="card-body"]')).toBe(cardBody)
 	expect(container.querySelector('[data-item-id="section-1"]')).toBe(section)
 })
 

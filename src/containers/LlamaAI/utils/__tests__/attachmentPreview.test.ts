@@ -1,7 +1,8 @@
-import { afterEach, expect, test, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { ATTACHMENT_PREVIEW_BYTES, readFilePreview, readUrlPreview } from '../attachmentPreview'
 
-afterEach(() => vi.unstubAllGlobals())
+const fixtures = installFixtureFetch()
 
 test('bounds large local previews and retains the complete original for download', async () => {
 	const file = new File(['x'.repeat(ATTACHMENT_PREVIEW_BYTES + 10)], 'large.csv')
@@ -34,7 +35,7 @@ test('stops a remote download after enough preview bytes and preserves its downl
 		},
 		cancel
 	})
-	vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(stream)))
+	fixtures.serve({ 'https://files/large.csv': () => new Response(stream) })
 	const preview = await readUrlPreview('https://files/large.csv', 'large.csv')
 	expect(preview.content).toHaveLength(ATTACHMENT_PREVIEW_BYTES)
 	expect(preview.truncated).toBe(true)
@@ -43,13 +44,10 @@ test('stops a remote download after enough preview bytes and preserves its downl
 })
 
 test('reads small remote files completely and surfaces HTTP failures', async () => {
-	vi.stubGlobal(
-		'fetch',
-		vi
-			.fn()
-			.mockResolvedValueOnce(new Response('a,b\n1,2'))
-			.mockResolvedValueOnce(new Response('', { status: 404 }))
-	)
+	fixtures.serve({
+		'https://files/small.csv': () => new Response('a,b\n1,2'),
+		'https://files/missing.csv': fixtureStatus(404, { error: 'Not found' })
+	})
 	expect(await readUrlPreview('https://files/small.csv', 'small.csv')).toMatchObject({
 		content: 'a,b\n1,2',
 		truncated: false

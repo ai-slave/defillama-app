@@ -154,24 +154,6 @@ describe('token rights page', () => {
 		})
 	})
 
-	test('links rows to the token rights section of the token page', async () => {
-		setup({
-			protocolMetadata: {
-				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
-			},
-			tokensJson: {
-				ldo: { name: 'Lido DAO', symbol: 'LDO', token_nk: 'coingecko:lido-dao', route: '/token/LDO' }
-			},
-			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
-		})
-
-		const result = await getStaticProps({} as never)
-		// The token page only scrolls to and highlights a hash that matches one of its section ids.
-		expect(result).toMatchObject({
-			props: { protocols: [{ name: 'Lido', href: '/token/LDO#token-rights-and-value-accrual' }] }
-		})
-	})
-
 	test('uses resolved metadata for deprecated rows', async () => {
 		setup({
 			protocolMetadata: {

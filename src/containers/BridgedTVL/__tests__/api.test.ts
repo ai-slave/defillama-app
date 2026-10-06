@@ -103,6 +103,5 @@ describe('fetchChainAssetsChart', () => {
 			{ timestamp: 1_700_000_000, data: { total: 42.5, ownTokens: 0, canonical: 30 } },
 			{ timestamp: 1_700_086_400, data: { total: 0 } }
 		])
-		expect(http.urls()).toEqual([`${SERVER_URL}/chain-assets/chart/base`])
 	})
 })

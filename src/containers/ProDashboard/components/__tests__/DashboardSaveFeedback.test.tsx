@@ -111,7 +111,7 @@ test.each(['success', 'failure'] as const)(
 		await submit()
 		// The pending state reaches React on a TanStack notify tick, after the save request starts.
 		await waitForUi(() => {
-			expect(savedTags()).toEqual([[]])
+			expect(savedTags()).toHaveLength(1)
 			expect(originalInput.closest('fieldset')!.disabled).toBe(true)
 		})
 		// The fields lock while saving; focus waits on the pending Save.

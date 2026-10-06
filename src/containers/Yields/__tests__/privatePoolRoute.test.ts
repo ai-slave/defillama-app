@@ -66,7 +66,8 @@ async function call(query: Record<string, string>) {
 	return { status: res.status.mock.calls[0][0], body: res.json.mock.calls[0][0] }
 }
 
-const historyUrls = () => http.urls().filter((url) => url.includes('/history'))
+const historyRanges = () =>
+	http.requests.filter(({ url }) => url.pathname.endsWith('/history')).map(({ url }) => url.searchParams.get('range'))
 
 beforeEach(() => {
 	vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -86,7 +87,7 @@ describe('/api/private/yields/pool/[id]', () => {
 			{ label: '7d', verified: 2.4 },
 			{ label: '30d', verified: 2.3 }
 		])
-		expect(historyUrls()).toEqual([`${earnUrl(id)}/history?range=max`, `${verifiedUrl(id)}/history?range=max`])
+		expect(historyRanges()).toEqual(['max', 'max'])
 	})
 
 	test("reads the intrinsic source pool's measurement and its max history", async () => {
@@ -117,10 +118,7 @@ describe('/api/private/yields/pool/[id]', () => {
 		// Days without a measured rate leave a gap instead of a zero.
 		expect(body.intrinsicSeries).toEqual({ '2026-08-01': 1.05, '2026-08-03': 1.052 })
 		// Always max: the asset band rebases to whatever deposit day the reader picks.
-		expect(historyUrls()).toEqual([
-			`${earnUrl(sourceId)}/history?range=max`,
-			`${verifiedUrl(sourceId)}/history?range=max`
-		])
+		expect(historyRanges()).toEqual(['max', 'max'])
 	})
 
 	// The asset band is optional; losing it must not cost the reader the whole measured page.

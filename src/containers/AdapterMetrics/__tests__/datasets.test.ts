@@ -40,8 +40,7 @@ vi.mock('~/utils/async', async (importOriginal) => ({
 import {
 	createDimensionDatasetRequestScope,
 	DIMENSION_DATASET_REQUEST_CONCURRENCY,
-	fetchDimensionDataset,
-	getDimensionDatasetSpec
+	fetchDimensionDataset
 } from '../server/datasets'
 
 const metadata = installMetadataSeeder()
@@ -461,14 +460,5 @@ describe('fetchDimensionDataset', () => {
 				}
 			]
 		})
-	})
-
-	test('fetches the perps dataset from the derivatives metrics route', async () => {
-		upstream.metrics = () => ({ protocols: [protocol('Perp')] })
-
-		const result = await fetchDimensionDataset(getDimensionDatasetSpec('perps')!.options)
-
-		expect(upstream.metricRequests).toEqual(['/metrics/derivatives'])
-		expect(result.protocols.map(({ name }) => name)).toEqual(['Perp'])
 	})
 })

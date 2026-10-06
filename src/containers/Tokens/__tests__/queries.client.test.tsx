@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokensWatchlistContainer } from '~/containers/TokensWatchlist'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { fetchTokensResponse } from '../queries.client'
-import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION } from '../types'
 import { buildTokensSortIndexes, getTokensPageFromRows } from '../utils'
 
 const fetchJson = vi.hoisted(() => vi.fn())
@@ -68,16 +67,6 @@ async function expectShows(text: string) {
 
 describe('fetchTokensResponse', () => {
 	const signal = new AbortController().signal
-
-	test('asks for the current schema on every Tokens request', async () => {
-		fetchJson.mockResolvedValue(page)
-		await fetchTokensResponse('/api/public/tokens?page=2', signal)
-		await fetchTokensResponse('/api/public/tokens/market-map', signal)
-		expect(fetchJson.mock.calls.map(([url]) => url)).toEqual([
-			`/api/public/tokens?page=2&schemaVersion=${TOKENS_PAGE_RESPONSE_SCHEMA_VERSION}`,
-			`/api/public/tokens/market-map?schemaVersion=${TOKENS_PAGE_RESPONSE_SCHEMA_VERSION}`
-		])
-	})
 
 	test('rejects a response from an older deployment and accepts a current one, even with no rows', async () => {
 		fetchJson.mockResolvedValue({ schemaVersion: 13, rows: [] })

@@ -114,7 +114,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 	}
 }
 
-test('asks the public earn endpoint for the token pools and opens the requested page', async () => {
+test('a page change keeps the token pool matching rules and opens the requested page', async () => {
 	const refresh = await mountRefresh({ filter: false })
 	try {
 		await refresh.trigger('next-page')

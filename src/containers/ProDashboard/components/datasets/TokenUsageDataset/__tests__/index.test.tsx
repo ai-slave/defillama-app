@@ -81,9 +81,6 @@ describe('TokenUsageDataset CSV export', () => {
 		await render()
 
 		await waitForUi(() => expect(container.querySelectorAll('tbody tr').length).toBeGreaterThan(0))
-		expect(http.requests.map((request) => request.url.search)).toEqual([
-			'?includeCex=false&symbols%5B%5D=USDC&dashboardId=dash-1'
-		])
 		const search = container.querySelector<HTMLInputElement>('input[placeholder="Search protocols..."]')
 		if (!search) throw new Error('Expected protocol search input')
 		search.value = 'Keep'
@@ -135,9 +132,7 @@ describe('TokenUsageDataset CSV export', () => {
 		})
 		await act(async () => option.click())
 
-		expect(http.requests.map((request) => request.url.search).filter((query) => query.startsWith('?query'))).toContain(
-			'?query=usd'
-		)
+		expect(http.requests.map((request) => request.url.searchParams.get('query'))).toContain('usd')
 		expect(onConfigChange.mock.calls).toEqual([[{ ...config, tokenSymbols: ['usdc'] }]])
 	})
 })

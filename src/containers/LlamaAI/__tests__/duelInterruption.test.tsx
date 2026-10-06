@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
-import { act, type ComponentProps } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIRouteProvider } from '~/contexts/LlamaAIRouteState'
+import { setLlamaAIWalkthroughState } from '~/contexts/LocalStorage'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import type { ChatSurface } from '../components/ChatSurface'
+import { sendFromComposer } from './chatComposer'
 
 const router = vi.hoisted(() => ({
 	query: {},
@@ -17,30 +18,14 @@ const router = vi.hoisted(() => ({
 	events: { on: () => undefined, off: () => undefined }
 }))
 vi.mock('next/router', () => ({ default: router, useRouter: () => router }))
-// Keep prompt submission, recovery and the duel panel real; omit the rest of the chat surface.
-vi.mock('../components/ChatSurface', () => ({
-	ChatSurface: ({ landingProps, conversationViewModel }: ComponentProps<typeof ChatSurface>) => (
-		<>
-			<button type="button" onClick={() => landingProps.handleSubmit('Compare Aave and Morpho')}>
-				Send prompt
-			</button>
-			{conversationViewModel.duelSlot}
-		</>
-	)
-}))
+// The composer, prompt submission, recovery and the conversation with its duel panel stay real; the sidebar and
+// modals this test asserts nothing about are omitted.
 vi.mock('../components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('../components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('../components/SettingsModal', () => ({ SettingsModal: () => null }))
 vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
 vi.mock('../components/DeepLinkPromptModal', () => ({ DeepLinkPromptModal: () => null }))
 vi.mock('../components/TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
-vi.mock('../components/ConversationView', () => ({
-	LoadingConversationState: () => null,
-	EmptyConversationErrorState: () => null
-}))
-vi.mock('../components/AddToArticle/ArticleExportContext', () => ({
-	ArticleExportProvider: ({ children }: { children: React.ReactNode }) => children
-}))
 vi.mock('~/containers/LlamaAI/projects/ProjectLanding', () => ({ ProjectLanding: () => null }))
 vi.mock('~/containers/LlamaAI/projects/ProjectsGrid', () => ({ ProjectsGrid: () => null }))
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
@@ -65,6 +50,8 @@ let root: Root
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	// A returning subscriber: the first-visit walkthrough would open its own dialog over the composer.
+	setLlamaAIWalkthroughState('completed')
 	session.client.setDefaultOptions({ queries: { retry: false, staleTime: Infinity } })
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -107,9 +94,7 @@ async function sendPrompt() {
 			</session.Wrapper>
 		)
 	)
-	await act(async () =>
-		[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
-	)
+	await sendFromComposer('Compare Aave and Morpho')
 }
 
 function column(label: string) {
@@ -119,7 +104,7 @@ function column(label: string) {
 }
 const alertText = (label: string) => column(label).querySelector('[role=alert]')?.textContent ?? null
 const canPrefer = (label: string) =>
-	!(column(label).querySelector(`button[aria-label="I prefer ${label}"]`) as HTMLButtonElement).disabled
+	column(label).querySelector(`button[aria-label="I prefer ${label}"]`)!.getAttribute('aria-disabled') !== 'true'
 
 test('an arm resumed by a reconnect shows as interrupted when the reconnect drops too', async () => {
 	session.serve({

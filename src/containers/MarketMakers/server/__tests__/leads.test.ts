@@ -1,11 +1,6 @@
-import { afterEach, assert, describe, expect, test, vi } from 'vitest'
+import { assert, describe, expect, test } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
-import { clientIp, sendClaimToUserAnalytics, validateClaimBody, validateConnectBody } from '../leads'
-
-afterEach(() => {
-	vi.unstubAllEnvs()
-	vi.unstubAllGlobals()
-})
+import { clientIp, validateClaimBody, validateConnectBody } from '../leads'
 
 const validConnect = {
 	interest: 'engage-market-maker',
@@ -126,28 +121,6 @@ describe('validateClaimBody', () => {
 
 	test('rejects a filled honeypot field', () => {
 		expect(validateClaimBody({ ...validClaim, hp: 'bot' }).ok).toBe(false)
-	})
-})
-
-describe('sendClaimToUserAnalytics', () => {
-	test('posts the validated claim when analytics is configured', async () => {
-		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com/')
-		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'test-secret')
-		const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }))
-		vi.stubGlobal('fetch', fetchMock)
-
-		const validated = validateClaimBody(validClaim)
-		assert(validated.ok)
-		await sendClaimToUserAnalytics(validated.payload)
-
-		expect(fetchMock).toHaveBeenCalledWith(
-			'https://analytics.example.com/api/ingestion/utr-claims',
-			expect.objectContaining({
-				method: 'POST',
-				headers: expect.objectContaining({ 'X-Shared-Secret': 'test-secret' }),
-				body: JSON.stringify(validated.payload)
-			})
-		)
 	})
 })
 

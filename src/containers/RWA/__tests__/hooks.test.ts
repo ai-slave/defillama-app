@@ -10,7 +10,6 @@ import {
 	buildRwaAssetGroupPieChartData,
 	buildRwaAssetCategoryPieChartData,
 	buildRwaChartDataset,
-	fetchRwaAssetChartData,
 	hasRwaInclusionOverrides,
 	resolveRWAOverviewInclusionFlag,
 	useRwaChartDataset
@@ -250,23 +249,6 @@ describe('asset chart fetching', () => {
 
 		await act(async () => root.unmount())
 		client.clear()
-	})
-
-	test('passes the resolved inclusion flags and scope to the asset-breakdown route', async () => {
-		fetchJsonMock.mockResolvedValue(assetRows)
-
-		await expect(
-			fetchRwaAssetChartData({
-				key: 'onChainMcap',
-				target: { kind: 'category', slug: 'treasuries' },
-				includeStablecoins: true,
-				includeGovernance: false,
-				includeBridgeTvl: true
-			})
-		).resolves.toEqual(assetRows)
-		expect(fetchJsonMock).toHaveBeenCalledWith(
-			'/api/public/rwa/asset-breakdown?key=onChainMcap&includeStablecoin=true&includeGovernance=false&includeBridgeTvl=true&category=treasuries'
-		)
 	})
 })
 

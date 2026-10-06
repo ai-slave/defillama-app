@@ -2,7 +2,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { DashboardStreamChunk } from '../../dashboardStreamContract'
 import type { Dashboard } from '../../dashboardTypes'
 import {
@@ -13,7 +14,8 @@ import {
 	useDashboardStream
 } from '../useDashboardStream'
 
-const fetchMock = vi.fn()
+const http = installFixtureFetch()
+const STREAM_ROUTE = 'http://localhost:3000/api/dynamic/pro-dashboard/'
 let root: Root
 let container: HTMLDivElement
 let queryClient: QueryClient
@@ -43,7 +45,7 @@ function createStreamBody() {
 	})
 	const encoder = new TextEncoder()
 	return {
-		response: { ok: true, status: 200, body },
+		response: new Response(body),
 		push: (chunk: DashboardStreamChunk) => controller?.enqueue(encoder.encode(`${JSON.stringify(chunk)}\n`)),
 		close: () => controller?.close()
 	}
@@ -74,8 +76,6 @@ function searchParams(url: string) {
 }
 
 beforeEach(() => {
-	vi.stubGlobal('fetch', fetchMock)
-	fetchMock.mockReset()
 	queryClient = new QueryClient()
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -86,7 +86,6 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	vi.unstubAllGlobals()
 })
 
 describe('buildStreamRequest', () => {
@@ -125,12 +124,12 @@ describe('buildStreamRequest', () => {
 describe('useDashboardStream', () => {
 	test('requests the stream with the card and variable overrides', async () => {
 		const stream = createStreamBody()
-		fetchMock.mockResolvedValue(stream.response)
+		http.serve({ [STREAM_ROUTE]: () => stream.response })
 
 		await mount({ itemId: 'chart-1', variableOverrides: { chain: 'Solana' }, version: 'v1' })
 
-		expect(fetchMock).toHaveBeenCalledOnce()
-		const params = searchParams(String(fetchMock.mock.calls[0]?.[0]))
+		expect(http.requests).toHaveLength(1)
+		const params = http.requests[0]!.url.searchParams
 		expect(params.get('item')).toBe('chart-1')
 		expect(params.get('var-chain')).toBe('Solana')
 		expect(params.get('v')).toBe('v1')
@@ -140,7 +139,7 @@ describe('useDashboardStream', () => {
 
 	test('accumulates ready item ids across itemReady chunks into fresh sets', async () => {
 		const stream = createStreamBody()
-		fetchMock.mockResolvedValue(stream.response)
+		http.serve({ [STREAM_ROUTE]: () => stream.response })
 		await mount()
 		expect(streamState?.readyItemIds.size).toBe(0)
 
@@ -165,7 +164,7 @@ describe('useDashboardStream', () => {
 
 	test('seeds streamed chart data into the query cache and keeps the dashboard chunk', async () => {
 		const stream = createStreamBody()
-		fetchMock.mockResolvedValue(stream.response)
+		http.serve({ [STREAM_ROUTE]: () => stream.response })
 		await mount()
 		const queryKey = ['pro-dashboard', 'chart-source', 'fees', 'chain', 'Solana', null, null]
 
@@ -192,7 +191,7 @@ describe('useDashboardStream', () => {
 
 		test('caches the streamed dashboard for its viewer under both the slug and the id', async () => {
 			const stream = createStreamBody()
-			fetchMock.mockResolvedValue(stream.response)
+			http.serve({ [STREAM_ROUTE]: () => stream.response })
 			await mount(undefined, { dashboardId: 'lending-watch', viewer: owner })
 
 			await deliver(() => stream.push({ type: 'dashboard', data: dashboard }))
@@ -204,7 +203,7 @@ describe('useDashboardStream', () => {
 
 		test('does not cache a dashboard the viewer deleted while it streamed', async () => {
 			const stream = createStreamBody()
-			fetchMock.mockResolvedValue(stream.response)
+			http.serve({ [STREAM_ROUTE]: () => stream.response })
 			await mount(undefined, { dashboardId: 'lending-watch', viewer: owner })
 			queryClient.setQueryData(['pro-dashboard-deleted', 'dash-1', 'u1'], true)
 

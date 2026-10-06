@@ -73,8 +73,6 @@ function str(body: Body, key: string, maxLength = 200): string | null {
 
 type Validated = { ok: true; payload: Body } | { ok: false; error: string }
 
-export { sendClaimToUserAnalytics }
-
 function commonLeadFields(body: Body): Validated {
 	if (typeof body.hp === 'string' && body.hp.trim() !== '') return { ok: false, error: 'Invalid submission' }
 	const marketMakerId = str(body, 'market_maker_id', 64)

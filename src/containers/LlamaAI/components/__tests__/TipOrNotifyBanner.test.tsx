@@ -7,10 +7,6 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import { TipActionProvider } from '../TipActionContext'
 import { TipOrNotifyBanner } from '../TipOrNotifyBanner'
 
-vi.mock('../NotificationPermissionBanner', () => ({
-	NotificationPermissionBanner: () => <p>Want to be notified when LlamaAI responds?</p>
-}))
-
 const session = installSubscriberSession('reader')
 let toppedUp = '0.25'
 const openSettings = vi.fn()
@@ -19,6 +15,8 @@ let host: HTMLDivElement
 beforeEach(() => {
 	openSettings.mockReset()
 	toppedUp = '0.25'
+	// The browser has not been asked yet, so the real notification prompt can show.
+	vi.stubGlobal('Notification', { permission: 'default' })
 	session.serve({
 		'https://features.llama.fi/user/ai-balance': () =>
 			Response.json({ freeRemaining: '0.25', toppedUpBalance: toppedUp, freeLimit: '1', freeSpent: '0.75' }),

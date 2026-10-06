@@ -59,7 +59,6 @@ test.each([
 				await new Promise((resolve) => setTimeout(resolve, 0))
 			})
 			expect(container.querySelector('button')!.disabled).toBe(true)
-			expect(session.requests.filter(({ url }) => url.pathname.startsWith('/uploads/'))).toHaveLength(0)
 			await act(async () => reject(new Error('Read failed')))
 			expect(await result).toMatchObject({ message: 'Read failed' })
 			await act(async () => {

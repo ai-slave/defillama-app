@@ -1,12 +1,18 @@
 // @vitest-environment happy-dom
 
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import type { IChainOverviewData } from '../types'
 
-vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/chain/[chain]', push: () => {} }) }))
-// Heavy children; the render test only checks the tab row.
+const router = vi.hoisted(() => ({
+	query: {} as Record<string, string>,
+	pathname: '/chain/[chain]',
+	push: vi.fn()
+}))
+vi.mock('next/router', () => ({ useRouter: () => router }))
+// Heavy children; these tests only check the tab row.
 vi.mock('~/containers/Investors/InvestorRelationsView', () => ({ InvestorRelationsView: () => null }))
 vi.mock('~/components/RowLinksWithDropdown', () => ({ RowLinksWithDropdown: () => null }))
 vi.mock('~/components/EntityQuestionsStrip', () => ({ EntityQuestionsStrip: () => null }))
@@ -16,9 +22,10 @@ vi.mock('../Stats', () => ({ Stats: () => null }))
 vi.mock('../SmolStats', () => ({ SmolStats: () => null }))
 
 import { ChainOverview } from '../index'
-import { getChainInvestorRelationsTab } from '../investorRelationsTab'
 
-const session = installSubscriberSession('chain-ir')
+const session = installSubscriberSession('chain-ir', { resolved: true })
+let container: HTMLDivElement
+let root: Root
 
 const chainProps = (name: string) =>
 	({
@@ -36,29 +43,63 @@ const chainProps = (name: string) =>
 		}
 	}) as unknown as IChainOverviewData
 
-function render(name: string) {
-	return renderToStaticMarkup(
-		<session.Wrapper>
-			<ChainOverview {...chainProps(name)} />
-		</session.Wrapper>
+async function render(name: string) {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<ChainOverview {...chainProps(name)} />
+			</session.Wrapper>
+		)
 	)
 }
 
-describe('Chain Investor Relations tab', () => {
-	test('shows a tracked Overview / Enterprise tab row on the overview of an IR chain', () => {
-		const markup = render('NEAR')
+function tabs(name: string) {
+	const nav = container.querySelector(`nav[aria-label="${name} pages"]`)
+	return Array.from(nav?.querySelectorAll('button') ?? [], (button) => ({
+		name: button.textContent,
+		current: button.getAttribute('aria-current')
+	}))
+}
 
-		expect(markup).toContain('Enterprise')
-		expect(markup).toContain('data-umami-event="investor-relations-tab-click"')
-		expect(markup).toContain('data-umami-event-entity="near"')
-		expect(markup).toContain('data-umami-event-dashboard-id="n34rr3v3nu3d4sh"')
-	})
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	router.query = {}
+	router.push.mockReset()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+})
 
-	test('activates the Enterprise view only for ?tab=investor-relations on an IR chain', () => {
-		expect(getChainInvestorRelationsTab('NEAR', undefined, false)).toMatchObject({
-			dashboard: { dashboardId: 'n34rr3v3nu3d4sh' },
-			active: false
-		})
-		expect(getChainInvestorRelationsTab('NEAR', 'investor-relations', false)?.active).toBe(true)
-	})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+
+test('an IR chain opens the Enterprise tab from the Overview / Enterprise row', async () => {
+	await render('NEAR')
+	expect(tabs('NEAR')).toEqual([
+		{ name: 'Overview', current: 'page' },
+		{ name: 'Enterprise', current: null }
+	])
+
+	const enterprise = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Enterprise')!
+	await act(async () => enterprise.click())
+	expect(router.push).toHaveBeenCalledWith(
+		{ pathname: '/chain/[chain]', query: { tab: 'investor-relations' } },
+		undefined,
+		{ shallow: true }
+	)
+
+	router.query = { tab: 'investor-relations' }
+	await render('NEAR')
+	expect(tabs('NEAR')).toEqual([
+		{ name: 'Overview', current: null },
+		{ name: 'Enterprise', current: 'page' }
+	])
+})
+
+test('a chain without an IR dashboard shows no tab row', async () => {
+	router.query = { tab: 'investor-relations' }
+	await render('Ethereum')
+	expect(container.querySelector('nav')).toBeNull()
 })

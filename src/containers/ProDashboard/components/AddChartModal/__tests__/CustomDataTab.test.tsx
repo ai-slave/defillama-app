@@ -10,20 +10,11 @@ import { initializeFromEditItem, modalReducer } from '../modalReducer'
 import type { ModalState } from '../types'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {}, push: vi.fn() }) }))
-// The SQL results grid, chart and toolbar are heavy children; these tests read the rows and columns they receive.
-vi.mock('~/containers/Downloads/sql/ResultsGrid', () => ({
-	ResultsGrid: ({ result }: { result: { rows: Array<unknown> } }) => <p>grid rows: {result.rows.length}</p>
-}))
-vi.mock('~/containers/Downloads/sql/chart', () => ({
-	ChartRouter: ({ config, result }: { config: { chartType: string }; result: { rows: Array<unknown> } }) => (
-		<p>
-			chart {config.chartType}: {result.rows.length}
-		</p>
-	)
-}))
-vi.mock('~/containers/Downloads/sql/chart/ChartToolbar', () => ({
-	ChartToolbar: ({ config }: { config: { xCol: string | null } }) => <p>x axis: {config.xCol}</p>
-}))
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
+// Drawing the chart is a heavy child nothing here reads; the toolbar above it shows the chart configuration.
+vi.mock('~/containers/Downloads/sql/chart', () => ({ ChartRouter: () => null }))
 
 declare global {
 	var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -91,6 +82,20 @@ async function pasteCsv(text: string) {
 	await waitForTypedParse()
 }
 
+/** The cell texts of each body row in the results grid. */
+function gridRows() {
+	return [...document.querySelectorAll('[role="row"]')]
+		.map((row) => [...row.querySelectorAll('[role="cell"]')].map((cell) => cell.textContent))
+		.filter((cells) => cells.length > 0)
+}
+
+/** The x column the chart toolbar shows, or undefined while no chart preview is on screen. The chip reads "x: <column>". */
+function chartXColumn() {
+	return [...document.querySelectorAll('[role="combobox"]')]
+		.find((node) => node.textContent?.startsWith('x: '))
+		?.textContent?.slice('x: '.length)
+}
+
 function displayMode(label: string) {
 	const option = Array.from(document.querySelectorAll('[role="radiogroup"][aria-label="Display as"] label')).find(
 		(node) => node.textContent?.trim() === label
@@ -140,7 +145,10 @@ describe('a subscriber', () => {
 		await act(async () => displayMode('Table').click())
 		expect(displayMode('Table').checked).toBe(true)
 		expect(latest?.customData.displayMode).toBe('table')
-		expect(document.body.textContent).toContain('grid rows: 2')
+		expect(gridRows()).toEqual([
+			['2026-01-01', '10'],
+			['2026-01-02', '20']
+		])
 		expect(track).toHaveBeenCalledWith('custom-data-display-table', undefined)
 	})
 
@@ -198,10 +206,11 @@ describe('a subscriber', () => {
 	test('emptying the CSV box removes the preview of the rows it held', async () => {
 		await renderTab()
 		await pasteCsv(CSV)
-		expect(document.body.textContent).toContain('chart line: 2')
+		expect(chartXColumn()).toBe('day')
 
 		await typeCsv('')
-		expect(document.body.textContent).not.toContain('chart line')
+		expect(chartXColumn()).toBeUndefined()
+		expect(document.body.textContent).not.toContain('2 rows')
 		expect(document.body.textContent).toContain('Paste or upload a CSV to preview it here.')
 	})
 
@@ -218,13 +227,25 @@ describe('a subscriber', () => {
 				[Date.UTC(2026, 0, 1), 10],
 				[Date.UTC(2026, 0, 2), 20]
 			],
-			chart: { chartType: 'line', xCol: 'day', yCols: ['value'] } as CustomDataConfig['chart'],
+			chart: {
+				chartType: 'line',
+				xCol: 'day',
+				yCols: ['value'],
+				splitByCol: null,
+				stackMode: 'off',
+				rightAxisCols: [],
+				seriesKinds: {},
+				seriesColors: {},
+				numberFormat: 'auto'
+			},
 			displayMode: 'chart'
 		})
-		expect(document.body.textContent).toContain('chart line: 2')
+		expect(chartXColumn()).toBe('day')
+		expect(document.body.textContent).toContain('2 rows · 2 columns')
 
 		await typeCsv('d')
-		expect(document.body.textContent).toContain('chart line: 2')
+		expect(chartXColumn()).toBe('day')
+		expect(document.body.textContent).toContain('2 rows · 2 columns')
 	})
 
 	test('reports a malformed CSV as plain text without storing rows', async () => {

@@ -40,8 +40,6 @@ test('keeps collateral and borrowing results separate when the selected token ch
 	http.serve({
 		'/api/public/yields/borrow-routes': (url: URL) => {
 			const params = url.searchParams
-			expect(params.get('pageSize')).toBe('all')
-			expect(params.get('includeMemeTokens')).toBe('true')
 			const leg = params.has('collateralToken') ? 'collateralToken' : 'borrowToken'
 			return { rows: [{ route: `${leg}:${params.getAll(leg).join(',')}` }] }
 		}

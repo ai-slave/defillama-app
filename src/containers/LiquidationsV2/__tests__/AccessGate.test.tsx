@@ -68,12 +68,12 @@ function signIn(subscription: 'active' | 'none') {
 	})
 }
 
-async function render(chainLinks = shell.chainLinks) {
+async function render() {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
 				<AuthProvider>
-					<LiquidationsChainRouteContent shell={{ ...shell, chainLinks }} />
+					<LiquidationsChainRouteContent shell={shell} />
 				</AuthProvider>
 			</QueryClientProvider>
 		)
@@ -93,13 +93,6 @@ test('shows a signed-out visitor the gate without a checkout link', async () => 
 	expect(text()).toContain('An active subscription is required to view liquidations data.')
 	expect(container.querySelector('a[href^="/subscription"]')).toBeNull()
 	expect(text()).toContain('Arbitrum One')
-})
-
-test('hides the chain row when the protocol has a single chain', async () => {
-	await render(shell.chainLinks.slice(0, 2))
-
-	expect(text()).toContain('Sky')
-	expect(text()).not.toContain('Base')
 })
 
 test('sends a signed-in visitor without a subscription to checkout and back', async () => {

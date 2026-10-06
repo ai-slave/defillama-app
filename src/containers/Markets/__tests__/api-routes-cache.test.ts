@@ -14,6 +14,6 @@ describe('token markets list response cache', () => {
 
 		expect(first).toMatchObject({ status: 200, serializedJson: JSON.stringify({ tokens: [] }) })
 		expect(second).toEqual(first)
-		expect(http.urls()).toEqual([`${MARKETS_SERVER_URL}/tokens/list.json`])
+		expect(http.requests).toHaveLength(1)
 	})
 })

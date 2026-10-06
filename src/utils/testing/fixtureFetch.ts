@@ -73,7 +73,7 @@ export function installFixtureFetch() {
 			}
 		},
 		requests,
-		/** Hrefs requested so far, in order. For proxies, the outbound URL is the observable outcome. */
+		/** Hrefs requested so far, in order. Assert one only when our own logic chose it, never a fixed template. */
 		urls: () => requests.map((request) => request.url.href)
 	}
 }

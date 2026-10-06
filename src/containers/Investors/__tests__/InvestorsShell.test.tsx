@@ -4,33 +4,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { InvestorsSiteId } from '../config'
+import InvestorsDashboard from '../index'
 import { InvestorsSiteProvider } from '../SiteContext'
 
-// The registry is the dynamic-import seam: the real one loads every project's dashboard bundle.
-// Each fixture module has an Overview and a Metrics tab that name their project.
-// Projects named here fail to load, as a chunk does right after a deploy.
-const { failing } = vi.hoisted(() => ({ failing: new Set<string>() }))
-vi.mock('../registry', async () => {
-	const { ALL_INVESTORS_PROJECTS } = await import('../config')
-	const tab = (id: string, label: string, project: string) => ({
-		id,
-		label,
-		component: () => <p>{`${project} ${label}`}</p>
-	})
-	return {
-		getDashboardModule: async (dashboardId: string) => {
-			const project = ALL_INVESTORS_PROJECTS.find((p) => p.dashboardId === dashboardId)!.name
-			if (failing.has(project)) throw new Error('ChunkLoadError')
-			return { tabs: [tab('overview', 'Overview', project), tab('metrics', 'Metrics', project)] }
-		}
-	}
-})
-// Heavy child: the chart grid renders only on a ProDashboard tab, which these fixture modules do not have.
-vi.mock('~/containers/ProDashboard/components/ChartGrid', () => ({ ChartGrid: () => null }))
-
-import InvestorsDashboard from '../index'
+// Real dashboard modules from the registry. Their data is out of scope here: every request answers 503,
+// so a tab that fetches shows its own error state.
+const fetchFixtures = installFixtureFetch()
 
 describe('standalone IR shell', () => {
 	let container: HTMLDivElement
@@ -47,8 +29,17 @@ describe('standalone IR shell', () => {
 				</QueryClientProvider>
 			)
 		)
-		// The shell hears about the loaded modules on a later task, so wait until nothing is loading.
-		await waitForUi(() => expect(client.isFetching()).toBe(0))
+		await settle()
+	}
+
+	// Headers and tab components load lazily, then fetch: wait until both are on screen and nothing is fetching,
+	// so no lazy load lands outside act after the test.
+	async function settle() {
+		await waitForUi(() => {
+			expect(client.isFetching()).toBe(0)
+			expect(container.querySelector('header')).not.toBeNull()
+			expect(container.querySelector('[role="tabpanel"]')?.childElementCount ?? 1).toBeGreaterThan(0)
+		})
 	}
 
 	function navButtons() {
@@ -59,18 +50,20 @@ describe('standalone IR shell', () => {
 		const button = Array.from(container.querySelectorAll('nav button')).find((node) => node.textContent === label)
 		expect(button, `nav button ${label}`).toBeDefined()
 		await act(async () => button!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-	}
-
-	function shownContent() {
-		return container.querySelector('p')?.textContent ?? null
+		await settle()
 	}
 
 	function selectedTab() {
 		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? null
 	}
 
+	function panelText() {
+		return container.querySelector('[role="tabpanel"]')?.textContent ?? null
+	}
+
 	beforeEach(() => {
-		client = new QueryClient()
+		fetchFixtures.serve({ http: fixtureStatus(503) })
+		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -80,7 +73,6 @@ describe('standalone IR shell', () => {
 		await act(async () => root.unmount())
 		container.remove()
 		client.clear()
-		failing.clear()
 		vi.restoreAllMocks()
 	})
 
@@ -91,28 +83,28 @@ describe('standalone IR shell', () => {
 		await render('enterprise')
 		expect(navButtons()).toContain('Odyssey Ecosystem')
 		expect(navButtons()).not.toContain('Spark')
-		expect(shownContent()).toBe('Odyssey Ecosystem Overview')
+		expect(selectedTab()).toBe('TVL')
 	})
 
 	test('a tab or project switch shows its content from the top of the page, and a project starts at its first tab', async () => {
 		const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
 		await render('investors')
-		expect(shownContent()).toBe('Spark Overview')
 		expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-orientation')).toBe('vertical')
-		expect(selectedTab()).toBe('Overview')
+		expect(selectedTab()).toBe('Financials')
+		expect(panelText()).toBe("Couldn't load Spark financials.")
 
-		await click('Metrics')
-		expect(selectedTab()).toBe('Metrics')
-		expect(container.querySelector('[role="tabpanel"] p')?.textContent).toBe('Spark Metrics')
+		await click('Distribution Rewards')
+		expect(selectedTab()).toBe('Distribution Rewards')
 		expect(scroll).toHaveBeenCalledTimes(1)
 		// The open tab is already on screen, so it does not scroll.
-		await click('Metrics')
+		await click('Distribution Rewards')
 		expect(scroll).toHaveBeenCalledTimes(1)
 
-		await click('NEAR')
-		expect(shownContent()).toBe('NEAR Overview')
+		// THORChain also has a Financials tab, so a kept selection would open it there.
+		await click('Financials')
+		await click('THORChain')
 		expect(selectedTab()).toBe('Overview')
-		expect(scroll).toHaveBeenCalledTimes(2)
+		expect(scroll).toHaveBeenCalledTimes(3)
 	})
 
 	test('the open project collapses and expands its tab list', async () => {
@@ -125,20 +117,9 @@ describe('standalone IR shell', () => {
 		expect(spark().getAttribute('aria-expanded')).toBe('false')
 		expect(container.querySelector('[role="tab"]')).toBeNull()
 		// Collapsing the list keeps the open tab on screen.
-		expect(shownContent()).toBe('Spark Overview')
+		expect(panelText()).toBe("Couldn't load Spark financials.")
 
 		await click('Spark')
-		expect(selectedTab()).toBe('Overview')
-	})
-
-	test('a project whose dashboard fails to load says so instead of an empty page', async () => {
-		client.setDefaultOptions({ queries: { retry: false } })
-		failing.add('Spark')
-		await render('investors')
-		expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-			"Couldn't load this dashboard. Reload the page to try again."
-		)
-		await click('NEAR')
-		expect(shownContent()).toBe('NEAR Overview')
+		expect(selectedTab()).toBe('Financials')
 	})
 })

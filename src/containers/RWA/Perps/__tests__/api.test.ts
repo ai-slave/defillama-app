@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { RWA_PERPS_SERVER_URL as base } from '~/constants'
 import * as api from '../api'
 
 const { fetchJson } = vi.hoisted(() => ({ fetchJson: vi.fn() }))
@@ -13,64 +12,7 @@ beforeEach(() => {
 	fetchJson.mockResolvedValue([])
 })
 
-describe('rwa perps api urls', () => {
-	function callsWithoutCacheVersion(): Array<Array<unknown>> {
-		return fetchJson.mock.calls.map(([url, ...args]) => {
-			const parsed = new URL(url)
-			parsed.searchParams.delete('cachebust')
-			return [parsed.toString(), ...args]
-		})
-	}
-
-	test('encodes contract, venue, and market ids in request paths', async () => {
-		await api.fetchRWAPerpsCurrent(false)
-		await api.fetchRWAPerpsList(true)
-		await api.fetchRWAPerpsStats(true)
-		await api.fetchRWAPerpsMarketsByContract('xyz:META/2026')
-		await api.fetchRWAPerpsMarketsByVenue('my venue')
-		await api.fetchRWAPerpsMarketsByAssetGroup('US Equities', true)
-		await api.fetchRWAPerpsMarketsByAsset('SK Hynix', true)
-		await api.fetchRWAPerpsOverviewBreakdownChartData({
-			breakdown: 'assetGroup',
-			key: 'openInterest',
-			target: { kind: 'venue', slug: 'xyz' },
-			includeCex: false
-		})
-		await api.fetchRWAPerpsContractBreakdownChartData({
-			key: 'markets',
-			target: { kind: 'assetGroup', slug: 'US Equities' },
-			includeCex: true
-		})
-		await api.fetchRWAPerpsMarketBreakdownChartData({
-			key: 'openInterest',
-			target: { kind: 'baseAsset', slug: 'SK Hynix' },
-			includeCex: false
-		})
-
-		expect(callsWithoutCacheVersion()).toEqual([
-			[`${base}/current`],
-			[`${base}/list?includeCex=true`],
-			[`${base}/stats?includeCex=true`],
-			[`${base}/contract/xyz%3AMETA%2F2026`],
-			[`${base}/venue/my%20venue`],
-			[`${base}/assetGroup/US%20Equities?includeCex=true`],
-			[`${base}/asset/SK%20Hynix?includeCex=true`],
-			[`${base}/chart/overview-breakdown?breakdown=assetGroup&key=openInterest&venue=xyz`],
-			[`${base}/chart/contract-breakdown?key=markets&includeCex=true&assetGroup=US+Equities`],
-			[`${base}/chart/market-breakdown?key=openInterest&baseAsset=SK+Hynix`]
-		])
-	})
-
-	test('builds funding history urls with optional query params', async () => {
-		await api.fetchRWAPerpsFundingHistory('xyz:META', { startTime: 10, endTime: 20 })
-		await api.fetchRWAPerpsFundingHistory('xyz:META')
-
-		expect(callsWithoutCacheVersion()).toEqual([
-			[`${base}/funding/xyz%3AMETA?startTime=10&endTime=20`],
-			[`${base}/funding/xyz%3AMETA`]
-		])
-	})
-
+describe('fetchRWAPerpsFundingHistory', () => {
 	test('normalizes funding database decimals and timestamps once at the fetch boundary', async () => {
 		fetchJson.mockResolvedValueOnce([
 			{

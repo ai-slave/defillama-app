@@ -15,7 +15,7 @@ function upstreamUrl(query: Parameters<typeof buildEquitiesPriceHistoryUpstreamU
 }
 
 describe('equities price history proxy mapping', () => {
-	test('preserves the requested identity and timeframe through both proxy URL builders', async () => {
+	test('returns upstream price history through the public proxy route', async () => {
 		const query = { ticker: 'BRK.B', country: 'US', timeframe: 'MAX' } as const
 		const chart = { data: [[1_700_000_000, 123]], updatedAt: '2026-09-01' }
 		http.serve({
@@ -30,17 +30,6 @@ describe('equities price history proxy mapping', () => {
 			}
 		})
 		expect(await fetchEquitiesPriceHistoryFromProxy(query.ticker, query.country, query.timeframe)).toEqual(chart)
-
-		const proxyUrl = http.urls()[0]
-		if (typeof proxyUrl !== 'string') throw new Error('Missing equities price history proxy request')
-		const proxy = new URL(proxyUrl, 'https://defillama.com')
-		expect(proxy.pathname).toBe('/api/public/equities/price-history')
-		const forwarded = Object.fromEntries(proxy.searchParams)
-		expect(forwarded).toEqual(query)
-
-		const upstream = http.requests[1].url
-		expect(upstream.pathname).toMatch(/\/price-history$/)
-		expect(Object.fromEntries(upstream.searchParams)).toMatchObject(query)
 	})
 
 	test.each([

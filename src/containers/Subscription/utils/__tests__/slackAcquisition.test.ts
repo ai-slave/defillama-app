@@ -57,13 +57,6 @@ describe('slackAcquisition', () => {
 		await expect(
 			persistSlackAcquisitionIfFirst({ source: 'slack', entry: 'mention' }, { fetch, aiServer: 'https://ai.example' })
 		).resolves.toEqual({ wrote: true })
-
-		expect(fetch).toHaveBeenNthCalledWith(1, 'https://ai.example/user-settings')
-		expect(fetch).toHaveBeenNthCalledWith(2, 'https://ai.example/user-settings', {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ settings: { signup_source: { source: 'slack', entry: 'mention' } } })
-		})
 	})
 
 	test('skips persistence when signup source already exists', async () => {

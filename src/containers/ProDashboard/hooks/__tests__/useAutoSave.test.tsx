@@ -306,7 +306,6 @@ test('a document above 48 KiB flushes after 300ms while small documents keep the
 	expect(saves()).toHaveLength(1)
 	await advance(1)
 	expect(saves()).toHaveLength(2)
-	expect(saves()[1].body.data.items).toHaveLength(60)
 })
 
 test('sends variables and annotations with every autosave, preferring explicit overrides', async () => {

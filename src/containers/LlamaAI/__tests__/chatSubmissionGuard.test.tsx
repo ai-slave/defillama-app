@@ -2,8 +2,10 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { setLlamaAIWalkthroughState } from '~/contexts/LocalStorage'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { liveComposer, sendFromComposer, stopButton } from './chatComposer'
 
 const api = vi.hoisted(() => ({
 	router: {
@@ -18,26 +20,8 @@ const api = vi.hoisted(() => ({
 	}
 }))
 vi.mock('next/router', () => ({ default: api.router, useRouter: () => api.router }))
-// Heavy surfaces this test asserts nothing about; submission, streaming and routing stay real.
+// Heavy surfaces this test asserts nothing about; the composer, submission, streaming and routing stay real.
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => children }))
-vi.mock('~/containers/LlamaAI/components/ChatSurface', () => ({
-	// Sends the reader's prompt and shows whether the chat took it.
-	ChatSurface: ({
-		landingProps
-	}: {
-		landingProps: { handleSubmit: (prompt: string) => boolean | Promise<unknown> }
-	}) => (
-		<button
-			type="button"
-			onClick={async () => {
-				const taken = await landingProps.handleSubmit(`Prompt ${++sent}`)
-				document.querySelector('[data-testid="taken"]')!.textContent = String(taken)
-			}}
-		>
-			Send prompt
-		</button>
-	)
-}))
 vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('~/containers/LlamaAI/components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('~/containers/LlamaAI/components/SettingsModal', () => ({ SettingsModal: () => null }))
@@ -45,7 +29,6 @@ vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null
 vi.mock('~/containers/LlamaAI/components/TextSelectionPopup', () => ({ TextSelectionPopup: () => null }))
 import LlamaAIPage from '~/pages/ai/chat/[[...sessionId]]'
 
-let sent = 0
 const session = installSubscriberSession('reader')
 const agenticPosts = () =>
 	session.requests
@@ -79,19 +62,13 @@ function goTo(url: string) {
 }
 
 const draw = () =>
-	act(async () =>
-		root.render(
-			<session.Wrapper>
-				<output data-testid="taken" />
-				{LlamaAIPage.getLayout(<LlamaAIPage />)}
-			</session.Wrapper>
-		)
-	)
+	act(async () => root.render(<session.Wrapper>{LlamaAIPage.getLayout(<LlamaAIPage />)}</session.Wrapper>))
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
-	sent = 0
+	// A returning subscriber: the first-visit walkthrough would open its own dialog over the composer.
+	setLlamaAIWalkthroughState('completed')
 	answers = []
 	answerProbe = () => ({ active: false, execution: null })
 	api.router.push.mockImplementation(async (url: string) => {
@@ -129,16 +106,10 @@ afterEach(async () => {
 	document.body.innerHTML = ''
 })
 
-const taken = () => document.querySelector('[data-testid="taken"]')!.textContent
-async function send() {
-	const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Send prompt')!
-	await act(async () => button.click())
-}
-
 test('a prompt sent after an answer is done but before its response closes is refused, and goes out once it closes', async () => {
 	goTo('/ai/chat')
 	await draw()
-	await send()
+	await sendFromComposer('Prompt 1')
 	await waitForUi(() => expect(answers).toHaveLength(1))
 	await act(async () => {
 		answers[0].write(
@@ -152,8 +123,9 @@ test('a prompt sent after an answer is done but before its response closes is re
 	})
 	await draw()
 
-	await send()
-	expect(taken()).toBe('false')
+	// A refused prompt stays in the composer for the reader to send again.
+	await sendFromComposer('Prompt 2')
+	expect(liveComposer()!.value).toBe('Prompt 2')
 	expect(agenticPosts()).toEqual(['Prompt 1'])
 
 	await act(async () => {
@@ -161,9 +133,9 @@ test('a prompt sent after an answer is done but before its response closes is re
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 	await draw()
-	await send()
-	expect(taken()).toBe('true')
+	await sendFromComposer('Prompt 3')
 	await waitForUi(() => expect(agenticPosts()).toEqual(['Prompt 1', 'Prompt 3']))
+	expect(liveComposer()!.value).toBe('')
 })
 
 test('a prompt sent while a saved chat checks for a running answer goes out instead of waiting for the check', async () => {
@@ -176,23 +148,29 @@ test('a prompt sent while a saved chat checks for a running answer goes out inst
 	)
 	await draw()
 
-	await send()
-	expect(taken()).toBe('true')
+	await sendFromComposer('Prompt 1')
 	await waitForUi(() => expect(agenticPosts()).toEqual(['Prompt 1']))
+	expect(liveComposer()!.value).toBe('')
 	await act(async () => probe.resolve(Response.json({ active: false, execution: null })))
 })
 
-test('a submission that fails before its request starts says so in the chat', async () => {
-	goTo('/ai/chat')
+test('a submission that fails before its request starts says so in the chat, and the next prompt goes out', async () => {
+	goTo('/ai/chat/old-chat')
 	await draw()
+	await waitForUi(() => expect(document.body.textContent).toContain('An older answer'))
 	vi.spyOn(crypto, 'randomUUID').mockImplementationOnce(() => {
 		throw new Error('No randomness available')
 	})
-	await send()
+	await sendFromComposer('Prompt 1')
 	await waitForUi(() =>
 		expect(document.body.textContent).toContain(
 			'The request was interrupted. Reload this conversation before trying again.'
 		)
 	)
 	expect(agenticPosts()).toEqual([])
+	expect(stopButton()).toBeUndefined()
+
+	await sendFromComposer('Prompt 2')
+	await waitForUi(() => expect(agenticPosts()).toEqual(['Prompt 2']))
+	expect(stopButton()).toBeDefined()
 })

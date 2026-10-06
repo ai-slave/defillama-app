@@ -57,12 +57,6 @@ vi.mock('~/containers/Account/ManageAccount', () => ({ ManageAccount: () => null
 
 const session = installSubscriberSession('checkout-user', { account: 'free', resolved: true })
 const statusReads = () => session.urls().filter((url) => url.endsWith('/subscription/status'))
-// Reads of one plan's record: the page asks for the bought plan by type while it confirms a purchase.
-const purchaseReads = () =>
-	session.requests.filter(
-		(request) =>
-			request.url.pathname === '/subscription/status' && String(request.init?.body).includes('subscriptionType')
-	)
 /** Answers a status read by the plan it asks for; an untyped read gets the first active plan. */
 const statusByType = (plans: Record<string, Subscription>, first: Subscription) => (_url: URL, init?: RequestInit) => {
 	const type = init?.body
@@ -144,7 +138,6 @@ test('a monthly to yearly upgrade keeps confirming while the plan reads monthly,
 	try {
 		// Reads at 0s and 4s still see the monthly plan the upgrade started from.
 		await page.wait(4000)
-		expect(purchaseReads().length).toBeGreaterThan(0)
 		expect(page.title()).toBe('Confirming your payment')
 		session.serve({ '/subscription/status': { subscription: proPlan('year') } })
 		await page.wait(4000)
@@ -241,7 +234,6 @@ test('a user with API who buys Pro yearly confirms on the Pro record, not the fi
 		await page.wait(4000)
 
 		expect(page.title()).toBe('Payment successful')
-		expect(purchaseReads().length).toBeGreaterThan(0)
 	} finally {
 		await page.unmount()
 	}

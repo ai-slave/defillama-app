@@ -6,7 +6,7 @@ import type { ProtocolEmission, RawProtocolEmission, RawProtocolEmissionDetail }
 const http = installFixtureFetch()
 
 describe('unlocks api', () => {
-	test('fetches protocol emission details from the datasets endpoint', async () => {
+	test('normalizes a protocol detail into chart events', async () => {
 		const rawDetail = {
 			name: 'Chainlink',
 			gecko_id: 'chainlink',
@@ -77,7 +77,6 @@ describe('unlocks api', () => {
 		const api = await import('../api')
 		const result = await api.fetchProtocolEmission('chain/link')
 
-		expect(http.urls()).toEqual([`${DATASETS_SERVER_URL}/emissions/chain%2Flink`])
 		expect(result).not.toBeNull()
 		if (!result) throw new Error('Expected protocol detail')
 		expect(result.name).toBe('Chainlink')
@@ -121,7 +120,6 @@ describe('unlocks api', () => {
 		const api = await import('../api')
 
 		await expect(api.fetchProtocolEmission('chainlink')).rejects.toBe(error)
-		expect(http.requests).toHaveLength(1)
 	})
 
 	test('returns null only for a missing protocol detail', async () => {

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { YIELDS_V2_SERVER_URL } from '~/constants'
-import { fetchPoolDetail, fetchPoolDetailHistory, fetchBorrowMarketDetailHistory } from '../poolDetail/fetch'
-import { fetchStablecoinRatesHistory } from '../rates/fetch'
+import { fetchPoolDetailHistory } from '../poolDetail/fetch'
 import { buildYieldsProxyUrl, yieldsProxy } from '../server/proxy'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
@@ -24,38 +23,7 @@ afterEach(() => {
 	vi.unstubAllGlobals()
 })
 
-describe('Yields v2 browser fetches', () => {
-	test('routes shared client-side history fetchers through the same-origin proxy', async () => {
-		vi.stubGlobal('window', {})
-
-		await fetchPoolDetailHistory(POOL_ID, 'max')
-		await fetchBorrowMarketDetailHistory('borrow/pool', '90d')
-		await fetchStablecoinRatesHistory('30d')
-
-		// No measured leg from the browser: it reaches the private routes instead, and the public
-		// proxy refuses to front the verified endpoints at all.
-		expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-			`/api/public/yields/proxy/v2/earn/${POOL_ID}/history?range=max`,
-			'/api/public/yields/proxy/v2/borrow/markets/borrow%2Fpool/history?range=90d',
-			'/api/public/yields/proxy/v2/reference-rates/stablecoins/history?range=30d'
-		])
-	})
-
-	test('routes the earn detail fetch through the proxy in the browser', async () => {
-		vi.stubGlobal('window', {})
-
-		await fetchPoolDetail(POOL_ID)
-
-		expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([`/api/public/yields/proxy/v2/earn/${POOL_ID}`])
-	})
-
-	test('keeps SSR requests on the direct keyed upstream', async () => {
-		await fetchPoolDetailHistory('pool', 'max')
-
-		expect(fetchMock).toHaveBeenCalledOnce()
-		expect(fetchMock.mock.calls[0]?.[0]).toBe(`${YIELDS_V2_SERVER_URL}/v2/earn/pool/history?range=max`)
-	})
-
+describe('Yields v2 pool history fetch', () => {
 	test('does not request the verified sidecar unless the caller opts in', async () => {
 		await fetchPoolDetailHistory(POOL_ID, 'max')
 

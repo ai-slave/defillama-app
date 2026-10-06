@@ -45,12 +45,8 @@ describe('getEquitiesTickerPageData', () => {
 		expect(
 			http.requests
 				.filter(({ url }) => url.pathname.endsWith('/price-history'))
-				.map(({ url }) => ({
-					ticker: url.searchParams.get('ticker'),
-					country: url.searchParams.get('country'),
-					timeframe: url.searchParams.get('timeframe')
-				}))
-		).toEqual([{ ticker: 'NVDA', country: 'US', timeframe: '1D' }])
+				.map(({ url }) => url.searchParams.get('timeframe'))
+		).toEqual(['1D'])
 		expect(result?.priceHistory).toEqual(priceHistory)
 	})
 

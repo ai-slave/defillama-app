@@ -45,6 +45,7 @@ Mock only at boundaries:
 - These shapes fail the `undefined` check: no assertion, or only `toBeDefined`, `toBeTruthy` or `not.toThrow`; only mock-call or absence assertions; an expected value computed by the code under test; a restated constant, config default or prompt string; data the test built itself.
 - Never assert calls between internal modules, class names, inline styles, wrapper nesting, exact HTML, snapshots, or "renders without crashing".
 - Assert calls only for `fetch`, navigation, emitted events, and callbacks the test supplies.
+- Assert a request's URL, headers or body only where our own logic chose them: a filter, a cursor, a branch on user input. A fixed endpoint, an auth or secret header, or a body that is the input as JSON is a copy of the code. It cannot catch a wrong env var, a missing key or a broken upstream, and it fails only on intended changes.
 - Accessibility semantics (labels, roles, focus, expanded state) are behavior. Assert them.
 - Tests read results through the public API, never through getters that expose internal state.
 

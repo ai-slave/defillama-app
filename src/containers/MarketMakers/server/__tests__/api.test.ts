@@ -18,11 +18,6 @@ describe('leaderboardVolume route', () => {
 
 		expect(first).toMatchObject({ status: 200, serializedJson: JSON.stringify([{ marketMakerId: 'lhava' }]) })
 		expect(second).toEqual(first)
-		expect(http.requests[0].url.pathname).toBe('/api/v1/public/market-maker/leaderboard/volume')
-		expect(Object.fromEntries(http.requests[0].url.searchParams)).toEqual({
-			start_date: '2026-05-30',
-			end_date: '2026-06-29'
-		})
 		expect(http.requests).toHaveLength(1)
 
 		// Another date range is a different leaderboard, never the cached one.

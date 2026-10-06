@@ -74,7 +74,6 @@ test('waits for every series, blocks failed partial exports, then exports both s
 		if (!button) throw new Error('Missing card menu')
 		return button
 	})
-	expect(http.requests).toHaveLength(2)
 	await act(async () => menu.click())
 	expect(exportButton().getAttribute('aria-disabled')).toBe('true')
 	await act(async () => exportButton().click())

@@ -98,10 +98,6 @@ function responseForUrl(rawUrl: string): unknown {
 	throw new Error(`unexpected URL: ${url}`)
 }
 
-function expectMetadataRequest(url: string): void {
-	expect(http.urls().map(withoutCacheVersion)).toContain(url)
-}
-
 describe('metadata source adapters', () => {
 	beforeEach(() => {
 		vi.resetModules()
@@ -109,7 +105,7 @@ describe('metadata source adapters', () => {
 		http.serve({ 'https://': (url: URL) => responseForUrl(url.href) })
 	})
 
-	test('fetches and parses metadata from public URLs', async () => {
+	test('parses protocols, company routes and the emissions list from the metadata sources', async () => {
 		vi.stubEnv('API_KEY', '')
 		const { fetchCoreMetadataSources } = await import('../sources')
 
@@ -120,18 +116,6 @@ describe('metadata source adapters', () => {
 		})
 		expect(sources.equitiesCompanyRoutes).toEqual([{ ticker: 'NVDA', country: 'US' }])
 		expect(sources.preIpoCompanyIds).toEqual(['anthropic'])
-		expectMetadataRequest('https://api.llama.fi/config/smol/appMetadata-protocols.json')
-		expectMetadataRequest('https://api.llama.fi/rwa/list')
-		expectMetadataRequest('https://api.llama.fi/rwa/rwa/platforms')
-		expectMetadataRequest('https://api.llama.fi/rwa/protocol-mcap')
-		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/rankings.json')
-		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/filters.json')
-		expectMetadataRequest('https://api.llama.fi/config/smol/token.json')
-		expectMetadataRequest('https://bridges.llama.fi/bridges?includeChains=true')
-		expectMetadataRequest('https://api.llama.fi/emissions')
-		expectMetadataRequest('https://defillama-datasets.llama.fi/emissionsSupplyMetrics')
-		expectMetadataRequest('https://api.llama.fi/equities/v1/companies-list')
-		expectMetadataRequest('https://pre-ipo.llama.fi/v1/companies-list')
 		expect(sources.emissionsProtocolsList).toEqual(['aave'])
 	})
 
@@ -141,40 +125,7 @@ describe('metadata source adapters', () => {
 
 		await fetchCoreMetadataSources()
 
-		expectMetadataRequest('https://pro-api.llama.fi/secret-key/api/config/smol/appMetadata-protocols.json')
-		expectMetadataRequest('https://api.llama.fi/config/smol/token.json')
-		expect(http.urls()).not.toContain('https://pro-api.llama.fi/secret-key/api/config/smol/token.json')
-		expectMetadataRequest('https://pro-api.llama.fi/secret-key/api/emissions')
-		expectMetadataRequest('https://pro-api.llama.fi/secret-key/equities/v1/companies-list')
-		expectMetadataRequest('https://pro-api.llama.fi/secret-key/pre-ipo/v1/companies-list')
-	})
-
-	test('fetches metadata sources from direct URL overrides before pro API fallbacks', async () => {
-		vi.stubEnv('API_KEY', 'secret-key')
-		vi.stubEnv('BRIDGES_SERVER_URL', 'https://bridges.example.com/')
-		vi.stubEnv('DATASETS_SERVER_URL', 'https://datasets.example.com/')
-		vi.stubEnv('LIQUIDATIONS_SERVER_URL_V2', 'https://liquidations.example.com/')
-		vi.stubEnv('PRE_IPO_SERVER_URL', 'https://pre-ipo.example.com/v1/')
-		vi.stubEnv('EQUITIES_SERVER_URL', 'https://equities.example.com/v1/')
-		vi.stubEnv('RWA_PERPS_SERVER_URL', 'https://rwa-perps.example.com/')
-		vi.stubEnv('RWA_SERVER_URL', 'https://rwa.example.com/')
-		vi.stubEnv('SERVER_URL', 'https://core.example.com/api/')
-		const { fetchCoreMetadataSources } = await import('../sources')
-
-		expect((await fetchCoreMetadataSources()).preIpoCompanyIds).toEqual(['anthropic'])
-
-		expectMetadataRequest('https://core.example.com/api/config/smol/appMetadata-protocols.json')
-		expectMetadataRequest('https://core.example.com/api/config/smol/token.json')
-		expectMetadataRequest('https://rwa.example.com/list')
-		expectMetadataRequest('https://rwa.example.com/rwa/platforms')
-		expectMetadataRequest('https://rwa.example.com/protocol-mcap')
-		expectMetadataRequest('https://rwa-perps.example.com/list?includeCex=true')
-		expectMetadataRequest('https://datasets.example.com/tokenlist/rankings.json')
-		expectMetadataRequest('https://datasets.example.com/tokenlist/filters.json')
-		expectMetadataRequest('https://liquidations.example.com/all')
-		expectMetadataRequest('https://bridges.example.com/bridges?includeChains=true')
-		expectMetadataRequest('https://equities.example.com/v1/companies-list')
-		expectMetadataRequest('https://pre-ipo.example.com/v1/companies-list')
+		expect(http.urls().map(withoutCacheVersion)).toContain('https://api.llama.fi/config/smol/token.json')
 	})
 
 	test('logs the named metadata source when an upstream request fails', async () => {

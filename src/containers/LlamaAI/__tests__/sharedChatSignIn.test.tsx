@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { sendFromComposer } from './chatComposer'
 
 const router = vi.hoisted(() => ({
 	query: { shareToken: 'shared-token' },
@@ -22,26 +23,13 @@ vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) =>
 vi.mock('next/script', () => ({ default: () => null }))
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
 vi.mock('~/containers/Subscription/Turnstile', () => ({ Turnstile: () => null }))
-// The chat is heavy; the stub only forks with a question and shows the prompt the page hands it to send.
-vi.mock('~/containers/LlamaAI', () => ({
-	AgenticChat: ({
-		onForkSubmit,
-		initialPrompt
-	}: {
-		onForkSubmit: (prompt: string) => void
-		initialPrompt?: string
-	}) => (
-		<>
-			<button type="button" onClick={() => onForkSubmit('Why did TVL drop?')}>
-				Ask
-			</button>
-			<output>{initialPrompt ?? 'nothing to send'}</output>
-		</>
-	)
-}))
 import SharedConversationPage from '~/pages/ai/chat/shared/[shareToken]'
 
 const session = installSubscriberSession('reader', { account: 'signed-out' })
+const agenticPrompts = () =>
+	session.requests
+		.filter((call) => call.url.href === 'https://ai.llama.fi/agentic')
+		.map((call) => (JSON.parse(call.init!.body as string) as { message: string }).message)
 let root: Root
 
 beforeEach(async () => {
@@ -50,7 +38,21 @@ beforeEach(async () => {
 			session: { sessionId: 's1', title: 'Shared', createdAt: '2026-01-01', isPublic: true },
 			messages: [],
 			isPublicView: true
-		}
+		},
+		// What the chat loads once the reader signs in.
+		'https://features.llama.fi/user/ai-balance': {
+			freeRemaining: '1',
+			toppedUpBalance: '0',
+			freeLimit: '1',
+			freeSpent: '0'
+		},
+		'/user-settings': { settings: { customInstructions: '' }, tip: null },
+		'/mobile-push/web-notifications': { available: false, enabled: false },
+		'/user/sessions': { sessions: [], hasMore: false },
+		'https://ai.llama.fi/projects/usage': { limits: { projects: 10 } },
+		'/subscription/trial-available': { trialAvailable: true },
+		'https://ai.llama.fi/agentic': () =>
+			new Response('data: {"type":"done"}\n\n', { headers: { 'Content-Type': 'text/event-stream' } })
 	})
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -69,12 +71,7 @@ afterEach(async () => {
 })
 
 async function askAndCloseSignIn() {
-	const ask = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Ask')
-		expect(button).toBeDefined()
-		return button!
-	})
-	await act(async () => ask.click())
+	await sendFromComposer('Why did TVL drop?')
 	const close = await waitForUi(() => {
 		const button = document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Close dialog"]')
 		expect(button).not.toBeNull()
@@ -89,20 +86,15 @@ test('a question abandoned at sign-in is not sent after a later sign-in', async 
 	await act(async () => pb.authStore.save(session.token, session.record as never))
 	// Long enough for the account to load, which is when the page hands a waiting question over.
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
-	expect(document.querySelector('output')?.textContent).toBe('nothing to send')
+	expect(agenticPrompts()).toEqual([])
 })
 
 test('closing sign-in after signing in from another tab still sends the question', async () => {
-	const ask = await waitForUi(() => {
-		const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Ask')
-		expect(button).toBeDefined()
-		return button!
-	})
-	await act(async () => ask.click())
+	await sendFromComposer('Why did TVL drop?')
 	await act(async () => pb.authStore.save(session.token, session.record as never))
 	await waitForUi(() => expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe("You're signed in"))
 	await act(async () =>
 		document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Close dialog"]')!.click()
 	)
-	await waitForUi(() => expect(document.querySelector('output')?.textContent).toBe('Why did TVL drop?'))
+	await waitForUi(() => expect(agenticPrompts()).toEqual(['Why did TVL drop?']))
 })

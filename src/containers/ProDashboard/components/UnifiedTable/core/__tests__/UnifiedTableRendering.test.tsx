@@ -5,6 +5,8 @@ import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { UnifiedTableConfig } from '../../../../unifiedTable/config/current'
 import type { ProtocolsUnifiedTableResponse } from '../../../../unifiedTable/contracts'
 import { TablePagination } from '../../../Table/TablePagination'
@@ -44,6 +46,9 @@ function Dashboard({ streamDone, children }: { streamDone: boolean; children: Re
 }
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
+const http = installFixtureFetch()
+const ROWS_ROUTE = '/api/public/pro-dashboard/unified-table/protocols'
+const rowRequests = () => http.requests.filter((request) => request.url.pathname === ROWS_ROUTE).length
 
 const virtualizer = vi.hoisted(() => {
 	let count = 0
@@ -149,11 +154,7 @@ function createQueryClient() {
 }
 
 async function waitForContent(container: HTMLElement, content: string) {
-	for (let attempt = 0; attempt < 20; attempt++) {
-		if (container.textContent?.includes(content)) return
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-	}
-	throw new Error(`Expected rendered content: ${content}`)
+	await waitForUi(() => expect(container.textContent).toContain(content))
 }
 
 function SortingHarness({ columnId }: { columnId: string }) {
@@ -254,7 +255,6 @@ describe('UnifiedTable rendering', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
-		vi.unstubAllGlobals()
 	})
 
 	test.each(['tvl', 'fees24h'])(
@@ -264,16 +264,7 @@ describe('UnifiedTable rendering', () => {
 				...unifiedTableResponse,
 				rows: [100, null, 0, -20].map((value, index) => ({ ...createRow(index), metrics: { [columnId]: value } }))
 			}
-			vi.stubGlobal(
-				'fetch',
-				vi.fn(
-					async () =>
-						new Response(JSON.stringify(data), {
-							status: 200,
-							headers: { 'content-type': 'application/json' }
-						})
-				)
-			)
+			http.serve({ [ROWS_ROUTE]: data })
 			await act(async () =>
 				root.render(
 					<QueryClientProvider client={createQueryClient()}>
@@ -385,16 +376,7 @@ describe('UnifiedTable rendering', () => {
 				}
 			]
 		}
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(
-				async () =>
-					new Response(JSON.stringify(response), {
-						status: 200,
-						headers: { 'content-type': 'application/json' }
-					})
-			)
-		)
+		http.serve({ [ROWS_ROUTE]: response })
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
@@ -414,24 +396,13 @@ describe('UnifiedTable rendering', () => {
 			input.value = 'aave'
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
-		for (let attempt = 0; attempt < 20 && container.textContent?.includes('Compound'); attempt++) {
-			await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-		}
+		await waitForUi(() => expect(container.textContent).not.toContain('Compound'))
 		expect(container.textContent).toContain('Aave')
 		expect(container.textContent).not.toContain('Compound')
 	})
 
 	test('collapsing the search with Escape keeps the query and returns focus to the search button', async () => {
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(
-				async () =>
-					new Response(JSON.stringify(unifiedTableResponse), {
-						status: 200,
-						headers: { 'content-type': 'application/json' }
-					})
-			)
-		)
+		http.serve({ [ROWS_ROUTE]: unifiedTableResponse })
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
@@ -462,16 +433,7 @@ describe('UnifiedTable rendering', () => {
 	})
 
 	test('an empty search that loses focus to another control collapses without pulling focus back', async () => {
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(
-				async () =>
-					new Response(JSON.stringify(unifiedTableResponse), {
-						status: 200,
-						headers: { 'content-type': 'application/json' }
-					})
-			)
-		)
+		http.serve({ [ROWS_ROUTE]: unifiedTableResponse })
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
@@ -500,16 +462,7 @@ describe('UnifiedTable rendering', () => {
 		[false, true]
 	])('read-only %s shows grouping and column controls: %s', async (isReadOnly, showsControls) => {
 		dashboardMocks.permissions.isReadOnly = isReadOnly
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(
-				async () =>
-					new Response(JSON.stringify(unifiedTableResponse), {
-						status: 200,
-						headers: { 'content-type': 'application/json' }
-					})
-			)
-		)
+		http.serve({ [ROWS_ROUTE]: unifiedTableResponse })
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
@@ -526,8 +479,7 @@ describe('UnifiedTable rendering', () => {
 	})
 
 	test('shows an initial query failure distinctly from an empty table and retries from the error state', async () => {
-		const fetchMock = vi.fn(async () => new Response('upstream unavailable', { status: 400 }))
-		vi.stubGlobal('fetch', fetchMock)
+		http.serve({ [ROWS_ROUTE]: fixtureStatus(400, { message: 'upstream unavailable' }) })
 		const queryClient = createQueryClient()
 
 		await act(async () =>
@@ -543,23 +495,16 @@ describe('UnifiedTable rendering', () => {
 		expect(container.textContent).not.toContain('No rows match your scope or filters.')
 		expect(container.textContent).not.toContain("Couldn't refresh this card")
 
-		const attemptsBeforeRetry = fetchMock.mock.calls.length
+		const attemptsBeforeRetry = rowRequests()
 		await act(async () => button('Try again').click())
 		await waitForContent(container, "Couldn't load this table")
-		expect(fetchMock.mock.calls.length).toBeGreaterThan(attemptsBeforeRetry)
+		expect(rowRequests()).toBeGreaterThan(attemptsBeforeRetry)
 	})
 
 	test('keeps stale rows visible and offers a retry when a background refresh fails', async () => {
 		let shouldFail = false
-		const fetchMock = vi.fn(async () =>
-			shouldFail
-				? new Response('upstream unavailable', { status: 400 })
-				: new Response(JSON.stringify(unifiedTableResponse), {
-						status: 200,
-						headers: { 'content-type': 'application/json' }
-					})
-		)
-		vi.stubGlobal('fetch', fetchMock)
+		const failure = fixtureStatus(400, { message: 'upstream unavailable' })
+		http.serve({ [ROWS_ROUTE]: () => (shouldFail ? failure() : Response.json(unifiedTableResponse)) })
 		const queryClient = createQueryClient()
 
 		await act(async () =>
@@ -582,13 +527,10 @@ describe('UnifiedTable rendering', () => {
 		expect(container.textContent).not.toContain("Couldn't load this table")
 
 		shouldFail = false
-		const attemptsBeforeRetry = fetchMock.mock.calls.length
+		const attemptsBeforeRetry = rowRequests()
 		await act(async () => button('Try again').click())
-		for (let attempt = 0; attempt < 20 && container.textContent?.includes("Couldn't refresh this card"); attempt++) {
-			await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-		}
-		expect(fetchMock.mock.calls.length).toBeGreaterThan(attemptsBeforeRetry)
-		expect(container.textContent).not.toContain("Couldn't refresh this card")
+		await waitForUi(() => expect(container.textContent).not.toContain("Couldn't refresh this card"))
+		expect(rowRequests()).toBeGreaterThan(attemptsBeforeRetry)
 		expect(container.textContent).toContain('Aave')
 	})
 })

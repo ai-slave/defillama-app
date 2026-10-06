@@ -136,9 +136,6 @@ test('returns activity rows in milliseconds and keeps sub-dollar gas costs', asy
 		return null
 	})
 	await waitForUi(() => expect(data).toEqual([[1_700_000_000_000, 0.01]]))
-	expect(requested()).toEqual([
-		`${CHARTS}?kind=adapter&adapterType=active-users&protocol=pangolin-v2&dataType=dailyGasUsedUsd`
-	])
 })
 
 test('keeps successful empty activity and median responses distinct from failures', async () => {

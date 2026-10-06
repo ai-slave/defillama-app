@@ -5,6 +5,9 @@ import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { TotalValueLostContainer } from '~/containers/Hacks/TotalValueLost'
+import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { usePaginatedTable } from '../features/pagination'
 import type { searchTableFeatures } from '../features/search'
 import { useSearchTableContext } from '../search/context'
@@ -15,14 +18,9 @@ import { TableSearchInput } from '../search/TableSearchInput'
 import { VirtualSearchTableView } from '../search/VirtualSearchTableView'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/mica' }) }))
-const { csvRows } = vi.hoisted(() => ({ csvRows: vi.fn() }))
-vi.mock('~/components/CsvDownloadButton', () => ({
-	CSVDownloadButton: ({ prepareCsv }: { prepareCsv: () => { rows: unknown } }) => (
-		<button type="button" onClick={() => csvRows(prepareCsv().rows)}>
-			Export
-		</button>
-	)
-}))
+// A subscriber session lets the real CSV button export; the sink captures the downloaded file.
+const session = installSubscriberSession('subscriber', { resolved: true })
+const downloads = installDownloadSink()
 type Asset = { name: string; value: number }
 const helper = createColumnHelper<typeof searchTableFeatures, Asset>()
 const columns = helper.columns([
@@ -66,26 +64,36 @@ function Fixture({
 }) {
 	renderOwner()
 	return (
-		<SearchTableProvider
-			options={{ data: rows, columns: definitions, initialState: { sorting: [{ id: 'value', desc: false }] } }}
-		>
-			<TableSearchInput columnId="name" placeholder="Search assets" />
-			<TableCsvExport filename="assets" includeHiddenColumns={exportAll} />
-			<ResetSearch />
-			{virtual ? <VirtualSearchTableView /> : <SearchTableView />}
-		</SearchTableProvider>
+		<session.Wrapper>
+			<SearchTableProvider
+				options={{ data: rows, columns: definitions, initialState: { sorting: [{ id: 'value', desc: false }] } }}
+			>
+				<TableSearchInput columnId="name" placeholder="Search assets" />
+				<TableCsvExport filename="assets" includeHiddenColumns={exportAll} />
+				<ResetSearch />
+				{virtual ? <VirtualSearchTableView /> : <SearchTableView />}
+			</SearchTableProvider>
+		</session.Wrapper>
 	)
 }
 async function click(container: HTMLElement, name: string) {
 	const button = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === name)!
 	await act(async () => button.click())
 }
+async function exportCsv(container: HTMLElement) {
+	const count = downloads.length
+	const button = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === '.csv')!
+	await waitForUi(() => expect(button.disabled).toBe(false))
+	await act(async () => button.click())
+	await waitForUi(() => expect(downloads).toHaveLength(count + 1))
+	const { filename, blob } = downloads[count]!
+	return { filename, text: await blob.text() }
+}
 test('composes search, visibility, sorting, reset, and CSV without rerendering the owner', async () => {
 	const container = document.createElement('div')
 	document.body.append(container)
 	const root = createRoot(container)
 	renderOwner.mockClear()
-	csvRows.mockClear()
 	try {
 		await act(async () => root.render(<Fixture />))
 		expect(container.querySelector('tbody tr')?.textContent).toBe('Alpha, Inc.1')
@@ -98,8 +106,7 @@ test('composes search, visibility, sorting, reset, and CSV without rerendering t
 		await click(container, 'Toggle value')
 		expect(container.querySelectorAll('thead th')).toHaveLength(1)
 		expect(container.querySelector('tbody')?.textContent).toBe('Beta')
-		await click(container, 'Export')
-		expect(csvRows).toHaveBeenLastCalledWith([['Name'], ['Beta']])
+		expect(await exportCsv(container)).toEqual({ filename: 'assets.csv', text: 'Name\nBeta' })
 		await click(container, 'Reset')
 		expect(input.value).toBe('')
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
@@ -276,15 +283,7 @@ test.each([false, true])(
 			await click(container, 'Hide name')
 			await act(async () => typeImmediately(container.querySelector('input')!, 'Beta'))
 			expect(container.querySelector('tbody')?.textContent).toBe('2')
-			await click(container, 'Export')
-			expect(csvRows).toHaveBeenLastCalledWith(
-				exportAll
-					? [
-							['Name', 'Value'],
-							['Beta', 2]
-						]
-					: [['Value'], [2]]
-			)
+			expect((await exportCsv(container)).text).toBe(exportAll ? 'Name,Value\nBeta,2' : 'Value\n2')
 		} finally {
 			await act(async () => root.unmount())
 		}
@@ -327,12 +326,14 @@ test('Hacks keeps the Name column when "Only" picks one metric', async () => {
 	try {
 		await act(async () =>
 			root.render(
-				<TotalValueLostContainer
-					protocols={[
-						{ name: 'Alpha', slug: 'alpha', route: null, totalHackedUsd: 20, returnedFundsUsd: 5 },
-						{ name: 'Beta', slug: 'beta', route: null, totalHackedUsd: 10, returnedFundsUsd: 2 }
-					]}
-				/>
+				<session.Wrapper>
+					<TotalValueLostContainer
+						protocols={[
+							{ name: 'Alpha', slug: 'alpha', route: null, totalHackedUsd: 20, returnedFundsUsd: 5 },
+							{ name: 'Beta', slug: 'beta', route: null, totalHackedUsd: 10, returnedFundsUsd: 2 }
+						]}
+					/>
+				</session.Wrapper>
 			)
 		)
 		await press(document.querySelector<HTMLElement>('[aria-label="Columns dropdown"]')!)
@@ -347,12 +348,7 @@ test('Hacks keeps the Name column when "Only" picks one metric', async () => {
 			'Net User Loss'
 		])
 		expect(container.querySelector('tbody tr')?.textContent).toContain('Alpha')
-		await click(container, 'Export')
-		expect(csvRows).toHaveBeenLastCalledWith([
-			['Name', 'Net User Loss'],
-			['Alpha', 15],
-			['Beta', 8]
-		])
+		expect((await exportCsv(container)).text).toBe('Name,Net User Loss\nAlpha,15\nBeta,8')
 	} finally {
 		await act(async () => root.unmount())
 		container.remove()

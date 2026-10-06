@@ -4,9 +4,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { virtualViewport } from '~/utils/testing/virtualLayout'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { CustomDataConfig } from '../../../types'
-import { CardHeightScaleContext } from '../../cardHeightContext'
 import { DashboardCardContext } from '../../DashboardCardContext'
 import { CustomDataCard } from '../CustomDataCard'
 import { gzipBase64Encode } from '../rowsEncoding'
@@ -14,29 +14,11 @@ import { gzipBase64Encode } from '../rowsEncoding'
 const appendItems = vi.fn()
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {} }) }))
 const session = installSubscriberSession('u1', { resolved: true })
-// The results grid and the SQL chart are heavy children; these tests read the rows they receive.
-vi.mock('~/containers/Downloads/sql/ResultsGrid', () => ({
-	ResultsGrid: ({ result }: { result: { rows: Array<Array<unknown>> } }) => (
-		<p>
-			grid rows: {result.rows.length}, last row: {result.rows.at(-1)?.join(' ')}
-		</p>
-	)
-}))
-vi.mock('~/containers/Downloads/sql/chart', () => ({
-	ChartRouter: ({
-		config,
-		result,
-		height
-	}: {
-		config: { chartType: string }
-		result: { rows: Array<unknown> }
-		height?: string
-	}) => (
-		<p data-height={height}>
-			chart {config.chartType}: {result.rows.length}
-		</p>
-	)
-}))
+vi.mock('@tanstack/react-virtual', async (original) =>
+	(await import('~/utils/testing/virtualLayout')).withVirtualLayout(await original())
+)
+// Drawing the chart is a heavy child nothing here reads.
+vi.mock('~/containers/Downloads/sql/chart', () => ({ ChartRouter: () => null }))
 
 const chart: CustomDataConfig['chart'] = {
 	chartType: 'line',
@@ -84,17 +66,13 @@ afterEach(async () => {
 	container.remove()
 })
 
-type RenderOptions = { streamDone?: boolean; scale?: number; isReadOnly?: boolean; editable?: boolean }
+type RenderOptions = { streamDone?: boolean; isReadOnly?: boolean; editable?: boolean }
 
 async function render(
 	config: CustomDataConfig,
-	{ streamDone = true, scale = 1, isReadOnly = false, editable = false }: RenderOptions = {}
+	{ streamDone = true, isReadOnly = false, editable = false }: RenderOptions = {}
 ) {
-	const card = (
-		<CardHeightScaleContext.Provider value={scale}>
-			<CustomDataCard config={config} />
-		</CardHeightScaleContext.Provider>
-	)
+	const card = <CustomDataCard config={config} />
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -122,25 +100,36 @@ async function openMenu() {
 	if (menu) await act(async () => menu.click())
 }
 
-function chartHeight() {
-	return container.querySelector('p[data-height]')?.getAttribute('data-height')
+/** The cell texts of each body row the results grid shows. */
+function gridRows() {
+	return [...container.querySelectorAll('[role="row"]')]
+		.map((row) => [...row.querySelectorAll('[role="cell"]')].map((cell) => cell.textContent))
+		.filter((cells) => cells.length > 0)
 }
 
-test('renders inline rows as a table with the plain-text name, source and row count', async () => {
+function menuLabels() {
+	return [...document.querySelectorAll('[role="menuitem"]')].map((node) => node.textContent?.trim())
+}
+
+test('renders inline rows as a table with the plain-text name, source and row count, without an image export', async () => {
 	await render({ ...base, name: '<b>Treasury</b>' })
 	expect(container.querySelector('h2')?.textContent).toBe('<b>Treasury</b>')
 	expect(container.querySelector('h2')?.querySelector('b')).toBeNull()
 	expect(container.textContent).toContain('treasury.csv')
 	expect(container.textContent).toContain('2 rows')
-	expect(container.textContent).toContain('grid rows: 2')
-	expect(container.textContent).not.toContain('chart')
+	expect(gridRows()).toEqual([
+		['2026-01-01', '1'],
+		['2026-01-02', '2']
+	])
+	await openMenu()
+	expect(menuLabels()).not.toContain('Download image')
 })
 
-test('renders the chart view and duplicates the dataset with a fresh id when editable', async () => {
+test('the chart view offers an image export instead of the table, and duplicates the dataset with a fresh id', async () => {
 	await render({ ...base, displayMode: 'chart' })
-	expect(container.textContent).toContain('chart line: 2')
-	expect(chartHeight()).toBe('420px')
+	expect(gridRows()).toEqual([])
 	await openMenu()
+	expect(menuLabels()).toContain('Download image')
 	const duplicate = buttonNamed('Duplicate')
 	expect(duplicate).toBeDefined()
 	await act(async () => duplicate?.click())
@@ -173,9 +162,9 @@ test('decodes compressed rows lazily before rendering them', async () => {
 	const data = await gzipBase64Encode(JSON.stringify(rows))
 	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1500 } })
 	expect(container.textContent).toContain('1,500 rows')
-	await waitForUi(() =>
-		expect(container.textContent).toContain(`grid rows: 1500, last row: ${Date.UTC(2026, 0, 16)} 1499`)
-	)
+	await waitForUi(() => expect(gridRows()[0]).toEqual(['2026-01-01', '0']))
+	await act(async () => virtualViewport.scroll(1500 * 28))
+	expect(gridRows().at(-1)).toEqual(['2026-01-16', '1,499'])
 })
 
 test('replacing compressed rows shows a loader, not the previous rows, while the new ones decode', async () => {
@@ -190,23 +179,25 @@ test('replacing compressed rows shows a loader, not the previous rows, while the
 		['2026-01-02', 222]
 	])
 	await render({ ...base, rows: first })
-	await waitForUi(() => expect(container.textContent).toContain('grid rows: 1'))
+	await waitForUi(() => expect(gridRows()).toEqual([['2026-01-01', '111']]))
 	await render({ ...base, rows: second })
-	const duringDecode = container.textContent
-	await waitForUi(() => expect(container.textContent).toContain('grid rows: 2'))
+	const textDuringDecode = container.textContent
+	const rowsDuringDecode = gridRows()
+	await waitForUi(() => expect(gridRows()).toHaveLength(2))
 
-	expect(duringDecode).toContain('Loading')
-	expect(duringDecode).not.toContain('grid rows: 1')
+	expect(textDuringDecode).toContain('Loading')
+	expect(rowsDuringDecode).toEqual([])
 })
 
 test('the same compressed rows arriving again as a new object keep drawing without a loader', async () => {
 	const rows = [['2026-01-01', 111]]
 	const data = await gzipBase64Encode(JSON.stringify(rows))
 	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1 } })
-	await waitForUi(() => expect(container.textContent).toContain('grid rows: 1'))
+	await waitForUi(() => expect(gridRows()).toEqual([['2026-01-01', '111']]))
 	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1 } })
 
-	expect(container.textContent).toContain('grid rows: 1')
+	expect(container.textContent).not.toContain('Loading')
+	expect(gridRows()).toEqual([['2026-01-01', '111']])
 })
 
 test('shows a loader while rows are still streaming and an empty state once the stream is done', async () => {

@@ -8,8 +8,10 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import { rememberSignIn } from '~/auth/lastSignIn'
+import { AUTH_SERVER, POCKETBASE_URL } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { GOOGLE_CODE, installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { SignInDialog, SignInFlow } from '../SignInDialog'
@@ -68,6 +70,7 @@ function Harness() {
 }
 
 const oauth = installOAuthBoundary()
+const http = installFixtureFetch()
 // Requests the sign-in methods send, held until the test answers; PocketBase OAuth plumbing is answered by the boundary.
 let requests: Array<{
 	url: string
@@ -81,14 +84,9 @@ beforeEach(async () => {
 	localStorage.clear()
 	pb.authStore.clear()
 	requests = []
-	vi.stubGlobal(
-		'fetch',
-		vi.fn((url: string | URL, init?: RequestInit) => {
-			const route = oauth.routes[new URL(String(url)).pathname]
-			if (route) return route()
-			return new Promise<Response>((resolve, reject) => requests.push({ url: String(url), init, resolve, reject }))
-		})
-	)
+	const hold = (url: URL, init?: RequestInit) =>
+		new Promise<Response>((resolve, reject) => requests.push({ url: url.href, init, resolve, reject }))
+	http.serve({ ...oauth.routes, [AUTH_SERVER]: hold, [POCKETBASE_URL]: hold })
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -108,7 +106,6 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 	client.clear()
-	vi.unstubAllGlobals()
 	vi.restoreAllMocks()
 	pb.authStore.clear()
 })
@@ -328,9 +325,7 @@ test.each(['person@example.com', ''])(
 			container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 		)
 		await settle()
-		const [url, options] = vi.mocked(fetch).mock.calls[0]
-		expect(String(url)).toMatch(/\/auth\/request-password-reset$/)
-		expect(JSON.parse(String(options?.body))).toEqual({ email: 'other@example.com', turnstile_token: 'test-captcha' })
+		expect(JSON.parse(String(requests[0].init?.body))).toMatchObject({ email: 'other@example.com' })
 		requests[0].resolve(new Response(JSON.stringify({ ok: true })))
 		await waitForUi(async () => {
 			await settle()
@@ -443,7 +438,7 @@ test('keeps other sign-in methods available when the GitHub popup is blocked', a
 	expect(
 		github.compareDocumentPosition(container.querySelector('[role="alert"]')!) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy()
-	expect(vi.mocked(fetch)).not.toHaveBeenCalled()
+	expect(http.urls()).toEqual([])
 	expect(input('email').disabled).toBe(false)
 
 	const google = buttonNamed('Continue with Google')

@@ -5,6 +5,7 @@ import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { PageClockProvider } from '~/hooks/usePageClock'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import {
 	protocolListRequestQuery,
 	protocolListSort,
@@ -22,6 +23,8 @@ vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: (
 vi.mock('~/components/Filters/TVLRange', () => ({ TVLRange: () => null }))
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
 import { RecentlyListedProtocolsTable } from '../RecentProtocolsTable'
+
+const http = installFixtureFetch()
 
 describe('protocol list request query', () => {
 	test('falls back to newest listings for unknown sorts and treats any non-asc order as descending', () => {
@@ -78,15 +81,14 @@ describe('RecentlyListedProtocolsTable', () => {
 	let pending: Array<(value: Response) => void>
 	let observers: Array<IntersectionObserverCallback>
 	let client: QueryClient
-	const fetchMock = vi.fn((_input: RequestInfo | URL) => new Promise<Response>((resolve) => pending.push(resolve)))
 	beforeEach(() => {
 		state.query = {}
 		state.push.mockReset()
-		fetchMock.mockClear()
 		pending = []
+		// Each page request waits until the test answers it with resolvePage.
+		http.serve({ '/api/public/protocol-lists': () => new Promise<Response>((resolve) => pending.push(resolve)) })
 		observers = []
 		client = new QueryClient()
-		vi.stubGlobal('fetch', fetchMock)
 		vi.stubGlobal(
 			'IntersectionObserver',
 			class {
@@ -110,7 +112,7 @@ describe('RecentlyListedProtocolsTable', () => {
 		vi.unstubAllGlobals()
 	})
 
-	const requestedUrl = () => new URL(String(fetchMock.mock.lastCall?.[0]), 'http://localhost')
+	const requestedUrl = () => http.requests.at(-1)!.url
 	// The page's data function stamps the clock its listed-at labels are measured from.
 	const table = () => (
 		<PageClockProvider pageClockSec={1_790_000_000}>
@@ -141,7 +143,7 @@ describe('RecentlyListedProtocolsTable', () => {
 	test('hydrates SSR rows without a fetch, appends a pinned page, and retains rows when a filter fails', async () => {
 		await hydrate()
 		expect(container.textContent).toContain('Newest')
-		expect(fetchMock).not.toHaveBeenCalled()
+		expect(http.requests).toEqual([])
 		// Scrolling to the end of the list brings the load-more sentinel into view.
 		await act(async () => {
 			for (const callback of observers)

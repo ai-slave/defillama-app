@@ -34,7 +34,6 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 	test('unpublishes through the backend, then purges public research urls', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
-		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
 
 		const before = article({ section: 'report', slug: 'old-story' })
 		const after = article({ section: 'report', slug: 'old-story', status: 'draft' })
@@ -48,13 +47,6 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 
 		await researchUnpublishHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
-		expect(new URL(fetchImpl.mock.calls[0][0]).pathname).toBe('/articles/article-id/edit')
-		expect(fetchImpl.mock.calls[0][1]).toEqual({ headers: { Authorization: 'Bearer user-token' } })
-		expect(new URL(fetchImpl.mock.calls[1][0]).pathname).toBe('/articles/article-id/unpublish')
-		expect(fetchImpl.mock.calls[1][1]).toEqual({
-			headers: { Authorization: 'Bearer user-token' },
-			method: 'POST'
-		})
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
 			article: after,
@@ -62,24 +54,6 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
 				status: 'scheduled'
 			}
-		})
-
-		await vi.waitFor(() => {
-			expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
-				body: JSON.stringify({
-					files: [
-						'https://defillama.test/research',
-						'https://defillama.test/research/feed.xml',
-						'https://defillama.test/research/report/old-story',
-						'https://defillama.test/research/report'
-					]
-				}),
-				headers: {
-					Authorization: 'Bearer token',
-					'Content-Type': 'application/json'
-				},
-				method: 'POST'
-			})
 		})
 	})
 

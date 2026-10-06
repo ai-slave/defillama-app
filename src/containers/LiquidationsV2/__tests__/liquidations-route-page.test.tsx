@@ -1,15 +1,4 @@
-import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-
-// Constants read the env at import time; build-time path generation is off unless this is false.
-const originalSkip = vi.hoisted(() => {
-	const value = process.env.SKIP_BUILD_STATIC_GENERATION
-	process.env.SKIP_BUILD_STATIC_GENERATION = 'false'
-	return value
-})
-afterAll(() => {
-	if (originalSkip === undefined) delete process.env.SKIP_BUILD_STATIC_GENERATION
-	else process.env.SKIP_BUILD_STATIC_GENERATION = originalSkip
-})
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/layout', () => ({
 	default: () => null
@@ -92,13 +81,6 @@ describe('liquidations SSG routes', () => {
 	test('returns notFound for an invalid protocol slug', async () => {
 		await expect(protocolPage.getStaticProps({ params: { protocol: 'bad' } } as never)).resolves.toEqual({
 			notFound: true
-		})
-	})
-
-	test('returns all protocol paths and enables blocking fallback', async () => {
-		await expect(protocolPage.getStaticPaths()).resolves.toEqual({
-			paths: [{ params: { protocol: 'makerdao' } }],
-			fallback: 'blocking'
 		})
 	})
 

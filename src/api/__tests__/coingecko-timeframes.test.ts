@@ -59,13 +59,6 @@ describe('CoinGecko chart timeframes', () => {
 			includeCoinData: true
 		})
 
-		expect(mocks.getObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_timeframe_24H')
-		expect(mocks.getObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_coin_data')
-		expect(mocks.setObjectCache).toHaveBeenCalledWith(
-			'cgchart_bitcoin_coin_data',
-			expect.objectContaining({ symbol: 'btc' }),
-			expect.any(Number)
-		)
 		expect(chart?.data?.coinData?.links?.homepage).toEqual(['https://bitcoin.org'])
 		expect(chart?.data?.prices).toEqual(hasChart ? [[1000, 10]] : undefined)
 	})

@@ -47,7 +47,7 @@ export function useRWAAssetFlows(assetId: string, enabled: boolean) {
 	})
 }
 
-export function useRWAFlowOverviewSplitWithFilters(
+function useRWAFlowOverviewSplitWithFilters(
 	splitBy: RWAFlowOverviewSplitBy,
 	includeStablecoin: boolean,
 	includeGovernance: boolean,
@@ -66,7 +66,7 @@ export function useRWAFlowOverviewSplitWithFilters(
 	})
 }
 
-export function useRWAFlowAssetBreakdown(target: RWAFlowScopedTarget | null, enabled: boolean) {
+function useRWAFlowAssetBreakdown(target: RWAFlowScopedTarget | null, enabled: boolean) {
 	return useQuery<Array<IRWAFlowAssetBreakdownRow>>({
 		queryKey: ['rwa-flows', 'asset-breakdown', target?.kind ?? 'none', target?.slug ?? ''],
 		queryFn: () => {

@@ -103,7 +103,6 @@ test('a failed export stays in the dialog as a plain sentence instead of a toast
 			expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't add to the article. Try again.")
 		)
 	})
-	expect(session.urls()).toContain('https://features.llama.fi/articles/a1/edit')
 	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
 	expect(toastError).not.toHaveBeenCalled()
 	expect(button('Add to article').getAttribute('aria-busy')).toBeNull()

@@ -4,6 +4,7 @@ import { act } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ProtocolRankingInitialPage, ProtocolRankingPage } from '../tableQuery'
 import type { IProtocol } from '../types'
@@ -55,7 +56,9 @@ const responsePage = {
 	rows: [protocol]
 } satisfies ProtocolRankingPage<IProtocol>
 
-let rankingResponse: ProtocolRankingPage<IProtocol> = responsePage
+const RANKINGS = '/api/public/protocol-rankings'
+const http = installFixtureFetch()
+const requestedSearch = (index: number, param: string) => http.requests.at(index)!.url.searchParams.get(param)
 
 describe('Protocol Rankings hydration', () => {
 	let container: HTMLDivElement
@@ -100,16 +103,12 @@ describe('Protocol Rankings hydration', () => {
 			return true
 		})
 		router.replace.mockReset()
-		rankingResponse = responsePage
+		http.serve({ [RANKINGS]: responsePage })
 		toastError.mockReset()
 		triggerIntersection = null
 		localStorage.clear()
 		localStorage.setItem('ptcmp', 'Fees')
 		localStorage.setItem('ptcp', '7d')
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(async () => ({ ok: true, status: 200, json: async () => rankingResponse }) as Response)
-		)
 		vi.stubGlobal(
 			'IntersectionObserver',
 			class {
@@ -148,40 +147,36 @@ describe('Protocol Rankings hydration', () => {
 			String(call[0]).toLowerCase().includes('hydration')
 		)
 		expect(hydrationErrors).toEqual([])
-		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(http.requests).toHaveLength(1))
 	})
 
 	test('a persisted preset sorts by its column after hydration, and picking a period sorts by that period', async () => {
 		await hydrateTable()
-		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
-		expect(new URL(String(vi.mocked(fetch).mock.calls[0][0]), 'http://localhost').searchParams.get('sort')).toBe(
-			'fees_7d'
-		)
+		await waitForUi(() => expect(http.requests).toHaveLength(1))
+		expect(requestedSearch(0, 'sort')).toBe('fees_7d')
 
 		const period1m = container.querySelector<HTMLInputElement>('input[type="radio"][value="1m"]')!
 		await act(async () => period1m.click())
-		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(2))
-		expect(new URL(String(vi.mocked(fetch).mock.calls[1][0]), 'http://localhost').searchParams.get('sort')).toBe(
-			'fees_30d'
-		)
+		await waitForUi(() => expect(http.requests).toHaveLength(2))
+		expect(requestedSearch(1, 'sort')).toBe('fees_30d')
 	})
 
 	test('does not toast when an automatic persisted-preset request fails', async () => {
-		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
+		http.serve({ [RANKINGS]: fixtureStatus(403) })
 
 		await hydrateTable()
-		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(http.requests).toHaveLength(1))
 
 		expect(toastError).not.toHaveBeenCalled()
 	})
 
 	test('toasts when a user search request fails', async () => {
 		localStorage.clear()
-		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
+		http.serve({ [RANKINGS]: fixtureStatus(403) })
 		await hydrateTable()
 		await typeSearch('aave')
 
-		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toContain('search=aave')
+		expect(requestedSearch(-1, 'search')).toBe('aave')
 		expect(toastError).toHaveBeenCalledWith("Couldn't update rankings. Please retry.", {
 			id: 'protocol-rankings-update-error'
 		})
@@ -190,28 +185,27 @@ describe('Protocol Rankings hydration', () => {
 	test('covers stale rows while a replacement request is pending', async () => {
 		localStorage.clear()
 		let resolveRequest: ((response: Response) => void) | undefined
-		vi.mocked(fetch).mockImplementation(
-			() =>
+		http.serve({
+			[RANKINGS]: () =>
 				new Promise<Response>((resolve) => {
 					resolveRequest = resolve
 				})
-		)
+		})
 		await hydrateTable()
 		await typeSearch('aave')
 
 		expect(container.textContent).toContain('Updating rankings…')
 
 		await act(async () => {
-			resolveRequest?.({ ok: true, status: 200, json: async () => responsePage } as Response)
-			await Promise.resolve()
+			resolveRequest?.(Response.json(responsePage))
 		})
-		expect(container.textContent).not.toContain('Updating rankings…')
+		await waitForUi(() => expect(container.textContent).not.toContain('Updating rankings…'))
 	})
 
 	test('keeps infinite-scroll loading in the footer without an overlay', async () => {
 		localStorage.clear()
 		const paginatedPage = { ...initialPage, nextCursor: 'next', total: 2, hasMore: true }
-		vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined))
+		http.serve({ [RANKINGS]: () => new Promise<Response>(() => undefined) })
 		await hydrateTable(paginatedPage)
 		if (!triggerIntersection) throw new Error('Expected protocol rankings scroll observer')
 
@@ -226,7 +220,7 @@ describe('Protocol Rankings hydration', () => {
 		localStorage.setItem('ptcfs', 'Fees')
 		localStorage.setItem('ptc', JSON.stringify({ fees_7d: true }))
 		await hydrateTable()
-		const requestsBeforeReset = vi.mocked(fetch).mock.calls.length
+		const requestsBeforeReset = http.requests.length
 		const reset = [...container.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Reset')
 		if (!reset) throw new Error('Expected Reset button')
 
@@ -239,8 +233,8 @@ describe('Protocol Rankings hydration', () => {
 		expect(localStorage.getItem('ptcmp')).toBeNull()
 		expect(localStorage.getItem('ptcp')).toBeNull()
 		expect(localStorage.getItem('ptc')).toBeNull()
-		expect(fetch).toHaveBeenCalledTimes(requestsBeforeReset + 1)
-		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toContain('sort=tvl')
-		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).not.toContain('minTvl')
+		expect(http.requests).toHaveLength(requestsBeforeReset + 1)
+		expect(requestedSearch(-1, 'sort')).toBe('tvl')
+		expect(requestedSearch(-1, 'minTvl')).toBeNull()
 	})
 })

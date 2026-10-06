@@ -31,8 +31,6 @@ test('parses the latest roundup into section headers and linked titles', async (
 		date: 'Sep 24',
 		messages: ['📰 News', ['Uniswap fee switch', 'https://a.example'], ['Aave ships V4', 'https://b.example']]
 	})
-	const headers = fetchWithPoolingOnServer.mock.calls[0][1].headers as Headers
-	expect(headers.get('Authorization')).toBe('Bot token')
 })
 
 test('propagates upstream failures', async () => {

@@ -40,25 +40,32 @@ describe('token pricing check', () => {
 
 	test('preserves Tron and TON address forms and encodes non-EVM identifiers in lookup URLs', async () => {
 		const addresses = [
-			['Tron', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'tron:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'],
+			[
+				'Tron',
+				'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+				'tron:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+				'https://coins.llama.fi/prices/current/tron%3ATR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+			],
 			[
 				'TON',
 				'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
-				'ton:EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs'
+				'ton:EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
+				'https://coins.llama.fi/prices/current/ton%3AEQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs'
 			],
 			[
 				'ton',
 				'0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe',
-				'ton:0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe'
+				'ton:0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe',
+				'https://coins.llama.fi/prices/current/ton%3A0%3Ab113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe'
 			],
-			['cosmos', 'ibc/ABC123', 'cosmos:ibc/ABC123']
+			['cosmos', 'ibc/ABC123', 'cosmos:ibc/ABC123', 'https://coins.llama.fi/prices/current/cosmos%3Aibc%2FABC123']
 		] as const
-		for (const [chain, address, key] of addresses) {
+		for (const [chain, address, key, url] of addresses) {
 			expect(tokenPriceKey(chain, address)).toBe(key)
 			const price = { price: 1, symbol: 'TEST', timestamp: 1_789_325_550, confidence: 1 }
 			fetchJsonMock.mockResolvedValueOnce({ coins: { [key]: price } })
 			await expect(checkTokenPricing(key)).resolves.toEqual(price)
-			expect(fetchJsonMock).toHaveBeenLastCalledWith(`https://coins.llama.fi/prices/current/${encodeURIComponent(key)}`)
+			expect(fetchJsonMock).toHaveBeenLastCalledWith(url)
 		}
 	})
 
@@ -118,7 +125,6 @@ describe('token pricing check', () => {
 		fetchJsonMock.mockResolvedValueOnce({ coins: { [usdc]: price } }).mockResolvedValueOnce({ coins: {} })
 
 		await expect(checkTokenPricing(usdc)).resolves.toEqual(price)
-		expect(fetchJsonMock).toHaveBeenCalledWith(`https://coins.llama.fi/prices/current/${encodeURIComponent(usdc)}`)
 		await expect(checkTokenPricing(usdc)).resolves.toBeNull()
 	})
 
@@ -143,8 +149,6 @@ describe('token pricing check', () => {
 			currentPrice: current,
 			firstPrice: { status: 'available', value: 1_538_667_082 }
 		})
-		expect(fetchJsonMock).toHaveBeenCalledWith(`https://coins.llama.fi/prices/first/${encodeURIComponent(usdc)}`)
-		expect(fetchJsonMock).toHaveBeenCalledTimes(2)
 	})
 
 	test('can report historical coverage without a current price', async () => {

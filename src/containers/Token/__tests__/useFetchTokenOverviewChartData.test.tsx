@@ -89,9 +89,7 @@ describe('useFetchTokenOverviewChartData', () => {
 
 		await render('7D')
 		expect(JSON.parse(container.textContent ?? '')).toEqual({})
-		expect(http.requests.map(({ url }) => url.pathname + url.search)).toEqual([
-			'/api/public/tokens/charts/coingecko/bitcoin?timeframe=7D'
-		])
+		expect(http.requests.map(({ url }) => url.searchParams.get('timeframe'))).toEqual(['7D'])
 
 		await act(async () => rangeRequest.resolve({ data: { prices: [[2_000_000_000_000, 200]] } }))
 		await waitForUi(async () => {

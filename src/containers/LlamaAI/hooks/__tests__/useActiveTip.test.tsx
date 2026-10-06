@@ -115,7 +115,6 @@ test('a dismissed tip stays cleared across later renders', async () => {
 	await act(async () => api.dismissTip(tipFor('tip-a')))
 	expect(seen.at(-1)).toBeNull()
 	expect(localStorage.getItem('llamaai-last-tip:user-a')).toBeNull()
-	expect(session.urls()).toContain(`${AI_SERVER}/user-tips/tip-a/dismiss`)
 
 	await render()
 	expect(seen.at(-1)).toBeNull()

@@ -8,8 +8,7 @@ import {
 	fetchBridgeTransactionsClient,
 	fetchBridgeVolumeAll,
 	fetchBridgeVolumeByChain,
-	fetchBridgeVolumeBySlug,
-	fetchRawBridgeVolumeByChain
+	fetchBridgeVolumeBySlug
 } from '../api'
 import { bridgeTransactions } from '../server/api'
 
@@ -62,7 +61,6 @@ describe('fetchBridgeDayStats', () => {
 
 		await fetchBridgeDayStats(timestamp, 'Base')
 
-		expect(telemetry.requests).toHaveLength(1)
 		expect(telemetry.urls()[0]).toContain(`/bridgedaystats/${utcMidnight}/Base`)
 	})
 })
@@ -85,7 +83,6 @@ describe('fetchBridgeVolumeByChain and fetchBridgeVolumeAll', () => {
 		telemetry.serve({
 			[`${BRIDGES_SERVER_URL}/bridgevolume/Arbitrum`]: chart,
 			[`${BRIDGES_SERVER_URL}/bridgevolume/Zkfair`]: [],
-			[`${BRIDGES_SERVER_URL}/bridgevolume/Base`]: chart,
 			[`${BRIDGES_SERVER_URL}/bridgevolume/all`]: chart
 		})
 
@@ -96,7 +93,6 @@ describe('fetchBridgeVolumeByChain and fetchBridgeVolumeAll', () => {
 			{ date: 1_784_678_400, depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 }
 		])
 		await expect(fetchBridgeVolumeByChain('Zkfair')).resolves.toEqual([])
-		await expect(fetchRawBridgeVolumeByChain('Base')).resolves.toEqual(chart)
 	})
 })
 
@@ -136,7 +132,7 @@ describe('fetchBridgeTransactionsClient', () => {
 })
 
 describe('bridge transactions API route', () => {
-	test('forwards exact cursor paging and returns normalized metadata with no-store', async () => {
+	test('forwards exact cursor paging and returns normalized metadata', async () => {
 		telemetry.serve({
 			[BRIDGES_SERVER_URL]: () =>
 				new Response(JSON.stringify([rawTransaction]), {
@@ -151,7 +147,6 @@ describe('bridge transactions API route', () => {
 		expect(telemetry.urls()[0]).toBe(
 			`${BRIDGES_SERVER_URL}/transactions/51?starttimestamp=100&endtimestamp=200&limit=10000&cursor=current_cursor-1`
 		)
-		expect(telemetry.requests[0].init?.cache).toBe('no-store')
 		expect(result).toEqual({
 			status: 200,
 			body: { rows: [rawTransaction], hasMore: true, nextCursor: 'next_cursor-2' },

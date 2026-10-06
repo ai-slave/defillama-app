@@ -98,18 +98,6 @@ describe('UTR project API', () => {
 		])
 	})
 
-	test('authenticates project API requests with the Forgd bearer key', async () => {
-		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
-		fetchJson.mockResolvedValueOnce(rawScoringConfig)
-
-		await fetchUtrScoringConfig()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'https://quant.forgd.com/api/utr/scoring-config',
-			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
-		)
-	})
-
 	test('returns empty results when the project API is unavailable', async () => {
 		fetchJson.mockRejectedValue(new Error('unavailable'))
 
@@ -120,7 +108,7 @@ describe('UTR project API', () => {
 		await expect(fetchUtrUniverseWithLive()).resolves.toEqual({ rows: [], scoredCount: 0, totalCount: 0 })
 	})
 
-	test('loads the leaderboard with the Forgd bearer key and preserves upstream failures', async () => {
+	test('returns the leaderboard and preserves upstream failures', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
 		const payload = {
 			configVersion: 18,
@@ -133,10 +121,6 @@ describe('UTR project API', () => {
 		fetchJson.mockResolvedValueOnce(payload)
 
 		await expect(fetchUtrLeaderboardStrict()).resolves.toEqual(payload)
-		expect(fetchJson).toHaveBeenCalledWith(
-			'https://quant.forgd.com/api/utr/leaderboard',
-			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
-		)
 
 		fetchJson.mockRejectedValueOnce(new Error('upstream failed'))
 		await expect(fetchUtrLeaderboardStrict()).rejects.toThrow('upstream failed')
@@ -192,10 +176,6 @@ describe('UTR project API', () => {
 		})
 
 		const disclosures = await fetchUtrDisclosures('arctic-1')
-		expect(fetchJson).toHaveBeenCalledWith(
-			'https://quant.forgd.com/api/v1/public/utr/disclosures/arctic-1',
-			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
-		)
 		expect(disclosures?.insiderIdentities).toEqual([
 			{ name: 'Amir Haleem', role: 'Founder', profileUrl: 'https://x.com/amirhaleem', description: null }
 		])

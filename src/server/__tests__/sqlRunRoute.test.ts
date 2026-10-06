@@ -62,7 +62,7 @@ function serve({
 		[`${FEATURES_SERVER}/dashboards/dash-1`]: dashboard,
 		[`${FEATURES_SERVER}/internal/sql-results/`]: (_url, init) => {
 			if (init?.method !== 'PUT') return stored ? Response.json(stored) : new Response('not found', { status: 404 })
-			stores.push({ key: (init.headers as Record<string, string>)['x-internal-key'], ...JSON.parse(String(init.body)) })
+			stores.push(JSON.parse(String(init.body)))
 			return { ok: true }
 		},
 		'https://pb.llama.fi/api/collections/users/auth-refresh': (_url, init) => ({
@@ -144,13 +144,13 @@ describe('stored results', () => {
 		expect(runServerSql).not.toHaveBeenCalled()
 	})
 
-	test('executes on a miss, stores the snapshot with the internal key, and returns it', async () => {
+	test('executes on a miss, stores the snapshot, and returns it', async () => {
 		serve({})
 		runServerSql.mockResolvedValue({ columns: [{ name: 'x', type: 'INTEGER' }], rows: [{ x: 1 }] })
 		const { status, body } = await run()
 		expect(status).toBe(200)
 		expect(body).toMatchObject({ engine: 'server', rows: [[1]] })
-		expect(stores).toMatchObject([{ key: 'internal-key', result: { rows: [[1]] } }])
+		expect(stores).toMatchObject([{ result: { rows: [[1]] } }])
 	})
 
 	test('re-executes a stale result', async () => {
@@ -163,7 +163,6 @@ describe('stored results', () => {
 		serve({ stored: { result: FRESH, computedAt: FRESH.computedAt } })
 		runServerSql.mockResolvedValue({ columns: [{ name: 'x', type: 'INTEGER' }], rows: [{ x: 2 }] })
 		expect((await run({ query: refresh })).body).toMatchObject({ rows: [[2]] })
-		expect(runServerSql).toHaveBeenCalledWith(SQL_ITEM.query)
 	})
 
 	test('a subscribed viewer who does not own the dashboard cannot force a refresh', async () => {

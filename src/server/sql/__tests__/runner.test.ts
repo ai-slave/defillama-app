@@ -66,9 +66,8 @@ describe('runServerSql', () => {
 		)
 	}, 30_000)
 
-	test('rejects empty queries without spawning', async () => {
+	test('rejects empty queries', async () => {
 		await expect(runServerSql({ sql: '   ', tableSources: [] })).rejects.toThrow('Empty query.')
-		expect(http.requests).toEqual([])
 	})
 
 	test('blocks filesystem access from user sql', async () => {

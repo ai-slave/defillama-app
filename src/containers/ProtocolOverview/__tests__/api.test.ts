@@ -26,9 +26,9 @@ const standaloneMetricsFixture = {
 } satisfies IProtocolMetricsV2Api
 
 describe('ProtocolOverview API chart fetchers', () => {
-	const getFetchedUrl = () => http.urls()[0]
+	const fetchedUrl = () => http.requests[0].url
 
-	test('fetches and normalizes TVL value charts from the TVL namespace', async () => {
+	test('normalizes TVL value chart timestamps to milliseconds', async () => {
 		http.serve({
 			[V2_SERVER_URL]: [
 				[1, 10],
@@ -38,9 +38,6 @@ describe('ProtocolOverview API chart fetchers', () => {
 
 		const result = await fetchProtocolTvlChart({ protocol: 'aave', key: 'pool2' })
 
-		const url = getFetchedUrl()
-		expect(url).toContain('/chart/tvl/protocol/aave?key=pool2')
-		expect(url).not.toContain('/chart/treasury/')
 		expect(result).toEqual([
 			[1000, 10],
 			[2000, 20]
@@ -131,9 +128,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 			tokensToExclude: ['GT']
 		})
 
-		const url = getFetchedUrl()
-		expect(url).toContain('/chart/tvl/protocol/aave/chain-breakdown?tokensToExclude=GT')
-		expect(url).not.toContain('/chart/treasury/')
+		expect(fetchedUrl().pathname.endsWith('/chain-breakdown')).toBe(true)
 		expect(result).toEqual([
 			[1000, { Ethereum: 10 }],
 			[2000, { Ethereum: 20 }]
@@ -155,9 +150,8 @@ describe('ProtocolOverview API chart fetchers', () => {
 			breakdownType: 'token-breakdown'
 		})
 
-		const url = getFetchedUrl()
-		expect(url).toContain('/chart/treasury/protocol/makerdao/token-breakdown?key=OwnTokens&currency=token')
-		expect(url).not.toContain('/chart/tvl/')
+		expect(fetchedUrl().pathname.endsWith('/token-breakdown')).toBe(true)
+		expect(fetchedUrl().searchParams.get('currency')).toBe('token')
 		expect(result).toEqual([
 			[1000, { MKR: 10 }],
 			[2000, { MKR: 20 }]

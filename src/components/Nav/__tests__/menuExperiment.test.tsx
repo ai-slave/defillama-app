@@ -265,52 +265,6 @@ test('preserves A and hydrates the grouped B destinations without changing the a
 		expect(a.querySelector('details')?.open).toBe(false)
 		await act(async () => a.querySelector<HTMLElement>('summary[data-menu-name="Equities"]')!.click())
 		expect(a.querySelector('details')?.open).toBe(true)
-		expect([...b.querySelectorAll('a')].map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
-			['Overview', '/'],
-			['Chains', '/chains'],
-			['Categories', '/categories'],
-			['Yields', '/yields'],
-			['Hacks', '/hacks'],
-			['All Metrics', '/metrics'],
-			['DEXs', '/dexs'],
-			['Perps', '/perps'],
-			['Revenue', '/revenue'],
-			['Fees', '/fees'],
-			['Holders Revenue', '/holders-revenue'],
-			['All Tools', '/tools'],
-			['Crypto Cards', '/crypto-cards'],
-			['ChainList', 'https://chainlist.org/'],
-			['Dashboard Builder', '/pro'],
-			['Watchlist', '/watchlist'],
-			['Rewards', '/rewards'],
-			['Tokens', '/tokens'],
-			['Stablecoins', '/stablecoins'],
-			['RWAs', '/rwa'],
-			['ETFs', '/etfs'],
-			['Universal Token Rating', '/universal-token-rating'],
-			['Rankings', '/equities'],
-			['Sectors', '/equities/sectors'],
-			['Industries', '/equities/industries'],
-			['Earnings Calendar', '/equities/earnings-calendar'],
-			['Pre-IPO', '/pre-ipo'],
-			['Exchanges', '/exchanges'],
-			['MiCA', '/mica'],
-			['Reserves', '/cexs'],
-			['Market Makers', '/market-makers'],
-			['DefiLlama Research', '/research'],
-			['Investor Relations', 'https://investors.defillama.com/'],
-			['Support', '/support'],
-			['API & MCP', 'https://api-docs.defillama.com/'],
-			['DEX Aggregator', 'https://swap.defillama.com/']
-		])
-		expect([...b.querySelectorAll('summary')].map((group) => group.textContent)).toEqual([
-			'DeFi',
-			'Metrics',
-			'Tools',
-			'Assets',
-			'Equities',
-			'Exchanges'
-		])
 		expect([...b.querySelectorAll('details')].map((group) => group.open)).toEqual([
 			false,
 			false,

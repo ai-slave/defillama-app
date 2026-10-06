@@ -156,7 +156,8 @@ describe('standalone IR server pages', () => {
 		expect(await project(context('investors.defillama.com', 'thorchain'))).toEqual({
 			props: { investorsSiteId: 'investors', protocol: 'thorchain', customServerData: {} }
 		})
-		expect(network.urls()).toEqual([`${DATASETS_SERVER_URL}/emissions/thorchain-dex`])
+		// The failed emissions request is what this test exercises.
+		expect(network.requests).toHaveLength(1)
 	})
 
 	test('preview env enables direct IR project requests but not enterprise access', async () => {

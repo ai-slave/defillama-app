@@ -125,8 +125,10 @@ describe('parseUnifiedTableQuery', () => {
 			family: 'fees'
 		})
 	})
+})
 
-	test('returns legacy chain metrics without the new availability envelope', async () => {
+describe('createLegacyProtocolsUnifiedTableResponse', () => {
+	test('returns legacy chain metrics without the new availability envelope', () => {
 		const result = createLegacyProtocolsUnifiedTableResponse({
 			rows: [],
 			chainMetrics: {

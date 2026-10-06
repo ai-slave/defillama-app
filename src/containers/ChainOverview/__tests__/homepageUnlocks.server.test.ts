@@ -93,6 +93,5 @@ describe('homepage unlocks summary', () => {
 		const { fetchHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
 
 		await expect(fetchHomepageUnlocksSummary()).resolves.toBeNull()
-		expect(http.urls()).toEqual([`${DATASETS_SERVER_URL}/homepage/unlocks-summary.json`])
 	})
 })

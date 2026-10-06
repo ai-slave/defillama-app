@@ -275,11 +275,12 @@ describe('ChartRenderer', () => {
 	test('malformed rows stay inside the chart and a data update recovers it', async () => {
 		const config = makeCartesianChart()
 		await act(async () => render(<ChartRenderer charts={[config]} chartData={[null as never]} />))
-		expect(container.querySelector('[data-testid="cartesian"]')).toBeNull()
 		expect(container.textContent).toContain('No data available for chart')
+		expect(viewLabels(container)).toEqual([])
 
 		await act(async () => render(<ChartRenderer charts={[config]} chartData={chartData} />))
-		expect(container.querySelector('[data-testid="cartesian"]')).not.toBeNull()
+		expect(container.textContent).not.toContain('No data available for chart')
+		expect(viewLabels(container)).toContain('Scale: Linear')
 	})
 
 	test('lets promoted date categories resolve aggregation and retain it after save and reset', async () => {

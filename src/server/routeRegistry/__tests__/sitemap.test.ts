@@ -175,7 +175,6 @@ describe('cache-backed sitemap sections', () => {
 		expect(sections.map((section) => String(section.id))).not.toContain('governance')
 		expect(allEntryPaths).not.toContain('governance')
 		expect(allEntryPaths).toContain('token-rights')
-		expect(sitemap.getSitemapSectionPath('protocols')).toBe('sitemap/protocols.xml')
 		expect(entriesBySection.get('protocols')).toEqual(expect.arrayContaining(['protocol/aave', 'protocol/fees/aave']))
 		expect(entriesBySection.get('protocols')).not.toContain('protocol/binance-cex')
 		expect(entriesBySection.get('chains')).toEqual(expect.arrayContaining(['chain/ethereum', 'fees/chain/ethereum']))
@@ -203,7 +202,6 @@ describe('cache-backed sitemap sections', () => {
 			])
 		)
 		expect(entriesBySection.get('bridges')).toEqual(expect.arrayContaining(['bridge/stargate', 'bridges/ethereum']))
-		expect(sitemap.getSitemapSectionPath('protocols-by-category')).toBe('sitemap/protocols-by-category.xml')
 		expect(entriesBySection.get('dat')).toEqual(
 			expect.arrayContaining(['digital-asset-treasury/MSTR', 'digital-asset-treasuries/bitcoin'])
 		)
@@ -227,7 +225,6 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('raises')).toEqual(expect.arrayContaining(['raises/paradigm', 'raises/a16z']))
 		expect(sections.map((section) => String(section.id))).not.toContain('tokens')
 		expect(entriesBySection.get('narratives')).toEqual(expect.arrayContaining(['narrative-tracker/ai']))
-		expect(sitemap.getSitemapSectionPath('pro-dashboards')).toBe('sitemap/pro-dashboards.xml')
 		expect(entriesBySection.get('pro-dashboards')).toEqual(
 			expect.arrayContaining(['pro/empty-public-dashboard', 'pro/rich-public-dashboard'])
 		)
@@ -243,9 +240,6 @@ describe('cache-backed sitemap sections', () => {
 				})
 			])
 		)
-		expect(http.requests.map((request) => request.url.search)).toEqual([
-			'?visibility=public&sortBy=popular&page=1&limit=100'
-		])
 	})
 
 	test('resolves section ids from Next page params that include the .xml suffix', async () => {

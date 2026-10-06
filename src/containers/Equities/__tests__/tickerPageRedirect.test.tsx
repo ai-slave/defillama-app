@@ -28,10 +28,6 @@ describe('equities ticker page routing', () => {
 			revalidate: expect.any(Number)
 		})
 		expect(http.requests.length).toBeGreaterThan(0)
-		for (const { url } of http.requests) {
-			expect(url.searchParams.get('ticker')).toBe('NVDA')
-			expect(url.searchParams.get('country')).toBe('US')
-		}
 	})
 
 	test.each([

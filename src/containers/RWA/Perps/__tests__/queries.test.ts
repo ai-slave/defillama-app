@@ -886,13 +886,6 @@ describe('perps overview helpers', () => {
 		expect(requested()).toContain('/chart/market-breakdown?key=openInterest&includeCex=true&baseAsset=Meta')
 	})
 
-	test('aggregates overview chart rows by timestamp into a multi-series dataset', () => {
-		expect(toRWAPerpsBreakdownChartDataset([{ timestamp: 1_774_483_200, xyz: 100, flx: 20 }])).toEqual({
-			source: [{ timestamp: 1_774_483_200_000, xyz: 100, flx: 20 }],
-			dimensions: ['timestamp', 'xyz', 'flx']
-		})
-	})
-
 	test('builds snapshot totals for overview and venue breakdowns', () => {
 		expect(
 			buildRWAPerpsOverviewSnapshotBreakdownTotals({

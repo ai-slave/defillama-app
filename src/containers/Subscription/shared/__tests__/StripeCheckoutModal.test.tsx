@@ -638,8 +638,6 @@ test('an account switched after the checkout was created keeps the payment with 
 	const caller = await mountCaller(upgrade)
 	try {
 		await waitForUi(() => expect(creates()).toBe(1))
-		const createRequest = session.requests.find((request) => request.url.href.endsWith('/subscription/create'))!
-		expect(new Headers(createRequest.init!.headers).get('Authorization')).toBe(session.token)
 		await switchAccount()
 		await act(async () => answerCreate())
 		await waitForUi(() => expect(dialog()!.textContent).toContain('The signed-in account changed'))

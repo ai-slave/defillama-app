@@ -132,11 +132,9 @@ describe('getProtocolsByChain', () => {
 			includeExtendedMetrics: true
 		})
 
-		expect(basicUrls.filter((url) => url.includes('/metrics/'))).toEqual([
-			`${V2_SERVER_URL}/metrics/fees/chain/ethereum`,
-			`${V2_SERVER_URL}/metrics/fees/chain/ethereum?dataType=dailyRevenue`,
-			`${V2_SERVER_URL}/metrics/fees/chain/ethereum?dataType=dailyHoldersRevenue`
-		])
+		expect(
+			basicUrls.filter((url) => url.includes('/metrics/derivatives') || url.includes('/metrics/open-interest'))
+		).toEqual([])
 		expect([extended?.protocols[0]?.perps?.total24h, extended?.protocols[0]?.openInterest?.total24h]).toEqual([20, 50])
 		expect(extended?.perps?.protocols).toHaveLength(1)
 	})

@@ -14,6 +14,7 @@ const asset = (total: number) => ({
 
 describe('getBridgedTVLByChain', () => {
 	test('preserves integer presentation ordering ties without loading list-only flows', async () => {
+		// No flows fixture: a flows request would fail the test as unfixtured.
 		http.serve({ [`${SERVER_URL}/chain-assets/chains`]: { Alpha: asset(10.2), Beta: asset(10.9) } })
 
 		const result = await getBridgedTVLByChain({
@@ -30,7 +31,6 @@ describe('getBridgedTVLByChain', () => {
 			{ label: 'Beta', to: '/bridged/beta' }
 		])
 		expect(result.chainData?.total.total).toBe(10.2)
-		expect(http.urls()).toEqual([`${SERVER_URL}/chain-assets/chains`])
 		expect(result).not.toHaveProperty('assets')
 	})
 

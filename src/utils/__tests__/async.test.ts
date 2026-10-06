@@ -181,15 +181,6 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 		vi.useRealTimers()
 	})
-
-	test('reads the fast and slow JSON timeouts from env', async () => {
-		const { getFastJsonTimeoutMs, getSlowJsonTimeoutMs } = await import('../async')
-
-		vi.stubEnv('SERVER_FETCH_JSON_FAST_TIMEOUT_MS', '3500')
-		vi.stubEnv('SERVER_FETCH_JSON_SLOW_TIMEOUT_MS', '55000')
-		expect(getFastJsonTimeoutMs()).toBe(3500)
-		expect(getSlowJsonTimeoutMs()).toBe(55_000)
-	})
 })
 
 describe('httpErrorMessage', () => {

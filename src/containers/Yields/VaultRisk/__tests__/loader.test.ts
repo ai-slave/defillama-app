@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { VAULT_RISK_API } from '~/constants'
 import { hasVaultRisk } from '../loader'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
@@ -12,12 +11,9 @@ beforeEach(() => {
 })
 
 describe('hasVaultRisk', () => {
-	test('returns true on a vault-only fetch when the pool has a risk entry', async () => {
+	test('returns true when the pool has a risk entry', async () => {
 		mocks.fetchJson.mockResolvedValue({ data: { protocol_id: null, vault_specific_risks: [] } })
 		await expect(hasVaultRisk(POOL)).resolves.toBe(true)
-		// vault only — never fetches the protocol endpoint for the entry check
-		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
-		expect(mocks.fetchJson).toHaveBeenCalledWith(`${VAULT_RISK_API}/${POOL}`, expect.anything())
 	})
 
 	test('returns false when the response is not a vault fixture', async () => {

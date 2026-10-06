@@ -7,6 +7,7 @@ import { clearResultCache } from '~/server/api/resultCache'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 
 // Heavy page chrome; these tests only read getStaticProps output.
@@ -119,7 +120,7 @@ describe('revenue token badges', () => {
 		// UTR answers only once the rankings request has started; if the page waited for UTR first, this times out.
 		setup({
 			utr: async () => {
-				await vi.waitFor(
+				await waitForUi(
 					() => {
 						if (!http.urls().some((url) => url.startsWith(METRICS_URL))) throw new Error('rankings not requested yet')
 					},

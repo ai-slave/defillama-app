@@ -957,18 +957,7 @@ describe('rwa queries', () => {
 		})
 
 		expect(result?.assets[0]?.category).toEqual(['RWA Stablecoins', 'Other RWAs'])
-		expect(result?.categoriesOptions).toEqual([
-			{
-				key: 'Other RWAs',
-				name: 'Other RWAs',
-				help: expect.stringContaining('alternative or niche real-world assets')
-			},
-			{
-				key: 'RWA Stablecoins',
-				name: 'RWA Stablecoins',
-				help: expect.stringContaining('Fiat-pegged stablecoins')
-			}
-		])
+		expect(result?.categoriesOptions.map((option) => option.key)).toEqual(['Other RWAs', 'RWA Stablecoins'])
 	})
 
 	test('offers Unknown for a field an asset lacks, so the default view shows that asset', async () => {

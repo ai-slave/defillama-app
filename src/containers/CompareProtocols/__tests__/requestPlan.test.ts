@@ -14,7 +14,6 @@ describe('CompareProtocols request planning', () => {
 		fixtureFetch.serve({ [`${V2_SERVER_URL}/chart/tvl/protocol/aave-v3?key=borrowed`]: [[1_700_000_000, 25]] })
 
 		expect(await buildCompareProtocolTvlQuery('Aave V3', 'borrowed').queryFn()).toEqual([[1_700_000_000_000, 25]])
-		expect(fixtureFetch.urls()).toEqual([`${V2_SERVER_URL}/chart/tvl/protocol/aave-v3?key=borrowed`])
 	})
 
 	test('scopes global TVL settings to the supported comparison sections', () => {

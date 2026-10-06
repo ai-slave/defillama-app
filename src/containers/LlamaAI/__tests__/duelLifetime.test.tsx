@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
-import { act, type ComponentProps } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIRouteProvider } from '~/contexts/LlamaAIRouteState'
+import { setLlamaAIWalkthroughState } from '~/contexts/LocalStorage'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import type { ChatSurface } from '../components/ChatSurface'
+import { sendFromComposer } from './chatComposer'
 
 const router = vi.hoisted(() => ({
 	query: {},
@@ -17,26 +18,8 @@ const router = vi.hoisted(() => ({
 	events: { on: () => undefined, off: () => undefined }
 }))
 vi.mock('next/router', () => ({ default: router, useRouter: () => router }))
-// The conversation, its messages and the duel panel stay real; the landing and composer are one button each.
-vi.mock('../components/ChatSurface', async () => {
-	const { ConversationView } = await import('../components/ConversationView')
-	return {
-		ChatSurface: ({ landingProps, conversationViewModel }: ComponentProps<typeof ChatSurface>) => (
-			<>
-				<button type="button" onClick={() => landingProps.handleSubmit('Compare Aave and Morpho')}>
-					Send prompt
-				</button>
-				<button type="button" onClick={() => conversationViewModel.handleSubmit('And Spark?')}>
-					Send follow-up
-				</button>
-				<button type="button" onClick={conversationViewModel.handleStopRequest}>
-					Stop response
-				</button>
-				<ConversationView viewModel={conversationViewModel} animateActiveExchange={false} />
-			</>
-		)
-	}
-})
+// The composer, the conversation, its messages and the duel panel stay real; the sidebar and modals this test
+// asserts nothing about are omitted.
 vi.mock('../components/sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
 vi.mock('../components/AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('../components/SettingsModal', () => ({ SettingsModal: () => null }))
@@ -148,6 +131,8 @@ let root: Root
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	// A returning subscriber: the first-visit walkthrough would open its own dialog over the composer.
+	setLlamaAIWalkthroughState('completed')
 	session.client.setDefaultOptions({ queries: { retry: false, staleTime: Infinity } })
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -192,7 +177,7 @@ async function startDuel() {
 			</session.Wrapper>
 		)
 	)
-	await click('Send prompt')
+	await sendFromComposer('Compare Aave and Morpho')
 	await act(async () => duel.write(...duelOpening))
 	await waitForUi(() => expect(duelColumns()).toEqual(['Response 1', 'Response 2']))
 }
@@ -201,7 +186,9 @@ const duelColumns = () =>
 	[...document.querySelectorAll('section[aria-label^="Response"]')].map((column) => column.getAttribute('aria-label'))
 const thread = () => document.body.textContent
 const canPrefer = () =>
-	[...document.querySelectorAll<HTMLButtonElement>('button[aria-label^="I prefer"]')].map((button) => !button.disabled)
+	[...document.querySelectorAll<HTMLButtonElement>('button[aria-label^="I prefer"]')].map(
+		(button) => button.getAttribute('aria-disabled') !== 'true'
+	)
 
 test('a queued answer that starts after an unvoted duel shows in place of the duel, below its saved answer', async () => {
 	session.serve({
@@ -216,7 +203,7 @@ test('a queued answer that starts after an unvoted duel shows in place of the du
 			])
 	})
 	await startDuel()
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 	await act(async () => {
 		duel.write({ type: 'response_end', arm: 'a' }, { type: 'response_end', arm: 'b' }, { type: 'done' })
 		duel.close()
@@ -246,7 +233,7 @@ test("a prompt sent after an unvoted duel replaces the duel at once, and the due
 	await waitForUi(() => expect(canPrefer()).toEqual([true, true]))
 
 	// The new prompt's stream stays silent, so nothing it sends can be what ends the duel.
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 
 	await waitForUi(() => {
 		expect(duelColumns()).toEqual([])
@@ -270,7 +257,7 @@ async function editDuelPrompt() {
 	})
 	await waitForUi(() => expect(document.querySelector('button[aria-label="Edit message"]')).not.toBeNull())
 	await click('Edit message')
-	const draft = document.querySelector('textarea')!
+	const draft = [...document.querySelectorAll('textarea')].find((input) => !input.closest('form'))!
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(draft, 'Compare Aave and Spark')
 		draft.dispatchEvent(new Event('input', { bubbles: true }))
@@ -345,12 +332,14 @@ test("the duel's own stream reconnecting keeps both answers in the duel", async 
 })
 
 const voteButtons = () =>
-	[...document.querySelectorAll<HTMLButtonElement>('button[aria-label^="I prefer"]')].map((button) => button.disabled)
+	[...document.querySelectorAll<HTMLButtonElement>('button[aria-label^="I prefer"]')].map(
+		(button) => button.getAttribute('aria-disabled') === 'true'
+	)
 
 async function finishDuelWithQueuedFollowUp(hold: ReturnType<typeof queueHold>) {
 	session.serve({ ...queuedFollowUp, 'https://ai.llama.fi/agentic/stream/chat-1': hold.respond })
 	await startDuel()
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 	await act(async () => {
 		duel.write(
 			{ type: 'response_end', arm: 'a' },
@@ -444,7 +433,7 @@ test('a queue hold that drops before its prompt fires keeps later prompts queued
 	session.serve(queuedFollowUp)
 	session.serveInOrder('https://ai.llama.fi/agentic/stream/chat-1', [dropped], hold.respond)
 	await startDuel()
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 	await act(async () => {
 		duel.write(
 			{ type: 'response_end', arm: 'a' },
@@ -459,7 +448,7 @@ test('a queue hold that drops before its prompt fires keeps later prompts queued
 	)
 
 	// Inside the retry delay, before the next hold opens.
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 
 	// The chat waits a real second before it holds again.
 	await waitForUi(() => expect(hold.openCount()).toBe(1), { timeout: 1500 })
@@ -485,7 +474,7 @@ test('a confirmed stop keeps the duel, with the stopped first answer final and t
 	})
 	await startDuel()
 
-	await click('Stop response')
+	await click('Stop')
 	// The server saves the stopped run as arm A's answer and closes it with an untagged `response_end`, which the
 	// duel tags as arm A; arm B's run is aborted with the execution.
 	await act(async () => {
@@ -525,7 +514,7 @@ test('a prompt sent while a vote still switches the thread keeps its question an
 	await waitForUi(() => expect(voteButtons()).toEqual([false, false]))
 
 	await click('I prefer Response 2')
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 	// The switch answers before the prompt's stream names its execution.
 	await act(async () => settleSwitch())
 	await act(async () => {
@@ -599,7 +588,7 @@ test("a duel's saved answer that fails to load leaves an error under the duel's 
 	await waitForUi(() => expect(voteButtons()).toEqual([false, false]))
 	session.serve({ 'https://ai.llama.fi/user/sessions/chat-1/restore': fixtureStatus(500, { error: 'unavailable' }) })
 
-	await click('Send follow-up')
+	await sendFromComposer('And Spark?')
 
 	await waitForUi(() => {
 		const text = thread()!

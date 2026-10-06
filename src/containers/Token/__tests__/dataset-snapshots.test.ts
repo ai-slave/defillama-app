@@ -45,6 +45,7 @@ test.each([{ tokens: [] }, { tokens: [indexedEntry] }])(
 		const result = await getIndexedTokenRiskBorrowCapacity()
 		expect(result.data).toEqual(data)
 		expect([...result.indexedTokens]).toEqual(tokens.length > 0 ? [['ethereum:0x1', [indexedEntry]]] : [])
-		expect(http.urls()).toEqual([`${RISK_SERVER_URL}/get-borrow-capacity-by-asset`])
+		// One upstream fetch at publish: the read comes from the snapshot.
+		expect(http.requests).toHaveLength(1)
 	}
 )

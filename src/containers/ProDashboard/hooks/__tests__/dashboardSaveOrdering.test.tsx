@@ -81,6 +81,5 @@ test('saving another dashboard does not wait for the current dashboard', async (
 	await mount('b')
 	await act(async () => save.mutate({ id: 'b', data: payload('Other') }))
 	await waitForUi(() => expect(saves()).toHaveLength(2))
-	expect(saves().map(({ url }) => url.searchParams.get('id'))).toEqual(['a', 'b'])
 	await act(async () => first.resolve(saved('a')))
 })

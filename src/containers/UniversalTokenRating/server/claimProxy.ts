@@ -51,7 +51,7 @@ export async function mapUtrClaimUpstreamResponse(response: Response): Promise<U
 	return { status: 502, body: { error: 'Failed to submit the claim request' } }
 }
 
-export async function proxyUtrClaim(payload: Record<string, unknown>): Promise<UtrClaimProxyResult> {
+async function proxyUtrClaim(payload: Record<string, unknown>): Promise<UtrClaimProxyResult> {
 	const config = getUtrClaimUpstreamConfig()
 	if (!config) return { status: 502, body: { error: 'Claim service is not configured' } }
 	try {

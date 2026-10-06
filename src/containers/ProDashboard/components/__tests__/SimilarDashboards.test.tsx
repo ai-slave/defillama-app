@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({ push: vi.fn() }))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: mocks.push, query: {} }) }))
 const http = installSubscriberSession('reader', { account: 'signed-out' })
 const searches = () =>
-	http.requests.filter((request) => request.url.pathname === '/dashboards/search').map((request) => request.url.search)
+	http.requests
+		.filter((request) => request.url.pathname === '/dashboards/search')
+		.map((request) => request.url.searchParams.get('tags'))
 
 function makeDashboard(id: string): Dashboard {
 	return {
@@ -70,7 +72,7 @@ describe('SimilarDashboards', () => {
 		expect(searches()).toEqual([])
 
 		await render({ dashboardId: 'current', tags: ['Yields'] })
-		expect(searches()).toEqual(['?tags=Yields&visibility=public&sortBy=popular&page=1&limit=9'])
+		expect(searches()).toEqual(['Yields'])
 		expect(container.querySelector('h2')?.textContent).toBe('Similar dashboards')
 	})
 
@@ -78,7 +80,7 @@ describe('SimilarDashboards', () => {
 		serveSearch(['a', 'current', 'b', 'c', 'd', 'e', 'f'].map((id) => makeDashboard(id)))
 		await render({ dashboardId: 'current', tags: ['Yields', 'Perps', 'Fees'] })
 
-		expect(searches()).toEqual(['?tags=Yields%2CPerps&visibility=public&sortBy=popular&page=1&limit=9'])
+		expect(searches()).toEqual(['Yields,Perps'])
 
 		expect(container.querySelector('h2')?.textContent).toBe('Similar dashboards')
 		const names = Array.from(container.querySelectorAll('[data-umami-event="dashboard-similar-click"] h2')).map(

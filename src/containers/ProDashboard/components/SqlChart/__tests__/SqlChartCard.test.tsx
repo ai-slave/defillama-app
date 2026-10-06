@@ -40,6 +40,11 @@ test('a card height scale resizes the chart to whole pixels', () => {
 })
 
 const session = installSubscriberSession('u1', { resolved: true })
+// A retry or a refresh-all must bypass the stored snapshot; the first read may reuse it.
+const sqlRunRefreshFlags = () =>
+	session.requests
+		.filter(({ url }) => url.pathname === '/api/private/pro-dashboard/sql-run')
+		.map(({ url }) => url.searchParams.get('refresh'))
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
@@ -91,10 +96,7 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 			.click()
 	)
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull(), { timeout: 1000 })
-	expect(session.urls().filter((url) => url.includes('sql-run'))).toEqual([
-		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql',
-		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql&refresh=1'
-	])
+	expect(sqlRunRefreshFlags()).toEqual([null, '1'])
 })
 
 test('refresh all re-runs the card on the server and counts the failure its answer reports', async () => {
@@ -112,9 +114,7 @@ test('refresh all re-runs the card on the server and counts the failure its answ
 	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 0, failed: 0 }))
 
 	await act(async () => refreshAllSqlCharts())
-	expect(session.urls().at(-1)).toBe(
-		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql&refresh=1'
-	)
+	expect(sqlRunRefreshFlags().at(-1)).toBe('1')
 	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 1, total: 1, bulk: true }))
 	await act(async () => failedRun.resolve({ ...stored, error: 'SQL run failed' }))
 	await waitForUi(() => expect(getSqlRefreshProgress()).toMatchObject({ active: 0, total: 1, failed: 1 }))

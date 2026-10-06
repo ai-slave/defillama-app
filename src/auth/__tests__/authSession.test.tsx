@@ -7,13 +7,20 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider, useAuthContext } from '~/auth'
 import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
+import { AUTH_SERVER } from '~/constants'
 import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
 import { accessibleName } from '~/utils/testing/accessibleName'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
 const oauth = installOAuthBoundary()
+const http = installFixtureFetch()
+const GOOGLE_SIGNIN = `${AUTH_SERVER}/auth/google-code-signin`
+const LINK_CONFIRM = `${AUTH_SERVER}/auth/social-link/confirm`
+const LINK_RESEND = `${AUTH_SERVER}/auth/social-link/resend`
+const PROMOTIONAL_EMAILS = `${AUTH_SERVER}/user/promotional-emails`
 
 const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
@@ -31,7 +38,19 @@ function Probe() {
 let root: Root
 let client: QueryClient
 let container: HTMLDivElement
-let otpCalls: Array<{ path: string; authorization: string | null; resolve: (response: Response) => void }>
+type HeldRequest = { resolve: (response: Response) => void }
+/** Answers a route with a response the test resolves later, recording each request in `calls`. */
+const holdIn = (calls: Array<HeldRequest>) => () => new Promise<Response>((resolve) => calls.push({ resolve }))
+/** Answers a route once the test calls the returned `finish`. */
+function holdOnce() {
+	let finish!: (response: Response) => void
+	const fixture = () =>
+		new Promise<Response>((resolve) => {
+			finish = resolve
+		})
+	return { fixture, finish: (response: Response) => finish(response) }
+}
+let otpCalls: Array<HeldRequest>
 let inviteView: ReturnType<typeof useTeam>
 function InviteProbe() {
 	inviteView = useTeam({ inviteToken: 'invite-token' })
@@ -41,10 +60,10 @@ function InviteProbe() {
 		</output>
 	)
 }
-let inviteCalls: Array<{ resolve: (response: Response) => void }>
-let signupCalls: Array<{ resolve: (response: Response) => void }>
+let inviteCalls: Array<HeldRequest>
+let signupCalls: Array<HeldRequest>
 let loginVerified: boolean
-let refreshCalls: Array<{ authorization: string | null; resolve: (response: Response) => void }>
+let refreshCalls: Array<HeldRequest>
 
 beforeEach(() => {
 	refreshCalls = []
@@ -52,55 +71,33 @@ beforeEach(() => {
 	loginVerified = false
 	signupCalls = []
 	inviteCalls = []
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(async (url: string | URL, config?: RequestInit) => {
-			const oauthRoute = oauth.routes[new URL(String(url)).pathname]
-			if (oauthRoute) return oauthRoute()
-			if (String(url).endsWith('/team/invite/accept'))
-				return new Promise<Response>((resolve) => inviteCalls.push({ resolve }))
-			if (String(url).endsWith('/team')) return jsonResponse({ team: null })
-			if (String(url).endsWith('/auth/signup')) return new Promise<Response>((resolve) => signupCalls.push({ resolve }))
-			if (String(url).endsWith('/auth/login')) {
-				return jsonResponse({
-					token: token('email-user'),
-					record: { ...record('email-user'), email: 'person@example.com', verified: loginVerified }
-				})
-			}
-			if (String(url).endsWith('/sendOtp') || String(url).endsWith('/verifyOtp')) {
-				return new Promise<Response>((resolve) =>
-					otpCalls.push({
-						path: String(url),
-						authorization: new Headers(config?.headers).get('Authorization'),
-						resolve
-					})
-				)
-			}
-			if (String(url).endsWith('/subscription/status')) {
-				return jsonResponse({ message: 'No active subscription' }, 404)
-			}
-			if (String(url).endsWith('/auth/google-code-signin')) {
-				return jsonResponse({
-					isNew: true,
-					kind: 'authenticated',
-					token: token('google-new'),
-					user: { email: 'new@example.com', id: 'google-new', verified: true }
-				})
-			}
-			if (String(url).endsWith('/user/attribution')) {
-				return jsonResponse({ ok: true })
-			}
-			if (!String(url).endsWith('/api/collections/users/auth-refresh')) {
-				throw new Error(`Unexpected fetch in test: ${url}`)
-			}
-			return new Promise<Response>((resolve, reject) => {
+	http.serve({
+		...oauth.routes,
+		[`${AUTH_SERVER}/team/invite/accept`]: holdIn(inviteCalls),
+		[`${AUTH_SERVER}/team`]: { team: null },
+		[`${AUTH_SERVER}/auth/signup`]: holdIn(signupCalls),
+		[`${AUTH_SERVER}/auth/login`]: () => ({
+			token: token('email-user'),
+			record: { ...record('email-user'), email: 'person@example.com', verified: loginVerified }
+		}),
+		[`${AUTH_SERVER}/sendOtp`]: holdIn(otpCalls),
+		[`${AUTH_SERVER}/verifyOtp`]: holdIn(otpCalls),
+		[`${AUTH_SERVER}/subscription/status`]: fixtureStatus(404, { message: 'No active subscription' }),
+		[GOOGLE_SIGNIN]: {
+			isNew: true,
+			kind: 'authenticated',
+			token: token('google-new'),
+			user: { email: 'new@example.com', id: 'google-new', verified: true }
+		},
+		[`${AUTH_SERVER}/user/attribution`]: { ok: true },
+		'/api/collections/users/auth-refresh': (_url: URL, init?: RequestInit) =>
+			new Promise<Response>((resolve, reject) => {
 				// The PocketBase SDK auto-cancels an in-flight request when another one
 				// with the same key starts; a real fetch rejects on abort, so mirror that.
-				config?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))
-				refreshCalls.push({ authorization: new Headers(config?.headers).get('Authorization'), resolve })
+				init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))
+				refreshCalls.push({ resolve })
 			})
-		})
-	)
+	})
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -112,7 +109,6 @@ afterEach(async () => {
 	client.clear()
 	vi.useRealTimers()
 	container.remove()
-	vi.unstubAllGlobals()
 	pb.authStore.clear()
 	localStorage.clear()
 	sessionStorage.clear()
@@ -137,7 +133,6 @@ test('fills a token-only session from the refresh and keeps it signed in', async
 	await render()
 
 	expect(refreshCalls).toHaveLength(1)
-	expect(refreshCalls[0].authorization).toBe(token('account-a'))
 	refreshCalls[0].resolve(jsonResponse({ token: token('rotated-a'), record: record('account-a') }))
 	await settle()
 
@@ -198,15 +193,6 @@ test('accepts Google identity before one account refresh and keeps onboarding op
 	await settle()
 
 	await signIn
-	expect(fetch).toHaveBeenCalledWith(
-		expect.stringContaining('/auth/google-code-signin'),
-		expect.objectContaining({
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XmlHttpRequest' },
-			body: JSON.stringify({ code: 'popup-code', signupClient: 'web', source: 'subscription-page' })
-		})
-	)
-
 	expect(refreshCalls).toHaveLength(1)
 	expect(pb.authStore.record?.id).toBe('google-new')
 	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'google' })
@@ -260,7 +246,6 @@ test('continues unverified email sign-in in a dismissible sheet and retains the 
 	expect(sessionView.isAuthenticated).toBe(true)
 	expect(document.body.textContent).toContain("You're signed in.")
 	expect(otpCalls).toHaveLength(1)
-	expect(otpCalls[0].authorization).toBe(`Bearer ${token('email-user')}`)
 	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
 	await settle()
 	await act(async () => button('Verify later').click())
@@ -294,7 +279,7 @@ test('sends the first code when a signed-in account opens the sheet, and again f
 	pb.authStore.save(token('account-a'), { ...record('account-a'), email: 'a@example.com', verified: false })
 	await render()
 	await act(async () => sessionView.promptVerifyEmail('account-a'))
-	expect(otpCalls.map((call) => call.authorization)).toEqual([`Bearer ${token('account-a')}`])
+	expect(otpCalls).toHaveLength(1)
 	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
 	await settle()
 	await act(async () => button('Verify later').click())
@@ -306,10 +291,7 @@ test('sends the first code when a signed-in account opens the sheet, and again f
 		pb.authStore.save(token('account-b'), { ...record('account-b'), email: 'b@example.com', verified: false })
 	)
 	await act(async () => sessionView.promptVerifyEmail('account-b'))
-	expect(otpCalls.map((call) => call.authorization)).toEqual([
-		`Bearer ${token('account-a')}`,
-		`Bearer ${token('account-b')}`
-	])
+	expect(otpCalls).toHaveLength(2)
 	expect(document.body.textContent).toContain('b@example.com')
 })
 
@@ -625,13 +607,8 @@ test.each([
 
 test.each(['cancel', 'replace'] as const)('ignores a late Google session after %s', async (action) => {
 	await render()
-	let finish!: (response: Response) => void
-	vi.mocked(fetch).mockImplementationOnce(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
+	const { fixture, finish } = holdOnce()
+	http.serve({ [GOOGLE_SIGNIN]: fixture })
 	const controller = new AbortController()
 	const onAuthenticated = vi.fn()
 	const result = sessionView.signInWithGoogle({
@@ -664,13 +641,8 @@ test.each(['cancel', 'replace'] as const)('ignores a late Google session after %
 
 test.each(['confirm', 'resend'] as const)('ignores a cancelled Google link %s response', async (operation) => {
 	await render()
-	let finish!: (response: Response) => void
-	vi.mocked(fetch).mockImplementationOnce(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
+	const { fixture, finish } = holdOnce()
+	http.serve({ [operation === 'confirm' ? LINK_CONFIRM : LINK_RESEND]: fixture })
 	const controller = new AbortController()
 	const request = { challengeToken: 'challenge', code: '123456', signal: controller.signal }
 	const result =
@@ -709,18 +681,12 @@ test('blocks onboarding Continue if a replacement token arrives before its recor
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
 	const continueButton = button('Continue')
-	const before = vi.mocked(fetch).mock.calls.length
 	await act(async () => {
 		pb.authStore.save(token('replacement'))
 		continueButton.click()
 	})
 	await settle()
-	expect(
-		vi
-			.mocked(fetch)
-			.mock.calls.slice(before)
-			.some(([url]) => String(url).endsWith('/user/promotional-emails'))
-	).toBe(false)
+	expect(http.urls()).not.toContain(PROMOTIONAL_EMAILS)
 	expect(pb.authStore.token).toBe(token('replacement'))
 	expect(document.body.textContent).not.toContain('Thanks for signing up!')
 })
@@ -734,13 +700,8 @@ test('ignores an onboarding save after the owning session is replaced', async ()
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
-	let finish!: (response: Response) => void
-	vi.mocked(fetch).mockImplementationOnce(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
+	const { fixture, finish } = holdOnce()
+	http.serve({ [PROMOTIONAL_EMAILS]: fixture })
 	await act(async () => button('Continue').click())
 	await settle()
 	await act(async () => pb.authStore.save(token('replacement')))
@@ -762,13 +723,8 @@ test('accepts an onboarding save when the same account refreshes its token', asy
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
-	let finish!: (response: Response) => void
-	vi.mocked(fetch).mockImplementationOnce(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
+	const { fixture, finish } = holdOnce()
+	http.serve({ [PROMOTIONAL_EMAILS]: fixture })
 	await act(async () => button('Continue').click())
 	await settle()
 	refreshCalls[0].resolve(
@@ -794,9 +750,10 @@ test('a failed onboarding save keeps its error on screen while Continue retries'
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
-	vi.mocked(fetch)
-		.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
-		.mockImplementationOnce(() => new Promise(() => {}))
+	http.serveInOrder(PROMOTIONAL_EMAILS, [
+		() => Promise.reject(new TypeError('Failed to fetch')),
+		() => new Promise(() => {})
+	])
 	await act(async () => button('Continue').click())
 	await waitForUi(async () => {
 		await settle()
@@ -882,9 +839,8 @@ test('welcomes a new GitHub account and attributes its signup to GitHub', async 
 	expect(pb.authStore.record?.id).toBe('github-new')
 	expect(sessionView.isNewSignup).toBe(true)
 	expect(document.body.textContent).toContain('Thanks for signing up!')
-	const attribution = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith('/user/attribution'))!
-	expect(new Headers(attribution[1]?.headers).get('Authorization')).toBe(`Bearer ${token('github-new')}`)
-	expect(JSON.parse(String(attribution[1]?.body))).toMatchObject({ provider: 'github' })
+	const attribution = http.requests.find((request) => request.url.href === `${AUTH_SERVER}/user/attribution`)!
+	expect(JSON.parse(String(attribution.init?.body))).toMatchObject({ provider: 'github' })
 })
 
 test('reloads Google profile fields even when an earlier sign-in left a fresh cache', async () => {
@@ -913,13 +869,8 @@ test('does not let an old save finish onboarding for a new login to the same acc
 		})
 	})
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
-	let finish!: (response: Response) => void
-	vi.mocked(fetch).mockImplementationOnce(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
+	const { fixture, finish } = holdOnce()
+	http.serve({ [PROMOTIONAL_EMAILS]: fixture })
 	await act(async () => button('Continue').click())
 	await settle()
 	await act(async () => sessionView.logout())
@@ -939,7 +890,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 test('backs off a Google-link resend when the endpoint gives a 429 without timing', async () => {
 	vi.useFakeTimers({ toFake: ['Date'] })
 	await render()
-	vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ error: 'Please wait before requesting another code' }, 429))
+	http.serve({ [LINK_RESEND]: fixtureStatus(429, { error: 'Please wait before requesting another code' }) })
 	await expect(
 		sessionView.resendGoogleLink({
 			challengeToken: 'challenge',
@@ -951,14 +902,19 @@ test('backs off a Google-link resend when the endpoint gives a 429 without timin
 test('remembers Google only after its linking challenge becomes an accepted session', async () => {
 	await render()
 	localStorage.setItem('last-sign-in', JSON.stringify({ method: 'email' }))
-	vi.mocked(fetch).mockResolvedValueOnce(
-		jsonResponse({
+	http.serve({
+		[GOOGLE_SIGNIN]: {
 			kind: 'link_verification_required',
 			challengeToken: 'challenge',
 			expiresAt: new Date(Date.now() + 120_000).toISOString(),
 			resendAfter: new Date(Date.now() + 60_000).toISOString()
-		})
-	)
+		},
+		[LINK_CONFIRM]: {
+			kind: 'authenticated',
+			token: token('linked'),
+			user: { id: 'linked', email: 'linked@example.com', verified: true }
+		}
+	})
 	await act(async () => {
 		await sessionView.signInWithGoogle({
 			code: 'fixture',
@@ -967,13 +923,6 @@ test('remembers Google only after its linking challenge becomes an accepted sess
 	})
 	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'email' })
 	expect(pb.authStore.token).toBe('')
-	vi.mocked(fetch).mockResolvedValueOnce(
-		jsonResponse({
-			kind: 'authenticated',
-			token: token('linked'),
-			user: { id: 'linked', email: 'linked@example.com', verified: true }
-		})
-	)
 	await act(async () => {
 		await sessionView.confirmGoogleLink({
 			challengeToken: 'challenge',

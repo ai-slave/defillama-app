@@ -294,7 +294,7 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.protocols['6033'].rwaProtocolMcapSlug).toBe('uranium-io')
 	})
 
-	test('precomputes emissions historical prices with a 6h POST', async () => {
+	test('precomputes emissions historical prices around the latest past unlock', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = nowSec - 8 * day
@@ -325,15 +325,9 @@ describe('fetchCoreMetadata', () => {
 		})
 
 		const payload = await fetchCoreMetadata()
-		const { init: requestOptions } = priceRequests()[0]!
-		const requestBody = JSON.parse(requestOptions!.body as string)
+		const requestBody = JSON.parse(priceRequests()[0]!.init!.body as string)
 
 		expect(priceRequests()).toHaveLength(1)
-		expect(requestOptions).toMatchObject({
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
-		})
-		expect(requestBody.searchWidth).toBe('6h')
 		expect(requestBody.coins['coingecko:chainlink']).toHaveLength(15)
 		expect(payload.emissionsHistoricalPrices).toEqual({
 			'coingecko:chainlink': {

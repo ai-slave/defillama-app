@@ -65,7 +65,6 @@ describe('/api/private/pro-dashboard/fetch', () => {
 		expect(body.data).toEqual([
 			{ ...reported, verified: expect.objectContaining({ apy: 4, price_per_share: 1.1, tvl_usd: null }) }
 		])
-		expect(http.urls().filter((url) => url.includes('range=max'))).toHaveLength(2)
 	})
 
 	test('returns 500 and records the failure with the request type when upstream fails', async () => {

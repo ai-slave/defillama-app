@@ -37,16 +37,6 @@ describe('research Cloudflare purge helpers', () => {
 			status: 'purged',
 			urls: ['https://defillama.test/research', 'https://defillama.test/research/report/story']
 		})
-		expect(fetchImpl).toHaveBeenCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
-			body: JSON.stringify({
-				files: ['https://defillama.test/research', 'https://defillama.test/research/report/story']
-			}),
-			headers: {
-				Authorization: 'Bearer token',
-				'Content-Type': 'application/json'
-			},
-			method: 'POST'
-		})
 	})
 
 	test('uses the configured site url when building purge urls', () => {

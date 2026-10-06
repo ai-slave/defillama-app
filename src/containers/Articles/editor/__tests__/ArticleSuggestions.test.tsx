@@ -3,8 +3,12 @@
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { createArticleEditorExtensions } from '../extensions'
+
+const http = installFixtureFetch()
+const ENTITY_SEARCH = '/api/public/research/entities/search'
 
 let editor: Editor
 let root: Root
@@ -42,14 +46,13 @@ beforeEach(async () => {
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
-	vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ entities: [] }) }))
+	http.serve({ [ENTITY_SEARCH]: { entities: [] } })
 	await act(async () => root.render(<Harness />))
 	await settle()
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	vi.unstubAllGlobals()
 	window.localStorage.clear()
 })
 
@@ -95,11 +98,14 @@ test('supports click activation without needing a pointer-down event', async () 
 })
 
 test('fetches each mention query once and ignores a superseded response', async () => {
-	const requests: Array<{ resolve: (value: Response) => void }> = []
-	vi.mocked(fetch).mockImplementation(() => new Promise((resolve) => requests.push({ resolve })))
+	const requests: Array<{ resolve: (body: unknown) => void }> = []
+	http.serve({ [ENTITY_SEARCH]: () => new Promise((resolve) => requests.push({ resolve })) })
 	await type('@')
 	await type('a')
-	expect(fetch).toHaveBeenCalledTimes(2)
+	expect(http.urls()).toEqual([
+		'http://localhost:3000/api/public/research/entities/search?q=',
+		'http://localhost:3000/api/public/research/entities/search?q=a'
+	])
 	const item = {
 		id: 'aave',
 		entityType: 'protocol',
@@ -109,12 +115,12 @@ test('fetches each mention query once and ignores a superseded response', async 
 		source: 'search'
 	}
 	await act(async () => {
-		requests[1].resolve(new Response(JSON.stringify({ entities: [item] })))
+		requests[1].resolve({ entities: [item] })
 	})
 	await settle()
 	expect(selected()?.textContent).toContain('Aave')
 	await act(async () => {
-		requests[0].resolve(new Response(JSON.stringify({ entities: [] })))
+		requests[0].resolve({ entities: [] })
 	})
 	await settle()
 	expect(selected()?.textContent).toContain('Aave')

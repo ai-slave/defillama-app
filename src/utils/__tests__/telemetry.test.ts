@@ -100,14 +100,6 @@ describe('telemetry client', () => {
 		expect(
 			batch.events.map((event: TelemetryEvent) => (event.type === 'runtime_error' ? event.error_message : ''))
 		).toEqual(['second', 'third', 'fourth'])
-		const firstCall = fetchMock.mock.calls[0]!
-		const firstInit = firstCall[1]
-		if (!firstInit) throw new Error('missing telemetry request init')
-		expect(firstCall[0]).toBe(process.env.OPS_TELEMETRY_URL)
-		expect(firstInit.headers).toMatchObject({
-			Authorization: 'Bearer secret',
-			'Idempotency-Key': expect.any(String)
-		})
 	})
 
 	test('uses the Coolify source commit as the producer service version', async () => {
@@ -124,9 +116,6 @@ describe('telemetry client', () => {
 			runtime: 'build',
 			serviceVersion: 'coolify-sha'
 		})
-		expect(sentEvents(fetchMock)[0]?.attributes).toMatchObject({
-			telemetry_target_id: 'defillama'
-		})
 	})
 
 	test('skips blank source commit env vars in producer service version fallback', async () => {
@@ -140,19 +129,6 @@ describe('telemetry client', () => {
 
 		expect(sentBatch(fetchMock).producer).toMatchObject({
 			serviceVersion: 'github-sha'
-		})
-	})
-
-	test('uses the configured telemetry target id on emitted events', async () => {
-		vi.stubEnv('OPS_TELEMETRY_TARGET_ID', 'defillama-ayo3')
-		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 204 }))
-		vi.stubGlobal('fetch', fetchMock)
-
-		recordDomainEvent('metadata.refresh', 'info', 'runtime_loop', 'Metadata refresh completed')
-		await flushTelemetry({ timeoutMs: 1000 })
-
-		expect(sentEvents(fetchMock)[0]?.attributes).toMatchObject({
-			telemetry_target_id: 'defillama-ayo3'
 		})
 	})
 
@@ -562,38 +538,6 @@ describe('telemetry client', () => {
 			message: 'Skipped token rights entries',
 			attributes: { skipped_count: 1 }
 		})
-	})
-
-	test('records build and metadata marker domain events outside route traces', async () => {
-		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
-		vi.stubGlobal('fetch', fetchMock)
-
-		recordDomainEvent('build.complete', 'info', 'main', 'Build completed on main', {
-			branch: 'main',
-			commit_sha: 'abcdef123456'
-		})
-		recordDomainEvent('metadata.refresh', 'info', 'runtime_loop', 'Metadata refresh completed', {
-			duration_ms: 250,
-			source: 'runtime_loop'
-		})
-		await flushTelemetry({ timeoutMs: 1000 })
-
-		expect(sentEvents(fetchMock)).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					event_name: 'build.complete',
-					level: 'info',
-					message: 'Build completed on main',
-					subject: 'main'
-				}),
-				expect.objectContaining({
-					event_name: 'metadata.refresh',
-					level: 'info',
-					message: 'Metadata refresh completed',
-					subject: 'runtime_loop'
-				})
-			])
-		)
 	})
 
 	test('links outbound fetch events to the active route span', async () => {

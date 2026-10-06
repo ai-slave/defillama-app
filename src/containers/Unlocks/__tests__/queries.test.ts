@@ -212,7 +212,7 @@ describe('getProtocolEmissionsPieData', () => {
 
 		expect(result.pieChartData.documented).toEqual([{ name: 'Team', value: 10 }])
 		expect(result.meta).toBeNull()
-		expect(http.urls()).toEqual([`${DETAIL_API}curve-finance`])
+		expect(http.urls().filter((url) => url.startsWith(ALL_API))).toEqual([])
 	})
 
 	test('fetches supply metadata for the locked/unlocked chart', async () => {
@@ -348,7 +348,7 @@ describe('getProtocolEmissons', () => {
 			}
 		})
 
-		expect(http.urls()).toEqual([`${DETAIL_API}chainlink`])
+		expect(http.urls().filter((url) => url.startsWith(CURRENT_PRICES_API))).toEqual([])
 		expect(result.tokenPrice).toEqual({ price: 12.34, symbol: 'LINK' })
 	})
 
@@ -386,7 +386,7 @@ describe('getProtocolEmissons', () => {
 			}
 		})
 
-		expect(http.urls()).toEqual([`${DETAIL_API}plasma`])
+		expect(http.urls().filter((url) => url.startsWith(ALL_API))).toEqual([])
 		expect(result.meta).toEqual({
 			gecko_id: 'plasma',
 			circSupply: 25,
@@ -631,7 +631,7 @@ describe('getAllProtocolEmissions', () => {
 			}
 		})
 
-		expect(http.urls()).toEqual([ALL_API])
+		expect(http.urls().filter((url) => url.startsWith(CURRENT_PRICES_API))).toEqual([])
 		expect(result).toHaveLength(1)
 		expect(result[0]).toMatchObject({
 			tPrice: 7.89,
@@ -698,7 +698,7 @@ describe('getAllProtocolEmissions', () => {
 
 		dateNow.mockRestore()
 
-		expect(http.urls()).toEqual([ALL_API])
+		expect(http.urls().filter((url) => url.startsWith(HISTORICAL_PRICES_API))).toEqual([])
 		expect(result[0]?.lastEvent).toEqual([cliff(lastPastEvent, 10)])
 		expect(result[0]?.historicalPrice).toEqual([
 			[(lastPastEvent - day) * 1000, 5],
@@ -773,7 +773,6 @@ describe('getAllProtocolEmissions', () => {
 
 		dateNow.mockRestore()
 
-		expect(http.urls()).toContain(`${CURRENT_PRICES_API}coingecko:chainlink`)
 		expect(result[0]).toMatchObject({
 			tPrice: 3,
 			tSymbol: 'LINK',

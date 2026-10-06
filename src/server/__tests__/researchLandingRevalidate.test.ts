@@ -34,7 +34,6 @@ describe('/api/private/research/revalidate-landing', () => {
 	test('validates the researcher session, then purges /research', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
-		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
 
 		const fetchImpl = vi
 			.fn()
@@ -45,24 +44,10 @@ describe('/api/private/research/revalidate-landing', () => {
 
 		await researchLandingRevalidateHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
-		expect(new URL(fetchImpl.mock.calls[0][0]).pathname).toBe('/articles/mine')
-		expect(new URL(fetchImpl.mock.calls[0][0]).searchParams.get('limit')).toBe('1')
-		expect(fetchImpl.mock.calls[0][1]).toEqual({ headers: { Authorization: 'Bearer user-token' } })
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({
 			purgePaths: ['/research'],
 			status: 'scheduled'
-		})
-
-		await vi.waitFor(() => {
-			expect(fetchImpl).toHaveBeenLastCalledWith('https://api.cloudflare.com/client/v4/zones/zone/purge_cache', {
-				body: JSON.stringify({ files: ['https://defillama.test/research'] }),
-				headers: {
-					Authorization: 'Bearer token',
-					'Content-Type': 'application/json'
-				},
-				method: 'POST'
-			})
 		})
 	})
 

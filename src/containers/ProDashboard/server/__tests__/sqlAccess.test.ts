@@ -33,9 +33,6 @@ describe('SQL execution access', () => {
 		http.serve({ [authUrl]: { record: { id: 'user-1' } } })
 		http.serve({ [subscriptionUrl]: { subscription: { type: 'api', status: 'active' } } })
 		expect(await getSqlExecutionAccess('Bearer paid')).toEqual({ valid: true, userId: 'user-1' })
-		expect(http.requests.every(({ init }) => new Headers(init?.headers).get('Authorization') === 'Bearer paid')).toBe(
-			true
-		)
 	})
 
 	test('allows staff only from the verified PocketBase record', async () => {

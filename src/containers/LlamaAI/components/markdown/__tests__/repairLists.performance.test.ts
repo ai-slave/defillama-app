@@ -3,19 +3,18 @@ import type { Processor } from 'unified'
 import { expect, test, vi } from 'vitest'
 import { createSegmentProcessors, createSegmentRenderer } from '../markdownSegments'
 
+// Counts the characters the real Markdown parser reads, under every cache layer above it. Work done,
+// not wall time, is what the cache bounds, and it does not vary with the machine.
 const cost = vi.hoisted(() => ({ parsedChars: 0 }))
-vi.mock('../remarkIncremental', async (importOriginal) => {
-	const original = await importOriginal<typeof import('../remarkIncremental')>()
+vi.mock('remark-parse', async (importOriginal) => {
+	const remarkParse = (await importOriginal<typeof import('remark-parse')>()).default
 	return {
-		createRemarkIncremental: () => {
-			const incremental = original.createRemarkIncremental()
-			return function (this: Processor<Root>) {
-				const parse = this.parser!
-				this.parser = (source, file) => {
-					cost.parsedChars += source.length
-					return parse(source, file)
-				}
-				incremental.call(this)
+		default(this: Processor<Root>) {
+			remarkParse.call(this)
+			const parse = this.parser!
+			this.parser = (source, file) => {
+				cost.parsedChars += String(source).length
+				return parse(source, file)
 			}
 		}
 	}

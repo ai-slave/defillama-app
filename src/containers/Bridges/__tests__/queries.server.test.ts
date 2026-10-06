@@ -58,6 +58,7 @@ const NOW = Date.parse('2026-04-28T12:00:00Z')
 
 describe('getBridgeChainNetInflows', () => {
 	test('returns the latest completed UTC-day net flow without fetching bridge overview data', async () => {
+		// No overview fixtures: an overview request would fail the test as unfixtured.
 		http.serve({
 			[CONFIG_API]: { chainCoingeckoIds: { XDC: ['xdc-network'] } },
 			[`${BRIDGES_SERVER_URL}/bridgevolume/XDC`]: [
@@ -67,7 +68,6 @@ describe('getBridgeChainNetInflows', () => {
 		})
 
 		await expect(getBridgeChainNetInflows('XDC', NOW)).resolves.toEqual({ netInflows: 9 })
-		expect(http.urls()).toEqual([CONFIG_API, `${BRIDGES_SERVER_URL}/bridgevolume/XDC`])
 	})
 
 	test.each([

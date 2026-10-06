@@ -18,11 +18,6 @@ describe('marketMakerBreakdown route', () => {
 
 		expect(first).toMatchObject({ status: 200, serializedJson: JSON.stringify({ marketMakerId: 'lhava' }) })
 		expect(second).toEqual(first)
-		expect(http.requests[0].url.pathname).toBe('/api/v1/public/market-maker/leaderboard/breakdown/lhava')
-		expect(Object.fromEntries(http.requests[0].url.searchParams)).toEqual({
-			start_date: '2026-05-30',
-			end_date: '2026-06-29'
-		})
 		expect(http.requests).toHaveLength(1)
 	})
 

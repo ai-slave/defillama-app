@@ -77,6 +77,5 @@ describe('protocol unlock static props boundary', () => {
 		http.serve({ [`${DATASETS_SERVER_URL}/emissions/aave`]: fixtureStatus(400) })
 
 		await expect(getProtocolUnlocksStaticPropsData('Aave', {}, ['aave'])).rejects.toThrow(/400/)
-		expect(http.urls()).toEqual([`${DATASETS_SERVER_URL}/emissions/aave`])
 	})
 })

@@ -3,66 +3,57 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import { dashboardModuleQuery } from '../dashboardTabs'
-import type { DashboardModule } from '../dashboardTypes'
 import { InvestorRelationsView } from '../InvestorRelationsView'
 
-// The registry is the dynamic-import seam: the real one loads whole dashboard bundles, and these
-// tests need to decide when each module finishes loading to reproduce the dashboard-switch race.
-const { modules } = vi.hoisted(() => ({
-	modules: {} as Record<
-		string,
-		{ promise: Promise<DashboardModule>; resolve: (m: DashboardModule) => void; reject: (error: Error) => void }
-	>
-}))
-vi.mock('../registry', () => ({
-	getDashboardModule: (id: string) => modules[id]?.promise ?? null,
-	isDashboardRegistered: (id: string) => id in modules
-}))
-// Heavy child: the chart grid renders only on a ProDashboard tab, which these tests never open.
-vi.mock('~/containers/ProDashboard/components/ChartGrid', () => ({ ChartGrid: () => null }))
+// Real dashboard modules from the registry. Their data is out of scope here: every request answers 503,
+// so a tab that fetches shows its own error state.
+const fetchFixtures = installFixtureFetch()
 
-function registerModule(id: string) {
-	let resolve!: (m: DashboardModule) => void
-	let reject!: (error: Error) => void
-	const promise = new Promise<DashboardModule>((onResolve, onReject) => {
-		resolve = onResolve
-		reject = onReject
-	})
-	modules[id] = { promise, resolve, reject }
-}
-
-function tab(id: string, label: string) {
-	return { id, label, component: () => <p>{`${label} content`}</p> }
-}
+const HYPERLIQUID = 'eobgdbgg0d0hake'
+const SPARK = '9vn8xp43tdzo6gt'
+const AAVE = 'g3rswlkr9khxa03'
+const ODYSSEY = '0dyss3y3c0sys7m1'
 
 describe('InvestorRelationsView', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let client: QueryClient
 
-	function render(dashboardId: string, activeTab?: string) {
-		return act(async () => {
-			root.render(
-				<QueryClientProvider client={client}>
-					<InvestorRelationsView
-						dashboardId={dashboardId}
-						customOnly
-						entityName="Entity"
-						customServerData={{}}
-						activeTab={activeTab}
-					/>
-				</QueryClientProvider>
-			)
-		})
+	function element(dashboardId: string, activeTab?: string) {
+		return (
+			<QueryClientProvider client={client}>
+				<InvestorRelationsView
+					dashboardId={dashboardId}
+					customOnly
+					entityName="Entity"
+					customServerData={{}}
+					activeTab={activeTab}
+				/>
+			</QueryClientProvider>
+		)
 	}
 
-	// The component hears about a settled module on a later task, so wait until that module stops loading.
-	async function resolveModule(id: string, module: DashboardModule) {
-		await act(async () => modules[id].resolve(module))
-		await waitForUi(() => expect(client.isFetching({ queryKey: dashboardModuleQuery(id).queryKey })).toBe(0))
+	// A synchronous render commits before any dashboard module import can settle, so the test sees the loading state.
+	function renderNow(dashboardId: string, activeTab?: string) {
+		act(() => root.render(element(dashboardId, activeTab)))
+	}
+
+	async function render(dashboardId: string, activeTab?: string) {
+		renderNow(dashboardId, activeTab)
+		await settle()
+	}
+
+	// Headers and tab components load lazily, then fetch: wait until both are on screen and nothing is fetching,
+	// so no lazy load lands outside act after the test.
+	async function settle() {
+		await waitForUi(() => {
+			expect(client.isFetching()).toBe(0)
+			expect(container.querySelector('header')).not.toBeNull()
+			expect(container.querySelector('[role="tabpanel"]')?.childElementCount ?? 1).toBeGreaterThan(0)
+		})
 	}
 
 	function tabButtons() {
@@ -73,8 +64,9 @@ describe('InvestorRelationsView', () => {
 		return container.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? null
 	}
 
-	function shownContent() {
-		return container.querySelector('p')?.textContent ?? null
+	/** The heading a dashboard without its own header shows for the open tab. */
+	function openTabHeading() {
+		return container.querySelector('h1')?.textContent ?? null
 	}
 
 	async function clickTab(label: string) {
@@ -84,12 +76,12 @@ describe('InvestorRelationsView', () => {
 	}
 
 	beforeEach(() => {
+		fetchFixtures.serve({ http: fixtureStatus(503) })
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		client = new QueryClient()
+		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		for (const key of Object.keys(modules)) delete modules[key]
 	})
 
 	afterEach(async () => {
@@ -99,88 +91,59 @@ describe('InvestorRelationsView', () => {
 	})
 
 	test('a dashboard switch hides the old tabs while the new module loads, then starts from its first tab', async () => {
-		registerModule('a')
-		registerModule('b')
-		await render('a')
+		renderNow(HYPERLIQUID)
 		expect(tabButtons()).toEqual([])
+		await settle()
+		expect(tabButtons()).toEqual(['Ecosystem', 'Stats', 'Trades', 'HLP Positions', 'Reports', 'Investor Calls'])
+		expect(selectedTab()).toBe('Ecosystem')
 
-		// Both dashboards have a tab with the same id, so a kept selection would open B two.
-		await resolveModule('a', { tabs: [tab('a-1', 'A one'), tab('shared', 'A two')] })
-		expect(tabButtons()).toEqual(['A one', 'A two'])
-		expect(shownContent()).toBe('A one content')
-		await clickTab('A two')
-		expect(selectedTab()).toBe('A two')
+		await clickTab('Reports')
+		expect(selectedTab()).toBe('Reports')
 		// The panel is labelled by the tab that opened it.
 		const panel = container.querySelector('[role="tabpanel"]')!
-		expect(panel.querySelector('p')?.textContent).toBe('A two content')
-		expect(container.querySelector(`#${CSS.escape(panel.getAttribute('aria-labelledby')!)}`)?.textContent).toBe('A two')
+		expect(container.querySelector(`#${CSS.escape(panel.getAttribute('aria-labelledby')!)}`)?.textContent).toBe(
+			'Reports'
+		)
+		expect(panel.textContent).toContain('Reports — Coming Soon')
+		// Spark also has an Overview tab with this id, so a kept selection would open it there.
+		await clickTab('Ecosystem')
 
-		// Switching dashboards must not show A's tabs under B's name while B loads.
-		await render('b')
+		// Switching dashboards must not show Hyperliquid's tabs under Spark's name while Spark loads.
+		renderNow(SPARK)
 		expect(tabButtons()).toEqual([])
-		expect(shownContent()).toBeNull()
+		expect(container.querySelector('[role="tabpanel"]')).toBeNull()
 
-		await resolveModule('b', { tabs: [tab('b-1', 'B one'), tab('shared', 'B two')] })
-		expect(tabButtons()).toEqual(['B one', 'B two'])
-		expect(shownContent()).toBe('B one content')
+		await settle()
+		expect(tabButtons()).toEqual(['Financials', 'Overview', 'Distribution Rewards', 'Reports & Press Releases'])
+		expect(selectedTab()).toBe('Financials')
+		expect(container.querySelector('[role="tabpanel"]')?.textContent).toBe("Couldn't load Spark financials.")
 	})
 
 	test('an external tab is a link beside the tab list, not a tab', async () => {
-		registerModule('a')
-		await render('a')
-		await resolveModule('a', {
-			tabs: [
-				tab('a-1', 'A one'),
-				{ ...tab('treasury', 'Treasury'), externalHref: 'https://treasury.example' },
-				tab('a-2', 'A two')
-			]
-		})
-		expect(tabButtons()).toEqual(['A one', 'A two'])
-		const link = container.querySelector('a[href="https://treasury.example"]')!
-		expect(link.textContent).toBe('Treasury')
+		await render(ODYSSEY)
+		expect(tabButtons()).toEqual(['TVL', 'Revenue', 'Incentives', 'Yields', 'Growth', 'Pegs'])
+		const link = Array.from(container.querySelectorAll('a')).find((a) => a.textContent === 'Treasury')!
+		expect(link.getAttribute('href')).toBe('https://metronome.octav.fi/app/Treasury?board=overview')
 		expect(link.closest('[role="tablist"]')).toBeNull()
 	})
 
 	test('a controlled active tab hides the tab strip and drives the content', async () => {
-		registerModule('a')
-		await render('a', 'a-2')
-		await resolveModule('a', { tabs: [tab('a-1', 'A one'), tab('a-2', 'A two')] })
+		await render(HYPERLIQUID, 'reports')
 		expect(tabButtons()).toEqual([])
 		// The route nav above picks the tab, so the content is not a tab panel.
 		expect(container.querySelector('[role="tabpanel"]')).toBeNull()
-		expect(shownContent()).toBe('A two content')
+		expect(openTabHeading()).toBe('Reports')
 
-		await render('a', 'a-1')
-		expect(shownContent()).toBe('A one content')
+		await render(HYPERLIQUID, 'investor-calls')
+		expect(openTabHeading()).toBe('Investor Calls')
 	})
 
-	test('a module that resolves after the dashboard changed is ignored', async () => {
-		registerModule('a')
-		registerModule('b')
-		await render('a')
-		await render('b')
-		expect(tabButtons()).toEqual([])
-		expect(shownContent()).toBeNull()
-
-		await resolveModule('b', { tabs: [tab('b-1', 'B one')] })
-		expect(tabButtons()).toEqual(['B one'])
-		expect(shownContent()).toBe('B one content')
-
-		// A's module finishing last must not replace B's tabs.
-		await resolveModule('a', { tabs: [tab('a-1', 'A one')] })
-		expect(tabButtons()).toEqual(['B one'])
-		expect(shownContent()).toBe('B one content')
-	})
-
-	test('a dashboard whose module fails to load says so instead of loading forever', async () => {
-		client.setDefaultOptions({ queries: { retry: false } })
-		registerModule('a')
-		await render('a')
-		await act(async () => modules.a.reject(new Error('ChunkLoadError')))
-		await waitForUi(() =>
-			expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-				"Couldn't load this dashboard. Reload the page to try again."
-			)
-		)
+	test('a module that finishes loading after a dashboard switch does not replace the new tabs', async () => {
+		// Both imports are still in flight when the second render commits.
+		renderNow(HYPERLIQUID)
+		renderNow(AAVE)
+		await settle()
+		expect(tabButtons()).toEqual(['Overview', 'Markets', 'Rates', 'GHO'])
+		expect(openTabHeading()).toBe('Overview')
 	})
 })

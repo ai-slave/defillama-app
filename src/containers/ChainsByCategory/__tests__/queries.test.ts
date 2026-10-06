@@ -26,7 +26,6 @@ beforeEach(() => {
 	http.serve({
 		'/v2/metrics/fees': { protocols: [] },
 		'/v2/metrics/active-users': { protocols: [] },
-		'/v2/metrics/nft-volume': { protocols: [] },
 		'/stablecoins': { chains: [], peggedAssets: [] },
 		'/chain-assets/chains': { timestamp: 1 }
 	})
@@ -370,12 +369,6 @@ describe('chains by category source availability', () => {
 				activeUsers24h: 0,
 				stablesMcap: 0
 			})
-		}
-		expect(http.urls().filter((url) => url.includes('nft-volume'))).toEqual([])
-		for (const chain of result.chains) {
-			expect(chain).not.toHaveProperty('nftVolume24h')
-			expect(chain).not.toHaveProperty('nftVolume7d')
-			expect(chain).not.toHaveProperty('nftVolume30d')
 		}
 	})
 

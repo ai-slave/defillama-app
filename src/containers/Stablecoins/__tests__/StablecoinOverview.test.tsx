@@ -105,9 +105,7 @@ test('the unreleased flag in the URL adds unreleased supply once the router is r
 	await act(async () => root.render(page()))
 	expect(totalCirculating()).toBe('150m')
 	expect(unreleasedCheckbox().checked).toBe(true)
-	expect(http.urls()).toEqual([
-		'http://localhost:3000/api/public/stablecoins/chart-series?scope=asset&chart=totalCirc&limit=10&stablecoin=tether&unreleased=true'
-	])
+	expect(http.requests.map(({ url }) => url.searchParams.get('unreleased'))).toEqual(['true'])
 
 	await act(async () => unreleasedCheckbox().click())
 	expect(router.query).toEqual({ peggedasset: 'tether' })

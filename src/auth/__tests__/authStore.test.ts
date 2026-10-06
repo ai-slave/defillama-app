@@ -1,17 +1,13 @@
 // @vitest-environment happy-dom
 // @vitest-environment-options {"url":"https://defillama.com"}
 
-import { afterEach, expect, test, vi } from 'vitest'
-import { POCKETBASE_URL } from '~/constants'
+import { afterEach, expect, test } from 'vitest'
 import pb from '~/utils/pocketbase'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { getAuthStoreSnapshot, getServerSnapshot, refreshSession, subscribeToAuthStore } from '../authStore'
 
 const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
-
-function jsonResponse(body: unknown, status = 200) {
-	return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
-}
 
 function deferred<T>() {
 	let resolve!: (value: T) => void
@@ -21,18 +17,16 @@ function deferred<T>() {
 	return { promise, resolve }
 }
 
-function stubRefreshEndpoint() {
-	const pending = deferred<Response>()
-	const fetchMock = vi.fn((url: string | URL, _config?: RequestInit) => {
-		expect(String(url)).toBe(`${POCKETBASE_URL}/api/collections/users/auth-refresh`)
-		return pending.promise
-	})
-	vi.stubGlobal('fetch', fetchMock)
-	return { pending, fetchMock }
+const http = installFixtureFetch()
+
+/** Holds the refresh response until the test resolves it, so the session can change while it is in flight. */
+function holdRefreshResponse() {
+	const pending = deferred<unknown>()
+	http.serve({ '/api/collections/users/auth-refresh': () => pending.promise })
+	return { pending }
 }
 
 afterEach(() => {
-	vi.unstubAllGlobals()
 	pb.authStore.clear()
 	localStorage.clear()
 })
@@ -73,25 +67,23 @@ test('writes the cookie before notifying subscribers and reuses snapshots', () =
 
 test('commits a refresh that resolves while its session is still current', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
-	const { pending, fetchMock } = stubRefreshEndpoint()
+	const { pending } = holdRefreshResponse()
 
 	const refresh = refreshSession()
-	pending.resolve(jsonResponse({ token: token('rotated-a'), record: { ...record('account-a'), name: 'Fresh' } }))
+	pending.resolve({ token: token('rotated-a'), record: { ...record('account-a'), name: 'Fresh' } })
 
 	await expect(refresh).resolves.toMatchObject({ id: 'account-a', name: 'Fresh' })
 	expect(pb.authStore.token).toBe(token('rotated-a'))
 	expect(pb.authStore.record?.name).toBe('Fresh')
-	const requestConfig = fetchMock.mock.calls[0][1] as RequestInit
-	expect(new Headers(requestConfig.headers).get('Authorization')).toBe(token('account-a'))
 })
 
 test('discards a refresh that resolves after logout', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
-	const { pending } = stubRefreshEndpoint()
+	const { pending } = holdRefreshResponse()
 
 	const refresh = refreshSession()
 	pb.authStore.clear()
-	pending.resolve(jsonResponse({ token: token('rotated-a'), record: record('account-a') }))
+	pending.resolve({ token: token('rotated-a'), record: record('account-a') })
 
 	await refresh
 	expect(pb.authStore.token).toBe('')
@@ -100,11 +92,11 @@ test('discards a refresh that resolves after logout', async () => {
 
 test('discards a refresh that resolves after switching to another account', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
-	const { pending } = stubRefreshEndpoint()
+	const { pending } = holdRefreshResponse()
 
 	const refresh = refreshSession()
 	pb.authStore.save(token('account-b'), record('account-b'))
-	pending.resolve(jsonResponse({ token: token('rotated-a'), record: record('account-a') }))
+	pending.resolve({ token: token('rotated-a'), record: record('account-a') })
 
 	await refresh
 	expect(pb.authStore.token).toBe(token('account-b'))
@@ -113,10 +105,10 @@ test('discards a refresh that resolves after switching to another account', asyn
 
 test('does not undo verification when an older refresh returns with the same token', async () => {
 	pb.authStore.save(token('account-a'), { ...record('account-a'), verified: false })
-	const { pending } = stubRefreshEndpoint()
+	const { pending } = holdRefreshResponse()
 	const refresh = refreshSession()
 	pb.authStore.save(token('account-a'), { ...record('account-a'), verified: true })
-	pending.resolve(jsonResponse({ token: token('rotated-a'), record: { ...record('account-a'), verified: false } }))
+	pending.resolve({ token: token('rotated-a'), record: { ...record('account-a'), verified: false } })
 	await refresh
 	expect(pb.authStore.record?.verified).toBe(true)
 	expect(pb.authStore.token).toBe(token('account-a'))

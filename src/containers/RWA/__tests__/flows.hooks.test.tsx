@@ -4,15 +4,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import {
-	useRWAAssetFlows,
-	useRWAFlowAssetBreakdown,
-	useRWAFlowOverviewSplitWithFilters,
-	useRWAFlowSeries,
-	useRWAFlowSummary,
-	type RWAFlowSeriesRequest,
-	type RWAFlowSeriesResult
-} from '../flows.hooks'
+import { useRWAFlowSeries, type RWAFlowSeriesRequest, type RWAFlowSeriesResult } from '../flows.hooks'
 
 const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
 
@@ -64,29 +56,6 @@ async function renderFlowSeries(request: RWAFlowSeriesRequest) {
 	await waitForUi(() => expect(results.at(-1)?.isLoading).toBe(false))
 	return results.at(-1)
 }
-
-describe('RWA flow browser routes', () => {
-	test('fetches every flow scope through the local public API', async () => {
-		await mount(() => {
-			useRWAFlowSummary()
-			useRWAAssetFlows('ondo/usdy', true)
-			useRWAFlowOverviewSplitWithFilters('assetGroup', true, false, true)
-			useRWAFlowAssetBreakdown({ kind: 'assetGroup', slug: 'Treasury Funds' }, true)
-			useRWAFlowAssetBreakdown({ kind: 'chain', slug: 'Ethereum' }, true)
-			useRWAFlowAssetBreakdown(null, true)
-			return null
-		})
-
-		await waitForUi(() => expect(fetchJsonMock).toHaveBeenCalledTimes(5))
-		expect(requestedUrls().sort()).toEqual([
-			'/api/public/rwa/flows/asset-breakdown/assetGroup/Treasury%20Funds',
-			'/api/public/rwa/flows/asset-breakdown/chain/Ethereum',
-			'/api/public/rwa/flows/asset/ondo%2Fusdy?withMcap=true',
-			'/api/public/rwa/flows/overview?splitBy=assetGroup&includeStablecoin=true&includeGovernance=false',
-			'/api/public/rwa/flows/summary'
-		])
-	})
-})
 
 describe('useRWAFlowSeries', () => {
 	test('reads the asset group split on the front page and never the unscoped asset breakdown', async () => {

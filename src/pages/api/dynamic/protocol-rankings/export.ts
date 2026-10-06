@@ -6,7 +6,6 @@ import {
 	resolveProtocolRankingChain
 } from '~/containers/ProtocolRankings/server/api'
 import { parseStructuredProtocolRankingQuery } from '~/containers/ProtocolRankings/tableQuery'
-import { isContentHashVersion } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type ExportBody = {
@@ -37,6 +36,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	const chain = resolveProtocolRankingChain(body.chain)
 	if (!chain) return res.status(400).json({ error: 'Invalid export chain' })
 	const requestedSnapshot = typeof body.snapshot === 'string' ? body.snapshot : null
+	const { isContentHashVersion } = await import('~/server/datasetSnapshots/redisBlobStore.server')
 	if (requestedSnapshot && !isContentHashVersion(requestedSnapshot)) {
 		return res.status(400).json({ error: 'Invalid snapshot token' })
 	}

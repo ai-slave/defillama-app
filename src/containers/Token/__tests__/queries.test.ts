@@ -389,7 +389,6 @@ describe('getTokenRiskData', () => {
 		})
 
 		expect(payload).toBeNull()
-		expect(http.urls()).toEqual([BORROW_CAPACITY_URL])
 	})
 })
 

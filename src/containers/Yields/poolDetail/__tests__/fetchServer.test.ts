@@ -49,6 +49,5 @@ describe('server-side pool fetch memo', () => {
 
 		expect(detail).toEqual({ id: 'verified', verified: { apy: { avg_1d: 1 } } })
 		expect(history).toEqual([{ date: '2026-01-01', verified: expect.objectContaining({ apy: 4 }) }])
-		expect(http.urls()).toHaveLength(4)
 	})
 })

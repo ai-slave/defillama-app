@@ -2,6 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import {
 	closeTerminalSocket,
 	releaseTerminalBars,
@@ -59,28 +60,27 @@ const ops = (socket: FakeSocket) =>
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-let ticketRequests = 0
-let fetchCalls = 0
+const TICKET_PATH = '/terminal/ws-ticket'
 const TOKEN = `e30.${btoa(JSON.stringify({ id: 'user', exp: 4_102_444_800 }))}.signature`
+const fixtures = installFixtureFetch()
+let ticketsIssued = 0
 
 beforeEach(() => {
 	FakeSocket.instances = []
-	ticketRequests = 0
-	fetchCalls = 0
+	ticketsIssued = 0
 	vi.stubGlobal('WebSocket', FakeSocket)
 	pb.authStore.save(TOKEN, null)
-	vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
-		fetchCalls += 1
-		if (new Headers(init?.headers).get('Authorization') !== `Bearer ${TOKEN}`)
-			return Promise.resolve({ ok: false, status: 401 })
-		ticketRequests += 1
-		return Promise.resolve({ ok: true, json: () => Promise.resolve({ ticket: `ticket-${ticketRequests}` }) })
+	fixtures.serve({
+		[TICKET_PATH]: (_url: URL, init?: RequestInit) => {
+			if (new Headers(init?.headers).get('Authorization') !== `Bearer ${TOKEN}`) return fixtureStatus(401)()
+			ticketsIssued += 1
+			return { ticket: `ticket-${ticketsIssued}` }
+		}
 	})
 })
 
 afterEach(() => {
 	closeTerminalSocket()
-	vi.unstubAllGlobals()
 })
 
 describe('terminal socket multiplexing', () => {
@@ -336,7 +336,7 @@ test('signing in while the terminal is open connects without waiting for another
 	pb.authStore.clear()
 	subscribeTerminalStats('strip', 'HYPE', () => {})
 	await flush()
-	expect(fetchCalls).toBe(0)
+	expect(fixtures.requests).toHaveLength(0)
 	expect(FakeSocket.instances).toHaveLength(0)
 
 	pb.authStore.save(TOKEN, null)
@@ -366,7 +366,7 @@ test('refreshing a token for the same user keeps the active socket and its subsc
 	await flush()
 	const active = FakeSocket.instances[0]
 	active.open()
-	const requestsBeforeRefresh = ticketRequests
+	const requestsBeforeRefresh = fixtures.requests.length
 
 	pb.authStore.save(refreshedToken, record)
 	await flush()
@@ -374,7 +374,7 @@ test('refreshing a token for the same user keeps the active socket and its subsc
 
 	expect(active.readyState).toBe(1)
 	expect(FakeSocket.instances).toHaveLength(1)
-	expect(ticketRequests).toBe(requestsBeforeRefresh)
+	expect(fixtures.requests).toHaveLength(requestsBeforeRefresh)
 	expect(onStats).toHaveBeenCalledWith({ markPx: 1 })
 })
 
@@ -384,9 +384,9 @@ test('an old ticket response cannot open a socket after the account changes', as
 	const oldTicket = new Promise<Response>((resolve) => {
 		resolveOldTicket = resolve
 	})
-	vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
-		const token = new Headers(init?.headers).get('Authorization')
-		return token === `Bearer ${TOKEN}` ? oldTicket : Promise.resolve(Response.json({ ticket: 'new-ticket' }))
+	fixtures.serve({
+		[TICKET_PATH]: (_url: URL, init?: RequestInit) =>
+			new Headers(init?.headers).get('Authorization') === `Bearer ${TOKEN}` ? oldTicket : { ticket: 'new-ticket' }
 	})
 
 	subscribeTerminalStats('strip', 'HYPE', () => {})

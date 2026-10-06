@@ -46,7 +46,8 @@ test('publishes and reads entries through both on-disk indexes', async () => {
 	expect(await api.fetchTokenRightsEntryByName("Aave DAO's")).toEqual(entry)
 	expect(await api.fetchTokenRightsEntryByName('missing')).toBeNull()
 	expect(await api.fetchTokenRightsEntryByDefillamaIds(['missing'])).toBeNull()
-	expect(http.urls()).toEqual([`${SERVER_URL}/token-rights`])
+	// One upstream fetch at publish: every read comes from the on-disk indexes.
+	expect(http.requests).toHaveLength(1)
 })
 
 test('falls through to the next id within one generation when a refresh adds the first id between lookups', async () => {

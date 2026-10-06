@@ -75,7 +75,7 @@ describe('master Exchanges API routes', () => {
 		expect(invalid).toEqual({ status: 400, body: { error: 'Unknown exchange chart' } })
 	})
 
-	test('loads per-venue history from its canonical series file', async () => {
+	test('returns per-venue history keyed by series name', async () => {
 		const { masterExchangeHistory } = await import('../server/master.api')
 		http.serve({
 			'/exchanges/coinbase/series/all.json': {
@@ -89,7 +89,6 @@ describe('master Exchanges API routes', () => {
 
 		const response = await masterExchangeHistory.handle({ ...request, query: { exchange: 'coinbase' } })
 
-		expect(http.urls()).toEqual([`${MARKETS_SERVER_URL}/exchanges/coinbase/series/all.json`])
 		expect('serializedJson' in response && JSON.parse(response.serializedJson)).toMatchObject({
 			series: { spot_volume: [10, 30] }
 		})

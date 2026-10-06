@@ -88,15 +88,12 @@ describe('kpk Overview tab', () => {
 		expect(container.textContent).toContain('$9.9bn')
 	}
 
-	test('links the operations query beside the rebalancing caption', async () => {
+	test('links the pinned operations query when the adapter sends no ref', async () => {
 		await renderTab()
 
 		const link = container.querySelector<HTMLAnchorElement>('a[href="https://dune.com/kpk/kpk-vaults-operations"]')
 
 		expect(link?.getAttribute('aria-label')).toBe('Open KPK Vaults Operations — Dune in a new tab')
-		expect(container.textContent).toContain(
-			"Executed by KPK's non-custodial rebalancing and exit agents on Vaults and Funds"
-		)
 	})
 
 	test('keeps the ref the adapter sends over the pinned one', async () => {

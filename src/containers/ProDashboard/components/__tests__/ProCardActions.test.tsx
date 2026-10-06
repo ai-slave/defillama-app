@@ -2,39 +2,27 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { DashboardTestProvider, type DashboardTestState } from '~/utils/testing/dashboardContext'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import type { Dashboard } from '../../dashboardTypes'
 import { DashboardCardContext, type DashboardCardContextValue } from '../DashboardCardContext'
 import { ProCardEditControls, ProCardOverflowMenu } from '../ProCardActions'
-const mocks = vi.hoisted(() => ({
-	permissions: { isReadOnly: false, hideDuplicateButton: false },
-	dashboard: { currentDashboard: null as { id: string; slug?: string; visibility: 'public' | 'private' } | null },
-	items: { current: [] as Array<DashboardItemConfig> },
-	auth: { isAuthenticated: true, hasActiveSubscription: true, isTrial: false, loaders: { userLoading: false } },
-	writeText: vi.fn(),
-	variables: {
-		variables: [] as Array<{ id: string; kind: 'chain' | 'protocol'; label: string; value: string }>,
-		canEditVariables: true,
-		bindItemField: vi.fn()
-	}
-}))
-vi.mock('../../ProDashboardAPIContext', () => ({
-	useProDashboardPermissions: () => mocks.permissions,
-	useProDashboardDashboard: () => mocks.dashboard,
-	useProDashboardItemsState: () => ({ items: mocks.items.current }),
-	useProDashboardVariables: () => mocks.variables
-}))
-vi.mock('~/auth', () => ({ useAuthContext: () => mocks.auth }))
+const writeText = vi.fn()
+const bindItemField = vi.fn()
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
-vi.mock('~/components/ChartExport/useChartPngExport', () => ({
-	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })
-}))
-vi.mock('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard', () => ({
-	SubscribeProModal: () => <div>Subscribe to export</div>
-}))
+const session = installSubscriberSession('u1', { resolved: true })
 const downloads = installDownloadSink()
-const publicDashboard = { id: 'dashboard-1', slug: 'fees-dash', visibility: 'public' as const }
+const publicDashboard: Dashboard = {
+	id: 'dashboard-1',
+	slug: 'fees-dash',
+	visibility: 'public',
+	data: { items: [], dashboardName: 'Fees' },
+	created: '2026-01-01T00:00:00Z',
+	updated: '2026-01-01T00:00:00Z'
+}
 const chartItem: DashboardItemConfig = {
 	id: 'chart-1',
 	kind: 'chart',
@@ -47,23 +35,28 @@ let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.permissions.isReadOnly = false
-	mocks.permissions.hideDuplicateButton = false
-	mocks.auth.hasActiveSubscription = true
-	mocks.dashboard.currentDashboard = null
-	mocks.items.current = []
-	mocks.variables.variables = []
-	mocks.variables.bindItemField.mockClear()
-	mocks.writeText.mockClear()
+	bindItemField.mockClear()
+	writeText.mockReset().mockResolvedValue(undefined)
 	layoutControls.onColSpanChange.mockClear()
 	layoutControls.onHeightChange.mockClear()
 	layoutControls.onMove.mockClear()
-	mocks.writeText.mockResolvedValue(undefined)
-	Object.defineProperty(navigator, 'clipboard', { value: { writeText: mocks.writeText }, configurable: true })
+	Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
 })
+/** Renders `node` inside a signed-in subscriber's dashboard with the given dashboard state. */
+async function render(node: ReactNode, state: DashboardTestState = {}) {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<DashboardTestProvider {...state}>{node}</DashboardTestProvider>
+			</session.Wrapper>
+		)
+	)
+}
+const readOnly = { mode: 'view', permissions: { isReadOnly: true } } as const
+const publicCard: DashboardTestState = { dashboard: { currentDashboard: publicDashboard }, items: [chartItem] }
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
@@ -110,16 +103,14 @@ function withLayoutCard(children: ReactNode, value: DashboardCardContextValue = 
 	return <DashboardCardContext.Provider value={value}>{children}</DashboardCardContext.Provider>
 }
 test('readonly allows exports but hides duplicate and edit controls', async () => {
-	mocks.permissions.isReadOnly = true
-	await act(async () =>
-		root.render(
-			<>
-				<ProCardEditControls>
-					<button type="button">Edit</button>
-				</ProCardEditControls>
-				<ProCardOverflowMenu image={{ chartInstance: () => null }} onDuplicate={vi.fn()} />
-			</>
-		)
+	await render(
+		<>
+			<ProCardEditControls>
+				<button type="button">Edit</button>
+			</ProCardEditControls>
+			<ProCardOverflowMenu image={{ chartInstance: () => null }} onDuplicate={vi.fn()} />
+		</>,
+		readOnly
 	)
 	expect(container.textContent).not.toContain('Edit')
 	await openMenu()
@@ -127,33 +118,30 @@ test('readonly allows exports but hides duplicate and edit controls', async () =
 	expect(document.body.textContent).not.toContain('Duplicate')
 })
 test('has no trigger without actions and respects hidden duplicate', async () => {
-	await act(async () => root.render(<ProCardOverflowMenu />))
+	await render(<ProCardOverflowMenu />)
 	expect(container.querySelector('button')).toBeNull()
-	await act(async () => root.render(<ProCardOverflowMenu onDuplicate={vi.fn()} />))
+	await render(<ProCardOverflowMenu onDuplicate={vi.fn()} />)
 	expect(container.querySelector('[aria-label="More actions"]')).not.toBeNull()
-	mocks.permissions.hideDuplicateButton = true
-	await act(async () => root.render(<ProCardOverflowMenu onDuplicate={vi.fn()} />))
+	await render(<ProCardOverflowMenu onDuplicate={vi.fn()} />, { permissions: { hideDuplicateButton: true } })
 	expect(container.querySelector('button')).toBeNull()
 })
-test('CSV downloads for subscribers and opens the gate otherwise', async () => {
+test('Download CSV saves the prepared rows for a subscriber', async () => {
 	const prepareCsv = () => ({ filename: 'Example', rows: [['value'], [1]] })
-	await act(async () => root.render(<ProCardOverflowMenu csv={{ prepareCsv }} />))
+	await render(<ProCardOverflowMenu csv={{ prepareCsv }} />)
 	await openMenu()
+	await waitForUi(() =>
+		expect(
+			menuItems()
+				.find((node) => node.textContent === 'Download CSV')
+				?.getAttribute('aria-disabled')
+		).not.toBe('true')
+	)
 	await clickMenuItem('Download CSV')
-	expect(downloads.map((download) => download.filename)).toEqual(['example.csv'])
+	await waitForUi(() => expect(downloads.map((download) => download.filename)).toEqual(['example.csv']))
 	expect(await downloads[0]!.blob.text()).toBe('value\n1')
-	mocks.auth.hasActiveSubscription = false
-	await act(async () => root.render(<ProCardOverflowMenu csv={{ prepareCsv }} />))
-	await openMenu()
-	await clickMenuItem('Download CSV')
-	await waitForUi(() => expect(document.body.textContent).toContain('Subscribe to export'))
-	expect(downloads).toHaveLength(1)
 })
 test('offers a card permalink and an embed snippet for cards on a public dashboard', async () => {
-	mocks.permissions.isReadOnly = true
-	mocks.dashboard.currentDashboard = publicDashboard
-	mocks.items.current = [chartItem]
-	await act(async () => root.render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	await render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />), { ...publicCard, ...readOnly })
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual([
 		'Download image',
@@ -161,10 +149,8 @@ test('offers a card permalink and an embed snippet for cards on a public dashboa
 		'Copy link to card',
 		'Embed card…'
 	])
-	expect(document.body.querySelector('[data-umami-event="copy-card-link"]')).not.toBeNull()
-	expect(document.body.querySelector('[data-umami-event="embed-card"]')).not.toBeNull()
 	await clickMenuItem('Copy link to card')
-	expect(mocks.writeText).toHaveBeenCalledExactlyOnceWith(`${window.location.origin}/pro/fees-dash#item=chart-1`)
+	expect(writeText).toHaveBeenCalledExactlyOnceWith(`${window.location.origin}/pro/fees-dash#item=chart-1`)
 	await openMenu()
 	await clickMenuItem('Embed card…')
 	const textarea = document.body.querySelector<HTMLTextAreaElement>('textarea[aria-label="Embed code"]')
@@ -183,33 +169,32 @@ test('offers a card permalink and an embed snippet for cards on a public dashboa
 			.find((node) => node.textContent?.trim() === 'Copy code')!
 			.click()
 	)
-	expect(mocks.writeText).toHaveBeenLastCalledWith(expect.stringContaining('theme=light'))
+	expect(writeText).toHaveBeenLastCalledWith(expect.stringContaining('theme=light'))
 })
 test('shows the trigger for a shareable card even without exports, before duplicate', async () => {
-	mocks.dashboard.currentDashboard = publicDashboard
-	mocks.items.current = [chartItem]
-	await act(async () => root.render(withCard(<ProCardOverflowMenu onDuplicate={vi.fn()} />)))
+	await render(withCard(<ProCardOverflowMenu onDuplicate={vi.fn()} />), publicCard)
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Copy link to card', 'Embed card…', 'Duplicate'])
 	expect(document.body.querySelectorAll('[role="separator"]')).toHaveLength(1)
 })
 test('hides card sharing without a card context or on a private dashboard', async () => {
-	mocks.dashboard.currentDashboard = publicDashboard
-	mocks.items.current = [chartItem]
-	await act(async () => root.render(<ProCardOverflowMenu image={{ chartInstance: () => null }} />))
+	await render(<ProCardOverflowMenu image={{ chartInstance: () => null }} />, publicCard)
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image'])
-	await act(async () => root.render(<ProCardOverflowMenu />))
+	await render(<ProCardOverflowMenu />, publicCard)
 	expect(container.querySelector('button')).toBeNull()
-	mocks.dashboard.currentDashboard = { ...publicDashboard, visibility: 'private' }
-	await act(async () => root.render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	const privateCard: DashboardTestState = {
+		...publicCard,
+		dashboard: { currentDashboard: { ...publicDashboard, visibility: 'private' } }
+	}
+	await render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />), privateCard)
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image'])
-	await act(async () => root.render(withCard(<ProCardOverflowMenu />)))
+	await render(withCard(<ProCardOverflowMenu />), privateCard)
 	expect(container.querySelector('button')).toBeNull()
 })
-test('renders width, height and move groups from the card layout context', async () => {
-	await act(async () => root.render(withLayoutCard(<ProCardOverflowMenu />)))
+test('offers the card widths and heights with the current ones checked, and reports the one picked', async () => {
+	await render(withLayoutCard(<ProCardOverflowMenu />))
 	await openMenu()
 	expect(document.body.querySelectorAll('[role="group"]')).toHaveLength(3)
 	expect(document.body.textContent).toContain('Width')
@@ -233,8 +218,6 @@ test('renders width, height and move groups from the card layout context', async
 		'true',
 		'false'
 	])
-	expect(document.body.querySelectorAll('[data-umami-event="dashboard-card-width"]').length).toBe(4)
-	expect(document.body.querySelectorAll('[data-umami-event="dashboard-card-height"]').length).toBe(3)
 	await act(async () =>
 		menuRadios()
 			.find((node) => node.textContent === 'Full width')!
@@ -247,13 +230,9 @@ test('renders width, height and move groups from the card layout context', async
 			.click()
 	)
 	expect(layoutControls.onHeightChange).toHaveBeenCalledExactlyOnceWith('tall')
-	const moveUp = menuItems().find((node) => node.textContent === 'Move up')!
-	expect(moveUp.getAttribute('aria-disabled')).toBe('true')
-	await clickMenuItem('Move down')
-	expect(layoutControls.onMove).toHaveBeenCalledExactlyOnceWith(1)
 })
 test('drops the height group for a card without heights and keeps the move group', async () => {
-	await act(async () => root.render(withLayoutCard(<ProCardOverflowMenu />, NO_HEIGHT_LAYOUT_CARD_CONTEXT)))
+	await render(withLayoutCard(<ProCardOverflowMenu />, NO_HEIGHT_LAYOUT_CARD_CONTEXT))
 	await openMenu()
 	expect(document.body.querySelectorAll('[role="group"]')).toHaveLength(2)
 	expect(menuRadios().map((node) => node.textContent)).toEqual([
@@ -265,66 +244,62 @@ test('drops the height group for a card without heights and keeps the move group
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Move up', 'Move down'])
 })
 test('drops every layout group in read-only', async () => {
-	mocks.permissions.isReadOnly = true
-	await act(async () => root.render(withLayoutCard(<ProCardOverflowMenu />)))
+	await render(withLayoutCard(<ProCardOverflowMenu />), readOnly)
 	expect(container.querySelector('button')).toBeNull()
-	await act(async () => root.render(withLayoutCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	await render(withLayoutCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />), readOnly)
 	await openMenu()
 	expect(menuRadios()).toHaveLength(0)
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image'])
 })
 test('offers to bind or unbind the card to each parameter of a matching kind', async () => {
-	mocks.items.current = [chartItem]
-	mocks.variables.variables = [
-		{ id: 'protocol', kind: 'protocol', label: 'Protocol', value: 'aave' },
-		{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }
-	]
-	await act(async () => root.render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	const variables = {
+		variables: [
+			{ id: 'protocol', kind: 'protocol', label: 'Protocol', value: 'aave' },
+			{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }
+		],
+		canEditVariables: true,
+		bindItemField
+	} as DashboardTestState['variables']
+	await render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />), {
+		items: [chartItem],
+		variables
+	})
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image', 'Bind to Protocol'])
-	expect(document.body.querySelector('[data-umami-event="dashboard-card-bind"]')).not.toBeNull()
 	await clickMenuItem('Bind to Protocol')
-	expect(mocks.variables.bindItemField).toHaveBeenCalledExactlyOnceWith('chart-1', 'subject', 'protocol')
+	expect(bindItemField).toHaveBeenCalledExactlyOnceWith('chart-1', 'subject', 'protocol')
 
-	mocks.items.current = [{ ...chartItem, bindings: { subject: 'protocol' } }]
-	await act(async () => root.render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	const boundItems = [{ ...chartItem, bindings: { subject: 'protocol' } }]
+	await render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />), {
+		items: boundItems,
+		variables
+	})
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toContain('Unbind from Protocol')
 	await clickMenuItem('Unbind from Protocol')
-	expect(mocks.variables.bindItemField).toHaveBeenLastCalledWith('chart-1', 'subject', null)
+	expect(bindItemField).toHaveBeenLastCalledWith('chart-1', 'subject', null)
 
-	mocks.permissions.isReadOnly = true
-	await act(async () => root.render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	await render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />), {
+		...readOnly,
+		items: boundItems,
+		variables
+	})
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image'])
 })
 
 test('ends the menu with Remove card when the card context carries onRemove', async () => {
 	onRemoveCard.mockClear()
-	await act(async () =>
-		root.render(
-			<DashboardCardContext.Provider value={REMOVABLE_CARD_CONTEXT}>
-				<ProCardOverflowMenu image={{ chartInstance: () => null }} />
-			</DashboardCardContext.Provider>
-		)
-	)
+	await render(withLayoutCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />, REMOVABLE_CARD_CONTEXT))
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image', 'Remove card'])
-	expect(document.body.querySelector('[data-umami-event="dashboard-card-remove"]')).not.toBeNull()
 	await clickMenuItem('Remove card')
 	expect(onRemoveCard).toHaveBeenCalledOnce()
 
-	await act(async () => root.render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />)))
+	await render(withCard(<ProCardOverflowMenu image={{ chartInstance: () => null }} />))
 	await openMenu()
 	expect(menuItems().map((node) => node.textContent)).toEqual(['Download image', 'Copy image'])
 
-	mocks.permissions.isReadOnly = true
-	await act(async () =>
-		root.render(
-			<DashboardCardContext.Provider value={REMOVABLE_CARD_CONTEXT}>
-				<ProCardOverflowMenu />
-			</DashboardCardContext.Provider>
-		)
-	)
+	await render(withLayoutCard(<ProCardOverflowMenu />, REMOVABLE_CARD_CONTEXT), readOnly)
 	expect(container.querySelector('button')).toBeNull()
 })

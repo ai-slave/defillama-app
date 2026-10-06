@@ -233,8 +233,6 @@ describe('TargetedAnnouncement', () => {
 			serveInterests({ interests: [{ category: 'llamaai', score: 0.9 }], segments: [] })
 			await render()
 			await waitForText('LlamaAI is now in the DefiLlama app.')
-			const request = session.requests.find(({ url }) => url.href === INTERESTS_URL)!
-			expect(new Headers(request.init?.headers).get('Authorization')).toBe(`Bearer ${session.token}`)
 			await waitForImpression()
 			expect(impressions()[0][1]).toMatchObject({ kind: 'targeted', category: 'llamaai', id: 'llamaai-mobile-app' })
 		})

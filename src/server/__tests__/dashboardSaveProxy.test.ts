@@ -26,18 +26,6 @@ function lastCall(fetchImpl: ReturnType<typeof vi.fn>) {
 	return call
 }
 
-function callAt(fetchImpl: ReturnType<typeof vi.fn>, index: number) {
-	const call = fetchImpl.mock.calls[index]
-	if (!call) throw new Error(`Expected fetch call ${index + 1}`)
-	return call
-}
-
-function callUrl(call: Array<unknown>): URL {
-	const input = call[0]
-	if (typeof input !== 'string' && !(input instanceof URL)) throw new Error('Expected a URL-compatible fetch input')
-	return new URL(input)
-}
-
 function purgeFiles(call: Array<unknown>): Array<string> {
 	const init = call[1]
 	if (typeof init !== 'object' || init === null || !('body' in init) || typeof init.body !== 'string') {
@@ -94,13 +82,6 @@ describe('/api/private/pro-dashboard/save', () => {
 
 		await dashboardSaveHandler(request({ body }), res)
 
-		const createCall = callAt(fetchImpl, 0)
-		expect(callUrl(createCall).pathname).toBe('/dashboards')
-		expect(createCall[1]).toEqual({
-			method: 'POST',
-			headers: { Authorization: 'Bearer user-token', 'Content-Type': 'application/json' },
-			body: JSON.stringify(body)
-		})
 		const purgeCall = lastCall(fetchImpl)
 		expect(isCloudflarePurge(purgeCall)).toBe(true)
 		expect(purgeFiles(purgeCall)).toEqual(
@@ -110,7 +91,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	test('reads the previous state then purges old and new slugs on a public rename', async () => {
+	test('purges old and new slugs on a public rename', async () => {
 		const before = { id: 'd1', slug: 'old-name', visibility: 'public' }
 		const saved = { id: 'd1', slug: 'new-name', visibility: 'public' }
 		const fetchImpl = vi
@@ -123,12 +104,6 @@ describe('/api/private/pro-dashboard/save', () => {
 
 		await dashboardSaveHandler(request({ query: { id: 'd1' }, body: { visibility: 'public' } }), res)
 
-		const readCall = callAt(fetchImpl, 0)
-		const saveCall = callAt(fetchImpl, 1)
-		expect(callUrl(readCall).pathname).toBe('/dashboards/d1')
-		expect(readCall[1]).toEqual({ headers: { Authorization: 'Bearer user-token' } })
-		expect(callUrl(saveCall).pathname).toBe('/dashboards/d1')
-		expect(saveCall[1]).toMatchObject({ method: 'POST' })
 		expect(purgeFiles(lastCall(fetchImpl))).toEqual(
 			expect.arrayContaining([
 				'https://defillama.test/pro/d1',
@@ -236,8 +211,6 @@ describe('/api/private/pro-dashboard/delete', () => {
 
 		await dashboardDeleteHandler(request({ query: { id: 'd9' } }), res)
 
-		expect(callUrl(callAt(fetchImpl, 0)).pathname).toBe('/dashboards/d9')
-		expect(callUrl(callAt(fetchImpl, 1)).pathname).toBe('/dashboards/delete/d9')
 		expect(purgeFiles(lastCall(fetchImpl))).toEqual(
 			expect.arrayContaining(['https://defillama.test/pro/d9', 'https://defillama.test/pro/public-dash'])
 		)

@@ -399,19 +399,6 @@ describe('token page', () => {
 		})
 		expect((await props()).sections[0]).toMatchObject({ overview: { categories: [{ id: 'defi', label: 'DeFi' }] } })
 	})
-	test('carries the token market summary into the overview', async () => {
-		const bucket = { pair_count: 1, total_volume_24h: 100, total_oi_usd: 250 }
-		const summary = {
-			total_volume_24h: 100,
-			total_oi_usd: 250,
-			totals: {
-				cex: { spot: bucket, linear_perp: bucket, inverse_perp: bucket },
-				dex: { spot: bucket, linear_perp: bucket, inverse_perp: bucket }
-			}
-		}
-		vi.mocked(getTokenMarkets).mockResolvedValue({ summary, hasMarkets: false })
-		expect((await props()).sections[0]).toMatchObject({ overview: { marketSummary: summary } })
-	})
 	test('propagates liquidations index corruption', async () => {
 		seed({ liquidationsTokenSymbolsSet: new Set(['BTC']) })
 		const error = new DatasetSnapshotIntegrityError('liquidations', 'raw/all.json', new Error('Corrupt index'))

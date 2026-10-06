@@ -16,11 +16,7 @@ import type { ChartBuilderConfig, ChartConfig } from '~/containers/ProDashboard/
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { createMockNextApiResponse, type MockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import { installTelemetrySink } from '~/utils/testing/telemetry'
-
-const { fetchChartBuilderServerDataMock, fetchProtocolsTableMock } = vi.hoisted(() => ({
-	fetchChartBuilderServerDataMock: vi.fn(),
-	fetchProtocolsTableMock: vi.fn()
-}))
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 /** Upstream state the stream reads: catalog rows from the database, and a chart answer per request. */
 const upstream = vi.hoisted(() => ({
@@ -28,16 +24,9 @@ const upstream = vi.hoisted(() => ({
 	chart: (_url: URL): unknown => [[1_700_000_000, 1]]
 }))
 
-// The protocol catalog and P/F availability come from the database; everything else runs down to fetch.
+// The protocol catalog, P/F availability and unified table rows come from the database; everything else runs down to fetch.
 vi.mock('~/server/db/llama', () => ({
-	llamaDb: { query: async () => upstream.catalogRows, any: async () => [] }
-}))
-// Chart-builder series and unified tables are computed from dataset and database queries these tests do not model.
-vi.mock('~/containers/ProDashboard/server/chartBuilder/data', () => ({
-	fetchChartBuilderServerData: fetchChartBuilderServerDataMock
-}))
-vi.mock('~/containers/ProDashboard/server/unifiedTable/protocols', () => ({
-	fetchProtocolsTable: fetchProtocolsTableMock
+	llamaDb: { query: async () => upstream.catalogRows, any: async () => [], one: async () => ({}) }
 }))
 // Authorized reads go through the pooled server client; route them to the same fetch fixtures.
 vi.mock('~/utils/http-client', () => ({
@@ -269,8 +258,6 @@ describe('pro dashboard cache headers', () => {
 		vi.clearAllMocks()
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
 		setDashboardConfig(publicDashboard)
-		fetchChartBuilderServerDataMock.mockResolvedValue({ series: [] })
-		fetchProtocolsTableMock.mockResolvedValue({ rows: [], parentMetrics: {} })
 	})
 
 	afterEach(() => {
@@ -306,7 +293,7 @@ describe('pro dashboard cache headers', () => {
 		res.write.mockReturnValueOnce(false)
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(written(res)).toHaveBeenCalledOnce())
+		await waitForUi(() => expect(written(res)).toHaveBeenCalledOnce())
 		expect(ended(res)).not.toHaveBeenCalled()
 
 		events.emit('drain')
@@ -341,7 +328,7 @@ describe('pro dashboard cache headers', () => {
 		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(upstreamReads()).toEqual(expect.arrayContaining(['app-metadata', 'protocols'])))
+		await waitForUi(() => expect(upstreamReads()).toEqual(expect.arrayContaining(['app-metadata', 'protocols'])))
 		// Aave's metadata advertises no fees adapter, so the fees card must be skipped rather than fetched.
 		answerAppMetadata(Response.json({ '1': { name: 'aave', displayName: 'Aave' } }))
 		await streamPromise
@@ -415,12 +402,12 @@ describe('pro dashboard cache headers', () => {
 		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(chartReads()).toHaveLength(DASHBOARD_STREAM_SOURCE_CONCURRENCY))
+		await waitForUi(() => expect(chartReads()).toHaveLength(DASHBOARD_STREAM_SOURCE_CONCURRENCY))
 		for (let startedCount = DASHBOARD_STREAM_SOURCE_CONCURRENCY + 1; startedCount <= chartCount; startedCount++) {
 			const answer = held.pending.shift()
 			if (!answer) throw new Error('Expected an active chart request')
 			answer([[1_700_000_000, startedCount]])
-			await vi.waitFor(() => expect(chartReads()).toHaveLength(startedCount))
+			await waitForUi(() => expect(chartReads()).toHaveLength(startedCount))
 		}
 		for (const answer of held.pending) answer([[1_700_000_000, 1]])
 		await streamPromise
@@ -482,7 +469,7 @@ describe('pro dashboard cache headers', () => {
 		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(chartReads()).toHaveLength(INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
+		await waitForUi(() => expect(chartReads()).toHaveLength(INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
 		expect(written(res)).not.toHaveBeenCalledWith('{"type":"done"}\n')
 		for (const answer of held.pending) answer([[1_700_000_000, 1]])
 		await streamPromise
@@ -493,7 +480,11 @@ describe('pro dashboard cache headers', () => {
 	})
 
 	test('records failed chart-builder sources without failing the stream', async () => {
-		fetchChartBuilderServerDataMock.mockRejectedValue(new Error('builder unavailable'))
+		// The builder's protocol breakdown upstream is down; other chart reads still answer.
+		upstream.chart = (url) =>
+			url.pathname.endsWith('/protocol-breakdown')
+				? fixtureStatus(404, { message: 'builder unavailable' })()
+				: [[1_700_000_000, 1]]
 		setDashboardConfig({
 			...publicDashboard,
 			data: {
@@ -527,9 +518,16 @@ describe('pro dashboard cache headers', () => {
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
-		// A failed source is recorded once, and the route itself does not fail.
-		expect(await runtimeErrors()).toEqual([{ phase: 'outboundFetch', source: 'chart-builder' }])
+		// The stream records the failed source once, beside the upstream read that failed, and the route itself succeeds.
+		const errors = await runtimeErrors()
+		expect(errors.filter((error) => error.source === 'chart-builder')).toEqual([
+			{ phase: 'outboundFetch', source: 'chart-builder' }
+		])
+		expect(errors).toContainEqual({ phase: 'outboundFetch', source: '/v2/chart/fees/protocol-breakdown' })
 		expect(written(res)).toHaveBeenCalledWith('{"type":"done"}\n')
+		expect((await telemetry.events()).filter((event) => event.type === 'route_execution')).toEqual([
+			expect.objectContaining({ status: 'success', http_status: 200 })
+		])
 	})
 	test('streams chart-builder data under the client query key only for metrics the stream owns', async () => {
 		const builderConfig = (metric: string) => ({
@@ -688,8 +686,6 @@ describe('pro dashboard stream item readiness', () => {
 		setDashboardConfig(publicDashboard)
 		upstream.catalogRows = [catalogRow('aave'), catalogRow('lido')]
 		serveUpstreams([catalogChain('Ethereum'), catalogChain('Solana')])
-		fetchChartBuilderServerDataMock.mockResolvedValue({ series: [] })
-		fetchProtocolsTableMock.mockResolvedValue({ rows: [], parentMetrics: {} })
 	})
 
 	test('marks a builder card ready after its data chunk and before done', async () => {
@@ -719,11 +715,11 @@ describe('pro dashboard stream item readiness', () => {
 		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(chartReads()).toHaveLength(2))
+		await waitForUi(() => expect(chartReads()).toHaveLength(2))
 		expect(readyItemIds(streamChunks(res))).toEqual([])
 
 		held.pending[0]?.([[1_700_000_000, 1]])
-		await vi.waitFor(() => expect(chunkIndex(streamChunks(res), 'chartData')).toBeGreaterThan(-1))
+		await waitForUi(() => expect(chunkIndex(streamChunks(res), 'chartData')).toBeGreaterThan(-1))
 		expect(readyItemIds(streamChunks(res))).toEqual([])
 
 		held.pending[1]?.([[1_700_000_000, 2]])
@@ -754,7 +750,7 @@ describe('pro dashboard stream item readiness', () => {
 		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(chartReads()).toHaveLength(1))
+		await waitForUi(() => expect(chartReads()).toHaveLength(1))
 		const earlyChunks = streamChunks(res)
 		expect(earlyChunks[0]?.type).toBe('dashboard')
 		expect(earlyChunks[1]).toEqual({
@@ -941,7 +937,7 @@ describe('pro dashboard stream item readiness', () => {
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
 		const chunks = streamChunks(res)
-		expect(fetchProtocolsTableMock).toHaveBeenCalledOnce()
+		expect(chunks.filter((chunk) => chunk.type === 'unifiedTableData')).toHaveLength(1)
 		expect(chunks.filter((chunk) => chunk.type === 'itemReady')).toEqual([
 			{ type: 'itemReady', itemIds: ['table-1', 'table-2'] }
 		])

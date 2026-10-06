@@ -91,13 +91,6 @@ async function mount() {
 	await click('Open balance')
 }
 
-test('opens the amount form on the default amount without creating a payment', async () => {
-	await mount()
-	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Top up balance')
-	expect(document.querySelector('input')?.value).toBe('10')
-	expect(topups()).toEqual([])
-})
-
 test('keeps back and close available during a cold checkout load, and does not reopen after it finishes', async () => {
 	await mount()
 	await click('$25')

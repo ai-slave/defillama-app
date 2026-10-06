@@ -157,11 +157,12 @@ describe('protocol point comparisons', () => {
 	})
 
 	test('chain comparisons read the chain app fee column while protocol comparisons read protocol fees', () => {
-		expect(pointColumns(['fees'], true)).toBe(
-			'seven_days_ago.app_fees_1d AS fees_7d_ago,\n\t\t\tthirty_days_ago.app_fees_1d AS fees_30d_ago'
-		)
-		expect(pointColumns(['fees'], false)).toBe(
-			'seven_days_ago.fees_1d AS fees_7d_ago,\n\t\t\tthirty_days_ago.fees_1d AS fees_30d_ago'
-		)
+		const chainColumns = pointColumns(['fees'], true)
+		expect(chainColumns).toContain('seven_days_ago.app_fees_1d AS fees_7d_ago')
+		expect(chainColumns).toContain('thirty_days_ago.app_fees_1d AS fees_30d_ago')
+		const protocolColumns = pointColumns(['fees'], false)
+		expect(protocolColumns).toContain('seven_days_ago.fees_1d AS fees_7d_ago')
+		expect(protocolColumns).toContain('thirty_days_ago.fees_1d AS fees_30d_ago')
+		expect(protocolColumns).not.toContain('app_fees_1d')
 	})
 })
