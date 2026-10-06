@@ -17,6 +17,11 @@ import { Tooltip } from './Tooltip'
                  chart and table toolbars keep `default` so they never stretch.
    - field:      a choice that is a form field (visibility, owner): fills its
                  row with equal segments. Never a caller width override.
+   - mode:       a switch between whole workspaces that sits beside a primary
+                 action (LlamaAI Chat | Terminal above New chat). Selected is
+                 a neutral fill, so the switch never outshines the action.
+                 Equal segments stack in a column (an icon rail); pass
+                 `grid-flow-col` to lay them side by side.
    - chips:      spaced rounded-full pills with no box around the row, for
                  a longer pick on its own row: a category or sector filter,
                  a status, a content type, a table's column group. The row
@@ -59,6 +64,11 @@ export const TAG_GROUP_VARIANTS = {
 			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
 			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+	},
+	mode: {
+		container: 'body-sm grid shrink-0 auto-cols-fr gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
+		button:
+			'touch-target hover-wash inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-surface-elevated-2 data-[active=true]:text-primary'
 	},
 	chips: {
 		container: 'flex w-fit max-w-full flex-wrap items-center gap-1.5',
@@ -111,6 +121,7 @@ export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
    the segment's stretch: equal segments in `field`, a stretched row below sm in the responsive variants. */
 const tooltipAnchorSizing: Partial<Record<TagGroupVariant, string>> = {
 	field: 'flex-1 basis-0',
+	mode: 'grid',
 	responsive: 'max-sm:flex-1',
 	'solid-responsive': 'max-sm:flex-1'
 }

@@ -83,8 +83,7 @@ const destinations = () =>
 			'nav[aria-label="LlamaAI"] button, nav[aria-label="LlamaAI menu"] button'
 		)
 	].map((button) => ({
-		label: (button.querySelector('.sr-only')?.textContent ?? button.textContent ?? '').replace(/\d+$|New$/, ''),
-		current: button.getAttribute('aria-current')
+		label: (button.querySelector('.sr-only')?.textContent ?? button.textContent ?? '').replace(/\d+$|New$/, '')
 	}))
 const button = (label: string) =>
 	[
@@ -93,60 +92,73 @@ const button = (label: string) =>
 		)
 	].find((b) => (b.querySelector('.sr-only')?.textContent ?? b.textContent)?.replace(/\d+$|New$/, '') === label)!
 
+const viewSwitch = () => container.querySelector('[role="radiogroup"][aria-label="View"]')
+// The rail's options are icons named by aria-label; the open sidebar's are text.
+const optionName = (radio: HTMLInputElement) =>
+	radio.getAttribute('aria-label') ?? radio.closest('label')!.textContent!.replace(/New$/, '')
+const viewRadios = () => [
+	...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="View"] input[type="radio"]')
+]
+const viewOptions = () => viewRadios().map((radio) => ({ label: optionName(radio), checked: radio.checked }))
+const viewOption = (label: string) =>
+	viewRadios()
+		.find((radio) => optionName(radio) === label)!
+		.closest('label')!
+
 /**
  * Users were lost between two sidebars. The rail in the chat and the rail in the terminal must be the
- * same list, so the only thing that tells the two places apart is which one is marked current.
+ * same list, so the only thing that tells the two places apart is which View option is selected.
  */
-test('the rail lists the same destinations in both places and marks only the place you are in', async () => {
+test('the rail lists the same destinations in both places', async () => {
 	await render({ folded: true, place: 'chat' })
-	const inChat = destinations()
+	const inChat = destinations().map((d) => d.label)
 	await render({ folded: true, place: 'terminal' })
-	const inTerminal = destinations()
-
-	expect(inChat.map((d) => d.label)).toEqual([
-		'Open sidebar',
-		'Search chats',
-		'New chat',
-		'Chat',
-		'Terminal',
-		'Alerts',
-		'Projects',
-		'Settings'
-	])
-	expect(inTerminal.map((d) => d.label)).toEqual(inChat.map((d) => d.label))
-	expect(inChat.filter((d) => d.current === 'page').map((d) => d.label)).toEqual(['Chat'])
-	expect(inTerminal.filter((d) => d.current === 'page').map((d) => d.label)).toEqual(['Terminal'])
+	expect(inChat).toEqual(['Open sidebar', 'Search chats', 'New chat', 'Alerts', 'Projects', 'Settings'])
+	expect(destinations().map((d) => d.label)).toEqual(inChat)
 })
 
-test('the open sidebar marks the same place as its rail', async () => {
-	await render({ place: 'chat' })
-	expect(
-		destinations()
-			.filter((d) => d.current === 'page')
-			.map((d) => d.label)
-	).toEqual(['Chat'])
-	await render({ place: 'terminal' })
-	expect(
-		destinations()
-			.filter((d) => d.current === 'page')
-			.map((d) => d.label)
-	).toEqual(['Terminal'])
+test('the rail and the open sidebar show one View switch set to the place you are in', async () => {
+	for (const folded of [true, false]) {
+		await render({ folded, place: 'chat' })
+		expect(viewOptions()).toEqual([
+			{ label: 'Chat', checked: true },
+			{ label: 'Terminal', checked: false }
+		])
+		await render({ folded, place: 'terminal' })
+		expect(viewOptions()).toEqual([
+			{ label: 'Chat', checked: false },
+			{ label: 'Terminal', checked: true }
+		])
+	}
 })
 
 test('Chat leaves the terminal, Terminal leaves the chat, and the current place is not re-entered', async () => {
 	const onSwitchPlace = vi.fn()
 	await render({ folded: true, place: 'terminal', onSwitchPlace })
-	await act(async () => button('Terminal').click())
+	await act(async () => viewOption('Terminal').click())
 	expect(onSwitchPlace).not.toHaveBeenCalled()
-	await act(async () => button('Chat').click())
+	await act(async () => viewOption('Chat').click())
 	expect(onSwitchPlace).toHaveBeenCalledOnce()
 
 	onSwitchPlace.mockClear()
 	await render({ place: 'chat', onSwitchPlace })
-	await act(async () => button('Chat').click())
+	await act(async () => viewOption('Chat').click())
 	expect(onSwitchPlace).not.toHaveBeenCalled()
-	await act(async () => button('Terminal').click())
+	await act(async () => viewOption('Terminal').click())
 	expect(onSwitchPlace).toHaveBeenCalledOnce()
+})
+
+/** Without the terminal there is one place, so a Chat entry beside New chat only reads as a second New chat. */
+test('an account without the terminal sees no View switch in the rail or the open sidebar', async () => {
+	const record = { ...pb.authStore.record!, flags: {} }
+	pb.authStore.save(pb.authStore.token, record)
+	session.serve({ '/api/collections/users/auth-refresh': { token: pb.authStore.token, record } })
+
+	await render({ folded: true, place: 'chat' })
+	expect(viewSwitch()).toBeNull()
+	await render({ place: 'chat' })
+	expect(viewSwitch()).toBeNull()
+	expect(destinations().map((d) => d.label)).toEqual(['New chat'])
 })
 
 test('the rail search opens the sidebar with the search field showing', async () => {

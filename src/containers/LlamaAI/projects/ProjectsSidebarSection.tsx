@@ -106,7 +106,8 @@ export function ProjectsSidebarSection({
 					height={14}
 					width={14}
 					aria-hidden="true"
-					className="shrink-0 text-tertiary"
+					// The chevron glyph sits inset in its box; pull it out so its tip lines up with the counts above it.
+					className="-mr-1 shrink-0 text-tertiary"
 				/>
 			</button>
 

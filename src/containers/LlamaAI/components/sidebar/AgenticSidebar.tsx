@@ -32,6 +32,7 @@ import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -393,8 +394,8 @@ function SidebarPanel({
 				ref={sidebarRef}
 				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-subtle bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
 			>
-				<header className="flex flex-col gap-2 border-b border-subtle p-4 pb-2">
-					<div className="-mx-1.5 flex items-center gap-1">
+				<header className="flex flex-col gap-2 border-b border-subtle p-4">
+					<div className="-mx-2 flex items-center gap-1">
 						<SidebarToggles
 							folded={false}
 							searchOpen={isSearchShown}
@@ -473,14 +474,12 @@ function SidebarPanel({
 						</div>
 					) : null}
 
-					<nav aria-label="LlamaAI menu" className="flex flex-col gap-2 pb-1">
+					<nav aria-label="LlamaAI menu" className="flex flex-col gap-2">
 						<SidebarDestinations
 							folded={false}
 							place={place}
 							onNewChat={onNewChat}
 							onSwitchPlace={onSwitchPlace}
-							alertsCount={alertsCount}
-							onOpenAlerts={onOpenAlerts}
 							newChatRef={newChatRef}
 						/>
 					</nav>
@@ -490,7 +489,12 @@ function SidebarPanel({
 					ref={scrollContainerRef}
 					className="flex-1 [scrollbar-width:thin] [scrollbar-gutter:stable] overflow-auto overscroll-contain"
 				>
-					<div ref={projectsSectionRef} className="flex flex-col gap-3 pt-2">
+					<div ref={projectsSectionRef} className="flex flex-col gap-1 pt-2">
+						{onOpenAlerts ? (
+							<div className="flex flex-col px-2">
+								<AlertsItem folded={false} alertsCount={alertsCount} onOpenAlerts={onOpenAlerts} />
+							</div>
+						) : null}
 						<ProjectsSidebarSection
 							sessions={sessions}
 							currentProjectId={currentProjectId}
@@ -500,7 +504,7 @@ function SidebarPanel({
 							onSessionSelect={onSessionSelect}
 							onDelete={onDelete}
 						/>
-						<div className="flex min-h-6 items-center justify-between border-t border-subtle px-4 pt-3">
+						<div className="flex min-h-6 items-center justify-between px-4 pt-4">
 							<h2 className="label-sm text-secondary">History</h2>
 							{isLoading || hasShownSessions ? (
 								<Button
@@ -704,7 +708,6 @@ function SidebarItem({
 	trailing,
 	active,
 	onClick,
-	className = '',
 	...buttonProps
 }: {
 	ref?: Ref<HTMLButtonElement>
@@ -715,13 +718,11 @@ function SidebarItem({
 	trailing?: ReactNode
 	active?: boolean
 	onClick: () => void
-	className?: string
 	'aria-expanded'?: boolean
 	'data-umami-event'?: string
 	'data-umami-event-action'?: string
 	'data-umami-event-source'?: string
 }) {
-	const current = active ? ('page' as const) : undefined
 	if (folded) {
 		return (
 			<Tooltip
@@ -734,9 +735,7 @@ function SidebarItem({
 						variant="ghost"
 						square
 						data-active={active}
-						aria-current={current}
 						onClick={onClick}
-						className={className}
 						{...buttonProps}
 					/>
 				}
@@ -750,9 +749,8 @@ function SidebarItem({
 		<button
 			type="button"
 			data-active={active}
-			aria-current={current}
 			onClick={onClick}
-			className={`${SIDEBAR_ROW} w-full text-left ${className}`}
+			className={`${SIDEBAR_ROW} w-full text-left`}
 			{...buttonProps}
 		>
 			{icon}
@@ -804,16 +802,12 @@ function SidebarDestinations({
 	place,
 	onNewChat,
 	onSwitchPlace,
-	alertsCount,
-	onOpenAlerts,
 	newChatRef
 }: {
 	folded: boolean
 	place: SidebarPlace
 	onNewChat: () => void
 	onSwitchPlace?: () => void
-	alertsCount: number | null
-	onOpenAlerts?: () => void
 	newChatRef?: Ref<HTMLButtonElement>
 }) {
 	const terminalEnabled = useTerminalEnabled()
@@ -822,71 +816,54 @@ function SidebarDestinations({
 		trackUmamiEvent('llamaai-new-chat')
 		onNewChat()
 	}
-	const openAlerts = onOpenAlerts
-		? () => {
-				trackUmamiEvent('llamaai-alerts-open', { source })
-				onOpenAlerts()
+	// The place switch is a mode toggle: picking the place you are in does nothing.
+	const switchPlace = (next: SidebarPlace) => {
+		if (next === place) return
+		trackUmamiEvent('llamaai-terminal-open', next === 'chat' ? { action: 'close', source } : { source })
+		onSwitchPlace?.()
+	}
+	// The terminal never opens below lg, where the open sidebar has no second place to switch to; the rail is lg-only.
+	const placeSwitch = terminalEnabled ? (
+		<SegmentedControl
+			label="View"
+			variant="mode"
+			size="md"
+			value={place}
+			onValueChange={switchPlace}
+			options={
+				folded
+					? [
+							{
+								value: 'chat',
+								label: <Icon name="message-square" height={16} width={16} />,
+								ariaLabel: 'Chat',
+								tooltip: 'Chat'
+							},
+							{
+								value: 'terminal',
+								label: <Icon name="bar-chart-2" height={16} width={16} />,
+								ariaLabel: 'Terminal',
+								tooltip: 'Terminal'
+							}
+						]
+					: [
+							{ value: 'chat', label: 'Chat' },
+							{
+								value: 'terminal',
+								label: (
+									<>
+										Terminal
+										<span className="rounded-full border border-ai-gold/30 bg-ai-gold-tint px-1.5 label-xs text-ai-bronze uppercase">
+											New
+										</span>
+									</>
+								)
+							}
+						]
 			}
-		: null
-	const places = (
-		<>
-			<SidebarItem
-				folded={folded}
-				label="Chat"
-				icon={<Icon name="chat" height={16} width={16} className="shrink-0" />}
-				active={place === 'chat'}
-				onClick={() => {
-					if (place === 'terminal') onSwitchPlace?.()
-				}}
-				data-umami-event={place === 'terminal' ? 'llamaai-terminal-open' : undefined}
-				data-umami-event-action={place === 'terminal' ? 'close' : undefined}
-				data-umami-event-source={place === 'terminal' ? source : undefined}
-			/>
-			{terminalEnabled ? (
-				<SidebarItem
-					folded={folded}
-					label="Terminal"
-					icon={<Icon name="bar-chart-2" height={16} width={16} className="shrink-0" />}
-					trailing={
-						<span className="shrink-0 rounded-full border border-ai-gold/30 bg-ai-gold-tint px-1.5 py-0.5 label-xs text-ai-bronze uppercase">
-							New
-						</span>
-					}
-					active={place === 'terminal'}
-					onClick={() => {
-						if (place === 'chat') onSwitchPlace?.()
-					}}
-					className="max-lg:hidden"
-					data-umami-event={place === 'chat' ? 'llamaai-terminal-open' : undefined}
-					data-umami-event-source={place === 'chat' ? source : undefined}
-				/>
-			) : null}
-			{openAlerts ? (
-				<SidebarItem
-					folded={folded}
-					label="Alerts"
-					tooltip={typeof alertsCount === 'number' ? `Alerts (${alertsCount})` : 'Alerts'}
-					icon={
-						<span className="relative flex shrink-0">
-							<Icon name="calendar-plus" height={16} width={16} className="text-warning" />
-							{folded && alertsCount ? (
-								<span className="absolute -top-1.5 -right-2 min-w-3.5 rounded-full bg-surface-elevated-2 px-0.5 text-center label-xs text-secondary">
-									{alertsCount}
-								</span>
-							) : null}
-						</span>
-					}
-					trailing={
-						typeof alertsCount === 'number' ? (
-							<span className="shrink-0 body-sm text-tertiary tabular-nums">{alertsCount}</span>
-						) : null
-					}
-					onClick={openAlerts}
-				/>
-			) : null}
-		</>
-	)
-
+			className={folded ? undefined : 'grid-flow-col max-lg:hidden'}
+		/>
+	) : null
 	if (folded) {
 		return (
 			<>
@@ -898,18 +875,55 @@ function SidebarDestinations({
 					<Icon name="square-pen" height={16} width={16} />
 					<span className="sr-only">New chat</span>
 				</Tooltip>
-				{places}
+				{placeSwitch}
 			</>
 		)
 	}
 	return (
 		<>
+			{placeSwitch}
 			<Button ref={newChatRef} type="button" size="md" variant="outline" onClick={newChat} className="w-full">
 				<Icon name="square-pen" height={14} width={14} />
 				New chat
 			</Button>
-			<div className="-mx-2 flex flex-col">{places}</div>
 		</>
+	)
+}
+
+function AlertsItem({
+	folded,
+	alertsCount,
+	onOpenAlerts
+}: {
+	folded: boolean
+	alertsCount: number | null
+	onOpenAlerts: () => void
+}) {
+	return (
+		<SidebarItem
+			folded={folded}
+			label="Alerts"
+			tooltip={typeof alertsCount === 'number' ? `Alerts (${alertsCount})` : 'Alerts'}
+			icon={
+				<span className="relative flex shrink-0">
+					<Icon name="calendar-plus" height={16} width={16} />
+					{folded && alertsCount ? (
+						<span className="absolute -top-1.5 -right-2 min-w-3.5 rounded-full bg-surface-elevated-2 px-0.5 text-center label-xs text-secondary">
+							{alertsCount}
+						</span>
+					) : null}
+				</span>
+			}
+			trailing={
+				typeof alertsCount === 'number' ? (
+					<span className="shrink-0 body-sm text-tertiary tabular-nums">{alertsCount}</span>
+				) : null
+			}
+			onClick={() => {
+				trackUmamiEvent('llamaai-alerts-open', { source: folded ? 'sidebar_rail' : 'sidebar' })
+				onOpenAlerts()
+			}}
+		/>
 	)
 }
 
@@ -941,14 +955,8 @@ function SidebarRail({
 				}}
 			/>
 			<span aria-hidden="true" className="my-1 w-6 border-t border-subtle" />
-			<SidebarDestinations
-				folded
-				place={place}
-				onNewChat={onNewChat}
-				onSwitchPlace={onSwitchPlace}
-				alertsCount={alertsCount}
-				onOpenAlerts={onOpenAlerts}
-			/>
+			<SidebarDestinations folded place={place} onNewChat={onNewChat} onSwitchPlace={onSwitchPlace} />
+			{onOpenAlerts ? <AlertsItem folded alertsCount={alertsCount} onOpenAlerts={onOpenAlerts} /> : null}
 			<SidebarItem
 				folded
 				label="Projects"
