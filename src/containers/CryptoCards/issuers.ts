@@ -2,6 +2,9 @@ import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import type { CardsIndexCard } from './api.types'
 
+// Crypto Cards pages and the Card Details tab are public, with no sign-in or staff gate. An exchange issuer's page is
+// /cex/card-details/<cex>. When the card's protocol has a DefiLlama parent, the parent shows the tab and owns the one
+// card page; the child redirects there.
 type CryptoCardProtocolReference = Pick<CardsIndexCard, 'id' | 'parent_id' | 'defillama_id' | 'defillama_parent_id'>
 
 interface CryptoCardIssuerProtocolIds {

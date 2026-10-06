@@ -45,6 +45,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - `bun run start` starts a standard Next.js production server.
 - `bun run start:docker` runs the Docker/self-hosted entrypoint, including the post-start hook.
 
+- `typescript` stays on 6.x because Next.js 16 needs the TypeScript JS API, which TypeScript 7 does not export. `tsgo` from `@typescript/native-preview` runs `typecheck`.
+
 ## Deployment
 
 defillama.com sits behind Cloudflare and the [DefiLlama/defillama-app-lb](https://github.com/DefiLlama/defillama-app-lb) load balancer. Its `nginx.conf` routes each request to the self-hosted Coolify origins first, which build with `bun run build:deploy` (Turbopack). When an origin is slow or fails, the balancer serves a stale cached copy, then falls back to the Vercel deployment (webpack). A page that looks different from another, or a build-only bug, can come from either platform.

@@ -25,6 +25,7 @@ Store internals live in the headers of `src/server/datasetSnapshots/fileStore.se
 - The refresh mode is a required argument to `acquireDatasetSnapshot`.
 - A failed refresh serves the last good snapshot. A missing first snapshot plus a failed refresh throws.
 - Required artifacts never fall back to an upstream API.
+- Only first-party DefiLlama APIs become snapshot domains. A third-party source stays an optional live fetch (`cachedResult` plus a failure backoff): a domain with no earlier version fails the build whenever its source is down.
 - Each publish keeps the current and previous version and prunes the rest.
 - A result cache key for snapshot-derived data includes the snapshot version.
 - The CDN caches final responses only. It never refreshes a snapshot.

@@ -4,6 +4,8 @@ import { SubscriptionBackground, SubscriptionFooter, SubscriptionHeader } from '
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 
+// The app is LlamaAI on mobile, not a TVL tracker. Its copy states three quota tiers, never "free": 3 guest prompts
+// per device that never reset, 10 a day once signed in, unlimited with Pro (mobile-app `lib/freePrompts`).
 export const APP_STORE_URL = 'https://apps.apple.com/us/app/defillama-defi-tracker/id6761379469'
 export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.defillama.mobile'
 

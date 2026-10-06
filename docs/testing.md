@@ -38,6 +38,7 @@ Mock only at boundaries:
 | A heavy child component                                                                                           | A stub, only when the test asserts nothing about that child's output                          |
 
 - Never `vi.mock` any other module under `src/`.
+- A fixture endpoint has a success variant that changes the scenario's state as the real server does, so a dialog's success path, including invalidations that remount it, is tested, not only its failure.
 - A test that needs a hand-written fake of a library (ECharts, an editor) to reach its assertion is testing logic that belongs in a pure function. Extract it.
 
 ## Assertions
@@ -67,6 +68,9 @@ Mock only at boundaries:
 - Bound every wait on a promise a mock is expected to resolve, so a lost mock registration fails fast instead of hanging.
 - In render tests, wrap every event, focus change and store write in `act`.
 - Wait with `waitForUi` from `src/utils/testing/waitForUi.ts`, never `vi.waitFor`.
+- A regression test for async UI holds the response (a fixture that returns a promise the test resolves), so the intermediate state renders before React batches past it.
+- happy-dom fires no `blur` or `focusout` when a focused element is removed or disabled, and it keeps focus on a disabled button. Chrome fires both events and drops focus to the page. Dispatch `focusout` with `relatedTarget: null` to act like Chrome, and assert `disabled` or `aria-disabled` rather than `document.activeElement`.
+- The app runs in Strict Mode (`reactStrictMode: true`), which replays effects on mount. A test of an effect that consumes a one-shot request renders under `<StrictMode>`.
 - React logs a warning for each update outside `act`, and those warnings can crash a CI worker at teardown. In agent shells Vitest uses its minimal reporter, which hides console output; run with `--silent=false --reporter=default` to see them.
 
 ## Clock and hydration

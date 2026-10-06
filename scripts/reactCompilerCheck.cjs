@@ -11,6 +11,10 @@
  *   node scripts/reactCompilerCheck.cjs <repo-root> <file>...
  *   node scripts/reactCompilerCheck.cjs . src/containers/RWA/index.tsx --cached buildRwaTimeSeriesCharts
  *
+ * An `eslint-disable` comment for any React rule makes the compiler skip the whole component; an
+ * `oxlint-disable-next-line` comment does not. `'use no memo'` clears lowering bailouts only, never refs or
+ * incompatible-library diagnostics; put it at function level so the baseline records it.
+ *
  * The repo root comes first: passing only a file checks nothing and exits 0. Expect a `compiled` line for
  * every file.
  *

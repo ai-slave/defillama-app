@@ -41,6 +41,10 @@ import { selectTriggerStyles } from './types'
    option's `logo` draws with TokenLogo on its row and, once picked, on the
    trigger. A server-searched picker passes `onSearchChange` and lists the
    options it is given unfiltered.
+
+   An unset single pick is `null`: pass `value ?? null`, never `x || ''`,
+   which renders a blank trigger. Use `''` only for an option whose value
+   really is `''`.
 ---------------------------------------------------------------------------- */
 
 export type VirtualizedSelectOption<T extends string = string> = {

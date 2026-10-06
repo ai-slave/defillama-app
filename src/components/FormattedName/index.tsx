@@ -21,6 +21,8 @@ export function FormattedName({ text, maxCharacters, fontSize, fontWeight = 400,
 		'--text-size': fontSize ?? 'inherit',
 		'--weight': fontWeight
 	}
+	// The tooltip follows maxCharacters, not measured overflow: wrapping the text in a Tooltip changes its width, which
+	// flips an overflow measurement and loops.
 	const hasTooltip = typeof maxCharacters === 'number' && text.length > maxCharacters
 	const content = (
 		<span

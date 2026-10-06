@@ -33,6 +33,8 @@ A dialog records the control that opened it, and a click inside a dialog focuses
 | An accepted action changes data (remove, save local) | The mutation's own `onSuccess`, which runs after the view unmounts                                                                     | `deletePortfolioWithNotifications` in `src/containers/DeFiWatchlist/index.tsx` |
 | The dialog is gone when the request settles          | A toast, only then (`if (!ref.current?.isConnected) toast…`)                                                                           | `src/components/ReportIncorrectData/index.tsx`                                 |
 
+Never call `mutation.reset()` while a newer request may be pending: it detaches the running request and unlocks a pending dialog.
+
 A retry that hides its error removes the button that has focus, never shows its pending label, and moves the layout twice. Keep the error until the retry succeeds.
 
 `ConfirmActionDialog`'s `onSuccess` and a `mutate()` call's own callbacks are skipped once the dialog or component has gone. Put only view work there: closing, focus, a redirect that only makes sense while the page is open. Work that belongs to the accepted action goes in the mutation's `onSuccess`, and it names its entity from the mutation's variables, never from state read at settle time.
