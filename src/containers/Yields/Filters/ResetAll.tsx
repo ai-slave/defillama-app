@@ -36,12 +36,9 @@ export function ResetAllYieldFilters({
 	return (
 		<Tooltip
 			content="Clear filters while keeping your APY window, reward/intrinsic settings, and rows per page."
-			className={nestedMenu ? 'w-full' : undefined}
-			tabIndex={hasActiveFilters ? undefined : 0}
+			render={<ResetFiltersButton nestedMenu={nestedMenu} onClick={handleClick} disabled={!hasActiveFilters} />}
 		>
-			<ResetFiltersButton nestedMenu={nestedMenu} onClick={handleClick} disabled={!hasActiveFilters}>
-				{label}
-			</ResetFiltersButton>
+			{label}
 		</Tooltip>
 	)
 }

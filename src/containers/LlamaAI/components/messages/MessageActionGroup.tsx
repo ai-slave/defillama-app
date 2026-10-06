@@ -143,6 +143,7 @@ export function ActionButtonGroup({
 						size="md"
 						variant={sent ? 'secondary' : isPrimary ? 'primary' : isDecisionGroup ? 'secondary' : 'filter'}
 						disabled={!onActionClick}
+						accessibleWhenDisabled
 						onClick={() => handleActionClick(action)}
 					>
 						{action.label}

@@ -85,11 +85,11 @@ test('leaves processing to the server while controls emit requests and totals dr
 		await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Go to last page"]')!.click())
 		expect(requested.pagination).toHaveBeenLastCalledWith({ pageIndex: 4, pageSize: 10 })
 		expect(container.textContent).toContain('Page 5 of 5')
-		expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')!.disabled).toBe(true)
+		expect(container.querySelector('[aria-label="Go to next page"]')!.getAttribute('aria-disabled')).toBe('true')
 		expect(displayedNames()).toEqual(['Zulu', 'Alpha'])
 		await act(async () => root.render(<ServerTable rowCount={65} />))
 		expect(container.textContent).toContain('Page 5 of 7')
-		expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')!.disabled).toBe(false)
+		expect(container.querySelector('[aria-label="Go to next page"]')!.getAttribute('aria-disabled')).toBeNull()
 		expect(displayedNames()).toEqual(['Zulu', 'Alpha'])
 	} finally {
 		await act(async () => root.unmount())

@@ -24,6 +24,9 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  * 6. A `Tooltip` without `render` whose child is a control (a button, link or Ariakit disclosure; CONTROL_TAGS): the
  *    tooltip's span becomes the anchor, so `aria-describedby` misses the focusable control and a tap both opens the
  *    tooltip and runs the control. Pass the control as `render`.
+ * 7. A button disabled by its position (a pager at its first or last page, move up or down at an edge, undo with no
+ *    history; STEP_LIMIT): pressing it is what moves it to that limit, so it disables itself while it has focus. Pass
+ *    `accessibleWhenDisabled` (Button, ProButton or `Ariakit.Button`; a raw `button` cannot keep focus while disabled).
  *
  * "Pending flag" means the `disabled` expression names something pending or saving (isPending, pending, isSaving,
  * saving, submitting). Other reasons to disable are outside this check.
@@ -36,6 +39,9 @@ const PENDING_NAME = /\b(?:is)?(?:pending|saving|submitting)\b|\.isPending\b|Pen
 const FIELD_TAGS = new Set(['input', 'textarea', 'Input'])
 const BUTTON_TAGS = new Set(['button', 'Button'])
 const NON_TEXT_TYPES = new Set(['checkbox', 'radio', 'file'])
+const STEP_LIMIT =
+	/\bcan(?:(?:Next|Prev(?:ious)?)(?:Page)?|Move(?:Up|Down)|Undo|Redo)\b|getCan(?:Next|Previous)Page\b|\bhas(?:Next|Prev(?:ious)?)(?:Page)?\b|\bis(?:First|Last)(?:Page)?\b|\b\w*page(?:Index)?\s*(?:[<>]=?|===?)|(?:[<>]=?|===?)\s*\w*page/i
+const STEP_TAGS = new Set(['button', 'Button', 'ProButton', 'Ariakit.Button'])
 const CONTROL_TAGS = new Set([
 	'button',
 	'Button',
@@ -121,6 +127,18 @@ export function scanSource(relative: string, source: string): Array<string> {
 				/(?:^|[\s"'`])outline-hidden(?:[\s"'`]|$)/.test(expressionText(className))
 			) {
 				violations.push(`${at(opening)} hides the focus ring on a focus anchor; keep the ring so focus is visible`)
+			}
+			if (disabled && STEP_TAGS.has(tag) && STEP_LIMIT.test(expressionText(disabled))) {
+				const keepsFocus = attribute(opening, 'accessibleWhenDisabled')
+				if (tag === 'button') {
+					violations.push(
+						`${at(opening)} disables itself at a limit it moves to, and a raw button cannot keep focus while disabled; use Ariakit.Button or Button with accessibleWhenDisabled`
+					)
+				} else if (!keepsFocus || expressionText(keepsFocus) === 'false') {
+					violations.push(
+						`${at(opening)} disables itself at a limit it moves to, which drops its focus; pass accessibleWhenDisabled`
+					)
+				}
 			}
 			if (disabled && PENDING_NAME.test(expressionText(disabled))) {
 				if (FIELD_TAGS.has(tag) && !NON_TEXT_TYPES.has(inputType(opening))) {
@@ -244,6 +262,47 @@ if (process.argv.includes('--self-test')) {
 			source:
 				'export const F = () => <Tooltip content="Total value locked"><span className="underline">TVL</span></Tooltip>',
 			violation: false
+		},
+		{
+			name: 'pager button disabled at its last page',
+			source:
+				'export const F = () => <button type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>Next</button>',
+			violation: true
+		},
+		{
+			name: 'previous button disabled at page zero',
+			source:
+				'export const F = () => <Button size="sm" onClick={previous} disabled={pageIndex === 0}>Previous</Button>',
+			violation: true
+		},
+		{
+			name: 'pager button that keeps focus at its limit',
+			source:
+				'export const F = () => <Ariakit.Button onClick={next} disabled={!canNextPage} accessibleWhenDisabled>Next</Ariakit.Button>',
+			violation: false
+		},
+		{
+			name: 'pager button that opts out of keeping focus',
+			source:
+				'export const F = () => <Button size="sm" onClick={next} disabled={!canNextPage} accessibleWhenDisabled={false}>Next</Button>',
+			violation: true
+		},
+		{
+			name: 'raw pager button with an inert accessibleWhenDisabled',
+			source:
+				'export const F = () => <button type="button" onClick={next} disabled={!canNextPage} accessibleWhenDisabled>Next</button>',
+			violation: true
+		},
+		{
+			name: 'pager button that keeps focus only for its own press',
+			source:
+				'export const F = () => <Button size="sm" onClick={next} disabled={!canNextPage} accessibleWhenDisabled={!isLoading}>Next</Button>',
+			violation: false
+		},
+		{
+			name: 'move up disabled at the top',
+			source: 'export const F = () => <Button size="sm" square onClick={up} disabled={!canMoveUp}>Up</Button>',
+			violation: true
 		},
 		{
 			name: 'button disabled for another reason',

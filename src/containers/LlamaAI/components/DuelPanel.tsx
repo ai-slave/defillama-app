@@ -75,6 +75,8 @@ function AnswerColumn({
 					size="md"
 					aria-label={`I prefer ${label}`}
 					disabled={!canChoose || !hasVisibleContent}
+					// Voting closes every choice, this one included; it keeps focus.
+					accessibleWhenDisabled
 					onClick={onChoose}
 					className="w-full"
 				>

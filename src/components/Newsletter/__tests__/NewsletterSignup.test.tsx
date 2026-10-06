@@ -64,11 +64,13 @@ test.each(['card', 'strip'] as const)(
 			for (const choice of choices) choice.click()
 		})
 		const submit = container.querySelector<HTMLButtonElement>('button[type="submit"]')!
-		expect(submit.disabled).toBe(true)
+		expect(submit.getAttribute('aria-disabled')).toBe('true')
+		expect(submit.disabled).toBe(false)
 		expect(choices.map((e) => e.getAttribute('aria-checked'))).toEqual(['false', 'false'])
 		await act(async () => choices[1].click())
 		await act(async () => submit.click())
-		await waitForUi(() => expect(submit.disabled).toBe(true))
+		await waitForUi(() => expect(submit.getAttribute('aria-disabled')).toBe('true'))
+		expect(submit.disabled).toBe(false)
 		expect(subscribeRequests().map((request) => JSON.parse(request.init!.body as string))).toEqual([
 			{ email: 'reader@example.com', newsletters: ['research'] }
 		])

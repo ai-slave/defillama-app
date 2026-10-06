@@ -63,7 +63,7 @@ export const nestedMenuSelectRowStyles = tw`grid min-h-11 w-full cursor-pointer 
 
 export const nestedMenuSeeMoreStyles = tw`min-h-11 w-full cursor-pointer px-4 py-2.5 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
-export const nestedMenuActionStyles = tw`flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40`
+export const nestedMenuActionStyles = tw`flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:opacity-40`
 
 export const nestedMenuDisclosureIconStyles = tw`size-4 justify-self-end text-tertiary`
 

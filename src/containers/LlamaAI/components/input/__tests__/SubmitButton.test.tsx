@@ -46,6 +46,24 @@ describe('SubmitButton streaming affordances', () => {
 
 		expect(container.textContent).toContain('Stopping')
 		expect(container.textContent).not.toContain('Queue message')
-		expect(container.querySelector('button')?.disabled).toBe(true)
+		const button = container.querySelector('button')!
+		expect(button.getAttribute('aria-disabled')).toBe('true')
+		expect(button.disabled).toBe(false)
+	})
+
+	test('keeps the pressed Stop button in place once stopping starts', async () => {
+		await act(async () => {
+			root.render(<SubmitButton mode={{ kind: 'streaming', canQueue: false, onStop: vi.fn() }} />)
+		})
+		const stop = container.querySelector('button')!
+		stop.focus()
+
+		await act(async () => {
+			root.render(<SubmitButton mode={{ kind: 'stopping' }} />)
+		})
+
+		expect(container.querySelector('button')).toBe(stop)
+		expect(document.activeElement).toBe(stop)
+		expect(stop.getAttribute('aria-busy')).toBe('true')
 	})
 })

@@ -458,6 +458,7 @@ export function Leaderboard({
 							size="sm"
 							square
 							disabled={currentPage === 0}
+							accessibleWhenDisabled
 							onClick={() => setPage(currentPage - 1)}
 							aria-label="Previous page"
 						>
@@ -468,6 +469,7 @@ export function Leaderboard({
 							size="sm"
 							square
 							disabled={currentPage + 1 >= pageCount}
+							accessibleWhenDisabled
 							onClick={() => setPage(currentPage + 1)}
 							aria-label="Next page"
 						>

@@ -107,7 +107,7 @@ test('opens the popup from our button and delivers each code only once', async (
 		await act(async () => view.button.click())
 		expect(google.requestCode).toHaveBeenCalledOnce()
 		expect(google.options).toMatchObject({ scope: 'openid email profile', ux_mode: 'popup' })
-		expect(view.button.disabled).toBe(true)
+		expect([view.button.getAttribute('aria-disabled'), view.button.disabled]).toEqual(['true', false])
 		await act(async () => google.options.callback({ code: 'popup-code' }))
 		expect(onCode).toHaveBeenCalledWith('popup-code')
 		await act(async () => google.options.callback({ code: 'duplicate' }))
@@ -124,7 +124,7 @@ test.each(['popup_closed', 'popup_failed_to_open'])('recovers after %s so the us
 	try {
 		await act(async () => view.button.click())
 		await act(async () => google.options.error_callback({ type }))
-		expect(view.button.disabled).toBe(false)
+		expect(view.button.getAttribute('aria-disabled')).toBe(null)
 		expect(Boolean(view.container.querySelector('[role="alert"]'))).toBe(type !== 'popup_closed')
 		expect(onCode).not.toHaveBeenCalled()
 		await act(async () => view.button.click())
@@ -144,7 +144,7 @@ test('does not exchange a denied authorization and keeps its error on screen whi
 		expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
 			'Google sign-in did not finish. Try again.'
 		)
-		expect(view.button.disabled).toBe(false)
+		expect(view.button.getAttribute('aria-disabled')).toBe(null)
 		expect(onCode).not.toHaveBeenCalled()
 		await act(async () => view.button.click())
 		expect(view.button.getAttribute('aria-busy')).toBe('true')
@@ -185,10 +185,10 @@ test('abandons the old popup when another method takes over but accepts a fresh 
 		)
 		await act(async () => oldPopup.callback({ code: 'late-code' }))
 		expect(onCode).not.toHaveBeenCalled()
-		expect(view.button.disabled).toBe(false)
+		expect(view.button.getAttribute('aria-disabled')).toBe(null)
 		await act(async () => view.button.click())
 		await act(async () => oldPopup.error_callback({ type: 'popup_closed' }))
-		expect(view.button.disabled).toBe(true)
+		expect([view.button.getAttribute('aria-disabled'), view.button.disabled]).toEqual(['true', false])
 		await act(async () => google.options.callback({ code: 'fresh-code' }))
 		expect(onCode).toHaveBeenCalledWith('fresh-code')
 		expect(onCode).toHaveBeenCalledOnce()
@@ -205,7 +205,7 @@ test.each([{ loading: true }, { loading: false, disabled: true }])(
 		try {
 			await act(async () => view.button.click())
 			expect(google.requestCode).not.toHaveBeenCalled()
-			expect(view.button.disabled).toBe(true)
+			expect([view.button.getAttribute('aria-disabled'), view.button.disabled]).toEqual(['true', false])
 		} finally {
 			await view.unmount()
 		}
@@ -233,7 +233,7 @@ test('recovers from a script timeout using the retry button', async () => {
 		const google = installGooglePopup()
 		await act(async () => script.dispatchEvent(new Event('load')))
 		expect(view.container.querySelector('[role="alert"]')).toBeNull()
-		expect(view.button.disabled).toBe(false)
+		expect(view.button.getAttribute('aria-disabled')).toBe(null)
 		await act(async () => view.button.click())
 		expect(google.requestCode).toHaveBeenCalledOnce()
 	} finally {

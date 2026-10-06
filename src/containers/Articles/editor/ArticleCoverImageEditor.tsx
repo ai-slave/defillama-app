@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
 import { Icon as SharedIcon } from '~/ui/Icon'
 import type { LocalArticleDocument } from '../types'
@@ -59,14 +60,15 @@ export function ArticleCoverImageEditor({
 								<Icon name="pencil" className="size-3.5" />
 								<span>Edit details</span>
 							</button>
-							<button
+							<Ariakit.Button
 								type="button"
 								disabled={isUploadingCover}
 								onClick={openCoverPicker}
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55 disabled:cursor-not-allowed disabled:opacity-60"
+								accessibleWhenDisabled
+								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 							>
 								{isUploadingCover ? 'Uploading…' : 'Replace'}
-							</button>
+							</Ariakit.Button>
 							<button
 								type="button"
 								disabled={isUploadingCover}
@@ -119,16 +121,17 @@ export function ArticleCoverImageEditor({
 					})()}
 				</figure>
 			) : (
-				<button
+				<Ariakit.Button
 					type="button"
 					disabled={isUploadingCover}
 					onClick={openCoverPicker}
-					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+					accessibleWhenDisabled
+					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 				>
 					<SharedIcon name="image-plus" className="size-6" />
 					<span className="text-sm font-medium">{isUploadingCover ? 'Uploading…' : 'Add cover image'}</span>
 					<span className="text-[11px] text-tertiary/80">PNG, JPEG, WebP, or GIF · up to 8 MB</span>
-				</button>
+				</Ariakit.Button>
 			)}
 			{publishError ? <p className="mt-2 text-xs text-error">{publishError}</p> : null}
 		</div>

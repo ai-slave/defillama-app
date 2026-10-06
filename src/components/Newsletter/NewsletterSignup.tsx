@@ -164,11 +164,12 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 									placeholder="you@example.com"
 									className="h-10 min-w-0 rounded-lg border border-medium bg-surface-elevated-1 px-3 text-sm text-primary outline-hidden focus-visible:border-sub-brand-primary @sm:w-56"
 								/>
-								<button
+								<Ariakit.Button
 									type="submit"
 									aria-busy={isPending}
 									disabled={!canSubmit}
-									className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+									accessibleWhenDisabled
+									className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 								>
 									{isPending ? (
 										spinner
@@ -178,7 +179,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 											<Icon name="arrow-right" height={16} width={16} />
 										</>
 									)}
-								</button>
+								</Ariakit.Button>
 							</div>
 						</form>
 					</div>
@@ -228,12 +229,13 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<button
+						<Ariakit.Button
 							type="submit"
 							aria-busy={isPending}
 							aria-describedby={noneSelected ? helperId : undefined}
 							disabled={!canSubmit}
-							className="flex h-10 w-fit items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-50"
+							accessibleWhenDisabled
+							className="flex h-10 w-fit items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
 							{isPending ? (
 								<>
@@ -243,7 +245,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							) : (
 								'Subscribe'
 							)}
-						</button>
+						</Ariakit.Button>
 						{noneSelected ? (
 							<p id={helperId} className="text-xs text-sub-text-muted">
 								Choose at least one newsletter.

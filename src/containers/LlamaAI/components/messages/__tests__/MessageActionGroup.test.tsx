@@ -42,7 +42,9 @@ test('a gated click does not claim success; the conversation supplies the receip
 test('restored history identifies the sent action and read-only actions cannot submit', async () => {
 	await act(async () => root.render(<ActionButtonGroup actions={actions} nextUserMessage="Compare chains" />))
 	expect(container.querySelectorAll('button')[1].textContent).toContain('Sent')
-	expect([...container.querySelectorAll('button')].every((b) => b.disabled)).toBe(true)
+	// Sending disables the pressed action, so a disabled action stays focusable.
+	expect([...container.querySelectorAll('button')].every((b) => b.getAttribute('aria-disabled') === 'true')).toBe(true)
+	expect([...container.querySelectorAll('button')].some((b) => b.disabled)).toBe(false)
 })
 
 test('link suggestions remain navigable without a submission callback', async () => {

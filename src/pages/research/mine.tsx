@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -425,25 +426,27 @@ function MyArticlesContent() {
 								{rangeStart}–{rangeEnd} of {formatNumber(filtered.length)}
 							</span>
 							<div className="flex items-center gap-1">
-								<button
+								<Ariakit.Button
 									type="button"
 									onClick={() => setPage((p) => Math.max(1, p - 1))}
 									disabled={safePage <= 1}
-									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-medium disabled:hover:text-secondary"
+									accessibleWhenDisabled
+									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-medium aria-disabled:hover:text-secondary"
 								>
 									<span aria-hidden>←</span> Prev
-								</button>
+								</Ariakit.Button>
 								<span className="px-3 font-jetbrains text-xs tabular-nums">
 									{safePage} / {totalPages}
 								</span>
-								<button
+								<Ariakit.Button
 									type="button"
 									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
 									disabled={safePage >= totalPages}
-									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-medium disabled:hover:text-secondary"
+									accessibleWhenDisabled
+									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:border-medium aria-disabled:hover:text-secondary"
 								>
 									Next <span aria-hidden>→</span>
-								</button>
+								</Ariakit.Button>
 							</div>
 						</div>
 					) : null}

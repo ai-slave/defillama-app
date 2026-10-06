@@ -8,10 +8,14 @@ import {
 } from '@tanstack/react-table'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { describe, expect, onTestFinished, test } from 'vitest'
+import { describe, expect, onTestFinished, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { searchTableFeatures } from '../features/search'
 import { PaginatedTable } from '../PaginatedTable'
 import { getPaginationControls } from '../paginationControls'
+
+// The page-size picker reads the URL query.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
 
 const features = tableFeatures({
 	...searchTableFeatures,
@@ -20,10 +24,14 @@ const features = tableFeatures({
 })
 const columnHelper = createColumnHelper<typeof features, { name: string }>()
 
-function TestTable({ interactionDisabled = false, stickyHeader = false }) {
+const oneRow = [{ name: 'row-1' }]
+// Three pages of ten. Module-level, so the table keeps its page across renders.
+const threePages = Array.from({ length: 25 }, (_, i) => ({ name: `row-${i + 1}` }))
+
+function TestTable({ interactionDisabled = false, stickyHeader = false, data = oneRow }) {
 	const table = useTable({
 		features,
-		data: [{ name: 'row-1' }],
+		data,
 		columns: [
 			columnHelper.accessor('name', {
 				header: 'Name',
@@ -106,5 +114,18 @@ describe('PaginatedTable', () => {
 		const disabled = await render(<TestTable interactionDisabled />)
 		expect(sortButtons(disabled).map((button) => button.getAttribute('aria-disabled'))).toEqual(['true'])
 		expect(disabled.querySelector('[role="status"]')?.textContent).toBe('Loading data…')
+	})
+
+	test('a pager button that reaches the end keeps focus', async () => {
+		const container = await render(<TestTable data={threePages} />)
+		const last = container.querySelector<HTMLButtonElement>('[aria-label="Go to last page"]')!
+		last.focus()
+		await act(async () => last.click())
+
+		await waitForUi(() => expect(container.textContent).toContain('Page 3 of 3'))
+		expect(last.getAttribute('aria-disabled')).toBe('true')
+		// Browsers drop focus from a natively disabled button; happy-dom does not, so assert the cause.
+		expect(last.disabled).toBe(false)
+		expect(document.activeElement).toBe(last)
 	})
 })

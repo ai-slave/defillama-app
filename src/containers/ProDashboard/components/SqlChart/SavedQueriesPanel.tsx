@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
@@ -60,14 +61,15 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 								content={<span className="mono-sm whitespace-pre-wrap">{query.sql}</span>}
 								data-fullwidth
 								render={
-									<button
+									<Ariakit.Button
 										type="button"
 										onClick={() => onApply(query)}
 										disabled={isDisabled || isBusy}
+										accessibleWhenDisabled
 										aria-busy={isBusy}
 									/>
 								}
-								className="group/apply min-w-0 flex-1 py-2 text-left disabled:cursor-not-allowed"
+								className="group/apply min-w-0 flex-1 py-2 text-left aria-disabled:cursor-not-allowed"
 							>
 								<span className="flex w-full min-w-0 flex-col gap-0.5">
 									<span className="flex items-center gap-2">

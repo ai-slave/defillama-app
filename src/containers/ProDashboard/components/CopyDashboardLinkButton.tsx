@@ -115,7 +115,7 @@ export function CopyDashboardLinkButton({
 								size="sm"
 								variant="primary"
 								onClick={() => void makePublic()}
-								disabled={makingPublic}
+								loading={makingPublic}
 								data-umami-event="dashboard-make-public"
 							>
 								{makingPublic ? 'Making public…' : 'Make public'}

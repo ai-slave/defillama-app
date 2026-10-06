@@ -277,7 +277,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 
 	return (
 		<div data-active={isActive} className={`group relative -mx-2 ${SIDEBAR_ROW_SURFACE}`} style={style}>
-			<button
+			<Ariakit.Button
 				type="button"
 				onClick={(e) => {
 					if (e.metaKey || e.ctrlKey) {
@@ -288,6 +288,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					handleSessionClick(session.sessionId)
 				}}
 				disabled={deletion.isPending || isRestoring}
+				accessibleWhenDisabled
 				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:opacity-60"
 			>
 				{session.isPinned ? <Icon name="pin" height={14} width={14} className="shrink-0 text-tertiary" /> : null}
@@ -310,7 +311,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					</Tooltip>
 				) : null}
 				<span className="truncate">{session.title}</span>
-			</button>
+			</Ariakit.Button>
 			<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center gap-0.5 rounded-r-md bg-surface-elevated-1 px-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-[active=true]:bg-brand-muted">
 				<Tooltip
 					content="Edit session title"

@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
@@ -87,16 +88,17 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					</div>
 				</div>
 			) : (
-				<button
+				<Ariakit.Button
 					ref={uploadRef}
 					type="button"
 					disabled={disabled}
 					onClick={open}
-					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+					accessibleWhenDisabled
+					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 				>
 					<Icon name="file-text" className="size-5" />
 					<span className="text-xs font-medium">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>
-				</button>
+				</Ariakit.Button>
 			)}
 			{errorMessage ? (
 				<p role="alert" className="body-sm text-data-down">

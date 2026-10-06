@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from '~/containers/Account/endTrialHold'
 import { PRO_TRIAL_CONVERSION_PRICE } from '~/containers/Subscription/data'
 import type {
@@ -352,29 +353,31 @@ function PricingCardCta({
 						</p>
 					</div>
 					{card.secondaryCta ? (
-						<button
+						<Ariakit.Button
 							type="button"
 							className={outlineBtnCls}
 							onClick={() => onSecondaryCtaClick?.(card.key)}
 							disabled={loading === 'llamapay'}
+							accessibleWhenDisabled
 							{...checkoutEvent('llamapay')}
 						>
 							{loading === 'llamapay' ? 'Processing...' : card.secondaryCta}
-						</button>
+						</Ariakit.Button>
 					) : null}
 				</>
 			) : (
 				<>
 					{card.secondaryCta ? (
-						<button
+						<Ariakit.Button
 							type="button"
 							className={outlineBtnCls}
 							onClick={() => onSecondaryCtaClick?.(card.key)}
 							disabled={loading === 'llamapay'}
+							accessibleWhenDisabled
 							{...checkoutEvent('llamapay')}
 						>
 							{loading === 'llamapay' ? 'Processing...' : card.secondaryCta}
-						</button>
+						</Ariakit.Button>
 					) : null}
 					<button
 						type="button"

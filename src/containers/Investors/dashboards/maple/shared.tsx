@@ -3,6 +3,7 @@ import type { RowData as TableRowData } from '@tanstack/react-table'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { PaginatedTableInstance, PaginationFeatures } from '~/components/Table/features/contracts'
+import { TablePager } from '~/containers/Investors/TablePager'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
 export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')
@@ -58,28 +59,17 @@ export function Pagination<F extends PaginationFeatures, T extends TableRowData>
 	const total = table.getFilteredRowModel().rows.length
 
 	return (
-		<div className="mt-2 flex items-center justify-between text-xs text-pro-text-label">
-			<span>
-				{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
-			</span>
-			<div className="flex gap-2">
-				<button
-					type="button"
-					onClick={() => table.previousPage()}
-					disabled={!table.getCanPreviousPage()}
-					className="disabled:opacity-30"
-				>
-					← Prev
-				</button>
-				<button
-					type="button"
-					onClick={() => table.nextPage()}
-					disabled={!table.getCanNextPage()}
-					className="disabled:opacity-30"
-				>
-					Next →
-				</button>
-			</div>
-		</div>
+		<TablePager
+			label={
+				<>
+					{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
+				</>
+			}
+			canPrevious={table.getCanPreviousPage()}
+			canNext={table.getCanNextPage()}
+			onPrevious={() => table.previousPage()}
+			onNext={() => table.nextPage()}
+			className="mt-2"
+		/>
 	)
 }

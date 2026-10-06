@@ -108,14 +108,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 					controls={
 						canRefresh ? (
 							<>
-								<ProButton
-									size="sm"
-									variant="ghost"
-									onClick={refresh}
-									disabled={isRefreshing}
-									title="Re-run the query"
-									{...(isRefreshing ? { loading: true } : {})}
-								>
+								<ProButton size="sm" variant="ghost" onClick={refresh} loading={isRefreshing} title="Re-run the query">
 									{isRefreshing ? 'Refreshing…' : 'Refresh'}
 								</ProButton>
 								<Tooltip content={REFRESH_HINT} className="flex items-center">

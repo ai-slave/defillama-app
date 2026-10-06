@@ -1,6 +1,5 @@
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 
 export type SubmitButtonMode =
@@ -21,6 +20,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 						variant="outline"
 						square
 						disabled={mode.disabled}
+						accessibleWhenDisabled
 						data-umami-event="llamaai-queue-submit"
 					/>
 				}
@@ -31,10 +31,12 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 		)
 	}
 
-	if (mode.kind === 'streaming') {
+	// Stop and its pending state are one button, so pressing Stop keeps focus on it while the stop request runs.
+	if (mode.kind === 'streaming' || mode.kind === 'stopping') {
+		const stopping = mode.kind === 'stopping'
 		return (
 			<>
-				{mode.canQueue ? (
+				{mode.kind === 'streaming' && mode.canQueue ? (
 					<Tooltip
 						content="Queue — sends when this response finishes"
 						render={<Button type="submit" size="md" variant="outline" square data-umami-event="llamaai-queue-submit" />}
@@ -44,14 +46,15 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 					</Tooltip>
 				) : null}
 				<Tooltip
-					content="Stop"
+					content={stopping ? 'Stopping…' : 'Stop'}
 					render={
 						<Button
 							type="button"
 							size="md"
-							variant="primary"
+							variant={stopping ? 'outline' : 'primary'}
 							square
-							onClick={mode.onStop}
+							pendingLabel={stopping ? 'Stopping…' : null}
+							onClick={stopping ? undefined : mode.onStop}
 							data-umami-event="llamaai-stop-generation"
 						/>
 					}
@@ -63,27 +66,6 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 		)
 	}
 
-	if (mode.kind === 'stopping') {
-		return (
-			<Tooltip
-				content="Stopping…"
-				render={
-					<Button
-						type="button"
-						size="md"
-						variant="outline"
-						square
-						disabled
-						data-umami-event="llamaai-stop-generation"
-					/>
-				}
-			>
-				<LoadingSpinner size={14} />
-				<span className="sr-only">Stopping</span>
-			</Tooltip>
-		)
-	}
-
 	return (
 		<Button
 			type="submit"
@@ -92,6 +74,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 			square
 			data-umami-event="llamaai-prompt-submit"
 			disabled={mode.disabled}
+			accessibleWhenDisabled
 		>
 			<Icon name="arrow-up" height={16} width={16} />
 			<span className="sr-only">Submit prompt</span>

@@ -558,10 +558,11 @@ export function UnifiedTableTab({
 				<CollapsibleSection title="Columns" badge={`${visibleColumnsCount} selected`} className="shadow-sm">
 					<div className="flex flex-col gap-2">
 						<div className="flex flex-wrap items-center justify-end gap-2 text-xs">
-							<button
+							<Ariakit.Button
 								type="button"
 								onClick={handleResetToPreset}
 								disabled={!isModified}
+								accessibleWhenDisabled
 								className={`rounded-md border px-2 py-0.5 text-xs transition ${
 									isModified
 										? 'border-brand text-brand hover:bg-brand/10'
@@ -569,7 +570,7 @@ export function UnifiedTableTab({
 								}`}
 							>
 								Reset to preset
-							</button>
+							</Ariakit.Button>
 						</div>
 						<ColumnManager
 							rowHeaders={rowHeaders}

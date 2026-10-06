@@ -4,6 +4,7 @@ import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
+import { TablePager } from '~/containers/Investors/TablePager'
 import {
 	formatPercent,
 	formatUsd,
@@ -182,29 +183,18 @@ function Pagination({ table }: { table: ReturnType<typeof useTable<typeof tableF
 	const total = table.getFilteredRowModel().rows.length
 
 	return (
-		<div className="mt-2 flex items-center justify-between text-xs text-pro-text-label">
-			<span>
-				{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
-			</span>
-			<div className="flex gap-2">
-				<button
-					type="button"
-					onClick={() => table.previousPage()}
-					disabled={!table.getCanPreviousPage()}
-					className="disabled:opacity-30"
-				>
-					← Prev
-				</button>
-				<button
-					type="button"
-					onClick={() => table.nextPage()}
-					disabled={!table.getCanNextPage()}
-					className="disabled:opacity-30"
-				>
-					Next →
-				</button>
-			</div>
-		</div>
+		<TablePager
+			label={
+				<>
+					{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
+				</>
+			}
+			canPrevious={table.getCanPreviousPage()}
+			canNext={table.getCanNextPage()}
+			onPrevious={() => table.previousPage()}
+			onNext={() => table.nextPage()}
+			className="mt-2"
+		/>
 	)
 }
 

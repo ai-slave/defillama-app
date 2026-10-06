@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
 import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -67,9 +68,10 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 	const label = direction === 'prev' ? 'Previous slide' : 'Next slide'
 
 	return (
-		<button
+		<Ariakit.Button
 			type="button"
 			disabled={disabled}
+			accessibleWhenDisabled
 			onClick={onClick}
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
@@ -81,7 +83,7 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 			aria-label={label}
 		>
 			<Icon name={direction === 'prev' ? 'chevron-left' : 'chevron-right'} className="size-4 text-on-brand" />
-		</button>
+		</Ariakit.Button>
 	)
 }
 

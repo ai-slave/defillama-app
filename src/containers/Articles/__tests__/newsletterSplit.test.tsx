@@ -55,7 +55,7 @@ describe('newsletter and media-kit split', () => {
 		)
 		expect(pressed).toEqual(['true', 'true'])
 		const submit = [...root.querySelectorAll('button')].find((button) => button.textContent === 'Enter email')
-		expect(submit?.hasAttribute('disabled')).toBe(true)
+		expect([submit?.getAttribute('aria-disabled'), submit?.disabled]).toEqual(['true', false])
 	})
 
 	test('links the research hero subscribe button to the newsletters page', () => {

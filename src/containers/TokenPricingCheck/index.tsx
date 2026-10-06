@@ -205,10 +205,11 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 							type="submit"
 							size="md"
 							variant="primary"
-							disabled={!chain || result.status === 'loading'}
+							disabled={!chain}
+							pendingLabel={result.status === 'loading' ? 'Checking…' : null}
 							className="w-full md:w-auto"
 						>
-							{result.status === 'loading' ? 'Checking...' : 'Check pricing'}
+							Check pricing
 						</Button>
 					</div>
 					{moveTokenExample ? (

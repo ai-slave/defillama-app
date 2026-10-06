@@ -857,18 +857,19 @@ export function ChartBuilderTab({
 						<div className="mt-2 flex flex-col gap-1">
 							<div className="flex items-center justify-between gap-2">
 								<h4 className="text-xs font-medium text-pro-text-secondary">Series colors</h4>
-								<button
+								<Ariakit.Button
 									type="button"
 									onClick={() => onChartBuilderChange({ seriesColors: {} })}
 									disabled={!hasCustomSeriesColors}
-									className={`text-xs font-medium transition-colors disabled:cursor-not-allowed ${
+									accessibleWhenDisabled
+									className={`text-xs font-medium transition-colors aria-disabled:cursor-not-allowed ${
 										hasCustomSeriesColors
 											? 'text-pro-text-secondary hover:text-pro-text-primary'
 											: 'cursor-not-allowed text-pro-text-tertiary'
 									}`}
 								>
 									Reset all
-								</button>
+								</Ariakit.Button>
 							</div>
 							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
 								{visibleSeries.map((series) => {
@@ -889,19 +890,20 @@ export function ChartBuilderTab({
 												className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
 												aria-label={`Select color for ${series.name}`}
 											/>
-											<button
+											<Ariakit.Button
 												type="button"
 												onClick={() => handleSeriesColorReset(series.name)}
 												disabled={!hasOverride}
+												accessibleWhenDisabled
 												aria-label={`Reset color for ${series.name}`}
-												className={`text-xs font-medium transition-colors disabled:cursor-not-allowed ${
+												className={`text-xs font-medium transition-colors aria-disabled:cursor-not-allowed ${
 													hasOverride
 														? 'text-pro-text-tertiary hover:text-pro-text-primary'
 														: 'pro-text4 cursor-not-allowed'
 												}`}
 											>
 												Reset
-											</button>
+											</Ariakit.Button>
 										</div>
 									)
 								})}

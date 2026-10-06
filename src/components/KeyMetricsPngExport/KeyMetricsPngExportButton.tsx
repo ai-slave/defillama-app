@@ -2,7 +2,6 @@ import { useState, type RefObject } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
@@ -295,10 +294,10 @@ export function KeyMetricsPngExportButton({
 			onClick={() => {
 				void handleExport()
 			}}
-			disabled={isLoading}
+			pendingLabel={isLoading ? 'Exporting…' : null}
 			title="Download Key Metrics as PNG"
 		>
-			{isLoading ? <LoadingSpinner size={12} /> : <Icon name="download-paper" height={12} width={12} />}
+			<Icon name="download-paper" height={12} width={12} />
 			<span>.png</span>
 		</Button>
 	)

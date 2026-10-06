@@ -166,7 +166,7 @@ export function ArticleEditorHeader({
 
 			{/* Wraps instead of shrinking: a published article with pending edits has more actions than a phone row fits. */}
 			<div className="flex flex-wrap items-center gap-2">
-				<button
+				<Ariakit.Button
 					type="button"
 					aria-live="polite"
 					aria-label={
@@ -188,13 +188,14 @@ export function ArticleEditorHeader({
 								: 'Cmd/Ctrl+S to save'
 					}
 					disabled={pillState === 'saving' || pillState === 'idle'}
+					accessibleWhenDisabled
 					onClick={() => void saveArticle()}
-					className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors disabled:cursor-default ${
+					className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors aria-disabled:cursor-default ${
 						pillState === 'error'
 							? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
 							: pillState === 'unsaved'
 								? 'border-warning/35 bg-warning/5 text-warning hover:bg-warning/10 dark:text-warning'
-								: 'border-transparent text-secondary hover:border-medium hover:bg-research-tint-hover disabled:hover:border-transparent disabled:hover:bg-transparent'
+								: 'border-transparent text-secondary hover:border-medium hover:bg-research-tint-hover aria-disabled:hover:border-transparent aria-disabled:hover:bg-transparent'
 					}`}
 				>
 					<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${PILL_DOT[pillState]}`} />
@@ -210,7 +211,7 @@ export function ArticleEditorHeader({
 							⌘S
 						</kbd>
 					) : null}
-				</button>
+				</Ariakit.Button>
 
 				<SegmentedControl
 					semantics="tabs"
@@ -244,15 +245,16 @@ export function ArticleEditorHeader({
 								>
 									Discard
 								</button>
-								<button
+								<Ariakit.Button
 									type="button"
 									disabled={isPublishing}
 									onClick={handlePublish}
-									className="flex h-9 items-center gap-1.5 rounded-md bg-success px-3.5 text-xs font-medium text-on-brand shadow-publish transition-all hover:bg-success hover:shadow-publish-hover disabled:cursor-not-allowed disabled:opacity-50"
+									accessibleWhenDisabled
+									className="flex h-9 items-center gap-1.5 rounded-md bg-success px-3.5 text-xs font-medium text-on-brand shadow-publish transition-all hover:bg-success hover:shadow-publish-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 								>
 									<span>{isPublishing ? 'Publishing…' : 'Publish update'}</span>
 									<span aria-hidden>→</span>
-								</button>
+								</Ariakit.Button>
 							</>
 						) : null}
 						<Ariakit.MenuProvider>

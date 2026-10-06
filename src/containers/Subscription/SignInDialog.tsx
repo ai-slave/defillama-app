@@ -671,11 +671,14 @@ function AuthScreen({
 			<div className="flex flex-col gap-3">
 				{signupLayout ? null : googleSignIn}
 				<div className="flex flex-col gap-2">
-					<button
+					<Ariakit.Button
 						type="button"
 						className={authProviderButtonStyles}
 						onClick={() => void handleGithubSignIn()}
 						disabled={isPending}
+						// Its own request keeps focus on it; another method's request takes it out of the tab order.
+						accessibleWhenDisabled={signInWithGithubMutation.isPending}
+						aria-busy={signInWithGithubMutation.isPending || undefined}
 					>
 						<span className={authProviderIconSlotStyles}>
 							{signInWithGithubMutation.isPending ? (
@@ -688,7 +691,7 @@ function AuthScreen({
 							{signInWithGithubMutation.isPending ? 'Waiting for GitHub…' : 'Continue with GitHub'}
 						</span>
 						{lastMethod === 'github' ? <LastUsedCorner /> : null}
-					</button>
+					</Ariakit.Button>
 
 					{state.error?.method === 'github' ? <InlineStatus variant="error">{state.error.message}</InlineStatus> : null}
 				</div>

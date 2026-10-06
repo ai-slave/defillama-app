@@ -91,7 +91,7 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 							aria-label="Saved view name"
 							autoFocus
 						/>
-						<Button type="submit" variant="primary" size="md" disabled={!canSave}>
+						<Button type="submit" variant="primary" size="md" disabled={!canSave} accessibleWhenDisabled>
 							<Icon name="plus" className="size-3.5" />
 							Save
 						</Button>

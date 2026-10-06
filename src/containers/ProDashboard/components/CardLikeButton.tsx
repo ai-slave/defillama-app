@@ -1,5 +1,4 @@
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
 import { ProButton } from '../ui'
 
@@ -23,7 +22,8 @@ export function CardLikeButton({
 			variant="ghost"
 			aria-label="Star dashboard"
 			aria-pressed={isLiked}
-			disabled={isLiking}
+			loading={isLiking}
+			icon={<Icon name="star" height={14} width={14} className={isLiked ? 'fill-current text-warning' : 'fill-none'} />}
 			onClick={(event: React.MouseEvent) => {
 				event.preventDefault()
 				event.stopPropagation()
@@ -32,11 +32,6 @@ export function CardLikeButton({
 			className="z-10 tabular-nums"
 			title={isLiked ? 'Unstar dashboard' : 'Star dashboard'}
 		>
-			{isLiking ? (
-				<LoadingSpinner size={14} />
-			) : (
-				<Icon name="star" height={14} width={14} className={isLiked ? 'fill-current text-warning' : 'fill-none'} />
-			)}
 			{count}
 		</ProButton>
 	)

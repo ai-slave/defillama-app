@@ -612,7 +612,12 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							<div className="grid gap-2 border-t border-medium px-5 py-3">
 								<div className="flex items-center justify-between">
 									<span className="label-xs tracking-wide text-tertiary uppercase">Annotations</span>
-									<Button size="sm" onClick={addAnnotation} disabled={annotations.length >= MAX_ANNOTATIONS}>
+									<Button
+										size="sm"
+										onClick={addAnnotation}
+										disabled={annotations.length >= MAX_ANNOTATIONS}
+										accessibleWhenDisabled
+									>
 										<Icon name="plus" className="size-3.5" aria-hidden="true" />
 										Add
 									</Button>

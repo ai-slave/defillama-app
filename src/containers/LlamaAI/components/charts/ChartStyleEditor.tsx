@@ -526,6 +526,7 @@ export function ChartStyleEditor({
 													square
 													aria-label={`Move series ${i + 1} up`}
 													disabled={i === 0}
+													accessibleWhenDisabled
 													onClick={() => moveSeries(i, i - 1)}
 												>
 													<Icon name="chevron-up" height={16} width={16} />
@@ -536,6 +537,7 @@ export function ChartStyleEditor({
 													square
 													aria-label={`Move series ${i + 1} down`}
 													disabled={i === draft.series.length - 1}
+													accessibleWhenDisabled
 													onClick={() => moveSeries(i, i + 1)}
 												>
 													<Icon name="chevron-down" height={16} width={16} />

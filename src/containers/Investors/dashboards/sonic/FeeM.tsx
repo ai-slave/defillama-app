@@ -11,6 +11,7 @@ import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { usePaginatedTable } from '~/components/Table/features/pagination'
+import { TablePager } from '~/containers/Investors/TablePager'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -372,29 +373,18 @@ export default function FeeM() {
 
 					{/* Pagination */}
 					{table.getPageCount() > 1 && (
-						<div className="flex items-center justify-between border-t border-pro-cards-border px-4 py-3">
-							<span className="text-xs text-pro-text-label">
-								Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
-							</span>
-							<div className="flex gap-1">
-								<button
-									type="button"
-									onClick={() => table.previousPage()}
-									disabled={!table.getCanPreviousPage()}
-									className="rounded-md border border-pro-cards-border px-3 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
-								>
-									Prev
-								</button>
-								<button
-									type="button"
-									onClick={() => table.nextPage()}
-									disabled={!table.getCanNextPage()}
-									className="rounded-md border border-pro-cards-border px-3 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
-								>
-									Next
-								</button>
-							</div>
-						</div>
+						<TablePager
+							label={
+								<>
+									Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
+								</>
+							}
+							canPrevious={table.getCanPreviousPage()}
+							canNext={table.getCanNextPage()}
+							onPrevious={() => table.previousPage()}
+							onNext={() => table.nextPage()}
+							className="border-t border-pro-cards-border px-4 py-3"
+						/>
 					)}
 				</div>
 			</div>

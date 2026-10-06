@@ -155,7 +155,7 @@ test.each(SCENARIOS)(
 		})
 		const waitForRetryEnabled = () =>
 			waitForUi(async () => {
-				await act(async () => expect(findButton('Retry')?.disabled).toBe(false))
+				await act(async () => expect(findButton('Retry')?.getAttribute('aria-disabled')).toBe(null))
 			})
 		/** Double-clicks Retry, which must start one request per leg; resolves collateral and leaves the debt leg. */
 		const retry = async (retained: Array<string>) => {
@@ -166,7 +166,12 @@ test.each(SCENARIOS)(
 				findButton('Retry').click()
 			})
 			await waitForUi(async () => {
-				await act(async () => expect(findButton('Retrying…')?.disabled).toBe(true))
+				// A retry in flight keeps its focus and ignores presses: busy and aria-disabled, never natively disabled.
+				await act(async () => {
+					const pending = container.querySelector<HTMLButtonElement>('button[aria-busy="true"]')!
+					expect(pending.textContent).toContain('Retrying…')
+					expect([pending.getAttribute('aria-disabled'), pending.disabled]).toEqual(['true', false])
+				})
 			})
 			await act(async () => collateral.resolve(Response.json({ rows: scenario.finalIsEmpty ? [] : USE_ROUTES })))
 			expect(shownIds()).toEqual(retained)

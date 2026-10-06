@@ -11,10 +11,10 @@ export const authInputStyles =
 // Sign-in method buttons keep a centred label; the "Last used" chip sits on the top-right corner (LastUsedCorner),
 // so no label moves to make room at any width. A pending spinner takes the icon's slot.
 export const authProviderButtonStyles =
-	'relative flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium px-3 py-2 label-md text-primary enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
+	'relative flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium px-3 py-2 label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
 // Wallet picker rows list choices with their tags, so they read left to right.
 export const authWalletRowStyles =
-	'relative flex min-h-10 w-full items-center gap-2 rounded-lg border border-medium px-3 py-2 text-left label-md text-primary enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
+	'relative flex min-h-10 w-full items-center gap-2 rounded-lg border border-medium px-3 py-2 text-left label-md text-primary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60'
 export const authProviderIconSlotStyles = 'flex size-5 shrink-0 items-center justify-center'
 
 /** The auth header: the title takes focus on every mount (callers key it by step), so a step change is announced. */

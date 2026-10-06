@@ -36,6 +36,7 @@ export function TokenDeferredPaginationControls({
 					aria-label="Go to next page"
 					onClick={() => onRequestPage(1)}
 					disabled={isLoading}
+					accessibleWhenDisabled
 				>
 					<Icon name="chevron-right" height={16} width={16} />
 				</Button>
@@ -47,6 +48,7 @@ export function TokenDeferredPaginationControls({
 					aria-label="Go to last page"
 					onClick={() => onRequestPage(pageCount - 1)}
 					disabled={isLoading}
+					accessibleWhenDisabled
 				>
 					<Icon name="chevrons-right" height={16} width={16} />
 				</Button>

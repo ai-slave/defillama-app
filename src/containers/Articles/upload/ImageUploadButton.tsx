@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
@@ -64,12 +65,13 @@ export function ImageUploadButton({
 			{isSquare ? (
 				<>
 					{currentUrl ? (
-						<button
+						<Ariakit.Button
 							type="button"
 							onClick={open}
 							disabled={isUploading}
+							accessibleWhenDisabled
 							aria-label={`Replace ${name}`}
-							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 disabled:cursor-not-allowed disabled:opacity-60"
+							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 						>
 							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img
@@ -80,17 +82,18 @@ export function ImageUploadButton({
 							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/0 label-sm text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
 								{isUploading ? 'Uploading…' : 'Replace'}
 							</span>
-						</button>
+						</Ariakit.Button>
 					) : (
-						<button
+						<Ariakit.Button
 							type="button"
 							onClick={open}
 							disabled={isUploading}
-							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+							accessibleWhenDisabled
+							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
 							<Icon name="image-plus" className="size-5" />
 							<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload'}</span>
-						</button>
+						</Ariakit.Button>
 					)}
 					<div className="flex min-w-0 flex-col gap-2 pt-1">
 						<div className="flex flex-wrap gap-2">
@@ -124,12 +127,13 @@ export function ImageUploadButton({
 				<>
 					{currentUrl ? (
 						<div className="grid gap-2">
-							<button
+							<Ariakit.Button
 								type="button"
 								onClick={open}
 								disabled={isUploading}
+								accessibleWhenDisabled
 								aria-label={`Replace ${name}`}
-								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 disabled:cursor-not-allowed"
+								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 aria-disabled:cursor-not-allowed"
 							>
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img
@@ -140,7 +144,7 @@ export function ImageUploadButton({
 								<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-invert/0 text-xs font-medium text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
 									{isUploading ? 'Uploading…' : 'Replace'}
 								</span>
-							</button>
+							</Ariakit.Button>
 							<div className="flex flex-wrap gap-2">
 								<Button
 									type="button"
@@ -164,16 +168,17 @@ export function ImageUploadButton({
 							</div>
 						</div>
 					) : (
-						<button
+						<Ariakit.Button
 							ref={uploadRef}
 							type="button"
 							disabled={isUploading}
+							accessibleWhenDisabled
 							onClick={open}
-							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
 							<Icon name="image-plus" className="size-5" />
 							<span className="text-xs font-medium">{isUploading ? 'Uploading…' : `Upload ${name}`}</span>
-						</button>
+						</Ariakit.Button>
 					)}
 					{status}
 				</>

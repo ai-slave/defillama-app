@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { TagGroup } from '~/ui/SegmentedControl'
 
 interface TablePaginationProps {
@@ -41,25 +42,27 @@ export function TablePagination({
 		<div className="mt-2 flex w-full items-center justify-between">
 			{shouldShowPagination ? (
 				<div className="flex items-center gap-2">
-					<button
+					<Ariakit.Button
 						type="button"
 						onClick={previousPage}
 						disabled={!canPreviousPage}
-						className="rounded-md border border-subtle px-2 py-1 text-sm text-pro-text-secondary transition-colors hover:bg-border-subtle disabled:cursor-not-allowed disabled:opacity-50"
+						accessibleWhenDisabled
+						className="rounded-md border border-subtle px-2 py-1 text-sm text-pro-text-secondary transition-colors hover:bg-border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 					>
 						Previous
-					</button>
+					</Ariakit.Button>
 					<span className="text-xs text-pro-text-secondary">
 						Page {pageIndex + 1} of {pageCount}
 					</span>
-					<button
+					<Ariakit.Button
 						type="button"
 						onClick={nextPage}
 						disabled={!canNextPage}
-						className="rounded-md border border-subtle px-2 py-1 text-sm text-pro-text-secondary transition-colors hover:bg-border-subtle disabled:cursor-not-allowed disabled:opacity-50"
+						accessibleWhenDisabled
+						className="rounded-md border border-subtle px-2 py-1 text-sm text-pro-text-secondary transition-colors hover:bg-border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 					>
 						Next
-					</button>
+					</Ariakit.Button>
 				</div>
 			) : null}
 			{showPageSizes ? (

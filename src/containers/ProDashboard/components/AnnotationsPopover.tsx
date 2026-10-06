@@ -13,7 +13,7 @@ import { ProBadge, ProButton } from '../ui'
 import { generateItemId } from '../utils/dashboardUtils'
 
 const INPUT_STYLES =
-	'min-w-0 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus-visible:border-brand focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-60'
+	'min-w-0 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus-visible:border-brand focus-visible:outline-hidden read-only:cursor-not-allowed read-only:opacity-60'
 
 export function AnnotationsPopover() {
 	const { annotations, setAnnotations } = useProDashboardAnnotations()
@@ -89,7 +89,8 @@ export function AnnotationsPopover() {
 								aria-label="Annotation date"
 								className={`${INPUT_STYLES} shrink-0`}
 								value={date}
-								disabled={atLimit}
+								// Adding the last allowed annotation from this field locks it; read-only keeps its focus.
+								readOnly={atLimit}
 								onChange={(event) => setDate(event.target.value)}
 							/>
 							<input
@@ -99,7 +100,7 @@ export function AnnotationsPopover() {
 								className={`${INPUT_STYLES} flex-1`}
 								value={label}
 								maxLength={DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH}
-								disabled={atLimit}
+								readOnly={atLimit}
 								onChange={(event) => setLabel(event.target.value)}
 							/>
 						</div>
@@ -114,6 +115,7 @@ export function AnnotationsPopover() {
 								size="sm"
 								variant="primary"
 								disabled={!canAdd}
+								accessibleWhenDisabled
 								data-umami-event="dashboard-annotation-add"
 							>
 								<Icon name="plus" height={14} width={14} />

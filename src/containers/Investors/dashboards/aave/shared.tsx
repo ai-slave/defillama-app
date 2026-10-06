@@ -19,6 +19,7 @@ import type {
 	VisibilityFeatures
 } from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { TablePager } from '~/containers/Investors/TablePager'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
 export const AAVE_BAR_EXPORT = { csv: true, png: false, filename: 'bar-chart-data' } as const
@@ -183,28 +184,17 @@ export function Pagination<F extends PaginationFeatures, T extends TableRowData>
 	const total = table.getPrePaginatedRowModel().rows.length
 
 	return (
-		<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-[11px] text-pro-text-tertiary">
-			<span className="tabular-nums">
-				{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
-			</span>
-			<div className="flex gap-1">
-				<button
-					type="button"
-					onClick={() => table.previousPage()}
-					disabled={!table.getCanPreviousPage()}
-					className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
-				>
-					Prev
-				</button>
-				<button
-					type="button"
-					onClick={() => table.nextPage()}
-					disabled={!table.getCanNextPage()}
-					className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
-				>
-					Next
-				</button>
-			</div>
-		</div>
+		<TablePager
+			label={
+				<>
+					{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
+				</>
+			}
+			canPrevious={table.getCanPreviousPage()}
+			canNext={table.getCanNextPage()}
+			onPrevious={() => table.previousPage()}
+			onNext={() => table.nextPage()}
+			className="mt-3 border-t border-subtle pt-3"
+		/>
 	)
 }

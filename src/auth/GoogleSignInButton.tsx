@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import Script from 'next/script'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -206,11 +207,12 @@ export function GoogleSignInButton({
 				onReady={() => setLoadStatus('ready')}
 				onError={() => setLoadStatus('failed')}
 			/>
-			<button
+			<Ariakit.Button
 				ref={buttonRef}
 				type="button"
 				className={authProviderButtonStyles}
 				disabled={disabled || busy || loadStatus !== 'ready'}
+				accessibleWhenDisabled
 				aria-busy={busy}
 				onClick={requestCode}
 			>
@@ -231,7 +233,7 @@ export function GoogleSignInButton({
 								: 'Continue with Google'}
 				</span>
 				{lastUsed ? <LastUsedCorner /> : null}
-			</button>
+			</Ariakit.Button>
 			{loadStatus === 'failed' ? (
 				<div className="mt-2">
 					<InlineStatus variant="error">

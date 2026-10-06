@@ -12,8 +12,8 @@ export function TokenDataRetry({
 	return (
 		<div className="flex flex-wrap items-center justify-center gap-2">
 			<span>{message}</span>
-			<Button size="sm" disabled={isRetrying} onClick={onRetry}>
-				{isRetrying ? 'Retrying…' : 'Retry'}
+			<Button size="sm" pendingLabel={isRetrying ? 'Retrying…' : null} onClick={onRetry}>
+				Retry
 			</Button>
 		</div>
 	)

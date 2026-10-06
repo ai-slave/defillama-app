@@ -355,11 +355,13 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 						<div className="flex items-center gap-2">
 							{shouldShowPaginationControls ? (
 								<>
+									{/* Each pager button disables itself at the end it moves to, so it keeps focus while disabled. */}
 									<Button
 										type="button"
 										aria-label="Go to first page"
 										onClick={() => startTransition(() => table.setPageIndex(0))}
 										disabled={interactionDisabled || !canPreviousPage}
+										accessibleWhenDisabled
 										variant="secondary"
 										size="md"
 										square
@@ -371,6 +373,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 										aria-label="Go to previous page"
 										onClick={() => startTransition(() => table.previousPage())}
 										disabled={interactionDisabled || !canPreviousPage}
+										accessibleWhenDisabled
 										variant="secondary"
 										size="md"
 										square
@@ -383,6 +386,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 										aria-label="Go to next page"
 										onClick={() => startTransition(() => table.nextPage())}
 										disabled={interactionDisabled || !canNextPage}
+										accessibleWhenDisabled
 										variant="secondary"
 										size="md"
 										square
@@ -394,6 +398,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 										aria-label="Go to last page"
 										onClick={() => startTransition(() => table.setPageIndex(Math.max(0, table.getPageCount() - 1)))}
 										disabled={interactionDisabled || !canNextPage}
+										accessibleWhenDisabled
 										variant="secondary"
 										size="md"
 										square

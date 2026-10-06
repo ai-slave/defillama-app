@@ -398,11 +398,13 @@ test('upload pending disables picking and ignores another drop until completion'
 	await drop()
 	await waitForUi(() => expect(container.textContent).toContain('Uploading…'))
 	expect(button('Add project source').disabled).toBe(true)
-	expect(target.disabled).toBe(true)
+	// The target started the upload, so it keeps focus while it waits.
+	expect(target.getAttribute('aria-disabled')).toBe('true')
+	expect(target.disabled).toBe(false)
 	await drop()
 	expect(api.upload).toHaveBeenCalledOnce()
 	await act(async () => request.resolve({ imported: [], skipped: [] }))
-	await waitForUi(() => expect(target.disabled).toBe(false))
+	await waitForUi(() => expect(target.hasAttribute('aria-disabled')).toBe(false))
 	expect(button('Add project source').disabled).toBe(false)
 })
 

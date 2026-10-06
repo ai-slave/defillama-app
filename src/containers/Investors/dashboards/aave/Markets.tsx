@@ -3,6 +3,7 @@ import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
+import { TablePager } from '~/containers/Investors/TablePager'
 import {
 	formatPercent,
 	formatUsd,
@@ -175,29 +176,18 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 				<InvestorsTable instance={instance} overrideRows={pagedRows} />
 			</div>
 			{totalPages > 1 && (
-				<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-[11px] text-pro-text-tertiary">
-					<span className="tabular-nums">
-						{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, allRows.length)} of {allRows.length}
-					</span>
-					<div className="flex gap-1">
-						<button
-							type="button"
-							onClick={() => setPage((p) => p - 1)}
-							disabled={page === 0}
-							className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
-						>
-							Prev
-						</button>
-						<button
-							type="button"
-							onClick={() => setPage((p) => p + 1)}
-							disabled={page >= totalPages - 1}
-							className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
-						>
-							Next
-						</button>
-					</div>
-				</div>
+				<TablePager
+					label={
+						<>
+							{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, allRows.length)} of {allRows.length}
+						</>
+					}
+					canPrevious={page > 0}
+					canNext={page < totalPages - 1}
+					onPrevious={() => setPage((p) => p - 1)}
+					onNext={() => setPage((p) => p + 1)}
+					className="mt-3 border-t border-subtle pt-3"
+				/>
 			)}
 		</div>
 	)

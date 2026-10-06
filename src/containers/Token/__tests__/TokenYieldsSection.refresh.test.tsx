@@ -197,7 +197,7 @@ test.each([
 	}
 })
 
-/** Double-clicks Retry, which must start exactly one request and disable itself while it runs. */
+/** Double-clicks Retry, which must start exactly one request and ignore presses, keeping focus, while it runs. */
 async function retryOnce(refresh: Awaited<ReturnType<typeof mountRefresh>>, hydratedPools: Array<string>) {
 	refresh.restart()
 	const retry = refresh.findButton('Retry')!
@@ -207,8 +207,12 @@ async function retryOnce(refresh: Awaited<ReturnType<typeof mountRefresh>>, hydr
 	})
 	await waitForUi(async () => {
 		await act(async () => {
-			expect(retry.disabled).toBe(true)
-			expect(refresh.container.textContent).toContain('Retrying…')
+			expect([retry.getAttribute('aria-busy'), retry.getAttribute('aria-disabled'), retry.disabled]).toEqual([
+				'true',
+				'true',
+				false
+			])
+			expect(retry.textContent).toContain('Retrying…')
 		})
 	})
 	expect(refresh.shownPools()).toEqual(hydratedPools)

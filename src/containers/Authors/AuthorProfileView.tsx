@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import Image from 'next/image'
 import { useMemo, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
@@ -155,15 +156,16 @@ function NavLink({
 }) {
 	if (nav.navigate) {
 		return (
-			<button
+			<Ariakit.Button
 				type="button"
 				onClick={() => nav.navigate!(params)}
 				aria-current={ariaCurrent}
 				disabled={ariaDisabled}
+				accessibleWhenDisabled
 				className={className}
 			>
 				{children}
-			</button>
+			</Ariakit.Button>
 		)
 	}
 	return (

@@ -1,26 +1,25 @@
-import type { ReactNode } from 'react'
+import * as Ariakit from '@ariakit/react'
+import type { ComponentPropsWithRef } from 'react'
 import { Button } from '~/ui/Button'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 
-/** In the phone filter menu the reset is the menu's closing action row; on desktop it is a toolbar button. */
+/** In the phone filter menu the reset is the menu's closing action row; on desktop it is a toolbar button.
+    Clearing the filters disables the reset itself, so it stays focusable while disabled and swallows presses. It
+    forwards the rest of its props, so a Tooltip can render it as its anchor. */
 export function ResetFiltersButton({
 	nestedMenu,
-	onClick,
 	disabled,
-	children
-}: {
-	nestedMenu: boolean
-	onClick: () => void
-	disabled?: boolean
-	children: ReactNode
-}) {
+	className,
+	...props
+}: { nestedMenu: boolean } & Omit<ComponentPropsWithRef<'button'>, 'type'>) {
 	return nestedMenu ? (
-		<button type="button" onClick={onClick} disabled={disabled} className={nestedMenuActionStyles}>
-			{children}
-		</button>
+		<Ariakit.Button
+			{...props}
+			disabled={disabled}
+			accessibleWhenDisabled
+			className={`${nestedMenuActionStyles} ${className ?? ''}`.trim()}
+		/>
 	) : (
-		<Button type="button" size="md" onClick={onClick} disabled={disabled}>
-			{children}
-		</Button>
+		<Button {...props} size="md" disabled={disabled} accessibleWhenDisabled className={className} />
 	)
 }

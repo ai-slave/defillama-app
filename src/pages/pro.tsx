@@ -476,7 +476,7 @@ function ProContent({
 									aria-label="First page"
 									onClick={() => goToPage(1)}
 									disabled={selectedPage < 3}
-									className="disabled:hidden"
+									accessibleWhenDisabled
 								>
 									<Icon name="chevrons-left" height={16} width={16} />
 								</ProButton>
@@ -488,7 +488,7 @@ function ProContent({
 									aria-label="Previous page"
 									onClick={() => goToPage(Math.max(1, selectedPage - 1))}
 									disabled={selectedPage === 1}
-									className="disabled:hidden"
+									accessibleWhenDisabled
 								>
 									<Icon name="chevron-left" height={16} width={16} />
 								</ProButton>
@@ -516,7 +516,7 @@ function ProContent({
 									aria-label="Next page"
 									onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
 									disabled={selectedPage === myDashboardsTotalPages}
-									className="disabled:hidden"
+									accessibleWhenDisabled
 								>
 									<Icon name="chevron-right" height={16} width={16} />
 								</ProButton>
@@ -527,7 +527,7 @@ function ProContent({
 									aria-label="Last page"
 									onClick={() => goToPage(myDashboardsTotalPages)}
 									disabled={selectedPage > myDashboardsTotalPages - 2}
-									className="disabled:hidden"
+									accessibleWhenDisabled
 								>
 									<Icon name="chevrons-right" height={16} width={16} />
 								</ProButton>

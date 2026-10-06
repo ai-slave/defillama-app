@@ -25,19 +25,20 @@ export function RailButton({
 	children: ReactNode
 }) {
 	return (
-		<button
+		<Ariakit.Button
 			type="button"
 			aria-label={label}
 			aria-pressed={active}
 			title={label}
 			onClick={onClick}
 			disabled={disabled}
-			className={`flex size-9 shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+			accessibleWhenDisabled
+			className={`flex size-9 shrink-0 items-center justify-center rounded-md transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-40 ${
 				active ? 'bg-research-tint text-link' : 'text-secondary hover:bg-research-tint-hover hover:text-primary'
 			}`}
 		>
 			{children}
-		</button>
+		</Ariakit.Button>
 	)
 }
 

@@ -215,17 +215,19 @@ export function ProjectFilesPanel({
 				{isInitialLoading || files.length === 0 ? (
 					<div className="relative">
 						{/* Keep the upload copy in layout so wrapping and zoom cannot move the storage row when feedback clears. */}
-						<button
+						<Ariakit.Button
 							type="button"
 							onClick={onPick}
 							disabled={isInitialLoading || filesFailed || isUploading}
+							// The upload it starts keeps focus on it; the hidden loading and failed states leave the tab order.
+							accessibleWhenDisabled={!isInitialLoading && !filesFailed}
 							aria-hidden={isInitialLoading || filesFailed || undefined}
-							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary focus-visible:focus-ring enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 ${isInitialLoading || filesFailed ? 'invisible' : ''}`}
+							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary not-aria-disabled:hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${isInitialLoading || filesFailed ? 'invisible' : ''}`}
 						>
 							<Icon name="file-plus" height={16} width={16} className="text-tertiary" />
 							<span>Drop files here or choose files</span>
 							<span>Markdown, text, code, JSON, CSV. Up to 100 MB per file.</span>
-						</button>
+						</Ariakit.Button>
 						{fileErrorNotice ? (
 							<div className="absolute inset-0 flex items-center justify-center p-4">{fileErrorNotice}</div>
 						) : isInitialLoading ? (

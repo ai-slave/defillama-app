@@ -146,6 +146,7 @@ export function SectionCard({
 								variant="ghost"
 								aria-label="Move section up"
 								disabled={!editing.canMoveUp}
+								accessibleWhenDisabled
 								onClick={() => editing.onMove(-1)}
 							/>
 						}
@@ -161,6 +162,7 @@ export function SectionCard({
 								variant="ghost"
 								aria-label="Move section down"
 								disabled={!editing.canMoveDown}
+								accessibleWhenDisabled
 								onClick={() => editing.onMove(1)}
 							/>
 						}

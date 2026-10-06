@@ -279,11 +279,12 @@ export function NotebookView({
 							) : null}
 						</span>
 					) : null}
-					<button
+					<Ariakit.Button
 						type="button"
 						onClick={runAll}
 						disabled={!canRun || runningAny || !hasRunnableSql}
-						className={`inline-flex items-center gap-1.5 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+						accessibleWhenDisabled
+						className={`inline-flex items-center gap-1.5 rounded-md transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-40 ${
 							promoteRunAll
 								? 'bg-brand px-3 py-1.5 text-sm font-semibold text-on-brand hover:opacity-90'
 								: 'border border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-pro-text-primary hover:border-brand/40 hover:text-brand'
@@ -302,7 +303,7 @@ export function NotebookView({
 							</svg>
 						)}
 						{promoteRunAll ? 'Run notebook' : 'Run all'}
-					</button>
+					</Ariakit.Button>
 				</div>
 			</div>
 
@@ -318,14 +319,15 @@ export function NotebookView({
 					</span>
 					<div className="flex items-center gap-1">
 						{firstStaleName && !tab.cellsDirty ? (
-							<button
+							<Ariakit.Button
 								type="button"
 								onClick={runAll}
 								disabled={!canRun || runningAny}
-								className="rounded-md border border-pro-premium-300/40 px-2 py-0.5 text-[11px] font-medium text-pro-premium-300 hover:bg-pro-premium-300/10 disabled:cursor-not-allowed disabled:opacity-40"
+								accessibleWhenDisabled
+								className="rounded-md border border-pro-premium-300/40 px-2 py-0.5 text-[11px] font-medium text-pro-premium-300 hover:bg-pro-premium-300/10 aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 							>
 								Re-run all
-							</button>
+							</Ariakit.Button>
 						) : null}
 						<button
 							type="button"

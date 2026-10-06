@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
@@ -414,28 +415,30 @@ export function DashboardDiscovery({
 					{totalPages > 1 ? (
 						<div className="flex flex-col items-center gap-4">
 							<div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto">
-								<button
+								<Ariakit.Button
 									type="button"
 									onClick={() => {
 										const targetPage = 1
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage < 3}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									accessibleWhenDisabled
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
 								>
 									<Icon name="chevrons-left" height={16} width={16} />
-								</button>
-								<button
+								</Ariakit.Button>
+								<Ariakit.Button
 									type="button"
 									onClick={() => {
 										const targetPage = Math.max(1, selectedPage - 1)
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage === 1}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									accessibleWhenDisabled
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
 								>
 									<Icon name="chevron-left" height={16} width={16} />
-								</button>
+								</Ariakit.Button>
 								{pagesToShow.map((pageNum) => {
 									const isActive = selectedPage === pageNum
 									return (
@@ -453,28 +456,30 @@ export function DashboardDiscovery({
 										</button>
 									)
 								})}
-								<button
+								<Ariakit.Button
 									type="button"
 									onClick={() => {
 										const targetPage = Math.min(totalPages, selectedPage + 1)
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage === totalPages}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									accessibleWhenDisabled
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
 								>
 									<Icon name="chevron-right" height={16} width={16} />
-								</button>
-								<button
+								</Ariakit.Button>
+								<Ariakit.Button
 									type="button"
 									onClick={() => {
 										const targetPage = totalPages
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage > totalPages - 2}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									accessibleWhenDisabled
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 aria-disabled:opacity-40"
 								>
 									<Icon name="chevrons-right" height={16} width={16} />
-								</button>
+								</Ariakit.Button>
 							</div>
 							<p className="text-xs text-pro-text-label">
 								Page {selectedPage} of {totalPages}

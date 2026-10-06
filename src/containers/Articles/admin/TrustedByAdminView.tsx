@@ -418,16 +418,17 @@ function SortableLogoRow({
 			data-dragging={isDragging}
 			className={`grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-3 p-4 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${logo.enabled ? '' : 'opacity-50'}`}
 		>
-			<button
+			<Ariakit.Button
 				type="button"
 				disabled={disabled}
-				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+				accessibleWhenDisabled
+				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 				aria-label={`Drag ${logo.name}`}
 				{...attributes}
 				{...listeners}
 			>
 				<Icon name="menu" className="size-4" />
-			</button>
+			</Ariakit.Button>
 
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img src={logo.imageUrl} alt="" className="h-8 shrink-0 object-contain" />
@@ -505,16 +506,17 @@ function SortableMentionRow({
 			data-dragging={isDragging}
 			className={`grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-3 p-4 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${mention.enabled ? '' : 'opacity-50'}`}
 		>
-			<button
+			<Ariakit.Button
 				type="button"
 				disabled={disabled}
-				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+				accessibleWhenDisabled
+				className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash aria-disabled:cursor-not-allowed aria-disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 				aria-label="Drag mention"
 				{...attributes}
 				{...listeners}
 			>
 				<Icon name="menu" className="size-4" />
-			</button>
+			</Ariakit.Button>
 
 			{slotLabel ? (
 				<span className="inline-flex shrink-0 items-center rounded-full bg-research-tint px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">

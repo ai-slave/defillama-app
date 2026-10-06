@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import type { Ref } from 'react'
 import type * as React from 'react'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -42,14 +43,15 @@ export function EditorialTagRow({
 				</span>
 				<span className="truncate text-sm text-primary">{article.title}</span>
 			</div>
-			<button
+			<Ariakit.Button
 				type="button"
 				onClick={onRemove}
 				disabled={pending}
-				className={`justify-self-end rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50${leading ? ' sm:col-start-3' : ''}`}
+				accessibleWhenDisabled
+				className={`justify-self-end rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 aria-disabled:opacity-50${leading ? ' sm:col-start-3' : ''}`}
 			>
 				Remove
-			</button>
+			</Ariakit.Button>
 		</li>
 	)
 }

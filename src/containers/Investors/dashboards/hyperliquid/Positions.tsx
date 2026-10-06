@@ -14,6 +14,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
+import { TablePager } from '~/containers/Investors/TablePager'
 import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -86,29 +87,18 @@ function Pagination<Row>({ table }: { table: TableInstance<typeof tableFeaturesC
 	const to = Math.min((pageIndex + 1) * pageSize, total)
 
 	return (
-		<div className="flex items-center justify-between pt-3">
-			<span className="text-xs text-pro-text-label">
-				{from}–{to} of {total}
-			</span>
-			<div className="flex gap-1">
-				<button
-					type="button"
-					onClick={() => table.previousPage()}
-					disabled={!table.getCanPreviousPage()}
-					className="rounded-sm px-2.5 py-1 text-xs font-medium text-pro-text-label transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
-				>
-					Prev
-				</button>
-				<button
-					type="button"
-					onClick={() => table.nextPage()}
-					disabled={!table.getCanNextPage()}
-					className="rounded-sm px-2.5 py-1 text-xs font-medium text-pro-text-label transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
-				>
-					Next
-				</button>
-			</div>
-		</div>
+		<TablePager
+			label={
+				<>
+					{from}–{to} of {total}
+				</>
+			}
+			canPrevious={table.getCanPreviousPage()}
+			canNext={table.getCanNextPage()}
+			onPrevious={() => table.previousPage()}
+			onNext={() => table.nextPage()}
+			className="pt-3"
+		/>
 	)
 }
 

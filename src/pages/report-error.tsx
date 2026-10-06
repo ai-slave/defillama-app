@@ -4,7 +4,6 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Input, textareaStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
 
 async function reportError(report: any) {
@@ -67,15 +66,15 @@ function ReportError() {
 						<span>How can we contact you? (optional)</span>
 						<Input name="contact" placeholder="Email address" className="w-full" />
 					</label>
-					<Button name="submit-btn" variant="primary" size="md" disabled={isPending} className="mt-3 w-full">
-						{isPending ? (
-							<>
-								<LoadingSpinner size={16} />
-								<span>Submitting...</span>
-							</>
-						) : (
-							'Report'
-						)}
+					<Button
+						type="submit"
+						name="submit-btn"
+						variant="primary"
+						size="md"
+						pendingLabel={isPending ? 'Submitting…' : null}
+						className="mt-3 w-full"
+					>
+						Report
 					</Button>
 					{error ? <small className="text-center text-error">{error.message}</small> : null}
 				</Card>

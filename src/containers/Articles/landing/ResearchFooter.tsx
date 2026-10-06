@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
@@ -233,12 +234,13 @@ function FooterMediaKit() {
 					placeholder="Email address"
 					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
-				<button
+				<Ariakit.Button
 					type="submit"
 					aria-busy={isPending}
 					disabled={!canSubmit}
-					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-link px-6 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90 disabled:opacity-70 ${
-						isPending ? 'disabled:cursor-wait' : 'disabled:cursor-not-allowed'
+					accessibleWhenDisabled
+					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-link px-6 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90 aria-disabled:opacity-70 ${
+						isPending ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed'
 					}`}
 				>
 					{isPending ? (
@@ -248,7 +250,7 @@ function FooterMediaKit() {
 					) : (
 						'Get the media kit'
 					)}
-				</button>
+				</Ariakit.Button>
 			</form>
 			{isSent ? (
 				<p role="status" className={descriptionClassName}>

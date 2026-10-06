@@ -159,6 +159,7 @@ export function FollowingShelves() {
 						aria-label="Previous page"
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
+						accessibleWhenDisabled
 					>
 						<Icon name="chevron-left" height={16} width={16} />
 					</ProButton>
@@ -192,6 +193,7 @@ export function FollowingShelves() {
 						aria-label="Next page"
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
+						accessibleWhenDisabled
 					>
 						<Icon name="chevron-right" height={16} width={16} />
 					</ProButton>

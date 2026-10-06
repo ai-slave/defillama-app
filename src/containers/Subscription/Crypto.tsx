@@ -59,16 +59,17 @@ export function PaymentButton({
 	return (
 		<>
 			<div className="flex flex-col gap-2">
-				<button
+				<Ariakit.Button
 					type="button"
 					onClick={handleClick}
 					disabled={loading === paymentMethod}
-					className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple bg-sub-purple py-3 text-sm font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 sm:py-3.5 dark:border-sub-purple dark:bg-sub-purple dark:hover:bg-sub-purple-hover ${type === 'api' && !isStripe ? 'shadow-sub-purple-glow-strong' : ''}`}
+					accessibleWhenDisabled
+					className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple bg-sub-purple py-3 text-sm font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md aria-disabled:cursor-not-allowed aria-disabled:opacity-70 sm:py-3.5 dark:border-sub-purple dark:bg-sub-purple dark:hover:bg-sub-purple-hover ${type === 'api' && !isStripe ? 'shadow-sub-purple-glow-strong' : ''}`}
 					data-umami-event={isAuthenticated ? `subscribe-${paymentMethod}-${type ?? ''}` : undefined}
 				>
 					{icon ? <Icon name={icon} height={14} width={14} className="sm:h-4 sm:w-4" /> : null}
 					<span className="wrap-break-word">{text}</span>
-				</button>
+				</Ariakit.Button>
 				{cryptoError ? <InlineStatus variant="error">{cryptoError}</InlineStatus> : null}
 			</div>
 

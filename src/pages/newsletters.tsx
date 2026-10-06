@@ -277,12 +277,13 @@ export default function NewslettersPage() {
 									/>
 								</label>
 
-								<button
+								<Ariakit.Button
 									type="submit"
 									aria-busy={isPending}
 									aria-describedby={helperId}
 									disabled={!canSubmit}
-									className="flex h-12 items-center justify-center gap-2 rounded-lg bg-link px-5 text-sm font-semibold text-on-brand transition-[opacity,transform] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-[0.98]"
+									accessibleWhenDisabled
+									className="flex h-12 items-center justify-center gap-2 rounded-lg bg-link px-5 text-sm font-semibold text-on-brand transition-[opacity,transform] hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 motion-safe:active:scale-[0.98]"
 								>
 									{isPending ? (
 										<>
@@ -292,7 +293,7 @@ export default function NewslettersPage() {
 									) : (
 										buttonText
 									)}
-								</button>
+								</Ariakit.Button>
 
 								<div className="min-h-14">
 									{succeeded ? (

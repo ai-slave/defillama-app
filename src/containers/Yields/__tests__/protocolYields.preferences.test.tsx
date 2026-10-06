@@ -148,7 +148,7 @@ test('restores APY preferences before fetching and keeps protocol scope when tog
 	await act(async () => root.render(element()))
 	expect(lastRequest().getAll('protocol')).toEqual(['Aave V2', 'Aave V3'])
 	expect(lastRequest().get('chain')).toBeNull()
-	expect(button('Clear filters').disabled).toBe(true)
+	expect(button('Clear filters').getAttribute('aria-disabled')).toBe('true')
 	expect(mocks.router.replace).toHaveBeenCalledTimes(1)
 })
 
