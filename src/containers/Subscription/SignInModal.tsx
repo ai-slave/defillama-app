@@ -1,17 +1,17 @@
 import * as Ariakit from '@ariakit/react'
+import type { ReactElement } from 'react'
 import { useAuthContext } from '~/auth'
 import { SignInDialog } from '~/containers/Subscription/SignInDialog'
 
 export function SignInModal({
-	text,
-	className,
+	trigger,
 	store,
 	prompt,
 	question,
 	onAuthenticated
 }: {
-	text?: string
-	className?: string
+	/** The control that opens the dialog, such as `<Button size="md">Sign in</Button>`; it hides while signed in. */
+	trigger?: ReactElement
 	store?: Ariakit.DialogStore
 	prompt?: string
 	question?: string
@@ -22,7 +22,6 @@ export function SignInModal({
 	const dialogStore = store ?? localDialogStore
 	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 	const { isAuthenticated, loaders } = useAuthContext()
-	const shouldRenderTrigger = text !== undefined || className !== undefined
 
 	// Only the trigger hides; an open dialog stays until it closes, so a sign-in from another tab ends on its own step
 	// instead of vanishing while the new session's user loads.
@@ -30,11 +29,7 @@ export function SignInModal({
 
 	return (
 		<>
-			{shouldRenderTrigger && !hideTrigger ? (
-				<button type="button" className={className} onClick={dialogStore.show}>
-					{text ?? 'Sign In'}
-				</button>
-			) : null}
+			{trigger && !hideTrigger ? <Ariakit.DialogDisclosure store={dialogStore} render={trigger} /> : null}
 			{isOpen ? (
 				<SignInDialog store={dialogStore} prompt={prompt} question={question} onAuthenticated={onAuthenticated} />
 			) : null}

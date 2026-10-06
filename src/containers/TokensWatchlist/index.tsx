@@ -16,7 +16,6 @@ import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { TokenMarketsSection } from '~/containers/Token/TokenMarketsSection'
@@ -263,7 +262,7 @@ function TokensPortfolioSelection() {
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => setSelectedPortfolio(value)}
-					className={`${selectTriggerStyles('filter', 'md')} min-w-[100px]`}
+					className="min-w-[100px]"
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />
 				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">

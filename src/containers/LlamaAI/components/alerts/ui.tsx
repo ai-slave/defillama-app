@@ -3,7 +3,6 @@ import { useState, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
-import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
@@ -35,8 +34,6 @@ export function SettingsIntegrationsLink() {
 export const alertInputClass = `${inputStyles} w-full`
 
 export const alertFieldLabelClass = 'label-sm text-secondary'
-
-export const alertIconButtonClass = buttonStyles({ variant: 'ghost', size: 'md', square: true })
 
 /** The 32px tile that leads every alerts dialog header. */
 export function AlertsHeaderIcon() {

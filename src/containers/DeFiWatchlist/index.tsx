@@ -22,7 +22,7 @@ import { DEFAULT_PORTFOLIO_NAME, useLocalStorageSettingsManager } from '~/contex
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useEmailNotifications, type MetricType, type NotificationSettings } from '~/hooks/useEmailNotifications'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
@@ -232,7 +232,6 @@ export function DefiWatchlistContainer({
 }
 
 const EMPTY_ARRAY: Array<any> = []
-const portfolioActionButtonClassName = buttonStyles({ size: 'md' })
 
 export function PortfolioNotifications({
 	selectedPortfolio,
@@ -690,7 +689,7 @@ function PortfolioSelection() {
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => handleSelectPortfolio(value)}
-					className={`${portfolioActionButtonClassName} min-w-[100px] justify-between`}
+					className="min-w-[100px]"
 				/>
 				<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={handleAddPortfolio} />
 				<Button ref={newButtonRef} type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">

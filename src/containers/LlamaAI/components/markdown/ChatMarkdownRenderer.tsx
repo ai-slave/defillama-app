@@ -32,7 +32,7 @@ import {
 } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { ExternalLinkInterstitial } from '~/containers/ProDashboard/components/ExternalLinkInterstitial'
 import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -76,10 +76,6 @@ function HeadingWithId({
 }
 
 /** Match `HBarChart` / `TreemapChart` graphic watermark sizing */
-// Matches the chat chart toolbar so a table and a chart in the same message read alike.
-const TABLE_TOOLBAR_ICON_BUTTON = buttonStyles({ size: 'md', square: true })
-const TABLE_TOOLBAR_BUTTON = buttonStyles({ size: 'md' })
-
 const TABLE_WATERMARK_HEIGHT = 40
 const TABLE_WATERMARK_WIDTH = Math.round((389 / 133) * TABLE_WATERMARK_HEIGHT)
 
@@ -202,19 +198,18 @@ function TableWrapper({
 				</DialogBody>
 			</Dialog>
 			<div className="ml-auto flex flex-nowrap items-center justify-end gap-2" id="ai-table-download">
-				<button
-					type="button"
+				<Button
+					size="md"
+					square
 					onClick={openTableFullscreen}
 					disabled={isStreaming}
-					className={TABLE_TOOLBAR_ICON_BUTTON}
 					aria-label="View table fullscreen"
 				>
 					<Icon name="expand" className="size-4 shrink-0" />
-				</button>
+				</Button>
 				<TableImageButtons
 					getSource={getImageSource}
 					disabled={isStreaming}
-					buttonClassName={TABLE_TOOLBAR_BUTTON}
 					triggerLabel="Export"
 					prepareCsv={isStreaming ? undefined : prepareCsv}
 				/>

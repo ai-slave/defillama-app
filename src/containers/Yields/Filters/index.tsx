@@ -7,7 +7,7 @@ import { BasicLink } from '~/components/Link'
 import { NestedMenu } from '~/components/NestedMenu'
 import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -141,11 +141,17 @@ function WatchlistLink() {
 		<Tooltip
 			content="Watchlist"
 			render={
-				<BasicLink href="/yields/watchlist" style={watchlistIconStyle} data-umami-event="yields-watchlist-open" />
+				<Button
+					as={BasicLink}
+					href="/yields/watchlist"
+					size="md"
+					square
+					style={watchlistIconStyle}
+					data-umami-event="yields-watchlist-open"
+				/>
 			}
-			className={buttonStyles({ variant: 'secondary', size: 'md', square: true })}
 		>
-			<Icon name="bookmark" className="size-3.5 shrink-0" />
+			<Icon name="bookmark" className="size-4 shrink-0" />
 			<span className="sr-only">Watchlist</span>
 		</Tooltip>
 	)
@@ -201,7 +207,6 @@ export function YieldFilters({
 	const filterMenu = (
 		<React.Suspense fallback={null}>
 			<NestedMenu
-				buttonVariant="filter"
 				label={
 					<span className="flex items-center gap-1.5">
 						Filters

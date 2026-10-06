@@ -48,13 +48,12 @@ import {
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const noop = () => {}
-const chartToolbarIconButtonStyles = buttonStyles({ size: 'md', square: true })
 
 const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
@@ -291,7 +290,6 @@ function ChartExportButtonsSlot({
 	return (
 		<ChartPngExportButton
 			chartInstance={chartInstance}
-			className={chartToolbarIconButtonStyles}
 			filename={renderPlan.filename}
 			title={chartTitle}
 			iconOnly

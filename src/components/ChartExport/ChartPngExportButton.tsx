@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -14,11 +14,8 @@ import { useChartPngExport } from './useChartPngExport'
 export * from './chartPngExport'
 // --- Component ---
 
-const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
-
 interface ChartPngExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
-	className?: string | undefined
 	smol?: boolean | undefined
 	disabled?: boolean | undefined
 	title?: string | undefined
@@ -41,7 +38,6 @@ function withCsvExtension(filename: string) {
 
 export function ChartPngExportButton({
 	chartInstance,
-	className = DEFAULT_CLASSNAME,
 	smol = true,
 	disabled = false,
 	title,
@@ -80,10 +76,12 @@ export function ChartPngExportButton({
 						store={menu}
 						data-loading={isLoading}
 						disabled={disabled || isLoading}
+						// The menu hands focus back here as the export starts, so the trigger stays focusable while it runs.
+						accessibleWhenDisabled={isLoading}
 						aria-label={iconOnly ? exportLabel : undefined}
+						render={<Button size="md" square={iconOnly} />}
 					/>
 				}
-				className={className}
 			>
 				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" height={14} width={14} />}
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}

@@ -1,5 +1,5 @@
 import type { Message } from '~/containers/LlamaAI/types'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -15,20 +15,22 @@ export function BranchArrows({
 	const { currentVersion, totalVersions, siblings } = info
 	const goPrev = currentVersion > 1 ? siblings[currentVersion - 2]?.leafMessageId : null
 	const goNext = currentVersion < totalVersions ? siblings[currentVersion]?.leafMessageId : null
-	const arrowClass = buttonStyles({ variant: 'ghost', size: 'sm', square: true })
 	return (
 		<div className="flex items-center gap-0.5">
 			<Tooltip
 				content="Previous version"
 				render={
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						// Stepping to the first or last version disables the arrow just pressed; it keeps focus.
+						accessibleWhenDisabled
 						disabled={disabled || !goPrev}
 						onClick={() => !disabled && goPrev && onSwitch(goPrev)}
 						aria-label="Previous version"
 					/>
 				}
-				className={arrowClass}
 			>
 				<Icon name="chevron-left" height={16} width={16} />
 			</Tooltip>
@@ -38,14 +40,17 @@ export function BranchArrows({
 			<Tooltip
 				content="Next version"
 				render={
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						// Stepping to the first or last version disables the arrow just pressed; it keeps focus.
+						accessibleWhenDisabled
 						disabled={disabled || !goNext}
 						onClick={() => !disabled && goNext && onSwitch(goNext)}
 						aria-label="Next version"
 					/>
 				}
-				className={arrowClass}
 			>
 				<Icon name="chevron-right" height={16} width={16} />
 			</Tooltip>

@@ -26,7 +26,7 @@ test('Dark mode exports the message as a dark PDF and downloads the file', async
 		await act(async () =>
 			root.render(
 				<session.Wrapper>
-					<PDFExportButton sessionId="session" messageId="message" className="" />
+					<PDFExportButton sessionId="session" messageId="message" />
 				</session.Wrapper>
 			)
 		)
@@ -68,7 +68,7 @@ test('the menu button keeps focus while the export runs', async () => {
 		await act(async () =>
 			root.render(
 				<session.Wrapper>
-					<PDFExportButton sessionId="session" messageId="message" className="" />
+					<PDFExportButton sessionId="session" messageId="message" />
 				</session.Wrapper>
 			)
 		)

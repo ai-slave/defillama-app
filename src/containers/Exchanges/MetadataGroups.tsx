@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Tag } from '~/ui/Tag'
@@ -39,15 +39,10 @@ export function MetadataSource({ source }: { source: ExchangeMetadataSource | un
 					<Icon name="help-circle" height={14} width={14} />
 				</Tooltip>
 			) : null}
-			<BasicLink
-				href={source.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				className={buttonStyles({ variant: 'secondary', size: 'sm' })}
-			>
+			<Button as={BasicLink} href={source.url} target="_blank" rel="noopener noreferrer" size="sm">
 				Source
-				<Icon name="external-link" height={12} width={12} />
-			</BasicLink>
+				<Icon name="external-link" className="size-3.5" />
+			</Button>
 		</span>
 	)
 }

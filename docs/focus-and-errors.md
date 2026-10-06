@@ -6,16 +6,17 @@ An action that removes, replaces or disables the control that has focus drops fo
 
 ## Where focus goes when a control leaves
 
-| When                                                              | Use                                                                                  | Example                                          |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| Anything inside a `Dialog` or `SideSheet`                         | Nothing: the surface's net (`catchLostFocus`) hands lost focus to its first control  | `src/ui/Dialog.tsx`                              |
-| A synchronous change outside a dialog removes the pressed control | `keepFocus(commit, target)`                                                          | `DashboardFormFields.tsx`                        |
-| A row leaves its list (remove, delete, unlink)                    | `neighbourRowControl(row, control)` as the target, computed before the change        | `src/components/FilterBuilderDialog.tsx`         |
-| Data removes the control later and nothing takes its place        | `passFocusOnLeave(target)` as the control's ref                                      | `src/components/Nav/Account.tsx`                 |
-| A Try again outside a dialog leaves once its read succeeds        | `focusRegionOnLeave` as its ref: the nearest `tabIndex={-1}` region, else `<main>`   | `ProCardStatus.tsx`, `RetryNotice.tsx`           |
-| Something that loads later replaces the control                   | `takeLostFocus` as the replacement's ref                                             | `src/components/Search/index.tsx`                |
-| A dialog closes                                                   | Nothing by default: its opener, else `<main>`. Pass `finalFocus` for a nearer target | `DashboardCard.tsx`, `DeletePortfolioButton.tsx` |
-| A confirm's success removes the control that opened it            | `finalFocus` pointing at the neighbour, set in the confirm's `onSuccess`             | `ProjectsGrid.tsx`                               |
+| When                                                                  | Use                                                                                  | Example                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| Anything inside a `Dialog` or `SideSheet`                             | Nothing: the surface's net (`catchLostFocus`) hands lost focus to its first control  | `src/ui/Dialog.tsx`                              |
+| Pressing a control disables it (a vote, a rating, a pager at its end) | `disabled` plus `accessibleWhenDisabled`, so it keeps focus and swallows presses     | `DuelPanel.tsx`, `BranchControls.tsx`            |
+| A synchronous change outside a dialog removes the pressed control     | `keepFocus(commit, target)`                                                          | `DashboardFormFields.tsx`                        |
+| A row leaves its list (remove, delete, unlink)                        | `neighbourRowControl(row, control)` as the target, computed before the change        | `src/components/FilterBuilderDialog.tsx`         |
+| Data removes the control later and nothing takes its place            | `passFocusOnLeave(target)` as the control's ref                                      | `src/components/Nav/Account.tsx`                 |
+| A Try again outside a dialog leaves once its read succeeds            | `focusRegionOnLeave` as its ref: the nearest `tabIndex={-1}` region, else `<main>`   | `ProCardStatus.tsx`, `RetryNotice.tsx`           |
+| Something that loads later replaces the control                       | `takeLostFocus` as the replacement's ref                                             | `src/components/Search/index.tsx`                |
+| A dialog closes                                                       | Nothing by default: its opener, else `<main>`. Pass `finalFocus` for a nearer target | `DashboardCard.tsx`, `DeletePortfolioButton.tsx` |
+| A confirm's success removes the control that opened it                | `finalFocus` pointing at the neighbour, set in the confirm's `onSuccess`             | `ProjectsGrid.tsx`                               |
 
 Inside a dialog, a handoff that only reproduces the net is redundant; outside one, a control that removes itself always hands focus on. Focus never lands on `<body>`, and `<main>` (`pageContent()`) is the last resort, not the default target.
 

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { type KeyboardEvent, type MouseEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogSearchHeader } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
@@ -65,8 +65,6 @@ const KBD_STYLES = tw`rounded-sm border border-medium px-1 body-sm text-secondar
 
 const ROW_STYLES = tw`group flex w-full cursor-pointer scroll-my-1 items-center gap-3 rounded-md px-2 py-2 text-left data-active-item:bg-hover-row`
 
-const CUSTOMIZE_STYLES = buttonStyles({ variant: 'ghost', size: 'sm' })
-
 function rowElementId(index: number): string {
 	return `quick-add-row-${index}`
 }
@@ -126,9 +124,13 @@ function QuickAddRow({ suggestion, index, onSelect, onCustomize }: QuickAddRowPr
 				</span>
 			</span>
 			{customizable ? (
-				<span
+				// A span, not a button: the row is the option, and keyboard users reach Customize with Tab.
+				<Button
+					as="span"
+					variant="ghost"
+					size="sm"
 					aria-hidden="true"
-					className={`${CUSTOMIZE_STYLES} invisible max-md:hidden md:group-hover:visible md:group-data-active-item:visible`}
+					className="invisible max-md:hidden md:group-hover:visible md:group-data-active-item:visible"
 					onClick={(event: MouseEvent<HTMLSpanElement>) => {
 						event.stopPropagation()
 						onCustomize(suggestion)
@@ -136,7 +138,7 @@ function QuickAddRow({ suggestion, index, onSelect, onCustomize }: QuickAddRowPr
 				>
 					Customize
 					<kbd className={KBD_STYLES}>Tab</kbd>
-				</span>
+				</Button>
 			) : null}
 			<Tag className="max-sm:hidden">{KIND_LABELS[suggestion.kind]}</Tag>
 			<kbd className={`hidden ${KBD_STYLES} md:group-data-active-item:inline`}>↵</kbd>

@@ -138,7 +138,7 @@ export function SubscribeAPICard({
 					<>
 						{context === 'page' ? (
 							<>
-								<SignInModal text="Already a subscriber? Sign In" />
+								<SignInModal trigger={<button type="button">Already a subscriber? Sign In</button>} />
 								<div
 									className={`grid gap-3 max-sm:w-full max-sm:grid-cols-1 ${billingInterval === 'year' ? 'grid-cols-1' : 'grid-cols-2'}`}
 								>

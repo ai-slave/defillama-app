@@ -17,9 +17,8 @@ import { formatResponseCost, formatResponseDuration } from '~/containers/LlamaAI
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -43,8 +42,6 @@ interface ResponseControlsProps {
 type Rating = 'good' | 'bad' | null
 
 const ARTIFACT_FETCH_TIMEOUT_MS = 10_000
-// Every control in the row is an icon-only ghost button so the row reads as one toolbar.
-const CONTROL = buttonStyles({ variant: 'ghost', size: 'md', square: true })
 
 // Mounts only after hydration: "today" is the reader's local day, which the server cannot know.
 function CompletedTime({ completedAt }: { completedAt: Date }) {
@@ -166,22 +163,19 @@ export function ResponseControls({
 						<Tooltip
 							content={copyLabel}
 							render={
-								<button
-									type="button"
-									// Focusable while pending, so focus stays on the control instead of falling to the page.
-									aria-disabled={copyStatus === 'pending' || undefined}
+								<Button
+									variant="ghost"
+									size="md"
+									square
 									aria-label={copyLabel}
-									aria-busy={copyStatus === 'pending'}
+									pendingLabel={copyStatus === 'pending' ? copyLabel : null}
 									onClick={() => {
 										void handleCopy()
 									}}
 								/>
 							}
-							className={CONTROL}
 						>
-							{copyStatus === 'pending' ? (
-								<LoadingSpinner size={16} />
-							) : copyStatus === 'copied' ? (
+							{copyStatus === 'copied' ? (
 								<Icon name="check-circle" height={16} width={16} />
 							) : (
 								<Icon name="clipboard" height={16} width={16} />
@@ -202,14 +196,16 @@ export function ResponseControls({
 							<Tooltip
 								content={isRatedAsGood ? 'Rated as good' : 'Rate as good'}
 								render={
-									<button
-										type="button"
+									<Button
+										variant="ghost"
+										size="md"
+										square
 										onClick={() => rate('good')}
 										aria-pressed={isRatedAsGood}
-										aria-disabled={submittedRating !== null || undefined}
+										disabled={submittedRating !== null}
+										accessibleWhenDisabled
 									/>
 								}
-								className={CONTROL}
 							>
 								<Icon name="thumbs-up" height={16} width={16} className={isRatedAsGood ? 'text-success' : undefined} />
 								<span className="sr-only">Thumbs up</span>
@@ -217,29 +213,34 @@ export function ResponseControls({
 							<Tooltip
 								content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
 								render={
-									<button
-										type="button"
+									<Button
+										variant="ghost"
+										size="md"
+										square
 										onClick={() => rate('bad')}
 										aria-pressed={isRatedAsBad}
-										aria-disabled={submittedRating !== null || undefined}
+										disabled={submittedRating !== null}
+										accessibleWhenDisabled
 									/>
 								}
-								className={CONTROL}
 							>
 								<Icon name="thumbs-down" height={16} width={16} className={isRatedAsBad ? 'text-error' : undefined} />
 								<span className="sr-only">Thumbs down</span>
 							</Tooltip>
 						</>
 					) : null}
-					{content && sessionId && !readOnly ? (
-						<PDFExportButton sessionId={sessionId} messageId={messageId} className={CONTROL} />
-					) : null}
+					{content && sessionId && !readOnly ? <PDFExportButton sessionId={sessionId} messageId={messageId} /> : null}
 					{messageMetadata?.outputTokens != null ? (
 						<Ariakit.PopoverProvider store={detailsPopover}>
 							<Tooltip
 								content="Response details"
-								render={<Ariakit.PopoverDisclosure store={detailsPopover} aria-label="Response details" />}
-								className={CONTROL}
+								render={
+									<Ariakit.PopoverDisclosure
+										store={detailsPopover}
+										aria-label="Response details"
+										render={<Button variant="ghost" size="md" square />}
+									/>
+								}
 							>
 								<Icon name="circle-help" height={16} width={16} />
 							</Tooltip>
@@ -255,15 +256,17 @@ export function ResponseControls({
 						<Tooltip
 							content="Provide feedback"
 							render={
-								<button
-									type="button"
+								<Button
+									variant="ghost"
+									size="md"
+									square
 									onClick={() => {
 										if (!submittedRating) setFeedback({ open: true, rating: null })
 									}}
-									aria-disabled={submittedRating !== null || undefined}
+									disabled={submittedRating !== null}
+									accessibleWhenDisabled
 								/>
 							}
-							className={CONTROL}
 						>
 							<Icon name="message-square-warning" height={16} width={16} />
 							<span className="sr-only">Provide feedback</span>
@@ -272,8 +275,7 @@ export function ResponseControls({
 					{sessionId && !readOnly && onShare ? (
 						<Tooltip
 							content="Make public and share"
-							render={<button type="button" onClick={() => onShare(messageId)} />}
-							className={CONTROL}
+							render={<Button variant="ghost" size="md" square onClick={() => onShare(messageId)} />}
 						>
 							<Icon name="share" height={16} width={16} />
 							<span className="sr-only">Make public and share</span>
@@ -282,8 +284,9 @@ export function ResponseControls({
 					{openArticleExport && articleExportRequest && !readOnly ? (
 						<Tooltip
 							content="Export to research article"
-							render={<button type="button" onClick={() => openArticleExport(articleExportRequest())} />}
-							className={CONTROL}
+							render={
+								<Button variant="ghost" size="md" square onClick={() => openArticleExport(articleExportRequest())} />
+							}
 						>
 							<Icon name="file-plus" height={16} width={16} />
 							<span className="sr-only">Export to research article</span>

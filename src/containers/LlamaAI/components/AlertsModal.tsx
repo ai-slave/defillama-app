@@ -50,7 +50,6 @@ import type {
 } from '~/containers/LlamaAI/components/alerts/types'
 import {
 	alertFieldLabelClass,
-	alertIconButtonClass,
 	AlertsHeaderIcon,
 	SegmentedToggle,
 	DELIVERY_OPTIONS,
@@ -517,15 +516,16 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 								<Tooltip
 									content="View history"
 									render={
-										<button
-											type="button"
+										<Button
+											variant="ghost"
+											size="md"
+											square
 											onClick={handleToggleExecutions}
 											aria-pressed={showExecutions}
 											aria-label={`View history of ${alert.title}`}
+											data-active={showExecutions}
 										/>
 									}
-									className={alertIconButtonClass}
-									data-active={showExecutions}
 								>
 									<Icon name="clock" className="size-4" />
 								</Tooltip>
@@ -533,25 +533,31 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 							<Tooltip
 								content="Edit"
 								render={
-									<button
+									<Button
 										ref={editButtonRef}
-										type="button"
+										variant="ghost"
+										size="md"
+										square
 										onClick={() => switchMode(editing ? 'view' : 'editing')}
 										aria-pressed={editing}
 										aria-label={`Edit ${alert.title}`}
+										data-active={editing}
 									/>
 								}
-								className={alertIconButtonClass}
-								data-active={editing}
 							>
 								<Icon name="pencil" className="size-4" />
 							</Tooltip>
 							<Tooltip
 								content="Delete"
 								render={
-									<button type="button" onClick={() => switchMode('deleting')} aria-label={`Delete ${alert.title}`} />
+									<Button
+										variant="ghost"
+										size="md"
+										square
+										onClick={() => switchMode('deleting')}
+										aria-label={`Delete ${alert.title}`}
+									/>
 								}
-								className={alertIconButtonClass}
 							>
 								<Icon name="trash-2" className="size-4 text-error" />
 							</Tooltip>

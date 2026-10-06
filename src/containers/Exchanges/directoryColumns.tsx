@@ -3,7 +3,7 @@ import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
@@ -481,42 +481,60 @@ export function buildDirectoryColumns(
 				return (
 					<div className="flex items-center gap-0.5">
 						{reservesHref ? (
-							<Tooltip content="Open reserves">
-								<BasicLink
-									href={reservesHref}
-									aria-label={`Open ${venue.name} reserves`}
-									className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-								>
-									<Icon name="wallet" className="size-4" />
-								</BasicLink>
+							<Tooltip
+								content="Open reserves"
+								render={
+									<Button
+										as={BasicLink}
+										variant="ghost"
+										size="sm"
+										square
+										href={reservesHref}
+										aria-label={`Open ${venue.name} reserves`}
+									/>
+								}
+							>
+								<Icon name="wallet" className="size-4" />
 							</Tooltip>
 						) : null}
 						{defillamaPath ? (
-							<Tooltip content={`Open ${venue.kind.toUpperCase()} profile`}>
-								<BasicLink
-									href={defillamaPath}
-									aria-label={`Open ${venue.name} ${venue.kind.toUpperCase()} profile`}
-									className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-								>
-									<Icon name="bar-chart-2" className="size-4" />
-								</BasicLink>
+							<Tooltip
+								content={`Open ${venue.kind.toUpperCase()} profile`}
+								render={
+									<Button
+										as={BasicLink}
+										variant="ghost"
+										size="sm"
+										square
+										href={defillamaPath}
+										aria-label={`Open ${venue.name} ${venue.kind.toUpperCase()} profile`}
+									/>
+								}
+							>
+								<Icon name="bar-chart-2" className="size-4" />
 							</Tooltip>
 						) : null}
 						{venueDestination ? (
-							<Tooltip content="Open venue website">
-								<BasicLink
-									href={venueDestination.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									aria-label={`Open ${venue.name} website`}
-									data-umami-event="exchange-website-click"
-									data-umami-event-exchange={venue.name}
-									data-umami-event-referral={venueDestination.kind === 'referral' ? 'true' : 'false'}
-									data-umami-event-url={venueDestination.url}
-									className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
-								>
-									<Icon name="globe" className="size-4" />
-								</BasicLink>
+							<Tooltip
+								content="Open venue website"
+								render={
+									<Button
+										as={BasicLink}
+										variant="ghost"
+										size="sm"
+										square
+										href={venueDestination.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label={`Open ${venue.name} website`}
+										data-umami-event="exchange-website-click"
+										data-umami-event-exchange={venue.name}
+										data-umami-event-referral={venueDestination.kind === 'referral' ? 'true' : 'false'}
+										data-umami-event-url={venueDestination.url}
+									/>
+								}
+							>
+								<Icon name="globe" className="size-4" />
 							</Tooltip>
 						) : null}
 					</div>

@@ -1,5 +1,5 @@
 import type { ComponentPropsWithRef } from 'react'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon, type IIcon } from '~/ui/Icon'
 
 /* ----------------------------------------------------------------------------
@@ -9,7 +9,7 @@ import { Icon, type IIcon } from '~/ui/Icon'
    button recipe. Never hand-roll an icon + label + arrow anchor.
 
    Multi-URL cases (several websites, audit reports) use
-   <Menu isExternal className={buttonStyles({ size: 'md' })}> instead.
+   <Menu isExternal> instead.
 ---------------------------------------------------------------------------- */
 
 interface ExternalLinkButtonProps extends Omit<ComponentPropsWithRef<'a'>, 'className'> {
@@ -21,15 +21,10 @@ interface ExternalLinkButtonProps extends Omit<ComponentPropsWithRef<'a'>, 'clas
 
 export function ExternalLinkButton({ icon, className, children, ...props }: ExternalLinkButtonProps) {
 	return (
-		<a
-			className={`${buttonStyles({ size: 'md' })} ${className ?? ''}`.trim()}
-			target="_blank"
-			rel="noopener noreferrer"
-			{...props}
-		>
+		<Button as="a" size="md" className={className} target="_blank" rel="noopener noreferrer" {...props}>
 			{icon ? <Icon name={icon} className="size-3.5 shrink-0" /> : null}
 			<span>{children}</span>
 			<Icon name="arrow-up-right" className="size-3.5 shrink-0" />
-		</a>
+		</Button>
 	)
 }

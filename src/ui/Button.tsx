@@ -74,9 +74,11 @@ import { LoadingSpinner } from './Loaders'
 
    For Ariakit hosts, prefer composing the component itself:
    <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
-   (DialogDismiss, MenuButton, PopoverDisclosure alike). Never render it into
-   `Ariakit.Button`: pass `disabled` and `accessibleWhenDisabled` to Button.
-   `buttonStyles({ size })` exists for the rare host that only takes a class.
+   (DialogDismiss, MenuButton, PopoverDisclosure, a Tooltip anchor alike).
+   Never render it into `Ariakit.Button`: pass `disabled` and
+   `accessibleWhenDisabled` to Button. A link is `<Button as={BasicLink}>`.
+   The class builder is private on purpose: a component whose trigger is a
+   button renders Button itself rather than taking a class for it.
    ProButton follows the same model with `loading`.
 ---------------------------------------------------------------------------- */
 
@@ -132,7 +134,7 @@ const RADIUS_CLASSES: Record<ButtonSize, string> = {
 	md: 'rounded-lg'
 }
 
-export function buttonStyles({
+function buttonStyles({
 	variant = 'secondary',
 	size,
 	square = false

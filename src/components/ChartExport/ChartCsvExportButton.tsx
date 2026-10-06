@@ -4,7 +4,6 @@ import { useCallback } from 'react'
 import { CSVDownloadButton, type CsvPayload, type PrepareCsv } from '~/components/CsvDownloadButton'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { getPeriodCsvCells, getPeriodCsvHeaders } from '~/components/ECharts/shared/csv'
-import { buttonStyles } from '~/ui/Button'
 import type { CsvCell } from '~/utils/csvCell'
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -331,7 +330,6 @@ export type ChartCsvSource =
 
 interface ChartCsvExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
-	className?: string | undefined
 	smol?: boolean | undefined
 	disabled?: boolean | undefined
 	filename?: string | undefined
@@ -339,11 +337,8 @@ interface ChartCsvExportButtonProps {
 	onExport?: ((info: { filename: string }) => void) | undefined
 }
 
-const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
-
 export function ChartCsvExportButton({
 	chartInstance,
-	className = DEFAULT_CLASSNAME,
 	smol = true,
 	disabled,
 	filename,
@@ -372,7 +367,7 @@ export function ChartCsvExportButton({
 	}, [chartInstance, filename, source, onExport])
 
 	return (
-		<CSVDownloadButton prepareCsv={prepareCsv} replaceClassName className={className} smol={smol} disabled={disabled}>
+		<CSVDownloadButton prepareCsv={prepareCsv} size="md" smol={smol} disabled={disabled}>
 			<span>{smol ? '.csv' : 'CSV'}</span>
 		</CSVDownloadButton>
 	)

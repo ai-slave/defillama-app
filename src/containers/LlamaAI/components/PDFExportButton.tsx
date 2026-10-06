@@ -5,6 +5,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { AI_SERVER } from '~/constants'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -13,15 +14,7 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const TOAST_ID = 'pdf-export'
 
-export function PDFExportButton({
-	sessionId,
-	messageId,
-	className
-}: {
-	sessionId: string
-	messageId: string
-	className: string
-}) {
+export function PDFExportButton({ sessionId, messageId }: { sessionId: string; messageId: string }) {
 	const { loaders, authorizedFetch, hasActiveSubscription } = useAuthContext()
 	const subscribeModalStore = Ariakit.useDialogStore()
 	const menu = Ariakit.useMenuStore()
@@ -86,9 +79,9 @@ export function PDFExportButton({
 							// Focusable while the export runs, so focus stays on the control instead of falling to the page.
 							disabled={loading}
 							accessibleWhenDisabled
+							render={<Button variant="ghost" size="md" square />}
 						/>
 					}
-					className={className}
 				>
 					{pdfExport.isPending ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
 				</Tooltip>

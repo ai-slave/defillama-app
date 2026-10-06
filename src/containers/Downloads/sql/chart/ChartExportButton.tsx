@@ -23,7 +23,6 @@ export function ChartExportButton({ chartInstance, chartType, title, filename }:
 			pngProfile={profileFor(chartType)}
 			title={title ?? undefined}
 			filename={filename}
-			className="inline-flex items-center gap-1 rounded-md border border-subtle bg-pro-app-bg/50 px-2 py-1 text-[11px] text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-50"
 			smol
 		/>
 	)

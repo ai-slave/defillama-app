@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo } from 'react'
-import { buttonStyles } from '~/ui/Button'
+import { type ReactElement, useMemo } from 'react'
+import { Button } from '~/ui/Button'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
@@ -12,7 +12,10 @@ interface IMenuProps {
 	isExternal?: boolean
 	getItemAttributes?: (value: string) => Record<string, string>
 	onItemClick?: (value: string) => void
+	/** Layout placement of the default md Button trigger only (min-w-[100px], w-full, …). */
 	className?: string
+	/** A trigger that is not a button, such as a page title that switches entities. */
+	render?: ReactElement
 	portal?: boolean
 }
 
@@ -23,6 +26,7 @@ export function Menu({
 	getItemAttributes,
 	onItemClick,
 	className,
+	render,
 	portal,
 	...props
 }: IMenuProps) {
@@ -38,7 +42,7 @@ export function Menu({
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
 				{...props}
-				className={className ?? `${buttonStyles({ size: 'md' })} max-w-fit justify-between`}
+				render={render ?? <Button size="md" className={`max-w-fit justify-between ${className ?? ''}`} />}
 			>
 				{name}
 				<Ariakit.MenuButtonArrow />

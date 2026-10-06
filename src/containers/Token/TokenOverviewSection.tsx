@@ -15,7 +15,7 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
@@ -704,30 +704,31 @@ function TokenInformationCard({
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
 					{categories.map((category) => (
-						<BasicLink
+						<Button
+							as={BasicLink}
 							key={category.id}
 							href={`/tokens?categories=${encodeURIComponent(category.id)}`}
-							className={buttonStyles({ size: 'md' })}
+							size="md"
 						>
 							{category.label}
-						</BasicLink>
+						</Button>
 					))}
 				</div>
 			) : null}
 			{issuer ? (
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="label-md text-secondary">Issued by:</span>
-					<BasicLink href={`/protocol/${issuer.slug}`} className={buttonStyles({ size: 'md' })}>
+					<Button as={BasicLink} href={`/protocol/${issuer.slug}`} size="md">
 						{issuer.name}
-					</BasicLink>
+					</Button>
 				</div>
 			) : null}
 			{chain ? (
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="label-md text-secondary">Chain:</span>
-					<BasicLink href={`/chain/${chain.slug}`} className={buttonStyles({ size: 'md' })}>
+					<Button as={BasicLink} href={`/chain/${chain.slug}`} size="md">
 						{chain.name}
-					</BasicLink>
+					</Button>
 				</div>
 			) : null}
 		</Card>

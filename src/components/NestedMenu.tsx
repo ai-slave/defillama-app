@@ -1,12 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, type ReactNode } from 'react'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuSurface } from '~/ui/MenuSurface'
 import {
 	nestedMenuDisclosureIconStyles,
-	nestedMenuRootFilterButtonStyles,
 	nestedMenuRootRowStyles,
 	nestedMenuSelectRowStyles,
 	popoverMultiSelectCheckStyles
@@ -24,22 +23,20 @@ export function NestedMenuItem({ ref, ...props }: NestedMenuItemProps) {
 interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	label: React.ReactNode
 	combobox?: Ariakit.MenuStoreProps['combobox']
-	buttonVariant?: 'default' | 'filter'
 }
 
-export function NestedMenu({ label, children, combobox, buttonVariant = 'default', ...props }: NestedMenuProps) {
+export function NestedMenu({ label, children, combobox, ...props }: NestedMenuProps) {
 	const menu = Ariakit.useMenuStore({ combobox })
 
-	const rootButtonClassName =
-		buttonVariant === 'filter' ? nestedMenuRootFilterButtonStyles : buttonStyles({ size: 'md' })
 	const labelClassName = 'min-w-0 justify-self-start truncate text-left'
 
 	return (
 		<Ariakit.MenuProvider store={menu}>
 			<Ariakit.MenuButton
 				{...props}
-				className={`${!menu.parent ? rootButtonClassName : nestedMenuRootRowStyles} ${props.className ?? ''}`}
-				render={menu.parent ? <NestedMenuItem hideOnClick={false} render={props.render} /> : undefined}
+				// A full-width root trigger keeps its arrow at the far edge.
+				className={`${menu.parent ? nestedMenuRootRowStyles : 'justify-between'} ${props.className ?? ''}`}
+				render={menu.parent ? <NestedMenuItem hideOnClick={false} render={props.render} /> : <Button size="md" />}
 			>
 				<span className={labelClassName}>{label}</span>
 				{menu.parent ? (

@@ -5,7 +5,7 @@ import { subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { BasicLink } from '~/components/Link'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
@@ -83,8 +83,11 @@ export function Account() {
 			{/* Mounted in every state, so a sign-in that finishes here or in another tab keeps its dialog through the
 			    loading and account states until its last step closes it. Its trigger shows only while signed out. */}
 			<SignInModal
-				text="Sign In / Subscribe"
-				className={`${buttonStyles({ variant: 'primary', size: 'sm' })} w-full`}
+				trigger={
+					<Button variant="primary" size="sm" className="w-full">
+						Sign In / Subscribe
+					</Button>
+				}
 			/>
 		</>
 	)

@@ -32,7 +32,15 @@ function AuthActions({
 					<Icon name="chevron-right" height={16} width={16} />
 				</BasicLink>
 			) : null}
-			{isClient ? <SignInModal text="Sign-in" className={signInClassName} /> : null}
+			{isClient ? (
+				<SignInModal
+					trigger={
+						<button type="button" className={signInClassName}>
+							Sign-in
+						</button>
+					}
+				/>
+			) : null}
 		</>
 	)
 }

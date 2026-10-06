@@ -1,16 +1,13 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { RWAPlatformKpi } from '../../kpi/platformKpi'
 import type { RWAPlatformMeta } from '../api.types'
 import { getRwaPlatformLinks, getRwaPlatformTags, rankRwaPlatformIssuers } from './panelData'
 import { PanelCard, Pill, Pills, Prose } from './PanelParts'
-
-const linkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
-const iconLinkStyles = buttonStyles({ variant: 'secondary', size: 'md', square: true })
 
 /** What the platform is: the description, its tags, where to find it, and the issuers it hosts. Always rendered. */
 export function AboutPanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWAPlatformKpi }) {
@@ -27,7 +24,7 @@ export function AboutPanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWAPlatf
 			{hasLinks ? (
 				<div className="flex flex-wrap items-center gap-1.5">
 					{links.websites.length > 1 ? (
-						<Menu name="Website" options={links.websites} isExternal className={linkButtonStyles} />
+						<Menu name="Website" options={links.websites} isExternal />
 					) : links.websites[0] ? (
 						<ExternalLinkButton href={links.websites[0]} icon="globe">
 							Website
@@ -39,9 +36,9 @@ export function AboutPanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWAPlatf
 						</ExternalLinkButton>
 					) : null}
 					{links.protocolHref ? (
-						<BasicLink href={links.protocolHref} className={linkButtonStyles}>
+						<Button as={BasicLink} href={links.protocolHref} size="md">
 							<span>Protocol page</span>
-						</BasicLink>
+						</Button>
 					) : null}
 					{links.socials.length > 0 ? (
 						<span className="mx-1 h-6 w-px bg-surface-elevated-2" aria-hidden="true" />
@@ -50,9 +47,9 @@ export function AboutPanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWAPlatf
 						<Tooltip
 							key={social.label}
 							content={social.label}
-							render={<a href={social.href} target="_blank" rel="noopener noreferrer" className={iconLinkStyles} />}
+							render={<Button as="a" href={social.href} target="_blank" rel="noopener noreferrer" size="md" square />}
 						>
-							<Icon name={social.icon} className="size-3.5" />
+							<Icon name={social.icon} className="size-4" />
 							<span className="sr-only">{social.label}</span>
 						</Tooltip>
 					))}

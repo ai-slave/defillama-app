@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { createElement } from 'react'
 import type { SortedTableFeatures } from '~/components/Table/features/sorting'
 import { TokenLogo } from '~/components/TokenLogo'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { heatmapClass, percentileOpacity, rankOpacity } from '../colors'
 import type { ColumnConfig, DisplayMode } from '../constants'
@@ -30,14 +30,10 @@ function metricHeatmapClass(metricKey: string, mode: DisplayMode) {
 
 function detailsButton(row: LeaderboardRow, onSelectMM: (id: string, name: string) => void) {
 	return createElement(
-		'button',
-		{
-			type: 'button',
-			onClick: () => onSelectMM(row.marketMakerId, row.marketMakerName),
-			className: buttonStyles({ size: 'md' })
-		},
+		Button,
+		{ size: 'md', onClick: () => onSelectMM(row.marketMakerId, row.marketMakerName) },
 		'Details',
-		createElement(Icon, { name: 'arrow-right', height: 12, width: 12 })
+		createElement(Icon, { name: 'arrow-right', className: 'size-3.5' })
 	)
 }
 

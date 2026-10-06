@@ -1,13 +1,10 @@
 import { useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Menu } from '~/components/Menu'
-import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import type { RWALinkGroup, RWAPanelRow } from './panelData'
 
 /* The pieces the six panels share: the card, prose with a clamp, rows, pills, badges, link pills, tally bars. */
-
-const linkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
 
 /** Prose longer than this gets a Show more toggle. Character-based on purpose: measuring rendered overflow
     needs a layout effect per paragraph. */
@@ -103,7 +100,7 @@ export function LinkPills({ groups }: { groups: Array<RWALinkGroup> }) {
 		<div className="flex flex-wrap gap-1.5">
 			{groups.map((group) =>
 				group.urls.length > 1 ? (
-					<Menu key={group.label} name={group.label} options={group.urls} isExternal className={linkButtonStyles} />
+					<Menu key={group.label} name={group.label} options={group.urls} isExternal />
 				) : (
 					<ExternalLinkButton key={group.label} href={group.urls[0]!} icon="file-text">
 						{group.label}

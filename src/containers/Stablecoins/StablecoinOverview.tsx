@@ -43,7 +43,6 @@ import {
 import { useCalcCirculating, useGroupBridgeData } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
@@ -81,7 +80,6 @@ const risksHelperTexts: Record<string, string> = {
 const ASSET_CHART_MODE = { page: 'asset' } as const
 const ASSET_CHART_TYPE_OPTIONS = getStablecoinChartTypeOptions(ASSET_CHART_MODE)
 const UNRELEASED_QUERY_KEY = 'unreleased'
-const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 const EMPTY_SERIES: Array<string> = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
@@ -395,7 +393,12 @@ export function PeggedAssetInfo({
 										)
 										if (selectedOption) onStablecoinChange(selectedOption.id)
 									}}
-									className="-ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-0.5 font-bold text-primary hover:bg-hover-row focus-visible:bg-hover-row"
+									render={
+										<button
+											type="button"
+											className="-ml-1 flex w-fit items-center gap-1 rounded-md px-1 py-0.5 font-bold text-primary hover:bg-hover-row focus-visible:bg-hover-row"
+										/>
+									}
 								/>
 							</span>
 						) : (
@@ -577,7 +580,7 @@ export function PeggedAssetInfo({
 									<span>:</span>
 								</span>
 								{auditLinks != null && auditLinks.length > 0 ? (
-									<Menu name="Yes" options={auditLinks} isExternal className={INFO_ACTION_STYLES} />
+									<Menu name="Yes" options={auditLinks} isExternal />
 								) : (
 									<span>No</span>
 								)}

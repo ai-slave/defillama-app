@@ -13,7 +13,7 @@ import { resolveEarnColumnAccess } from '~/containers/Yields/Filters/columnOptio
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
@@ -67,7 +67,6 @@ import { useNativeYieldHistory } from './useNativeYieldChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
-const assetHeaderLinkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
 
 type AssetChartMetric = 'marketData' | 'flows' | 'flowVsPrice'
 
@@ -821,7 +820,6 @@ export function RWAAssetPage({
 											name="Website"
 											options={asset.website}
 											isExternal
-											className={assetHeaderLinkButtonStyles}
 											getItemAttributes={(url) => ({
 												'data-umami-event': 'rwa-asset-website-click',
 												'data-umami-event-asset': displayName,
@@ -845,7 +843,7 @@ export function RWAAssetPage({
 								) : null}
 								{asset.twitter ? (
 									asset.twitter.length > 1 ? (
-										<Menu name="Twitter" options={asset.twitter} isExternal className={assetHeaderLinkButtonStyles} />
+										<Menu name="Twitter" options={asset.twitter} isExternal />
 									) : (
 										<ExternalLinkButton key={asset.twitter[0]} href={asset.twitter[0]} icon="twitter">
 											X/Twitter
@@ -853,13 +851,9 @@ export function RWAAssetPage({
 									)
 								) : null}
 								{asset.protocolLinks.map((protocol) => (
-									<BasicLink
-										key={protocol.slug}
-										href={`/protocol/${protocol.slug}`}
-										className={assetHeaderLinkButtonStyles}
-									>
+									<Button as={BasicLink} key={protocol.slug} href={`/protocol/${protocol.slug}`} size="md">
 										<span>{protocol.name}</span>
-									</BasicLink>
+									</Button>
 								))}
 								{asset.linkedin ? (
 									<ExternalLinkButton href={asset.linkedin} icon="linkedin">
@@ -929,12 +923,7 @@ export function RWAAssetPage({
 									<p className="flex flex-wrap items-center gap-2">
 										<span className="label-md text-secondary">Reports:</span>
 										{attestationLinks.length > 1 ? (
-											<Menu
-												name="View reports"
-												options={attestationLinks}
-												isExternal
-												className={assetHeaderLinkButtonStyles}
-											/>
+											<Menu name="View reports" options={attestationLinks} isExternal />
 										) : (
 											<ExternalLinkButton href={attestationLinks[0]}>View report</ExternalLinkButton>
 										)}

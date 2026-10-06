@@ -11,7 +11,7 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredResearchReportsCard'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -24,7 +24,6 @@ import { getProtocolInfoCategories } from './category'
 import type { IProtocolOverviewPageData } from './types'
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
-const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 
 interface SectionHeaderProps {
 	id: string
@@ -207,22 +206,18 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 					</ExternalLinkButton>
 				) : null}
 				{props.exchangeProfileRoute ? (
-					<BasicLink href={props.exchangeProfileRoute} className={INFO_ACTION_STYLES}>
+					<Button as={BasicLink} href={props.exchangeProfileRoute} size="md">
 						Exchange profile
-					</BasicLink>
+					</Button>
 				) : null}
 			</div>
 			{categories.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
 					{categories.map((category) => (
-						<BasicLink
-							href={category.href}
-							className={INFO_ACTION_STYLES}
-							key={`${props.id}-category-${category.label}`}
-						>
+						<Button as={BasicLink} href={category.href} size="md" key={`${props.id}-category-${category.label}`}>
 							{category.label}
-						</BasicLink>
+						</Button>
 					))}
 				</div>
 			) : null}
@@ -247,7 +242,7 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 							<span>:</span>
 						</span>
 						{props.audits.auditLinks.length > 0 ? (
-							<Menu name="Yes" options={props.audits.auditLinks} isExternal className={INFO_ACTION_STYLES} />
+							<Menu name="Yes" options={props.audits.auditLinks} isExternal />
 						) : (
 							<span>No</span>
 						)}
@@ -427,13 +422,15 @@ function Yields(props: IProtocolOverviewPageData) {
 				<MetricRow label="Pools Tracked" value={yields.noOfPoolsTracked} />
 				<MetricRow label="Average Supply APY" value={averageApy} />
 			</div>
-			<ButtonLink
+			<Button
+				as={ButtonLink}
 				href={yieldsProtocolsHref(props.otherProtocols ? props.otherProtocols.slice(1) : [props.name])}
-				className={`${INFO_ACTION_STYLES} mr-auto`}
+				size="md"
+				className="mr-auto"
 			>
 				<span>View all Yields</span>
-				<Icon name="arrow-right" className="size-4" />
-			</ButtonLink>
+				<Icon name="arrow-right" className="size-3.5" />
+			</Button>
 		</Card>
 	)
 }
@@ -568,18 +565,19 @@ function Competitors(props: IProtocolOverviewPageData) {
 			<div className="flex items-center justify-between gap-2">
 				<SectionHeader id="competitors">Competitors</SectionHeader>
 				{comparisonHref ? (
-					<ButtonLink
+					<Button
+						as={ButtonLink}
 						href={comparisonHref}
+						size="md"
 						onClick={(event) => {
 							if (canOpenComparison) return
 							event.preventDefault()
 							setSignupSource('protocol-comparison')
 							subscribeModalStore.show()
 						}}
-						className={INFO_ACTION_STYLES}
 					>
 						Create comparison dashboard
-					</ButtonLink>
+					</Button>
 				) : null}
 			</div>
 			<div className="flex flex-wrap items-center gap-4">

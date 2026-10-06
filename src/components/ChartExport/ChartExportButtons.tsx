@@ -8,7 +8,6 @@ interface ChartExportButtonsProps {
 	title?: string | undefined
 	iconUrl?: string | undefined
 	expandLegend?: boolean | undefined
-	className?: string | undefined
 	smol?: boolean | undefined
 	disabled?: boolean | undefined
 	showCsv?: boolean | undefined
@@ -26,7 +25,6 @@ export function ChartExportButtons({
 	title,
 	iconUrl,
 	expandLegend,
-	className,
 	smol,
 	disabled,
 	showCsv = true,
@@ -43,7 +41,6 @@ export function ChartExportButtons({
 				<ChartCsvExportButton
 					chartInstance={chartInstance}
 					filename={filename}
-					className={className}
 					smol={smol}
 					disabled={disabled}
 					source={csvSource}
@@ -57,7 +54,6 @@ export function ChartExportButtons({
 					title={title}
 					iconUrl={iconUrl}
 					expandLegend={expandLegend}
-					className={className}
 					smol={smol}
 					disabled={disabled}
 					pngProfile={pngProfile}

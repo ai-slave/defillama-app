@@ -1,5 +1,5 @@
 import { TokenLogo } from '~/components/TokenLogo'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
@@ -25,7 +25,11 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 					<Tooltip
 						content={`Open ${profile.name} website`}
 						render={
-							<a
+							<Button
+								as="a"
+								variant="ghost"
+								size="md"
+								square
 								href={venueDestination.url}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -36,7 +40,6 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 								data-umami-event-url={venueDestination.url}
 							/>
 						}
-						className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 					>
 						<Icon name="globe" className="size-4" />
 					</Tooltip>
@@ -45,7 +48,11 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 					<Tooltip
 						content={`Open ${profile.name} on X`}
 						render={
-							<a
+							<Button
+								as="a"
+								variant="ghost"
+								size="md"
+								square
 								href={profile.metadata.twitterUrl}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -55,7 +62,6 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 								data-umami-event-url={profile.metadata.twitterUrl}
 							/>
 						}
-						className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 					>
 						<Icon name="twitter" className="size-4" />
 					</Tooltip>

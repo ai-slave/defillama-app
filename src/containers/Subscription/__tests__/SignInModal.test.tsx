@@ -105,7 +105,7 @@ test('a sign-in stacked over another dialog, whose Sign in button left, hands fo
 					<Dialog size="sm" open onClose={() => {}}>
 						<DialogHeader title="Menu" />
 						<DialogBody>
-							<SignInModal text="Sign in" />
+							<SignInModal trigger={<button type="button">Sign in</button>} />
 						</DialogBody>
 					</Dialog>
 				</main>

@@ -4,7 +4,7 @@ import { Menu } from '~/components/Menu'
 import { NewPortfolioDialog } from '~/components/NewPortfolioDialog'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -64,7 +64,7 @@ export function YieldsWatchlistContainer() {
 						onItemClick={(value) => {
 							setSelectedPortfolio(value)
 						}}
-						className={`${buttonStyles({ variant: 'secondary', size: 'md' })} min-w-[100px] justify-between`}
+						className="min-w-[100px]"
 						data-umami-event="yields-watchlist-portfolio-switch"
 					/>
 					<NewPortfolioDialog open={open} setOpen={setOpen} portfolios={portfolios} onCreate={addPortfolio} />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import type { DuelArmState } from '../hooks/useDuelStream'
@@ -129,25 +129,27 @@ export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: 
 			</div>
 
 			<div className="flex items-center justify-center gap-2">
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					size="sm"
 					disabled={!canVote || voted}
+					accessibleWhenDisabled
 					onClick={() => handleVote('tie')}
-					className={buttonStyles({ variant: 'ghost', size: 'sm' })}
 				>
 					They’re about the same
-				</button>
+				</Button>
 				<span aria-hidden className="text-tertiary">
 					·
 				</span>
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					size="sm"
 					disabled={!canVote || voted}
+					accessibleWhenDisabled
 					onClick={() => handleVote('both_bad')}
-					className={buttonStyles({ variant: 'ghost', size: 'sm' })}
 				>
 					Neither is good
-				</button>
+				</Button>
 			</div>
 		</div>
 	)

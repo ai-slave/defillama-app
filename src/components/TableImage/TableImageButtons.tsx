@@ -8,6 +8,7 @@ import {
 	useCsvDownload
 } from '~/components/CsvDownloadButton'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -80,14 +81,11 @@ export function readColumnWidths(table: HTMLTableElement | null): Array<number |
 	return widths.some((width) => width !== null) ? widths : undefined
 }
 
-const DEFAULT_TRIGGER_CLASS =
-	'flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-hover-row focus-visible:bg-hover-row disabled:opacity-50'
-
 export function TableImageButtons({
 	getSource,
 	className,
 	disabled = false,
-	buttonClassName = DEFAULT_TRIGGER_CLASS,
+	buttonClassName,
 	iconOnly = false,
 	triggerContent,
 	triggerLabel,
@@ -98,6 +96,7 @@ export function TableImageButtons({
 	getSource: TableImageSource
 	className?: string
 	disabled?: boolean
+	/** A surface with its own control language (Articles) styles the trigger itself; otherwise it is an md Button. */
 	buttonClassName?: string
 	iconOnly?: boolean
 	/** Replaces the icon + label entirely, for toolbars with their own typographic language. */
@@ -151,7 +150,10 @@ export function TableImageButtons({
 			<Ariakit.MenuProvider store={menu}>
 				<Ariakit.MenuButton
 					className={buttonClassName}
+					render={buttonClassName ? undefined : <Button size="md" square={iconOnly} />}
 					disabled={disabled || isLoading}
+					// The menu hands focus back here as the export starts, so the trigger stays focusable while it runs.
+					accessibleWhenDisabled={isLoading}
 					title="Export table as image"
 					aria-label="Export table as image"
 				>

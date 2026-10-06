@@ -67,8 +67,6 @@ export const nestedMenuActionStyles = tw`flex min-h-11 w-full shrink-0 cursor-po
 
 export const nestedMenuDisclosureIconStyles = tw`size-4 justify-self-end text-tertiary`
 
-export const nestedMenuRootFilterButtonStyles = tw`flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row`
-
 export function popoverMultiSelectCheckStyles(selected: boolean) {
 	return `ml-auto grid size-3.5 shrink-0 place-items-center rounded-[4px] border ${
 		selected ? 'border-brand bg-brand text-on-brand' : 'border-strong bg-transparent text-transparent'

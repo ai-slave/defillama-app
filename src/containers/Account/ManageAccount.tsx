@@ -5,7 +5,7 @@ import { ViewTabs } from '~/components/ViewTabs'
 import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthorProfileCard'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { LoadingIndicator } from '~/ui/Status'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { AuthenticationCard } from './AuthenticationCard'
@@ -65,7 +65,13 @@ export function ManageAccount() {
 						Sign in to view and manage your account and subscription.
 					</p>
 				</div>
-				<SignInModal text="Sign in" className={buttonStyles({ variant: 'primary', size: 'md' })} />
+				<SignInModal
+					trigger={
+						<Button variant="primary" size="md">
+							Sign in
+						</Button>
+					}
+				/>
 			</div>
 		)
 	}
