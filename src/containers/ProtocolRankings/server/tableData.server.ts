@@ -1,9 +1,5 @@
 import { cachedResult } from '~/server/api/resultCache'
-import {
-	contentHashVersion,
-	createRedisBlobStore,
-	isContentHashVersion
-} from '~/server/datasetSnapshots/redisBlobStore.server'
+import { contentHashVersion, createRedisBlobStore } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { slug } from '~/utils'
 import type { ICategoriesAndTags, IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 import { recordRuntimeError } from '~/utils/telemetry'
@@ -87,10 +83,6 @@ const snapshotStore = createRedisBlobStore<ProtocolRankingsCanonicalSnapshot>({
 	getIdentity: (payload) => ({ key: chainCacheKey(payload.chain), version: payload.snapshot }),
 	getPublishedAt: (payload) => payload.createdAt
 })
-
-export function isProtocolRankingSnapshotToken(value: string): boolean {
-	return isContentHashVersion(value)
-}
 
 function measureSnapshotBytes(snapshot: ProtocolRankingsCanonicalSnapshot): number {
 	return Buffer.byteLength(JSON.stringify(snapshot))

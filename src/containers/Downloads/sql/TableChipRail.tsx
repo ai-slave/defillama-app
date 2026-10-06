@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { inferFineKindFromArrowType } from './columnKind'
 import { formatDownloadRowCount } from './format'
 import { buildLlmInstructions } from './llmInstructions'
-import { inferColumnKind, SectionLabel, TypeBadge } from './primitives'
+import { SectionLabel, TypeBadge } from './primitives'
 import { prettyLabelForSource, type RegisteredTable } from './useTableRegistry'
 
 export type PendingTableStatus = 'pending' | 'loading' | 'failed'
@@ -202,7 +203,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 						className="flex items-center gap-1.5 text-xs"
 						title={c.type ? `${c.name} · ${c.type}` : c.name}
 					>
-						<TypeBadge kind={inferColumnKind(c.type)} />
+						<TypeBadge kind={inferFineKindFromArrowType(c.type)} />
 						<span className="truncate font-mono text-pro-text-primary">{c.name}</span>
 					</li>
 				))}

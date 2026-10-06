@@ -20,8 +20,8 @@ import {
 	cardKeyFacts,
 	cardTraits,
 	compareTiers,
-	disclosureFieldLabel,
 	disclosureStatusLabel,
+	humanize,
 	tierDetailSections
 } from './detailRows'
 import { GetCardButton } from './GetCardButton'
@@ -193,7 +193,7 @@ function TierSources({ tier, title, heading }: { tier: CardsDetailTier; title: s
 			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
 				{disclosures.map(([field, disclosure]) => (
 					<div key={field} className="min-w-0">
-						<p className="label-sm text-secondary">{disclosureFieldLabel(field)}</p>
+						<p className="label-sm text-secondary">{humanize(field)}</p>
 						<Tag className="mt-1">{disclosureStatusLabel(disclosure)}</Tag>
 						{disclosure.derivations?.map((derivation) => (
 							<div key={`${derivation.operation}-${derivation.explanation}`} className="mt-2 body-sm text-secondary">

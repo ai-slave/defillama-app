@@ -10,7 +10,8 @@ import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
@@ -31,13 +32,11 @@ import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from
 import { TokenPrivateSectionGate } from './TokenPrivateSectionGate'
 import { buildTokenUsageRows, filterTokenUsageRows, type TokenUsageSectionRow } from './TokenUsageSection.utils'
 
-const tableFeaturesConfig = paginatedTableFeatures
-
 type TokenUsageView = 'list' | 'treemap'
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'amountUsd' }]
 const TOKEN_USAGE_SECTION_ID = 'token-usage'
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenUsageSectionRow>()
+const columnHelper = createColumnHelper<typeof paginatedTableFeatures, TokenUsageSectionRow>()
 const TOKEN_USAGE_NAME_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
 
 const TreemapChart = dynamic(() => import('~/components/ECharts/TreemapChart'), {

@@ -2,6 +2,7 @@ import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -9,7 +10,7 @@ import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
+import { readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -80,10 +81,10 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 						const items = normalizeTooltipItems(params)
 						if (items.length === 0) return ''
 						const p = items[0]
-						const bin = escapeSqlChartHtml(String(p.axisValue ?? p.name ?? ''))
+						const bin = escapeHtml(String(p.axisValue ?? p.name ?? ''))
 						const name = p.seriesName ?? ''
 						const count = Number(getTooltipRawYValue(p, name) ?? 0)
-						return `<div style="font-weight:600;margin-bottom:4px">${bin}</div><div>${p.marker ?? ''}${escapeSqlChartHtml(name)}&nbsp;&nbsp;${formatNumber(count)}</div>`
+						return `<div style="font-weight:600;margin-bottom:4px">${bin}</div><div>${p.marker ?? ''}${escapeHtml(name)}&nbsp;&nbsp;${formatNumber(count)}</div>`
 					}
 				}
 			} satisfies MultiSeriesChartOptions

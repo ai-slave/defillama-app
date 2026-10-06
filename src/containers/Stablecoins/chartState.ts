@@ -143,6 +143,7 @@ export function useStablecoinChartViewChange(
 	)
 }
 
+// A hook so the compiler keeps the memo: inlined in either page body, the call goes uncached.
 export function useStablecoinChartViewOptions(chartState: Parameters<typeof getStablecoinChartViewOptions>[0]) {
 	return useMemo(() => getStablecoinChartViewOptions(chartState), [chartState])
 }

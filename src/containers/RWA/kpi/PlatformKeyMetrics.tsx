@@ -20,8 +20,6 @@ export type RWAPlatformKeyMetricsProps = {
 	kpi: RWAPlatformKpi
 }
 
-const PERIOD = RWA_KPI_PERIOD
-const PERIOD_LABEL = RWA_KPI_PERIOD_LABEL
 const COUNT_FORMAT = { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' } as const
 /** A platform reads its own numbers, so the labels are the per-asset ones, not the overview totals. */
 const LABELS: RwaKpiLabels = {
@@ -52,7 +50,7 @@ export function buildRwaPlatformKeyMetricsCsv({ meta, kpi }: RWAPlatformKeyMetri
 export function RWAPlatformKeyMetrics(props: RWAPlatformKeyMetricsProps) {
 	const { meta, kpi } = props
 	const { metrics, largestProtocol } = kpi
-	const headlineChange = metrics.change[PERIOD].activeMcap
+	const headlineChange = metrics.change[RWA_KPI_PERIOD].activeMcap
 	const headlinePercent = percentChange(headlineChange.current, headlineChange.prior)
 
 	return (
@@ -84,7 +82,7 @@ export function RWAPlatformKeyMetrics(props: RWAPlatformKeyMetricsProps) {
 					truncate
 				/>
 				{headlinePercent != null ? (
-					<SummaryChange percent={headlinePercent} comparison={`over ${PERIOD_LABEL}`} />
+					<SummaryChange percent={headlinePercent} comparison={`over ${RWA_KPI_PERIOD_LABEL}`} />
 				) : null}
 			</div>
 			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaPlatformKeyMetricsCsv(props)} smol />}>

@@ -9,9 +9,7 @@ import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'
 import type { BridgeAddressTableRow } from './types'
 
-const tableFeaturesConfig = displayTableFeatures
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgeAddressTableRow>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, BridgeAddressTableRow>()
 
 export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableRow> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'withdrawn', desc: true }])
@@ -108,7 +106,7 @@ export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableR
 	)
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data,
 		columns,
 		state: {

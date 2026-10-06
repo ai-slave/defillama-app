@@ -7,7 +7,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/EChar
 import { Select } from '~/components/Select/Select'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { downloadBlob } from '~/utils/download'
@@ -138,7 +138,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { authorizedFetch } = useAuthContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const config = builder.config
 	const [showColors, setShowColors] = useState(false)
 	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)

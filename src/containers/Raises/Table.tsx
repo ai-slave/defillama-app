@@ -24,9 +24,7 @@ import { formatDate, formatIsoDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Raise } from './model'
 
-export const tableFeaturesConfig = orderedFilteredTableFeatures
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, Raise>()
+const columnHelper = createColumnHelper<typeof orderedFilteredTableFeatures, Raise>()
 
 export const raisesColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
@@ -142,7 +140,7 @@ export const raisesColumnOrders: ColumnOrdersByBreakpoint = {
 	]
 }
 
-export const prepareRaisesCsv = (instance: Table<typeof tableFeaturesConfig, Raise>) => {
+export const prepareRaisesCsv = (instance: Table<typeof orderedFilteredTableFeatures, Raise>) => {
 	const csv = prepareTableCsv({ instance, filename: 'raises' })
 	const headers = csv.rows[0]
 	if (!headers) return csv
@@ -175,7 +173,7 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: orderedFilteredTableFeatures,
 		data: raises,
 		columns: raisesColumns,
 		state: {

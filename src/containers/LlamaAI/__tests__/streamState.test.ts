@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
 	buildAssistantMessage,
-	createStreamBuffer,
+	createStreamAccumulator,
 	createInitialStreamState,
 	streamReducer
 } from '~/containers/LlamaAI/streamState'
@@ -165,8 +165,8 @@ describe('streamReducer', () => {
 })
 
 test('committed answers retain the server timestamp rather than the client clock', () => {
-	const buffer = createStreamBuffer()
+	const buffer = createStreamAccumulator()
 	buffer.messageMetadata = { timestamp: 1_700_000_000_000, executionTimeMs: 1200 }
 	expect(buildAssistantMessage(buffer, 'answer').timestamp).toBe(1_700_000_000_000)
-	expect(buildAssistantMessage(createStreamBuffer(), 'legacy').timestamp).toBeUndefined()
+	expect(buildAssistantMessage(createStreamAccumulator(), 'legacy').timestamp).toBeUndefined()
 })

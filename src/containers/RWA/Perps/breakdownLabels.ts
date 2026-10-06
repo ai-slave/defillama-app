@@ -1,10 +1,5 @@
 import type { IRWAPerpsMarket } from './api.types'
-import type {
-	RWAPerpsOverviewSnapshotBreakdown,
-	RWAPerpsOverviewTreemapBreakdown,
-	RWAPerpsVenueSnapshotBreakdown,
-	RWAPerpsVenueTreemapBreakdown
-} from './types'
+import type { RWAPerpsOverviewTreemapBreakdown, RWAPerpsVenueTreemapBreakdown } from './types'
 
 export const UNKNOWN_BREAKDOWN_LABEL = 'Unknown'
 
@@ -51,20 +46,6 @@ export function getRWAPerpsSharedBreakdownLabel(row: SharedBreakdownRow, breakdo
 		default:
 			return assertNever(breakdown)
 	}
-}
-
-export function getRWAPerpsOverviewSnapshotBreakdownLabel(
-	row: IRWAPerpsMarket,
-	breakdown: RWAPerpsOverviewSnapshotBreakdown
-): string {
-	return getRWAPerpsSharedBreakdownLabel(row, breakdown)
-}
-
-export function getRWAPerpsVenueSnapshotBreakdownLabel(
-	row: IRWAPerpsMarket,
-	breakdown: RWAPerpsVenueSnapshotBreakdown
-): string {
-	return getRWAPerpsSharedBreakdownLabel(row, breakdown)
 }
 
 function assertNever(value: never): never {

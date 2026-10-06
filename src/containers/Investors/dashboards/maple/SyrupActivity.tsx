@@ -1,7 +1,8 @@
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -25,8 +26,6 @@ import {
 	MAPLE_UNITLESS_TIME_CHART_OPTIONS,
 	Pagination
 } from './shared'
-
-const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -65,7 +64,7 @@ const DRIP_CLAIMS_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const txColumns: Array<ColumnDef<typeof tableFeaturesConfig, TxRow>> = [
+const txColumns: Array<ColumnDef<typeof paginatedTableFeatures, TxRow>> = [
 	{
 		header: 'Date',
 		id: 'timestamp',
@@ -113,7 +112,7 @@ const txColumns: Array<ColumnDef<typeof tableFeaturesConfig, TxRow>> = [
 	}
 ]
 
-const dripColumns: Array<ColumnDef<typeof tableFeaturesConfig, DripRow>> = [
+const dripColumns: Array<ColumnDef<typeof paginatedTableFeatures, DripRow>> = [
 	{
 		header: 'Date',
 		id: 'timestamp',

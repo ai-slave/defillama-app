@@ -4,6 +4,11 @@ import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetr
 
 export type DownloadAccess = 'preview' | 'trial' | 'paid'
 
+/** Strips characters that would break out of a quoted Content-Disposition filename. */
+export function sanitizeFilenameParam(s: string): string {
+	return s.replace(/["\r\n;\\]/g, '_').trim()
+}
+
 type DownloadRouteOptions<TParams> = {
 	route: string
 	getRouteParams?: (req: NextApiRequest, res: NextApiResponse) => TParams | null | Promise<TParams | null>

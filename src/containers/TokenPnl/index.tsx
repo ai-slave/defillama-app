@@ -40,7 +40,6 @@ const EMPTY_SELECTED_COINS: Record<string, TokenSearchResult> = {}
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 export const DEFAULT_TOKEN_PNL_TOKEN_IDS = ['bitcoin', 'ethereum', 'solana'] as const
-const DEFAULT_COMPARISON_IDS = DEFAULT_TOKEN_PNL_TOKEN_IDS
 const TOKEN_PNL_MAX_DATE_BUFFER_SECONDS = 60
 
 function buildTokenOptionMap(tokens: Array<TokenSearchResult>): Record<string, TokenSearchResult> {
@@ -283,7 +282,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	const missingTokenIds = useMemo(() => {
 		const missingIds = new Set<string>()
 		if (selectedCoinId && !tokenOptionsById[selectedCoinId]) missingIds.add(selectedCoinId)
-		for (const tokenId of DEFAULT_COMPARISON_IDS) {
+		for (const tokenId of DEFAULT_TOKEN_PNL_TOKEN_IDS) {
 			if (!tokenOptionsById[tokenId]) missingIds.add(tokenId)
 		}
 		return Array.from(missingIds)
@@ -312,7 +311,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	const coinInfoMap = useMemo(() => {
 		const map = new Map(Object.entries(resolvedTokenOptionsById))
 		if (selectedCoinId && !map.has(selectedCoinId)) map.set(selectedCoinId, getTokenSearchFallback(selectedCoinId))
-		for (const tokenId of DEFAULT_COMPARISON_IDS) {
+		for (const tokenId of DEFAULT_TOKEN_PNL_TOKEN_IDS) {
 			if (!map.has(tokenId)) map.set(tokenId, getTokenSearchFallback(tokenId))
 		}
 		return map
@@ -338,7 +337,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	})
 
 	const comparisonQueries = useQueries({
-		queries: DEFAULT_COMPARISON_IDS.map((tokenId) => ({
+		queries: DEFAULT_TOKEN_PNL_TOKEN_IDS.map((tokenId) => ({
 			queryKey: ['token-pnl-comparison-item', tokenId, start, end],
 			queryFn: () => buildComparisonEntry({ tokenId, start, end }),
 			enabled: !!(router.isReady && start != null && end != null && end > start),

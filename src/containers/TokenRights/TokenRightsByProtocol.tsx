@@ -513,7 +513,7 @@ function OverviewTokenValue({
 }: {
 	display: ITokenRightsTokenDisplay
 	inactiveLabel: string
-	inactiveTone?: StatusTone
+	inactiveTone?: TokenRightsChipTone
 }) {
 	if (display.displayTokens.length === 0) {
 		return <TokenRightsToneText label={inactiveLabel} tone={inactiveTone} />
@@ -538,16 +538,14 @@ function OverviewEquityCaptureValue({ value }: { value: string | null }) {
 // Shared primitives
 // ---------------------------------------------------------------------------
 
-type StatusTone = TokenRightsChipTone
-
-const TEXT_TONE_CLASSES: Record<StatusTone, string> = {
+const TEXT_TONE_CLASSES: Record<TokenRightsChipTone, string> = {
 	positive: 'text-success',
 	negative: 'text-error',
 	warning: 'text-warning dark:text-warning',
 	neutral: 'text-secondary'
 }
 
-function TokenRightsToneText({ label, tone }: { label: string; tone: StatusTone }) {
+function TokenRightsToneText({ label, tone }: { label: string; tone: TokenRightsChipTone }) {
 	return <span className={`label-md whitespace-nowrap ${TEXT_TONE_CLASSES[tone]}`}>{label}</span>
 }
 
@@ -726,7 +724,7 @@ function tryHostname(url: string): string {
 	}
 }
 
-function feeSwitchTone(status: string): StatusTone {
+function feeSwitchTone(status: string): TokenRightsChipTone {
 	switch (status) {
 		case 'ON':
 			return 'positive'
@@ -739,7 +737,7 @@ function feeSwitchTone(status: string): StatusTone {
 	}
 }
 
-function equityCaptureTone(val: string): StatusTone {
+function equityCaptureTone(val: string): TokenRightsChipTone {
 	switch (val) {
 		case 'Yes':
 			return 'negative'

@@ -21,7 +21,6 @@ const EMPTY_LINKS: Array<ILink> = []
 const ROW_WRAP_TOLERANCE_PX = 1
 const RESIZE_DEBOUNCE_MS = 100
 const SSR_LINK_LIMIT = 20
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 interface OverflowState {
 	renderMenuOnly: boolean
@@ -198,7 +197,7 @@ export function LinksWithDropdown({
 
 	// Full measurement: runs synchronously before paint when isMeasuring is true.
 	// Deferred until isClient so we measure all links, not just the SSR-limited subset.
-	useIsomorphicLayoutEffect(() => {
+	useLayoutEffect(() => {
 		if (!isClient || !isMeasuring) return
 
 		const priorityNav = priorityNavRef.current
@@ -212,6 +211,7 @@ export function LinksWithDropdown({
 		}
 
 		dispatch({ type: 'MEASURED', result, signature: linksLayoutSignature })
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the trigger: AWAIT_CONTAINER clears menu-only, and the container it mounts must be measured.
 	}, [isClient, isMeasuring, overflowState.renderMenuOnly, links.length, linksLayoutSignature])
 
 	// Resize listeners — fast cached recalculation, no two-phase render needed

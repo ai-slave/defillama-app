@@ -3,7 +3,8 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
@@ -16,8 +17,6 @@ import { formatDateTime } from '~/utils/dateFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { formatEquitiesCompactValue } from './financialsFormatting'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from './types'
-
-const tableFeaturesConfig = paginatedTableFeatures
 
 const TABLE_PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 const DEFAULT_TABLE_PAGE_SIZE = 10
@@ -35,8 +34,8 @@ function getMarketVenueFromQuery(value?: string): MarketVenueFilter {
 	return match ?? 'all'
 }
 
-const marketsColumnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesOnchainMarketRow>()
-const tokensColumnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesOnchainTokenRow>()
+const marketsColumnHelper = createColumnHelper<typeof paginatedTableFeatures, IEquitiesOnchainMarketRow>()
+const tokensColumnHelper = createColumnHelper<typeof paginatedTableFeatures, IEquitiesOnchainTokenRow>()
 
 function formatFundingRate(value: number | null): string {
 	return value == null ? '-' : (formatEquitiesCompactValue(value, '%') ?? '-')

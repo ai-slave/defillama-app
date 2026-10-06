@@ -27,7 +27,7 @@ import {
 	type RWASelectFilterOptions,
 	getRwaInclusionQueryValue
 } from './filterState'
-import { computeWeightedGroups, getPrimaryRwaCategory } from './grouping'
+import { getPrimaryRwaCategory } from './grouping'
 import { rwaSlug } from './rwaSlug'
 import { getRwaTableViewQuery, parseRwaTableView } from './table/view'
 
@@ -35,7 +35,10 @@ export { resolveRWAOverviewInclusionFlag } from './filterState'
 
 type PieChartDatum = { name: string; value: number }
 
-function emptyPieChartResult(): { pieChartData: Array<PieChartDatum>; pieChartStackColors: Record<string, string> } {
+export function emptyPieChartResult(): {
+	pieChartData: Array<PieChartDatum>
+	pieChartStackColors: Record<string, string>
+} {
 	return { pieChartData: [], pieChartStackColors: {} }
 }
 
@@ -315,30 +318,6 @@ export const useFilteredRwaAssets = ({
 	])
 }
 
-export function useRWAAssetCategoryPieChartData({
-	enabled,
-	assets,
-	categories,
-	selectedCategories,
-	metric,
-	includeBridgeTvl = true
-}: {
-	enabled: boolean
-	assets: IRWAAssetsOverview['assets']
-	categories: Array<string>
-	selectedCategories: Array<string>
-	metric: RWAChartMetricKey
-	includeBridgeTvl?: boolean
-}) {
-	return useMemo(
-		() =>
-			enabled
-				? buildRwaAssetCategoryPieChartData({ assets, categories, selectedCategories, metric, includeBridgeTvl })
-				: emptyPieChartResult(),
-		[assets, categories, enabled, includeBridgeTvl, metric, selectedCategories]
-	)
-}
-
 /** Category pie slices: each asset counts only toward its primary category. */
 export function buildRwaAssetCategoryPieChartData({
 	assets,
@@ -377,54 +356,6 @@ export function buildRwaAssetCategoryPieChartData({
 		pieChartData,
 		pieChartStackColors
 	}
-}
-
-export function useRwaCategoryAssetClassPieChartData({
-	enabled,
-	assets,
-	assetClasses,
-	selectedAssetClasses,
-	metric,
-	includeBridgeTvl = true
-}: {
-	enabled: boolean
-	assets: IRWAAssetsOverview['assets']
-	assetClasses: Array<string>
-	selectedAssetClasses: Array<string>
-	metric: RWAChartMetricKey
-	includeBridgeTvl?: boolean
-}) {
-	return useMemo(() => {
-		if (!enabled) {
-			return emptyPieChartResult()
-		}
-
-		const pieChartStackColors = buildStackColors(assetClasses)
-		const selectedAssetClassesSet = new Set(selectedAssetClasses)
-		const assetClassTotals = new Map<string, number>()
-
-		for (const asset of assets) {
-			for (const { value: assetClass, weight } of computeWeightedGroups(asset.assetClass)) {
-				if (!assetClass || !selectedAssetClassesSet.has(assetClass)) continue
-
-				assetClassTotals.set(
-					assetClass,
-					(assetClassTotals.get(assetClass) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl) * weight
-				)
-			}
-		}
-
-		const pieChartData: Array<PieChartDatum> = []
-		for (const [name, value] of assetClassTotals) {
-			if (value > 0) pieChartData.push({ name, value })
-		}
-		pieChartData.sort((a, b) => b.value - a.value)
-
-		return {
-			pieChartData,
-			pieChartStackColors
-		}
-	}, [assetClasses, assets, enabled, includeBridgeTvl, metric, selectedAssetClasses])
 }
 
 export function useRwaAssetNamePieChartData({
@@ -475,26 +406,6 @@ export function useRwaAssetNamePieChartData({
 			pieChartStackColors
 		}
 	}, [assets, enabled, includeBridgeTvl, metric, selectedAssetNames])
-}
-
-export function useRwaAssetGroupPieChartData({
-	enabled,
-	assets,
-	metric,
-	includeBridgeTvl = true
-}: {
-	enabled: boolean
-	assets: IRWAAssetsOverview['assets']
-	metric: RWAChartMetricKey
-	includeBridgeTvl?: boolean
-}) {
-	return useMemo(
-		() =>
-			enabled && assets.length > 0
-				? buildRwaAssetGroupPieChartData({ assets, metric, includeBridgeTvl })
-				: emptyPieChartResult(),
-		[assets, enabled, includeBridgeTvl, metric]
-	)
 }
 
 /** Asset-group pie slices, with missing groups counted as Unknown. */

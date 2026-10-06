@@ -12,7 +12,7 @@ import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/Cumulat
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
@@ -64,7 +64,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const router = useRouter()
 	const getQueryValue = useMemo(() => readAsPathQuery(router.asPath), [router.asPath])
 	const [isThemeDark] = useDarkModeManager()
-	const { chartInstance: overviewChartInstance, handleChartReady: handleOverviewChartReady } = useChartImageExport()
+	const { chartInstance: overviewChartInstance, handleChartReady: handleOverviewChartReady } = useGetChartInstance()
 	const overviewImageFilename = slug(props.name)
 	const overviewImageTitle = props.name
 	const { toggledMetrics, hasAtLeastOneBarChart, toggledCharts, groupBy, defaultEnabledCharts, hasEvents } = useMemo(

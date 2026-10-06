@@ -4,6 +4,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
@@ -28,7 +29,7 @@ import { InstantTooltip } from '../InstantTooltip'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { ProtocolIcon } from '../poolDetail/Icons'
 import { rangeCovers } from '../poolDetail/poolChartUtils'
-import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue } from '../poolDetail/tooltip'
+import { getChartTooltipItems, getChartTooltipValue } from '../poolDetail/tooltip'
 import { YieldsTabs } from '../YieldsTabs'
 import {
 	fetchStablecoinRatesHistory,
@@ -91,7 +92,7 @@ function ratesTooltipFormatter(params: unknown): string {
 	const items = getChartTooltipItems(params)
 	if (items.length === 0) return ''
 	const first = items[0]!
-	const ts = getChartTooltipTimestamp(first)
+	const ts = getTooltipAxisValue(first)
 	const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 	const sorted = [...items].sort((a, b) => (RATES_ORDER[a.seriesName] ?? 9) - (RATES_ORDER[b.seriesName] ?? 9))
 	let rows = ''

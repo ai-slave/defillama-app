@@ -1,16 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { RWA_PERPS_SERVER_URL } from '~/constants'
-import { rwaPerpsOverviewBreakdown } from '~/containers/RWA/server/api'
-import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/perps/overview-breakdown'
+import { parsePerpsOverviewBreakdownRequest, rwaPerpsOverviewBreakdown } from '~/containers/RWA/server/api'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 
-describe('parseOverviewBreakdownRequest', () => {
+describe('parsePerpsOverviewBreakdownRequest', () => {
 	test('accepts overview requests without a target', () => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					breakdown: 'assetGroup',
 					key: 'openInterest'
@@ -31,7 +30,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		{ query: { excludeAssetClass: 'Forex Perps' }, target: { kind: 'excludeAssetClass', slug: 'Forex Perps' } }
 	])('accepts $target.kind-targeted requests', ({ query, target }) => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: { ...query, includeCex: 'true', breakdown: 'baseAsset', key: 'volume24h' }
 			})
 		).toEqual({ breakdown: 'baseAsset', key: 'volume24h', target, includeCex: true })
@@ -39,7 +38,7 @@ describe('parseOverviewBreakdownRequest', () => {
 
 	test('rejects the retired venueType query', () => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					breakdown: 'assetGroup',
 					key: 'openInterest',
@@ -51,7 +50,7 @@ describe('parseOverviewBreakdownRequest', () => {
 
 	test('rejects contract breakdowns and invalid target combinations', () => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					baseAsset: 'SK Hynix',
 					breakdown: 'venue',
@@ -61,7 +60,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					breakdown: 'contract',
 					key: 'markets'
@@ -70,7 +69,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					assetGroup: 'US Equities',
 					includeCex: 'yes',
@@ -81,7 +80,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					venue: 'xyz',
 					breakdown: 'venue',
@@ -91,7 +90,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					assetGroup: 'US Equities',
 					breakdown: 'assetGroup',
@@ -101,7 +100,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					assetGroup: 'US Equities',
 					assetClass: 'Forex Perps',
@@ -112,7 +111,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					excludeAssetClass: 'Forex Perps',
@@ -123,7 +122,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					venue: 'xyz',
 					assetGroup: 'US Equities',
@@ -134,7 +133,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parsePerpsOverviewBreakdownRequest({
 				query: {
 					venue: '   ',
 					breakdown: 'baseAsset',

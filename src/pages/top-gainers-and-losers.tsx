@@ -21,8 +21,6 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const GAINERS_SORTING_STATE: SortingState = [{ id: 'change_1d', desc: true }]
 const LOSERS_SORTING_STATE: SortingState = [{ id: 'change_1d', desc: false }]
 
@@ -43,7 +41,7 @@ type ProtocolRow = ProtocolBaseRow & {
 	mcaptvl: number | null
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, ProtocolRow>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, ProtocolRow>()
 
 const topGainersAndLosersColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
@@ -122,7 +120,7 @@ function TopGainersAndLosersTable({ data, sortingState }: { data: Array<Protocol
 	const [sorting, setSorting] = useState<SortingState>(sortingState)
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data,
 		columns: topGainersAndLosersColumns,
 		state: {

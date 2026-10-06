@@ -7,15 +7,18 @@ import { searchTableFeatures } from '../features/search'
 import { VirtualTable } from '../VirtualTable'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pairs' }) }))
-
-const features = searchTableFeatures
-const helper = createColumnHelper<typeof features, { name: string }>()
+const helper = createColumnHelper<typeof searchTableFeatures, { name: string }>()
 const columns = helper.columns([helper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[180px]' } })])
 const data = Array.from({ length: 100 }, (_, i) => ({ name: `Asset ${i + 1}` }))
 
 function Fixture() {
 	// Hidden columns can come back from a saved view, so the table can mount with none visible.
-	const table = useTable({ features, columns, data, initialState: { columnVisibility: { name: false } } })
+	const table = useTable({
+		features: searchTableFeatures,
+		columns,
+		data,
+		initialState: { columnVisibility: { name: false } }
+	})
 	return (
 		<>
 			<button type="button" onClick={() => table.getColumn('name')!.toggleVisibility(true)}>

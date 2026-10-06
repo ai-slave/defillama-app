@@ -20,13 +20,11 @@ export function resolveTokensChartLogo(source: string): string {
 	return source.startsWith(TOKENS_CHART_GECKO_LOGO_PREFIX) ? geckoTokenIconUrl(source.slice(1)) : source
 }
 
-export type TokensTreemapLeaf = MarketTreemapLeaf
-
 export interface TokensTreemapGroup extends Omit<MarketTreemapGroup, 'children'> {
-	children: Array<TokensTreemapLeaf>
+	children: Array<MarketTreemapLeaf>
 }
 
-export type TokensTreemapNode = TokensTreemapLeaf | TokensTreemapGroup
+export type TokensTreemapNode = MarketTreemapLeaf | TokensTreemapGroup
 
 export interface TokensTreemapOptions {
 	colorWindow: TokensChangeWindow
@@ -36,7 +34,7 @@ export interface TokensTreemapOptions {
 
 export interface TokensTreemapResult {
 	treeData: Array<TokensTreemapNode>
-	leaves: Array<TokensTreemapLeaf>
+	leaves: Array<MarketTreemapLeaf>
 	stablecoinsHidden: number
 }
 
@@ -45,9 +43,9 @@ export function buildTokensTreemap(
 	{ colorWindow, mapMode, universe }: TokensTreemapOptions
 ): TokensTreemapResult {
 	const priceChanges = data.priceChanges[colorWindow]
-	const leaves: Array<TokensTreemapLeaf> = []
-	const tokenLeaves: Array<TokensTreemapLeaf> = []
-	const stablecoinLeaves: Array<TokensTreemapLeaf> = []
+	const leaves: Array<MarketTreemapLeaf> = []
+	const tokenLeaves: Array<MarketTreemapLeaf> = []
+	const stablecoinLeaves: Array<MarketTreemapLeaf> = []
 	let tokenMarketCap = 0
 	let stablecoinMarketCap = 0
 	let stablecoinsHidden = 0
@@ -62,7 +60,7 @@ export function buildTokensTreemap(
 		}
 		const marketCap = data.marketCaps[index]!
 		const change = priceChanges[index]!
-		const leaf: TokensTreemapLeaf = {
+		const leaf: MarketTreemapLeaf = {
 			name: data.symbols[index]!,
 			value: [marketCap, change],
 			iconKey: leaves.length,
@@ -98,7 +96,7 @@ export function prepareTokensTreemapCsv({
 	colorWindow,
 	filename
 }: {
-	leaves: ReadonlyArray<TokensTreemapLeaf>
+	leaves: ReadonlyArray<MarketTreemapLeaf>
 	colorWindow: TokensChangeWindow
 	filename: string
 }) {

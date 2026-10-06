@@ -2,7 +2,7 @@ import { Button } from '~/ui/Button'
 import { DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import type { WizardStep } from '../types'
-import { getStepIndex, WIZARD_STEPS } from '../types'
+import { WIZARD_STEPS } from '../types'
 
 const STEP_LABELS: Record<WizardStep, string> = {
 	'select-type': 'Type',
@@ -12,7 +12,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
 }
 
 export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
-	const currentIndex = getStepIndex(currentStep)
+	const currentIndex = WIZARD_STEPS.indexOf(currentStep)
 	return (
 		<div className="flex items-center justify-center gap-2">
 			{WIZARD_STEPS.map((step, index) => {

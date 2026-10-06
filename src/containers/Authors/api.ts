@@ -49,6 +49,9 @@ export async function getAuthorBySlug(
 	return parseResponse<AuthorPageResponse>(response)
 }
 
+// Prefix of every top-authors query; each `limit` gets its own entry under it.
+export const TOP_AUTHORS_QUERY_KEY = ['pro-dashboard', 'top-authors'] as const
+
 export async function getTopAuthors(limit?: number, fetcher: FetchLike = fetch): Promise<Array<TopAuthorEntry>> {
 	const qs = limit ? `?limit=${limit}` : ''
 	const response = await fetcher(`${FEATURES_SERVER}/authors/top${qs}`)

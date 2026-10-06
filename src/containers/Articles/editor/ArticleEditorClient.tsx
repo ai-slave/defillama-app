@@ -8,6 +8,7 @@ import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { InlineStatus, PanelStatus } from '~/ui/Status'
@@ -68,7 +69,6 @@ import type { ArticlePeoplePanelConfig } from './peoplePanel'
 import { PeoplePanelDialog } from './PeoplePanelDialog'
 import { RevisionHistoryDrawer } from './RevisionHistoryDrawer'
 import { useArticleCollaborators } from './useArticleCollaborators'
-import { useEditorEventCallback } from './useEditorEventCallback'
 
 /** The pending revision's timestamp wins whenever a draft edit is unpublished. */
 function latestArticleUpdatedAt(article: Pick<LocalArticleDocument, 'pendingUpdatedAt' | 'updatedAt'>) {
@@ -170,8 +170,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	)
 
 	// Keep tiptap's plugins stable while their event handlers follow the committed article.
-	const getUpload = useEditorEventCallback(() => uploadInlineImage)
-	const getArticleId = useEditorEventCallback(() => article.id)
+	const getUpload = useStableCallback(() => uploadInlineImage)
+	const getArticleId = useStableCallback(() => article.id)
 
 	const extensions = useMemo(
 		() =>

@@ -25,12 +25,10 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
-const tableFeaturesConfig = expandedFilteredTableFeatures
-
 type StablecoinsByChainRow = ReturnType<typeof useGroupChainsPegged>[number]
 type StablecoinsChainsTableMeta = { deprecatedChains: Record<string, true> }
 type DominanceCell = NonNullable<StablecoinsByChainRow['dominance']>
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, StablecoinsByChainRow>()
+const columnHelper = createColumnHelper<typeof expandedFilteredTableFeatures, StablecoinsByChainRow>()
 
 const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
@@ -178,7 +176,7 @@ export function StablecoinsChainsTable({
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: expandedFilteredTableFeatures,
 		data,
 		columns: stablecoinsByChainColumns,
 		state: {

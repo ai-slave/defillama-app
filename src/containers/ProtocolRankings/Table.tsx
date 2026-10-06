@@ -71,8 +71,6 @@ import {
 import type { ProtocolRankingInitialPage } from './tableQuery'
 import type { IProtocol } from './types'
 
-const tableFeaturesConfig = expandedFilteredTableFeatures
-
 type ChainProtocolsTableProps = {
 	protocols: Array<IProtocol>
 	sampleRow?: IProtocol
@@ -445,7 +443,7 @@ function ChainProtocolsTableInner({
 	const tableExpanded = searchExpanded ? (searchExpandedPick ?? searchExpanded) : expanded
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: expandedFilteredTableFeatures,
 		data: finalProtocols,
 		columns: allColumns,
 		state: {
@@ -1211,7 +1209,7 @@ export function getProtocolRankingPresetColumnVisibility(
 	)
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IProtocol>()
+const columnHelper = createColumnHelper<typeof expandedFilteredTableFeatures, IProtocol>()
 
 const protocolRankingAccessor = (key: ProtocolRankingSortKey) => (row: IProtocol) => {
 	const value = getProtocolRankingSortValue(row, key)

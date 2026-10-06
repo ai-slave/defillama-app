@@ -50,8 +50,6 @@ import { getRatio, HIGH_RATIO_MULTIPLE, type OptionsRatioKey } from './optionsRa
 import type { IAdapterByChainPageData } from './types'
 import { filterProtocolsByCategoryQuery } from './utils'
 
-const tableFeaturesConfig = searchTableFeatures
-
 type TPageType =
 	| 'Fees'
 	| 'Revenue'
@@ -138,7 +136,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: searchTableFeatures,
 		data: protocols,
 		columns: tableColumns,
 		state: {
@@ -159,7 +157,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	})
 
 	const rankInstance = useTable({
-		features: tableFeaturesConfig,
+		features: searchTableFeatures,
 		data: protocols,
 		columns: tableColumns,
 		state: { sorting },
@@ -511,7 +509,7 @@ const getColumnsOptions = <T extends { id: string; columnDef: { header?: unknown
 
 type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, AdapterProtocolRow>()
+const columnHelper = createColumnHelper<typeof searchTableFeatures, AdapterProtocolRow>()
 
 const NameColumn = (type: IProps['type']) =>
 	columnHelper.accessor('name', {

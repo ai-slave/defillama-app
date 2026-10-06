@@ -3,8 +3,6 @@ import { definitions } from '../../definitions'
 import type { RWAFlagKey, RWAFlagTally } from '../rows'
 import { columnHelper, numberColumnMeta } from './shared'
 
-type FlagKey = RWAFlagKey
-
 /** yes over known; a child without an answer counts in neither. */
 function FlagTallyCell({ tally, label }: { tally: RWAFlagTally; label: string }) {
 	if (tally.known === 0) return null
@@ -23,7 +21,7 @@ function formatFlagTally(tally: RWAFlagTally): string {
 }
 
 type FlagColumnConfig = {
-	key: FlagKey
+	key: RWAFlagKey
 	width: string
 	/** A restriction: yes is the warning colour. */
 	yesIsWarning?: boolean
@@ -73,7 +71,7 @@ function createFlagColumn({ key, width, yesIsWarning = false, csvOnly = false }:
 export const flagColumns = FLAG_COLUMNS.map(createFlagColumn)
 /** The Compliance preset shows six flags in the reader's order: proof first, then the gates, then the exits. CEX
     listing is known on a third of the assets and reads Yes wherever known, so it stays csv-only. */
-const COMPLIANCE_FLAG_ORDER: ReadonlyArray<FlagKey> = [
+const COMPLIANCE_FLAG_ORDER: ReadonlyArray<RWAFlagKey> = [
 	'attestations',
 	'kycForMintRedeem',
 	'kycAllowlistedWhitelistedToTransferHold',

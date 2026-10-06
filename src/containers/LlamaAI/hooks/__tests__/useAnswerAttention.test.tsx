@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AgenticSSECallbacks } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { useAnswerAttention } from '~/containers/LlamaAI/hooks/useAnswerAttention'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
-import { createStreamBuffer, createStreamStore, type StreamAction } from '~/containers/LlamaAI/streamState'
+import { createStreamAccumulator, createStreamStore, type StreamAction } from '~/containers/LlamaAI/streamState'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 
 const track = installUmamiSink()
@@ -24,7 +24,7 @@ function Harness() {
 function startRun(): AgenticSSECallbacks {
 	const callbacks = createAgenticCallbacks({
 		isCurrent: () => true,
-		buffer: createStreamBuffer(),
+		buffer: createStreamAccumulator(),
 		dispatch: store.dispatch,
 		currentMessageIdRef: { current: null },
 		appendMessage: () => {},

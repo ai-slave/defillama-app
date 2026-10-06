@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
 	ActiveFilterCard,
-	ActiveFilterPills,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog,
@@ -17,7 +16,6 @@ import {
 	draftEquityFiltersToActive,
 	EQUITY_FILTER_CATEGORIES,
 	EQUITY_FILTER_CONFIGS,
-	formatEquityActiveFilter,
 	getEquityCategoricalFilterConfig,
 	getEquityNumericFilterConfig,
 	setEquityDraftOperator,
@@ -46,53 +44,10 @@ const CATEGORY_LABELS = Object.fromEntries(
 	EQUITY_FILTER_CATEGORIES.map((category) => [category.key, category.label])
 ) as Record<EquityFilterCategory, string>
 
-function OperatorSelect({
-	value,
-	onChange
-}: {
-	value: EquityNumericOperator
-	onChange: (operator: EquityNumericOperator) => void
-}) {
-	return (
-		<Select
-			heading="Operator"
-			allValues={OPERATOR_OPTIONS}
-			selectedValues={value}
-			setSelectedValues={(nextValue) => onChange(nextValue as EquityNumericOperator)}
-			label={value}
-			labelType="none"
-			variant="input"
-			size="md"
-			className="shrink-0"
-			triggerProps={{ 'aria-label': 'Operator' }}
-		/>
-	)
-}
-
 const MODE_OPTIONS: Array<{ value: EquityCategoricalMode; label: string }> = [
 	{ value: 'include', label: 'Include' },
 	{ value: 'exclude', label: 'Exclude' }
 ]
-
-function ModeToggle({
-	value,
-	onChange
-}: {
-	value: EquityCategoricalMode
-	onChange: (mode: EquityCategoricalMode) => void
-}) {
-	return (
-		<SegmentedControl
-			label="Match mode"
-			value={value}
-			onValueChange={onChange}
-			options={MODE_OPTIONS}
-			variant="default"
-			size="md"
-			className="shrink-0"
-		/>
-	)
-}
 
 function NumericFilterEditor({
 	config,
@@ -116,9 +71,17 @@ function NumericFilterEditor({
 			onRemove={onRemove}
 		>
 			<div className="flex items-center gap-2">
-				<OperatorSelect
-					value={filter.operator}
-					onChange={(operator) => onUpdate(setEquityDraftOperator(filter, operator))}
+				<Select
+					heading="Operator"
+					allValues={OPERATOR_OPTIONS}
+					selectedValues={filter.operator}
+					setSelectedValues={(operator) => onUpdate(setEquityDraftOperator(filter, operator as EquityNumericOperator))}
+					label={filter.operator}
+					labelType="none"
+					variant="input"
+					size="md"
+					className="shrink-0"
+					triggerProps={{ 'aria-label': 'Operator' }}
 				/>
 				{filter.operator === 'between' ? (
 					<>
@@ -174,7 +137,15 @@ function CategoricalFilterEditor({
 	return (
 		<ActiveFilterCard label={config.label} category={CATEGORY_LABELS[config.category]} onRemove={onRemove}>
 			<div className="flex items-center gap-2">
-				<ModeToggle value={mode} onChange={(nextMode) => onUpdate({ ...filter, mode: nextMode })} />
+				<SegmentedControl
+					label="Match mode"
+					value={mode}
+					onValueChange={(nextMode) => onUpdate({ ...filter, mode: nextMode })}
+					options={MODE_OPTIONS}
+					variant="default"
+					size="md"
+					className="shrink-0"
+				/>
 				<SelectWithCombobox
 					allValues={options}
 					selectedValues={values}
@@ -281,24 +252,6 @@ function EquitiesFiltersSession({ categoricalOptions, filters, onFiltersChange }
 			}
 			onClearAll={() => setDraftFilters([])}
 			onApply={() => onFiltersChange(draftEquityFiltersToActive(draftFilters))}
-		/>
-	)
-}
-
-export function EquityActiveFilterPills({
-	filters,
-	onRemove
-}: {
-	filters: Array<EquityActiveFilter>
-	onRemove: (id: string) => void
-}) {
-	return (
-		<ActiveFilterPills
-			pills={filters.map((filter) => ({
-				id: filter.id,
-				label: formatEquityActiveFilter(filter),
-				onRemove: () => onRemove(filter.id)
-			}))}
 		/>
 	)
 }

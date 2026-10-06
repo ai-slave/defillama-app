@@ -39,7 +39,7 @@ export interface ApyCardRowsInput {
 	median: { label: string; apy: number } | undefined
 }
 
-const pct = (value: number) => formatPercent(value, YIELD_PERCENT_OPTIONS)
+export const pct = (value: number) => formatPercent(value, YIELD_PERCENT_OPTIONS)
 
 export function buildApyCardRows(input: ApyCardRowsInput): Array<MeasuredRow> {
 	const { total, base, reward, intrinsic, measured, locked, median } = input

@@ -88,10 +88,6 @@ export type QueueSubmitResult =
 	| { status: 'cancelled' }
 	| { status: 'rejected'; message: string }
 
-const trackSubmit = () => {
-	trackUmamiEvent('llamaai-prompt-submit')
-}
-
 interface PendingSelection {
 	selectionStart: number
 	selectionEnd: number
@@ -355,7 +351,7 @@ export function PromptInput({
 				return
 			}
 
-			trackSubmit()
+			trackUmamiEvent('llamaai-prompt-submit')
 			const hasImages = imagesToSend.length > 0
 			// A logical cannot be lowered inside a try, and both submit paths below pass the same flag.
 			const suggestedFlag = isSuggested || undefined

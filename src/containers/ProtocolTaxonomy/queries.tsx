@@ -1141,8 +1141,6 @@ type CategoryAggregateRow = {
 	extraTvls: Record<string, IProtocolsCategoriesExtraTvlPoint>
 }
 
-const CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS = PROTOCOL_LIST_ADDITIVE_TVL_KEYS
-
 function createEmptyExtraTvlPoint(): IProtocolsCategoriesExtraTvlPoint {
 	return {
 		tvl: 0,
@@ -1154,7 +1152,7 @@ function createEmptyExtraTvlPoint(): IProtocolsCategoriesExtraTvlPoint {
 
 function createEmptyExtraTvls(): Record<string, IProtocolsCategoriesExtraTvlPoint> {
 	const extraTvls: Record<string, IProtocolsCategoriesExtraTvlPoint> = {}
-	for (const key of CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS) {
+	for (const key of PROTOCOL_LIST_ADDITIVE_TVL_KEYS) {
 		extraTvls[key] = createEmptyExtraTvlPoint()
 	}
 	return extraTvls
@@ -1206,7 +1204,7 @@ function buildProtocolsCategoriesChartData({
 	categoryKeys: Array<string>
 	extraTvlTypes?: ReadonlyArray<string>
 }): IProtocolsCategoriesChartData {
-	const includedExtraTvlKeys = CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS.filter((key) => extraTvlTypes.includes(key))
+	const includedExtraTvlKeys = PROTOCOL_LIST_ADDITIVE_TVL_KEYS.filter((key) => extraTvlTypes.includes(key))
 	const extraTvlCharts: IProtocolsCategoriesChartData['extraTvlCharts'] = {}
 	if (includedExtraTvlKeys.length > 0) {
 		for (const categoryName of categoryKeys) {
@@ -1334,7 +1332,7 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 			tagRow.revenue = tagRow.revenue === null || protocolRevenue === null ? null : tagRow.revenue + protocolRevenue
 		}
 
-		for (const extraTvlKey of CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS) {
+		for (const extraTvlKey of PROTOCOL_LIST_ADDITIVE_TVL_KEYS) {
 			const protocolExtraTvl = protocol.chainTvls[extraTvlKey]
 			if (protocolExtraTvl == null) continue
 

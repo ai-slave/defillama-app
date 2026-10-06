@@ -278,7 +278,7 @@ const ProDashboardSaveContext = createContext<ReturnType<typeof useAutoSave> | n
 const ProDashboardTimeContext = createContext<ProDashboardTimeContextType | undefined>(undefined)
 const ProDashboardCatalogContext = createContext<ProDashboardCatalogContextType | undefined>(undefined)
 const ProDashboardPermissionsContext = createContext<ProDashboardPermissionsContextType | undefined>(undefined)
-const ProDashboardModeContext = createContext<ProDashboardModeContextType>({
+export const ProDashboardModeContext = createContext<ProDashboardModeContextType>({
 	mode: 'view'
 })
 const ProDashboardDashboardContext = createContext<ProDashboardDashboardContextType | undefined>(undefined)
@@ -1455,10 +1455,6 @@ export function useProDashboardUI() {
 		throw new Error('useProDashboardUI must be used within a ProDashboardAPIProvider')
 	}
 	return context
-}
-
-export function useDashboardMode() {
-	return useContext(ProDashboardModeContext).mode
 }
 
 export function useProDashboardSave() {

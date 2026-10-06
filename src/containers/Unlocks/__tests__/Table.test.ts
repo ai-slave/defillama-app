@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import type { EmissionEvent } from '../api.types'
 import { getEmissionAmountBreakdownOverInterval } from '../eventAmount'
-import { filterUnlockTableProtocols, type IEmission, parseUnlockFilterValue } from '../Table'
+import type { EnrichedProtocolEmission } from '../queries'
+import { filterUnlockTableProtocols, parseUnlockFilterValue } from '../Table'
 
 const ALL_UNLOCK_TYPES = [
 	'publicSale',
@@ -18,8 +19,8 @@ const protocol = (
 	name: string,
 	price: number | null,
 	mcap: number | undefined,
-	events: IEmission['upcomingEvent']
-): IEmission => {
+	events: EnrichedProtocolEmission['upcomingEvent']
+): EnrichedProtocolEmission => {
 	// Every fixture event sits inside the first day, the window the server uses for next24h.
 	const next24h = getEmissionAmountBreakdownOverInterval(events, 0, 24 * 60 * 60)
 
@@ -108,11 +109,11 @@ describe('unlock table construction behavior fixture', () => {
 	})
 
 	test('retains identity when every event survives and clones only a partially filtered row', () => {
-		const alphaEvents: IEmission['upcomingEvent'] = [
+		const alphaEvents: EnrichedProtocolEmission['upcomingEvent'] = [
 			cliff('Team', 'insiders', 1, 10),
 			cliff('Advisors', 'insiders', 2, 5)
 		]
-		const betaEvents: IEmission['upcomingEvent'] = [
+		const betaEvents: EnrichedProtocolEmission['upcomingEvent'] = [
 			cliff('Sale', 'privateSale', 3, 20),
 			cliff('Farm', 'farming', 4, 30)
 		]
@@ -130,11 +131,11 @@ describe('unlock table construction behavior fixture', () => {
 	})
 
 	test('combines watchlist, type, value and share filters on the next-24h value', () => {
-		const alphaEvents: IEmission['upcomingEvent'] = [
+		const alphaEvents: EnrichedProtocolEmission['upcomingEvent'] = [
 			linear('Team', 'insiders', 1, 10, 15),
 			cliff('Farm', 'farming', 2, 100)
 		]
-		const gammaEvents: IEmission['upcomingEvent'] = [
+		const gammaEvents: EnrichedProtocolEmission['upcomingEvent'] = [
 			cliff('Advisors', 'insiders', 5, 15),
 			cliff('Public', 'publicSale', 6, 10)
 		]
@@ -174,7 +175,7 @@ describe('unlock table construction behavior fixture', () => {
 	})
 
 	test('filters on known values while excluding rows without required market data', () => {
-		const ignoredEvents: IEmission['upcomingEvent'] = [
+		const ignoredEvents: EnrichedProtocolEmission['upcomingEvent'] = [
 			unknown('Unknown amount', 'insiders', 1),
 			cliff('Known zero', 'insiders', 2, 0),
 			cliff('Negative correction', 'insiders', 3, -10)

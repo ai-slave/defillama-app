@@ -18,7 +18,7 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
@@ -33,7 +33,7 @@ import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
 import { joinChartHoverSync } from '../shared/chartHoverSync'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
-import { enterAnimationOptions, useChartMotion } from '../shared/chartMotion'
+import { ChartMotionContext, enterAnimationOptions } from '../shared/chartMotion'
 import {
 	CHART_HALLMARK_LABEL_RESERVE,
 	CHART_INSET,
@@ -156,7 +156,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		logoBg: string
 	} | null>(null)
 	const latestTooltipDataIndexRef = useRef<number | null>(null)
-	const chartMotion = useChartMotion()
+	const chartMotion = useContext(ChartMotionContext)
 	// Per-component tooltip size cache (used by tooltip.position). Keeping this in a ref avoids
 	// recreating it on effect re-runs and prevents cross-chart interference.
 	const tooltipSizeCacheRef = useRef<{ w: number; h: number; updatedAt: number } | null>(null)

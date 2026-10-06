@@ -5,7 +5,8 @@ import { useId, type ReactNode } from 'react'
 import { setSignupSource } from '~/auth/signupSource'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
-import { Keycap, TypeBadge, type ColumnKind } from './primitives'
+import type { FineKind } from './columnKind'
+import { Keycap, TypeBadge } from './primitives'
 
 interface UpsellGateProps {
 	isAuthenticated: boolean
@@ -131,7 +132,7 @@ const ALT_ROWS: Array<AltRow> = [
 
 interface TableCol<T> {
 	name: string
-	kind: ColumnKind
+	kind: FineKind
 	type: string
 	width: number
 	get: (row: T) => string | number

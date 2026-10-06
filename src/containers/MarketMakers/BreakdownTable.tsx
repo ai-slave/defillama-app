@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatPercent } from '~/utils/numberFormat'
-import { TimeframeBadge } from './badges'
+import { AccentBadge } from './badges'
 import type { BreakdownSections } from './breakdown'
 import { heatmapClass, percentileOpacity, rankOpacity } from './colors'
 import { formatMetricValue, type MetricFormatKind } from './format'
@@ -181,7 +181,7 @@ export function BreakdownTable({
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center gap-2">
 				<h4 className="label-md">{title}, Detailed Breakdown</h4>
-				<TimeframeBadge label={badge} />
+				<AccentBadge className="h-6">{badge}</AccentBadge>
 			</div>
 			<div className={`overflow-x-auto rounded-lg border ${BORDER}`}>
 				<table className="w-full border-collapse">

@@ -42,9 +42,7 @@ import {
 	protocolListUrl
 } from './tableQuery'
 
-const tableFeaturesConfig = expandedFilteredTableFeatures
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, RecentProtocolTableRow>()
+const columnHelper = createColumnHelper<typeof expandedFilteredTableFeatures, RecentProtocolTableRow>()
 
 export function RecentlyListedProtocolsTable({
 	protocols,
@@ -78,7 +76,7 @@ export function RecentlyListedProtocolsTable({
 	}
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: expandedFilteredTableFeatures,
 		data: pages.rows,
 		columns,
 		state: {

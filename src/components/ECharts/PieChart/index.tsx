@@ -3,7 +3,7 @@ import { PieChart as EPieChart, type PieSeriesOption } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
+import { useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -16,7 +16,7 @@ import { formatPercent } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
-import { enterAnimationOptions, useChartMotion } from '../shared/chartMotion'
+import { ChartMotionContext, enterAnimationOptions } from '../shared/chartMotion'
 import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { buildPieLayoutOption } from './data'
@@ -100,7 +100,7 @@ function PieChart({
 	const stackColorByName = useMemo(() => new Map(Object.entries(stackColors ?? {})), [stackColors])
 	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
-	const chartMotion = useChartMotion()
+	const chartMotion = useContext(ChartMotionContext)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})

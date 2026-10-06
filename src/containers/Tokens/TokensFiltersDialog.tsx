@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
 	ActiveFilterCard,
-	ActiveFilterPills,
 	FilterBrowser,
 	FilterBuilderContent,
 	FilterBuilderDialog,
@@ -10,7 +9,6 @@ import {
 } from '~/components/FilterBuilderDialog'
 import { parseEquityFilterNumber } from '~/containers/Equities/filters'
 import {
-	formatTokensActiveFilter,
 	getTokensFilterConfig,
 	TOKENS_FILTER_CATEGORIES,
 	TOKENS_FILTER_CONFIGS,
@@ -127,24 +125,6 @@ function TokensFiltersSession({
 			}
 			onClearAll={() => setDraftFilters([])}
 			onApply={() => onFiltersChange(draftFiltersToActive(draftFilters))}
-		/>
-	)
-}
-
-export function TokensActiveFilterPills({
-	filters,
-	onRemove
-}: {
-	filters: Array<TokensActiveFilter>
-	onRemove: (id: TokensFilterField) => void
-}) {
-	return (
-		<ActiveFilterPills
-			pills={filters.map((filter) => ({
-				id: filter.id,
-				label: formatTokensActiveFilter(filter),
-				onRemove: () => onRemove(filter.id)
-			}))}
 		/>
 	)
 }

@@ -168,13 +168,6 @@ function calculateEstimatedDimensionProtocolChainEarnings(
 	}
 }
 
-export function getEstimatedDimensionProtocolChainEarnings(
-	protocol: DimensionEarningsChainSource,
-	chainName: string
-): { total24h: number | null; total30d: number | null } | undefined {
-	return calculateEstimatedDimensionProtocolChainEarnings(protocol, chainName)
-}
-
 export function forEachEstimatedDimensionProtocolChainEarnings(
 	protocol: DimensionEarningsChainSource,
 	visit: (chainName: string, total24h: number | null, total30d: number | null) => void
@@ -404,7 +397,7 @@ export function buildDimensionEarningsOverview({
 
 		filteredEarningsData = []
 		for (const protocol of earningsData) {
-			const estimatedChainEarnings = getEstimatedDimensionProtocolChainEarnings(protocol, internalChainName)
+			const estimatedChainEarnings = calculateEstimatedDimensionProtocolChainEarnings(protocol, internalChainName)
 			if (!estimatedChainEarnings) continue
 
 			chainSpecificTotal24h =

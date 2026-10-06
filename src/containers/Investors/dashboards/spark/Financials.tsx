@@ -1,10 +1,10 @@
-import type * as echarts from 'echarts/core'
-import { lazy, useCallback, useMemo, useRef, useState } from 'react'
+import { lazy, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { formatPercent } from '~/utils/numberFormat'
 import { assignColors } from './api'
 import {
@@ -44,15 +44,6 @@ function ChartCard({
 			{children}
 		</div>
 	)
-}
-
-function useChartInstance() {
-	const ref = useRef<echarts.ECharts | null>(null)
-	const onReady = useCallback((instance: echarts.ECharts | null) => {
-		ref.current = instance
-	}, [])
-	const getInstance = useCallback(() => ref.current, [])
-	return { onReady, getInstance }
 }
 
 function KpiCard({ label, value }: { label: string; value: string }) {
@@ -217,8 +208,8 @@ function AllocatedAssetsSection({
 }
 
 function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof useFinancialsData>['data']> }) {
-	const gross = useChartInstance()
-	const net = useChartInstance()
+	const gross = useGetChartInstance()
+	const net = useGetChartInstance()
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -228,7 +219,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 					title={data.monthlyGross.title}
 					actions={
 						<ChartPngExportButton
-							chartInstance={gross.getInstance}
+							chartInstance={gross.chartInstance}
 							filename="gross-returns"
 							title={sparkExportTitle(data.monthlyGross.title)}
 							smol
@@ -244,14 +235,14 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						hideDefaultLegend={data.monthlyGross.charts.length < 2}
 						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
-						onReady={gross.onReady}
+						onReady={gross.handleChartReady}
 					/>
 				</ChartCard>
 				<ChartCard
 					title={data.monthlyNet.title}
 					actions={
 						<ChartPngExportButton
-							chartInstance={net.getInstance}
+							chartInstance={net.chartInstance}
 							filename="net-returns"
 							title={sparkExportTitle(data.monthlyNet.title)}
 							smol
@@ -267,7 +258,7 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 						hideDefaultLegend={data.monthlyNet.charts.length < 2}
 						chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
-						onReady={net.onReady}
+						onReady={net.handleChartReady}
 					/>
 				</ChartCard>
 			</div>
@@ -276,8 +267,8 @@ function MonthlyReturnsSection({ data }: { data: NonNullable<ReturnType<typeof u
 }
 
 function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeof useFinancialsData>['data']> }) {
-	const total = useChartInstance()
-	const byChain = useChartInstance()
+	const total = useGetChartInstance()
+	const byChain = useGetChartInstance()
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -287,7 +278,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 					title="Spark-distributed USDS"
 					actions={
 						<ChartPngExportButton
-							chartInstance={total.getInstance}
+							chartInstance={total.chartInstance}
 							filename="spark-distributed-usds"
 							title={sparkExportTitle('Spark-distributed USDS')}
 							smol
@@ -302,14 +293,14 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						height="400px"
 						chartOptions={UNITLESS_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
-						onReady={total.onReady}
+						onReady={total.handleChartReady}
 					/>
 				</ChartCard>
 				<ChartCard
 					title={data.supplyByChain.title}
 					actions={
 						<ChartPngExportButton
-							chartInstance={byChain.getInstance}
+							chartInstance={byChain.chartInstance}
 							filename="susds-by-chain"
 							title={sparkExportTitle(data.supplyByChain.title)}
 							smol
@@ -326,7 +317,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 						height="400px"
 						chartOptions={UNITLESS_STACKED_SCROLL_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
-						onReady={byChain.onReady}
+						onReady={byChain.handleChartReady}
 					/>
 				</ChartCard>
 			</div>
@@ -337,7 +328,7 @@ function SusdsDistributionSection({ data }: { data: NonNullable<ReturnType<typeo
 type FinData = NonNullable<ReturnType<typeof useFinancialsData>['data']>
 
 function TvlSection({ data }: { data: FinData }) {
-	const tvl = useChartInstance()
+	const tvl = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Total Value Locked</SectionHeader>
@@ -346,7 +337,7 @@ function TvlSection({ data }: { data: FinData }) {
 				title={data.tvl.title}
 				actions={
 					<ChartPngExportButton
-						chartInstance={tvl.getInstance}
+						chartInstance={tvl.chartInstance}
 						filename="tvl"
 						title={sparkExportTitle(data.tvl.title)}
 						smol
@@ -363,7 +354,7 @@ function TvlSection({ data }: { data: FinData }) {
 					height="400px"
 					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={tvl.onReady}
+					onReady={tvl.handleChartReady}
 				/>
 			</ChartCard>
 		</div>
@@ -371,8 +362,8 @@ function TvlSection({ data }: { data: FinData }) {
 }
 
 function DepositsAndBorrowsSection({ data }: { data: FinData }) {
-	const deposits = useChartInstance()
-	const borrows = useChartInstance()
+	const deposits = useGetChartInstance()
+	const borrows = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SparkLend Deposits &amp; Borrows</SectionHeader>
@@ -381,7 +372,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 					title={data.deposits.title}
 					actions={
 						<ChartPngExportButton
-							chartInstance={deposits.getInstance}
+							chartInstance={deposits.chartInstance}
 							filename="sparklend-deposits"
 							title={sparkExportTitle(data.deposits.title)}
 							smol
@@ -396,14 +387,14 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						height="400px"
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
-						onReady={deposits.onReady}
+						onReady={deposits.handleChartReady}
 					/>
 				</ChartCard>
 				<ChartCard
 					title={data.borrows.title}
 					actions={
 						<ChartPngExportButton
-							chartInstance={borrows.getInstance}
+							chartInstance={borrows.chartInstance}
 							filename="sparklend-borrows"
 							title={sparkExportTitle(data.borrows.title)}
 							smol
@@ -418,7 +409,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 						height="400px"
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={HIDDEN_EXPORT}
-						onReady={borrows.onReady}
+						onReady={borrows.handleChartReady}
 					/>
 				</ChartCard>
 			</div>
@@ -427,7 +418,7 @@ function DepositsAndBorrowsSection({ data }: { data: FinData }) {
 }
 
 function SllTvlSection({ data }: { data: FinData }) {
-	const sllTvl = useChartInstance()
+	const sllTvl = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SLL TVL by Chain</SectionHeader>
@@ -435,7 +426,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 				title={data.sllTvl.title}
 				actions={
 					<ChartPngExportButton
-						chartInstance={sllTvl.getInstance}
+						chartInstance={sllTvl.chartInstance}
 						filename="sll-tvl-by-chain"
 						title={sparkExportTitle(data.sllTvl.title)}
 						smol
@@ -452,7 +443,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 					height="400px"
 					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={sllTvl.onReady}
+					onReady={sllTvl.handleChartReady}
 				/>
 			</ChartCard>
 		</div>
@@ -460,7 +451,7 @@ function SllTvlSection({ data }: { data: FinData }) {
 }
 
 function SavingsTvlSection({ data }: { data: FinData }) {
-	const savingsTvl = useChartInstance()
+	const savingsTvl = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Spark Savings TVL by Chain</SectionHeader>
@@ -468,7 +459,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 				title={data.savingsTvl.title}
 				actions={
 					<ChartPngExportButton
-						chartInstance={savingsTvl.getInstance}
+						chartInstance={savingsTvl.chartInstance}
 						filename="spark-savings-tvl-by-chain"
 						title={sparkExportTitle(data.savingsTvl.title)}
 						smol
@@ -485,7 +476,7 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 					height="400px"
 					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={savingsTvl.onReady}
+					onReady={savingsTvl.handleChartReady}
 				/>
 			</ChartCard>
 		</div>
@@ -493,8 +484,8 @@ function SavingsTvlSection({ data }: { data: FinData }) {
 }
 
 function TreasurySection({ data }: { data: FinData }) {
-	const treasury = useChartInstance()
-	const buybacks = useChartInstance()
+	const treasury = useGetChartInstance()
+	const buybacks = useGetChartInstance()
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Treasury &amp; Buybacks</SectionHeader>
@@ -553,7 +544,7 @@ function TreasurySection({ data }: { data: FinData }) {
 					title="Total Treasury"
 					actions={
 						<ChartPngExportButton
-							chartInstance={treasury.getInstance}
+							chartInstance={treasury.chartInstance}
 							filename="total-treasury"
 							title={sparkExportTitle('Total Treasury')}
 							smol
@@ -565,7 +556,7 @@ function TreasurySection({ data }: { data: FinData }) {
 						charts={data.treasuryModel.charts}
 						valueSymbol="$"
 						height="400px"
-						onReady={treasury.onReady}
+						onReady={treasury.handleChartReady}
 						hideDefaultLegend={false}
 						exportButtons="hidden"
 					/>
@@ -574,7 +565,7 @@ function TreasurySection({ data }: { data: FinData }) {
 					title="SPK Buybacks"
 					actions={
 						<ChartPngExportButton
-							chartInstance={buybacks.getInstance}
+							chartInstance={buybacks.chartInstance}
 							filename="spk-buybacks"
 							title={sparkExportTitle('SPK Buybacks')}
 							smol
@@ -586,7 +577,7 @@ function TreasurySection({ data }: { data: FinData }) {
 						charts={data.buybacksModel.charts}
 						valueSymbol=""
 						height="400px"
-						onReady={buybacks.onReady}
+						onReady={buybacks.handleChartReady}
 						hideDefaultLegend={false}
 						exportButtons="hidden"
 					/>

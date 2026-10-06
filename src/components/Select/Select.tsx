@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
+import { NestedMenu } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
 import {
 	nestedMenuSelectRowStyles,
@@ -194,9 +194,9 @@ export function Select(props: ISelect) {
 			<NestedMenu combobox={null} label={label} render={<button type="button" />}>
 				<div className={popoverScrollAreaStyles}>
 					{showCheckboxes ? (
-						<NestedMenuItem hideOnClick={false} onClick={toggleSelectAll} className={nestedMenuSelectRowStyles}>
+						<Ariakit.MenuItem hideOnClick={false} onClick={toggleSelectAll} className={nestedMenuSelectRowStyles}>
 							{selectAllContent}
-						</NestedMenuItem>
+						</Ariakit.MenuItem>
 					) : null}
 					{allValues.map((option) => (
 						<NestedSelectItem

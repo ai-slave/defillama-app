@@ -82,10 +82,6 @@ const openInterestChangeColumn = columnHelper.accessor(
 	}
 )
 
-function formatRatePercent(value: number | null | undefined): string | null {
-	return formatPercentChange(value)
-}
-
 /** Premiums sit in hundredths of a percent, so three decimals. */
 function formatPremium(value: number | null | undefined): string | null {
 	if (value == null || !Number.isFinite(value)) return null
@@ -94,11 +90,11 @@ function formatPremium(value: number | null | undefined): string | null {
 }
 
 function FundingCell({ metrics }: { metrics: RWATableMetrics }) {
-	const formatted = formatRatePercent(metrics.fundingApr)
+	const formatted = formatPercentChange(metrics.fundingApr)
 	if (formatted == null) return null
 	const detail =
 		metrics.fundingRate != null && metrics.fundingIntervalHours != null
-			? `${formatRatePercent(metrics.fundingRate * 100)} per ${metrics.fundingIntervalHours}h, annualised.`
+			? `${formatPercentChange(metrics.fundingRate * 100)} per ${metrics.fundingIntervalHours}h, annualised.`
 			: GROUP_RATE_NOTE
 	return (
 		<Tooltip content={detail} className={`justify-end underline decoration-dotted ${longCostTone(metrics.fundingApr)}`}>

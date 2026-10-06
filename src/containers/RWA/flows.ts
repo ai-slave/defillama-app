@@ -23,12 +23,11 @@ import type { RWAChartMetricAvailability } from './chartState'
 import { definitions } from './definitions'
 
 export type RWAFlowGrouping = ChartTimeGroupingWithCumulative
-export type RWAFlowOverlayMetric = RWAChartMetricKey
 type RWAFlowOverlayValues = ReadonlyMap<number, number | null>
 export type RWAFlowOverlay =
-	| { metric: RWAFlowOverlayMetric; values: RWAFlowOverlayValues }
+	| { metric: RWAChartMetricKey; values: RWAFlowOverlayValues }
 	| { metric: 'onChainMcap'; values: null }
-type RWAGroupedFlowOverlay = { metric: RWAFlowOverlayMetric; values: Map<number, number | null> }
+type RWAGroupedFlowOverlay = { metric: RWAChartMetricKey; values: Map<number, number | null> }
 export type RWAFlowChartSelection =
 	| { view: 'netFlows'; groupBy: RWAFlowGrouping; overlays: ReadonlyArray<RWAFlowOverlay> }
 	| { view: 'flowVsPrice'; groupBy: RWAFlowGrouping; mcapByTimestamp: RWAFlowOverlayValues | null }
@@ -62,11 +61,11 @@ export function getRWAFlowOverlayOptions(availability: RWAChartMetricAvailabilit
 export function parseRWAFlowOverlayMetrics(
 	values: ReadonlyArray<string>,
 	availability: RWAChartMetricAvailability = { hasActiveMcapData: true }
-): Array<RWAFlowOverlayMetric> {
+): Array<RWAChartMetricKey> {
 	if (values.length === 0) return ['onChainMcap']
 	if (values.includes('none')) return []
 
-	const selected: Array<RWAFlowOverlayMetric> = []
+	const selected: Array<RWAChartMetricKey> = []
 	for (const option of getRWAFlowOverlayOptions(availability)) {
 		if (values.includes(option.key)) selected.push(option.key)
 	}
@@ -273,7 +272,7 @@ function getFlowMcap(point: RWAFlowSeriesPoint, mcapByTimestamp?: ReadonlyMap<nu
 	return mcapByTimestamp.get(rwaUnixSecondsToMilliseconds(point.timestamp)) ?? null
 }
 
-function getRWAFlowOverlayOption(metric: RWAFlowOverlayMetric) {
+function getRWAFlowOverlayOption(metric: RWAChartMetricKey) {
 	switch (metric) {
 		case 'onChainMcap':
 			return RWA_FLOW_OVERLAY_OPTIONS[0]

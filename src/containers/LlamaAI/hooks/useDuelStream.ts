@@ -7,9 +7,9 @@ import {
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
 	buildAssistantMessage,
-	createStreamBuffer,
+	createStreamAccumulator,
 	hasStreamBufferContent,
-	type StreamBuffer,
+	type StreamAccumulator,
 	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
 import type { Message } from '~/containers/LlamaAI/types'
@@ -31,10 +31,10 @@ const ignoreStreamAction: StreamDispatch = () => undefined
 function useDuelArm() {
 	const [arm, setArm] = useState<DuelArmState>(EMPTY_ARM)
 	// Mutable and outside React: every event lands here, and render reads the snapshot in `arm`.
-	const streamRef = useRef<{ buffer: StreamBuffer; callbacks: AgenticSSECallbacks } | null>(null)
+	const streamRef = useRef<{ buffer: StreamAccumulator; callbacks: AgenticSSECallbacks } | null>(null)
 
 	const start = useCallback(() => {
-		const buffer = createStreamBuffer()
+		const buffer = createStreamAccumulator()
 		streamRef.current = {
 			buffer,
 			callbacks: createAgenticCallbacks({

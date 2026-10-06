@@ -2,7 +2,14 @@ import { lazy, useMemo } from 'react'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatPercent } from '~/utils/numberFormat'
-import { useTvlData, chartToModel, zoomStartPct, defaultZoomOptions, type MorphoMarketHistory } from './api'
+import {
+	useTab,
+	chartToModel,
+	zoomStartPct,
+	defaultZoomOptions,
+	type MorphoMarketHistory,
+	type TvlResponse
+} from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -60,7 +67,7 @@ function buildMorphoHistoryModel(market: MorphoMarketHistory): CartesianChartMod
 }
 
 export default function Tvl() {
-	const { data, isLoading } = useTvlData()
+	const { data, isLoading } = useTab<TvlResponse>('tvl')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const fromDate = data?.defaultFrom || '2025-01-01'
 	const ecosystemChart = data?.ecosystemChart

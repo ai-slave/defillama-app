@@ -8,7 +8,6 @@ const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
 
 const http = installFixtureFetch()
 const newBlocks = [{ type: 'paragraph', content: [{ type: 'text', text: 'appended' }] }]
-const authorizedFetch = (url: string, init?: RequestInit) => fetch(url, init)
 
 function savedArticle() {
 	const request = http.requests.find(({ init }) => init?.method === 'POST' || init?.method === 'PATCH')!
@@ -32,7 +31,7 @@ test('appends after existing content and preserves editable article metadata', a
 			article: { ...existing, contentJson: { type: 'doc', content: [intro, ...newBlocks] } }
 		}
 	})
-	await appendBlocksToArticle('a1', newBlocks, authorizedFetch)
+	await appendBlocksToArticle('a1', newBlocks, fetch)
 	expect(savedArticle()).toMatchObject({
 		contentJson: { type: 'doc', content: [intro, ...newBlocks] },
 		title: 'Weekly Alpha #3',
@@ -48,7 +47,7 @@ test('appends to a draft with no content array', async () => {
 		[`${FEATURES_SERVER}/articles/a2/edit`]: { article: existing },
 		[`${FEATURES_SERVER}/articles/a2`]: { article: existing }
 	})
-	await appendBlocksToArticle('a2', newBlocks, authorizedFetch)
+	await appendBlocksToArticle('a2', newBlocks, fetch)
 	expect(savedArticle().contentJson).toEqual({ type: 'doc', content: newBlocks })
 })
 
@@ -57,7 +56,7 @@ test.each([
 	['   ', 'Untitled research']
 ])('creates a draft from imported blocks and title %j', async (title, expectedTitle) => {
 	http.serve({ [`${FEATURES_SERVER}/articles`]: { article: { ...createEmptyLocalArticle(ARTICLE_NOW), id: 'new1' } } })
-	const result = await createArticleWithBlocks(title, newBlocks, authorizedFetch)
+	const result = await createArticleWithBlocks(title, newBlocks, fetch)
 	expect(savedArticle()).toMatchObject({
 		title: expectedTitle,
 		status: 'draft',

@@ -2,7 +2,6 @@ import type { PaginationState, SortingState } from '@tanstack/react-table'
 import type { EarnPageRow } from '../data/types'
 
 export type IYieldTableRow = EarnPageRow
-export type YieldPoolTableRow = EarnPageRow
 export type YieldsTableAppearance = 'standalone' | 'embedded'
 
 export interface IYieldsTableProps<TRow = EarnPageRow> {

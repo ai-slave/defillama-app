@@ -47,7 +47,7 @@ import {
 } from '~/containers/Stablecoins/chartState'
 import { filterStablecoinAssets, resolveStablecoinFilterState } from '~/containers/Stablecoins/filterPolicy'
 import { PeggedFilters } from '~/containers/Stablecoins/Filters'
-import { useCalcCirculating } from '~/containers/Stablecoins/hooks'
+import { calcCirculating } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -230,7 +230,7 @@ export function StablecoinsByChain({
 		[chains, router.query]
 	)
 
-	const peggedTotals = useCalcCirculating<FormattedStablecoinAsset>(peggedAssets, includeUnreleased)
+	const peggedTotals = calcCirculating<FormattedStablecoinAsset>(peggedAssets, includeUnreleased)
 
 	const marketCapSeries = React.useMemo(() => {
 		if (chartType !== 'marketCap' || (chartView !== 'pie' && chartView !== 'hbar' && chartView !== 'treemap')) {

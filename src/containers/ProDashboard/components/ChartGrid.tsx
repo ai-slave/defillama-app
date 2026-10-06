@@ -191,20 +191,6 @@ const CARD_REMOVED_TOAST_ID = 'card-removed'
 const SECTION_REMOVED_TOAST_ID = 'section-removed'
 const NO_CARD_HEIGHTS: ReadonlyArray<DashboardCardHeight> = []
 
-function SharedHeaderLabel() {
-	return (
-		<ProMeta
-			className="px-1"
-			items={[
-				<>
-					<Icon name="pin" height={12} width={12} />
-					Shown on every tab
-				</>
-			]}
-		/>
-	)
-}
-
 interface ChartGridProps {
 	onAddChartClick: (placement?: DashboardItemPlacement) => void
 	onEditItem?: (item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => void
@@ -900,21 +886,30 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 						<div ref={gridRef} tabIndex={-1} className="flex flex-col gap-3" data-testid="dashboard-grid">
 							{layout.tabs === null ? (
 								renderGroups(layout.shared, { withAddTile: !isReadOnly, startsGrid: true })
-							) : layout.shared.length > 0 ? (
+							) : layout.shared.length > 0 || !isReadOnly ? (
 								<div className="flex flex-col gap-2">
-									{isReadOnly ? null : <SharedHeaderLabel />}
-									{renderGroups(layout.shared, {
-										withAddTile: !isReadOnly,
-										startsGrid: isReadOnly,
-										...(sharedPlacement ? { placement: sharedPlacement } : {})
-									})}
+									{isReadOnly ? null : (
+										<ProMeta
+											className="px-1"
+											items={[
+												<>
+													<Icon name="pin" height={12} width={12} />
+													Shown on every tab
+												</>
+											]}
+										/>
+									)}
+									{layout.shared.length > 0 ? (
+										renderGroups(layout.shared, {
+											withAddTile: !isReadOnly,
+											startsGrid: isReadOnly,
+											...(sharedPlacement ? { placement: sharedPlacement } : {})
+										})
+									) : (
+										<div className={GROUP_GRID_CLASS}>{addItemTile(sharedPlacement)}</div>
+									)}
 								</div>
-							) : isReadOnly ? null : (
-								<div className="flex flex-col gap-2">
-									<SharedHeaderLabel />
-									<div className={GROUP_GRID_CLASS}>{addItemTile(sharedPlacement)}</div>
-								</div>
-							)}
+							) : null}
 							{layout.tabs && activeTabId ? (
 								<DashboardTabs
 									tabs={layout.tabs}

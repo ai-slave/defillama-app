@@ -7,8 +7,6 @@ import { formatCompactNumber } from '~/utils/numberFormat'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 function KpiCard({ label, value }: { label: string; value: string | number | null }) {
@@ -101,7 +99,7 @@ const DEFAULT_CHART_OPTIONS = createChartOptions('')
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')
 const PERCENT_CHART_OPTIONS = createChartOptions('%')
 
-const tokenColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TopToken>()
+const tokenColumnHelper = createColumnHelper<typeof displayTableFeatures, TopToken>()
 
 const tokenColumns = tokenColumnHelper.columns([
 	tokenColumnHelper.accessor('symbol', {
@@ -141,7 +139,7 @@ export default function Blockchain() {
 	const { data, isLoading } = useBlockchainData()
 
 	const tokenTable = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data?.topTokens ?? [],
 		columns: tokenColumns,

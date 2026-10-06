@@ -2,7 +2,7 @@ import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
@@ -17,8 +17,6 @@ import { getColumns } from './columns'
 import { buildTokenUsageSummary } from './summary'
 import { type TokenOption, useTokenSearch } from './useTokenSearch'
 import { useTokenUsageData } from './useTokenUsageData'
-
-export const tableFeaturesConfig = paginatedTableFeatures
 
 const EMPTY_TOKEN_OPTIONS: Array<TokenOption> = []
 const EMPTY_USAGE_DATA: Array<ProtocolTokenUsageData> = []

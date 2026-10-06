@@ -19,10 +19,6 @@ export async function fetchChainsByCategory(category: string): Promise<ChainsByC
 	return fetchJson<ChainsByCategoryResponse>(`${CHAINS_API_V2_URL}/${encodeURIComponent(category)}`)
 }
 
-export async function fetchChainsByCategoryAll(): Promise<ChainsByCategoryResponse> {
-	return fetchChainsByCategory('All')
-}
-
 export async function fetchChainsTvlOverview(): Promise<Array<{ name: string; tvl: number }>> {
 	return fetchJson<Array<{ name: string; tvl: number }>>(CHAIN_TVL_API_URL)
 }

@@ -1,12 +1,11 @@
 import type { PaginationState, SortingState, TableOptions } from '@tanstack/react-table'
 import { startTransition, useState } from 'react'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { Panel } from '~/ui/Panel'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import type { IYieldsTableProps } from './types'
-
-export const tableFeaturesConfig = paginatedTableFeatures
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100, 200] as const
 
@@ -29,7 +28,7 @@ export function PaginatedYieldsTable<TRow>({
 	loadingLabel,
 	shell = 'default'
 }: IYieldsTableProps<TRow> & {
-	columns: TableOptions<typeof tableFeaturesConfig, TRow>['columns']
+	columns: TableOptions<typeof paginatedTableFeatures, TRow>['columns']
 	tableClassName: string
 	initialPageSize: number
 	shell?: 'default' | 'none'

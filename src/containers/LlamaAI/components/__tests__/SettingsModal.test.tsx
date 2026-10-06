@@ -39,7 +39,6 @@ beforeEach(() => {
 	})
 })
 
-const settle = (assertion: () => void) => waitForUi(assertion)
 const buttonNamed = (name: string, within: ParentNode = document) =>
 	[...within.querySelectorAll<HTMLButtonElement>('button')].find((node) => accessibleName(node) === name)
 const confirmation = () => document.querySelector<HTMLElement>('[role="alertdialog"]')
@@ -147,7 +146,7 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/skills`]: offline
 		})
 		await openMemory()
-		await settle(() => expect(document.body.textContent).toContain("Couldn't load skills."))
+		await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load skills."))
 		expect(document.body.textContent).toContain("Couldn't load memories.")
 		expect(document.body.textContent).not.toContain('Nothing remembered yet.')
 		expect(document.body.textContent).not.toContain('No skills yet.')
@@ -157,8 +156,8 @@ describe('SettingsModal instructions', () => {
 			memoriesRetry.click()
 			skillsRetry.click()
 		})
-		await settle(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
-		await settle(() => expect(document.body.textContent).toContain("Couldn't load skills."))
+		await waitForUi(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
+		await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load skills."))
 		expect(agentHomeRequests('/memories')).toBe(2)
 		expect(agentHomeRequests('/skills')).toBe(2)
 	})
@@ -190,7 +189,7 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/memories/memory-1`]: () => (++deletes === 1 ? offline() : retriedDelete.promise)
 		})
 		await openMemory()
-		await settle(() => expect(document.body.textContent).toContain("Couldn't load memories."))
+		await waitForUi(() => expect(document.body.textContent).toContain("Couldn't load memories."))
 		expect(document.body.textContent).toContain('Prefer concise answers')
 		expect(document.body.textContent).toContain('Saved workflow')
 		// With cached data the error stays up during a retry, and its button cannot start another.
@@ -201,23 +200,23 @@ describe('SettingsModal instructions', () => {
 				el.textContent?.includes("Couldn't load memories")
 			)!
 		await act(async () => loadError().querySelector('button')!.click())
-		await settle(() => expect(loadError().querySelector('button')!.getAttribute('aria-busy')).toBe('true'))
+		await waitForUi(() => expect(loadError().querySelector('button')!.getAttribute('aria-busy')).toBe('true'))
 		await act(async () => memoriesRefresh.resolve(offline()))
 		// Deleting asks first, and the confirmation owns the request: its error, its retry of the same memory, its pending.
 		await act(async () => buttonNamed('Delete')!.click())
-		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
 		expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(0)
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
-		await settle(() => expect(alertText(confirmation()!)).toBe("Couldn't delete this memory. Try again."))
+		await waitForUi(() => expect(alertText(confirmation()!)).toBe("Couldn't delete this memory. Try again."))
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
-		await settle(() => expect(buttonNamed('Deleting…', confirmation()!)).toBeDefined())
+		await waitForUi(() => expect(buttonNamed('Deleting…', confirmation()!)).toBeDefined())
 		expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(2)
 		await act(async () => retriedDelete.resolve(Response.json({ deleted: true })))
-		await settle(() => expect(confirmation()).toBeNull())
+		await waitForUi(() => expect(confirmation()).toBeNull())
 	})
 	test('a successfully loaded empty workspace still shows its empty states', async () => {
 		await openMemory()
-		await settle(() => expect(document.body.textContent).toContain('No skills yet.'))
+		await waitForUi(() => expect(document.body.textContent).toContain('No skills yet.'))
 		expect(document.body.textContent).toContain('Nothing remembered yet.')
 		expect(document.querySelector('[role="alert"]')).toBeNull()
 	})
@@ -251,11 +250,11 @@ describe('SettingsModal instructions', () => {
 		let online = false
 		session.serve({ [`${AGENT_HOME}/memories`]: () => (online ? Response.json(emptyMemories) : offline()) })
 		await openMemory()
-		await settle(() => expect(alertText()).toContain("Couldn't load memories."))
+		await waitForUi(() => expect(alertText()).toContain("Couldn't load memories."))
 		online = true
 		await press(buttonNamed('Try again')!)
-		await settle(() => expect(document.querySelector('[role="alert"]')).toBeNull())
-		await settle(() => expect(document.activeElement).toBe(closeButton()))
+		await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+		await waitForUi(() => expect(document.activeElement).toBe(closeButton()))
 	})
 	test('cancelling a memory deletion returns focus to Delete; deleting hands it to the next entry, the last to the dialog', async () => {
 		const deleted = new Set<string>()
@@ -276,24 +275,24 @@ describe('SettingsModal instructions', () => {
 			}
 		})
 		await openMemory()
-		await settle(() => expect(deleteButtons()).toHaveLength(2))
+		await waitForUi(() => expect(deleteButtons()).toHaveLength(2))
 		const [first, second] = deleteButtons()
 		await press(first)
-		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
 		// Cancel keeps the row, so focus goes back to its Delete.
 		await act(async () => buttonNamed('Cancel', confirmation()!)!.click())
-		await settle(() => expect(document.activeElement).toBe(first))
+		await waitForUi(() => expect(document.activeElement).toBe(first))
 		await press(first)
-		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
-		await settle(() => expect(document.body.textContent).not.toContain('Prefer concise answers'))
-		await settle(() => expect(document.activeElement).toBe(second))
+		await waitForUi(() => expect(document.body.textContent).not.toContain('Prefer concise answers'))
+		await waitForUi(() => expect(document.activeElement).toBe(second))
 		// The last entry has no neighbour left.
 		await press(second)
-		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		await waitForUi(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
 		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
-		await settle(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
-		await settle(() => expect(document.activeElement).toBe(closeButton()))
+		await waitForUi(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
+		await waitForUi(() => expect(document.activeElement).toBe(closeButton()))
 	})
 	test('archiving a skill hands focus to the next skill once it moves to Archived', async () => {
 		const notes = { ...research, name: 'Notes' }
@@ -309,16 +308,16 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/skills/Research`]: () => archive.promise
 		})
 		await openMemory()
-		await settle(() => expect(document.body.textContent).toContain('Notes'))
+		await waitForUi(() => expect(document.body.textContent).toContain('Notes'))
 		const [first, next] = [...document.querySelectorAll('button')].filter((b) => b.textContent === 'Archive')
 		await press(first)
 		// The next skill's Archive waits while this one archives, and stays focusable for the handoff.
-		await settle(() => expect(first.getAttribute('aria-busy')).toBe('true'))
+		await waitForUi(() => expect(first.getAttribute('aria-busy')).toBe('true'))
 		expect(next.getAttribute('aria-disabled')).toBe('true')
 		archived = true
 		await act(async () => archive.resolve(Response.json({ message: 'archived' })))
-		await settle(() => expect(document.body.textContent).toContain('Archived (1)'))
-		await settle(() => expect(document.activeElement).toBe(next))
+		await waitForUi(() => expect(document.body.textContent).toContain('Archived (1)'))
+		await waitForUi(() => expect(document.activeElement).toBe(next))
 	})
 	test('retrying a failed archive keeps its error on screen while the retry runs', async () => {
 		const archives: Array<() => Response | Promise<Response>> = [offline, () => new Promise<Response>(() => {})]
@@ -327,13 +326,13 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/skills/Research`]: () => archives.shift()!()
 		})
 		await openMemory()
-		await settle(() => expect(buttonNamed('Archive')).toBeDefined())
+		await waitForUi(() => expect(buttonNamed('Archive')).toBeDefined())
 		await press(buttonNamed('Archive')!)
-		await settle(() => expect(buttonNamed('Try again')).toBeDefined())
+		await waitForUi(() => expect(buttonNamed('Try again')).toBeDefined())
 		const retry = buttonNamed('Try again')!
 		await press(retry)
 
-		await settle(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
+		await waitForUi(() => expect(retry.getAttribute('aria-busy')).toBe('true'))
 		expect(retry.closest('[role="alert"]')?.textContent).toContain("Couldn't archive this skill.")
 	})
 	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
@@ -460,13 +459,13 @@ describe('SettingsModal instructions', () => {
 		await press(buttonNamed('Clear')!)
 		expect(confirmation()?.textContent).toContain('Clear your instructions?')
 		await act(async () => buttonNamed('Cancel', confirmation()!)!.click())
-		await settle(() => expect(confirmation()).toBeNull())
+		await waitForUi(() => expect(confirmation()).toBeNull())
 		expect(textarea().value).toBe('Saved instructions')
 		expect(saveSettings).not.toHaveBeenCalled()
 		await press(buttonNamed('Clear')!)
 		await act(async () => buttonNamed('Clear', confirmation()!)!.click())
 		expect(saveSettings).toHaveBeenCalledExactlyOnceWith({ customInstructions: '' })
-		await settle(() => expect(document.activeElement).toBe(textarea()))
+		await waitForUi(() => expect(document.activeElement).toBe(textarea()))
 	})
 
 	test('keeps the submitted draft when reopened before props catch up', async () => {
@@ -564,7 +563,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => buttonNamed('App')!.click())
 		await act(async () => document.querySelector<HTMLInputElement>('[aria-label="Enter to send"]')!.click())
 
-		await settle(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
+		await waitForUi(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
 		expect(document.querySelector('[role="alert"]')!.closest('[role="dialog"]')).not.toBeNull()
 	})
 
@@ -578,7 +577,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => buttonNamed('App')!.click())
 
 		await act(async () => pendingSave.resolve(false))
-		await settle(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
+		await waitForUi(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
 	})
 
 	test('Save shows its progress, and a refused save keeps the dialog open with its error', async () => {
@@ -595,7 +594,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => {
 			textarea().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true }))
 		})
-		await settle(() => expect(saveSettings).toHaveBeenCalledTimes(2))
+		await waitForUi(() => expect(saveSettings).toHaveBeenCalledTimes(2))
 		expect(dialogStore.getState().open).toBe(true)
 		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
 	})
@@ -605,14 +604,14 @@ describe('SettingsModal instructions', () => {
 		saveSettings.mockResolvedValueOnce(false).mockImplementationOnce(() => retry.promise)
 		await act(async () => change('Answer in bullet points'))
 		await act(async () => buttonNamed('Save')!.click())
-		await settle(() => expect(alertText()).toBe("Couldn't save your instructions. Try again."))
+		await waitForUi(() => expect(alertText()).toBe("Couldn't save your instructions. Try again."))
 
 		await act(async () => buttonNamed('Save')!.click())
 		expect(buttonNamed('Saving…')).toBeDefined()
 		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
 
 		await act(async () => retry.resolve(true))
-		await settle(() => expect(alertText()).toBeUndefined())
+		await waitForUi(() => expect(alertText()).toBeUndefined())
 	})
 
 	test('Clear all asks first, keeps its progress and error in the confirmation, and closes once cleared', async () => {
@@ -625,24 +624,24 @@ describe('SettingsModal instructions', () => {
 			[`${AGENT_HOME}/memories?target=user`]: () => (++clears === 1 ? offline() : retriedClear.promise)
 		})
 		await openMemory()
-		await settle(() => expect(document.body.textContent).toContain('Prefers ETH pairs'))
+		await waitForUi(() => expect(document.body.textContent).toContain('Prefers ETH pairs'))
 
 		await press(buttonNamed('Clear all')!)
-		await settle(() => expect(confirmation()?.textContent).toContain('Clear everything about you?'))
+		await waitForUi(() => expect(confirmation()?.textContent).toContain('Clear everything about you?'))
 		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(0)
 
 		await act(async () => buttonNamed('Clear all', confirmation()!)!.click())
-		await settle(() => expect(alertText(confirmation()!)).toBe("Couldn't clear these memories. Try again."))
+		await waitForUi(() => expect(alertText(confirmation()!)).toBe("Couldn't clear these memories. Try again."))
 		await act(async () => buttonNamed('Clear all', confirmation()!)!.click())
-		await settle(() => expect(buttonNamed('Clearing…', confirmation()!)).toBeDefined())
+		await waitForUi(() => expect(buttonNamed('Clearing…', confirmation()!)).toBeDefined())
 
 		cleared = true
 		await act(async () => retriedClear.resolve(Response.json({ cleared: 1 })))
-		await settle(() => expect(confirmation()).toBeNull())
+		await waitForUi(() => expect(confirmation()).toBeNull())
 		expect(document.body.textContent).toContain('Nothing remembered yet.')
 		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(2)
 		// A cleared list leaves no row to hand focus to.
-		await settle(() => expect(document.activeElement).toBe(closeButton()))
+		await waitForUi(() => expect(document.activeElement).toBe(closeButton()))
 	})
 
 	test('a saved draft stays until settings report it, and the field then follows later refreshes', async () => {
@@ -808,7 +807,7 @@ describe('SettingsModal initial tab', () => {
 			'https://ai.llama.fi/slack/status': { links: [], pending: null }
 		})
 		await render({ tab: 'integrations', tgloginToken: 'token' })
-		await settle(() =>
+		await waitForUi(() =>
 			expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))
 		)
 	})
@@ -838,7 +837,7 @@ describe('SettingsModal initial tab', () => {
 
 	test('reopening Settings without a top-up does not check the payment again', async () => {
 		await render({ tab: 'balance', topupResult: 'success' })
-		await settle(() =>
+		await waitForUi(() =>
 			expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain('Checking your payment')
 		)
 		await act(async () => tabDialogStore.hide())
@@ -846,7 +845,7 @@ describe('SettingsModal initial tab', () => {
 		// The sidebar's Settings button opens it with no state of its own.
 		await render(null)
 		await act(async () => tabDialogStore.show())
-		await settle(() => expect(openTabId()).toBe(tab('Balance').id))
+		await waitForUi(() => expect(openTabId()).toBe(tab('Balance').id))
 		expect(document.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Checking your payment')
 	})
 

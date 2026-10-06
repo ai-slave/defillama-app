@@ -32,8 +32,6 @@ import { slug } from '~/utils'
 import { formatCompactNumber, formatRatio, formatUsd, roundNumber } from '~/utils/numberFormat'
 import type { IFormattedDataWithExtraTvl } from './types'
 
-const tableFeaturesConfig = searchTableFeatures
-
 /** Tooltip rows in display order; the v2-only sections stay hidden until the producer reports them. */
 const CHAIN_ASSET_TOOLTIP_ROWS = [
 	{ key: 'native', label: 'Native' },
@@ -79,7 +77,7 @@ export function ChainsByCategoryTable({
 	const [expanded, setExpanded] = React.useState<ExpandedState>(showByGroup ? true : {})
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: searchTableFeatures,
 		data,
 		columns,
 		state: {
@@ -246,7 +244,7 @@ const chainsTableColumnOrders: ColumnOrdersByBreakpoint = {
 	]
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IFormattedDataWithExtraTvl>()
+const columnHelper = createColumnHelper<typeof searchTableFeatures, IFormattedDataWithExtraTvl>()
 
 const columns = columnHelper.columns([
 	columnHelper.accessor('name', {

@@ -12,8 +12,6 @@ import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const EMISSIONS_PERCENTAGE_CHART_OPTIONS = createSingleSeriesChartOptions('%')
@@ -78,7 +76,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
-const walletColumnHelper = createColumnHelper<typeof tableFeaturesConfig, WalletEntry>()
+const walletColumnHelper = createColumnHelper<typeof displayTableFeatures, WalletEntry>()
 
 const walletColumns = walletColumnHelper.columns([
 	walletColumnHelper.accessor('wallet', {
@@ -121,7 +119,7 @@ export default function Revenue() {
 	const [emissionsView, setEmissionsView] = useState<'percentage' | 'absolute'>('percentage')
 
 	const walletTable = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data?.walletBreakdown ?? [],
 		columns: walletColumns,

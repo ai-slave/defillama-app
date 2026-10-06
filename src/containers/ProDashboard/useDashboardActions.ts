@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { type Dispatch, type SetStateAction, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
 import type { StoredColSpan } from './dashboardConfig/colSpan'
 import type { DashboardItemConfig } from './dashboardItemConfig'
@@ -33,8 +33,6 @@ import {
 } from './unifiedTable/config/layoutPolicy'
 import { getDashboardSizeLimitError } from './utils/dashboardDocumentSize'
 import { generateItemId } from './utils/dashboardUtils'
-
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 export type AutoSaveOverrides = {
 	timePeriod?: TimePeriod
@@ -139,7 +137,7 @@ export function useDashboardActions(
 	const aiUndoStateRef = useRef<AIUndoState | undefined>(aiUndoState)
 	const historyRef = useRef(history)
 	const hasHydratedRef = useRef(false)
-	useIsomorphicLayoutEffect(() => {
+	useLayoutEffect(() => {
 		itemsRef.current = items
 		variablesRef.current = variables
 		annotationsRef.current = annotations

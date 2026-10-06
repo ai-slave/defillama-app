@@ -29,7 +29,6 @@ import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { readExperimentVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
 import type { WalletSignInProps } from './WalletSignIn'
 
-const inputCls = authInputStyles
 const fieldLabelCls = 'mb-1.5 label-sm text-secondary'
 
 const OFFER_EXPERIMENT_ID = 'llamaai-signin-offer-v1'
@@ -287,7 +286,7 @@ function PasswordField({
 					readOnly={readOnly}
 					autoComplete={autoComplete}
 					minLength={minLength}
-					className={`${inputCls} pr-10`}
+					className={`${authInputStyles} pr-10`}
 				/>
 				{/* sm, centred: an md square grows to 44px in a phone sheet and would hang out of the 40px field.
 				    touch-target keeps its 44px hit area. */}
@@ -522,7 +521,7 @@ function AuthScreen({
 							readOnly={isPending}
 							name="email"
 							required
-							className={inputCls}
+							className={authInputStyles}
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>
@@ -543,7 +542,7 @@ function AuthScreen({
 							minLength={8}
 							readOnly={isPending}
 							autoComplete="new-password"
-							className={inputCls}
+							className={authInputStyles}
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
 						/>
 						<FieldError>Passwords must match and contain at least 8 characters.</FieldError>
@@ -617,7 +616,7 @@ function AuthScreen({
 							readOnly={isPending}
 							name="email"
 							required
-							className={inputCls}
+							className={authInputStyles}
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>
@@ -807,7 +806,7 @@ function ForgotPasswordScreen({
 							defaultValue={initialEmail}
 							required
 							readOnly={reset.isPending}
-							className={inputCls}
+							className={authInputStyles}
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>

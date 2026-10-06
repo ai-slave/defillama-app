@@ -27,9 +27,6 @@ const EquitiesFinancialsDataset = lazy(() =>
 const RWAAssetsDataset = lazy(() =>
 	import('./datasets/RWADataset/RWAAssetsDataset').then((module) => ({ default: module.RWAAssetsDataset }))
 )
-const RWAChainAssetsDataset = lazy(() =>
-	import('./datasets/RWADataset/RWAAssetsDataset').then((module) => ({ default: module.RWAChainAssetsDataset }))
-)
 const RWAChainsDataset = lazy(() =>
 	import('./datasets/RWADataset/RWAChainsDataset').then((module) => ({ default: module.RWAChainsDataset }))
 )
@@ -101,7 +98,7 @@ function DatasetTableBody({ config, onConfigChange }: DatasetTableCardProps) {
 		)
 	if (config.datasetType === 'rwa') return <RWAAssetsDataset />
 	if (config.datasetType === 'rwa-chains') return <RWAChainsDataset />
-	if (config.datasetType === 'rwa-selected-chain') return <RWAChainAssetsDataset chain={config.chain} />
+	if (config.datasetType === 'rwa-selected-chain') return <RWAAssetsDataset chain={config.chain} />
 	if (config.datasetType === 'equities') return <EquitiesCompaniesDataset />
 	if (config.datasetType === 'equities-financials') return <EquitiesFinancialsDataset ticker={config.ticker} />
 	if (config.datasetType === 'equities-filings') return <EquitiesFilingsDataset ticker={config.ticker} />

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { inferFineKindFromArrowType, type FineKind } from './columnKind'
+import type { FineKind } from './columnKind'
 
 type StatusTone = 'ready' | 'busy' | 'error' | 'muted'
 
@@ -47,9 +47,7 @@ export function SectionLabel({ label, count, action }: { label: string; count?: 
 	)
 }
 
-type ColumnKind = FineKind
-
-const KIND_LABEL: Record<ColumnKind, string> = {
+const KIND_LABEL: Record<FineKind, string> = {
 	date: 'date',
 	int: 'int',
 	float: 'num',
@@ -59,7 +57,7 @@ const KIND_LABEL: Record<ColumnKind, string> = {
 	other: '—'
 }
 
-const KIND_TONE: Record<ColumnKind, string> = {
+const KIND_TONE: Record<FineKind, string> = {
 	date: 'text-pro-premium-300',
 	int: 'text-brand',
 	float: 'text-brand',
@@ -69,7 +67,7 @@ const KIND_TONE: Record<ColumnKind, string> = {
 	other: 'text-pro-text-tertiary'
 }
 
-export function TypeBadge({ kind }: { kind: ColumnKind }) {
+export function TypeBadge({ kind }: { kind: FineKind }) {
 	return (
 		<span
 			aria-label={`${kind} column`}
@@ -79,7 +77,3 @@ export function TypeBadge({ kind }: { kind: ColumnKind }) {
 		</span>
 	)
 }
-
-export const inferColumnKind = inferFineKindFromArrowType
-
-export type { ColumnKind }

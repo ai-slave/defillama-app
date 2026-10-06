@@ -1,17 +1,17 @@
 import type { ColumnDef, Row, Table } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
-import type { tableFeaturesConfig } from './index'
 
 const ranksBySortedRows = new WeakMap<
-	ReadonlyArray<Row<typeof tableFeaturesConfig, ProtocolTokenUsageData>>,
+	ReadonlyArray<Row<typeof paginatedTableFeatures, ProtocolTokenUsageData>>,
 	ReadonlyMap<string, number>
 >()
 
-function getSortedRowIndex(table: Table<typeof tableFeaturesConfig, ProtocolTokenUsageData>, rowId: string): number {
+function getSortedRowIndex(table: Table<typeof paginatedTableFeatures, ProtocolTokenUsageData>, rowId: string): number {
 	const sortedRows = table.getSortedRowModel().rows
 	let ranks = ranksBySortedRows.get(sortedRows)
 	if (!ranks) {
@@ -27,10 +27,10 @@ function getSortedRowIndex(table: Table<typeof tableFeaturesConfig, ProtocolToke
 
 export const getColumns = (
 	tokenSymbols: Array<string>
-): Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTokenUsageData>> => {
+): Array<ColumnDef<typeof paginatedTableFeatures, ProtocolTokenUsageData>> => {
 	const isMultiToken = tokenSymbols.length > 1
 
-	const baseColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTokenUsageData>> = [
+	const baseColumns: Array<ColumnDef<typeof paginatedTableFeatures, ProtocolTokenUsageData>> = [
 		{
 			header: 'Protocol',
 			accessorKey: 'name',

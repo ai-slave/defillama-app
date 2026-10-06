@@ -1,7 +1,7 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useContext, useEffect } from 'react'
 import { uploadChatFile, type UploadedAttachment } from '~/containers/LlamaAI/api/uploadChatFile'
 import type { UploadSelectionFeedback } from '~/containers/LlamaAI/components/UploadSelectionNotice'
-import { useUploadTarget } from '~/containers/LlamaAI/components/UploadTarget'
+import { UploadTargetContext } from '~/containers/LlamaAI/components/UploadTarget'
 import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { AttachmentPreview } from '~/containers/LlamaAI/utils/attachmentPreview'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -179,7 +179,7 @@ function previewUrlFor(file: File) {
 
 export function useImageUpload({ maxImages = 15, maxSizeBytes, uploadContext }: UseImageUploadOptions = {}) {
 	// The caller can name the target explicitly; otherwise it comes from whichever chat is mounted.
-	const targetFromContext = useUploadTarget()
+	const targetFromContext = useContext(UploadTargetContext)
 	const target = uploadContext === undefined ? targetFromContext : uploadContext
 	const [selectedImages, setSelectedImages] = useState<Array<SelectedImage>>([])
 	const [selectionFeedback, setSelectionFeedback] = useState<UploadSelectionFeedback | null>(null)

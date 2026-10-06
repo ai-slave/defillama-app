@@ -7,7 +7,7 @@ import { BasicLink } from '~/components/Link'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Icon } from '~/ui/Icon'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
-import { getMyDashboardAuthorProfile, updateMyDashboardAuthorProfile } from './api'
+import { getMyDashboardAuthorProfile, TOP_AUTHORS_QUERY_KEY, updateMyDashboardAuthorProfile } from './api'
 import { avatarColorStyle } from './avatarColor'
 import { DEFAULT_AUTHOR_NAME_RE, DEFAULT_AUTHOR_SLUG_RE } from './profileDefaults'
 import type { AuthorProfileUpdate, PublicDashboardAuthor } from './types'
@@ -221,7 +221,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 		mutationFn: (payload: AuthorProfileUpdate) => updateMyDashboardAuthorProfile(payload, authorizedFetch),
 		onSuccess: (nextProfile) => {
 			queryClient.setQueryData(['dashboard-author-profile'], nextProfile)
-			queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'top-authors'] })
+			queryClient.invalidateQueries({ queryKey: TOP_AUTHORS_QUERY_KEY })
 			queryClient.invalidateQueries({ queryKey: ['author-page', nextProfile.slug] })
 		}
 	})

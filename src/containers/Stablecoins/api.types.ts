@@ -253,8 +253,7 @@ export interface StablecoinDominanceEntry {
 
 export type StablecoinDominanceChartPoint = StablecoinChartPoint
 
-export type StablecoinRecentCoinsDataResponse = Record<string, Array<StablecoinRecentCoinDataPoint>>
-export type StablecoinRecentCoinDataPoint = StablecoinChartPoint
+export type StablecoinRecentCoinsDataResponse = Record<string, Array<StablecoinChartPoint>>
 
 export interface RawStablecoinPriceSnapshot {
 	date: number

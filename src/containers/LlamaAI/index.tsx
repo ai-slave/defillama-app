@@ -7,6 +7,7 @@ import {
 	memo,
 	Suspense,
 	useCallback,
+	useContext,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
@@ -106,11 +107,11 @@ import { isFreeLimitError, runAgenticRequest, type UsageLimitError } from '~/con
 import { settleStopRequest } from '~/containers/LlamaAI/stopSettlement'
 import { appendBufferedAssistantMessage, createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
-	createStreamBuffer,
+	createStreamAccumulator,
 	createStreamStore,
 	hasStreamBufferContent,
 	type ChatPageContext,
-	type StreamBuffer
+	type StreamAccumulator
 } from '~/containers/LlamaAI/streamState'
 import type { AgenticAnswerMode, Message } from '~/containers/LlamaAI/types'
 import { insertAbandonedDuelAnswer } from '~/containers/LlamaAI/utils/abandonedDuel'
@@ -122,8 +123,8 @@ import { hasClaimableQueueWork } from '~/containers/LlamaAI/utils/queueAttach'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { AI_BALANCE_QUERY_KEY } from '~/containers/Subscription/useTopup'
-import { isLlamaAIConversationPage, useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
-import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
+import { isLlamaAIConversationPage, LlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
+import { SessionAliasContext } from '~/contexts/SessionAliasRegistry'
 import { useConstant } from '~/hooks/useConstant'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
@@ -224,7 +225,7 @@ type RecoveryController = {
 	id: number
 	sessionId: string
 	startedAt: number
-	buffer: StreamBuffer
+	buffer: StreamAccumulator
 	failedRequest: FailedRequest | null
 	lastErrorMessage: string | null
 	attemptCount: number
@@ -304,8 +305,8 @@ export function AgenticChat({
 	const { authorizedFetch, user, hasActiveSubscription, isTrial } = useAuthContext()
 	const hasUser = !!user
 	const isMobileChatView = useMedia('(max-width: 1023px)')
-	const route = useLlamaAIRouteContext()
-	const sessionAliases = useOptionalSessionAliases()
+	const route = useContext(LlamaAIRouteContext)
+	const sessionAliases = useContext(SessionAliasContext)
 	const resolveSessionAlias = useCallback((id: string) => sessionAliases?.resolve(id) ?? id, [sessionAliases])
 	const registerSessionAlias = useCallback(
 		(fakeId: string, realId: string) => {
@@ -1085,7 +1086,7 @@ export function AgenticChat({
 			replaceUserMessageId,
 			onUserMessageId
 		}: {
-			buffer: StreamBuffer
+			buffer: StreamAccumulator
 			isCurrent: () => boolean
 			targetSessionId: string
 			deferEmptyDone?: boolean
@@ -1366,7 +1367,7 @@ export function AgenticChat({
 			error: recoveryError
 		}: {
 			targetSessionId: string
-			buffer: StreamBuffer
+			buffer: StreamAccumulator
 			failedRequest: FailedRequest | null
 			error: Error
 		}) => {
@@ -1698,7 +1699,7 @@ export function AgenticChat({
 					})
 				}
 
-				const buffer = createStreamBuffer()
+				const buffer = createStreamAccumulator()
 				let mutationAccepted = false
 				const adoptResponseSession = (id: string) => {
 					const previousSessionId = currentSessionId
@@ -2199,7 +2200,7 @@ export function AgenticChat({
 			])
 			attach()
 
-			const buffer = createStreamBuffer()
+			const buffer = createStreamAccumulator()
 			const mutation = createAgenticMutationEnvelope({
 				clientMutationId: crypto.randomUUID(),
 				message: trimmed,

@@ -10,7 +10,6 @@ import type {
 type TimestampMs = number
 /** Normalized chart point as `[timestampMs, value]`. */
 export type TimePoint = readonly [timestampMs: TimestampMs, value: number]
-type MutableTimeSeriesRow = MultiSeriesTimeSeriesRow
 
 /** Multi-series bar input where each series contributes summed values per selected time bucket. */
 export type PeriodBarSeries = {
@@ -68,10 +67,10 @@ function assertNever(value: never): never {
 }
 
 function getOrCreateRow(
-	rowsByTimestamp: Map<number, MutableTimeSeriesRow>,
+	rowsByTimestamp: Map<number, MultiSeriesTimeSeriesRow>,
 	timestamp: number,
 	seriesCount: number
-): MutableTimeSeriesRow {
+): MultiSeriesTimeSeriesRow {
 	let row = rowsByTimestamp.get(timestamp)
 	if (!row) {
 		row = [timestamp]
@@ -92,7 +91,7 @@ function addSeriesName(name: string, seenNames: Set<string>, dimensions: Array<s
 
 /** Sort the shared sparse rows once, then fill every series value in place. */
 function finalizeRows(
-	rowsByTimestamp: Map<number, MutableTimeSeriesRow>,
+	rowsByTimestamp: Map<number, MultiSeriesTimeSeriesRow>,
 	seriesCount: number,
 	isCumulative: boolean,
 	carryForwardMissingValues: boolean
@@ -136,7 +135,7 @@ function finalizeRows(
 export function buildTimeSeriesChart(input: TimeSeriesChartInput): TimeSeriesChartSpec {
 	if (input.series.length === 0) return EMPTY_CHART_SPEC
 
-	const rowsByTimestamp = new Map<number, MutableTimeSeriesRow>()
+	const rowsByTimestamp = new Map<number, MultiSeriesTimeSeriesRow>()
 	const seenNames = new Set<string>()
 	const dimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp']
 	const charts = new Array<MultiSeriesChartSeriesConfig>(input.series.length)

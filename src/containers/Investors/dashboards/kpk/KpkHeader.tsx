@@ -1,5 +1,5 @@
 import { formatDate } from '~/utils/dateFormat'
-import { useKpkMetadata, type KpkLinkKey } from './api'
+import { useTab, type KpkLinkKey, type KpkMetadata } from './api'
 
 const LINK_LABELS: Record<KpkLinkKey, string> = {
 	website: 'kpk.io',
@@ -12,7 +12,7 @@ const LINK_LABELS: Record<KpkLinkKey, string> = {
 const LINK_ORDER: Array<KpkLinkKey> = ['website', 'app', 'docs', 'x', 'github']
 
 export default function KpkHeader() {
-	const { data } = useKpkMetadata()
+	const { data } = useTab<KpkMetadata>('metadata')
 	const asOf = data?.asOf ? formatDate(data.asOf) : null
 
 	return (

@@ -1,7 +1,8 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { createColumnHelper } from '@tanstack/react-table'
 import { startTransition, Suspense, useMemo, useState } from 'react'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
@@ -20,10 +21,8 @@ import {
 	getTokenRiskScopeLabel
 } from './TokenRisksSection.utils'
 
-const tableFeaturesConfig = paginatedTableFeatures
-
 const TOKEN_RISKS_SECTION_ID = 'token-risks'
-const exposureColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenRiskExposureRow>()
+const exposureColumnHelper = createColumnHelper<typeof paginatedTableFeatures, TokenRiskExposureRow>()
 const DEFAULT_EXPOSURES_SORTING: SortingState = [{ id: 'currentMaxBorrowUsd', desc: true }]
 
 function TableEntityCell({

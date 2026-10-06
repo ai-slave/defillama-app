@@ -138,7 +138,7 @@ function useRWAAssetsTableData(chain?: string) {
 	return { data, isLoading: isLoading || (hasValidChain && !streamDone && data === undefined), error }
 }
 
-function RWAAssetsTable({ chain }: { chain?: string }) {
+export function RWAAssetsDataset({ chain }: { chain?: string }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'activeMcap', desc: true }])
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(DEFAULT_COLUMN_ORDER)
 	const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
@@ -223,12 +223,4 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 			/>
 		</div>
 	)
-}
-
-export function RWAAssetsDataset() {
-	return <RWAAssetsTable />
-}
-
-export function RWAChainAssetsDataset({ chain }: { chain: string }) {
-	return <RWAAssetsTable chain={chain} />
 }

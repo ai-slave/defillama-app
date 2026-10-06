@@ -6,7 +6,7 @@ import { ExecutionCoordinator } from '~/containers/LlamaAI/executionCoordinator'
 import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
 import type { QueuedMessageElement } from '~/containers/LlamaAI/queue/protocol'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
-import { createStreamBuffer, type StreamDispatch } from '~/containers/LlamaAI/streamState'
+import { createStreamAccumulator, type StreamDispatch } from '~/containers/LlamaAI/streamState'
 import type { Message } from '~/containers/LlamaAI/types'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -210,7 +210,7 @@ describe('useChatExecutionOwner', () => {
 	})
 
 	test('commits the buffered answer separately when the active execution changes', async () => {
-		const buffer = createStreamBuffer()
+		const buffer = createStreamAccumulator()
 		buffer.executionId = 'execution-1'
 		buffer.text = 'first answer'
 		const server = aiServer({
@@ -232,7 +232,7 @@ describe('useChatExecutionOwner', () => {
 	})
 
 	test('keeps the partial answer and reports aborted when a running stream is cut off', async () => {
-		const buffer = createStreamBuffer()
+		const buffer = createStreamAccumulator()
 		buffer.executionId = 'execution-1'
 		buffer.text = 'partial answer'
 		const server = aiServer({
@@ -266,7 +266,7 @@ describe('useChatExecutionOwner', () => {
 
 	test('recovery does not replay a completed execution the client already received in full', async () => {
 		const completed = execution('execution-1', { cursor: 4, hasResult: true, status: 'completed' })
-		const caughtUp = createStreamBuffer()
+		const caughtUp = createStreamAccumulator()
 		caughtUp.executionId = 'execution-1'
 		caughtUp.receivedEventCount = 4
 		const server = aiServer({ active: [Response.json({ active: false, execution: completed })] })

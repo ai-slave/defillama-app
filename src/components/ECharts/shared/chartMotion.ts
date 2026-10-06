@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext } from 'react'
 
 export type ChartMotionMode = 'default' | 'draw'
 
@@ -6,10 +6,6 @@ export const CHART_DRAW_DURATION = 700
 export const CHART_DRAW_THRESHOLD = 200_000
 
 export const ChartMotionContext = createContext<ChartMotionMode>('default')
-
-export function useChartMotion(): ChartMotionMode {
-	return useContext(ChartMotionContext)
-}
 
 export interface ChartEnterAnimationOptions {
 	animation?: boolean

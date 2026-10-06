@@ -17,9 +17,9 @@ import type { QueuedMessageElement } from '~/containers/LlamaAI/queue/protocol'
 import { runAgenticRequest } from '~/containers/LlamaAI/runAgenticRequest'
 import { appendBufferedAssistantMessage } from '~/containers/LlamaAI/streamCallbacks'
 import {
-	createStreamBuffer,
+	createStreamAccumulator,
 	hasStreamBufferContent,
-	type StreamBuffer,
+	type StreamAccumulator,
 	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
 import type { Message } from '~/containers/LlamaAI/types'
@@ -36,14 +36,14 @@ export type ResumeExecutionOutcome =
 
 type AttachExecutionInput = {
 	targetSessionId: string
-	buffer?: StreamBuffer
+	buffer?: StreamAccumulator
 	resetStream?: boolean
-	onTemporaryDisconnect?: (error: Error, streamBuffer: StreamBuffer) => void
+	onTemporaryDisconnect?: (error: Error, streamBuffer: StreamAccumulator) => void
 	operation?: ExecutionOperation
 }
 
 type CreateChatStreamCallbacks = (args: {
-	buffer: StreamBuffer
+	buffer: StreamAccumulator
 	isCurrent: () => boolean
 	targetSessionId: string
 	replaceUserMessageId?: (messageId: string, queueItemId?: string) => void
@@ -85,7 +85,7 @@ export function useChatExecutionOwner({
 	const attachExecution = useStableCallback(
 		async ({
 			targetSessionId,
-			buffer = createStreamBuffer(),
+			buffer = createStreamAccumulator(),
 			resetStream = true,
 			replayCompleted,
 			onTemporaryDisconnect,
@@ -123,7 +123,7 @@ export function useChatExecutionOwner({
 					if (buffer.executionId && buffer.executionId !== activeMessageId) {
 						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 						// oxlint-disable-next-line no-param-reassign -- the buffer is rotated when the execution changes; every downstream callback receives the current one.
-						buffer = createStreamBuffer()
+						buffer = createStreamAccumulator()
 						if (!resetStream) {
 							dispatch({ type: 'RESET_STREAM' })
 							dispatch({ type: 'START_STREAM' })
@@ -246,7 +246,7 @@ export function useChatExecutionOwner({
 					if (changedExecution?.messageId && changedExecution.messageId !== activeMessageId) {
 						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 						// oxlint-disable-next-line no-param-reassign -- see above: the buffer is rotated for the replacement execution.
-						buffer = createStreamBuffer()
+						buffer = createStreamAccumulator()
 						if (!resetStream) {
 							dispatch({ type: 'RESET_STREAM' })
 							dispatch({ type: 'START_STREAM' })
@@ -269,7 +269,7 @@ export function useChatExecutionOwner({
 	const attachQueuedExecution = useStableCallback(
 		async (
 			targetSessionId: string,
-			buffer: StreamBuffer,
+			buffer: StreamAccumulator,
 			resetStream: boolean,
 			queueItemId: string | null,
 			operation: ExecutionOperation
@@ -379,7 +379,7 @@ export function useChatExecutionOwner({
 		await executionCoordinator
 			.ensure(targetSessionId, 'queue', async (operation) => {
 				let failedAttempts = 0
-				let buffer = createStreamBuffer()
+				let buffer = createStreamAccumulator()
 				while (
 					operation.isCurrent() &&
 					getCurrentSessionId() === targetSessionId &&
@@ -398,7 +398,7 @@ export function useChatExecutionOwner({
 					if (result.outcome === 'paused' || result.outcome === 'finished' || result.outcome === 'failed') return
 					if (result.outcome === 'done') {
 						failedAttempts = 0
-						buffer = createStreamBuffer()
+						buffer = createStreamAccumulator()
 						continue
 					}
 					if (result.outcome === 'not_found') {
@@ -406,7 +406,7 @@ export function useChatExecutionOwner({
 							appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 							dispatch({ type: 'RESET_STREAM' })
 						}
-						buffer = createStreamBuffer()
+						buffer = createStreamAccumulator()
 						if (result.changedExecution) buffer.executionId = result.changedExecution.messageId
 					}
 					failedAttempts += 1

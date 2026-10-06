@@ -9,7 +9,7 @@ import { Icon } from '~/ui/Icon'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
-import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
+import { AccentBadge, SecondaryBadge, StatusBadge } from './badges'
 import { BreakdownTables } from './BreakdownTable'
 import { ClaimDialog } from './ClaimDialog'
 import {
@@ -319,7 +319,7 @@ function DrawerBody({
 			<section className="-mt-3 flex flex-col gap-3">
 				<div className="flex flex-wrap items-center gap-2">
 					<h3 className="heading-xs">Leaderboards performance</h3>
-					<TimeframeBadge label={badge} />
+					<AccentBadge className="h-6">{badge}</AccentBadge>
 				</div>
 				<RadarChart scores={scores} />
 				<div className={`flex flex-col p-3 ${CARD_BORDER}`}>

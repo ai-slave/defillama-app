@@ -2,7 +2,7 @@ import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
 import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { CHART_COLORS } from '~/constants/colors'
-import { fetchChainChart, fetchChainsByCategoryAll } from '~/containers/Chains/api'
+import { fetchChainChart, fetchChainsByCategory } from '~/containers/Chains/api'
 import { fetchRaises } from '~/containers/Raises/api'
 import type { RaisesSummary } from '~/containers/Raises/summary'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
@@ -226,7 +226,7 @@ export async function getExtraTvlByChain({
 				})
 				return null
 			}),
-		fetchChainsByCategoryAll()
+		fetchChainsByCategory('All')
 			.then((data) =>
 				(data?.chainTvls ?? []).flatMap((chainData) =>
 					chainData.extraTvl?.[config.chartKey] !== undefined ? [chainData.name] : []

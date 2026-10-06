@@ -1,7 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { Fragment, type ReactNode } from 'react'
-import { fetchBlockExplorers } from '~/api'
+import { useBlockExplorers } from '~/api/client'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -24,12 +23,10 @@ import { HOW_WE_VERIFY_ID } from '../poolDetail/VerifiedApyPanel'
 import { useSubscribeProModal } from '../useSubscribeProModal'
 import { useVerifiedAccess } from '../useVerifiedAccess'
 import { tokenIconByAddress } from '../VaultRisk/tokenIcon'
-import { buildApyCardRows } from './apyCardRows'
+import { buildApyCardRows, pct } from './apyCardRows'
 import { ExitStatusIcon } from './ExitStatusIcon'
 import { MeasuredCard, MeasuredExitOffer, MeasuredLock, MeasuredSeal } from './Measured'
 import type { IYieldTableRow } from './types'
-
-const pct = (value: number) => formatPercent(value, YIELD_PERCENT_OPTIONS)
 
 // APY column headers name their window when it deviates from the default latest
 // snapshot, so the numbers stay self-documenting outside the controls' viewport.
@@ -644,11 +641,7 @@ export function RewardApyCell({
 	chain: string | undefined
 	tokens: Array<{ address: string; symbol: string | null }> | undefined
 }) {
-	const { data: explorers } = useQuery({
-		queryKey: ['block-explorers'],
-		queryFn: fetchBlockExplorers,
-		staleTime: 24 * 60 * 60 * 1000
-	})
+	const { data: explorers } = useBlockExplorers()
 	if (value == null) return <EmptyCell />
 	const icons = (tokens ?? [])
 		.slice(0, 3)

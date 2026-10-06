@@ -6,7 +6,7 @@ import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp, type ApiUnixSe
 const BASE = '/api/public/odyssey-ecosystem'
 const STALE_MS = 10 * 60 * 1000
 
-function useTab<T>(tab: string) {
+export function useTab<T>(tab: string) {
 	return useQuery<T>({
 		queryKey: ['odyssey-ecosystem', tab],
 		queryFn: async () => {
@@ -103,8 +103,6 @@ export interface MetadataResponse {
 	faq: Array<{ question: string; answer: string }>
 }
 
-export const useMetadata = () => useTab<MetadataResponse>('metadata')
-
 /* ──────────────────────────── TVL ──────────────────────────── */
 
 interface MorphoMarket {
@@ -188,8 +186,6 @@ export interface TvlResponse {
 		morpho: FormattedValue
 	}
 }
-
-export const useTvlData = () => useTab<TvlResponse>('tvl')
 
 /* ──────────────────────────── Revenue ──────────────────────────── */
 
@@ -289,8 +285,6 @@ export interface RevenueResponse {
 	}
 }
 
-export const useRevenueData = () => useTab<RevenueResponse>('revenue')
-
 /* ──────────────────────────── Incentives ──────────────────────────── */
 
 export interface EpochRow {
@@ -375,8 +369,6 @@ export interface IncentivesResponse {
 	}
 }
 
-export const useIncentivesData = () => useTab<IncentivesResponse>('incentives')
-
 /* ──────────────────────────── Yields (slimmed) ──────────────────────────── */
 
 export interface VesperPool {
@@ -418,8 +410,6 @@ export interface YieldsResponse {
 		odysseyStrategyCount: FormattedValue
 	}
 }
-
-export const useYieldsData = () => useTab<YieldsResponse>('yields')
 
 /* ──────────────────────────── Treasury ──────────────────────────── */
 
@@ -470,8 +460,6 @@ export interface TreasuryResponse {
 		rows: Array<{ bucket: string; share: string; value: string }>
 	}
 }
-
-export const useTreasuryData = () => useTab<TreasuryResponse>('treasury')
 
 /* ──────────────────────────── Growth ──────────────────────────── */
 
@@ -528,8 +516,6 @@ export interface GrowthResponse {
 	}
 }
 
-export const useGrowthData = () => useTab<GrowthResponse>('growth')
-
 /* ──────────────────────────── Pegs (new) ──────────────────────────── */
 
 export interface PegDepthRow {
@@ -579,5 +565,3 @@ export interface PegsResponse {
 	bridgeInCaps?: Array<PegSupplyCap & { capType?: string }>
 	bridgeOutCaps?: Array<PegSupplyCap & { capType?: string }>
 }
-
-export const usePegsData = () => useTab<PegsResponse>('pegs')

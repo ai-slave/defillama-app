@@ -26,8 +26,6 @@ import {
 	SectionHeader
 } from './shared'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const WINDOW_OPTIONS: Array<{ value: TimeWindow; label: string }> = [
@@ -80,7 +78,7 @@ interface RateComparisonRow {
 	sizeUsd: number
 }
 
-const rateColumns: Array<ColumnDef<typeof tableFeaturesConfig, RateComparisonRow>> = [
+const rateColumns: Array<ColumnDef<typeof displayTableFeatures, RateComparisonRow>> = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{ header: 'Market', accessorKey: 'market', size: 200 },
 	{
@@ -121,7 +119,7 @@ function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: rateColumns,

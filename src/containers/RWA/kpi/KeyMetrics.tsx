@@ -20,8 +20,6 @@ export type RWAKeyMetricsProps = {
 	largestProtocol: RwaNamedBar | null
 }
 
-const PERIOD = RWA_KPI_PERIOD
-const PERIOD_LABEL = RWA_KPI_PERIOD_LABEL
 /** The overview reads the totals over every asset, so the labels say so. */
 const LABELS: RwaKpiLabels = {
 	activeMcap: definitions.totalActiveMcap,
@@ -49,9 +47,8 @@ export function buildRwaKeyMetricsCsv({ metrics, perps, largestProtocol }: RWAKe
 /** The home page Key Metrics panel with the RWA rows. The KPI tiles folded into it. */
 export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
 	const { metrics, perps, largestProtocol } = props
-	const headlineChange = metrics.change[PERIOD].activeMcap
+	const headlineChange = metrics.change[RWA_KPI_PERIOD].activeMcap
 	const headlinePercent = percentChange(headlineChange.current, headlineChange.prior)
-	const periodLabel = PERIOD_LABEL
 
 	return (
 		<SummaryStatsCard padding="sm">
@@ -64,7 +61,7 @@ export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
 					truncate
 				/>
 				{headlinePercent != null ? (
-					<SummaryChange percent={headlinePercent} comparison={`over ${periodLabel}`} />
+					<SummaryChange percent={headlinePercent} comparison={`over ${RWA_KPI_PERIOD_LABEL}`} />
 				) : null}
 			</div>
 			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaKeyMetricsCsv(props)} smol />}>

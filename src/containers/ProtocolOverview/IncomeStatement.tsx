@@ -9,7 +9,7 @@ import {
 	TokenPageTableScroller,
 	TokenPageTableShell
 } from '~/components/Table/helpers'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -96,7 +96,7 @@ export function IncomeStatement({
 	const [groupBy, setGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [sankeyGroupBy, setSankeyGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [selectedSankeyPeriod, setSelectedSankeyPeriod] = useState<string | null>(null)
-	const { chartInstance: sankeyChartInstance, handleChartReady: handleSankeyChartReady } = useChartImageExport()
+	const { chartInstance: sankeyChartInstance, handleChartReady: handleSankeyChartReady } = useGetChartInstance()
 	const headerId = anchorId ?? 'income-statement'
 	const showTable = view === 'table' || view === 'both'
 	const showSankey = view === 'sankey' || view === 'both'

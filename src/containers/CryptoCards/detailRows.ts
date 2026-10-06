@@ -36,7 +36,7 @@ export interface CardKeyFact {
 	value: string | null
 }
 
-function humanize(value: string): string {
+export function humanize(value: string): string {
 	return value
 		.replaceAll('_', ' ')
 		.replaceAll('-', ' ')
@@ -371,8 +371,4 @@ export function disclosureStatusLabel(disclosure: CardsDisclosure): string {
 	if (disclosure.status === 'explicitly_none') return 'Explicitly none'
 	if (disclosure.status === 'confirmed') return 'Confirmed'
 	return disclosure.absence_reason ? `Not disclosed: ${humanize(disclosure.absence_reason)}` : 'Not publicly disclosed'
-}
-
-export function disclosureFieldLabel(key: string): string {
-	return humanize(key)
 }

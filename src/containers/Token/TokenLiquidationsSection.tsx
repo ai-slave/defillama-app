@@ -10,7 +10,7 @@ import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
 import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
-import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
+import type { OverviewChainRow, OverviewProtocolRow } from '../LiquidationsV2/api.types'
 import { DeferredTokenLiquidationsTable } from './deferred/DeferredTokenLiquidationsTable'
 import { TokenPrivateSectionGate } from './TokenPrivateSectionGate'
 
@@ -136,20 +136,13 @@ const chainColumns = chainColumnHelper.columns([
 	})
 ])
 
-async function fetchTokenLiquidationsRows(
-	tokenSymbol: string,
-	authorizedFetch: (url: string) => Promise<Response | null>
-): Promise<TokenLiquidationsSectionData | null> {
-	return fetchTokenLiquidationsClient(tokenSymbol, authorizedFetch)
-}
-
 export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string }) {
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('protocols')
 	const handleSetActiveTab = (tab: (typeof TABS)[number]['id']) => setActiveTab(tab)
 	const { data, error, isLoading } = useQuery({
 		queryKey: ['token-liquidations', tokenSymbol],
-		queryFn: () => fetchTokenLiquidationsRows(tokenSymbol, authorizedFetch),
+		queryFn: () => fetchTokenLiquidationsClient(tokenSymbol, authorizedFetch),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,

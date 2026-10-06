@@ -129,7 +129,7 @@ async function fetchResearchNewsletterItems(feedUrl: string): Promise<Array<Rese
 	return parseResearchNewsletterFeed(xml)
 }
 
-function getCachedResearchNewsletterItems(): Promise<Array<ResearchNewsletterItem>> {
+export function getResearchNewsletterArchiveItems(): Promise<Array<ResearchNewsletterItem>> {
 	const feedUrl = process.env.BEEHIIV_RESEARCH_RSS_URL?.trim() || DEFAULT_RESEARCH_NEWSLETTER_FEED_URL
 
 	return cachedResult(
@@ -145,11 +145,7 @@ function getCachedResearchNewsletterItems(): Promise<Array<ResearchNewsletterIte
 }
 
 export async function getResearchNewsletterItems(): Promise<Array<ResearchNewsletterItem>> {
-	return (await getCachedResearchNewsletterItems()).slice(0, MAX_LANDING_ITEMS)
-}
-
-export function getResearchNewsletterArchiveItems(): Promise<Array<ResearchNewsletterItem>> {
-	return getCachedResearchNewsletterItems()
+	return (await getResearchNewsletterArchiveItems()).slice(0, MAX_LANDING_ITEMS)
 }
 
 export function searchResearchNewsletterItems(

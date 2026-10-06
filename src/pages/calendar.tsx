@@ -28,8 +28,6 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 
-const tableFeaturesConfig = filteredTableFeatures
-
 type CalendarEmission = ProtocolEmission & {
 	unlock: [timestamp: number, amount: number]
 	tPrice: number | null
@@ -80,7 +78,7 @@ type CalendarRow = {
 	link?: string
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, CalendarRow>()
+const columnHelper = createColumnHelper<typeof filteredTableFeatures, CalendarRow>()
 
 export default function Protocols({ emissions }: { emissions: Array<CalendarEmission> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -121,7 +119,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 	)
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: filteredTableFeatures,
 		data: rows,
 		columns: calendarColumns,
 		state: {

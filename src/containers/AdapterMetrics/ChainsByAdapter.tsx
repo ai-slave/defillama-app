@@ -26,8 +26,6 @@ import { ChainsByAdapterChart } from './ChainChart'
 import type { IChainsByAdapterPageData } from './types'
 import { showsChainsByAdapterChart } from './utils'
 
-const tableFeaturesConfig = searchTableFeatures
-
 type TPageType =
 	| 'Fees'
 	| 'Revenue'
@@ -53,7 +51,7 @@ export function ChainsByAdapter(props: IProps) {
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: searchTableFeatures,
 		data: props.chains,
 		columns: columnsByType[props.type],
 		state: {
@@ -123,7 +121,7 @@ export function ChainsByAdapter(props: IProps) {
 }
 type ChainRow = IChainsByAdapterPageData['chains'][0]
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, ChainRow>()
+const columnHelper = createColumnHelper<typeof searchTableFeatures, ChainRow>()
 
 const NameColumn = (route: string) =>
 	columnHelper.accessor('name', {

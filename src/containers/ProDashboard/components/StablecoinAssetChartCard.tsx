@@ -3,16 +3,16 @@ import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSer
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { filterChartDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/filterChartDataset'
 import { useStablecoinAssetChartData } from '~/containers/ProDashboard/components/datasets/StablecoinAssetDataset/useStablecoinAssetChartData'
 import {
-	filterStablecoinDatasetByTimePeriod,
 	STABLECOIN_DOLLAR_CHART_OPTIONS,
 	STABLECOIN_PERCENT_CHART_OPTIONS
 } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 import { colorManager } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
@@ -47,7 +47,7 @@ const EMPTY_SERIES: Array<string> = []
 export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardProps) {
 	const { stablecoin, stablecoinId, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${stablecoinId}:${chartType}`)
 	const selectionOptions = useMemo(
 		() => ({
@@ -151,7 +151,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const filteredDataset = useMemo(
 		() =>
 			'dataset' in presentation
-				? filterStablecoinDatasetByTimePeriod(presentation.dataset, timePeriod, customTimePeriod)
+				? filterChartDatasetByTimePeriod(presentation.dataset, timePeriod, customTimePeriod)
 				: null,
 		[presentation, timePeriod, customTimePeriod]
 	)
@@ -181,7 +181,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					series: pieSeries,
 					selectedSeries: pieSelection.selectedCharts
 				})
-			: filterStablecoinDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
+			: filterChartDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
 		return prepareProChartCsv(exportDataset, filename)
 	}
 

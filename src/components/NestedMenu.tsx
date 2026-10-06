@@ -12,14 +12,6 @@ import {
 } from '~/ui/Popover'
 import { DrawerDismiss, NestedDrawerHeader } from '~/ui/PopoverSurface'
 
-interface NestedMenuItemProps extends Ariakit.MenuItemProps {
-	ref?: React.Ref<HTMLDivElement>
-}
-
-export function NestedMenuItem({ ref, ...props }: NestedMenuItemProps) {
-	return <Ariakit.MenuItem ref={ref} {...props} className={props.className ?? ''} />
-}
-
 interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	label: React.ReactNode
 	combobox?: Ariakit.MenuStoreProps['combobox']
@@ -36,7 +28,7 @@ export function NestedMenu({ label, children, combobox, ...props }: NestedMenuPr
 				{...props}
 				// A full-width root trigger keeps its arrow at the far edge.
 				className={`${menu.parent ? nestedMenuRootRowStyles : 'justify-between'} ${props.className ?? ''}`}
-				render={menu.parent ? <NestedMenuItem hideOnClick={false} render={props.render} /> : <Button size="md" />}
+				render={menu.parent ? <Ariakit.MenuItem hideOnClick={false} render={props.render} /> : <Button size="md" />}
 			>
 				<span className={labelClassName}>{label}</span>
 				{menu.parent ? (

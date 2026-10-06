@@ -1,10 +1,10 @@
 import { useRouter } from 'next/router'
-import { createContext, type PropsWithChildren, useContext, useMemo } from 'react'
+import { createContext, type PropsWithChildren, useMemo } from 'react'
 import { parseLlamaAIRoute, type LlamaAIRouteState } from './llamaAIRoute'
 
 export { isLlamaAIConversationPage, type LlamaAIRouteState } from './llamaAIRoute'
 
-const LlamaAIRouteContext = createContext<LlamaAIRouteState>({ kind: 'unknown' })
+export const LlamaAIRouteContext = createContext<LlamaAIRouteState>({ kind: 'unknown' })
 
 export function useLlamaAIRouteState(): LlamaAIRouteState {
 	const { isReady, pathname, asPath, query } = useRouter()
@@ -17,8 +17,4 @@ export function useLlamaAIRouteState(): LlamaAIRouteState {
 
 export function LlamaAIRouteProvider({ value, children }: PropsWithChildren<{ value: LlamaAIRouteState }>) {
 	return <LlamaAIRouteContext.Provider value={value}>{children}</LlamaAIRouteContext.Provider>
-}
-
-export function useLlamaAIRouteContext() {
-	return useContext(LlamaAIRouteContext)
 }

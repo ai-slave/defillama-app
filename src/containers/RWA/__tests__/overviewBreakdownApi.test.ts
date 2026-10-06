@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { rwaOverviewBreakdown } from '~/containers/RWA/server/api'
-import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/overview-breakdown'
+import { parseRWAOverviewBreakdownRequest, rwaOverviewBreakdown } from '~/containers/RWA/server/api'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
 const upstream = vi.hoisted(() => ({
@@ -27,10 +26,10 @@ beforeEach(() => {
 const timestampSeconds = 1_774_483_200
 const timestampMs = timestampSeconds * 1000
 
-describe('parseOverviewBreakdownRequest', () => {
+describe('parseRWAOverviewBreakdownRequest', () => {
 	test('accepts platform requests when both flags are false', () => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parseRWAOverviewBreakdownRequest({
 				query: {
 					breakdown: 'platform',
 					key: 'activeMcap',
@@ -49,7 +48,7 @@ describe('parseOverviewBreakdownRequest', () => {
 
 	test('accepts bridge exclusion with both classification flags enabled', () => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parseRWAOverviewBreakdownRequest({
 				query: {
 					breakdown: 'platform',
 					key: 'activeMcap',
@@ -71,7 +70,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		'accepts %s requests with mixed inclusion flags',
 		(breakdown) => {
 			expect(
-				parseOverviewBreakdownRequest({
+				parseRWAOverviewBreakdownRequest({
 					query: { breakdown, key: 'activeMcap', includeStablecoin: 'true', includeGovernance: 'false' }
 				})
 			).toEqual({
@@ -86,7 +85,7 @@ describe('parseOverviewBreakdownRequest', () => {
 
 	test('rejects arrays and invalid enum values', () => {
 		expect(
-			parseOverviewBreakdownRequest({
+			parseRWAOverviewBreakdownRequest({
 				query: {
 					breakdown: ['platform'],
 					key: 'activeMcap',
@@ -97,7 +96,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parseRWAOverviewBreakdownRequest({
 				query: {
 					breakdown: 'contract',
 					key: 'activeMcap',
@@ -108,7 +107,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseOverviewBreakdownRequest({
+			parseRWAOverviewBreakdownRequest({
 				query: {
 					breakdown: 'platform',
 					key: '',

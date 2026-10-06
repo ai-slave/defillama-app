@@ -1,9 +1,9 @@
 import { formatNumber } from '~/utils/numberFormat'
-import { useTreasuryData } from './api'
+import { useTab, type TreasuryResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
 
 export default function Treasury() {
-	const { data } = useTreasuryData()
+	const { data } = useTab<TreasuryResponse>('treasury')
 	const tlp = data?.treasuryLps
 	const eth = data?.ethUniv3
 	const plasma = data?.plasmaUniv3

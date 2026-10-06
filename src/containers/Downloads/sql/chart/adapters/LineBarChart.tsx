@@ -8,6 +8,7 @@ import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesYAxisOption
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -15,7 +16,7 @@ import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
 import { pivotRowsForSplit } from '../pivot'
-import { escapeSqlChartHtml, readSqlNumber, readSqlTimestampMs } from '../rowValues'
+import { readSqlNumber, readSqlTimestampMs } from '../rowValues'
 import { makeValueFormatter, type ValueFormatter } from '../valueFormatters'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -278,7 +279,7 @@ function buildChartOptions(
 			formatter: (params: unknown) => {
 				const items = normalizeTooltipItems(params)
 				if (items.length === 0) return ''
-				const header = escapeSqlChartHtml(String(items[0].axisValue ?? items[0].name ?? ''))
+				const header = escapeHtml(String(items[0].axisValue ?? items[0].name ?? ''))
 				const rows: Array<{ marker: string; name: string; value: number }> = []
 				for (const item of items) {
 					const name = item.seriesName
@@ -293,7 +294,7 @@ function buildChartOptions(
 				let content = ''
 				for (let index = 0; index < rows.length && index < 10; index++) {
 					const row = rows[index]
-					content += `<li style="list-style:none">${row.marker}${escapeSqlChartHtml(row.name)}&nbsp;&nbsp;${formatter.tooltip(row.value)}</li>`
+					content += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatter.tooltip(row.value)}</li>`
 				}
 				return `<div style="font-weight:600;margin-bottom:4px">${header}</div>${content || '<div style="color:#999">No data</div>'}`
 			}

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLeaderboardRows } from './client'
 import { type ColumnConfig, DISPLAY_MODES, type DisplayMode, THRESHOLDS, type Threshold } from './constants'
 import { DocsDrawer } from './DocsDrawer'
-import { MarketMakersOutro } from './MarketMakersOutro'
+import { MarketMakersFooter } from './Footer'
 import { MarketMakersTabs } from './MarketMakersTabs'
 import { MMDetailDrawer } from './MMDetailDrawer'
 import { RankTable } from './RankTable'
@@ -72,7 +72,7 @@ export function Leaderboard({
 						onSelectMM={(id, name) => setSelectedMM({ id, name })}
 						isLoading={isLoading}
 					/>
-					<MarketMakersOutro />
+					<MarketMakersFooter />
 				</div>
 			</div>
 			<RefineDrawer

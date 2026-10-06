@@ -2,13 +2,13 @@ import { describe, expect, test, vi } from 'vitest'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
 	createInitialStreamState,
-	createStreamBuffer,
+	createStreamAccumulator,
 	streamReducer,
 	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
 
 function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
-	const buffer = createStreamBuffer()
+	const buffer = createStreamAccumulator()
 	const dispatch = vi.fn() as unknown as StreamDispatch
 	const appendMessage = vi.fn()
 	const notify = vi.fn()
@@ -156,7 +156,7 @@ describe('createAgenticCallbacks', () => {
 		let state = createInitialStreamState()
 		const callbacks = createAgenticCallbacks({
 			isCurrent: () => true,
-			buffer: createStreamBuffer(),
+			buffer: createStreamAccumulator(),
 			dispatch: (action) => {
 				state = streamReducer(state, action)
 			},

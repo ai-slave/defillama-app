@@ -10,6 +10,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { ChartPanelBody, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
@@ -57,7 +58,7 @@ import {
 	GROWTH_MAX_DEPOSIT
 } from './queryState'
 import { ReadoutCell, readoutFieldStyles, SeriesMark } from './readout'
-import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
+import { getChartTooltipItems, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 import type { PoolHistoryRange } from './types'
 import { useQueryDraft } from './useQueryDraft'
 import { useVerifiedHistoryFetcher } from './useVerifiedHistory'
@@ -276,7 +277,7 @@ function buildTooltipFormatter(model: GrowthChartModel, digits: number, assetNam
 		const items = getChartTooltipItems(params)
 		if (items.length === 0) return ''
 
-		const timestamp = getChartTooltipTimestamp(items[0])
+		const timestamp = getTooltipAxisValue(items[0])
 		let html = Number.isFinite(timestamp) ? formatTooltipChartDate(timestamp, 'daily') : ''
 
 		const item = items.find((candidate) => candidate.seriesName === VERIFIED_NAME)

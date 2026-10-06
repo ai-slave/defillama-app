@@ -8,7 +8,7 @@ import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
-import { useRevenueData, chartToModel } from './api'
+import { useTab, chartToModel, type RevenueResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -112,7 +112,7 @@ function SubSectionCard({
 }
 
 export default function Revenue() {
-	const { data, isLoading } = useRevenueData()
+	const { data, isLoading } = useTab<RevenueResponse>('revenue')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const ra = k.revenueAllTime ?? ({} as Partial<NonNullable<typeof k.revenueAllTime>>)
 	const ha = k.holdersAllTime ?? ({} as Partial<NonNullable<typeof k.holdersAllTime>>)

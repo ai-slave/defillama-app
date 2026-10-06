@@ -1,16 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { RWA_PERPS_SERVER_URL } from '~/constants'
-import { rwaPerpsContractBreakdown } from '~/containers/RWA/server/api'
-import { parseContractBreakdownRequest } from '~/pages/api/public/rwa/perps/contract-breakdown'
+import { parsePerpsContractBreakdownRequest, rwaPerpsContractBreakdown } from '~/containers/RWA/server/api'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 
-describe('parseContractBreakdownRequest', () => {
+describe('parsePerpsContractBreakdownRequest', () => {
 	test('accepts overview contract requests', () => {
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					key: 'markets'
 				}
@@ -24,7 +23,7 @@ describe('parseContractBreakdownRequest', () => {
 
 	test('accepts venue, asset-group, asset-class, and asset-class exclusion targets', () => {
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					venue: ' xyz ',
 					key: 'openInterest'
@@ -37,7 +36,7 @@ describe('parseContractBreakdownRequest', () => {
 		})
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					assetGroup: 'US Equities',
 					includeCex: 'true',
@@ -51,7 +50,7 @@ describe('parseContractBreakdownRequest', () => {
 		})
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					includeCex: 'true',
@@ -65,7 +64,7 @@ describe('parseContractBreakdownRequest', () => {
 		})
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					excludeAssetClass: 'Forex Perps',
 					key: 'markets'
@@ -80,7 +79,7 @@ describe('parseContractBreakdownRequest', () => {
 
 	test('rejects invalid query params', () => {
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					baseAsset: 'SK Hynix',
 					key: 'openInterest'
@@ -89,7 +88,7 @@ describe('parseContractBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					venue: ['xyz'],
 					key: 'openInterest'
@@ -98,7 +97,7 @@ describe('parseContractBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					includeCex: 'yes',
@@ -108,7 +107,7 @@ describe('parseContractBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					excludeAssetClass: 'Forex Perps',
@@ -118,7 +117,7 @@ describe('parseContractBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					venue: 'xyz',
 					assetClass: 'Forex Perps',
@@ -128,7 +127,7 @@ describe('parseContractBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					venue: 'xyz',
 					assetGroup: 'US Equities',
@@ -138,7 +137,7 @@ describe('parseContractBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseContractBreakdownRequest({
+			parsePerpsContractBreakdownRequest({
 				query: {
 					key: 'activeMcap'
 				}

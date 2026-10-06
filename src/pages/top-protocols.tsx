@@ -103,8 +103,6 @@ export const getStaticProps = withPerformanceLogging('top-protocols', async () =
 
 const pageName = ['Top Protocols']
 
-const columnHelper = COLUMN_HELPER
-
 export default function TopProtocols({ data, chains, uniqueCategories }) {
 	const columnOptions = uniqueCategories.map((cat) => ({ name: cat, key: cat }))
 
@@ -116,7 +114,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 
 	const columns = React.useMemo(() => {
 		const baseColumns = [
-			columnHelper.accessor('chain', {
+			COLUMN_HELPER.accessor('chain', {
 				header: 'Chain',
 				id: 'chain',
 				enableSorting: false,
@@ -139,7 +137,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 		]
 
 		const categoryColumns = uniqueCategories.map((cat) =>
-			columnHelper.accessor((row) => row[cat], {
+			COLUMN_HELPER.accessor((row) => row[cat], {
 				id: cat,
 				header: cat,
 				enableSorting: false,

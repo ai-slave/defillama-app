@@ -8,7 +8,8 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { EmissionEvent } from '../api.types'
 import { getEmissionAmountBreakdownOverInterval } from '../eventAmount'
-import { type IEmission, UnlocksTable } from '../Table'
+import type { EnrichedProtocolEmission } from '../queries'
+import { UnlocksTable } from '../Table'
 
 // The real router context, so a navigation re-renders every consumer the way Next does.
 let query: Record<string, string | Array<string>> = {}
@@ -26,7 +27,7 @@ const cliff = (category: string): EmissionEvent => ({
 	noOfTokens: [100]
 })
 
-const protocol = (name: string, events: Array<EmissionEvent>): IEmission => {
+const protocol = (name: string, events: Array<EmissionEvent>): EnrichedProtocolEmission => {
 	const next24h = getEmissionAmountBreakdownOverInterval(events, 0, 24 * 60 * 60)
 	return {
 		sources: [],

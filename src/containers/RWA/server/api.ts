@@ -20,10 +20,7 @@ import {
 	setRWAPerpsChartScope
 } from '~/containers/RWA/Perps/api'
 import { toRWAPerpsBreakdownChartDataset } from '~/containers/RWA/Perps/breakdownDataset'
-import {
-	parseChartMetricKey as parsePerpsChartMetricKey,
-	parseOptionalTarget
-} from '~/containers/RWA/Perps/requestParsers'
+import { parseChartMetricKey as parsePerpsChartMetricKey } from '~/containers/RWA/Perps/requestParsers'
 import type {
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsMarketBreakdownRequest,
@@ -282,10 +279,10 @@ function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
 	// silently get the DEX default when they intended a different scope.
 	if (query.venueType !== undefined || query.baseAsset !== undefined) return null
 
-	const venue = parseOptionalTarget(query.venue)
-	const assetGroup = parseOptionalTarget(query.assetGroup)
-	const assetClass = parseOptionalTarget(query.assetClass)
-	const excludeAssetClass = parseOptionalTarget(query.excludeAssetClass)
+	const venue = parseOptionalStringTarget(query.venue)
+	const assetGroup = parseOptionalStringTarget(query.assetGroup)
+	const assetClass = parseOptionalStringTarget(query.assetClass)
+	const excludeAssetClass = parseOptionalStringTarget(query.excludeAssetClass)
 	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
 
 	if (!hasExactlyOneTarget([venue, assetGroup, assetClass, excludeAssetClass])) {
@@ -300,7 +297,7 @@ function parsePerpsChartTarget(query: ApiQuery): RWAPerpsChartTarget | null {
 }
 
 function parsePerpsMarketChartTarget(query: ApiQuery): RWAPerpsMarketBreakdownTarget | null {
-	const baseAsset = parseOptionalTarget(query.baseAsset)
+	const baseAsset = parseOptionalStringTarget(query.baseAsset)
 	if (baseAsset === null) return null
 	if (baseAsset === undefined) return parsePerpsChartTarget(query)
 	if (

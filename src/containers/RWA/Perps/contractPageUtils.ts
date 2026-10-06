@@ -14,12 +14,9 @@ import {
 	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
+import type { IRWAPerpsMarketChartPoint } from './api.types'
 import { perpsDefinitions as d } from './definitions'
-import type {
-	IRWAPerpsContractData,
-	IRWAPerpsContractFundingHistoryPoint,
-	IRWAPerpsContractMarketChartPoint
-} from './types'
+import type { IRWAPerpsContractData, IRWAPerpsContractFundingHistoryPoint } from './types'
 
 dayjs.extend(utc)
 
@@ -328,7 +325,7 @@ export function buildRWAPerpsContractInfoRows(contractData: IRWAPerpsContractDat
 	]
 }
 
-function getMetricValue(point: IRWAPerpsContractMarketChartPoint, metric: RWAPerpsContractChartMetricKey): number {
+function getMetricValue(point: IRWAPerpsMarketChartPoint, metric: RWAPerpsContractChartMetricKey): number {
 	switch (metric) {
 		case 'openInterest':
 			return point.openInterest
@@ -366,7 +363,7 @@ export function buildRWAPerpsContractChartSpec({
 	groupBy,
 	enabledMetrics
 }: {
-	marketPoints: Array<IRWAPerpsContractMarketChartPoint> | null
+	marketPoints: Array<IRWAPerpsMarketChartPoint> | null
 	fundingHistory: Array<IRWAPerpsContractFundingHistoryPoint> | null
 	groupBy: ChartTimeGrouping
 	enabledMetrics: Array<RWAPerpsContractChartMetricKey>

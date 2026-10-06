@@ -5,7 +5,7 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -327,7 +327,7 @@ export function RWAOverviewChartPanel({
 	const showCharts = overview.assets.length > 1 || isPlatformMode || isFlowMetric
 
 	const { chartInstance: multiSeriesChart2Instance, handleChartReady: handleMultiSeriesChartReady } =
-		useChartImageExport()
+		useGetChartInstance()
 	const chartMetricLabel = isPerpsView
 		? (getRwaPerpsChartMetricOptions().find((option) => option.key === perpsChartMetric)?.label ?? 'Open Interest')
 		: isFlowVsPrice

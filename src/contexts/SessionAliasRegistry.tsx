@@ -1,4 +1,4 @@
-import { createContext, type PropsWithChildren, useContext, useMemo, useState } from 'react'
+import { createContext, type PropsWithChildren, useMemo, useState } from 'react'
 
 interface SessionAliasRegistry {
 	resolve: (id: string) => string
@@ -6,7 +6,7 @@ interface SessionAliasRegistry {
 	clear: () => void
 }
 
-const SessionAliasContext = createContext<SessionAliasRegistry | null>(null)
+export const SessionAliasContext = createContext<SessionAliasRegistry | null>(null)
 
 export function SessionAliasProvider({ userId, children }: PropsWithChildren<{ userId: string | null }>) {
 	// Aliases belong to one signed-in user: the next user starts with an empty map in the same render, before any
@@ -30,7 +30,4 @@ export function SessionAliasProvider({ userId, children }: PropsWithChildren<{ u
 	)
 
 	return <SessionAliasContext.Provider value={value}>{children}</SessionAliasContext.Provider>
-}
-export function useOptionalSessionAliases() {
-	return useContext(SessionAliasContext)
 }

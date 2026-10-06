@@ -6,7 +6,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { slug } from '~/utils'
 import { queryReadFailed } from '~/utils/query'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
@@ -35,7 +35,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const { protocol, protocolName, dataType } = config
 	const resolvedDataType = dataType === 'realtime' ? 'documented' : dataType
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const todayHallmarks = useMemo<Array<[number, string]>>(
 		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],

@@ -27,7 +27,7 @@ type StablecoinBridgeInfo = {
 	link?: string
 }
 
-/** Minimal shape required by `useGroupBridgeData` for each chain entry. */
+/** Minimal shape required by `groupBridgeData` for each chain entry. */
 type GroupBridgeDataInput = {
 	name: string
 	symbol: string
@@ -90,6 +90,7 @@ export const calcCirculating = <T extends StablecoinCirculatingInput>(
 	return updatedPeggedAssets.sort((a, b) => (b.mcap ?? 0) - (a.mcap ?? 0))
 }
 
+// A hook so the compiler keeps the memo for ChainsWithStablecoins: inlined there, the call goes uncached.
 export const useCalcCirculating = <T extends StablecoinCirculatingInput>(
 	filteredPeggedAssets: Array<T>,
 	includeUnreleased?: boolean
@@ -99,6 +100,7 @@ export const useCalcCirculating = <T extends StablecoinCirculatingInput>(
 		[filteredPeggedAssets, includeUnreleased]
 	)
 }
+
 interface StablecoinsChainsRow {
 	name: string
 	mcap: number | null
@@ -362,11 +364,4 @@ export const groupBridgeData = (
 		}
 	}
 	return finalDataArray.sort((a, b) => (b.circulating ?? 0) - (a.circulating ?? 0))
-}
-
-export const useGroupBridgeData = (
-	chains: Array<GroupBridgeDataInput>,
-	bridgeInfoObject: BridgeInfo
-): Array<StablecoinUsageByChainRow> => {
-	return useMemo(() => groupBridgeData(chains, bridgeInfoObject), [chains, bridgeInfoObject])
 }

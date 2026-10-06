@@ -5,7 +5,7 @@ import type { QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import {
 	buildAssistantMessage,
 	hasStreamBufferContent,
-	type StreamBuffer,
+	type StreamAccumulator,
 	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
 import { applyTerminalOps } from '~/containers/LlamaAI/terminal/terminalOps'
@@ -21,7 +21,7 @@ function takeCurrentMessageId(ref: RefObject<string | null>) {
 }
 
 export function appendBufferedAssistantMessage(
-	buffer: StreamBuffer,
+	buffer: StreamAccumulator,
 	currentMessageIdRef: RefObject<string | null>,
 	appendMessage: (message: Message) => void
 ) {
@@ -60,7 +60,7 @@ export function createAgenticCallbacks({
 	notify
 }: {
 	isCurrent: () => boolean
-	buffer: StreamBuffer
+	buffer: StreamAccumulator
 	dispatch: StreamDispatch
 	currentMessageIdRef: RefObject<string | null>
 	onSessionId?: (sessionId: string) => void

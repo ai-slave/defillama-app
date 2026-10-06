@@ -1,7 +1,7 @@
-import type * as echarts from 'echarts/core'
-import { lazy, useCallback, useRef } from 'react'
+import { lazy } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { DOLLAR_SCROLL_CHART_OPTIONS, DOLLAR_STACKED_SCROLL_CHART_OPTIONS, HIDDEN_EXPORT } from './chartDefaults'
 import { useDistributionData } from './distributionApi'
 
@@ -32,15 +32,6 @@ function ChartCard({
 	)
 }
 
-function useChartInstance() {
-	const ref = useRef<echarts.ECharts | null>(null)
-	const onReady = useCallback((instance: echarts.ECharts | null) => {
-		ref.current = instance
-	}, [])
-	const getInstance = useCallback(() => ref.current, [])
-	return { onReady, getInstance }
-}
-
 function CardSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
@@ -55,12 +46,12 @@ function CardSkeleton({ title }: { title: string }) {
 export default function DistributionRewards() {
 	const { data, isLoading } = useDistributionData()
 
-	const actualRev = useChartInstance()
-	const revProjection = useChartInstance()
-	const susdsTvl = useChartInstance()
-	const xrSusds = useChartInstance()
-	const xrSusdc = useChartInstance()
-	const stakedUsds = useChartInstance()
+	const actualRev = useGetChartInstance()
+	const revProjection = useGetChartInstance()
+	const susdsTvl = useGetChartInstance()
+	const xrSusds = useGetChartInstance()
+	const xrSusdc = useGetChartInstance()
+	const stakedUsds = useGetChartInstance()
 
 	if (isLoading || !data) {
 		return (
@@ -81,7 +72,7 @@ export default function DistributionRewards() {
 				title="Actual Revenue - User"
 				actions={
 					<ChartPngExportButton
-						chartInstance={actualRev.getInstance}
+						chartInstance={actualRev.chartInstance}
 						filename="actual-revenue-user"
 						title={sparkExportTitle('Actual Revenue - User')}
 						smol
@@ -97,7 +88,7 @@ export default function DistributionRewards() {
 					hideDefaultLegend={data.actualRevenue.charts.length < 2}
 					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={actualRev.onReady}
+					onReady={actualRev.handleChartReady}
 				/>
 			</ChartCard>
 
@@ -105,7 +96,7 @@ export default function DistributionRewards() {
 				title="Revenue Projection - User"
 				actions={
 					<ChartPngExportButton
-						chartInstance={revProjection.getInstance}
+						chartInstance={revProjection.chartInstance}
 						filename="revenue-projection-user"
 						title={sparkExportTitle('Revenue Projection - User')}
 						smol
@@ -122,7 +113,7 @@ export default function DistributionRewards() {
 					height="400px"
 					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={revProjection.onReady}
+					onReady={revProjection.handleChartReady}
 				/>
 			</ChartCard>
 
@@ -130,7 +121,7 @@ export default function DistributionRewards() {
 				title="sUSDS & sUSDC TVL by Spark Referrals"
 				actions={
 					<ChartPngExportButton
-						chartInstance={susdsTvl.getInstance}
+						chartInstance={susdsTvl.chartInstance}
 						filename="susds-susdc-tvl-spark-referrals"
 						title={sparkExportTitle('sUSDS & sUSDC TVL by Spark Referrals')}
 						smol
@@ -147,7 +138,7 @@ export default function DistributionRewards() {
 					height="400px"
 					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={susdsTvl.onReady}
+					onReady={susdsTvl.handleChartReady}
 				/>
 			</ChartCard>
 
@@ -155,7 +146,7 @@ export default function DistributionRewards() {
 				title="XR Rewards - sUSDS Crosschain"
 				actions={
 					<ChartPngExportButton
-						chartInstance={xrSusds.getInstance}
+						chartInstance={xrSusds.chartInstance}
 						filename="xr-rewards-susds-crosschain"
 						title={sparkExportTitle('XR Rewards - sUSDS Crosschain')}
 						smol
@@ -171,7 +162,7 @@ export default function DistributionRewards() {
 					hideDefaultLegend={data.xrSusds.charts.length < 2}
 					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={xrSusds.onReady}
+					onReady={xrSusds.handleChartReady}
 				/>
 			</ChartCard>
 
@@ -179,7 +170,7 @@ export default function DistributionRewards() {
 				title="XR Rewards - sUSDC Crosschain"
 				actions={
 					<ChartPngExportButton
-						chartInstance={xrSusdc.getInstance}
+						chartInstance={xrSusdc.chartInstance}
 						filename="xr-rewards-susdc-crosschain"
 						title={sparkExportTitle('XR Rewards - sUSDC Crosschain')}
 						smol
@@ -195,7 +186,7 @@ export default function DistributionRewards() {
 					hideDefaultLegend={data.xrSusdc.charts.length < 2}
 					chartOptions={DOLLAR_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={xrSusdc.onReady}
+					onReady={xrSusdc.handleChartReady}
 				/>
 			</ChartCard>
 
@@ -203,7 +194,7 @@ export default function DistributionRewards() {
 				title="Staked USDS TVL by Spark Referrals"
 				actions={
 					<ChartPngExportButton
-						chartInstance={stakedUsds.getInstance}
+						chartInstance={stakedUsds.chartInstance}
 						filename="staked-usds-tvl-spark-referrals"
 						title={sparkExportTitle('Staked USDS TVL by Spark Referrals')}
 						smol
@@ -220,7 +211,7 @@ export default function DistributionRewards() {
 					height="400px"
 					chartOptions={DOLLAR_STACKED_SCROLL_CHART_OPTIONS}
 					exportButtons={HIDDEN_EXPORT}
-					onReady={stakedUsds.onReady}
+					onReady={stakedUsds.handleChartReady}
 				/>
 			</ChartCard>
 		</div>

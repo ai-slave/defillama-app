@@ -1,11 +1,11 @@
 import { createColumnHelper, type TableOptions } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { formatPercent, formatRatio } from '~/utils/numberFormat'
 import type { LoopTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
-import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import type { IYieldsTableProps } from './types'
 import {
@@ -87,11 +87,11 @@ function LeverageCell({ value }: { value: number | null | undefined }) {
 // infra the borrow tables use, with bespoke loop column defs. Column ids double as the
 // server `sortBy` keys (the loops handler exposes loop_apy / supply_apy / borrow_apy /
 // available_borrow / ltv accessors).
-const loopHelper = createColumnHelper<typeof tableFeaturesConfig, LoopTableRow>()
+const loopHelper = createColumnHelper<typeof paginatedTableFeatures, LoopTableRow>()
 
 // Column order / labels: Token, Protocol, Chain, Leverage, Supply APY, Borrow APY,
 // Looped APY, Available, Loop LTV.
-const loopColumns: TableOptions<typeof tableFeaturesConfig, LoopTableRow>['columns'] = loopHelper.columns([
+const loopColumns: TableOptions<typeof paginatedTableFeatures, LoopTableRow>['columns'] = loopHelper.columns([
 	loopHelper.accessor('pool', {
 		id: 'token',
 		header: 'Token',

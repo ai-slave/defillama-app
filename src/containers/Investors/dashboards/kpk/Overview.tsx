@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { formatNumber } from '~/utils/numberFormat'
-import { useKpkOverview, type KpkRef } from './api'
+import { useTab, type KpkRef, type KpkOverview } from './api'
 import { CompositionSection, type CompositionSubtotal } from './CompositionSection'
 import { MILLION } from './transform'
 import {
@@ -26,7 +26,7 @@ const BOOK_TITLES = {
 }
 
 export default function Overview() {
-	const { data, isError } = useKpkOverview()
+	const { data, isError } = useTab<KpkOverview>('overview')
 
 	const adjusted = data?.tvaAdjusted
 	const books = data?.books

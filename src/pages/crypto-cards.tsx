@@ -10,9 +10,7 @@ import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
-type CryptoCardsPageProps = CardsIndexModel
-
-export const getStaticProps = withPerformanceLogging<CryptoCardsPageProps>('crypto-cards', async () => {
+export const getStaticProps = withPerformanceLogging<CardsIndexModel>('crypto-cards', async () => {
 	const { fetchAdapterChainMetrics } = await import('~/containers/AdapterMetrics/api')
 	const [{ default: metadataCache }, index, issuerVolumes] = await Promise.all([
 		import('~/utils/metadata'),
@@ -42,7 +40,7 @@ export const CRYPTO_CARDS_PAGE_METADATA = {
 	pageName: ['Crypto Cards']
 }
 
-export default function CryptoCardsPage({ rows, reference }: CryptoCardsPageProps) {
+export default function CryptoCardsPage({ rows, reference }: CardsIndexModel) {
 	return (
 		<Layout {...CRYPTO_CARDS_PAGE_METADATA}>
 			<header className="flex flex-col gap-1 px-1 pb-2">

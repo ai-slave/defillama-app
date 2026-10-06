@@ -3,7 +3,8 @@ import { lazy, type ReactNode, Suspense, useContext } from 'react'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { getYieldBorrowHistoryQueryKey, getYieldSupplyHistoryQueryKey } from '~/containers/Yields/queries.client'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
@@ -47,14 +48,14 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const { poolConfigId, poolName, project, chain } = config
 	const chartType = normalizeYieldChartType(config.chartType)
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
 	const needsBorrowData = chartType === 'borrow-apy' || chartType === 'net-borrow-apy'
 	const needsSupplyData = !needsBorrowData
 	const supplyQuery = useQuery({
-		queryKey: ['yield-supply-history', poolConfigId],
+		queryKey: getYieldSupplyHistoryQueryKey(poolConfigId),
 		queryFn: (): Promise<PoolHistory> => {
 			return authToken
 				? fetchProDashboardProxy('yields', { poolConfigId }, authToken)
@@ -69,7 +70,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const chartError = queryReadFailed(supplyQuery)
 
 	const borrowQuery = useQuery({
-		queryKey: ['yield-borrow-history', poolConfigId],
+		queryKey: getYieldBorrowHistoryQueryKey(poolConfigId),
 		queryFn: (): Promise<BorrowMarketHistory> => {
 			return authToken
 				? fetchProDashboardProxy('yieldsLendBorrow', { poolConfigId }, authToken)

@@ -34,8 +34,6 @@ import {
 	type TokenDirectory
 } from '~/utils/tokenDirectory'
 
-const tableFeaturesConfig = displayTableFeatures
-
 interface TokenRightsListItem {
 	name: string
 	logo: string
@@ -84,7 +82,7 @@ type TokenRightsLinkResolution =
 	| { type: 'linked'; item: TokenRightsListItem }
 	| { type: 'skipped'; entry: SkippedTokenRightsEntry }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenRightsListItem>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, TokenRightsListItem>()
 
 const TOKEN_RIGHTS_PILL_TOOLTIPS = {
 	feeSwitch:
@@ -451,7 +449,7 @@ function TokenRightsPage({
 	const stats = useMemo(() => getTokenRightsStats(filteredProtocols), [filteredProtocols])
 	const latestUpdated = useMemo(() => getLatestUpdatedMonth(protocols), [protocols])
 	const table = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data: filteredProtocols,
 		columns,
 		state: { sorting, columnVisibility: { holdersRevenue24h: holdersRevenueAvailable } },

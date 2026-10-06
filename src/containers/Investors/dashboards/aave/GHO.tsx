@@ -23,8 +23,6 @@ import {
 	SectionHeader
 } from './shared'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const GHO_TOKEN = '0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f'
@@ -56,7 +54,7 @@ interface GHOMarketRow {
 	utilization: number
 }
 
-const ghoMarketColumns: Array<ColumnDef<typeof tableFeaturesConfig, GHOMarketRow>> = [
+const ghoMarketColumns: Array<ColumnDef<typeof displayTableFeatures, GHOMarketRow>> = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{
 		header: 'Market Size',
@@ -104,7 +102,7 @@ function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: ghoMarketColumns,

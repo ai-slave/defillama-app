@@ -13,21 +13,6 @@ const isStablecoinChartQueryKey = (key: string) => key === 'chartType' || key ==
 
 type StablecoinFilterKey = string
 
-function Attribute({ nestedMenu }: { nestedMenu: boolean }) {
-	return (
-		<Select
-			allValues={stablecoinAttributeOptions}
-			label="Attribute"
-			nestedMenu={nestedMenu}
-			labelType="smol"
-			variant="filter"
-			size="md"
-			includeQueryKey="attribute"
-			excludeQueryKey="excludeAttribute"
-		/>
-	)
-}
-
 function BackingType({
 	nestedMenu,
 	availableBackings
@@ -151,7 +136,16 @@ function PeggedFiltersDropdowns({
 }) {
 	return (
 		<>
-			<Attribute nestedMenu={!!nestedMenu} />
+			<Select
+				allValues={stablecoinAttributeOptions}
+				label="Attribute"
+				nestedMenu={!!nestedMenu}
+				labelType="smol"
+				variant="filter"
+				size="md"
+				includeQueryKey="attribute"
+				excludeQueryKey="excludeAttribute"
+			/>
 			<BackingType nestedMenu={!!nestedMenu} availableBackings={availableBackings} />
 			<PegType nestedMenu={!!nestedMenu} availablePegTypes={availablePegTypes} />
 			<McapRange nestedMenu={!!nestedMenu} />

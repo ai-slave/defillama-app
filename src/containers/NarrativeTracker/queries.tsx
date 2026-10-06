@@ -1,11 +1,7 @@
 import { DAY_MS, findTimeSeriesPointNear, getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import { fetchCategoryCoinPrices, fetchCategoryInfo, fetchCategoryPerformance, fetchCoinInfo } from './api'
-import type { ICategoryInfoApiItem, PriceEntry, TimeSeriesEntry } from './api.types'
+import type { PriceEntry, TimeSeriesEntry } from './api.types'
 import type { CategoryPerformanceProps, IPctChangeRow, PerformanceTimeSeries } from './types'
-
-export async function getCategoryInfo(): Promise<Array<ICategoryInfoApiItem>> {
-	return fetchCategoryInfo()
-}
 
 type NarrativePeriod = '7' | '30' | 'ytd' | '365'
 
@@ -130,7 +126,7 @@ export async function getCoinPerformance(categoryId: string): Promise<CategoryPe
 	const [prices, coinInfo, categories] = await Promise.all([
 		fetchCategoryCoinPrices(categoryId),
 		fetchCoinInfo(categoryId),
-		getCategoryInfo()
+		fetchCategoryInfo()
 	])
 
 	const coinsUniqueIncludingDenomCoins: Record<string, string> = Object.fromEntries(coinInfo.map((c) => [c.id, c.name]))

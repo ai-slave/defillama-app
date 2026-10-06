@@ -17,9 +17,10 @@ import {
 	type ChartOptionsMap
 } from '../chart-datasets'
 import { datasets, datasetCategories, type DatasetDefinition } from '../datasets'
+import { inferFineKindFromArrowType } from './columnKind'
 import { CopyTextButton } from './CopyTextButton'
 import { formatDownloadRowCount } from './format'
-import { inferColumnKind, TypeBadge } from './primitives'
+import { TypeBadge } from './primitives'
 import { columnShapeFor } from './schemaShapes'
 import {
 	identifierize,
@@ -558,7 +559,7 @@ function ColumnChips({
 			{columns.map((c) => {
 				const content = (
 					<>
-						{c.type ? <TypeBadge kind={inferColumnKind(c.type)} /> : null}
+						{c.type ? <TypeBadge kind={inferFineKindFromArrowType(c.type)} /> : null}
 						{c.name}
 					</>
 				)

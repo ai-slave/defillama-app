@@ -19,10 +19,6 @@ export function formatRwaSignedUsd(value: number): string {
 	return `${value >= 0 ? '+' : '-'}${formatRwaKpiUsd(Math.abs(value))}`
 }
 
-function formatBarUsd(value: number): string {
-	return formatUsd(value, BAR_USD)
-}
-
 function formatBarSignedUsd(value: number): string {
 	return `${value >= 0 ? '+' : '-'}${formatUsd(Math.abs(value), BAR_USD)}`
 }
@@ -81,7 +77,7 @@ export function RWAValueBars({ bars }: { bars: Array<RwaNamedBar> }) {
 				logo: 'token',
 				share: bar.value / max,
 				tone: 'bg-brand',
-				text: formatBarUsd(bar.value)
+				text: formatUsd(bar.value, BAR_USD)
 			}))}
 		/>
 	)

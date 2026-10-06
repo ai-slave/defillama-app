@@ -48,16 +48,12 @@ export interface ChainAssetsDetailResponse {
 	totals: ChainsAssetTotalsResponse
 }
 
-export const CHAIN_ASSET_FLOW_CATEGORIES = CHAIN_ASSET_CATEGORIES
-
-export type ChainAssetFlowCategory = ChainAssetCategoryKey
-
 export interface RawChainAssetFlowValue {
 	perc: string
 	raw: string
 }
 
-export type RawChainAssetsFlowEntry = Partial<Record<ChainAssetFlowCategory, RawChainAssetFlowValue>>
+export type RawChainAssetsFlowEntry = Partial<Record<ChainAssetCategoryKey, RawChainAssetFlowValue>>
 export type RawChainAssetsFlows1dResponse = Record<string, RawChainAssetsFlowEntry>
 
 export interface ChainAssetFlowValue {
@@ -65,7 +61,7 @@ export interface ChainAssetFlowValue {
 	raw: number
 }
 
-export type ChainAssetsFlowEntry = Partial<Record<ChainAssetFlowCategory, ChainAssetFlowValue>>
+export type ChainAssetsFlowEntry = Partial<Record<ChainAssetCategoryKey, ChainAssetFlowValue>>
 export type ChainsAssetsFlows1dResponse = Record<string, ChainAssetsFlowEntry>
 
 /** Precomputed `/chain-assets/chart/:chain` wire contract. Timestamps remain Unix seconds. */

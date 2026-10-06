@@ -1,11 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { MarketTableRow, RouteTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
-import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import type { IYieldsTableProps, YieldsTableAppearance } from './types'
 import {
@@ -47,7 +47,7 @@ function UsdCell({ value }: { value: number | null | undefined }) {
 // Shared server-paginated table for the /yields/borrow markets & routes views.
 // Same tanstack + PaginatedTable infra the pools table uses, with bespoke column
 // defs (not the pools config). Column ids double as the server `sortBy` keys.
-const marketHelper = createColumnHelper<typeof tableFeaturesConfig, MarketTableRow>()
+const marketHelper = createColumnHelper<typeof paginatedTableFeatures, MarketTableRow>()
 
 const marketColumns = marketHelper.columns([
 	marketHelper.accessor('pool', {
@@ -158,7 +158,7 @@ const marketColumns = marketHelper.columns([
 	})
 ])
 
-const routeHelper = createColumnHelper<typeof tableFeaturesConfig, RouteTableRow>()
+const routeHelper = createColumnHelper<typeof paginatedTableFeatures, RouteTableRow>()
 
 const routeColumns = routeHelper.columns([
 	routeHelper.accessor('pool', {

@@ -32,12 +32,10 @@ export interface IRWAPerpsContractFundingHistoryPoint {
 	fundingPayment: number
 }
 
-export type IRWAPerpsContractMarketChartPoint = IRWAPerpsMarketChartPoint
-
 export interface IRWAPerpsContractData {
 	contract: IRWAPerpsContractInfo
 	market: IRWAPerpsMarket
-	marketChart: Array<IRWAPerpsContractMarketChartPoint> | null
+	marketChart: Array<IRWAPerpsMarketChartPoint> | null
 	fundingHistory: Array<IRWAPerpsContractFundingHistoryPoint> | null
 }
 
@@ -61,10 +59,6 @@ export type RWAPerpsAssetGroupTreemapBreakdown = 'venue' | 'baseAsset' | 'assetC
 export type RWAPerpsAssetTimeSeriesBreakdown = 'venue' | 'contract'
 export type RWAPerpsAssetNonTimeSeriesBreakdown = 'venue' | 'contract'
 export type RWAPerpsAssetTreemapBreakdown = 'venue' | 'contract'
-export type RWAPerpsOverviewSnapshotBreakdown = RWAPerpsOverviewNonTimeSeriesBreakdown
-export type RWAPerpsVenueSnapshotBreakdown = RWAPerpsVenueNonTimeSeriesBreakdown
-export type RWAPerpsAssetGroupSnapshotBreakdown = RWAPerpsAssetGroupNonTimeSeriesBreakdown
-export type RWAPerpsAssetSnapshotBreakdown = RWAPerpsAssetNonTimeSeriesBreakdown
 export type RWAPerpsChartMode = 'overview' | 'venue' | 'assetGroup' | 'asset'
 
 export type RWAPerpsAllChartTarget = { kind: 'all' }

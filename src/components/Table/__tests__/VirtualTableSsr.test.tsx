@@ -4,7 +4,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { searchTableFeatures } from '../features/search'
 import { Table } from '../Table'
 import { VirtualTable } from '../VirtualTable'
-const features = searchTableFeatures
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/stablecoins' })
@@ -15,7 +14,7 @@ type TestRow = {
 	mcap: number
 }
 
-const columnHelper = createColumnHelper<typeof features, TestRow>()
+const columnHelper = createColumnHelper<typeof searchTableFeatures, TestRow>()
 const columns = [
 	columnHelper.accessor('name', {
 		header: 'Name',
@@ -49,7 +48,7 @@ function TestVirtualTable({
 		mcap: index + 1
 	}))
 	const instance = useTable({
-		features,
+		features: searchTableFeatures,
 		data,
 		columns
 	})
@@ -96,7 +95,7 @@ const groupedColumns = columnHelper.columns([
 
 function GroupedTable({ hideDay = false }: { hideDay?: boolean }) {
 	const table = useTable({
-		features,
+		features: searchTableFeatures,
 		columns: groupedColumns,
 		data: [{ name: 'Asset', mcap: 1 }],
 		state: { columnVisibility: { day: !hideDay } }

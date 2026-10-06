@@ -9,7 +9,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -17,8 +18,6 @@ import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
 import { formatSonicCount } from './format'
 import { SonicIcon } from './SonicIcon'
-
-const tableFeaturesConfig = paginatedTableFeatures
 
 echarts.use([TreemapLabelContrast, EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
 
@@ -165,7 +164,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 	return <div ref={containerRef} className="w-full" style={{ height: '400px' }} />
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, FeeMLeaderboardEntry>()
+const columnHelper = createColumnHelper<typeof paginatedTableFeatures, FeeMLeaderboardEntry>()
 
 const columns = columnHelper.columns([
 	columnHelper.display({

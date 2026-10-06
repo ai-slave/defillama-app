@@ -40,7 +40,7 @@ import {
 	parseStablecoinVolumeGroupBy,
 	type StablecoinChartType as StablecoinChartCategory
 } from '~/containers/Stablecoins/chartState'
-import { useCalcCirculating, useGroupBridgeData } from '~/containers/Stablecoins/hooks'
+import { calcCirculating, groupBridgeData } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
@@ -211,7 +211,7 @@ export function PeggedAssetInfo({
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true, scroll: false })
 	}, [includeUnreleased, router])
 
-	const chainTotals = useCalcCirculating(chainCirculatings, includeUnreleased)
+	const chainTotals = calcCirculating(chainCirculatings, includeUnreleased)
 
 	const marketCapSeries = React.useMemo(
 		() =>
@@ -237,7 +237,7 @@ export function PeggedAssetInfo({
 		return mcap + unreleased * price
 	}, [includeUnreleased, mcap, unreleased, price])
 
-	const groupedChains = useGroupBridgeData(chainTotals, bridgeInfo)
+	const groupedChains = groupBridgeData(chainTotals, bridgeInfo)
 
 	const getImageExportTitle = () => {
 		if (chartType === 'marketCap') {

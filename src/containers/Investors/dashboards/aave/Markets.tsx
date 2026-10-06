@@ -23,8 +23,6 @@ import {
 	SectionHeader
 } from './shared'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const MARKET_SIZE_CHART: IMultiSeriesChartProps['charts'] = [
@@ -46,7 +44,7 @@ const UTILIZATION_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const reserveColumns: Array<ColumnDef<typeof tableFeaturesConfig, FlatReserve>> = [
+const reserveColumns: Array<ColumnDef<typeof displayTableFeatures, FlatReserve>> = [
 	{ header: 'Asset', accessorKey: 'symbol', size: 100 },
 	{ header: 'Chain', accessorKey: 'chain', size: 100 },
 	{
@@ -156,7 +154,7 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 	const [page, setPage] = useState(0)
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: reserveColumns,

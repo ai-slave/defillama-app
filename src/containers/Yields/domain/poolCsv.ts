@@ -1,6 +1,6 @@
 import type { ApiQuery } from '~/server/api/types'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
-import type { YieldPoolTableRow } from '../Tables/types'
+import type { IYieldTableRow } from '../Tables/types'
 import { activeSplit, apyHeaders, apyValues, windowSuffix } from './csvApy'
 import { exitStatusLine } from './exitPresentation'
 
@@ -12,7 +12,7 @@ function selectedColumns(query: ApiQuery, defaultColumns: ReadonlyArray<string>)
 // Mirrors the earn table: the fixed visible columns, the APY block following the active
 // window/composition, and the optional Columns-dropdown columns only when selected.
 export function prepareYieldPoolsCsv(
-	rows: Array<YieldPoolTableRow>,
+	rows: Array<IYieldTableRow>,
 	query: ApiQuery = {},
 	defaultColumns: ReadonlyArray<string> = []
 ) {

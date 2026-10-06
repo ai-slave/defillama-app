@@ -1,5 +1,5 @@
 import { tokenIconUrl } from '~/utils/icons'
-import { useMetadata } from './api'
+import { useTab, type MetadataResponse } from './api'
 
 // llamaSlugs from /api/odyssey-ecosystem/metadata (protocols[].llamaSlug), used to pull protocol logos.
 const ODYSSEY_SLUG = 'odyssey-finance'
@@ -27,7 +27,7 @@ interface NavLink {
 }
 
 // Live URLs come from metadata (links.* / debankBundles.*); static URLs are fallbacks until it loads.
-function buildLinks(meta: ReturnType<typeof useMetadata>['data']): Array<NavLink> {
+function buildLinks(meta: MetadataResponse | undefined): Array<NavLink> {
 	const links = meta?.links ?? {}
 	const debank = meta?.debankBundles ?? {}
 	const items: Array<NavLink> = [
@@ -68,7 +68,7 @@ function OdysseyLogo() {
 }
 
 export default function OdysseyHeader() {
-	const { data: meta } = useMetadata()
+	const { data: meta } = useTab<MetadataResponse>('metadata')
 	return (
 		<header className="flex items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
 			<OdysseyLogo />

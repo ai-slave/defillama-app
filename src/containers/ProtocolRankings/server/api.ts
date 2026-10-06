@@ -1,5 +1,6 @@
 import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute, type ApiQuery } from '~/server/api/types'
+import { isContentHashVersion } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { TableCursorError } from '~/server/tablePages/cursorPage.server'
 import { prepareTableRows } from '~/server/tablePages/preparedRows.server'
 import { slug } from '~/utils'
@@ -11,11 +12,7 @@ import {
 	protocolRankingQuery,
 	type ProtocolRankingQuery
 } from '../tableQuery'
-import {
-	getProtocolRankingsSnapshot,
-	getRequestedProtocolRankingsSnapshot,
-	isProtocolRankingSnapshotToken
-} from './tableData.server'
+import { getProtocolRankingsSnapshot, getRequestedProtocolRankingsSnapshot } from './tableData.server'
 
 function firstQueryValue(value: string | Array<string> | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
@@ -45,7 +42,7 @@ export function parseProtocolRankingApiQuery(query: ApiQuery): {
 	const rawLimit = Number(firstQueryValue(query.limit) ?? PROTOCOL_RANKINGS_LIMITS.page)
 	const requestedSnapshot = firstQueryValue(query.snapshot) ?? null
 	const cursor = firstQueryValue(query.cursor) ?? null
-	if (requestedSnapshot && !isProtocolRankingSnapshotToken(requestedSnapshot)) return null
+	if (requestedSnapshot && !isContentHashVersion(requestedSnapshot)) return null
 	if (cursor && cursor.length > 500) return null
 	const normalizedQuery = protocolRankingQuery.normalize({
 		search: firstQueryValue(query.search),

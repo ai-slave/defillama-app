@@ -3,14 +3,10 @@ import { SERVER_URL, V2_SERVER_URL } from '~/constants'
 import { chartDatasetsBySlug, type ChartDatasetDefinition } from '~/containers/Downloads/chart-datasets'
 import type { ChartBuilderCsvRequest } from '~/containers/ProDashboard/chartBuilderCsvContract'
 import { streamProtocolTvlCsv } from '~/containers/ProDashboard/server/chartBuilder/protocolTvlCsv'
-import { withDownloadRoute, type DownloadAccess } from '~/server/api/withDownloadRoute'
+import { sanitizeFilenameParam, withDownloadRoute, type DownloadAccess } from '~/server/api/withDownloadRoute'
 import { slug as toSlug } from '~/utils'
 import { serializeCsvRow } from '~/utils/csv'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
-
-function sanitizeFilenameParam(s: string): string {
-	return s.replace(/["\r\n;\\]/g, '_').trim()
-}
 
 function timestampToIsoDate(ts: number): string {
 	const ms = ts < 1e12 ? ts * 1000 : ts

@@ -5,7 +5,8 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
@@ -22,8 +23,6 @@ import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
 import type { PreIpoOverviewPageProps } from './types'
-
-const tableFeaturesConfig = paginatedTableFeatures
 
 const PERCENT_OPTIONS = {
 	input: 'percent',
@@ -59,7 +58,7 @@ function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListIt
 	)
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, PreIpoCompanyListItem>()
+const columnHelper = createColumnHelper<typeof paginatedTableFeatures, PreIpoCompanyListItem>()
 const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Company',

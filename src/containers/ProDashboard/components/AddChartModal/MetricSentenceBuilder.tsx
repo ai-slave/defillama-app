@@ -129,13 +129,7 @@ interface TokenButtonProps {
 	active?: boolean
 }
 
-function TokenButtonInner({
-	label,
-	secondary,
-	onClick,
-	active,
-	ref
-}: TokenButtonProps & { ref?: Ref<HTMLButtonElement> }) {
+function TokenButton({ label, secondary, onClick, active, ref }: TokenButtonProps & { ref?: Ref<HTMLButtonElement> }) {
 	return (
 		<button
 			type="button"
@@ -154,7 +148,6 @@ function TokenButtonInner({
 		</button>
 	)
 }
-const TokenButton = TokenButtonInner
 
 export function MetricSentenceBuilder({
 	aggregator,

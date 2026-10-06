@@ -15,8 +15,6 @@ import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatNumber } from '~/utils/numberFormat'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const valueToFilter = {
 	'1d': 'day',
 	'7d': 'week',
@@ -37,7 +35,7 @@ interface ITrendingContracts {
 	name?: string
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, ITrendingContracts>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, ITrendingContracts>()
 
 async function getContracts(chain: string, time: string) {
 	return await fetchJson(
@@ -99,7 +97,7 @@ export default function TrendingContracts() {
 	const results = data?.results ?? []
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data: results,
 		state: {
 			sorting

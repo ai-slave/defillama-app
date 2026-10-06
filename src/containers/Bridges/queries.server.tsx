@@ -818,5 +818,3 @@ export async function getBridgePageData(bridge: string): Promise<BridgePageData 
 		config: bridgeData
 	}
 }
-
-export const getBridgePageDatanew = getBridgePageData

@@ -20,6 +20,7 @@
 
 - Before editing a folder, read the nearest `README.md` in it or its parents.
 - When fixing a reported problem, also fix what allowed it: the rule where it lives (design.md, a component header, a folder README), a shared `src/ui` component, or a policy check when the rule is mechanical. A fix at one call site leaves the same mistake on the next page.
+- Do not add a function, hook, component, constant or type whose only job is to rename, forward to, or pin the arguments of another one. Import and call the original, and keep one name for one thing. A wrapper earns its place when it owns something: cache policy, a domain meaning, a test-mocked boundary, or config shared by several callers. A memo-only hook also stays when React Compiler would not cache the call inlined: read the compiled caller for a cache guard around the call, because a component that compiles can still leave one call uncached.
 - Before calling UI work done, look at it in the browser at desktop width and at the 375px mobile preset. Check dark mode too when the change touches colors, tokens or surfaces. Tests do not show layout, wrapping or contrast.
 
 ## Before you change it, read

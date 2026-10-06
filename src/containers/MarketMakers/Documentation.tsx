@@ -3,8 +3,8 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { docsAsset, FigureDualTable, FigureRadar, FigureTable } from './DocsFigures'
+import { MarketMakersFooter } from './Footer'
 import { GRADE_BANDS } from './gradeBands'
-import { MarketMakersOutro } from './MarketMakersOutro'
 import { MarketMakersTabs } from './MarketMakersTabs'
 import {
 	PI_COMPONENT_SECTIONS,
@@ -1074,7 +1074,7 @@ export function MarketMakersDocumentation() {
 				</div>
 			</Card>
 			<div className="mt-6">
-				<MarketMakersOutro />
+				<MarketMakersFooter />
 			</div>
 		</div>
 	)

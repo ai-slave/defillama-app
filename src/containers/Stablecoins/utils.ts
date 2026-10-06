@@ -98,8 +98,6 @@ interface IStablecoinMcapStats {
 	isDataStale: boolean
 }
 
-type IRateChartPoint = StablecoinRateSnapshot
-
 export interface IFormattedStablecoinChainRow {
 	name: string
 	circulating: number | null
@@ -223,7 +221,7 @@ interface IFormatPeggedAssetsDataParams {
 	peggedAssets?: Array<StablecoinListAsset>
 	chartDataByPeggedAsset?: Array<Array<StablecoinChartDataPoint> | null | undefined>
 	priceData?: StablecoinPricesResponse
-	rateData?: Array<IRateChartPoint>
+	rateData?: Array<StablecoinRateSnapshot>
 	peggedAssetIdToChartDataIndex?: Record<string, number>
 	doublecountedIndexes?: Array<number>
 	currentTimeMs: number
@@ -421,7 +419,7 @@ export const isStablecoinChartDateVisible = (selectedChain: string | null | unde
 
 const getTargetPrice = (
 	pegType: StablecoinPegType,
-	ratesChart: Array<IRateChartPoint>,
+	ratesChart: Array<StablecoinRateSnapshot>,
 	targetTimestampMs: number | null,
 	currentTimeMs: number
 ): number | null => {

@@ -22,13 +22,9 @@ import type {
 	IRWAPerpsMarketChartPoint
 } from './api.types'
 import { toRWAPerpsBreakdownChartDataset } from './breakdownDataset'
-import {
-	getRWAPerpsAssetGroupBreakdownLabel,
-	getRWAPerpsOverviewSnapshotBreakdownLabel,
-	getRWAPerpsVenueSnapshotBreakdownLabel
-} from './breakdownLabels'
+import { getRWAPerpsAssetGroupBreakdownLabel, getRWAPerpsSharedBreakdownLabel } from './breakdownLabels'
 import { getDefaultRWAPerpsChartBreakdown, getDefaultRWAPerpsChartView } from './chartState'
-import type { RWAPerpsTimeSeriesBreakdown } from './chartState'
+import type { RWAPerpsNonTimeSeriesBreakdown, RWAPerpsTimeSeriesBreakdown } from './chartState'
 import { getRWAPerpsIncludedRows } from './dashboardData'
 import type {
 	IRWAPerpsAssetGroupPageData,
@@ -40,15 +36,14 @@ import type {
 	IRWAPerpsContractData,
 	IRWAPerpsContractBreakdownRequest,
 	IRWAPerpsContractFundingHistoryPoint,
-	IRWAPerpsContractMarketChartPoint,
 	IRWAPerpsNavLink,
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsOverviewBreakdownRequest,
 	IRWAPerpsVenuePageData,
 	IRWAPerpsVenuesOverview,
 	IRWAPerpsVenuesOverviewRow,
-	RWAPerpsAssetGroupSnapshotBreakdown,
-	RWAPerpsAssetSnapshotBreakdown,
+	RWAPerpsAssetGroupNonTimeSeriesBreakdown,
+	RWAPerpsAssetNonTimeSeriesBreakdown,
 	RWAPerpsChartMetricKey,
 	RWAPerpsAllChartTarget,
 	RWAPerpsAssetClassChartTarget,
@@ -57,15 +52,9 @@ import type {
 	RWAPerpsChartTarget,
 	RWAPerpsChartView,
 	RWAPerpsOverviewTimeSeriesBreakdown,
-	RWAPerpsOverviewSnapshotBreakdown,
-	RWAPerpsVenueSnapshotBreakdown
+	RWAPerpsOverviewNonTimeSeriesBreakdown,
+	RWAPerpsVenueNonTimeSeriesBreakdown
 } from './types'
-
-type SnapshotBreakdown =
-	| RWAPerpsOverviewSnapshotBreakdown
-	| RWAPerpsVenueSnapshotBreakdown
-	| RWAPerpsAssetGroupSnapshotBreakdown
-	| RWAPerpsAssetSnapshotBreakdown
 
 type BreakdownLabelResolver<TRow, TBreakdown extends string> = (row: TRow, breakdown: TBreakdown) => string
 
@@ -89,9 +78,7 @@ function getPrimaryAssetClass(assetClass: Array<string> | null): string | null {
 	return assetClass?.[0] ?? null
 }
 
-function normalizeMarketChart(
-	points: Array<IRWAPerpsMarketChartPoint>
-): Array<IRWAPerpsContractMarketChartPoint> | null {
+function normalizeMarketChart(points: Array<IRWAPerpsMarketChartPoint>): Array<IRWAPerpsMarketChartPoint> | null {
 	if (points.length === 0) return null
 
 	return points.map((point) => ({
@@ -118,7 +105,7 @@ function resolveContractMarket(markets: Array<IRWAPerpsMarket>, contract: string
 	return match
 }
 
-function buildSnapshotBreakdownTotals<TBreakdown extends SnapshotBreakdown>({
+function buildSnapshotBreakdownTotals<TBreakdown extends RWAPerpsNonTimeSeriesBreakdown>({
 	rows,
 	breakdown,
 	key,
@@ -312,14 +299,14 @@ export function buildRWAPerpsOverviewSnapshotBreakdownTotals({
 	key
 }: {
 	rows: Array<IRWAPerpsMarket>
-	breakdown: RWAPerpsOverviewSnapshotBreakdown
+	breakdown: RWAPerpsOverviewNonTimeSeriesBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
 	return buildSnapshotBreakdownTotals({
 		rows,
 		breakdown,
 		key,
-		getBreakdownLabel: getRWAPerpsOverviewSnapshotBreakdownLabel
+		getBreakdownLabel: getRWAPerpsSharedBreakdownLabel
 	})
 }
 
@@ -329,14 +316,14 @@ export function buildRWAPerpsVenueSnapshotBreakdownTotals({
 	key
 }: {
 	rows: Array<IRWAPerpsMarket>
-	breakdown: RWAPerpsVenueSnapshotBreakdown
+	breakdown: RWAPerpsVenueNonTimeSeriesBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
 	return buildSnapshotBreakdownTotals({
 		rows,
 		breakdown,
 		key,
-		getBreakdownLabel: getRWAPerpsVenueSnapshotBreakdownLabel
+		getBreakdownLabel: getRWAPerpsSharedBreakdownLabel
 	})
 }
 
@@ -346,14 +333,14 @@ export function buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
 	key
 }: {
 	rows: Array<IRWAPerpsMarket>
-	breakdown: RWAPerpsAssetGroupSnapshotBreakdown
+	breakdown: RWAPerpsAssetGroupNonTimeSeriesBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
 	return buildSnapshotBreakdownTotals({
 		rows,
 		breakdown,
 		key,
-		getBreakdownLabel: getRWAPerpsOverviewSnapshotBreakdownLabel
+		getBreakdownLabel: getRWAPerpsSharedBreakdownLabel
 	})
 }
 
@@ -363,14 +350,14 @@ export function buildRWAPerpsAssetSnapshotBreakdownTotals({
 	key
 }: {
 	rows: Array<IRWAPerpsMarket>
-	breakdown: RWAPerpsAssetSnapshotBreakdown
+	breakdown: RWAPerpsAssetNonTimeSeriesBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
 	return buildSnapshotBreakdownTotals({
 		rows,
 		breakdown,
 		key,
-		getBreakdownLabel: getRWAPerpsOverviewSnapshotBreakdownLabel
+		getBreakdownLabel: getRWAPerpsSharedBreakdownLabel
 	})
 }
 

@@ -1,12 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { chartDatasetsBySlug, type ChartDatasetDefinition } from '~/containers/Downloads/chart-datasets'
-import { withDownloadRoute, type DownloadAccess } from '~/server/api/withDownloadRoute'
+import { sanitizeFilenameParam, withDownloadRoute, type DownloadAccess } from '~/server/api/withDownloadRoute'
 import { rowsToCsv } from '~/server/sql/csv'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
-
-function sanitizeFilenameParam(s: string): string {
-	return s.replace(/["\r\n;\\]/g, '_').trim()
-}
 
 function getRouteParams(req: NextApiRequest, res: NextApiResponse) {
 	const { dataset: datasetSlug, param } = req.query

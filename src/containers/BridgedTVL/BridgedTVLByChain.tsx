@@ -28,8 +28,6 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { ChainAsset, ChainAssetCategoryKey } from './api.types'
 import { hasVisibleChainAssetTotal } from './presentation'
 
-const tableFeaturesConfig = displayTableFeatures
-
 interface BridgedChainRow {
 	name: string
 	value: number
@@ -46,7 +44,7 @@ interface BridgedTVLByChainProps {
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 const EMPTY_CHAIN_ASSET_BREAKDOWN: Record<string, number> = {}
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgedChainRow>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, BridgedChainRow>()
 
 const bridgedChainColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
@@ -137,7 +135,7 @@ export function BridgedTVLByChain({
 
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'value', desc: true }])
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data: tableData,
 		columns: bridgedChainColumns,
 		state: {

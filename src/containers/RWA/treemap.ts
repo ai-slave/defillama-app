@@ -16,7 +16,6 @@ export type RwaTreemapNode = {
 	children?: Array<RwaTreemapNode>
 }
 
-const TREEMAP_COLORS = CHART_COLORS
 type RWAAsset = IRWAAssetsOverview['assets'][number]
 
 export const buildRwaTreemapTreeData = (
@@ -46,7 +45,7 @@ export const buildRwaTreemapTreeData = (
 	const children: Array<RwaTreemapNode> = []
 	for (const [index, item] of data.entries()) {
 		const sharePct = total > 0 ? roundNumber((item.value / total) * 100, 2) : 0
-		const color = TREEMAP_COLORS[index] ?? createGeneratedColor(index - TREEMAP_COLORS.length)
+		const color = CHART_COLORS[index] ?? createGeneratedColor(index - CHART_COLORS.length)
 		children.push({
 			name: item.name,
 			path: `${rootLabel}/${item.name}`,
@@ -83,9 +82,6 @@ export const canBuildRwaNestedTreemap = ({
 	if (parentGrouping === 'category' && childGrouping === 'category') return false
 	return true
 }
-
-const getRwaMetricValue = (asset: RWAAsset, metric: RWAChartMetric, includeBridgeTvl: boolean): number =>
-	getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
 
 type RwaMetricByChainRow = { label: string; value: number }
 
@@ -338,7 +334,7 @@ export const buildRwaNestedTreemapTreeData = ({
 			continue
 		}
 
-		const metricValue = getRwaMetricValue(asset, metric, includeBridgeTvl)
+		const metricValue = getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
 		if (metricValue <= 0) continue
 
 		const parentGroups = getWeightedAssetGroupsByGrouping(asset, parentGrouping)
@@ -386,7 +382,7 @@ export const buildRwaNestedTreemapTreeData = ({
 	const parentNodes: Array<RwaTreemapNode> = parentRows.map((row) => {
 		const parentPath = `${resolvedRootLabel}/${row.parentLabel}`
 		const parentSharePct = roundNumber((row.parentTotal / total) * 100, 2)
-		const parentColor = parentColorMap[row.parentLabel] ?? TREEMAP_COLORS[0]
+		const parentColor = parentColorMap[row.parentLabel] ?? CHART_COLORS[0]
 		const childShades = deriveChildShades(parentColor, row.childRows.length)
 		const childNodes: Array<RwaTreemapNode> = row.childRows.map(([childLabel, childTotal], childIndex) => {
 			const childSharePct = roundNumber((childTotal / row.parentTotal) * 100, 2)

@@ -23,10 +23,6 @@ interface UseWebCompletionSeenOptions {
 const SEEN_RETRY_DELAYS_MS = [750, 2000] as const
 export const PENDING_SEEN_TTL_MS = 10_000
 
-function canFlushPreference(preference: WebMobilePreference): boolean {
-	return isWebMobilePushEnabled(preference)
-}
-
 function shouldClearPending(preference: WebMobilePreference): boolean {
 	switch (preference.kind) {
 		case 'signed-out':
@@ -44,7 +40,7 @@ function shouldClearPending(preference: WebMobilePreference): boolean {
 }
 
 export function canMarkSeen(pending: PendingSeen, attention: ChatAttention, preference: WebMobilePreference): boolean {
-	if (!canFlushPreference(preference)) return false
+	if (!isWebMobilePushEnabled(preference)) return false
 	if (pending.expiresAt <= Date.now()) return false
 	if (!isChatSurfaceAttended(attention)) return false
 	if (attention.sessionId !== pending.sessionId) return false
@@ -92,7 +88,7 @@ async function flushPendingSeen({
 	authorizedFetch,
 	scheduleRetry
 }: FlushPendingSeenOptions) {
-	if (state.flushing || !canFlushPreference(preference)) return
+	if (state.flushing || !isWebMobilePushEnabled(preference)) return
 	if (!getNextSeen(state, attention, preference)) return
 	state.flushing = true
 	try {
@@ -128,7 +124,7 @@ export function useWebCompletionSeen({ attention, preference }: UseWebCompletion
 	const stateRef = useRef<SeenFlushState>({ pending: new Map(), flushing: false })
 	const previousUserIdRef = useRef(userId)
 	const [retryAt, setRetryAt] = useState<number | null>(null)
-	const canFlush = canFlushPreference(preference)
+	const canFlush = isWebMobilePushEnabled(preference)
 	const clearOnDisable = shouldClearPending(preference)
 
 	const runFlush = () => {

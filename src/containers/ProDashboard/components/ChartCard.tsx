@@ -4,7 +4,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { downloadCSV } from '~/utils/download'
 import type { QueryRetry } from '~/utils/query'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
@@ -137,7 +137,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const { getChainInfo, getProtocolInfo, protocolRelations, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const chartQuery = useChartData(

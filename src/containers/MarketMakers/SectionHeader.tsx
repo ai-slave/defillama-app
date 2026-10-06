@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { TimeframeBadge } from './badges'
+import { AccentBadge } from './badges'
 import { ArrowRightIcon } from './icons'
 import { forgdPrimaryLinkStyles } from './styles'
 
@@ -56,7 +56,7 @@ export function SectionHeader({
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2">
 						<h1 className="heading-sm">{title}</h1>
-						<TimeframeBadge label={badge} />
+						<AccentBadge className="h-6">{badge}</AccentBadge>
 					</div>
 					<p className="max-w-[660px] body-sm text-secondary">{description}</p>
 				</div>
@@ -64,7 +64,7 @@ export function SectionHeader({
 			</div>
 			<div className="flex flex-col gap-3 min-[1120px]:hidden">
 				<div className="flex items-center justify-between gap-2">
-					<TimeframeBadge label={badge} />
+					<AccentBadge className="h-6">{badge}</AccentBadge>
 					{action}
 				</div>
 				<div className="flex flex-col gap-1">

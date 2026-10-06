@@ -67,14 +67,12 @@ export const MAX_COMPARISON_ITEMS = 10
 
 export const WIZARD_STEPS: Array<WizardStep> = ['select-type', 'select-items', 'select-metrics', 'preview']
 
-export const getStepIndex = (step: WizardStep): number => WIZARD_STEPS.indexOf(step)
-
 export const getNextStep = (step: WizardStep): WizardStep | null => {
-	const index = getStepIndex(step)
+	const index = WIZARD_STEPS.indexOf(step)
 	return WIZARD_STEPS[index + 1] ?? null
 }
 
 export const getPrevStep = (step: WizardStep): WizardStep | null => {
-	const index = getStepIndex(step)
+	const index = WIZARD_STEPS.indexOf(step)
 	return index > 0 ? (WIZARD_STEPS[index - 1] ?? null) : null
 }

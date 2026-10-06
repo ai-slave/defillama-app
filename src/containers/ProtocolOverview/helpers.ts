@@ -69,6 +69,7 @@ const getSortedChainValues = (valuesByChain: Record<string, number>): Array<[str
 	return values
 }
 
+// A hook so the compiler keeps the memo: inlined in ProtocolOverview, computeFinalTVL runs on every render.
 export const useFinalTVL = (props: Pick<IProtocolOverviewPageData, 'currentTvlByChain' | 'oracleTvs'>) => {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 

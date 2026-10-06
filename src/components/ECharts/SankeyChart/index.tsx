@@ -9,8 +9,8 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
@@ -78,7 +78,7 @@ function SankeyChart({
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const useMobileLayout = isSmall && orient === 'horizontal'
 	const chartTheme = useChartTheme(isDark)
-	const { chartInstance: exportChartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const exportFilename = imageExportFilename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'sankey-chart')
 	const exportTitle = imageExportTitle || title
 	const containerRef = useRef<HTMLDivElement>(null)

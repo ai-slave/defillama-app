@@ -4,7 +4,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatPercent } from '~/utils/numberFormat'
-import { useGrowthData, chartToModel, type LooprDailyRow } from './api'
+import { useTab, chartToModel, type LooprDailyRow, type GrowthResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -93,7 +93,7 @@ function capitalize(s: string) {
 }
 
 export default function Growth() {
-	const { data, isLoading } = useGrowthData()
+	const { data, isLoading } = useTab<GrowthResponse>('growth')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const loopr = data?.loopr
 	const looprChains = loopr?.chains

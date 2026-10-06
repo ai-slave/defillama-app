@@ -23,10 +23,6 @@ type ChildGrouping = Exclude<RWAPerpsTreemapNestedBy, 'none'>
 
 type TreemapScope = { mode: 'overview' } | { mode: 'venue' | 'assetGroup' | 'asset'; scopeLabel: string }
 
-function getGroupLabel(market: IRWAPerpsMarket, grouping: ParentGrouping | ChildGrouping): string {
-	return getRWAPerpsSharedBreakdownLabel(market, grouping)
-}
-
 function getMetricValue(market: IRWAPerpsMarket, metric: RWAPerpsChartMetricKey): number {
 	return metric === 'markets' ? 1 : market[metric]
 }
@@ -166,8 +162,8 @@ function buildNestedTreeData({
 		const value = getMetricValue(market, metric)
 		if (value <= 0) continue
 
-		const parentLabel = getGroupLabel(market, parentGrouping)
-		const childLabel = getGroupLabel(market, nestedBy)
+		const parentLabel = getRWAPerpsSharedBreakdownLabel(market, parentGrouping)
+		const childLabel = getRWAPerpsSharedBreakdownLabel(market, nestedBy)
 
 		const childTotals = parentToChildTotals.get(parentLabel) ?? new Map<string, number>()
 		childTotals.set(childLabel, (childTotals.get(childLabel) ?? 0) + value)
@@ -213,7 +209,7 @@ export function buildRWAPerpsTreemapTreeData(
 			const value = getMetricValue(market, metric)
 			if (value <= 0) continue
 
-			const label = getGroupLabel(market, parentGrouping)
+			const label = getRWAPerpsSharedBreakdownLabel(market, parentGrouping)
 			totalsByParent.set(label, (totalsByParent.get(label) ?? 0) + value)
 		}
 

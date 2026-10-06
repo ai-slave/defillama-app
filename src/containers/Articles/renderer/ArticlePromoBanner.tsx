@@ -4,13 +4,9 @@ import { getAllArticlesBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
-import { articlePromoLinkUrl } from '~/containers/Articles/promoLinks'
+import { articlePromoLinkUrl, isExternalUrl } from '~/containers/Articles/promoLinks'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { Banner, BannerLookupResult } from '~/containers/Articles/types'
-
-function isExternalUrl(url: string) {
-	return /^https?:\/\//i.test(url)
-}
 
 export function usePromoBanner(articleId: string | null | undefined): Banner | null {
 	const allArticlesBannerQuery = useQuery<BannerLookupResult>({

@@ -7,3 +7,7 @@ export function landingPromoLinkUrl(banner: Banner): string {
 export function articlePromoLinkUrl(banner: Banner): string {
 	return banner.articleLinkUrl?.trim() || banner.linkUrl?.trim() || ''
 }
+
+export function isExternalUrl(url: string) {
+	return /^https?:\/\//i.test(url)
+}

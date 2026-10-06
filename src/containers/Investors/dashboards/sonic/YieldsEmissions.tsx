@@ -1,13 +1,12 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
-
-const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -33,7 +32,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, YieldPool>()
+const columnHelper = createColumnHelper<typeof paginatedTableFeatures, YieldPool>()
 
 const columns = columnHelper.columns([
 	columnHelper.accessor('project', {

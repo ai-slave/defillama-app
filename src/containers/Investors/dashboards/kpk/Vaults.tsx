@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react'
 import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
-import type { KpkVault } from './api'
-import { useKpkVaults } from './api'
+import { useTab, type KpkVault, type KpkVaults } from './api'
 import { KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
 import {
@@ -49,7 +48,7 @@ function RebalanceCell({ value }: { value: KpkVault['rebalances30d'] }) {
 }
 
 export default function Vaults() {
-	const { data, isError } = useKpkVaults()
+	const { data, isError } = useTab<KpkVaults>('vaults')
 	const [venue, setVenue] = useState<string>(ALL_VENUES)
 
 	const venueOptions = useMemo(

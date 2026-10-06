@@ -17,10 +17,6 @@ export function AccentBadge({ children, className = '' }: { children: ReactNode;
 	)
 }
 
-export function TimeframeBadge({ label }: { label: string }) {
-	return <AccentBadge className="h-6">{label}</AccentBadge>
-}
-
 export function SecondaryBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
 	return (
 		<span

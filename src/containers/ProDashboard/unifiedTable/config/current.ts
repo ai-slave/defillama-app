@@ -135,7 +135,7 @@ export type UnifiedListTableFilterKey = {
 	[K in keyof UnifiedTableFilters]-?: NonNullable<UnifiedTableFilters[K]> extends Array<string> ? K : never
 }[keyof UnifiedTableFilters]
 
-export interface ProtocolsUnifiedTableConfig {
+export interface UnifiedTableConfig {
 	id: string
 	kind: 'unified-table'
 	configVersion: 3
@@ -155,5 +155,3 @@ export interface ProtocolsUnifiedTableConfig {
 	bindings?: DashboardItemBindings
 	customColumns?: Array<CustomColumnDefinition>
 }
-
-export type UnifiedTableConfig = ProtocolsUnifiedTableConfig

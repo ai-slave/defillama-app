@@ -5,7 +5,7 @@ import { Hovercard } from '~/ui/Hovercard'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { DailyUnlocks, DayInfo } from './calendarTypes'
 import { interpolateColor } from './colorUtils'
 
@@ -17,9 +17,6 @@ interface CalendarDayCellProps {
 	maxUnlockValue: number
 	isToday: boolean
 }
-
-const usd = (value: number) =>
-	formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday }: CalendarDayCellProps) {
 	const [isDarkMode] = useDarkModeManager()
@@ -72,7 +69,9 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 				</span>
 				{hasUnlocks && dayInfo.isCurrentMonth ? (
 					<div className="mt-auto hidden truncate body-sm sm:block">
-						{dayData.totalValue > 0 ? `Cliff: ${usd(dayData.totalValue)}` : `Rate: ${usd(weeklyRateValue)} / week`}
+						{dayData.totalValue > 0
+							? `Cliff: ${formatUsd(dayData.totalValue, USD_LOWERCASE_MILLIONS_OPTIONS)}`
+							: `Rate: ${formatUsd(weeklyRateValue, USD_LOWERCASE_MILLIONS_OPTIONS)} / week`}
 					</div>
 				) : null}
 			</div>
@@ -111,7 +110,7 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 									<span className="truncate">{event.protocol}</span>
 								</BasicLink>
 								<span className="label-sm whitespace-nowrap text-primary">
-									{usd(event.value)}
+									{formatUsd(event.value, USD_LOWERCASE_MILLIONS_OPTIONS)}
 									{event.unit === 'week' ? ' / week' : ''}
 								</span>
 							</li>
@@ -121,13 +120,13 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 						{dayData.totalValue > 0 ? (
 							<p className="flex justify-between gap-4">
 								<span>Cliff unlocks</span>
-								<span>{usd(dayData.totalValue)}</span>
+								<span>{formatUsd(dayData.totalValue, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>
 							</p>
 						) : null}
 						{weeklyRateValue > 0 ? (
 							<p className="flex justify-between gap-4">
 								<span>Weekly rate</span>
-								<span>{usd(weeklyRateValue)} / week</span>
+								<span>{formatUsd(weeklyRateValue, USD_LOWERCASE_MILLIONS_OPTIONS)} / week</span>
 							</p>
 						) : null}
 					</div>

@@ -1,5 +1,5 @@
 import { lazy, type ReactNode, Suspense, useMemo } from 'react'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAAssetChartConfig } from '../types'
 import { ProMeta } from '../ui'
@@ -23,7 +23,7 @@ interface RWAAssetChartCardProps {
 
 export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const { assetId, assetName, metrics } = config
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const chartRead = useRWAAssetChartData(assetId)
 	const { chartDataset, isLoading, readFailed } = chartRead

@@ -8,7 +8,7 @@ import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -95,7 +95,7 @@ export function RWAPlatformEntityChartPanel({
 	const toggle = (key: RWAPlatformChartMetricKey) =>
 		setSelected(selected.includes(key) ? selected.filter((entry) => entry !== key) : [...selected, key])
 
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const filename = `rwa-platform-${meta.slug || rwaSlug(meta.name)}-chart`
 
 	return (

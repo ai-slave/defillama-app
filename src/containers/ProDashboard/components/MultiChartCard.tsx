@@ -3,7 +3,7 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
 import { getMetricUnitGroup } from '~/containers/ProDashboard/components/metricGroups'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { capitalizeFirstLetter } from '~/utils'
@@ -78,7 +78,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 		handleTreemapChange,
 		handleDuplicateMultiChart
 	} = useProDashboardEditorActions()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)

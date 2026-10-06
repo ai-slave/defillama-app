@@ -3,8 +3,6 @@ import { formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import type { IProtocolValueChart, ProtocolTvlKey } from './api.types'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
-type ChartInterval = ChartTimeGroupingWithCumulative
-
 export type ProtocolExtraTvlKey = Exclude<ProtocolTvlKey, 'tvl' | 'all'>
 export const PROTOCOL_EXTRA_TVL_KEYS = [
 	'staking',
@@ -121,7 +119,7 @@ export function buildTvlChart({
 	tvlChartData: IProtocolValueChart
 	extraTvlCharts: ExtraTvlChartsResult
 	selectedExtraTvls: ReadonlyArray<ProtocolExtraTvlKey>
-	groupBy: ChartInterval
+	groupBy: ChartTimeGroupingWithCumulative
 	denominationPriceHistory: Record<string, number> | null
 }): Array<[number, number | null]> {
 	if (selectedExtraTvls.length === 0) {

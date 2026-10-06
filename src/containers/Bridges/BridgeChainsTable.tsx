@@ -26,9 +26,7 @@ import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import type { BridgeChainTableRow } from './utils'
 
-const tableFeaturesConfig = orderedFilteredTableFeatures
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgeChainTableRow>()
+const columnHelper = createColumnHelper<typeof orderedFilteredTableFeatures, BridgeChainTableRow>()
 
 const bridgeChainsColumn = columnHelper.columns([
 	columnHelper.accessor('name', {
@@ -169,7 +167,7 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'prevDayNetFlow', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: orderedFilteredTableFeatures,
 		data,
 		columns: bridgeChainsColumn,
 		state: {

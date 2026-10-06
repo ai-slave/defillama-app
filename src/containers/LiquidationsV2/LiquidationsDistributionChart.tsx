@@ -33,14 +33,13 @@ import {
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-type Metric = LiquidationsMetric
 type BreakdownMode = 'total' | 'protocol' | 'chain'
 type ChartMode = 'cumulative' | 'distribution'
 type LiquidationsChartState = {
 	token: string | null
 	tokenLabel: string
 	tokenTotalUsd: number | null
-	metric: Metric
+	metric: LiquidationsMetric
 	mode: ChartMode
 	modeLabel: string
 	breakdownMode: BreakdownMode
@@ -110,7 +109,7 @@ function LiquidationsDistributionChartCard({
 	onChartReady: (instance: ECharts | null) => void
 	setBreakdownMode: (mode: BreakdownMode) => void
 	setChartMode: (mode: ChartMode) => void
-	setMetric: (metric: Metric) => void
+	setMetric: (metric: LiquidationsMetric) => void
 	selectedSeries: Array<string>
 	setSelectedToken: (token: string) => void
 	setSelectedSeries: React.Dispatch<React.SetStateAction<Array<string>>>
@@ -252,11 +251,11 @@ function normalizeLiquidationsChartTokenKey(value: string): string {
 		.replace(/[^a-z0-9]+/g, '-')
 }
 
-export function getLiquidationsChartMetric(metricQuery: string | undefined): Metric {
+export function getLiquidationsChartMetric(metricQuery: string | undefined): LiquidationsMetric {
 	return metricQuery === 'amount' ? 'amount' : 'usd'
 }
 
-export function getLiquidationsChartMetricQueryPatch(nextMetric: Metric) {
+export function getLiquidationsChartMetricQueryPatch(nextMetric: LiquidationsMetric) {
 	return {
 		[METRIC_QUERY_PARAM]: nextMetric === 'usd' ? undefined : nextMetric
 	}
@@ -390,7 +389,7 @@ export function buildCumulativeLiquidationsChartView(
 
 export function buildLiquidationsChartExportDataset(
 	view: LiquidationsDistributionChartView,
-	metric: Metric,
+	metric: LiquidationsMetric,
 	selectedSeries: ReadonlySet<string>
 ): MultiSeriesChartDataset {
 	const series: LiquidationsDistributionChartView['series'] = []
@@ -508,7 +507,7 @@ export function LiquidationsDistributionChart({
 		[chartState.token, defaultToken, router, tokenStateMode]
 	)
 	const setMetric = React.useCallback(
-		(nextMetric: Metric) => {
+		(nextMetric: LiquidationsMetric) => {
 			if (nextMetric === chartState.metric) return
 			void pushShallowQuery(router, getLiquidationsChartMetricQueryPatch(nextMetric))
 		},

@@ -3,13 +3,9 @@ import type { TokenExchangeListingsResponse, TokenMarketsResponse } from '~/cont
 import { fetchJson } from '~/utils/async'
 import type { TokenRiskBorrowCapacityResponse } from './api.types'
 
-export async function getTokenRiskBorrowCapacityFromNetwork(): Promise<TokenRiskBorrowCapacityResponse> {
+export async function getTokenRiskBorrowCapacity(): Promise<TokenRiskBorrowCapacityResponse> {
 	const data = await fetchJson<TokenRiskBorrowCapacityResponse>(`${RISK_SERVER_URL}/get-borrow-capacity-by-asset`)
 	return data
-}
-
-export async function getTokenRiskBorrowCapacity(): Promise<TokenRiskBorrowCapacityResponse> {
-	return getTokenRiskBorrowCapacityFromNetwork()
 }
 
 export async function fetchTokenMarkets(geckoId: string): Promise<TokenMarketsResponse> {

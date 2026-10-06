@@ -4,7 +4,6 @@ import type { ChartConfig } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
 import type { QueryResult } from '../exportResults'
 import { AreaChartAdapter } from './adapters/AreaChartAdapter'
-import { BarChartAdapter } from './adapters/BarChartAdapter'
 import { BubbleChartAdapter } from './adapters/BubbleChartAdapter'
 import { CandlestickChartAdapter } from './adapters/CandlestickChartAdapter'
 import { HBarChartAdapter } from './adapters/HBarChartAdapter'
@@ -29,7 +28,7 @@ export function ChartRouter({ config, result, classified, onReady, height = SQL_
 		case 'line':
 			return <LineBarChart {...common} forceType="line" />
 		case 'bar':
-			return <BarChartAdapter {...common} />
+			return <LineBarChart {...common} forceType="bar" forceStack={config.stackMode !== 'off' ? 'bar' : undefined} />
 		case 'area':
 		case 'areaStacked':
 		case 'areaPct':

@@ -17,7 +17,7 @@ import {
 	fetchProtocolValueChart
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { queryReadFailed } from '~/utils/query'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -65,7 +65,7 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const { protocol, protocolName, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const streamDone = useContext(StreamDoneContext)
 	const { getProtocolInfo } = useProDashboardCatalog()

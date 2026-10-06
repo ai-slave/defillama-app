@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
-import { act, useEffect } from 'react'
+import { act, useContext, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { SessionAliasProvider, useOptionalSessionAliases } from '../SessionAliasRegistry'
+import { SessionAliasContext, SessionAliasProvider } from '../SessionAliasRegistry'
 
 let container: HTMLDivElement
 let root: Root
@@ -10,7 +10,7 @@ let resolve: (id: string) => string
 
 /** Registers the fake id of the user's first chat once its real id arrives, as the chat does after its first reply. */
 function Chat({ realId }: { realId: string | null }) {
-	const aliases = useOptionalSessionAliases()!
+	const aliases = useContext(SessionAliasContext)!
 	resolve = aliases.resolve
 	useEffect(() => {
 		if (realId) aliases.register('fake-1', realId)

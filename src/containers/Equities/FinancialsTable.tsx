@@ -47,10 +47,6 @@ function getPeriodTypeFromQueryValue(value?: string): EquitiesStatementPeriodOpt
 	return periodType ?? 'Quarterly'
 }
 
-export function getStatementHeaders(periodEnding: Array<string>): Array<EquitiesStatementHeader> {
-	return getEquitiesStatementHeaders(periodEnding)
-}
-
 function formatStatementPeriodLabel(periodEnding: string): string {
 	return formatDate(periodEnding) ?? '-'
 }
@@ -136,7 +132,10 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 		() => buildEquitiesStatementRows(statements, statementType, periodType),
 		[statements, statementType, periodType]
 	)
-	const statementHeaders = useMemo(() => getStatementHeaders(periodData.periodEnding), [periodData.periodEnding])
+	const statementHeaders = useMemo(
+		() => getEquitiesStatementHeaders(periodData.periodEnding),
+		[periodData.periodEnding]
+	)
 	const hasAnyBreakdownRows = rows.some((row) => (row.subRows?.length ?? 0) > 0)
 	const setStatementType = (value: EquitiesStatementOption) => {
 		void pushShallowQuery(router, {

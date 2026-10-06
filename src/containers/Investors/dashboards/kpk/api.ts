@@ -12,7 +12,7 @@ import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../a
 const BASE = '/api/public/kpk'
 const STALE_MS = 10 * 60 * 1000
 
-function useTab<T>(tab: string) {
+export function useTab<T>(tab: string) {
 	return useQuery<T>({
 		queryKey: ['kpk', tab],
 		queryFn: async () => {
@@ -111,8 +111,6 @@ export interface KpkMetadata {
 	links: Partial<Record<KpkLinkKey, string>>
 }
 
-export const useKpkMetadata = () => useTab<KpkMetadata>('metadata')
-
 /* ──────────────────────────── overview ──────────────────────────── */
 
 /**
@@ -157,8 +155,6 @@ export interface KpkOverview {
 	comp: Record<KpkOverviewCompKey, KpkRangedComposition>
 	refs: Array<KpkRef>
 }
-
-export const useKpkOverview = () => useTab<KpkOverview>('overview')
 
 /* ──────────────────────────── treasury mandates ──────────────────────────── */
 
@@ -375,8 +371,6 @@ export interface KpkMandates {
 	refs: Array<KpkRef>
 }
 
-export const useKpkMandates = () => useTab<KpkMandates>('mandates')
-
 /* ──────────────────────────── vaults ──────────────────────────── */
 
 export interface KpkVault {
@@ -441,5 +435,3 @@ export interface KpkVaults {
 	riskDisclaimer: string
 	refs: Array<KpkRef>
 }
-
-export const useKpkVaults = () => useTab<KpkVaults>('vaults')

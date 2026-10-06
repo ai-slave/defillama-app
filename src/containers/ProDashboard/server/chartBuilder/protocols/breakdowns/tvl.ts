@@ -43,10 +43,6 @@ const subtractSeries = (a: Array<[number, number]>, b: Array<[number, number]>):
 	return Array.from(mapA.entries()).sort((x, y) => x[0] - y[0])
 }
 
-const fetchAllChainTotalTvl = async (): Promise<Array<[number, number]>> => {
-	return fetchChainTotalTvl(['all'])
-}
-
 const fetchChainTvlSingle = async (chain: string): Promise<Array<[number, number]>> => {
 	const j = await fetchChainChart(chain)
 	const adjustedTvl = processAdjustedTvl(j)
@@ -232,7 +228,7 @@ export const getTvlBreakdownData = async (
 
 	const buildTotalSeriesForChains = async (): Promise<Array<[number, number]>> => {
 		if (chainFilterMode === 'exclude' && hasRealExcludedChains) {
-			const allTvl = await fetchAllChainTotalTvl()
+			const allTvl = await fetchChainTotalTvl(['all'])
 			const excludedPerChain = await mapWithConcurrency(excludedChains, 8, fetchChainTvlSingle)
 			const sumExcluded = Array.from(sumSeriesByTimestamp(excludedPerChain).entries()).sort((a, b) => a[0] - b[0])
 			return subtractSeries(allTvl, sumExcluded)

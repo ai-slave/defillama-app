@@ -17,10 +17,6 @@ import type {
 	RWAPerpsMarketBreakdownTarget
 } from './types'
 
-function encodeRWAPerpsPathSegment(value: string): string {
-	return encodeURIComponent(value)
-}
-
 export function setRWAPerpsChartScope(
 	searchParams: URLSearchParams,
 	scope: { target: RWAPerpsMarketBreakdownTarget; includeCex: boolean }
@@ -54,7 +50,7 @@ function createRWAPerpsScopedUrl(path: string, includeCex: boolean): string {
 }
 
 function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHistoryParams): string {
-	const encodedId = encodeRWAPerpsPathSegment(id)
+	const encodedId = encodeURIComponent(id)
 	const searchParams = new URLSearchParams()
 
 	if (params?.startTime !== undefined) {
@@ -94,7 +90,7 @@ export async function fetchRWAPerpsStats(includeCex: boolean): Promise<IRWAPerps
  * Fetch all markets for a contract across venues.
  */
 export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<Array<IRWAPerpsMarket>> {
-	const encodedContract = encodeRWAPerpsPathSegment(contract)
+	const encodedContract = encodeURIComponent(contract)
 	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/contract/${encodedContract}?cachebust=091626`)
 }
 
@@ -102,7 +98,7 @@ export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<
  * Fetch all markets listed on a venue.
  */
 export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<Array<IRWAPerpsMarket>> {
-	const encodedVenue = encodeRWAPerpsPathSegment(venue)
+	const encodedVenue = encodeURIComponent(venue)
 	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?cachebust=091626`)
 }
 
@@ -113,7 +109,7 @@ export async function fetchRWAPerpsMarketsByAssetGroup(
 	assetGroup: string,
 	includeCex: boolean
 ): Promise<Array<IRWAPerpsMarket>> {
-	const encodedAssetGroup = encodeRWAPerpsPathSegment(assetGroup)
+	const encodedAssetGroup = encodeURIComponent(assetGroup)
 	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl(`assetGroup/${encodedAssetGroup}`, includeCex))
 }
 
@@ -121,7 +117,7 @@ export async function fetchRWAPerpsMarketsByAssetGroup(
  * Fetch all markets mapped to one canonical reference asset.
  */
 export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boolean): Promise<Array<IRWAPerpsMarket>> {
-	const encodedAsset = encodeRWAPerpsPathSegment(asset)
+	const encodedAsset = encodeURIComponent(asset)
 	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl(`asset/${encodedAsset}`, includeCex))
 }
 
@@ -129,7 +125,7 @@ export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boo
  * Fetch the historical time-series for one market.
  */
 export async function fetchRWAPerpsMarketChart(id: string): Promise<Array<IRWAPerpsMarketChartPoint>> {
-	const encodedId = encodeRWAPerpsPathSegment(id)
+	const encodedId = encodeURIComponent(id)
 	return fetchJson<Array<IRWAPerpsMarketChartPoint>>(`${RWA_PERPS_SERVER_URL}/chart/${encodedId}?cachebust=091626`)
 }
 

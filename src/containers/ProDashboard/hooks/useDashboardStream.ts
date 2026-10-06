@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 import { createDashboardStreamLineParser } from '~/containers/ProDashboard/dashboardStreamLines'
+import { getYieldBorrowHistoryQueryKey, getYieldSupplyHistoryQueryKey } from '~/containers/Yields/queries.client'
 import { parseDashboardQueryKey } from '../dashboardQueryKey'
 import type { DashboardStreamChunk } from '../dashboardStreamContract'
 import type { Dashboard } from '../dashboardTypes'
@@ -187,12 +188,12 @@ export function useDashboardStream(
 					break
 				case 'yieldsChartData':
 					if ('supply' in chunk.data) {
-						queryClient.setQueryData(['yield-supply-history', chunk.id], chunk.data.supply ?? null, {
+						queryClient.setQueryData(getYieldSupplyHistoryQueryKey(chunk.id), chunk.data.supply ?? null, {
 							updatedAt: now
 						})
 					}
 					if ('borrow' in chunk.data) {
-						queryClient.setQueryData(['yield-borrow-history', chunk.id], chunk.data.borrow ?? null, {
+						queryClient.setQueryData(getYieldBorrowHistoryQueryKey(chunk.id), chunk.data.borrow ?? null, {
 							updatedAt: now
 						})
 					}

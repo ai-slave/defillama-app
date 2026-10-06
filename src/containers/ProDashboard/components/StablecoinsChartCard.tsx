@@ -2,8 +2,8 @@ import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { filterChartDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/filterChartDataset'
 import {
-	filterStablecoinDatasetByTimePeriod,
 	STABLECOIN_DOLLAR_CHART_OPTIONS,
 	STABLECOIN_INFLOWS_CHART_OPTIONS,
 	STABLECOIN_PERCENT_CHART_OPTIONS,
@@ -13,7 +13,7 @@ import { useStablecoinsChartData } from '~/containers/ProDashboard/components/da
 import { generateConsistentChartColor, STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
@@ -50,7 +50,7 @@ const SERIES_SELECTION_CHARTS = new Set<StablecoinsChartConfig['chartType']>([
 export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const { chain, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${chain}:${chartType}`)
 	const selectionOptions = useMemo(
 		() => ({
@@ -106,7 +106,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		[chartPayload.charts, chartType, stackColors]
 	)
 	const dataset = useMemo(
-		() => filterStablecoinDatasetByTimePeriod(chartPayload.dataset, timePeriod, customTimePeriod),
+		() => filterChartDatasetByTimePeriod(chartPayload.dataset, timePeriod, customTimePeriod),
 		[chartPayload.dataset, timePeriod, customTimePeriod]
 	)
 	const latestMcapIndex = dataset.dimensions.indexOf('Mcap')
@@ -122,7 +122,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 						series: pieSeries,
 						selectedSeries: pieSelection.selectedCharts
 					})
-				: filterStablecoinDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
+				: filterChartDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
 		if (chartType === 'pie') filename = `stablecoins-${chainSlug}-pie`
 		return prepareProChartCsv(exportDataset, filename)
 	}

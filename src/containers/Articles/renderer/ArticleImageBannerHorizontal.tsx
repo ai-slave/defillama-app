@@ -3,16 +3,13 @@ import Link from 'next/link'
 import { getAllArticlesBanner, getArticleBanner, getSectionBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
+import { isExternalUrl } from '~/containers/Articles/promoLinks'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 
 type Props = {
 	articleId: string
 	section: ArticleSection | null
-}
-
-function isExternalUrl(url: string) {
-	return /^https?:\/\//i.test(url)
 }
 
 export function ArticleImageBannerHorizontal({ articleId, section }: Props) {

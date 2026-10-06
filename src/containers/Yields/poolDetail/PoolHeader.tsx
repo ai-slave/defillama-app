@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
+import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -9,7 +10,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { categoryLabel } from './format'
-import { ChainIcon, ProtocolIcon } from './Icons'
+import { ProtocolIcon } from './Icons'
 import type { DetailChain, DetailProtocol } from './types'
 
 function shortAddress(a: string): string {
@@ -56,7 +57,7 @@ export function PoolHeader({
 				<span className="relative inline-flex shrink-0">
 					<ProtocolIcon slug={protocol.slug} name={protocol.name} size={40} />
 					<span className="absolute -right-1 -bottom-1 rounded-full border-2 border-surface bg-surface">
-						<ChainIcon slug={chain.slug} name={chain.name} size={18} />
+						<TokenLogo kind="chain" name={chain.slug} alt={chain.name} size={18} />
 					</span>
 				</span>
 				<span className="flex min-w-0 flex-col gap-0.5">

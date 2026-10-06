@@ -4,6 +4,7 @@ import { Announcement } from '~/components/Announcement'
 import { getAllArticlesBanner, getArticleBanner, getLandingBanner, getSectionBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
+import { isExternalUrl } from '~/containers/Articles/promoLinks'
 import { articleBannerCandidates } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
@@ -20,10 +21,6 @@ export type ArticleBannerStripInitialData = {
 	section?: BannerLookupResult | null
 	allArticles?: BannerLookupResult | null
 	landing?: BannerLookupResult | null
-}
-
-function isExternalUrl(url: string) {
-	return /^https?:\/\//i.test(url)
 }
 
 export function ArticleBannerStrip({ scope, section, articleId, initialData }: Props) {

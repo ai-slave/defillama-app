@@ -1,14 +1,5 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { calcCirculating, groupBridgeData, groupChainsPegged } from '../hooks'
-
-let chainGroupSettings: Record<string, boolean> = {}
-
-function getGroupChainsResult(
-	chains: Parameters<typeof groupChainsPegged>[0],
-	groupData: Parameters<typeof groupChainsPegged>[1]
-) {
-	return groupChainsPegged(chains, groupData, chainGroupSettings)
-}
 
 type GroupChainRow = Parameters<typeof groupChainsPegged>[0][number]
 type GroupChainComparisonFields = Pick<
@@ -28,11 +19,7 @@ const groupChainRow = (
 	...row
 })
 
-beforeEach(() => {
-	chainGroupSettings = {}
-})
-
-describe('useCalcCirculating', () => {
+describe('calcCirculating', () => {
 	test('adds unreleased supply before sorting and keeps delisted assets discoverable', () => {
 		const result = calcCirculating(
 			[
@@ -99,11 +86,9 @@ describe('useCalcCirculating', () => {
 	})
 })
 
-describe('useGroupChainsPegged', () => {
+describe('groupChainsPegged', () => {
 	test('groups enabled child chains into their parent without duplicating subrows', () => {
-		chainGroupSettings = { L2: true }
-
-		const result = getGroupChainsResult(
+		const result = groupChainsPegged(
 			[
 				groupChainRow({
 					name: 'Parent',
@@ -141,7 +126,8 @@ describe('useGroupChainsPegged', () => {
 				Parent: {
 					L2: ['Child', 'Child', 'Unknown Child']
 				}
-			}
+			},
+			{ L2: true }
 		)
 
 		expect(result.map((chain) => [chain.name, chain.mcap, chain.subRows?.map((subRow) => subRow.name)])).toEqual([
@@ -159,9 +145,7 @@ describe('useGroupChainsPegged', () => {
 	})
 
 	test('keeps an all-unavailable grouped metric unavailable while retaining explicit zero', () => {
-		chainGroupSettings = { L2: true }
-
-		const [unknownGroup, zeroGroup] = getGroupChainsResult(
+		const [unknownGroup, zeroGroup] = groupChainsPegged(
 			[
 				groupChainRow({ name: 'Unknown', mcap: null, unreleased: null, bridgedTo: null, minted: null }),
 				groupChainRow({ name: 'Zero', mcap: 0, unreleased: 0, bridgedTo: 0, minted: 0 })
@@ -169,7 +153,8 @@ describe('useGroupChainsPegged', () => {
 			{
 				'Unknown Parent': { L2: ['Unknown'] },
 				'Zero Parent': { L2: ['Zero'] }
-			}
+			},
+			{ L2: true }
 		)
 
 		expect(unknownGroup).toMatchObject({ mcap: null, unreleased: null, bridgedTo: null, minted: null })
@@ -177,7 +162,7 @@ describe('useGroupChainsPegged', () => {
 	})
 })
 
-describe('useGroupBridgeData', () => {
+describe('groupBridgeData', () => {
 	const baseChain = {
 		symbol: 'USD',
 		circulating: 100,

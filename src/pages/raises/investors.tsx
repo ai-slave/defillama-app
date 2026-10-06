@@ -26,13 +26,11 @@ import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
-const tableFeaturesConfig = filteredTableFeatures
-
 interface INormalizedInvestor extends IInvestorTimespan {
 	name: string
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, INormalizedInvestor>()
+const columnHelper = createColumnHelper<typeof filteredTableFeatures, INormalizedInvestor>()
 
 export const getStaticProps = withPerformanceLogging('raises/active-investors', async () => {
 	const data = await getInvestorsPageData()
@@ -157,7 +155,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: filteredTableFeatures,
 		data: normalizedData,
 		columns,
 		state: {

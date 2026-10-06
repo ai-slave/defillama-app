@@ -237,10 +237,6 @@ export function parseEquityFilterNumber(input: string): number | undefined {
 	return base
 }
 
-function encodeEquityFilterQueryValue(value: string): string {
-	return encodeURIComponent(value)
-}
-
 function decodeEquityFilterQueryValue(value: string): string | null {
 	try {
 		return decodeURIComponent(value)
@@ -346,7 +342,7 @@ export function serializeEquityFiltersQuery(filters: Array<EquityActiveFilter>):
 	for (const filter of filters) {
 		if (filter.kind === 'categorical') {
 			const operator = filter.mode === 'exclude' ? 'out' : 'in'
-			segments.push(`${filter.id}:${operator}:${filter.values.map(encodeEquityFilterQueryValue).join(',')}`)
+			segments.push(`${filter.id}:${operator}:${filter.values.map(encodeURIComponent).join(',')}`)
 		} else if (filter.kind === 'numericRange') {
 			segments.push(`${filter.id}:between:${filter.minValue},${filter.maxValue}`)
 		} else {

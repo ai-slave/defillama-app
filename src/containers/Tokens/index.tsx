@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { ActiveFilterPills } from '~/components/FilterBuilderDialog'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -32,6 +33,7 @@ import { useTokensColumnVisibility } from './columnVisibility'
 import { prepareTokensCsv } from './csv'
 import {
 	buildTokensFiltersQueryUpdate,
+	formatTokensActiveFilter,
 	getTokensFiltersDefaultSorting,
 	parseTokensFiltersFromQuery,
 	shouldApplyTokensFilterSorting,
@@ -39,7 +41,7 @@ import {
 } from './filters'
 import { TokensSourceAvailability } from './SourceAvailability'
 import { TokensChartsSection } from './TokensChartsSection'
-import { TokensActiveFilterPills, TokensFiltersDialog } from './TokensFiltersDialog'
+import { TokensFiltersDialog } from './TokensFiltersDialog'
 import type {
 	TokensDisplayTone,
 	TokensFilterOption,
@@ -540,8 +542,7 @@ function TokensSharedControls({
 	)
 }
 
-const HIDEABLE_COLUMNS = TOKENS_HIDEABLE_COLUMN_SPECS
-const COLUMN_PICKER_OPTIONS = HIDEABLE_COLUMNS.map((column) => ({ key: column.id, name: column.header }))
+const COLUMN_PICKER_OPTIONS = TOKENS_HIDEABLE_COLUMN_SPECS.map((column) => ({ key: column.id, name: column.header }))
 
 export default function TokensPage({ initialData }: TokensPageProps) {
 	const router = useRouter()
@@ -604,7 +605,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		return next
 	}, [columnVisibility, filters])
 	let visibleColumnsWidth = rankColumnWidth + NAME_COLUMN_WIDTH
-	for (const column of HIDEABLE_COLUMNS) {
+	for (const column of TOKENS_HIDEABLE_COLUMN_SPECS) {
 		if (effectiveColumnVisibility[column.id] !== false) visibleColumnsWidth += column.width
 	}
 	const tableStyle: TokensTableStyle = {
@@ -628,16 +629,18 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		onSortingChange: serverTable.onSortingChange,
 		onColumnVisibilityChange: handleColumnVisibilityChange
 	})
-	const selectedColumns = HIDEABLE_COLUMNS.filter((column) => columnVisibility[column.id] !== false).map(
+	const selectedColumns = TOKENS_HIDEABLE_COLUMN_SPECS.filter((column) => columnVisibility[column.id] !== false).map(
 		(column) => column.id
 	)
 	const setSelectedColumns = React.useCallback(
 		(updater: Array<string> | ((old: Array<string>) => Array<string>)) => {
 			handleColumnVisibilityChange((old) => {
-				const current = HIDEABLE_COLUMNS.filter((column) => old[column.id] !== false).map((column) => column.id)
+				const current = TOKENS_HIDEABLE_COLUMN_SPECS.filter((column) => old[column.id] !== false).map(
+					(column) => column.id
+				)
 				const next = typeof updater === 'function' ? updater(current) : updater
 				const visibility: ColumnVisibilityState = { ...old }
-				for (const column of HIDEABLE_COLUMNS) {
+				for (const column of TOKENS_HIDEABLE_COLUMN_SPECS) {
 					visibility[column.id] = next.includes(column.id)
 				}
 				return visibility
@@ -651,7 +654,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 				query: serverTable.query,
 				sorting: serverTable.sorting,
 				hiddenColumnIds: new Set(
-					HIDEABLE_COLUMNS.filter((c) => effectiveColumnVisibility[c.id] === false).map((c) => c.id)
+					TOKENS_HIDEABLE_COLUMN_SPECS.filter((c) => effectiveColumnVisibility[c.id] === false).map((c) => c.id)
 				)
 			}),
 		[effectiveColumnVisibility, serverTable.query, serverTable.sorting]
@@ -680,7 +683,13 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	const filterPills =
 		filters.length > 0 ? (
 			<div className="px-2 pb-2">
-				<TokensActiveFilterPills filters={filters} onRemove={removeFilter} />
+				<ActiveFilterPills
+					pills={filters.map((filter) => ({
+						id: filter.id,
+						label: formatTokensActiveFilter(filter),
+						onRemove: () => removeFilter(filter.id)
+					}))}
+				/>
 			</div>
 		) : null
 

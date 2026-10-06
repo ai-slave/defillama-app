@@ -1,9 +1,9 @@
 import { formatPercent } from '~/utils/numberFormat'
-import { useYieldsData } from './api'
+import { useTab, type YieldsResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable } from './ui'
 
 export default function Yields() {
-	const { data } = useYieldsData()
+	const { data } = useTab<YieldsResponse>('yields')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 
 	return (

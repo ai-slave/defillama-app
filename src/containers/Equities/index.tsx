@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'next/router'
 import { startTransition, useCallback, useMemo, useState, type ReactNode } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { ActiveFilterPills } from '~/components/FilterBuilderDialog'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { columnVisibilityFeature } from '~/components/Table/features/display'
@@ -34,9 +35,10 @@ import { formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { prepareEquitiesCsv, type EquitiesCsvColumn } from './csv'
-import { EquitiesFiltersDialog, EquityActiveFilterPills } from './EquityFiltersDialog'
+import { EquitiesFiltersDialog } from './EquityFiltersDialog'
 import {
 	EQUITY_FILTERS_QUERY_KEY,
+	formatEquityActiveFilter,
 	parseEquityFiltersQuery,
 	serializeEquityFiltersQuery,
 	type EquityActiveFilter
@@ -928,7 +930,13 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 	const filterPills =
 		filters.length > 0 ? (
 			<div className="px-2 pb-2">
-				<EquityActiveFilterPills filters={filters} onRemove={(id) => setFilters(filters.filter((f) => f.id !== id))} />
+				<ActiveFilterPills
+					pills={filters.map((filter) => ({
+						id: filter.id,
+						label: formatEquityActiveFilter(filter),
+						onRemove: () => setFilters(filters.filter((f) => f.id !== filter.id))
+					}))}
+				/>
 			</div>
 		) : null
 	const presetsRow = (

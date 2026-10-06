@@ -1,6 +1,6 @@
 import {
 	UNIFIED_TABLE_CONFIG_VERSION,
-	type ProtocolsUnifiedTableConfig,
+	type UnifiedTableConfig,
 	type UnifiedTableFilters
 } from '../../unifiedTable/config/current'
 import type { CustomColumnDefinition } from '../../unifiedTable/config/types'
@@ -129,7 +129,7 @@ function migrateFilters(filters: PersistedProtocolTableFilters): {
 	}
 }
 
-export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): ProtocolsUnifiedTableConfig {
+export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): UnifiedTableConfig {
 	const customColumns = migrateCustomColumns(config.customColumns ?? [])
 	const customColumnIds = new Set(customColumns.map((column) => column.id))
 	const keepColumn = (id: string): string | null => {

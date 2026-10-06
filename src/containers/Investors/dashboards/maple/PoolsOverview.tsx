@@ -1,7 +1,8 @@
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
+import { usePaginatedTable } from '~/components/Table/features/pagination'
 import { Table } from '~/components/Table/Table'
 import {
 	formatCompactNumber,
@@ -23,8 +24,6 @@ import {
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
 	Pagination
 } from './shared'
-
-const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -56,7 +55,7 @@ const APY_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const poolColumns: Array<ColumnDef<typeof tableFeaturesConfig, PoolRow>> = [
+const poolColumns: Array<ColumnDef<typeof paginatedTableFeatures, PoolRow>> = [
 	{ header: 'Pool', accessorKey: 'name', size: 220 },
 	{ header: 'Asset', accessorKey: 'asset', size: 80 },
 	{

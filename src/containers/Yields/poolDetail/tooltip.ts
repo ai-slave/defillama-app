@@ -1,4 +1,4 @@
-import { getTooltipAxisValue, getTooltipRawYValue } from '~/components/ECharts/shared/tooltip'
+import { getTooltipRawYValue } from '~/components/ECharts/shared/tooltip'
 
 export interface ChartTooltipItem {
 	axisValue: unknown
@@ -54,8 +54,4 @@ export function getChartTooltipItems(params: unknown): Array<ChartTooltipItem> {
 
 export function getChartTooltipValue(item: ChartTooltipItem): unknown {
 	return getTooltipRawYValue(item, item.seriesName)
-}
-
-export function getChartTooltipTimestamp(item: ChartTooltipItem): number {
-	return getTooltipAxisValue(item)
 }

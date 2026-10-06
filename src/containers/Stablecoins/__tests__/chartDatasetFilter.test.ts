@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { filterStablecoinDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
+import { filterChartDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/filterChartDataset'
 
 describe('filterStablecoinDatasetByTimePeriod', () => {
 	test('filters canonical USD inflow rows with second-based dashboard bounds', () => {
@@ -13,7 +13,7 @@ describe('filterStablecoinDatasetByTimePeriod', () => {
 		}
 
 		expect(
-			filterStablecoinDatasetByTimePeriod(dataset, 'custom', {
+			filterChartDatasetByTimePeriod(dataset, 'custom', {
 				type: 'absolute',
 				startDate: 1_704_153_600,
 				endDate: 1_704_153_600

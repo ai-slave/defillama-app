@@ -19,8 +19,6 @@ import { useRaisesData } from './hooks'
 import type { Raise } from './model'
 import { prepareRaisesCsv, raisesColumnOrders, raisesColumns } from './Table'
 
-const tableFeaturesConfig = orderedFilteredTableFeatures
-
 const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
 ) as React.FC<IMultiSeriesChartProps>
@@ -33,7 +31,7 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: orderedFilteredTableFeatures,
 		data: raises,
 		columns: raisesColumns,
 		state: {

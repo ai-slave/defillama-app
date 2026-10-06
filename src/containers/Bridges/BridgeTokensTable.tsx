@@ -8,9 +8,7 @@ import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'
 import type { BridgeTokenTableRow } from './types'
 
-const tableFeaturesConfig = displayTableFeatures
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgeTokenTableRow>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, BridgeTokenTableRow>()
 
 export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'volume', desc: true }])
@@ -121,7 +119,7 @@ export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }
 	)
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data,
 		columns,
 		state: {

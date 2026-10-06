@@ -2,7 +2,7 @@ import type { GetStaticPropsContext, GetStaticPropsResult, InferGetStaticPropsTy
 import { TemporarilyDisabledPage } from '~/components/TemporarilyDisabledPage'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BridgeProtocolOverview } from '~/containers/Bridges/BridgeProtocolOverview'
-import { getBridgePageDatanew } from '~/containers/Bridges/queries.server'
+import { getBridgePageData } from '~/containers/Bridges/queries.server'
 import Layout from '~/layout'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -11,7 +11,7 @@ import { withPerformanceLogging } from '~/utils/perf'
 type BridgePageProps =
 	| {
 			state: 'ready'
-			data: NonNullable<Awaited<ReturnType<typeof getBridgePageDatanew>>>
+			data: NonNullable<Awaited<ReturnType<typeof getBridgePageData>>>
 			bridgeSlug: string
 	  }
 	| {
@@ -38,7 +38,7 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		try {
-			const data = await getBridgePageDatanew(bridge)
+			const data = await getBridgePageData(bridge)
 
 			if (!data) {
 				if (revalidateReason === 'stale') {

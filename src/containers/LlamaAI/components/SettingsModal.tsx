@@ -48,8 +48,6 @@ import { RAIL_TAB } from './tabRailStyles'
 
 const MAX_LENGTH = 5000
 
-type TabId = SettingsTabId
-
 type MemoryRemoval = { kind: 'entry'; id: string } | { kind: 'all'; target: 'user' | 'memory' }
 
 const MEMORY_REMOVAL_COPY = {
@@ -126,7 +124,7 @@ export const SettingsModal = memo(function SettingsModal({
 	const [, markNotifBannerDismissed] = useLlamaAINotifyBannerDismissed()
 	const notifPermission = useNotificationPermission()
 	const [isRequestingNotif, setIsRequestingNotif] = useState(false)
-	const [selectedTab, setSelectedTab] = useState<TabId>(() =>
+	const [selectedTab, setSelectedTab] = useState<SettingsTabId>(() =>
 		isSettingsTabId(initialState?.tab) ? initialState.tab : 'persona'
 	)
 	// Which command object the tab above came from. Applying a new one during render keeps the modal
@@ -139,7 +137,7 @@ export const SettingsModal = memo(function SettingsModal({
 	}
 	// The lab tab renders only in dark mode, so light mode falls back rather than leaving the panel
 	// blank. Constraining the selection here keeps one source of truth for which tab is showing.
-	const activeTab: TabId = selectedTab === 'lab' && !isDark ? 'persona' : selectedTab
+	const activeTab: SettingsTabId = selectedTab === 'lab' && !isDark ? 'persona' : selectedTab
 	const agentHome = useAgentHomeData(isOpen && activeTab === 'memory')
 	const memoriesFailed = queryReadFailed(agentHome.memories)
 	const skillsFailed = queryReadFailed(agentHome.skills)
@@ -147,14 +145,14 @@ export const SettingsModal = memo(function SettingsModal({
 	// A failed save shows at the end of the tab it came from, in whichever opening is on screen when it fails; each
 	// opening starts clean. A save that fails while the dialog is closed, such as the instructions saved on close, can
 	// only be reported by a toast.
-	const [saveError, setSaveError] = useState<{ tab: TabId; message: string } | null>(null)
+	const [saveError, setSaveError] = useState<{ tab: SettingsTabId; message: string } | null>(null)
 	const [saveErrorOpening, setSaveErrorOpening] = useState(openingKey)
 	if (saveErrorOpening !== openingKey) {
 		setSaveErrorOpening(openingKey)
 		setSaveError(null)
 	}
 	// The error stays while its retry runs and leaves once a save from the same tab lands.
-	const save = async (tab: TabId, message: string, request: Promise<boolean>) => {
+	const save = async (tab: SettingsTabId, message: string, request: Promise<boolean>) => {
 		const accepted = await request
 		if (accepted) {
 			setSaveError((current) => (current?.tab === tab ? null : current))
@@ -235,7 +233,7 @@ export const SettingsModal = memo(function SettingsModal({
 		else clearInstructions()
 	}
 
-	const saveSetting = (tab: TabId, request: Promise<boolean>) =>
+	const saveSetting = (tab: SettingsTabId, request: Promise<boolean>) =>
 		void save(tab, "Couldn't save that setting. Try again.", request)
 
 	const handleMemoryToggle = () => {
@@ -377,7 +375,7 @@ export const SettingsModal = memo(function SettingsModal({
 	const notifSupported = notifPermission !== 'unsupported'
 
 	const tabs: Array<{
-		id: TabId
+		id: SettingsTabId
 		label: string
 		icon: 'pencil' | 'gear-settings' | 'sparkles' | 'flame' | 'link' | 'wallet'
 	}> = [
@@ -1186,12 +1184,12 @@ function SettingsTabs({
 	onValueChange,
 	...props
 }: {
-	value: TabId
-	onValueChange: (tab: TabId) => void
-	values: ReadonlyArray<TabId>
+	value: SettingsTabId
+	onValueChange: (tab: SettingsTabId) => void
+	values: ReadonlyArray<SettingsTabId>
 	orientation: 'both'
 	children: ReactNode
 }) {
 	const leave = useDialogLeave()
-	return <Tabs<TabId> {...props} onValueChange={(tab) => leave(() => onValueChange(tab))} />
+	return <Tabs<SettingsTabId> {...props} onValueChange={(tab) => leave(() => onValueChange(tab))} />
 }

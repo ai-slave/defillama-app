@@ -32,8 +32,6 @@ export interface FormatUsdOptions extends PrecisionOptions {
 	signDisplay?: SignDisplay
 }
 
-export type FormatRatioOptions = PrecisionOptions
-
 export interface FormatPercentOptions extends PrecisionOptions {
 	/** Fractions are multiplied by 100; percent values are displayed as supplied. */
 	input: 'fraction' | 'percent'
@@ -204,10 +202,10 @@ export function formatUsd(value: NumericValue | null | undefined, options: Forma
 }
 
 /** Formats ratios and preserves tiny non-zero values as threshold labels instead of zero. */
-export function formatRatio(value: NumericValue, options?: FormatRatioOptions): string
-export function formatRatio(value: null | undefined, options?: FormatRatioOptions): null
-export function formatRatio(value: NumericValue | null | undefined, options?: FormatRatioOptions): string | null
-export function formatRatio(value: NumericValue | null | undefined, options: FormatRatioOptions = {}): string | null {
+export function formatRatio(value: NumericValue, options?: PrecisionOptions): string
+export function formatRatio(value: null | undefined, options?: PrecisionOptions): null
+export function formatRatio(value: NumericValue | null | undefined, options?: PrecisionOptions): string | null
+export function formatRatio(value: NumericValue | null | undefined, options: PrecisionOptions = {}): string | null {
 	const number = finiteValue(value)
 	if (number == null) return null
 	const maximumFractionDigits = options.maximumFractionDigits ?? 2

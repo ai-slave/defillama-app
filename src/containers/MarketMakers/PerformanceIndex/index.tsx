@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Panel, PanelHeader } from '~/ui/Panel'
 import { usePerformanceIndex } from '../client'
 import { DocsDrawer } from '../DocsDrawer'
-import { MarketMakersOutro } from '../MarketMakersOutro'
+import { MarketMakersFooter } from '../Footer'
 import { MarketMakersTabs } from '../MarketMakersTabs'
 import { MMDetailDrawer } from '../MMDetailDrawer'
 import { RefineDrawer } from '../RankTable/RefineDrawer'
@@ -53,7 +53,7 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 						<ScoresTable rows={performanceRows} onSelectMM={selectMM} />
 					</Panel>
 					<Definitions />
-					<MarketMakersOutro />
+					<MarketMakersFooter />
 				</div>
 			</div>
 			<DocsDrawer open={docsOpen} onClose={() => setDocsOpen(false)} />

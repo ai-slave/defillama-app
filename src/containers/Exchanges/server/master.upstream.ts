@@ -18,8 +18,6 @@ import type {
 } from '../master.types'
 import type { ExchangeResearchRange } from '../queryState'
 
-const exchangePath = (exchange: string) => encodeURIComponent(exchange)
-
 export function fetchMasterDirectoryFromNetwork(): Promise<MasterDirectoryResponse> {
 	return fetchJson<MasterDirectoryResponse>(`${MARKETS_SERVER_URL}/exchanges/directory.json`)
 }
@@ -47,17 +45,19 @@ export function fetchMasterExchangeHistoryFromNetwork(
 	range: ExchangeResearchRange
 ): Promise<MasterVenueSeriesResponse> {
 	return fetchJson<MasterVenueSeriesResponse>(
-		`${MARKETS_SERVER_URL}/exchanges/${exchangePath(exchange)}/series/${range}.json`
+		`${MARKETS_SERVER_URL}/exchanges/${encodeURIComponent(exchange)}/series/${range}.json`
 	)
 }
 
 export function fetchMasterExchangeIndexFromNetwork(exchange: string): Promise<MasterExchangeIndexResponse> {
-	return fetchJson<MasterExchangeIndexResponse>(`${MARKETS_SERVER_URL}/exchanges/${exchangePath(exchange)}/index.json`)
+	return fetchJson<MasterExchangeIndexResponse>(
+		`${MARKETS_SERVER_URL}/exchanges/${encodeURIComponent(exchange)}/index.json`
+	)
 }
 
 export function fetchMasterExchangeMetadataFromNetwork(exchange: string): Promise<MasterExchangeMetadataResponse> {
 	return fetchJson<MasterExchangeMetadataResponse>(
-		`${MARKETS_SERVER_URL}/exchanges/${exchangePath(exchange)}/metadata.json`
+		`${MARKETS_SERVER_URL}/exchanges/${encodeURIComponent(exchange)}/metadata.json`
 	)
 }
 
@@ -69,7 +69,7 @@ export function fetchMasterExchangeRegionManifestFromNetwork(
 	exchange: string
 ): Promise<MasterExchangeRegionManifestResponse> {
 	return fetchJson<MasterExchangeRegionManifestResponse>(
-		`${MARKETS_SERVER_URL}/exchanges/${exchangePath(exchange)}/metadata/regions.json`
+		`${MARKETS_SERVER_URL}/exchanges/${encodeURIComponent(exchange)}/metadata/regions.json`
 	)
 }
 
@@ -78,7 +78,7 @@ export function fetchMasterExchangeRegionalMetadataFromNetwork(
 	region: string
 ): Promise<MasterExchangeMetadataResponse> {
 	return fetchJson<MasterExchangeMetadataResponse>(
-		`${MARKETS_SERVER_URL}/exchanges/${exchangePath(exchange)}/metadata/${encodeURIComponent(region)}.json`
+		`${MARKETS_SERVER_URL}/exchanges/${encodeURIComponent(exchange)}/metadata/${encodeURIComponent(region)}.json`
 	)
 }
 

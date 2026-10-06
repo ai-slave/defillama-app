@@ -5,12 +5,8 @@ import type { RawEntitiesResponse, RawTreasuriesResponse } from './api.types'
 /**
  * Fetch treasury records for supported entities.
  */
-export async function fetchTreasuriesFromNetwork(): Promise<RawTreasuriesResponse> {
-	return fetchJson<RawTreasuriesResponse>(`${SERVER_URL}/treasuries`, { timeout: getSlowJsonTimeoutMs() })
-}
-
 export async function fetchTreasuries(): Promise<RawTreasuriesResponse> {
-	return fetchTreasuriesFromNetwork()
+	return fetchJson<RawTreasuriesResponse>(`${SERVER_URL}/treasuries`, { timeout: getSlowJsonTimeoutMs() })
 }
 
 export async function fetchTreasuryById(treasuryId: string): Promise<RawTreasuriesResponse[number] | null> {
@@ -18,7 +14,7 @@ export async function fetchTreasuryById(treasuryId: string): Promise<RawTreasuri
 		return null
 	}
 
-	const data = await fetchTreasuriesFromNetwork()
+	const data = await fetchTreasuries()
 	for (const treasury of data) {
 		if (treasury.id === treasuryId) {
 			return treasury

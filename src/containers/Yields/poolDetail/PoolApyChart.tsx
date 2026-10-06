@@ -9,6 +9,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -45,7 +46,7 @@ import {
 	POOL_CHART_WINDOW_PREFS,
 	type PoolChartWindow
 } from './queryState'
-import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
+import { getChartTooltipItems, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 import type { PoolHistoryRange } from './types'
 import { useVerifiedHistoryFetcher } from './useVerifiedHistory'
 import { useWidestHistory } from './useWidestHistory'
@@ -219,7 +220,7 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 		for (const p of items) byName.set(p.seriesName, p)
 
 		const first = items[0]!
-		const ts = getChartTooltipTimestamp(first)
+		const ts = getTooltipAxisValue(first)
 		const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 
 		let html = date

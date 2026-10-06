@@ -13,9 +13,7 @@ import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import type { Insider } from './api.types'
 
-const tableFeaturesConfig = displayTableFeatures
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, Insider>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, Insider>()
 
 const formatAllocationLabel = (value: string) =>
 	value
@@ -163,7 +161,7 @@ export function InsidersTable({
 	}, [blockExplorersData, tokenChain, insiders])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		defaultColumn: { sortUndefined: 'last' },
 		data: insiders,
 		columns,

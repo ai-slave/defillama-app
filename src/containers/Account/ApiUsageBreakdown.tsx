@@ -68,20 +68,6 @@ function useChartSource(usageStats: ApiUsageStats | null | undefined) {
 	return { sortedStats, totalRequests, averageRequests, windowDays, routeSeries }
 }
 
-function useChartData(
-	sortedStats: ApiUsageStats['stats'],
-	windowDays: number,
-	routeSeries: Array<string>,
-	selectedRoutes: Array<string>,
-	colors: ApiUsageChartColors,
-	fetchedAt: number | null
-) {
-	return useMemo(
-		() => buildApiUsageChartData(sortedStats, windowDays, routeSeries, selectedRoutes, colors, fetchedAt),
-		[sortedStats, colors, windowDays, routeSeries, selectedRoutes, fetchedAt]
-	)
-}
-
 export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBreakdownProps) {
 	const [isDark] = useDarkModeManager()
 	const activeColors = isDark ? DARK_CHART_COLORS : LIGHT_CHART_COLORS
@@ -92,7 +78,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 		availableSeries: routeSeries,
 		scope: String(windowDays)
 	})
-	const { dataset, charts } = useChartData(
+	const { dataset, charts } = buildApiUsageChartData(
 		sortedStats,
 		windowDays,
 		routeSeries,

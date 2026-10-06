@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { lazy, Suspense, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
@@ -55,7 +55,7 @@ import { useDashboardEditorHotkeys } from './hooks/useDashboardEditorHotkeys'
 import { requestDashboardItemReveal } from './hooks/useDashboardItemDeepLink'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import {
-	useDashboardMode,
+	ProDashboardModeContext,
 	useProDashboardCatalog,
 	useProDashboardDashboard,
 	useProDashboardEditorActions,
@@ -255,7 +255,7 @@ function ProDashboardContent() {
 		setPaywallReason(reason)
 	}
 	const router = useRouter()
-	const mode = useDashboardMode()
+	const { mode } = useContext(ProDashboardModeContext)
 	useEffect(() => {
 		if (mode === 'edit') warmEditorModalChunks()
 	}, [mode])

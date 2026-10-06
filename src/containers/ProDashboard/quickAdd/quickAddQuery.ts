@@ -137,10 +137,6 @@ const MAX_PHRASE_WORDS = Math.max(
 	longestPhraseWordCount(Object.keys(COMMAND_PHRASES))
 )
 
-export function getQuickAddMetricSynonym(phrase: string): ProDashboardChartType | undefined {
-	return METRIC_SYNONYMS.get(phrase)
-}
-
 interface QuickAddQueryDraft {
 	metric: ProDashboardChartType | null
 	form: QuickAddForm | null

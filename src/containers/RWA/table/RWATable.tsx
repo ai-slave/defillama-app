@@ -12,10 +12,11 @@ import {
 	searchFieldInputPlacementStyles
 } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import type { RWAOverviewDisplayRow } from '../api.types'
 import { useRWAFlowSummary } from '../flows.hooks'
-import type { RWAChangePeriod } from './change'
+import { RWA_CHANGE_PERIODS, type RWAChangePeriod } from './change'
 import type { RWAFlowStatus } from './columns/flows'
 import {
 	getRwaColumnOptions,
@@ -26,7 +27,6 @@ import {
 } from './columnSets'
 import { getRwaCsvRows } from './csv'
 import type { RWAGroupBy, RWAPlatformLogos, RWATableView } from './groupBy'
-import { RWATablePeriodSwitch } from './toolbar/PeriodSwitch'
 import { useRwaTable } from './useRwaTable'
 
 /** The view, the Group by and the CEX flag are set in the strip above the chart (RWATableControls); the table reads them. */
@@ -114,7 +114,16 @@ function RWATableView({
 								className={searchFieldInputPlacementStyles}
 							/>
 						</label>
-						{view === 'assets' ? <RWATablePeriodSwitch value={period} onChange={onPeriodChange} /> : null}
+						{view === 'assets' ? (
+							<TagGroup
+								variant="default"
+								setValue={onPeriodChange}
+								selectedValue={period}
+								values={RWA_CHANGE_PERIODS}
+								ariaLabel="Change period"
+								size="md"
+							/>
+						) : null}
 						<SelectWithCombobox
 							allValues={columnOptions}
 							selectedValues={selectedColumns}

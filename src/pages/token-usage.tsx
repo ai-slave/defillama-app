@@ -41,8 +41,6 @@ import { LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
-const tableFeaturesConfig = displayTableFeatures
-
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
 const pageName = ['Token', 'usage in', 'Protocols']
@@ -56,7 +54,7 @@ type TokenUsagePageRow = {
 	misrepresentedTokens?: boolean
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenUsagePageRow>()
+const columnHelper = createColumnHelper<typeof displayTableFeatures, TokenUsagePageRow>()
 
 export default function Tokens() {
 	const router = useRouter()
@@ -124,7 +122,7 @@ export default function Tokens() {
 
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
 	const tableInstance = useTable({
-		features: tableFeaturesConfig,
+		features: displayTableFeatures,
 		data: filteredProtocols,
 		columns,
 		state: {

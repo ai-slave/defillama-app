@@ -54,10 +54,14 @@ export const useYieldsPaginatedTable = <TRow,>(
 		enabled: !!url
 	})
 }
+// The pro dashboard reads and stream-seeds the same pool history entries.
+export const getYieldSupplyHistoryQueryKey = (configID: string | null) => ['yield-supply-history', configID] as const
+export const getYieldBorrowHistoryQueryKey = (configID: string | null) => ['yield-borrow-history', configID] as const
+
 // single pool chart data
 export const useYieldChartData = (configID: string | null) => {
 	return useQuery<PoolHistory>({
-		queryKey: ['yield-supply-history', configID],
+		queryKey: getYieldSupplyHistoryQueryKey(configID),
 		queryFn: () => fetchPoolDetailHistory(configID!, 'max'),
 		staleTime: Infinity,
 		refetchOnWindowFocus: false,
@@ -67,7 +71,7 @@ export const useYieldChartData = (configID: string | null) => {
 }
 export const useYieldChartLendBorrow = (configID: string | null, enabled = true) => {
 	return useQuery<BorrowMarketHistory>({
-		queryKey: ['yield-borrow-history', configID],
+		queryKey: getYieldBorrowHistoryQueryKey(configID),
 		queryFn: () => fetchBorrowMarketDetailHistory(configID!, 'max'),
 		staleTime: Infinity,
 		refetchOnWindowFocus: false,

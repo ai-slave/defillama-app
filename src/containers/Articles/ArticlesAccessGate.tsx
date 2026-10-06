@@ -27,10 +27,6 @@ export function isResearcher(user: AuthModel | null | undefined): boolean {
 	return user?.flags?.is_researcher === true
 }
 
-export function hasResearchAccess(user: AuthModel | null | undefined): boolean {
-	return isResearcher(user)
-}
-
 export function canManageResearchArticle(article: { viewerRole?: ArticleDocument['viewerRole'] }): boolean {
 	return article.viewerRole === 'owner' || article.viewerRole === 'researcher'
 }
@@ -52,7 +48,7 @@ export function useHasArticlesAccess() {
 	return {
 		isLoading: loaders.userLoading,
 		isAuthenticated,
-		hasAccess: isAuthenticated && hasResearchAccess(user)
+		hasAccess: isAuthenticated && isResearcher(user)
 	}
 }
 

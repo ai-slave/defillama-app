@@ -36,7 +36,6 @@ import {
 	usePrefetchedProtocolChartQuery
 } from './usePrefetchedProtocolChartQuery'
 
-type ChartInterval = ChartTimeGroupingWithCumulative
 type AdapterChartState = { data: Array<[number, number]> | null; isLoading: boolean; enabled: boolean }
 type UnlocksChartResponse = {
 	chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
@@ -96,7 +95,7 @@ export const useFetchProtocolChartData = ({
 	openInterestProtocols
 }: IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
-	groupBy: ChartInterval
+	groupBy: ChartTimeGroupingWithCumulative
 	tvlSettings: Partial<Record<ProtocolExtraTvlKey, boolean>>
 }) => {
 	const router = useRouter()

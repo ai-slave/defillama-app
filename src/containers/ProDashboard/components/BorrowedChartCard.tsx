@@ -7,7 +7,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { buildProtocolBreakdownCsvDataset } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -50,7 +50,7 @@ interface BorrowedChartCardProps {
 export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	const { protocol, protocolName, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const streamDone = useContext(StreamDoneContext)
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const suppressTokenBreakdown = shouldSuppressBorrowedTokenBreakdown(

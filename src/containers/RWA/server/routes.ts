@@ -2,7 +2,7 @@ import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
-export function getRWARoutesFromMetadata(metadataCache: MetadataCache): Array<string> {
+export function getRWASitemapRoutes(metadataCache: MetadataCache): Array<string> {
 	const routes: Array<string> = ['rwa/perps/forex']
 	const { rwaList, rwaPerpsList } = metadataCache
 
@@ -38,5 +38,3 @@ export function getRWARoutesFromMetadata(metadataCache: MetadataCache): Array<st
 
 	return routes
 }
-
-export const getRWASitemapRoutes = getRWARoutesFromMetadata

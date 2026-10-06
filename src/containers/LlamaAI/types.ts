@@ -133,21 +133,6 @@ export interface AlertIntent {
 	}>
 }
 
-export interface SuggestedQuestionsResponse {
-	categories: {
-		find_alpha: Array<string>
-		analytics: Array<string>
-		speculative_guidance: Array<string>
-		learn: Array<string>
-		research_report: Array<string>
-	}
-	metadata: {
-		generatedAt: string
-		cacheExpiresAt: string
-		totalQuestions: number
-	}
-}
-
 export interface LandingQuestion {
 	text: string
 	tag: string

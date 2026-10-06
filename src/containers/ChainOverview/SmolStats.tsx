@@ -1,15 +1,12 @@
 import { BasicLink } from '~/components/Link'
 import { SmolStatCard } from '~/ui/SmolStatCard'
 import { slug } from '~/utils'
-import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
+import { formatPercentChange, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { FeesGeneratedChart } from './FeesGeneratedChart'
 import { SmolBarChart } from './SmolBarChart'
 import { SmolLineChart } from './SmolLineChart'
 import type { IChainOverviewData } from './types'
 import { UpcomingUnlocksChart } from './UpcomingUnlocksChart'
-
-const formatCompactUsd = (value: number) =>
-	formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 export function SmolStats(props: IChainOverviewData) {
 	const chainSlug = slug(props.metadata.name)
@@ -38,7 +35,7 @@ export function SmolStats(props: IChainOverviewData) {
 							title="Upcoming Unlocks"
 							tooltip={unlocksTooltip}
 							link={<BasicLink href="/unlocks" />}
-							value={formatCompactUsd(unlocks.total14d)}
+							value={formatUsd(unlocks.total14d, USD_LOWERCASE_MILLIONS_OPTIONS)}
 							qualifier="next 14 days"
 						>
 							<UpcomingUnlocksChart data={unlocks.chart} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
@@ -50,7 +47,7 @@ export function SmolStats(props: IChainOverviewData) {
 							title="DEXs Volume"
 							tooltip="Total value of all spot trades executed on decentralized exchanges"
 							link={<BasicLink href="/dexs" />}
-							value={formatCompactUsd(dexs.total24h)}
+							value={formatUsd(dexs.total24h, USD_LOWERCASE_MILLIONS_OPTIONS)}
 							qualifier="24h"
 						>
 							<SmolBarChart series={dexsChart} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
@@ -69,7 +66,7 @@ export function SmolStats(props: IChainOverviewData) {
 									data-umami-event-metric="etf-inflows"
 								/>
 							}
-							value={latestEtf ? formatCompactUsd(latestEtf[1]) : null}
+							value={latestEtf ? formatUsd(latestEtf[1], USD_LOWERCASE_MILLIONS_OPTIONS) : null}
 							qualifier="24h"
 						>
 							<SmolBarChart series={etfs} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
@@ -88,7 +85,7 @@ export function SmolStats(props: IChainOverviewData) {
 									data-umami-event-metric="rwa-active-aum"
 								/>
 							}
-							value={formatCompactUsd(totalRwaActiveMcap.total)}
+							value={formatUsd(totalRwaActiveMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
 						>
 							<SmolLineChart series={totalRwaActiveMcap.chart} color="blue" className="my-auto h-[53px] md:h-[132px]" />
 						</SmolStatCard>
@@ -102,7 +99,7 @@ export function SmolStats(props: IChainOverviewData) {
 						props.metadata.name === 'All' ? '' : ` deployed on ${props.metadata.name}`
 					}`}
 					link={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
-					value={formatCompactUsd(dexs.total24h)}
+					value={formatUsd(dexs.total24h, USD_LOWERCASE_MILLIONS_OPTIONS)}
 					qualifier="24h"
 				>
 					<SmolBarChart series={dexsChart} />
@@ -114,7 +111,11 @@ export function SmolStats(props: IChainOverviewData) {
 					title="Fees Paid"
 					tooltip={`Total fees paid by protocols on ${props.metadata.name === 'All' ? 'all chains' : props.metadata.name}`}
 					link={<BasicLink href={props.metadata.name === 'All' ? '/fees' : `/fees/chain/${chainSlug}`} />}
-					value={props.chainFees.feesGenerated24h != null ? formatCompactUsd(props.chainFees.feesGenerated24h) : null}
+					value={
+						props.chainFees.feesGenerated24h != null
+							? formatUsd(props.chainFees.feesGenerated24h, USD_LOWERCASE_MILLIONS_OPTIONS)
+							: null
+					}
 					qualifier="24h"
 				>
 					<FeesGeneratedChart series={feesChart} />
@@ -128,7 +129,7 @@ export function SmolStats(props: IChainOverviewData) {
 						props.metadata.name === 'All' ? 'all chains' : props.metadata.name
 					}`}
 					link={<BasicLink href={props.metadata.name === 'All' ? '/stablecoins' : `/stablecoins/${chainSlug}`} />}
-					value={stablecoins.mcap != null ? formatCompactUsd(stablecoins.mcap) : null}
+					value={stablecoins.mcap != null ? formatUsd(stablecoins.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) : null}
 					change={{
 						text: formatPercentChange(stablecoins.change7d),
 						tone: stablecoinChangeIsNonNegative ? 'text-data-up' : 'text-data-down',

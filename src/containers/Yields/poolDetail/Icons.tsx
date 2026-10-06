@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { TokenLogo } from '~/components/TokenLogo'
 import { protocolInitial } from './format'
 import { protocolIconUrl } from './iconUrls'
 
@@ -28,8 +27,4 @@ export function ProtocolIcon({ slug, name, size = 22 }: { slug: string; name: st
 			onError={() => setErrored(true)}
 		/>
 	)
-}
-
-export function ChainIcon({ slug, name, size = 22 }: { slug: string; name: string; size?: number }) {
-	return <TokenLogo kind="chain" name={slug} alt={name} size={size} />
 }

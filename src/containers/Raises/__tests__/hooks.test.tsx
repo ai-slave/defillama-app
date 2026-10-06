@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { serializeCsv } from '~/utils/csv'
 import { buildRaisesData } from '../hooks'
 import type { Raise } from '../model'
-import { prepareRaisesCsv, raisesColumns, tableFeaturesConfig } from '../Table'
+import { prepareRaisesCsv, raisesColumns } from '../Table'
 import { getRaisesFiltersList } from '../utils'
 
 function raise(name: string, amountUsd: number | null, overrides: Partial<Raise> = {}): Raise {
@@ -52,7 +53,7 @@ describe('Raises filters and chart population', () => {
 		expect(data.monthlyInvestmentChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), total]])
 		expect(data.fundingRoundsByMonthChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), names.length]])
 		const table = constructTestTable({
-			features: tableFeaturesConfig,
+			features: orderedFilteredTableFeatures,
 			data: data.filteredRaisesList,
 			columns: raisesColumns,
 			state: {},
@@ -118,7 +119,7 @@ describe('Raises filters and chart population', () => {
 describe('Shared Raises CSV contract', () => {
 	test('exports raw whole USD and both dates in table sort order, with unknowns last and zero intact', () => {
 		const table = constructTestTable({
-			features: tableFeaturesConfig,
+			features: orderedFilteredTableFeatures,
 			data: [raise('Unknown', null), raise('Zero', 0), raise('Measured', 3_100_000, { valuationUsd: 300_000_000 })],
 			columns: raisesColumns,
 			state: { sorting: [{ id: 'amount', desc: false }] },

@@ -9,5 +9,3 @@ export function readSqlNumber(value: unknown, allowBoolean = false): number | nu
 export function readSqlTimestampMs(value: unknown): number | null {
 	return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
-
-export { escapeHtml as escapeSqlChartHtml } from '~/components/ECharts/shared/escapeHtml'

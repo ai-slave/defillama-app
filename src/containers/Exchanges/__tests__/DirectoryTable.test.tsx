@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
-import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
+import { searchTableFeatures } from '~/components/Table/features/search'
 import { buildDirectoryColumns } from '../directoryColumns'
 import type { ExchangeDirectoryRowModel, ExchangeSegmentActivity } from '../models'
 
@@ -62,7 +62,7 @@ function quality(score: number, rank: number): NonNullable<ExchangeDirectoryRowM
 
 function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: ExchangeDirectoryRowModel, id: string) {
 	const table = constructTestTable({
-		features: tableFeaturesConfig,
+		features: searchTableFeatures,
 		data: [venue],
 		columns: buildDirectoryColumns(scope, true),
 		state: {},

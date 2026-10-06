@@ -16,7 +16,7 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import type { useCalcCirculating } from '~/containers/Stablecoins/hooks'
+import type { calcCirculating } from '~/containers/Stablecoins/hooks'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -26,8 +26,6 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
-
-const tableFeaturesConfig = orderedFilteredTableFeatures
 
 type StablecoinDeviationInfo = {
 	timestamp: number
@@ -62,8 +60,8 @@ type StablecoinsTableInputRow = {
 	circulating?: number | null
 	subRows?: Array<StablecoinsTableInputRow>
 }
-type StablecoinRow = ReturnType<typeof useCalcCirculating<StablecoinsTableInputRow>>[number]
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, StablecoinRow>()
+type StablecoinRow = ReturnType<typeof calcCirculating<StablecoinsTableInputRow>>[number]
+const columnHelper = createColumnHelper<typeof orderedFilteredTableFeatures, StablecoinRow>()
 
 const stablecoinsColumns = columnHelper.columns([
 	columnHelper.accessor((row) => `${row.name}${row.symbol && row.symbol !== '-' ? ` (${row.symbol})` : ''}`, {
@@ -353,7 +351,7 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: orderedFilteredTableFeatures,
 		data,
 		columns: stablecoinsColumns,
 		state: {

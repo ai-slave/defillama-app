@@ -6,11 +6,11 @@ import { acquireDatasetSnapshot } from '~/server/datasetSnapshots/refresh.server
 import { findRaisesByDefillamaId } from './dataset.transform'
 
 export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Array<Raise>> {
-	const response = await fetchRaises()
+	const response = await fetchRaisesFromSnapshot()
 	return findRaisesByDefillamaId(response, defillamaId)
 }
 
-export async function fetchRaises(): Promise<RaisesResponse> {
+export async function fetchRaisesFromSnapshot(): Promise<RaisesResponse> {
 	const { handle } = await acquireDatasetSnapshot('raises', 'blocking')
 	const response = await handle.readJson<RaisesApiResponse>(DATASET_SNAPSHOT_CONTRACT.raises.files.full)
 	return normalizeRaisesApiResponse(response)

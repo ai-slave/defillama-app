@@ -2,7 +2,7 @@ import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartConfig } from '../types'
 import { ProMeta } from '../ui'
@@ -51,7 +51,7 @@ interface RWAOverviewChartCardProps {
 
 export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const { metric, chartView, breakdown, chain } = config
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const chartRead = useRWABreakdownChartData(breakdown, metric, chain)
 	const { chartDataset: rawDataset, isLoading, readFailed } = chartRead

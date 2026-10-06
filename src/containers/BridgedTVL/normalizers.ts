@@ -14,7 +14,7 @@ import type {
 	RawChainAssetsFlows1dResponse,
 	RawChainsAssetsResponse
 } from './api.types'
-import { CHAIN_ASSET_CATEGORIES, CHAIN_ASSET_FLOW_CATEGORIES, CHAIN_ASSET_OPTIONAL_CATEGORIES } from './api.types'
+import { CHAIN_ASSET_CATEGORIES, CHAIN_ASSET_OPTIONAL_CATEGORIES } from './api.types'
 
 function parseChainAssetNumber(value: string): number {
 	return Number(value)
@@ -96,7 +96,7 @@ export function normalizeChainAssetsFlows1dResponse(
 		const rawEntry = response[chain]
 		if (rawEntry === undefined) continue
 		const entry: ChainAssetsFlowEntry = {}
-		for (const category of CHAIN_ASSET_FLOW_CATEGORIES) {
+		for (const category of CHAIN_ASSET_CATEGORIES) {
 			const rawValue = rawEntry[category]
 			if (rawValue === undefined) continue
 			entry[category] = {

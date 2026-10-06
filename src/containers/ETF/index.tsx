@@ -36,12 +36,10 @@ const ASSETS = [
 	{ key: 'solana', name: 'Solana', iconUrl: tokenIconUrl('solana') }
 ] as const
 
-type GroupBy = LowercaseDwmcGrouping
-
 const DEFAULT_SORTING_STATE = [{ id: 'aum', desc: true }]
 
 export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETFOverviewProps) {
-	const [groupBy, setGroupBy] = React.useState<GroupBy>('weekly')
+	const [groupBy, setGroupBy] = React.useState<LowercaseDwmcGrouping>('weekly')
 	const {
 		activeSeries: tickers,
 		selectedCharts,

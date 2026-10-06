@@ -36,18 +36,16 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
-const tableFeaturesConfig = expandedFilteredTableFeatures
-
 const optionsKey = 'unlockTable'
 
 interface IUnlocksTableProps {
-	protocols: Array<IEmission>
+	protocols: Array<EnrichedProtocolEmission>
 	showOnlyWatchlist: boolean
 	savedProtocols: Set<string>
 	/** The page's clock at render time; the table hides events that passed before it. */
 	initialNowSec: number
 }
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEmission>()
+const columnHelper = createColumnHelper<typeof expandedFilteredTableFeatures, EnrichedProtocolEmission>()
 
 const formatUnlockTypeLabel = (type: string) =>
 	type
@@ -58,7 +56,7 @@ const formatUnlockTypeLabel = (type: string) =>
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 		.join(' ')
 
-export function getUnlockTypes(protocols: Array<IEmission>): Array<string> {
+export function getUnlockTypes(protocols: Array<EnrichedProtocolEmission>): Array<string> {
 	const categories = new Set<string>()
 	for (const protocol of protocols) {
 		for (const event of protocol.events) categories.add(event.category)
@@ -96,7 +94,7 @@ export function hasActiveUnlockTableFilters(query: ParsedUrlQuery, unlockTypes: 
 }
 
 export const filterUnlockTableProtocols = (
-	protocols: Array<IEmission>,
+	protocols: Array<EnrichedProtocolEmission>,
 	{
 		showOnlyWatchlist,
 		savedProtocols,
@@ -107,7 +105,7 @@ export const filterUnlockTableProtocols = (
 		minPerc,
 		maxPerc
 	}: UnlockTableFilterOptions
-): Array<IEmission> => {
+): Array<EnrichedProtocolEmission> => {
 	const isCategoryFilterActive = selectedUnlockTypes.length !== allUnlockTypes.length
 	const isValueFilterActive = minUnlockValue !== null || maxUnlockValue !== null
 	const isPercentageFilterActive = minPerc !== '' || maxPerc !== ''
@@ -117,13 +115,13 @@ export const filterUnlockTableProtocols = (
 	if (!isAnyFilterActive) return protocols
 
 	const selectedCategories = isCategoryFilterActive ? new Set(selectedUnlockTypes) : null
-	const filteredProtocols: Array<IEmission> = []
+	const filteredProtocols: Array<EnrichedProtocolEmission> = []
 
 	for (const protocol of protocols) {
 		if (showOnlyWatchlist && !savedProtocols.has(protocol.name)) continue
 
 		const upcomingEvents = protocol.upcomingEvent
-		let filteredUpcomingEvents: IEmission['upcomingEvent'] | null = null
+		let filteredUpcomingEvents: EnrichedProtocolEmission['upcomingEvent'] | null = null
 		if (selectedCategories) {
 			for (let index = 0; index < upcomingEvents.length; index++) {
 				const event = upcomingEvents[index]!
@@ -271,7 +269,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 	const columns = useMemo(() => [...emissionsColumns, upcomingEventColumn(nowSec)], [nowSec])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: expandedFilteredTableFeatures,
 		data: filteredData,
 		columns,
 		state: {
@@ -377,8 +375,6 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 		</Card>
 	)
 }
-
-export type IEmission = EnrichedProtocolEmission
 
 const emissionsColumns = columnHelper.columns([
 	columnHelper.accessor('name', {

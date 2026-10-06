@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BridgeInfo } from '~/containers/Bridges/BridgeProtocolOverview'
-import { getBridgePageDatanew } from '~/containers/Bridges/queries.server'
+import { getBridgePageData } from '~/containers/Bridges/queries.server'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
@@ -42,7 +42,7 @@ export const getStaticProps = withPerformanceLogging(
 
 		const [protocolData, bridgeData] = await Promise.all([
 			fetchProtocolOverviewMetrics(canonicalProtocol),
-			getBridgePageDatanew(canonicalProtocol)
+			getBridgePageData(canonicalProtocol)
 		])
 
 		if (!bridgeData) {

@@ -3,41 +3,19 @@ import { useRouter } from 'next/router'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import type { paginatedTableFeatures } from '~/components/Table/features/pagination'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { MeasuredColumnHint, MeasuredExitColumnHint } from './Measured'
 import { NameYield, PoolNameLockup } from './Name'
-import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
 import { TruncatedText } from './TruncatedText'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
 import { EarnApyCell, EmptyCell, ExitCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
-
-interface EarnPoolNameProps {
-	row: IYieldTableRow
-	value: string
-	rowId: string
-}
-
-function nameLockupProps({ row, value, rowId }: EarnPoolNameProps) {
-	return {
-		rowId,
-		value,
-		configID: row.configID,
-		url: row.url,
-		poolMeta: row.poolMeta,
-		exploited: row.exploited,
-		hasRiskData: row.hasRiskData
-	}
-}
-
-function EarnPoolName(props: EarnPoolNameProps) {
-	return <PoolNameLockup {...nameLockupProps(props)} />
-}
 
 const STABILITY_RATING_STYLES: Record<string, string> = {
 	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
@@ -99,18 +77,7 @@ function ApyStabilityIndicator({
 	)
 }
 
-function ProjectNameCell({ row }: { row: { original: IYieldTableRow } }) {
-	return (
-		<NameYield
-			project={row.original.project}
-			projectslug={row.original.projectslug}
-			airdrop={row.original.airdrop}
-			raiseValuationUsd={row.original.raiseValuationUsd}
-		/>
-	)
-}
-
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IYieldTableRow>()
+const columnHelper = createColumnHelper<typeof paginatedTableFeatures, IYieldTableRow>()
 const OPTIONAL_COLUMN_IDS = new Set([
 	'category',
 	'apyBase',
@@ -140,7 +107,17 @@ function createEarnColumns(
 			id: 'pool',
 			header: 'Pool',
 			enableSorting: false,
-			cell: ({ getValue, row }) => <EarnPoolName row={row.original} value={getValue()} rowId={row.id} />,
+			cell: ({ getValue, row }) => (
+				<PoolNameLockup
+					rowId={row.id}
+					value={getValue()}
+					configID={row.original.configID}
+					url={row.original.url}
+					poolMeta={row.original.poolMeta}
+					exploited={row.original.exploited}
+					hasRiskData={row.original.hasRiskData}
+				/>
+			),
 			meta: { headerClassName: 'w-[190px] min-w-[190px]' }
 		}),
 		columnHelper.accessor((row) => row.referenceAsset ?? undefined, {
@@ -170,7 +147,14 @@ function createEarnColumns(
 			id: 'project',
 			header: 'Protocol',
 			enableSorting: false,
-			cell: ({ row }) => <ProjectNameCell row={row} />,
+			cell: ({ row }) => (
+				<NameYield
+					project={row.original.project}
+					projectslug={row.original.projectslug}
+					airdrop={row.original.airdrop}
+					raiseValuationUsd={row.original.raiseValuationUsd}
+				/>
+			),
 			meta: { headerClassName: 'w-[130px] min-w-[130px]' }
 		}),
 		columnHelper.accessor((row) => row.category ?? undefined, {

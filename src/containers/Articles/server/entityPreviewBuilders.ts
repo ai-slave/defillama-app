@@ -1,6 +1,6 @@
 import { fetchBridges } from '~/containers/Bridges/api'
 import { fetchCexs } from '~/containers/Cexs/api'
-import { fetchChainsByCategoryAll, fetchChainsList } from '~/containers/Chains/api'
+import { fetchChainsByCategory, fetchChainsList } from '~/containers/Chains/api'
 import { fetchHacks } from '~/containers/Hacks/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
@@ -44,7 +44,7 @@ function makeCache<T>(loader: () => Promise<T>) {
 
 const getProtocols = makeCache(() => fetchProtocols())
 const getChains = makeCache(() => fetchChainsList())
-const getChainsByCategory = makeCache(fetchChainsByCategoryAll)
+const getChainsByCategory = makeCache(() => fetchChainsByCategory('All'))
 const getStablecoins = makeCache(() => fetchStablecoinAssetsApi())
 const getCexs = makeCache(() => fetchCexs())
 const getBridges = makeCache(() => fetchBridges(true))

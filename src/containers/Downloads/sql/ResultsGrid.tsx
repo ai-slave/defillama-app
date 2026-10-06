@@ -1,8 +1,9 @@
 import { lazy, Suspense, useMemo, useRef } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { formatNumber } from '~/utils/numberFormat'
+import { inferFineKindFromArrowType, type FineKind } from './columnKind'
 import type { QueryResult } from './exportResults'
-import { inferColumnKind, TypeBadge } from './primitives'
+import { TypeBadge } from './primitives'
 
 interface SparklineShim {
 	data?: Array<[number, number]>
@@ -22,8 +23,6 @@ interface ResultsGridProps {
 	result: QueryResult
 }
 
-type ColumnKind = ReturnType<typeof inferColumnKind>
-
 export function ResultsGrid({ result }: ResultsGridProps) {
 	const parentRef = useRef<HTMLDivElement>(null)
 
@@ -37,7 +36,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 	const columnMeta = useMemo(
 		() =>
 			result.columns.map((c, columnIndex) => {
-				let kind = inferColumnKind(c.type)
+				let kind = inferFineKindFromArrowType(c.type)
 				if (kind === 'other') {
 					const sample = result.rows.find((row) => row[columnIndex] != null)
 					if (
@@ -158,7 +157,7 @@ function toSparklineData(values: Array<unknown>): Array<[number, number]> {
 	return data
 }
 
-function formatCell(value: unknown, kind: ColumnKind): string {
+function formatCell(value: unknown, kind: FineKind): string {
 	if (value === null || value === undefined) return ''
 	if (typeof value === 'bigint') return value.toLocaleString()
 	if (typeof value === 'number') {
@@ -186,12 +185,7 @@ function cellToTitle(value: unknown): string {
 	return formatted.length > 60 ? formatted : ''
 }
 
-function estimateColumnWidth(
-	header: string,
-	rows: Array<Array<unknown>>,
-	columnIndex: number,
-	kind: ColumnKind
-): number {
+function estimateColumnWidth(header: string, rows: Array<Array<unknown>>, columnIndex: number, kind: FineKind): number {
 	const sample = rows.slice(0, 40)
 	let max = header.length + 3
 	for (const row of sample) {

@@ -3,7 +3,7 @@ import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/Mult
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatRatio } from '~/utils/numberFormat'
-import { useIncentivesData, chartToModel, type EpochRow, type SpendWindowRow } from './api'
+import { useTab, chartToModel, type EpochRow, type SpendWindowRow, type IncentivesResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -97,7 +97,7 @@ function epochCols(id: VenueId): Array<Col<EpochTableRow>> {
 }
 
 export default function Incentives() {
-	const { data } = useIncentivesData()
+	const { data } = useTab<IncentivesResponse>('incentives')
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
 	const [poolTab, setPoolTab] = useState<VenueId>('aerodrome')
 	const [epochTab, setEpochTab] = useState<VenueId>('aerodrome')

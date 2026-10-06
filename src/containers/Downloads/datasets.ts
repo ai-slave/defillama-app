@@ -59,7 +59,6 @@ function numericField(record: DatasetItem, field: string): number | null {
 	return typeof value === 'number' ? value : null
 }
 
-const extractArray = (json: unknown): Array<DatasetItem> => extractRecordArray(json)
 const extractDataField = (json: unknown): Array<DatasetItem> => recordFieldArrayOrRoot(json, 'data')
 const extractProtocols = (json: unknown): Array<DatasetItem> => recordFieldArray(json, 'protocols')
 
@@ -299,7 +298,7 @@ export const datasets: Array<DatasetDefinition> = [
 		url: `${V2_SERVER_URL}/chains`,
 		defaultSortField: 'tvl',
 		fields: ['name', 'tokenSymbol', 'tvl', 'chainId'],
-		extractItems: extractArray
+		extractItems: extractRecordArray
 	},
 	{
 		slug: 'yields',
@@ -584,7 +583,7 @@ export const datasets: Array<DatasetDefinition> = [
 			'language'
 		],
 		extractItems: (json) =>
-			extractArray(json).map((item) => normalizeHack(item as unknown as IHackApiItem) as unknown as DatasetItem)
+			extractRecordArray(json).map((item) => normalizeHack(item as unknown as IHackApiItem) as unknown as DatasetItem)
 	},
 	{
 		slug: 'raises',
@@ -630,7 +629,7 @@ export const datasets: Array<DatasetDefinition> = [
 			'mcap',
 			'unlocksPerDay'
 		],
-		extractItems: extractArray
+		extractItems: extractRecordArray
 	},
 	{
 		slug: 'treasuries',
@@ -640,7 +639,7 @@ export const datasets: Array<DatasetDefinition> = [
 		url: `${SERVER_URL}/treasuries`,
 		defaultSortField: 'tvl',
 		fields: ['name', 'slug', 'chain', 'chains', 'tvl', 'change_1h', 'change_1d', 'change_7d', 'tokenBreakdowns'],
-		extractItems: extractArray
+		extractItems: extractRecordArray
 	},
 	{
 		slug: 'etf-overview',
@@ -650,7 +649,7 @@ export const datasets: Array<DatasetDefinition> = [
 		url: `${ETF_SERVER_URL}/overview`,
 		defaultSortField: 'aum',
 		fields: ['ticker', 'asset', 'issuer', 'etf_name', 'custodian', 'pct_fee', 'flows', 'aum', 'volume'],
-		extractItems: extractArray
+		extractItems: extractRecordArray
 	},
 	{
 		slug: 'etf-history',
@@ -660,7 +659,7 @@ export const datasets: Array<DatasetDefinition> = [
 		url: `${ETF_SERVER_URL}/history`,
 		defaultSortField: 'day',
 		fields: ['gecko_id', 'day', 'total_flow_usd'],
-		extractItems: extractArray
+		extractItems: extractRecordArray
 	},
 	{
 		slug: 'bridges',

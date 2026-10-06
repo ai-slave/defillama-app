@@ -98,27 +98,15 @@ export function parseNumberInput(value: string | number | null | undefined): num
  * If the parameter is an array, uses the first element.
  *
  * @example
- * toNumberParam('42') // 42
- * toNumberParam(['42', '99']) // 42
- * toNumberParam('invalid') // null
+ * parseNumberQueryParam('42') // 42
+ * parseNumberQueryParam(['42', '99']) // 42
+ * parseNumberQueryParam('invalid') // null
  */
-function toNumberParam(param: QueryParamInput): number | null {
+export function parseNumberQueryParam(param: QueryParamInput): number | null {
 	if (Array.isArray(param)) {
 		return parseNumberInput(param[0])
 	}
 	return parseNumberInput(param)
-}
-
-/**
- * Converts a query parameter to a number or null.
- *
- * @example
- * parseNumberQueryParam('42') // 42
- * parseNumberQueryParam(['42']) // 42
- * parseNumberQueryParam(null) // null
- */
-export function parseNumberQueryParam(param: QueryParamInput): number | null {
-	return toNumberParam(param)
 }
 
 // ============================================================================

@@ -111,7 +111,7 @@ vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 }))
 
 vi.mock('~/containers/Raises/server/dataset.server', () => ({
-	fetchRaises: async () => {
+	fetchRaisesFromSnapshot: async () => {
 		if (raisesInvestors.fail) throw new Error('snapshot unavailable')
 		return { raises: [{ leadInvestors: ['Paradigm'], otherInvestors: ['a16z'] }] }
 	}

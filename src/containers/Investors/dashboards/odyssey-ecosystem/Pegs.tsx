@@ -1,6 +1,6 @@
 import { formatDateTime } from '~/utils/dateFormat'
 import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
-import { usePegsData, type PegRow, type PegSupplyCap } from './api'
+import { useTab, type PegRow, type PegSupplyCap, type PegsResponse } from './api'
 import { KpiCard, ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
 
 const SIZES = [10_000, 50_000, 100_000, 500_000, 1_000_000]
@@ -84,7 +84,7 @@ function SynthTable({ rows }: { rows: Array<PegRow> }) {
 }
 
 export default function Pegs() {
-	const { data } = usePegsData()
+	const { data } = useTab<PegsResponse>('pegs')
 	const msUSD = (data?.rows || []).filter((r) => r.synth === 'msUSD')
 	const msETH = (data?.rows || []).filter((r) => r.synth === 'msETH')
 	const k = data?.kpis

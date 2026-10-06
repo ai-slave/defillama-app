@@ -101,8 +101,6 @@ export interface StreamAccumulator {
 	messageMetadata?: MessageMetadata
 }
 
-export type StreamBuffer = StreamAccumulator
-
 type ResettableStreamState = Omit<
 	StreamState,
 	'phase' | 'messageMetadata' | 'error' | 'rateLimitDetails' | 'contextWarning'
@@ -208,9 +206,7 @@ export const createStreamAccumulator = (): StreamAccumulator => ({
 	receivedEventCount: 0
 })
 
-export const createStreamBuffer = createStreamAccumulator
-
-export function hasStreamBufferContent(buffer: StreamBuffer) {
+export function hasStreamBufferContent(buffer: StreamAccumulator) {
 	return Boolean(
 		buffer.text ||
 		buffer.charts.length > 0 ||
@@ -401,7 +397,7 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 const nonEmpty = <T>(value: Array<T> | undefined) => (value && value.length > 0 ? value : undefined)
 
 // Convert the buffered stream payload into the same message shape used for restored history.
-export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string): Message {
+export function buildAssistantMessage(buffer: StreamAccumulator, messageId?: string): Message {
 	return {
 		role: 'assistant',
 		content: buffer.text || undefined,

@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import type { IEquitiesStatementsResponse } from '../api.types'
-import { getStatementHeaders } from '../FinancialsTable'
-import { buildEquitiesStatementRows, getEquitiesStatementValue } from '../financialStatements'
+import {
+	buildEquitiesStatementRows,
+	getEquitiesStatementHeaders,
+	getEquitiesStatementValue
+} from '../financialStatements'
 
 const statementSection = {
 	labels: ['Revenue'],
@@ -12,7 +15,7 @@ const statementSection = {
 
 describe('equities financials statement headers', () => {
 	test('orders periodEnding values from newest to oldest', () => {
-		expect(getStatementHeaders(['1984-03-31', '1984-09-30', '1984-06-30'])).toEqual([
+		expect(getEquitiesStatementHeaders(['1984-03-31', '1984-09-30', '1984-06-30'])).toEqual([
 			{ index: 1, periodEnding: '1984-09-30' },
 			{ index: 2, periodEnding: '1984-06-30' },
 			{ index: 0, periodEnding: '1984-03-31' }
@@ -55,7 +58,7 @@ describe('equities financials statement headers', () => {
 			balanceSheet: statementSection,
 			cashflow: statementSection
 		}
-		const headers = getStatementHeaders(incomeStatement.quarterly.periodEnding)
+		const headers = getEquitiesStatementHeaders(incomeStatement.quarterly.periodEnding)
 		const [row] = buildEquitiesStatementRows(statements, 'Income Statement', 'Quarterly')
 		if (!row) throw new Error('Missing Revenue row')
 		const [childRow] = row.subRows ?? []

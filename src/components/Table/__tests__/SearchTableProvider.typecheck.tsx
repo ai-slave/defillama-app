@@ -2,10 +2,9 @@ import { createColumnHelper } from '@tanstack/react-table'
 import type { ComponentProps } from 'react'
 import type { PairTable } from '~/containers/Exchanges/PairTable'
 import { formatNumber } from '~/utils/numberFormat'
-import { searchTableFeatures } from '../features/search'
+import type { searchTableFeatures } from '../features/search'
 import { SearchTableProvider } from '../search/SearchTableProvider'
 import { SearchTableView } from '../search/SearchTableView'
-const features = searchTableFeatures
 
 interface TestRow {
 	name: string
@@ -13,7 +12,7 @@ interface TestRow {
 	tags: Array<string>
 }
 
-const columnHelper = createColumnHelper<typeof features, TestRow>()
+const columnHelper = createColumnHelper<typeof searchTableFeatures, TestRow>()
 const columns = [
 	columnHelper.accessor('name', {
 		header: 'Name',

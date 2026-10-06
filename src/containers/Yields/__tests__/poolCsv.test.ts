@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
 import { EARN_NO_COLUMNS, PAID_DEFAULT_EARN_COLUMNS } from '../Filters/columnOptions'
-import type { YieldPoolTableRow } from '../Tables/types'
+import type { IYieldTableRow } from '../Tables/types'
 
-const row = (overrides: Partial<YieldPoolTableRow> = {}): YieldPoolTableRow =>
+const row = (overrides: Partial<IYieldTableRow> = {}): IYieldTableRow =>
 	({
 		pool: 'stETH',
 		project: 'Lido',
@@ -17,7 +17,7 @@ const row = (overrides: Partial<YieldPoolTableRow> = {}): YieldPoolTableRow =>
 		holderCount: 615_498,
 		poolMeta: null,
 		...overrides
-	}) as YieldPoolTableRow
+	}) as IYieldTableRow
 
 describe('prepareYieldPoolsCsv', () => {
 	test('default view mirrors the earn table with base+reward split', () => {

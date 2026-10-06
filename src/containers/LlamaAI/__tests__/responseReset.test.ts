@@ -3,7 +3,7 @@ import { parseSSEStream } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
 	createInitialStreamState,
-	createStreamBuffer,
+	createStreamAccumulator,
 	streamReducer,
 	type StreamAction,
 	type StreamState
@@ -43,7 +43,7 @@ describe('client handling of a backend correction retry', () => {
 			if (action.type === 'COMMIT_STREAM') stepsBeforeCommit = state.steps
 			state = streamReducer(state, action)
 		}
-		const buffer = createStreamBuffer()
+		const buffer = createStreamAccumulator()
 		const appendMessage = vi.fn()
 		const callbacks = createAgenticCallbacks({
 			isCurrent: () => true,

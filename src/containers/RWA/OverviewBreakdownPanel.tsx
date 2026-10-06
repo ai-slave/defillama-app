@@ -5,7 +5,7 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import { Select } from '~/components/Select/Select'
 import { CHART_COLORS } from '~/constants/colors'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import type { IRWAAssetsOverview, RWAChartMetricKey } from './api.types'
 import type { RwaChartAxis } from './chartBreakdown'
@@ -17,8 +17,9 @@ import {
 	type RwaTreemapNestedBy
 } from './chartState'
 import {
-	useRWAAssetCategoryPieChartData,
-	useRwaAssetGroupPieChartData,
+	buildRwaAssetCategoryPieChartData,
+	buildRwaAssetGroupPieChartData,
+	emptyPieChartResult,
 	useRwaAssetNamePieChartData,
 	useRwaAssetPlatformPieChartData,
 	useRwaChainBreakdownPieChartData,
@@ -94,14 +95,15 @@ export function RWAOverviewBreakdownPanel({
 	toolbarStart
 }: RWAOverviewBreakdownPanelProps) {
 	const { pieChartData: assetCategoryPieChartData, pieChartStackColors: assetCategoryPieChartStackColors } =
-		useRWAAssetCategoryPieChartData({
-			enabled: axis === 'category',
-			assets,
-			categories: rankedFilterValues.categories,
-			selectedCategories,
-			metric,
-			includeBridgeTvl
-		})
+		axis === 'category'
+			? buildRwaAssetCategoryPieChartData({
+					assets,
+					categories: rankedFilterValues.categories,
+					selectedCategories,
+					metric,
+					includeBridgeTvl
+				})
+			: emptyPieChartResult()
 
 	const shouldBuildAssetNamePieChartData = axis === 'assetName'
 	const { pieChartData: assetNamePieChartData, pieChartStackColors: assetNamePieChartStackColors } =
@@ -117,12 +119,9 @@ export function RWAOverviewBreakdownPanel({
 		})
 
 	const { pieChartData: assetGroupPieChartData, pieChartStackColors: assetGroupPieChartStackColors } =
-		useRwaAssetGroupPieChartData({
-			enabled: axis === 'assetGroup',
-			assets,
-			metric,
-			includeBridgeTvl
-		})
+		axis === 'assetGroup' && assets.length > 0
+			? buildRwaAssetGroupPieChartData({ assets, metric, includeBridgeTvl })
+			: emptyPieChartResult()
 
 	const { pieChartData: assetPlatformPieChartData, pieChartStackColors: assetPlatformPieChartStackColors } =
 		useRwaAssetPlatformPieChartData({
@@ -189,11 +188,11 @@ export function RWAOverviewBreakdownPanel({
 		return limit == null ? completePieChartData : limitRwaPieChartData(completePieChartData, limit)
 	}, [completePieChartData, axis])
 
-	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useChartImageExport()
+	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
 	const pieChartFilename = `rwa-pie-${filenameSuffix}`
-	const { chartInstance: barChartInstance, handleChartReady: handleBarChartReady } = useChartImageExport()
+	const { chartInstance: barChartInstance, handleChartReady: handleBarChartReady } = useGetChartInstance()
 	const barChartFilename = `rwa-bar-${filenameSuffix}`
-	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useChartImageExport()
+	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useGetChartInstance()
 	const treemapChartFilename = `rwa-treemap-${filenameSuffix}`
 
 	const deferredSelectedPieChartData = useDeferredValue(selectedPieChartData)

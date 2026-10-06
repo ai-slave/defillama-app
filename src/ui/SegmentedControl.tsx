@@ -104,7 +104,6 @@ export const TAG_GROUP_SIZES = {
 } as const
 
 export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`
-export const chartSegmentedControlButtonStyles = TAG_GROUP_VARIANTS.default.button
 
 export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
 

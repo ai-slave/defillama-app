@@ -13,7 +13,7 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import type { useGroupBridgeData } from '~/containers/Stablecoins/hooks'
+import type { groupBridgeData } from '~/containers/Stablecoins/hooks'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import {
@@ -27,10 +27,8 @@ import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
-export const tableFeaturesConfig = searchTableFeatures
-
-type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, StablecoinByChainRow>()
+type StablecoinByChainRow = ReturnType<typeof groupBridgeData>[number]
+const columnHelper = createColumnHelper<typeof searchTableFeatures, StablecoinByChainRow>()
 
 const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor((row) => `${row.name}${row.symbol && row.symbol !== '-' ? ` (${row.symbol})` : ''}`, {
@@ -185,7 +183,7 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: searchTableFeatures,
 		data,
 		columns: stablecoinsByChainColumns,
 		state: {

@@ -29,8 +29,6 @@ import { buildFilteredHacksSummary, filterHacksRows } from './data'
 import { HacksFilters } from './Filters'
 import type { IHacksPageData } from './types'
 
-const tableFeaturesConfig = filteredTableFeatures
-
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
@@ -44,7 +42,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	const initialSearchAppliedRef = React.useRef(false)
 
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: filteredTableFeatures,
 		data,
 		columns: hacksColumns,
 		state: {
@@ -244,7 +242,7 @@ export function HacksContainer({
 	)
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IHacksPageData['data'][0]>()
+const columnHelper = createColumnHelper<typeof filteredTableFeatures, IHacksPageData['data'][0]>()
 
 const hacksColumns = columnHelper.columns([
 	columnHelper.accessor('name', {

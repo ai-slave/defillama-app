@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react'
 import { ProSegmented } from '~/containers/ProDashboard/ui/ProSegmented'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
-import type { KpkMandateClient, KpkMandateSleeve, KpkMandateWindow } from './api'
-import { useKpkMandates } from './api'
+import { useTab, type KpkMandateClient, type KpkMandates, type KpkMandateSleeve, type KpkMandateWindow } from './api'
 import { KPK_BENCH_TEXT, KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
 import {
@@ -54,7 +53,7 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve | null }) {
 }
 
 export default function Mandates() {
-	const { data, isError } = useKpkMandates()
+	const { data, isError } = useTab<KpkMandates>('mandates')
 	const [selectedDenom, setSelectedDenom] = useState<string | null>(null)
 
 	const denomOptions = useMemo(

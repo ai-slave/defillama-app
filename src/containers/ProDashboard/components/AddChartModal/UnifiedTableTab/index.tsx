@@ -27,7 +27,7 @@ import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/Equitie
 import { EquitiesFilingsDataset } from '../../datasets/EquitiesDataset/EquitiesFilingsDataset'
 import { EquitiesFinancialsDataset } from '../../datasets/EquitiesDataset/EquitiesFinancialsDataset'
 import { useEquitiesTickerOptions } from '../../datasets/EquitiesDataset/useEquitiesTickerOptions'
-import { RWAAssetsDataset, RWAChainAssetsDataset } from '../../datasets/RWADataset/RWAAssetsDataset'
+import { RWAAssetsDataset } from '../../datasets/RWADataset/RWAAssetsDataset'
 import { RWAChainsDataset } from '../../datasets/RWADataset/RWAChainsDataset'
 import type { UnifiedTableFocusSection } from '../../UnifiedTable/types'
 import { applyPresetToConfig } from '../../UnifiedTable/utils/configHelpers'
@@ -725,7 +725,7 @@ export function UnifiedTableTab({
 						) : activeRwaTab === 'rwa' ? (
 							<RWAAssetsDataset />
 						) : (
-							<RWAChainAssetsDataset chain={selectedDatasetChain || 'Ethereum'} />
+							<RWAAssetsDataset chain={selectedDatasetChain || 'Ethereum'} />
 						)}
 					</div>
 				</div>

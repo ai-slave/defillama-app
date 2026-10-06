@@ -13,7 +13,7 @@ import { prepareChartCsv } from '~/components/ECharts/shared/csv'
 import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
@@ -150,7 +150,7 @@ export function ChainChartPanel({
 	// Cumulative hides Active Addresses, so a chart picked down to it alone draws nothing to export or embed.
 	const plotsSeries = toggledCharts.length > (isActiveAddressesHidden ? 1 : 0)
 
-	const { chartInstance: chainChartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance: chainChartInstance, handleChartReady } = useGetChartInstance()
 	const imageExportFilename = slug(metadata.name)
 	const imageExportTitle = metadata.name === 'All' ? 'All Chains' : metadata.name
 

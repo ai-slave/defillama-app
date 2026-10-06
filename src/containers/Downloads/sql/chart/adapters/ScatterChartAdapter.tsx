@@ -1,11 +1,12 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { ScatterTooltipParams } from '~/components/ECharts/ScatterChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
+import { readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 import { buildScatterPresentation, type ScatterPresentationInput } from './scatterPresentation'
 
@@ -60,11 +61,11 @@ export function ScatterChartAdapter({ config, result, classified, onReady, heigh
 		if (!params?.value || params.value.length < 2) return ''
 		const [x, y, label] = params.value
 		const lines: Array<string> = []
-		if (label) lines.push(`<strong>${escapeSqlChartHtml(String(label))}</strong>`)
+		if (label) lines.push(`<strong>${escapeHtml(String(label))}</strong>`)
 		const group = params.data && !Array.isArray(params.data) ? params.data.groupName : undefined
-		if (group) lines.push(`Category: ${escapeSqlChartHtml(String(group))}`)
-		lines.push(`${escapeSqlChartHtml(xCol?.name ?? 'x')}: ${formatter.tooltip(x)}`)
-		lines.push(`${escapeSqlChartHtml(yCol?.name ?? 'y')}: ${formatter.tooltip(y)}`)
+		if (group) lines.push(`Category: ${escapeHtml(String(group))}`)
+		lines.push(`${escapeHtml(xCol?.name ?? 'x')}: ${formatter.tooltip(x)}`)
+		lines.push(`${escapeHtml(yCol?.name ?? 'y')}: ${formatter.tooltip(y)}`)
 		return lines.join('<br/>')
 	}
 

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, type ReactNode, Suspense, useCallback, useContext, useMemo } from 'react'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { queryReadFailed } from '~/utils/query'
@@ -27,7 +27,7 @@ interface UnlocksPieCardProps {
 }
 
 export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
-	const { chartInstance, handleChartReady } = useChartImageExport()
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { protocol, protocolName, chartType } = config
 	const includeSupplyMeta = chartType === 'locked-unlocked'
 

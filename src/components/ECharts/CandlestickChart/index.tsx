@@ -62,7 +62,6 @@ const INDICATOR_COLORS = ['#ff7f0e', '#2ca02c', '#9467bd', '#e377c2', '#17becf',
 
 const PANEL_HEIGHT = 60
 const VOLUME_HEIGHT = 80
-const BASE_BOTTOM = CHART_ZOOM_RESERVE
 
 function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS, onReady }: ICandlestickChartProps) {
 	const [isThemeDark] = useDarkModeManager()
@@ -85,7 +84,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 
 	const defaultChartSettings = useMemo<EChartsOption>(() => {
 		const panelCount = panels.length
-		const volumeBottom = BASE_BOTTOM + panelCount * PANEL_HEIGHT
+		const volumeBottom = CHART_ZOOM_RESERVE + panelCount * PANEL_HEIGHT
 		const priceBottom = volumeBottom + VOLUME_HEIGHT + 20
 		const showLegend = overlays.length > 0 || panels.length > 0
 
@@ -161,7 +160,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		for (let idx = 0; idx < panels.length; idx++) {
 			const panel = panels[idx]!
 			const gridIdx = idx + 2
-			const bottom = BASE_BOTTOM + (panelCount - idx - 1) * PANEL_HEIGHT
+			const bottom = CHART_ZOOM_RESERVE + (panelCount - idx - 1) * PANEL_HEIGHT
 
 			grids.push({
 				height: PANEL_HEIGHT - 10,

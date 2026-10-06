@@ -1,16 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { RWA_PERPS_SERVER_URL } from '~/constants'
-import { rwaPerpsMarketBreakdown } from '~/containers/RWA/server/api'
-import { parseMarketBreakdownRequest } from '~/pages/api/public/rwa/perps/market-breakdown'
+import { parsePerpsMarketBreakdownRequest, rwaPerpsMarketBreakdown } from '~/containers/RWA/server/api'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 
-describe('parseMarketBreakdownRequest', () => {
+describe('parsePerpsMarketBreakdownRequest', () => {
 	test('accepts every bounded backend target', () => {
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					key: 'openInterest'
 				}
@@ -22,7 +21,7 @@ describe('parseMarketBreakdownRequest', () => {
 		})
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					venue: 'xyz',
 					key: 'openInterest'
@@ -35,7 +34,7 @@ describe('parseMarketBreakdownRequest', () => {
 		})
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					assetGroup: 'Equities',
 					includeCex: 'true',
@@ -49,7 +48,7 @@ describe('parseMarketBreakdownRequest', () => {
 		})
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					key: 'markets'
@@ -62,7 +61,7 @@ describe('parseMarketBreakdownRequest', () => {
 		})
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					excludeAssetClass: 'Forex Perps',
 					key: 'volume24h'
@@ -75,7 +74,7 @@ describe('parseMarketBreakdownRequest', () => {
 		})
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					baseAsset: 'SK Hynix',
 					includeCex: 'true',
@@ -91,7 +90,7 @@ describe('parseMarketBreakdownRequest', () => {
 
 	test('rejects invalid metrics and conflicting targets', () => {
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					key: 'activeMcap'
 				}
@@ -99,7 +98,7 @@ describe('parseMarketBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					baseAsset: 'SK Hynix',
 					venue: 'Binance',
@@ -109,7 +108,7 @@ describe('parseMarketBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					excludeAssetClass: 'Forex Perps',
@@ -119,7 +118,7 @@ describe('parseMarketBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					assetGroup: 'Equities',
 					includeCex: 'yes',
@@ -129,7 +128,7 @@ describe('parseMarketBreakdownRequest', () => {
 		).toBeNull()
 
 		expect(
-			parseMarketBreakdownRequest({
+			parsePerpsMarketBreakdownRequest({
 				query: {
 					assetClass: 'Forex Perps',
 					includeCex: ['true'],

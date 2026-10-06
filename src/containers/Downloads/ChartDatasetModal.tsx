@@ -64,7 +64,6 @@ const PERCENT_HEADER_PATTERN = /(apy|pct|percent|change|rate|fee)/i
 const CURRENCY_HEADER_PATTERN =
 	/(usd|tvl|mcap|market.?cap|price|amount|volume|fees?|revenue|supply|borrow|depositusd|withdrawusd|value|flow)/i
 
-type PreviewRow = ParsedCsvRow
 type SortDirection = 'asc' | 'desc'
 
 interface SortState {
@@ -111,14 +110,14 @@ function getInitialSortDirection(kind: ColumnKind): SortDirection {
 function buildSelectedCsvRows(
 	columns: Array<ColumnMeta>,
 	selected: Set<number>,
-	rows: Array<PreviewRow>
+	rows: Array<ParsedCsvRow>
 ): Array<Array<string>> {
 	const active = columns.filter((c) => selected.has(c.index))
 	if (active.length === 0) return []
 	return [active.map((c) => c.header), ...rows.map((row) => active.map((c) => row.values[c.index] ?? ''))]
 }
 
-function buildTsvString(columns: Array<ColumnMeta>, selected: Set<number>, rows: Array<PreviewRow>): string {
+function buildTsvString(columns: Array<ColumnMeta>, selected: Set<number>, rows: Array<ParsedCsvRow>): string {
 	const active = columns.filter((c) => selected.has(c.index))
 	if (active.length === 0) return ''
 	const header = active.map((c) => c.header).join('\t')
@@ -309,7 +308,7 @@ export function ChartDatasetModal({
 	}, [sumModeActive, rawCsvQueries, sumColumnLabel])
 
 	const { headers, rows } = useMemo(() => {
-		if (!csvText) return { headers: [] as Array<string>, rows: [] as Array<PreviewRow> }
+		if (!csvText) return { headers: [] as Array<string>, rows: [] as Array<ParsedCsvRow> }
 		return parseCsv(csvText)
 	}, [csvText])
 

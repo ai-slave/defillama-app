@@ -20,8 +20,6 @@ import { slug } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatUsd } from '~/utils/numberFormat'
 
-const tableFeaturesConfig = orderedFilteredTableFeatures
-
 type BridgesTableRow = {
 	displayName: string
 	icon?: string | null
@@ -43,7 +41,7 @@ type BridgesTableProps = {
 	csvFileName?: string
 }
 
-const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgesTableRow>()
+const columnHelper = createColumnHelper<typeof orderedFilteredTableFeatures, BridgesTableRow>()
 
 const BRIDGES_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('displayName', {
@@ -158,7 +156,7 @@ export function BridgesTable({
 	const columnFilters: ColumnFiltersState = searchValue ? [{ id: 'displayName', value: searchValue }] : []
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const instance = useTable({
-		features: tableFeaturesConfig,
+		features: orderedFilteredTableFeatures,
 		data,
 		columns: BRIDGES_COLUMNS,
 		state: {

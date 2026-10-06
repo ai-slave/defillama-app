@@ -26,8 +26,6 @@ const revisions: Array<ArticleRevision> = EVENTS.map((eventType, i) => {
 })
 
 const http = installFixtureFetch()
-// The drawer receives authorizedFetch as a prop; plain fetch reaches the same fixtures.
-const authorizedFetch = (url: string, init?: RequestInit) => fetch(url, init)
 const revisionRequests = () =>
 	http.requests.map((request) => request.url.pathname).filter((path) => /\/revisions\/rev-/.test(path))
 
@@ -123,7 +121,7 @@ describe('RevisionHistoryDrawer', () => {
 					<RevisionHistoryDrawer
 						onClose={onClose}
 						articleId="article-1"
-						authorizedFetch={authorizedFetch}
+						authorizedFetch={fetch}
 						saveEdits={saveEdits}
 						onRestored={onRestored}
 					/>
@@ -415,7 +413,7 @@ describe('RevisionHistoryDrawer', () => {
 					{open && (
 						<RevisionHistoryDrawer
 							articleId="article-1"
-							authorizedFetch={authorizedFetch}
+							authorizedFetch={fetch}
 							saveEdits={async () => true}
 							onRestored={vi.fn()}
 							onClose={() => {
