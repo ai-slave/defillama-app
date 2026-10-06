@@ -8,7 +8,7 @@ export async function sendClaimToUserAnalytics(payload: Record<string, unknown>)
 	if (!baseUrl || !sharedSecret) return
 
 	try {
-		const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/ingestion/utr-claims`, {
+		const response = await fetch(`${baseUrl}/api/ingestion/utr-claims`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

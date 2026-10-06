@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { FEATURES_SERVER } from '~/constants'
 import {
 	authorizationHeader,
 	dashboardIdFromQuery,
-	featuresServerUrl,
 	fetchExistingDashboard,
 	purgeDashboardCache,
 	sendBackendResponse
@@ -25,7 +25,7 @@ export async function dashboardDeleteHandler(req: NextApiRequest, res: NextApiRe
 	const authHeader = authorizationHeader(req)
 	const before = await fetchExistingDashboard(id, authHeader)
 
-	const deleteResponse = await fetch(featuresServerUrl(`/dashboards/delete/${encodeURIComponent(id)}`), {
+	const deleteResponse = await fetch(`${FEATURES_SERVER}/dashboards/delete/${encodeURIComponent(id)}`, {
 		method: 'POST',
 		headers: authHeader
 	})

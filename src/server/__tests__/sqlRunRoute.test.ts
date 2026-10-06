@@ -9,8 +9,8 @@ vi.mock('~/server/sql/runner', async (importActual) => ({
 	runServerSql
 }))
 
+import { FEATURES_SERVER } from '~/constants'
 import { sqlRunHandler } from '~/containers/ProDashboard/server/sqlRunRoute'
-import { featuresServerUrl } from '~/server/dashboardPurgeProxy'
 import { SqlPolicyError } from '~/server/sql/policy'
 import { SqlQueueFullError } from '~/server/sql/runner'
 
@@ -59,8 +59,8 @@ function serve({
 	stored?: { result: unknown; computedAt: string }
 }) {
 	http.serve({
-		[featuresServerUrl('/dashboards/dash-1')]: dashboard,
-		[featuresServerUrl('/internal/sql-results/')]: (_url, init) => {
+		[`${FEATURES_SERVER}/dashboards/dash-1`]: dashboard,
+		[`${FEATURES_SERVER}/internal/sql-results/`]: (_url, init) => {
 			if (init?.method !== 'PUT') return stored ? Response.json(stored) : new Response('not found', { status: 404 })
 			stores.push({ key: (init.headers as Record<string, string>)['x-internal-key'], ...JSON.parse(String(init.body)) })
 			return { ok: true }

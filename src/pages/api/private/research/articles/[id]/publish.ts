@@ -12,10 +12,6 @@ type BackendArticleResponse = {
 
 type ResponseData = (BackendArticleResponse & { cache?: ScheduledResearchCacheUpdate }) | { error: string }
 
-function articleUrl(path: string) {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
-}
-
 function articleIdFromRequest(req: NextApiRequest): string | null {
 	const { id } = req.query
 	if (Array.isArray(id)) return id[0] || null
@@ -122,7 +118,7 @@ export async function researchPublishHandler(req: NextApiRequest, res: NextApiRe
 		...authorizationHeader(req),
 		'Content-Type': 'application/json'
 	}
-	const beforeResponse = await fetch(articleUrl(`/articles/${encodedArticleId}/edit`), {
+	const beforeResponse = await fetch(`${FEATURES_SERVER}/articles/${encodedArticleId}/edit`, {
 		headers: authorizationHeader(req)
 	})
 	if (!beforeResponse.ok) {
@@ -132,7 +128,7 @@ export async function researchPublishHandler(req: NextApiRequest, res: NextApiRe
 	const before = (await readJson<BackendArticleResponse>(beforeResponse))?.article ?? null
 
 	const publishBody = publishRequestBody(req)
-	const publishResponse = await fetch(articleUrl(`/articles/${encodedArticleId}/publish`), {
+	const publishResponse = await fetch(`${FEATURES_SERVER}/articles/${encodedArticleId}/publish`, {
 		headers,
 		method: 'POST',
 		body: publishBody

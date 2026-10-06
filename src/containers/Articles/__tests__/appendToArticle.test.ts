@@ -7,7 +7,6 @@ import { appendBlocksToArticle, createArticleWithBlocks } from '../import/append
 const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
 
 const http = installFixtureFetch()
-const base = FEATURES_SERVER.replace(/\/$/, '')
 const newBlocks = [{ type: 'paragraph', content: [{ type: 'text', text: 'appended' }] }]
 const authorizedFetch = (url: string, init?: RequestInit) => fetch(url, init)
 
@@ -28,8 +27,10 @@ test('appends after existing content and preserves editable article metadata', a
 		contentJson: { type: 'doc', content: [intro] }
 	}
 	http.serve({
-		[`${base}/articles/a1/edit`]: { article: existing },
-		[`${base}/articles/a1`]: { article: { ...existing, contentJson: { type: 'doc', content: [intro, ...newBlocks] } } }
+		[`${FEATURES_SERVER}/articles/a1/edit`]: { article: existing },
+		[`${FEATURES_SERVER}/articles/a1`]: {
+			article: { ...existing, contentJson: { type: 'doc', content: [intro, ...newBlocks] } }
+		}
 	})
 	await appendBlocksToArticle('a1', newBlocks, authorizedFetch)
 	expect(savedArticle()).toMatchObject({
@@ -43,7 +44,10 @@ test('appends after existing content and preserves editable article metadata', a
 
 test('appends to a draft with no content array', async () => {
 	const existing = { ...createEmptyLocalArticle(ARTICLE_NOW), id: 'a2', contentJson: { type: 'doc' } }
-	http.serve({ [`${base}/articles/a2/edit`]: { article: existing }, [`${base}/articles/a2`]: { article: existing } })
+	http.serve({
+		[`${FEATURES_SERVER}/articles/a2/edit`]: { article: existing },
+		[`${FEATURES_SERVER}/articles/a2`]: { article: existing }
+	})
 	await appendBlocksToArticle('a2', newBlocks, authorizedFetch)
 	expect(savedArticle().contentJson).toEqual({ type: 'doc', content: newBlocks })
 })
@@ -52,7 +56,7 @@ test.each([
 	['Uniswap fee report', 'Uniswap fee report'],
 	['   ', 'Untitled research']
 ])('creates a draft from imported blocks and title %j', async (title, expectedTitle) => {
-	http.serve({ [`${base}/articles`]: { article: { ...createEmptyLocalArticle(ARTICLE_NOW), id: 'new1' } } })
+	http.serve({ [`${FEATURES_SERVER}/articles`]: { article: { ...createEmptyLocalArticle(ARTICLE_NOW), id: 'new1' } } })
 	const result = await createArticleWithBlocks(title, newBlocks, authorizedFetch)
 	expect(savedArticle()).toMatchObject({
 		title: expectedTitle,

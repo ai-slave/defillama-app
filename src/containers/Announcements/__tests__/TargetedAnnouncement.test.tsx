@@ -6,6 +6,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { UserInterestsResponse } from '~/api/users.types'
+import { FEATURES_SERVER } from '~/constants'
 import { PageClockProvider } from '~/hooks/usePageClock'
 import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import {
@@ -27,7 +28,7 @@ vi.mock('next/router', () => ({ useRouter: () => route }))
 
 const session = installSubscriberSession('user-a')
 const track = installUmamiSink()
-const INTERESTS_URL = 'https://users-api.llama.team/api/profile/interests'
+const INTERESTS_URL = `${FEATURES_SERVER}/profile/interests`
 const PROMO_TEXT = 'Ask LlamaAI anything about DeFi'
 
 function serveInterests(profile: UserInterestsResponse) {
@@ -232,6 +233,8 @@ describe('TargetedAnnouncement', () => {
 			serveInterests({ interests: [{ category: 'llamaai', score: 0.9 }], segments: [] })
 			await render()
 			await waitForText('LlamaAI is now in the DefiLlama app.')
+			const request = session.requests.find(({ url }) => url.href === INTERESTS_URL)!
+			expect(new Headers(request.init?.headers).get('Authorization')).toBe(`Bearer ${session.token}`)
 			await waitForImpression()
 			expect(impressions()[0][1]).toMatchObject({ kind: 'targeted', category: 'llamaai', id: 'llamaai-mobile-app' })
 		})

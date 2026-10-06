@@ -58,7 +58,7 @@ export async function postUpload<T>(
 	for (let i = 0; i < bytes.length; i += chunkSize) {
 		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
 	}
-	const response = await authorizedFetch(`${FEATURES_SERVER.replace(/\/$/, '')}/uploads/${route}`, {
+	const response = await authorizedFetch(`${FEATURES_SERVER}/uploads/${route}`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ ...fields, dataBase64: btoa(binary) })

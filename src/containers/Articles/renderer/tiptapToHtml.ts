@@ -8,9 +8,6 @@ import { getArticleEntityRoute, isValidArticleEntityType } from '../entityLinks'
 import { getTiptapNodeText } from '../extractors'
 import type { ArticleCalloutTone, ArticleEntityType, TiptapJson, TiptapMark } from '../types'
 
-const SITE_ORIGIN = SITEMAP_BASE_URL
-const MEDIA_ORIGIN = FEATURES_SERVER.replace(/\/$/, '')
-
 export type FeedImageInput = {
 	src?: string | null
 	alt?: string | null
@@ -68,7 +65,7 @@ function applyMark(children: string, mark: TiptapMark): string {
 	if (mark.type === 'link') {
 		const href = stringAttr(mark.attrs, 'href')
 		if (!href) return children
-		const target = /^(\/|#)/.test(href) ? absolutize(href, SITE_ORIGIN) : href
+		const target = /^(\/|#)/.test(href) ? absolutize(href, SITEMAP_BASE_URL) : href
 		if (!target) return children
 		return `<a href="${escapeAttr(target)}">${children}</a>`
 	}
@@ -77,7 +74,7 @@ function applyMark(children: string, mark: TiptapMark): string {
 		const slug = stringAttr(mark.attrs, 'slug')
 		if (!entityType || !slug || !isValidArticleEntityType(entityType)) return children
 		const route = stringAttr(mark.attrs, 'route') || getArticleEntityRoute(entityType as ArticleEntityType, slug)
-		return `<a href="${escapeAttr(`${SITE_ORIGIN}${route}`)}">${children}</a>`
+		return `<a href="${escapeAttr(`${SITEMAP_BASE_URL}${route}`)}">${children}</a>`
 	}
 	return children
 }
@@ -91,11 +88,11 @@ function renderInlineText(node: TiptapJson): string {
 }
 
 export function imageFigureHtml(image: FeedImageInput): string {
-	const src = absolutize(image.src, MEDIA_ORIGIN)
+	const src = absolutize(image.src, FEATURES_SERVER)
 	if (!src) return ''
 	const alt = escapeAttr((image.alt ?? '').trim())
 	const imgTag = `<img src="${escapeAttr(src)}" alt="${alt}" />`
-	const linkHref = absolutize(image.href, SITE_ORIGIN)
+	const linkHref = absolutize(image.href, SITEMAP_BASE_URL)
 	const media = linkHref ? `<a href="${escapeAttr(linkHref)}">${imgTag}</a>` : imgTag
 
 	const captionLines: Array<string> = []
@@ -127,7 +124,7 @@ function renderCallout(node: TiptapJson): string {
 function renderCitation(node: TiptapJson): string {
 	const label = stringAttr(node.attrs, 'label') || stringAttr(node.attrs, 'id') || ''
 	const title = stringAttr(node.attrs, 'title')
-	const url = absolutize(stringAttr(node.attrs, 'url'), SITE_ORIGIN)
+	const url = absolutize(stringAttr(node.attrs, 'url'), SITEMAP_BASE_URL)
 	const text = `[${escapeHtml(label)}]`
 	if (url) {
 		const titleAttr = title ? ` title="${escapeAttr(title)}"` : ''
@@ -142,7 +139,7 @@ function renderChart(node: TiptapJson): string {
 	const label = config.caption || config.series.map((series) => series.name).join(' vs ')
 	const primary = config.series[0]
 	if (!primary) return ''
-	const href = `${SITE_ORIGIN}${getArticleEntityRoute(primary.entityType, primary.slug)}`
+	const href = `${SITEMAP_BASE_URL}${getArticleEntityRoute(primary.entityType, primary.slug)}`
 	return `<p><em>[Chart: ${escapeHtml(label)}]</em> — <a href="${escapeAttr(href)}">View on DefiLlama</a></p>`
 }
 
@@ -167,7 +164,7 @@ function renderPeoplePanel(node: TiptapJson): string {
 	const heading = config.label ? `<h4>${escapeHtml(config.label)}</h4>` : ''
 	const people = config.items
 		.map((item) => {
-			const src = absolutize(item.src, MEDIA_ORIGIN)
+			const src = absolutize(item.src, FEATURES_SERVER)
 			const avatar = src ? `<img src="${escapeAttr(src)}" alt="${escapeAttr(item.name)}" /> ` : ''
 			const name = item.href
 				? `<a href="${escapeAttr(item.href)}"><strong>${escapeHtml(item.name)}</strong></a>`

@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { FEATURES_SERVER } from '~/constants'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { normalizeSqlResultRows } from '~/containers/Downloads/sql/resultNormalization'
 import { captureSnapshot, clampRowCap } from '~/containers/ProDashboard/sqlSnapshot'
 import type { SqlQueryRecipe, SqlSnapshot } from '~/containers/ProDashboard/types'
-import { authorizationHeader, featuresServerUrl } from '~/server/dashboardPurgeProxy'
+import { authorizationHeader } from '~/server/dashboardPurgeProxy'
 import { SqlPolicyError, validateSqlRecipe } from '~/server/sql/policy'
 import { hashSqlQuery } from '~/server/sql/queryHash'
 import { getStoredSqlResult, putStoredSqlResult } from '~/server/sql/resultsStore'
@@ -85,7 +86,7 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 		return res.status(400).json({ error: 'Missing dashboardId or itemId' })
 	}
 
-	const dashboardResponse = await fetch(featuresServerUrl(`/dashboards/${encodeURIComponent(dashboardId)}`), {
+	const dashboardResponse = await fetch(`${FEATURES_SERVER}/dashboards/${encodeURIComponent(dashboardId)}`, {
 		headers: authorizationHeader(req),
 		signal: AbortSignal.timeout(15_000)
 	})

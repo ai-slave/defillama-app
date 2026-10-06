@@ -73,13 +73,9 @@ export type ArticlePathsResponse = {
 	items: Array<ArticlePathItem>
 }
 
-function articleUrl(path: string) {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
-}
-
 /** Temporary CDN cache bust; remove when Cloudflare purge covers these routes. */
 function articleUrlWithCacheNonce(path: string) {
-	const url = articleUrl(path)
+	const url = `${FEATURES_SERVER}${path}`
 	const nonce = String(Date.now())
 	return url.includes('?') ? `${url}&_n=${nonce}` : `${url}?_n=${nonce}`
 }
@@ -188,7 +184,7 @@ export async function listArticleSections(
 ): Promise<ArticleSectionListResponse> {
 	const search = new URLSearchParams()
 	appendSearchParam(search, 'perSection', perSection)
-	return parseResponse(await fetchFn(articleUrl(`/articles/sections?${search}`)))
+	return parseResponse(await fetchFn(`${FEATURES_SERVER}/articles/sections?${search}`))
 }
 
 export async function listArticlesByTag(
@@ -243,7 +239,7 @@ export async function getResearchLanding(
 }
 
 export async function listArticlePaths(fetchFn: FetchLike = fetch): Promise<ArticlePathsResponse> {
-	return parseResponse(await fetchFn(articleUrl('/articles/paths')))
+	return parseResponse(await fetchFn(`${FEATURES_SERVER}/articles/paths`))
 }
 
 export async function revalidateResearchLanding(authorizedFetch: AuthorizedFetch): Promise<void> {
@@ -263,7 +259,7 @@ export async function setEditorialTag(
 	const hasOrder = options?.order !== undefined
 	return parseResponse(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/editorial-tags/${encodeURIComponent(tag)}`),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/editorial-tags/${encodeURIComponent(tag)}`,
 			hasOrder
 				? {
 						method: 'POST',
@@ -281,7 +277,7 @@ export async function reorderEditorialTag(
 	authorizedFetch: AuthorizedFetch
 ): Promise<{ tag: string; items: Array<EditorialTagOrderItem> }> {
 	return parseResponse(
-		await authorizedFetch(articleUrl(`/articles/editorial-tags/${encodeURIComponent(tag)}/order`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/editorial-tags/${encodeURIComponent(tag)}/order`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ items })
@@ -297,7 +293,7 @@ export async function updateEditorialTagMetadata(
 ): Promise<{ articleId: string; tag: string; metadata: ArticleEditorialTagMetadata }> {
 	return parseResponse(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/editorial-tags/${encodeURIComponent(tag)}`),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/editorial-tags/${encodeURIComponent(tag)}`,
 			{
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
@@ -314,7 +310,7 @@ export async function unsetEditorialTag(
 ): Promise<{ articleId: string; tag: string }> {
 	return parseResponse(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/editorial-tags/${encodeURIComponent(tag)}`),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/editorial-tags/${encodeURIComponent(tag)}`,
 			{ method: 'DELETE' }
 		)
 	)
@@ -328,14 +324,14 @@ export async function getArticleBySlug(slug: string, fetchFn: FetchLike = fetch)
 }
 
 export async function getAuthorBySlug(slug: string, fetchFn: FetchLike = fetch): Promise<ArticleAuthorResponse | null> {
-	const response = await fetchFn(articleUrl(`/article-authors/${encodeURIComponent(slug)}`))
+	const response = await fetchFn(`${FEATURES_SERVER}/article-authors/${encodeURIComponent(slug)}`)
 	if (response.status === 404) return null
 	return parseResponse<ArticleAuthorResponse>(response)
 }
 
 export async function getOwnedArticle(id: string, authorizedFetch: AuthorizedFetch): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}/edit`))
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}/edit`)
 	)
 	return data.article
 }
@@ -345,7 +341,7 @@ export async function createArticle(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl('/articles'), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(buildSavePayload(article, { includeStatus: true }))
@@ -360,7 +356,7 @@ export async function updateArticle(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(buildSavePayload(article))
@@ -382,7 +378,7 @@ export async function updateArticleReportFields(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(patch)
@@ -397,7 +393,7 @@ export async function updateReportHighlightSponsorLogo(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}/report-highlight/sponsor-logo`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}/report-highlight/sponsor-logo`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ sponsorLogo })
@@ -438,7 +434,7 @@ export async function unpublishArticle(id: string, authorizedFetch: AuthorizedFe
 
 export async function discardPendingEdits(id: string, authorizedFetch: AuthorizedFetch): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}/discard-pending`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}/discard-pending`, {
 			method: 'POST'
 		})
 	)
@@ -455,7 +451,7 @@ export async function listArticleRevisions(
 	appendSearchParam(search, 'cursor', params.cursor)
 	const suffix = search.toString() ? `?${search.toString()}` : ''
 	return parseResponse<ArticleRevisionListResponse>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}/revisions${suffix}`))
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}/revisions${suffix}`)
 	)
 }
 
@@ -466,7 +462,7 @@ export async function getArticleRevision(
 ): Promise<ArticleRevision> {
 	const data = await parseResponse<{ revision: ArticleRevision }>(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/revisions/${encodeURIComponent(revisionId)}`)
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/revisions/${encodeURIComponent(revisionId)}`
 		)
 	)
 	return data.revision
@@ -479,9 +475,7 @@ export async function restoreArticleRevisionToPending(
 ): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
 		await authorizedFetch(
-			articleUrl(
-				`/articles/${encodeURIComponent(articleId)}/revisions/${encodeURIComponent(revisionId)}/restore-pending`
-			),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/revisions/${encodeURIComponent(revisionId)}/restore-pending`,
 			{ method: 'POST' }
 		)
 	)
@@ -495,7 +489,7 @@ export async function deleteArticleRevision(
 ): Promise<void> {
 	await parseResponse(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/revisions/${encodeURIComponent(revisionId)}`),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/revisions/${encodeURIComponent(revisionId)}`,
 			{ method: 'DELETE' }
 		)
 	)
@@ -508,11 +502,13 @@ export async function listMyArticles(
 	const search = new URLSearchParams()
 	appendSearchParam(search, 'page', params.page)
 	appendSearchParam(search, 'limit', params.limit)
-	return parseResponse(await authorizedFetch(articleUrl(`/articles/mine?${search}`)))
+	return parseResponse(await authorizedFetch(`${FEATURES_SERVER}/articles/mine?${search}`))
 }
 
 export async function deleteArticle(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
-	await parseResponse(await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(id)}`), { method: 'DELETE' }))
+	await parseResponse(
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(id)}`, { method: 'DELETE' })
+	)
 }
 
 export type AuthorProfileUpdate = {
@@ -525,7 +521,7 @@ export type AuthorProfileUpdate = {
 
 export async function getMyAuthorProfile(authorizedFetch: AuthorizedFetch): Promise<ArticleAuthorProfile> {
 	const data = await parseResponse<{ author: ArticleAuthorProfile }>(
-		await authorizedFetch(articleUrl('/article-authors/me'))
+		await authorizedFetch(`${FEATURES_SERVER}/article-authors/me`)
 	)
 	return data.author
 }
@@ -535,7 +531,7 @@ export async function updateMyAuthorProfile(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleAuthorProfile> {
 	const data = await parseResponse<{ author: ArticleAuthorProfile }>(
-		await authorizedFetch(articleUrl('/article-authors/me'), {
+		await authorizedFetch(`${FEATURES_SERVER}/article-authors/me`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -549,7 +545,7 @@ export async function listCollaborators(
 	authorizedFetch: AuthorizedFetch
 ): Promise<Array<ArticleCollaborator>> {
 	const data = await parseResponse<{ collaborators: Array<ArticleCollaborator> }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(articleId)}/collaborators`))
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/collaborators`)
 	)
 	return data.collaborators
 }
@@ -560,7 +556,7 @@ export async function addCollaborator(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleCollaborator> {
 	const data = await parseResponse<{ collaborator: ArticleCollaborator }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(articleId)}/collaborators`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/collaborators`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ email })
@@ -576,7 +572,7 @@ export async function removeCollaborator(
 ): Promise<void> {
 	await parseResponse(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/collaborators/${encodeURIComponent(pbUserId)}`),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/collaborators/${encodeURIComponent(pbUserId)}`,
 			{ method: 'DELETE' }
 		)
 	)
@@ -590,7 +586,7 @@ export async function updateCollaborator(
 ): Promise<ArticleCollaborator> {
 	const data = await parseResponse<{ collaborator: ArticleCollaborator }>(
 		await authorizedFetch(
-			articleUrl(`/articles/${encodeURIComponent(articleId)}/collaborators/${encodeURIComponent(pbUserId)}`),
+			`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/collaborators/${encodeURIComponent(pbUserId)}`,
 			{
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
@@ -607,7 +603,7 @@ export async function transferOwnership(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const data = await parseResponse<{ article: ArticleDocument }>(
-		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(articleId)}/transfer-owner`), {
+		await authorizedFetch(`${FEATURES_SERVER}/articles/${encodeURIComponent(articleId)}/transfer-owner`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(target)
@@ -617,20 +613,20 @@ export async function transferOwnership(
 }
 
 export async function listBanners(authorizedFetch: AuthorizedFetch): Promise<Array<Banner>> {
-	const data = await parseResponse<{ banners: Array<Banner> }>(await authorizedFetch(articleUrl('/banners')))
+	const data = await parseResponse<{ banners: Array<Banner> }>(await authorizedFetch(`${FEATURES_SERVER}/banners`))
 	return data.banners.map(normalizeBannerTargeting)
 }
 
 export async function getBanner(id: string, authorizedFetch: AuthorizedFetch): Promise<Banner> {
 	const data = await parseResponse<{ banner: Banner }>(
-		await authorizedFetch(articleUrl(`/banners/${encodeURIComponent(id)}`))
+		await authorizedFetch(`${FEATURES_SERVER}/banners/${encodeURIComponent(id)}`)
 	)
 	return normalizeBannerTargeting(data.banner)
 }
 
 export async function createBanner(payload: BannerPayload, authorizedFetch: AuthorizedFetch): Promise<Banner> {
 	const data = await parseResponse<{ banner: Banner }>(
-		await authorizedFetch(articleUrl('/banners'), {
+		await authorizedFetch(`${FEATURES_SERVER}/banners`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -645,7 +641,7 @@ export async function updateBanner(
 	authorizedFetch: AuthorizedFetch
 ): Promise<Banner> {
 	const data = await parseResponse<{ banner: Banner }>(
-		await authorizedFetch(articleUrl(`/banners/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/banners/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -656,7 +652,7 @@ export async function updateBanner(
 
 export async function deleteBanner(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
 	await parseResponse(
-		await authorizedFetch(articleUrl(`/banners/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/banners/${encodeURIComponent(id)}`, {
 			method: 'DELETE'
 		})
 	)
@@ -758,7 +754,7 @@ export async function getTrustedBySection(fetchFn: FetchLike = fetch): Promise<T
 
 export async function listTrustedLogos(authorizedFetch: AuthorizedFetch): Promise<Array<TrustedLogo>> {
 	const data = await parseResponse<{ logos: Array<TrustedLogo> }>(
-		await authorizedFetch(articleUrl('/research/trusted-by/logos'))
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/logos`)
 	)
 	return data.logos
 }
@@ -768,7 +764,7 @@ export async function createTrustedLogo(
 	authorizedFetch: AuthorizedFetch
 ): Promise<TrustedLogo> {
 	const data = await parseResponse<{ logo: TrustedLogo }>(
-		await authorizedFetch(articleUrl('/research/trusted-by/logos'), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/logos`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -783,7 +779,7 @@ export async function updateTrustedLogo(
 	authorizedFetch: AuthorizedFetch
 ): Promise<TrustedLogo> {
 	const data = await parseResponse<{ logo: TrustedLogo }>(
-		await authorizedFetch(articleUrl(`/research/trusted-by/logos/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/logos/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -794,7 +790,9 @@ export async function updateTrustedLogo(
 
 export async function deleteTrustedLogo(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
 	await parseResponse(
-		await authorizedFetch(articleUrl(`/research/trusted-by/logos/${encodeURIComponent(id)}`), { method: 'DELETE' })
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/logos/${encodeURIComponent(id)}`, {
+			method: 'DELETE'
+		})
 	)
 }
 
@@ -803,7 +801,7 @@ export async function reorderTrustedLogos(
 	authorizedFetch: AuthorizedFetch
 ): Promise<Array<TrustedLogo>> {
 	const data = await parseResponse<{ logos: Array<TrustedLogo> }>(
-		await authorizedFetch(articleUrl('/research/trusted-by/logos/order'), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/logos/order`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ ids })
@@ -814,7 +812,7 @@ export async function reorderTrustedLogos(
 
 export async function listSocialMentions(authorizedFetch: AuthorizedFetch): Promise<Array<SocialMention>> {
 	const data = await parseResponse<{ mentions: Array<SocialMention> }>(
-		await authorizedFetch(articleUrl('/research/trusted-by/mentions'))
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/mentions`)
 	)
 	return data.mentions
 }
@@ -824,7 +822,7 @@ export async function createSocialMention(
 	authorizedFetch: AuthorizedFetch
 ): Promise<SocialMention> {
 	const data = await parseResponse<{ mention: SocialMention }>(
-		await authorizedFetch(articleUrl('/research/trusted-by/mentions'), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/mentions`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -839,7 +837,7 @@ export async function updateSocialMention(
 	authorizedFetch: AuthorizedFetch
 ): Promise<SocialMention> {
 	const data = await parseResponse<{ mention: SocialMention }>(
-		await authorizedFetch(articleUrl(`/research/trusted-by/mentions/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/mentions/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -850,7 +848,9 @@ export async function updateSocialMention(
 
 export async function deleteSocialMention(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
 	await parseResponse(
-		await authorizedFetch(articleUrl(`/research/trusted-by/mentions/${encodeURIComponent(id)}`), { method: 'DELETE' })
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/mentions/${encodeURIComponent(id)}`, {
+			method: 'DELETE'
+		})
 	)
 }
 
@@ -859,7 +859,7 @@ export async function reorderSocialMentions(
 	authorizedFetch: AuthorizedFetch
 ): Promise<Array<SocialMention>> {
 	const data = await parseResponse<{ mentions: Array<SocialMention> }>(
-		await authorizedFetch(articleUrl('/research/trusted-by/mentions/order'), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/trusted-by/mentions/order`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ ids })
@@ -882,7 +882,7 @@ export async function getSponsoredResearchReports(
 
 export async function listResearchSponsors(authorizedFetch: AuthorizedFetch): Promise<Array<ResearchSponsorAdmin>> {
 	const data = await parseResponse<{ sponsors: Array<ResearchSponsorAdmin> }>(
-		await authorizedFetch(articleUrl('/research/sponsors'))
+		await authorizedFetch(`${FEATURES_SERVER}/research/sponsors`)
 	)
 	return data.sponsors
 }
@@ -896,7 +896,7 @@ export async function searchResearchSponsorArticles(
 	appendSearchParam(search, 'q', query)
 	appendSearchParam(search, 'limit', limit)
 	const data = await parseResponse<{ articles: Array<ResearchSponsorArticleSearchResult> }>(
-		await authorizedFetch(articleUrl(`/research/sponsors/articles?${search}`))
+		await authorizedFetch(`${FEATURES_SERVER}/research/sponsors/articles?${search}`)
 	)
 	return data.articles
 }
@@ -906,7 +906,7 @@ export async function createResearchSponsor(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ResearchSponsorAdmin> {
 	const data = await parseResponse<{ sponsor: ResearchSponsorAdmin }>(
-		await authorizedFetch(articleUrl('/research/sponsors'), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/sponsors`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -921,7 +921,7 @@ export async function updateResearchSponsor(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ResearchSponsorSummary> {
 	const data = await parseResponse<{ sponsor: ResearchSponsorSummary }>(
-		await authorizedFetch(articleUrl(`/research/sponsors/${encodeURIComponent(id)}`), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/sponsors/${encodeURIComponent(id)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
@@ -932,7 +932,7 @@ export async function updateResearchSponsor(
 
 export async function deleteResearchSponsor(id: string, authorizedFetch: AuthorizedFetch): Promise<void> {
 	await parseResponse(
-		await authorizedFetch(articleUrl(`/research/sponsors/${encodeURIComponent(id)}`), { method: 'DELETE' })
+		await authorizedFetch(`${FEATURES_SERVER}/research/sponsors/${encodeURIComponent(id)}`, { method: 'DELETE' })
 	)
 }
 
@@ -943,7 +943,7 @@ export async function linkResearchSponsorReport(
 ): Promise<void> {
 	await parseResponse(
 		await authorizedFetch(
-			articleUrl(`/research/sponsors/${encodeURIComponent(sponsorId)}/reports/${encodeURIComponent(articleId)}`),
+			`${FEATURES_SERVER}/research/sponsors/${encodeURIComponent(sponsorId)}/reports/${encodeURIComponent(articleId)}`,
 			{ method: 'PUT' }
 		)
 	)
@@ -956,7 +956,7 @@ export async function unlinkResearchSponsorReport(
 ): Promise<void> {
 	await parseResponse(
 		await authorizedFetch(
-			articleUrl(`/research/sponsors/${encodeURIComponent(sponsorId)}/reports/${encodeURIComponent(articleId)}`),
+			`${FEATURES_SERVER}/research/sponsors/${encodeURIComponent(sponsorId)}/reports/${encodeURIComponent(articleId)}`,
 			{ method: 'DELETE' }
 		)
 	)
@@ -975,7 +975,7 @@ export async function setArticleClient(
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleClient | null> {
 	const data = await parseResponse<{ client: ArticleClient | null }>(
-		await authorizedFetch(articleUrl(`/research/articles/${encodeURIComponent(articleId)}/client`), {
+		await authorizedFetch(`${FEATURES_SERVER}/research/articles/${encodeURIComponent(articleId)}/client`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)

@@ -12,7 +12,7 @@ import { ResearchSearchDialog } from '../ResearchSearchDialog'
 const ARTICLE_NOW = '2026-07-14T00:00:00.000Z'
 
 const http = installFixtureFetch()
-const articlesUrl = `${FEATURES_SERVER.replace(/\/$/, '')}/articles`
+const articlesUrl = `${FEATURES_SERVER}/articles`
 let container: HTMLDivElement
 let root: Root
 let client: QueryClient

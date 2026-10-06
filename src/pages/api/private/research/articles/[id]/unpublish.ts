@@ -12,10 +12,6 @@ type BackendArticleResponse = {
 
 type ResponseData = (BackendArticleResponse & { cache?: ScheduledResearchCacheUpdate }) | { error: string }
 
-function articleUrl(path: string) {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
-}
-
 function articleIdFromRequest(req: NextApiRequest): string | null {
 	const { id } = req.query
 	if (Array.isArray(id)) return id[0] || null
@@ -94,7 +90,7 @@ export async function researchUnpublishHandler(req: NextApiRequest, res: NextApi
 	}
 
 	const encodedArticleId = encodeURIComponent(articleId)
-	const beforeResponse = await fetch(articleUrl(`/articles/${encodedArticleId}/edit`), {
+	const beforeResponse = await fetch(`${FEATURES_SERVER}/articles/${encodedArticleId}/edit`, {
 		headers: authorizationHeader(req)
 	})
 	if (!beforeResponse.ok) {
@@ -104,7 +100,7 @@ export async function researchUnpublishHandler(req: NextApiRequest, res: NextApi
 	const before = (await readJson<BackendArticleResponse>(beforeResponse))?.article ?? null
 	const purgePaths = unpublishPurgePaths(before)
 
-	const unpublishResponse = await fetch(articleUrl(`/articles/${encodedArticleId}/unpublish`), {
+	const unpublishResponse = await fetch(`${FEATURES_SERVER}/articles/${encodedArticleId}/unpublish`, {
 		headers: authorizationHeader(req),
 		method: 'POST'
 	})

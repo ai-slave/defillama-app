@@ -1,5 +1,5 @@
+import { FEATURES_SERVER } from '~/constants'
 import type { SqlSnapshot } from '~/containers/ProDashboard/types'
-import { featuresServerUrl } from '~/server/dashboardPurgeProxy'
 
 export interface StoredSqlResult {
 	snapshot: SqlSnapshot
@@ -11,7 +11,7 @@ function internalKey(): string | null {
 }
 
 function resultUrl(hash: string): string {
-	return featuresServerUrl(`/internal/sql-results/${encodeURIComponent(hash)}`)
+	return `${FEATURES_SERVER}/internal/sql-results/${encodeURIComponent(hash)}`
 }
 
 export async function getStoredSqlResult(hash: string): Promise<StoredSqlResult | null> {

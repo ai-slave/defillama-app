@@ -1,11 +1,10 @@
+import { FEATURES_SERVER } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import type { UserInterestsResponse } from './users.types'
 
-const USERS_API_URL = 'https://users-api.llama.team'
-
-/** Fetch the authenticated user's interests using their PocketBase token. Request failures propagate to the caller. */
+/** Fetch interests through features-server with the user's PocketBase token; analytics credentials stay server-side. */
 export function fetchUserInterests(token: string): Promise<UserInterestsResponse> {
-	return fetchJson<UserInterestsResponse>(`${USERS_API_URL}/api/profile/interests`, {
+	return fetchJson<UserInterestsResponse>(`${FEATURES_SERVER}/profile/interests`, {
 		headers: { Authorization: `Bearer ${token}` }
 	})
 }

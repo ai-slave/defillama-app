@@ -5,10 +5,6 @@ import { type CloudflarePurgeResult, purgeCloudflareDashboardUrls } from './clou
 
 export type ProxiedDashboard = { id?: string; slug?: string | null; visibility?: string | null }
 
-export function featuresServerUrl(path: string): string {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
-}
-
 export function authorizationHeader(req: NextApiRequest): Record<string, string> {
 	const header = req.headers.authorization
 	if (Array.isArray(header)) {
@@ -29,7 +25,7 @@ export async function fetchExistingDashboard(
 	authHeader: Record<string, string>
 ): Promise<ProxiedDashboard | null> {
 	try {
-		const response = await fetch(featuresServerUrl(`/dashboards/${encodeURIComponent(id)}?_=${Date.now()}`), {
+		const response = await fetch(`${FEATURES_SERVER}/dashboards/${encodeURIComponent(id)}?_=${Date.now()}`, {
 			headers: authHeader
 		})
 		if (!response.ok) return null

@@ -5,10 +5,6 @@ import { withApiRouteTelemetry } from '~/utils/telemetry'
 
 type ResponseData = ScheduledResearchCacheUpdate | { error: string }
 
-function articleUrl(path: string) {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
-}
-
 function authorizationHeader(req: NextApiRequest): Record<string, string> {
 	const header = req.headers.authorization
 	if (Array.isArray(header)) {
@@ -50,7 +46,7 @@ export async function researchLandingRevalidateHandler(req: NextApiRequest, res:
 		return res.status(401).json({ error: 'Unauthorized' })
 	}
 
-	const authCheck = await fetch(articleUrl('/articles/mine?limit=1'), { headers })
+	const authCheck = await fetch(`${FEATURES_SERVER}/articles/mine?limit=1`, { headers })
 	if (!authCheck.ok) {
 		return sendBackendResponse(authCheck, res)
 	}

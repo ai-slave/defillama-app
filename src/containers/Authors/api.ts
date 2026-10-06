@@ -21,10 +21,6 @@ export class AuthorApiError extends Error {
 	}
 }
 
-function authorUrl(path: string) {
-	return `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
-}
-
 async function parseResponse<T>(response: Response | null): Promise<T> {
 	if (!response) throw new AuthorApiError('Please sign in to continue', 401)
 	const text = await response.text()
@@ -49,13 +45,13 @@ export async function getAuthorBySlug(
 	if (params.dashboardLimit) searchParams.set('dashboardLimit', String(params.dashboardLimit))
 	if (params.dashboardSort) searchParams.set('dashboardSort', params.dashboardSort)
 	const qs = searchParams.toString()
-	const response = await fetcher(authorUrl(`/authors/${encodeURIComponent(slug)}${qs ? `?${qs}` : ''}`))
+	const response = await fetcher(`${FEATURES_SERVER}/authors/${encodeURIComponent(slug)}${qs ? `?${qs}` : ''}`)
 	return parseResponse<AuthorPageResponse>(response)
 }
 
 export async function getTopAuthors(limit?: number, fetcher: FetchLike = fetch): Promise<Array<TopAuthorEntry>> {
 	const qs = limit ? `?limit=${limit}` : ''
-	const response = await fetcher(authorUrl(`/authors/top${qs}`))
+	const response = await fetcher(`${FEATURES_SERVER}/authors/top${qs}`)
 	const data = await parseResponse<{ items: Array<TopAuthorEntry> }>(response)
 	return Array.isArray(data.items) ? data.items : []
 }
@@ -64,14 +60,14 @@ export async function followAuthor(
 	slug: string,
 	authorizedFetch: AuthorizedFetch
 ): Promise<{ following: boolean; followerCount: number }> {
-	const response = await authorizedFetch(authorUrl(`/authors/${encodeURIComponent(slug)}/follow`), {
+	const response = await authorizedFetch(`${FEATURES_SERVER}/authors/${encodeURIComponent(slug)}/follow`, {
 		method: 'POST'
 	})
 	return parseResponse<{ following: boolean; followerCount: number }>(response)
 }
 
 export async function getMyDashboardAuthorProfile(authorizedFetch: AuthorizedFetch): Promise<PublicDashboardAuthor> {
-	const response = await authorizedFetch(authorUrl('/authors/me'))
+	const response = await authorizedFetch(`${FEATURES_SERVER}/authors/me`)
 	const data = await parseResponse<{ author: PublicDashboardAuthor }>(response)
 	return data.author
 }
@@ -80,7 +76,7 @@ export async function updateMyDashboardAuthorProfile(
 	payload: AuthorProfileUpdate,
 	authorizedFetch: AuthorizedFetch
 ): Promise<PublicDashboardAuthor> {
-	const response = await authorizedFetch(authorUrl('/authors/me'), {
+	const response = await authorizedFetch(`${FEATURES_SERVER}/authors/me`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(payload)

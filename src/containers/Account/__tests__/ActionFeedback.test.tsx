@@ -13,7 +13,7 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import { ApiAccessCard } from '../ApiAccessCard'
 
 const session = installSubscriberSession('admin')
-const features = (path: string) => `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
+
 const copy = vi.fn<(text: string) => Promise<void>>()
 const regenerate = vi.fn<() => Promise<string>>()
 type Reply = () => unknown
@@ -54,14 +54,14 @@ beforeEach(() => {
 	logosReply = () => ({ logos })
 	session.client.setDefaultOptions({ queries: { retry: false } })
 	session.serve({
-		[features('/research/sponsors')]: () => ({ sponsors }),
-		[features('/research/sponsors/')]: () => next(sponsorUpdates),
-		[features('/research/trusted-by/logos')]: () => logosReply(),
-		[features('/research/trusted-by/mentions')]: {
+		[`${FEATURES_SERVER}/research/sponsors`]: () => ({ sponsors }),
+		[`${FEATURES_SERVER}/research/sponsors/`]: () => next(sponsorUpdates),
+		[`${FEATURES_SERVER}/research/trusted-by/logos`]: () => logosReply(),
+		[`${FEATURES_SERVER}/research/trusted-by/mentions`]: {
 			mentions: [{ id: 'm1', username: 'example', quote: 'A useful tool', enabled: false }]
 		},
-		[features('/research/trusted-by/logos/l1')]: () => next(deletions),
-		[features('/research/trusted-by/mentions/m1')]: () => next(deletions),
+		[`${FEATURES_SERVER}/research/trusted-by/logos/l1`]: () => next(deletions),
+		[`${FEATURES_SERVER}/research/trusted-by/mentions/m1`]: () => next(deletions),
 		'/api/private/research/revalidate-landing': {},
 		'/api/public/research/entities/search': {
 			entities: [entity('new', 'New sponsor'), entity('second', 'Second sponsor')]
@@ -300,7 +300,7 @@ test('picking a Research article keeps focus on the article search while the lin
 	const link = pending()
 	sponsorUpdates.push(link.answer)
 	session.serve({
-		[features('/research/sponsors/articles')]: {
+		[`${FEATURES_SERVER}/research/sponsors/articles`]: {
 			articles: [
 				{ id: 'r1', title: 'Linkable report', slug: 'linkable', section: 'report', lifecycleStatus: 'published' }
 			]

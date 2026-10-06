@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { FEATURES_SERVER } from '~/constants'
 import {
 	authorizationHeader,
 	dashboardIdFromQuery,
-	featuresServerUrl,
 	fetchExistingDashboard,
 	purgeDashboardCache,
 	sendBackendResponse
@@ -28,7 +28,7 @@ export async function dashboardSaveHandler(req: NextApiRequest, res: NextApiResp
 	const before = id ? await fetchExistingDashboard(id, authHeader) : null
 
 	const saveResponse = await fetch(
-		id ? featuresServerUrl(`/dashboards/${encodeURIComponent(id)}`) : featuresServerUrl('/dashboards'),
+		id ? `${FEATURES_SERVER}/dashboards/${encodeURIComponent(id)}` : `${FEATURES_SERVER}/dashboards`,
 		{
 			method: 'POST',
 			headers: { ...authHeader, 'Content-Type': 'application/json' },

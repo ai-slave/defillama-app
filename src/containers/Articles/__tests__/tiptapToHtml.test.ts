@@ -3,8 +3,6 @@ import { FEATURES_SERVER } from '~/constants'
 import { imageFigureHtml, tiptapJsonToHtml } from '~/containers/Articles/renderer/tiptapToHtml'
 import type { TiptapJson } from '~/containers/Articles/types'
 
-const MEDIA_ORIGIN = FEATURES_SERVER.replace(/\/$/, '')
-
 function doc(content: Array<TiptapJson>): TiptapJson {
 	return { type: 'doc', content }
 }
@@ -198,12 +196,12 @@ describe('tiptapJsonToHtml', () => {
 describe('imageFigureHtml', () => {
 	test('absolutizes relative image sources against the media origin', () => {
 		const html = imageFigureHtml({ src: '/uploads/image/x.png', alt: 'Alt' })
-		expect(html).toContain(`<img src="${MEDIA_ORIGIN}/uploads/image/x.png" alt="Alt" />`)
+		expect(html).toContain(`<img src="${FEATURES_SERVER}/uploads/image/x.png" alt="Alt" />`)
 	})
 
 	test('keeps absolute sources and renders captions', () => {
-		const html = imageFigureHtml({ src: `${MEDIA_ORIGIN}/uploads/y.png`, headline: 'Head', credit: 'Bob' })
-		expect(html).toContain(`src="${MEDIA_ORIGIN}/uploads/y.png"`)
+		const html = imageFigureHtml({ src: `${FEATURES_SERVER}/uploads/y.png`, headline: 'Head', credit: 'Bob' })
+		expect(html).toContain(`src="${FEATURES_SERVER}/uploads/y.png"`)
 		expect(html).toContain('Head')
 		expect(html).toContain('Credit: Bob')
 	})
