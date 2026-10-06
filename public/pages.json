@@ -908,7 +908,11 @@
       "name": "Crypto Cards",
       "route": "/crypto-cards",
       "category": "Tools",
-      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability"
+      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability",
+      "searchKeywords": [
+        "card",
+        "cards"
+      ]
     },
     {
       "name": "Yields: Watchlist",
