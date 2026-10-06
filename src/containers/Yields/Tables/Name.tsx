@@ -151,16 +151,19 @@ function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null 
 export function RiskDataHint({ configID, poolName }: { configID: string; poolName: string }) {
 	const label = `Open ${poolName} risk report`
 	return (
-		<Tooltip content={label}>
-			<BasicLink
-				href={`/yields/pool/${configID}/risk`}
-				target="_blank"
-				rel="noopener noreferrer"
-				aria-label={label}
-				className="flex items-center text-warning transition-colors hover:text-primary"
-			>
-				<Icon name="shield-check" height={21} width={21} />
-			</BasicLink>
+		<Tooltip
+			content={label}
+			render={
+				<BasicLink
+					href={`/yields/pool/${configID}/risk`}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label={label}
+					className="flex items-center text-warning transition-colors hover:text-primary"
+				/>
+			}
+		>
+			<Icon name="shield-check" height={21} width={21} />
 		</Tooltip>
 	)
 }

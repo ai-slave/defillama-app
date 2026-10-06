@@ -41,11 +41,14 @@ export function VerifiedFilterToggle({ nestedMenu = false }: { nestedMenu?: bool
 	}
 
 	return (
-		<Tooltip content={help}>
-			<Button type="button" variant="toggle" size="md" aria-pressed={active} data-active={active} onClick={toggle}>
-				{glyph}
-				Verified
-			</Button>
+		<Tooltip
+			content={help}
+			render={
+				<Button type="button" variant="toggle" size="md" aria-pressed={active} data-active={active} onClick={toggle} />
+			}
+		>
+			{glyph}
+			Verified
 		</Tooltip>
 	)
 }

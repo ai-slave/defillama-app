@@ -659,18 +659,19 @@ export function PoolGrowthChart({
 					{currentModel.hasIntrinsic ? (
 						<Tooltip
 							content={`Stack what ${assetName} earned by itself on top of what the pool earned, both measured on-chain. Its price move is still not drawn.`}
+							render={
+								<button
+									type="button"
+									aria-pressed={withIntrinsic}
+									onClick={() =>
+										setQuery({ [INTRINSIC_QUERY_KEY]: getBooleanOverride(!withIntrinsic, INTRINSIC_DEFAULT_ON) })
+									}
+									className={metricSeriesToggleStyles}
+									data-active={withIntrinsic}
+								/>
+							}
 						>
-							<button
-								type="button"
-								aria-pressed={withIntrinsic}
-								onClick={() =>
-									setQuery({ [INTRINSIC_QUERY_KEY]: getBooleanOverride(!withIntrinsic, INTRINSIC_DEFAULT_ON) })
-								}
-								className={metricSeriesToggleStyles}
-								data-active={withIntrinsic}
-							>
-								{intrinsicSymbol ? `${intrinsicSymbol} yield` : 'Asset yield'}
-							</button>
+							{intrinsicSymbol ? `${intrinsicSymbol} yield` : 'Asset yield'}
 						</Tooltip>
 					) : null}
 					<ChartExportButtons

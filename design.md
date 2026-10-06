@@ -269,7 +269,7 @@ Icons:
 - An icon-only action (copy, close, download, settings, pagination) rests on `text-secondary` and turns `text-primary` on hover and focus, never dimmed with opacity.
 - Status icons use the status tokens (`text-warning`, `text-data-down`); empty-state illustrations are `text-tertiary`; the active sort caret is `text-brand`.
 - An icon beside a label is 14px (`size-3.5`); an icon-only control's icon is 16px (`size-4`). Never mix the two in one role.
-- An icon-only control carries `aria-label` plus a `Tooltip`. Never put data in a native `title=`: touch cannot reach it.
+- An icon-only control carries `aria-label` plus a `Tooltip` that renders as the control (`render={<Button … />}`), never one wrapped around it, so the tooltip describes the focusable control and a tap keeps the control's action. Never put data in a native `title=`: touch cannot reach it.
 
 Values and windows:
 

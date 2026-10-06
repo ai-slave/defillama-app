@@ -16,7 +16,16 @@ interface ITooltip extends Ariakit.TooltipOptions {
    unreachable on touch and unstyled. An icon-only control has an `aria-label` plus a Tooltip.
 
    Touch has no hover, so a tap opens the tooltip whatever element `render` makes the anchor, except an anchor that
-   is, or sits inside, a link, button or other control, where the tap keeps that control's action. */
+   is, or sits inside, a link, button or other control, where the tap keeps that control's action.
+
+   A control is the anchor: pass it as `render` (`render={<Button … />}`), never as a child of the default span, so
+   the tap logic above sees it and `aria-describedby` lands on it (policy: check-focus-handoff).
+
+   The default span is a trigger box (`flex shrink-0 items-center`): it centers an icon beside its text and a long
+   sibling never squeezes it. A `render` anchor keeps only its own classes and lays out as it would without the
+   Tooltip. No anchor clips, because `overflow: hidden` cuts a control's 44px `touch-target` area. Text that should
+   ellipsize: a `render` anchor takes `min-w-0 truncate` itself; in the default span, which is a flex box where
+   `text-overflow` draws no ellipsis, wrap the text in `<span className="truncate">` and limit the span's width. */
 
 /** Elements whose tap already does something, such as a link or button: a tap there keeps that action instead of opening the tooltip. */
 const TAP_ACTION_SELECTOR =
@@ -31,7 +40,7 @@ export function Tooltip({ content, children, placement = 'top-start', className,
 		<Ariakit.TooltipProvider store={store}>
 			<Ariakit.TooltipAnchor
 				store={store}
-				className={`flex shrink-0 items-center truncate ${className ?? ''}`}
+				className={props.render ? className : `flex shrink-0 items-center ${className ?? ''}`}
 				render={<span />}
 				// Touch has no hover, so a tap opens the tooltip. A `render` anchor that is, or sits in, a
 				// control leaves the tap to that control; plain anchors keep toggling as they always have.

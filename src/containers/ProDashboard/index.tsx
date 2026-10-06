@@ -584,7 +584,11 @@ function ProDashboardContent() {
 					Dashboards
 				</ProButton>
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1">
-					<Tooltip content="Views" render={<p />} className="min-h-8 gap-1.5 px-2 text-sm text-pro-text-tertiary">
+					<Tooltip
+						content="Views"
+						render={<p />}
+						className="flex min-h-8 items-center gap-1.5 px-2 text-sm text-pro-text-tertiary"
+					>
 						<Icon name="eye" height={14} width={14} />
 						<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
 						<span className="sr-only">Views</span>

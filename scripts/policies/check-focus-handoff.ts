@@ -21,6 +21,9 @@ import { policyTargetFiles } from '../lib/sourceFiles'
  *    should see where it landed. Keep the global focus ring.
  * 5. `Ariakit.Button` rendering `Button` or `ProButton`: both are Ariakit's Button already, so the wrapper only
  *    duplicates it. Pass `disabled` and `accessibleWhenDisabled` to the button itself.
+ * 6. A `Tooltip` without `render` whose child is a control (a button, link or Ariakit disclosure; CONTROL_TAGS): the
+ *    tooltip's span becomes the anchor, so `aria-describedby` misses the focusable control and a tap both opens the
+ *    tooltip and runs the control. Pass the control as `render`.
  *
  * "Pending flag" means the `disabled` expression names something pending or saving (isPending, pending, isSaving,
  * saving, submitting). Other reasons to disable are outside this check.
@@ -33,6 +36,18 @@ const PENDING_NAME = /\b(?:is)?(?:pending|saving|submitting)\b|\.isPending\b|Pen
 const FIELD_TAGS = new Set(['input', 'textarea', 'Input'])
 const BUTTON_TAGS = new Set(['button', 'Button'])
 const NON_TEXT_TYPES = new Set(['checkbox', 'radio', 'file'])
+const CONTROL_TAGS = new Set([
+	'button',
+	'Button',
+	'ProButton',
+	'a',
+	'BasicLink',
+	'ButtonLink',
+	'ExternalLinkButton',
+	'Ariakit.MenuButton',
+	'Ariakit.PopoverDisclosure',
+	'Ariakit.DialogDisclosure'
+])
 
 function tagName(node: ts.JsxOpeningLikeElement): string {
 	return node.tagName.getText()
@@ -84,6 +99,18 @@ export function scanSource(relative: string, source: string): Array<string> {
 				violations.push(
 					`${at(opening)} wraps a Button in Ariakit.Button; Button is Ariakit's Button already, so pass its props to it`
 				)
+			}
+			if (tag === 'Tooltip' && !render && ts.isJsxElement(node)) {
+				for (const child of node.children) {
+					const childOpening = ts.isJsxElement(child)
+						? child.openingElement
+						: ts.isJsxSelfClosingElement(child)
+							? child
+							: null
+					if (childOpening && CONTROL_TAGS.has(tagName(childOpening))) {
+						violations.push(`${at(opening)} wraps a control in Tooltip's span; pass the control as render`)
+					}
+				}
 			}
 			const tabIndex = attribute(opening, 'tabIndex')
 			const className = attribute(opening, 'className')
@@ -187,6 +214,35 @@ if (process.argv.includes('--self-test')) {
 			name: 'Ariakit host rendering Button',
 			source:
 				'export const F = () => <Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>',
+			violation: false
+		},
+		{
+			name: 'Tooltip wrapping a Button',
+			source:
+				'export const F = () => <Tooltip content="Open site"><Button size="md" square aria-label="Open site" /></Tooltip>',
+			violation: true
+		},
+		{
+			name: 'Tooltip wrapping a link',
+			source: 'export const F = () => <Tooltip content="Pools"><BasicLink href="/pools">Pools</BasicLink></Tooltip>',
+			violation: true
+		},
+		{
+			name: 'Tooltip wrapping a menu button',
+			source:
+				'export const F = () => <Tooltip content="Export"><Ariakit.MenuButton store={menu}>Export</Ariakit.MenuButton></Tooltip>',
+			violation: true
+		},
+		{
+			name: 'Tooltip rendering as the control',
+			source:
+				'export const F = () => <Tooltip content="Open site" render={<Button size="md" square aria-label="Open site" />}><Icon name="globe" /></Tooltip>',
+			violation: false
+		},
+		{
+			name: 'Tooltip around text',
+			source:
+				'export const F = () => <Tooltip content="Total value locked"><span className="underline">TVL</span></Tooltip>',
 			violation: false
 		},
 		{

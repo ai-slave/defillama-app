@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { compile } from 'tailwindcss'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { Button } from '../Button'
 import { Tooltip } from '../Tooltip'
 
 let container: HTMLDivElement
@@ -69,4 +71,43 @@ test('leaves a tap on a link anchor to the link and still opens on focus', async
 	expect(tooltipText()).toBeUndefined()
 	await act(async () => link.focus())
 	await waitForUi(() => expect(tooltipText()).toBe('Open the DEX dashboard'))
+})
+
+/** Styles the rendered tree with the real Tailwind utilities its classes generate. */
+async function applyTailwind() {
+	const candidates = [...container.querySelectorAll('*')].flatMap((el) => [...el.classList])
+	const style = document.createElement('style')
+	style.textContent = (await compile('@tailwind utilities;')).build(candidates)
+	container.append(style)
+}
+
+test('no anchor clips its content, so a button keeps its touch target past its edges', async () => {
+	await act(async () =>
+		root.render(
+			<>
+				<Tooltip content="Open website" render={<Button variant="ghost" size="md" square aria-label="Open website" />}>
+					<svg />
+				</Tooltip>
+				<Tooltip content="Liquid staking">LSD</Tooltip>
+			</>
+		)
+	)
+	await applyTailwind()
+	const button = container.querySelector('button[aria-label="Open website"]')!
+	const textAnchor = [...container.querySelectorAll('span')].find((el) => el.textContent === 'LSD')!
+	expect([getComputedStyle(button).overflow, getComputedStyle(textAnchor).overflow]).not.toContain('hidden')
+})
+
+test('a render anchor keeps its own layout, so a truncating link can shrink beside its siblings', async () => {
+	await act(async () =>
+		root.render(
+			<Tooltip content="3 markets here: Spot, USD Perps" render={<a href="/token/USDC" className="min-w-0 truncate" />}>
+				USDC
+			</Tooltip>
+		)
+	)
+	await applyTailwind()
+	const link = getComputedStyle(container.querySelector('a')!)
+	expect(link.display).not.toBe('flex')
+	expect(link.flexShrink).not.toBe('0')
 })

@@ -54,14 +54,14 @@ const TOKEN_COLUMNS = columnHelper.columns([
 						content={`${marketCount} market${marketCount === 1 ? '' : 's'} here: ${segments
 							.map((segment) => EXCHANGE_SEGMENT_LABELS[segment])
 							.join(', ')}`}
-						className="min-w-0"
+						render={
+							<BasicLink
+								href={`/token/${encodeURIComponent(token)}`}
+								className="min-w-0 truncate label-md text-link hover:underline"
+							/>
+						}
 					>
-						<BasicLink
-							href={`/token/${encodeURIComponent(token)}`}
-							className="truncate label-md text-link hover:underline"
-						>
-							{token}
-						</BasicLink>
+						{token}
 					</Tooltip>
 					{/* Sibling of the link, never inside it: leverage must not become link text. */}
 					{maxLeverage == null ? null : (

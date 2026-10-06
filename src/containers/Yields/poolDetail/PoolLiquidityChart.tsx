@@ -603,16 +603,19 @@ export function PoolLiquidityChart({
 				<PanelTitle>Exit history</PanelTitle>
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					{currentModel.hasUnits ? (
-						<Tooltip content="In dollars a fall can be an outflow OR the token's price dropping. Switch to token units to see deposit flows on their own.">
-							<button
-								type="button"
-								aria-pressed={unit === 'units'}
-								onClick={() => setQuery({ liqUnit: getLiquidityUnitQueryValue(unit === 'usd' ? 'native' : 'usd') })}
-								className={metricSeriesToggleStyles}
-								data-active={unit === 'units'}
-							>
-								{unit === 'usd' ? `Show ${unitLabel(currentModel.symbol)}` : 'Show USD'}
-							</button>
+						<Tooltip
+							content="In dollars a fall can be an outflow OR the token's price dropping. Switch to token units to see deposit flows on their own."
+							render={
+								<button
+									type="button"
+									aria-pressed={unit === 'units'}
+									onClick={() => setQuery({ liqUnit: getLiquidityUnitQueryValue(unit === 'usd' ? 'native' : 'usd') })}
+									className={metricSeriesToggleStyles}
+									data-active={unit === 'units'}
+								/>
+							}
+						>
+							{unit === 'usd' ? `Show ${unitLabel(currentModel.symbol)}` : 'Show USD'}
 						</Tooltip>
 					) : null}
 					<PoolRangeControl kind="liquidity" />

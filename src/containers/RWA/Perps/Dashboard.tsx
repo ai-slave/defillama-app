@@ -364,7 +364,7 @@ const overviewColumns = overviewColumnHelper.columns([
 			if (!value) return null
 			return (
 				<Tooltip content={value} className="max-w-full">
-					{value}
+					<span className="truncate">{value}</span>
 				</Tooltip>
 			)
 		},
@@ -817,7 +817,7 @@ const venueColumns = venueColumnHelper.columns([
 			if (!value) return null
 			return (
 				<Tooltip content={value} className="max-w-full">
-					{value}
+					<span className="truncate">{value}</span>
 				</Tooltip>
 			)
 		},
