@@ -11,16 +11,16 @@ describe('buildETFFlowChartData', () => {
 	test('groups all assets in one chronological pass and retains asset-only dates', () => {
 		const flows: IProcessedFlows = {
 			[jan2]: { date: jan2, Bitcoin: -2, Ethereum: 4 },
-			[jan1]: { date: jan1, Ethereum: 3, Solana: 5 }
+			[jan1]: { date: jan1, Ethereum: 3, Solana: 5, Hyperliquid: 1 }
 		}
 
 		expect(buildETFFlowChartData(flows, 'daily')).toEqual([
-			[jan1 * 1e3, 0, 3, 5],
-			[jan2 * 1e3, -2, 4, null]
+			[jan1 * 1e3, 0, 3, 5, 1],
+			[jan2 * 1e3, -2, 4, null, null]
 		])
 
 		const weeklyBucket = getBucketTimestampSec(jan1, 'weekly')
-		expect(buildETFFlowChartData(flows, 'weekly')).toEqual([[weeklyBucket * 1e3, -2, 7, 5]])
+		expect(buildETFFlowChartData(flows, 'weekly')).toEqual([[weeklyBucket * 1e3, -2, 7, 5, 1]])
 	})
 
 	test('keeps cumulative gaps blank and resumes each asset running total when data returns', () => {
@@ -32,9 +32,9 @@ describe('buildETFFlowChartData', () => {
 		}
 
 		expect(buildETFFlowChartData(flows, 'cumulative')).toEqual([
-			[jan1 * 1e3, 10, 3, null],
-			[jan2 * 1e3, 8, null, null],
-			[jan3 * 1e3, 8, 7, 5]
+			[jan1 * 1e3, 10, 3, null, null],
+			[jan2 * 1e3, 8, null, null, null],
+			[jan3 * 1e3, 8, 7, 5, null]
 		])
 	})
 
@@ -45,7 +45,7 @@ describe('buildETFFlowChartData', () => {
 		}
 		const bucket = getBucketTimestampSec(jan1, groupBy)
 
-		expect(buildETFFlowChartData(flows, groupBy)).toEqual([[bucket * 1e3, 3, 7, null]])
+		expect(buildETFFlowChartData(flows, groupBy)).toEqual([[bucket * 1e3, 3, 7, null, null]])
 	})
 
 	test('builds the exact filtered dataset and chart contract used by the overview', () => {

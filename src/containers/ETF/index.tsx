@@ -30,11 +30,7 @@ import type { ETFOverviewProps, IETFSnapshotRow } from './types'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const ASSETS = [
-	{ key: 'bitcoin', name: 'Bitcoin', iconUrl: tokenIconUrl('bitcoin') },
-	{ key: 'ethereum', name: 'Ethereum', iconUrl: tokenIconUrl('ethereum') },
-	{ key: 'solana', name: 'Solana', iconUrl: tokenIconUrl('solana') }
-] as const
+const ASSETS = ETF_ASSET_NAMES.map((name) => ({ key: name.toLowerCase(), name, iconUrl: tokenIconUrl(name) }))
 
 const DEFAULT_SORTING_STATE = [{ id: 'aum', desc: true }]
 
@@ -128,6 +124,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							charts={finalCharts.charts}
 							selectedCharts={selectedCharts}
 							groupBy={groupBy}
+							containerClassName="flex-1 min-h-[360px]"
 							onReady={handleChartReady}
 						/>
 					</React.Suspense>

@@ -3,13 +3,14 @@ import type { LowercaseDwmcGrouping } from '~/components/ECharts/shared/ChartGro
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import type { IProcessedFlows } from './types'
 
-export const ETF_ASSET_NAMES = ['Bitcoin', 'Ethereum', 'Solana'] as const
+export const ETF_ASSET_NAMES = ['Bitcoin', 'Ethereum', 'Solana', 'Hyperliquid'] as const
 export type ETFAssetName = (typeof ETF_ASSET_NAMES)[number]
 
 const ETF_CHART_COLORS: Record<ETFAssetName, string> = {
 	Bitcoin: '#F7931A',
 	Ethereum: '#6B7280',
-	Solana: '#9945FF'
+	Solana: '#9945FF',
+	Hyperliquid: '#50D2C1'
 }
 
 export function buildETFFlowChartData(
@@ -20,11 +21,7 @@ export function buildETFFlowChartData(
 	const source: MultiSeriesChartDataset['source'] = []
 	const isCumulative = groupBy === 'cumulative'
 	const bitcoinIndex = assets.indexOf('Bitcoin') + 1
-	const ethereumIndex = assets.indexOf('Ethereum') + 1
-	const solanaIndex = assets.indexOf('Solana') + 1
-	let totalBitcoin = 0
-	let totalEthereum = 0
-	let totalSolana = 0
+	const totals: Partial<Record<ETFAssetName, number>> = {}
 	let activeBucket: string | number | null = null
 	let activeRow: MultiSeriesChartDataset['source'][number] | null = null
 
@@ -36,27 +33,20 @@ export function buildETFFlowChartData(
 			activeBucket = bucket
 			activeRow = new Array(assets.length + 1).fill(null)
 			activeRow[0] = +bucket * 1e3
-			if (bitcoinIndex > 0) activeRow[bitcoinIndex] = isCumulative ? totalBitcoin : 0
+			// Bitcoin never gaps; other assets stay blank on days without data.
+			if (bitcoinIndex > 0) activeRow[bitcoinIndex] = isCumulative ? (totals.Bitcoin ?? 0) : 0
 			source.push(activeRow)
 		}
 
-		if (bitcoinIndex > 0) {
-			const bitcoinFlow = flowEntry.Bitcoin ?? 0
-			if (isCumulative) totalBitcoin += bitcoinFlow
-			activeRow[bitcoinIndex] = isCumulative ? totalBitcoin : (activeRow[bitcoinIndex] as number) + bitcoinFlow
-		}
-
-		if (ethereumIndex > 0 && flowEntry.Ethereum != null) {
-			if (isCumulative) totalEthereum += flowEntry.Ethereum
-			activeRow[ethereumIndex] = isCumulative
-				? totalEthereum
-				: ((activeRow[ethereumIndex] as number | null) ?? 0) + flowEntry.Ethereum
-		}
-		if (solanaIndex > 0 && flowEntry.Solana != null) {
-			if (isCumulative) totalSolana += flowEntry.Solana
-			activeRow[solanaIndex] = isCumulative
-				? totalSolana
-				: ((activeRow[solanaIndex] as number | null) ?? 0) + flowEntry.Solana
+		for (const [i, name] of assets.entries()) {
+			const flow = flowEntry[name]
+			if (flow == null) continue
+			if (isCumulative) {
+				totals[name] = (totals[name] ?? 0) + flow
+				activeRow[i + 1] = totals[name]
+			} else {
+				activeRow[i + 1] = ((activeRow[i + 1] as number | null) ?? 0) + flow
+			}
 		}
 	}
 
