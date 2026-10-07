@@ -94,9 +94,14 @@ Every hosted deploy sets `API_KEY`, so most server-side fetches go through [Defi
 | Pro Dashboard server-side tables                                                               | `LLAMA_DB_URL` (Postgres)                | `DefiLlama/llama-ai-warehouse` (schema) |                                                                                                    |
 | GitHub sign-in (wallet sign-in uses `AUTH_SERVER` `/nonce` and `/eth-auth` in features-server) | `POCKETBASE_URL`                         | `DefiLlama/pocketbase` (hooks)          |                                                                                                    |
 | Banner interests                                                                               | `FEATURES_SERVER`, `src/api/users.ts`    | `DefiLlama/features-server`             | `DefiLlama/user-analytics`                                                                         |
-| UTR claim copies                                                                               | `USER_ANALYTICS_URL`                     | `DefiLlama/user-analytics`              |                                                                                                    |
+| UTR claim copies                                                                               | `FEATURES_SERVER`                        | `DefiLlama/features-server`             | `DefiLlama/user-analytics`                                                                         |
 | OG images (Pro dashboards render their own in `src/pages/api/og`)                              | `src/components/SEO/index.tsx`           | `DefiLlama/og-cards`                    |                                                                                                    |
 | Server telemetry                                                                               | `OPS_TELEMETRY_URL`                      | `DefiLlama/defillama-ops`               |                                                                                                    |
+
+UTR and market-maker claim copies go through features-server at `/analytics/utr-claims`
+using the server-only `UTR_CLAIMS_SHARED_SECRET`, which must match in all three services.
+Deploy the relay before this caller. Missing secrets disable copies; delivery failures
+do not block the main claim submission. `USER_ANALYTICS_URL` is no longer used.
 
 Analytics events go to a self-hosted Umami instance with no repo; see `docs/analytics.md`.
 

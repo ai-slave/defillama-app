@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
 import uploadHandler from '~/pages/api/public/utr/claim/documents'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -7,7 +8,6 @@ import { mapUtrClaimUpstreamResponse, utrClaimSubmit } from '../server/claimProx
 
 const http = installFixtureFetch()
 const FORGD_CLAIM = 'https://quant.forgd.com/api/v1/public/utr/claim'
-const ANALYTICS = 'https://analytics.example.com/api/ingestion/utr-claims'
 
 afterEach(() => {
 	vi.unstubAllEnvs()
@@ -31,9 +31,11 @@ describe('proxyUtrClaim', () => {
 
 	test('returns the Forgd claim result when User Analytics fails', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
-		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'analytics-secret')
-		http.serve({ [ANALYTICS]: fixtureStatus(500), [FORGD_CLAIM]: fixtureStatus(201, { id: 'claim-id' }) })
+		http.serve({
+			[`${FEATURES_SERVER}/analytics/utr-claims`]: fixtureStatus(500),
+			[FORGD_CLAIM]: fixtureStatus(201, { id: 'claim-id' })
+		})
 		const payload = { tokenName: 'Test', disclosures: {}, documents: {}, clickId: 'click-1' }
 
 		await expect(
@@ -45,7 +47,6 @@ describe('proxyUtrClaim', () => {
 
 	test('waits for the Discord webhook after a successful full-form claim', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
-		vi.stubEnv('USER_ANALYTICS_URL', '')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
 		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/123/token')
 		let releaseDiscord: () => void = () => undefined

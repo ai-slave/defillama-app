@@ -67,7 +67,7 @@ function discordResult() {
 beforeEach(() => {
 	vi.stubEnv('CLAIMS_TURNSTILE_SECRET_KEY', 'claim-secret')
 	vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', DISCORD)
-	vi.stubEnv('USER_ANALYTICS_URL', '')
+	vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
 	http.serve({
 		[DISCORD]: {},
 		[FORGD_CLAIM]: { status: 'received', request_id: 'request-1' },
@@ -100,7 +100,6 @@ describe('leadClaim', () => {
 	})
 
 	test('rejects an invalid CAPTCHA before contacting Forgd, User Analytics or Discord', async () => {
-		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'analytics-secret')
 		http.serve({ [SITEVERIFY]: { success: false, 'error-codes': ['invalid-input-response'] } })
 
