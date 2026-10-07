@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useId } from 'react'
 import { PricingCard } from '~/containers/Subscription/components'
 import type { BillingCycle, PlanKey, PricingCardCallbacks, PricingCardData } from '~/containers/Subscription/types'
+import { SubscriptionCoverage } from './SubscriptionCoverage'
 
 export function SubscriptionPricingSection({
 	pricingCards,
@@ -36,8 +37,8 @@ export function SubscriptionPricingSection({
 	const isYearly = billingCycle === 'yearly'
 
 	return (
-		<section className="mx-auto flex max-w-[1440px] flex-col items-center px-4 pt-14 md:px-10 md:pt-20 md:pb-32 2xl:px-32">
-			<div className="flex w-full flex-col items-center gap-9 text-center md:w-[600px]">
+		<section className="subscription-pricing mx-auto flex max-w-[1440px] flex-col items-center px-4 pt-14 md:px-10 md:pt-20 md:pb-32 2xl:px-32">
+			<div className="pricing-original flex w-full flex-col items-center gap-9 text-center md:w-[600px]">
 				<div className="flex items-center gap-2">
 					<img src="/assets/defillama-dark.webp" alt="DefiLlama" className="h-14 w-auto md:h-10 dark:hidden" />
 					<img src="/assets/logo_white.webp" alt="" className="hidden size-14 md:h-10 md:w-10 dark:block" />
@@ -54,8 +55,9 @@ export function SubscriptionPricingSection({
 					</p>
 				</div>
 			</div>
+			<SubscriptionCoverage />
 
-			<div className="mt-9 flex flex-col items-center gap-3 md:mt-12 md:gap-5">
+			<div className="subscription-billing mt-9 flex flex-col items-center gap-3 md:mt-12 md:gap-5">
 				<Ariakit.RadioProvider
 					value={billingCycle}
 					setValue={(value) => {
@@ -101,7 +103,7 @@ export function SubscriptionPricingSection({
 				</p>
 			</div>
 
-			<div className="mt-9 flex w-full flex-wrap justify-center gap-4">
+			<div className="subscription-pricing-cards mt-9 flex w-full flex-wrap justify-center gap-4">
 				{pricingCards.map((card) => (
 					<PricingCard
 						key={card.key}

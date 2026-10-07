@@ -120,7 +120,13 @@ test('billing arrows change the selected cycle once without a mount callback', a
 			/>
 		)
 	}
-	await act(async () => root.render(<Pricing />))
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<Pricing />
+			</session.Wrapper>
+		)
+	)
 	expect(change).not.toHaveBeenCalled()
 	await press(radio('yearly'), 'ArrowLeft')
 	expect(radio('monthly').checked).toBe(true)

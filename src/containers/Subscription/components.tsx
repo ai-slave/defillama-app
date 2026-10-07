@@ -12,6 +12,7 @@ import type {
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { CoveragePricingContent } from './sections/SubscriptionCoverage'
 
 const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
 
@@ -542,14 +543,15 @@ export function PricingCard({
 		: 'hidden sm:flex sm:h-[17px] sm:items-center sm:justify-center sm:opacity-0'
 
 	return (
-		<div className={wrapperClass}>
-			<div className={shellClass}>
-				<div className={innerClass}>
-					<div className="mx-auto">
+		<div className={`subscription-pricing-card ${wrapperClass}`} data-recommended={isHighlighted || undefined}>
+			<div className={`subscription-pricing-shell ${shellClass}`}>
+				<div className={`subscription-pricing-inner ${innerClass}`}>
+					<div className="pricing-original mx-auto">
 						<PricingCardContent card={card} isTrialAvailable={isTrialAvailable} />
 					</div>
+					<CoveragePricingContent card={card} isTrialAvailable={isTrialAvailable} />
 
-					<div className="mx-auto mt-7 flex w-full flex-col gap-4 sm:mt-5 sm:gap-3">
+					<div className="subscription-pricing-actions mx-auto mt-7 flex w-full flex-col gap-4 sm:mt-5 sm:gap-3">
 						<PricingCardCta
 							card={card}
 							isCurrentPlan={isCurrentPlan}
@@ -585,13 +587,13 @@ export function PricingCard({
 			</div>
 
 			{card.recommendedLabel ? (
-				<div className={badgeSlotClass}>
+				<div className={`pricing-original ${badgeSlotClass}`}>
 					<div className="text-center text-sm leading-[17px] font-medium text-sub-brand-softest">
 						{card.recommendedLabel}
 					</div>
 				</div>
 			) : (
-				<div className={badgeSlotClass} aria-hidden="true" />
+				<div className={`pricing-original ${badgeSlotClass}`} aria-hidden="true" />
 			)}
 		</div>
 	)

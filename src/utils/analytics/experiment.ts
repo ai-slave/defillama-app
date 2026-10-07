@@ -24,7 +24,8 @@ export const EXPERIMENTS = {
 	'llamaai-free-label-v1': 'visitor',
 	'home-brief-default-v1': 'visitor',
 	'llamaai-signin-offer-v1': 'visitor',
-	'menu-layout-v1': 'site'
+	'menu-layout-v1': 'site',
+	'pricing-coverage-v1': 'visitor'
 } as const satisfies Record<string, 'visitor' | 'user' | 'site'>
 
 export type ExperimentId = keyof typeof EXPERIMENTS

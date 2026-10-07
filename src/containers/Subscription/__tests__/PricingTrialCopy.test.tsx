@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
@@ -40,7 +41,13 @@ function trialConversionLine() {
 }
 
 test('the trial names the monthly Pro price it converts to while the yearly prices show', async () => {
-	await act(async () => root.render(<PricingPage />))
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={new QueryClient()}>
+				<PricingPage />
+			</QueryClientProvider>
+		)
+	)
 
 	expect(container.textContent).toContain('$40.83')
 	expect(trialConversionLine()).toBe('No charge for 7 days — converts to $49/month after')

@@ -17,6 +17,7 @@ import {
 	PRICING_CARDS_BY_CYCLE,
 	TRUST_LOGOS
 } from '~/containers/Subscription/data'
+import { observePricingPage, trackPricingClick } from '~/containers/Subscription/pricingExperiment'
 import {
 	SubscriptionBackground,
 	SubscriptionComparisonSection,
@@ -235,7 +236,12 @@ function SubscriptionContent() {
 			<SubscriptionBackground />
 			<SubscriptionHeader />
 
-			<main className="relative z-10">
+			<main
+				ref={observePricingPage}
+				onClickCapture={trackPricingClick}
+				data-billing-cycle={billingCycle}
+				className="relative z-10"
+			>
 				{isSubscriptionError ? (
 					<div className="mx-auto max-w-[600px] px-4 pt-10">
 						<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />

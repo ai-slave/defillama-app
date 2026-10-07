@@ -48,8 +48,7 @@ function ComparisonPlanHead({
 	isFirst,
 	isLast,
 	isSelected,
-	isCurrentPlan,
-	isLowerTier,
+	currentPlan,
 	hideAction,
 	onAction
 }: {
@@ -58,12 +57,13 @@ function ComparisonPlanHead({
 	isFirst: boolean
 	isLast: boolean
 	isSelected: boolean
-	isCurrentPlan: boolean
-	isLowerTier: boolean
+	currentPlan: PlanKey | null
 	hideAction: boolean
 	onAction: (plan: PlanKey) => void
 }) {
 	const meta = PLAN_META_BY_CYCLE[billingCycle][plan]
+	const isCurrentPlan = plan === currentPlan
+	const isLowerTier = currentPlan != null && currentPlan !== 'free' && PLAN_TIER[plan] < PLAN_TIER[currentPlan]
 	const colStyle = isSelected ? planHeadStyles.selected : planHeadStyles.default
 	const btnStyle = isSelected ? planHeadButtonStyles.selected : planHeadButtonStyles.default
 	const edgeBorderClass = isSelected ? '' : `${isFirst ? 'border-l' : ''} ${isLast ? 'border-r' : ''}`
@@ -107,6 +107,8 @@ function ComparisonPlanHead({
 						className={`h-7 rounded-[6px] border px-2 text-[10px] leading-3 md:h-8 md:rounded-lg md:text-xs ${btnStyle}`}
 						// Several plans share an action label, so the name says which plan it starts.
 						aria-label={`${meta.action}: ${meta.title}`}
+						// Paid-plan changes are account management, matching the pricing card's untracked upgrade controls.
+						data-pricing-plan={currentPlan == null || currentPlan === 'free' ? plan : undefined}
 						onClick={() => onAction(plan)}
 					>
 						{meta.action}
@@ -176,10 +178,7 @@ export function SubscriptionComparisonSection({
 											isFirst={index === 0}
 											isLast={index === planOrder.length - 1}
 											isSelected={plan === selectedPlan}
-											isCurrentPlan={plan === currentPlan}
-											isLowerTier={
-												currentPlan != null && currentPlan !== 'free' && PLAN_TIER[plan] < PLAN_TIER[currentPlan]
-											}
+											currentPlan={currentPlan}
 											hideAction={hidePlanActions && plan !== 'enterprise'}
 											onAction={onPlanAction}
 										/>

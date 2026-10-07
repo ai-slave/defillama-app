@@ -14,6 +14,7 @@ export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/protocol/yields/*': ['yields'],
 	'/chart/protocol/*': ['yields'],
 	'/api/public/yields': ['yields'],
+	'/api/public/subscription/coverage': ['yields'],
 	'/api/public/yields/**': ['yields'],
 	'/api/private/yields/*': ['yields'],
 	'/api/private/downloads/*': ['yields'],

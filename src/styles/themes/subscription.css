@@ -234,3 +234,60 @@
 		--sub-social-icon: var(--sub-text-muted);
 	}
 }
+
+/* Pricing's independent pre-paint assignment. A's layout and account-state recipes remain intact. */
+@layer utilities {
+	.pricing-coverage {
+		display: none;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .pricing-coverage {
+		display: flex;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .pricing-original {
+		display: none;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing {
+		gap: 1.5rem;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-billing,
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-cards {
+		margin-top: 0;
+		gap: 0.5rem;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-card {
+		max-width: none;
+		padding: 0;
+		background: transparent;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-shell {
+		border: 1px solid var(--border-subtle);
+		border-radius: 0.5rem;
+		background: var(--bg-surface);
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-card[data-recommended] .subscription-pricing-shell {
+		border-color: var(--border-brand);
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-inner {
+		border-radius: 0.5rem;
+		padding: 1rem;
+		background: transparent;
+		gap: 1.5rem;
+	}
+	html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-actions {
+		margin-top: 0;
+	}
+	@media (min-width: 48rem) {
+		html[data-ab-pricing-coverage-v1='b'] .subscription-pricing {
+			padding-inline: 2rem;
+		}
+		html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-cards {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (min-width: 80rem) {
+		html[data-ab-pricing-coverage-v1='b'] .subscription-pricing-cards {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+}
