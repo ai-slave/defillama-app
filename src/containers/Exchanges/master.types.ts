@@ -282,6 +282,42 @@ interface MasterExecutionMeasurements {
 	taker_fee_bps: number | null
 }
 
+/** One segment of a venue (`execution-quality.json` `segments`): its measured markets of
+ * each basket asset merged by the volume measured on each, then averaged across assets
+ * with cross-venue weights (spot volume for spot, open interest for perps), the same
+ * weights for every venue. The intra-spread share covers every measured market in it. */
+export interface MasterExecutionSegmentMetrics extends MasterExecutionMeasurements {
+	assets: Array<string>
+	pair_count: number
+	hours_covered: number
+	n_trades: number
+	/** Share of measured notional printed inside the spread the book showed, %. */
+	inside_spread_pct: number | null
+	inside_measured_usd: number
+}
+
+/** One market's own trailing 30-day medians (`execution` on index.json pairs); null below
+ * 72 hours of coverage or when nothing measures it. */
+export type MasterSlippageBand = '1k' | '10k' | '50k' | '100k' | '250k' | '500k' | '1m'
+export interface MasterPairExecution
+	extends
+		MasterExecutionMeasurements,
+		// the bands MasterExecutionMeasurements does not already declare
+		Partial<
+			Record<
+				| `realized_slippage_bps_${Exclude<MasterSlippageBand, '10k' | '100k' | '1m'>}`
+				| `predicted_slippage_bps_${Exclude<MasterSlippageBand, '10k' | '100k' | '1m'>}`,
+				number | null
+			>
+		> {
+	inside_spread_pct: number | null
+	/** Notional the intra-spread share is measured over, USD. Absent on an older cache build. */
+	inside_measured_usd?: number
+	notional_usd: number
+	hours_covered: number
+	n_trades: number
+}
+
 /** Measured execution quality (tick-level fills on the shared perp basket) —
  * `exchanges/execution-quality.json`. USD perps only today. */
 export interface MasterExecutionPairMetrics extends MasterExecutionMeasurements {
@@ -330,6 +366,10 @@ export interface MasterExecutionQualityResponse {
 	 * build → equal weight. */
 	oi_weights_usd?: Record<string, number>
 	venues: Record<string, MasterExecutionVenueMetrics>
+	/** Per venue slug and segment, every venue with measured markets in it. Absent on an
+	 * older cache build. */
+	segments?: Record<string, Partial<Record<MasterSegment, MasterExecutionSegmentMetrics>>>
+	segment_weights_usd?: Partial<Record<MasterSegment, Record<string, number>>>
 }
 
 /** Committed quality scores — `exchanges/quality-ranks.json`. `rank` is the position
@@ -353,6 +393,12 @@ export interface MasterQualityRanksResponse {
 			/** Reserves sub-scores (magnitude/consistency, 0–100) behind components.R;
 			 * present whenever the venue has a reserves figure. */
 			reserve_subs?: Record<string, number | null>
+			/** Markets printing their volume inside the spread their own book showed, per segment;
+			 * `share` is what comes off the score. Present when any market was measured. */
+			intra_spread?: {
+				share: number
+				segments: Partial<Record<MasterSegment, { flagged: number; measured: number; share: number }>>
+			}
 		}
 	>
 	/** Venues with no observed book — listed, never scored. */
@@ -526,6 +572,8 @@ export interface MasterExchangePair {
 	volume_change_24h: number | null
 	oi_change_24h: number | null
 	freshness: MasterFreshness
+	/** Absent on an older cache build. */
+	execution?: MasterPairExecution | null
 }
 
 export interface MasterExchangeIndexSegment {

@@ -16,7 +16,6 @@ import {
 	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
 } from '~/utils/numberFormat'
 import { TierBadge } from './directoryColumns'
-import { MethodologyLink } from './docsLinks'
 import { fractionChange, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -25,6 +24,7 @@ import {
 	type ExchangeProfileSegmentModel,
 	type ExchangeSegment
 } from './models'
+import { insideShown, IntraSpread } from './ProfileExecution'
 import { ProfileIdentity } from './ProfileIdentity'
 import { TierScale } from './ProfileRanking'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
@@ -251,18 +251,20 @@ export function ProfileMetrics({
 					segments={marketsBySegment}
 					render={(value: number | null) => formatCompactNumber(value, NUMBER_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
-				{profile.execution?.costToTradeBps != null ? (
+				{/* Intra-spread volume per segment, only where it reaches the flag threshold: below it
+				    the share is mostly a coarse tick grid or clock jitter, so an honest venue shows no row.
+				    Cost, slippage and markouts live on the Markets and Execution tabs. */}
+				{EXCHANGE_SEGMENTS.filter(
+					(segmentId) =>
+						segmentVisible(segmentId) && insideShown(profile.executionBySegment[segmentId]?.insideSpreadPct) != null
+				).map((segmentId) => (
 					<MetricRow
-						label="Cost to trade"
-						tooltip={
-							<>
-								What a $10k market order really costs here: taker fee plus half the spread, measured from actual fills.
-								Details on the Execution tab. <MethodologyLink />
-							</>
-						}
-						value={`${formatUsd(profile.execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /$10k`}
+						key={segmentId}
+						label={`${EXCHANGE_SEGMENT_LABELS[segmentId]} intra-spread volume`}
+						tooltip="Share of the last 30 days' volume printed inside the spread the order book showed."
+						value={<IntraSpread pct={profile.executionBySegment[segmentId]?.insideSpreadPct} />}
 					/>
-				) : null}
+				))}
 				{profile.nativeToken ? (
 					<MetricRow
 						label="Native token"

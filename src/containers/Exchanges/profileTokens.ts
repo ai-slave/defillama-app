@@ -6,7 +6,13 @@
  * exchange page with. A token's spot and perp markets are different instruments, so
  * they stay in separate columns rather than being summed into one liquidity figure.
  */
-import type { ExchangeExecutionPairModel, ExchangePairModel, ExchangeProfileModel, ExchangeSegment } from './models'
+import type {
+	ExchangeMarketExecution,
+	ExchangePairModel,
+	ExchangeProfileModel,
+	ExchangeSegment,
+	ExchangeSegmentExecution
+} from './models'
 
 /** Segments carrying a normalized-volume band. COIN perps have neither, by design. */
 const NVOL_SEGMENTS: ReadonlyArray<ExchangeSegment> = ['spot', 'linear_perp']
@@ -29,8 +35,50 @@ export interface ExchangeTokenRow {
 	spotVolumeIsReported: boolean
 	perpVolumeIsReported: boolean
 	perpOpenInterestUsd: number | null
-	/** Measured fills for this token on this venue. Null outside the execution basket. */
-	execution: ExchangeExecutionPairModel | null
+	/** Measured fills for this token per segment, its markets there merged into one. */
+	executionBySegment: Partial<Record<ExchangeSegment, ExchangeSegmentExecution>>
+}
+
+/**
+ * A token's markets in one segment as one (BTC/USDT with BTC/USDC): each figure is the
+ * mean of the markets that have it, weighted by the notional measured on each, so a
+ * market counts for what trades there; the intra-spread share is pooled over the notional
+ * it was measured on instead. Mirrors upstream mergeMarketExecution. Null when none of
+ * them is measured.
+ */
+export function mergeMarketExecution(token: string, pairs: Array<ExchangePairModel>): ExchangeSegmentExecution | null {
+	const measured = pairs.flatMap((pair) => (pair.execution && pair.execution.notionalUsd > 0 ? [pair.execution] : []))
+	if (measured.length === 0) return null
+	const mean = (
+		pick: (execution: ExchangeMarketExecution) => number | null,
+		weigh: (execution: ExchangeMarketExecution) => number = (execution) => execution.notionalUsd
+	) => {
+		let weight = 0
+		let total = 0
+		for (const execution of measured) {
+			const value = pick(execution)
+			if (value == null || !(weigh(execution) > 0)) continue
+			weight += weigh(execution)
+			total += value * weigh(execution)
+		}
+		return weight > 0 ? total / weight : null
+	}
+	return {
+		assets: [token],
+		hoursCovered: Math.max(...measured.map((execution) => execution.hoursCovered)),
+		costToTradeBps: mean((execution) => execution.costToTradeBps),
+		effectiveSpreadBps: mean((execution) => execution.effectiveSpreadBps),
+		realizedSlippage10kBps: mean((execution) => execution.realizedSlippage10kBps),
+		predictedSlippage10kBps: mean((execution) => execution.predictedSlippage10kBps),
+		realizedSlippage100kBps: mean((execution) => execution.realizedSlippage100kBps),
+		predictedSlippage100kBps: mean((execution) => execution.predictedSlippage100kBps),
+		markout1mBps: mean((execution) => execution.markout1mBps),
+		markout5mBps: mean((execution) => execution.markout5mBps),
+		insideSpreadPct: mean(
+			(execution) => execution.insideSpreadPct,
+			(execution) => execution.insideMeasuredUsd
+		)
+	}
 }
 
 function sum(values: Array<number | null | undefined>): number | null {
@@ -92,8 +140,6 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): Array<Exchange
 		bySegment.set(segment, grouped)
 	}
 
-	const executionByAsset = new Map((profile.execution?.pairs ?? []).map((pair) => [pair.asset.toUpperCase(), pair]))
-
 	const rows = order.map((token) => {
 		const inSegment = (segments: ReadonlyArray<ExchangeSegment>) =>
 			segments.flatMap((segment) => bySegment.get(segment)?.get(token) ?? [])
@@ -102,6 +148,8 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): Array<Exchange
 		const perpPairs = inSegment(PERP_SEGMENTS)
 		const spotVolume = normalizedVolume(spotPairs)
 		const perpVolume = normalizedVolume(linearPairs)
+		const spotExecution = mergeMarketExecution(token, spotPairs)
+		const perpExecution = mergeMarketExecution(token, linearPairs)
 		let maxLeverage: number | null = null
 		for (const pair of perpPairs) {
 			if (pair.maxLeverage != null) maxLeverage = Math.max(maxLeverage ?? 0, pair.maxLeverage)
@@ -124,7 +172,10 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): Array<Exchange
 			perpVolumeIsReported: linearPairs.length > 0 && perpVolume.reported,
 			// Both perpetual classes are USD-denominated, so their open interest adds up.
 			perpOpenInterestUsd: sum(perpPairs.map((pair) => pair.openInterestUsd)),
-			execution: executionByAsset.get(token) ?? null
+			executionBySegment: {
+				...(spotExecution ? { spot: spotExecution } : null),
+				...(perpExecution ? { linear_perp: perpExecution } : null)
+			}
 		}
 	})
 

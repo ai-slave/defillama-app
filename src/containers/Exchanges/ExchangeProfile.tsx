@@ -19,7 +19,7 @@ import {
 import { hasExchangeInformation } from './MetadataGroups'
 import { EXCHANGE_SEGMENTS, type ExchangeOverviewChartModel, type ExchangeProfileModel } from './models'
 import { PairTable } from './PairTable'
-import { ProfileExecution } from './ProfileExecution'
+import { measuredExecutionSegments, ProfileExecution } from './ProfileExecution'
 import { ProfileHighlights } from './ProfileHighlights'
 import { ProfileHistory } from './ProfileHistory'
 import { ProfileIdentity } from './ProfileIdentity'
@@ -132,7 +132,7 @@ function MarketsExchangeProfile({
 		profile.quality != null
 	const hasReserves = profile.reserves != null
 	const hasHistory = profile.hacks.length > 0 || profile.raises.length > 0
-	const hasExecution = profile.execution != null && profile.execution.pairs.length > 0
+	const hasExecution = measuredExecutionSegments(profile).length > 0
 	const defaultSegment = resolveProfileSegment(profile, null)
 	const countrySegments =
 		countryView.status === 'unavailable'
@@ -192,8 +192,8 @@ function MarketsExchangeProfile({
 				onTabChange={setTab}
 				panelId={panelId}
 			>
-				{tab === 'execution' && profile.execution ? (
-					<ProfileExecution execution={profile.execution} />
+				{tab === 'execution' && hasExecution ? (
+					<ProfileExecution profile={profile} />
 				) : tab === 'reserves' && profile.reserves ? (
 					<ProfileReserves profile={profile} reserves={profile.reserves} />
 				) : tab === 'history' && hasHistory ? (

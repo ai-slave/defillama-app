@@ -325,6 +325,19 @@ function executionResponse(): MasterExecutionQualityResponse {
 					}
 				}
 			}
+		},
+		segments: {
+			venue: {
+				linear_perp: {
+					...measurements,
+					assets: ['BTC'],
+					pair_count: 1,
+					hours_covered: 24,
+					n_trades: 10,
+					inside_spread_pct: 12,
+					inside_measured_usd: 1000
+				}
+			}
 		}
 	}
 }
@@ -772,29 +785,28 @@ describe('master directory mapper', () => {
 
 		expect(unavailable.executionAvailable).toBe(false)
 		expect(unmeasured.executionAvailable).toBe(true)
-		expect(required(unmeasured.rows[0]).execution).toBeNull()
+		expect(required(unmeasured.rows[0]).executionBySegment).toEqual({})
 	})
 
 	test('maps the exact execution measurement without transport defaults', () => {
 		const measured = mapMasterDirectory(directoryResponse([directoryVenue()]), executionResponse())
 
 		expect(measured.executionAvailable).toBe(true)
-		expect(required(measured.rows[0]).execution).toEqual({
-			assets: ['BTC'],
-			hoursCovered: 24,
-			// Cost is published on a narrower basket than fill quality, so the row names
-			// both: two columns on one row can describe different markets.
-			costAssets: ['BTC'],
-			costToTradeBps: 4,
-			effectiveSpreadBps: 2,
-			realizedSlippage10kBps: 1,
-			predictedSlippage10kBps: 1.5,
-			// The size ladder and the second horizon median over the SAME pairs as the
-			// headline figures, so a row can never mix baskets across its own columns.
-			realizedSlippage100kBps: 2,
-			predictedSlippage100kBps: 2.5,
-			markout1mBps: 0.3,
-			markout5mBps: 0.4
+		// One entry per measured segment, nothing invented for the others.
+		expect(required(measured.rows[0]).executionBySegment).toEqual({
+			linear_perp: {
+				assets: ['BTC'],
+				hoursCovered: 24,
+				costToTradeBps: 4,
+				effectiveSpreadBps: 2,
+				realizedSlippage10kBps: 1,
+				predictedSlippage10kBps: 1.5,
+				realizedSlippage100kBps: 2,
+				predictedSlippage100kBps: 2.5,
+				markout1mBps: 0.3,
+				markout5mBps: 0.4,
+				insideSpreadPct: 12
+			}
 		})
 	})
 
@@ -973,156 +985,6 @@ describe('BTC execution table mapper', () => {
 	})
 })
 
-describe('execution basket', () => {
-	// Two venues, uneven coverage: the deep one measures BTC+ETH, the thin one only
-	// BTC. Before the shared basket, the deep venue's columns were a BTC/ETH median
-	// while the thin venue's were BTC alone — different markets, same column.
-	function unevenExecution(): MasterExecutionQualityResponse {
-		const base = executionResponse()
-		const btc = required(base.venues.venue).pairs.BTC
-		const eth = { ...required(btc), asset: 'ETH', symbol: 'ETH/USDT', cost_to_trade_bps: 40, markout_bps_1m: 9 }
-		return {
-			...base,
-			basket: ['BTC', 'ETH'],
-			venues: {
-				deep: {
-					...required(base.venues.venue),
-					assets: ['BTC', 'ETH'],
-					pair_count: 2,
-					pairs: { BTC: required(btc), ETH: eth }
-				},
-				thin: required(base.venues.venue)
-			}
-		}
-	}
-
-	test('restricts every venue to the assets all of them cover', () => {
-		const directory = mapMasterDirectory(
-			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
-			unevenExecution()
-		)
-		expect(directory.executionBasket).toEqual(['BTC'])
-		for (const row of directory.rows) {
-			expect(row.execution?.assets).toEqual(['BTC'])
-			// ETH's 40bps cost is excluded, so the deep venue is not penalised for
-			// measuring more markets than its peer.
-			expect(row.execution?.costToTradeBps).toBe(4)
-			expect(row.execution?.markout1mBps).toBe(0.3)
-		}
-	})
-
-	// Cost is published on BTC/ETH, fill quality on the top five. Both narrow to what
-	// every measured venue covers, so each column still compares like for like down the
-	// table even though the two describe different markets.
-	test('measures cost on a narrower basket than fill quality', () => {
-		const base = executionResponse()
-		const btc = required(required(base.venues.venue).pairs.BTC)
-		const withAssets = (assets: Array<string>) => ({
-			...required(base.venues.venue),
-			assets,
-			pair_count: assets.length,
-			pairs: Object.fromEntries(
-				assets.map((asset) => [
-					asset,
-					// SOL is deliberately worse: if it leaked into cost, the cost average moves.
-					{
-						...btc,
-						asset,
-						cost_to_trade_bps: asset === 'SOL' ? 40 : 4,
-						realized_slippage_bps_10k: asset === 'SOL' ? 9 : 1
-					}
-				])
-			)
-		})
-		const execution = {
-			...base,
-			basket: ['BTC', 'ETH', 'SOL'],
-			oi_weights_usd: { BTC: 60, ETH: 30, SOL: 10 },
-			venues: { a: withAssets(['BTC', 'ETH', 'SOL']), b: withAssets(['BTC', 'ETH', 'SOL']) }
-		}
-		const directory = mapMasterDirectory(
-			directoryResponse([directoryVenue({ slug: 'a' }), directoryVenue({ slug: 'b' })]),
-			execution
-		)
-		expect(directory.executionCostBasket).toEqual(['BTC', 'ETH'])
-		expect(directory.executionFillBasket).toEqual(['BTC', 'ETH', 'SOL'])
-
-		const row = required(directory.rows[0])
-		expect(row.execution?.costAssets).toEqual(['BTC', 'ETH'])
-		expect(row.execution?.assets).toEqual(['BTC', 'ETH', 'SOL'])
-		// Cost excludes SOL entirely; fill quality includes it, at SOL's 10% of basket OI:
-		// (1·60 + 1·30 + 9·10) / 100. A median would have published BTC/ETH's 1 and hidden SOL.
-		expect(row.execution?.costToTradeBps).toBe(4)
-		expect(row.execution?.realizedSlippage10kBps).toBeCloseTo(1.8, 10)
-	})
-
-	// The reason the weights are published at all: the displayed baskets are narrower than
-	// the file's, so the average is retaken here and has to weight the way upstream did.
-	test('weights basket assets by open interest, and falls back to equal weight without it', () => {
-		const base = executionResponse()
-		const btc = required(required(base.venues.venue).pairs.BTC)
-		const venue = {
-			...required(base.venues.venue),
-			assets: ['BTC', 'ETH'],
-			pair_count: 2,
-			pairs: Object.fromEntries(
-				(['BTC', 'ETH'] as const).map((asset) => [
-					asset,
-					{ ...btc, asset, cost_to_trade_bps: asset === 'BTC' ? 1 : 11 }
-				])
-			)
-		}
-		const withWeights = (oi_weights_usd?: Record<string, number>) =>
-			mapMasterDirectory(directoryResponse([directoryVenue({ slug: 'a' })]), {
-				...base,
-				basket: ['BTC', 'ETH'],
-				...(oi_weights_usd ? { oi_weights_usd } : null),
-				venues: { a: venue }
-			}).rows[0]?.execution?.costToTradeBps
-
-		expect(withWeights({ BTC: 90, ETH: 10 })).toBeCloseTo(2, 10)
-		// ETH unweighted: equal weight for the whole basket beats silently averaging BTC alone.
-		expect(withWeights({ BTC: 90 })).toBe(6)
-		expect(withWeights()).toBe(6)
-	})
-
-	test('widens to the full shared basket once every venue covers it', () => {
-		const execution = unevenExecution()
-		execution.venues.thin = required(execution.venues.deep)
-		const directory = mapMasterDirectory(
-			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
-			execution
-		)
-		expect(directory.executionBasket).toEqual(['BTC', 'ETH'])
-		expect(directory.rows[0]?.execution?.costToTradeBps).toBe(22) // equal-weight mean(4, 40)
-	})
-
-	test('reports the weakest pair’s coverage, not the strongest', () => {
-		const execution = unevenExecution()
-		execution.venues.thin = required(execution.venues.deep)
-		execution.venues.deep = {
-			...required(execution.venues.deep),
-			pairs: {
-				BTC: { ...required(required(execution.venues.deep).pairs.BTC), hours_covered: 720 },
-				ETH: { ...required(required(execution.venues.deep).pairs.ETH), hours_covered: 80 }
-			}
-		}
-		const directory = mapMasterDirectory(directoryResponse([directoryVenue({ slug: 'deep' })]), execution)
-		expect(directory.rows[0]?.execution?.hoursCovered).toBe(80)
-	})
-
-	test('falls back to each venue’s own aggregate when no asset is shared', () => {
-		const execution = unevenExecution()
-		execution.venues.thin = { ...required(execution.venues.thin), assets: ['SOL'], pairs: {} }
-		const directory = mapMasterDirectory(
-			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
-			execution
-		)
-		expect(directory.executionBasket).toEqual([])
-		expect(directory.rows.find((row) => row.slug === 'thin')?.execution?.assets).toEqual(['SOL'])
-	})
-})
-
 describe('depth ladders', () => {
 	test('zips a pair ladder onto the band axis and marks bands the book did not reach', () => {
 		// Fixture book reaches min(0.03, 0.04) = ±3%, so both ±0.5% and ±2% are measured.
@@ -1252,33 +1114,23 @@ describe('master profile mapper', () => {
 		expect(unmeasured.quality).toBeNull()
 	})
 
-	test('maps exact profile execution pairs in the producer basket order', () => {
+	test('maps the venue execution figures and each measured segment', () => {
 		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
 			execution: executionResponse(),
 			ranks: null,
 			methodology: null
 		})
 
-		expect(profile.execution?.pairs).toEqual([
-			{
-				asset: 'BTC',
-				hoursCovered: 24,
-				fillCount: 10,
-				costToTradeBps: 4,
-				effectiveSpreadBps: 2,
-				quotedSpreadBps: 3,
-				realizedSlippage10kBps: 1,
-				predictedSlippage10kBps: 1.5,
-				realizedSlippage100kBps: 2,
-				predictedSlippage100kBps: 2.5,
-				realizedSlippage1mBps: 3,
-				predictedSlippage1mBps: 3.5,
-				markout1sBps: 0.1,
-				markout15sBps: 0.2,
-				markout1mBps: 0.3,
-				markout5mBps: 0.4
-			}
-		])
+		expect(profile.execution).toEqual({
+			hoursCovered: 24,
+			costToTradeBps: 4,
+			realizedSlippage10kBps: 1,
+			predictedSlippage10kBps: 1.5,
+			markout1mBps: 0.3,
+			feed: null
+		})
+		expect(Object.keys(profile.executionBySegment)).toEqual(['linear_perp'])
+		expect(profile.executionBySegment.linear_perp?.insideSpreadPct).toBe(12)
 	})
 
 	test('maps profile ranking when ranks and methodology describe the same generation', () => {

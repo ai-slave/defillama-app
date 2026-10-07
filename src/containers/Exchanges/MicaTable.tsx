@@ -19,7 +19,7 @@ import { DEFAULT_MICA_FILTER, EXCHANGES_QUERY_KEYS, getMicaFilter, type MicaFilt
 const FILTER_OPTIONS = [
 	{ value: 'all', label: 'All' },
 	{ value: 'spot', label: 'Spot' },
-	{ value: 'perp', label: 'Perps' },
+	{ value: 'perp', label: 'USD Perps' },
 	{ value: 'fiat', label: 'Fiat onramp' }
 ] as const
 

@@ -2,6 +2,8 @@
 
 Exchanges reads the orderbook-watch exchanges cache served from `MARKETS_SERVER_URL`. `master.types.ts` owns the wire shapes, and `master.mappers.ts` maps them into the read models in `models.ts`. Components import models, never wire types. Token market rows belong to `src/containers/Markets/README.md`.
 
+Execution sizes and markout horizons are independently nullable. Stacked execution cells render every measured size or horizon even when the first sorting value is missing; the shared `SlippageLadder` and `MarkoutHorizons` components decide whether the whole cell is unmeasured. Never gate a multi-measurement cell on one accessor value.
+
 ## Endpoints and failure
 
 | Surface                                                               | Cache file                                                                                                    | When it fails                                                                                                                              |

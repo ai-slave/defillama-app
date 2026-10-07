@@ -7,26 +7,16 @@ function columnsById(columns: ReturnType<typeof buildDirectoryColumns>) {
 }
 
 describe('Exchanges definitions', () => {
-	// Cost to trade and fill quality are published on different baskets on purpose, so a
-	// column can only be compared DOWN the table, not across a row. Each header helper
-	// has to name its own scope or a reader has no way to know that.
-	test('each execution column states the basket it is measured on', () => {
-		const byId = columnsById(buildDirectoryColumns('linear_perp', true, ['BTC', 'ETH'], ['BTC', 'ETH', 'SOL']))
-		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
-		const helper = (id: string) =>
-			String(byId[id]?.meta?.headerHelperText).replace(definitions[id]?.description ?? '', '')
-
-		expect(helper('execCostToTrade')).toContain('BTC, ETH perps')
-		expect(helper('execSlippage10k')).toContain('BTC, ETH, SOL perps')
-		// Slippage and markout share one basket: both are fill quality.
-		expect(helper('execMarkout1m')).toBe(helper('execSlippage10k'))
-		expect(helper('execCostToTrade')).not.toBe(helper('execSlippage10k'))
-	})
-
-	test('falls back to naming each venue’s own perps when nothing is shared', () => {
-		const byId = columnsById(buildDirectoryColumns('linear_perp', true, [], []))
-		for (const id of EXECUTION_COLUMN_IDS) {
-			expect(String(byId[id]?.meta?.headerHelperText)).toContain('own covered perps')
+	// Every execution column reads one segment of the venue; its header helper has to say
+	// what that segment figure is built from, or a reader cannot compare it down the table.
+	test('each execution column states what it is measured on', () => {
+		for (const scope of ['all', 'spot', 'linear_perp', 'inverse_perp'] as const) {
+			const byId = columnsById(buildDirectoryColumns(scope, true))
+			const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
+			for (const id of EXECUTION_COLUMN_IDS) {
+				const helper = String(byId[id]?.meta?.headerHelperText).replace(definitions[id]?.description ?? '', '')
+				expect(helper).toMatch(/measured market/)
+			}
 		}
 	})
 })

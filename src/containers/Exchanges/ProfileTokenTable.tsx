@@ -22,17 +22,55 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
-import { exchangeDefinitions, usdPerpLabel } from './definitions'
-import { EXCHANGE_SEGMENT_LABELS, type ExchangeProfileModel } from './models'
-import { MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
+import { exchangeDefinitions } from './definitions'
+import { EXCHANGE_SEGMENT_LABELS, type ExchangeProfileModel, type ExchangeSegment } from './models'
+import { insideShown, IntraSpread, MarkoutHorizons, money, NA, SegmentLines, SlippageLadder } from './ProfileExecution'
 import { exchangeTokenRows, type ExchangeTokenRow } from './profileTokens'
 
 const columnHelper = createColumnHelper<SearchTableFeatures, ExchangeTokenRow>()
 
-// No normalized-volume columns here: a token row folds several markets (BTC/USDT,
-// BTC/USDC, …) and one without a captured book would flag the whole row as unchecked.
-// The per-segment tables carry normalized volume per market instead.
+// The directory's merged columns, per token: a token row folds its markets (BTC/USDT,
+// BTC/USDC, …) in each segment, execution merged by the volume measured on each.
 const definitions = exchangeDefinitions.directory
+const SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
+const NOT_TRADED = <span className="text-tertiary">N/A</span>
+
+/** One labelled line per segment the token trades in here; N/A when it trades in neither. */
+function segmentLines(
+	row: ExchangeTokenRow,
+	value: (segment: ExchangeSegment) => React.ReactNode,
+	segments: ReadonlyArray<ExchangeSegment> = SEGMENTS
+) {
+	return <SegmentLines present={segments.filter((segment) => row.segments.includes(segment))} value={value} />
+}
+
+/** Slippage or markout for one segment, the two rungs stacked as on the directory. */
+function segmentExecColumn(spec: {
+	id: string
+	segment: ExchangeSegment
+	definition: { label: string; description: string }
+	field: 'realizedSlippage10kBps' | 'markout1mBps'
+	width: string
+}) {
+	return columnHelper.accessor((row) => row.executionBySegment[spec.segment]?.[spec.field] ?? undefined, {
+		id: spec.id,
+		header: spec.definition.label,
+		sortDescFirst: false,
+		cell: ({ row }) => {
+			if (!row.original.segments.includes(spec.segment)) return NOT_TRADED
+			const execution = row.original.executionBySegment[spec.segment] ?? null
+			return spec.field === 'markout1mBps' ? (
+				<MarkoutHorizons execution={execution} />
+			) : (
+				<SlippageLadder execution={execution} />
+			)
+		},
+		meta: { headerClassName: spec.width, align: 'end', headerHelperText: spec.definition.description }
+	})
+}
+
+const nvolCell = (value: number | null, reported: boolean) =>
+	value == null ? '–' : `${formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${reported ? '*' : ''}`
 const TOKEN_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('token', {
 		id: 'token',
@@ -77,73 +115,104 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			headerHelperText: 'Base asset, with the highest leverage its perps offer here. Hover for the segments trading it.'
 		}
 	}),
-	// Cost, slippage and markout answer different questions, so they get a column
-	// each, presented exactly as the Execution tab presents them. One metric shown
-	// two different ways across two surfaces is its own kind of confusion.
-	columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
-		id: 'perpCost',
-		// Short on purpose; the tooltip carries the USD-perp qualifier.
-		header: definitions.execCostToTrade.label,
-		sortDescFirst: false,
-		cell: ({ row }) => {
-			const execution = row.original.execution
-			return execution?.costToTradeBps == null ? (
-				NA
-			) : (
-				<>{formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}</>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[160px]',
-			align: 'end',
-			headerHelperText:
-				'All-in cost of a $10k market order on this token’s USD perp: taker fee plus half the effective spread.'
+	columnHelper.accessor(
+		(row) =>
+			row.executionBySegment.linear_perp?.costToTradeBps ?? row.executionBySegment.spot?.costToTradeBps ?? undefined,
+		{
+			id: 'cost',
+			header: definitions.execCostToTrade.label,
+			sortDescFirst: false,
+			cell: ({ row }) =>
+				segmentLines(row.original, (segment) => {
+					const cost = row.original.executionBySegment[segment]?.costToTradeBps
+					return cost == null ? NA : money(cost)
+				}),
+			meta: {
+				headerClassName: 'w-[160px]',
+				align: 'end',
+				headerHelperText:
+					'All-in cost of a $10k market order on this token here: taker fee plus half the effective spread, one line per segment.'
+			}
 		}
+	),
+	segmentExecColumn({
+		id: 'spotSlippage',
+		segment: 'spot',
+		definition: definitions.spotSlippage,
+		field: 'realizedSlippage10kBps',
+		width: 'w-[204px]'
 	}),
-	columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
+	segmentExecColumn({
 		id: 'perpSlippage',
-		header: usdPerpLabel(definitions.execSlippage10k.label),
-		sortDescFirst: false,
-		cell: ({ row }) => (row.original.execution ? <SlippageLadder execution={row.original.execution} /> : NA),
-		meta: {
-			headerClassName: 'w-[186px]',
-			align: 'end',
-			headerHelperText:
-				'What the pre-trade book promised, then what fills actually paid, at each order size. The Execution tab adds $1M.'
-		}
+		segment: 'linear_perp',
+		definition: definitions.perpSlippage,
+		field: 'realizedSlippage10kBps',
+		width: 'w-[204px]'
 	}),
-	columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
+	segmentExecColumn({
+		id: 'spotMarkout',
+		segment: 'spot',
+		definition: definitions.spotMarkout,
+		field: 'markout1mBps',
+		width: 'w-[140px]'
+	}),
+	segmentExecColumn({
 		id: 'perpMarkout',
-		header: usdPerpLabel(definitions.execMarkout1m.label),
-		sortDescFirst: false,
-		cell: ({ row }) => (row.original.execution ? <MarkoutHorizons execution={row.original.execution} /> : NA),
-		meta: {
-			headerClassName: 'w-[161px]',
-			align: 'end',
-			headerHelperText:
-				'Where the price went 1 and 5 minutes after a fill, per $10k. Lower is better; positive (red) means it kept moving against the taker. The Execution tab adds 1s and 15s.'
-		}
+		segment: 'linear_perp',
+		definition: definitions.perpMarkout,
+		field: 'markout1mBps',
+		width: 'w-[150px]'
 	}),
-	columnHelper.accessor((row) => row.spotActiveLiquidity ?? undefined, {
-		id: 'spotActiveLiquidity',
-		header: definitions.spotActiveLiquidity.label,
-		cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
-		meta: {
-			headerClassName: 'w-[112px]',
-			align: 'end',
-			headerHelperText: definitions.spotActiveLiquidity.description
+	columnHelper.accessor(
+		(row) => {
+			const shown = SEGMENTS.map((segment) => insideShown(row.executionBySegment[segment]?.insideSpreadPct)).filter(
+				(value): value is number => value != null
+			)
+			return shown.length > 0 ? Math.max(...shown) : undefined
+		},
+		{
+			id: 'intraSpread',
+			header: definitions.intraSpread.label,
+			sortDescFirst: true,
+			cell: ({ row }) => {
+				const flagged = SEGMENTS.filter(
+					(segment) => insideShown(row.original.executionBySegment[segment]?.insideSpreadPct) != null
+				)
+				return flagged.length === 0
+					? null
+					: segmentLines(
+							row.original,
+							(segment) => <IntraSpread pct={row.original.executionBySegment[segment]?.insideSpreadPct} />,
+							flagged
+						)
+			},
+			meta: { headerClassName: 'w-[150px]', align: 'end', headerHelperText: definitions.intraSpread.description }
 		}
-	}),
-	columnHelper.accessor((row) => row.perpActiveLiquidity ?? undefined, {
-		id: 'perpActiveLiquidity',
-		header: definitions.perpActiveLiquidity.label,
-		cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
-		meta: {
-			headerClassName: 'w-[116px]',
-			align: 'end',
-			headerHelperText: definitions.perpActiveLiquidity.description
+	),
+	columnHelper.accessor(
+		(row) =>
+			row.spotActiveLiquidity == null && row.perpActiveLiquidity == null
+				? undefined
+				: (row.spotActiveLiquidity ?? 0) + (row.perpActiveLiquidity ?? 0),
+		{
+			id: 'activeLiquidity',
+			header: definitions.segmentActiveLiquidity.label,
+			cell: ({ row }) =>
+				segmentLines(
+					row.original,
+					(segment) =>
+						formatUsd(
+							segment === 'spot' ? row.original.spotActiveLiquidity : row.original.perpActiveLiquidity,
+							USD_LOWERCASE_MILLIONS_OPTIONS
+						) ?? '–'
+				),
+			meta: {
+				headerClassName: 'w-[180px]',
+				align: 'end',
+				headerHelperText: definitions.segmentActiveLiquidity.description
+			}
 		}
-	}),
+	),
 	columnHelper.accessor((row) => row.perpOpenInterestUsd ?? undefined, {
 		id: 'perpOpenInterest',
 		header: definitions.perpOpenInterest.label,
@@ -152,6 +221,32 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			headerClassName: 'w-[112px]',
 			align: 'end',
 			headerHelperText: definitions.perpOpenInterest.description
+		}
+	}),
+	columnHelper.accessor((row) => row.spotNormalizedVolume ?? undefined, {
+		id: 'spotNormalizedVolume',
+		header: definitions.spotNormalizedVolume.label,
+		cell: ({ row }) =>
+			row.original.segments.includes('spot')
+				? nvolCell(row.original.spotNormalizedVolume, row.original.spotVolumeIsReported)
+				: NOT_TRADED,
+		meta: {
+			headerClassName: 'w-[112px]',
+			align: 'end',
+			headerHelperText: `${definitions.spotNormalizedVolume.description} * = a market without a captured book counts at reported volume.`
+		}
+	}),
+	columnHelper.accessor((row) => row.perpNormalizedVolume ?? undefined, {
+		id: 'perpNormalizedVolume',
+		header: definitions.perpNormalizedVolume.label,
+		cell: ({ row }) =>
+			row.original.segments.includes('linear_perp')
+				? nvolCell(row.original.perpNormalizedVolume, row.original.perpVolumeIsReported)
+				: NOT_TRADED,
+		meta: {
+			headerClassName: 'w-[128px]',
+			align: 'end',
+			headerHelperText: `${definitions.perpNormalizedVolume.description} * = a market without a captured book counts at reported volume.`
 		}
 	})
 ])

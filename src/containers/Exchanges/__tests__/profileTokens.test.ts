@@ -66,24 +66,37 @@ describe('exchangeTokenRows', () => {
 		expect(row.perpVolumeIsReported).toBe(false)
 	})
 
-	test('attaches measured fills by asset and leaves the rest null', () => {
+	// BTC/USDT and BTC/USDC are one token: each figure is the mean of its measured markets,
+	// weighted by the volume measured on each, so the busier market counts for more.
+	test('merges a token’s measured markets by volume and leaves unmeasured tokens empty', () => {
+		const measured = (
+			costToTradeBps: number,
+			notionalUsd: number,
+			insideSpreadPct: number,
+			insideMeasuredUsd: number
+		) =>
+			({
+				costToTradeBps,
+				notionalUsd,
+				insideSpreadPct,
+				insideMeasuredUsd,
+				hoursCovered: 100
+			}) as unknown as ExchangePairModel['execution']
 		const rows = exchangeTokenRows(
-			profile(
-				{ linear_perp: [pair('btc'), pair('doge')] },
-				{
-					assets: ['BTC'],
-					hoursCovered: 720,
-					costToTradeBps: 1,
-					realizedSlippage10kBps: 1,
-					predictedSlippage10kBps: 1,
-					markout1mBps: 1,
-					feed: null,
-					pairs: [{ asset: 'BTC', costToTradeBps: 4 } as never]
-				}
-			)
+			profile({
+				linear_perp: [
+					// the second market has a book to judge against on 1 of its 100: its 50% is 0.5 of 101
+					pair('btc', { execution: measured(4, 300, 1, 100) }),
+					pair('btc', { execution: measured(8, 100, 50, 1) }),
+					pair('doge', { execution: null })
+				]
+			})
 		)
-		expect(rows.find((row) => row.token === 'BTC')?.execution?.costToTradeBps).toBe(4)
-		expect(rows.find((row) => row.token === 'DOGE')?.execution).toBeNull()
+		const btc = rows.find((row) => row.token === 'BTC')?.executionBySegment.linear_perp
+		expect(btc?.costToTradeBps).toBe(5)
+		expect(btc?.insideSpreadPct).toBeCloseTo((1 * 100 + 50 * 1) / 101, 10)
+		expect(btc?.hoursCovered).toBe(100)
+		expect(rows.find((row) => row.token === 'DOGE')?.executionBySegment).toEqual({})
 	})
 
 	// Leverage is a property of the perp, not of the asset: a spot-only token has none,

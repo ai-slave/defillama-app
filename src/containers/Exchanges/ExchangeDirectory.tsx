@@ -69,8 +69,6 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 				catalog={countryState.catalog}
 				catalogFailed={countryState.catalogFailed}
 				executionAvailable={directory.executionAvailable}
-				executionCostBasket={directory.executionCostBasket}
-				executionFillBasket={directory.executionFillBasket}
 				onCountryChange={countryState.setCountry}
 			/>
 			<p className="px-1 pb-2 body-sm text-tertiary">

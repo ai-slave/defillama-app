@@ -1,3 +1,5 @@
+import { flexRender } from '@tanstack/react-table'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { searchTableFeatures } from '~/components/Table/features/search'
@@ -50,7 +52,7 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 		selectedCountry: null,
 		selectedCountryStatus: null,
 		normalizedVolume: null,
-		execution: null,
+		executionBySegment: {},
 		quality: null,
 		...patch
 	}
@@ -60,7 +62,11 @@ function quality(score: number, rank: number): NonNullable<ExchangeDirectoryRowM
 	return { score, rank, tier: 'A', segments: {}, components: {} }
 }
 
-function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: ExchangeDirectoryRowModel, id: string) {
+function directoryCell(
+	scope: 'all' | 'spot' | 'linear_perp' | 'inverse_perp',
+	venue: ExchangeDirectoryRowModel,
+	id: string
+) {
 	const table = constructTestTable({
 		features: searchTableFeatures,
 		data: [venue],
@@ -77,6 +83,39 @@ function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: Ex
 }
 
 describe('exact segment scopes in directory columns', () => {
+	test.each(['all', 'spot', 'linear_perp', 'inverse_perp'] as const)(
+		'shows measured second rungs when the first is absent in %s',
+		(scope) => {
+			const segment = scope === 'all' ? 'linear_perp' : scope
+			const venue = row({
+				segments: { [segment]: activity() },
+				executionBySegment: {
+					[segment]: {
+						assets: ['BTC'],
+						hoursCovered: 100,
+						costToTradeBps: 4,
+						effectiveSpreadBps: 2,
+						realizedSlippage10kBps: null,
+						predictedSlippage10kBps: null,
+						realizedSlippage100kBps: 2,
+						predictedSlippage100kBps: 2.5,
+						markout1mBps: null,
+						markout5mBps: 3,
+						insideSpreadPct: null
+					}
+				}
+			})
+			const slippage = directoryCell(scope, venue, scope === 'all' ? 'perpSlippage' : 'execSlippage10k')
+			const markout = directoryCell(scope, venue, scope === 'all' ? 'perpMarkout' : 'execMarkout1m')
+			const slippageHtml = renderToStaticMarkup(flexRender(slippage.column.columnDef.cell, slippage.getContext()))
+			const markoutHtml = renderToStaticMarkup(flexRender(markout.column.columnDef.cell, markout.getContext()))
+			expect(slippageHtml).toContain('$100k')
+			expect(slippageHtml).toContain('$20.00')
+			expect(markoutHtml).toContain('5m')
+			expect(markoutHtml).toContain('+$3.00')
+		}
+	)
+
 	test('hides execution columns only when the execution source is unavailable', () => {
 		const availableIds = new Set(buildDirectoryColumns('linear_perp', true).map((column) => column.id))
 		const unavailableIds = new Set(buildDirectoryColumns('linear_perp', false).map((column) => column.id))

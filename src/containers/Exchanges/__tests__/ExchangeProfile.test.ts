@@ -29,6 +29,7 @@ function profile(slug: string, segments: Array<ExchangeSegment>): ExchangeProfil
 		defillamaUrl: null,
 		defillamaCexSlug: null,
 		execution: null,
+		executionBySegment: {},
 		quality: null,
 		nativeToken: null,
 		hacks: [],

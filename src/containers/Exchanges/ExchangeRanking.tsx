@@ -8,11 +8,13 @@ import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import { EXCHANGES_METHODOLOGY_URL, ExchangeDocsLinks } from './docsLinks'
-import type {
-	ExchangeRankingModel,
-	ExchangeRankingPillarModel,
-	ExchangeRankingRowModel,
-	ExchangeRankingSubModel
+import {
+	EXCHANGE_SEGMENT_LABELS,
+	type ExchangeRankingModel,
+	type ExchangeRankingPillarModel,
+	type ExchangeRankingRowModel,
+	type ExchangeRankingSubModel,
+	type ExchangeSegment
 } from './models'
 import { scoreColor } from './ProfileRanking'
 
@@ -116,7 +118,8 @@ function RankingRow({
 	expanded: boolean
 	onToggle: () => void
 }) {
-	const hasDetail = row.execSubs !== null || row.reserveSubs !== null
+	const intra = row.intraSpread && row.intraSpread.share > 0 ? row.intraSpread : null
+	const hasDetail = row.execSubs !== null || row.reserveSubs !== null || intra !== null
 	return (
 		<>
 			<tr className="border-t border-subtle">
@@ -165,6 +168,29 @@ function RankingRow({
 				<tr className="bg-surface-elevated-1">
 					<td />
 					<td colSpan={4 + pillars.length} className="px-2 py-3">
+						{intra ? (
+							<div className="flex flex-col gap-1 pb-3">
+								<Tooltip
+									content={ranking.intraSpreadCheck?.what ?? ''}
+									className="w-fit label-sm underline decoration-dotted"
+								>
+									Intra-spread volume
+								</Tooltip>
+								<p className="body-sm text-secondary">
+									{`${(
+										Object.entries(intra.segments) as Array<[ExchangeSegment, { flagged: number; measured: number }]>
+									)
+										.filter(([, count]) => count.flagged > 0)
+										.map(
+											([segment, count]) =>
+												`${EXCHANGE_SEGMENT_LABELS[segment]} ${count.flagged} of ${count.measured} markets`
+										)
+										.join(
+											', '
+										)} print 5% or more inside the spread; ${Math.round(intra.share * 100)}% off Execution, and each segment's share off its volume and depth.`}
+								</p>
+							</div>
+						) : null}
 						<div className="flex flex-col gap-4 md:flex-row md:gap-10">
 							<SubScoreRows title="Reserves sub-scores" subs={ranking.reserveSubs} scores={row.reserveSubs} />
 							<SubScoreRows
@@ -403,6 +429,12 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			{pillars.map((pillar) => (
 				<PillarSection key={pillar.key} pillar={pillar} ranking={ranking} />
 			))}
+			{ranking.intraSpreadCheck ? (
+				<Card as="section" padding="md" className="flex flex-col gap-2" id="check-intra-spread">
+					<h3 className="heading-xs">{ranking.intraSpreadCheck.label}</h3>
+					<p className="body-md text-secondary">{ranking.intraSpreadCheck.what}</p>
+				</Card>
+			) : null}
 
 			<Card as="section" padding="md" className="flex flex-col gap-3">
 				<h3 className="heading-xs">Tiers</h3>

@@ -22,7 +22,8 @@ describe('merged directory scope', () => {
 			normalizedVolume: {
 				linear_perp: { activeLiquidity: 40, normalized: 60 },
 				inverse_perp: null
-			}
+			},
+			executionBySegment: {}
 		} as unknown as ExchangeDirectoryRowModel
 		const table = constructTestTable({
 			features: tableFeaturesConfig,
@@ -40,7 +41,7 @@ describe('merged directory scope', () => {
 			return cell.getValue()
 		}
 
-		expect(value('perpActiveLiquidity')).toBe(40)
+		expect(value('segmentActiveLiquidity')).toBe(40)
 		expect(value('perpOpenInterest')).toBe(100)
 		expect(value('perpNormalizedVolume')).toBe(60)
 	})
@@ -76,7 +77,10 @@ describe('merged directory scope', () => {
 				linear_perp: { activeLiquidity: 40, normalized: 60 }
 			},
 			sparks: { spot: [1, 2], linear_perp: [1, 2] },
-			execution: { costToTradeBps: 1, realizedSlippage10kBps: 2, markout1mBps: 3 }
+			executionBySegment: {
+				spot: { costToTradeBps: 1, realizedSlippage10kBps: 2, markout1mBps: 3, insideSpreadPct: 12 },
+				linear_perp: { costToTradeBps: 1, realizedSlippage10kBps: 2, markout1mBps: 3, insideSpreadPct: 12 }
+			}
 		} as unknown as ExchangeDirectoryRowModel
 		const visible = new Set(visibleIds('all'))
 		const table = constructTestTable({

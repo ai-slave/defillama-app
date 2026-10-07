@@ -24,6 +24,7 @@ import {
 import { exchangeDefinitions } from './definitions'
 import { sumNullable } from './modelHelpers'
 import type { ExchangePairModel, ExchangeSegment } from './models'
+import { insideShown, IntraSpread, Markout, NA, pctOfBps, SlippagePair } from './ProfileExecution'
 
 const PERCENT_OPTIONS = {
 	input: 'fraction',
@@ -168,6 +169,55 @@ export function buildPairColumns(
 				align: 'end',
 				headerHelperText: definitions.priceChange24h.description
 			}
+		}),
+		// What trading here costs, measured on this market's own fills (trailing 30 days,
+		// 72 hours of coverage at least); n/a where it is not measured.
+		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
+			id: 'execCostToTrade',
+			header: definitions.execCostToTrade.label,
+			sortDescFirst: false,
+			cell: ({ getValue }) =>
+				getValue() == null
+					? NA
+					: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
+			meta: { headerClassName: 'w-[150px]', align: 'end', headerHelperText: definitions.execCostToTrade.description }
+		}),
+		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
+			id: 'execSlippage10k',
+			header: definitions.execSlippage10k.label,
+			sortDescFirst: false,
+			cell: ({ row }) => (
+				<SlippagePair
+					predicted={row.original.execution?.predictedSlippage10kBps ?? null}
+					actual={row.original.execution?.realizedSlippage10kBps ?? null}
+				/>
+			),
+			meta: { headerClassName: 'w-[140px]', align: 'end', headerHelperText: definitions.execSlippage10k.description }
+		}),
+		columnHelper.accessor((row) => insideShown(row.execution?.insideSpreadPct) ?? undefined, {
+			id: 'intraSpread',
+			header: definitions.intraSpread.label,
+			sortDescFirst: true,
+			cell: ({ row }) => <IntraSpread pct={row.original.execution?.insideSpreadPct} />,
+			meta: { headerClassName: 'w-[125px]', align: 'end', headerHelperText: definitions.intraSpread.description }
+		}),
+		columnHelper.accessor((row) => row.execution?.effectiveSpreadBps ?? undefined, {
+			id: 'execEffectiveSpread',
+			header: definitions.execEffectiveSpread.label,
+			sortDescFirst: false,
+			cell: ({ getValue }) => (getValue() == null ? NA : pctOfBps(getValue() ?? null)),
+			meta: {
+				headerClassName: 'w-[100px]',
+				align: 'end',
+				headerHelperText: definitions.execEffectiveSpread.description
+			}
+		}),
+		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
+			id: 'execMarkout1m',
+			header: definitions.execMarkout1m.label,
+			sortDescFirst: false,
+			cell: ({ getValue }) => <Markout value={getValue() ?? null} />,
+			meta: { headerClassName: 'w-[105px]', align: 'end', headerHelperText: definitions.execMarkout1m.description }
 		}),
 		// Active liquidity leads the liquidity metrics, matching the exchanges directory.
 		columnHelper.accessor((row) => row.normalizedVolume?.activeLiquidity ?? undefined, {

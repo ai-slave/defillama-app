@@ -1,15 +1,24 @@
-import type { ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { MethodologyLink } from './docsLinks'
-import type { ExchangeExecutionFeedHealth, ExchangeExecutionModel, ExchangeExecutionPairModel } from './models'
+import {
+	EXCHANGE_SEGMENT_LABELS,
+	type ExchangeExecutionFeedHealth,
+	type ExchangeMarketExecution,
+	type ExchangePairModel,
+	type ExchangeProfileModel,
+	type ExchangeSegment
+} from './models'
 
 // Execution metrics are one-way bps figures; 1bp of $10k is exactly $1, so bps values
 // render as dollars at the reference size — the framing regular users reason in.
 
 // Spreads read most naturally as a percentage of price, not dollars.
-const pctOfBps = (bps: number | null) => {
+export const pctOfBps = (bps: number | null) => {
 	if (bps == null) return 'n/a'
 	const pct = bps / 100
 	const digits = pct >= 0.1 ? 2 : pct >= 0.01 ? 3 : 4
@@ -46,7 +55,7 @@ export function Markout({ value }: { value: number | null }) {
  * would push the liquidity figures off the row; one unlabelled line would not say which
  * size or horizon it meant.
  */
-function StackedRows({ rows }: { rows: Array<{ label: string; value: ReactNode }> }) {
+export function StackedRows({ rows }: { rows: Array<{ label: string; value: ReactNode }> }) {
 	return (
 		<span className="flex flex-col items-end gap-0.5 leading-tight">
 			{rows.map((row) => (
@@ -57,6 +66,39 @@ function StackedRows({ rows }: { rows: Array<{ label: string; value: ReactNode }
 			))}
 		</span>
 	)
+}
+
+/**
+ * Intra-spread volume: the share of measured volume printed strictly inside the spread the
+ * book showed, at a price no displayed order offered. Honest books print 0.1–2%. Below
+ * INSIDE_MIN_PCT it is mostly a coarse tick grid or clock jitter, a false flag, so nothing is
+ * shown; from INSIDE_NOTE_PCT it is worth a look, from INSIDE_WARN_PCT a large part of the
+ * volume did not trade against the book on show.
+ */
+export const INSIDE_MIN_PCT = 2.5
+export const INSIDE_NOTE_PCT = 5
+export const INSIDE_WARN_PCT = 10
+export const insideShown = (pct: number | null | undefined): number | null =>
+	pct != null && pct >= INSIDE_MIN_PCT ? pct : null
+
+export function IntraSpread({ pct }: { pct: number | null | undefined }) {
+	const shown = insideShown(pct)
+	if (shown == null) return null
+	const text = formatPercent(shown, { input: 'percent', maximumFractionDigits: shown >= 10 ? 0 : 1 })
+	if (shown >= INSIDE_WARN_PCT) {
+		return (
+			<Tooltip
+				content="A large share of this volume did not trade against the order book on show."
+				className="ms-auto w-fit"
+			>
+				<span className="flex items-center gap-1 text-data-down">
+					<Icon name="alert-triangle" height={14} width={14} aria-hidden="true" />
+					{text}
+				</span>
+			</Tooltip>
+		)
+	}
+	return <span className={shown >= INSIDE_NOTE_PCT ? 'text-warning' : undefined}>{text}</span>
 }
 
 /** bps at a reference size, read at a multiple of it: $100k is ten $10k units. */
@@ -76,6 +118,7 @@ interface SlippageLadderValues {
  * size is what makes the two lines comparable for someone thinking in order size.
  */
 export function SlippageLadder({ execution }: { execution: SlippageLadderValues | null }) {
+	if (execution?.realizedSlippage10kBps == null && execution?.realizedSlippage100kBps == null) return NA
 	return (
 		<StackedRows
 			rows={[
@@ -108,6 +151,7 @@ export function MarkoutHorizons({
 }: {
 	execution: { markout1mBps: number | null; markout5mBps: number | null } | null
 }) {
+	if (execution?.markout1mBps == null && execution?.markout5mBps == null) return NA
 	return (
 		<StackedRows
 			rows={[
@@ -115,151 +159,6 @@ export function MarkoutHorizons({
 				{ label: '5m', value: <Markout value={execution?.markout5mBps ?? null} /> }
 			]}
 		/>
-	)
-}
-
-function summarySentences(execution: ExchangeExecutionModel): Array<string> {
-	const sentences: Array<string> = []
-	if (execution.costToTradeBps != null) {
-		sentences.push(
-			`A $10k market order here costs about ${formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} all-in: base-tier taker fee plus spread. VIP tiers lower the fee part; the slippage figures below exclude fees.`
-		)
-	}
-	const actual = execution.realizedSlippage10kBps
-	const predicted = execution.predictedSlippage10kBps
-	if (actual != null && predicted != null) {
-		const gap = actual - predicted
-		sentences.push(
-			gap <= 0.05
-				? `The book delivers what it promises: it predicted ${formatUsd(predicted, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} of slippage on a $10k fill, and fills actually cost ${formatUsd(actual, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}.`
-				: `The book promised ${formatUsd(predicted, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} of slippage on a $10k fill; fills actually cost ${formatUsd(actual, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}, which is ${formatUsd(gap, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} more, so displayed depth partly moves before fills land.`
-		)
-	}
-	if (execution.markout1mBps != null) {
-		sentences.push(
-			execution.markout1mBps > 0
-				? `In the minute after a $10k fill the price keeps moving against the taker by about ${formatUsd(Math.abs(execution.markout1mBps), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} on average.`
-				: `In the minute after a fill the price tends to come back about ${formatUsd(Math.abs(execution.markout1mBps), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} (per $10k) in the taker's favour.`
-		)
-	}
-	sentences.push(
-		`From ${execution.hoursCovered}h of tick-level fills across ${execution.pairs.length} pair${execution.pairs.length === 1 ? '' : 's'} (${execution.assets.join(', ')}): actual trades, not venue claims. USD perps only.`
-	)
-	return sentences
-}
-
-const HEADER_HELP: Array<{ label: string; help: string; align?: 'end' }> = [
-	{ label: 'Pair', help: 'Perp market in the shared measurement basket.' },
-	{
-		label: 'Cost to trade',
-		help: 'All-in cost of a $10k market order: base-tier taker fee plus half the effective spread. VIP tiers lower the fee part.',
-		align: 'end'
-	},
-	{
-		label: 'Spread',
-		help: 'Twice the gap between fill price and mid at fill time, as a percentage of price. Hover a value for the quoted spread.',
-		align: 'end'
-	},
-	{
-		label: 'Slippage $10k',
-		help: 'What the pre-trade book promised, then what fills of $10k or more actually paid, in dollars per $10k.',
-		align: 'end'
-	},
-	{
-		label: 'Slippage $100k',
-		help: 'Same, for fills of $100k or more, per $100k.',
-		align: 'end'
-	},
-	{
-		label: 'Slippage $1M',
-		help: 'Same, for fills of $1M or more, per $1M. Fills this large are rare, so often not measured.',
-		align: 'end'
-	},
-	{
-		label: 'Markout 1s',
-		help: 'Where the price went 1 second after a fill, per $10k. Lower is better; positive means it kept moving against the taker.',
-		align: 'end'
-	},
-	{
-		label: 'Markout 15s',
-		help: 'Where the price went 15 seconds after a fill, per $10k.',
-		align: 'end'
-	},
-	{
-		label: 'Markout 1m',
-		help: 'Where the price went 1 minute after a fill, per $10k.',
-		align: 'end'
-	},
-	{
-		label: 'Markout 5m',
-		help: 'Where the price went 5 minutes after a fill, per $10k.',
-		align: 'end'
-	},
-	{
-		label: 'Measured',
-		help: 'Hours of tick coverage and fills behind this pair’s window.',
-		align: 'end'
-	}
-]
-
-const at = (bps: number | null, sizeUnits: number) => (bps == null ? null : bps * sizeUnits)
-
-function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
-	// bps → dollars at the column's own trade size: ×10 for $100k, ×100 for $1M
-	return (
-		<tr>
-			<th
-				scope="row"
-				className="sticky left-0 z-10 border-t border-subtle bg-surface px-2 py-2 text-left label-sm whitespace-nowrap"
-			>
-				{pair.asset}
-			</th>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				{pair.costToTradeBps == null ? (
-					NA
-				) : (
-					<>
-						{formatUsd(pair.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}{' '}
-						<span className="text-tertiary">/$10k</span>
-					</>
-				)}
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				{pair.effectiveSpreadBps == null ? (
-					NA
-				) : (
-					<Tooltip content={`Quoted spread: ${pctOfBps(pair.quotedSpreadBps)}`} className="ms-auto w-fit">
-						{pctOfBps(pair.effectiveSpreadBps)}
-					</Tooltip>
-				)}
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<SlippagePair predicted={pair.predictedSlippage10kBps} actual={pair.realizedSlippage10kBps} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<SlippagePair predicted={at(pair.predictedSlippage100kBps, 10)} actual={at(pair.realizedSlippage100kBps, 10)} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<SlippagePair predicted={at(pair.predictedSlippage1mBps, 100)} actual={at(pair.realizedSlippage1mBps, 100)} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<Markout value={pair.markout1sBps} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<Markout value={pair.markout15sBps} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<Markout value={pair.markout1mBps} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap">
-				<Markout value={pair.markout5mBps} />
-			</td>
-			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap text-tertiary">
-				<Tooltip content={`${formatNumber(pair.fillCount)} fills measured`} className="ms-auto w-fit">
-					{`${pair.hoursCovered}h`}
-				</Tooltip>
-			</td>
-		</tr>
 	)
 }
 
@@ -334,36 +233,242 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 	)
 }
 
-export function ProfileExecution({ execution }: { execution: ExchangeExecutionModel }) {
+/** Segments with at least one measured market, in tab order. */
+export function measuredExecutionSegments(profile: ExchangeProfileModel): Array<ExchangeSegment> {
+	return (['spot', 'linear_perp', 'inverse_perp'] as const).filter((segment) =>
+		(profile.segments[segment]?.pairs ?? []).some((pair) => pair.execution)
+	)
+}
+
+const SEGMENT_IN_TEXT: Record<ExchangeSegment, string> = {
+	spot: 'spot',
+	linear_perp: 'USD perps',
+	inverse_perp: 'COIN perps'
+}
+/** bps of $10k read as dollars, two decimals. */
+export const money = (bps: number) => formatUsd(bps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'
+
+export const SEGMENT_SHORT: Record<ExchangeSegment, string> = {
+	spot: 'Spot',
+	linear_perp: 'USD perp',
+	inverse_perp: 'COIN perp'
+}
+
+/** One labelled line per segment, the stacked cell the merged tables use; N/A when there is none. */
+export function SegmentLines({
+	present,
+	value
+}: {
+	present: ReadonlyArray<ExchangeSegment>
+	value: (segment: ExchangeSegment) => ReactNode
+}) {
+	if (present.length === 0) return <span className="text-tertiary">N/A</span>
+	return <StackedRows rows={present.map((segment) => ({ label: SEGMENT_SHORT[segment], value: value(segment) }))} />
+}
+
+/**
+ * Light red on the dearer half of this table's markets, deeper the dearer; nothing on
+ * the cheaper half, because a cheap reading next to a book that does not show what trades
+ * is not good news. Mid-rank, so a figure every market shares (one fee) stays unshaded.
+ */
+function dearShade(values: Array<number | null>): (value: number | null) => CSSProperties | undefined {
+	const sorted = values.filter((value): value is number => value != null).sort((a, b) => a - b)
+	return (value) => {
+		if (value == null || sorted.length < 3) return undefined
+		const below = sorted.filter((other) => other < value).length
+		const ties = sorted.filter((other) => other === value).length
+		const rank = (below + (ties - 1) / 2) / (sorted.length - 1)
+		const alpha = (rank - 0.5) * 0.18
+		return alpha < 0.015 ? undefined : { backgroundColor: `rgba(220, 38, 38, ${Math.round(alpha * 1000) / 1000})` }
+	}
+}
+const insideShade = (pct: number | null): CSSProperties | undefined =>
+	pct == null
+		? undefined
+		: pct >= INSIDE_WARN_PCT
+			? { backgroundColor: 'rgba(220, 38, 38, 0.09)' }
+			: pct >= INSIDE_NOTE_PCT
+				? { backgroundColor: 'rgba(217, 119, 6, 0.07)' }
+				: undefined
+
+interface ExecutionColumn {
+	label: string
+	help: string
+	value: (execution: ExchangeMarketExecution) => number | null
+	render: (execution: ExchangeMarketExecution) => ReactNode
+	shade?: (value: number | null) => CSSProperties | undefined
+}
+
+function executionColumns(rows: Array<ExchangeMarketExecution>): Array<ExecutionColumn> {
+	const bands = (rows[0]?.slippage ?? []).map((band, index) => ({ ...band, index }))
+	const columns: Array<ExecutionColumn> = [
+		{
+			label: 'Cost to trade $10k',
+			help: 'All-in cost of a $10k market order: base-tier taker fee plus half the effective spread. VIP tiers lower the fee part.',
+			value: (execution) => execution.costToTradeBps,
+			render: (execution) => (execution.costToTradeBps == null ? NA : money(execution.costToTradeBps))
+		},
+		{
+			label: 'Spread',
+			help: 'q = the spread the book quoted, then the spread trades actually paid (twice the gap between fill and mid), as a percentage of price.',
+			value: (execution) => execution.effectiveSpreadBps,
+			render: (execution) =>
+				execution.effectiveSpreadBps == null ? (
+					NA
+				) : (
+					<span className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap">
+						{execution.quotedSpreadBps == null ? null : (
+							<span className="whitespace-nowrap text-tertiary">{`q ${pctOfBps(execution.quotedSpreadBps)} →`}</span>
+						)}
+						<span>{pctOfBps(execution.effectiveSpreadBps)}</span>
+					</span>
+				)
+		},
+		{
+			label: 'Intra-spread vol.',
+			help: 'Share of measured volume printed inside the spread the book showed. Blank below 2.5%, amber from 5%, a warning from 10%.',
+			value: (execution) => insideShown(execution.insideSpreadPct),
+			render: (execution) => <IntraSpread pct={execution.insideSpreadPct} />,
+			shade: insideShade
+		},
+		...bands
+			.filter((band) => rows.some((row) => row.slippage[band.index]?.realizedBps != null))
+			.map((band): ExecutionColumn => ({
+				label: `Slippage ${band.size}`,
+				help: `What the book before a ${band.size} order predicted, then what fills of that size paid, in dollars.`,
+				value: (execution) => execution.slippage[band.index]?.realizedBps ?? null,
+				render: (execution) => {
+					const rung = execution.slippage[band.index]
+					return (
+						<SlippagePair
+							predicted={rung?.predictedBps == null ? null : rung.predictedBps * band.units}
+							actual={rung?.realizedBps == null ? null : rung.realizedBps * band.units}
+						/>
+					)
+				}
+			})),
+		...(
+			[
+				['1s', 'markout1sBps'],
+				['15s', 'markout15sBps'],
+				['1m', 'markout1mBps'],
+				['5m', 'markout5mBps']
+			] as const
+		).map(([horizon, field]): ExecutionColumn => ({
+			label: `Markout ${horizon}`,
+			help: `Where the price went ${horizon} after a fill, per $10k. Lower is better; positive means it kept moving against the taker.`,
+			value: (execution) => execution[field],
+			render: (execution) => <Markout value={execution[field]} />
+		})),
+		{
+			label: 'Measured',
+			help: 'Hours of tick coverage behind the trailing 30-day window.',
+			value: (execution) => execution.hoursCovered,
+			render: (execution) => <span className="text-tertiary">{`${execution.hoursCovered}h`}</span>,
+			shade: () => undefined
+		},
+		{
+			label: 'Taker fee',
+			help: 'Base-tier taker fee the cost to trade includes.',
+			value: (execution) => execution.takerFeeBps,
+			render: (execution) => (execution.takerFeeBps == null ? NA : pctOfBps(execution.takerFeeBps))
+		}
+	]
+	return columns.map((column) => ({ ...column, shade: column.shade ?? dearShade(rows.map(column.value)) }))
+}
+
+export function ProfileExecution({ profile }: { profile: ExchangeProfileModel }) {
+	const segments = measuredExecutionSegments(profile)
+	const [picked, setPicked] = useState<ExchangeSegment | null>(null)
+	const segment =
+		picked && segments.includes(picked)
+			? picked
+			: segments.includes('linear_perp')
+				? 'linear_perp'
+				: segments.includes('spot')
+					? 'spot'
+					: segments[0]
+	if (!segment) return null
+	const markets = (profile.segments[segment]?.pairs ?? [])
+		.filter((pair): pair is ExchangePairModel & { execution: ExchangeMarketExecution } => pair.execution != null)
+		.sort((a, b) => b.execution.notionalUsd - a.execution.notionalUsd)
+	const columns = executionColumns(markets.map((pair) => pair.execution))
+	const venue = profile.executionBySegment[segment]
+	// The venue's own segment figure in the same shape, so it reads down the same columns. It
+	// carries the $10k and $100k sizes only; the other columns stay blank on this row.
+	const basket: ExchangeMarketExecution | null = venue
+		? {
+				...venue,
+				quotedSpreadBps: null,
+				takerFeeBps: null,
+				markout1sBps: null,
+				markout15sBps: null,
+				notionalUsd: 0,
+				insideMeasuredUsd: 0,
+				slippage: (markets[0]?.execution.slippage ?? []).map((rung) => ({
+					...rung,
+					predictedBps:
+						rung.size === '$10k'
+							? venue.predictedSlippage10kBps
+							: rung.size === '$100k'
+								? venue.predictedSlippage100kBps
+								: null,
+					realizedBps:
+						rung.size === '$10k'
+							? venue.realizedSlippage10kBps
+							: rung.size === '$100k'
+								? venue.realizedSlippage100kBps
+								: null
+				}))
+			}
+		: null
+	const costs = segments.flatMap((each) => {
+		const cost = profile.executionBySegment[each]?.costToTradeBps
+		return cost == null ? [] : [`${money(cost)} on ${SEGMENT_IN_TEXT[each]}`]
+	})
+	const measuredCount = segments.reduce(
+		(count, each) => count + (profile.segments[each]?.pairs ?? []).filter((pair) => pair.execution).length,
+		0
+	)
+	const cellClass = 'border-t border-subtle px-2 py-2 text-right whitespace-nowrap'
 	return (
 		<div className="flex flex-col gap-2">
 			<Card padding="sm">
 				<p className="body-md">
-					{summarySentences(execution).join(' ')} <MethodologyLink />
+					{costs.length > 0 ? `A $10k market order costs about ${costs.join(', ')}, taker fee included. ` : ''}
+					{`Measured on ${measuredCount} markets from every trade and the order book before it, over the last 30 days.`}{' '}
+					<MethodologyLink />
 				</p>
 			</Card>
 			<Card padding="none">
-				{/* Eleven columns of paired figures: a deliberate 12px compact recipe (headers and
-				    cells together), and cells that never wrap, so a narrow screen scrolls the table
-				    sideways with the pair column pinned instead of stacking every row three lines high. */}
+				<div className="flex items-center gap-2 p-2">
+					<SegmentedControl<ExchangeSegment>
+						value={segment}
+						onValueChange={setPicked}
+						options={segments.map((each) => ({ value: each, label: EXCHANGE_SEGMENT_LABELS[each] }))}
+						label="Execution segment"
+						variant="default"
+						size="md"
+					/>
+					<span className="ms-auto body-sm text-tertiary">{`${markets.length} markets`}</span>
+				</div>
+				{/* Many columns of paired figures: a compact 12px recipe and cells that never wrap, so
+				    a narrow screen scrolls the table sideways with the market column pinned. */}
 				<div className="overflow-x-auto">
 					<table className="w-full body-sm">
 						<thead>
 							<tr>
-								{HEADER_HELP.map((column, index) => (
+								<th className="sticky left-0 z-10 bg-surface px-2 pt-3 pb-2 text-left label-sm text-secondary">
+									Market
+								</th>
+								{columns.map((column) => (
 									<th
 										key={column.label}
-										className={`px-2 pt-3 pb-2 label-sm whitespace-nowrap text-secondary ${
-											index === 0
-												? 'sticky left-0 z-10 bg-surface text-left'
-												: column.align === 'end'
-													? 'text-right'
-													: 'text-left'
-										}`}
+										className="px-2 pt-3 pb-2 text-right label-sm whitespace-nowrap text-secondary"
 									>
 										<Tooltip
 											content={column.help}
-											className={`${column.align === 'end' ? 'ms-auto w-fit' : 'w-fit'} whitespace-nowrap underline decoration-dotted`}
+											className="ms-auto w-fit whitespace-nowrap underline decoration-dotted"
 										>
 											{column.label}
 										</Tooltip>
@@ -372,19 +477,50 @@ export function ProfileExecution({ execution }: { execution: ExchangeExecutionMo
 							</tr>
 						</thead>
 						<tbody>
-							{execution.pairs.map((pair) => (
-								<PairRow key={pair.asset} pair={pair} />
+							{basket ? (
+								<tr>
+									<th
+										scope="row"
+										className="sticky left-0 z-10 border-t border-subtle bg-surface px-2 py-2 text-left label-sm whitespace-nowrap"
+									>
+										<Tooltip
+											content={`The venue's figure: its tokens' markets merged by volume, tokens weighted by cross-venue ${segment === 'spot' ? 'spot volume' : 'open interest'}, the same weights for every venue.`}
+											className="w-fit underline decoration-dotted"
+										>
+											{`${profile.name} basket`}
+										</Tooltip>
+									</th>
+									{columns.map((column) => (
+										<td key={column.label} className={cellClass}>
+											{column.value(basket) == null ? null : column.render(basket)}
+										</td>
+									))}
+								</tr>
+							) : null}
+							{markets.map((pair) => (
+								<tr key={pair.pairId}>
+									<th
+										scope="row"
+										className="sticky left-0 z-10 border-t border-subtle bg-surface px-2 py-2 text-left label-sm whitespace-nowrap uppercase"
+									>
+										{pair.symbol}
+									</th>
+									{columns.map((column) => (
+										<td key={column.label} className={cellClass} style={column.shade?.(column.value(pair.execution))}>
+											{column.render(pair.execution)}
+										</td>
+									))}
+								</tr>
 							))}
 						</tbody>
 					</table>
 				</div>
 				<p className="border-t border-subtle p-3 body-sm text-tertiary">
-					Slippage is in dollars at each trade size: predicted first (the book&rsquo;s promise), then what fills
-					actually cost. Markouts are dollars per $10k traded; lower is better. Fill prices exclude trading fees, which
-					venues charge separately after the fill. n/a means not measured, never zero. <MethodologyLink />
+					Last 30 days, per $10k unless a size is named. p and q are what the book predicted and quoted; red marks the
+					dearest markets here. n/a means not measured.
 				</p>
 			</Card>
-			{execution.feed ? <FeedHealth feed={execution.feed} /> : null}
+			{profile.execution?.feed ? <FeedHealth feed={profile.execution.feed} /> : null}
 		</div>
 	)
 }

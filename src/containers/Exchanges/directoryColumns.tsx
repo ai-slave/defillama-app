@@ -23,7 +23,7 @@ import {
 	KycRequirementValue,
 	MicaLicenseValue
 } from './ComplianceCells'
-import { exchangeDefinitions, usdPerpLabel } from './definitions'
+import { exchangeDefinitions } from './definitions'
 import { feeLabel, FeeValue } from './feePresentation'
 import { fiatFeeSummary, FiatFeesValue } from './FiatFeesValue'
 import { MiniSparkline } from './MiniSparkline'
@@ -39,9 +39,15 @@ import {
 	volumeToDepth,
 	volumeToOpenInterest
 } from './modelHelpers'
-import type { ExchangeDirectoryRowModel, ExchangeNormalizedVolume, ExchangeSegment, ExchangeVenueKind } from './models'
+import type {
+	ExchangeDirectoryRowModel,
+	ExchangeNormalizedVolume,
+	ExchangeSegment,
+	ExchangeSegmentExecution,
+	ExchangeVenueKind
+} from './models'
 import { EXCHANGE_SEGMENT_LABELS } from './models'
-import { MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
+import { insideShown, IntraSpread, MarkoutHorizons, money, NA, SegmentLines, SlippageLadder } from './ProfileExecution'
 import { withCountryParam, type DirectoryScope } from './queryState'
 import { selectVenueDestination } from './venueLinks'
 
@@ -53,7 +59,16 @@ const PERCENT_OPTIONS = {
 } as const
 
 const columnHelper = createColumnHelper<SearchTableFeatures, ExchangeDirectoryRowModel>()
-export const EXECUTION_COLUMN_IDS = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
+export const EXECUTION_COLUMN_IDS = [
+	'execCostToTrade',
+	'execSlippage10k',
+	'spotSlippage',
+	'perpSlippage',
+	'execMarkout1m',
+	'spotMarkout',
+	'perpMarkout',
+	'intraSpread'
+]
 
 function ratio(value: number | null | undefined): string {
 	if (value == null) return '–'
@@ -349,28 +364,28 @@ function perpColumn(spec: {
 }
 
 /**
- * Each execution column states the basket it is measured on, in its header helper.
- *
- * They no longer share one: cost to trade is published on the two deepest perps, fill
- * quality across the top five. Every column is still the same basket on every row, so
- * a column compares like for like down the table — but two columns on ONE row now
- * describe different markets, and the only honest fix for that is to say so where a
- * reader looks for what a number means.
+ * Every execution column reads one segment of the venue (row.executionBySegment): its own
+ * measured markets there, each token's markets merged by volume, tokens weighted the same
+ * way for every venue, so a column compares like for like down the table.
  */
-function executionScopeNote(basket: Array<string>): string {
-	if (basket.length === 0) return 'Each venue’s own covered perps.'
-	if (basket.length === 1) {
-		return `Measured on the ${basket[0]} perp.`
-	}
-	return `OI-weighted across ${basket.join(', ')} perps.`
+const EXECUTION_SCOPE_NOTE = 'Last 30 days of the venue’s measured markets in this segment.'
+
+/** The segments the merged view shows execution for, in reading order. */
+const MERGED_EXEC_SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
+
+/** One line per segment the venue runs, labelled; N/A when it runs none of them. */
+function segmentLines(
+	row: ExchangeDirectoryRowModel,
+	value: (segment: ExchangeSegment) => React.ReactNode,
+	segments: ReadonlyArray<ExchangeSegment> = MERGED_EXEC_SEGMENTS
+) {
+	return <SegmentLines present={segments.filter((segment) => row.segments[segment])} value={value} />
 }
 
-export function buildDirectoryColumns(
-	scope: DirectoryScope,
-	executionAvailable: boolean,
-	executionCostBasket: Array<string> = [],
-	executionFillBasket: Array<string> = []
-) {
+const segmentExec = (row: ExchangeDirectoryRowModel, segment: ExchangeSegment) =>
+	row.executionBySegment[segment] ?? null
+
+export function buildDirectoryColumns(scope: DirectoryScope, executionAvailable: boolean) {
 	const definitions = exchangeDefinitions.directory
 	// Every exact-segment column reads through these. The merged `all` view has no
 	// single segment to read, so they resolve to nothing rather than silently picking
@@ -379,11 +394,44 @@ export function buildDirectoryColumns(
 	const scopedActivity = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? null : activityForScope(row, scope))
 	const scopedNvol = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? null : normalizedVolumeForScope(row, scope))
 	const scopedSpark = (row: ExchangeDirectoryRowModel) => (scope === 'all' ? [] : sparklineForScope(row, scope))
-	// The merged view names the segment in every header (see the segment columns below);
-	// execution is measured on USD perps only, so it says so there too.
-	const execLabel = (label: string) => (scope === 'all' ? usdPerpLabel(label) : label)
-	const costNote = executionScopeNote(executionCostBasket)
-	const fillNote = executionScopeNote(executionFillBasket)
+	const scopedExec = (row: ExchangeDirectoryRowModel): ExchangeSegmentExecution | null =>
+		scope === 'all' ? null : (row.executionBySegment[scope] ?? null)
+	// the merged view sorts by USD perp, spot where the venue has no perps
+	const costOf = (row: ExchangeDirectoryRowModel) =>
+		scope === 'all'
+			? (segmentExec(row, 'linear_perp')?.costToTradeBps ?? segmentExec(row, 'spot')?.costToTradeBps ?? null)
+			: (scopedExec(row)?.costToTradeBps ?? null)
+	// A merged-view slippage or markout column: one segment, with the two rungs stacked.
+	const mergedExecColumn = (spec: {
+		id: string
+		segment: ExchangeSegment
+		definition: { label: string; description: string }
+		field: 'realizedSlippage10kBps' | 'markout1mBps'
+		width: string
+	}) =>
+		columnHelper.accessor((row) => segmentExec(row, spec.segment)?.[spec.field] ?? undefined, {
+			id: spec.id,
+			header: spec.definition.label,
+			sortDescFirst: false,
+			cell: ({ row }) => {
+				if (!row.original.segments[spec.segment]) return <UnsupportedMetric />
+				const execution = segmentExec(row.original, spec.segment)
+				return spec.field === 'markout1mBps' ? (
+					<MarkoutHorizons execution={execution} />
+				) : (
+					<SlippageLadder execution={execution} />
+				)
+			},
+			meta: {
+				headerClassName: spec.width,
+				align: 'end',
+				headerHelperText: `${spec.definition.description} ${EXECUTION_SCOPE_NOTE}`,
+				csvValue: (row) => {
+					const value = segmentExec(row, spec.segment)?.[spec.field]
+					return value == null ? '' : String(roundNumber(value, 2))
+				}
+			}
+		})
 	const columns = columnHelper.columns([
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
@@ -545,19 +593,23 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.venueLinks.description
 			}
 		}),
-		// Measured execution quality — tick-level fills on the shared perp basket, so it
-		// exists for linear-perp scope only today (hidden elsewhere via scope visibility).
+		// Measured execution quality from tick-level fills, per segment (row.executionBySegment).
 		// 1bp of $10k = $1, so bps figures ARE dollars per $10k trade.
-		columnHelper.accessor((row) => row.execution?.costToTradeBps ?? undefined, {
+		columnHelper.accessor((row) => costOf(row) ?? undefined, {
 			id: 'execCostToTrade',
-			// Stays short in every scope; the merged view says "USD perps only" in the
-			// tooltip instead, because the qualified header did not fit its column.
 			header: definitions.execCostToTrade.label,
 			sortDescFirst: false,
 			cell: ({ row, getValue }) => {
+				if (scope === 'all') {
+					// Spot and USD perp on one line each; sorted by USD perp, spot where there is none.
+					return segmentLines(row.original, (segment) => {
+						const cost = segmentExec(row.original, segment)?.costToTradeBps
+						return cost == null ? NA : money(cost)
+					})
+				}
 				const cost = getValue()
 				if (cost == null) return NA
-				const execution = row.original.execution
+				const execution = scopedExec(row.original)
 				// One number. Showing the effective spread beside it read as a breakdown, but
 				// the all-in figure carries HALF the spread, so the two never added up to
 				// anything and invited arithmetic that does not hold. The split belongs in the
@@ -576,57 +628,137 @@ export function buildDirectoryColumns(
 			meta: {
 				headerClassName: 'w-[160px] min-w-[160px]',
 				align: 'end',
-				headerHelperText: `${definitions.execCostToTrade.description} ${costNote}${scope === 'all' ? ' USD perps only.' : ''}`,
-				csvValue: (row) =>
-					row.execution?.costToTradeBps == null ? '' : String(roundNumber(row.execution.costToTradeBps, 2))
+				headerHelperText: `${definitions.execCostToTrade.description} ${EXECUTION_SCOPE_NOTE}${scope === 'all' ? ' One line per segment, sorted by USD perp.' : ''}`,
+				csvValue: (row) => {
+					const cost = costOf(row)
+					return cost == null ? '' : String(roundNumber(cost, 2))
+				}
 			}
 		}),
-		columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
+		columnHelper.accessor((row) => scopedExec(row)?.realizedSlippage10kBps ?? undefined, {
 			id: 'execSlippage10k',
-			header: execLabel(definitions.execSlippage10k.label),
+			header: definitions.execSlippage10k.label,
 			sortDescFirst: false,
-			cell: ({ row, getValue }) => (getValue() == null ? NA : <SlippageLadder execution={row.original.execution} />),
+			cell: ({ row }) => <SlippageLadder execution={scopedExec(row.original)} />,
 			meta: {
 				headerClassName: 'w-[186px] min-w-[186px]',
 				align: 'end',
-				headerHelperText: `${definitions.execSlippage10k.description} ${fillNote}`,
-				csvValue: (row) =>
-					row.execution?.realizedSlippage10kBps == null
-						? ''
-						: String(roundNumber(row.execution.realizedSlippage10kBps, 2))
+				headerHelperText: `${definitions.execSlippage10k.description} ${EXECUTION_SCOPE_NOTE}`,
+				csvValue: (row) => {
+					const value = scopedExec(row)?.realizedSlippage10kBps
+					return value == null ? '' : String(roundNumber(value, 2))
+				}
 			}
 		}),
-		columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
+		mergedExecColumn({
+			id: 'spotSlippage',
+			segment: 'spot',
+			definition: definitions.spotSlippage,
+			field: 'realizedSlippage10kBps',
+			width: 'w-[204px] min-w-[204px]'
+		}),
+		mergedExecColumn({
+			id: 'perpSlippage',
+			segment: 'linear_perp',
+			definition: definitions.perpSlippage,
+			field: 'realizedSlippage10kBps',
+			width: 'w-[204px] min-w-[204px]'
+		}),
+		columnHelper.accessor((row) => scopedExec(row)?.markout1mBps ?? undefined, {
 			id: 'execMarkout1m',
-			header: execLabel(definitions.execMarkout1m.label),
+			header: definitions.execMarkout1m.label,
 			sortDescFirst: false,
-			cell: ({ row, getValue }) => (getValue() == null ? NA : <MarkoutHorizons execution={row.original.execution} />),
+			cell: ({ row }) => <MarkoutHorizons execution={scopedExec(row.original)} />,
 			meta: {
-				headerClassName: scope === 'all' ? 'w-[161px] min-w-[161px]' : 'w-[140px] min-w-[140px]',
+				headerClassName: 'w-[140px] min-w-[140px]',
 				align: 'end',
-				headerHelperText: `${definitions.execMarkout1m.description} ${fillNote}`,
-				csvValue: (row) =>
-					row.execution?.markout1mBps == null ? '' : String(roundNumber(row.execution.markout1mBps, 2))
+				headerHelperText: `${definitions.execMarkout1m.description} ${EXECUTION_SCOPE_NOTE}`,
+				csvValue: (row) => {
+					const value = scopedExec(row)?.markout1mBps
+					return value == null ? '' : String(roundNumber(value, 2))
+				}
 			}
 		}),
+		mergedExecColumn({
+			id: 'spotMarkout',
+			segment: 'spot',
+			definition: definitions.spotMarkout,
+			field: 'markout1mBps',
+			width: 'w-[140px] min-w-[140px]'
+		}),
+		mergedExecColumn({
+			id: 'perpMarkout',
+			segment: 'linear_perp',
+			definition: definitions.perpMarkout,
+			field: 'markout1mBps',
+			width: 'w-[150px] min-w-[150px]'
+		}),
+		// Blank below INSIDE_MIN_PCT, a false flag there; the merged view lists only the
+		// segments that reach it.
+		columnHelper.accessor(
+			(row) => {
+				if (scope !== 'all') return insideShown(scopedExec(row)?.insideSpreadPct) ?? undefined
+				const shown = MERGED_EXEC_SEGMENTS.map((segment) =>
+					insideShown(segmentExec(row, segment)?.insideSpreadPct)
+				).filter((value): value is number => value != null)
+				return shown.length > 0 ? Math.max(...shown) : undefined
+			},
+			{
+				id: 'intraSpread',
+				header: definitions.intraSpread.label,
+				sortDescFirst: true,
+				cell: ({ row }) => {
+					if (scope !== 'all') return <IntraSpread pct={scopedExec(row.original)?.insideSpreadPct} />
+					const flagged = MERGED_EXEC_SEGMENTS.filter(
+						(segment) =>
+							row.original.segments[segment] && insideShown(segmentExec(row.original, segment)?.insideSpreadPct) != null
+					)
+					if (flagged.length === 0) return null
+					return segmentLines(
+						row.original,
+						(segment) => <IntraSpread pct={segmentExec(row.original, segment)?.insideSpreadPct} />,
+						flagged
+					)
+				},
+				meta: {
+					headerClassName: 'w-[150px] min-w-[150px]',
+					align: 'end',
+					headerHelperText: `${definitions.intraSpread.description} ${EXECUTION_SCOPE_NOTE}`
+				}
+			}
+		),
 		// ── merged `all` view ────────────────────────────────────────────────────
 		// Segment-qualified twins of the scoped columns above. They exist so one row can
 		// carry spot and USD perps at once; each names its segment in the header, because
 		// the whole failure mode of a merged table is a number whose market is unstated.
 		// Hidden outside the `all` scope, where the scoped versions serve instead.
-		segmentColumn({
-			id: 'spotActiveLiquidity',
-			segment: 'spot',
-			definition: definitions.spotActiveLiquidity,
-			value: (row) => row.normalizedVolume?.spot?.activeLiquidity ?? undefined,
-			note: (row) => row.segments.spot?.doubleCount?.depth
-		}),
-		perpColumn({
-			id: 'perpActiveLiquidity',
-			definition: definitions.perpActiveLiquidity,
-			pick: (row, segment) => row.normalizedVolume?.[segment]?.activeLiquidity ?? null,
-			headerClassName: 'w-[116px] min-w-[116px]'
-		}),
+		columnHelper.accessor(
+			(row) => {
+				const values = NVOL_SEGMENTS.map((segment) => row.normalizedVolume?.[segment]?.activeLiquidity).filter(
+					(value): value is number => value != null
+				)
+				return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) : undefined
+			},
+			{
+				id: 'segmentActiveLiquidity',
+				header: definitions.segmentActiveLiquidity.label,
+				cell: ({ row }) =>
+					segmentLines(
+						row.original,
+						(segment) =>
+							formatUsd(
+								row.original.normalizedVolume?.[segment]?.activeLiquidity ?? null,
+								USD_LOWERCASE_MILLIONS_OPTIONS
+							) ?? '–',
+						NVOL_SEGMENTS
+					),
+				meta: {
+					headerClassName: 'w-[180px] min-w-[180px]',
+					align: 'end',
+					headerHelperText: `${definitions.segmentActiveLiquidity.description} Sorted by the two together.`
+				}
+			}
+		),
 		perpColumn({
 			id: 'perpOpenInterest',
 			definition: definitions.perpOpenInterest,

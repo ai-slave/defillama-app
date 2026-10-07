@@ -203,27 +203,44 @@ export interface ExchangeDirectoryRowModel {
 	selectedCountry: string | null
 	selectedCountryStatus: ExchangeRegionStatus | null
 	normalizedVolume: Record<ExchangeSegment, ExchangeNormalizedVolume | null> | null
-	/** Measured execution quality on the shared perp basket (USD perps only today):
-	 * tick-level fills, not venue claims. Null for uncovered venues — never zero. */
-	execution: {
-		/** Assets behind the fill-quality figures (slippage, markout). */
-		assets: Array<string>
-		/** Assets behind cost to trade, which is published on a narrower set. */
-		costAssets: Array<string>
-		hoursCovered: number
-		costToTradeBps: number | null
-		/** The spread half of cost to trade, shown beside it. */
-		effectiveSpreadBps: number | null
-		realizedSlippage10kBps: number | null
-		predictedSlippage10kBps: number | null
-		realizedSlippage100kBps: number | null
-		predictedSlippage100kBps: number | null
-		markout1mBps: number | null
-		markout5mBps: number | null
-	} | null
+	/** Measured execution per segment, over each venue's own markets in it (see
+	 * MasterExecutionSegmentMetrics). Missing segment = not measured, never zero. */
+	executionBySegment: Partial<Record<ExchangeSegment, ExchangeSegmentExecution>>
 	/** REAL score — rendered as the tier chip + within-kind position beside the venue
 	 * name, and the directory's default sort. */
 	quality: ExchangeVenueRankModel | null
+}
+
+/** One market's own execution over the trailing 30 days (`execution` on its pair). */
+export interface ExchangeMarketExecution extends Omit<ExchangeSegmentExecution, 'assets'> {
+	quotedSpreadBps: number | null
+	takerFeeBps: number | null
+	markout1sBps: number | null
+	markout15sBps: number | null
+	/** Notional measured behind the figures, USD: what merging a token's markets weighs by. */
+	notionalUsd: number
+	/** Notional the intra-spread share is measured over, USD: what that share is pooled by. */
+	insideMeasuredUsd: number
+	/** Every measured order size, smallest first: what the book predicted, then what fills
+	 *  paid, both in bps of the size (units = size ÷ $10k, to read them as dollars). */
+	slippage: Array<{ size: string; units: number; predictedBps: number | null; realizedBps: number | null }>
+}
+
+/** A venue's or a token's execution in one segment. Dollar figures are bps of the
+ * reference size, so 1bp of $10k is $1. */
+export interface ExchangeSegmentExecution {
+	assets: Array<string>
+	hoursCovered: number
+	costToTradeBps: number | null
+	effectiveSpreadBps: number | null
+	realizedSlippage10kBps: number | null
+	predictedSlippage10kBps: number | null
+	realizedSlippage100kBps: number | null
+	predictedSlippage100kBps: number | null
+	markout1mBps: number | null
+	markout5mBps: number | null
+	/** Share of measured volume printed inside the shown spread, %. */
+	insideSpreadPct: number | null
 }
 
 /** The venue's REAL score: Reserves, Execution, Activity, Liquidity. `score` is the
@@ -241,7 +258,7 @@ export interface ExchangeVenueRankModel {
 
 /**
  * One venue's measured BTC execution quality plus fee, restricted to the BTC pair
- * specifically (not the shared basket average `ExchangeDirectoryRowModel.execution`
+ * specifically (not a basket average
  * mixes several assets into) — for the cross-venue BTC comparison table on the
  * research charts page. Null fields mean not measured for this venue, never zero.
  */
@@ -294,14 +311,6 @@ export interface ExchangeDirectoryModel {
 	summary: ExchangeDirectorySummaryModel
 	updatedAt: string
 	executionAvailable: boolean
-	/** The assets every measured venue covers. The published columns narrow further,
-	 *  per metric, so each stays comparable across rows. Empty when no shared asset
-	 *  exists and each row discloses its own basket instead. */
-	executionBasket: Array<string>
-	/** Assets behind the cost-to-trade column. */
-	executionCostBasket: Array<string>
-	/** Assets behind the slippage and markout columns. */
-	executionFillBasket: Array<string>
 }
 
 export interface ExchangePairModel {
@@ -354,6 +363,8 @@ export interface ExchangePairModel {
 	/** Cumulative depth per band for this pair — summed across a segment's pairs to
 	 *  draw the venue's book profile. */
 	depthLadder: ExchangeDepthLadder | null
+	/** Null below 72 hours of coverage or where nothing measures this market. */
+	execution: ExchangeMarketExecution | null
 }
 
 export interface ExchangeProfileSegmentModel {
@@ -488,25 +499,6 @@ export interface ExchangeRaiseModel {
 	sourceUrl: string | null
 }
 
-export interface ExchangeExecutionPairModel {
-	asset: string
-	hoursCovered: number
-	fillCount: number
-	costToTradeBps: number | null
-	effectiveSpreadBps: number | null
-	quotedSpreadBps: number | null
-	realizedSlippage10kBps: number | null
-	predictedSlippage10kBps: number | null
-	realizedSlippage100kBps: number | null
-	predictedSlippage100kBps: number | null
-	realizedSlippage1mBps: number | null
-	predictedSlippage1mBps: number | null
-	markout1sBps: number | null
-	markout15sBps: number | null
-	markout1mBps: number | null
-	markout5mBps: number | null
-}
-
 export interface ExchangeExecutionFeedHealth {
 	date: string
 	avgGapMs: number
@@ -516,17 +508,15 @@ export interface ExchangeExecutionFeedHealth {
 	degraded: boolean
 }
 
-/** Measured execution quality for the profile's Execution tab: tick-level fills on
- * the shared perp basket (USD perps only today). Null = venue not covered. */
+/** The venue's basket execution figures the ranking breakdown shows, and its book-feed
+ * health for the Execution tab. Null = venue not covered. */
 export interface ExchangeExecutionModel {
-	assets: Array<string>
 	hoursCovered: number
 	costToTradeBps: number | null
 	realizedSlippage10kBps: number | null
 	predictedSlippage10kBps: number | null
 	markout1mBps: number | null
 	feed: ExchangeExecutionFeedHealth | null
-	pairs: Array<ExchangeExecutionPairModel>
 }
 
 /** The venue's quality ranking, joined with the published methodology catalog so the
@@ -563,6 +553,11 @@ export interface ExchangeRankingRowModel {
 	execSubs: Record<string, number | null> | null
 	execDelivery: number | null
 	reserveSubs: Record<string, number | null> | null
+	/** Flagged intra-spread markets per segment and the venue's flagged share; null = not measured. */
+	intraSpread: {
+		share: number
+		segments: Partial<Record<ExchangeSegment, { flagged: number; measured: number; share: number }>>
+	} | null
 }
 
 /** The cross-venue ranking page: every scored venue in score order plus the catalog
@@ -575,6 +570,8 @@ export interface ExchangeRankingModel {
 	reserveSubs: Array<ExchangeRankingSubModel>
 	rows: Array<ExchangeRankingRowModel>
 	insufficient: Array<{ slug: string; name: string; kind: ExchangeVenueKind; profileHref: string }>
+	/** The published intra-spread check, from the catalog's flags; null on an older catalog. */
+	intraSpreadCheck: { label: string; what: string } | null
 }
 
 export interface ExchangeProfileQualityModel {
@@ -611,6 +608,8 @@ export interface ExchangeProfileModel {
 	kind: ExchangeVenueKind
 	profileMode: ExchangeProfileMode
 	execution: ExchangeExecutionModel | null
+	/** The venue's own figure per segment (execution-quality.json `segments`). */
+	executionBySegment: Partial<Record<ExchangeSegment, ExchangeSegmentExecution>>
 	quality: ExchangeProfileQualityModel | null
 	defillamaUrl: string | null
 	/** DefiLlama cex slug from the venue's links; input for reserve gating, not yet validated against protocol metadata. */

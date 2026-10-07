@@ -18,6 +18,7 @@ function profile(
 		defillamaUrl: null,
 		defillamaCexSlug: null,
 		execution: null,
+		executionBySegment: {},
 		quality: null,
 		nativeToken: null,
 		hacks: [],

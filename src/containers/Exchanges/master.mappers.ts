@@ -5,8 +5,9 @@ import type {
 	MasterColumnarSeriesResponse,
 	MasterDepthLadder,
 	MasterDirectoryResponse,
-	MasterExecutionPairMetrics,
-	MasterExecutionVenueMetrics,
+	MasterExecutionSegmentMetrics,
+	MasterPairExecution,
+	MasterSlippageBand,
 	MasterExecutionQualityResponse,
 	MasterQualityRanksResponse,
 	MasterRankMethodologyResponse,
@@ -42,7 +43,6 @@ import {
 	type ExchangeDirectoryRowModel,
 	type ExchangeEeaOrderbookOwnership,
 	type ExchangeExecutionModel,
-	type ExchangeExecutionPairModel,
 	type ExchangeProfileQualityModel,
 	type ExchangeRankingModel,
 	type ExchangeRankingRowModel,
@@ -59,6 +59,8 @@ import {
 	type ExchangeResearchReportModel,
 	type ExchangeResearchView,
 	type ExchangeSegment,
+	type ExchangeMarketExecution,
+	type ExchangeSegmentExecution,
 	type MicaVenueModel,
 	type CryptoRailsModel,
 	type RampCatalogModel,
@@ -214,153 +216,56 @@ export function mapDepthLadder(ladder: MasterDepthLadder | null, bands: Array<nu
 	}))
 }
 
-/**
- * Open-interest-weighted mean across basket assets, weights renormalized over the assets
- * present. Mirrors `oiWeightedMean` upstream (lib/execution-metrics.ts), which aggregates
- * the venue-level figures in the same file this reads — the display baskets here are
- * narrower, so the average is retaken rather than read off.
- *
- * Was an equal-weight median. Over a basket ordered by depth a median is a selector, not
- * a statistic: the middle value was ETH on 15 of 17 venues, so a column labelled as a
- * basket published one asset's number and discarded the rest.
- *
- * All-or-nothing on the weights: an asset with no positive weight sends the whole average
- * back to equal weight rather than being dropped, because dropping it would quietly
- * average a narrower basket than the column's header claims.
- */
-function oiWeightedMean(
-	values: Array<{ asset: string; value: number }>,
-	weights: Record<string, number> | undefined
-): number | null {
-	if (values.length === 0) return null
-	const applied = values.map((entry) => weights?.[entry.asset] ?? 0)
-	const total = applied.reduce((sum, weight) => sum + weight, 0)
-	if (!(total > 0) || applied.some((weight) => !(weight > 0))) {
-		return values.reduce((sum, entry) => sum + entry.value, 0) / values.length
-	}
-	return values.reduce((sum, entry, index) => sum + entry.value * applied[index], 0) / total
-}
-
-/**
- * What each published metric is measured on.
- *
- * Cost to trade stays on the two deepest perps: it is the number a reader feels
- * directly, and on a thinner market it is driven more by the venue's fee schedule than
- * by its book. Fill quality spans the top five, where a single market's quirks matter
- * less than the pattern across several.
- *
- * These are narrower than the collected basket on purpose. Collecting ten and showing
- * five is not waste: the wider set feeds the venue profile and keeps the option of
- * widening a column later without waiting for coverage to build.
- *
- * The trade this makes: a row's cost column and its slippage column now describe
- * different markets, so the two are not comparable against each other on one row. They
- * remain comparable DOWN each column, which is the comparison the listing is for, and
- * each header states its own scope.
- */
-const METRIC_BASKETS = {
-	cost: ['BTC', 'ETH'],
-	// Fixed, not the current top of the collected basket: a self-ranking list would
-	// change what the column means whenever listings rotate. Widen it deliberately.
-	fill: ['BTC', 'ETH', 'SOL', 'HYPE', 'BNB']
-} as const satisfies Record<string, ReadonlyArray<string>>
-
-/**
- * The assets EVERY measured venue covers. The listing publishes cost, slippage and
- * markout side by side, and a venue's own basket is whatever the collector reached
- * for it — comparing a two-asset average against a five-asset one puts different
- * markets in the same column, which is how a venue's cost could read below its own
- * slippage. Restricting all of them to the shared basket costs coverage and buys
- * comparability, and it widens on its own as collection catches up.
- *
- * Empty (no venue measured, or no asset common to all) → callers keep the venue's
- * own aggregate and disclose each row's basket instead.
- */
-export function commonExecutionBasket(execution: MasterExecutionQualityResponse | null): Array<string> {
-	const venues = Object.values(execution?.venues ?? {})
-	if (venues.length === 0) return []
-	let shared: Array<string> | null = null
-	for (const venue of venues) {
-		const own = new Set(venue.assets)
-		shared = shared === null ? [...venue.assets] : shared.filter((asset) => own.has(asset))
-	}
-	// Publish in the upstream basket's order so the label reads BTC, ETH, … not by venue.
-	const order = execution?.basket ?? []
-	return (shared ?? []).sort((a, b) => order.indexOf(a) - order.indexOf(b))
-}
-
-/**
- * The assets a metric is actually averaged over: its configured basket, narrowed to
- * what every measured venue covers.
- *
- * Both halves matter. The configured basket fixes the scope so it does not drift with
- * coverage; intersecting with the common set keeps venues comparable, because a venue
- * missing one of the five would otherwise be averaged over four while its peers use
- * five.
- */
-function basketFor(metric: keyof typeof METRIC_BASKETS, common: Array<string>): Array<string> {
-	return METRIC_BASKETS[metric].filter((asset) => common.includes(asset))
-}
-
-/** One row's displayed execution figures, each metric over its own stated basket. */
-function directoryExecution(
-	metrics: MasterExecutionVenueMetrics | null,
-	basket: Array<string>,
-	oiWeights: Record<string, number> | undefined
-): ExchangeDirectoryRowModel['execution'] {
-	if (!metrics) return null
-	if (basket.length === 0) {
-		return {
-			assets: metrics.assets,
-			costAssets: metrics.assets,
-			hoursCovered: metrics.hours_covered,
-			costToTradeBps: metrics.cost_to_trade_bps,
-			effectiveSpreadBps: metrics.effective_spread_bps,
-			realizedSlippage10kBps: metrics.realized_slippage_bps_10k,
-			predictedSlippage10kBps: metrics.predicted_slippage_bps_10k,
-			realizedSlippage100kBps: metrics.realized_slippage_bps_100k,
-			predictedSlippage100kBps: metrics.predicted_slippage_bps_100k,
-			markout1mBps: metrics.markout_bps_1m,
-			markout5mBps: metrics.markout_bps_5m
-		}
-	}
-	const pairsFor = (metric: keyof typeof METRIC_BASKETS) =>
-		basketFor(metric, basket)
-			.map((asset) => metrics.pairs[asset])
-			.filter((pair) => pair !== undefined)
-	const costPairs = pairsFor('cost')
-	const fillPairs = pairsFor('fill')
-	if (costPairs.length === 0 && fillPairs.length === 0) return null
-
-	const over =
-		(pairs: Array<MasterExecutionPairMetrics>) => (pick: (pair: MasterExecutionPairMetrics) => number | null) =>
-			oiWeightedMean(
-				pairs.flatMap((pair) => {
-					const value = pick(pair)
-					return value == null ? [] : [{ asset: pair.asset, value }]
-				}),
-				oiWeights
-			)
-	const overCost = over(costPairs)
-	// Slippage and markout share one basket: both are fill quality, and splitting them
-	// would put two scopes side by side for no gain.
-	const overFill = over(fillPairs)
-	const allPairs = [...new Set([...costPairs, ...fillPairs])]
-
+function segmentExecution(metrics: MasterExecutionSegmentMetrics): ExchangeSegmentExecution {
 	return {
-		assets: fillPairs.map((pair) => pair.asset),
-		costAssets: costPairs.map((pair) => pair.asset),
-		// The weakest pair bounds the row: claiming the deepest pair's coverage for a
-		// basket average would overstate what the number rests on.
-		hoursCovered: allPairs.length > 0 ? Math.min(...allPairs.map((pair) => pair.hours_covered)) : 0,
-		costToTradeBps: overCost((pair) => pair.cost_to_trade_bps),
-		effectiveSpreadBps: overCost((pair) => pair.effective_spread_bps),
-		realizedSlippage10kBps: overFill((pair) => pair.realized_slippage_bps_10k),
-		predictedSlippage10kBps: overFill((pair) => pair.predicted_slippage_bps_10k),
-		realizedSlippage100kBps: overFill((pair) => pair.realized_slippage_bps_100k),
-		predictedSlippage100kBps: overFill((pair) => pair.predicted_slippage_bps_100k),
-		markout1mBps: overFill((pair) => pair.markout_bps_1m),
-		markout5mBps: overFill((pair) => pair.markout_bps_5m)
+		assets: metrics.assets,
+		hoursCovered: metrics.hours_covered,
+		costToTradeBps: metrics.cost_to_trade_bps,
+		effectiveSpreadBps: metrics.effective_spread_bps,
+		realizedSlippage10kBps: metrics.realized_slippage_bps_10k,
+		predictedSlippage10kBps: metrics.predicted_slippage_bps_10k,
+		realizedSlippage100kBps: metrics.realized_slippage_bps_100k,
+		predictedSlippage100kBps: metrics.predicted_slippage_bps_100k,
+		markout1mBps: metrics.markout_bps_1m,
+		markout5mBps: metrics.markout_bps_5m,
+		insideSpreadPct: metrics.inside_spread_pct
+	}
+}
+
+const SLIPPAGE_BANDS: Array<[MasterSlippageBand, string, number]> = [
+	['1k', '$1k', 0.1],
+	['10k', '$10k', 1],
+	['50k', '$50k', 5],
+	['100k', '$100k', 10],
+	['250k', '$250k', 25],
+	['500k', '$500k', 50],
+	['1m', '$1M', 100]
+]
+
+function marketExecution(metrics: MasterPairExecution): ExchangeMarketExecution {
+	return {
+		hoursCovered: metrics.hours_covered,
+		costToTradeBps: metrics.cost_to_trade_bps,
+		effectiveSpreadBps: metrics.effective_spread_bps,
+		quotedSpreadBps: metrics.quoted_spread_bps,
+		takerFeeBps: metrics.taker_fee_bps,
+		realizedSlippage10kBps: metrics.realized_slippage_bps_10k,
+		predictedSlippage10kBps: metrics.predicted_slippage_bps_10k,
+		realizedSlippage100kBps: metrics.realized_slippage_bps_100k,
+		predictedSlippage100kBps: metrics.predicted_slippage_bps_100k,
+		markout1sBps: metrics.markout_bps_1s,
+		markout15sBps: metrics.markout_bps_15s,
+		markout1mBps: metrics.markout_bps_1m,
+		markout5mBps: metrics.markout_bps_5m,
+		insideSpreadPct: metrics.inside_spread_pct,
+		insideMeasuredUsd: metrics.inside_measured_usd ?? 0,
+		notionalUsd: metrics.notional_usd,
+		slippage: SLIPPAGE_BANDS.map(([band, size, units]) => ({
+			size,
+			units,
+			predictedBps: metrics[`predicted_slippage_bps_${band}`] ?? null,
+			realizedBps: metrics[`realized_slippage_bps_${band}`] ?? null
+		}))
 	}
 }
 
@@ -368,10 +273,8 @@ function mapDirectoryVenue(
 	venue: MasterDirectoryVenue,
 	venuesBySlug: Map<string, MasterDirectoryVenue>,
 	execution: MasterExecutionQualityResponse | null,
-	depthBands: Array<number>,
-	executionBasket: Array<string>
+	depthBands: Array<number>
 ): ExchangeDirectoryRowModel {
-	const executionMetrics = execution?.venues[venue.slug] ?? null
 	const segments: ExchangeDirectoryRowModel['segments'] = {}
 	for (const segment of EXCHANGE_SEGMENTS) {
 		const stats = venue.segments[segment]
@@ -498,7 +401,12 @@ function mapDirectoryVenue(
 					inverse_perp: mapNormalizedVolume(venue.nvol.inverse_perp)
 				}
 			: null,
-		execution: directoryExecution(executionMetrics, executionBasket, execution?.oi_weights_usd),
+		executionBySegment: Object.fromEntries(
+			Object.entries(execution?.segments?.[venue.slug] ?? {}).map(([segment, metrics]) => [
+				segment,
+				segmentExecution(metrics)
+			])
+		),
 		quality: venue.rank ?? null
 	}
 }
@@ -538,11 +446,10 @@ export function mapMasterDirectory(
 	const venuesBySlug = new Map<string, MasterDirectoryVenue>()
 	for (const venue of response.venues) venuesBySlug.set(venue.slug, venue)
 	const rows = new Array<ExchangeDirectoryRowModel>(response.venues.length)
-	const executionBasket = commonExecutionBasket(execution)
 	for (let index = 0; index < response.venues.length; index++) {
 		const venue = response.venues[index]
 		if (!venue) throw new Error(`Missing directory venue at index ${index}`)
-		rows[index] = mapDirectoryVenue(venue, venuesBySlug, execution, response.depth_bands, executionBasket)
+		rows[index] = mapDirectoryVenue(venue, venuesBySlug, execution, response.depth_bands)
 	}
 	rows.sort(byQualityRank)
 	return {
@@ -563,16 +470,13 @@ export function mapMasterDirectory(
 			}
 		},
 		updatedAt: response.last_updated,
-		executionAvailable: execution !== null,
-		executionBasket,
-		executionCostBasket: basketFor('cost', executionBasket),
-		executionFillBasket: basketFor('fill', executionBasket)
+		executionAvailable: execution !== null
 	}
 }
 
 /**
  * BTC execution + fee comparison, one row per venue that has a measured BTC pair —
- * unlike `directoryExecution`'s basket average, this reads `pairs.BTC` directly so
+ * unlike a basket average, this reads `pairs.BTC` directly so
  * every figure is BTC specifically, not diluted by whatever else is in the basket.
  * `directoryRows` supplies the name/profile link/quality tier already computed for
  * the directory (same join key: venue slug), so this never re-derives that.
@@ -706,7 +610,8 @@ export function mapExchangePair(
 						status: pair.nvol.status,
 						cap: pair.nvol.cap ?? null
 					}
-				: null
+				: null,
+		execution: pair.execution ? marketExecution(pair.execution) : null
 	}
 }
 
@@ -833,6 +738,7 @@ export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataRes
 		kind: metadata.type,
 		profileMode: metadata.profile_mode,
 		execution: null,
+		executionBySegment: {},
 		quality: null,
 		defillamaUrl: metadata.links.defillama?.url ?? null,
 		defillamaCexSlug: mapDefillamaCexSlug(metadata),
@@ -845,38 +751,13 @@ export function mapMasterMetadataOnlyProfile(metadata: MasterExchangeMetadataRes
 	}
 }
 
-const mapExecutionPair = (pair: MasterExecutionPairMetrics): ExchangeExecutionPairModel => ({
-	asset: pair.asset,
-	hoursCovered: pair.hours_covered,
-	fillCount: pair.n_trades,
-	costToTradeBps: pair.cost_to_trade_bps,
-	effectiveSpreadBps: pair.effective_spread_bps,
-	quotedSpreadBps: pair.quoted_spread_bps,
-	realizedSlippage10kBps: pair.realized_slippage_bps_10k,
-	predictedSlippage10kBps: pair.predicted_slippage_bps_10k,
-	realizedSlippage100kBps: pair.realized_slippage_bps_100k,
-	predictedSlippage100kBps: pair.predicted_slippage_bps_100k,
-	realizedSlippage1mBps: pair.realized_slippage_bps_1m,
-	predictedSlippage1mBps: pair.predicted_slippage_bps_1m,
-	markout1sBps: pair.markout_bps_1s,
-	markout15sBps: pair.markout_bps_15s,
-	markout1mBps: pair.markout_bps_1m,
-	markout5mBps: pair.markout_bps_5m
-})
-
 function mapProfileExecution(
 	slug: string,
 	execution: MasterExecutionQualityResponse | null
 ): ExchangeExecutionModel | null {
 	const venue = execution?.venues[slug]
 	if (!venue) return null
-	const pairs: Array<ExchangeExecutionPairModel> = []
-	for (const asset of execution.basket) {
-		const pair = venue.pairs[asset]
-		if (pair) pairs.push(mapExecutionPair(pair))
-	}
 	return {
-		assets: venue.assets,
 		hoursCovered: venue.hours_covered,
 		costToTradeBps: venue.cost_to_trade_bps,
 		realizedSlippage10kBps: venue.realized_slippage_bps_10k,
@@ -891,8 +772,7 @@ function mapProfileExecution(
 					downtimeS: venue.feed.downtime_s,
 					degraded: venue.feed.degraded
 				}
-			: null,
-		pairs
+			: null
 	}
 }
 
@@ -933,7 +813,8 @@ export function mapExchangeRanking(
 			components: entry.components,
 			execSubs: entry.exec_subs ?? null,
 			execDelivery: entry.exec_delivery ?? null,
-			reserveSubs: entry.reserve_subs ?? null
+			reserveSubs: entry.reserve_subs ?? null,
+			intraSpread: entry.intra_spread ?? null
 		})
 	}
 	rows.sort((a, b) => b.score - a.score || a.rankInKind - b.rankInKind)
@@ -943,8 +824,10 @@ export function mapExchangeRanking(
 		const venue = rowsBySlug.get(slug)
 		if (venue) insufficient.push({ slug, name: venue.name, kind: venue.kind, profileHref: venue.profileHref })
 	}
+	const intraSpreadFlag = methodology.flags.find((flag) => flag.key === 'intra_spread')
 	return {
 		generatedAt: ranks.generated_at,
+		intraSpreadCheck: intraSpreadFlag ? { label: intraSpreadFlag.label, what: intraSpreadFlag.what } : null,
 		pillars: methodology.components.map((definition) => ({
 			key: definition.key,
 			label: definition.label,
@@ -1093,6 +976,12 @@ export function mapMasterProfile(
 		kind: index.type,
 		profileMode: metadata.profile_mode,
 		execution: mapProfileExecution(index.slug, extras.execution),
+		executionBySegment: Object.fromEntries(
+			Object.entries(extras.execution?.segments?.[index.slug] ?? {}).map(([segment, metrics]) => [
+				segment,
+				segmentExecution(metrics)
+			])
+		),
 		quality: mapProfileQuality(index.slug, extras.ranks, extras.methodology),
 		defillamaUrl: metadata.links.defillama?.url ?? null,
 		defillamaCexSlug: mapDefillamaCexSlug(metadata),
@@ -1528,7 +1417,7 @@ export function mapMasterMica(response: MasterMicaResponse): Array<MicaVenueMode
 		.map((venue) => {
 			const { websiteUrl, referralUrl } = websiteDestination(venue)
 			const spotDepth = venue.depth_summary.spot
-			// Perp columns present the linear class ("Perps"); inverse books stay separate per contract.
+			// Perp columns present USD perps; COIN perps stay separate per contract.
 			const perpDepth = venue.depth_summary.linear_perp
 			return {
 				exchange: venue.slug,

@@ -92,7 +92,7 @@ describe('profile loader', () => {
 
 		const profile = await loadMasterExchangeProfile('venue')
 
-		expect(profile.execution).toMatchObject({ assets: ['BTC'], hoursCovered: 24 })
+		expect(profile.execution).toMatchObject({ hoursCovered: 24 })
 		expect(profile.quality).toBeNull()
 	})
 

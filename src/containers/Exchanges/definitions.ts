@@ -89,18 +89,16 @@ export const exchangeDefinitions = {
 		// Header tooltips are plain strings, so the docs pointer is spelled out rather than linked.
 		execCostToTrade: {
 			label: 'Cost to trade $10k',
-			description:
-				'What a $10k market order really costs: taker fee plus half the spread, measured from actual fills. Learn more at docs.llama.fi/exchanges/methodology'
+			description: 'What a $10k market order really costs: taker fee plus half the spread, measured from actual fills.'
 		},
 		execSlippage10k: {
 			label: 'Slippage',
-			description:
-				'How far fills moved the price at $10k and $100k, with what the order book predicted first. Learn more at docs.llama.fi/exchanges/methodology'
+			description: 'How far fills moved the price at $10k and $100k, with what the order book predicted first.'
 		},
 		execMarkout1m: {
 			label: 'Markout',
 			description:
-				'Where the price went 1 and 5 minutes after a fill, per $10k. Positive (red) means it kept moving against the buyer. Learn more at docs.llama.fi/exchanges/methodology'
+				'Where the price went 1 and 5 minutes after a fill, per $10k. Positive (red) means it kept moving against the buyer.'
 		},
 		kind: {
 			label: 'Type',
@@ -157,13 +155,35 @@ export const exchangeDefinitions = {
 			description:
 				'Bid plus ask depth within 2% of mid, from our own snapshots. A floor: endpoint limits can cut a book short. Active liquidity is the volatility-adjusted version.'
 		},
-		spotActiveLiquidity: {
-			label: 'Spot liq.',
-			description: 'Active liquidity across the venue’s spot markets. N/A means it runs no spot market.'
+		segmentActiveLiquidity: {
+			label: 'Active liquidity',
+			description:
+				'Active liquidity across the venue’s spot and USD perp markets, one line each. N/A means it runs neither. COIN perps are separate.'
 		},
-		perpActiveLiquidity: {
-			label: 'USD perp liq.',
-			description: 'Active liquidity across the venue’s USD perp markets. COIN perps are separate.'
+		spotSlippage: {
+			label: 'Spot slippage',
+			description:
+				'How far fills moved the price on the venue’s spot markets at $10k and $100k, with what the order book predicted first.'
+		},
+		perpSlippage: {
+			label: 'USD perp slippage',
+			description:
+				'How far fills moved the price on the venue’s USD perp markets at $10k and $100k, with what the order book predicted first.'
+		},
+		spotMarkout: {
+			label: 'Spot markout',
+			description:
+				'Where the price went 1 and 5 minutes after a spot fill, per $10k. Positive (red) means it kept moving against the buyer.'
+		},
+		perpMarkout: {
+			label: 'USD perp markout',
+			description:
+				'Where the price went 1 and 5 minutes after a USD perp fill, per $10k. Positive (red) means it kept moving against the buyer.'
+		},
+		intraSpread: {
+			label: 'Intra-spread vol.',
+			description:
+				'Share of volume printed inside the spread the order book showed. Blank below 2.5%, amber from 5%, a warning from 10%.'
 		},
 		perpOpenInterest: {
 			label: 'USD perp OI',
@@ -337,6 +357,29 @@ export const exchangeDefinitions = {
 			label: 'Spread',
 			description: 'Best ask minus best bid, as a percentage of mid.'
 		},
+		execCostToTrade: {
+			label: 'Cost to trade $10k',
+			description:
+				'What a $10k market order on this market really costs: taker fee plus half the effective spread, from the last 30 days of fills.'
+		},
+		execSlippage10k: {
+			label: 'Slippage $10k',
+			description: 'What the order book before a $10k order predicted, then what the fills paid, in dollars.'
+		},
+		execEffectiveSpread: {
+			label: 'Eff. spread',
+			description: 'What trades actually paid: twice the gap between fill price and mid, as a percentage of price.'
+		},
+		execMarkout1m: {
+			label: 'Markout 1m',
+			description:
+				'Where the price went 1 minute after a fill, per $10k. Positive (red) means it kept moving against the taker.'
+		},
+		intraSpread: {
+			label: 'Intra-spread vol.',
+			description:
+				'Share of volume printed inside the spread the order book showed. Blank below 2.5%, amber from 5%, a warning from 10%.'
+		},
 		markPrice: {
 			label: 'Mark price',
 			description: 'Venue mark price, used to value open positions and unrealized PnL.'
@@ -393,11 +436,3 @@ export const exchangeDefinitions = {
 	directory: Record<string, ExchangeDefinition>
 	markets: Record<string, ExchangeDefinition>
 }
-
-/**
- * A metric label qualified with the segment it is measured on, for surfaces that mix
- * segments in one table (the merged directory view, the profile's per-token table).
- * Execution is USD perps only, so those columns say so where a spot row sits beside
- * them; exact-segment tables keep the short label.
- */
-export const usdPerpLabel = (label: string) => `USD perp ${label.toLowerCase()}`

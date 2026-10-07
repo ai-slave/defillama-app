@@ -12,7 +12,7 @@ import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from './directoryColumns'
+import { buildDirectoryColumns } from './directoryColumns'
 import { ExchangeCountrySelect } from './ExchangeCountrySelect'
 import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import { filterDirectoryRows, nestDirectoryRows, type DirectoryKind, type DirectoryTreeRow } from './modelHelpers'
@@ -55,8 +55,12 @@ const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, Array<string>> = {
 	// The segment-qualified twins sit alongside; scope visibility picks which set
 	// applies, so no scope ever renders both.
 	activity: [
-		'spotActiveLiquidity',
-		'perpActiveLiquidity',
+		'spotSlippage',
+		'perpSlippage',
+		'spotMarkout',
+		'perpMarkout',
+		'intraSpread',
+		'segmentActiveLiquidity',
 		'perpOpenInterest',
 		'spotNormalizedVolume',
 		'perpNormalizedVolume',
@@ -107,16 +111,19 @@ const ALL_COLUMN_IDS = [
 // which would be redundant-at-best and contradictory-at-worst inside a scope that has
 // already fixed the segment.
 const MERGED_ONLY_COLUMN_IDS = [
-	'spotActiveLiquidity',
-	'perpActiveLiquidity',
+	'spotSlippage',
+	'perpSlippage',
+	'spotMarkout',
+	'perpMarkout',
+	'segmentActiveLiquidity',
 	'perpOpenInterest',
 	'spotNormalizedVolume',
 	'perpNormalizedVolume'
 ]
 
 // Fee columns follow the active segment scope exactly; perp-only metrics don't apply to
-// spot. Execution columns are measured on the linear-perp basket only today, so they
-// show in that scope alone. Liquidity follows the same rule: active liquidity needs a
+// spot. Execution columns read the scope's own segment, so every scope shows them; the
+// merged view uses its per-segment twins instead. Active liquidity needs a
 // normalized-volume band, which exists for spot and USD perps, so COIN perps show the
 // fixed ±2% depth instead of a column of dashes.
 const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, Array<string>> = {
@@ -139,7 +146,9 @@ const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, Array<string>> = {
 		'volumeToDepth',
 		'sparkline',
 		'marketCount',
-		'coinCount'
+		'coinCount',
+		'execSlippage10k',
+		'execMarkout1m'
 	],
 	spot: [
 		'openInterestUsd',
@@ -148,11 +157,10 @@ const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, Array<string>> = {
 		'linearPerpFee',
 		'inversePerpFee',
 		'depth2Usd',
-		...MERGED_ONLY_COLUMN_IDS,
-		...EXECUTION_COLUMN_IDS
+		...MERGED_ONLY_COLUMN_IDS
 	],
 	linear_perp: ['spotFee', 'inversePerpFee', 'depth2Usd', ...MERGED_ONLY_COLUMN_IDS],
-	inverse_perp: ['spotFee', 'linearPerpFee', 'activeLiquidity', ...MERGED_ONLY_COLUMN_IDS, ...EXECUTION_COLUMN_IDS]
+	inverse_perp: ['spotFee', 'linearPerpFee', 'activeLiquidity', ...MERGED_ONLY_COLUMN_IDS]
 }
 
 export function directoryColumnVisibility(group: DirectoryColumnGroup, scope: DirectoryScope): ColumnVisibilityState {
@@ -198,16 +206,8 @@ function useFilteredDirectoryRows(
 	)
 }
 
-function useDirectoryColumns(
-	scope: DirectoryScope,
-	executionAvailable: Parameters<typeof buildDirectoryColumns>[1],
-	executionCostBasket: Parameters<typeof buildDirectoryColumns>[2],
-	executionFillBasket: Parameters<typeof buildDirectoryColumns>[3]
-) {
-	return React.useMemo(
-		() => buildDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket),
-		[scope, executionAvailable, executionCostBasket, executionFillBasket]
-	)
+function useDirectoryColumns(scope: DirectoryScope, executionAvailable: Parameters<typeof buildDirectoryColumns>[1]) {
+	return React.useMemo(() => buildDirectoryColumns(scope, executionAvailable), [scope, executionAvailable])
 }
 
 export function DirectoryTable({
@@ -216,8 +216,6 @@ export function DirectoryTable({
 	catalog,
 	catalogFailed,
 	executionAvailable,
-	executionCostBasket,
-	executionFillBasket,
 	onCountryChange
 }: {
 	rows: Array<ExchangeDirectoryRowModel>
@@ -225,8 +223,6 @@ export function DirectoryTable({
 	catalog: MasterExchangeRegionCatalogResponse | null
 	catalogFailed: boolean
 	executionAvailable: boolean
-	executionCostBasket: Array<string>
-	executionFillBasket: Array<string>
 	onCountryChange: (country: string | null) => void
 }) {
 	const router = useRouter()
@@ -239,7 +235,7 @@ export function DirectoryTable({
 	// every expanded parent pushes the ranked list further down. The exact-segment
 	// tables keep their expanded default.
 	const brandRowsExpanded = scope === 'all' ? undefined : true
-	const columns = useDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket)
+	const columns = useDirectoryColumns(scope, executionAvailable)
 
 	return (
 		<SearchTableProvider<DirectoryTreeRow>
