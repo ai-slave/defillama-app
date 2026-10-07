@@ -271,7 +271,7 @@ test('preserves cover metadata edited while its replacement uploads', async () =
 	})
 })
 
-test('does not apply an old cover upload to a different article', async () => {
+test('an old cover upload neither shows on a different article nor saves the article left', async () => {
 	const pending = deferred<{ url: string }>()
 	api.upload.mockReturnValue(pending.promise)
 	await mount()
@@ -292,7 +292,15 @@ test('does not apply an old cover upload to a different article', async () => {
 		coverImage: { url: '/second.png', alt: 'Second cover' }
 	}
 	await mount('second-article')
-	await act(async () => pending.resolve({ url: '/late.png' }))
+	// The left editor's autosave would fire 1.5s after the late upload; fake clocks reach it without waiting.
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+	try {
+		await act(async () => pending.resolve({ url: '/late.png' }))
+		await act(() => vi.advanceTimersByTimeAsync(2000))
+	} finally {
+		vi.useRealTimers()
+	}
+	expect(api.save).not.toHaveBeenCalled()
 	expect(title().value).toBe('Another article')
 	expect(container.querySelector('img[alt="Second cover"]')?.getAttribute('src')).toBe('/second.png')
 	const input = document.querySelector<HTMLInputElement>('[aria-label="Upload cover image"]')!

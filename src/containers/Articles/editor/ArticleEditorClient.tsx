@@ -321,7 +321,10 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	}, [])
 
 	const saveArticle = async (opts: { silent?: boolean } = {}) => {
-		if (!editor) return false
+		// A destroyed editor belongs to an article the reader left. Its late work (an upload that finishes, a save
+		// that settles behind newer typing) can still arm an autosave after the unmount cleared the timer, and that
+		// save must not send the left article's last render back to the server.
+		if (!editor || editor.isDestroyed) return false
 		// An edit route saves only its own loaded article; saving before it loads would create an unrelated draft.
 		if (articleId && !article.id) return false
 		if (!isAuthenticated) {
