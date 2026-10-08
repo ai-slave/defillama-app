@@ -31,12 +31,30 @@ test('dragging over a card in the same section announces the position it would t
 	expect(dragAnnouncement(grouped, 'over', 'tvl', null)).toBe('TVL notes is not over a card.')
 })
 
-test('dragging into another section explains that cards stay inside their section', () => {
-	expect(dragAnnouncement(grouped, 'over', 'tvl', 'risks')).toBe(
-		'TVL notes is over Risk notes; cards move only inside their own section.'
+test('dragging into another section announces the position the card takes there', () => {
+	expect(dragAnnouncement(grouped, 'over', 'tvl', 'risks')).toBe('TVL notes is over position 2 of 2 in Later.')
+	expect(dragAnnouncement(grouped, 'end', 'tvl', 'risks')).toBe('TVL notes moved to position 2 of 2 in Later.')
+})
+
+test('dragging onto a section row announces the side of it the card lands on', () => {
+	expect(dragAnnouncement(grouped, 'over', 'tvl', 'later')).toBe('TVL notes is over position 1 of 2 in Later.')
+	expect(dragAnnouncement(grouped, 'end', 'fees', 'overview')).toBe('Fees notes moved to position 1 of 1.')
+})
+
+test('dragging out of a tab explains that cards stay inside their tab', () => {
+	const tabbed = context(
+		[
+			{ id: 'intro', kind: 'text', title: 'Intro notes', content: 'a' },
+			{ id: 'first', kind: 'section', title: 'First', displayAs: 'tab' },
+			{ id: 'tvl', kind: 'text', title: 'TVL notes', content: 'b' }
+		],
+		'first'
 	)
-	expect(dragAnnouncement(grouped, 'end', 'tvl', 'risks')).toBe(
-		'TVL notes stayed where it was. Cards move only inside their own section.'
+	expect(dragAnnouncement(tabbed, 'over', 'tvl', 'intro')).toBe(
+		"TVL notes is over Intro notes; cards can't move across a tab boundary."
+	)
+	expect(dragAnnouncement(tabbed, 'end', 'tvl', 'intro')).toBe(
+		"TVL notes stayed where it was. Cards can't move across a tab boundary."
 	)
 })
 

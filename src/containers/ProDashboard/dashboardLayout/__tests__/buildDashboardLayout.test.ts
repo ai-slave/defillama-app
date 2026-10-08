@@ -1,3 +1,4 @@
+import { arrayMove } from '@dnd-kit/sortable'
 import { describe, expect, test } from 'vitest'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { SectionConfig } from '../../types'
@@ -5,9 +6,9 @@ import {
 	appendItemsToTab,
 	buildDashboardLayout,
 	dashboardHasTabs,
-	dropGroupBounds,
 	findGroupHeadingForItem,
 	findTabForItem,
+	headingGroupBounds,
 	insertItemsAfter,
 	insertItemsBefore,
 	moveDashboardItemWithinBounds,
@@ -169,15 +170,12 @@ describe('moveSectionWithChildren', () => {
 	})
 
 	test('a heading section never leaves its tab', () => {
-		const up = [tab('tabA'), chart('c1'), tab('tabB'), chart('c3'), heading('h'), chart('c4')]
+		const up = [tab('tabA'), chart('c1'), tab('tabB'), heading('h0'), chart('c3'), heading('h'), chart('c4')]
 		const movedUp = moveSectionWithChildren(up, 'h', -1)
-		expect(ids(movedUp)).toEqual(['tabA', 'c1', 'tabB', 'h', 'c4', 'c3'])
+		expect(ids(movedUp)).toEqual(['tabA', 'c1', 'tabB', 'h', 'c4', 'h0', 'c3'])
 		expect(moveSectionWithChildren(movedUp, 'h', -1)).toBe(movedUp)
 		const down = [tab('tabA'), heading('h'), chart('c1'), tab('tabB'), chart('c2')]
 		expect(moveSectionWithChildren(down, 'h', 1)).toBe(down)
-		const withinTab = [tab('tabA'), chart('c0'), heading('h1'), chart('c1'), heading('h2'), chart('c2'), tab('tabB')]
-		expect(ids(moveSectionWithChildren(withinTab, 'h1', -1))).toEqual(['tabA', 'h1', 'c1', 'c0', 'h2', 'c2', 'tabB'])
-		expect(ids(moveSectionWithChildren(withinTab, 'h2', -1))).toEqual(['tabA', 'c0', 'h2', 'c2', 'h1', 'c1', 'tabB'])
 	})
 	const items = [chart('intro'), heading('h1'), chart('a'), chart('b'), heading('h2'), chart('c'), heading('h3')]
 
@@ -189,8 +187,10 @@ describe('moveSectionWithChildren', () => {
 		expect(ids(moveSectionWithChildren(items, 'h1', 1))).toEqual(['intro', 'h2', 'c', 'h1', 'a', 'b', 'h3'])
 	})
 
-	test('moving the first section up jumps ahead of the headingless intro cards', () => {
-		expect(ids(moveSectionWithChildren(items, 'h1', -1))).toEqual(['h1', 'a', 'b', 'intro', 'h2', 'c', 'h3'])
+	test('a section never moves above headingless cards, so those cards never join it', () => {
+		expect(moveSectionWithChildren(items, 'h1', -1)).toBe(items)
+		const withinTab = [tab('tabA'), chart('c0'), heading('h1'), chart('c1'), tab('tabB')]
+		expect(moveSectionWithChildren(withinTab, 'h1', -1)).toBe(withinTab)
 	})
 
 	test('returns the same reference at the edges and for unknown sections', () => {
@@ -249,13 +249,13 @@ describe('visibleGroupBounds', () => {
 	})
 })
 
-describe('dropGroupBounds', () => {
+describe('headingGroupBounds', () => {
 	test('a card is bounded by its own heading group inside the visible tab', () => {
 		const items = [chart('a'), heading('h1'), chart('b'), chart('c'), heading('h2'), chart('d')]
-		expect(dropGroupBounds(items, 'a', null)).toEqual([0, 1])
-		expect(dropGroupBounds(items, 'b', null)).toEqual([2, 4])
-		expect(dropGroupBounds(items, 'd', null)).toEqual([5, 6])
-		expect(dropGroupBounds(items, 'missing', null)).toBeNull()
+		expect(headingGroupBounds(items, 'a', null)).toEqual([0, 1])
+		expect(headingGroupBounds(items, 'b', null)).toEqual([2, 4])
+		expect(headingGroupBounds(items, 'd', null)).toEqual([5, 6])
+		expect(headingGroupBounds(items, 'missing', null)).toBeNull()
 	})
 })
 
@@ -273,24 +273,41 @@ describe('resolveDropIndex', () => {
 		expect(resolveDropIndex(items, 'missing', 'a', null)).toBeNull()
 	})
 
-	test('a drop across a heading boundary is refused in both directions', () => {
+	const dropped = (items: Array<DashboardItemConfig>, activeId: string, overId: string, activeTabId: string | null) => {
+		const target = resolveDropIndex(items, activeId, overId, activeTabId)
+		if (target === null) return null
+		return ids(
+			arrayMove(
+				items,
+				items.findIndex((item) => item.id === activeId),
+				target
+			)
+		)
+	}
+
+	test('a card dropped over a card in another section joins that section', () => {
 		const items = [chart('a'), heading('h1'), chart('b'), chart('c')]
-		expect(resolveDropIndex(items, 'a', 'b', null)).toBeNull()
-		expect(resolveDropIndex(items, 'b', 'a', null)).toBeNull()
-		expect(resolveDropIndex(items, 'b', 'c', null)).toBe(3)
+		expect(dropped(items, 'a', 'b', null)).toEqual(['h1', 'b', 'a', 'c'])
+		expect(dropped(items, 'c', 'a', null)).toEqual(['c', 'a', 'h1', 'b'])
 	})
 
-	test('a drop onto a section row is refused', () => {
-		const items = [chart('a'), chart('b'), heading('h1'), chart('c')]
-		expect(resolveDropIndex(items, 'a', 'h1', null)).toBeNull()
-		expect(resolveDropIndex(items, 'c', 'h1', null)).toBeNull()
+	test('a card dropped on a section row lands on the far side of it', () => {
+		const items = [chart('a'), chart('b'), heading('h1'), chart('c'), chart('d')]
+		expect(dropped(items, 'b', 'h1', null)).toEqual(['a', 'h1', 'b', 'c', 'd'])
+		expect(dropped(items, 'c', 'h1', null)).toEqual(['a', 'b', 'c', 'h1', 'd'])
 	})
 
-	test('a drop into another tab, or from an inactive tab, is refused', () => {
-		const items = [chart('header'), tab('t1'), chart('a'), tab('t2'), chart('b')]
-		expect(resolveDropIndex(items, 'a', 'b', 't1')).toBeNull()
-		expect(resolveDropIndex(items, 'a', 'header', 't1')).toBeNull()
-		expect(resolveDropIndex(items, 'b', 'a', 't1')).toBeNull()
+	const tabbed = [chart('header'), tab('t1'), chart('a'), heading('h1'), chart('c'), tab('t2'), chart('b')]
+
+	test('a card crosses headings inside its tab', () => {
+		expect(dropped(tabbed, 'c', 'h1', 't1')).toEqual(['header', 't1', 'a', 'c', 'h1', 't2', 'b'])
+	})
+
+	test('a drop into another tab, onto the tab row, or from an inactive tab, is refused', () => {
+		expect(resolveDropIndex(tabbed, 'a', 'b', 't1')).toBeNull()
+		expect(resolveDropIndex(tabbed, 'a', 'header', 't1')).toBeNull()
+		expect(resolveDropIndex(tabbed, 'c', 't1', 't1')).toBeNull()
+		expect(resolveDropIndex(tabbed, 'b', 'a', 't1')).toBeNull()
 	})
 })
 

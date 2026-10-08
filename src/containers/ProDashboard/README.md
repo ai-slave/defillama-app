@@ -20,6 +20,7 @@ A Pro dashboard is a JSON document the frontend owns. The server stores `data` a
 
 - Absence is never ambiguous, so a document `schemaVersion` would have nothing to discriminate. Old documents take the new shape on the owner's first save.
 - Sections never nest. `buildDashboardLayout` groups the cards after a section until the next one; any tab section turns the cards before the first tab into a shared header. The 409 merge treats a section like any other card.
+- A card changes section only when the user moves that card: drag and Move up/down cross headings and stop at a tab boundary. Moving a section swaps whole section blocks and never passes headingless cards, because passing them would pull those cards into it.
 - `variables` hold defaults; cards keep their literals plus `bindings` (field → variable id). The client resolves on the way into `ChartGrid`; the server resolves after the protocol catalog loads and before it plans sources.
 - An owner persists a variable value by rewriting the bound literals in the same save. A viewer overrides through `?var-<id>=…`, which also reaches the stream URL so edge cache variants stay correct. Search, SEO and AI iteration see real values.
 - Custom data rows stay out of the SSR HTML and arrive with the stream's `dashboard` chunk.

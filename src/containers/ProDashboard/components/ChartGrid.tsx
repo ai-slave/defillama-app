@@ -186,7 +186,7 @@ const DRAG_OVERLAY_TRANSITION = 'transform 180ms cubic-bezier(0.25, 1, 0.5, 1)'
 const DRAG_INSTRUCTIONS: ScreenReaderInstructions = {
 	draggable: 'Press space to pick up a card, arrow keys to move it, space to drop, escape to cancel.'
 }
-const READ_ONLY_SORTABLE = { draggable: true, droppable: true } as const
+const STATIC_SORTABLE = { draggable: true, droppable: true } as const
 const CARD_REMOVED_TOAST_ID = 'card-removed'
 const SECTION_REMOVED_TOAST_ID = 'section-removed'
 const NO_CARD_HEIGHTS: ReadonlyArray<DashboardCardHeight> = []
@@ -631,6 +631,12 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		setActiveDragId(null)
 	}
 
+	const reorderItems = (next: Array<DashboardItemConfig>, movedItemId: string) => {
+		handleChartsReordered(next)
+		const heading = findGroupHeadingForItem(buildDashboardLayout(next), movedItemId)
+		if (heading) expandSection(heading)
+	}
+
 	const handleDragEnd = (event: DragEndEvent) => {
 		setActiveDragId(null)
 		const { active, over } = event
@@ -639,7 +645,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		if (targetIndex === null) return
 		const oldIndex = items.findIndex((item) => item.id === active.id)
 		if (oldIndex === -1) return
-		handleChartsReordered(arrayMove(items, oldIndex, targetIndex))
+		reorderItems(arrayMove(items, oldIndex, targetIndex), String(active.id))
 	}
 
 	const announcements = useMemo<Announcements>(() => {
@@ -675,7 +681,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		if (index === -1) return
 		const next = moveDashboardItemWithinBounds(items, index, direction, visibleGroupBounds(items, itemId, activeTabId))
 		if (next === items) return
-		handleChartsReordered(next)
+		reorderItems(next, itemId)
 		requestDashboardItemReveal(itemId, { scroll: 'nearest' })
 	}
 
@@ -717,7 +723,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		insertSection(range ? range[1] - 1 : items.length - 1)
 	}
 
-	const renderItem = (item: DashboardItemConfig) => {
+	const renderItem = (item: DashboardItemConfig, collapsed: boolean) => {
 		const rawItem = rawById.get(item.id) ?? item
 		const effectiveColSpan = gridColumnSpan(itemColSpan(rawItem))
 		const index = items.findIndex((candidate) => candidate.id === item.id)
@@ -727,7 +733,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 				key={item.id}
 				id={item.id}
 				elementId={dashboardItemElementId(rawItem.id)}
-				{...(isReadOnly ? { disabled: READ_ONLY_SORTABLE } : {})}
+				{...(isReadOnly || collapsed ? { disabled: STATIC_SORTABLE } : {})}
 				isTable={itemSpansFullRow(rawItem)}
 				data-col={itemColSpan(rawItem)}
 				data-item-id={rawItem.id}
@@ -775,7 +781,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 				key={section.id}
 				id={section.id}
 				fullWidth
-				disabled={isReadOnly ? READ_ONLY_SORTABLE : { draggable: true, droppable: false }}
+				disabled={isReadOnly || section.displayAs === 'tab' ? STATIC_SORTABLE : { draggable: true, droppable: false }}
 				data-item-id={section.id}
 				className="col-span-full"
 			>
@@ -841,7 +847,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 							)
 						: null}
 					<CollapsibleGroup id={contentId} collapsed={collapsed} contentClassName={GROUP_GRID_CLASS}>
-						{group.items.map(renderItem)}
+						{group.items.map((item) => renderItem(item, collapsed))}
 						{showAddTile ? addItemTile(options.placement) : null}
 					</CollapsibleGroup>
 					{showEmptyTabNotice ? (
@@ -849,7 +855,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 							{...(showAddTile ? {} : { role: 'status' })}
 							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-medium px-3 text-center body-md text-tertiary"
 						>
-							{showAddTile ? 'This tab has no cards yet. Add one or drag a card here.' : 'Nothing in this tab yet'}
+							{showAddTile ? 'This tab has no cards yet.' : 'Nothing in this tab yet'}
 						</div>
 					) : null}
 				</div>

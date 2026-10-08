@@ -122,9 +122,8 @@ export function moveSectionWithChildren(
 			if (startsPreviousBlock(items[previousStart])) break
 			previousStart--
 		}
-		if (section.displayAs === 'tab' && !startsPreviousBlock(items[previousStart])) return items
-		const previousSectionStart = startsPreviousBlock(items[previousStart]) ? previousStart : lowerBound
-		return [...items.slice(0, previousSectionStart), ...block, ...items.slice(previousSectionStart, start), ...after]
+		if (!startsPreviousBlock(items[previousStart])) return items
+		return [...items.slice(0, previousStart), ...block, ...items.slice(previousStart, start), ...after]
 	}
 	if (after.length === 0) return items
 	const nextItem = after[0]
@@ -262,7 +261,7 @@ function sectionGroupBounds(items: ReadonlyArray<DashboardItemConfig>, index: nu
 	return [start, end]
 }
 
-export function dropGroupBounds(
+export function headingGroupBounds(
 	items: ReadonlyArray<DashboardItemConfig>,
 	itemId: string,
 	activeTabId: string | null
@@ -284,7 +283,7 @@ export function resolveDropIndex(
 	if (activeId === overId) return null
 	const overIndex = items.findIndex((item) => item.id === overId)
 	if (overIndex === -1) return null
-	const bounds = dropGroupBounds(items, activeId, activeTabId)
+	const bounds = visibleGroupBounds(items, activeId, activeTabId)
 	if (!bounds) return null
 	if (overIndex < bounds[0] || overIndex >= bounds[1]) return null
 	return overIndex
