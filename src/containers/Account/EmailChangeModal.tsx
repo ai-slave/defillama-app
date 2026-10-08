@@ -1,10 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useId, useState } from 'react'
+import { type FormEvent, useId, useState } from 'react'
 import { refreshSession } from '~/auth/authStore'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
+import { emailError } from '~/utils/email'
 import pb from '~/utils/pocketbase'
 
 interface EmailChangeModalProps {
@@ -18,8 +21,11 @@ export function EmailChangeModal(props: EmailChangeModalProps) {
 }
 
 function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
-	const emailId = useId()
-	// Not the mutation's own error: that one clears as soon as a retry starts. Success replaces the form.
+	const successId = useId()
+	const [email, setEmail] = useState('')
+	const [submitted, setSubmitted] = useState(false)
+	// The server's refusal shows as the field's error until the address is edited. Not the mutation's own error: that
+	// one clears as soon as a retry starts. Success replaces the form.
 	const [error, setError] = useState<string | null>(null)
 	const requestEmailChange = useMutation({
 		mutationFn: async (nextEmail: string) => {
@@ -27,14 +33,20 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 			// The change request already succeeded; refreshSession only updates the cached user state, so
 			// its failure must not fail the change.
 			await refreshSession().catch(() => {})
-		},
-		onError: () => setError('Could not send the confirmation email. Check the address and try again.')
+		}
 	})
 	const pending = requestEmailChange.isPending
+	const emailMessage = emailError(email)
 
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		requestEmailChange.mutate(new FormData(event.currentTarget).get('email') as string)
+		const form = event.currentTarget
+		if (emailMessage) return showFieldErrors(form, () => setSubmitted(true))
+		requestEmailChange.mutate(email, {
+			// Focus moves to the refused field, so a screen reader reads it with the error.
+			onError: () =>
+				showFieldErrors(form, () => setError('Could not send the confirmation email. Check the address and try again.'))
+		})
 	}
 
 	return (
@@ -43,57 +55,45 @@ function EmailChangeDialog({ isOpen, onClose }: EmailChangeModalProps) {
 				<>
 					<DialogHeader title="Confirmation link sent" />
 					<DialogBody>
-						<p id={`${emailId}-success`} className="body-sm text-secondary">
+						<p id={successId} className="body-sm text-secondary">
 							A confirmation link has been sent to{' '}
 							<strong className="font-medium text-primary">{requestEmailChange.variables}</strong>. Open it to confirm
 							the change.
 						</p>
 					</DialogBody>
 					<DialogFooter>
-						<Button
-							type="button"
-							variant="primary"
-							size="md"
-							autoFocus
-							onClick={onClose}
-							aria-describedby={`${emailId}-success`}
-						>
+						<Button type="button" variant="primary" size="md" autoFocus onClick={onClose} aria-describedby={successId}>
 							Done
 						</Button>
 					</DialogFooter>
 				</>
 			) : (
-				<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+				<form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 					<DialogHeader title="Change your email" />
 					<DialogBody>
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={emailId} className="label-sm text-secondary">
-								New email
-							</label>
-							{/* Ariakit's autoFocus, so the dialog starts on the field instead of its first button, the ×. */}
-							<Ariakit.Focusable
-								autoFocus
-								render={
-									<Input
-										type="email"
-										readOnly={pending}
-										id={emailId}
-										name="email"
-										aria-describedby={error ? `${emailId}-error` : undefined}
-										aria-invalid={error ? true : undefined}
-										required
-										onChange={() => setError(null)}
-										placeholder="your.new.email@example.com"
-										className="w-full"
-									/>
-								}
-							/>
-							{error ? (
-								<p id={`${emailId}-error`} role="alert" className="body-sm text-data-down">
-									{error}
-								</p>
-							) : null}
-						</div>
+						<Field label="New email" error={(submitted ? emailMessage : null) ?? error}>
+							{(control) => (
+								// Ariakit's autoFocus, so the dialog starts on the field instead of its first button, the ×.
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<Input
+											{...control}
+											type="email"
+											required
+											readOnly={pending}
+											value={email}
+											onChange={(e) => {
+												setEmail(e.target.value)
+												setError(null)
+											}}
+											placeholder="your.new.email@example.com"
+											className="w-full"
+										/>
+									}
+								/>
+							)}
+						</Field>
 					</DialogBody>
 					<DialogFooter dismiss={<DialogCancelButton />}>
 						<Button type="submit" variant="primary" size="md" pendingLabel={pending ? 'Sending…' : null}>

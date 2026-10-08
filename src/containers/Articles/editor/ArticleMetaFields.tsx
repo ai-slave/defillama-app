@@ -64,7 +64,7 @@ export function MetaSwitch({
 export function MetaFieldHint({ children, error }: { children?: ReactNode; error?: string | null }) {
 	if (error) {
 		return (
-			<p role="alert" className="body-sm text-data-down">
+			<p role="alert" className="body-sm text-error">
 				{error}
 			</p>
 		)

@@ -1,8 +1,17 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
-import { type ReactNode, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
-import { type PromotionalEmailsValue, useAuthContext } from '~/auth'
+import {
+	type ComponentProps,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useId,
+	useRef,
+	useState,
+	useSyncExternalStore
+} from 'react'
+import { useAuthContext } from '~/auth'
 import {
 	AuthDialogHeader,
 	authProviderButtonStyles,
@@ -21,16 +30,18 @@ import { WELCOME_WEEK_ALLOWANCE } from '~/containers/LlamaAI/freePlanCopy'
 import { Turnstile } from '~/containers/Subscription/Turnstile'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { readExperimentVariant, trackExperimentAction, trackExperimentExposure } from '~/utils/analytics/experiment'
+import { emailError } from '~/utils/email'
 import type { WalletSignInProps } from './WalletSignIn'
-
-const fieldLabelCls = 'mb-1.5 label-sm text-secondary'
 
 const OFFER_EXPERIMENT_ID = 'llamaai-signin-offer-v1'
 
@@ -204,12 +215,13 @@ export function SignInFlow({
 	)
 }
 
-function FieldError({ children }: { children: ReactNode }) {
-	return <span className="mt-1 hidden body-sm text-error peer-user-invalid:block">{children}</span>
-}
+/** The Turnstile widget and its failure line. Key it by spent token: a submitted attempt mounts a fresh widget.
+    Its own Try again mounts a fresh widget inside the same wrapper and moves focus there, since the button is gone.
+    The widget draws its own red failure state, so the line under it explains and offers the retry without a second
+    error. The submit it gates is out of the tab order meanwhile, so a status region announces the failure. */
+const CAPTCHA_FAILURE =
+	"The security check couldn't load. A content blocker or VPN can stop it: pause it for this site, then try again."
 
-/** The Turnstile widget and its failure state. Key it by spent token: a submitted attempt mounts a fresh widget.
-    Its own Try again mounts a fresh widget inside the same wrapper and moves focus there, since the button is gone. */
 function Captcha({ disabled, onToken }: { disabled: boolean; onToken: (token: string) => void }) {
 	const [failed, setFailed] = useState(false)
 	const [retry, setRetry] = useState(0)
@@ -231,88 +243,56 @@ function Captcha({ disabled, onToken }: { disabled: boolean; onToken: (token: st
 					onExpire={() => onToken('')}
 				/>
 			</div>
+			{/* Mounted throughout, as a live region must be; the visible line below is its copy for sighted readers. */}
+			<span role="status" className="sr-only">
+				{failed ? CAPTCHA_FAILURE : ''}
+			</span>
 			{failed ? (
-				<InlineStatus variant="error">
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<span>The security check failed.</span>
-						<Button
-							variant="secondary"
-							size="sm"
-							onClick={() => {
-								setFailed(false)
-								setRetry(retry + 1)
-								wrapperRef.current!.focus()
-							}}
-						>
-							Try again
-						</Button>
-					</div>
-				</InlineStatus>
+				<div className="flex flex-wrap items-center gap-2">
+					<p aria-hidden className="body-sm text-secondary">
+						{CAPTCHA_FAILURE}
+					</p>
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={() => {
+							setFailed(false)
+							setRetry(retry + 1)
+							wrapperRef.current!.focus()
+						}}
+					>
+						Try again
+					</Button>
+				</div>
 			) : null}
 		</>
 	)
 }
 
-function PasswordField({
-	name,
-	label,
-	action,
-	error,
-	minLength,
-	readOnly,
-	autoComplete
-}: {
-	name: string
-	label: string
-	/** Sits at the right end of the label row, after the field in tab order. */
-	action?: ReactNode
-	error: string
-	minLength?: number
-	readOnly: boolean
-	autoComplete?: string
-}) {
+/** A password Input with a show/hide toggle; Field's control props spread onto it. */
+function PasswordInput(props: Omit<ComponentProps<typeof Input>, 'type' | 'className'>) {
 	const [visible, setVisible] = useState(false)
-	const id = useId()
 	return (
-		<div className="grid grid-cols-[1fr_auto] items-center">
-			<label htmlFor={id} className={`${fieldLabelCls} col-start-1 row-start-1`}>
-				{label}
-			</label>
-			{/* The eye centres on the field alone, so the error sits outside the field's box and shows through :has. */}
-			<div className="group/password col-span-2 row-start-2">
-				<div className="relative flex">
-					<Input
-						id={id}
-						type={visible ? 'text' : 'password'}
-						name={name}
-						required
-						readOnly={readOnly}
-						autoComplete={autoComplete}
-						minLength={minLength}
-						className="w-full pr-10"
+		<div className="relative flex">
+			<Input {...props} type={visible ? 'text' : 'password'} className="w-full pr-10" />
+			{/* sm, centred: an md square is as tall as the field and would sit on its border. touch-target keeps
+			    its 44px hit area. */}
+			<Tooltip
+				content={visible ? 'Hide password' : 'Show password'}
+				render={
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						square
+						className="absolute top-1/2 right-2 -translate-y-1/2"
+						onClick={() => setVisible((value) => !value)}
+						aria-label={visible ? 'Hide password' : 'Show password'}
 					/>
-					{/* sm, centred: an md square is as tall as the field and would sit on its border. touch-target keeps
-					    its 44px hit area. */}
-					<Tooltip
-						content={visible ? 'Hide password' : 'Show password'}
-						render={
-							<Button
-								type="button"
-								variant="ghost"
-								size="sm"
-								square
-								className="absolute top-1/2 right-2 -translate-y-1/2"
-								onClick={() => setVisible((value) => !value)}
-								aria-label={visible ? 'Hide password' : 'Show password'}
-							/>
-						}
-					>
-						<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
-					</Tooltip>
-				</div>
-				<span className="mt-1 hidden body-sm text-error group-has-[input:user-invalid]/password:block">{error}</span>
-			</div>
-			{action ? <div className="col-start-2 row-start-1 mb-1.5 body-sm">{action}</div> : null}
+				}
+			>
+				<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
+			</Tooltip>
 		</div>
 	)
 }
@@ -336,8 +316,14 @@ function AuthScreen({
 	const signInWithGithubMutation = useMutation({ mutationFn: signInWithGithub })
 	const signInWithGoogleMutation = useMutation({ mutationFn: signInWithGoogle })
 	const errorId = useId()
+	const termsErrorId = useId()
 	const loginMutation = useMutation({ mutationFn: login })
-	const formId = useId()
+	const [email, setEmail] = useState('')
+	const [password, setPassword] = useState('')
+	const [passwordConfirm, setPasswordConfirm] = useState('')
+	const [acceptedTerms, setAcceptedTerms] = useState(false)
+	const [promotionalEmails, setPromotionalEmails] = useState(true)
+	const [submitted, setSubmitted] = useState(false)
 	// Submit stays disabled until Turnstile hands over a token.
 	const [turnstileToken, setTurnstileToken] = useState('')
 	const [captchaRetry, setCaptchaRetry] = useState(0)
@@ -350,32 +336,40 @@ function AuthScreen({
 		signupMutation.isPending ||
 		signInWithGithubMutation.isPending ||
 		signInWithGoogleMutation.isPending
+
+	const emailMessage = emailError(email)
+	const passwordMessage = !password
+		? isSignup
+			? 'Enter a password.'
+			: 'Enter your password.'
+		: isSignup && password.length < 8
+			? 'Enter at least 8 characters.'
+			: null
+	const confirmMessage = !passwordConfirm
+		? 'Enter your password again.'
+		: passwordConfirm !== password
+			? "The passwords don't match."
+			: null
+	const termsMessage = acceptedTerms ? null : 'Accept the Terms of Service and Privacy Policy to continue.'
+	const termsError = submitted ? termsMessage : null
+
 	const handleSignUp = async (event: FormSubmitEvent) => {
 		event.preventDefault()
 		if (isPending || !turnstileToken) return
-		const form = event.currentTarget
-		const data = new FormData(form)
-		const password = String(data.get('password'))
-		const passwordConfirm = String(data.get('passwordConfirm'))
-		const confirmInput = form.elements.namedItem('passwordConfirm') as HTMLInputElement
+		if (emailMessage || passwordMessage || confirmMessage || termsMessage)
+			return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		store.dispatch({ kind: 'requestStarted' })
-		if (password !== passwordConfirm) {
-			confirmInput.setCustomValidity('Passwords do not match')
-			confirmInput.reportValidity()
-			return
-		}
-		const promotionalEmails: PromotionalEmailsValue = data.has('promotionalEmails') ? 'on' : 'off'
 		const signal = store.beginAuthRequest()
 		// Turnstile tokens are single-use; a failed attempt needs a fresh widget.
 		const token = turnstileToken
 		setTurnstileToken('')
 		await signupMutation
 			.mutateAsync({
-				email: String(data.get('email')),
+				email: email.trim(),
 				password,
 				passwordConfirm,
 				turnstileToken: token,
-				promotionalEmails,
+				promotionalEmails: promotionalEmails ? 'on' : 'off',
 				suppressVerifyEmailPrompt,
 				signal,
 				onAuthenticated
@@ -392,15 +386,15 @@ function AuthScreen({
 	const handleSignIn = async (event: FormSubmitEvent) => {
 		event.preventDefault()
 		if (isPending || !turnstileToken) return
-		const data = new FormData(event.currentTarget)
+		if (emailMessage || passwordMessage) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		store.dispatch({ kind: 'requestStarted' })
 		const signal = store.beginAuthRequest()
 		const token = turnstileToken
 		setTurnstileToken('')
 		await loginMutation
 			.mutateAsync({
-				email: String(data.get('email')),
-				password: String(data.get('password')),
+				email: email.trim(),
+				password,
 				turnstileToken: token,
 				signal,
 				suppressVerifyEmailPrompt,
@@ -516,78 +510,95 @@ function AuthScreen({
 			) : null}
 			{isSignup ? (
 				<form
+					noValidate
 					aria-describedby={state.error?.method === 'email' ? errorId : undefined}
 					className="flex flex-col gap-4"
 					onSubmit={(event) => void handleSignUp(event)}
 				>
-					<label className="flex flex-col">
-						<span className={fieldLabelCls}>Email</span>
-						<Input
-							type="email"
-							autoComplete="username"
-							readOnly={isPending}
-							name="email"
-							required
-							className="peer w-full"
-						/>
-						<FieldError>Enter a valid email address.</FieldError>
-					</label>
-					<PasswordField
-						name="password"
-						label="Password"
-						error="Password must be at least 8 characters."
-						minLength={8}
-						readOnly={isPending}
-						autoComplete="new-password"
-					/>
-					<label className="flex flex-col">
-						<span className={fieldLabelCls}>Confirm password</span>
-						<Input
-							type="password"
-							name="passwordConfirm"
-							required
-							minLength={8}
-							readOnly={isPending}
-							autoComplete="new-password"
-							className="peer w-full"
-							onInput={(event) => event.currentTarget.setCustomValidity('')}
-						/>
-						<FieldError>Passwords must match and contain at least 8 characters.</FieldError>
-					</label>
+					<Field label="Email" error={submitted ? emailMessage : null}>
+						{(control) => (
+							<Input
+								{...control}
+								type="email"
+								autoComplete="username"
+								readOnly={isPending}
+								name="email"
+								required
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
+								className="w-full"
+							/>
+						)}
+					</Field>
+					<Field label="Password" error={submitted ? passwordMessage : null}>
+						{(control) => (
+							<PasswordInput
+								{...control}
+								name="password"
+								required
+								minLength={8}
+								readOnly={isPending}
+								autoComplete="new-password"
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
+							/>
+						)}
+					</Field>
+					<Field label="Confirm password" error={submitted ? confirmMessage : null}>
+						{(control) => (
+							<Input
+								{...control}
+								type="password"
+								name="passwordConfirm"
+								required
+								readOnly={isPending}
+								autoComplete="new-password"
+								value={passwordConfirm}
+								onChange={(event) => setPasswordConfirm(event.target.value)}
+								className="w-full"
+							/>
+						)}
+					</Field>
 
 					<Captcha key={captchaRetry} disabled={isPending} onToken={setTurnstileToken} />
 
-					<label className="flex items-start gap-2">
-						<input
-							type="checkbox"
+					<div data-invalid={termsError ? '' : undefined} className="flex flex-col gap-1">
+						<Checkbox
+							variant="consent"
 							disabled={isPending}
 							required
-							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
-						/>
-						<span className="body-sm text-secondary">
-							I agree to the{' '}
-							<BasicLink href="/terms" target="_blank" className="text-link underline">
-								Terms of Service
-							</BasicLink>{' '}
-							and{' '}
-							<BasicLink href="/privacy-policy" target="_blank" className="text-link underline">
-								Privacy Policy
-							</BasicLink>
-						</span>
-					</label>
+							checked={acceptedTerms}
+							onChange={(event) => setAcceptedTerms(event.target.checked)}
+							aria-invalid={termsError ? true : undefined}
+							aria-describedby={termsError ? termsErrorId : undefined}
+						>
+							<span>
+								I agree to the{' '}
+								<BasicLink href="/terms" target="_blank" className="text-link underline">
+									Terms of Service
+								</BasicLink>{' '}
+								and{' '}
+								<BasicLink href="/privacy-policy" target="_blank" className="text-link underline">
+									Privacy Policy
+								</BasicLink>
+							</span>
+						</Checkbox>
+						{termsError ? (
+							<p id={termsErrorId} className="body-sm text-error">
+								{termsError}
+							</p>
+						) : null}
+					</div>
 
-					<label className="flex items-start gap-2">
-						<input
-							type="checkbox"
-							disabled={isPending}
-							name="promotionalEmails"
-							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
-							defaultChecked
-						/>
-						<span className="body-sm text-secondary">
-							Receive emails about upcoming DefiLlama products and new releases
-						</span>
-					</label>
+					<Checkbox
+						variant="consent"
+						disabled={isPending}
+						name="promotionalEmails"
+						checked={promotionalEmails}
+						onChange={(event) => setPromotionalEmails(event.target.checked)}
+					>
+						Receive emails about upcoming DefiLlama products and new releases
+					</Checkbox>
 
 					<Button
 						type="submit"
@@ -607,63 +618,70 @@ function AuthScreen({
 				</form>
 			) : (
 				<form
-					id={formId}
+					noValidate
 					className="flex flex-col gap-4"
 					aria-describedby={state.error?.method === 'email' ? errorId : undefined}
 					onSubmit={(event) => void handleSignIn(event)}
 				>
-					<label className="flex flex-col">
-						<span className={`${fieldLabelCls} flex items-center gap-2`}>
-							Email
-							{lastMethod === 'email' ? <LastUsedChip /> : null}
-						</span>
-						<Input
-							type="email"
-							autoComplete="username"
-							readOnly={isPending}
-							name="email"
-							required
-							className="peer w-full"
-						/>
-						<FieldError>Enter a valid email address.</FieldError>
-					</label>
-					<PasswordField
-						name="password"
-						label="Password"
-						error="Enter your password."
-						readOnly={isPending}
-						autoComplete="current-password"
-						action={
-							<Button
-								variant="link"
-								form={formId}
-								onClick={(event) =>
-									store.dispatch({
-										kind: 'navigate',
-										screen: 'forgot',
-										email: (event.currentTarget.form!.elements.namedItem('email') as HTMLInputElement).value
-									})
-								}
-							>
-								Forgot password?
-							</Button>
+					<Field
+						label={
+							<span className="flex items-center gap-2">
+								Email
+								{lastMethod === 'email' ? <LastUsedChip /> : null}
+							</span>
 						}
-					/>
+						error={submitted ? emailMessage : null}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="email"
+								autoComplete="username"
+								readOnly={isPending}
+								name="email"
+								required
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
+								className="w-full"
+							/>
+						)}
+					</Field>
+					<Field
+						label="Password"
+						error={submitted ? passwordMessage : null}
+						action={
+							<span className="body-sm">
+								<Button variant="link" onClick={() => store.dispatch({ kind: 'navigate', screen: 'forgot', email })}>
+									Forgot password?
+								</Button>
+							</span>
+						}
+					>
+						{(control) => (
+							<PasswordInput
+								{...control}
+								name="password"
+								required
+								readOnly={isPending}
+								autoComplete="current-password"
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
+							/>
+						)}
+					</Field>
 
 					<Captcha key={captchaRetry} disabled={isPending} onToken={setTurnstileToken} />
 
-					<div>
-						<Button
-							type="submit"
-							variant="primary"
-							size="md"
-							className="w-full"
-							disabled={isPending || !turnstileToken}
-							pendingLabel={loginMutation.isPending ? 'Signing in…' : null}
-						>
-							Sign in
-						</Button>
-					</div>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						className="w-full"
+						disabled={isPending || !turnstileToken}
+						pendingLabel={loginMutation.isPending ? 'Signing in…' : null}
+					>
+						Sign in
+					</Button>
 					{state.error?.method === 'email' ? (
 						<div id={errorId}>
 							<InlineStatus variant="error">{state.error.message}</InlineStatus>
@@ -743,12 +761,15 @@ function ForgotPasswordScreen({
 	header: (title: string) => ReactNode
 }) {
 	const errorId = useId()
+	const [email, setEmail] = useState(initialEmail)
+	const [submitted, setSubmitted] = useState(false)
 	const [turnstileToken, setTurnstileToken] = useState('')
 	const [captchaRetry, setCaptchaRetry] = useState(0)
+	const emailMessage = emailError(email)
 	const reset = useMutation({
-		mutationFn: async ({ email, signal, token }: { email: string; signal: AbortSignal; token: string }) => {
-			await requestPasswordReset(email, token, signal)
-			return signal.aborted ? null : email
+		mutationFn: async ({ address, signal, token }: { address: string; signal: AbortSignal; token: string }) => {
+			await requestPasswordReset(address, token, signal)
+			return signal.aborted ? null : address
 		},
 		// A sent token is spent whatever the outcome, so the widget restarts after every attempt.
 		onSettled: () => setCaptchaRetry((retry) => retry + 1)
@@ -756,11 +777,11 @@ function ForgotPasswordScreen({
 	const handleSubmit = (event: FormSubmitEvent) => {
 		event.preventDefault()
 		if (reset.isPending || !turnstileToken) return
-		const data = new FormData(event.currentTarget)
+		if (emailMessage) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		store.dispatch({ kind: 'requestStarted' })
 		const token = turnstileToken
 		setTurnstileToken('')
-		reset.mutate({ email: String(data.get('email')), signal: store.beginAuthRequest(), token })
+		reset.mutate({ address: email.trim(), signal: store.beginAuthRequest(), token })
 	}
 
 	if (reset.data)
@@ -786,6 +807,8 @@ function ForgotPasswordScreen({
 							variant="link"
 							onClick={() => {
 								reset.reset()
+								setEmail('')
+								setSubmitted(false)
 								store.dispatch({ kind: 'navigate', screen: 'forgot', email: '' })
 							}}
 						>
@@ -802,23 +825,26 @@ function ForgotPasswordScreen({
 			<DialogBody>
 				<p className="body-sm text-secondary">Enter your email and we&apos;ll send you a reset link.</p>
 				<form
+					noValidate
 					className="flex flex-col gap-4"
 					onSubmit={handleSubmit}
 					aria-describedby={reset.error ? errorId : undefined}
 				>
-					<label className="flex flex-col">
-						<span className={fieldLabelCls}>Email</span>
-						<Input
-							type="email"
-							name="email"
-							autoComplete="email"
-							defaultValue={initialEmail}
-							required
-							readOnly={reset.isPending}
-							className="peer w-full"
-						/>
-						<FieldError>Enter a valid email address.</FieldError>
-					</label>
+					<Field label="Email" error={submitted ? emailMessage : null}>
+						{(control) => (
+							<Input
+								{...control}
+								type="email"
+								name="email"
+								autoComplete="email"
+								required
+								readOnly={reset.isPending}
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
+								className="w-full"
+							/>
+						)}
+					</Field>
 					<Captcha key={captchaRetry} disabled={reset.isPending} onToken={setTurnstileToken} />
 					<Button
 						type="submit"

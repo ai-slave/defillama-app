@@ -4,6 +4,8 @@ import { useRef, useState, type InputHTMLAttributes, type ReactNode } from 'reac
 import { NestedMenu } from '~/components/NestedMenu'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { PopoverSurface } from '~/ui/PopoverSurface'
@@ -119,6 +121,11 @@ export function FilterBetweenRange({
 	)
 }
 
+/** Every range filter keeps rows between both bounds, so an inverted range would show an empty table. */
+function invertedRangeError(min: string, max: string) {
+	return min !== '' && max !== '' && Number(min) > Number(max) ? 'Enter a max no lower than the min.' : null
+}
+
 function Form({
 	inset,
 	onSubmit,
@@ -145,7 +152,11 @@ function Form({
 }) {
 	const formRef = useRef<HTMLFormElement>(null)
 	const minRef = useRef<HTMLInputElement>(null)
+	// The inputs stay uncontrolled, as callers read the submitted form; these copies drive the quick picks and the error.
 	const [minValue, setMinValue] = useState(String(min ?? ''))
+	const [maxValue, setMaxValue] = useState(String(max ?? ''))
+	const [submitted, setSubmitted] = useState(false)
+	const rangeError = invertedRangeError(minValue, maxValue)
 	const pickMin = (value: number) => {
 		if (minRef.current) minRef.current.value = String(value)
 		setMinValue(String(value))
@@ -154,9 +165,20 @@ function Form({
 	return (
 		<form
 			ref={formRef}
-			onSubmit={onSubmit}
+			noValidate
+			onSubmit={(event) => {
+				// Read from the form: a quick pick sets the min and submits before its state renders.
+				const form = event.currentTarget
+				if (invertedRangeError(form.min.value, form.max.value)) {
+					event.preventDefault()
+					return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+				}
+				onSubmit(event)
+			}}
 			onReset={() => {
 				setMinValue('')
+				setMaxValue('')
+				setSubmitted(false)
 				onClear()
 			}}
 			// A sheet row: on phones its fields and buttons are 44px, like a form in a dialog sheet.
@@ -164,18 +186,20 @@ function Form({
 			className={`flex flex-col gap-3 py-3 ${inset === 'nested' ? 'px-4' : 'px-3'}`}
 		>
 			<div className="flex flex-col gap-1.5">
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">{minLabel}</span>
-					<Input
-						ref={minRef}
-						type="number"
-						name="min"
-						defaultValue={min ?? ''}
-						{...minInputProps}
-						onInput={(e) => setMinValue(e.currentTarget.value)}
-						className="w-full"
-					/>
-				</label>
+				<Field label={minLabel}>
+					{(control) => (
+						<Input
+							{...control}
+							ref={minRef}
+							type="number"
+							name="min"
+							defaultValue={min ?? ''}
+							{...minInputProps}
+							onInput={(e) => setMinValue(e.currentTarget.value)}
+							className="w-full"
+						/>
+					)}
+				</Field>
 				{quickPicks?.length ? (
 					<div className="flex flex-wrap gap-1.5">
 						{quickPicks.map((pick) => (
@@ -193,10 +217,19 @@ function Form({
 					</div>
 				) : null}
 			</div>
-			<label className="flex flex-col gap-1">
-				<span className="label-sm text-secondary">{maxLabel}</span>
-				<Input type="number" name="max" defaultValue={max ?? ''} {...maxInputProps} className="w-full" />
-			</label>
+			<Field label={maxLabel} error={submitted ? rangeError : null}>
+				{(control) => (
+					<Input
+						{...control}
+						type="number"
+						name="max"
+						defaultValue={max ?? ''}
+						{...maxInputProps}
+						onInput={(e) => setMaxValue(e.currentTarget.value)}
+						className="w-full"
+					/>
+				)}
+			</Field>
 
 			<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
 				<Button type="reset" size="md" className="w-full">

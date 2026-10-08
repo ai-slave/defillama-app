@@ -58,7 +58,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 						</span>
 					</div>
 					{resendError ? (
-						<p role="alert" className="mt-1 body-sm text-data-down">
+						<p role="alert" className="mt-1 body-sm text-error">
 							{resendError}
 						</p>
 					) : null}

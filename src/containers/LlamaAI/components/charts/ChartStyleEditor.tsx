@@ -7,6 +7,8 @@ import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -184,15 +186,22 @@ const swatch =
 const axisTag = 'w-3.5 shrink-0 text-center label-sm text-tertiary'
 const PREVIEW_DEBOUNCE_MS = 350
 
-function getSeriesNameProblem(series: ChartConfiguration['series']): string | null {
+// hbar (single series) & pie color per category, not per series: a picker per bar/slice replaces the series names.
+const colorsPerCategory = (draft: EditorDraft) =>
+	draft.type === 'pie' || (draft.type === 'hbar' && (draft.series?.length ?? 1) <= 1)
+
+/** Each series name's problem: empty, or repeating an earlier series' name. The cartesian adapter rejects either; a
+    chart coloured per category shows no name fields, and the pie and hbar adapters accept any name. */
+function seriesNameIssues(draft: EditorDraft): Array<'empty' | 'duplicate' | null> {
+	if (colorsPerCategory(draft)) return []
 	const names = new Set<string>()
-	for (const [index, item] of series.entries()) {
+	return draft.series.map((item) => {
 		const name = item.name.trim()
-		if (!name) return `Series ${index + 1} name cannot be empty`
-		if (names.has(name)) return `Series name "${name}" must be unique`
+		if (!name) return 'empty'
+		if (names.has(name)) return 'duplicate'
 		names.add(name)
-	}
-	return null
+		return null
+	})
 }
 
 const EMPTY_CATEGORIES: NonNullable<ChartStyleEditorProps['categories']> = []
@@ -242,7 +251,7 @@ export function ChartStyleEditor({
 		setDraft(next)
 		// Invalid display identities make the adapter reject the entire chart. Keep the
 		// last valid preview visible while the user finishes editing the draft.
-		if (getSeriesNameProblem(next.series)) {
+		if (seriesNameIssues(next).some(Boolean)) {
 			debouncedPreview.cancel()
 			return
 		}
@@ -285,30 +294,37 @@ export function ChartStyleEditor({
 
 	const yAxes = useMemo(() => draft.axes?.yAxes ?? [], [draft])
 	const availableTypes = useMemo(() => compatibleTypes(config.axes?.x?.type), [config])
-	// hbar (single series) & pie color per category, not per series — offer a picker per bar/slice.
-	const perCategory = draft.type === 'pie' || (draft.type === 'hbar' && (draft.series?.length ?? 1) <= 1)
+	const perCategory = colorsPerCategory(draft)
 	const canReorder = !perCategory && (draft.series?.length ?? 0) > 1
 	const hasHallmarks = caps.showHallmarks && (draft.hallmarks?.length ?? 0) > 0
 	const canEditHallmarks = draft.axes?.x?.type === 'time'
 	const canLegend = LEGEND_TYPES.has(draft.type) && (draft.series?.length ?? 0) > 1
 
-	const problems = useMemo(() => {
-		const out: Array<string> = []
-		if (!draft.title.trim()) out.push('Title cannot be empty')
-		const seriesNameProblem = getSeriesNameProblem(draft.series)
-		if (seriesNameProblem) out.push(seriesNameProblem)
-		for (const a of yAxes) {
-			const lo = typeof a.min === 'number' ? a.min : undefined
-			const hi = typeof a.max === 'number' ? a.max : undefined
-			if (lo !== undefined && hi !== undefined && lo >= hi) {
-				out.push(`${a.label || 'Y-axis'}: min must be less than max`)
-			}
-		}
-		return out
-	}, [draft.series, draft.title, yAxes])
+	// A repeated series name shows while typing; the other errors wait for Save.
+	const [submitted, setSubmitted] = useState(false)
+	const titleError = draft.title.trim() ? null : 'Enter a chart title.'
+	const nameIssues = seriesNameIssues(draft)
+	const nameErrors = nameIssues.map((issue) =>
+		issue === 'duplicate'
+			? 'Enter a name no other series uses.'
+			: issue === 'empty' && submitted
+				? 'Enter a series name.'
+				: null
+	)
+	const axisErrors = yAxes.map((a) =>
+		typeof a.min === 'number' && typeof a.max === 'number' && a.min >= a.max ? 'Enter a max above the min.' : null
+	)
 
-	// Save is disabled while the draft has problems.
-	const save = () => {
+	const save = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (saveMutation.isPending) return
+		if (titleError || nameIssues.some(Boolean) || axisErrors.some(Boolean)) {
+			// On a phone the errors sit in the Style pane, which the reader may have swapped for the preview.
+			return showFieldErrors(event.currentTarget, () => {
+				setSubmitted(true)
+				setPane('style')
+			})
+		}
 		const savedConfig = draftConfig(draft)
 		saveMutation.mutate({ config: savedConfig, patch: toPatch(savedConfig, draftView, seriesOrder) })
 	}
@@ -370,432 +386,451 @@ export function ChartStyleEditor({
 					</DialogToolbar>
 				</div>
 			) : null}
-			<div className="flex min-h-0 flex-1">
-				{preview ? (
-					<div
-						className={`min-w-0 flex-1 items-start justify-center overflow-auto p-4 md:flex md:items-center ${pane === 'preview' ? 'flex' : 'hidden'}`}
-					>
-						<div className="w-full">{preview}</div>
-					</div>
-				) : null}
-				{/* The draft is locked while it saves: the editor closes when that save lands, so a later edit would be
-				    lost. Save sits outside the fieldset, so it keeps focus. */}
-				<fieldset
-					disabled={saveMutation.isPending}
-					className={`min-h-0 w-full flex-col gap-3 overflow-y-auto p-4 text-secondary md:flex ${preview ? 'border-subtle bg-surface-elevated-1 md:w-[340px] md:shrink-0 md:border-l' : ''} ${!preview || pane === 'style' ? 'flex' : 'hidden'}`}
-					onBlurCapture={debouncedPreview.flush}
-				>
-					<span className={sectionLabel}>Style</span>
-
-					<div className={section}>
-						<span className={sectionLabel}>Type</span>
-						<div className="flex flex-wrap gap-1.5">
-							{availableTypes.map((t) => (
-								<Button
-									key={t}
-									type="button"
-									size="sm"
-									variant={draft.type === t ? 'primary' : 'secondary'}
-									onClick={() => update((d) => (d.type = t), 'immediate')}
-								>
-									<span className="capitalize">{t}</span>
-								</Button>
-							))}
-						</div>
-					</div>
-
-					<div className={section}>
-						<span className={sectionLabel}>Title</span>
-						<Input
-							className="w-full"
-							aria-label="Chart title"
-							placeholder="Chart title"
-							value={draft.title}
-							onChange={(e) => update((d) => (d.title = e.target.value))}
-						/>
-					</div>
-
-					<div className={section}>
-						<div className="flex items-center justify-between">
-							<span className={sectionLabel}>{perCategory ? 'Colors' : 'Series'}</span>
-							{canReorder ? (
-								<Button type="button" size="sm" aria-label="Sort series" onClick={sortSeries}>
-									Sort
-								</Button>
-							) : null}
-						</div>
-						{perCategory ? (
-							<div className="grid grid-cols-1 gap-x-5 gap-y-1.5 sm:grid-cols-2">
-								{categories.map((cat, i) => (
-									<label key={cat} className="flex items-center gap-2">
-										<input
-											type="color"
-											value={draft.seriesColors?.[cat] ?? chartColor(i)}
-											onChange={(e) =>
-												update((d) => {
-													d.seriesColors = { ...d.seriesColors, [cat]: e.target.value }
-												}, 'immediate')
-											}
-											className={swatch}
-										/>
-										<span className="truncate body-md" title={cat}>
-											{cat}
-										</span>
-									</label>
-								))}
-							</div>
-						) : (
-							<div className="flex flex-col gap-1.5">
-								{draft.series?.map((s, i) => (
-									// The pane is narrow at every width: the swatch and name take one line, the selects and arrows share the next.
-									<div key={seriesOrder[i]} className="flex flex-wrap items-center gap-2">
-										<input
-											type="color"
-											value={s.styling?.color ?? chartColor(i)}
-											onChange={(e) =>
-												update((d) => {
-													updateItemAt(d.series, i, (item) => {
-														item.styling = { ...item.styling, color: e.target.value }
-													})
-												}, 'immediate')
-											}
-											className={swatch}
-											aria-label={`Series ${i + 1} color`}
-										/>
-										<Input
-											className="min-w-48 flex-1"
-											aria-label={`Series ${i + 1} name`}
-											placeholder="Series name"
-											value={s.name}
-											onChange={(e) => update((d) => updateItemAt(d.series, i, (item) => (item.name = e.target.value)))}
-										/>
-										{caps.showGrouping ? (
-											<select
-												className={`${inputStyles} min-w-0 flex-1 basis-36 truncate`}
-												aria-label={`Series ${i + 1} aggregation`}
-												title="How this series combines into week/month buckets"
-												value={s.metricClass}
-												onChange={(e) => {
-													const metricClass = e.target.value
-													if (metricClass !== 'flow' && metricClass !== 'stock') return
-													const yField = s.dataMapping.yField
-													update((d) => {
-														for (const item of d.series) {
-															if (item.dataMapping.yField === yField) item.metricClass = metricClass
-														}
-													}, 'immediate')
-												}}
-											>
-												{s.metricClass === 'unknown' ? (
-													<option value="unknown" disabled>
-														Aggregation: choose
-													</option>
-												) : null}
-												<option value="flow">Sum per period</option>
-												<option value="stock">End-of-period value</option>
-											</select>
-										) : null}
-										{isCombo ? (
-											<select
-												className={`${inputStyles} min-w-0 flex-1 basis-20 truncate`}
-												aria-label={`Series ${i + 1} type`}
-												value={s.type}
-												onChange={(e) => {
-													if (!isSeriesType(e.target.value)) return
-													const type = e.target.value
-													update((d) => updateItemAt(d.series, i, (item) => (item.type = type)), 'immediate')
-												}}
-											>
-												{SERIES_TYPES.map((t) => (
-													<option key={t} value={t}>
-														{t}
-													</option>
-												))}
-											</select>
-										) : null}
-										{canReorder ? (
-											<div className="flex shrink-0 gap-0.5">
-												<Tooltip
-													content="Move up"
-													render={
-														<Button
-															type="button"
-															size="sm"
-															square
-															aria-label={`Move series ${i + 1} up`}
-															disabled={i === 0}
-															accessibleWhenDisabled
-															onClick={() => moveSeries(i, i - 1)}
-														/>
-													}
-												>
-													<Icon name="chevron-up" height={16} width={16} />
-												</Tooltip>
-												<Tooltip
-													content="Move down"
-													render={
-														<Button
-															type="button"
-															size="sm"
-															square
-															aria-label={`Move series ${i + 1} down`}
-															disabled={i === draft.series.length - 1}
-															accessibleWhenDisabled
-															onClick={() => moveSeries(i, i + 1)}
-														/>
-													}
-												>
-													<Icon name="chevron-down" height={16} width={16} />
-												</Tooltip>
-											</div>
-										) : null}
-									</div>
-								))}
-							</div>
-						)}
-					</div>
-
-					<div className={section}>
-						<span className={sectionLabel}>Axes</span>
-						<div className="flex items-center gap-2">
-							<span className={axisTag}>X</span>
-							<Input
-								className="flex-1"
-								placeholder="X-axis label"
-								value={draft.axes?.x?.label ?? ''}
-								onChange={(e) => update((d) => (d.axes.x.label = e.target.value))}
-							/>
-						</div>
-						{yAxes.map((a, i) => (
-							<div key={a.id} className="flex flex-col gap-1.5">
-								<div className="flex items-center gap-2">
-									<span className={axisTag}>Y</span>
-									<Input
-										className="flex-1"
-										placeholder="Y-axis label"
-										value={a.label ?? ''}
-										onChange={(e) =>
-											update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.label = e.target.value)))
-										}
-									/>
-									<Input
-										className="w-16"
-										placeholder="unit"
-										value={a.valueSymbol ?? draft.valueSymbol ?? ''}
-										onChange={(e) =>
-											update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.valueSymbol = e.target.value)))
-										}
-									/>
-								</div>
-								<div className="flex items-center gap-2 pl-5.5">
-									<Input
-										className="flex-1"
-										placeholder="min"
-										value={a.min === undefined ? '' : String(a.min)}
-										onChange={(e) =>
-											update((d) => {
-												const v = e.target.value.trim()
-												const n = Number(v)
-												updateItemAt(d.axes.yAxes, i, (axis) => {
-													if (v === '') delete axis.min
-													else if (v === 'dataMin') axis.min = 'dataMin'
-													else if (Number.isFinite(n)) axis.min = n
-													else delete axis.min
-												})
-											})
-										}
-									/>
-									<Input
-										className="flex-1"
-										placeholder="max"
-										value={a.max === undefined ? '' : String(a.max)}
-										onChange={(e) =>
-											update((d) => {
-												const v = e.target.value.trim()
-												const n = Number(v)
-												updateItemAt(d.axes.yAxes, i, (axis) => {
-													if (v === '') delete axis.max
-													else if (v === 'dataMax') axis.max = 'dataMax'
-													else if (Number.isFinite(n)) axis.max = n
-													else delete axis.max
-												})
-											})
-										}
-									/>
-									<Input
-										className="flex-1"
-										placeholder="step"
-										value={a.interval === undefined ? '' : String(a.interval)}
-										onChange={(e) =>
-											update((d) => {
-												const v = e.target.value.trim()
-												const n = Number(v)
-												updateItemAt(d.axes.yAxes, i, (axis) => {
-													if (v === '' || !Number.isFinite(n) || n <= 0) delete axis.interval
-													else axis.interval = n
-												})
-											})
-										}
-									/>
-								</div>
-							</div>
-						))}
-					</div>
-
-					{canEditHallmarks ? (
-						<div className={section}>
-							<span className={sectionLabel}>Annotations</span>
-							<div className="flex flex-col gap-1.5">
-								{(draft.hallmarks ?? []).map((h, i) => (
-									<div key={h.id} className="flex items-center gap-2">
-										<Input
-											type="date"
-											className="w-36"
-											aria-label={`Annotation ${i + 1} date`}
-											value={toDateInput(h.value[0])}
-											onChange={(e) =>
-												update((d) => {
-													const hs = d.hallmarks ?? []
-													const ts = fromDateInput(e.target.value)
-													hs[i] = { ...hs[i], value: [Number.isFinite(ts) ? ts : hs[i].value[0], hs[i].value[1]] }
-													d.hallmarks = hs
-												})
-											}
-										/>
-										<Input
-											className="flex-1"
-											aria-label={`Annotation ${i + 1} label`}
-											placeholder="label"
-											value={h.value[1]}
-											onChange={(e) =>
-												update((d) => {
-													const hs = d.hallmarks ?? []
-													hs[i] = { ...hs[i], value: [hs[i].value[0], e.target.value] }
-													d.hallmarks = hs
-												})
-											}
-										/>
-										<Tooltip
-											content="Remove annotation"
-											render={
-												<Button
-													type="button"
-													size="sm"
-													square
-													variant="destructive"
-													onClick={() =>
-														update((d) => {
-															const hs = [...(d.hallmarks ?? [])]
-															hs.splice(i, 1)
-															d.hallmarks = hs
-														}, 'immediate')
-													}
-													aria-label="Remove annotation"
-												/>
-											}
-										>
-											<Icon name="x" height={16} width={16} />
-										</Tooltip>
-									</div>
-								))}
-							</div>
-							<Button
-								type="button"
-								size="sm"
-								onClick={() =>
-									update((d) => {
-										d.hallmarks = [
-											...(d.hallmarks ?? []),
-											{ id: crypto.randomUUID(), value: [Math.floor(Date.now() / 1000), ''] }
-										]
-									}, 'immediate')
-								}
-								className="self-start"
-							>
-								+ Add annotation
-							</Button>
+			<form noValidate onSubmit={save} className="flex min-h-0 flex-1 flex-col">
+				<div className="flex min-h-0 flex-1">
+					{preview ? (
+						<div
+							className={`min-w-0 flex-1 items-start justify-center overflow-auto p-4 md:flex md:items-center ${pane === 'preview' ? 'flex' : 'hidden'}`}
+						>
+							<div className="w-full">{preview}</div>
 						</div>
 					) : null}
+					{/* The draft is locked while it saves: the editor closes when that save lands, so a later edit would be
+				    lost. Save sits outside the fieldset, so it keeps focus. */}
+					<fieldset
+						disabled={saveMutation.isPending}
+						className={`min-h-0 w-full flex-col gap-3 overflow-y-auto p-4 text-secondary md:flex ${preview ? 'border-subtle bg-surface-elevated-1 md:w-[340px] md:shrink-0 md:border-l' : ''} ${!preview || pane === 'style' ? 'flex' : 'hidden'}`}
+						onBlurCapture={debouncedPreview.flush}
+					>
+						<span className={sectionLabel}>Style</span>
 
-					{hasHallmarks ? (
 						<div className={section}>
-							<span className={sectionLabel}>Event markers</span>
+							<span className={sectionLabel}>Type</span>
 							<div className="flex flex-wrap gap-1.5">
-								{(['mark-line', 'event-rail'] as const).map((s) => (
+								{availableTypes.map((t) => (
 									<Button
-										key={s}
+										key={t}
 										type="button"
 										size="sm"
-										variant={(draft.hallmarkStyle ?? 'mark-line') === s ? 'primary' : 'secondary'}
-										onClick={() => update((d) => (d.hallmarkStyle = s), 'immediate')}
+										variant={draft.type === t ? 'primary' : 'secondary'}
+										onClick={() => update((d) => (d.type = t), 'immediate')}
 									>
-										{s === 'mark-line' ? 'Lines' : 'Event rail'}
+										<span className="capitalize">{t}</span>
 									</Button>
 								))}
 							</div>
 						</div>
-					) : null}
 
-					{toggles.length > 0 || canLegend ? (
 						<div className={section}>
-							<div className="flex flex-wrap gap-x-5 gap-y-2">
-								{toggles.map(([key, text]) => (
-									<Checkbox
-										key={key}
-										variant="inline"
-										checked={draftView[key]}
-										onChange={(e) => updateView(key, e.target.checked)}
-									>
-										{text}
-									</Checkbox>
-								))}
-								{canLegend ? (
-									<Checkbox
-										variant="inline"
-										checked={draft.legend?.show ?? true}
-										onChange={(e) => update((d) => (d.legend = { show: e.target.checked }), 'immediate')}
-									>
-										Legend
-									</Checkbox>
+							<span className={sectionLabel}>Title</span>
+							<Field hideLabel label="Chart title" error={submitted ? titleError : null}>
+								{(control) => (
+									<Input
+										{...control}
+										className="w-full"
+										placeholder="Chart title"
+										value={draft.title}
+										onChange={(e) => update((d) => (d.title = e.target.value))}
+									/>
+								)}
+							</Field>
+						</div>
+
+						<div className={section}>
+							<div className="flex items-center justify-between">
+								<span className={sectionLabel}>{perCategory ? 'Colors' : 'Series'}</span>
+								{canReorder ? (
+									<Button type="button" size="sm" aria-label="Sort series" onClick={sortSeries}>
+										Sort
+									</Button>
 								) : null}
 							</div>
+							{perCategory ? (
+								<div className="grid grid-cols-1 gap-x-5 gap-y-1.5 sm:grid-cols-2">
+									{categories.map((cat, i) => (
+										<label key={cat} className="flex items-center gap-2">
+											<input
+												type="color"
+												value={draft.seriesColors?.[cat] ?? chartColor(i)}
+												onChange={(e) =>
+													update((d) => {
+														d.seriesColors = { ...d.seriesColors, [cat]: e.target.value }
+													}, 'immediate')
+												}
+												className={swatch}
+											/>
+											<span className="truncate body-md" title={cat}>
+												{cat}
+											</span>
+										</label>
+									))}
+								</div>
+							) : (
+								<div className="flex flex-col gap-1.5">
+									{draft.series?.map((s, i) => (
+										<Field key={seriesOrder[i]} hideLabel label={`Series ${i + 1} name`} error={nameErrors[i]}>
+											{(control) => (
+												// The pane is narrow at every width: the swatch and name take one line, the selects and arrows share the next.
+												<div className="flex flex-wrap items-center gap-2">
+													<input
+														type="color"
+														value={s.styling?.color ?? chartColor(i)}
+														onChange={(e) =>
+															update((d) => {
+																updateItemAt(d.series, i, (item) => {
+																	item.styling = { ...item.styling, color: e.target.value }
+																})
+															}, 'immediate')
+														}
+														className={swatch}
+														aria-label={`Series ${i + 1} color`}
+													/>
+													<Input
+														{...control}
+														className="min-w-48 flex-1"
+														placeholder="Series name"
+														value={s.name}
+														onChange={(e) =>
+															update((d) => updateItemAt(d.series, i, (item) => (item.name = e.target.value)))
+														}
+													/>
+													{caps.showGrouping ? (
+														<select
+															className={`${inputStyles} min-w-0 flex-1 basis-36 truncate`}
+															aria-label={`Series ${i + 1} aggregation`}
+															title="How this series combines into week/month buckets"
+															value={s.metricClass}
+															onChange={(e) => {
+																const metricClass = e.target.value
+																if (metricClass !== 'flow' && metricClass !== 'stock') return
+																const yField = s.dataMapping.yField
+																update((d) => {
+																	for (const item of d.series) {
+																		if (item.dataMapping.yField === yField) item.metricClass = metricClass
+																	}
+																}, 'immediate')
+															}}
+														>
+															{s.metricClass === 'unknown' ? (
+																<option value="unknown" disabled>
+																	Aggregation: choose
+																</option>
+															) : null}
+															<option value="flow">Sum per period</option>
+															<option value="stock">End-of-period value</option>
+														</select>
+													) : null}
+													{isCombo ? (
+														<select
+															className={`${inputStyles} min-w-0 flex-1 basis-20 truncate`}
+															aria-label={`Series ${i + 1} type`}
+															value={s.type}
+															onChange={(e) => {
+																if (!isSeriesType(e.target.value)) return
+																const type = e.target.value
+																update((d) => updateItemAt(d.series, i, (item) => (item.type = type)), 'immediate')
+															}}
+														>
+															{SERIES_TYPES.map((t) => (
+																<option key={t} value={t}>
+																	{t}
+																</option>
+															))}
+														</select>
+													) : null}
+													{canReorder ? (
+														<div className="flex shrink-0 gap-0.5">
+															<Tooltip
+																content="Move up"
+																render={
+																	<Button
+																		type="button"
+																		size="sm"
+																		square
+																		aria-label={`Move series ${i + 1} up`}
+																		disabled={i === 0}
+																		accessibleWhenDisabled
+																		onClick={() => moveSeries(i, i - 1)}
+																	/>
+																}
+															>
+																<Icon name="chevron-up" height={16} width={16} />
+															</Tooltip>
+															<Tooltip
+																content="Move down"
+																render={
+																	<Button
+																		type="button"
+																		size="sm"
+																		square
+																		aria-label={`Move series ${i + 1} down`}
+																		disabled={i === draft.series.length - 1}
+																		accessibleWhenDisabled
+																		onClick={() => moveSeries(i, i + 1)}
+																	/>
+																}
+															>
+																<Icon name="chevron-down" height={16} width={16} />
+															</Tooltip>
+														</div>
+													) : null}
+												</div>
+											)}
+										</Field>
+									))}
+								</div>
+							)}
 						</div>
-					) : null}
-				</fieldset>
-			</div>
-			<DialogFooter
-				leading={
-					error || problems.length > 0 ? (
-						// A disabled Save says why in the row it sits in, not in a tooltip.
-						<span role={error ? 'alert' : undefined} className={`label-sm ${error ? 'text-error' : 'text-secondary'}`}>
-							{error ?? problems[0]}
-						</span>
-					) : (
-						<Button
-							type="button"
-							variant="ghost"
-							size="md"
-							onClick={reset}
-							disabled={saveMutation.isPending}
-							accessibleWhenDisabled
-						>
-							Reset
-						</Button>
-					)
-				}
-				dismiss={<DialogCancelButton />}
-			>
-				<Button
-					type="button"
-					variant="primary"
-					size="md"
-					onClick={save}
-					disabled={problems.length > 0}
-					pendingLabel={saveMutation.isPending ? 'Saving…' : null}
+
+						<div className={section}>
+							<span className={sectionLabel}>Axes</span>
+							<div className="flex items-center gap-2">
+								<span className={axisTag}>X</span>
+								<Input
+									className="flex-1"
+									aria-label="X-axis label"
+									placeholder="X-axis label"
+									value={draft.axes?.x?.label ?? ''}
+									onChange={(e) => update((d) => (d.axes.x.label = e.target.value))}
+								/>
+							</div>
+							{yAxes.map((a, i) => (
+								<div key={a.id} className="flex flex-col gap-1.5">
+									<div className="flex items-center gap-2">
+										<span className={axisTag}>Y</span>
+										<Input
+											className="flex-1"
+											aria-label={`Y-axis ${i + 1} label`}
+											placeholder="Y-axis label"
+											value={a.label ?? ''}
+											onChange={(e) =>
+												update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.label = e.target.value)))
+											}
+										/>
+										<Input
+											className="w-16"
+											aria-label={`Y-axis ${i + 1} unit`}
+											placeholder="unit"
+											value={a.valueSymbol ?? draft.valueSymbol ?? ''}
+											onChange={(e) =>
+												update((d) => updateItemAt(d.axes.yAxes, i, (axis) => (axis.valueSymbol = e.target.value)))
+											}
+										/>
+									</div>
+									<Field
+										hideLabel
+										label={`Y-axis ${i + 1} max`}
+										error={submitted ? axisErrors[i] : null}
+										className="pl-5.5"
+									>
+										{(control) => (
+											<div className="flex items-center gap-2">
+												<Input
+													className="flex-1"
+													aria-label={`Y-axis ${i + 1} min`}
+													placeholder="min"
+													value={a.min === undefined ? '' : String(a.min)}
+													onChange={(e) =>
+														update((d) => {
+															const v = e.target.value.trim()
+															const n = Number(v)
+															updateItemAt(d.axes.yAxes, i, (axis) => {
+																if (v === '') delete axis.min
+																else if (v === 'dataMin') axis.min = 'dataMin'
+																else if (Number.isFinite(n)) axis.min = n
+																else delete axis.min
+															})
+														})
+													}
+												/>
+												<Input
+													{...control}
+													className="flex-1"
+													placeholder="max"
+													value={a.max === undefined ? '' : String(a.max)}
+													onChange={(e) =>
+														update((d) => {
+															const v = e.target.value.trim()
+															const n = Number(v)
+															updateItemAt(d.axes.yAxes, i, (axis) => {
+																if (v === '') delete axis.max
+																else if (v === 'dataMax') axis.max = 'dataMax'
+																else if (Number.isFinite(n)) axis.max = n
+																else delete axis.max
+															})
+														})
+													}
+												/>
+												<Input
+													className="flex-1"
+													aria-label={`Y-axis ${i + 1} step`}
+													placeholder="step"
+													value={a.interval === undefined ? '' : String(a.interval)}
+													onChange={(e) =>
+														update((d) => {
+															const v = e.target.value.trim()
+															const n = Number(v)
+															updateItemAt(d.axes.yAxes, i, (axis) => {
+																if (v === '' || !Number.isFinite(n) || n <= 0) delete axis.interval
+																else axis.interval = n
+															})
+														})
+													}
+												/>
+											</div>
+										)}
+									</Field>
+								</div>
+							))}
+						</div>
+
+						{canEditHallmarks ? (
+							<div className={section}>
+								<span className={sectionLabel}>Annotations</span>
+								<div className="flex flex-col gap-1.5">
+									{(draft.hallmarks ?? []).map((h, i) => (
+										<div key={h.id} className="flex items-center gap-2">
+											<Input
+												type="date"
+												className="w-36"
+												aria-label={`Annotation ${i + 1} date`}
+												value={toDateInput(h.value[0])}
+												onChange={(e) =>
+													update((d) => {
+														const hs = d.hallmarks ?? []
+														const ts = fromDateInput(e.target.value)
+														hs[i] = { ...hs[i], value: [Number.isFinite(ts) ? ts : hs[i].value[0], hs[i].value[1]] }
+														d.hallmarks = hs
+													})
+												}
+											/>
+											<Input
+												className="flex-1"
+												aria-label={`Annotation ${i + 1} label`}
+												placeholder="label"
+												value={h.value[1]}
+												onChange={(e) =>
+													update((d) => {
+														const hs = d.hallmarks ?? []
+														hs[i] = { ...hs[i], value: [hs[i].value[0], e.target.value] }
+														d.hallmarks = hs
+													})
+												}
+											/>
+											<Tooltip
+												content="Remove annotation"
+												render={
+													<Button
+														type="button"
+														size="sm"
+														square
+														variant="destructive"
+														onClick={() =>
+															update((d) => {
+																const hs = [...(d.hallmarks ?? [])]
+																hs.splice(i, 1)
+																d.hallmarks = hs
+															}, 'immediate')
+														}
+														aria-label="Remove annotation"
+													/>
+												}
+											>
+												<Icon name="x" height={16} width={16} />
+											</Tooltip>
+										</div>
+									))}
+								</div>
+								<Button
+									type="button"
+									size="sm"
+									onClick={() =>
+										update((d) => {
+											d.hallmarks = [
+												...(d.hallmarks ?? []),
+												{ id: crypto.randomUUID(), value: [Math.floor(Date.now() / 1000), ''] }
+											]
+										}, 'immediate')
+									}
+									className="self-start"
+								>
+									+ Add annotation
+								</Button>
+							</div>
+						) : null}
+
+						{hasHallmarks ? (
+							<div className={section}>
+								<span className={sectionLabel}>Event markers</span>
+								<div className="flex flex-wrap gap-1.5">
+									{(['mark-line', 'event-rail'] as const).map((s) => (
+										<Button
+											key={s}
+											type="button"
+											size="sm"
+											variant={(draft.hallmarkStyle ?? 'mark-line') === s ? 'primary' : 'secondary'}
+											onClick={() => update((d) => (d.hallmarkStyle = s), 'immediate')}
+										>
+											{s === 'mark-line' ? 'Lines' : 'Event rail'}
+										</Button>
+									))}
+								</div>
+							</div>
+						) : null}
+
+						{toggles.length > 0 || canLegend ? (
+							<div className={section}>
+								<div className="flex flex-wrap gap-x-5 gap-y-2">
+									{toggles.map(([key, text]) => (
+										<Checkbox
+											key={key}
+											variant="inline"
+											checked={draftView[key]}
+											onChange={(e) => updateView(key, e.target.checked)}
+										>
+											{text}
+										</Checkbox>
+									))}
+									{canLegend ? (
+										<Checkbox
+											variant="inline"
+											checked={draft.legend?.show ?? true}
+											onChange={(e) => update((d) => (d.legend = { show: e.target.checked }), 'immediate')}
+										>
+											Legend
+										</Checkbox>
+									) : null}
+								</div>
+							</div>
+						) : null}
+					</fieldset>
+				</div>
+				<DialogFooter
+					leading={
+						error ? (
+							<span role="alert" className="label-sm text-error">
+								{error}
+							</span>
+						) : (
+							<Button
+								type="button"
+								variant="ghost"
+								size="md"
+								onClick={reset}
+								disabled={saveMutation.isPending}
+								accessibleWhenDisabled
+							>
+								Reset
+							</Button>
+						)
+					}
+					dismiss={<DialogCancelButton />}
 				>
-					Save
-				</Button>
-			</DialogFooter>
+					<Button type="submit" variant="primary" size="md" pendingLabel={saveMutation.isPending ? 'Saving…' : null}>
+						Save
+					</Button>
+				</DialogFooter>
+			</form>
 		</Dialog>
 	)
 }

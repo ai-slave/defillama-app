@@ -47,6 +47,12 @@ const confirmation = () => document.querySelector<HTMLElement>('[role="alertdial
 const unlinkRequests = () =>
 	session.requests.filter((request) => request.url.href === TELEGRAM_LINK && request.init?.method === 'DELETE').length
 
+// The error a control's Field shows under it (src/ui/Field.tsx), or null.
+const errorOf = (control: Element) =>
+	control.getAttribute('aria-invalid') === 'true'
+		? (document.getElementById(control.getAttribute('aria-describedby')!.split(' ').at(-1)!)?.textContent ?? null)
+		: null
+
 test('Disconnect asks first, keeps its progress and error in the confirmation, and closes once unlinked', async () => {
 	const firstUnlink = Promise.withResolvers<Response>()
 	const retriedUnlink = Promise.withResolvers<Response>()
@@ -187,27 +193,23 @@ async function typeCode(value: string) {
 	})
 }
 
-test('a wrong code keeps its message while the next code is checked', async () => {
-	const second = Promise.withResolvers<Response>()
+test('a short code says so under the field; a wrong code says so until the code is edited', async () => {
 	session.serve({ [`${TELEGRAM}/status`]: unlinked })
-	session.serveInOrder(`${TELEGRAM}/link/confirm`, [
-		() => Response.json({ error: 'bad code' }, { status: 400 }),
-		() => second.promise
-	])
+	session.serveInOrder(`${TELEGRAM}/link/confirm`, [() => Response.json({ error: 'bad code' }, { status: 400 })])
 	await renderRow({ initialStatus: unlinked, initialTgloginToken: 'token' })
+	const code = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await typeCode('123')
+	await press(button('Confirm')!)
+	expect(errorOf(code)).toBe('Enter the 6-digit code from Telegram.')
+	expect(document.activeElement).toBe(code)
 	await typeCode('123456')
+	expect(errorOf(code)).toBeNull()
 	await press(button('Confirm')!)
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-			"That code didn't work. Check it in Telegram and try again."
-		)
-	)
+	await waitForUi(() => expect(errorOf(code)).toBe("That code didn't work. Check it in Telegram and try again."))
+	// The refusal moves focus to the code, so a screen reader reads the field with its error.
+	expect(document.activeElement).toBe(code)
 	await typeCode('654321')
-	await press(button('Confirm')!)
-	await waitForUi(() => expect(button('Confirming…')).toBeDefined())
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-		"That code didn't work. Check it in Telegram and try again."
-	)
+	expect(errorOf(code)).toBeNull()
 })
 
 test('a confirmed switch hands focus to the linked account', async () => {

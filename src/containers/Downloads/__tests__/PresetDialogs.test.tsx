@@ -214,18 +214,19 @@ test('saving under a name that differs only in case replaces that preset instead
 	await act(async () => saveRoot.unmount())
 })
 
-test("rename refuses another preset's name, ignoring case, and keeps both presets", async () => {
+test("rename refuses another preset's name, ignoring case, and a blank name, and keeps both presets", async () => {
 	await click(button('Rename Second preset'))
 	const dialog = document.querySelector('[role="dialog"]')!
 	const input = dialog.querySelector<HTMLInputElement>('input')!
 	await type(input, 'first PRESET')
-	expect(dialog.textContent).toContain('Another preset is named "First preset". Choose a different name.')
+	expect(dialog.textContent).toContain('Another preset is already named "First preset".')
 	expect(input.getAttribute('aria-invalid')).toBe('true')
-	await act(async () => {
-		input.form!.requestSubmit()
-	})
-	expect(button('Rename').disabled).toBe(true)
+	await click(button('Rename'))
 	expect(savedNames()).toEqual(['First preset', 'Second preset'])
+	expect(document.activeElement).toBe(input)
+	await type(input, '  ')
+	expect(input.getAttribute('aria-invalid')).toBe('true')
+	expect(dialog.textContent).toContain('Enter a preset name.')
 	await type(input, 'second PRESET')
 	await click(button('Rename'))
 	expect(savedNames()).toEqual(['First preset', 'second PRESET'])

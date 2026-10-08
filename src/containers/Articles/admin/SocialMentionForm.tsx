@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
@@ -14,6 +15,8 @@ import {
 import type { MentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import type { SocialMention, SocialMentionPayload } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, textareaStyles } from '~/ui/Input'
 import { queryReadFailed } from '~/utils/query'
 
@@ -48,8 +51,12 @@ function buildPayload(state: FormState): SocialMentionPayload {
 	}
 }
 
-function canSubmit(state: FormState): boolean {
-	return !!state.quote.trim() && !!state.username.trim() && !!state.xPostId.trim()
+function validate(state: FormState) {
+	return {
+		quote: state.quote.trim() ? null : 'Enter the quote.',
+		username: state.username.trim() ? null : 'Enter the username.',
+		xPostId: state.xPostId.trim() ? null : 'Enter the X post id.'
+	}
 }
 
 type Props = {
@@ -78,7 +85,9 @@ export function SocialMentionForm({ mentionId }: Props) {
 		acceptSaved
 	} = useSavedDraft(mention, mention?.id ?? null, mentionToForm, sameValue)
 
-	const submittable = canSubmit(state)
+	const [submitted, setSubmitted] = useState(false)
+	const errors = validate(state)
+	const shown = submitted ? errors : null
 
 	const allMentions = mentionsQuery.data ?? []
 	const previewSlotIndex = mentionId
@@ -93,8 +102,8 @@ export function SocialMentionForm({ mentionId }: Props) {
 	}
 
 	const saveMutation = useMutation({
-		mutationFn: async (submitted: FormState) => {
-			const payload = buildPayload(submitted)
+		mutationFn: async (values: FormState) => {
+			const payload = buildPayload(values)
 			if (mention) return updateSocialMention(mention.id, payload, authorizedFetch)
 			return createSocialMention(payload, authorizedFetch)
 		},
@@ -140,9 +149,11 @@ export function SocialMentionForm({ mentionId }: Props) {
 	// The save happened whatever the reader did next, so the revalidation and the toast belong to the
 	// mutation. Only the redirect is tied to this form still being on screen, and that goes on the
 	// mutate call, which React Query drops if the form unmounted first.
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!submittable) return
+		if (errors.quote || errors.username || errors.xPostId) {
+			return showFieldErrors(e.currentTarget, () => setSubmitted(true))
+		}
 		saveMutation.mutate(state, {
 			onSuccess: (saved) => {
 				acceptSaved(mentionToForm(saved), state)
@@ -152,66 +163,85 @@ export function SocialMentionForm({ mentionId }: Props) {
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">Quote</span>
-				<textarea
-					value={state.quote}
-					onChange={(e) => update({ quote: e.target.value })}
-					rows={3}
-					placeholder="What they said about DefiLlama"
-					className={`${textareaStyles} w-full resize-y`}
-				/>
-			</label>
+		<form noValidate onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
+			<Field label="Quote" error={shown?.quote}>
+				{(control) => (
+					<textarea
+						{...control}
+						required
+						value={state.quote}
+						onChange={(e) => update({ quote: e.target.value })}
+						rows={3}
+						placeholder="What they said about DefiLlama"
+						className={`${textareaStyles} w-full resize-y`}
+					/>
+				)}
+			</Field>
 
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">Username</span>
-				<Input
-					type="text"
-					value={state.username}
-					onChange={(e) => update({ username: e.target.value })}
-					placeholder="handle without @"
-					className="w-full"
-				/>
-			</label>
+			<Field label="Username" error={shown?.username}>
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						required
+						value={state.username}
+						onChange={(e) => update({ username: e.target.value })}
+						placeholder="handle without @"
+						className="w-full"
+					/>
+				)}
+			</Field>
 
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">Social media name</span>
-				<Input
-					type="text"
-					value={state.socialMediaName}
-					onChange={(e) => update({ socialMediaName: e.target.value })}
-					placeholder="X"
-					className="w-full"
-				/>
-			</label>
+			<Field label="Social media name">
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						value={state.socialMediaName}
+						onChange={(e) => update({ socialMediaName: e.target.value })}
+						placeholder="X"
+						className="w-full"
+					/>
+				)}
+			</Field>
 
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">
-					Social media link <span className="font-normal text-tertiary">(optional)</span>
-				</span>
-				<Input
-					type="url"
-					value={state.socialMediaLink}
-					onChange={(e) => update({ socialMediaLink: e.target.value })}
-					placeholder="https://x.com/…"
-					className="w-full"
-				/>
-			</label>
+			<Field
+				label={
+					<>
+						Social media link <span className="font-normal text-tertiary">(optional)</span>
+					</>
+				}
+			>
+				{(control) => (
+					<Input
+						{...control}
+						type="url"
+						value={state.socialMediaLink}
+						onChange={(e) => update({ socialMediaLink: e.target.value })}
+						placeholder="https://x.com/…"
+						className="w-full"
+					/>
+				)}
+			</Field>
 
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">X post id</span>
-				<Input
-					type="text"
-					value={state.xPostId}
-					onChange={(e) => update({ xPostId: e.target.value })}
-					placeholder="2020885843125178639"
-					className="w-full"
-				/>
-				<p className="body-sm text-tertiary">numeric id from the X post URL, e.g. 2020885843125178639</p>
-			</label>
-
-			{!submittable ? <p className="body-sm text-warning">Quote, username, and X post id are all required.</p> : null}
+			<Field
+				label="X post id"
+				hint="The numeric id from the X post URL, e.g. 2020885843125178639."
+				error={shown?.xPostId}
+			>
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						required
+						inputMode="numeric"
+						value={state.xPostId}
+						onChange={(e) => update({ xPostId: e.target.value })}
+						placeholder="2020885843125178639"
+						className="w-full"
+					/>
+				)}
+			</Field>
 
 			<div className="grid gap-1.5">
 				<span className="label-md text-primary">Slot previews</span>
@@ -244,13 +274,14 @@ export function SocialMentionForm({ mentionId }: Props) {
 						/>
 						{dirty ? 'Unsaved changes' : mention ? 'All changes saved' : 'New mention'}
 					</span>
-					{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+					{/* Disabled only with nothing to save, which the status beside it says. Focusable while disabled: a save
+					    leaves nothing dirty, which disables the button that was pressed. */}
 					<Button
 						variant="primary"
 						size="md"
 						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 						type="submit"
-						disabled={!submittable || (!dirty && !!mention)}
+						disabled={!dirty && !!mention}
 						accessibleWhenDisabled
 					>
 						{mention ? 'Save changes' : 'Create mention'}

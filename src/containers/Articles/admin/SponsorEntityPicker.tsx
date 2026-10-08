@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import type { ArticleEntitySuggestionItem } from '~/containers/Articles/entitySuggestions'
 import type { ResearchSponsorEntityType } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
+import type { FieldControlProps } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
@@ -16,19 +17,15 @@ export type SponsorEntitySelection = ArticleEntitySuggestionItem & {
 	entityType: ResearchSponsorEntityType
 }
 
-type Props = {
-	value: SponsorEntitySelection | null
-	onChange: (value: SponsorEntitySelection | null) => void
-	placeholder?: string
-	inputId?: string
-}
-
+/** The search box of a Field (~/ui/Field): `control` carries the label's id and the error wiring. */
 export function SponsorEntityPicker({
 	value,
 	onChange,
-	placeholder = 'Search protocols, chains, or CEXs…',
-	inputId
-}: Props) {
+	...control
+}: FieldControlProps & {
+	value: SponsorEntitySelection | null
+	onChange: (value: SponsorEntitySelection | null) => void
+}) {
 	const [open, setOpen] = useState(false)
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [searchValue, setSearchValue] = useState('')
@@ -57,9 +54,8 @@ export function SponsorEntityPicker({
 					<Icon name="search" height={14} width={14} className="pointer-events-none absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
 						ref={inputRef}
-						id={inputId}
-						aria-label={inputId ? undefined : 'Sponsor page'}
-						placeholder={value?.label ?? placeholder}
+						{...control}
+						placeholder={value?.label ?? 'Search protocols, chains, or CEXs…'}
 						autoSelect
 						className={`${inputStyles} w-full pr-9 pl-9`}
 					/>

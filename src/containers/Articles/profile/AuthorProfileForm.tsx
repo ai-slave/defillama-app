@@ -13,7 +13,8 @@ import {
 import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { fieldFrameInputStyles, fieldFrameStyles, Input, textareaStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
@@ -98,11 +99,12 @@ function formsEqual(a: FormState, b: FormState): boolean {
 	return true
 }
 
-function validateSlug(value: string): string | null {
+/** A handle that cannot work, shown while typing; an empty one waits for the submit. */
+function slugFormatError(value: string): string | null {
 	const trimmed = value.trim()
 	if (!trimmed) return null
-	if (trimmed.length > SLUG_MAX) return `Handle must be ${SLUG_MAX} characters or fewer`
-	if (!SLUG_REGEX.test(trimmed)) return 'Use lowercase letters, numbers, and dashes only'
+	if (trimmed.length > SLUG_MAX) return `Shorten the handle to ${SLUG_MAX} characters.`
+	if (!SLUG_REGEX.test(trimmed)) return 'Enter a valid handle: lowercase letters, numbers and dashes.'
 	return null
 }
 
@@ -271,10 +273,11 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 		mutationFn: (payload: AuthorProfileUpdate) => updateMyAuthorProfile(payload, authorizedFetch)
 	})
 
+	const [submitted, setSubmitted] = useState(false)
 	const dirty = !formsEqual(state, initial)
-	const slugError = validateSlug(state.slug)
-	const displayNameError = !state.displayName.trim() ? 'Display name is required' : null
-	const hasError = !!slugError || !!displayNameError
+	const slugError = slugFormatError(state.slug) ?? (state.slug.trim() ? null : 'Enter a handle.')
+	const displayNameError = state.displayName.trim() ? null : 'Enter a display name.'
+	const shownSlugError = submitted ? slugError : slugFormatError(state.slug)
 
 	const slugChanged = state.slug.trim() !== initial.slug.trim()
 
@@ -297,12 +300,13 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 
 	const handleReset = () => {
 		setState(initial)
+		setSubmitted(false)
 		setShowCustom(initial.customSocials.length > 0)
 	}
 
-	const handleSubmit = async (event: React.FormEvent) => {
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (hasError || !dirty) return
+		if (displayNameError || slugError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		const payload = buildPayload(state, initial)
 		if (Object.keys(payload).length === 0) return
 		// A logical test cannot be lowered inside a try, and this one needs the saved slug to compare.
@@ -326,7 +330,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-4xl gap-0 px-1 pb-28">
+		<form noValidate onSubmit={handleSubmit} className="mx-auto grid w-full max-w-4xl gap-0 px-1 pb-28">
 			<header className="flex flex-wrap items-end justify-between gap-3 pt-2 pb-6">
 				<div>
 					<Link
@@ -358,20 +362,23 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						helperText="PNG, JPEG, WebP, or GIF · up to 8 MB"
 					/>
 				</div>
-				<label className="grid gap-1.5">
-					<span className="flex items-center justify-between gap-2 label-md text-primary">
-						Display name
-						<CharCount value={state.displayName} max={DISPLAY_NAME_MAX} />
-					</span>
-					<Input
-						type="text"
-						maxLength={DISPLAY_NAME_MAX}
-						value={state.displayName}
-						onChange={(e) => update({ displayName: e.target.value })}
-						className="w-full"
-					/>
-					{displayNameError ? <span className="label-sm text-error">{displayNameError}</span> : null}
-				</label>
+				<Field
+					label="Display name"
+					action={<CharCount value={state.displayName} max={DISPLAY_NAME_MAX} />}
+					error={submitted ? displayNameError : null}
+				>
+					{(control) => (
+						<Input
+							{...control}
+							type="text"
+							required
+							maxLength={DISPLAY_NAME_MAX}
+							value={state.displayName}
+							onChange={(e) => update({ displayName: e.target.value })}
+							className="w-full"
+						/>
+					)}
+				</Field>
 			</Section>
 
 			<Section
@@ -383,69 +390,76 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					</>
 				}
 			>
-				<label className="grid gap-1.5">
-					<span className="label-md text-primary">Public URL</span>
-					{/* Input has no prefix slot, so the wrapper draws the Input recipe's border and focus; the prefix and the
-					    value each take the recipe's type (text-base, sm:body-sm): the base layer sets every input to text-sm. */}
-					<div className={fieldFrameStyles}>
-						<span className="shrink-0 text-tertiary">/research/authors/</span>
-						<input
-							type="text"
-							maxLength={SLUG_MAX}
-							value={state.slug}
-							onChange={(e) => update({ slug: e.target.value })}
-							aria-invalid={slugError ? true : undefined}
-							className={fieldFrameInputStyles}
-							spellCheck={false}
-							autoCapitalize="none"
-							autoCorrect="off"
-						/>
-					</div>
-					{slugError ? (
-						<span className="label-sm text-error">{slugError}</span>
-					) : slugChanged ? (
-						<span className="inline-flex items-center gap-1.5 label-sm text-warning">
-							<span aria-hidden className="size-1.5 rounded-full bg-warning" />
-							Old links to <span className="font-jetbrains">/research/authors/{initial.slug}</span> will 404.
-						</span>
-					) : null}
-				</label>
+				<Field
+					label="Public URL"
+					hint={
+						slugChanged && !shownSlugError ? (
+							<span className="inline-flex items-center gap-1.5 text-warning">
+								<span aria-hidden className="size-1.5 rounded-full bg-warning" />
+								Old links to <span className="font-jetbrains">/research/authors/{initial.slug}</span> will 404.
+							</span>
+						) : null
+					}
+					error={shownSlugError}
+					live
+				>
+					{(control) => (
+						/* Input has no prefix slot, so the wrapper draws the Input recipe's border and focus; the prefix and the
+						   value each take the recipe's type (text-base, sm:body-sm): the base layer sets every input to text-sm. */
+						<div className={fieldFrameStyles}>
+							<span className="shrink-0 text-tertiary">/research/authors/</span>
+							<input
+								{...control}
+								type="text"
+								required
+								maxLength={SLUG_MAX}
+								value={state.slug}
+								onChange={(e) => update({ slug: e.target.value })}
+								className={fieldFrameInputStyles}
+								spellCheck={false}
+								autoCapitalize="none"
+								autoCorrect="off"
+							/>
+						</div>
+					)}
+				</Field>
 			</Section>
 
 			<Section
 				title="Bio"
 				description="One or two sentences. Shown at the top of your author page and in research bylines."
 			>
-				<label className="grid gap-1.5">
-					<span className="flex items-center justify-between gap-2 label-md text-primary">
-						About you
-						<CharCount value={state.bio} max={BIO_MAX} />
-					</span>
-					<textarea
-						rows={5}
-						maxLength={BIO_MAX}
-						value={state.bio}
-						onChange={(e) => update({ bio: e.target.value })}
-						placeholder="Researcher covering DeFi liquidity, MEV, and stablecoins."
-						className={`${textareaStyles} w-full resize-y`}
-					/>
-				</label>
+				<Field label="About you" action={<CharCount value={state.bio} max={BIO_MAX} />}>
+					{(control) => (
+						<textarea
+							{...control}
+							rows={5}
+							maxLength={BIO_MAX}
+							value={state.bio}
+							onChange={(e) => update({ bio: e.target.value })}
+							placeholder="Researcher covering DeFi liquidity, MEV, and stablecoins."
+							className={`${textareaStyles} w-full resize-y`}
+						/>
+					)}
+				</Field>
 			</Section>
 
 			<Section title="Links" description="Shown as chips on your author page. Empty fields are dropped on save.">
 				<div className="grid gap-3 sm:grid-cols-2">
 					{PRESET_SOCIALS.map((kind) => (
-						<label key={kind.id} className="grid gap-1.5">
-							<span className="label-sm text-secondary">{kind.label}</span>
-							<Input
-								type="text"
-								maxLength={SOCIAL_VALUE_MAX}
-								value={state.socials[kind.id] || ''}
-								onChange={(e) => updateSocial(kind.id, e.target.value)}
-								placeholder={kind.placeholder}
-								className="w-full"
-							/>
-						</label>
+						<Field key={kind.id} label={kind.label}>
+							{(control) => (
+								<Input
+									{...control}
+									type="text"
+									maxLength={SOCIAL_VALUE_MAX}
+									value={state.socials[kind.id] || ''}
+									onChange={(e) => updateSocial(kind.id, e.target.value)}
+									placeholder={kind.placeholder}
+									className="w-full"
+								/>
+							)}
+						</Field>
 					))}
 				</div>
 
@@ -555,13 +569,14 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						>
 							Discard
 						</Button>
-						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+						{/* Disabled only with nothing to save, which the status beside it says. Focusable while disabled: a save
+						    leaves nothing dirty, which disables the button that was pressed. */}
 						<Button
 							variant="primary"
 							size="md"
 							pendingLabel={updateProfileMutation.isPending ? 'Saving…' : null}
 							type="submit"
-							disabled={!dirty || hasError}
+							disabled={!dirty}
 							accessibleWhenDisabled
 						>
 							Save changes

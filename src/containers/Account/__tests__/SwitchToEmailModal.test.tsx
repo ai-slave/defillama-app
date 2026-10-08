@@ -256,6 +256,31 @@ test('mismatched passwords are reported under the confirmation field without sen
 	expect(confirmCalls).toHaveLength(0)
 })
 
+test('a short code and password are reported under their fields, focusing the first, without sending the switch', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	const [code, password, confirm] = confirmFields()
+	await act(async () => {
+		setInput(code, '123')
+		setInput(password, 'short')
+		setInput(confirm, 'short')
+	})
+	const errorOf = (input: HTMLInputElement) =>
+		document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent ?? null
+	expect([code, password, confirm].map(errorOf)).toEqual([null, null, null])
+	await act(async () => submitForm(code))
+
+	expect([code, password, confirm].map(errorOf)).toEqual([
+		'Enter a valid 6-digit code.',
+		'Enter a password of at least 8 characters.',
+		null
+	])
+	expect(document.activeElement).toBe(code)
+	await act(async () => setInput(code, '123456'))
+	expect(code.hasAttribute('aria-invalid')).toBe(false)
+	expect(confirmCalls).toHaveLength(0)
+})
+
 const confirmFields = () =>
 	[
 		'input[placeholder="000000"]',

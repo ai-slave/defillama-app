@@ -55,6 +55,9 @@ function renderForm(overrides: {
 				<AppMetadataProvider>
 					<DashboardTestProvider catalog={{ chains }}>
 						<UnifiedChartTab
+							error={null}
+							pane="configure"
+							onPaneChange={vi.fn()}
 							selectedChartTab={overrides.selectedChartTab ?? 'chain'}
 							selectedChartTypes={['tvl']}
 							chainOptions={[

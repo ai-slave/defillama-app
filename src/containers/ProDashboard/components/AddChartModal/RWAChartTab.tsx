@@ -29,6 +29,8 @@ const EMPTY_RWA_SNAPSHOT_ITEMS: Array<{ name: string; value: number }> = []
 const EMPTY_RWA_BAR_DATA = { categories: [], values: [] }
 
 interface RWAChartTabProps {
+	/** What Add still needs, shown under the asset once Add was pressed. */
+	error: string | null
 	rwaMode: 'overview' | 'asset'
 	selectedRwaChain: string
 	selectedRwaMetric: RWAOverviewChartMetric
@@ -112,7 +114,8 @@ function RWAChartTabInner({
 	onSelectedRwaTreemapNestedByChange: _onSelectedRwaTreemapNestedByChange,
 	onSelectedRwaAssetIdChange,
 	onSelectedRwaAssetNameChange,
-	onSelectedRwaAssetMetricsChange
+	onSelectedRwaAssetMetricsChange,
+	error
 }: RWAChartTabProps) {
 	const { chains: rwaChains } = useRWAChainsList()
 
@@ -188,6 +191,7 @@ function RWAChartTabInner({
 					onAssetIdChange={onSelectedRwaAssetIdChange}
 					onAssetNameChange={onSelectedRwaAssetNameChange}
 					onMetricsChange={onSelectedRwaAssetMetricsChange}
+					error={error}
 				/>
 			)}
 
@@ -213,7 +217,8 @@ function AssetControls({
 	selectedMetrics,
 	onAssetIdChange,
 	onAssetNameChange,
-	onMetricsChange
+	onMetricsChange,
+	error
 }: {
 	selectedAssetId: string | null
 	selectedAssetName: string | null
@@ -221,6 +226,7 @@ function AssetControls({
 	onAssetIdChange: (id: string | null) => void
 	onAssetNameChange: (name: string | null) => void
 	onMetricsChange: (metrics: Array<RWAOverviewChartMetric>) => void
+	error: string | null
 }) {
 	const { assets, isLoading } = useRWAAssetsList()
 
@@ -261,6 +267,7 @@ function AssetControls({
 			<VirtualizedSelect
 				variant="field"
 				label="Select asset"
+				error={error}
 				options={assetOptions}
 				selectedValue={selectedAssetId}
 				onChange={handleAssetChange}

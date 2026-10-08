@@ -137,29 +137,27 @@ test('preset selection follows the numeric amount and a preset replaces a custom
 })
 
 test.each([
-	{ invalid: '0', valid: '1' },
-	{ invalid: '501', valid: '500' }
-])('$invalid explains why payment is unavailable and $valid recovers', async ({ invalid, valid }) => {
+	{ invalid: '0', valid: '1', pay: 'Pay with card' },
+	{ invalid: '501', valid: '500', pay: 'Pay with crypto' }
+])('$pay with $invalid says why under the amount and $valid recovers', async ({ invalid, valid, pay }) => {
 	await mount()
 	const input = document.querySelector('input')!
+	const amountError = () => document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
 	await enterAmount(invalid)
+	expect(input.hasAttribute('aria-invalid')).toBe(false)
+	expect(button(pay).getAttribute('aria-disabled')).toBeNull()
+	await click(pay)
 	expect(input.getAttribute('aria-invalid')).toBe('true')
-	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'Enter an amount between $1 and $500'
-	)
-	expect(button('Pay with card').getAttribute('aria-disabled')).toBe('true')
-	expect(button('Pay with crypto').disabled).toBe(true)
+	expect(amountError()).toBe('Enter an amount between $1 and $500.')
+	expect(document.activeElement).toBe(input)
 	await enterAmount('')
-	expect(document.querySelector('[role="alert"]')).toBeNull()
-	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe('Enter an amount')
-	expect(button('Pay with card').getAttribute('aria-disabled')).toBe('true')
-	expect(button('Pay with crypto').disabled).toBe(true)
+	expect(amountError()).toBe('Enter an amount.')
 	await enterAmount(valid)
-	expect(input.value).toBe(valid)
 	expect(input.hasAttribute('aria-invalid')).toBe(false)
 	expect(input.hasAttribute('aria-describedby')).toBe(false)
-	expect(button('Pay with card').getAttribute('aria-disabled')).toBeNull()
-	expect(button('Pay with crypto').disabled).toBe(false)
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Top up balance')
+	expect(cardCheckout.load).not.toHaveBeenCalled()
+	expect(topups()).toEqual([])
 })
 
 test('pending crypto checkout blocks duplicate actions and failure allows retry with a different amount', async () => {
@@ -172,16 +170,15 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Redirecting…')
 	expect(input.readOnly).toBe(true)
 	expect(button('$5').disabled).toBe(true)
-	expect(button('Pay with card').getAttribute('aria-disabled')).toBe('true')
 	await click('Redirecting…')
 	await click('Pay with card')
 	await waitForUi(() => expect(topups()).toHaveLength(1))
+	expect(cardCheckout.load).not.toHaveBeenCalled()
 	expect(topups()[0]).toMatchObject({ amount: 25, provider: 'llamapay' })
 	await act(async () => request.resolve(unavailable()))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	expect(input.value).toBe('25')
 	expect(input.disabled).toBe(false)
-	expect(button('Pay with card').getAttribute('aria-disabled')).toBeNull()
 	await click('$5')
 	await click('Pay with crypto')
 	await waitForUi(() => expect(button('Pay with crypto').disabled).toBe(false))

@@ -110,6 +110,21 @@ afterEach(async () => {
 	pb.authStore.clear()
 })
 const input = (name: string) => container.querySelector<HTMLInputElement>(`input[name="${name}"]`)!
+async function type(name: string, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input(name), value)
+		input(name).dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+const termsCheckbox = () =>
+	[...container.querySelectorAll('label')]
+		.find((label) => label.textContent?.startsWith('I agree'))!
+		.querySelector<HTMLInputElement>('input')!
+const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
+const submitForm = () =>
+	act(async () =>
+		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
 async function completeCaptcha() {
 	const captcha = Array.from(container.querySelectorAll('button')).find(
 		(button) => button.textContent === 'Test CAPTCHA'
@@ -117,8 +132,8 @@ async function completeCaptcha() {
 	if (captcha) await act(async () => captcha.click())
 }
 async function submit() {
-	input('email').value = 'person@example.com'
-	input('password').value = 'correct horse battery staple'
+	await type('email', 'person@example.com')
+	await type('password', 'correct horse battery staple')
 	await completeCaptcha()
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
@@ -190,9 +205,10 @@ test('preserves signup fields after failure and disables submit until a fresh CA
 		(button) => button.textContent === 'Create an account'
 	)!
 	await act(async () => signupTab.click())
-	input('email').value = 'new@example.com'
-	input('password').value = 'password123'
-	input('passwordConfirm').value = 'password123'
+	await type('email', 'new@example.com')
+	await type('password', 'password123')
+	await type('passwordConfirm', 'password123')
+	await act(async () => termsCheckbox().click())
 	const captcha = () =>
 		Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Test CAPTCHA')!
 	await act(async () => captcha().click())
@@ -232,29 +248,88 @@ test('preserves signup fields after failure and disables submit until a fresh CA
 	expect(onAuthenticated).toHaveBeenCalledOnce()
 })
 
-test('explains a failed security check and mounts a fresh check on retry', async () => {
+test('sign-up says what is wrong under each field, focuses the first, and sends nothing until it is fixed', async () => {
+	await act(async () => buttonNamed('Create an account').click())
+	await completeCaptcha()
+	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false)
+	expect(errorTexts()).toEqual([])
+	await submitForm()
+	expect(errorTexts()).toEqual([
+		'Enter an email address.',
+		'Enter a password.',
+		'Enter your password again.',
+		'Accept the Terms of Service and Privacy Policy to continue.'
+	])
+	expect(document.activeElement).toBe(input('email'))
+	expect(input('email').getAttribute('aria-invalid')).toBe('true')
+	await type('email', 'new@example')
+	await type('password', 'short')
+	await type('passwordConfirm', 'shorter')
+	expect(errorTexts()).toEqual([
+		'Enter a valid email address.',
+		'Enter at least 8 characters.',
+		"The passwords don't match.",
+		'Accept the Terms of Service and Privacy Policy to continue.'
+	])
+	await type('email', 'new@example.com')
+	await type('password', 'password123')
+	await type('passwordConfirm', 'password123')
+	await submitForm()
+	expect(errorTexts()).toEqual(['Accept the Terms of Service and Privacy Policy to continue.'])
+	expect(document.activeElement).toBe(termsCheckbox())
+	expect(termsCheckbox().getAttribute('aria-invalid')).toBe('true')
+	expect(requests).toHaveLength(0)
+	await act(async () => termsCheckbox().click())
+	expect(errorTexts()).toEqual([])
+	await submitForm()
+	await settle()
+	expect(requests).toHaveLength(1)
+})
+
+test('sign-in names a missing email and password under their fields and sends nothing', async () => {
+	await completeCaptcha()
+	await submitForm()
+	expect(errorTexts()).toEqual(['Enter an email address.', 'Enter your password.'])
+	expect(document.activeElement).toBe(input('email'))
+	expect(requests).toHaveLength(0)
+	await type('email', 'person@example.com')
+	await type('password', 'secret')
+	expect(errorTexts()).toEqual([])
+})
+
+test('explains a failed security check without a second error and mounts a fresh check on retry', async () => {
 	const submitButton = () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!
 	await completeCaptcha()
 	expect(submitButton().disabled).toBe(false)
 	await act(async () => buttonNamed('Fail CAPTCHA').click())
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain('The security check failed.')
-	expect(submitButton().disabled).toBe(true)
-	await act(async () =>
-		Array.from(container.querySelectorAll<HTMLButtonElement>('[role="alert"] button'))
-			.find((button) => button.textContent === 'Try again')!
-			.click()
-	)
+	expect(container.textContent).toContain("The security check couldn't load.")
 	expect(container.querySelector('[role="alert"]')).toBeNull()
+	expect(errorTexts()).toEqual([])
+	expect(submitButton().disabled).toBe(true)
+	await act(async () => buttonNamed('Try again').click())
+	expect(container.textContent).not.toContain("The security check couldn't load.")
 	expect(container.textContent).toContain('Test CAPTCHA')
 	await completeCaptcha()
 	expect(submitButton().disabled).toBe(false)
 })
 
+test('announces a failed security check through a status region mounted before it fails', async () => {
+	const regions = [...container.querySelectorAll('[role="status"]')]
+	await act(async () => buttonNamed('Fail CAPTCHA').click())
+	const announced = regions.find((region) => region.textContent?.startsWith("The security check couldn't load."))
+	expect(announced?.textContent).toBe(
+		"The security check couldn't load. A content blocker or VPN can stop it: pause it for this site, then try again."
+	)
+})
+
+test('the password field comes before Forgot password? in tab order', async () => {
+	const forgot = buttonNamed('Forgot password?')
+	expect(input('password').compareDocumentPosition(forgot)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+})
+
 test('Try again on a failed security check moves focus to the fresh check', async () => {
 	await act(async () => buttonNamed('Fail CAPTCHA').click())
-	const retry = [...container.querySelectorAll('[role="alert"] button')].find(
-		(button) => accessibleName(button) === 'Try again'
-	) as HTMLButtonElement
+	const retry = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Try again')!
 	await act(async () => retry.focus())
 	await act(async () => retry.click())
 
@@ -268,7 +343,7 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 			.find((button) => button.textContent === 'Forgot password?')!
 			.click()
 	)
-	input('email').value = 'person@example.com'
+	await type('email', 'person@example.com')
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
@@ -311,7 +386,7 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 test.each(['person@example.com', ''])(
 	'starts recovery with the sign-in email "%s" and allows a different recipient',
 	async (email) => {
-		input('email').value = email
+		await type('email', email)
 		await act(async () =>
 			Array.from(container.querySelectorAll('button'))
 				.find((button) => button.textContent === 'Forgot password?')!
@@ -319,7 +394,7 @@ test.each(['person@example.com', ''])(
 		)
 		expect(input('email').value).toBe(email)
 		expect(requests).toHaveLength(0)
-		input('email').value = 'other@example.com'
+		await type('email', 'other@example.com')
 		await completeCaptcha()
 		await act(async () =>
 			container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
@@ -392,7 +467,7 @@ async function openGoogleLink() {
 test('the Google link code field stays focusable while its code is checked', async () => {
 	await openGoogleLink()
 	const code = input('code')
-	code.value = '123456'
+	await type('code', '123456')
 	await act(async () => code.focus())
 	await act(async () => code.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
 	await settle()

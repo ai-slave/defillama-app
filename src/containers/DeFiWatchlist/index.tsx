@@ -28,6 +28,8 @@ import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
+import { FieldGroup } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { InlineStatus, PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -528,14 +530,17 @@ function NotificationSettingsForm({
 		filteredChains.map((chain) => chain.name)
 	)
 	const isEmpty = settings.protocols == null && settings.chains == null
+	// The pick spans both groups, so the error sits under the last group that has anything to pick.
+	const emptyError = submitted && isEmpty ? 'Choose at least one protocol or chain metric.' : null
 
 	return (
 		<form
+			noValidate
 			className="flex min-h-0 flex-auto flex-col"
 			onSubmit={(event) => {
 				event.preventDefault()
-				setSubmitted(true)
-				if (isEmpty || save.isPending) return
+				if (save.isPending) return
+				if (isEmpty) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 				const form = event.currentTarget
 				// The dialog locks while saving, but leaving the page unmounts it; then only a toast can tell.
 				save.mutateAsync({ portfolioName: selectedPortfolio, settings, frequency: 'weekly' }).then(onSaved, (error) => {
@@ -558,6 +563,7 @@ function NotificationSettingsForm({
 					picked={protocolPicks}
 					onChange={setProtocolPicks}
 					disabled={save.isPending}
+					error={filteredChains.length === 0 ? emptyError : null}
 				/>
 				<MetricChoices
 					title="Chain metrics"
@@ -567,8 +573,8 @@ function NotificationSettingsForm({
 					picked={chainPicks}
 					onChange={setChainPicks}
 					disabled={save.isPending}
+					error={filteredChains.length > 0 ? emptyError : null}
 				/>
-				{submitted && isEmpty ? <InlineStatus variant="error">Pick at least one metric to email.</InlineStatus> : null}
 				{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
 			</DialogBody>
 			<DialogFooter dismiss={<DialogCancelButton />}>
@@ -587,7 +593,8 @@ function MetricChoices({
 	metrics,
 	picked,
 	onChange,
-	disabled
+	disabled,
+	error
 }: {
 	title: string
 	count: number
@@ -596,10 +603,10 @@ function MetricChoices({
 	picked: Array<string>
 	onChange: (picked: Array<string>) => void
 	disabled: boolean
+	error: string | null
 }) {
 	return (
-		<fieldset className="flex flex-col gap-2" disabled={disabled}>
-			<legend className="mb-2 label-md text-primary">{title}</legend>
+		<FieldGroup label={title} error={error}>
 			{count > 0 ? (
 				<>
 					<p className="body-sm text-secondary">
@@ -611,6 +618,7 @@ function MetricChoices({
 							<Checkbox
 								key={metric.key}
 								variant="inline"
+								disabled={disabled}
 								checked={picked.includes(metric.key)}
 								onChange={(event) =>
 									onChange(
@@ -628,7 +636,7 @@ function MetricChoices({
 					No {noun}s in your watchlist. Add {noun}s to your watchlist to email their metrics.
 				</p>
 			)}
-		</fieldset>
+		</FieldGroup>
 	)
 }
 

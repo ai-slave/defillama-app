@@ -3,6 +3,7 @@ import type { SortingState } from '@tanstack/react-table'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { CustomColumnDefinition } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../../hooks/useUnifiedTableWizard'
@@ -36,31 +37,38 @@ const renderManager = ({
 	sorting = [],
 	onSortingChange = vi.fn(),
 	customColumnDraft = EMPTY_CUSTOM_COLUMN_DRAFT,
-	onCustomColumnDraftChange = vi.fn()
+	onCustomColumnDraftChange = vi.fn(),
+	customColumns = [],
+	onAddCustomColumn = vi.fn()
 }: {
 	sorting?: SortingState
 	onSortingChange?: (sorting: SortingState) => void
 	customColumnDraft?: CustomColumnDraft
 	onCustomColumnDraftChange?: (draft: CustomColumnDraft) => void
+	customColumns?: Array<CustomColumnDefinition>
+	onAddCustomColumn?: (column: CustomColumnDefinition) => void
 } = {}) =>
 	act(async () =>
 		root.render(
 			<session.Wrapper>
-				<ColumnManager
-					rowHeaders={['protocol']}
-					columnOrder={['name', 'tvl']}
-					columnVisibility={{}}
-					onChange={vi.fn()}
-					customColumns={[]}
-					onAddCustomColumn={vi.fn()}
-					onUpdateCustomColumn={vi.fn()}
-					onRemoveCustomColumn={vi.fn()}
-					customColumnDraft={customColumnDraft}
-					onCustomColumnDraftChange={onCustomColumnDraftChange}
-					sorting={sorting}
-					onSortingChange={onSortingChange}
-					onSortingReset={vi.fn()}
-				/>
+				{/* The Add card dialog's form holds the table editor. */}
+				<form noValidate>
+					<ColumnManager
+						rowHeaders={['protocol']}
+						columnOrder={['name', 'tvl']}
+						columnVisibility={{}}
+						onChange={vi.fn()}
+						customColumns={customColumns}
+						onAddCustomColumn={onAddCustomColumn}
+						onUpdateCustomColumn={vi.fn()}
+						onRemoveCustomColumn={vi.fn()}
+						customColumnDraft={customColumnDraft}
+						onCustomColumnDraftChange={onCustomColumnDraftChange}
+						sorting={sorting}
+						onSortingChange={onSortingChange}
+						onSortingReset={vi.fn()}
+					/>
+				</form>
 			</session.Wrapper>
 		)
 	)
@@ -145,5 +153,41 @@ describe('a subscriber', () => {
 		expect(radio('Aggregation', 'Sum').checked).toBe(true)
 		await act(async () => radio('Aggregation', 'None').click())
 		expect(onCustomColumnDraftChange).toHaveBeenLastCalledWith({ ...draft, aggregation: 'none' })
+	})
+})
+
+describe('with Pro', () => {
+	signInAs('subscriber')
+
+	test('adding an empty custom column says what is missing under each field, focuses the name and adds nothing', async () => {
+		const onAddCustomColumn = vi.fn()
+		await renderManager({ onAddCustomColumn })
+		await act(async () => button('Custom column').click())
+		const errors = () => Array.from(container.querySelectorAll('.text-error')).map((element) => element.textContent)
+		expect(button('Add custom column').getAttribute('aria-disabled')).toBeNull()
+		expect(errors()).toEqual([])
+		await act(async () => button('Add custom column').click())
+		expect(errors()).toEqual(['Enter a column name.', 'Enter an expression.'])
+		expect(document.activeElement).toBe(nameField())
+		expect(onAddCustomColumn).not.toHaveBeenCalled()
+	})
+
+	test('a name another custom column has says so before Add', async () => {
+		await renderManager({
+			customColumns: [
+				{ id: 'custom_1', name: 'Ratio', expression: 'tvl / mcap', format: 'ratio', aggregation: 'none' }
+			],
+			customColumnDraft: { ...EMPTY_CUSTOM_COLUMN_DRAFT, name: 'ratio' }
+		})
+		// The toggle also counts the saved custom columns.
+		await act(async () =>
+			Array.from(container.querySelectorAll('button'))
+				.find((element) => element.textContent?.trim().startsWith('Custom column'))!
+				.click()
+		)
+		expect(nameField()).not.toBeNull()
+		expect(Array.from(container.querySelectorAll('.text-error')).map((element) => element.textContent)).toEqual([
+			'Another column already has this name.'
+		])
 	})
 })

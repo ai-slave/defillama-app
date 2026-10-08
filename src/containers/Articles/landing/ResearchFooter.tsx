@@ -3,9 +3,11 @@ import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { emailError } from '~/utils/email'
 
 const BRAND_KIT_URL = 'https://defillama.com/defillama-press-kit.zip'
 const NEWSLETTER_URL = '/newsletters'
@@ -192,27 +194,32 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 
 function FooterMediaKit() {
 	const mutation = useMediaKitEmail()
+	const errorId = useId()
 	const [email, setEmail] = useState('')
+	const [submitted, setSubmitted] = useState(false)
 	const [isSent, setIsSent] = useState(false)
 
 	const isPending = mutation.isPending
-	const trimmedEmail = email.trim()
-	const canSubmit = !isPending && !isSent && trimmedEmail.length > 0
+	const emailMessage = emailError(email)
+	const error = submitted ? emailMessage : null
 
 	const onEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
 		setEmail(e.target.value)
 		if (isSent) setIsSent(false)
 	}
 
-	const handleSubmit = (e: FormEvent) => {
+	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!canSubmit) return
+		if (isPending || isSent) return
+		if (emailMessage) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
+		const trimmedEmail = email.trim()
 		mutation.mutate(
 			{ email: trimmedEmail },
 			{
 				onSuccess: () => {
 					trackUmamiEvent('research-media-kit-email-sent')
 					setIsSent(true)
+					setSubmitted(false)
 				}
 			}
 		)
@@ -224,37 +231,48 @@ function FooterMediaKit() {
 			<p className={`max-w-sm ${descriptionClassName}`}>
 				Explore our product overviews, package details, key differentiators, and essential information.
 			</p>
-			<form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-				<input
-					type="email"
-					required
-					aria-label="Email address"
-					value={email}
-					onChange={onEmailChange}
-					placeholder="Email address"
-					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 body-md text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-				/>
-				{/* Sending leaves nothing to submit until the email changes, so the pressed button disables itself. */}
-				<Ariakit.Button
-					type="submit"
-					aria-busy={isPending}
-					disabled={!canSubmit}
-					accessibleWhenDisabled
-					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-6 label-md text-on-brand not-aria-disabled:hover:brightness-110 focus-visible:focus-ring-on-brand aria-disabled:not-aria-busy:bg-disabled aria-disabled:not-aria-busy:text-disabled ${
-						isPending ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed'
-					}`}
-				>
-					{isPending ? (
-						<>
-							<LoadingSpinner size={16} />
-							<span className="sr-only">Sending…</span>
-						</>
-					) : isSent ? (
-						'Sent'
-					) : (
-						'Get the media kit'
-					)}
-				</Ariakit.Button>
+			{/* The underline input carries its label as a placeholder, so Field's visible label would not fit; the error is
+			    wired by hand the same way (data-invalid for showFieldErrors, aria-invalid and aria-describedby). */}
+			<form noValidate onSubmit={handleSubmit} className="flex flex-col gap-2">
+				<div data-invalid={error ? '' : undefined} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+					<input
+						type="email"
+						required
+						aria-label="Email address"
+						aria-invalid={error ? true : undefined}
+						aria-describedby={error ? errorId : undefined}
+						value={email}
+						onChange={onEmailChange}
+						placeholder="Email address"
+						className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 body-md text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden aria-invalid:border-error aria-invalid:focus:border-error"
+					/>
+					{/* Sending leaves nothing to submit until the email changes, so the pressed button disables itself. */}
+					<Ariakit.Button
+						type="submit"
+						aria-busy={isPending}
+						disabled={isPending || isSent}
+						accessibleWhenDisabled
+						className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-6 label-md text-on-brand not-aria-disabled:hover:brightness-110 focus-visible:focus-ring-on-brand aria-disabled:not-aria-busy:bg-disabled aria-disabled:not-aria-busy:text-disabled ${
+							isPending ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed'
+						}`}
+					>
+						{isPending ? (
+							<>
+								<LoadingSpinner size={16} />
+								<span className="sr-only">Sending…</span>
+							</>
+						) : isSent ? (
+							'Sent'
+						) : (
+							'Get the media kit'
+						)}
+					</Ariakit.Button>
+				</div>
+				{error ? (
+					<p id={errorId} className="body-sm text-error">
+						{error}
+					</p>
+				) : null}
 			</form>
 			{isSent ? (
 				<p role="status" className={descriptionClassName}>

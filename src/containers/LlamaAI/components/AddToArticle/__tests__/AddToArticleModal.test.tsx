@@ -114,13 +114,35 @@ test('a failed export stays in the dialog as a plain sentence instead of a toast
 	await act(async () => retry.resolve(fixtureStatus(500, { error: 'boom' })()))
 })
 
-test('without a target the add button says why it is unavailable', async () => {
+test('adding without a target says what is missing under the field it names and focuses it', async () => {
 	session.serve({ [MINE]: DRAFTS })
 	await click('Open')
+	await expectText('Weekly recap')
+	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Choose a draft')
+	await click('Add to article')
 	await expectText('Choose a draft or create a new article.')
-	expect(button('Add to article').disabled).toBe(true)
+	expect(document.activeElement).toBe(document.querySelector('input[aria-label="Search drafts"]'))
 	await click('Create new article')
-	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Enter a title for the new article.')
+	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Choose a draft')
+	const title = document.querySelector<HTMLInputElement>('input[name="newArticleTitle"]')!
+	await click('Create draft')
+	expect(document.getElementById(title.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'Enter a title for the new article.'
+	)
+	expect(document.activeElement).toBe(title)
+})
+
+// A browser submits the form on Enter in a text field unless the keydown is cancelled; happy-dom does not, so the
+// cancelled keydown is the contract.
+test('Enter in the draft search finishes the search without submitting', async () => {
+	session.serve({ [MINE]: DRAFTS })
+	await click('Open')
+	await expectText('Weekly recap')
+	const search = document.querySelector<HTMLInputElement>('input[aria-label="Search drafts"]')!
+	const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+	await act(async () => search.dispatchEvent(enter))
+	expect(enter.defaultPrevented).toBe(true)
+	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Choose a draft')
 })
 
 test('while an export runs, the target cannot change under it', async () => {

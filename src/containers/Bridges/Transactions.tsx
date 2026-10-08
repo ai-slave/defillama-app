@@ -17,10 +17,12 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
+import { dateRangeErrors, useDateRangeValidation } from '~/hooks/useDateRangeValidation'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import {
 	Input,
@@ -30,6 +32,7 @@ import {
 } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
+import { InlineStatus } from '~/ui/Status'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -541,11 +544,11 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 		}
 	})
 
-	const { startDate, endDate, dateError, handleStartDateChange, handleEndDateChange, validateDateRange } =
-		useDateRangeValidation({
-			defaultStartDate: defaultRange.startDate,
-			defaultEndDate: defaultRange.endDate
-		})
+	const { startDate, endDate, handleStartDateChange, handleEndDateChange } = useDateRangeValidation({
+		defaultStartDate: defaultRange.startDate,
+		defaultEndDate: defaultRange.endDate
+	})
+	const [submitted, setSubmitted] = React.useState(false)
 
 	const { data: blockExplorersData } = useBlockExplorers()
 
@@ -558,13 +561,13 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 	)
 	const selectedBridge = bridges.find((bridge) => String(bridge.id) === selectedBridgeId[0])
 
+	const maxDate = toDateOnly(new Date(nowSec * 1000))
+	const dateErrors = dateRangeErrors(startDate, endDate, maxDate)
+
 	const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!selectedBridge) {
-			return
-		}
-		if (!validateDateRange(startDate, endDate)) {
-			return
+		if (!selectedBridge || dateErrors.startDate || dateErrors.endDate) {
+			return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		}
 		mutate({
 			startDate,
@@ -572,8 +575,6 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 			bridge: selectedBridge
 		})
 	}
-
-	const maxDate = toDateOnly(new Date(nowSec * 1000))
 
 	const tableData = transactionResult.rows
 	const columns = React.useMemo(() => buildBridgeColumns(blockExplorersData), [blockExplorersData])
@@ -583,7 +584,6 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 		? `bridge-transactions_${slug(fetchedContext.bridgeName)}_${fetchedContext.startDate}_${fetchedContext.endDate}${transactionResult.truncated ? '_newest-loaded-truncated' : ''}`
 		: `bridge-transactions_${startDate}_${endDate}`
 
-	const formError = fetchFailure ?? dateError ?? null
 	const showEmpty = tableData.length === 0 && !isPending
 
 	return (
@@ -596,70 +596,87 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				</p>
 			</header>
 
+			{/* From md the fields share subgrid rows (label, control, error), so an error under one field never moves the
+			    controls beside it. */}
 			<Card
 				padding="md"
 				as="form"
+				noValidate
 				onSubmit={handleSubmit}
-				className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:items-end"
+				className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:grid-rows-[auto_auto_auto] md:gap-y-0"
 			>
-				<label className="flex flex-col gap-1.5">
-					<span className="label-sm text-secondary uppercase">Bridge</span>
-					<SelectWithCombobox
-						heading="Bridge"
-						allValues={bridgeOptions}
-						selectedValues={selectedBridgeId}
-						setSelectedValues={setSelectedBridgeId}
-						singleSelect
-						label={selectedBridge?.displayName ?? 'Select a bridge'}
-						labelType="none"
-						variant="filter"
-						size="md"
-						className="w-full"
-					/>
-				</label>
-				<label className="flex flex-col gap-1.5">
-					<span className="label-sm text-secondary uppercase">Start Date</span>
-					<Input
-						type="date"
-						name="startDate"
-						value={startDate}
-						onChange={(e) => handleStartDateChange(e.target.value)}
-						max={maxDate}
-						required
-						className="cursor-pointer dark:scheme-dark"
-					/>
-				</label>
-				<label className="flex flex-col gap-1.5">
-					<span className="label-sm text-secondary uppercase">End Date</span>
-					<Input
-						type="date"
-						name="endDate"
-						value={endDate}
-						onChange={(e) => handleEndDateChange(e.target.value)}
-						min={startDate}
-						max={maxDate}
-						required
-						className="cursor-pointer dark:scheme-dark"
-					/>
-				</label>
+				<Field
+					label="Bridge"
+					error={submitted && !selectedBridge ? 'Choose a bridge.' : null}
+					className="md:row-span-3 md:grid md:grid-rows-subgrid"
+				>
+					{(control) => (
+						<SelectWithCombobox
+							heading="Bridge"
+							allValues={bridgeOptions}
+							selectedValues={selectedBridgeId}
+							setSelectedValues={setSelectedBridgeId}
+							singleSelect
+							label={selectedBridge?.displayName ?? 'Select a bridge'}
+							labelType="none"
+							variant="filter"
+							size="md"
+							className="w-full"
+							triggerProps={control}
+						/>
+					)}
+				</Field>
+				<Field
+					label="Start Date"
+					error={submitted ? dateErrors.startDate : null}
+					className="md:row-span-3 md:grid md:grid-rows-subgrid"
+				>
+					{(control) => (
+						<Input
+							{...control}
+							type="date"
+							name="startDate"
+							value={startDate}
+							onChange={(e) => handleStartDateChange(e.target.value)}
+							max={maxDate}
+							required
+							className="cursor-pointer dark:scheme-dark"
+						/>
+					)}
+				</Field>
+				<Field
+					label="End Date"
+					error={submitted ? dateErrors.endDate : null}
+					className="md:row-span-3 md:grid md:grid-rows-subgrid"
+				>
+					{(control) => (
+						<Input
+							{...control}
+							type="date"
+							name="endDate"
+							value={endDate}
+							onChange={(e) => handleEndDateChange(e.target.value)}
+							min={startDate}
+							max={maxDate}
+							required
+							className="cursor-pointer dark:scheme-dark"
+						/>
+					)}
+				</Field>
 				<Button
 					type="submit"
 					variant="primary"
 					size="md"
-					disabled={!selectedBridge}
 					pendingLabel={isPending ? 'Fetching…' : null}
+					className="md:col-start-4 md:row-start-2"
 				>
 					<Icon name="search" height={14} width={14} />
 					Fetch Transactions
 				</Button>
 
-				{formError ? (
-					<div
-						role="alert"
-						className="col-span-full flex items-center gap-2 rounded-md border border-error-muted bg-error-tint px-3 py-2 body-md text-error"
-					>
-						<Icon name="alert-triangle" height={14} width={14} />
-						<p>{formError}</p>
+				{fetchFailure ? (
+					<div className="col-span-full md:mt-3">
+						<InlineStatus variant="error">{fetchFailure}</InlineStatus>
 					</div>
 				) : null}
 			</Card>

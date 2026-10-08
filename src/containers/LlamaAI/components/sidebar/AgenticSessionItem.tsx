@@ -195,8 +195,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const title = (e.currentTarget.elements.namedItem('newTitle') as HTMLInputElement | null)?.value.trim() ?? ''
-		if (updateTitle.isPending || !title) return
-		if (title === session.title) {
+		if (updateTitle.isPending) return
+		// A title cleared to blank keeps the old one, as Finder and Figma do.
+		if (!title || title === session.title) {
 			closeRename()
 			return
 		}
@@ -211,6 +212,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	if (isEditing) {
 		return (
 			<form
+				noValidate
 				ref={formRef}
 				onSubmit={handleSave}
 				className="group relative -mx-2 flex flex-wrap items-center gap-1 rounded-md bg-hover-row px-1 py-0.5"

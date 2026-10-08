@@ -38,6 +38,8 @@ interface SimpleTableConfigProps {
 	onIncludeCexChange: (include: boolean) => void
 	onBackToTypeSelector: () => void
 	isEditing?: boolean | undefined
+	/** What Add still needs (a chain or tokens), shown under that picker once Add was pressed. */
+	error: string | null
 }
 
 const tableTypeOptions: Array<{
@@ -198,6 +200,7 @@ const PRO_ONLY_TABLE_TYPES = new Set<string>([
 ])
 
 export function SimpleTableConfig({
+	error,
 	selectedChains,
 	chainOptions,
 	protocolsLoading,
@@ -289,6 +292,7 @@ export function SimpleTableConfig({
 				<VirtualizedSelect
 					variant="field"
 					label="Chain"
+					error={error}
 					options={chainOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}
@@ -365,6 +369,7 @@ export function SimpleTableConfig({
 				<>
 					<VirtualizedMultiSelect
 						label="Tokens (up to 4)"
+						error={error}
 						options={mergedTokenOptions}
 						selectedValues={selectedTokens}
 						onChange={(values) => onTokensChange(values.slice(0, 4))}
@@ -424,6 +429,7 @@ export function SimpleTableConfig({
 				<VirtualizedSelect
 					variant="field"
 					label="Chain"
+					error={error}
 					options={chainOptions}
 					selectedValue={selectedDatasetChain}
 					onChange={(option) => onDatasetChainChange(option.value)}

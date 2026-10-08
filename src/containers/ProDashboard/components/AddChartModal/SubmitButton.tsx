@@ -1,17 +1,20 @@
-import { useId } from 'react'
+import { type MouseEvent, useId } from 'react'
 import { Button } from '~/ui/Button'
 import { DialogCancelButton, DialogFooter } from '~/ui/Dialog'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { ProMeta } from '../../ui'
-import { resolveSubmitBlocker } from './submitBlocker'
+import { type PickListLoad, resolveSubmitGate } from './submitBlocker'
 import type { ModalState } from './types'
 
 interface SubmitButtonProps {
 	editItem?: DashboardItemConfig | null | undefined
 	state: ModalState
-	onSubmit: () => void
-	/** Why the dashboard refused the last submit, shown where the blocker would be. */
+	/** Checks the input, which says what is missing under its control, then adds or saves the card. */
+	onSubmit: (event: MouseEvent<HTMLButtonElement>) => void
+	/** Why the dashboard refused the last submit, shown where the gate's reason would be. */
 	submitError: string | null
+	/** The open form's pick list while it loads (Add waits) or after it failed (Add stays disabled beside the failure). */
+	pickList: PickListLoad
 }
 
 function getButtonText(state: ModalState, editItem: DashboardItemConfig | null | undefined): string {
@@ -24,10 +27,9 @@ function getButtonText(state: ModalState, editItem: DashboardItemConfig | null |
 	return count > 1 ? `Add ${count.toString()} cards` : 'Add card'
 }
 
-export function SubmitButton({ editItem, state, onSubmit, submitError }: SubmitButtonProps) {
+export function SubmitButton({ editItem, state, onSubmit, submitError, pickList }: SubmitButtonProps) {
 	const reasonId = useId()
-	const disabledReason = resolveSubmitBlocker(state, editItem)
-	const isDisabled = disabledReason !== null
+	const gate = resolveSubmitGate(state)
 
 	return (
 		<DialogFooter
@@ -38,20 +40,21 @@ export function SubmitButton({ editItem, state, onSubmit, submitError }: SubmitB
 							{submitError}
 						</p>
 					) : (
-						<ProMeta items={[disabledReason]} />
+						<ProMeta items={[gate]} />
 					)}
 				</div>
 			}
 			dismiss={<DialogCancelButton />}
 		>
-			{/* Focusable while blocked, so the reason beside it is read with it. */}
+			{/* Focusable while gated, so the reason beside it is read with it. */}
 			<Button
 				variant="primary"
 				size="md"
 				onClick={onSubmit}
-				disabled={isDisabled}
+				pendingLabel={pickList?.status === 'loading' ? pickList.label : null}
+				disabled={gate !== null || pickList?.status === 'failed'}
 				accessibleWhenDisabled
-				aria-describedby={isDisabled ? reasonId : undefined}
+				aria-describedby={gate !== null ? reasonId : undefined}
 				{...(state.selectedMainTab === 'custom-data' ? { 'data-umami-event': 'custom-data-add' } : {})}
 			>
 				{getButtonText(state, editItem)}

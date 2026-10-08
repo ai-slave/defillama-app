@@ -5,6 +5,8 @@ import { SubscriptionLoadError } from '~/containers/Subscription/shared/Subscrip
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -43,6 +45,7 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 	} = useTeam()
 	const [seatInput, setSeatInput] = useState(String(subscription.seats.seatCount))
 	const seatCount = Number(seatInput)
+	const [submitted, setSubmitted] = useState(false)
 	const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 	const pending = setSeatsMutation.isPending
 
@@ -56,7 +59,14 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 	// When canceling, lock the floor at the current count — only increases (which undo
 	// the pending cancel) are allowed.
 	const minSeats = isCanceling ? subscription.seats.seatCount : Math.max(1, occupiedSeats)
-	const isValidSeatCount = seatInput !== '' && Number.isInteger(seatCount) && seatCount >= minSeats
+	const seatMessage =
+		seatInput === ''
+			? 'Enter a seat count.'
+			: !Number.isInteger(seatCount)
+				? 'Enter a whole number of seats.'
+				: seatCount < minSeats
+					? `Enter ${minSeats} or more seats.`
+					: null
 	const isAtOccupiedFloor = !isCanceling && seatCount <= occupiedSeats && occupiedSeats > 0
 	const decrementDisabled = seatCount <= minSeats
 	const floorHint = !decrementDisabled
@@ -85,6 +95,7 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		if (!canChangeTeamBilling) return
+		if (seatMessage) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		setSeatsMutation.mutate(
 			{ subscriptionType: subscription.type, seatCount },
 			{ onSuccess: onClose, onError: (error) => setFailure({ error, cancel: false }) }
@@ -108,7 +119,7 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 
 	return (
 		<Dialog size="sm" open onClose={onClose} pending={pending} portal unmountOnHide>
-			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+			<form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={`Manage ${label} seats`} />
 				<DialogBody>
 					{isCanceling && cancelAtDate ? (
@@ -129,71 +140,64 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 						</div>
 					</div>
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor="manage-seat-count" className="label-sm text-secondary">
-							New seat count
-						</label>
-						<div className="flex items-center gap-2">
-							{/* Focusable at the floor: the press that reaches it keeps focus, and the hint below says why. */}
-							<Tooltip
-								content="Decrease seats"
-								render={
-									<Button
-										type="button"
-										aria-label="Decrease seats"
-										size="md"
-										square
-										disabled={decrementDisabled || !canChangeTeamBilling}
-										accessibleWhenDisabled
-										onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
-									/>
-								}
-							>
-								<Icon name="minus" className="size-4" aria-hidden="true" />
-							</Tooltip>
-							{/* Ariakit's autoFocus, so the dialog opens on the seat count instead of the header ×. */}
-							<Ariakit.Focusable
-								autoFocus
-								render={
-									<Input
-										id="manage-seat-count"
-										type="number"
-										required
-										min={minSeats}
-										step={1}
-										readOnly={!canChangeTeamBilling}
-										inputMode="numeric"
-										value={seatInput}
-										onChange={(e) => setSeatInput(e.target.value)}
-										aria-describedby={floorHint ? 'manage-seat-floor' : undefined}
-										className="w-20 text-center"
-									/>
-								}
-							/>
-							<Tooltip
-								content="Increase seats"
-								render={
-									<Button
-										type="button"
-										aria-label="Increase seats"
-										disabled={!canChangeTeamBilling}
-										onClick={() => setSeatInput(String(Math.max(minSeats, seatCount + 1)))}
-										size="md"
-										square
-									/>
-								}
-							>
-								<Icon name="plus" className="size-4" aria-hidden="true" />
-							</Tooltip>
-						</div>
-						{floorHint ? (
-							<p id="manage-seat-floor" className="body-sm text-secondary">
-								{floorHint}
-							</p>
-						) : null}
-					</div>
+					<Field label="New seat count" hint={floorHint} error={submitted ? seatMessage : null}>
+						{(control) => (
+							<div className="flex items-center gap-2">
+								{/* Focusable at the floor: the press that reaches it keeps focus, and the hint below says why. */}
+								<Tooltip
+									content="Decrease seats"
+									render={
+										<Button
+											type="button"
+											aria-label="Decrease seats"
+											size="md"
+											square
+											disabled={decrementDisabled || !canChangeTeamBilling}
+											accessibleWhenDisabled
+											onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
+										/>
+									}
+								>
+									<Icon name="minus" className="size-4" aria-hidden="true" />
+								</Tooltip>
+								{/* Ariakit's autoFocus, so the dialog opens on the seat count instead of the header ×. */}
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<Input
+											{...control}
+											type="number"
+											required
+											min={minSeats}
+											step={1}
+											readOnly={!canChangeTeamBilling}
+											inputMode="numeric"
+											value={seatInput}
+											onChange={(e) => setSeatInput(e.target.value)}
+											className="w-20 text-center"
+										/>
+									}
+								/>
+								<Tooltip
+									content="Increase seats"
+									render={
+										<Button
+											type="button"
+											aria-label="Increase seats"
+											disabled={!canChangeTeamBilling}
+											onClick={() => setSeatInput(String(Math.max(minSeats, seatCount + 1)))}
+											size="md"
+											square
+										/>
+									}
+								>
+									<Icon name="plus" className="size-4" aria-hidden="true" />
+								</Tooltip>
+							</div>
+						)}
+					</Field>
 
-					{hasChange && isValidSeatCount && (
+					{hasChange && !seatMessage && (
 						<div className="flex flex-col gap-2 rounded-lg bg-surface-elevated-1 p-3 body-sm text-secondary">
 							<div className="flex items-center justify-between">
 								<span>
@@ -216,7 +220,7 @@ export function ManageSeatsModal({ onClose, subscription }: ManageSeatsModalProp
 						</div>
 					)}
 
-					{diff < 0 && isValidSeatCount && (
+					{diff < 0 && !seatMessage && (
 						<InlineStatus variant="warning">
 							Seats will be removed immediately and the payment for the current billing period will not be refunded.
 						</InlineStatus>

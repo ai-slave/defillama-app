@@ -48,6 +48,7 @@ function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 	const store = Ariakit.usePopoverContext()!
 	return (
 		<form
+			noValidate
 			className="grid gap-3"
 			onSubmit={(event) => {
 				event.preventDefault()
@@ -81,6 +82,7 @@ function LinkForm({ href, save }: { href: string; save: (href: string) => void }
 	const store = Ariakit.usePopoverContext()!
 	return (
 		<form
+			noValidate
 			className="grid gap-3"
 			onSubmit={(event) => {
 				event.preventDefault()
@@ -123,6 +125,7 @@ function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) =
 	const store = Ariakit.usePopoverContext()!
 	return (
 		<form
+			noValidate
 			className="grid gap-3"
 			onSubmit={(event) => {
 				event.preventDefault()

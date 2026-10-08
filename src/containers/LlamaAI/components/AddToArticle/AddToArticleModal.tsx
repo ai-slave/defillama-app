@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { useId, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { listMyArticles } from '~/containers/Articles/api'
@@ -19,7 +19,8 @@ import {
 } from '~/containers/LlamaAI/utils/articleExport'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
-import { passFocusOnLeave } from '~/ui/focus'
+import { Field, FieldGroup } from '~/ui/Field'
+import { passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -128,7 +129,6 @@ function AddToArticleForm({
 	request,
 	sessionTitle
 }: Omit<AddToArticleModalProps, 'request'> & { open: boolean; request: ArticleExportRequest }) {
-	const fieldId = useId()
 	const searchRef = useRef<HTMLInputElement>(null)
 	const router = useRouter()
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
@@ -276,21 +276,19 @@ function AddToArticleForm({
 		}
 	})
 
-	const canSubmit = isCreatingNew ? newTitle.trim().length > 0 : effectiveArticleId !== null
+	const [submitted, setSubmitted] = useState(false)
+	const titleError = isCreatingNew && !newTitle.trim() ? 'Enter a title for the new article.' : null
+	const draftError = !isCreatingNew && effectiveArticleId === null ? 'Choose a draft or create a new article.' : null
 	const isSubmitting = mutation.isPending
-
-	const disabledReason = canSubmit
-		? null
-		: isCreatingNew
-			? 'Enter a title for the new article.'
-			: 'Choose a draft or create a new article.'
 
 	return (
 		<Dialog store={dialogStore} size="sm" fullSheet pending={isSubmitting} unmountOnHide portal hideOnInteractOutside>
 			<form
+				noValidate
 				onSubmit={(e) => {
 					e.preventDefault()
-					if (!canSubmit || isSubmitting) return
+					if (isSubmitting) return
+					if (titleError || draftError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 					// The fields lock while the export runs; the footer's submit, outside them, holds focus and its label.
 					;(e.nativeEvent as SubmitEvent).submitter?.focus()
 					mutation.mutate()
@@ -301,88 +299,88 @@ function AddToArticleForm({
 				<DialogBody>
 					{/* Locked while the export runs, so the article it goes to and its parts cannot change under it. */}
 					<fieldset disabled={isSubmitting} className="contents">
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={`${fieldId}-search`} className="label-sm text-secondary">
-								Add to a draft
-							</label>
+						<FieldGroup label="Add to a draft" error={submitted ? draftError : null}>
 							<div className="relative">
 								<Icon name="search" aria-hidden="true" className={`${searchFieldIconStyles} size-4`} />
 								<Input
 									ref={searchRef}
-									id={`${fieldId}-search`}
 									type="text"
+									aria-label="Search drafts"
 									onInput={(e) => setSearch(e.currentTarget.value)}
+									// Enter finishes a search, not the form: it would add to whichever draft is picked, or say none is.
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') e.preventDefault()
+									}}
 									placeholder="Search drafts…"
 									className={searchFieldInputPlacementStyles}
 								/>
 							</div>
-						</div>
 
-						<div className="max-h-56 overflow-y-auto overscroll-contain">
-							{queryReadFailed(drafts) ? (
-								<InlineStatus variant="error">
-									<div className="flex flex-wrap items-center justify-between gap-2">
-										<span>Couldn&apos;t load your drafts.</span>
-										<Button
-											// The list replaces this button once the retry loads it, so focus moves to the search field above.
-											ref={passFocusOnLeave(() => searchRef.current)}
-											type="button"
-											size="sm"
-											pendingLabel={drafts.isFetching ? 'Retrying…' : null}
-											onClick={() => void drafts.refetch()}
-										>
-											Try again
-										</Button>
+							<div className="max-h-56 overflow-y-auto overscroll-contain">
+								{queryReadFailed(drafts) ? (
+									<InlineStatus variant="error">
+										<div className="flex flex-wrap items-center justify-between gap-2">
+											<span>Couldn&apos;t load your drafts.</span>
+											<Button
+												// The list replaces this button once the retry loads it, so focus moves to the search field above.
+												ref={passFocusOnLeave(() => searchRef.current)}
+												type="button"
+												size="sm"
+												pendingLabel={drafts.isFetching ? 'Retrying…' : null}
+												onClick={() => void drafts.refetch()}
+											>
+												Try again
+											</Button>
+										</div>
+									</InlineStatus>
+								) : drafts.isLoading ? (
+									<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
+										<LoadingIndicator label="Loading drafts" />
 									</div>
-								</InlineStatus>
-							) : drafts.isLoading ? (
-								<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-									<LoadingIndicator label="Loading drafts" />
-								</div>
-							) : filtered.length === 0 ? (
-								<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
-									{search.trim() ? 'No matches found' : 'No drafts yet'}
-								</p>
-							) : (
-								<div className="flex flex-col gap-0.5">
-									{filtered.map((article) => (
-										<SelectableRow
-											key={article.id}
-											selected={effectiveArticleId === article.id}
-											onClick={() => setTarget({ kind: 'draft', id: article.id })}
-											trailing={
-												<span className="shrink-0 label-sm text-tertiary">
-													{article.status === 'published'
-														? 'published'
-														: new Date(article.updatedAt).toLocaleDateString()}
-												</span>
-											}
-										>
-											{article.title}
-										</SelectableRow>
-									))}
-								</div>
-							)}
-						</div>
+								) : filtered.length === 0 ? (
+									<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
+										{search.trim() ? 'No matches found' : 'No drafts yet'}
+									</p>
+								) : (
+									<div className="flex flex-col gap-0.5">
+										{filtered.map((article) => (
+											<SelectableRow
+												key={article.id}
+												selected={effectiveArticleId === article.id}
+												onClick={() => setTarget({ kind: 'draft', id: article.id })}
+												trailing={
+													<span className="shrink-0 label-sm text-tertiary">
+														{article.status === 'published'
+															? 'published'
+															: new Date(article.updatedAt).toLocaleDateString()}
+													</span>
+												}
+											>
+												{article.title}
+											</SelectableRow>
+										))}
+									</div>
+								)}
+							</div>
+						</FieldGroup>
 
 						{isCreatingNew ? (
-							<div className="flex flex-col gap-1.5">
-								<label htmlFor={`${fieldId}-title`} className="label-sm text-secondary">
-									New article title
-								</label>
-								{/* Replaces the button that revealed it, so focus follows into the field. */}
-								<Input
-									id={`${fieldId}-title`}
-									type="text"
-									name="newArticleTitle"
-									autoFocus
-									required
-									value={newTitle}
-									onChange={(e) => setNewTitle(e.target.value)}
-									placeholder="e.g. Weekly DeFi recap"
-									className="w-full"
-								/>
-							</div>
+							<Field label="New article title" error={submitted ? titleError : null}>
+								{(control) => (
+									/* Replaces the button that revealed it, so focus follows into the field. */
+									<Input
+										{...control}
+										type="text"
+										name="newArticleTitle"
+										autoFocus
+										required
+										value={newTitle}
+										onChange={(e) => setNewTitle(e.target.value)}
+										placeholder="e.g. Weekly DeFi recap"
+										className="w-full"
+									/>
+								)}
+							</Field>
 						) : (
 							<Button type="button" size="md" onClick={() => setTarget({ kind: 'new' })} className="w-full">
 								<Icon name="plus" className="size-4" />
@@ -445,15 +443,11 @@ function AddToArticleForm({
 					{exportError ? <InlineStatus variant="error">{exportError}</InlineStatus> : null}
 				</DialogBody>
 
-				<DialogFooter
-					leading={disabledReason ? <p className="body-sm text-secondary">{disabledReason}</p> : null}
-					dismiss={<DialogCancelButton />}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button
 						type="submit"
 						variant="primary"
 						size="md"
-						disabled={!canSubmit}
 						pendingLabel={isSubmitting ? (isCreatingNew ? 'Creating…' : 'Adding…') : null}
 					>
 						{isCreatingNew ? 'Create draft' : 'Add to article'}

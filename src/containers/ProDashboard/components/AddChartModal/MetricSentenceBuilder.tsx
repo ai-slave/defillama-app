@@ -10,7 +10,7 @@ import {
 } from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import type { Ref } from 'react'
-import { useDeferredValue, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
@@ -105,6 +105,8 @@ interface MetricSentenceBuilderProps {
 	onProtocolChange: (option: { value: string; label: string }) => void
 	onWindowChange: (value: MetricWindow) => void
 	onChartTypeChange: (value: MetricChartType) => void
+	/** What Add still needs (a metric or a subject), shown under the sentence once Add was pressed. */
+	error: string | null
 }
 
 const getTokenWidth = (token: Exclude<ActiveToken, null>, isMobile: boolean): number => {
@@ -130,9 +132,18 @@ interface TokenButtonProps {
 	secondary?: string
 	onClick: () => void
 	active?: boolean
+	/** The id of the error this token needs fixed, when it has one. */
+	errorId?: string
 }
 
-function TokenButton({ label, secondary, onClick, active, ref }: TokenButtonProps & { ref?: Ref<HTMLButtonElement> }) {
+function TokenButton({
+	label,
+	secondary,
+	onClick,
+	active,
+	errorId,
+	ref
+}: TokenButtonProps & { ref?: Ref<HTMLButtonElement> }) {
 	return (
 		<Button
 			variant="filter"
@@ -141,6 +152,8 @@ function TokenButton({ label, secondary, onClick, active, ref }: TokenButtonProp
 			data-metric-token="true"
 			data-active={active}
 			aria-expanded={active}
+			aria-invalid={errorId ? true : undefined}
+			aria-describedby={errorId}
 			ref={ref}
 		>
 			<span className="max-w-[100px] truncate sm:max-w-[180px]">{label}</span>
@@ -167,8 +180,13 @@ export function MetricSentenceBuilder({
 	onChainChange,
 	onProtocolChange,
 	onWindowChange,
-	onChartTypeChange
+	onChartTypeChange,
+	error
 }: MetricSentenceBuilderProps) {
+	const errorId = useId()
+	// A missing metric is the metric token's error; otherwise the subject is what is missing.
+	const metricErrorId = error && !metricType ? errorId : undefined
+	const subjectErrorId = error && metricType ? errorId : undefined
 	const [activeToken, setActiveToken] = useState<ActiveToken>(null)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [subjectTab, setSubjectTab] = useState<'chain' | 'protocol'>('chain')
@@ -680,7 +698,7 @@ export function MetricSentenceBuilder({
 	}
 
 	return (
-		<div className="flex flex-col gap-2.5 sm:gap-3">
+		<div data-invalid={error ? '' : undefined} className="flex flex-col gap-2.5 sm:gap-3">
 			<div className="rounded-lg border border-subtle bg-linear-to-br from-surface via-surface to-surface p-2.5 sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
 					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-tint text-link sm:size-8">
@@ -705,6 +723,7 @@ export function MetricSentenceBuilder({
 						label={metricLabel || 'metric'}
 						onClick={handleTokenPress('metric')}
 						active={activeToken === 'metric'}
+						errorId={metricErrorId}
 						ref={(node) => {
 							anchorRefs.current.metric = node
 						}}
@@ -714,6 +733,7 @@ export function MetricSentenceBuilder({
 						label={subjectLabel}
 						onClick={handleTokenPress('subject')}
 						active={activeToken === 'subject'}
+						errorId={subjectErrorId}
 						ref={(node) => {
 							anchorRefs.current.subject = node
 						}}
@@ -740,6 +760,11 @@ export function MetricSentenceBuilder({
 					/>
 				</div>
 			</div>
+			{error ? (
+				<p id={errorId} className="body-sm text-error">
+					{error}
+				</p>
+			) : null}
 			<Popover
 				store={popover}
 				modal={false}

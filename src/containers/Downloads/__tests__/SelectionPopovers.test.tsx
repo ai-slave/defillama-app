@@ -41,7 +41,7 @@ async function escape(el: HTMLElement) {
 		el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
 }
-test('unapplied dates keep All selected; Apply and Clear change the active range', async () => {
+test('unapplied dates keep All selected; Apply checks the range, and Apply and Clear change the active range', async () => {
 	const changed = vi.fn()
 	function Harness() {
 		const [value, setValue] = useState<DateRangeConfig | null>(null)
@@ -68,7 +68,18 @@ test('unapplied dates keep All selected; Apply and Clear change the active range
 	await click(trigger)
 	const reopened = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
 	expect(reopened[0].value).toBe('2026-01-01')
+	const errorOf = (el: HTMLInputElement) =>
+		document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent
+	await click(button('Apply'))
+	expect(changed).not.toHaveBeenCalled()
+	expect(errorOf(reopened[1])).toBe('Choose a To date.')
+	expect(document.activeElement).toBe(reopened[1])
+	await input(reopened[1], '2025-12-31')
+	expect(errorOf(reopened[1])).toBe('Choose a date on or after the From date.')
+	await click(button('Apply'))
+	expect(changed).not.toHaveBeenCalled()
 	await input(reopened[1], '2026-01-02')
+	expect(reopened[1].getAttribute('aria-invalid')).toBeNull()
 	await click(button('Apply'))
 	expect(changed).toHaveBeenLastCalledWith({ kind: 'custom', from: '2026-01-01', to: '2026-01-02' })
 	await click(trigger)
@@ -83,7 +94,34 @@ test('unapplied dates keep All selected; Apply and Clear change the active range
 	await click(trigger)
 	expect(document.querySelector<HTMLInputElement>('input[type="date"]')!.value).toBe('')
 })
-test('row limit errors identify the input; correcting applies it, and All restores unrestricted rows', async () => {
+test('Apply refuses typed days outside the dataset and takes its first and last day', async () => {
+	const changed = vi.fn()
+	await act(async () =>
+		root.render(<DateRangePicker value={null} onChange={changed} minDate="2026-01-01" maxDate="2026-01-31" />)
+	)
+	await click(button('Date range: All'))
+	const [from, to] = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
+	const errorOf = (el: HTMLInputElement) =>
+		document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent
+	await input(from, '2026-02-01')
+	await input(to, '2026-02-02')
+	await click(button('Apply'))
+	expect(changed).not.toHaveBeenCalled()
+	expect(errorOf(from)).toBe('Choose a date on or before Jan 31, 2026.')
+	expect(errorOf(to)).toBe('Choose a date on or before Jan 31, 2026.')
+	expect(document.activeElement).toBe(from)
+	await input(from, '2025-12-31')
+	await input(to, '2026-01-31')
+	expect(errorOf(from)).toBe('Choose a date on or after Jan 1, 2026.')
+	expect(to.getAttribute('aria-invalid')).toBeNull()
+	await click(button('Apply'))
+	expect(changed).not.toHaveBeenCalled()
+	await input(from, '2026-01-01')
+	await click(button('Apply'))
+	expect(changed).toHaveBeenLastCalledWith({ kind: 'custom', from: '2026-01-01', to: '2026-01-31' })
+})
+
+test('Apply says what is wrong with the row limit under it; correcting applies it, and All restores unrestricted rows', async () => {
 	const changed = vi.fn()
 	function Harness() {
 		const [value, setValue] = useState<number | null>(null)
@@ -106,14 +144,17 @@ test('row limit errors identify the input; correcting applies it, and All restor
 	const trigger = button('Row limit: All')
 	await click(trigger)
 	const field = document.querySelector<HTMLInputElement>('[aria-label="Custom row limit"]')!
-	await input(field, '-1')
-	// Submit directly to exercise the custom error path as well as native validation.
-	await act(async () => field.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	const error = () => document.getElementById(field.getAttribute('aria-describedby') ?? '')?.textContent
+	await click(button('Apply'))
 	expect(changed).not.toHaveBeenCalled()
+	expect(error()).toBe('Enter a row limit.')
+	expect(document.activeElement).toBe(field)
+	await input(field, '0')
+	expect(error()).toBe('Enter a row limit of 1 or more.')
 	expect(field.getAttribute('aria-invalid')).toBe('true')
-	expect(document.getElementById(field.getAttribute('aria-describedby')!)?.textContent).toBe('Enter a positive number')
 	await input(field, '250')
-	expect(field.getAttribute('aria-invalid')).toBe('false')
+	expect(field.getAttribute('aria-invalid')).toBeNull()
+	expect(error()).toBeUndefined()
 	await click(button('Apply'))
 	expect(changed).toHaveBeenCalledExactlyOnceWith(250)
 	await waitForUi(() => expect(document.activeElement).toBe(trigger))
@@ -125,4 +166,32 @@ test('row limit errors identify the input; correcting applies it, and All restor
 	expect(trigger.textContent).toBe('Row limit: All')
 	await click(trigger)
 	expect(button('All').getAttribute('aria-pressed')).toBe('true')
+})
+test('a reopened picker keeps its draft but drops the errors of the last opening', async () => {
+	await act(async () =>
+		root.render(
+			<>
+				<DateRangePicker value={null} onChange={vi.fn()} />
+				<RowLimitPicker value={null} totalRows={500} onChange={vi.fn()} />
+			</>
+		)
+	)
+	const errorTexts = () => [...document.querySelectorAll('.text-error')].map((el) => el.textContent)
+
+	await click(button('Date range: All'))
+	await input(document.querySelector<HTMLInputElement>('input[type="date"]')!, '2026-01-01')
+	await click(button('Apply'))
+	expect(errorTexts()).toEqual(['Choose a To date.'])
+	await escape(document.activeElement as HTMLElement)
+	await click(button('Date range: All'))
+	expect(document.querySelector<HTMLInputElement>('input[type="date"]')!.value).toBe('2026-01-01')
+	expect(errorTexts()).toEqual([])
+	await escape(document.activeElement as HTMLElement)
+
+	await click(button('Row limit: All'))
+	await click(button('Apply'))
+	expect(errorTexts()).toEqual(['Enter a row limit.'])
+	await escape(document.activeElement as HTMLElement)
+	await click(button('Row limit: All'))
+	expect(errorTexts()).toEqual([])
 })

@@ -30,6 +30,8 @@ import {
 	DialogToolbar,
 	useRefusal
 } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -289,6 +291,25 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 			if (outcome && isNarrow) setPane('results')
 		})
 
+	// Run and Save both need a query; pressing either without one says so under the editor, on the query pane.
+	// The query pane is no form: Enter in the card name never saves, and the footer's Save is the only way to save
+	// (as in Add card). The pane is the scope showFieldErrors searches.
+	const queryPaneRef = useRef<HTMLDivElement>(null)
+	const [submitted, setSubmitted] = useState(false)
+	const sqlError = sql.trim() ? null : 'Enter a query.'
+	const showSqlError = () =>
+		showFieldErrors(queryPaneRef.current!, () => {
+			setSubmitted(true)
+			setPane('query')
+		})
+	const runOrExplain = () => (sqlError ? showSqlError() : runAndShow(sql))
+	const handleSaveClick = () => {
+		// While saving, the same button stops the run that the save started.
+		if (savePending) return stopQuery()
+		if (sqlError) return showSqlError()
+		void handleSave()
+	}
+
 	return (
 		// An outside tap never drops the query; Cancel, × and Escape ask first once it has changed.
 		<Dialog
@@ -316,7 +337,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 					<Button
 						variant="secondary"
 						size="md"
-						onClick={() => (running ? stopQuery() : runAndShow(sql))}
+						onClick={() => (running ? stopQuery() : runOrExplain())}
 						disabled={controls.run.disabled}
 						accessibleWhenDisabled
 					>
@@ -359,32 +380,37 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 					className={`min-h-0 min-w-0 flex-1 flex-col lg:flex lg:overflow-y-auto ${pane === 'reference' ? 'hidden' : 'flex'}`}
 				>
 					<div
+						ref={queryPaneRef}
 						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:pb-0 ${pane === 'query' ? 'flex' : 'hidden'}`}
 					>
-						<label className="flex shrink-0 flex-col gap-1">
-							<span className="label-sm text-secondary">Card name (optional)</span>
-							<Input
-								type="text"
-								value={name}
-								readOnly={savePending}
-								aria-busy={savePending || undefined}
-								onChange={(e) => setName(e.target.value)}
-								className="shrink-0"
-							/>
-						</label>
+						<Field label="Card name (optional)" className="shrink-0">
+							{(control) => (
+								<Input
+									{...control}
+									type="text"
+									value={name}
+									readOnly={savePending}
+									aria-busy={savePending || undefined}
+									onChange={(e) => setName(e.target.value)}
+								/>
+							)}
+						</Field>
 
-						<div className="shrink-0">
-							<Editor
-								ref={editorRef}
-								value={sql}
-								onChange={setSql}
-								onRun={() => runAndShow(sql)}
-								tables={loadedTables}
-								height={editorHeight}
-								readOnly={savePending}
-								autoFocus={!isNarrow}
-							/>
-						</div>
+						<Field label="SQL query" hideLabel error={submitted ? sqlError : null} className="shrink-0">
+							{(control) => (
+								<Editor
+									{...control}
+									ref={editorRef}
+									value={sql}
+									onChange={setSql}
+									onRun={runOrExplain}
+									tables={loadedTables}
+									height={editorHeight}
+									readOnly={savePending}
+									autoFocus={!isNarrow}
+								/>
+							)}
+						</Field>
 
 						{loadingStage || engineLoading || engineError || controls.queryChanged ? (
 							<div className="flex shrink-0 flex-wrap items-center gap-3">
@@ -514,11 +540,10 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 				}
 				dismiss={<DialogCancelButton />}
 			>
-				{/* While saving, the same button stops the run that the save started. */}
 				<Button
 					variant="primary"
 					size="md"
-					onClick={() => (savePending ? stopQuery() : void handleSave())}
+					onClick={handleSaveClick}
 					disabled={controls.save.disabled}
 					accessibleWhenDisabled
 				>

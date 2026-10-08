@@ -152,8 +152,10 @@ describe('buildUtrClaimRequest', () => {
 		const result = buildUtrClaimRequest(input)
 
 		expect(result.payload).toBeNull()
-		expect(result.errors['insiderIdentities.1.role']).toBe('Role is required')
-		expect(result.errors['multisigWallets.0.thresholdRequired']).toContain('must not exceed')
+		expect(result.errors['insiderIdentities.1.role']).toBe('Enter the role.')
+		expect(result.errors['multisigWallets.0.thresholdTotal']).toBe(
+			'Enter a total threshold no lower than the required threshold.'
+		)
 	})
 })
 

@@ -81,7 +81,7 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 					check whether you already joined.
 				</p>
 				{isTeamError ? (
-					<p role="alert" className="body-sm text-data-down">
+					<p role="alert" className="body-sm text-error">
 						Could not check membership.
 					</p>
 				) : null}

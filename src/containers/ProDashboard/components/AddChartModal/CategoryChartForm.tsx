@@ -13,11 +13,19 @@ interface CategoryChartFormProps {
 	actions: ModalActions
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
 	protocolsLoading: boolean
+	/** What Add still needs, shown under the control that needs it once Add was pressed. */
+	error: string | null
 }
 
 /** The form of a single-card category, which saves from its own selection rather than the series composer. Chains
     and protocols have no form here: they compose series. */
-export function CategoryChartForm({ state, actions, protocolOptions, protocolsLoading }: CategoryChartFormProps) {
+export function CategoryChartForm({
+	state,
+	actions,
+	protocolOptions,
+	protocolsLoading,
+	error
+}: CategoryChartFormProps) {
 	switch (state.selectedChartTab) {
 		case 'chain':
 		case 'protocol':
@@ -25,6 +33,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'yields':
 			return (
 				<YieldsChartTab
+					error={error}
 					selectedYieldPool={state.selectedYieldPool}
 					onSelectedYieldPoolChange={actions.setSelectedYieldPool}
 					selectedYieldChartType={state.selectedYieldChartType}
@@ -46,6 +55,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'stablecoins':
 			return (
 				<StablecoinsChartTab
+					error={error}
 					selectedStablecoinChain={state.selectedStablecoinChain}
 					selectedStablecoinChartType={state.selectedStablecoinChartType}
 					stablecoinMode={state.stablecoinMode}
@@ -63,6 +73,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'rwa':
 			return (
 				<RWAChartTab
+					error={error}
 					rwaMode={state.rwaMode}
 					selectedRwaChain={state.selectedRwaChain}
 					selectedRwaMetric={state.selectedRwaMetric}
@@ -86,6 +97,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'advanced-tvl':
 			return (
 				<AdvancedTvlChartTab
+					error={error}
 					selectedAdvancedTvlProtocol={state.selectedAdvancedTvlProtocol}
 					selectedAdvancedTvlProtocolName={state.selectedAdvancedTvlProtocolName}
 					selectedAdvancedTvlChartType={state.selectedAdvancedTvlChartType}
@@ -99,6 +111,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'borrowed':
 			return (
 				<BorrowedChartTab
+					error={error}
 					selectedBorrowedProtocol={state.selectedBorrowedProtocol}
 					selectedBorrowedProtocolName={state.selectedBorrowedProtocolName}
 					selectedBorrowedChartType={state.selectedBorrowedChartType}
@@ -112,6 +125,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'income-statement':
 			return (
 				<IncomeStatementChartTab
+					error={error}
 					selectedIncomeStatementProtocol={state.selectedIncomeStatementProtocol}
 					selectedIncomeStatementProtocolName={state.selectedIncomeStatementProtocolName}
 					onSelectedIncomeStatementProtocolChange={actions.setSelectedIncomeStatementProtocol}
@@ -123,6 +137,7 @@ export function CategoryChartForm({ state, actions, protocolOptions, protocolsLo
 		case 'unlocks':
 			return (
 				<UnlocksChartTab
+					error={error}
 					selectedUnlocksProtocol={state.selectedUnlocksProtocol}
 					selectedUnlocksProtocolName={state.selectedUnlocksProtocolName}
 					selectedUnlocksChartType={state.selectedUnlocksChartType}

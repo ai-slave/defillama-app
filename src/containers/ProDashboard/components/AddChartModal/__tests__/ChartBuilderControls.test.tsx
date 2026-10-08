@@ -41,6 +41,9 @@ async function renderBuilder(initial: ChartBuilderConfig, previewStatus = 200) {
 		const [config, setConfig] = useState(initial)
 		return (
 			<ChartBuilderTab
+				error={null}
+				pane="configure"
+				onPaneChange={vi.fn()}
 				chartBuilder={config}
 				chartBuilderName=""
 				chainOptions={[]}

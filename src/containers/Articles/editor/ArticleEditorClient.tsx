@@ -3,6 +3,7 @@ import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/
 import { useEditor } from '@tiptap/react'
 import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -55,7 +56,6 @@ import {
 	articleQueryKey,
 	articleWriteKey,
 	cacheWrittenArticle,
-	sanitizeLinkHref,
 	slugFromTitle,
 	formatArticleDate
 } from './ArticleEditorUtils'
@@ -139,7 +139,10 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	const [saveError, setSaveError] = useState(false)
 	const [slugEditing, setSlugEditing] = useState(false)
 	const [slugDraft, setSlugDraft] = useState('')
-	const [publishErrors, setPublishErrors] = useState<Record<string, string>>({})
+	// Once a publish is tried, the local checks mark their fields from the article as it is now, so a fixed field
+	// clears as it is edited. The server's own field errors stay until the next publish.
+	const [publishTried, setPublishTried] = useState(false)
+	const [serverPublishErrors, setServerPublishErrors] = useState<Record<string, string>>({})
 	// `/research/mine` links drafts with `?view=preview`; after the first render the reader's toggle wins. The edit
 	// page renders this only once `router.query.id` exists, so the query is already readable here.
 	const [viewMode, setViewMode] = useState<ArticleEditorViewMode>(() => (routeView === 'preview' ? 'preview' : 'write'))
@@ -311,6 +314,11 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				[key]: value,
 				...(key === 'title' && isDraftPlaceholderSlug(current.slug) ? { slug: slugFromTitle(String(value)) } : {})
 			}))
+			// A server error on a field (`coverImage.caption` belongs to `coverImage`) clears once it is edited.
+			setServerPublishErrors((errors) => {
+				const kept = Object.entries(errors).filter(([field]) => field.split('.')[0] !== key)
+				return kept.length === Object.keys(errors).length ? errors : Object.fromEntries(kept)
+			})
 			markArticleDirty()
 		},
 		[markArticleDirty]
@@ -407,17 +415,12 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		openLinkEditor()
 	}, [editor, openLinkEditor])
 
-	const applyLink = (raw: string, newTab: boolean) => {
+	// `href` comes sanitized from the link form; an empty one removes the link.
+	const applyLink = (href: string, newTab: boolean) => {
 		if (!editor) return
-		const url = raw.trim()
-		if (url === '') {
+		if (href === '') {
 			editor.chain().focus().extendMarkRange('link').unsetLink().run()
 			setLinkEdit(null)
-			return
-		}
-		const href = sanitizeLinkHref(url)
-		if (!href) {
-			toast.error('That link is not allowed')
 			return
 		}
 		editor
@@ -709,12 +712,12 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	// Reports instead of toasting, so the review sheet can show a failure inside itself.
 	const handlePublish = async (opts?: { goLiveAt?: string | null }): Promise<PublishResult> => {
 		if (!article.id) return { ok: false, error: 'Save the draft before publishing.' }
-		const localErrors = validateLocalArticleForPublish(article)
-		if (localErrors.length > 0) {
-			setPublishErrors(Object.fromEntries(localErrors.map((e) => [e.field, e.message])))
-			return { ok: false, error: null }
-		}
-		setPublishErrors({})
+		// Rendered at once, so the review sheet can focus the first field a failed publish marks.
+		flushSync(() => {
+			setPublishTried(true)
+			setServerPublishErrors({})
+		})
+		if (validateLocalArticleForPublish(article).length > 0) return { ok: false, error: null }
 		// An explicit `goLiveAt` wins; otherwise publishing a scheduled article
 		// clears its schedule and publishing a draft leaves the field untouched.
 		const goLiveAt = opts && 'goLiveAt' in opts ? opts.goLiveAt : article.goLiveAt != null ? null : undefined
@@ -727,12 +730,13 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		} catch (error) {
 			const validationErrors = publishValidationErrors(error)
 			if (validationErrors.length === 0) return { ok: false, error: errorMessageOr(error, 'Failed to publish') }
-			setPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message])))
+			flushSync(() => setServerPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message]))))
 			return { ok: false, error: null }
 		}
 		const merged = applyPendingToLocalArticle(saved, saved.pending)
 		setArticle(merged)
 		setSavedAt(merged.updatedAt)
+		setPublishTried(false)
 		revalidateLanding()
 		if (isScheduled(merged, Date.now()))
 			return { ok: true, message: `Scheduled for ${formatArticleDate(merged.goLiveAt)}` }
@@ -959,6 +963,12 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		: []
 
 	const isPublished = article.status === 'published'
+	const publishErrors: Record<string, string> = publishTried
+		? {
+				...serverPublishErrors,
+				...Object.fromEntries(validateLocalArticleForPublish(article).map((e) => [e.field, e.message]))
+			}
+		: {}
 	const hasPendingEdits = isPublished && article.pending != null
 	const pillState: 'saving' | 'saved' | 'unsaved' | 'error' | 'idle' = isSaving
 		? 'saving'

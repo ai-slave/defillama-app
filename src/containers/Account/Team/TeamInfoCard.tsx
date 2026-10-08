@@ -25,7 +25,8 @@ export function TeamInfoCard() {
 	const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		const name = (new FormData(event.currentTarget).get('name') as string).trim()
-		if (!name) return
+		// A name cleared to blank keeps the current one, as a rename in Finder does.
+		if (!name) return closeEditor()
 		updateTeamMutation.mutate({ name }, { onSuccess: closeEditor, onError: (failure) => setError(failure.message) })
 	}
 
@@ -49,7 +50,11 @@ export function TeamInfoCard() {
 						className={`h-0 min-w-0 flex-1 border-b border-dashed border-medium ${isEditing ? 'max-sm:hidden' : ''}`}
 					/>
 					{isEditing ? (
-						<form className="flex min-w-0 items-center justify-end gap-2 max-sm:flex-1" onSubmit={handleSave}>
+						<form
+							noValidate
+							className="flex min-w-0 items-center justify-end gap-2 max-sm:flex-1"
+							onSubmit={handleSave}
+						>
 							<Input
 								type="text"
 								aria-label="Team name"
@@ -57,9 +62,6 @@ export function TeamInfoCard() {
 								readOnly={updateTeamMutation.isPending}
 								name="name"
 								defaultValue={team.name}
-								required
-								pattern=".*\S.*"
-								title="Enter a team name"
 								aria-describedby={error ? errorId : undefined}
 								aria-invalid={error ? true : undefined}
 								onKeyDown={(e) => {

@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useMemo } from 'react'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
@@ -39,6 +39,11 @@ interface UnifiedChartTabProps {
 	onRemoveFromComposer: (id: string) => void
 	/** The single-card category's form (CategoryChartForm); chains and protocols compose series here instead. */
 	categoryForm: ReactNode
+	/** What Add still needs, shown under the control that needs it once Add was pressed. */
+	error: string | null
+	/** Below lg the form shows one pane; AddChartModal holds it, so a failed Add can bring back the pane with the error. */
+	pane: AddCardPane
+	onPaneChange: (pane: AddCardPane) => void
 }
 
 export function UnifiedChartTab({
@@ -62,12 +67,14 @@ export function UnifiedChartTab({
 	onComposerItemColorChange,
 	onAddToComposer,
 	onRemoveFromComposer,
-	categoryForm
+	categoryForm,
+	error,
+	pane,
+	onPaneChange
 }: UnifiedChartTabProps) {
 	const { loading: metaLoading, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { protocols, chains } = useProDashboardCatalog()
 	const subjectParameter = useModalFieldBinding('subject', selectedChartTab === 'protocol' ? 'protocol' : 'chain')
-	const [pane, setPane] = useState<AddCardPane>('configure')
 
 	const handleSubjectTabChange = (tab: ChartTabType) => {
 		subjectParameter.unbind()
@@ -269,6 +276,7 @@ export function UnifiedChartTab({
 					onUnifiedChartNameChange={onUnifiedChartNameChange}
 					onComposerItemColorChange={onComposerItemColorChange}
 					onRemoveFromComposer={onRemoveFromComposer}
+					error={error}
 				/>
 			</div>
 		)
@@ -293,7 +301,7 @@ export function UnifiedChartTab({
 					: {
 							onBack: () => {
 								// The next category starts on its configuration.
-								setPane('configure')
+								onPaneChange('configure')
 								onBackToCategories()
 							}
 						})}
@@ -303,7 +311,7 @@ export function UnifiedChartTab({
 				label="Editor view"
 				options={ADD_CARD_PANES}
 				value={pane}
-				onValueChange={setPane}
+				onValueChange={onPaneChange}
 				variant="solid-responsive"
 				size="md"
 				className="shrink-0 lg:hidden"
@@ -341,6 +349,7 @@ export function UnifiedChartTab({
 							onToggle={handleEntityToggle}
 							onClear={handleClearSelection}
 							isLoading={protocolsLoading}
+							error={composerItems.length === 0 ? error : null}
 						/>
 					</div>
 				</div>
@@ -368,6 +377,7 @@ export function UnifiedChartTab({
 							chartCreationMode={chartCreationMode}
 							seriesCount={composerItems.length}
 							onChartCreationModeChange={onChartCreationModeChange}
+							error={error}
 						/>
 					) : null}
 

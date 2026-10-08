@@ -373,6 +373,46 @@ test('a failed verification keeps its error on screen while the same code is ret
 	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe('Could not verify your email.')
 })
 
+test('the verification sheet says a short or refused code under the field, and the next edit clears it', async () => {
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
+	await settle()
+	const codeInput = () => document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	const codeError = () => document.getElementById(codeInput().getAttribute('aria-describedby') ?? '')?.textContent
+	const typeCode = (value: string) =>
+		act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(codeInput(), value)
+			codeInput().dispatchEvent(new Event('input', { bubbles: true }))
+		})
+	const submit = () =>
+		act(async () => codeInput().form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await typeCode('123')
+	expect(button('Verify email').getAttribute('aria-disabled')).toBeNull()
+	await submit()
+	expect(codeError()).toBe('Enter the 6-digit code.')
+	expect(codeInput().getAttribute('aria-invalid')).toBe('true')
+	expect(document.activeElement).toBe(codeInput())
+	expect(otpCalls).toHaveLength(1)
+
+	await typeCode('123456')
+	expect(codeInput().hasAttribute('aria-invalid')).toBe(false)
+	// Pressing Verify leaves focus on the button; the refusal moves it to the field.
+	await act(async () => button('Verify email').focus())
+	await submit()
+	await settle()
+	otpCalls[1].resolve(jsonResponse({ error: 'Invalid code' }, 400))
+	await waitForUi(async () => {
+		await settle()
+		expect(codeError()).toBe('This code is wrong or has expired.')
+	})
+	expect(codeInput().getAttribute('aria-invalid')).toBe('true')
+	expect(document.activeElement).toBe(codeInput())
+	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
+	await typeCode('654321')
+	expect(codeInput().hasAttribute('aria-invalid')).toBe(false)
+})
+
 test('a reopened sheet starts without the last typed code and verify error', async () => {
 	await render()
 	await emailLogin()
@@ -388,7 +428,7 @@ test('a reopened sheet starts without the last typed code and verify error', asy
 	otpCalls[1].resolve(jsonResponse({ error: 'Invalid code' }, 400))
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="dialog"] [role="alert"]')).not.toBeNull()
+		expect(codeInput().getAttribute('aria-invalid')).toBe('true')
 	})
 	await act(async () => button('Verify later').click())
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
@@ -396,7 +436,7 @@ test('a reopened sheet starts without the last typed code and verify error', asy
 	await act(async () => sessionView.promptVerifyEmail('email-user'))
 	await settle()
 	expect(codeInput().value).toBe('')
-	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
+	expect(codeInput().hasAttribute('aria-invalid')).toBe(false)
 	// The code already sent still holds its cooldown.
 	expect(otpCalls).toHaveLength(2)
 	expect(locked(button('Resend code'))).toBe(true)
@@ -671,6 +711,27 @@ test.each(['confirm', 'resend'] as const)('ignores a cancelled Google link %s re
 	expect(pb.authStore.token).toBe('')
 })
 
+test('onboarding Continue without the terms says so under the checkbox, focuses it and saves nothing', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			code: 'fixture',
+			signal: new AbortController().signal
+		})
+	})
+	const terms = document.querySelector<HTMLInputElement>('input[type="checkbox"]')!
+	expect(button('Continue').getAttribute('aria-disabled')).toBeNull()
+	await act(async () => button('Continue').click())
+	expect(document.getElementById(terms.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'Accept the Terms of Service and Privacy Policy to continue.'
+	)
+	expect(document.activeElement).toBe(terms)
+	await settle()
+	expect(http.urls()).not.toContain(PROMOTIONAL_EMAILS)
+	await act(async () => terms.click())
+	expect(terms.hasAttribute('aria-describedby')).toBe(false)
+})
+
 test('blocks onboarding Continue if a replacement token arrives before its record', async () => {
 	await render()
 	await act(async () => {
@@ -884,7 +945,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 	await settle()
 	expect(document.body.textContent).toContain('Thanks for signing up!')
 	expect(document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(false)
-	expect(button('Continue').disabled).toBe(true)
+	expect(document.querySelector('.text-error')).toBeNull()
 })
 
 test('backs off a Google-link resend when the endpoint gives a 429 without timing', async () => {

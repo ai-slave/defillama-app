@@ -1,13 +1,20 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { formatNumber } from '~/utils/numberFormat'
 
 const PRESETS = [50, 100, 500, 1000] as const
+
+/** The custom input shows a limit that no preset button shows. */
+function customText(value: number | null) {
+	return value && !PRESETS.includes(value as (typeof PRESETS)[number]) ? String(value) : ''
+}
 
 interface RowLimitPickerProps {
 	value: number | null // null = no limit / show all rows
@@ -17,27 +24,21 @@ interface RowLimitPickerProps {
 }
 
 export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimitPickerProps) {
-	const id = useId()
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
 
-	const [customInput, setCustomInput] = useState<string>(() =>
-		value && !PRESETS.includes(value as (typeof PRESETS)[number]) ? String(value) : ''
-	)
-	const [error, setError] = useState<string | null>(null)
+	const [customInput, setCustomInput] = useState(() => customText(value))
 
 	// The custom input restarts from the selected limit whenever the selection changes.
 	const [syncedValue, setSyncedValue] = useState(value)
 	if (value !== syncedValue) {
 		setSyncedValue(value)
-		setCustomInput(value && !PRESETS.includes(value as (typeof PRESETS)[number]) ? String(value) : '')
-		setError(null)
+		setCustomInput(customText(value))
 	}
 
 	const isActive = value !== null && value > 0
 
 	const handlePresetClick = (n: number | null) => {
 		setCustomInput('')
-		setError(null)
 		onChange(n)
 		popover.hide()
 	}
@@ -81,54 +82,67 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 						</div>
 					</section>
 
-					<form
-						onSubmit={(e) => {
-							e.preventDefault()
-							const n = Number.parseInt(customInput, 10)
-							if (!Number.isFinite(n) || n <= 0) {
-								setError('Enter a positive number')
-								return
-							}
-							setError(null)
-							onChange(n)
+					{/* The surface unmounts on hide, so each opening starts with no error; the draft lives here and survives it. */}
+					<CustomLimitForm
+						draft={customInput}
+						setDraft={setCustomInput}
+						onApply={(limit) => {
+							onChange(limit)
 							popover.hide()
 						}}
-						className="flex flex-col gap-2 border-t border-subtle pt-3"
-					>
-						<label htmlFor={`${id}-custom`} className="label-sm text-secondary">
-							Custom
-						</label>
-						<div className="flex items-center gap-2">
-							<Input
-								id={`${id}-custom`}
-								type="number"
-								aria-label="Custom row limit"
-								aria-invalid={!!error}
-								aria-describedby={error ? `${id}-error` : undefined}
-								min={1}
-								inputMode="numeric"
-								value={customInput}
-								onChange={(e) => {
-									setCustomInput(e.currentTarget.value)
-									setError(null)
-								}}
-								placeholder="e.g. 250"
-								className="min-w-0 flex-1"
-							/>
-							<Button type="submit" variant="primary" size="md" disabled={!customInput}>
-								Apply
-							</Button>
-						</div>
-						{error ? (
-							<p id={`${id}-error`} role="alert" className="body-sm text-error">
-								{error}
-							</p>
-						) : null}
-					</form>
+					/>
 
 					<p className="body-sm text-tertiary">Applied after sort: the top N by the current sort order.</p>
 				</div>
 			</PopoverSurface>
 		</Ariakit.PopoverProvider>
+	)
+}
+
+function CustomLimitForm({
+	draft,
+	setDraft,
+	onApply
+}: {
+	draft: string
+	setDraft: (value: string) => void
+	onApply: (limit: number) => void
+}) {
+	const [submitted, setSubmitted] = useState(false)
+	// A fraction rounds down, as the limit counts whole rows.
+	const limit = Math.floor(Number(draft))
+	const error = !draft ? 'Enter a row limit.' : limit < 1 ? 'Enter a row limit of 1 or more.' : null
+
+	return (
+		<form
+			noValidate
+			onSubmit={(e) => {
+				e.preventDefault()
+				if (error) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
+				onApply(limit)
+			}}
+			className="border-t border-subtle pt-3"
+		>
+			<Field label="Custom" error={submitted ? error : null}>
+				{(control) => (
+					<div className="flex items-center gap-2">
+						<Input
+							{...control}
+							type="number"
+							aria-label="Custom row limit"
+							min={1}
+							inputMode="numeric"
+							value={draft}
+							onChange={(e) => setDraft(e.currentTarget.value)}
+							placeholder="e.g. 250"
+							className="min-w-0 flex-1"
+						/>
+						<Button type="submit" variant="primary" size="md">
+							Apply
+						</Button>
+					</div>
+				)}
+			</Field>
+		</form>
 	)
 }

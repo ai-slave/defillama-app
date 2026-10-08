@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactElement } from 'react'
+import { act, type ReactElement } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
@@ -13,8 +14,19 @@ import { ResearchNewsletters } from '~/containers/Articles/landing/ResearchNewsl
 import type { ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import NewslettersPage from '~/pages/newsletters'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
-vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/newsletters', asPath: '/newsletters', query: {} }) }))
+const http = installFixtureFetch()
+
+vi.mock('next/router', () => ({
+	default: { events: { on: vi.fn(), off: vi.fn() } },
+	useRouter: () => ({
+		pathname: '/newsletters',
+		asPath: '/newsletters',
+		query: {},
+		events: { on: vi.fn(), off: vi.fn() }
+	})
+}))
 
 function renderWithQueryClient(element: ReactElement) {
 	const queryClient = new QueryClient({
@@ -47,15 +59,58 @@ describe('newsletter and media-kit split', () => {
 		expect(root.querySelector('a[href="/newsletters"]')?.textContent).toBe('DefiLlama newsletters')
 	})
 
-	test('starts the newsletters page with both newsletters selected and submit disabled until an email', () => {
+	test('starts the newsletters page with both newsletters selected and an enabled submit that names them', () => {
 		const root = renderToDom(<NewslettersPage />)
 
-		const pressed = [...root.querySelectorAll('[aria-label="Newsletters"] button[aria-pressed]')].map((button) =>
+		const pressed = [...root.querySelectorAll('[role="group"] button[aria-pressed]')].map((button) =>
 			button.getAttribute('aria-pressed')
 		)
 		expect(pressed).toEqual(['true', 'true'])
-		const submit = [...root.querySelectorAll('button')].find((button) => button.textContent === 'Enter email')
-		expect([submit?.getAttribute('aria-disabled'), submit?.disabled]).toEqual(['true', false])
+		const submit = root.querySelector<HTMLButtonElement>('button[type="submit"]')!
+		expect(submit.textContent).toBe('Subscribe to both newsletters')
+		expect([submit.getAttribute('aria-disabled'), submit.disabled]).toEqual([null, false])
+	})
+
+	test('a newsletters submit with no publication or email says what is missing and focuses the first card', async () => {
+		const container = document.createElement('div')
+		document.body.append(container)
+		const root = createRoot(container)
+		const queryClient = new QueryClient()
+		try {
+			await act(async () =>
+				root.render(
+					<QueryClientProvider client={queryClient}>
+						<AuthProvider>
+							<NewslettersPage />
+						</AuthProvider>
+					</QueryClientProvider>
+				)
+			)
+			const cards = [...container.querySelectorAll<HTMLButtonElement>('[role="group"] button[aria-pressed]')]
+			const submit = container.querySelector<HTMLButtonElement>('button[type="submit"]')!
+			await act(async () => cards[0].click())
+			expect(submit.textContent).toBe('Subscribe to 1 newsletter')
+			await act(async () => cards[1].click())
+			expect(submit.textContent).toBe('Subscribe')
+			const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
+			expect(errorTexts()).toEqual([])
+
+			await act(async () => submit.click())
+
+			expect(errorTexts()).toEqual(['Choose at least one publication.', 'Enter an email address.'])
+			expect(document.activeElement).toBe(cards[0])
+			const group = container.querySelector('[role="group"]')!
+			expect(document.getElementById(group.getAttribute('aria-describedby')!)?.textContent).toBe(
+				'Choose at least one publication.'
+			)
+			await act(async () => cards[1].click())
+			expect(errorTexts()).toEqual(['Enter an email address.'])
+			expect(http.requests.filter((request) => request.url.pathname === '/newsletter/subscribe')).toHaveLength(0)
+		} finally {
+			await act(async () => root.unmount())
+			container.remove()
+			queryClient.clear()
+		}
 	})
 
 	test('links the research hero subscribe button to the newsletters page', () => {

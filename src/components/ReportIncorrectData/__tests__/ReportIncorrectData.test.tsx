@@ -45,15 +45,21 @@ async function openReport(subject: ReportSubject) {
 	await act(async () => trigger?.click())
 }
 
+async function typeMessage(value: string) {
+	const message = document.querySelector('form')!.elements.namedItem('message') as HTMLTextAreaElement
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(message, value)
+		message.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
 async function submitReport(dataType: string) {
 	const form = document.querySelector('form')
 	const select = form?.elements.namedItem('dataType') as HTMLSelectElement | null
-	const message = form?.elements.namedItem('message') as HTMLTextAreaElement | null
 	expect(form).not.toBeNull()
 	expect(select).not.toBeNull()
-	expect(message).not.toBeNull()
 	select!.value = dataType
-	message!.value = 'Incorrect value'
+	await typeMessage('Incorrect value')
 	await act(async () => form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
 	return JSON.parse(mocks.fetchJson.mock.calls[0][1].body)
 }
@@ -82,6 +88,21 @@ describe('ReportIncorrectData', () => {
 		expect(payload.protocol).toBe('Aave')
 		expect(payload).not.toHaveProperty('subject')
 	})
+})
+
+test('a report without a message says so under the field and sends nothing', async () => {
+	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+	const submit = document.querySelector<HTMLButtonElement>('button[type="submit"]')!
+	const message = document.querySelector('textarea')!
+	const errorText = () => document.querySelector('.text-error')?.textContent ?? null
+	expect(errorText()).toBeNull()
+	await act(async () => submit.click())
+	expect(errorText()).toBe('Enter what’s wrong with the data.')
+	expect(message.getAttribute('aria-invalid')).toBe('true')
+	expect(document.activeElement).toBe(message)
+	expect(mocks.fetchJson).not.toHaveBeenCalled()
+	await typeMessage('Incorrect value')
+	expect(errorText()).toBeNull()
 })
 
 async function waitForPending() {

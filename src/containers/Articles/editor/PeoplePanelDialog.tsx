@@ -4,7 +4,8 @@ import { useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -25,11 +26,8 @@ type Props = {
 	initialConfig: ArticlePeoplePanelConfig | null
 }
 
-const getImageButtonId = (groupId: string, rowId: string) => `${groupId}-${rowId}-image`
-
 export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }: Props) {
 	const uploadGroupId = useId()
-	const labelId = useId()
 	const initialPanel = initialConfig ?? makeEmptyPeoplePanelConfig()
 	const [label, setLabel] = useState(initialPanel.label)
 	const [items, setItems] = useState(() =>
@@ -42,7 +40,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 	const draftSnapshot = JSON.stringify({ label, items: items.map(({ item }) => item) })
 	const [openedSnapshot] = useState(draftSnapshot)
 	// Set by an insert with a person still missing an image; each row's error then follows its own image.
-	const [showErrors, setShowErrors] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 
 	const updateItem = (id: string, patch: Partial<ArticlePeoplePanelItem>) => {
 		setItems((prev) => {
@@ -89,13 +87,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 	const submit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		if (hasPendingUploads) return
-		const firstMissing = items.find(({ item }) => !item.src)
-		if (firstMissing) {
-			// Render the row errors before focusing, so the focused image button is announced with its error.
-			flushSync(() => setShowErrors(true))
-			document.getElementById(getImageButtonId(uploadGroupId, firstMissing.id))?.focus()
-			return
-		}
+		if (items.some(({ item }) => !item.src)) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		onSubmit({
 			label: label.trim(),
 			items: items.map(({ item }) => ({
@@ -110,7 +102,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 
 	return (
 		<Dialog store={store} size="md" unmountOnHide portal>
-			<form onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+			<form noValidate onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
 				<DialogDiscardGuard
 					when={draftSnapshot !== openedSnapshot}
 					title="Discard this people panel?"
@@ -124,12 +116,16 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						</InlineStatus>
 					) : null}
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={labelId} className="label-sm text-secondary">
-							Section label (optional)
-						</label>
-						<Input id={labelId} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Moderated by:" />
-					</div>
+					<Field label="Section label (optional)">
+						{(control) => (
+							<Input
+								{...control}
+								value={label}
+								onChange={(e) => setLabel(e.target.value)}
+								placeholder="Moderated by:"
+							/>
+						)}
+					</Field>
 
 					<div className="flex flex-col gap-3">
 						<div className="flex items-center justify-between gap-2">
@@ -142,12 +138,11 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 							<PersonRow
 								key={id}
 								uploadKey={['article-person-image', uploadGroupId, id]}
-								imageButtonId={getImageButtonId(uploadGroupId, id)}
 								item={item}
 								idx={idx}
 								total={items.length}
 								articleId={articleId}
-								showErrors={showErrors}
+								submitted={submitted}
 								onChange={(patch) => updateItem(id, patch)}
 								onRemove={(remove) => removeItem(idx, remove)}
 								onMove={(dir) => moveItem(idx, dir)}
@@ -176,29 +171,17 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 
 type RowProps = {
 	uploadKey: MutationKey
-	imageButtonId: string
 	item: ArticlePeoplePanelItem
 	idx: number
 	total: number
 	articleId: string | null
-	showErrors: boolean
+	submitted: boolean
 	onChange: (patch: Partial<ArticlePeoplePanelItem>) => void
 	onRemove: (remove: HTMLElement) => void
 	onMove: (direction: -1 | 1) => void
 }
 
-function PersonRow({
-	uploadKey,
-	imageButtonId,
-	item,
-	idx,
-	total,
-	articleId,
-	showErrors,
-	onChange,
-	onRemove,
-	onMove
-}: RowProps) {
+function PersonRow({ uploadKey, item, idx, total, articleId, submitted, onChange, onRemove, onMove }: RowProps) {
 	const fieldId = useId()
 	const inputRef = useRef<HTMLInputElement>(null)
 	const { uploadFile, isUploading, errorMessage } = useImageUpload({
@@ -218,7 +201,7 @@ function PersonRow({
 		if (inputRef.current) inputRef.current.value = ''
 	}
 
-	const imageError = errorMessage ?? (showErrors && !item.src ? 'An image is required for each person.' : null)
+	const imageError = errorMessage ?? (submitted && !item.src ? 'Upload an image for this person.' : null)
 	const person = idx + 1
 	const upRef = useRef<HTMLButtonElement>(null)
 	const downRef = useRef<HTMLButtonElement>(null)
@@ -244,9 +227,10 @@ function PersonRow({
 				aria-label={`Upload image for person ${person}`}
 				onChange={(e) => handleFile(e.target.files?.[0])}
 			/>
-			<div className="col-start-1 row-start-1 flex flex-col gap-1.5">
+			{/* The image has no visible label of its own, so the row wires its error by hand; data-invalid lets an insert
+			    focus the first image that is missing. */}
+			<div data-invalid={imageError ? '' : undefined} className="col-start-1 row-start-1 flex flex-col gap-1.5">
 				<Ariakit.Button
-					id={imageButtonId}
 					disabled={isUploading || !articleId}
 					accessibleWhenDisabled
 					aria-busy={isUploading || undefined}
@@ -279,46 +263,43 @@ function PersonRow({
 
 			<div className="col-span-2 row-start-2 flex min-w-0 flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:row-start-1">
 				{imageError ? (
-					<p id={`${fieldId}-image-error`} className="body-sm text-data-down">
+					<p id={`${fieldId}-image-error`} className="body-sm text-error">
 						{imageError}
 					</p>
 				) : null}
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${fieldId}-name`} className="label-sm text-secondary">
-						Name, role and organization
-					</label>
-					<Input
-						id={`${fieldId}-name`}
-						value={item.name}
-						onChange={(e) => onChange({ name: e.target.value })}
-						placeholder="Jane Doe, Head of Research, DefiLlama"
-					/>
-				</div>
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${fieldId}-bio`} className="label-sm text-secondary">
-						Bio
-					</label>
-					<textarea
-						id={`${fieldId}-bio`}
-						value={item.bio}
-						onChange={(e) => onChange({ bio: e.target.value })}
-						rows={3}
-						placeholder="Short bio paragraph"
-						className={`${textareaStyles} resize-y`}
-					/>
-				</div>
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${fieldId}-link`} className="label-sm text-secondary">
-						Link (optional)
-					</label>
-					<Input
-						id={`${fieldId}-link`}
-						inputMode="url"
-						value={item.href}
-						onChange={(e) => onChange({ href: e.target.value })}
-						placeholder="https://x.com/…"
-					/>
-				</div>
+				<Field label="Name, role and organization">
+					{(control) => (
+						<Input
+							{...control}
+							value={item.name}
+							onChange={(e) => onChange({ name: e.target.value })}
+							placeholder="Jane Doe, Head of Research, DefiLlama"
+						/>
+					)}
+				</Field>
+				<Field label="Bio">
+					{(control) => (
+						<textarea
+							{...control}
+							value={item.bio}
+							onChange={(e) => onChange({ bio: e.target.value })}
+							rows={3}
+							placeholder="Short bio paragraph"
+							className={`${textareaStyles} resize-y`}
+						/>
+					)}
+				</Field>
+				<Field label="Link (optional)">
+					{(control) => (
+						<Input
+							{...control}
+							inputMode="url"
+							value={item.href}
+							onChange={(e) => onChange({ href: e.target.value })}
+							placeholder="https://x.com/…"
+						/>
+					)}
+				</Field>
 			</div>
 
 			{/* 12px between the buttons keeps their 44px touch targets apart on desktop, where they draw at 32px. */}

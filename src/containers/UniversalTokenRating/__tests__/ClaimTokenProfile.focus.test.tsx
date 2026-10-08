@@ -143,17 +143,38 @@ async function fillRequiredFields() {
 	}
 }
 
-test('a missing required field is marked invalid and reads its error', async () => {
+test('a missing required field takes focus, is marked invalid and reads its error', async () => {
 	await press(button('Submit Disclosure Details'))
 	const firstName = field('First name')
-	expect(firstName.getAttribute('aria-required')).toBe('true')
+	expect(document.activeElement).toBe(firstName)
+	expect(firstName.required).toBe(true)
 	expect(firstName.getAttribute('aria-invalid')).toBe('true')
 	expect(document.getElementById(firstName.getAttribute('aria-describedby')!)?.textContent).toBe(
-		'First name is required'
+		'Enter your first name.'
 	)
 	await type('First name', 'Ada')
 	expect(firstName.hasAttribute('aria-invalid')).toBe(false)
 	expect(firstName.hasAttribute('aria-describedby')).toBe(false)
+	expect(http.requests.filter((request) => request.url.pathname === '/api/public/utr/claim')).toHaveLength(0)
+})
+
+test('an invalid disclosure cell takes focus once the reader fields are complete', async () => {
+	await fillRequiredFields()
+	const addMore = [...container.querySelectorAll<HTMLButtonElement>('button')].find((el) =>
+		el.textContent?.includes('Add more')
+	)!
+	await press(addMore)
+	const [name, role] = container.querySelectorAll<HTMLInputElement>('table input')
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, 'Alice')
+		name.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+
+	await press(button('Submit Disclosure Details'))
+
+	expect(document.activeElement).toBe(role)
+	expect(role.getAttribute('aria-invalid')).toBe('true')
+	expect(document.getElementById(role.getAttribute('aria-describedby')!)?.textContent).toBe('Enter the role.')
 })
 
 test('a failed submit stays on screen while its retry runs', async () => {

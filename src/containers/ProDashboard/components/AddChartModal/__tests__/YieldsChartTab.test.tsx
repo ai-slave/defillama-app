@@ -31,6 +31,7 @@ async function renderTab(onChartTypeChange = vi.fn()) {
 		root.render(
 			<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, retryDelay: 0 } } })}>
 				<YieldsChartTab
+					error={null}
 					selectedYieldPool={{ configID: 'pool-1', name: 'USDC', project: 'aave-v3', chain: 'Ethereum' }}
 					onSelectedYieldPoolChange={vi.fn()}
 					selectedYieldChartType="borrow-apy"

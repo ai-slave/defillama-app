@@ -16,7 +16,7 @@
 		"format": "oxfmt --write",
 		"format:check": "oxfmt --check",
 		"lint": "oxlint",
-		"check": "bun run format:check && bun run typecheck && bun run test:typecheck && bun scripts/policies/check-design-tokens.mjs && bun scripts/policies/check-color-contrast.mjs && bun scripts/policies/check-focus-handoff.ts",
+		"check": "bun run format:check && bun run typecheck && bun run test:typecheck && bun scripts/policies/check-design-tokens.mjs && bun scripts/policies/check-color-contrast.mjs && bun scripts/policies/check-focus-handoff.ts && bun scripts/policies/check-form-validation.ts",
 		"compiler:baseline": "bun scripts/compilerBaseline.ts",
 		"compiler:baseline:check": "bun scripts/compilerBaseline.ts --check",
 		"prepare": "git config core.hooksPath .githooks || true",

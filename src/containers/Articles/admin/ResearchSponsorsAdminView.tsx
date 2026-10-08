@@ -23,9 +23,11 @@ import { ARTICLE_CLIENT_RELATION_LABELS, ARTICLE_SECTION_LABELS } from '~/contai
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
-import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, neighbourRowControl, pageContent, passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
+import { InlineStatus } from '~/ui/Status'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
@@ -146,7 +148,6 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 			) : null}
 			{editing ? (
 				<SponsorPageEditor
-					sponsor={sponsor}
 					update={updateMutation}
 					// The saved editor closes with its Save button, so the toggle that opened it takes focus.
 					onSaved={() =>
@@ -223,6 +224,7 @@ export function ResearchSponsorsAdminView() {
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [selectedEntity, setSelectedEntity] = useState<SponsorEntitySelection | null>(null)
+	const [submitted, setSubmitted] = useState(false)
 	const { data, isLoading, error } = useQuery({
 		queryKey: SPONSORS_QUERY_KEY,
 		queryFn: () => listResearchSponsors(authorizedFetch),
@@ -233,6 +235,7 @@ export function ResearchSponsorsAdminView() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: SPONSORS_QUERY_KEY })
 			setSelectedEntity(null)
+			setSubmitted(false)
 			toast.success('Client added')
 		},
 		onError: (mutationError) => toast.error(mutationMessage(mutationError, 'Failed to add client'))
@@ -260,30 +263,38 @@ export function ResearchSponsorsAdminView() {
 					<h2 className="heading-xs text-primary">Add a client</h2>
 					<p className="body-sm text-secondary">Search by company name, then confirm the exact DefiLlama page.</p>
 				</div>
-				<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+				<form
+					noValidate
+					className="grid gap-3"
+					onSubmit={(event) => {
+						event.preventDefault()
+						if (!selectedEntity) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+						createMutation.mutate(selectedEntity)
+					}}
+				>
 					{/* Only the picker locks: a disabled fieldset would also disable the button that holds focus. */}
 					<fieldset disabled={createMutation.isPending} className="min-w-0">
-						<SponsorEntityPicker value={selectedEntity} onChange={setSelectedEntity} />
+						<Field label="DefiLlama page" error={submitted && !selectedEntity ? 'Choose a DefiLlama page.' : null}>
+							{(control) => <SponsorEntityPicker {...control} value={selectedEntity} onChange={setSelectedEntity} />}
+						</Field>
 					</fieldset>
 					<Button
 						size="md"
 						variant="primary"
-						type="button"
-						disabled={!selectedEntity}
-						accessibleWhenDisabled
+						type="submit"
+						className="justify-self-start"
 						pendingLabel={createMutation.isPending ? 'Adding…' : null}
-						onClick={() => selectedEntity && createMutation.mutate(selectedEntity)}
 					>
 						Add client
 					</Button>
-				</div>
+				</form>
 			</Card>
 
 			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading clients…</div> : null}
 			{error ? (
 				<Card padding="md" className="grid gap-2">
 					<h2 className="heading-xs text-primary">Couldn't load clients</h2>
-					<p className="body-sm text-data-down">{mutationMessage(error, 'Failed to load clients')}</p>
+					<p className="body-sm text-error">{mutationMessage(error, 'Failed to load clients')}</p>
 				</Card>
 			) : null}
 			{!isLoading && !error && data?.length === 0 ? (
@@ -321,44 +332,40 @@ function ReportRelationControl({
 }
 
 function SponsorPageEditor({
-	sponsor,
 	update,
 	onSaved
 }: {
-	sponsor: ResearchSponsorAdmin
 	update: UseMutationResult<unknown, Error, SponsorEntitySelection>
 	onSaved: () => void
 }) {
 	const [replacement, setReplacement] = useState<SponsorEntitySelection | null>(null)
+	const [submitted, setSubmitted] = useState(false)
 	return (
 		<form
+			noValidate
 			className="grid gap-3 border-t border-subtle pt-4"
 			onSubmit={(event) => {
 				event.preventDefault()
-				if (!replacement) return
+				if (!replacement) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 				update.mutate(replacement, { onSuccess: onSaved })
 			}}
 		>
-			<fieldset disabled={update.isPending} className="grid min-w-0 gap-3">
-				<label className="label-sm text-primary" htmlFor={`replacement-${sponsor.id}`}>
-					Replacement DefiLlama page
-				</label>
-				<SponsorEntityPicker inputId={`replacement-${sponsor.id}`} value={replacement} onChange={setReplacement} />
+			<fieldset disabled={update.isPending} className="min-w-0">
+				<Field label="Replacement DefiLlama page" error={submitted && !replacement ? 'Choose a DefiLlama page.' : null}>
+					{(control) => <SponsorEntityPicker {...control} value={replacement} onChange={setReplacement} />}
+				</Field>
 			</fieldset>
 			<Button
 				size="md"
 				variant="primary"
 				type="submit"
 				className="justify-self-start"
-				disabled={!replacement}
 				pendingLabel={update.isPending ? 'Saving…' : null}
 			>
 				Save page
 			</Button>
 			{update.error ? (
-				<p role="alert" className="body-sm text-data-down">
-					{mutationMessage(update.error, 'Failed to update sponsor page')}
-				</p>
+				<InlineStatus variant="error">{mutationMessage(update.error, 'Failed to update sponsor page')}</InlineStatus>
 			) : null}
 		</form>
 	)

@@ -27,6 +27,7 @@ test('chart type arrows update the draft once and None remains a selectable valu
 		const [type, setType] = useState<MetricChartType>('sparkline')
 		return (
 			<MetricSentenceBuilder
+				error={null}
 				aggregator="latest"
 				metricType="tvl"
 				metricSubjectType="chain"
@@ -89,6 +90,7 @@ async function renderBuilder() {
 				<AppMetadataProvider>
 					<DashboardTestProvider>
 						<MetricSentenceBuilder
+							error={null}
 							aggregator="latest"
 							metricType="tvl"
 							metricSubjectType="chain"

@@ -1,4 +1,5 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
+import { Field } from '~/ui/Field'
 import { Input } from '~/ui/Input'
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -12,18 +13,20 @@ const isPlausibleIsoDate = (value: string): boolean => {
 	return Number(match[1]) >= MIN_PLAUSIBLE_YEAR
 }
 
+/** A date that applies as soon as it is complete, with no submit. A complete date the page refuses stays in the field
+    with the reason under it until the field loses focus, then the applied date returns. */
 export function DateInput({
 	label,
 	value,
-	error,
+	errorFor,
 	onChange,
 	min,
 	max
 }: {
 	label: string
 	value: string
-	/** Why the page rejected the last date it was given. */
-	error: string
+	/** Why the page refuses this date, or null when it applies. */
+	errorFor: (date: string) => string | null
 	onChange: (value: string) => void
 	min?: string
 	max?: string
@@ -31,34 +34,27 @@ export function DateInput({
 	// What the reader is typing, only while the field has focus; on blur it shows the committed value, so a date the
 	// page rejected goes away. Controlled with the browser's own value, so React never rewrites a date mid-edit.
 	const [draft, setDraft] = useState<string | null>(null)
-	const errorId = useId()
-	// The error belongs to the rejected date, so it shows only while this field still holds one.
-	const shownError = draft !== null && draft !== value && error ? error : null
+	const error = draft !== null && draft !== value && isPlausibleIsoDate(draft) ? errorFor(draft) : null
 
 	const handleChange = (next: string) => {
 		setDraft(next)
-		if (next !== value && isPlausibleIsoDate(next)) onChange(next)
+		if (next !== value && isPlausibleIsoDate(next) && !errorFor(next)) onChange(next)
 	}
 
 	return (
-		<label className="flex flex-col gap-1.5">
-			<span className="body-sm text-secondary">{label}</span>
-			<Input
-				type="date"
-				value={draft ?? value}
-				onChange={(event) => handleChange(event.target.value)}
-				onBlur={() => setDraft(null)}
-				aria-invalid={shownError ? true : undefined}
-				aria-describedby={shownError ? errorId : undefined}
-				min={min}
-				max={max}
-				className="cursor-pointer dark:scheme-dark"
-			/>
-			{shownError ? (
-				<p id={errorId} role="alert" className="body-sm text-error">
-					{shownError}
-				</p>
-			) : null}
-		</label>
+		<Field label={label} error={error} live>
+			{(control) => (
+				<Input
+					{...control}
+					type="date"
+					value={draft ?? value}
+					onChange={(event) => handleChange(event.target.value)}
+					onBlur={() => setDraft(null)}
+					min={min}
+					max={max}
+					className="cursor-pointer dark:scheme-dark"
+				/>
+			)}
+		</Field>
 	)
 }

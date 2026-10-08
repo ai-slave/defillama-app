@@ -117,6 +117,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 
 	return (
 		<form
+			noValidate
 			action={routePath}
 			onSubmit={handleSubmit}
 			className="group relative flex items-center border-b border-medium transition-colors focus-within:border-brand"

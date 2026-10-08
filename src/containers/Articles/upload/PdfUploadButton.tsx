@@ -103,7 +103,7 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 				</Ariakit.Button>
 			)}
 			{errorMessage ? (
-				<p role="alert" className="body-sm text-data-down">
+				<p role="alert" className="body-sm text-error">
 					{errorMessage}
 				</p>
 			) : helperText ? (

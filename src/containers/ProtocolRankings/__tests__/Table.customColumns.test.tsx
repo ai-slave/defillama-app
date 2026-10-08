@@ -161,3 +161,45 @@ test('a confirmed delete hands focus to Add Custom Column, since the deleted col
 
 	await waitForUi(() => expect(document.activeElement?.textContent?.trim()).toBe('Add Custom Column'))
 })
+
+test('saving a custom column without a name or formula says so under each field and focuses the name', async () => {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={new QueryClient()}>
+				<ChainProtocolsTable protocols={[protocol]} chain="All" />
+			</QueryClientProvider>
+		)
+	)
+	await click(document.querySelector<HTMLButtonElement>('button[aria-label="Columns dropdown"]')!)
+	const add = await waitForUi(() => {
+		const element = [...document.querySelectorAll<HTMLElement>('button, [role="menuitem"]')].find(
+			(el) => el.textContent?.trim() === 'Add Custom Column'
+		)
+		expect(element).toBeDefined()
+		return element!
+	})
+	await click(add)
+	const dialog = await waitForUi(() => {
+		const element = document.querySelector('[role="dialog"] form')
+		expect(element).not.toBeNull()
+		return element!
+	})
+	const errors = () => [...dialog.querySelectorAll('.text-error')].map((el) => el.textContent)
+	const field = (label: string) =>
+		[...dialog.querySelectorAll('label')].find((el) => el.textContent === label)!.control as HTMLInputElement
+	const type = async (input: HTMLInputElement, value: string) =>
+		act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+
+	expect(errors()).toEqual([])
+	await click(button('Save')!)
+	expect(errors()).toEqual(['Enter a column name.', 'Enter a formula.'])
+	expect(document.activeElement).toBe(field('Column name'))
+	await type(field('Column name'), 'Ratio')
+	await type(field('Formula'), 'tvl *')
+	expect(errors()[0]).toMatch(/^Invalid formula: /)
+	await type(field('Formula'), 'tvl * 2')
+	expect(errors()).toEqual([])
+})

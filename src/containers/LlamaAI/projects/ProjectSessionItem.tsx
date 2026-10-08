@@ -39,8 +39,8 @@ export function ProjectSessionItem({
 		event.preventDefault()
 		if (updateTitle.isPending) return
 		const title = (event.currentTarget.elements.namedItem('newTitle') as HTMLInputElement).value.trim()
-		if (!title) return
-		if (title === s.title) {
+		// A title cleared to blank keeps the old one, as Finder and Figma do.
+		if (!title || title === s.title) {
 			closeRename()
 			return
 		}
@@ -56,6 +56,7 @@ export function ProjectSessionItem({
 		return (
 			<li key={s.sessionId}>
 				<form
+					noValidate
 					ref={formRef}
 					onSubmit={handleRenameSubmit}
 					className="group/row -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-1 rounded-md bg-hover-row px-1 py-0.5 sm:min-h-9"

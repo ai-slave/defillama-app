@@ -256,7 +256,7 @@ test('publishing from the page with a missing field opens the review that marks 
 	article = { ...article, status: 'published', tags: [], pending: { ...article, tags: [] } as ArticleSnapshotPayload }
 	await mount()
 	await click(button('Publish update'))
-	await waitForUi(() => expect(openDialog('Edit listing').textContent).toContain('At least one topic is required'))
+	await waitForUi(() => expect(openDialog('Edit listing').textContent).toContain('Enter at least one topic.'))
 	expect(toasts.error).not.toHaveBeenCalled()
 })
 
@@ -320,4 +320,71 @@ test('making a co-author the owner keeps the edits not saved yet', async () => {
 	await click(button('Make owner', openDialog('Make Sam the owner?')))
 	await waitForUi(() => expect(openDialog('Review & publish').querySelector('[aria-label="Remove Sam"]')).toBeNull())
 	expect(title.value).toBe('Unsaved headline')
+})
+
+async function type(input: HTMLInputElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+const errorOf = (field: HTMLElement) =>
+	field.getAttribute('aria-invalid') === 'true'
+		? document.getElementById(field.getAttribute('aria-describedby')!.split(' ').at(-1)!)!.textContent
+		: null
+
+test('publishing without a topic marks Topics, focuses it, and the mark clears once a topic is typed', async () => {
+	article = { ...article, tags: [] }
+	await mount()
+	await click(button('Publish'))
+	const review = openDialog('Review & publish')
+	const topics = review.querySelector<HTMLInputElement>('input[placeholder="stablecoins, lending, ethereum"]')!
+	expect(errorOf(topics)).toBeNull()
+	await press(button('Publish now', review))
+	await waitForUi(() => expect(document.activeElement).toBe(topics))
+	expect(errorOf(topics)).toBe('Enter at least one topic.')
+	await type(topics, 'lending')
+	expect(errorOf(topics)).toBeNull()
+})
+
+test('adding a co-author checks the address under its field and sends nothing until it looks valid', async () => {
+	await mount()
+	await click(button('Publish'))
+	const review = openDialog('Review & publish')
+	await waitForUi(() => expect(button('Remove Sam')).toBeTruthy())
+	const email = review.querySelector<HTMLInputElement>('input[type="email"]')!
+	await press(button('Add', review))
+	expect(errorOf(email)).toBe('Enter an email address.')
+	expect(document.activeElement).toBe(email)
+	await type(email, 'sam@example')
+	expect(errorOf(email)).toBe('Enter a valid email address.')
+	expect(
+		session.requests.some(
+			(request) => request.url.pathname.endsWith('/collaborators') && request.init?.method === 'POST'
+		)
+	).toBe(false)
+})
+
+test('an address the server refuses says so under the email field, takes focus, and clears on the next edit', async () => {
+	await mount()
+	session.serve({
+		[`${FEATURES_SERVER}/articles/`]: (url: URL, init?: RequestInit) => {
+			if (url.pathname.endsWith('/collaborators') && init?.method === 'POST') {
+				return fixtureStatus(404, { error: 'No account uses that email.' })()
+			}
+			if (url.pathname.endsWith('/edit')) return { article }
+			if (url.pathname.endsWith('/collaborators')) return { collaborators }
+			return articleWrite()
+		}
+	})
+	await click(button('Publish'))
+	const review = openDialog('Review & publish')
+	await waitForUi(() => expect(button('Remove Sam')).toBeTruthy())
+	const email = review.querySelector<HTMLInputElement>('input[type="email"]')!
+	await type(email, 'nobody@example.com')
+	await press(button('Add', review))
+	await waitForUi(() => expect(errorOf(email)).toBe('No account uses that email.'))
+	expect(document.activeElement).toBe(email)
+	await type(email, 'somebody@example.com')
+	expect(errorOf(email)).toBeNull()
 })

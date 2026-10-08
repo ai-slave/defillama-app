@@ -1,10 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, useRef, useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
-import { takeLostFocus } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
@@ -49,9 +50,16 @@ export function IntegrationRow({
 		initialTgloginToken: kind === 'telegram' ? initialTgloginToken : null
 	})
 
-	const codeId = useId()
 	const [codeDraft, setCodeDraft] = useState('')
-	const [inlineError, setInlineError] = useState<string | null>(null)
+	const [submitted, setSubmitted] = useState(false)
+	// The server refused the last code; the next edit clears it.
+	const [codeRejected, setCodeRejected] = useState(false)
+	const codeError =
+		submitted && codeDraft.length !== 6
+			? 'Enter the 6-digit code from Telegram.'
+			: codeRejected
+				? "That code didn't work. Check it in Telegram and try again."
+				: null
 	const confirming = link.state.status === 'confirming' ? link.state.step : null
 	const linkedHandle = link.state.status === 'linked' ? formatHandle(link.state.username) : ''
 	const [disconnectHandle, setDisconnectHandle] = useState<string | null>(null)
@@ -133,61 +141,54 @@ export function IntegrationRow({
 
 			{link.state.status === 'awaiting_code' || confirming === 'code' ? (
 				<form
+					noValidate
 					onSubmit={(e) => {
 						e.preventDefault()
-						// A wrong code's message stays while the next code is checked.
+						const form = e.currentTarget
+						if (codeDraft.length !== 6) return showFieldErrors(form, () => setSubmitted(true))
 						link
 							.confirmCode(codeDraft)
 							.then((result) => {
-								setInlineError(null)
 								if (result && 'linked' in result && result.linked) onInitialStateConsumed?.()
 							})
-							.catch(() => setInlineError("That code didn't work. Check it in Telegram and try again."))
+							.catch(() => showFieldErrors(form, () => setCodeRejected(true)))
 					}}
-					className="mt-3 flex flex-col gap-1.5"
+					className="mt-3"
 				>
-					<label htmlFor={codeId} className="label-sm text-secondary">
-						Code from Telegram
-					</label>
-					<div className="flex gap-2">
-						{/* Ariakit's autoFocus, so Settings opened from a Telegram login link starts on the code instead of its
+					<Field label="Code from Telegram" hint="Enter the 6-digit code the bot sent you." error={codeError}>
+						{(control) => (
+							<div className="flex gap-2">
+								{/* Ariakit's autoFocus, so Settings opened from a Telegram login link starts on the code instead of its
 						    ×, and a cancelled switch returns here. */}
-						<Ariakit.Focusable
-							autoFocus
-							render={
-								<Input
-									id={codeId}
-									value={codeDraft}
-									onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
-									placeholder="123456"
-									maxLength={6}
-									inputMode="numeric"
-									autoComplete="one-time-code"
-									aria-invalid={inlineError !== null}
-									aria-describedby={`${codeId}-hint`}
-									className="flex-1"
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<Input
+											{...control}
+											value={codeDraft}
+											onChange={(e) => {
+												setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))
+												setCodeRejected(false)
+											}}
+											placeholder="123456"
+											maxLength={6}
+											inputMode="numeric"
+											autoComplete="one-time-code"
+											className="flex-1"
+										/>
+									}
 								/>
-							}
-						/>
-						<Button
-							type="submit"
-							size="md"
-							variant="primary"
-							pendingLabel={confirming === 'code' ? 'Confirming…' : null}
-							disabled={codeDraft.length !== 6}
-						>
-							Confirm
-						</Button>
-					</div>
-					{inlineError ? (
-						<p id={`${codeId}-hint`} role="alert" className="m-0 body-sm text-error">
-							{inlineError}
-						</p>
-					) : (
-						<p id={`${codeId}-hint`} className="m-0 body-sm text-secondary">
-							Enter the 6-digit code the bot sent you.
-						</p>
-					)}
+								<Button
+									type="submit"
+									size="md"
+									variant="primary"
+									pendingLabel={confirming === 'code' ? 'Confirming…' : null}
+								>
+									Confirm
+								</Button>
+							</div>
+						)}
+					</Field>
 				</form>
 			) : null}
 

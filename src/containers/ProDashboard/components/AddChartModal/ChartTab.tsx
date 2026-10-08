@@ -5,6 +5,7 @@ import type { ChartRuntimeView } from '../../chartRuntime'
 import { ProMeta } from '../../ui'
 import { CategoryChartForm } from './CategoryChartForm'
 import { ChartBuilderTab } from './ChartBuilderTab'
+import type { AddCardPane } from './panes'
 import type { ChartModeType, ModalState } from './types'
 import { UnifiedChartTab } from './UnifiedChartTab'
 import type { ModalActions, ModalComputed } from './useModalActions'
@@ -42,11 +43,25 @@ interface ChartTabProps {
 	/** The picked series with their loaded data, for the previews. */
 	composerItems: Array<ChartRuntimeView>
 	isEditingItem: boolean
+	/** What Add still needs, shown under the control that needs it once Add was pressed. */
+	error: string | null
+	/** The pane a form shows below lg; see AddChartModal. */
+	pane: AddCardPane
+	onPaneChange: (pane: AddCardPane) => void
 }
 
 const CHART_MODES = ['builder', 'manual'] as const
 
-export function ChartTab({ state, actions, computed, composerItems, isEditingItem }: ChartTabProps) {
+export function ChartTab({
+	state,
+	actions,
+	computed,
+	composerItems,
+	isEditingItem,
+	error,
+	pane,
+	onPaneChange
+}: ChartTabProps) {
 	const { chartMode } = state
 	return (
 		<Tabs value={chartMode} values={CHART_MODES} onValueChange={actions.setChartMode}>
@@ -73,6 +88,9 @@ export function ChartTab({ state, actions, computed, composerItems, isEditingIte
 							onChartBuilderNameChange={actions.setChartBuilderName}
 							timePeriod={computed.timePeriod}
 							customTimePeriod={computed.customTimePeriod}
+							error={error}
+							pane={pane}
+							onPaneChange={onPaneChange}
 						/>
 					) : (
 						<UnifiedChartTab
@@ -102,8 +120,12 @@ export function ChartTab({ state, actions, computed, composerItems, isEditingIte
 									actions={actions}
 									protocolOptions={computed.protocolOptions}
 									protocolsLoading={computed.protocolsLoading}
+									error={error}
 								/>
 							}
+							error={error}
+							pane={pane}
+							onPaneChange={onPaneChange}
 						/>
 					)}
 				</TabPanel>

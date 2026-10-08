@@ -99,20 +99,24 @@ test('email confirmation locks the address during submission and identifies the 
 	await act(async () => request.resolve(emailSent()))
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('first@example.com'))
 })
-test('a failed email request can retry unchanged, keeping its error while the retry sends', async () => {
+test('a failed email request can retry unchanged, keeping its error under the field while the retry sends', async () => {
 	const retry = Promise.withResolvers<Response>()
 	emailReplies.push(offline, () => retry.promise)
 	await mount(<EmailHarness />)
-	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'first@example.com')
+	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
+	const fieldError = () => document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
+	await change(input, 'first@example.com')
 	await click('Confirm email')
 	const failure = 'Could not send the confirmation email. Check the address and try again.'
-	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toBe(failure))
+	await waitForUi(() => expect(fieldError()).toBe(failure))
+	expect(input.getAttribute('aria-invalid')).toBe('true')
+	expect(document.activeElement).toBe(input)
 	expect(button('Confirm email').disabled).toBe(false)
 	await click('Confirm email')
 	await waitForUi(() =>
 		expect(document.querySelector('[role=dialog] button[aria-busy=true]')?.textContent).toContain('Sending…')
 	)
-	expect(document.querySelector('[role=alert]')?.textContent).toBe(failure)
+	expect(fieldError()).toBe(failure)
 	await act(async () => retry.resolve(emailSent()))
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('A confirmation link'))
 	expect(emailRequests()).toHaveLength(2)
@@ -228,15 +232,16 @@ test('team rename failure preserves its draft and its error through the retry, a
 	await click('Cancel')
 	await waitForUi(() => expect(document.activeElement).toBe(button('Rename team')))
 })
-test('team rename rejects blank names and submits a trimmed name', async () => {
+test('a team rename cleared to blank keeps the current name without a request, and a padded name is trimmed', async () => {
 	await mount(<TeamInfoCard />)
 	await click('Rename team')
-	const input = container.querySelector('input')!
-	await change(input, '')
+	await change(container.querySelector('input')!, '   ')
 	await click('Save')
-	await change(input, '   ')
-	await click('Save')
-	await change(input, '  A clear name  ')
+	expect(container.querySelector('input')).toBeNull()
+	expect(container.textContent).toContain('Original')
+	expect(document.activeElement).toBe(button('Rename team'))
+	await click('Rename team')
+	await change(container.querySelector('input')!, '  A clear name  ')
 	await click('Save')
 	await waitForUi(() => expect(renameRequests()).toEqual(['A clear name']))
 })

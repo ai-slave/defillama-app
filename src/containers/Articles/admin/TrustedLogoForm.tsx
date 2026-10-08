@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { SavedChangedNotice, sameValue, useSavedDraft } from '~/containers/Articles/admin/savedDraft'
@@ -8,6 +9,8 @@ import { ArticleApiError, createTrustedLogo, listTrustedLogos, updateTrustedLogo
 import type { TrustedLogo, TrustedLogoPayload } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
+import { Field, FieldGroup } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { queryReadFailed } from '~/utils/query'
 
@@ -38,11 +41,11 @@ type FormErrors = {
 
 function validate(state: FormState): FormErrors {
 	const errors: FormErrors = {}
-	if (!state.name.trim()) errors.name = 'Name is required'
+	if (!state.name.trim()) errors.name = 'Enter a name.'
 	const linkUrl = state.linkUrl.trim()
-	if (!linkUrl) errors.linkUrl = 'Link URL is required'
-	else if (!/^(https?:\/\/)/.test(linkUrl)) errors.linkUrl = 'Must start with http:// or https://'
-	if (!state.imageUrl.trim()) errors.imageUrl = 'Image is required'
+	if (!linkUrl) errors.linkUrl = 'Enter the link URL.'
+	else if (!/^(https?:\/\/)/.test(linkUrl)) errors.linkUrl = 'Enter a valid URL starting with http:// or https://.'
+	if (!state.imageUrl.trim()) errors.imageUrl = 'Upload a logo image.'
 	return errors
 }
 
@@ -72,12 +75,14 @@ export function TrustedLogoForm({ logoId }: Props) {
 		acceptSaved
 	} = useSavedDraft(logo, logo?.id ?? null, logoToForm, sameValue)
 
+	const [submitted, setSubmitted] = useState(false)
 	const errors = validate(state)
 	const hasError = Object.keys(errors).length > 0
+	const shown = submitted ? errors : {}
 
 	const saveMutation = useMutation({
-		mutationFn: async (submitted: FormState) => {
-			const payload = buildPayload(submitted)
+		mutationFn: async (values: FormState) => {
+			const payload = buildPayload(values)
 			if (logo) return updateTrustedLogo(logo.id, payload, authorizedFetch)
 			return createTrustedLogo(payload, authorizedFetch)
 		},
@@ -123,9 +128,9 @@ export function TrustedLogoForm({ logoId }: Props) {
 	// The save happened whatever the reader did next, so the revalidation and the toast belong to the
 	// mutation. Only the redirect is tied to this form still being on screen, and that goes on the
 	// mutate call, which React Query drops if the form unmounted first.
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (hasError) return
+		if (hasError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		saveMutation.mutate(state, {
 			onSuccess: (saved) => {
 				acceptSaved(logoToForm(saved), state)
@@ -135,33 +140,36 @@ export function TrustedLogoForm({ logoId }: Props) {
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">Name</span>
-				<Input
-					type="text"
-					value={state.name}
-					onChange={(e) => update({ name: e.target.value })}
-					placeholder="e.g. Coinbase"
-					className="w-full"
-				/>
-				{errors.name ? <p className="body-sm text-error">{errors.name}</p> : null}
-			</label>
+		<form noValidate onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
+			<Field label="Name" error={shown.name}>
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						required
+						value={state.name}
+						onChange={(e) => update({ name: e.target.value })}
+						placeholder="e.g. Coinbase"
+						className="w-full"
+					/>
+				)}
+			</Field>
 
-			<label className="grid gap-1.5">
-				<span className="label-md text-primary">Link URL</span>
-				<Input
-					type="url"
-					value={state.linkUrl}
-					onChange={(e) => update({ linkUrl: e.target.value })}
-					placeholder="https://…"
-					className="w-full"
-				/>
-				{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
-			</label>
+			<Field label="Link URL" error={shown.linkUrl}>
+				{(control) => (
+					<Input
+						{...control}
+						type="url"
+						required
+						value={state.linkUrl}
+						onChange={(e) => update({ linkUrl: e.target.value })}
+						placeholder="https://…"
+						className="w-full"
+					/>
+				)}
+			</Field>
 
-			<div className="grid gap-1.5">
-				<span className="label-md text-primary">Logo image</span>
+			<FieldGroup label="Logo image" error={shown.imageUrl}>
 				<ImageUploadButton
 					scope="trusted-logo"
 					previewShape="wide"
@@ -171,8 +179,7 @@ export function TrustedLogoForm({ logoId }: Props) {
 					label="logo image"
 					helperText="webp/png, transparent background, at least 400px wide"
 				/>
-				{errors.imageUrl ? <p className="body-sm text-error">{errors.imageUrl}</p> : null}
-			</div>
+			</FieldGroup>
 
 			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page-glass px-2 py-3 backdrop-blur">
 				{conflict ? <SavedChangedNotice noun="logo" onLoadSaved={loadSaved} /> : null}
@@ -184,13 +191,14 @@ export function TrustedLogoForm({ logoId }: Props) {
 						/>
 						{dirty ? 'Unsaved changes' : logo ? 'All changes saved' : 'New logo'}
 					</span>
-					{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+					{/* Disabled only with nothing to save, which the status beside it says. Focusable while disabled: a save
+					    leaves nothing dirty, which disables the button that was pressed. */}
 					<Button
 						variant="primary"
 						size="md"
 						pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 						type="submit"
-						disabled={hasError || (!dirty && !!logo)}
+						disabled={!dirty && !!logo}
 						accessibleWhenDisabled
 					>
 						{logo ? 'Save changes' : 'Create logo'}

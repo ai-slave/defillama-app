@@ -25,8 +25,8 @@ function render(element: ReactElement) {
 }
 
 function inputByLabel(label: string) {
-	const field = Array.from(document.querySelectorAll('label')).find((el) => el.textContent?.includes(label))
-	return field?.querySelector('input') ?? null
+	const field = Array.from(document.querySelectorAll('label')).find((el) => el.textContent === label)
+	return field ? document.querySelector<HTMLInputElement>(`[id="${field.htmlFor}"]`) : null
 }
 
 function buttonByText(text: string) {
@@ -118,15 +118,18 @@ describe('connect form token steps', () => {
 })
 
 describe('claim form submission', () => {
-	test('asks for the verification check when Submit is pressed before it passes', async () => {
+	test('Submit waits for the security check to pass', async () => {
 		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', 'claim-site-key')
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
-
-		await click(buttonByText('Submit claim request')!)
-
-		expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
-			'Complete the verification check to submit'
+		await fillClaim()
+		const submit = buttonByText('Submit claim request')!
+		expect(submit.getAttribute('aria-disabled')).toBe('true')
+		expect(document.getElementById(submit.getAttribute('aria-describedby')!)?.textContent).toBe(
+			'Waiting for the security check above to finish.'
 		)
+
+		await click(submit)
+
 		expect(http.urls().some((url) => url.includes('/lead/claim'))).toBe(false)
 	})
 
@@ -224,13 +227,40 @@ describe('lead forms keep what was typed', () => {
 		expect(onClose).not.toHaveBeenCalled()
 	})
 
-	test('an incomplete claim moves focus to the first field that needs fixing', async () => {
+	test('an incomplete claim says what is missing under each field and focuses the first', async () => {
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
 		await type(inputByLabel('Position at organization')!, 'CEO')
+		await type(inputByLabel('Your organization email address')!, 'ada@acme')
+		const errorTexts = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((el) => el.textContent)
+		expect(errorTexts()).toEqual([])
 
 		await click(buttonByText('Submit claim request')!)
 
+		expect(errorTexts()).toEqual([
+			'Enter your full name.',
+			'Enter your LinkedIn or X profile URL.',
+			'Enter a valid email address.',
+			'Agree to both statements to submit the claim.'
+		])
 		expect(document.activeElement).toBe(inputByLabel('Your full name'))
+		await type(inputByLabel('Your full name')!, 'Ada Lovelace')
+		expect(errorTexts()).not.toContain('Enter your full name.')
+		expect(http.urls().some((url) => url.includes('/lead/claim'))).toBe(false)
+	})
+
+	test('an unticked consent takes focus when it is the only thing missing', async () => {
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+		await fillClaim()
+		const [alignment] = document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[type="checkbox"]')
+		await click(alignment)
+
+		await click(buttonByText('Submit claim request')!)
+
+		expect(document.activeElement).toBe(alignment)
+		expect(alignment.getAttribute('aria-invalid')).toBe('true')
+		expect(document.getElementById(alignment.getAttribute('aria-describedby')!)?.textContent).toBe(
+			'Agree to both statements to submit the claim.'
+		)
 	})
 
 	test('a failed claim keeps its error on screen while the retry runs', async () => {
@@ -259,6 +289,35 @@ describe('lead forms keep what was typed', () => {
 			expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Claim request received')
 		)
 	})
+})
+
+test('an empty connect request says what is missing and focuses the interest picker', async () => {
+	await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+	await click(buttonByText('Submit request')!)
+
+	expect([...document.querySelectorAll('[role="dialog"] .text-error')].map((el) => el.textContent)).toEqual([
+		'Choose what you are interested in.',
+		'Enter the project name.',
+		'Enter the token ticker.',
+		'Enter your full name.',
+		'Enter an email address.'
+	])
+	expect(document.activeElement?.textContent).toBe('Select an option')
+	expect(document.activeElement?.getAttribute('aria-invalid')).toBe('true')
+	expect(http.urls().some((url) => url.includes('/lead/connect'))).toBe(false)
+})
+
+test('a token status picked after a failed submit opens its token field without an error', async () => {
+	await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" clickId={null} />)
+	const errorTexts = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((el) => el.textContent)
+	await click(buttonByText('Submit request')!)
+	expect(errorTexts()).toContain('Enter the project name.')
+
+	const listed = [...document.querySelectorAll('label')].find((el) => el.textContent === 'Listed')!
+	await click(listed.querySelector('input')!)
+	expect(errorTexts()).toEqual([])
+	await click(buttonByText('Submit request')!)
+	expect(errorTexts()).toContain('Choose your token, or “My token does not appear in this list”.')
 })
 
 describe('lead dialogs open on their first field', () => {

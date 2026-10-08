@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { type ChangeEvent, type FormEvent, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { type ChangeEvent, type FormEvent, useRef, useState, useSyncExternalStore } from 'react'
 import { useAuthContext } from '~/auth'
 import { isWalletEmail } from '~/containers/Account/utils'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -10,11 +10,13 @@ import {
 	useNewsletterSubscription
 } from '~/hooks/useNewsletterSubscription'
 import { Button } from '~/ui/Button'
-import { keepFocus, pageContent } from '~/ui/focus'
+import { Field, FieldGroup } from '~/ui/Field'
+import { keepFocus, pageContent, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
+import { emailError } from '~/utils/email'
 
 interface NewsletterSignupProps {
 	layout: 'card' | 'strip'
@@ -51,7 +53,6 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	const isClient = useIsClient()
 	const { user } = useAuthContext()
 	const mutation = useNewsletterSubscription()
-	const helperId = useId()
 	const persistedDismissed = useSyncExternalStore(subscribeToStorage, readNewsletterDismissed, () => false)
 
 	const accountEmail =
@@ -60,6 +61,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	const [email, setEmail] = useState(accountEmail)
 	const [prevAccountEmail, setPrevAccountEmail] = useState(accountEmail)
 	const [touched, setTouched] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 	const [selected, setSelected] = useState<Record<NewsletterKey, boolean>>({ newsletter: true, research: true })
 	const [succeeded, setSucceeded] = useState(false)
 	const [dismissed, setDismissed] = useState(false)
@@ -72,29 +74,25 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 
 	const isPending = mutation.isPending
 	const selectedKeys = NEWSLETTERS.map((n) => n.key).filter((key) => selected[key])
-	const noneSelected = selectedKeys.length === 0
-	const canSubmit = !isPending && !noneSelected && email.trim().length > 0
-	// A disabled Subscribe says why in visible text beside it.
-	const disabledReason = noneSelected
-		? 'Choose at least one newsletter.'
-		: email.trim().length === 0
-			? 'Enter an email address.'
-			: null
+	const emailMessage = emailError(email)
+	const listMessage = selectedKeys.length === 0 ? 'Choose at least one newsletter.' : null
 
 	const toggle = (key: NewsletterKey) => setSelected((s) => ({ ...s, [key]: !s[key] }))
 	const onEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
 		setEmail(e.target.value)
 		setTouched(true)
 	}
-	const handleSubmit = (e: FormEvent) => {
+	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!canSubmit) return
+		if (isPending) return
+		if (emailMessage || listMessage) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		mutation.mutate(
 			{ email: email.trim(), newsletters: selectedKeys },
 			{
 				onSuccess: (data) => {
 					if (selectedKeys.every((key) => data.result?.[key] === 'ok')) {
 						setSucceeded(true)
+						setSubmitted(false)
 						persistNewsletterDismissed()
 					}
 				}
@@ -144,42 +142,56 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 					<NewsletterSuccess layout="strip" email={email} onReset={handleReset} />
 				) : (
 					<div className="flex flex-col gap-4 @5xl:flex-row @5xl:items-center @5xl:justify-between @5xl:gap-8">
-						<div className="flex flex-col gap-1">
+						<div className="flex min-w-0 flex-col gap-1">
 							<span className="flex items-center gap-2 title-lg text-primary">
 								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-link" />
-								Subscribe to the DefiLlama Newsletter
+								Get DefiLlama in your inbox
 							</span>
 							<span className="max-w-md body-md text-secondary">
-								Get DefiLlama's newsletter, Research updates, or both, delivered to your inbox.
+								Onchain data insights and DeFi tips, plus in-depth research reports.
 							</span>
 						</div>
+						{/* The fields share subgrid rows (label, control, error), so an error under one field never moves the
+						    controls beside it. From @sm the email and Subscribe share a row under the chips; from @2xl, where
+						    all three fit without wrapping the chips, they share one row. */}
 						<form
+							noValidate
 							onSubmit={handleSubmit}
-							className="flex flex-col gap-3 @sm:flex-row @sm:flex-wrap @sm:items-end @5xl:shrink-0 @5xl:justify-end"
+							className="flex flex-col gap-3 @sm:grid @sm:grid-cols-[minmax(0,1fr)_auto] @sm:grid-rows-[auto_auto_auto_auto] @sm:gap-x-3 @sm:gap-y-0 @2xl:grid-cols-[auto_minmax(0,14rem)_auto] @2xl:grid-rows-[auto_auto_auto] @2xl:justify-start @5xl:shrink-0"
 						>
-							<div className="flex flex-wrap items-center gap-2" role="group" aria-label="Newsletters">
-								{NEWSLETTERS.map(({ key, label }) => {
-									const on = selected[key]
-									return (
-										<Ariakit.Checkbox
-											key={key}
-											render={
-												<Button variant="toggle" size="md" data-active={on} aria-label={`Subscribe to ${label}`} />
-											}
-											checked={on}
-											onChange={() => toggle(key)}
-											disabled={isPending}
-										>
-											{on ? <Icon name="check" className="size-3.5" /> : null}
-											{label.replace('DefiLlama ', '')}
-										</Ariakit.Checkbox>
-									)
-								})}
-							</div>
-							<div className="flex flex-col gap-2 @sm:flex-row @sm:items-end">
-								<label className="flex min-w-0 flex-col gap-1 @sm:w-56">
-									<span className="label-sm text-secondary">Email</span>
+							<FieldGroup
+								label="Send me"
+								error={submitted ? listMessage : null}
+								className="@sm:col-span-2 @sm:mb-3 @2xl:col-span-1 @2xl:row-span-3 @2xl:mb-0 @2xl:grid @2xl:grid-rows-subgrid"
+							>
+								<div className="flex flex-wrap items-center gap-2">
+									{NEWSLETTERS.map(({ key, label }) => {
+										const on = selected[key]
+										return (
+											<Ariakit.Checkbox
+												key={key}
+												render={
+													<Button variant="toggle" size="md" data-active={on} aria-label={`Subscribe to ${label}`} />
+												}
+												checked={on}
+												onChange={() => toggle(key)}
+												disabled={isPending}
+											>
+												{on ? <Icon name="check" className="size-3.5" /> : null}
+												{label.replace('DefiLlama ', '')}
+											</Ariakit.Checkbox>
+										)
+									})}
+								</div>
+							</FieldGroup>
+							<Field
+								label="Email"
+								error={submitted ? emailMessage : null}
+								className="@sm:row-span-3 @sm:grid @sm:grid-rows-subgrid"
+							>
+								{(control) => (
 									<Input
+										{...control}
 										ref={emailRef}
 										type="email"
 										required
@@ -187,25 +199,18 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 										onChange={onEmailChange}
 										placeholder="you@example.com"
 									/>
-								</label>
-								<Button
-									type="submit"
-									variant="primary"
-									size="md"
-									pendingLabel={isPending ? 'Subscribing…' : null}
-									aria-describedby={disabledReason ? helperId : undefined}
-									disabled={!canSubmit}
-									accessibleWhenDisabled
-								>
-									Subscribe
-									<Icon name="arrow-right" className="size-3.5" />
-								</Button>
-							</div>
-							{disabledReason ? (
-								<p id={helperId} className="body-sm text-secondary @sm:basis-full @5xl:text-right">
-									{disabledReason}
-								</p>
-							) : null}
+								)}
+							</Field>
+							<Button
+								type="submit"
+								variant="primary"
+								size="md"
+								pendingLabel={isPending ? 'Subscribing…' : null}
+								className="@sm:col-start-2 @sm:row-start-3 @2xl:col-start-3 @2xl:row-start-2"
+							>
+								Subscribe
+								<Icon name="arrow-right" className="size-3.5" />
+							</Button>
 						</form>
 					</div>
 				)}
@@ -223,57 +228,51 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 			{succeeded ? (
 				<NewsletterSuccess layout="card" email={email} onReset={handleReset} />
 			) : (
-				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
-					<label className="flex flex-col gap-1">
-						<span className="label-sm text-tertiary">Subscribing as</span>
-						<Input
-							ref={emailRef}
-							type="email"
-							required
-							value={email}
-							onChange={onEmailChange}
-							placeholder="you@example.com"
-						/>
-					</label>
+				<form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+					<Field label="Subscribing as" error={submitted ? emailMessage : null}>
+						{(control) => (
+							<Input
+								{...control}
+								ref={emailRef}
+								type="email"
+								required
+								value={email}
+								onChange={onEmailChange}
+								placeholder="you@example.com"
+							/>
+						)}
+					</Field>
 
-					<div className="flex flex-col gap-4" role="group" aria-label="Newsletters">
-						{NEWSLETTERS.map(({ key, label, description }) => (
-							<div key={key} className="flex flex-col gap-1">
-								<div className="flex items-center justify-between gap-4">
-									<span className="body-md text-primary">{label}</span>
-									<Switch
-										label={`Subscribe to ${label}`}
-										hideLabel
-										value={key}
-										checked={selected[key]}
-										onChange={() => toggle(key)}
-										disabled={isPending}
-									/>
+					<FieldGroup label="Send me" error={submitted ? listMessage : null}>
+						<div className="flex flex-col gap-4">
+							{NEWSLETTERS.map(({ key, label, description }) => (
+								<div key={key} className="flex flex-col gap-1">
+									<div className="flex items-center justify-between gap-4">
+										<span className="body-md text-primary">{label}</span>
+										<Switch
+											label={`Subscribe to ${label}`}
+											hideLabel
+											value={key}
+											checked={selected[key]}
+											onChange={() => toggle(key)}
+											disabled={isPending}
+										/>
+									</div>
+									<p className="max-w-[400px] body-sm text-tertiary">{description}</p>
 								</div>
-								<p className="max-w-[400px] body-sm text-tertiary">{description}</p>
-							</div>
-						))}
-					</div>
+							))}
+						</div>
+					</FieldGroup>
 
-					<div className="flex flex-col gap-2">
-						<Button
-							type="submit"
-							variant="primary"
-							size="md"
-							pendingLabel={isPending ? 'Subscribing…' : null}
-							aria-describedby={disabledReason ? helperId : undefined}
-							disabled={!canSubmit}
-							accessibleWhenDisabled
-							className="w-fit"
-						>
-							Subscribe
-						</Button>
-						{disabledReason ? (
-							<p id={helperId} className="body-sm text-tertiary">
-								{disabledReason}
-							</p>
-						) : null}
-					</div>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						pendingLabel={isPending ? 'Subscribing…' : null}
+						className="w-fit"
+					>
+						Subscribe
+					</Button>
 				</form>
 			)}
 		</div>

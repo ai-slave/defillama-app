@@ -20,14 +20,15 @@ export async function fetchProYieldsData(chains: Array<string> = []): Promise<Ar
 	return joinEarnAndBorrowMarkets(earn.rows, markets.rows)
 }
 
-export function useYieldsData(chains?: Array<string>) {
+/** `enabled` false skips the fetch, for a caller that reads the pools only while their picker is open. */
+export function useYieldsData(chains?: Array<string>, enabled = true) {
 	const streamDone = useContext(StreamDoneContext)
 	const selectedChains = chains ?? []
 
 	const query = useQuery({
 		queryKey: getProYieldsDatasetQueryKey(selectedChains),
 		queryFn: () => fetchProYieldsData(selectedChains),
-		enabled: streamDone,
+		enabled: enabled && streamDone,
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		retry: 1
 	})

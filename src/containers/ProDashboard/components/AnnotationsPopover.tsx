@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef, useState } from 'react'
+import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
-import { keepFocus, neighbourRowControl } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, neighbourRowControl, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
@@ -17,30 +18,11 @@ import { ProBadge } from '../ui'
 import { generateItemId } from '../utils/dashboardUtils'
 
 export function AnnotationsPopover() {
-	const { annotations, setAnnotations } = useProDashboardAnnotations()
+	const { annotations } = useProDashboardAnnotations()
+	// The draft outlives a close, so a half-typed annotation is still there on the next opening.
 	const [date, setDate] = useState('')
 	const [label, setLabel] = useState('')
-	const dateInputRef = useRef<HTMLInputElement>(null)
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-end' })
-	const atLimit = annotations.length >= MAX_DASHBOARD_ANNOTATIONS
-	const trimmedLabel = label.trim()
-	const canAdd = !atLimit && isValidAnnotationDate(date) && trimmedLabel.length > 0
-
-	const addAnnotation = () => {
-		if (!canAdd) return
-		const annotation: DashboardAnnotation = { id: generateItemId('annotation', date), date, label: trimmedLabel }
-		setAnnotations([...annotations, annotation].toSorted((a, b) => a.date.localeCompare(b.date)))
-		setLabel('')
-	}
-
-	// The next row's delete takes focus, else the previous row's; after the last row, the date field that adds one.
-	const removeAnnotation = (id: string, button: HTMLElement) => {
-		const next = neighbourRowControl(button.closest('li')!, button) ?? dateInputRef.current
-		keepFocus(
-			() => setAnnotations(annotations.filter((annotation) => annotation.id !== id)),
-			() => next
-		)
-	}
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
@@ -55,96 +37,145 @@ export function AnnotationsPopover() {
 				) : null}
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" gutter={8} dismiss="own">
-				<div className="flex w-[340px] max-w-full flex-col">
-					<div className="flex items-center gap-2 border-b border-subtle py-2 pr-1 pl-3">
-						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-							<Ariakit.PopoverHeading className="label-sm text-primary">Annotations</Ariakit.PopoverHeading>
-							<p className="body-xs text-secondary">Dated marks shown on every time-series chart.</p>
-						</div>
-						<DrawerDismiss label="Close annotations" />
-					</div>
-					{annotations.length === 0 ? (
-						<p className="px-3 py-3 body-sm text-secondary">No annotations yet.</p>
-					) : (
-						<ul className="flex max-h-60 flex-col overflow-y-auto">
-							{annotations.map((annotation) => (
-								<li
-									key={annotation.id}
-									className="flex items-center gap-2 border-b border-subtle px-3 py-1.5 body-sm last-of-type:border-b-0"
-								>
-									<span className="shrink-0 mono-sm text-secondary">{annotation.date}</span>
-									<span className="min-w-0 flex-1 truncate text-primary">{annotation.label}</span>
-									<Tooltip
-										content="Delete annotation"
-										render={
-											<Button
-												type="button"
-												size="sm"
-												square
-												variant="ghostDestructive"
-												aria-label={`Delete annotation ${annotation.label}`}
-												onClick={(event) => removeAnnotation(annotation.id, event.currentTarget)}
-											/>
-										}
-									>
-										<Icon name="trash-2" className="size-4" />
-									</Tooltip>
-								</li>
-							))}
-						</ul>
-					)}
-					<form
-						className="flex flex-col gap-2 border-t border-subtle px-3 py-2"
-						onSubmit={(event) => {
-							event.preventDefault()
-							addAnnotation()
-						}}
-					>
-						<div className="flex gap-2">
+				{/* The surface unmounts on hide, so each opening starts with its errors quiet. */}
+				<AnnotationsPanel date={date} label={label} onDateChange={setDate} onLabelChange={setLabel} />
+			</PopoverSurface>
+		</Ariakit.PopoverProvider>
+	)
+}
+
+function AnnotationsPanel({
+	date,
+	label,
+	onDateChange,
+	onLabelChange
+}: {
+	date: string
+	label: string
+	onDateChange: (date: string) => void
+	onLabelChange: (label: string) => void
+}) {
+	const { annotations, setAnnotations } = useProDashboardAnnotations()
+	const [submitted, setSubmitted] = useState(false)
+	const dateInputRef = useRef<HTMLInputElement>(null)
+	const atLimit = annotations.length >= MAX_DASHBOARD_ANNOTATIONS
+	const trimmedLabel = label.trim()
+	// A date field holds a full date or nothing.
+	const dateError = isValidAnnotationDate(date) ? null : 'Enter a date.'
+	const labelError = trimmedLabel ? null : 'Enter a label.'
+
+	const addAnnotation = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		// At the limit the fields are read-only and Add is disabled, but Enter in a field still submits.
+		if (atLimit) return
+		if (dateError || labelError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+		const annotation: DashboardAnnotation = { id: generateItemId('annotation', date), date, label: trimmedLabel }
+		setAnnotations([...annotations, annotation].toSorted((a, b) => a.date.localeCompare(b.date)))
+		onLabelChange('')
+		setSubmitted(false)
+	}
+
+	// The next row's delete takes focus, else the previous row's; after the last row, the date field that adds one.
+	const removeAnnotation = (id: string, button: HTMLElement) => {
+		const next = neighbourRowControl(button.closest('li')!, button) ?? dateInputRef.current
+		keepFocus(
+			() => setAnnotations(annotations.filter((annotation) => annotation.id !== id)),
+			() => next
+		)
+	}
+
+	return (
+		<div className="flex w-[340px] max-w-full flex-col">
+			<div className="flex items-center gap-2 border-b border-subtle py-2 pr-1 pl-3">
+				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+					<Ariakit.PopoverHeading className="label-sm text-primary">Annotations</Ariakit.PopoverHeading>
+					<p className="body-xs text-secondary">Dated marks shown on every time-series chart.</p>
+				</div>
+				<DrawerDismiss label="Close annotations" />
+			</div>
+			{annotations.length === 0 ? (
+				<p className="px-3 py-3 body-sm text-secondary">No annotations yet.</p>
+			) : (
+				<ul className="flex max-h-60 flex-col overflow-y-auto">
+					{annotations.map((annotation) => (
+						<li
+							key={annotation.id}
+							className="flex items-center gap-2 border-b border-subtle px-3 py-1.5 body-sm last-of-type:border-b-0"
+						>
+							<span className="shrink-0 mono-sm text-secondary">{annotation.date}</span>
+							<span className="min-w-0 flex-1 truncate text-primary">{annotation.label}</span>
+							<Tooltip
+								content="Delete annotation"
+								render={
+									<Button
+										type="button"
+										size="sm"
+										square
+										variant="ghostDestructive"
+										aria-label={`Delete annotation ${annotation.label}`}
+										onClick={(event) => removeAnnotation(annotation.id, event.currentTarget)}
+									/>
+								}
+							>
+								<Icon name="trash-2" className="size-4" />
+							</Tooltip>
+						</li>
+					))}
+				</ul>
+			)}
+			<form noValidate className="flex flex-col gap-2 border-t border-subtle px-3 py-2" onSubmit={addAnnotation}>
+				<div className="flex gap-2">
+					<Field label="Date" error={submitted ? dateError : null} className="shrink-0">
+						{(control) => (
 							<Input
+								{...control}
 								ref={dateInputRef}
 								type="date"
-								aria-label="Annotation date"
-								className="min-w-0 shrink-0 cursor-pointer dark:scheme-dark"
+								required
+								className="cursor-pointer dark:scheme-dark"
 								value={date}
 								// Adding the last allowed annotation from this field locks it; read-only keeps its focus.
 								readOnly={atLimit}
 								aria-disabled={atLimit || undefined}
-								onChange={(event) => setDate(event.target.value)}
+								onChange={(event) => onDateChange(event.target.value)}
 							/>
+						)}
+					</Field>
+					<Field label="Label" error={submitted ? labelError : null} className="flex-1">
+						{(control) => (
 							<Input
+								{...control}
 								type="text"
-								aria-label="Annotation label"
-								placeholder="Label"
-								className="min-w-0 flex-1"
+								required
+								placeholder="e.g. Merge"
 								value={label}
 								maxLength={DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH}
 								readOnly={atLimit}
 								aria-disabled={atLimit || undefined}
-								onChange={(event) => setLabel(event.target.value)}
+								onChange={(event) => onLabelChange(event.target.value)}
 							/>
-						</div>
-						<div className="flex items-center justify-between gap-2">
-							<span className="body-xs text-tertiary">
-								{atLimit
-									? `Limit of ${MAX_DASHBOARD_ANNOTATIONS} reached. Delete one to add another.`
-									: `${annotations.length}/${MAX_DASHBOARD_ANNOTATIONS}`}
-							</span>
-							<Button
-								type="submit"
-								size="sm"
-								variant="primary"
-								disabled={!canAdd}
-								accessibleWhenDisabled
-								data-umami-event="dashboard-annotation-add"
-							>
-								<Icon name="plus" height={14} width={14} />
-								<span>Add</span>
-							</Button>
-						</div>
-					</form>
+						)}
+					</Field>
 				</div>
-			</PopoverSurface>
-		</Ariakit.PopoverProvider>
+				<div className="flex items-center justify-between gap-2">
+					<span className="body-xs text-tertiary">
+						{atLimit
+							? `Limit of ${MAX_DASHBOARD_ANNOTATIONS} reached. Delete one to add another.`
+							: `${annotations.length}/${MAX_DASHBOARD_ANNOTATIONS}`}
+					</span>
+					<Button
+						type="submit"
+						size="sm"
+						variant="primary"
+						disabled={atLimit}
+						accessibleWhenDisabled
+						data-umami-event="dashboard-annotation-add"
+					>
+						<Icon name="plus" height={14} width={14} />
+						<span>Add</span>
+					</Button>
+				</div>
+			</form>
+		</div>
 	)
 }

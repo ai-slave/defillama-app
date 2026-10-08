@@ -7,6 +7,7 @@ import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chain
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { CheckboxIndicator } from '~/ui/Checkbox'
+import { Field } from '~/ui/Field'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -34,7 +35,8 @@ async function fetchCategoryChains(category: string) {
 }
 
 export function SelectItemsStep() {
-	const { state, actions } = useComparisonWizardContext()
+	const { state, actions, derived } = useComparisonWizardContext()
+	const error = derived.shownStepError
 	const { protocols, chains, protocolsLoading, protocolCatalog } = useProDashboardCatalog()
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
@@ -261,108 +263,118 @@ export function SelectItemsStep() {
 				</div>
 			</div>
 
-			<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
-				<div className="border-b border-subtle p-2">
-					<div className="mb-2">
-						<VirtualizedMultiSelect
-							label="Filter by category"
-							options={
-								state.comparisonType === 'chains'
-									? (chainCategoriesList || []).map((c) => ({ value: c, label: c }))
-									: protocolCategoryOptions
-							}
-							selectedValues={selectedCategories}
-							onChange={setSelectedCategories}
-							placeholder="All categories"
-							maxSelections={5}
-						/>
-					</div>
-					<div className="relative">
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<Input
-							ref={searchRef}
-							type="text"
-							onInput={(e) => setSearch(e.currentTarget.value)}
-							aria-label={`Search ${typeLabel.toLowerCase()}`}
-							placeholder={`Search ${typeLabel.toLowerCase()}…`}
-							className={searchFieldInputPlacementStyles}
-						/>
-					</div>
-				</div>
-
-				<div ref={listRef} className="h-[280px] overflow-y-auto">
-					{protocolsLoading ? (
-						<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
-							<LoadingIndicator label={`Loading ${typeLabel.toLowerCase()}`} />
+			{/* With nothing picked, the search takes the error and the focus: picking starts there. */}
+			<Field hideLabel label={`Search ${typeLabel.toLowerCase()}`} error={error}>
+				{(control) => (
+					<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
+						<div className="border-b border-subtle p-2">
+							<div className="mb-2">
+								<VirtualizedMultiSelect
+									label="Filter by category"
+									options={
+										state.comparisonType === 'chains'
+											? (chainCategoriesList || []).map((c) => ({ value: c, label: c }))
+											: protocolCategoryOptions
+									}
+									selectedValues={selectedCategories}
+									onChange={setSelectedCategories}
+									placeholder="All categories"
+									maxSelections={5}
+								/>
+							</div>
+							<div className="relative">
+								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+								<Input
+									{...control}
+									ref={searchRef}
+									type="text"
+									onInput={(e) => setSearch(e.currentTarget.value)}
+									// Enter in the search never submits the wizard's step.
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') e.preventDefault()
+									}}
+									placeholder={`Search ${typeLabel.toLowerCase()}…`}
+									className={searchFieldInputPlacementStyles}
+								/>
+							</div>
 						</div>
-					) : protocolCatalog.status === 'error' ? (
-						<div className="flex h-full flex-col items-center justify-center gap-2 p-3">
-							<InlineStatus variant="error">Failed to load {typeLabel.toLowerCase()}.</InlineStatus>
-							<Button
-								type="button"
-								size="sm"
-								pendingLabel={protocolCatalog.retrying ? 'Retrying…' : null}
-								onClick={protocolCatalog.retry}
-							>
-								Retry
-							</Button>
-						</div>
-					) : filteredOptions.length === 0 ? (
-						<p role="status" className="flex h-full items-center justify-center body-sm text-tertiary">
-							No {typeLabel.toLowerCase()} found.
-						</p>
-					) : (
-						<div
-							style={{
-								height: `${virtualizer.totalSize}px`,
-								width: '100%',
-								position: 'relative'
-							}}
-						>
-							{virtualizer.items.map((virtualRow) => {
-								const option = filteredOptions[virtualRow.index]
-								const isDirectlySelected = selectedItemsSet.has(option.value)
-								const isParentSelected = option.isChild && option.parentSlug && selectedItemsSet.has(option.parentSlug)
-								const isSelected = isDirectlySelected || isParentSelected
-								const isDisabledByParent = isParentSelected && !isDirectlySelected
-								const isDisabledByLimit = !isSelected && selectedItemsSet.size >= 10
-								const isDisabled = isDisabledByParent || isDisabledByLimit
 
-								return (
-									<button
-										key={option.value}
+						<div ref={listRef} className="h-[280px] overflow-y-auto">
+							{protocolsLoading ? (
+								<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
+									<LoadingIndicator label={`Loading ${typeLabel.toLowerCase()}`} />
+								</div>
+							) : protocolCatalog.status === 'error' ? (
+								<div className="flex h-full flex-col items-center justify-center gap-2 p-3">
+									<InlineStatus variant="error">Failed to load {typeLabel.toLowerCase()}.</InlineStatus>
+									<Button
 										type="button"
-										role="checkbox"
-										aria-checked={!!isSelected}
-										aria-label={option.label}
-										onClick={() => actions.toggleSelectedItem(option.value)}
-										disabled={isDisabled}
-										className={`group absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-											isSelected ? 'bg-brand-faint' : 'not-disabled:hover:bg-hover-row'
-										} ${option.isChild ? 'pl-8' : ''}`}
-										style={{
-											height: `${virtualRow.size}px`,
-											transform: `translateY(${virtualRow.start}px)`
-										}}
+										size="sm"
+										pendingLabel={protocolCatalog.retrying ? 'Retrying…' : null}
+										onClick={protocolCatalog.retry}
 									>
-										<CheckboxIndicator checked={!!isSelected} />
+										Retry
+									</Button>
+								</div>
+							) : filteredOptions.length === 0 ? (
+								<p role="status" className="flex h-full items-center justify-center body-sm text-tertiary">
+									No {typeLabel.toLowerCase()} found.
+								</p>
+							) : (
+								<div
+									style={{
+										height: `${virtualizer.totalSize}px`,
+										width: '100%',
+										position: 'relative'
+									}}
+								>
+									{virtualizer.items.map((virtualRow) => {
+										const option = filteredOptions[virtualRow.index]
+										const isDirectlySelected = selectedItemsSet.has(option.value)
+										const isParentSelected =
+											option.isChild && option.parentSlug && selectedItemsSet.has(option.parentSlug)
+										const isSelected = isDirectlySelected || isParentSelected
+										const isDisabledByParent = isParentSelected && !isDirectlySelected
+										const isDisabledByLimit = !isSelected && selectedItemsSet.size >= 10
+										const isDisabled = isDisabledByParent || isDisabledByLimit
 
-										<span className={option.isChild ? 'opacity-70' : undefined}>
-											<TokenLogo src={option.logo} alt={`Logo of ${option.label}`} size={24} />
-										</span>
+										return (
+											<button
+												key={option.value}
+												type="button"
+												role="checkbox"
+												aria-checked={!!isSelected}
+												aria-label={option.label}
+												onClick={() => actions.toggleSelectedItem(option.value)}
+												disabled={isDisabled}
+												className={`group absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+													isSelected ? 'bg-brand-faint' : 'not-disabled:hover:bg-hover-row'
+												} ${option.isChild ? 'pl-8' : ''}`}
+												style={{
+													height: `${virtualRow.size}px`,
+													transform: `translateY(${virtualRow.start}px)`
+												}}
+											>
+												<CheckboxIndicator checked={!!isSelected} />
 
-										<span
-											className={`min-w-0 flex-1 truncate body-md ${option.isChild ? 'text-secondary' : 'text-primary'}`}
-										>
-											{option.label}
-										</span>
-									</button>
-								)
-							})}
+												<span className={option.isChild ? 'opacity-70' : undefined}>
+													<TokenLogo src={option.logo} alt={`Logo of ${option.label}`} size={24} />
+												</span>
+
+												<span
+													className={`min-w-0 flex-1 truncate body-md ${option.isChild ? 'text-secondary' : 'text-primary'}`}
+												>
+													{option.label}
+												</span>
+											</button>
+										)
+									})}
+								</div>
+							)}
 						</div>
-					)}
-				</div>
-			</div>
+					</div>
+				)}
+			</Field>
 		</div>
 	)
 }

@@ -1,11 +1,13 @@
 import { useMutation } from '@tanstack/react-query'
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { OtpRequestError } from '~/auth/emailVerification'
 import type { GoogleLinkChallenge, SignInFlowStore } from '~/auth/signInFlowStore'
 import { refreshNowSeconds, useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { oneTimeCodeInputStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
@@ -28,6 +30,9 @@ export function GoogleLinkForm({
 	const confirmGoogleLinkMutation = useMutation({ mutationFn: confirmGoogleLink })
 	const resendGoogleLinkMutation = useMutation({ mutationFn: resendGoogleLink })
 	const errorId = useId()
+	const [code, setCode] = useState('')
+	const [submitted, setSubmitted] = useState(false)
+	const codeError = code.length === 6 ? null : 'Enter the 6-digit code.'
 	const pending = confirmGoogleLinkMutation.isPending || resendGoogleLinkMutation.isPending
 
 	if (expired) {
@@ -51,8 +56,7 @@ export function GoogleLinkForm({
 
 	const handleSubmit = async (event: FormSubmitEvent) => {
 		event.preventDefault()
-		const form = event.currentTarget
-		const code = String(new FormData(form).get('code'))
+		if (codeError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		store.dispatch({ kind: 'requestStarted' })
 		const signal = store.beginAuthRequest()
 		await confirmGoogleLinkMutation
@@ -72,7 +76,7 @@ export function GoogleLinkForm({
 			})
 	}
 
-	const handleResend = async (form: HTMLFormElement) => {
+	const handleResend = async () => {
 		store.dispatch({ kind: 'requestStarted' })
 		const signal = store.beginAuthRequest()
 		const nextChallenge = await resendGoogleLinkMutation
@@ -101,37 +105,40 @@ export function GoogleLinkForm({
 			})
 		if (!nextChallenge || signal.aborted) return
 		store.dispatch({ challenge: nextChallenge, kind: 'googleLinkUpdated' })
-		form.reset()
+		setCode('')
+		setSubmitted(false)
 	}
 
 	return (
-		<form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
+		<form noValidate className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
 			<p className="body-sm text-secondary">
 				This Google account uses an email managed outside Google. Enter the 6-digit code sent to your email to confirm
 				the account link.
 			</p>
-			<label className="flex flex-col">
-				<span className="mb-1.5 label-sm text-secondary">Verification code</span>
-				<input
-					type="text"
-					name="code"
-					// Read-only rather than disabled while a request runs, so the field keeps focus.
-					readOnly={pending}
-					aria-busy={pending || undefined}
-					aria-describedby={error ? errorId : undefined}
-					inputMode="numeric"
-					autoComplete="one-time-code"
-					pattern="[0-9]{6}"
-					maxLength={6}
-					required
-					placeholder="000000"
-					className={`${oneTimeCodeInputStyles} peer w-full`}
-					onInput={(event) => {
-						event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 6)
-					}}
-				/>
-				<span className="mt-1 hidden body-sm text-error peer-user-invalid:block">Enter the 6-digit code.</span>
-			</label>
+			<Field label="Verification code" error={submitted ? codeError : null}>
+				{(control) => (
+					<input
+						{...control}
+						// The request error describes the field too: a wrong code is fixed here.
+						aria-describedby={
+							[control['aria-describedby'], error ? errorId : null].filter(Boolean).join(' ') || undefined
+						}
+						type="text"
+						name="code"
+						// Read-only rather than disabled while a request runs, so the field keeps focus.
+						readOnly={pending}
+						aria-busy={pending || undefined}
+						inputMode="numeric"
+						autoComplete="one-time-code"
+						maxLength={6}
+						required
+						placeholder="000000"
+						className={`${oneTimeCodeInputStyles} w-full`}
+						value={code}
+						onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+					/>
+				)}
+			</Field>
 			<Button
 				type="submit"
 				variant="primary"
@@ -155,7 +162,7 @@ export function GoogleLinkForm({
 					pendingLabel={resendGoogleLinkMutation.isPending ? 'Sending code…' : null}
 					disabled={!canResend || pending}
 					accessibleWhenDisabled
-					onClick={(event) => void handleResend(event.currentTarget.form!)}
+					onClick={() => void handleResend()}
 				>
 					{canResend ? 'Resend code' : 'Resend available shortly'}
 				</Button>

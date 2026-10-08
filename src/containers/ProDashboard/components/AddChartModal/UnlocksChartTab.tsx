@@ -22,6 +22,8 @@ const EMPTY_DATASET: EmissionsDataset = { source: [], dimensions: ['timestamp'] 
 const EMPTY_SCHEDULE_CHARTS: EmissionsChartConfig = []
 
 interface UnlocksChartTabProps {
+	/** What Add still needs, shown under the protocol once Add was pressed. */
+	error: string | null
 	selectedUnlocksProtocol: string | null
 	selectedUnlocksProtocolName: string | null
 	selectedUnlocksChartType: 'total' | 'schedule' | 'allocation' | 'locked-unlocked'
@@ -58,6 +60,7 @@ function createRandomColor() {
 }
 
 export function UnlocksChartTab({
+	error,
 	selectedUnlocksProtocol,
 	selectedUnlocksProtocolName,
 	selectedUnlocksChartType,
@@ -328,6 +331,7 @@ export function UnlocksChartTab({
 				<VirtualizedSelect
 					variant="field"
 					label="Protocol"
+					error={error}
 					options={selectableProtocolOptions}
 					selectedValue={selectedUnlocksProtocol || null}
 					onChange={handleProtocolChange}

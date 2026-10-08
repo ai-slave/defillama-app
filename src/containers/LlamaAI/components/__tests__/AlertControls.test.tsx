@@ -114,7 +114,7 @@ test('alert type arrows retain focus and drafts; reopening restores defaults', a
 	expect(alertCreations()).toEqual([])
 })
 
-test('unlinked delivery blocks submission; a rejected email save preserves the prefill', async () => {
+test('an unlinked delivery channel says so under the delivery field; a rejected email save preserves the prefill', async () => {
 	const store = await mountModal({
 		prefill: { token_nk: 'coingecko:bitcoin', symbol: 'btc', value: 50_000, op: 'below' }
 	})
@@ -122,17 +122,21 @@ test('unlinked delivery blocks submission; a rejected email save preserves the p
 	expect(radio('Price comparison', 'Below').getAttribute('aria-checked')).toBe('true')
 	const initialPrice = document.querySelector<HTMLInputElement>('[aria-label="Price"]')!.value
 	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
-	expect(submit().disabled).toBe(false)
+	const delivery = () => document.querySelector<HTMLElement>('[role="radiogroup"][aria-label="Delivery channel"]')!
+	const deliveryError = () => delivery().closest('[role="group"]')!.querySelector('.text-error')?.textContent ?? null
 	await press(radio('Delivery channel', 'Email'), 'ArrowRight')
 	expect(radio('Delivery channel', 'Telegram').getAttribute('aria-checked')).toBe('true')
-	expect(submit().disabled).toBe(true)
+	expect(submit().disabled).toBe(false)
+	expect(deliveryError()).toBeNull()
 	await act(async () => submit().click())
 	expect(alertCreations()).toEqual([])
+	expect(deliveryError()).toBe('Choose a linked channel.')
+	expect(delivery().contains(document.activeElement)).toBe(true)
 	await press(radio('Delivery channel', 'Telegram'), 'End')
 	expect(radio('Delivery channel', 'Slack').getAttribute('aria-checked')).toBe('true')
-	expect(submit().disabled).toBe(true)
+	expect(deliveryError()).toBe('Choose a linked channel.')
 	await press(radio('Delivery channel', 'Slack'), 'Home')
-	expect(submit().disabled).toBe(false)
+	expect(deliveryError()).toBeNull()
 	session.serve({ [`${AI}/alerts`]: () => Response.json({ error: 'Test save failure' }, { status: 500 }) })
 	await act(async () => {
 		submit().click()
@@ -248,22 +252,31 @@ test('segmented radios do not notify on mount or external changes, only on a pic
 	expect(onChange).toHaveBeenCalledExactlyOnceWith('above')
 })
 
-test('price editor saves the keyboard-selected operator and keeps invalid values disabled', async () => {
+test('price editor saves the keyboard-selected operator and says what is wrong with an empty price', async () => {
 	const onSave = vi.fn()
 	await act(async () =>
 		root.render(
 			<PriceAlertEditor
 				trigger={{ type: 'price', token_nk: 'coingecko:bitcoin', op: 'above', value: 100, recurring: true }}
 				isSaving={false}
+				fieldsInvalid={false}
+				errorMessage={null}
 				onCancel={vi.fn()}
 				onSave={onSave}
-			/>
+			>
+				{() => null}
+			</PriceAlertEditor>
 		)
 	)
 	await press(radio('Price comparison', 'Above'), 'ArrowRight')
 	await input('[aria-label="Price"]', '')
-	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
+	const price = container.querySelector<HTMLInputElement>('[aria-label="Price"]')!
+	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+	expect(onSave).not.toHaveBeenCalled()
+	expect(document.activeElement).toBe(price)
+	expect(document.getElementById(price.getAttribute('aria-describedby')!)!.textContent).toBe('Enter a price.')
 	await input('[aria-label="Price"]', '200')
+	expect(price.getAttribute('aria-invalid')).toBeNull()
 	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 	expect(onSave).toHaveBeenCalledExactlyOnceWith({
 		type: 'price',
@@ -275,28 +288,31 @@ test('price editor saves the keyboard-selected operator and keeps invalid values
 })
 
 test.each([
-	{ isSaving: true, blockReason: null },
-	{ isSaving: false, blockReason: 'Pick a Slack channel' }
+	{ isSaving: true, fieldsInvalid: false },
+	{ isSaving: false, fieldsInvalid: true }
 ])('price editor rejects form submission while blocked: %j', async (state) => {
 	const onSave = vi.fn()
-	const render = async (isSaving: boolean, blockReason: string | null) =>
+	const render = async (isSaving: boolean, fieldsInvalid: boolean) =>
 		act(async () =>
 			root.render(
 				<PriceAlertEditor
 					trigger={{ type: 'price', token_nk: 'coingecko:bitcoin', op: 'above', value: 100 }}
 					isSaving={isSaving}
-					blockReason={blockReason}
+					fieldsInvalid={fieldsInvalid}
+					errorMessage={null}
 					onCancel={vi.fn()}
 					onSave={onSave}
-				/>
+				>
+					{() => null}
+				</PriceAlertEditor>
 			)
 		)
-	await render(state.isSaving, state.blockReason)
+	await render(state.isSaving, state.fieldsInvalid)
 	await act(async () => {
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
 	expect(onSave).not.toHaveBeenCalled()
-	await render(false, null)
+	await render(false, false)
 	await act(async () => {
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
@@ -391,4 +407,59 @@ test('a retried Slack channel list keeps its error while retrying, then the chan
 	await act(async () => {
 		await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('[aria-label="Slack channel"]')))
 	})
+})
+
+test('switching the alert type after a failed submit opens the other type quiet; its next submit marks it', async () => {
+	await mountModal()
+	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
+	const prompt = () => document.querySelector('textarea')!
+	await act(async () => submit().click())
+	expect(prompt().getAttribute('aria-invalid')).toBe('true')
+	await press(radio('Alert type', 'Scheduled report'), 'ArrowRight')
+	const price = document.querySelector<HTMLInputElement>('[aria-label="Price"]')!
+	expect(price.getAttribute('aria-invalid')).toBeNull()
+	expect(document.querySelector('[role="dialog"] .text-error')).toBeNull()
+	await act(async () => submit().click())
+	expect(document.querySelector('[role="dialog"] [aria-invalid="true"]')).not.toBeNull()
+	await press(radio('Alert type', 'Price alert'), 'Home')
+	expect(prompt().getAttribute('aria-invalid')).toBeNull()
+	expect(alertCreations()).toEqual([])
+})
+
+test('a missing Slack workspace or channel focuses that picker, not the delivery channel toggle', async () => {
+	session.serve({
+		[`${AI}/slack/workspaces`]: {
+			workspaces: [
+				{ team_id: 'T1', team_name: 'Llama Research', default_channel_id: null, revoked: false },
+				{ team_id: 'T2', team_name: 'Llama Ops', default_channel_id: null, revoked: false }
+			]
+		},
+		[`${AI}/slack/channels?team_id=T1`]: { channels: [{ id: 'C1', name: 'alerts', is_private: false }] }
+	})
+	await mountModal()
+	await input('textarea', 'Daily TVL movers')
+	await press(radio('Delivery channel', 'Email'), 'End')
+	const submit = () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!
+	const workspace = await waitForUi(() => {
+		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')
+		expect(select).not.toBeNull()
+		return select!
+	})
+	await act(async () => submit().click())
+	expect(document.activeElement).toBe(workspace)
+	expect(workspace.getAttribute('aria-invalid')).toBe('true')
+	await act(async () => {
+		workspace.value = 'T1'
+		workspace.dispatchEvent(new Event('change', { bubbles: true }))
+	})
+	expect(workspace.getAttribute('aria-invalid')).toBeNull()
+	const channel = await waitForUi(() => {
+		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack channel"]')
+		expect(select).not.toBeNull()
+		return select!
+	})
+	await act(async () => submit().click())
+	expect(document.activeElement).toBe(channel)
+	expect(channel.closest('[role="group"]')!.querySelector('.text-error')?.textContent).toBe('Choose a Slack channel.')
+	expect(alertCreations()).toEqual([])
 })

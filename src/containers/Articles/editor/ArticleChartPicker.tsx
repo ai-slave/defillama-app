@@ -22,6 +22,8 @@ import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Dialog, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -178,7 +180,7 @@ function MultiPreview({
 		return (
 			<p
 				role={isError ? 'alert' : 'status'}
-				className={`flex items-center justify-center body-sm ${isError ? 'text-data-down' : 'text-tertiary'}`}
+				className={`flex items-center justify-center body-sm ${isError ? 'text-error' : 'text-tertiary'}`}
 				style={{ height: heightPx }}
 			>
 				{isError ? 'Could not load chart data' : 'No data available'}
@@ -323,9 +325,19 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		})
 	}
 
-	const canInsert = series.length > 0
-	// Insert is disabled without a series, and toggling and metric changes keep the series unique.
+	// Set by an Insert with no series; the search field then says so until one is picked.
+	const [submitted, setSubmitted] = useState(false)
+	const seriesError = submitted && series.length === 0 ? 'Choose at least one series.' : null
+	const searchRegionRef = useRef<HTMLDivElement>(null)
+	// Toggling and metric changes keep the series unique.
 	const handleInsert = () => {
+		if (series.length === 0) {
+			// On a phone the picking pane may be hidden behind the preview, so it shows first.
+			return showFieldErrors(searchRegionRef.current!, () => {
+				setSubmitted(true)
+				setPane('series')
+			})
+		}
 		onInsert({
 			series,
 			entities: deriveLegacyEntities(series),
@@ -425,16 +437,22 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							isLoading={metaLoading}
 							mode={tab}
 						/>
-						<div className="relative">
-							<Icon name="search" aria-hidden className={`${searchFieldIconStyles} size-4`} />
-							<Input
-								ref={searchRef}
-								value={query}
-								onChange={(event) => setQuery(event.target.value)}
-								aria-label={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
-								placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
-								className={searchFieldInputPlacementStyles}
-							/>
+						<div ref={searchRegionRef} role="search">
+							<Field hideLabel label={tab === 'protocol' ? 'Search protocols' : 'Search chains'} error={seriesError}>
+								{(control) => (
+									<div className="relative">
+										<Icon name="search" aria-hidden className={`${searchFieldIconStyles} size-4`} />
+										<Input
+											{...control}
+											ref={searchRef}
+											value={query}
+											onChange={(event) => setQuery(event.target.value)}
+											placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
+											className={searchFieldInputPlacementStyles}
+										/>
+									</div>
+								)}
+							</Field>
 						</div>
 					</div>
 					<ul className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
@@ -671,12 +689,12 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 			<DialogFooter
 				leading={
 					<span className="label-sm text-secondary">
-						{canInsert ? `${series.length} / ${MAX_SERIES} series` : 'Pick at least one series'}
+						{series.length} / {MAX_SERIES} series
 					</span>
 				}
 				dismiss={<DialogCancelButton />}
 			>
-				<Button variant="primary" size="md" disabled={!canInsert} onClick={handleInsert}>
+				<Button variant="primary" size="md" onClick={handleInsert}>
 					{initialConfig ? 'Update chart' : 'Insert chart'}
 				</Button>
 			</DialogFooter>

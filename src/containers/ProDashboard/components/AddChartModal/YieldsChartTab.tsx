@@ -7,6 +7,7 @@ import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalizati
 import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/queries.client'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -29,6 +30,8 @@ import {
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface YieldsChartTabProps {
+	/** What Add still needs, shown under the pool list once Add was pressed. */
+	error: string | null
 	selectedYieldPool: {
 		configID: string
 		name: string
@@ -66,6 +69,7 @@ const EMPTY_YIELDS_DATA: Array<ProYieldRow> = []
 const BORROW_CHART_TYPES = new Set(['borrow-apy', 'net-borrow-apy'])
 
 export function YieldsChartTab({
+	error,
 	selectedYieldPool,
 	onSelectedYieldPoolChange,
 	selectedYieldChartType,
@@ -445,173 +449,178 @@ export function YieldsChartTab({
 							</div>
 						</div>
 					) : (
-						<div className="overflow-hidden rounded-lg border border-subtle">
-							<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2 label-sm">
-								<div className="flex items-center gap-3">
-									<div className="relative">
-										<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
-										<Input
-											onInput={(e) => setPoolSearch(e.currentTarget.value)}
-											placeholder="Search pools…"
-											aria-label="Search pools"
-											className="w-36 pl-8 sm:w-48"
-										/>
+						// With no pool picked, the search takes the error and the focus: picking starts there.
+						<Field hideLabel label="Search pools" error={error}>
+							{(control) => (
+								<div className="overflow-hidden rounded-lg border border-subtle">
+									<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2 label-sm">
+										<div className="flex items-center gap-3">
+											<div className="relative">
+												<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+												<Input
+													{...control}
+													onInput={(e) => setPoolSearch(e.currentTarget.value)}
+													placeholder="Search pools…"
+													className="w-36 pl-8 sm:w-48"
+												/>
+											</div>
+											<span className="label-sm text-tertiary">
+												{filteredPools.length} pool
+												{filteredPools.length !== 1 ? 's' : ''}
+											</span>
+										</div>
+										{selectedYieldPool ? (
+											<Button variant="link" onClick={closePoolPicker}>
+												Cancel
+											</Button>
+										) : null}
 									</div>
-									<span className="label-sm text-tertiary">
-										{filteredPools.length} pool
-										{filteredPools.length !== 1 ? 's' : ''}
-									</span>
-								</div>
-								{selectedYieldPool ? (
-									<Button variant="link" onClick={closePoolPicker}>
-										Cancel
-									</Button>
-								) : null}
-							</div>
 
-							<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-subtle px-3 py-2 label-sm sm:grid-cols-[1fr_100px_100px_80px]">
-								<p className="text-tertiary">Pool</p>
-								<button
-									type="button"
-									aria-pressed={sortColumn === 'tvl'}
-									onClick={() => toggleSort('tvl')}
-									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'tvl' ? 'text-link' : 'text-tertiary hover:text-primary'
-									}`}
-								>
-									TVL
-									<Icon
-										name={sortColumn === 'tvl' && sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-										width={10}
-										height={10}
-										className={sortColumn === 'tvl' ? 'opacity-100' : 'opacity-30'}
-									/>
-								</button>
-								<button
-									type="button"
-									aria-pressed={sortColumn === 'apy'}
-									onClick={() => toggleSort('apy')}
-									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'apy' ? 'text-link' : 'text-tertiary hover:text-primary'
-									}`}
-								>
-									APY
-									<Icon
-										name={sortColumn === 'apy' && sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-										width={10}
-										height={10}
-										className={sortColumn === 'apy' ? 'opacity-100' : 'opacity-30'}
-									/>
-								</button>
-								<p className="text-right text-tertiary max-sm:hidden">Category</p>
-							</div>
-
-							<div ref={poolListRef} className="h-[240px] overflow-y-auto">
-								{searchedAndSortedPools.length === 0 ? (
-									<div className="flex h-full items-center justify-center body-sm text-tertiary">
-										No pools match your search
+									<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-subtle px-3 py-2 label-sm sm:grid-cols-[1fr_100px_100px_80px]">
+										<p className="text-tertiary">Pool</p>
+										<button
+											type="button"
+											aria-pressed={sortColumn === 'tvl'}
+											onClick={() => toggleSort('tvl')}
+											className={`flex items-center justify-end gap-1 ${
+												sortColumn === 'tvl' ? 'text-link' : 'text-tertiary hover:text-primary'
+											}`}
+										>
+											TVL
+											<Icon
+												name={sortColumn === 'tvl' && sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
+												width={10}
+												height={10}
+												className={sortColumn === 'tvl' ? 'opacity-100' : 'opacity-30'}
+											/>
+										</button>
+										<button
+											type="button"
+											aria-pressed={sortColumn === 'apy'}
+											onClick={() => toggleSort('apy')}
+											className={`flex items-center justify-end gap-1 ${
+												sortColumn === 'apy' ? 'text-link' : 'text-tertiary hover:text-primary'
+											}`}
+										>
+											APY
+											<Icon
+												name={sortColumn === 'apy' && sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
+												width={10}
+												height={10}
+												className={sortColumn === 'apy' ? 'opacity-100' : 'opacity-30'}
+											/>
+										</button>
+										<p className="text-right text-tertiary max-sm:hidden">Category</p>
 									</div>
-								) : (
-									<div
-										style={{
-											height: poolListVirtualizer.totalSize,
-											position: 'relative'
-										}}
-									>
-										{poolListVirtualizer.items.map((row) => {
-											const pool = searchedAndSortedPools[row.index]
-											if (!pool) return null
-											const isSelected = selectedYieldPool?.configID === pool.configID
-											const iconUrl = getItemIconUrl('protocol', null, pool.project)
-											return (
-												<button
-													type="button"
-													key={pool.configID}
-													aria-pressed={isSelected}
-													onClick={() => {
-														onSelectedYieldPoolChange({
-															configID: pool.configID,
-															name: pool.pool,
-															project: pool.project,
-															chain: pool.chains[0]
-														})
-														closePoolPicker()
-													}}
-													className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
-														isSelected ? 'bg-brand-tint' : ''
-													}`}
-													style={{
-														position: 'absolute',
-														top: 0,
-														left: 0,
-														width: '100%',
-														transform: `translateY(${row.start}px)`
-													}}
-												>
-													<div className="flex min-w-0 items-center gap-2">
-														{iconUrl ? (
-															<img
-																src={iconUrl}
-																alt={pool.project}
-																width={24}
-																height={24}
-																className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
-															/>
-														) : null}
-														<div className="min-w-0">
-															<div className={`truncate font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
-																{pool.pool}
-															</div>
-															<div className="truncate body-sm text-tertiary">
-																{pool.project} • {pool.chains[0]}
-															</div>
-														</div>
-													</div>
 
-													<div className={`text-right font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
-														{formatUsd(pool.tvl, {
-															compact: true,
-															minimumCompactValue: 1_000_000,
-															compactSuffix: 'lowercase'
-														})}
-													</div>
+									<div ref={poolListRef} className="h-[240px] overflow-y-auto">
+										{searchedAndSortedPools.length === 0 ? (
+											<div className="flex h-full items-center justify-center body-sm text-tertiary">
+												No pools match your search
+											</div>
+										) : (
+											<div
+												style={{
+													height: poolListVirtualizer.totalSize,
+													position: 'relative'
+												}}
+											>
+												{poolListVirtualizer.items.map((row) => {
+													const pool = searchedAndSortedPools[row.index]
+													if (!pool) return null
+													const isSelected = selectedYieldPool?.configID === pool.configID
+													const iconUrl = getItemIconUrl('protocol', null, pool.project)
+													return (
+														<button
+															type="button"
+															key={pool.configID}
+															aria-pressed={isSelected}
+															onClick={() => {
+																onSelectedYieldPoolChange({
+																	configID: pool.configID,
+																	name: pool.pool,
+																	project: pool.project,
+																	chain: pool.chains[0]
+																})
+																closePoolPicker()
+															}}
+															className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
+																isSelected ? 'bg-brand-tint' : ''
+															}`}
+															style={{
+																position: 'absolute',
+																top: 0,
+																left: 0,
+																width: '100%',
+																transform: `translateY(${row.start}px)`
+															}}
+														>
+															<div className="flex min-w-0 items-center gap-2">
+																{iconUrl ? (
+																	<img
+																		src={iconUrl}
+																		alt={pool.project}
+																		width={24}
+																		height={24}
+																		className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
+																	/>
+																) : null}
+																<div className="min-w-0">
+																	<div className={`truncate font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
+																		{pool.pool}
+																	</div>
+																	<div className="truncate body-sm text-tertiary">
+																		{pool.project} • {pool.chains[0]}
+																	</div>
+																</div>
+															</div>
 
-													<div className="text-right">
-														<div className={`font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
-															{formatPercent(pool.apy, {
-																input: 'percent',
-																minimumFractionDigits: 2,
-																maximumFractionDigits: 2,
-																useGrouping: false
-															}) ?? '0.00%'}
-														</div>
-														{pool.apyMean30d != null ? (
-															<div className="body-sm text-tertiary">
-																30d:{' '}
-																{formatPercent(pool.apyMean30d, {
-																	input: 'percent',
-																	minimumFractionDigits: 2,
-																	maximumFractionDigits: 2,
-																	useGrouping: false
+															<div className={`text-right font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
+																{formatUsd(pool.tvl, {
+																	compact: true,
+																	minimumCompactValue: 1_000_000,
+																	compactSuffix: 'lowercase'
 																})}
 															</div>
-														) : null}
-													</div>
 
-													<div className="text-right max-sm:hidden">
-														{pool.category ? (
-															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-tertiary">
-																{pool.category}
-															</span>
-														) : null}
-													</div>
-												</button>
-											)
-										})}
+															<div className="text-right">
+																<div className={`font-medium ${isSelected ? 'text-link' : 'text-primary'}`}>
+																	{formatPercent(pool.apy, {
+																		input: 'percent',
+																		minimumFractionDigits: 2,
+																		maximumFractionDigits: 2,
+																		useGrouping: false
+																	}) ?? '0.00%'}
+																</div>
+																{pool.apyMean30d != null ? (
+																	<div className="body-sm text-tertiary">
+																		30d:{' '}
+																		{formatPercent(pool.apyMean30d, {
+																			input: 'percent',
+																			minimumFractionDigits: 2,
+																			maximumFractionDigits: 2,
+																			useGrouping: false
+																		})}
+																	</div>
+																) : null}
+															</div>
+
+															<div className="text-right max-sm:hidden">
+																{pool.category ? (
+																	<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-tertiary">
+																		{pool.category}
+																	</span>
+																) : null}
+															</div>
+														</button>
+													)
+												})}
+											</div>
+										)}
 									</div>
-								)}
-							</div>
-						</div>
+								</div>
+							)}
+						</Field>
 					)}
 
 					{/* Chart Preview */}

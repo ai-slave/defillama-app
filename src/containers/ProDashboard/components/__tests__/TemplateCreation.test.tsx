@@ -114,7 +114,11 @@ test('cold catalog blocks Lending while From Scratch remains immediately usable'
 	expect(api.create).not.toHaveBeenCalled()
 	expect(button('Lending protocols').getAttribute('aria-disabled')).toBe('true')
 	await click('From scratch')
-	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Blank by choice'
+	const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, 'Blank by choice')
+		name.dispatchEvent(new Event('input', { bubbles: true }))
+	})
 	await click('Create dashboard')
 	expect(api.create).toHaveBeenCalledExactlyOnceWith({
 		dashboardName: 'Blank by choice',

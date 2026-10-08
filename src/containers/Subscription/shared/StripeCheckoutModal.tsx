@@ -388,7 +388,7 @@ function UpgradeFormFields({
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+		<form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 			<DialogHeader title="Complete your upgrade" />
 			<DialogBody>
 				<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-elevated-1 px-4 py-3">

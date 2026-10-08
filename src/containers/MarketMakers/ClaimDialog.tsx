@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
-import { useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { useId, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import {
@@ -14,13 +14,16 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
+import { emailError } from '~/utils/email'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from './ClaimTurnstile'
 import { useSubmitLead } from './client'
-import { LeadField, LeadHoneypot, LeadSuccess } from './LeadForm'
-import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from './leadShared'
+import { LeadHoneypot, LeadSuccess } from './LeadForm'
+import { normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from './leadShared'
 
 const CONTACT_OPTIONS = [
 	{ value: 'yes', label: 'Yes' },
@@ -63,7 +66,8 @@ function ClaimForm({
 	const submit = useSubmitLead('claim')
 	// The last failure, kept while a retry runs: the mutation clears its own error when the retry starts.
 	const [failure, setFailure] = useState<string | null>(null)
-	const dialogRef = useRef<HTMLDivElement>(null)
+	const consentsErrorId = useId()
+	const awaitingCheckId = useId()
 	const [position, setPosition] = useState('')
 	const [hasContact, setHasContact] = useState<'yes' | 'no'>('no')
 	const [contactName, setContactName] = useState('')
@@ -75,29 +79,27 @@ function ClaimForm({
 	const [termsConsent, setTermsConsent] = useState(false)
 	const [honeypot, setHoneypot] = useState('')
 	const [turnstileToken, setTurnstileToken] = useState('')
-	const [touched, setTouched] = useState<Record<string, boolean>>({})
-	const [submitAttempted, setSubmitAttempted] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 	const turnstileRef = useRef<TurnstileInstance | undefined>(undefined)
 	const captchaEnabled = isClaimTurnstileEnabled()
 
-	const errors: Record<string, string | null> = {
-		position: position.trim() === '' ? 'Position is required' : null,
-		contactName: hasContact === 'yes' && contactName.trim() === '' ? 'Enter the Forgd team member name' : null,
-		fullName: fullName.trim() === '' ? 'Full name is required' : null,
-		socialProfileUrl: !SOCIAL_PROFILE_PATTERN.test(socialProfileUrl.trim()) ? 'Enter a valid LinkedIn or X URL' : null,
-		organizationEmail:
-			organizationEmail.trim() === ''
-				? 'Organization email is required'
-				: !EMAIL_PATTERN.test(organizationEmail.trim())
-					? 'Enter a valid email address'
-					: null,
-		consents: !alignmentConsent || !termsConsent ? 'Both consents are required to submit' : null,
-		// Validated like a field, so Submit never sits disabled without saying why.
-		captcha: captchaEnabled && turnstileToken === '' ? 'Complete the verification check to submit' : null
+	const errors = {
+		position: position.trim() === '' ? 'Enter your position at the organization.' : null,
+		contactName: hasContact === 'yes' && contactName.trim() === '' ? 'Enter the Forgd team member’s name.' : null,
+		fullName: fullName.trim() === '' ? 'Enter your full name.' : null,
+		socialProfileUrl:
+			socialProfileUrl.trim() === ''
+				? 'Enter your LinkedIn or X profile URL.'
+				: SOCIAL_PROFILE_PATTERN.test(socialProfileUrl.trim())
+					? null
+					: 'Enter a valid LinkedIn or X URL.',
+		organizationEmail: emailError(organizationEmail),
+		consents: !alignmentConsent || !termsConsent ? 'Agree to both statements to submit the claim.' : null
 	}
-	const isValid = Object.values(errors).every((error) => error == null)
-	const showError = (key: string) => (submitAttempted || touched[key] ? errors[key] : null)
-	const markTouched = (key: string) => () => setTouched((prev) => ({ ...prev, [key]: true }))
+	const consentsError = submitted ? errors.consents : null
+	// The security check is a gate, not a field: Submit waits for its token and says so beside it, since a blocked
+	// widget shows nothing.
+	const awaitingCheck = captchaEnabled && turnstileToken === ''
 
 	const dirty =
 		position !== '' ||
@@ -110,13 +112,10 @@ function ClaimForm({
 		alignmentConsent ||
 		termsConsent
 
-	const onSubmit = () => {
-		if (!isValid) {
-			// The errors appear above, away from Submit, so focus moves to the first field that needs fixing.
-			flushSync(() => setSubmitAttempted(true))
-			dialogRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
-			return
-		}
+	const onSubmit = (event: FormSubmitEvent) => {
+		event.preventDefault()
+		if (submit.isPending || awaitingCheck) return
+		if (Object.values(errors).some(Boolean)) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		submit.mutate(
 			{
 				position,
@@ -146,14 +145,14 @@ function ClaimForm({
 	}
 
 	return (
-		<Dialog ref={dialogRef} size="md" open={open} onClose={onClose} pending={submit.isPending} portal unmountOnHide>
+		<Dialog size="md" open={open} onClose={onClose} pending={submit.isPending} portal unmountOnHide>
 			{submit.isSuccess ? (
 				<LeadSuccess
 					title="Claim request received"
 					message="The Forgd team will review your claim and reach out with next steps using the contact details you provided."
 				/>
 			) : (
-				<>
+				<form noValidate onSubmit={onSubmit} className="flex min-h-0 flex-auto flex-col">
 					<DialogDiscardGuard
 						when={dirty}
 						title="Discard this claim request?"
@@ -166,32 +165,33 @@ function ClaimForm({
 							and proceed with your access.
 						</p>
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<div className="flex flex-col gap-1.5">
-								<span className="label-sm text-primary">Name of organization</span>
+							<div className="flex flex-col gap-1">
+								<span className="label-sm text-secondary">Name of organization</span>
 								<div className={`${inputStyles} flex items-center gap-2`} aria-readonly>
 									<TokenLogo src={marketMakerLogo ?? null} size={18} />
 									<span className="truncate">{marketMakerName}</span>
 								</div>
 							</div>
-							<LeadField label="Position at organization" error={showError('position')}>
-								{/* The form's first field: the organization above is fixed. */}
-								<Ariakit.Focusable
-									autoFocus
-									render={
-										<Input
-											value={position}
-											onChange={(e) => setPosition(e.target.value)}
-											onBlur={markTouched('position')}
-											aria-invalid={showError('position') != null}
-											maxLength={200}
-											placeholder="e.g. CEO"
-										/>
-									}
-								/>
-							</LeadField>
+							<Field label="Position at organization" error={submitted ? errors.position : null}>
+								{(control) => (
+									// The form's first field: the organization beside it is fixed.
+									<Ariakit.Focusable
+										autoFocus
+										render={
+											<Input
+												{...control}
+												value={position}
+												onChange={(e) => setPosition(e.target.value)}
+												maxLength={200}
+												placeholder="e.g. CEO"
+											/>
+										}
+									/>
+								)}
+							</Field>
 						</div>
-						<div className="flex flex-col gap-1.5">
-							<span className="label-sm text-primary">Do you have direct contact with a Forgd team member?</span>
+						<div className="flex flex-col gap-1">
+							<span className="label-sm text-secondary">Do you have direct contact with a Forgd team member?</span>
 							<SegmentedControl
 								value={hasContact}
 								onValueChange={(value) => setHasContact(value)}
@@ -202,62 +202,75 @@ function ClaimForm({
 							/>
 						</div>
 						{hasContact === 'yes' ? (
-							<LeadField label="Forgd team member name" error={showError('contactName')}>
-								<Input
-									value={contactName}
-									onChange={(e) => setContactName(e.target.value)}
-									onBlur={markTouched('contactName')}
-									aria-invalid={showError('contactName') != null}
-									maxLength={200}
-									placeholder="Name the person you know"
-								/>
-							</LeadField>
+							<Field label="Forgd team member name" error={submitted ? errors.contactName : null}>
+								{(control) => (
+									<Input
+										{...control}
+										value={contactName}
+										onChange={(e) => setContactName(e.target.value)}
+										maxLength={200}
+										placeholder="Name the person you know"
+									/>
+								)}
+							</Field>
 						) : null}
-						<LeadField label="Your full name" error={showError('fullName')}>
-							<Input
-								value={fullName}
-								onChange={(e) => setFullName(e.target.value)}
-								onBlur={markTouched('fullName')}
-								aria-invalid={showError('fullName') != null}
-								maxLength={200}
-								placeholder="Your name"
-							/>
-						</LeadField>
-						<LeadField label="Your LinkedIn or X profile" error={showError('socialProfileUrl')}>
-							<Input
-								value={socialProfileUrl}
-								onChange={(e) => setSocialProfileUrl(e.target.value)}
-								onBlur={markTouched('socialProfileUrl')}
-								aria-invalid={showError('socialProfileUrl') != null}
-								maxLength={500}
-								placeholder="Enter a valid LinkedIn or X URL"
-							/>
-						</LeadField>
+						<Field label="Your full name" error={submitted ? errors.fullName : null}>
+							{(control) => (
+								<Input
+									{...control}
+									value={fullName}
+									onChange={(e) => setFullName(e.target.value)}
+									maxLength={200}
+									placeholder="Your name"
+								/>
+							)}
+						</Field>
+						<Field label="Your LinkedIn or X profile" error={submitted ? errors.socialProfileUrl : null}>
+							{(control) => (
+								<Input
+									{...control}
+									value={socialProfileUrl}
+									onChange={(e) => setSocialProfileUrl(e.target.value)}
+									maxLength={500}
+									placeholder="Enter a valid LinkedIn or X URL"
+								/>
+							)}
+						</Field>
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LeadField label="Your organization email address" error={showError('organizationEmail')}>
-								<Input
-									type="email"
-									value={organizationEmail}
-									onChange={(e) => setOrganizationEmail(e.target.value)}
-									onBlur={markTouched('organizationEmail')}
-									aria-invalid={showError('organizationEmail') != null}
-									maxLength={320}
-									placeholder="you@organization.com"
-								/>
-							</LeadField>
-							<LeadField label="Telegram handle (optional)">
-								<Input
-									value={telegram}
-									onChange={(e) => setTelegram(e.target.value)}
-									maxLength={64}
-									placeholder="@handle"
-								/>
-							</LeadField>
+							<Field label="Your organization email address" error={submitted ? errors.organizationEmail : null}>
+								{(control) => (
+									<Input
+										{...control}
+										type="email"
+										required
+										value={organizationEmail}
+										onChange={(e) => setOrganizationEmail(e.target.value)}
+										maxLength={320}
+										placeholder="you@organization.com"
+									/>
+								)}
+							</Field>
+							<Field label="Telegram handle (optional)">
+								{(control) => (
+									<Input
+										{...control}
+										value={telegram}
+										onChange={(e) => setTelegram(e.target.value)}
+										maxLength={64}
+										placeholder="@handle"
+									/>
+								)}
+							</Field>
 						</div>
-						<div className="flex flex-col gap-1 border-t border-subtle pt-4">
+						{/* Two required consents share one error: each unticked box is marked, and focus lands on the first. */}
+						<div
+							data-invalid={consentsError ? '' : undefined}
+							className="flex flex-col gap-1 border-t border-subtle pt-4"
+						>
 							<Checkbox
 								variant="consent"
-								aria-invalid={showError('consents') != null && !alignmentConsent}
+								aria-invalid={consentsError && !alignmentConsent ? true : undefined}
+								aria-describedby={consentsError ? consentsErrorId : undefined}
 								checked={alignmentConsent}
 								onChange={(e) => setAlignmentConsent(e.target.checked)}
 							>
@@ -265,7 +278,8 @@ function ClaimForm({
 							</Checkbox>
 							<Checkbox
 								variant="consent"
-								aria-invalid={showError('consents') != null && !termsConsent}
+								aria-invalid={consentsError && !termsConsent ? true : undefined}
+								aria-describedby={consentsError ? consentsErrorId : undefined}
 								checked={termsConsent}
 								onChange={(e) => setTermsConsent(e.target.checked)}
 							>
@@ -291,33 +305,40 @@ function ClaimForm({
 									.
 								</span>
 							</Checkbox>
-							{showError('consents') ? <span className="body-sm text-error">{showError('consents')}</span> : null}
+							{consentsError ? (
+								<p id={consentsErrorId} className="body-sm text-error">
+									{consentsError}
+								</p>
+							) : null}
 						</div>
 						<LeadHoneypot value={honeypot} onChange={setHoneypot} />
-						{captchaEnabled ? (
-							<div className="flex flex-col items-center gap-1.5">
-								<ClaimTurnstile ref={turnstileRef} onVerify={setTurnstileToken} onError={() => setTurnstileToken('')} />
-								{showError('captcha') ? (
-									<span role="alert" className="body-sm text-error">
-										{showError('captcha')}
-									</span>
-								) : null}
-							</div>
-						) : null}
+						<ClaimTurnstile ref={turnstileRef} onVerify={setTurnstileToken} onError={() => setTurnstileToken('')} />
 						{failure ? <InlineStatus variant="error">{failure}</InlineStatus> : null}
 					</DialogBody>
-					<DialogFooter dismiss={<DialogCancelButton />}>
+					<DialogFooter
+						dismiss={<DialogCancelButton />}
+						leading={
+							awaitingCheck ? (
+								<p id={awaitingCheckId} className="body-sm text-secondary">
+									Waiting for the security check above to finish.
+								</p>
+							) : null
+						}
+					>
 						<Button
-							type="button"
+							type="submit"
 							variant="primary"
 							size="md"
+							// A failed send spends the token, so the pressed button disables itself and keeps focus.
+							disabled={awaitingCheck}
+							accessibleWhenDisabled
+							aria-describedby={awaitingCheck ? awaitingCheckId : undefined}
 							pendingLabel={submit.isPending ? 'Submitting…' : null}
-							onClick={onSubmit}
 						>
 							Submit claim request
 						</Button>
 					</DialogFooter>
-				</>
+				</form>
 			)}
 		</Dialog>
 	)

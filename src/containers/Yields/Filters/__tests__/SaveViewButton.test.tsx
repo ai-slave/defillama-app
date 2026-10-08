@@ -30,7 +30,8 @@ const nextTask = () => new Promise((resolve) => setTimeout(resolve))
 async function openWithViews(names: Array<string>) {
 	await act(async () => root.render(<SaveViewButton currentFilters={{ chain: 'Ethereum' }} />))
 	await act(async () => container.querySelector('button')!.click())
-	const field = document.querySelector<HTMLInputElement>('input[aria-label="Saved view name"]')!
+	const label = [...document.querySelectorAll('label')].find((el) => el.textContent === 'Save current view')!
+	const field = document.getElementById(label.htmlFor) as HTMLInputElement
 	for (const name of names) {
 		await act(async () => {
 			const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
@@ -67,4 +68,19 @@ test('deleting the last saved view hands focus to the popover’s name field', a
 	await deleteFocused('Alpha')
 	expect(document.body.textContent).toContain('No saved views yet')
 	expect(document.activeElement).toBe(field)
+})
+
+test('a reopened popover drops the error of the last opening', async () => {
+	await act(async () => root.render(<SaveViewButton currentFilters={{ chain: 'Ethereum' }} />))
+	const trigger = container.querySelector('button')!
+	await act(async () => trigger.click())
+	await act(async () => document.querySelector('form')!.requestSubmit())
+	const errorTexts = () => [...document.querySelectorAll('.text-error')].map((el) => el.textContent)
+	expect(errorTexts()).toEqual(['Enter a view name.'])
+	await act(async () =>
+		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+	)
+	await act(async () => trigger.click())
+	expect(document.querySelector('form')).not.toBeNull()
+	expect(errorTexts()).toEqual([])
 })

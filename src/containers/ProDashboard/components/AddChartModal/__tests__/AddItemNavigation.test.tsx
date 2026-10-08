@@ -119,6 +119,53 @@ describe('a subscriber without SQL access', () => {
 		expect(appendItems).not.toHaveBeenCalled()
 	})
 
+	test('Add card on an empty text card says what is missing under the content, focuses it and adds nothing', async () => {
+		await renderModal()
+		await click(tab('text'))
+		const add = [...document.querySelectorAll<HTMLButtonElement>('footer button')].find(
+			(button) => button.textContent === 'Add card'
+		)!
+		const errors = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((node) => node.textContent)
+		expect(add.getAttribute('aria-disabled')).toBeNull()
+		expect(errors()).toEqual([])
+		await click(add)
+		const content = document.querySelector<HTMLTextAreaElement>('textarea')!
+		expect(errors()).toEqual(['Enter some text.'])
+		expect(document.activeElement).toBe(content)
+		expect(content.getAttribute('aria-invalid')).toBe('true')
+		expect(appendItems).not.toHaveBeenCalled()
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, 'Notes')
+			content.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		expect(errors()).toEqual([])
+	})
+
+	test('Add on an empty custom data card shows the error under the CSV, and every failed Add brings its pane back', async () => {
+		await renderModal()
+		await click(tab('custom-data'))
+		const add = [...document.querySelectorAll<HTMLButtonElement>('footer button')].find(
+			(button) => button.textContent === 'Add card'
+		)!
+		const pane = (name: string) =>
+			[...document.querySelectorAll<HTMLInputElement>('[role="radiogroup"] input[type="radio"]')].find(
+				(radio) => radio.closest('label')?.textContent === name
+			)!
+		const csv = document.querySelector<HTMLTextAreaElement>('textarea')!
+		await click(add)
+		expect(document.querySelector('[role="dialog"] .text-error')?.textContent).toBe('Paste or upload a CSV.')
+		expect(document.activeElement).toBe(csv)
+		// Below lg a second press finds the error unchanged; it must still bring the CSV fields back to take focus.
+		for (let press = 0; press < 2; press++) {
+			await click(pane('Preview'))
+			expect(pane('Preview').checked).toBe(true)
+			await click(add)
+			expect(pane('Configure').checked).toBe(true)
+			expect(document.activeElement).toBe(csv)
+		}
+		expect(appendItems).not.toHaveBeenCalled()
+	})
+
 	test('a fresh Table tab asks for a table type, and its Cancel closes without asking to discard', async () => {
 		const onClose = vi.fn()
 		await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />)

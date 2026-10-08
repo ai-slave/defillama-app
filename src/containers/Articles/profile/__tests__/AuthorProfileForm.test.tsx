@@ -42,9 +42,9 @@ afterEach(async () => {
 })
 
 const field = (label: string) =>
-	[...container.querySelectorAll('label')]
-		.find((entry) => entry.textContent?.startsWith(label))!
-		.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')!
+	document.getElementById(
+		[...container.querySelectorAll('label')].find((entry) => entry.textContent === label)!.htmlFor
+	) as HTMLInputElement | HTMLTextAreaElement
 
 async function type(target: HTMLInputElement | HTMLTextAreaElement, value: string) {
 	await act(async () => {
@@ -116,4 +116,31 @@ test('adding and removing custom links keeps focus in the links section', async 
 
 	await press(buttonNamed('Add a custom link'))
 	expect(document.activeElement).toBe(container.querySelector('input[placeholder="kind"]'))
+})
+
+test('a cleared display name waits for Save, then says so under the field and sends nothing', async () => {
+	save = Promise.resolve(Response.json({ author: profile }))
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<AuthorProfileForm />
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(field('Display name').value).toBe('Sam'))
+	const name = field('Display name')
+	await type(name, '')
+	expect(name.getAttribute('aria-invalid')).toBeNull()
+	await type(field('Public URL'), 'Sam Lee')
+	// A handle that cannot work says so while typing.
+	expect(
+		document.getElementById(field('Public URL').getAttribute('aria-describedby')!.split(' ').at(-1)!)!.textContent
+	).toBe('Enter a valid handle: lowercase letters, numbers and dashes.')
+	await type(field('Public URL'), 'sam')
+	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+	expect(document.activeElement).toBe(name)
+	expect(document.getElementById(name.getAttribute('aria-describedby')!)!.textContent).toBe('Enter a display name.')
+	expect(session.requests.some((request) => request.init?.method === 'PATCH')).toBe(false)
+	await type(name, 'Sam')
+	expect(name.getAttribute('aria-invalid')).toBeNull()
 })

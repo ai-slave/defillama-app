@@ -9,6 +9,8 @@ import { useAppMetadata } from '../../AppMetadataContext'
 import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 interface IncomeStatementChartTabProps {
+	/** What Add still needs, shown under the protocol once Add was pressed. */
+	error: string | null
 	selectedIncomeStatementProtocol: string | null
 	selectedIncomeStatementProtocolName: string | null
 	onSelectedIncomeStatementProtocolChange: (protocol: string | null) => void
@@ -18,6 +20,7 @@ interface IncomeStatementChartTabProps {
 }
 
 export function IncomeStatementChartTab({
+	error,
 	selectedIncomeStatementProtocol,
 	selectedIncomeStatementProtocolName,
 	onSelectedIncomeStatementProtocolChange,
@@ -94,6 +97,7 @@ export function IncomeStatementChartTab({
 				<VirtualizedSelect
 					variant="field"
 					label="Protocol"
+					error={error}
 					options={selectableProtocolOptions}
 					selectedValue={selectedIncomeStatementProtocol || null}
 					onChange={(option) => {

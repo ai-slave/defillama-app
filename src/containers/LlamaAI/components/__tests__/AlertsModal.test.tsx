@@ -540,3 +540,32 @@ test('a schedule edit survives opening a run from history and coming back, and c
 	await press(closeButton())
 	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard alert changes?')
 })
+
+test('saving a Slack alert with no workspace picked focuses the workspace picker, not the delivery channel toggle', async () => {
+	session.serve({
+		[ALERTS_URL]: { alerts: [{ ...alert, delivery_channel: 'slack', slack_team_id: null, slack_channel_id: null }] },
+		'https://ai.llama.fi/slack/workspaces': {
+			workspaces: [
+				{ team_id: 'T1', team_name: 'Llama Research', default_channel_id: null, revoked: false },
+				{ team_id: 'T2', team_name: 'Llama Ops', default_channel_id: null, revoked: false }
+			]
+		}
+	})
+	await render()
+	await waitForUi(() => expect(document.body.textContent).toContain('Weekly yields'))
+	await press(buttonNamed(document, 'Edit Weekly yields'))
+	const workspace = await waitForUi(() => {
+		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')
+		expect(select).not.toBeNull()
+		return select!
+	})
+	await press(buttonNamed(document, 'Save'))
+	expect(document.activeElement).toBe(workspace)
+	expect(workspace.getAttribute('aria-invalid')).toBe('true')
+	expect(workspace.closest('[role="group"]')!.querySelector('.text-error')?.textContent).toBe(
+		'Choose a Slack workspace.'
+	)
+	expect(alertRequests().some((request) => request.init?.method === 'PATCH' || request.init?.method === 'PUT')).toBe(
+		false
+	)
+})

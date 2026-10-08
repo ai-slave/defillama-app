@@ -25,6 +25,7 @@ import {
 } from '~/containers/LlamaAI/components/alerts/api'
 import {
 	deriveAlertTitle,
+	getDeliveryError,
 	getUpsellCopy,
 	type TriggerType
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
@@ -67,7 +68,8 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogDiscardGuard, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
-import { keepFocus, takeLostFocus } from '~/ui/focus'
+import { Field, FieldGroup } from '~/ui/Field'
+import { keepFocus, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -384,7 +386,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 	// focus now, which also keeps the closing menu from handing focus back to its button.
 	const rearmIntoEditor = () => {
 		flushSync(handleRearm)
-		document.getElementById(`alert-title-${alert.id}`)?.focus()
+		cardRef.current!.querySelector<HTMLInputElement>('input[name="title"]')!.focus()
 	}
 
 	const channelLabel =
@@ -728,8 +730,9 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 	const { authorizedFetch, user } = useAuthContext()
 	const queryClient = useQueryClient()
 	const parsedSchedule = parseScheduleExpression(alert.schedule_expression)
-	const conditionId = `alert-condition-${alert.id}`
-	const titleId = `alert-title-${alert.id}`
+	const titleRef = useRef<HTMLInputElement>(null)
+	// The schedule form's submit state; the price editor keeps its own.
+	const [submitted, setSubmitted] = useState(false)
 	const [frequency, setFrequency] = useState<'daily' | 'weekly'>(
 		alert.schedule_expression.includes('Weekly') ? 'weekly' : 'daily'
 	)
@@ -778,16 +781,13 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 	})
 
 	const updateErrorMessage = saveFailed ? "Couldn't save the alert. Try again." : null
-	const deliveryBlockReason =
-		deliveryChannel === 'telegram' && !telegramLinked
-			? 'Link Telegram first'
-			: deliveryChannel === 'slack' && !slackTeamId
-				? slackWorkspaces.length > 0
-					? 'Pick a Slack workspace'
-					: 'Connect a Slack workspace first'
-				: deliveryChannel === 'slack' && !slackChannelId
-					? 'Pick a Slack channel'
-					: null
+	const deliveryError = getDeliveryError({
+		channel: deliveryChannel,
+		telegramLinked,
+		slackTeamId,
+		slackChannelId,
+		slackWorkspaceCount: slackWorkspaces.length
+	})
 	const slackFields = {
 		slack_team_id: deliveryChannel === 'slack' ? slackTeamId : null,
 		slack_channel_id: deliveryChannel === 'slack' ? slackChannelId : null,
@@ -806,17 +806,22 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 					value: ''
 				})
 	const nameField = (
-		<div className="flex flex-col gap-1.5">
-			<label htmlFor={titleId} className={alertFieldLabelClass}>
-				Name (optional)
-			</label>
-			<Input id={titleId} name="title" defaultValue={alert.title} placeholder={defaultTitle} className="w-full" />
-		</div>
+		<Field label="Name (optional)">
+			{(control) => (
+				<Input
+					{...control}
+					ref={titleRef}
+					name="title"
+					defaultValue={alert.title}
+					placeholder={defaultTitle}
+					className="w-full"
+				/>
+			)}
+		</Field>
 	)
 
-	const deliveryFields = (
-		<div className="flex flex-col gap-1.5">
-			<span className={alertFieldLabelClass}>Deliver to</span>
+	const deliveryFields = (showErrors: boolean) => (
+		<FieldGroup label="Deliver to" error={showErrors ? deliveryError : null}>
 			<div className="flex flex-wrap items-center gap-2">
 				<SegmentedToggle<DeliveryChannel>
 					label="Delivery channel"
@@ -849,6 +854,8 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 									setSlackChannelId(ws?.default_channel_id ?? '')
 								}}
 								aria-label="Slack workspace"
+								// The group's error names the Slack pick it needs; that pick takes the submit's focus.
+								aria-invalid={showErrors && deliveryError && !slackTeamId ? true : undefined}
 								className={inputStyles}
 							>
 								<option value="" disabled>
@@ -878,6 +885,7 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 										value={slackChannelId}
 										onChange={(e) => setSlackChannelId(e.target.value)}
 										aria-label="Slack channel"
+										aria-invalid={showErrors && deliveryError && !slackChannelId ? true : undefined}
 										className={inputStyles}
 									>
 										<option value="" disabled>
@@ -897,7 +905,7 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 					</>
 				)}
 			</div>
-		</div>
+		</FieldGroup>
 	)
 
 	if (alert.trigger?.type === 'price') {
@@ -912,15 +920,14 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 				<PriceAlertEditor
 					trigger={alert.trigger}
 					isSaving={updateAlertMutation.isPending}
-					blockReason={deliveryBlockReason}
+					fieldsInvalid={deliveryError !== null}
 					errorMessage={updateErrorMessage}
 					onCancel={onClose}
 					onSave={(trigger) => {
 						trackUmamiEvent('llamaai-alert-edit')
-						const title = document.getElementById(titleId) as HTMLInputElement
 						updateAlertMutation.mutate({
 							alertId: alert.id,
-							title: title.value.trim() || priceAlertTitle(trigger),
+							title: titleRef.current!.value.trim() || priceAlertTitle(trigger),
 							delivery_channel: deliveryChannel,
 							condition: alert.condition || '',
 							trigger,
@@ -928,8 +935,12 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 						})
 					}}
 				>
-					{nameField}
-					{deliveryFields}
+					{(priceSubmitted) => (
+						<>
+							{nameField}
+							{deliveryFields(priceSubmitted)}
+						</>
+					)}
 				</PriceAlertEditor>
 			</div>
 		)
@@ -937,9 +948,11 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 
 	return (
 		<form
+			noValidate
 			onSubmit={(e) => {
 				e.preventDefault()
-				if (deliveryBlockReason || updateAlertMutation.isPending) return
+				if (updateAlertMutation.isPending) return
+				if (deliveryError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 				const fd = new FormData(e.currentTarget)
 				trackUmamiEvent('llamaai-alert-edit')
 				updateAlertMutation.mutate({
@@ -1006,22 +1019,20 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 					</select>
 				</div>
 			</div>
-			{deliveryFields}
-			<div className="flex flex-col gap-1.5">
-				<label htmlFor={conditionId} className={alertFieldLabelClass}>
-					Condition (optional)
-				</label>
-				<Input
-					id={conditionId}
-					name="condition"
-					defaultValue={alert.condition || ''}
-					placeholder="Only send if TVL drops below $1B"
-					className="w-full"
-				/>
-			</div>
+			{deliveryFields(submitted)}
+			<Field label="Condition (optional)">
+				{(control) => (
+					<Input
+						{...control}
+						name="condition"
+						defaultValue={alert.condition || ''}
+						placeholder="Only send if TVL drops below $1B"
+						className="w-full"
+					/>
+				)}
+			</Field>
 			{updateErrorMessage ? <InlineStatus variant="error">{updateErrorMessage}</InlineStatus> : null}
 			<div className="flex flex-wrap items-center justify-end gap-2">
-				{deliveryBlockReason ? <p className="mr-auto body-sm text-secondary">{deliveryBlockReason}</p> : null}
 				<Button type="button" size="md" disabled={updateAlertMutation.isPending} onClick={onClose}>
 					Cancel
 				</Button>
@@ -1029,7 +1040,6 @@ function AlertEditor({ alert, rearmed, cardRef, onEdited, onClose }: AlertEditor
 					type="submit"
 					variant="primary"
 					size="md"
-					disabled={!!deliveryBlockReason}
 					pendingLabel={updateAlertMutation.isPending ? 'Saving…' : null}
 				>
 					Save

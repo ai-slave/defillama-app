@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
 import { textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
@@ -38,8 +39,7 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 
 	const handleConfirm = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		const formData = new FormData(e.currentTarget)
-		const message = ((formData.get('message') as string) ?? '').trim()
+		const message = (new FormData(e.currentTarget).get('message') as string).trim()
 		cancelSubscriptionMutation.mutate(message || undefined, {
 			onError: (failure) => setError(failure.message || 'Failed to cancel subscription. Try again or contact support.')
 		})
@@ -68,25 +68,24 @@ function CancelSubscriptionDialog({ isOpen, onClose, variant }: CancelSubscripti
 					</DialogFooter>
 				</>
 			) : (
-				<form onSubmit={handleConfirm} className="flex min-h-0 flex-auto flex-col">
+				<form noValidate onSubmit={handleConfirm} className="flex min-h-0 flex-auto flex-col">
 					<DialogHeader title={isTrial ? 'Cancel free trial' : 'Cancel subscription'} closable={false} />
 					<DialogBody>
 						<Ariakit.DialogDescription className="body-sm text-secondary">
 							{CANCEL_BODY_TEXT[variant]}
 						</Ariakit.DialogDescription>
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor="cancel-reason" className="label-sm text-secondary">
-								Reason for cancelling (optional)
-							</label>
-							<textarea
-								id="cancel-reason"
-								name="message"
-								placeholder="Let us know why you're cancelling…"
-								rows={3}
-								readOnly={isLoading}
-								className={`${textareaStyles} w-full resize-none`}
-							/>
-						</div>
+						<Field label="Reason for cancelling (optional)">
+							{(control) => (
+								<textarea
+									{...control}
+									name="message"
+									placeholder="Let us know why you're cancelling…"
+									rows={3}
+									readOnly={isLoading}
+									className={`${textareaStyles} w-full resize-none`}
+								/>
+							)}
+						</Field>
 						{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 					</DialogBody>
 					<DialogFooter>

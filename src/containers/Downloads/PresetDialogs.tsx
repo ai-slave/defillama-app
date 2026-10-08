@@ -1,8 +1,10 @@
 import { useTabContext } from '@ariakit/react'
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogCancelButton } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { presetNameKey, type SavedDownload } from './savedDownloads'
 
@@ -84,14 +86,21 @@ function PresetNameDialog({
 	submitLabel: string
 	onNameTaken: 'replace' | 'reject'
 }) {
-	const id = useId()
 	const nameRef = useRef<HTMLInputElement>(null)
 	const [name, setName] = useState(suggestedName)
+	const [submitted, setSubmitted] = useState(false)
 
 	const trimmed = name.trim()
 	const key = presetNameKey(trimmed)
 	const takenName = trimmed ? existingNames.find((existing) => presetNameKey(existing) === key) : undefined
 	const rejected = takenName !== undefined && onNameTaken === 'reject'
+	const replaces = takenName !== undefined && !rejected
+	// The taken-name check answers "will this work?" while typing, so it shows before a submit.
+	const error = rejected
+		? `Another preset is already named "${takenName}".`
+		: submitted && !trimmed
+			? 'Enter a preset name.'
+			: null
 
 	return (
 		<Dialog
@@ -103,9 +112,12 @@ function PresetNameDialog({
 			initialFocus={nameRef}
 			render={
 				<form
+					noValidate
 					onSubmit={(event) => {
 						event.preventDefault()
-						if (!trimmed || rejected) return
+						if (!trimmed || rejected) {
+							return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+						}
 						onSave(trimmed)
 					}}
 				/>
@@ -113,31 +125,30 @@ function PresetNameDialog({
 		>
 			<DialogHeader title={title} subtitle={description} />
 			<DialogBody>
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${id}-name`} className="label-sm text-secondary">
-						Name
-					</label>
-					<Input
-						id={`${id}-name`}
-						ref={nameRef}
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						placeholder={placeholder}
-						aria-invalid={rejected ? true : undefined}
-						aria-describedby={takenName !== undefined ? `${id}-taken` : undefined}
-					/>
-					{takenName !== undefined ? (
-						<p id={`${id}-taken`} className={`body-sm ${rejected ? 'text-data-down' : 'text-warning'}`}>
-							{rejected
-								? `Another preset is named "${takenName}". Choose a different name.`
-								: `A preset named "${takenName}" exists. Saving replaces it.`}
-						</p>
-					) : null}
-				</div>
+				<Field
+					label="Name"
+					error={error}
+					live
+					hint={
+						replaces ? (
+							<span className="text-warning">A preset named "{takenName}" exists. Saving replaces it.</span>
+						) : null
+					}
+				>
+					{(control) => (
+						<Input
+							{...control}
+							ref={nameRef}
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder={placeholder}
+						/>
+					)}
+				</Field>
 			</DialogBody>
 			<DialogFooter dismiss={<DialogCancelButton />}>
-				<Button type="submit" size="md" variant="primary" disabled={!trimmed || rejected}>
-					{takenName !== undefined && !rejected ? 'Replace' : submitLabel}
+				<Button type="submit" size="md" variant="primary">
+					{replaces ? 'Replace' : submitLabel}
 				</Button>
 			</DialogFooter>
 		</Dialog>

@@ -174,3 +174,27 @@ test('a failed settings save keeps its error on screen while the retry saves', a
 	await act(async () => writes[1]!.resolve(Response.json({ preferences })))
 	await waitFor(() => expect(document.body.textContent).toContain('Notification preferences saved'))
 })
+
+test('saving with no metric picked says so under the metrics and focuses the first one, without a write', async () => {
+	await renderCard()
+	await waitFor(() => expect(button('Update settings')?.disabled).toBe(false))
+	await act(async () => button('Update settings')!.click())
+	const dialog = () => document.querySelector('[role="dialog"]')!
+	await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
+	const boxes = () => [...dialog().querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
+	const picked = boxes().find((box) => box.checked)!
+	await act(async () => picked.click())
+	const group = picked.closest('[role="group"]')!
+	const groupError = () => document.getElementById(group.getAttribute('aria-describedby') ?? '')?.textContent
+	expect(groupError()).toBeUndefined()
+
+	const save = [...dialog().querySelectorAll<HTMLButtonElement>('button[type="submit"]')].find((el) =>
+		el.closest('form')
+	)!
+	await act(async () => save.click())
+	expect(groupError()).toBe('Choose at least one protocol or chain metric.')
+	expect(document.activeElement).toBe(boxes()[0])
+	expect(writes).toHaveLength(0)
+	await act(async () => picked.click())
+	expect(groupError()).toBeUndefined()
+})

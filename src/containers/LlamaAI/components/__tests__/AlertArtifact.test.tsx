@@ -36,13 +36,13 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function render(savedAlertIds?: Array<string>) {
+async function render(savedAlertIds?: Array<string>, alertIntent = intent) {
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
 				<AlertArtifact
 					alertId="alert"
-					alertIntent={intent}
+					alertIntent={alertIntent}
 					messageId="message"
 					savedAlertIds={savedAlertIds}
 					defaultTitle="Daily TVL"
@@ -110,4 +110,29 @@ test('a card saved in an earlier visit shows its earlier test without taking foc
 	await render(['alert'])
 	await waitForUi(() => expect(document.body.textContent).toContain('Test already sent for this alert'))
 	expect(document.activeElement).toBe(document.body)
+})
+
+test('Save alert with no Slack channel picked focuses the channel picker, not the delivery channel toggle', async () => {
+	session.serve({
+		[`${AI}/slack/workspaces`]: {
+			workspaces: [
+				{ team_id: 'T1', team_name: 'Llama Research', default_channel_id: null, revoked: false },
+				{ team_id: 'T2', team_name: 'Llama Ops', default_channel_id: null, revoked: false }
+			]
+		},
+		[`${AI}/slack/channels?team_id=T1`]: { channels: [{ id: 'C1', name: 'alerts', is_private: false }] }
+	})
+	await render(undefined, { ...intent, deliveryChannel: 'slack', slackTeamId: 'T1' })
+	const channel = await waitForUi(() => {
+		const select = document.querySelector<HTMLSelectElement>('[aria-label="Slack channel"]')
+		expect(select).not.toBeNull()
+		return select!
+	})
+	await press(buttonNamed('Save alert')!)
+	expect(document.activeElement).toBe(channel)
+	expect(channel.getAttribute('aria-invalid')).toBe('true')
+	expect(
+		document.querySelector<HTMLSelectElement>('[aria-label="Slack workspace"]')!.getAttribute('aria-invalid')
+	).toBeNull()
+	expect(channel.closest('[role="group"]')!.querySelector('.text-error')?.textContent).toBe('Choose a Slack channel.')
 })

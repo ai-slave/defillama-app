@@ -4,9 +4,11 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardRatingDecision } from '../dashboardTypes'
 
@@ -27,19 +29,21 @@ export function Rating(props: RatingProps) {
 function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 	const [rating, setRating] = useState(0)
 	const formRef = useRef<HTMLFormElement>(null)
+	// The last failure, not the mutation's error: that one clears as soon as a retry starts. Success removes the banner.
+	const [error, setError] = useState<string | null>(null)
 	const submission = useMutation({
 		mutationFn: (decision: DashboardRatingDecision) => onSubmit(sessionId, decision),
-		onError: (error) => {
-			if (!formRef.current?.isConnected) toast.error(error.message)
+		onError: (failure) => {
+			if (formRef.current?.isConnected) setError(failure.message)
+			else toast.error(failure.message)
 		}
 	})
 	const skipping = submission.isPending && 'skipped' in submission.variables
 	const saving = submission.isPending && !skipping
-	const feedbackId = `${sessionId}-rating-feedback`
 
+	// Submit only renders once a rating is picked.
 	const handleSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
-		if (rating === 0) return
 		const feedback = (new FormData(e.currentTarget).get('feedback') as string | null)?.trim()
 		submission.mutate({ rating, ...(feedback ? { feedback } : {}) })
 	}
@@ -52,6 +56,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 				formRef.current = node
 				return focusPageOnLeave(node)
 			}}
+			noValidate
 			onSubmit={handleSubmit}
 			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-subtle bg-surface p-4"
 		>
@@ -94,20 +99,19 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 			) : null}
 
 			{rating > 0 ? (
-				<div className="flex w-full flex-col gap-1">
-					<label htmlFor={feedbackId} className="label-sm tracking-wide text-secondary uppercase">
-						Your Feedback (Optional)
-					</label>
-					<textarea
-						id={feedbackId}
-						name="feedback"
-						placeholder="Share your thoughts about the AI-generated dashboard…"
-						rows={3}
-						className={`${textareaStyles} w-full`}
-						readOnly={submission.isPending}
-						aria-busy={submission.isPending || undefined}
-					/>
-				</div>
+				<Field label="Feedback (optional)">
+					{(control) => (
+						<textarea
+							{...control}
+							name="feedback"
+							placeholder="Share your thoughts about the AI-generated dashboard…"
+							rows={3}
+							className={`${textareaStyles} w-full`}
+							readOnly={submission.isPending}
+							aria-busy={submission.isPending || undefined}
+						/>
+					)}
+				</Field>
 			) : null}
 
 			<div className="mt-6 flex items-center justify-center gap-3">
@@ -138,11 +142,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 			<span role="status" className="sr-only">
 				{submission.isPending ? (skipping ? 'Dismissing rating' : 'Saving rating') : ''}
 			</span>
-			{submission.error ? (
-				<p role="alert" className="body-md text-error">
-					{submission.error.message}
-				</p>
-			) : null}
+			{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
 		</form>
 	)
 }

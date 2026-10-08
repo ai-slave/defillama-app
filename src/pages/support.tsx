@@ -3,10 +3,17 @@ import Script from 'next/script'
 import * as React from 'react'
 import { useUserHash } from '~/auth'
 import Layout from '~/layout'
+import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
+import { emailError } from '~/utils/email'
+
+const EMPTY_REQUEST = { name: '', email: '', body: '' }
 
 async function submitSupportRequest(formData: FormData) {
 	const data = await fetch('https://api.llama.fi/reportSupport', {
@@ -84,31 +91,39 @@ function LiveChatCard({ userHash, email }: { userHash: string | null; email: str
 }
 
 function Support() {
-	const { mutate, isPending, error } = useMutation({ mutationFn: submitSupportRequest })
+	const { mutate, isPending } = useMutation({ mutationFn: submitSupportRequest })
 	const [isSubmitted, setIsSubmitted] = React.useState(false)
 	const [showForm, setShowForm] = React.useState(false)
+	const [request, setRequest] = React.useState(EMPTY_REQUEST)
+	const [submitted, setSubmitted] = React.useState(false)
+	// Kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [failed, setFailed] = React.useState(false)
+	const errors = {
+		// The email is optional; a malformed one would leave the team no way to reply.
+		email: request.email.trim() ? emailError(request.email) : null,
+		body: request.body.trim() ? null : 'Enter a description of the issue.'
+	}
+	const edit = (field: keyof typeof EMPTY_REQUEST) => (e: { target: { value: string } }) =>
+		setRequest((current) => ({ ...current, [field]: e.target.value }))
 
-	const onSubmit = (e) => {
+	const onSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
+		if (isPending) return
+		if (errors.email || errors.body) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 
-		const form = e.target as HTMLFormElement
-		const formData = new FormData(form)
-
-		if (!formData.get('email')) {
-			formData.set('email', 'anon@defillama.com')
-		}
-
-		// Remove the file field if no file is selected
-		const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement
-		if (fileInput && (!fileInput.files || fileInput.files.length === 0)) {
-			formData.delete('attachment')
-		}
+		const formData = new FormData()
+		formData.set('name', request.name)
+		formData.set('email', request.email.trim() || 'anon@defillama.com')
+		formData.set('body', request.body)
 
 		mutate(formData, {
 			onSuccess: () => {
-				form.reset()
+				setRequest(EMPTY_REQUEST)
+				setSubmitted(false)
+				setFailed(false)
 				setIsSubmitted(true)
-			}
+			},
+			onError: () => setFailed(true)
 		})
 	}
 
@@ -154,35 +169,33 @@ function Support() {
 					isSubmitted ? (
 						<SuccessScreen setIsSubmitted={setIsSubmitted} />
 					) : (
-						<Card as="form" onSubmit={onSubmit} padding="sm" className="flex w-full flex-col gap-4">
-							<div className="flex flex-col gap-1">
-								<label htmlFor="support-name" className="flex items-center gap-1">
-									<span>Name</span>
-									<span className="mt-0.5 body-sm text-tertiary">(Optional)</span>
-								</label>
-								<Input id="support-name" type="text" name="name" className="w-full" />
-							</div>
+						<Card as="form" noValidate onSubmit={onSubmit} padding="sm" className="flex w-full flex-col gap-4">
+							<Field label="Name (optional)">
+								{(control) => (
+									<Input {...control} type="text" value={request.name} onChange={edit('name')} className="w-full" />
+								)}
+							</Field>
 
-							<div className="flex flex-col gap-1">
-								<label htmlFor="support-email" className="flex items-center gap-1">
-									<span>Email</span>
-									<span className="mt-0.5 body-sm text-tertiary">(Optional)</span>
-								</label>
-								<Input id="support-email" type="email" name="email" className="w-full" />
-							</div>
+							<Field label="Email (optional)" error={submitted ? errors.email : null}>
+								{(control) => (
+									<Input {...control} type="email" value={request.email} onChange={edit('email')} className="w-full" />
+								)}
+							</Field>
 
-							<div className="flex flex-col gap-1">
-								<label htmlFor="support-description">Description</label>
-								<textarea
-									id="support-description"
-									name="body"
-									required
-									className={`${textareaStyles} min-h-24 w-full`}
-								/>
-							</div>
+							<Field label="Description" error={submitted ? errors.body : null}>
+								{(control) => (
+									<textarea
+										{...control}
+										required
+										value={request.body}
+										onChange={edit('body')}
+										className={`${textareaStyles} min-h-24 w-full`}
+									/>
+								)}
+							</Field>
 
 							<Button
-								name="submit-btn"
+								type="submit"
 								variant="primary"
 								size="md"
 								pendingLabel={isPending ? 'Submitting…' : null}
@@ -190,10 +203,10 @@ function Support() {
 							>
 								Submit
 							</Button>
-							{error ? (
-								<p role="alert" className="text-center body-sm text-error">
+							{failed ? (
+								<InlineStatus variant="error">
 									Your request didn't send. Try again, or email support@defillama.com.
-								</p>
+								</InlineStatus>
 							) : null}
 						</Card>
 					)

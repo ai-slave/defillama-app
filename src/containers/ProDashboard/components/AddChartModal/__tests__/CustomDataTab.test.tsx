@@ -47,6 +47,9 @@ function Harness({ editItem = null }: { editItem?: CustomDataConfig | null }) {
 	latest = state
 	return (
 		<CustomDataTab
+			error={null}
+			pane="configure"
+			onPaneChange={vi.fn()}
 			customData={state.customData}
 			onNameChange={(name) => dispatch({ type: 'SET_CUSTOM_DATA_NAME', payload: name })}
 			onTextChange={(text) => dispatch({ type: 'SET_CUSTOM_DATA_TEXT', payload: text })}

@@ -79,9 +79,10 @@ test('a new card has nothing to save until its query runs', () => {
 		save: { label: 'Add to dashboard', disabled: true },
 		run: { label: 'Run query', disabled: true }
 	})
-	expect(sqlChartModalControls(state, { ...ready, sql: '   ', editing: false }).run).toEqual({
-		label: 'Run query',
-		disabled: true
+	// An empty query keeps Run and Save enabled: pressing them says "Enter a query." under the editor.
+	expect(sqlChartModalControls(saved, { ...ready, sql: '   ', editing: false })).toMatchObject({
+		canSave: true,
+		run: { label: 'Run query', disabled: false }
 	})
 })
 
@@ -303,8 +304,6 @@ test('an idle Save that cannot run says why', () => {
 	const fresh = initialSqlChartModalState(null)
 	const status = (overrides: Partial<Parameters<typeof sqlChartModalControls>[1]>) =>
 		sqlChartModalControls(fresh, { ...ready, editing: false, ...overrides }).status
-	expect(status({ sql: '  ' })).toBe('Write a query to add the chart.')
-	expect(status({ sql: '', editing: true })).toBe('Write a query to save the chart.')
 	expect(status({ schemaLoading: true })).toBe('Loading tables…')
 	expect(status({ engine: 'loading' })).toBe('Waiting for the SQL engine to load…')
 	expect(status({ engine: 'error' })).toBe('The SQL engine failed to load.')

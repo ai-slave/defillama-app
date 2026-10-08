@@ -39,6 +39,8 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 interface StablecoinsChartTabProps {
+	/** What Add still needs, shown under the chain or stablecoin once Add was pressed. */
+	error: string | null
 	selectedStablecoinChain: string
 	selectedStablecoinChartType: StablecoinChartType
 	stablecoinMode: 'chain' | 'asset'
@@ -85,6 +87,7 @@ const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
 const BAR_EXPORT_BUTTONS = { csv: true, png: false, filename: 'bar-chart-data' }
 
 export function StablecoinsChartTab({
+	error,
 	selectedStablecoinChain,
 	selectedStablecoinChartType,
 	stablecoinMode,
@@ -436,6 +439,7 @@ export function StablecoinsChartTab({
 						<VirtualizedSelect
 							variant="field"
 							label="Chain"
+							error={error}
 							options={selectableChainOptions}
 							selectedValue={selectedStablecoinChain}
 							onChange={(option) => {
@@ -465,6 +469,7 @@ export function StablecoinsChartTab({
 						<VirtualizedSelect
 							variant="field"
 							label="Stablecoin"
+							error={error}
 							options={assetOptions}
 							selectedValue={selectedStablecoinAsset || null}
 							onChange={handleAssetChange}

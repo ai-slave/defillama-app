@@ -1,6 +1,7 @@
-import { useId, useMemo } from 'react'
+import { useMemo } from 'react'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
 import { Checkbox } from '~/ui/Checkbox'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../dashboardTypes'
@@ -11,7 +12,7 @@ import {
 	type MetricAggregator,
 	type MetricWindow
 } from '../../../types'
-import { dashboardFieldLabelStyles, DescriptionField, TagsField, VisibilityField } from '../../DashboardFormFields'
+import { DescriptionField, TagsField, VisibilityField } from '../../DashboardFormFields'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { DisplayMode } from '../types'
 
@@ -61,7 +62,6 @@ function outputSummary(cards: number, charts: number, includeTable: boolean) {
 export function PreviewStep() {
 	const { state, actions, derived } = useComparisonWizardContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const id = useId()
 
 	const selectedItemLabels = useMemo(() => {
 		return state.selectedItems.map((item) => {
@@ -77,20 +77,19 @@ export function PreviewStep() {
 	return (
 		<div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
 			<div className="flex min-w-0 flex-col gap-4">
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-						Dashboard name
-					</label>
-					<Input
-						id={`${id}-name`}
-						type="text"
-						value={derived.dashboardName}
-						onChange={(e) => actions.setDashboardName(e.target.value)}
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						placeholder="Enter dashboard name"
-						required
-					/>
-				</div>
+				<Field label="Dashboard name" error={derived.shownStepError}>
+					{(control) => (
+						<Input
+							{...control}
+							type="text"
+							value={derived.dashboardName}
+							onChange={(e) => actions.setDashboardName(e.target.value)}
+							maxLength={DASHBOARD_NAME_MAX_LENGTH}
+							placeholder="Enter dashboard name"
+							required
+						/>
+					)}
+				</Field>
 
 				<VisibilityField value={state.visibility} onChange={actions.setVisibility} sharedWithTeam={false} />
 

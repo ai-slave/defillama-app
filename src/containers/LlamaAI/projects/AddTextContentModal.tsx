@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, useRef, useState, type RefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import {
@@ -11,6 +11,8 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useAddTextFile } from './hooks'
@@ -29,19 +31,15 @@ export function AddTextContentModal(props: AddTextContentModalProps) {
 
 function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextContentModalProps) {
 	const formRef = useRef<HTMLFormElement>(null)
-	const nameRef = useRef<HTMLInputElement>(null)
-	const contentRef = useRef<HTMLTextAreaElement>(null)
-	const nameId = useId()
-	const contentId = useId()
 	const [name, setName] = useState('')
 	const [content, setContent] = useState('')
 	// Set by a submit with an empty field; each field error then follows what is typed.
-	const [checkRequired, setCheckRequired] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 	const add = useAddTextFile(projectId)
 	// The last failed save, not the mutation's error: that one clears as soon as a retry starts.
 	const [failed, setFailed] = useState(false)
-	const nameMissing = checkRequired && !name.trim()
-	const contentMissing = checkRequired && !content
+	const nameError = submitted && !name.trim() ? 'Enter a filename.' : null
+	const contentError = submitted && !content ? 'Enter the text to add.' : null
 	// The server can accept the request and still skip the file, e.g. at the project's file limit.
 	const skippedReason =
 		add.data && add.data.imported.length === 0 && add.data.skipped.length > 0 ? add.data.skipped[0].reason : null
@@ -50,12 +48,7 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 		e.preventDefault()
 		if (add.isPending) return
 		const trimmedName = name.trim()
-		if (!trimmedName || !content) {
-			setCheckRequired(true)
-			if (trimmedName) contentRef.current?.focus()
-			else nameRef.current?.focus()
-			return
-		}
+		if (!trimmedName || !content) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		void add.mutateAsync({ name: trimmedName, content }).then(
 			(result) => {
 				setFailed(false)
@@ -77,7 +70,7 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 
 	return (
 		<Dialog store={dialogStore} size="md" pending={add.isPending} finalFocus={finalFocus} unmountOnHide portal>
-			<form ref={formRef} onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+			<form ref={formRef} noValidate onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader
 					title="Add text content"
 					subtitle="Paste a note, prompt, or any plain-text content for this project."
@@ -88,56 +81,40 @@ function AddTextContentDialog({ dialogStore, projectId, finalFocus }: AddTextCon
 					description="The text you entered is not added to the project."
 				/>
 				<DialogBody>
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={nameId} className="label-sm text-secondary">
-							Filename
-						</label>
-						<Ariakit.Focusable
-							autoFocus
-							render={
-								<Input
-									id={nameId}
-									ref={nameRef}
-									readOnly={add.isPending}
-									maxLength={255}
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									aria-invalid={nameMissing || undefined}
-									aria-describedby={nameMissing ? `${nameId}-error` : undefined}
-									placeholder="notes.md"
-									className="font-mono"
-								/>
-							}
-						/>
-						{nameMissing ? (
-							<p id={`${nameId}-error`} role="alert" className="body-sm text-data-down">
-								Enter a filename.
-							</p>
-						) : null}
-					</div>
+					<Field label="Filename" error={nameError}>
+						{(control) => (
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										{...control}
+										required
+										readOnly={add.isPending}
+										maxLength={255}
+										value={name}
+										onChange={(e) => setName(e.target.value)}
+										placeholder="notes.md"
+										className="font-mono"
+									/>
+								}
+							/>
+						)}
+					</Field>
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={contentId} className="label-sm text-secondary">
-							Content
-						</label>
-						<textarea
-							id={contentId}
-							ref={contentRef}
-							readOnly={add.isPending}
-							rows={12}
-							value={content}
-							onChange={(e) => setContent(e.target.value)}
-							aria-invalid={contentMissing || undefined}
-							aria-describedby={contentMissing ? `${contentId}-error` : undefined}
-							placeholder="# my note&#10;Anything goes here…"
-							className={`${textareaStyles} resize-y font-mono`}
-						/>
-						{contentMissing ? (
-							<p id={`${contentId}-error`} role="alert" className="body-sm text-data-down">
-								Enter the text to add.
-							</p>
-						) : null}
-					</div>
+					<Field label="Content" error={contentError}>
+						{(control) => (
+							<textarea
+								{...control}
+								required
+								readOnly={add.isPending}
+								rows={12}
+								value={content}
+								onChange={(e) => setContent(e.target.value)}
+								placeholder="# my note&#10;Anything goes here…"
+								className={`${textareaStyles} resize-y font-mono`}
+							/>
+						)}
+					</Field>
 
 					{failed ? (
 						<InlineStatus variant="error">Couldn&apos;t add the text content. Try again.</InlineStatus>

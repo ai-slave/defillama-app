@@ -13,7 +13,7 @@ describe('BannerForm regional targeting', () => {
 	test('requires at least one location in selected mode', () => {
 		const state = bannerToForm(null)
 		expect(validateBannerForm({ ...state, text: 'Targeted banner', audienceMode: 'selected' }).audience).toBe(
-			'Select at least one region or country'
+			'Choose at least one region or country.'
 		)
 	})
 
@@ -54,7 +54,7 @@ describe('BannerForm promo landing mobile image', () => {
 	})
 
 	test('counts the landing mobile image as a promo image', () => {
-		expect(validateBannerForm(promoState()).imageUrl).toBe('Upload at least one image')
+		expect(validateBannerForm(promoState()).imageUrl).toBe('Upload at least one image.')
 		expect(
 			validateBannerForm({ ...promoState(), imageLandingMobileUrl: '/uploads/landing-mobile' }).imageUrl
 		).toBeUndefined()
@@ -81,10 +81,10 @@ describe('BannerForm promo placement urls', () => {
 
 	test('validates placement url prefixes only when filled in', () => {
 		expect(validateBannerForm({ ...promoState(), landingLinkUrl: 'ftp://example.com' }).landingLinkUrl).toBe(
-			'Must start with http://, https://, or /'
+			'Enter a valid URL starting with http://, https:// or /.'
 		)
 		expect(validateBannerForm({ ...promoState(), articleLinkUrl: 'example.com/article' }).articleLinkUrl).toBe(
-			'Must start with http://, https://, or /'
+			'Enter a valid URL starting with http://, https:// or /.'
 		)
 		const errors = validateBannerForm({ ...promoState(), landingLinkUrl: '', articleLinkUrl: '/research' })
 		expect(errors.landingLinkUrl).toBeUndefined()

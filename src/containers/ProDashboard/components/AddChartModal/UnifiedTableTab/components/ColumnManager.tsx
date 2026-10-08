@@ -42,6 +42,8 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { codeInputStyles, Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -373,16 +375,24 @@ export function ColumnManager({
 	}, [autocompleteFilter])
 
 	const expressionValidation = useMemo(() => {
-		if (!customExpression.trim()) return { isValid: false, error: 'Expression is required' }
+		if (!customExpression.trim()) return { isValid: false, error: 'Enter an expression.' }
 		return validateExpression(customExpression)
 	}, [customExpression])
 
+	// Whether Add or Update was pressed on this draft. A taken name and an expression that does not parse show as
+	// they are typed; an empty field waits for the press.
+	const [customColumnSubmitted, setCustomColumnSubmitted] = useState(false)
+	const nameTaken = customColumns.some(
+		(col) => col.name.toLowerCase() === customName.toLowerCase() && col.id !== editingId
+	)
 	const nameError = !customName.trim()
-		? 'Name is required'
-		: customColumns.some((col) => col.name.toLowerCase() === customName.toLowerCase() && col.id !== editingId)
-			? 'Column name already exists'
+		? 'Enter a column name.'
+		: nameTaken
+			? 'Another column already has this name.'
 			: null
-	const canSaveCustomColumn = nameError === null && expressionValidation.isValid
+	const shownNameError = customColumnSubmitted || nameTaken ? nameError : null
+	const shownExpressionError =
+		customColumnSubmitted || customExpression.trim() ? (expressionValidation.error ?? null) : null
 
 	const preview = useMemo(() => {
 		if (!customExpression.trim() || !expressionValidation.isValid) return null
@@ -501,8 +511,10 @@ export function ColumnManager({
 		}
 	}
 
-	const handleAddOrUpdateCustomColumn = () => {
-		if (!canSaveCustomColumn) return
+	const handleAddOrUpdateCustomColumn = (event: React.MouseEvent<HTMLButtonElement>) => {
+		if (nameError || !expressionValidation.isValid) {
+			return showFieldErrors(event.currentTarget.closest('section')!, () => setCustomColumnSubmitted(true))
+		}
 		const column: CustomColumnDefinition = {
 			id: editingId ?? generateCustomColumnId(),
 			name: customName.trim(),
@@ -521,6 +533,7 @@ export function ColumnManager({
 			onAddCustomColumn(column)
 		}
 		setDraft(EMPTY_CUSTOM_COLUMN_DRAFT)
+		setCustomColumnSubmitted(false)
 		setCustomColumnExpanded(false)
 	}
 
@@ -547,7 +560,10 @@ export function ColumnManager({
 		setCustomColumnExpanded(true)
 	}
 
-	const handleCancelEdit = () => setDraft(EMPTY_CUSTOM_COLUMN_DRAFT)
+	const handleCancelEdit = () => {
+		setDraft(EMPTY_CUSTOM_COLUMN_DRAFT)
+		setCustomColumnSubmitted(false)
+	}
 
 	useEffect(() => {
 		const handleClickOutside = () => setAutocompleteState((prev) => ({ ...prev, showAutocomplete: false }))
@@ -769,81 +785,73 @@ export function ColumnManager({
 							</div>
 						) : null}
 
-						<div className="flex flex-col gap-1">
-							<label className="flex flex-col gap-1 label-sm text-secondary">
-								Column name
+						<Field label="Column name" live error={shownNameError}>
+							{(control) => (
 								<Input
+									{...control}
 									type="text"
+									required
 									value={customName}
 									onChange={(e) => setDraft({ ...draft, name: e.target.value })}
 									placeholder="e.g., TVL to market cap"
-									aria-invalid={customName.trim() !== '' && nameError !== null}
-									aria-describedby={nameError && (customName || customExpression) ? `${fieldId}-name-error` : undefined}
 								/>
-							</label>
-							{/* The save button stays disabled until the name is valid; say why once the reader has typed something. */}
-							{nameError && (customName || customExpression) ? (
-								<p id={`${fieldId}-name-error`} className="body-sm text-error">
-									{nameError}
-								</p>
-							) : null}
-						</div>
+							)}
+						</Field>
 
-						<div className="flex flex-col gap-1">
-							<label htmlFor={`${fieldId}-expression`} className="label-sm text-secondary">
-								Expression
-							</label>
-							<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
-								<input
-									id={`${fieldId}-expression`}
-									ref={expressionInputRef}
-									type="text"
-									value={customExpression}
-									onChange={handleExpressionChange}
-									onKeyDown={handleExpressionKeyDown}
-									onFocus={() => customExpression && setShowAutocomplete(true)}
-									placeholder="e.g., tvl / mcap, fees24h * 365"
-									aria-invalid={Boolean(customExpression) && !expressionValidation.isValid}
-									className={`${codeInputStyles} w-full pr-8`}
-								/>
-								{customExpression ? (
-									<div className="absolute top-1/2 right-2 -translate-y-1/2">
-										{expressionValidation.isValid ? (
-											<Icon name="check" height={12} width={12} className="text-success" />
-										) : (
-											<Icon name="x" height={12} width={12} className="text-error" />
-										)}
-									</div>
-								) : null}
-								{showAutocomplete && filteredSuggestions.length > 0 ? (
-									<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay shadow-overlay">
-										{filteredSuggestions.map((suggestion, index) => (
-											<button
-												key={`${suggestion.type}-${suggestion.value}`}
-												type="button"
-												onClick={() => insertSuggestion(suggestion)}
-												onMouseEnter={() => setAutocompleteIndex(index)}
-												className={`flex cursor-pointer items-center gap-2 px-2 py-1 label-sm ${
-													index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-primary'
-												}`}
-											>
-												<span
-													className={`size-1.5 shrink-0 rounded-full ${
-														suggestion.type === 'variable'
-															? 'bg-brand'
-															: suggestion.type === 'function'
-																? 'bg-pro-ai'
-																: 'bg-border-strong'
+						<Field label="Expression" live error={shownExpressionError}>
+							{(control) => (
+								<div className="relative" role="presentation" onClick={(e) => e.stopPropagation()}>
+									<input
+										{...control}
+										ref={expressionInputRef}
+										type="text"
+										required
+										value={customExpression}
+										onChange={handleExpressionChange}
+										onKeyDown={handleExpressionKeyDown}
+										onFocus={() => customExpression && setShowAutocomplete(true)}
+										placeholder="e.g., tvl / mcap, fees24h * 365"
+										className={`${codeInputStyles} w-full pr-8`}
+									/>
+									{customExpression ? (
+										<div className="absolute top-1/2 right-2 -translate-y-1/2">
+											{expressionValidation.isValid ? (
+												<Icon name="check" height={12} width={12} className="text-success" />
+											) : (
+												<Icon name="x" height={12} width={12} className="text-error" />
+											)}
+										</div>
+									) : null}
+									{showAutocomplete && filteredSuggestions.length > 0 ? (
+										<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay shadow-overlay">
+											{filteredSuggestions.map((suggestion, index) => (
+												<button
+													key={`${suggestion.type}-${suggestion.value}`}
+													type="button"
+													onClick={() => insertSuggestion(suggestion)}
+													onMouseEnter={() => setAutocompleteIndex(index)}
+													className={`flex cursor-pointer items-center gap-2 px-2 py-1 label-sm ${
+														index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-primary'
 													}`}
-												/>
-												<code className="shrink-0">{suggestion.display}</code>
-												<span className="ml-auto truncate text-tertiary">{suggestion.description}</span>
-											</button>
-										))}
-									</div>
-								) : null}
-							</div>
-						</div>
+												>
+													<span
+														className={`size-1.5 shrink-0 rounded-full ${
+															suggestion.type === 'variable'
+																? 'bg-brand'
+																: suggestion.type === 'function'
+																	? 'bg-pro-ai'
+																	: 'bg-border-strong'
+														}`}
+													/>
+													<code className="shrink-0">{suggestion.display}</code>
+													<span className="ml-auto truncate text-tertiary">{suggestion.description}</span>
+												</button>
+											))}
+										</div>
+									) : null}
+								</div>
+							)}
+						</Field>
 						<p className="body-xs text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
 
 						{/* Each field keeps 14rem, so on a phone they stack instead of squeezing four segments each. */}
@@ -878,21 +886,12 @@ export function ColumnManager({
 							</div>
 						</div>
 
-						{customExpression ? (
-							<div
-								className={`rounded-md border p-2 body-sm ${
-									expressionValidation.isValid
-										? 'border-success-muted bg-success-faint'
-										: 'border-error-muted bg-error-faint'
-								}`}
-							>
+						{/* The expression's error sits under its field; a valid one previews its result on sample metrics. */}
+						{preview !== null ? (
+							<div className="rounded-md border border-success-muted bg-success-faint p-2 body-sm">
 								<div className="flex items-center justify-between">
 									<span className="text-secondary">Result:</span>
-									{preview !== null ? (
-										<span className="font-mono font-bold text-success">{preview}</span>
-									) : (
-										<span className="text-error">{expressionValidation.error || 'Invalid'}</span>
-									)}
+									<span className="font-mono font-bold text-success">{preview}</span>
 								</div>
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success-muted pt-1">
@@ -906,13 +905,7 @@ export function ColumnManager({
 							</div>
 						) : null}
 
-						<Button
-							variant="primary"
-							size="md"
-							onClick={handleAddOrUpdateCustomColumn}
-							disabled={!canSaveCustomColumn}
-							className="w-full"
-						>
+						<Button variant="primary" size="md" onClick={handleAddOrUpdateCustomColumn} className="w-full">
 							{editingId ? 'Update column' : 'Add custom column'}
 						</Button>
 					</div>

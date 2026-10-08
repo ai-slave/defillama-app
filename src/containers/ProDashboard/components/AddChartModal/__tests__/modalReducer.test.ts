@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import type { DashboardItemConfig } from '../../../dashboardItemConfig'
 import { hasDraftChanges, initializeFromEditItem, modalReducer, resolveChartTypesForSubjectTab } from '../modalReducer'
+import type { ModalState } from '../types'
 
 test('defaults to manual and preserves the chosen mode on reset', () => {
 	const state = initializeFromEditItem(null)
@@ -185,6 +186,16 @@ test('a closed manual form or builder mode leaves the chart types empty', () => 
 		modalReducer({ ...openManualForm(), chartMode: 'builder' }, { type: 'SET_SELECTED_CHART_TYPES', payload: [] })
 			.selectedChartTypes
 	).toEqual([])
+})
+
+test('Back from a single-card category returns to the composed series’ subject, so Add on the grid adds them', () => {
+	const yields = modalReducer(openManualForm(), { type: 'SET_SELECTED_CHART_TAB', payload: 'yields' })
+	const back = (state: ModalState) => modalReducer(state, { type: 'SET_MANUAL_FORM_OPEN', payload: false })
+	expect(back(yields)).toMatchObject({ manualFormOpen: false, selectedChartTab: 'chain' })
+	const aaveFees = { id: 'aave-fees', kind: 'chart', subjectType: 'protocol', protocol: 'aave', type: 'fees' } as const
+	expect(back({ ...yields, composerItems: [aaveFees] }).selectedChartTab).toBe('protocol')
+	const protocolForm = { ...openManualForm(), selectedChartTab: 'protocol' as const }
+	expect(back(protocolForm).selectedChartTab).toBe('protocol')
 })
 
 test('picking another yield pool starts its chart on TVL and APY, picking the same pool keeps the type', () => {

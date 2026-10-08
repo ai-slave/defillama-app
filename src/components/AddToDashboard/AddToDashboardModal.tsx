@@ -35,7 +35,8 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
-import { keepFocus } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -266,8 +267,10 @@ function AddToDashboardDialog({
 				slug: repairDashboard?.slug
 			}
 		: picked
-	const chartNameInputId = useId()
-	const newDashboardNameInputId = useId()
+	const targetErrorId = useId()
+	const [submitted, setSubmitted] = useState(false)
+	// Kept while a retry runs: the mutation clears its own error when the retry starts.
+	const [submitError, setSubmitError] = useState<string | null>(null)
 	const deferredSearch = useDeferredValue(search)
 
 	const filteredDashboards = useMemo(() => {
@@ -285,10 +288,14 @@ function AddToDashboardDialog({
 	}, [])
 
 	const newDashboardNameRef = useRef<HTMLInputElement>(null)
-	// The button gives way to the name field it asks for.
+	// The button gives way to the name field it asks for. The new field is a new question, so it opens without the last
+	// submit's errors; they return on the next submit.
 	const handleCreateNew = () =>
 		keepFocus(
-			() => setTarget({ kind: 'new', name: '' }),
+			() => {
+				setTarget({ kind: 'new', name: '' })
+				setSubmitted(false)
+			},
 			() => newDashboardNameRef.current
 		)
 
@@ -301,14 +308,17 @@ function AddToDashboardDialog({
 	const {
 		mutate: submitAddToDashboardMutation,
 		isPending: isSubmitting,
-		error: submitError,
-		variables: submitVariables,
-		data: submitted,
+		data: added,
 		reset: resetSubmit
 	} = useMutation({
 		mutationFn: (variables: { target: DraftTarget; chartName: string }) =>
 			submitAddToDashboard({ authorizedFetch, chartConfig, llamaAIChart, configName, ...variables, repairTarget }),
+		onError: (error, variables) =>
+			setSubmitError(
+				error.message || (variables.target.kind === 'new' ? 'Failed to create dashboard' : 'Failed to add chart')
+			),
 		onSuccess: (result) => {
+			setSubmitError(null)
 			if (result.target.kind === 'existing' && result.target.repaired) {
 				clearChartRepairTarget()
 				setRepairTarget(null)
@@ -333,29 +343,26 @@ function AddToDashboardDialog({
 			activateDashboardArtifacts(requireAuthorizedFetch(authorizedFetch), dashboardId, plan, plan.estimatedMaxCostUsd)
 	})
 	const costConfirmation =
-		submitted?.activation.status === 'needs-confirmation' ? { submitted, activation: submitted.activation } : null
+		added?.activation.status === 'needs-confirmation' ? { added, activation: added.activation } : null
 
 	if (!isAuthenticated || !hasActiveSubscription) {
 		return null
 	}
 
-	const blockedReason =
-		target === null
-			? 'Pick a dashboard or create a new one'
-			: target.kind === 'new' && !target.name.trim()
-				? 'Enter a name for the new dashboard'
-				: null
+	const targetError = submitted && target === null ? 'Choose a dashboard or create a new one.' : null
+	const nameError = target?.kind === 'new' && !target.name.trim() ? 'Enter a name for the new dashboard.' : null
 
-	// The submit button stays disabled while blockedReason is set, so a submit always has a complete target.
 	const handleAdd = (event: FormSubmitEvent) => {
 		event.preventDefault()
+		if (isSubmitting) return
+		if (target === null || nameError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		const chartName = String(new FormData(event.currentTarget).get('chartName') ?? '').trim()
-		submitAddToDashboardMutation({ target: target!, chartName })
+		submitAddToDashboardMutation({ target, chartName })
 	}
 
 	return (
 		<Dialog size="sm" fullSheet store={dialogStore} pending={isSubmitting} unmountOnHide portal>
-			<form onSubmit={handleAdd} className="flex min-h-0 flex-auto flex-col">
+			<form noValidate onSubmit={handleAdd} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={repairTarget ? 'Replace dashboard chart' : 'Add to dashboard'} />
 
 				<DialogBody>
@@ -376,108 +383,122 @@ function AddToDashboardDialog({
 						</label>
 					) : null}
 
-					<div className="max-h-56 overflow-y-auto overscroll-contain">
-						{isLoadingDashboards ? (
-							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-								<LoadingIndicator label="Loading dashboards" />
-							</div>
-						) : filteredDashboards.length === 0 && !search.trim() ? (
-							dashboardsFailed ? null : (
+					{/* The choice has no visible label of its own (the search field above names it), so the group is wired
+					    by hand: showFieldErrors focuses its first dashboard, or Create new dashboard when there is none. */}
+					<div
+						role="group"
+						aria-label="Dashboards"
+						aria-describedby={targetError ? targetErrorId : undefined}
+						data-invalid={targetError ? '' : undefined}
+						className="flex flex-col gap-4"
+					>
+						<div className="max-h-56 overflow-y-auto overscroll-contain">
+							{isLoadingDashboards ? (
+								<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
+									<LoadingIndicator label="Loading dashboards" />
+								</div>
+							) : filteredDashboards.length === 0 && !search.trim() ? (
+								dashboardsFailed ? null : (
+									<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
+										No dashboards yet
+									</p>
+								)
+							) : filteredDashboards.length === 0 ? (
 								<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
-									No dashboards yet
+									No matches found
 								</p>
-							)
-						) : filteredDashboards.length === 0 ? (
-							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
-								No matches found
-							</p>
-						) : (
-							<div className="flex flex-col gap-0.5">
-								{filteredDashboards.map((dashboard: (typeof dashboards)[number]) => {
-									const isSelected = target?.kind === 'existing' && target.id === dashboard.id
-									return (
-										<button
-											key={dashboard.id}
-											type="button"
-											aria-pressed={isSelected}
-											onClick={() => handleSelectDashboard(dashboard)}
-											className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm transition-colors ${
-												isSelected
-													? 'bg-brand-muted text-link'
-													: 'text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
-											}`}
-										>
-											<span
-												className={`grid size-4 shrink-0 place-items-center text-link ${isSelected ? '' : 'invisible'}`}
+							) : (
+								<div className="flex flex-col gap-0.5">
+									{filteredDashboards.map((dashboard: (typeof dashboards)[number]) => {
+										const isSelected = target?.kind === 'existing' && target.id === dashboard.id
+										return (
+											<button
+												key={dashboard.id}
+												type="button"
+												aria-pressed={isSelected}
+												onClick={() => handleSelectDashboard(dashboard)}
+												className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm transition-colors ${
+													isSelected
+														? 'bg-brand-muted text-link'
+														: 'text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
+												}`}
 											>
-												<Icon name="check" className="size-3" />
-											</span>
-											<span className="truncate">{dashboard.name}</span>
-										</button>
-									)
-								})}
-							</div>
-						)}
-					</div>
+												<span
+													className={`grid size-4 shrink-0 place-items-center text-link ${isSelected ? '' : 'invisible'}`}
+												>
+													<Icon name="check" className="size-3" />
+												</span>
+												<span className="truncate">{dashboard.name}</span>
+											</button>
+										)
+									})}
+								</div>
+							)}
+						</div>
 
-					{dashboardsFailed ? (
-						<InlineStatus variant="error">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<span>
-									{dashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
-								</span>
-								<Button
-									type="button"
-									size="sm"
-									onClick={() => void refetchDashboards()}
-									pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
-								>
-									Try again
-								</Button>
-							</div>
-						</InlineStatus>
-					) : null}
+						{dashboardsFailed ? (
+							<InlineStatus variant="error">
+								<div className="flex flex-wrap items-center justify-between gap-2">
+									<span>
+										{dashboards.length > 0 ? "Couldn't refresh your dashboards." : "Couldn't load your dashboards."}
+									</span>
+									<Button
+										type="button"
+										size="sm"
+										onClick={() => void refetchDashboards()}
+										pendingLabel={isFetchingDashboards ? 'Retrying…' : null}
+									>
+										Try again
+									</Button>
+								</div>
+							</InlineStatus>
+						) : null}
 
-					{!repairTarget ? (
-						<div>
-							{target?.kind === 'new' ? (
-								<>
-									<label htmlFor={newDashboardNameInputId} className="mb-1.5 block label-sm text-secondary">
-										New dashboard name
-									</label>
+						{repairTarget ? null : target?.kind === 'new' ? (
+							<Field label="New dashboard name" error={submitted ? nameError : null}>
+								{(control) => (
 									<Input
+										{...control}
 										ref={newDashboardNameRef}
-										id={newDashboardNameInputId}
 										type="text"
 										name="newDashboardName"
 										required
+										value={target.name}
 										onChange={(e) => setTarget({ kind: 'new', name: e.target.value })}
 										placeholder="e.g. Stablecoin research"
 										className="w-full"
 									/>
-								</>
-							) : (
+								)}
+							</Field>
+						) : (
+							<div className="flex flex-col gap-1">
 								<Button type="button" size="md" onClick={handleCreateNew} className="w-full">
 									<Icon name="plus" className="size-4" />
 									<span>Create new dashboard</span>
 								</Button>
-							)}
-						</div>
-					) : null}
+								{targetError ? (
+									<p id={targetErrorId} className="body-sm text-error">
+										{targetError}
+									</p>
+								) : null}
+							</div>
+						)}
+					</div>
 
 					{chartConfig && (chartConfig.kind === 'multi' || chartConfig.kind === 'builder') ? (
 						<div className="border-t border-subtle pt-4">
-							<label htmlFor={chartNameInputId} className="mb-1.5 block label-sm text-secondary">
-								Chart name
-							</label>
-							<Input
-								id={chartNameInputId}
-								type="text"
-								name="chartName"
-								defaultValue={configName}
-								placeholder={configName || 'Enter chart name…'}
-								className="w-full"
-							/>
+							<Field label="Chart name">
+								{(control) => (
+									<Input
+										{...control}
+										type="text"
+										name="chartName"
+										defaultValue={configName}
+										placeholder={configName || 'Enter chart name…'}
+										className="w-full"
+									/>
+								)}
+							</Field>
 						</div>
 					) : null}
 
@@ -488,23 +509,14 @@ function AddToDashboardDialog({
 						</InlineStatus>
 					) : null}
 
-					{submitError ? (
-						<InlineStatus variant="error">
-							{submitError.message ||
-								(submitVariables?.target.kind === 'new' ? 'Failed to create dashboard' : 'Failed to add chart')}
-						</InlineStatus>
-					) : null}
+					{submitError ? <InlineStatus variant="error">{submitError}</InlineStatus> : null}
 				</DialogBody>
 
-				<DialogFooter
-					leading={blockedReason ? <p className="body-sm text-tertiary">{blockedReason}</p> : null}
-					dismiss={<DialogCancelButton />}
-				>
+				<DialogFooter dismiss={<DialogCancelButton />}>
 					<Button
 						type="submit"
 						variant="primary"
 						size="md"
-						disabled={blockedReason !== null}
 						pendingLabel={isSubmitting ? (repairTarget ? 'Replacing…' : 'Adding…') : null}
 					>
 						<Icon name={repairTarget ? 'repeat' : 'plus'} className="size-3.5" />
@@ -516,7 +528,7 @@ function AddToDashboardDialog({
 				<ConfirmDialog
 					open
 					// Skipping keeps the saved chart as a snapshot; the add itself is done either way.
-					onClose={() => finish(costConfirmation.submitted, 'declined')}
+					onClose={() => finish(costConfirmation.added, 'declined')}
 					portal
 					tone="primary"
 					title="Enable daily refresh?"
@@ -531,7 +543,7 @@ function AddToDashboardDialog({
 					}
 					onConfirm={() =>
 						confirmedActivation.mutate(costConfirmation.activation, {
-							onSuccess: () => finish(costConfirmation.submitted, 'active')
+							onSuccess: () => finish(costConfirmation.added, 'active')
 						})
 					}
 				/>

@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import {
@@ -11,6 +11,8 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { useCreateProject, useProjectUsage, useUpdateProject } from './hooks'
@@ -32,20 +34,17 @@ export function CreateProjectModal(props: CreateProjectModalProps) {
 
 function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreated }: CreateProjectModalProps) {
 	const formRef = useRef<HTMLFormElement>(null)
-	const nameRef = useRef<HTMLInputElement>(null)
-	const nameId = useId()
-	const descriptionId = useId()
 	const [name, setName] = useState(project?.name ?? '')
 	const [description, setDescription] = useState(project?.description ?? '')
 	// Set by a submit with an empty name; the field error then follows what is typed.
-	const [checkRequired, setCheckRequired] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 	const create = useCreateProject()
 	const update = useUpdateProject(project?.id ?? '')
 	const isRename = project !== null
 	const pending = create.isPending || update.isPending
 	// The last failed save, not the mutations' errors: those clear as soon as a retry starts.
 	const [failed, setFailed] = useState(false)
-	const nameMissing = checkRequired && !name.trim()
+	const nameError = submitted && !name.trim() ? 'Enter a name for the project.' : null
 	const edited = name.trim() !== (project?.name ?? '') || description.trim() !== (project?.description ?? '')
 	// The server refuses a project past the plan's cap, so say so up front instead of after a failed create.
 	const usage = useProjectUsage(!isRename)
@@ -62,11 +61,7 @@ function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreate
 		e.preventDefault()
 		if (pending || atCap) return
 		const trimmed = name.trim()
-		if (!trimmed) {
-			setCheckRequired(true)
-			nameRef.current?.focus()
-			return
-		}
+		if (!trimmed) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		const payload = { name: trimmed, description: description.trim() || null }
 		const doneMessage = isRename ? 'Project updated' : 'Project created'
 		const failedMessage = isRename ? "Couldn't save the project." : "Couldn't create the project."
@@ -88,7 +83,7 @@ function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreate
 
 	return (
 		<Dialog store={dialogStore} size="sm" pending={pending} finalFocus={finalFocus} unmountOnHide portal>
-			<form ref={formRef} onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+			<form ref={formRef} noValidate onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader
 					title={isRename ? 'Rename project' : 'New project'}
 					subtitle="Group sessions and give them shared file knowledge."
@@ -101,48 +96,39 @@ function CreateProjectDialog({ dialogStore, project = null, finalFocus, onCreate
 					}
 				/>
 				<DialogBody>
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={nameId} className="label-sm text-secondary">
-							Name
-						</label>
-						<Ariakit.Focusable
-							autoFocus
-							render={
-								<Input
-									id={nameId}
-									ref={nameRef}
-									readOnly={pending}
-									maxLength={120}
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									aria-invalid={nameMissing || undefined}
-									aria-describedby={nameMissing ? `${nameId}-error` : undefined}
-									placeholder="My research project"
-								/>
-							}
-						/>
-						{nameMissing ? (
-							<p id={`${nameId}-error`} role="alert" className="body-sm text-data-down">
-								Enter a name for the project.
-							</p>
-						) : null}
-					</div>
+					<Field label="Name" error={nameError}>
+						{(control) => (
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										{...control}
+										required
+										readOnly={pending}
+										maxLength={120}
+										value={name}
+										onChange={(e) => setName(e.target.value)}
+										placeholder="My research project"
+									/>
+								}
+							/>
+						)}
+					</Field>
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={descriptionId} className="label-sm text-secondary">
-							Description (optional)
-						</label>
-						<textarea
-							id={descriptionId}
-							readOnly={pending}
-							rows={3}
-							maxLength={500}
-							value={description ?? ''}
-							onChange={(e) => setDescription(e.target.value)}
-							placeholder="What's this project about?"
-							className={`${textareaStyles} resize-none`}
-						/>
-					</div>
+					<Field label="Description (optional)">
+						{(control) => (
+							<textarea
+								{...control}
+								readOnly={pending}
+								rows={3}
+								maxLength={500}
+								value={description ?? ''}
+								onChange={(e) => setDescription(e.target.value)}
+								placeholder="What's this project about?"
+								className={`${textareaStyles} resize-none`}
+							/>
+						)}
+					</Field>
 
 					{atCap ? (
 						<InlineStatus variant="warning">

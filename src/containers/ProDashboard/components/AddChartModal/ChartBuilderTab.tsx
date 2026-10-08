@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useId, useMemo, useState, type ComponentProps } from 'react'
+import { lazy, Suspense, useCallback, useId, useMemo, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import {
@@ -57,6 +57,8 @@ const getProtocolBreakdownMetric = (metric: ChartBuilderConfig['metric']): Proto
 }
 
 interface ChartBuilderTabProps {
+	/** What Add still needs (a metric), shown under the metric once Add was pressed. */
+	error: string | null
 	chartBuilder: ChartBuilderConfig
 	chartBuilderName: string
 	chainOptions: Array<VirtualizedSelectOption>
@@ -66,6 +68,9 @@ interface ChartBuilderTabProps {
 	onChartBuilderNameChange: (name: string) => void
 	timePeriod: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
+	/** Below lg the form shows one pane; AddChartModal holds it, so a failed Add can bring back the pane with the error. */
+	pane: AddCardPane
+	onPaneChange: (pane: AddCardPane) => void
 }
 
 const METRIC_OPTIONS: Array<{ value: ChartBuilderConfig['metric']; label: string }> = [
@@ -147,6 +152,7 @@ function FilterModeToggle({
 }
 
 export function ChartBuilderTab({
+	error,
 	chartBuilder,
 	chartBuilderName,
 	chainOptions,
@@ -155,10 +161,11 @@ export function ChartBuilderTab({
 	onChartBuilderChange,
 	onChartBuilderNameChange,
 	timePeriod,
-	customTimePeriod
+	customTimePeriod,
+	pane,
+	onPaneChange
 }: ChartBuilderTabProps) {
 	const nameId = useId()
-	const [pane, setPane] = useState<AddCardPane>('configure')
 	const { loading: metaLoading, error: metaError, hasProtocolBuilderMetric } = useAppMetadata()
 	const { getProtocolInfo, protocols } = useProDashboardCatalog()
 
@@ -518,7 +525,7 @@ export function ChartBuilderTab({
 				label="Editor view"
 				options={ADD_CARD_PANES}
 				value={pane}
-				onValueChange={setPane}
+				onValueChange={onPaneChange}
 				variant="solid-responsive"
 				size="md"
 				className="mb-3 shrink-0 lg:hidden"
@@ -547,6 +554,7 @@ export function ChartBuilderTab({
 						<VirtualizedSelect
 							variant="field"
 							label="Metric"
+							error={error}
 							options={metricOptions}
 							selectedValue={chartBuilder.metric}
 							onChange={handleMetricChange}

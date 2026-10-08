@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { RawCexInflowsResponse } from '../api.types'
-import { getCexDateRangeState } from '../DateFilter'
+import { cexCustomRangeErrors, getCexDateRangeState } from '../DateFilter'
 import { getCexCustomRangeState } from '../index'
 
 const measurement = (outflows: number): RawCexInflowsResponse => ({
@@ -71,5 +71,19 @@ describe('CEX custom-range state', () => {
 				measurement: measurement(0)
 			})
 		).toBe('measured')
+	})
+
+	test('a typed custom range refuses future days and takes today itself', () => {
+		const at = (day: string, hour = 0) => Date.parse(`${day}T${String(hour).padStart(2, '0')}:00:00Z`)
+		expect(cexCustomRangeErrors('2026-10-09', '2026-10-10', at('2026-10-09'), at('2026-10-10'), '2026-10-08')).toEqual({
+			startError: 'Choose a start date no later than today.',
+			endError: 'Choose an end date no later than today.',
+			rangeError: null
+		})
+		expect(cexCustomRangeErrors('2026-10-01', '2026-10-08', at('2026-10-01'), at('2026-10-08'), '2026-10-08')).toEqual({
+			startError: null,
+			endError: null,
+			rangeError: null
+		})
 	})
 })

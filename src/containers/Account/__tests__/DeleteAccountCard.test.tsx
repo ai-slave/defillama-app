@@ -23,6 +23,8 @@ const typed = { text: 'DELETE', type: 'typed_confirmation' as const }
 const otp = { text: 'DELETE', type: 'otp' as const }
 const eligibility = { blockers: [], canDelete: true, requiredConfirmation: typed, warnings: [] }
 const completed = { status: 'completed', deletedAt: '2026-08-30T00:00:00.000Z' }
+const CONFIRMATION_INPUT = 'input[placeholder="DELETE"]'
+const CODE_INPUT = 'input[placeholder="000000"]'
 const record = (id: string) => ({
 	id,
 	email: 'a@example.com',
@@ -100,9 +102,9 @@ async function openDialog() {
 	await waitFor(() => expect(button('Checking…')).toBeUndefined())
 }
 
-async function continueAndSubmit(fill = () => setInput('#delete-account-confirmation', 'DELETE')) {
+async function continueAndSubmit(fill = () => setInput(CONFIRMATION_INPUT, 'DELETE')) {
 	await act(async () => button('Continue')!.click())
-	await waitFor(() => expect(document.querySelector('#delete-account-confirmation')).not.toBeNull())
+	await waitFor(() => expect(document.querySelector(CONFIRMATION_INPUT)).not.toBeNull())
 	await act(async () => fill())
 	await act(async () => button('Delete account permanently')!.click())
 }
@@ -121,12 +123,54 @@ test('requires the email code and sends it with the final deletion request', asy
 	})
 	await openDialog()
 	await continueAndSubmit(() => {
-		setInput('#delete-account-otp', '123456')
-		setInput('#delete-account-confirmation', 'DELETE')
+		setInput(CODE_INPUT, '123456')
+		setInput(CONFIRMATION_INPUT, 'DELETE')
 	})
 	await waitFor(() => expect(signedOut()).toBe(true))
 
 	expect(JSON.parse(String(deleteRequests()[0]!.init!.body)).otp).toBe('123456')
+})
+
+test('a short deletion code is reported under the code field without a deletion request', async () => {
+	session.serve({
+		[ELIGIBILITY]: { ...eligibility, requiredConfirmation: otp },
+		[REQUEST]: { message: 'Deletion code sent', requiredConfirmation: otp }
+	})
+	await openDialog()
+	await continueAndSubmit(() => {
+		setInput(CODE_INPUT, '123')
+		setInput(CONFIRMATION_INPUT, 'DELETE')
+	})
+	const code = document.querySelector<HTMLInputElement>(CODE_INPUT)!
+	expect(document.getElementById(code.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'Enter a valid 6-digit code.'
+	)
+	expect(document.activeElement).toBe(code)
+	await act(async () => setInput(CODE_INPUT, '123456'))
+	expect(code.hasAttribute('aria-invalid')).toBe(false)
+	expect(deleteRequests()).toHaveLength(0)
+})
+
+test('a refused deletion code is reported under the code field until the code is edited', async () => {
+	session.serve({
+		[ELIGIBILITY]: { ...eligibility, requiredConfirmation: otp },
+		[REQUEST]: { message: 'Deletion code sent', requiredConfirmation: otp },
+		[DELETE]: fixtureStatus(400, { error: 'Invalid or expired OTP' })
+	})
+	await openDialog()
+	await continueAndSubmit(() => {
+		setInput(CODE_INPUT, '123456')
+		setInput(CONFIRMATION_INPUT, 'DELETE')
+	})
+	const code = document.querySelector<HTMLInputElement>(CODE_INPUT)!
+	await waitFor(() => expect(document.activeElement).toBe(code))
+	expect(document.getElementById(code.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'This code is wrong or has expired.'
+	)
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+	await act(async () => setInput(CODE_INPUT, '654321'))
+	expect(code.hasAttribute('aria-invalid')).toBe(false)
+	expect(signedOut()).toBe(false)
 })
 
 test('shows the warning copy while the account check runs and holds Continue until it passes', async () => {
@@ -283,7 +327,7 @@ test('sends one deletion request when the form is submitted twice while pending'
 	session.serve({ [DELETE]: () => pending.promise })
 	await openDialog()
 	await continueAndSubmit()
-	const form = document.querySelector('#delete-account-confirmation')!.closest('form')!
+	const form = document.querySelector(CONFIRMATION_INPUT)!.closest('form')!
 	await act(async () => form.requestSubmit())
 
 	expect(deleteRequests()).toHaveLength(1)
@@ -294,11 +338,11 @@ test('sends one deletion request when the form is submitted twice while pending'
 test('refuses to delete through a dialog opened by an older session', async () => {
 	await openDialog()
 	await act(async () => button('Continue')!.click())
-	await waitFor(() => expect(document.querySelector('#delete-account-confirmation')).not.toBeNull())
+	await waitFor(() => expect(document.querySelector(CONFIRMATION_INPUT)).not.toBeNull())
 
 	await act(async () => pb.authStore.save(token('account-a', 3), record('account-a')))
-	await act(async () => setInput('#delete-account-confirmation', 'DELETE'))
-	await act(async () => document.querySelector('#delete-account-confirmation')!.closest('form')!.requestSubmit())
+	await act(async () => setInput(CONFIRMATION_INPUT, 'DELETE'))
+	await act(async () => document.querySelector(CONFIRMATION_INPUT)!.closest('form')!.requestSubmit())
 
 	await waitFor(() => expect(text()).toContain('Your session changed'))
 	expect(deleteRequests()).toHaveLength(0)
@@ -336,7 +380,7 @@ test('typing the code while a resend runs keeps the dialog locked until the rese
 	const resend = deferred<Response>()
 	session.serve({ [REQUEST]: () => resend.promise })
 	await act(async () => button('Resend code')!.click())
-	await act(async () => setInput('#delete-account-otp', '1'))
+	await act(async () => setInput(CODE_INPUT, '1'))
 
 	expect(button('Sending code…')).toBeDefined()
 	expect(button('Cancel')!.getAttribute('aria-disabled')).toBe('true')

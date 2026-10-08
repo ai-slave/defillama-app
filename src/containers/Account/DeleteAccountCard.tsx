@@ -8,6 +8,8 @@ import { revokeGoogleCredentialSharing } from '~/auth/GoogleSignInButton'
 import { AUTH_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -205,6 +207,7 @@ function DeleteAccountConfirmationForm({
 	onOtpChange,
 	onResendOtp,
 	otp,
+	otpError,
 	requiredConfirmation,
 	codeSentAt
 }: {
@@ -218,14 +221,14 @@ function DeleteAccountConfirmationForm({
 	onOtpChange: (value: string) => void
 	onResendOtp: () => void
 	otp: string
+	otpError: string | null
 	requiredConfirmation: RequiredConfirmation
 	codeSentAt: number | null
 }) {
 	const needsOtp = requiredConfirmation.type === 'otp'
-	const canSubmit = confirmation === requiredConfirmation.text && (!needsOtp || otp.length === 6)
 
 	return (
-		<form onSubmit={onDelete} className="flex min-h-0 flex-auto flex-col">
+		<form noValidate onSubmit={onDelete} className="flex min-h-0 flex-auto flex-col">
 			<DialogBody>
 				<Ariakit.DialogDescription className="body-sm text-secondary">
 					{needsOtp
@@ -234,22 +237,24 @@ function DeleteAccountConfirmationForm({
 				</Ariakit.DialogDescription>
 
 				{needsOtp ? (
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor="delete-account-otp" className="label-sm text-secondary">
-							Verification code
-						</label>
-						<Input
-							id="delete-account-otp"
-							type="text"
-							inputMode="numeric"
-							autoComplete="one-time-code"
-							maxLength={6}
-							readOnly={isDeleting}
-							value={otp}
-							onChange={(event) => onOtpChange(event.target.value.replace(/\D/g, ''))}
-							placeholder="000000"
-							className="w-full tracking-widest"
-						/>
+					<div className="flex flex-col gap-1">
+						<Field label="Verification code" error={otpError}>
+							{(control) => (
+								<Input
+									{...control}
+									type="text"
+									inputMode="numeric"
+									autoComplete="one-time-code"
+									maxLength={6}
+									required
+									readOnly={isDeleting}
+									value={otp}
+									onChange={(event) => onOtpChange(event.target.value.replace(/\D/g, ''))}
+									placeholder="000000"
+									className="w-full tracking-widest"
+								/>
+							)}
+						</Field>
 						<ResendCooldown
 							sentAtSeconds={codeSentAt}
 							onResend={onResendOtp}
@@ -259,21 +264,26 @@ function DeleteAccountConfirmationForm({
 					</div>
 				) : null}
 
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor="delete-account-confirmation" className="label-sm text-secondary">
-						Type <span className="font-semibold text-primary">{requiredConfirmation.text}</span> to confirm
-					</label>
-					<Input
-						id="delete-account-confirmation"
-						type="text"
-						autoComplete="off"
-						readOnly={isDeleting}
-						value={confirmation}
-						onChange={(event) => onConfirmationChange(event.target.value)}
-						placeholder={requiredConfirmation.text}
-						className="w-full"
-					/>
-				</div>
+				<Field
+					label={
+						<>
+							Type <span className="font-semibold text-primary">{requiredConfirmation.text}</span> to confirm
+						</>
+					}
+				>
+					{(control) => (
+						<Input
+							{...control}
+							type="text"
+							autoComplete="off"
+							readOnly={isDeleting}
+							value={confirmation}
+							onChange={(event) => onConfirmationChange(event.target.value)}
+							placeholder={requiredConfirmation.text}
+							className="w-full"
+						/>
+					)}
+				</Field>
 
 				{actionError ? <InlineStatus variant="error">{actionError}</InlineStatus> : null}
 			</DialogBody>
@@ -283,8 +293,9 @@ function DeleteAccountConfirmationForm({
 					type="submit"
 					variant="destructive"
 					size="md"
-					// The field labels above say what unlocks it; a resend in flight shows its own "Sending code…".
-					disabled={!canSubmit || isRequesting}
+					// Typing the phrase unlocks it, as its label says: friction on a destructive action, not validation. A resend
+					// in flight shows its own "Sending code…".
+					disabled={confirmation !== requiredConfirmation.text || isRequesting}
 					pendingLabel={isDeleting ? 'Deleting account…' : null}
 				>
 					Delete account permanently
@@ -311,8 +322,11 @@ function DeleteAccountModal({
 	const [requestedConfirmation, setRequestedConfirmation] = useState<RequiredConfirmation | null>(null)
 	const [confirmation, setConfirmation] = useState('')
 	const [otp, setOtp] = useState('')
+	const [submitted, setSubmitted] = useState(false)
 	// The last failed request or deletion. Not the mutations' own errors: those clear as soon as a retry starts.
 	const [actionError, setActionError] = useState<string | null>(null)
+	// The server's refusal of the code, shown under the code field until the code is edited.
+	const [codeRefusal, setCodeRefusal] = useState<string | null>(null)
 	// The mutation reports pending a tick after mutate(), so a second submit in that tick would send again.
 	const deleteSubmittedRef = useRef(false)
 
@@ -365,8 +379,7 @@ function DeleteAccountModal({
 			})
 			return readDeleteAccountResult(data)
 		},
-		onSuccess: () => onDeleted(session),
-		onError: (error) => setActionError(error.message)
+		onSuccess: () => onDeleted(session)
 	})
 
 	// Neither request can be cancelled, so the dialog stays open until it settles.
@@ -394,13 +407,28 @@ function DeleteAccountModal({
 				}
 			: { kind: 'checking' }
 
+	const otpMessage = !otp ? 'Enter the verification code.' : otp.length !== 6 ? 'Enter a valid 6-digit code.' : null
+
 	const handleDelete = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (deleteSubmittedRef.current || !requiredConfirmation) return
+		if (deleteSubmittedRef.current || !requiredConfirmation || confirmation !== requiredConfirmation.text) return
 		const needsOtp = requiredConfirmation.type === 'otp'
-		if (confirmation !== requiredConfirmation.text || (needsOtp && otp.length !== 6)) return
+		if (needsOtp && otpMessage) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+		const form = event.currentTarget
 		deleteSubmittedRef.current = true
-		deleteMutation.mutate({ needsOtp }, { onSettled: () => (deleteSubmittedRef.current = false) })
+		deleteMutation.mutate(
+			{ needsOtp },
+			{
+				onError: (error) => {
+					// The server names the code "OTP" when it refuses it as wrong or expired. Focus moves to the code, so a
+					// screen reader reads it with the refusal.
+					if (needsOtp && /\bOTP\b/.test(error.message)) {
+						showFieldErrors(form, () => setCodeRefusal('This code is wrong or has expired.'))
+					} else setActionError(error.message)
+				},
+				onSettled: () => (deleteSubmittedRef.current = false)
+			}
+		)
 	}
 
 	const cancel = (
@@ -426,6 +454,7 @@ function DeleteAccountModal({
 					cancel={cancel}
 					confirmation={confirmation}
 					otp={otp}
+					otpError={codeRefusal ?? (submitted ? otpMessage : null)}
 					actionError={actionError}
 					isRequesting={requestMutation.isPending}
 					isDeleting={deleteMutation.isPending}
@@ -436,6 +465,7 @@ function DeleteAccountModal({
 					}}
 					onOtpChange={(value) => {
 						setActionError(null)
+						setCodeRefusal(null)
 						setOtp(value)
 					}}
 					onResendOtp={() => requestMutation.mutate('resend')}

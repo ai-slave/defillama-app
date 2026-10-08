@@ -55,18 +55,16 @@ async function space(el: HTMLElement) {
 }
 
 test('multi-select, exclusive exploring and deselection to empty work with Space', async () => {
-	expect(container.querySelector('[role="group"]')?.getAttribute('aria-label')).toContain('Pick all that apply')
+	const group = container.querySelector('[role="group"]')!
+	expect(document.getElementById(group.getAttribute('aria-labelledby')!)?.textContent).toContain('Pick all that apply')
 	expect(selected()).toHaveLength(0)
-	expect(continueButton().disabled).toBe(true)
 	await space(choice('CSV Downloads'))
 	await space(choice('Pro Dashboards'))
 	expect(selected()).toHaveLength(2)
-	expect(continueButton().disabled).toBe(false)
 	await space(choice('Just exploring'))
 	expect(selected()).toEqual([expect.stringContaining('Just exploring')])
 	await space(choice('Just exploring'))
 	expect(selected()).toHaveLength(0)
-	expect(continueButton().disabled).toBe(true)
 	await space(choice('Just exploring'))
 	await space(choice('CSV Downloads'))
 	expect(selected()).toEqual([expect.stringContaining('CSV Downloads')])
@@ -96,11 +94,17 @@ test('multiple features keep routing priority and arm LlamaAI only on continue',
 	expect(push).toHaveBeenCalledExactlyOnceWith('/ai/chat')
 })
 
-test('exploring routes home; deselecting it blocks continue', async () => {
+test('exploring routes home; Get started with nothing chosen says so and stays', async () => {
 	await space(choice('Just exploring'))
 	await space(choice('Just exploring'))
+	expect(continueButton().disabled).toBe(false)
 	await act(async () => continueButton().click())
 	expect(push).not.toHaveBeenCalled()
+	const group = container.querySelector('[role="group"]')!
+	expect(document.getElementById(group.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'Choose at least one option.'
+	)
+	expect(document.activeElement).toBe(choice('LlamaAI'))
 	await space(choice('Just exploring'))
 	await act(async () => continueButton().click())
 	expect(push).toHaveBeenCalledExactlyOnceWith('/')

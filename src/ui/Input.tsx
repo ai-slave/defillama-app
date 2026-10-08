@@ -15,9 +15,10 @@ import { tw } from './tw'
    is 44px (`sheet:`), matching the sheet's footer buttons. Entered text and
    placeholder are body-sm (text-primary / text-tertiary); focus swaps the
    border to brand, and `aria-invalid` keeps it border-error while focused
-   too, so callers never add their own error border; a field the browser
-   rejects after the user edits it (`required`, `type="email"`) turns red the
-   same way through `user-invalid`. A field that locks but
+   too, so callers never add their own error border. Only `aria-invalid`
+   turns it red, which Field (./Field.tsx) sets once a submit shows the
+   error; the browser's own `:user-invalid` never does, because it fires on
+   blur, before the reader has asked to submit. A field that locks but
    must keep focus is `readOnly` plus `aria-disabled` (a limit reached: the
    disabled look) or plus `aria-busy` (its own save running: it keeps its look
    with the progress cursor, like a pending Button). Entered text stays
@@ -57,7 +58,7 @@ import { tw } from './tw'
    `className={inputStyles}` (plus layout classes) instead of the component.
 ---------------------------------------------------------------------------- */
 
-const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary placeholder:text-tertiary user-invalid:border-error not-focus:not-disabled:not-aria-disabled:not-aria-invalid:not-user-invalid:hover:border-strong focus:border-brand focus:outline-hidden user-invalid:focus:border-error disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled disabled:text-disabled aria-busy:cursor-progress aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled aria-invalid:border-error aria-invalid:focus:border-error`
+const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page bg-clip-padding px-3 body-lg text-primary placeholder:text-tertiary not-focus:not-disabled:not-aria-disabled:not-aria-invalid:hover:border-strong focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled disabled:text-disabled aria-busy:cursor-progress aria-disabled:cursor-not-allowed aria-disabled:border-disabled aria-disabled:bg-disabled aria-disabled:text-disabled aria-invalid:border-error aria-invalid:focus:border-error`
 
 export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
 

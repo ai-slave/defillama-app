@@ -202,7 +202,7 @@ test('lists the missing page fields in the review before issuing a publish reque
 	await click('Publish now')
 	expect(api.publish).not.toHaveBeenCalled()
 	const review = button('Keep editing').closest<HTMLElement>('[role="dialog"]')!
-	expect(review.textContent).toContain('Fix these on the page before publishing:Headline is required')
+	expect(review.textContent).toContain('Fix these on the page before publishing:Enter a headline.')
 	expect(api.error).not.toHaveBeenCalled()
 })
 
@@ -378,8 +378,10 @@ test('the Topics field keeps the comma being typed and saves at most 12 topics',
 
 	const thirteen = Array.from({ length: 13 }, (_, i) => `t${i + 1}`)
 	await typeTopics(thirteen.join(', '))
-	expect(topics.getAttribute('aria-invalid')).toBe('true')
-	expect(topics.closest('div')!.textContent).toContain('Only the first 12 topics are saved.')
+	expect(topics.getAttribute('aria-invalid')).toBeNull()
+	expect(document.getElementById(topics.getAttribute('aria-describedby')!)!.textContent).toBe(
+		'Only the first 12 topics are saved.'
+	)
 	await save()
 	expect(article.tags).toEqual(thirteen.slice(0, 12))
 })

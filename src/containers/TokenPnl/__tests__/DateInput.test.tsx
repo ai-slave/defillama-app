@@ -23,17 +23,12 @@ afterEach(async () => {
 /** An end date field whose page accepts only dates on or after the start, as Token PnL does. */
 function EndDate({ start }: { start: string }) {
 	const [end, setEnd] = useState('2026-09-20')
-	const [error, setError] = useState('')
 	return (
 		<DateInput
 			label="End Date"
 			value={end}
-			error={error}
-			onChange={(next) => {
-				if (next < start) return setError('End date cannot be before start date')
-				setError('')
-				setEnd(next)
-			}}
+			errorFor={(date) => (date < start ? 'Choose an end date on or after the start date.' : null)}
+			onChange={setEnd}
 		/>
 	)
 }
@@ -50,7 +45,7 @@ async function pick(value: string) {
 }
 
 const blur = () => act(async () => field().blur())
-const alert = () => container.querySelector('[role="alert"]')?.textContent ?? null
+const error = () => document.getElementById(field().getAttribute('aria-describedby') ?? '')?.textContent ?? null
 
 test('a date the page rejects says why under the field, then gives way to the committed date on blur', async () => {
 	await act(async () => root.render(<EndDate start="2026-09-10" />))
@@ -58,12 +53,12 @@ test('a date the page rejects says why under the field, then gives way to the co
 	await pick('2026-09-01')
 	expect(field().value).toBe('2026-09-01')
 	expect(field().getAttribute('aria-invalid')).toBe('true')
-	expect(alert()).toBe('End date cannot be before start date')
+	expect(error()).toBe('Choose an end date on or after the start date.')
 
 	await blur()
 	expect(field().value).toBe('2026-09-20')
 	expect(field().getAttribute('aria-invalid')).toBe(null)
-	expect(alert()).toBe(null)
+	expect(error()).toBe(null)
 })
 
 test('a date the page accepts stays in the field after it loses focus', async () => {

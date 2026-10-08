@@ -116,9 +116,8 @@ async function click(name: string) {
 const savedNames = () => document.querySelector('[aria-label="Saved queries"]')!.textContent
 // The field is named by its visible label.
 const cardName = () =>
-	[...document.querySelectorAll('label')]
-		.find((label) => label.textContent?.startsWith('Card name'))
-		?.querySelector<HTMLInputElement>('input') ?? null
+	([...document.querySelectorAll('label')].find((label) => label.textContent?.startsWith('Card name'))?.control ??
+		null) as HTMLInputElement | null
 
 test('Save keeps focus while it becomes Stop query, and Stop returns an editable draft that saves on retry', async () => {
 	const stopped = Promise.withResolvers<ReturnType<typeof valueTable>>()
@@ -324,4 +323,35 @@ test('a save the dashboard refuses keeps the editor open with the reason in its 
 	)
 	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
 	expect(document.querySelector<HTMLOutputElement>('[aria-label="Saved queries"]')!.textContent).toBe('')
+})
+
+test('Run and Save with an empty query say so under the editor and run nothing', async () => {
+	await mount({ ...item, query: { sql: '', tableSources: [] } })
+	const errors = () => [...document.querySelectorAll('.text-error')].map((node) => node.textContent)
+	await waitForUi(() => expect(button('Save changes').getAttribute('aria-disabled')).toBeNull())
+	const run = [...document.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+		b.textContent?.startsWith('Run query')
+	)!
+	expect(run.getAttribute('aria-disabled')).toBeNull()
+	expect(errors()).toEqual([])
+	await act(async () => run.click())
+	expect(errors()).toEqual(['Enter a query.'])
+	await click('Save changes')
+	expect(errors()).toEqual(['Enter a query.'])
+	expect(engine.send).not.toHaveBeenCalled()
+	expect(onEdit).not.toHaveBeenCalled()
+})
+
+test('Enter in the card name never saves the card; only the footer Save does', async () => {
+	await mount(storedItem)
+	const name = cardName()!
+	// No form holds the field, so the browser has nothing to submit on Enter.
+	expect(name.form).toBeNull()
+	await act(async () => {
+		name.focus()
+		name.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
+	})
+	expect(onEdit).not.toHaveBeenCalled()
+	await click('Save changes')
+	expect(onEdit).toHaveBeenCalledOnce()
 })

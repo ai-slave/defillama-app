@@ -1,11 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, type UseMutationResult } from '@tanstack/react-query'
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { AuthDialogHeader } from '~/auth/AuthDialog'
-import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
+import { InvalidCodeError, OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { oneTimeCodeInputStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
@@ -27,8 +29,8 @@ export function VerifyEmailDialog({
 	onClose: () => void
 }) {
 	const [otp, setOtp] = useState('')
+	const [submitted, setSubmitted] = useState(false)
 	const codeRef = useRef<HTMLInputElement>(null)
-	const errorId = useId()
 	const verify = useMutation({ mutationFn: (code: string) => verifyEmailCode(accountId, code) })
 	// Both mutations clear their error when a retry starts, so the sheet keeps the failure a retry answers on screen
 	// until it settles. A verify failure clears when the code is edited or a new one is requested.
@@ -46,13 +48,25 @@ export function VerifyEmailDialog({
 	const sendFailure =
 		(send.error instanceof OtpRequestError && send.error.retryAt > 0 && cooldownSeconds === 0 ? null : send.error) ??
 		(send.isPending ? resendingAfter : null)
-	const failure = verifyFailure ?? sendFailure
+	// A refused code is the field's error; every other failure is the request's.
+	const codeError =
+		verifyFailure instanceof InvalidCodeError
+			? verifyFailure.message
+			: submitted && otp.length !== 6
+				? 'Enter the 6-digit code.'
+				: null
+	const failure = (verifyFailure instanceof InvalidCodeError ? null : verifyFailure) ?? sendFailure
 	// A rate limit waits out its countdown on the resend button; any other delivery failure offers a retry.
 	const deliveryFailed = sendFailure !== null && !verifyFailure && cooldownSeconds === 0
 	const resend = () => {
 		setVerifyFailure(null)
 		setResendingAfter(sendFailure)
-		send.mutate(accountId, { onSuccess: () => setOtp('') })
+		send.mutate(accountId, {
+			onSuccess: () => {
+				setOtp('')
+				setSubmitted(false)
+			}
+		})
 	}
 	// Try again leaves once the code is sent, so focus moves on to the field the new code goes in.
 	const retryDelivery = () => {
@@ -89,11 +103,15 @@ export function VerifyEmailDialog({
 					<AuthDialogHeader title="Verify your email" />
 					<DialogBody>
 						<form
+							noValidate
 							className="flex flex-col gap-4"
 							onSubmit={(event) => {
 								event.preventDefault()
-								if (otp.length !== 6) return
-								verify.mutate(otp, { onError: setVerifyFailure })
+								const form = event.currentTarget
+								if (otp.length !== 6) return showFieldErrors(form, () => setSubmitted(true))
+								// A refused code lands on the field so its error is read out; other failures find no
+								// invalid field and leave focus where it is.
+								verify.mutate(otp, { onError: (refusal) => showFieldErrors(form, () => setVerifyFailure(refusal)) })
 							}}
 						>
 							<Ariakit.DialogDescription className="body-sm text-secondary">
@@ -103,61 +121,59 @@ export function VerifyEmailDialog({
 							<p className="body-sm text-secondary" aria-live="polite">
 								{send.isSuccess ? 'Code sent. Check your inbox.' : 'Enter the 6-digit code from your email.'}
 							</p>
-							<label className="flex flex-col">
-								<span className="mb-1.5 label-sm text-secondary">Verification code</span>
-								<input
-									ref={codeRef}
-									type="text"
-									inputMode="numeric"
-									autoComplete="one-time-code"
-									maxLength={6}
-									required
-									placeholder="000000"
-									className={`${oneTimeCodeInputStyles} w-full`}
-									value={otp}
-									// Read-only rather than disabled while a request runs, so the field keeps focus.
-									readOnly={pending}
-									aria-busy={pending || undefined}
-									aria-invalid={verifyFailure !== null}
-									aria-describedby={error ? errorId : undefined}
-									onChange={(event) => {
-										setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
-										setVerifyFailure(null)
-									}}
-								/>
-							</label>
+							<Field label="Verification code" error={codeError}>
+								{(control) => (
+									<input
+										{...control}
+										ref={codeRef}
+										type="text"
+										inputMode="numeric"
+										autoComplete="one-time-code"
+										maxLength={6}
+										required
+										placeholder="000000"
+										className={`${oneTimeCodeInputStyles} w-full`}
+										value={otp}
+										// Read-only rather than disabled while a request runs, so the field keeps focus.
+										readOnly={pending}
+										aria-busy={pending || undefined}
+										onChange={(event) => {
+											setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
+											setVerifyFailure(null)
+										}}
+									/>
+								)}
+							</Field>
 							<Button
 								type="submit"
 								variant="primary"
 								size="md"
 								className="w-full"
-								disabled={pending || otp.length !== 6}
+								disabled={send.isPending}
 								pendingLabel={verify.isPending ? 'Verifying…' : null}
 							>
 								Verify email
 							</Button>
-							{/* One slot for verify and delivery failures: the field describes itself with it either way. */}
+							{/* One slot for request failures, verify and delivery alike; a refused code shows under the field. */}
 							{error ? (
-								<div id={errorId}>
-									<InlineStatus variant="error">
-										{/* A delivery failure offers its retry beside the message; a wrong code is fixed in the field. */}
-										{deliveryFailed ? (
-											<div className="flex flex-wrap items-center justify-between gap-2">
-												<span>{error}</span>
-												<Button
-													type="button"
-													size="sm"
-													pendingLabel={send.isPending ? 'Sending code…' : null}
-													onClick={retryDelivery}
-												>
-													Try again
-												</Button>
-											</div>
-										) : (
-											error
-										)}
-									</InlineStatus>
-								</div>
+								<InlineStatus variant="error">
+									{/* A delivery failure offers its retry beside the message. */}
+									{deliveryFailed ? (
+										<div className="flex flex-wrap items-center justify-between gap-2">
+											<span>{error}</span>
+											<Button
+												type="button"
+												size="sm"
+												pendingLabel={send.isPending ? 'Sending code…' : null}
+												onClick={retryDelivery}
+											>
+												Try again
+											</Button>
+										</div>
+									) : (
+										error
+									)}
+								</InlineStatus>
 							) : null}
 							<div className="flex flex-col items-center gap-3">
 								{deliveryFailed ? null : (

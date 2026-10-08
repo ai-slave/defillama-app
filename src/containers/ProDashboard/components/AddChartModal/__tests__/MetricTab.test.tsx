@@ -28,6 +28,9 @@ async function renderTab(onLabelChange = vi.fn()) {
 				<AppMetadataProvider>
 					<DashboardTestProvider>
 						<MetricTab
+							error={null}
+							pane="configure"
+							onPaneChange={vi.fn()}
 							metricSubjectType="chain"
 							metricChain={null}
 							metricProtocol={null}

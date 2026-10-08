@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -47,6 +49,16 @@ function slugify(value: string): string {
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '')
+		.slice(0, SLUG_MAX)
+}
+
+// Typing a handle turns anything but letters and digits into one dash. A trailing dash stays while the reader types
+// on; profileErrors refuses it on save.
+function typedSlug(value: string): string {
+	return value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+/, '')
 		.slice(0, SLUG_MAX)
 }
 
@@ -164,21 +176,16 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	)
 }
 
-function validateForm(state: FormState): string | null {
-	if (!state.displayName.trim()) return 'Display name is required'
-	if (state.displayName.trim().length > DISPLAY_NAME_MAX)
-		return `Display name must be ${DISPLAY_NAME_MAX} characters or fewer`
-	if (!state.slug.trim()) return 'Handle is required'
-	if (state.slug.trim().length > SLUG_MAX) return `Handle must be ${SLUG_MAX} characters or fewer`
-	if (!SLUG_REGEX.test(state.slug.trim())) return 'Use lowercase letters, numbers, and dashes for the handle'
-	if (state.bio.length > BIO_MAX) return `Bio must be ${BIO_MAX} characters or fewer`
-	if (state.avatarUrl.trim() && !isHttpsUrl(state.avatarUrl.trim())) return 'Avatar URL must be an HTTPS URL'
+// Each invalid field's error, keyed by `displayName`, `slug` or a social's id. Every input's maxLength caps its length.
+function profileErrors(state: FormState): Record<string, string> {
+	const errors: Record<string, string> = {}
+	if (!state.displayName.trim()) errors.displayName = 'Enter a display name.'
+	if (!state.slug) errors.slug = 'Enter a handle.'
+	else if (!SLUG_REGEX.test(state.slug)) errors.slug = 'Enter a handle that ends with a letter or number.'
 	for (const social of SOCIALS) {
-		const value = state.socials[social.id]?.trim() || ''
-		if (value.length > SOCIAL_VALUE_MAX) return `${social.label} must be ${SOCIAL_VALUE_MAX} characters or fewer`
-		if (value && !isHttpsUrl(value)) return `${social.label} must be an HTTPS URL`
+		if (!isHttpsUrl(state.socials[social.id] ?? '')) errors[social.id] = 'Enter a valid https:// link.'
 	}
-	return null
+	return errors
 }
 
 export function DashboardAuthorProfileCard() {
@@ -221,14 +228,14 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 		}
 	})
 
-	const validationError = validateForm(state)
+	const [submitted, setSubmitted] = useState(false)
+	const errors = profileErrors(state)
+	const shownErrors: Record<string, string> = submitted ? errors : {}
 	const isDirty = !formsEqual(state, initial)
 
-	const save = async () => {
-		if (validationError) {
-			toast.error(validationError)
-			return
-		}
+	const save = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (Object.keys(errors).length > 0) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		const payload = buildPayload(state, initial)
 		try {
 			// The mutation writes the saved profile into the cache, which changes this editor's key and
@@ -247,7 +254,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 	const publicHref = `/authors/${state.slug || profile.slug}`
 
 	return (
-		<Card padding="md" className="grid gap-4">
+		<Card as="form" noValidate onSubmit={save} padding="md" className="grid gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
 					<Icon name="users" height={24} width={24} className="text-primary" />
@@ -268,78 +275,75 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 						label="Avatar"
 						previewShape="square"
 						helperText="Shown on your public dashboard profile and dashboard bylines."
-						onUploaded={(result) => setState((prev) => (prev ? { ...prev, avatarUrl: result.url } : prev))}
-						onCleared={() => setState((prev) => (prev ? { ...prev, avatarUrl: '' } : prev))}
+						onUploaded={(result) => setState((prev) => ({ ...prev, avatarUrl: result.url }))}
+						onCleared={() => setState((prev) => ({ ...prev, avatarUrl: '' }))}
 					/>
 
-					<label className="grid gap-1.5">
-						<span className="label-md text-primary">Display name</span>
-						<Input
-							value={state.displayName}
-							maxLength={DISPLAY_NAME_MAX}
-							onChange={(e) => {
-								const nextDisplayName = e.target.value
-								setState((prev) =>
-									prev
-										? {
-												...prev,
-												displayName: nextDisplayName,
-												slug: prev.slug === slugify(prev.displayName) ? slugify(nextDisplayName) : prev.slug
-											}
-										: prev
-								)
-							}}
-						/>
-					</label>
+					<Field label="Display name" error={shownErrors.displayName}>
+						{(control) => (
+							<Input
+								{...control}
+								required
+								value={state.displayName}
+								maxLength={DISPLAY_NAME_MAX}
+								onChange={(e) => {
+									const nextDisplayName = e.target.value
+									setState((prev) => ({
+										...prev,
+										displayName: nextDisplayName,
+										slug: prev.slug === slugify(prev.displayName) ? slugify(nextDisplayName) : prev.slug
+									}))
+								}}
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<div className="flex items-center justify-between gap-2">
-							<span className="label-md text-primary">Handle</span>
-							<CharCount value={state.slug} max={SLUG_MAX} />
-						</div>
-						<Input
-							value={state.slug}
-							maxLength={SLUG_MAX}
-							onChange={(e) => setState((prev) => (prev ? { ...prev, slug: slugify(e.target.value) } : prev))}
-						/>
-					</label>
+					<Field label="Handle" action={<CharCount value={state.slug} max={SLUG_MAX} />} error={shownErrors.slug}>
+						{(control) => (
+							<Input
+								{...control}
+								required
+								value={state.slug}
+								maxLength={SLUG_MAX}
+								onChange={(e) => setState((prev) => ({ ...prev, slug: typedSlug(e.target.value) }))}
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<div className="flex items-center justify-between gap-2">
-							<span className="label-md text-primary">Bio</span>
-							<CharCount value={state.bio} max={BIO_MAX} />
-						</div>
-						<textarea
-							value={state.bio}
-							maxLength={BIO_MAX}
-							rows={4}
-							onChange={(e) => setState((prev) => (prev ? { ...prev, bio: e.target.value } : prev))}
-							className={`${textareaStyles} resize-y`}
-						/>
-					</label>
+					<Field label="Bio" action={<CharCount value={state.bio} max={BIO_MAX} />}>
+						{(control) => (
+							<textarea
+								{...control}
+								value={state.bio}
+								maxLength={BIO_MAX}
+								rows={4}
+								onChange={(e) => setState((prev) => ({ ...prev, bio: e.target.value }))}
+								className={`${textareaStyles} resize-y`}
+							/>
+						)}
+					</Field>
 
 					<div className="grid gap-3">
 						<span className="label-md text-primary">Links</span>
 						<div className="grid gap-3 md:grid-cols-2">
 							{SOCIALS.map((social) => (
-								<label key={social.id} className="grid gap-1.5">
-									<span className="label-sm text-secondary">{social.label}</span>
-									<Input
-										value={state.socials[social.id] || ''}
-										maxLength={SOCIAL_VALUE_MAX}
-										placeholder={social.placeholder}
-										onChange={(e) =>
-											setState((prev) =>
-												prev
-													? {
-															...prev,
-															socials: { ...prev.socials, [social.id]: e.target.value }
-														}
-													: prev
-											)
-										}
-									/>
-								</label>
+								<Field key={social.id} label={social.label} error={shownErrors[social.id]}>
+									{(control) => (
+										<Input
+											{...control}
+											type="url"
+											value={state.socials[social.id] || ''}
+											maxLength={SOCIAL_VALUE_MAX}
+											placeholder={social.placeholder}
+											onChange={(e) =>
+												setState((prev) => ({
+													...prev,
+													socials: { ...prev.socials, [social.id]: e.target.value }
+												}))
+											}
+										/>
+									)}
+								</Field>
 							))}
 						</div>
 					</div>
@@ -369,16 +373,19 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 			</div>
 
 			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle pt-4">
-				<p className={`body-sm ${validationError ? 'text-warning' : 'text-secondary'}`}>
-					{validationError || 'Profile changes appear on public dashboard pages after saving.'}
+				<p className="body-sm text-secondary">
+					{isDirty
+						? 'Profile changes appear on public dashboard pages after saving.'
+						: 'Change a field to save your profile.'}
 				</p>
 				<Button
+					type="submit"
 					variant="primary"
 					size="md"
-					disabled={!isDirty || !!validationError}
+					// Nothing to save until a field changes; the line beside it says so.
+					disabled={!isDirty}
 					accessibleWhenDisabled
 					pendingLabel={updateMutation.isPending ? 'Saving…' : null}
-					onClick={save}
 				>
 					Save profile
 				</Button>

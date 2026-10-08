@@ -1,4 +1,5 @@
-import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from '~/containers/MarketMakers/leadShared'
+import { normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from '~/containers/MarketMakers/leadShared'
+import { emailError } from '~/utils/email'
 import type { ClaimDisclosureSectionId } from './claimFormConfig'
 
 export const UTR_CLAIM_DOCUMENT_KEYS = [
@@ -113,8 +114,21 @@ function requiredString(
 	errors: Record<string, string>
 ): string {
 	const trimmed = value?.trim() ?? ''
-	if (!trimmed) errors[path] = `${label} is required`
-	else if (trimmed.length > maxLength) errors[path] = `${label} must be ${maxLength} characters or fewer`
+	if (!trimmed) errors[path] = `Enter the ${label.toLowerCase()}.`
+	else if (trimmed.length > maxLength)
+		errors[path] = `Enter the ${label.toLowerCase()} in ${maxLength} characters or fewer.`
+	return trimmed
+}
+
+/** A select's value: its options bound it, so only a missing pick is refused. */
+function requiredChoice(
+	value: string | undefined,
+	path: string,
+	label: string,
+	errors: Record<string, string>
+): string {
+	const trimmed = value?.trim() ?? ''
+	if (!trimmed) errors[path] = `Choose the ${label.toLowerCase()}.`
 	return trimmed
 }
 
@@ -127,7 +141,7 @@ function optionalString(
 ): string | undefined {
 	const trimmed = value?.trim() ?? ''
 	if (!trimmed) return undefined
-	if (trimmed.length > maxLength) errors[path] = `${label} must be ${maxLength} characters or fewer`
+	if (trimmed.length > maxLength) errors[path] = `Enter the ${label.toLowerCase()} in ${maxLength} characters or fewer.`
 	return trimmed
 }
 
@@ -147,7 +161,7 @@ function httpUrl(
 		const parsed = new URL(trimmed)
 		if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('invalid protocol')
 	} catch {
-		errors[path] = `${label} must be a valid http(s) URL`
+		errors[path] = `Enter a valid ${label.toLowerCase()} starting with http:// or https://.`
 	}
 	return trimmed
 }
@@ -164,7 +178,7 @@ function numberInRange(
 	const trimmed = value?.trim() ?? ''
 	const parsed = trimmed === '' ? Number.NaN : Number(trimmed)
 	if (!Number.isFinite(parsed) || parsed < min || parsed > max || (integer && !Number.isInteger(parsed))) {
-		errors[path] = `${label} must be ${integer ? 'an integer ' : ''}between ${min} and ${max}`
+		errors[path] = `Enter the ${label.toLowerCase()} as a ${integer ? 'whole ' : ''}number from ${min} to ${max}.`
 	}
 	return parsed
 }
@@ -179,7 +193,7 @@ function rowPath(section: ClaimDisclosureSectionId, index: number, field: string
 
 function activeRows(rows: UtrClaimRows, section: ClaimDisclosureSectionId, errors: Record<string, string>) {
 	const active = rows[section].flatMap((row, index) => (isEmptyRow(row) ? [] : [{ row, index }]))
-	if (active.length > 100) errors[section] = 'No more than 100 rows are allowed'
+	if (active.length > 100) errors[section] = 'Enter no more than 100 rows.'
 	return active.slice(0, 100)
 }
 
@@ -239,16 +253,12 @@ function buildDisclosures(
 	}))
 
 	const tokenomicsGroups = activeRows(rows, 'tokenomicsGroups', errors).map(({ row, index }) => {
-		const unlockFrequency = requiredString(
+		const unlockFrequency = requiredChoice(
 			row.unlockFrequency,
 			rowPath('tokenomicsGroups', index, 'unlockFrequency'),
 			'Unlock frequency',
-			20,
 			errors
 		)
-		if (unlockFrequency !== 'Daily' && unlockFrequency !== 'Monthly') {
-			errors[rowPath('tokenomicsGroups', index, 'unlockFrequency')] = 'Unlock frequency must be Daily or Monthly'
-		}
 		return {
 			groupName: requiredString(
 				row.groupName,
@@ -265,11 +275,10 @@ function buildDisclosures(
 				100,
 				errors
 			),
-			groupCategory: requiredString(
+			groupCategory: requiredChoice(
 				row.groupCategory,
 				rowPath('tokenomicsGroups', index, 'groupCategory'),
 				'Group category',
-				120,
 				errors
 			),
 			tgeUnlockPct: numberInRange(
@@ -355,8 +364,8 @@ function buildDisclosures(
 			true
 		)
 		if (Number.isFinite(thresholdRequired) && Number.isFinite(thresholdTotal) && thresholdRequired > thresholdTotal) {
-			errors[rowPath('multisigWallets', index, 'thresholdRequired')] =
-				'Required threshold must not exceed total threshold'
+			errors[rowPath('multisigWallets', index, 'thresholdTotal')] =
+				'Enter a total threshold no lower than the required threshold.'
 		}
 		return {
 			walletAddress: requiredString(
@@ -394,11 +403,10 @@ function buildDisclosures(
 	})
 
 	const marketMakerEngagements = activeRows(rows, 'marketMakerEngagements', errors).map(({ row, index }) => ({
-		marketMakerId: requiredString(
+		marketMakerId: requiredChoice(
 			row.marketMakerId,
 			rowPath('marketMakerEngagements', index, 'marketMakerId'),
 			'Market maker',
-			100,
 			errors
 		),
 		marketMakerName: requiredString(
@@ -416,26 +424,21 @@ function buildDisclosures(
 			100,
 			errors
 		),
-		engagementType: requiredString(
+		engagementType: requiredChoice(
 			row.engagementType,
 			rowPath('marketMakerEngagements', index, 'engagementType'),
 			'Engagement type',
-			120,
 			errors
 		)
 	}))
 
 	const exchangeEngagements = activeRows(rows, 'exchangeEngagements', errors).map(({ row, index }) => {
-		const commitment = requiredString(
+		const commitment = requiredChoice(
 			row.commercialCommitment,
 			rowPath('exchangeEngagements', index, 'commercialCommitment'),
 			'Commercial commitment',
-			5,
 			errors
 		)
-		if (commitment !== 'true' && commitment !== 'false') {
-			errors[rowPath('exchangeEngagements', index, 'commercialCommitment')] = 'Commercial commitment must be Yes or No'
-		}
 		const details = optionalString(
 			row.details,
 			rowPath('exchangeEngagements', index, 'details'),
@@ -444,11 +447,10 @@ function buildDisclosures(
 			errors
 		)
 		return {
-			exchangeId: requiredString(
+			exchangeId: requiredChoice(
 				row.exchangeId,
 				rowPath('exchangeEngagements', index, 'exchangeId'),
 				'Exchange',
-				100,
 				errors
 			),
 			exchangeName: requiredString(
@@ -514,26 +516,33 @@ function validateDocuments(documents: UtrClaimDocuments, errors: Record<string, 
 
 export function buildUtrClaimRequest(input: UtrClaimRequestInput): UtrClaimValidation {
 	const errors: Record<string, string> = {}
-	const tokenName = requiredString(input.tokenName, 'token', 'Token name', 200, errors)
+	// The reader's own fields; their inputs cap the length, so only a blank one is refused here.
+	const tokenName = input.tokenName.trim()
+	if (!tokenName) errors.token = 'Enter the token name.'
 	const tokenTicker = optionalString(input.tokenTicker, 'tokenTicker', 'Token ticker', 30, errors)
-	const firstName = requiredString(input.firstName, 'firstName', 'First name', 100, errors)
-	const lastName = requiredString(input.lastName, 'lastName', 'Last name', 100, errors)
-	const position = requiredString(input.position, 'position', 'Position', 200, errors)
-	const email = requiredString(input.email, 'email', 'Email', 320, errors)
-	if (email && !EMAIL_PATTERN.test(email)) errors.email = 'Enter a valid email address'
+	const firstName = input.firstName.trim()
+	if (!firstName) errors.firstName = 'Enter your first name.'
+	const lastName = input.lastName.trim()
+	if (!lastName) errors.lastName = 'Enter your last name.'
+	const position = input.position.trim()
+	if (!position) errors.position = 'Enter your position at the organization.'
+	const email = input.email.trim()
+	const emailMessage = emailError(email)
+	if (emailMessage) errors.email = emailMessage
 
 	const normalizedProfileUrl = input.profileUrl.trim() ? normalizeSocialUrl(input.profileUrl.trim()) : ''
 	if (normalizedProfileUrl && !SOCIAL_PROFILE_PATTERN.test(normalizedProfileUrl)) {
-		errors.profileUrl = 'Enter a valid LinkedIn or X URL'
+		errors.profileUrl = 'Enter a valid LinkedIn or X URL.'
 	}
-	if (normalizedProfileUrl.length > 500) errors.profileUrl = 'Profile URL must be 500 characters or fewer'
+	if (normalizedProfileUrl.length > 500) errors.profileUrl = 'Enter the profile URL in 500 characters or fewer.'
 
 	const telegram = optionalString(input.telegram, 'telegram', 'Telegram handle', 100, errors)
 	const clickId = input.clickId?.trim() || undefined
 	const turnstileToken = input.turnstileToken.trim() || undefined
 	const coingeckoId = input.coingeckoId?.trim() || null
-	if (coingeckoId && coingeckoId.length > 100) errors.token = 'CoinGecko id must be 100 characters or fewer'
-	if (!input.alignmentConsent || !input.termsConsent) errors.consents = 'Both consents are required to submit'
+	if (coingeckoId && coingeckoId.length > 100)
+		errors.token = 'Choose a token with a CoinGecko id of 100 characters or fewer.'
+	if (!input.alignmentConsent || !input.termsConsent) errors.consents = 'Agree to both statements to submit the claim.'
 
 	const disclosures = buildDisclosures(input.rows, input.verifyMmEngagements, errors)
 	const documents = validateDocuments(input.documents, errors)

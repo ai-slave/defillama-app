@@ -112,3 +112,35 @@ test('a failed fetch keeps its error on screen while the retry loads', async () 
 	await waitForUi(() => expect(fetchButton.getAttribute('aria-busy')).toBe('true'))
 	expect(document.querySelector('[role="alert"]')?.textContent).toBe(alertText)
 })
+
+test('Fetch says what is missing under its field, focuses it, and puts an inverted range under the end date', async () => {
+	http.serve({ 'https://defillama-datasets.llama.fi/blockExplorers.json': [] })
+	const fetchRequests = () => http.requests.filter((request) => request.url.pathname.startsWith('/api/public/bridges'))
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<BridgeTransactionsPage bridges={[bridge]} />
+			</QueryClientProvider>
+		)
+	)
+	const errorOf = (el: Element) => document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent
+	const trigger = button('Select a bridge')
+	const fetchButton = button('Fetch Transactions')
+	expect(fetchButton.getAttribute('aria-disabled')).toBeNull()
+	await act(async () => fetchButton.click())
+	expect(errorOf(trigger)).toBe('Choose a bridge.')
+	expect(document.activeElement).toBe(trigger)
+
+	await pickPortal()
+	expect(trigger.getAttribute('aria-invalid')).toBeNull()
+	const [start, end] = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(end, '2000-01-01')
+		end.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	expect(errorOf(end)).toBe('Choose an end date on or after the start date.')
+	expect(start.getAttribute('aria-invalid')).toBeNull()
+	await act(async () => fetchButton.click())
+	expect(document.activeElement).toBe(end)
+	expect(fetchRequests()).toHaveLength(0)
+})

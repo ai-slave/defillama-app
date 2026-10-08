@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import { lazy, Suspense, useCallback, useId, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useRef, useState } from 'react'
 import { useCreateTopup, TOPUP_CONFIG } from '~/containers/Subscription/useTopup'
+import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBackButton, DialogBody, DialogDiscardGuard, DialogHeader, useDialogLeave } from '~/ui/Dialog'
-import { keepFocus } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -19,9 +21,10 @@ import { TopupCheckoutLoading } from './TopupCheckoutLoading'
    back beside the host dialog's header.
 
    - The amount field is `Input`. Presets are `toggle` Buttons with numeric
-     selection; the payment methods are equal secondary Buttons side by side.
-   - An empty or out-of-range amount says so ("Enter an amount") instead of
-     silently disabling the payment buttons.
+     selection; the payment methods are equal secondary submit Buttons side
+     by side, and Enter in the field pays by card, the first of them.
+   - The amount validates when a payment button is pressed: an empty or
+     out-of-range amount shows under the field and nothing is requested.
    - Closing the dialog while the crypto request runs cancels its redirect.
 ---------------------------------------------------------------------------- */
 
@@ -52,8 +55,8 @@ export function TopupForm({
 	redirectUrl: string
 	cancelUrl: string
 }) {
-	const amountId = useId()
 	const [amount, setAmount] = useState('10')
+	const [submitted, setSubmitted] = useState(false)
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
 	const [isRedirecting, setIsRedirecting] = useState(false)
 	const errorSlotRef = useRef<HTMLDivElement>(null)
@@ -62,7 +65,7 @@ export function TopupForm({
 	// The form is on screen while its error slot is mounted and its dialog has not started closing (the leave
 	// animation keeps it mounted). Outcomes after that are the user's to miss: no redirect, a toast for an error.
 	// While mounted, the form shows the pending request's error itself: nothing resets the mutation while it is
-	// pending (Back waits, and both pay buttons are disabled), so the observer always receives that error.
+	// pending (Back waits, and both pay buttons are locked), so the observer always receives that error.
 	// The dialog is read from the DOM, not Ariakit's dialog context: inside Settings that context is the tab panel,
 	// which stays open while the Settings dialog fades out. A closing dialog drops data-open at once.
 	const isOnScreen = () => {
@@ -73,11 +76,12 @@ export function TopupForm({
 	const leave = useDialogLeave()
 
 	const parsedAmount = parseFloat(amount)
-	const isValidAmount =
-		Number.isFinite(parsedAmount) && parsedAmount >= TOPUP_CONFIG.minAmount && parsedAmount <= TOPUP_CONFIG.maxAmount
-
-	const hasAmountError = amount !== '' && !isValidAmount
-	const amountMessageId = `${amountId}-message`
+	const amountError =
+		amount === ''
+			? 'Enter an amount.'
+			: parsedAmount >= TOPUP_CONFIG.minAmount && parsedAmount <= TOPUP_CONFIG.maxAmount
+				? null
+				: `Enter an amount between $${TOPUP_CONFIG.minAmount} and $${TOPUP_CONFIG.maxAmount}.`
 	const isPaymentPending = topupMutation.isPending || isRedirecting
 	const fetchClientSecret = useCallback(async (): Promise<string> => {
 		const result = await topupMutation.mutateAsync({
@@ -90,15 +94,7 @@ export function TopupForm({
 		throw new Error('Unexpected response from topup endpoint')
 	}, [topupMutation, parsedAmount, redirectUrl, cancelUrl])
 
-	const handleStripe = useCallback(() => {
-		if (!isValidAmount || isPaymentPending) return
-		// The card step hides itself while the mutation holds an error, so a failed crypto attempt must not carry over.
-		topupMutation.reset()
-		setStep('stripe')
-	}, [isValidAmount, isPaymentPending, topupMutation])
-
-	const handleLlamaPay = () => {
-		if (!isValidAmount || isPaymentPending) return
+	const payWithCrypto = () => {
 		setIsRedirecting(true)
 		topupMutation.mutate(
 			{ amount: parsedAmount, provider: 'llamapay', redirectUrl, cancelUrl },
@@ -112,6 +108,17 @@ export function TopupForm({
 				onError: () => setIsRedirecting(false)
 			}
 		)
+	}
+
+	const handleSubmit = (event: FormSubmitEvent) => {
+		event.preventDefault()
+		if (isPaymentPending) return
+		if (amountError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+		const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null
+		if (submitter?.value === 'llamapay') return payWithCrypto()
+		// The card step hides itself while the mutation holds an error, so a failed crypto attempt must not carry over.
+		topupMutation.reset()
+		setStep('stripe')
 	}
 
 	const handleAmountInput = (value: string) => {
@@ -156,50 +163,37 @@ export function TopupForm({
 				confirmLabel="Leave"
 			/>
 			{step === 'select' ? (
-				<>
-					<div className="flex flex-col gap-2">
-						<label htmlFor={amountId} className="label-sm text-secondary">
-							Amount (USD)
-						</label>
-						<div className="relative">
-							{/* The same size as the field's text, which stays 16px below sm so iOS does not zoom. */}
-							<span
-								aria-hidden="true"
-								className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 body-lg text-secondary sm:body-sm"
-							>
-								$
-							</span>
-							{/* Ariakit's autoFocus, so the dialog starts on the field instead of the header ×. */}
-							<Ariakit.Focusable
-								autoFocus={inDialog}
-								render={
-									<Input
-										ref={amountInputRef}
-										id={amountId}
-										type="text"
-										inputMode="decimal"
-										value={amount}
-										onChange={(e) => handleAmountInput(e.target.value)}
-										placeholder="0.00"
-										readOnly={isPaymentPending}
-										aria-invalid={hasAmountError || undefined}
-										aria-describedby={isValidAmount ? undefined : amountMessageId}
-										className="w-full pl-7"
-									/>
-								}
-							/>
-						</div>
-						{hasAmountError ? (
-							<p id={amountMessageId} role="alert" className="body-sm text-error">
-								Enter an amount between ${TOPUP_CONFIG.minAmount} and ${TOPUP_CONFIG.maxAmount}
-							</p>
-						) : amount === '' ? (
-							// Both pay buttons are disabled without an amount; this says why.
-							<p id={amountMessageId} className="body-sm text-secondary">
-								Enter an amount
-							</p>
-						) : null}
-					</div>
+				<form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+					<Field label="Amount (USD)" error={submitted ? amountError : null}>
+						{(control) => (
+							<div className="relative">
+								{/* The same size as the field's text, which stays 16px below sm so iOS does not zoom. */}
+								<span
+									aria-hidden="true"
+									className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 body-lg text-secondary sm:body-sm"
+								>
+									$
+								</span>
+								{/* Ariakit's autoFocus, so the dialog starts on the field instead of the header ×. */}
+								<Ariakit.Focusable
+									autoFocus={inDialog}
+									render={
+										<Input
+											{...control}
+											ref={amountInputRef}
+											type="text"
+											inputMode="decimal"
+											value={amount}
+											onChange={(e) => handleAmountInput(e.target.value)}
+											placeholder="0.00"
+											readOnly={isPaymentPending}
+											className="w-full pl-7"
+										/>
+									}
+								/>
+							</div>
+						)}
+					</Field>
 					<div role="group" aria-label="Suggested amounts" className="flex gap-2">
 						{TOPUP_CONFIG.quickAmounts.map((qa) => (
 							<Button
@@ -220,23 +214,12 @@ export function TopupForm({
 					<fieldset className="flex flex-col gap-2">
 						<legend className="mb-2 label-sm text-secondary">Payment method</legend>
 						<div className="grid grid-cols-2 gap-2">
-							<Button
-								type="button"
-								size="md"
-								onClick={handleStripe}
-								disabled={!isValidAmount || isPaymentPending}
-								accessibleWhenDisabled
-							>
+							{/* While crypto redirects, the submit handler ignores a card press; crypto's pending label says why. */}
+							<Button type="submit" value="stripe" size="md">
 								<Icon name="credit-card" height={14} width={14} />
 								Pay with card
 							</Button>
-							<Button
-								type="button"
-								size="md"
-								onClick={handleLlamaPay}
-								disabled={!isValidAmount}
-								pendingLabel={isRedirecting ? 'Redirecting…' : null}
-							>
+							<Button type="submit" value="llamapay" size="md" pendingLabel={isRedirecting ? 'Redirecting…' : null}>
 								<Icon name="wallet" height={14} width={14} />
 								Pay with crypto
 							</Button>
@@ -245,7 +228,7 @@ export function TopupForm({
 					<span role="status" className="sr-only">
 						{isRedirecting ? 'Redirecting…' : ''}
 					</span>
-				</>
+				</form>
 			) : errorMessage ? null : (
 				<Suspense fallback={<TopupCheckoutLoading />}>
 					<TopupStripeCheckout fetchClientSecret={fetchClientSecret} isPending={topupMutation.isPending} />

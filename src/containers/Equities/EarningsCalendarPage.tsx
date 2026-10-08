@@ -479,7 +479,7 @@ export function EarningsCalendarPage({ bootstrap }: { bootstrap?: EarningsCalend
 							This week
 						</Button>
 					</div>
-					<form onSubmit={submitSearch} className="flex w-full min-w-0 gap-1.5 sm:w-auto">
+					<form noValidate onSubmit={submitSearch} className="flex w-full min-w-0 gap-1.5 sm:w-auto">
 						<label className="relative min-w-0 flex-1 sm:w-[280px]">
 							<span className="sr-only">Search ticker or company</span>
 							<Icon name="search" className={`size-4 ${searchFieldIconStyles}`} />

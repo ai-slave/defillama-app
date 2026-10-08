@@ -38,6 +38,7 @@ export function UrlSearchInput({
 
 	return (
 		<form
+			noValidate
 			onSubmit={(event) => {
 				event.preventDefault()
 				debouncedSend.cancel()

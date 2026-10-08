@@ -33,7 +33,7 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 
 	if (renameDraft !== null) {
 		return (
-			<form onSubmit={submitRename} className="flex shrink-0 items-center gap-1">
+			<form noValidate onSubmit={submitRename} className="flex shrink-0 items-center gap-1">
 				<Input
 					autoFocus
 					value={renameDraft}

@@ -8,6 +8,8 @@ import { setSignupSource } from '~/auth/signupSource'
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -43,6 +45,29 @@ const isAtMidnight = (timestamp: number | null) => {
 	if (timestamp == null) return true
 	const date = new Date(timestamp)
 	return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0
+}
+
+/** Why a typed custom range cannot apply, per field. Days are YYYY-MM-DD UTC strings and `today` is the UTC day. The
+    inputs' max only shapes the calendar (the form is noValidate), so a typed future day is refused here. */
+export function cexCustomRangeErrors(
+	startDay: string,
+	endDay: string,
+	startTimestamp: number,
+	endTimestamp: number,
+	today: string
+) {
+	return {
+		startError: !startDay
+			? 'Choose a start date.'
+			: startDay > today
+				? 'Choose a start date no later than today.'
+				: null,
+		endError: !endDay ? 'Choose an end date.' : endDay > today ? 'Choose an end date no later than today.' : null,
+		rangeError:
+			startDay && endDay && getCexDateRangeState(startTimestamp, endTimestamp) !== 'valid'
+				? 'Choose an end more than one hour after the start.'
+				: null
+	}
 }
 
 export function DateFilter({
@@ -138,16 +163,25 @@ function CustomRangeForm({
 	const [localEndDate, setLocalEndDate] = useState(() => formatDateForInput(endDate))
 	const [localStartHour, setLocalStartHour] = useState(() => getHourFromTimestamp(startDate))
 	const [localEndHour, setLocalEndHour] = useState(() => getHourFromTimestamp(endDate))
-	const [rangeError, setRangeError] = useState<string | null>(() =>
-		getCexDateRangeState(startDate, endDate) === 'invalid' ? CEX_RANGE_ERROR : null
-	)
+	// A range applied from the URL that cannot load counts as submitted, so the form opens saying what to fix.
+	const [submitted, setSubmitted] = useState(() => getCexDateRangeState(startDate, endDate) === 'invalid')
 	const nowSec = useNowSeconds()
 	const maxDate = new Date(nowSec * 1000).toISOString().split('T')[0]
+
+	// The hours come from a fixed 0-23 list.
+	const startTimestamp = Date.parse(`${localStartDate}T${localStartHour.padStart(2, '0')}:00:00Z`)
+	const endTimestamp = Date.parse(`${localEndDate}T${localEndHour.padStart(2, '0')}:00:00Z`)
+	const { startError, endError, rangeError } = cexCustomRangeErrors(
+		localStartDate,
+		localEndDate,
+		startTimestamp,
+		endTimestamp,
+		maxDate
+	)
 
 	const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newStartDate = e.target.value
 		setLocalStartDate(newStartDate)
-		setRangeError(null)
 
 		// If new start date is after current end date, reset end date
 		if (newStartDate && localEndDate && newStartDate > localEndDate) {
@@ -159,7 +193,6 @@ function CustomRangeForm({
 	const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newEndDate = e.target.value
 		setLocalEndDate(newEndDate)
-		setRangeError(null)
 
 		// If new end date is before current start date, reset start date
 		if (newEndDate && localStartDate && newEndDate < localStartDate) {
@@ -168,29 +201,15 @@ function CustomRangeForm({
 		}
 	}
 
-	const handleStartHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setLocalStartHour(e.target.value)
-		setRangeError(null)
-	}
-
-	const handleEndHourChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setLocalEndHour(e.target.value)
-		setRangeError(null)
-	}
-
 	return (
 		<div className="mx-auto w-full sm:w-[260px]">
 			<form
+				noValidate
 				onSubmit={(e) => {
 					e.preventDefault()
-					// Apply is disabled until both dates are set, and the hours come from a fixed 0-23 list.
-					const startTimestamp = Date.parse(`${localStartDate}T${localStartHour.padStart(2, '0')}:00:00Z`)
-					const endTimestamp = Date.parse(`${localEndDate}T${localEndHour.padStart(2, '0')}:00:00Z`)
-					if (getCexDateRangeState(startTimestamp, endTimestamp) !== 'valid') {
-						setRangeError(CEX_RANGE_ERROR)
-						return
+					if (startError || endError || rangeError) {
+						return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 					}
-					setRangeError(null)
 					onApply({ startDate: startTimestamp, endDate: endTimestamp })
 				}}
 				onReset={() => {
@@ -198,82 +217,78 @@ function CustomRangeForm({
 					setLocalEndDate('')
 					setLocalStartHour('0')
 					setLocalEndHour('0')
-					setRangeError(null)
+					setSubmitted(false)
 					onApply(null)
 				}}
 				className="flex flex-col gap-3 p-3"
 			>
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">Start Date</span>
-					<Input
-						type="date"
-						name="startDate"
-						className="w-full cursor-pointer dark:scheme-dark"
-						value={localStartDate}
-						max={maxDate}
-						onChange={handleStartDateChange}
-						required
-					/>
-				</label>
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">Start Hour (optional)</span>
-					<select
-						name="startHour"
-						className={`${inputStyles} w-full`}
-						value={localStartHour}
-						onChange={handleStartHourChange}
-					>
-						{Array.from({ length: 24 }, (_, i) => (
-							<option key={`start-${i}`} value={i}>
-								{i.toString().padStart(2, '0')}:00
-							</option>
-						))}
-					</select>
-				</label>
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">End Date</span>
-					<Input
-						type="date"
-						name="endDate"
-						className="w-full cursor-pointer dark:scheme-dark"
-						value={localEndDate}
-						max={maxDate}
-						onChange={handleEndDateChange}
-						required
-					/>
-				</label>
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">End Hour (optional)</span>
-					<select
-						name="endHour"
-						className={`${inputStyles} w-full`}
-						value={localEndHour}
-						onChange={handleEndHourChange}
-					>
-						{Array.from({ length: 24 }, (_, i) => (
-							<option key={`end-${i}`} value={i}>
-								{i.toString().padStart(2, '0')}:00
-							</option>
-						))}
-					</select>
-				</label>
-				{rangeError ? (
-					<p role="alert" className="flex items-center gap-1.5 body-sm text-error">
-						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
-						{rangeError}
-					</p>
-				) : null}
+				<Field label="Start Date" error={submitted ? startError : null}>
+					{(control) => (
+						<Input
+							{...control}
+							type="date"
+							name="startDate"
+							className="w-full cursor-pointer dark:scheme-dark"
+							value={localStartDate}
+							max={maxDate}
+							onChange={handleStartDateChange}
+							required
+						/>
+					)}
+				</Field>
+				<Field label="Start Hour (optional)">
+					{(control) => (
+						<select
+							{...control}
+							name="startHour"
+							className={`${inputStyles} w-full`}
+							value={localStartHour}
+							onChange={(e) => setLocalStartHour(e.target.value)}
+						>
+							{Array.from({ length: 24 }, (_, i) => (
+								<option key={`start-${i}`} value={i}>
+									{i.toString().padStart(2, '0')}:00
+								</option>
+							))}
+						</select>
+					)}
+				</Field>
+				<Field label="End Date" error={submitted ? endError : null}>
+					{(control) => (
+						<Input
+							{...control}
+							type="date"
+							name="endDate"
+							className="w-full cursor-pointer dark:scheme-dark"
+							value={localEndDate}
+							max={maxDate}
+							onChange={handleEndDateChange}
+							required
+						/>
+					)}
+				</Field>
+				<Field label="End Hour (optional)" error={submitted ? rangeError : null}>
+					{(control) => (
+						<select
+							{...control}
+							name="endHour"
+							className={`${inputStyles} w-full`}
+							value={localEndHour}
+							onChange={(e) => setLocalEndHour(e.target.value)}
+						>
+							{Array.from({ length: 24 }, (_, i) => (
+								<option key={`end-${i}`} value={i}>
+									{i.toString().padStart(2, '0')}:00
+								</option>
+							))}
+						</select>
+					)}
+				</Field>
 				<div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row">
 					<Button type="reset" variant="secondary" size="md" className="w-full sm:w-auto sm:flex-1">
 						Clear
 					</Button>
-					<Button
-						type="submit"
-						disabled={!localStartDate || !localEndDate}
-						variant="primary"
-						size="md"
-						className="w-full sm:w-auto sm:flex-1"
-					>
+					<Button type="submit" variant="primary" size="md" className="w-full sm:w-auto sm:flex-1">
 						Apply Filter
 					</Button>
 				</div>

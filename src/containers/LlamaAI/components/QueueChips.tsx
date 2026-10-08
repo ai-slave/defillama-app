@@ -63,6 +63,7 @@ function QueueChipEditor({
 	const busy = status?.action === 'saving_edit' || status?.action === 'canceling_edit'
 	return (
 		<form
+			noValidate
 			ref={focusRowOnLeave}
 			className="flex min-w-0 flex-1 flex-col gap-1.5"
 			onSubmit={(event) => {

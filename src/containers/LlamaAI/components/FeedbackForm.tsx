@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { memo, useId, useState } from 'react'
+import { memo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
@@ -15,6 +15,8 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
+import { Field, FieldGroup } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -40,7 +42,7 @@ export const FeedbackDialog = memo(function FeedbackDialog(props: FeedbackDialog
 
 function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRatingSubmitted }: FeedbackDialogProps) {
 	const [selectedRating, setSelectedRating] = useState(initialRating)
-	const id = useId()
+	const [submitted, setSubmitted] = useState(false)
 	const { authorizedFetch } = useAuthContext()
 	// The last failed send, not the mutation's error: that one clears as soon as a retry starts.
 	const [failed, setFailed] = useState(false)
@@ -71,7 +73,9 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 	const pending = submission.isPending
 
 	const [feedbackText, setFeedbackText] = useState('')
-	const handleSubmitFeedback = () => {
+	const handleSubmitFeedback = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (!selectedRating) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		trackUmamiEvent('llamaai-feedback-text-submit')
 		submission.mutate({ rating: selectedRating, feedback: feedbackText.trim() || undefined })
 	}
@@ -84,82 +88,68 @@ function FeedbackDialogOpening({ open, setOpen, messageId, initialRating, onRati
 				title="Discard your feedback?"
 				description="The feedback you typed is not sent."
 			/>
-			<DialogBody>
-				<fieldset className="flex flex-col gap-2">
-					<legend className="mb-2 label-sm text-secondary">Rate this response</legend>
-					<div className="flex gap-2">
-						<button
-							type="button"
-							onClick={() => setSelectedRating('good')}
-							disabled={pending}
-							aria-pressed={selectedRating === 'good'}
-							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
-								selectedRating === 'good'
-									? 'border-success bg-success-tint text-success'
-									: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-success not-disabled:not-aria-disabled:hover:text-success'
-							}`}
-						>
-							<Icon name="thumbs-up" height={14} width={14} />
-							Good
-						</button>
-						<button
-							type="button"
-							onClick={() => setSelectedRating('bad')}
-							disabled={pending}
-							aria-pressed={selectedRating === 'bad'}
-							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
-								selectedRating === 'bad'
-									? 'border-error bg-error-tint text-error'
-									: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-error not-disabled:not-aria-disabled:hover:text-error'
-							}`}
-						>
-							<Icon name="thumbs-down" height={14} width={14} />
-							Bad
-						</button>
-					</div>
-				</fieldset>
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={`${id}-feedback`} className="label-sm text-secondary">
-						Additional feedback (optional)
-					</label>
-					{/* Ariakit's autoFocus, so the dialog starts in the text field instead of the header ×. */}
-					<Ariakit.Focusable
-						autoFocus
-						render={
-							<textarea
-								id={`${id}-feedback`}
-								placeholder="e.g. The TVL figure is out of date"
-								className={`${textareaStyles} w-full resize-none`}
-								rows={3}
-								maxLength={500}
-								value={feedbackText}
-								readOnly={pending}
-								aria-describedby={`${id}-count`}
-								onChange={(e) => setFeedbackText(e.target.value)}
+			<form noValidate onSubmit={handleSubmitFeedback} className="flex min-h-0 flex-auto flex-col">
+				<DialogBody>
+					<FieldGroup label="Rate this response" error={submitted && !selectedRating ? 'Choose Good or Bad.' : null}>
+						<div className="flex gap-2">
+							<button
+								type="button"
+								onClick={() => setSelectedRating('good')}
+								disabled={pending}
+								aria-pressed={selectedRating === 'good'}
+								className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
+									selectedRating === 'good'
+										? 'border-success bg-success-tint text-success'
+										: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-success not-disabled:not-aria-disabled:hover:text-success'
+								}`}
+							>
+								<Icon name="thumbs-up" height={14} width={14} />
+								Good
+							</button>
+							<button
+								type="button"
+								onClick={() => setSelectedRating('bad')}
+								disabled={pending}
+								aria-pressed={selectedRating === 'bad'}
+								className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
+									selectedRating === 'bad'
+										? 'border-error bg-error-tint text-error'
+										: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-error not-disabled:not-aria-disabled:hover:text-error'
+								}`}
+							>
+								<Icon name="thumbs-down" height={14} width={14} />
+								Bad
+							</button>
+						</div>
+					</FieldGroup>
+					<Field label="Additional feedback (optional)" hint={`${feedbackText.length}/500`}>
+						{(control) => (
+							/* Ariakit's autoFocus, so the dialog starts in the text field instead of the header ×. */
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<textarea
+										{...control}
+										placeholder="e.g. The TVL figure is out of date"
+										className={`${textareaStyles} w-full resize-none`}
+										rows={3}
+										maxLength={500}
+										value={feedbackText}
+										readOnly={pending}
+										onChange={(e) => setFeedbackText(e.target.value)}
+									/>
+								}
 							/>
-						}
-					/>
-					<p id={`${id}-count`} className="body-sm text-tertiary">
-						{feedbackText.length}/500
-					</p>
-				</div>
-				{failed ? <InlineStatus variant="error">Couldn&apos;t send your feedback. Try again.</InlineStatus> : null}
-			</DialogBody>
-			<DialogFooter
-				leading={selectedRating ? null : <p className="body-sm text-secondary">Choose Good or Bad to submit.</p>}
-				dismiss={<DialogCancelButton />}
-			>
-				<Button
-					type="button"
-					size="md"
-					variant="primary"
-					onClick={handleSubmitFeedback}
-					disabled={!selectedRating}
-					pendingLabel={pending ? 'Submitting…' : null}
-				>
-					Submit
-				</Button>
-			</DialogFooter>
+						)}
+					</Field>
+					{failed ? <InlineStatus variant="error">Couldn&apos;t send your feedback. Try again.</InlineStatus> : null}
+				</DialogBody>
+				<DialogFooter dismiss={<DialogCancelButton />}>
+					<Button type="submit" size="md" variant="primary" pendingLabel={pending ? 'Submitting…' : null}>
+						Submit
+					</Button>
+				</DialogFooter>
+			</form>
 		</Dialog>
 	)
 }

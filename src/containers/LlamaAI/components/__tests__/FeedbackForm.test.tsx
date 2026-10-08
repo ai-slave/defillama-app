@@ -135,12 +135,15 @@ test('a running submission names itself and cannot be cancelled', async () => {
 	})
 })
 
-test('general feedback says a rating is needed until one is chosen', async () => {
+test('general feedback asks for a rating when Submit is pressed without one, and focuses the choice', async () => {
 	await click('Provide feedback')
-	expect(dialog()?.textContent).toContain('Choose Good or Bad to submit.')
-	expect(button('Submit').disabled).toBe(true)
+	expect(dialog()?.textContent).not.toContain('Choose Good or Bad.')
+	expect(button('Submit').disabled).toBe(false)
+	await click('Submit')
+	expect(dialog()?.textContent).toContain('Choose Good or Bad.')
+	expect(document.activeElement).toBe(button('Good'))
+	expect(dialog()).not.toBeNull()
 	await click('Good')
 	expect(button('Good').getAttribute('aria-pressed')).toBe('true')
-	expect(dialog()?.textContent).not.toContain('Choose Good or Bad to submit.')
-	expect(button('Submit').disabled).toBe(false)
+	expect(dialog()?.textContent).not.toContain('Choose Good or Bad.')
 })

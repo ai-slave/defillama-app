@@ -43,10 +43,17 @@ async function render(open = true, mode: 'create' | 'iterate' = 'create', items:
 async function submit() {
 	await act(async () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 }
-function draft() {
-	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'My analysis'
-	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
-		'Compare the fees and TVL of Ethereum and Arbitrum'
+async function type(field: HTMLInputElement | HTMLTextAreaElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value')!.set!.call(field, value)
+		field.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+const nameField = () => document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+const promptField = () => document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
+async function draft() {
+	await type(nameField(), 'My analysis')
+	await type(promptField(), 'Compare the fees and TVL of Ethereum and Arbitrum')
 }
 beforeEach(() => {
 	vi.clearAllMocks()
@@ -69,7 +76,7 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	const retry = Promise.withResolvers<{ created: Dashboard }>()
 	save.mockReturnValueOnce(pending.promise).mockReturnValueOnce(retry.promise)
 	await render()
-	draft()
+	await draft()
 	await submit()
 	await waitForUi(() => expect(save).toHaveBeenCalledOnce())
 	expect(close).not.toHaveBeenCalled()
@@ -97,7 +104,7 @@ test.each(['success', 'failure'] as const)(
 		const pending = Promise.withResolvers<{ created: Dashboard }>()
 		save.mockReturnValueOnce(pending.promise)
 		await render()
-		draft()
+		await draft()
 		await submit()
 		await waitForUi(() => expect(save).toHaveBeenCalledOnce())
 		await render(false)
@@ -128,7 +135,7 @@ test.each([
 ])('%s is explained inline in plain sentences without attempting to save', async (_case, answer, message) => {
 	mocks.creator.mockImplementationOnce(answer)
 	await render()
-	draft()
+	await draft()
 	await submit()
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 	expect(document.querySelector('[role="alert"]')!.textContent).toBe(`${message}Your draft is still here. Try again.`)
@@ -142,7 +149,7 @@ test('a generation retry keeps the failure on screen while it runs', async () =>
 		.mockImplementationOnce(async () => new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'))
 		.mockImplementationOnce(() => new Promise(() => {}))
 	await render()
-	draft()
+	await draft()
 	await submit()
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 	await submit()
@@ -160,8 +167,7 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	const pending = Promise.withResolvers<{ notices: { refreshPending: boolean } }>()
 	save.mockReturnValueOnce(pending.promise)
 	await render(true, 'iterate')
-	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
-		'Add a fees comparison to this dashboard'
+	await type(promptField(), 'Add a fees comparison to this dashboard')
 	await submit()
 	await waitForUi(() => expect(accessibleName(document.querySelector('button[type="submit"]')!)).toBe('Updating…'))
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Updating dashboard')
@@ -205,8 +211,7 @@ test('the notices from saving an edit toast only once the dialog has closed', as
 		notices: { mergeNotice: 'This dashboard was changed in another tab or session.', refreshPending: true }
 	})
 	await render(true, 'iterate')
-	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
-		'Add a fees comparison to this dashboard'
+	await type(promptField(), 'Add a fees comparison to this dashboard')
 	await submit()
 
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
@@ -230,8 +235,7 @@ test('an iteration keeps custom data rows out of the request and restores what t
 	} as unknown as DashboardItemConfig
 	save.mockResolvedValueOnce({ notices: { refreshPending: false } })
 	await render(true, 'iterate', [section, customData])
-	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
-		'Add a fees comparison to this dashboard'
+	await type(promptField(), 'Add a fees comparison to this dashboard')
 	await submit()
 	await waitForUi(() => expect(save).toHaveBeenCalledOnce())
 	expect(JSON.parse(mocks.creator.mock.calls[0][1].body).existingDashboard.items).toEqual([
@@ -251,7 +255,7 @@ test('an iteration keeps custom data rows out of the request and restores what t
 test('editing the prompt discards the generated result, hands focus to the prompt and generates again', async () => {
 	save.mockRejectedValueOnce(new Error('Save unavailable')).mockResolvedValueOnce({ created: dashboard })
 	await render()
-	draft()
+	await draft()
 	await submit()
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 	expect(document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.readOnly).toBe(true)
@@ -265,7 +269,7 @@ test('editing the prompt discards the generated result, hands focus to the promp
 	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
 	await waitForUi(() => expect(prompt.readOnly).toBe(false))
 	expect(document.activeElement).toBe(prompt)
-	prompt.value = 'Compare stablecoin supplies instead of fees and TVL'
+	await type(prompt, 'Compare stablecoin supplies instead of fees and TVL')
 	await submit()
 	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.creator).toHaveBeenCalledTimes(2)
@@ -275,7 +279,7 @@ test('generation finishing after leaving does not start a save in a new opening'
 	const response = Promise.withResolvers<Response>()
 	mocks.creator.mockReturnValueOnce(response.promise)
 	await render()
-	draft()
+	await draft()
 	await submit()
 	await render(false)
 	await render()
@@ -297,11 +301,8 @@ async function pressEscape() {
 test('leaving with a typed prompt asks before discarding it', async () => {
 	await render()
 	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
-	await act(async () => {
-		prompt.focus()
-		prompt.value = 'Compare the fees of Ethereum and Arbitrum'
-		prompt.dispatchEvent(new Event('input', { bubbles: true }))
-	})
+	await act(async () => prompt.focus())
+	await type(prompt, 'Compare the fees of Ethereum and Arbitrum')
 
 	await pressEscape()
 	await waitForUi(() => expect(document.body.textContent).toContain('Discard this prompt?'))
@@ -315,7 +316,7 @@ test('leaving with a typed prompt asks before discarding it', async () => {
 test('leaving after a failed save asks before discarding the generated dashboard', async () => {
 	save.mockRejectedValueOnce(new Error('Save unavailable'))
 	await render()
-	draft()
+	await draft()
 	await submit()
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 
@@ -323,4 +324,23 @@ test('leaving after a failed save asks before discarding the generated dashboard
 	await pressEscape()
 	await waitForUi(() => expect(document.body.textContent).toContain('Discard the generated dashboard?'))
 	expect(close).not.toHaveBeenCalled()
+})
+
+test('a submit with a missing name and a short prompt says so under each field, focuses the name and sends nothing', async () => {
+	save.mockResolvedValueOnce({ created: dashboard })
+	await render()
+	const errors = () => [...document.querySelectorAll('.text-error')].map((element) => element.textContent)
+	await type(promptField(), 'Fees')
+	expect(errors()).toEqual([])
+	await submit()
+	expect(errors()).toEqual(['Enter a dashboard name.', 'Enter at least 20 characters.'])
+	expect(document.activeElement).toBe(nameField())
+	expect(nameField().getAttribute('aria-invalid')).toBe('true')
+	await type(nameField(), 'My analysis')
+	await type(promptField(), 'Compare the fees and TVL of Ethereum and Arbitrum')
+	expect(errors()).toEqual([])
+	expect(mocks.creator).not.toHaveBeenCalled()
+	await submit()
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
+	expect(mocks.creator).toHaveBeenCalledOnce()
 })

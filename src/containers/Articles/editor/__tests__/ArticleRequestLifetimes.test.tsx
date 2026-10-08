@@ -120,7 +120,8 @@ test('a moved person keeps focus on its arrows, and the end arrows stay focusabl
 	// Alice is now last, so her down arrow is spent; her up arrow takes focus.
 	expect(accessibleName(document.activeElement!)).toBe('Move person 2 up')
 	expect(
-		document.activeElement!.closest('fieldset')!.querySelector<HTMLInputElement>('input[id$="-name"]')!.value
+		document.activeElement!.closest('fieldset')!.querySelector<HTMLInputElement>('input[placeholder^="Jane Doe"]')!
+			.value
 	).toBe('Alice')
 })
 test("removing a person hands focus to the next person's ×, then to Add person once one is left", async () => {
@@ -179,7 +180,7 @@ test('inserting a panel with a person missing an image shows the error on that r
 	const submit = await mountPanel(null)
 	await click('Insert panel')
 	expect(submit).not.toHaveBeenCalled()
-	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('An image is required for each person.')
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Upload an image for this person.')
 	expect(accessibleName(document.activeElement!)).toBe('Upload image')
 	expect(store.getState().open).toBe(true)
 })

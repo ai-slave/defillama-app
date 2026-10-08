@@ -54,5 +54,30 @@ test('deleting an annotation hands focus to the next row, then to the date field
 	expect(document.activeElement).toBe(deleteButton('Shapella'))
 	await remove('Shapella')
 	expect(document.body.textContent).toContain('No annotations yet.')
-	expect(document.activeElement).toBe(document.body.querySelector('[aria-label="Annotation date"]'))
+	expect(document.activeElement).toBe(document.body.querySelector('input[type="date"]'))
+})
+
+test('a reopened popover keeps the typed draft but starts with its errors quiet', async () => {
+	await act(async () => root.render(<Harness />))
+	const disclosure = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Annotations'))!
+	await act(async () => disclosure.click())
+	await waitForUi(() => expect(document.body.querySelector('input[type="text"]')).not.toBeNull())
+	const errors = () => [...document.body.querySelectorAll('.text-error')].map((node) => node.textContent)
+	const labelField = () => document.body.querySelector<HTMLInputElement>('input[type="text"]')!
+	const addButton = () => [...document.body.querySelectorAll('button')].find((b) => b.textContent === 'Add')!
+	await act(async () => addButton().click())
+	expect(errors()).toEqual(['Enter a date.', 'Enter a label.'])
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(labelField(), 'Upgrade')
+		labelField().dispatchEvent(new Event('input', { bubbles: true }))
+	})
+
+	await act(async () => document.body.querySelector<HTMLButtonElement>('[aria-label="Close annotations"]')!.click())
+	await waitForUi(() => expect(document.body.querySelector('input[type="text"]')).toBeNull())
+	await act(async () => disclosure.click())
+	await waitForUi(() => expect(document.body.querySelector('input[type="text"]')).not.toBeNull())
+	expect(labelField().value).toBe('Upgrade')
+	expect(errors()).toEqual([])
+	await act(async () => addButton().click())
+	expect(errors()).toEqual(['Enter a date.'])
 })

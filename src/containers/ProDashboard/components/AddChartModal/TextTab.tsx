@@ -1,3 +1,4 @@
+import { Field } from '~/ui/Field'
 import { Input, textareaStyles } from '~/ui/Input'
 
 interface TextTabProps {
@@ -5,43 +6,42 @@ interface TextTabProps {
 	textContent: string
 	onTextTitleChange: (title: string) => void
 	onTextContentChange: (content: string) => void
+	/** What Add still needs (some content), shown under the content once Add was pressed. */
+	error: string | null
 }
 
-export function TextTab({ textTitle, textContent, onTextTitleChange, onTextContentChange }: TextTabProps) {
-	const titleInputId = 'add-chart-text-tab-title'
-	const contentInputId = 'add-chart-text-tab-content'
-
+export function TextTab({ textTitle, textContent, onTextTitleChange, onTextContentChange, error }: TextTabProps) {
 	return (
 		<div className="space-y-3 md:space-y-4">
-			<div>
-				<label htmlFor={titleInputId} className="mb-1.5 block label-md text-secondary md:mb-2">
-					Card name (optional)
-				</label>
-				<Input
-					id={titleInputId}
-					type="text"
-					value={textTitle}
-					onChange={(e) => onTextTitleChange(e.target.value)}
-					placeholder="Optional"
-					className="w-full"
-				/>
-			</div>
-			<div>
-				<label htmlFor={contentInputId} className="mb-1.5 block label-md text-secondary md:mb-2">
-					Content (Markdown)
-				</label>
-				<textarea
-					id={contentInputId}
-					value={textContent}
-					onChange={(e) => onTextContentChange(e.target.value)}
-					placeholder="Enter markdown content…"
-					rows={8}
-					className={`${textareaStyles} w-full resize-none`}
-				/>
-				<div className="mt-1.5 body-sm text-tertiary md:mt-2">
-					Supports markdown: **bold**, *italic*, # headers, - lists, `code`, [links](url)
-				</div>
-			</div>
+			<Field label="Card name (optional)">
+				{(control) => (
+					<Input
+						{...control}
+						type="text"
+						value={textTitle}
+						onChange={(e) => onTextTitleChange(e.target.value)}
+						placeholder="Optional"
+						className="w-full"
+					/>
+				)}
+			</Field>
+			<Field
+				label="Content (Markdown)"
+				hint="Supports markdown: **bold**, *italic*, # headers, - lists, `code`, [links](url)"
+				error={error}
+			>
+				{(control) => (
+					<textarea
+						{...control}
+						required
+						value={textContent}
+						onChange={(e) => onTextContentChange(e.target.value)}
+						placeholder="Enter markdown content…"
+						rows={8}
+						className={`${textareaStyles} w-full resize-none`}
+					/>
+				)}
+			</Field>
 		</div>
 	)
 }

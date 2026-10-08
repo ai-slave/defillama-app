@@ -2,8 +2,8 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { useDateRangeValidation } from '../useDateRangeValidation'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { dateRangeErrors, useDateRangeValidation } from '../useDateRangeValidation'
 
 let api: ReturnType<typeof useDateRangeValidation>
 
@@ -62,27 +62,16 @@ test('a start after the end clears the end', async () => {
 	expect(container.textContent).toBe('2026-10-01..')
 })
 
-test('today is the UTC day the defaults use, even where the local day is still yesterday', async () => {
-	const originalTimeZone = process.env.TZ
-	process.env.TZ = 'America/Los_Angeles'
-	// 19:56 on Oct 1 in Los Angeles is already Oct 2 in UTC, the day the pages' default end date names.
-	vi.useFakeTimers({ now: new Date('2026-10-02T02:56:00Z'), toFake: ['Date'] })
-	try {
-		await act(async () => root.render(<Range defaultStartDate="2026-09-02" defaultEndDate="2026-10-02" />))
-		let valid = false
-		await act(async () => {
-			valid = api.validateDateRange('2026-09-02', '2026-10-02')
-		})
-		expect(valid).toBe(true)
-		await act(async () => {
-			valid = api.validateDateRange('2026-09-02', '2026-10-03')
-		})
-		expect(valid).toBe(false)
-		expect(api.dateError).toBe('End date cannot be in the future')
-	} finally {
-		vi.useRealTimers()
-		// Assigning undefined to an env var stores the string "undefined".
-		if (originalTimeZone === undefined) delete process.env.TZ
-		else process.env.TZ = originalTimeZone
-	}
+test('a missing or future date errs under its own field, and an inverted range under the end date', () => {
+	const today = '2026-10-02'
+	expect(dateRangeErrors('', '', today)).toEqual({ startDate: 'Choose a start date.', endDate: 'Choose an end date.' })
+	expect(dateRangeErrors('2026-10-03', '2026-10-03', today)).toEqual({
+		startDate: 'Choose a start date no later than today.',
+		endDate: 'Choose an end date no later than today.'
+	})
+	expect(dateRangeErrors('2026-09-20', '2026-09-10', today)).toEqual({
+		startDate: null,
+		endDate: 'Choose an end date on or after the start date.'
+	})
+	expect(dateRangeErrors('2026-09-02', today, today)).toEqual({ startDate: null, endDate: null })
 })

@@ -14,15 +14,16 @@ export const ALERT_PROMPT_SUGGESTIONS: Array<{ label: string; prompt: string }> 
 	{ label: 'New protocols', prompt: 'New protocols listed this week, with their TVL' }
 ]
 
+/** The prompt field's error (ui/Field.tsx): a scheduled report needs something to cover. */
 export function validatePrompt(triggerType: TriggerType, prompt: string): string | null {
-	if (triggerType === 'schedule' && !prompt.trim()) return 'Describe what the report should cover'
+	if (triggerType === 'schedule' && !prompt.trim()) return 'Enter what the report should cover.'
 	return null
 }
 
-export function validatePriceTrigger(fields: { tokenNk: string | null; value: string }): string | null {
-	if (!fields.tokenNk) return 'Pick a token'
-	if (fields.value.trim() === '' || !Number.isFinite(Number(fields.value))) return 'Enter a price'
-	if (Number(fields.value) <= 0) return 'Price must be greater than 0'
+/** The price field's error. The field holds normalized input, so anything else is empty or not a number. */
+export function validatePrice(value: string): string | null {
+	if (value.trim() === '' || !Number.isFinite(Number(value))) return 'Enter a price.'
+	if (Number(value) <= 0) return 'Enter a price above 0.'
 	return null
 }
 
@@ -95,49 +96,21 @@ export function getDeliveryReadinessBlock(input: {
 	return null
 }
 
-export function getDeliveryBlockReason(delivery: {
+/** The delivery field's error, shown once the reader submits. An unlinked channel's own notice says where to link
+    it; this says what the submit needs. */
+export function getDeliveryError(delivery: {
 	channel: DeliveryChannel
 	telegramLinked: boolean
 	slackTeamId: string
 	slackChannelId: string
 	slackWorkspaceCount: number
 }): string | null {
-	const readinessBlock = getDeliveryReadinessBlock({
-		channel: delivery.channel,
-		telegramLinked: delivery.telegramLinked,
-		slackTeamId: delivery.slackTeamId,
-		slackWorkspaceCount: delivery.slackWorkspaceCount
-	})
-	if (readinessBlock) return readinessBlock.label
-
-	if (delivery.channel === 'slack' && delivery.slackTeamId && !delivery.slackChannelId) {
-		return 'Pick a Slack channel'
-	}
-
+	if (delivery.channel === 'telegram' && !delivery.telegramLinked) return 'Choose a linked channel.'
+	if (delivery.channel !== 'slack') return null
+	if (delivery.slackWorkspaceCount === 0) return 'Choose a linked channel.'
+	if (!delivery.slackTeamId) return 'Choose a Slack workspace.'
+	if (!delivery.slackChannelId) return 'Choose a Slack channel.'
 	return null
-}
-
-export function getSubmitBlockReason(input: {
-	triggerType: TriggerType
-	prompt: string
-	price: { tokenNk: string | null; value: string }
-	delivery: {
-		channel: DeliveryChannel
-		telegramLinked: boolean
-		slackTeamId: string
-		slackChannelId: string
-		slackWorkspaceCount: number
-	}
-}): string | null {
-	const promptError = validatePrompt(input.triggerType, input.prompt)
-	if (promptError) return promptError
-
-	if (input.triggerType === 'price') {
-		const priceError = validatePriceTrigger(input.price)
-		if (priceError) return priceError
-	}
-
-	return getDeliveryBlockReason(input.delivery)
 }
 
 export function getArtifactSubtitle(channel: DeliveryChannel, slackChannelName: string | null): string {

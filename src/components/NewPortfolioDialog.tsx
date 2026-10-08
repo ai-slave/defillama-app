@@ -1,7 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { useId, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 
 /** The watchlists' "New portfolio" dialog: one name field, checked against the portfolios that exist. */
@@ -49,48 +51,30 @@ function NewPortfolioForm({
 }) {
 	const [name, setName] = useState('')
 	const [submitted, setSubmitted] = useState(false)
-	const fieldId = useId()
-	const inputRef = useRef<HTMLInputElement>(null)
-	const trimmed = name.trim()
-	const error = submitted ? findPortfolioNameError(name, portfolios) : null
+	const error = findPortfolioNameError(name, portfolios)
 
 	return (
 		<form
+			noValidate
 			className="flex min-h-0 flex-auto flex-col"
 			onSubmit={(event) => {
 				event.preventDefault()
-				setSubmitted(true)
-				// A refused name sends focus back to the field, so its error is read out with it.
-				if (findPortfolioNameError(name, portfolios)) inputRef.current?.focus()
-				else onCreate(trimmed)
+				if (error) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+				onCreate(name.trim())
 			}}
 		>
 			<DialogHeader title="New portfolio" />
 			<DialogBody>
-				<div className="flex flex-col gap-1">
-					<label htmlFor={fieldId} className="label-sm text-secondary">
-						Name
-					</label>
-					<Ariakit.Focusable
-						autoFocus
-						render={
-							<Input
-								ref={inputRef}
-								id={fieldId}
-								name="name"
-								value={name}
-								onChange={(event) => setName(event.currentTarget.value)}
-								aria-invalid={error ? true : undefined}
-								aria-describedby={error ? `${fieldId}-error` : undefined}
-							/>
-						}
-					/>
-					{error ? (
-						<p id={`${fieldId}-error`} className="body-sm text-data-down">
-							{error}
-						</p>
-					) : null}
-				</div>
+				<Field label="Name" error={submitted ? error : null}>
+					{(control) => (
+						<Ariakit.Focusable
+							autoFocus
+							render={
+								<Input {...control} name="name" value={name} onChange={(event) => setName(event.currentTarget.value)} />
+							}
+						/>
+					)}
+				</Field>
 			</DialogBody>
 			<DialogFooter dismiss={<DialogCancelButton />}>
 				<Button type="submit" variant="primary" size="md">

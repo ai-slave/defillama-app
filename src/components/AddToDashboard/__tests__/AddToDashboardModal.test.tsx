@@ -71,19 +71,29 @@ async function renderModal() {
 	await waitForUi(() => expect(dialog().textContent).toContain('No dashboards yet'))
 }
 
-const footerText = () => dialog().querySelector('footer')?.textContent
+const errorTexts = () => [...dialog().querySelectorAll('.text-error')].map((element) => element.textContent)
+const saveRequests = () => session.requests.filter((request) => request.url.pathname.endsWith('/pro-dashboard/save'))
 
-test('submit says why it is disabled until a dashboard is picked or named', async () => {
+test('a submit without a dashboard or a new name says what is missing under it and saves nothing', async () => {
 	await renderModal()
 	const submit = button('Add to dashboard')
-	expect(submit.disabled).toBe(true)
-	expect(footerText()).toBe('Pick a dashboard or create a new oneCancelAdd to dashboard')
+	expect(submit.getAttribute('aria-disabled')).toBeNull()
+	expect(errorTexts()).toEqual([])
+	await act(async () => submit.click())
+	expect(errorTexts()).toEqual(['Choose a dashboard or create a new one.'])
+	expect(document.activeElement).toBe(button('Create new dashboard'))
 
 	await act(async () => button('Create new dashboard').click())
-	expect(footerText()).toBe('Enter a name for the new dashboardCancelAdd to dashboard')
-	await type(dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!, 'Research')
-	expect(submit.disabled).toBe(false)
-	expect(footerText()).toBe('CancelAdd to dashboard')
+	const name = dialog().querySelector<HTMLInputElement>('input[name="newDashboardName"]')!
+	// The new name field is a new question: it opens quiet, and the next submit asks for it.
+	expect(errorTexts()).toEqual([])
+	await act(async () => submit.click())
+	expect(errorTexts()).toEqual(['Enter a name for the new dashboard.'])
+	expect(document.activeElement).toBe(name)
+	expect(name.getAttribute('aria-invalid')).toBe('true')
+	await type(name, 'Research')
+	expect(errorTexts()).toEqual([])
+	expect(saveRequests()).toHaveLength(0)
 })
 
 test('Create new dashboard hands focus to the name field that replaces it', async () => {
@@ -107,7 +117,7 @@ test('each opening starts without the last search or new dashboard draft', async
 	await act(async () => store.show())
 	await waitForUi(() => expect(dialog().textContent).toContain('No dashboards yet'))
 	expect(dialog().querySelector('input[name="newDashboardName"]')).toBeNull()
-	expect(footerText()).toBe('Pick a dashboard or create a new oneCancelAdd to dashboard')
+	expect(button('Create new dashboard')).toBeDefined()
 })
 
 test('a failed create shows its error inside the open dialog, not as a toast', async () => {

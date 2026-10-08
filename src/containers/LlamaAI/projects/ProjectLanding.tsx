@@ -316,6 +316,7 @@ export function ProjectLanding({
 						</TabPanel>
 						<TabPanel value="chats" hidden={tab !== 'chats'} className="pt-4">
 							<form
+								noValidate
 								onSubmit={(e) => {
 									e.preventDefault()
 									void handleSubmit()

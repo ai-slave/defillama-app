@@ -16,14 +16,18 @@ vi.mock('@tiptap/react/menus', () => ({
 }))
 let root: Root
 let container: HTMLDivElement
+function linkUrlInput() {
+	const label = [...container.querySelectorAll('label')].find((node) => node.textContent === 'Link URL')
+	return label ? (document.getElementById(label.htmlFor) as HTMLInputElement) : null
+}
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
 test.each([
-	['Link URL', '[aria-label="Link URL"]'],
-	['the New tab button', 'button[aria-pressed]']
-])('Escape from %s cancels link edits and returns focus to the document', async (_name, selector) => {
+	['Link URL', () => linkUrlInput()!],
+	['the New tab button', () => container.querySelector<HTMLElement>('button[aria-pressed]')!]
+])('Escape from %s cancels link edits and returns focus to the document', async (_name, findControl) => {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -66,17 +70,17 @@ test.each([
 		)
 	}
 	await act(async () => root.render(<Harness />))
-	const input = container.querySelector<HTMLInputElement>('[aria-label="Link URL"]')!
+	const input = linkUrlInput()!
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'https://changed.example')
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
-	const control = container.querySelector<HTMLElement>(selector)!
+	const control = findControl()
 	await act(async () => {
 		control.focus()
 		control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	})
-	expect(container.querySelector('[aria-label="Link URL"]')).toBeNull()
+	expect(linkUrlInput()).toBeNull()
 	expect(apply).not.toHaveBeenCalled()
 	const documentElement = container.querySelector<HTMLElement>('[contenteditable="true"]')!
 	await waitForUi(() => expect(document.activeElement).toBe(documentElement))

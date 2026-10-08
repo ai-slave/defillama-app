@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -93,10 +94,12 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		})
 	}
 
-	const searchProject = () => {
+	// The search answers only when submitted, so its error is set then and cleared on the next edit, like a server's.
+	const searchProject = (event: FormSubmitEvent) => {
+		event.preventDefault()
 		const match = findUtrSearchMatch(universe.rows, searchQuery)
 		if (!match) {
-			setSearchError(searchQuery.trim() ? 'No matching token found' : 'Enter a token name or ticker')
+			setSearchError(searchQuery.trim() ? 'No matching token found.' : 'Enter a token name or ticker.')
 			return
 		}
 		setSearchError(null)
@@ -159,7 +162,12 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			<TopMovers movers={topMovers} />
 
 			<div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-surface p-2">
-				<div role="search" className="flex min-w-0 flex-1 items-center gap-2 max-lg:basis-full lg:max-w-[360px]">
+				<form
+					noValidate
+					role="search"
+					onSubmit={searchProject}
+					className="flex min-w-0 flex-1 items-center gap-2 max-lg:basis-full lg:max-w-[360px]"
+				>
 					<label className="min-w-0 flex-1">
 						<span className="sr-only">Search tokens</span>
 						<Input
@@ -169,11 +177,6 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 							onChange={(event) => {
 								setSearchQuery(event.target.value)
 								setSearchError(null)
-							}}
-							onKeyDown={(event) => {
-								if (event.key !== 'Enter' || event.nativeEvent.isComposing) return
-								event.preventDefault()
-								searchProject()
 							}}
 							placeholder="Search token or ticker"
 							aria-invalid={searchError ? true : undefined}
@@ -188,13 +191,11 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					</label>
 					<Tooltip
 						content="Find token in leaderboard"
-						render={
-							<Button type="button" size="md" square aria-label="Find token in leaderboard" onClick={searchProject} />
-						}
+						render={<Button type="submit" size="md" square aria-label="Find token in leaderboard" />}
 					>
 						<Icon name="search" height={16} width={16} />
 					</Tooltip>
-				</div>
+				</form>
 				{searchError ? (
 					<span id="utr-search-error" role="alert" className="w-full body-sm text-error lg:order-last">
 						{searchError}

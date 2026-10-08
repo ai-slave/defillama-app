@@ -169,11 +169,11 @@ export function sqlChartModalControls(
 	const locked = execution?.saving ?? false
 	const stopping = execution?.stopping === true
 	const stage = execution?.stage ?? null
-	const hasSql = !!sql.trim()
 	const isDirty = sql.trim() !== state.resultSql
 	const needsRun = !reusableResult(state, sql)
 	const engineUnavailable = engine !== 'ready'
-	const canSave = hasSql && !running && !schemaLoading && !(needsRun && engineUnavailable)
+	// An empty query is not a reason to disable: Run and Save say "Enter a query." under the editor instead.
+	const canSave = !running && !schemaLoading && !(needsRun && engineUnavailable)
 	return {
 		running,
 		locked,
@@ -182,7 +182,7 @@ export function sqlChartModalControls(
 		queryChanged: isDirty && !!state.result,
 		run: {
 			label: locked ? 'Running…' : stopping ? 'Stopping…' : running ? 'Stop query' : 'Run query',
-			disabled: locked || (running ? stopping : schemaLoading || engineUnavailable || !hasSql)
+			disabled: locked || (running ? stopping : schemaLoading || engineUnavailable)
 		},
 		save: {
 			label: locked ? (stopping ? 'Stopping…' : 'Stop query') : editing ? 'Save changes' : 'Add to dashboard',
@@ -195,16 +195,12 @@ export function sqlChartModalControls(
 				: running
 					? (stage ?? 'Running query…')
 					: // An idle Save that cannot run says why, in the row it sits in.
-						!hasSql
-						? editing
-							? 'Write a query to save the chart.'
-							: 'Write a query to add the chart.'
-						: schemaLoading
-							? 'Loading tables…'
-							: needsRun && engine === 'error'
-								? 'The SQL engine failed to load.'
-								: needsRun && engineUnavailable
-									? 'Waiting for the SQL engine to load…'
-									: ''
+						schemaLoading
+						? 'Loading tables…'
+						: needsRun && engine === 'error'
+							? 'The SQL engine failed to load.'
+							: needsRun && engineUnavailable
+								? 'Waiting for the SQL engine to load…'
+								: ''
 	}
 }

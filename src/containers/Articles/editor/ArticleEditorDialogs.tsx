@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
-import { useId } from 'react'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
 import { Input } from '~/ui/Input'
 import type { LocalArticleDocument } from '../types'
 
@@ -25,35 +25,25 @@ const COVER_FIELDS: Array<{ key: CoverField; label: string; placeholder: string 
 
 // The fields write straight to the article, so there is nothing to cancel: Done only closes.
 export function CoverDetailsDialog({ article, publishErrors, store, updateCoverField }: CoverDetailsDialogProps) {
-	const id = useId()
 	return (
 		<Dialog store={store} size="sm" portal unmountOnHide>
-			<DialogHeader title="Cover details" subtitle="Optional captions and attribution shown below the cover." />
+			<DialogHeader
+				title="Cover details"
+				subtitle="Captions and attribution shown below the cover. Publishing needs the caption, credit and copyright."
+			/>
 			<DialogBody>
-				{COVER_FIELDS.map(({ key, label, placeholder }) => {
-					const fieldId = `${id}-${key}`
-					const error = publishErrors[`coverImage.${key}`]
-					return (
-						<div key={key} className="flex flex-col gap-1.5">
-							<label htmlFor={fieldId} className="label-sm text-secondary">
-								{label}
-							</label>
+				{COVER_FIELDS.map(({ key, label, placeholder }) => (
+					<Field key={key} label={label} error={publishErrors[`coverImage.${key}`]}>
+						{(control) => (
 							<Input
-								id={fieldId}
+								{...control}
 								value={article.coverImage?.[key] ?? ''}
 								onChange={(e) => updateCoverField(key, e.target.value)}
 								placeholder={placeholder}
-								aria-invalid={error ? true : undefined}
-								aria-describedby={error ? `${fieldId}-error` : undefined}
 							/>
-							{error ? (
-								<p id={`${fieldId}-error`} className="body-sm text-data-down">
-									{error}
-								</p>
-							) : null}
-						</div>
-					)
-				})}
+						)}
+					</Field>
+				))}
 			</DialogBody>
 			<DialogFooter>
 				<Ariakit.DialogDismiss render={<Button size="md" variant="primary" />}>Done</Ariakit.DialogDismiss>

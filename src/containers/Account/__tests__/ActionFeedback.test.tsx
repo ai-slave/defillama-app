@@ -206,8 +206,19 @@ test('first key generation keeps focus on Generate while it runs, then hands it 
 	await act(async () => request.resolve('first-test-key'))
 	await waitForUi(() => expect(document.activeElement).toBe(button('Show API key')))
 })
+// The open page editor's field in the sponsor's card, found by its visible label.
+function replacementInput(sponsorId: string) {
+	const { displayName } = sponsors.find((sponsor) => (sponsor as { id: string }).id === sponsorId) as {
+		displayName: string
+	}
+	const card = [...document.querySelectorAll('section')].find(
+		(el) => el.querySelector('h2')?.textContent === displayName
+	)!
+	const label = [...card.querySelectorAll('label')].find((el) => el.textContent === 'Replacement DefiLlama page')
+	return label ? (document.getElementById(label.htmlFor) as HTMLInputElement) : null
+}
 async function selectReplacement(sponsorId: string, slug: string) {
-	const input = document.querySelector<HTMLInputElement>(`#replacement-${sponsorId}`)!
+	const input = replacementInput(sponsorId)!
 	await act(async () => {
 		input.focus()
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'New')
@@ -236,7 +247,7 @@ test('Cancel edit waits while a sponsor save runs, so its failure shows in the e
 	await click('Save page')
 	await waitForUi(() => expect(button('Cancel edit').getAttribute('aria-disabled')).toBe('true'))
 	await click('Cancel edit')
-	expect(document.querySelector('#replacement-s1')).not.toBeNull()
+	expect(replacementInput('s1')).not.toBeNull()
 	await act(async () => first.reply.resolve(offline()))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Offline'))
 	expect(button('Cancel edit').getAttribute('aria-disabled')).toBeNull()
@@ -252,7 +263,7 @@ test('a saved sponsor page closes its editor and hands focus to Change page', as
 		button('Save page')!.focus()
 		button('Save page')!.click()
 	})
-	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	await waitForUi(() => expect(replacementInput('s1')).toBeNull())
 	expect(document.activeElement).toBe(button('Change page'))
 	expect(button('Change page')!.getAttribute('aria-expanded')).toBe('false')
 })
@@ -278,10 +289,10 @@ test('a pending sponsor save does not block saving another sponsor', async () =>
 			['s2', 'second']
 		])
 	)
-	await waitForUi(() => expect(document.querySelector('#replacement-s2')).toBeNull())
-	expect(document.querySelector('#replacement-s1')).not.toBeNull()
+	await waitForUi(() => expect(replacementInput('s2')).toBeNull())
+	expect(replacementInput('s1')).not.toBeNull()
 	await act(async () => first.reply.resolve({}))
-	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	await waitForUi(() => expect(replacementInput('s1')).toBeNull())
 })
 
 test('sponsor save failure preserves the selected page and retries inline', async () => {
@@ -292,9 +303,9 @@ test('sponsor save failure preserves the selected page and retries inline', asyn
 	await selectReplacement('s1', 'new')
 	await click('Save page')
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Offline'))
-	expect(document.querySelector('#replacement-s1')).not.toBeNull()
+	expect(replacementInput('s1')).not.toBeNull()
 	await click('Save page')
-	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	await waitForUi(() => expect(replacementInput('s1')).toBeNull())
 })
 test('picking a Research article keeps focus on the article search while the link saves', async () => {
 	const link = pending()
@@ -400,4 +411,16 @@ test('deletion stays pending through the list refresh, then hands focus to Add l
 	await act(async () => refreshed.resolve({ logos: [] }))
 	await waitForUi(() => expect(dialog()).toBeUndefined())
 	await waitForUi(() => expect(document.activeElement?.textContent?.trim()).toBe('Add logo'))
+})
+test('Add client with no page picked marks the page search invalid, describes it by its error, and focuses it', async () => {
+	await mount(<ResearchSponsorsAdminView />)
+	await waitForUi(() => expect(button('Add client')).toBeDefined())
+	await click('Add client')
+	const label = [...document.querySelectorAll('label')].find((el) => el.textContent === 'DefiLlama page')!
+	const search = document.getElementById(label.htmlFor)!
+	expect(search.getAttribute('aria-invalid')).toBe('true')
+	expect(document.getElementById(search.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'Choose a DefiLlama page.'
+	)
+	expect(document.activeElement).toBe(search)
 })

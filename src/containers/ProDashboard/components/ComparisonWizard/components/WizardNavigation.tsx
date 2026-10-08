@@ -46,57 +46,35 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 
 interface WizardNavigationProps {
 	currentStep: WizardStep
-	/** What the step still needs, said beside a disabled Next or Create. */
-	blockedReason: string | null
-	onNext: () => void
 	onBack: () => void
-	onGenerate: () => void
 	creating: boolean
+	/** The metrics step's availability check: Next waits while it loads and stays disabled beside its failure. */
+	metricsLoad: 'loading' | 'failed' | null
 }
 
-export function WizardNavigation({
-	currentStep,
-	blockedReason,
-	onNext,
-	onBack,
-	onGenerate,
-	creating
-}: WizardNavigationProps) {
-	const isLastStep = currentStep === 'preview'
-
+/** Next and Create submit the wizard's form, which checks the step and says what it still needs under its control. */
+export function WizardNavigation({ currentStep, onBack, creating, metricsLoad }: WizardNavigationProps) {
 	return (
 		<DialogFooter
 			leading={
-				<>
-					<Button type="button" size="md" onClick={onBack} disabled={creating}>
-						<Icon name="arrow-left" height={14} width={14} />
-						Back
-					</Button>
-					{blockedReason ? <p className="body-sm text-secondary">{blockedReason}</p> : null}
-				</>
+				<Button type="button" size="md" onClick={onBack} disabled={creating}>
+					<Icon name="arrow-left" height={14} width={14} />
+					Back
+				</Button>
 			}
 		>
-			{isLastStep ? (
-				<Button
-					type="button"
-					variant="primary"
-					size="md"
-					onClick={onGenerate}
-					disabled={blockedReason !== null}
-					accessibleWhenDisabled
-					pendingLabel={creating ? 'Creating…' : null}
-				>
+			{currentStep === 'preview' ? (
+				<Button type="submit" variant="primary" size="md" pendingLabel={creating ? 'Creating…' : null}>
 					<Icon name="plus" height={14} width={14} />
 					Create dashboard
 				</Button>
 			) : (
-				// Kept focusable while disabled: a step that starts incomplete disables Next under the focus that moved there.
 				<Button
-					type="button"
+					type="submit"
 					variant="primary"
 					size="md"
-					onClick={onNext}
-					disabled={blockedReason !== null}
+					pendingLabel={metricsLoad === 'loading' ? 'Checking metrics…' : null}
+					disabled={metricsLoad === 'failed'}
 					accessibleWhenDisabled
 				>
 					Next

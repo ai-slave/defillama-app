@@ -14,13 +14,15 @@ import {
 	buildScheduleExpressionRaw,
 	deriveAlertTitle,
 	formatPriceLabel,
+	getDeliveryError,
 	getDeliveryReadinessBlock,
 	getPriceCaption,
-	getSubmitBlockReason,
 	getUpsellCopy,
 	resolveSlackTarget,
 	isAlertCapReachedError,
 	roundPriceValue,
+	validatePrice,
+	validatePrompt,
 	type PriceOp,
 	type SlackTarget,
 	type TriggerType
@@ -62,7 +64,8 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
-import { takeLostFocus } from '~/ui/focus'
+import { Field, FieldGroup } from '~/ui/Field'
+import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -177,8 +180,6 @@ function CreateAlertModalForm({
 	const router = useRouter()
 	const { alertsUsage } = useSessionList()
 	const fieldId = useId()
-	const promptId = `${fieldId}-prompt`
-	const titleId = `${fieldId}-title`
 	const summaryId = `${fieldId}-summary`
 
 	const openTab: TriggerType = initialTab ?? (prefill ? 'price' : 'schedule')
@@ -265,18 +266,20 @@ function CreateAlertModalForm({
 		slackWorkspaceCount: activeSlackWorkspaces.length
 	})
 
-	const submitBlockReason = getSubmitBlockReason({
-		triggerType,
-		prompt,
-		price: { tokenNk: priceToken?.tokenNk ?? null, value: priceValue },
-		delivery: {
+	const [submitted, setSubmitted] = useState(false)
+	const errors = {
+		prompt: validatePrompt(triggerType, prompt),
+		token: triggerType === 'price' && !priceToken ? 'Choose a token.' : null,
+		price: triggerType === 'price' ? validatePrice(priceValue) : null,
+		delivery: getDeliveryError({
 			channel: deliveryChannel,
 			telegramLinked,
 			slackTeamId,
 			slackChannelId,
 			slackWorkspaceCount: activeSlackWorkspaces.length
-		}
-	})
+		})
+	}
+	const shown = submitted ? errors : null
 
 	const isPending = createAlertMutation.isPending
 	const isUpsell = alertsUsage?.allowed === false || isAlertCapReachedError(createAlertMutation.error)
@@ -291,7 +294,10 @@ function CreateAlertModalForm({
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (submitBlockReason || isPending) return
+		if (isPending) return
+		if (errors.prompt || errors.token || errors.price || errors.delivery) {
+			return showFieldErrors(e.currentTarget, () => setSubmitted(true))
+		}
 		// The fields lock while creating; the footer's submit, outside them, holds focus and its "Creating…" label.
 		;(e.nativeEvent as SubmitEvent).submitter?.focus()
 		const slackChannelName = slackChannels?.find((c) => c.id === slackChannelId)?.name ?? null
@@ -395,7 +401,7 @@ function CreateAlertModalForm({
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+		<form noValidate onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 			<DialogHeader title="New alert" subtitle="Get pinged when things move" leading={<AlertsHeaderIcon />} />
 			<DialogDiscardGuard
 				when={hasTypedWork}
@@ -408,7 +414,10 @@ function CreateAlertModalForm({
 					<Ariakit.RadioProvider
 						value={triggerType}
 						setValue={(value) => {
-							if (value === 'schedule' || value === 'price') setTriggerType(value)
+							if (value !== 'schedule' && value !== 'price') return
+							// The other type asks different questions; its untouched fields stay quiet until the next submit.
+							if (value !== triggerType) setSubmitted(false)
+							setTriggerType(value)
 						}}
 					>
 						<Ariakit.RadioGroup aria-label="Alert type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -431,18 +440,20 @@ function CreateAlertModalForm({
 
 					{triggerType === 'schedule' ? (
 						<div className="flex flex-col gap-1.5">
-							<label htmlFor={promptId} className={alertFieldLabelClass}>
-								What should it tell you?
-							</label>
-							<textarea
-								id={promptId}
-								ref={initialPromptRef}
-								value={prompt}
-								onChange={(e) => setPrompt(e.target.value)}
-								rows={2}
-								placeholder="Hyperliquid TVL and its top drivers"
-								className={`${textareaStyles} w-full resize-none`}
-							/>
+							<Field label="What should it tell you?" error={shown?.prompt}>
+								{(control) => (
+									<textarea
+										{...control}
+										ref={initialPromptRef}
+										required
+										value={prompt}
+										onChange={(e) => setPrompt(e.target.value)}
+										rows={2}
+										placeholder="Hyperliquid TVL and its top drivers"
+										className={`${textareaStyles} w-full resize-none`}
+									/>
+								)}
+							</Field>
 							<div className="flex flex-wrap gap-1.5">
 								{ALERT_PROMPT_SUGGESTIONS.map((suggestion) => (
 									<Button
@@ -478,18 +489,22 @@ function CreateAlertModalForm({
 								onSearchChange={setTokenSearchInput}
 								isSearching={isSearchingTokens}
 								placeholder="Select token…"
+								error={shown?.token}
 							/>
 							<div className="flex flex-col gap-1.5">
-								<span className={alertFieldLabelClass}>Fires when the price goes</span>
-								<div className="flex flex-wrap items-center gap-2">
-									<SegmentedToggle<PriceOp>
-										label="Price comparison"
-										value={priceOp}
-										onChange={setPriceOp}
-										options={PRICE_OPERATOR_OPTIONS}
-									/>
-									<PriceInput value={priceValue} onValueChange={setPriceValue} />
-								</div>
+								<Field label="Fires when the price goes" error={shown?.price}>
+									{(control) => (
+										<div className="flex flex-wrap items-center gap-2">
+											<SegmentedToggle<PriceOp>
+												label="Price comparison"
+												value={priceOp}
+												onChange={setPriceOp}
+												options={PRICE_OPERATOR_OPTIONS}
+											/>
+											<PriceInput value={priceValue} onValueChange={setPriceValue} control={control} />
+										</div>
+									)}
+								</Field>
 								{currentPrice ? (
 									<button
 										type="button"
@@ -563,23 +578,34 @@ function CreateAlertModalForm({
 							</div>
 						</div>
 					) : (
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={promptId} className={alertFieldLabelClass}>
-								Add context to the ping (optional)
-							</label>
-							<textarea
-								id={promptId}
-								value={prompt}
-								onChange={(e) => setPrompt(e.target.value)}
-								rows={1}
-								placeholder="ETH price, gas, and what moved the market"
-								className={`${textareaStyles} w-full resize-none`}
-							/>
-						</div>
+						<Field label="Add context to the ping (optional)">
+							{(control) => (
+								<textarea
+									{...control}
+									value={prompt}
+									onChange={(e) => setPrompt(e.target.value)}
+									rows={1}
+									placeholder="ETH price, gas, and what moved the market"
+									className={`${textareaStyles} w-full resize-none`}
+								/>
+							)}
+						</Field>
 					)}
 
-					<div className="flex flex-col gap-1.5">
-						<span className={alertFieldLabelClass}>Where should it go?</span>
+					<FieldGroup
+						label="Where should it go?"
+						hint={
+							readinessBlock ? (
+								<span className="text-warning">
+									{readinessBlock.label} in{' '}
+									<span className="text-secondary">
+										<SettingsIntegrationsLink />
+									</span>
+								</span>
+							) : null
+						}
+						error={shown?.delivery}
+					>
 						<div className="flex flex-wrap items-center gap-2">
 							<SegmentedToggle<DeliveryChannel>
 								label="Delivery channel"
@@ -595,6 +621,8 @@ function CreateAlertModalForm({
 										<select
 											value={slackTeamId}
 											aria-label="Slack workspace"
+											// The group's error names the Slack pick it needs; that pick takes the submit's focus.
+											aria-invalid={shown?.delivery && !slackTeamId ? true : undefined}
 											onChange={(e) => {
 												const workspace = activeSlackWorkspaces.find((w) => w.team_id === e.target.value)
 												setPickedSlack({
@@ -630,6 +658,7 @@ function CreateAlertModalForm({
 												ref={takeLostFocus}
 												value={slackChannelId}
 												aria-label="Slack channel"
+												aria-invalid={shown?.delivery && !slackChannelId ? true : undefined}
 												// The workspace travels with the channel, so a later workspace change cannot inherit it.
 												onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
 												className={inputStyles}
@@ -650,29 +679,20 @@ function CreateAlertModalForm({
 								</>
 							) : null}
 						</div>
-						{readinessBlock ? (
-							<p className="body-sm text-warning">
-								{readinessBlock.label} in{' '}
-								<span className="text-secondary">
-									<SettingsIntegrationsLink />
-								</span>
-							</p>
-						) : null}
-					</div>
+					</FieldGroup>
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={titleId} className={alertFieldLabelClass}>
-							Name (optional)
-						</label>
-						<Input
-							id={titleId}
-							name="title"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							placeholder={derivedTitle}
-							className="w-full"
-						/>
-					</div>
+					<Field label="Name (optional)">
+						{(control) => (
+							<Input
+								{...control}
+								name="title"
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								placeholder={derivedTitle}
+								className="w-full"
+							/>
+						)}
+					</Field>
 
 					{onJustAsk ? (
 						<button
@@ -693,20 +713,10 @@ function CreateAlertModalForm({
 			</DialogBody>
 
 			<DialogFooter
-				leading={
-					<p className="min-w-0 truncate body-sm text-secondary">
-						{submitBlockReason ?? `${triggerSummary} → ${channelSummary}`}
-					</p>
-				}
+				leading={<p className="min-w-0 truncate body-sm text-secondary">{`${triggerSummary} → ${channelSummary}`}</p>}
 				dismiss={<DialogCancelButton />}
 			>
-				<Button
-					type="submit"
-					variant="primary"
-					size="md"
-					disabled={!!submitBlockReason}
-					pendingLabel={isPending ? 'Creating…' : null}
-				>
+				<Button type="submit" variant="primary" size="md" pendingLabel={isPending ? 'Creating…' : null}>
 					Create alert
 				</Button>
 			</DialogFooter>

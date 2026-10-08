@@ -40,7 +40,10 @@ import { selectTriggerStyles } from './types'
    label row; `chip` is a toolbar trigger that reads "Label: value". An
    option's `logo` draws with TokenLogo on its row and, once picked, on the
    trigger. A server-searched picker passes `onSearchChange` and lists the
-   options it is given unfiltered.
+   options it is given unfiltered. A `field` takes `error` the way Field does
+   (src/ui/Field.tsx): the message under the trigger in body-sm text-error,
+   `aria-invalid` and `aria-describedby` on the trigger, and `data-invalid`
+   on the field, so `showFieldErrors` focuses the trigger.
 
    An unset single pick is `null`: pass `value ?? null`, never `x || ''`,
    which renders a blank trigger. Use `''` only for an option whose value
@@ -79,6 +82,8 @@ type PickerBaseProps<T extends string = string> = {
 	/** For a caller that hands focus back to the trigger, e.g. when the list of picks it fed empties. */
 	triggerRef?: Ref<HTMLButtonElement>
 	autoFocus?: boolean
+	/** A `field`'s validation error, shown under the trigger (src/ui/Field.tsx). */
+	error?: string | null
 	/** Layout placement only. */
 	className?: string
 }
@@ -323,8 +328,9 @@ function PickerTrigger({
 	isLoading,
 	triggerRef,
 	autoFocus,
+	error,
 	className
-}: Pick<PickerBaseProps, 'label' | 'labelAction' | 'triggerRef' | 'autoFocus' | 'className'> & {
+}: Pick<PickerBaseProps, 'label' | 'labelAction' | 'triggerRef' | 'autoFocus' | 'error' | 'className'> & {
 	variant: PickerVariant
 	text: string
 	/** Whether `text` names a pick, or is the placeholder. */
@@ -334,6 +340,7 @@ function PickerTrigger({
 }) {
 	const labelId = useId()
 	const triggerId = useId()
+	const errorId = useId()
 	const content = (
 		<>
 			{/* The space keeps the accessible name "Label: value"; flex items join their text without one. */}
@@ -359,19 +366,26 @@ function PickerTrigger({
 		)
 	}
 	return (
-		<div className={`flex min-w-0 flex-col gap-1.5 ${className ?? ''}`}>
+		<div data-invalid={error ? '' : undefined} className={`flex min-w-0 flex-col gap-1 ${className ?? ''}`}>
 			<FieldLabel id={labelId} htmlFor={triggerId} label={label} action={labelAction} />
 			<ComboboxSelectTrigger
 				ref={triggerRef}
 				id={triggerId}
 				autoFocus={autoFocus}
 				aria-labelledby={`${labelId} ${triggerId}`}
+				aria-invalid={error ? true : undefined}
+				aria-describedby={error ? errorId : undefined}
 				disabled={isLoading}
 				aria-busy={isLoading || undefined}
 				className={`${selectTriggerStyles('input', 'md')} w-full`}
 			>
 				{content}
 			</ComboboxSelectTrigger>
+			{error ? (
+				<p id={errorId} className="body-sm text-error">
+					{error}
+				</p>
+			) : null}
 		</div>
 	)
 }

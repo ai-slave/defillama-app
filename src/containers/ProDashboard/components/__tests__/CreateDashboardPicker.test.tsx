@@ -96,6 +96,17 @@ async function click(name: string) {
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 }
+const nameField = () =>
+	[...document.querySelectorAll('label')].find((label) => label.textContent === 'Dashboard name')!
+		.control as HTMLInputElement
+async function typeName(value: string) {
+	const field = nameField()
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, value)
+		field.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+const errorTexts = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((node) => node.textContent)
 async function waitFor(check: () => void) {
 	await waitForUi(async () => {
 		await act(async () => {
@@ -125,7 +136,7 @@ describe('a subscriber', () => {
 			)
 		await mount()
 		const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
-		name.value = 'Keep my draft'
+		await typeName('Keep my draft')
 		await click('Create dashboard')
 		expect(document.querySelector('fieldset')!.disabled).toBe(true)
 		await click('Creating…')
@@ -161,7 +172,7 @@ describe('a subscriber', () => {
 				})
 		)
 		await mount()
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Earlier draft'
+		await typeName('Earlier draft')
 		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledOnce())
 		await act(async () => store.hide())
@@ -184,7 +195,7 @@ describe('a subscriber', () => {
 		navigation.push.mockRejectedValueOnce(new Error('Route unavailable'))
 		await mount(mode)
 		if (mode === 'From scratch') {
-			document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
+			await typeName('Saved dashboard')
 		}
 		const createButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => accessibleName(button) === 'Create dashboard'
@@ -221,18 +232,44 @@ describe('a subscriber', () => {
 		expect(create).toHaveBeenCalledOnce()
 	})
 
-	test('a comparison step that cannot continue says what it still needs', async () => {
+	test('a comparison step that cannot continue says what it still needs under its choices on Next', async () => {
 		await mount('Comparison')
 		await click('Back')
 		await click('TVL')
 		const next = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => accessibleName(button) === 'Next'
 		)!
-		expect(next.getAttribute('aria-disabled')).toBe('true')
-		expect(document.querySelector('footer')!.textContent).toContain('Pick at least 1 metric')
-		await click('TVL')
 		expect(next.getAttribute('aria-disabled')).toBeNull()
-		expect(document.querySelector('footer')!.textContent).not.toContain('Pick at least')
+		expect(errorTexts()).toEqual([])
+		await click('Next')
+		expect(document.body.textContent).toContain('Select metrics to compare')
+		expect(errorTexts()).toEqual(['Choose at least one metric.'])
+		expect(accessibleName(document.activeElement as HTMLElement)).toMatch(/^TVL/)
+		await click('TVL')
+		expect(errorTexts()).toEqual([])
+		await click('Next')
+		expect(document.body.textContent).toContain('Dashboard name')
+		expect(errorTexts()).toEqual([])
+	})
+
+	test('a blank dashboard without a name says so under the name, focuses it and creates nothing', async () => {
+		await mount()
+		await typeName('   ')
+		await click('Create dashboard')
+		expect(errorTexts()).toEqual(['Enter a dashboard name.'])
+		expect(document.activeElement).toBe(nameField())
+		expect(create).not.toHaveBeenCalled()
+		await typeName('Growth')
+		expect(errorTexts()).toEqual([])
+	})
+
+	test('Create with a cleared name says so under the name, focuses it and creates nothing', async () => {
+		await mount('Comparison')
+		await typeName('')
+		await click('Create dashboard')
+		expect(errorTexts()).toEqual(['Enter a dashboard name.'])
+		expect(document.activeElement).toBe(nameField())
+		expect(create).not.toHaveBeenCalled()
 	})
 
 	test('the wizard has one back control, and Back on its first step returns to the dashboard choices', async () => {
@@ -256,7 +293,7 @@ describe('a subscriber', () => {
 		await mount('Comparison', { toPreview: false })
 		await click('Back')
 		await click('Back')
-		// A new type drops the preset's chain, so the items step opens with nothing picked and Next disabled.
+		// A new type drops the preset's chain, so the items step opens with nothing picked.
 		await click('Compare protocols')
 		const next = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(button) => accessibleName(button) === 'Next'
@@ -278,15 +315,35 @@ describe('a subscriber', () => {
 
 	test('leaving the blank dashboard form with a typed name asks first', async () => {
 		await mount()
-		const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
-		await act(async () => {
-			name.value = 'Half typed'
-			name.dispatchEvent(new Event('input', { bubbles: true }))
-		})
+		await typeName('Half typed')
 		await click('Back to dashboard choices')
 		expect(document.body.textContent).toContain('Discard this dashboard?')
 		await click('Keep editing')
 		expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('Half typed')
+	})
+
+	test('Next on the metrics step waits for the availability check and stays disabled beside its failure', async () => {
+		let fail!: () => void
+		const failed = new Promise<void>((resolve) => {
+			fail = resolve
+		})
+		session.serve({
+			'https://api.llama.fi/config/smol/appMetadata-chains.json': async () => {
+				await failed
+				return new Response(null, { status: 500 })
+			}
+		})
+		await mount('Comparison', { toPreview: false })
+		const next = document.querySelector<HTMLButtonElement>('[role="dialog"] button[type="submit"]')!
+		expect(next.getAttribute('aria-busy')).toBe('true')
+		expect(accessibleName(next)).toBe('Checking metrics…')
+		await act(async () => fail())
+		await waitFor(() => expect(document.body.textContent).toContain('Could not check which metrics'))
+		expect(next.getAttribute('aria-disabled')).toBe('true')
+		await act(async () => next.click())
+		// No error under a list that is not there: the failure and its Try again are the reason.
+		expect(errorTexts()).toEqual([])
+		expect(document.body.textContent).toContain('Select metrics to compare')
 	})
 
 	test('the metrics step counts one available metric in the singular', async () => {
@@ -332,7 +389,7 @@ describe('a subscriber', () => {
 		create.mockResolvedValueOnce({ id: 'created' })
 		navigation.push.mockReturnValueOnce(route.promise)
 		await mount()
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
+		await typeName('Saved dashboard')
 		await click('Create dashboard')
 		await waitFor(() => expect(navigation.push).toHaveBeenCalledOnce())
 		await act(async () => store.hide())
@@ -347,7 +404,7 @@ describe('a subscriber', () => {
 		create.mockResolvedValueOnce({ id: 'created', slug: 'team-dashboard' })
 		await mount()
 		expect(document.body.textContent).toContain('Create in')
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Growth metrics'
+		await typeName('Growth metrics')
 		await act(async () => document.querySelector<HTMLInputElement>('input[value="team"]')!.click())
 		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledOnce())
@@ -377,7 +434,7 @@ describe('a free account', () => {
 		await mount()
 		// The limit comes from the account's dashboard list, which loads alongside the picker.
 		await waitFor(() => expect(localStorage.getItem('lite-dashboards')).toContain('first'))
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Over the limit'
+		await typeName('Over the limit')
 		await click('Create dashboard')
 		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 		const alert = document.querySelector('[role="alert"]')!
@@ -393,7 +450,7 @@ describe('a free account', () => {
 		create.mockResolvedValueOnce({ id: 'created', slug: 'free-dashboard' })
 		await mount()
 		expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.disabled).toBe(true)
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Open to everyone'
+		await typeName('Open to everyone')
 		await click('Create dashboard')
 		expect(create).toHaveBeenCalledExactlyOnceWith({
 			dashboardName: 'Open to everyone',
@@ -409,7 +466,7 @@ describe('a free account', () => {
 		create.mockResolvedValueOnce({ id: 'created', slug: 'personal' })
 		await mount()
 		expect(document.querySelector<HTMLInputElement>('input[value="team"]')!.disabled).toBe(true)
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Personal'
+		await typeName('Personal')
 		await click('Create dashboard')
 		await waitFor(() => expect(create).toHaveBeenCalledOnce())
 		expect(create.mock.calls[0][0]).not.toHaveProperty('teamId')

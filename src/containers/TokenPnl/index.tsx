@@ -15,12 +15,13 @@ import {
 } from '~/containers/TokenSearch/search'
 import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch/TokenSearchDialog'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
-import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
+import { dateRangeErrors } from '~/hooks/useDateRangeValidation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -273,7 +274,12 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 		router.isReady && isValidDate(endParam)
 			? unixToDateString(Number(endParam))
 			: unixToDateString(maxSelectableDateUnix)
-	const { dateError, validateDateRange } = useDateRangeValidation()
+	// A date applies as soon as it is typed, so a refused one says why at once instead of after a submit.
+	const today = unixToDateString(nowSeconds)
+	const startDateError = (date: string) =>
+		dateRangeErrors(date, endDate, today).startDate ??
+		(date > endDate ? 'Choose a start date on or before the end date.' : null)
+	const endDateError = (date: string) => dateRangeErrors(startDate, date, today).endDate
 
 	const [quantityInput, setQuantityInput] = useState('')
 
@@ -430,15 +436,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 
 	const dialogStore = Ariakit.useDialogStore()
 
-	const handleDateChange = (value: string, isStart: boolean) => {
-		if (!value) return
-		const nextStart = isStart ? value : startDate
-		const nextEnd = isStart ? endDate : value
-		if (!nextStart || !nextEnd) return
-		if (!validateDateRange(nextStart, nextEnd)) return
-		const unixValue = dateStringToUnix(value)
-		const bound = isStart ? 'start' : 'end'
-		void pushShallowQuery(router, { [bound]: unixValue ?? undefined })
+	const handleDateChange = (value: string, bound: 'start' | 'end') => {
+		void pushShallowQuery(router, { [bound]: dateStringToUnix(value) ?? undefined })
 	}
 
 	const updateCoin = (coinId: string) => {
@@ -457,22 +456,22 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 						<DateInput
 							label="Start Date"
 							value={startDate}
-							error={dateError}
-							onChange={(value) => handleDateChange(value, true)}
+							errorFor={startDateError}
+							onChange={(value) => handleDateChange(value, 'start')}
 							min={unixToDateString(0)}
 							max={unixToDateString(maxSelectableDateUnix)}
 						/>
 						<DateInput
 							label="End Date"
 							value={endDate}
-							error={dateError}
-							onChange={(value) => handleDateChange(value, false)}
+							errorFor={endDateError}
+							onChange={(value) => handleDateChange(value, 'end')}
 							min={startDate}
 							max={unixToDateString(maxSelectableDateUnix)}
 						/>
 					</div>
-					<div className="flex flex-col gap-1.5">
-						<span className="body-sm text-secondary">Token</span>
+					<div className="flex flex-col gap-1">
+						<span className="label-sm text-secondary">Token</span>
 						<button
 							type="button"
 							onClick={() => dialogStore.toggle()}
@@ -502,10 +501,10 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 							}}
 						/>
 					</div>
-					<div className="flex flex-col gap-1.5">
-						<label className="flex flex-col gap-1">
-							<span className="body-sm text-secondary">Quantity (optional)</span>
+					<Field label="Quantity (optional)">
+						{(control) => (
 							<Input
+								{...control}
 								type="number"
 								min="0"
 								step="any"
@@ -514,8 +513,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 								onChange={(event) => setQuantityInput(event.target.value)}
 								className="w-full dark:scheme-dark"
 							/>
-						</label>
-					</div>
+						)}
+					</Field>
 				</Card>
 				<TokenPnlContent
 					routerReady={router.isReady}

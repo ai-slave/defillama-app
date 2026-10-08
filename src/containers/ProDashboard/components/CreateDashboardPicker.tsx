@@ -17,6 +17,8 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -436,32 +438,20 @@ function CreateDashboardModalContent({
 	const [createIn, setCreateIn] = useState<'personal' | 'team'>('personal')
 	const [tags, setTags] = useState<Array<string>>([])
 	const [description, setDescription] = useState('')
-	const [nameLength, setNameLength] = useState(0)
+	const [name, setName] = useState('')
+	const [submitted, setSubmitted] = useState(false)
+	const nameError = name.trim() ? null : 'Enter a dashboard name.'
 	const dirty =
-		nameLength > 0 ||
-		tags.length > 0 ||
-		description !== '' ||
-		visibility !== defaultVisibility ||
-		createIn !== 'personal'
+		name !== '' || tags.length > 0 || description !== '' || visibility !== defaultVisibility || createIn !== 'personal'
 
 	const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		const form = e.currentTarget
-		const dashboardNameValue = new FormData(form).get('dashboardName')
-		const dashboardName = typeof dashboardNameValue === 'string' ? dashboardNameValue.trim() : ''
-
-		const nameElement = form.elements.namedItem('dashboardName')
-		const nameInput = nameElement instanceof HTMLInputElement ? nameElement : null
-		if (!dashboardName) {
-			nameInput?.setCustomValidity('Dashboard name is required')
-			nameInput?.reportValidity()
-			return
-		}
+		if (nameError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 
 		// The fields lock while creating; the footer's submit, outside them, holds focus and its "Creating…" label.
 		;(e.nativeEvent as SubmitEvent).submitter?.focus()
 		onCreate({
-			dashboardName,
+			dashboardName: name.trim(),
 			visibility,
 			tags,
 			description,
@@ -481,31 +471,28 @@ function CreateDashboardModalContent({
 				leading={<DialogBackButton label="Back to dashboard choices" onClick={onBack} />}
 			/>
 			<DialogBody>
-				<form id={formId} onSubmit={handleCreate}>
+				<form id={formId} noValidate onSubmit={handleCreate}>
 					<fieldset disabled={locked} className="flex flex-col gap-4">
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-								Dashboard name
-							</label>
-							{/* Ariakit's autoFocus, so the step starts on the name instead of the header controls. */}
-							<Ariakit.Focusable
-								autoFocus
-								render={
-									<Input
-										id={`${id}-name`}
-										name="dashboardName"
-										type="text"
-										maxLength={DASHBOARD_NAME_MAX_LENGTH}
-										onInput={(e) => {
-											e.currentTarget.setCustomValidity('')
-											setNameLength(e.currentTarget.value.length)
-										}}
-										placeholder="Enter dashboard name"
-										required
-									/>
-								}
-							/>
-						</div>
+						<Field label="Dashboard name" error={submitted ? nameError : null}>
+							{(control) => (
+								// Ariakit's autoFocus, so the step starts on the name instead of the header controls.
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<Input
+											{...control}
+											name="dashboardName"
+											type="text"
+											maxLength={DASHBOARD_NAME_MAX_LENGTH}
+											value={name}
+											onChange={(e) => setName(e.target.value)}
+											placeholder="Enter dashboard name"
+											required
+										/>
+									}
+								/>
+							)}
+						</Field>
 
 						{team ? (
 							<div className="flex flex-col gap-1.5">

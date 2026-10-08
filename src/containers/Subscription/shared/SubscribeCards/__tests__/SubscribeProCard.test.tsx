@@ -68,6 +68,14 @@ async function setOpen(open: boolean) {
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]') !== null).toBe(open))
 }
 
+// The sign-in fields are controlled, so a value reaches the form through an input event.
+async function typeInto(input: HTMLInputElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
 test('each open of a modal mounted closed tracks one subscribe-modal-open event', async () => {
 	await act(async () => root.render(<Harness />))
 	expect(openEvents()).toEqual([])
@@ -102,8 +110,8 @@ test('signing in from the plan dialog returns focus to its Unlock action, not th
 	await act(async () => button('Already a subscriber? Sign in').focus())
 	await act(async () => button('Already a subscriber? Sign in').click())
 	await waitForUi(() => expect(document.querySelector('input[name="email"]')).not.toBeNull())
-	document.querySelector<HTMLInputElement>('input[name="email"]')!.value = 'subscriber@example.com'
-	document.querySelector<HTMLInputElement>('input[name="password"]')!.value = 'correct horse battery staple'
+	await typeInto(document.querySelector<HTMLInputElement>('input[name="email"]')!, 'subscriber@example.com')
+	await typeInto(document.querySelector<HTMLInputElement>('input[name="password"]')!, 'correct horse battery staple')
 	await act(async () => button('Test CAPTCHA').click())
 	await act(async () =>
 		document

@@ -5,8 +5,11 @@ import { isWalletEmail } from '~/containers/Account/utils'
 import { NEWSLETTERS, type NewsletterKey, useNewsletterSubscription } from '~/hooks/useNewsletterSubscription'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { emailError } from '~/utils/email'
 
 const initialSelected: Record<NewsletterKey, boolean> = {
 	newsletter: true,
@@ -62,7 +65,7 @@ const newsletterDetails: Record<
 
 export default function NewslettersPage() {
 	const { user } = useAuthContext()
-	const helperId = useId()
+	const publicationsErrorId = useId()
 	const mutation = useNewsletterSubscription()
 
 	const accountEmail =
@@ -71,6 +74,7 @@ export default function NewslettersPage() {
 	const [email, setEmail] = useState(accountEmail)
 	const [prevAccountEmail, setPrevAccountEmail] = useState(accountEmail)
 	const [touched, setTouched] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 	const [selected, setSelected] = useState<Record<NewsletterKey, boolean>>(initialSelected)
 	const [succeeded, setSucceeded] = useState(false)
 
@@ -80,20 +84,16 @@ export default function NewslettersPage() {
 	}
 
 	const selectedKeys = NEWSLETTERS.map((n) => n.key).filter((key) => selected[key])
-	const noneSelected = selectedKeys.length === 0
 	const isPending = mutation.isPending
-	const canSubmit = !isPending && !noneSelected && email.trim().length > 0
-	const helperText = noneSelected
-		? 'Choose at least one newsletter.'
-		: `${selectedKeys.length} publication${selectedKeys.length === 1 ? '' : 's'} selected.`
-	const visibleSelectionText = `${selectedKeys.length}/${NEWSLETTERS.length} selected`
-	const buttonText = noneSelected
-		? 'Choose a newsletter'
-		: email.trim().length === 0
-			? 'Enter email'
+	const emailMessage = emailError(email)
+	const publicationsMessage = selectedKeys.length === 0 ? 'Choose at least one publication.' : null
+	const publicationsError = submitted ? publicationsMessage : null
+	const buttonText =
+		selectedKeys.length === 2
+			? 'Subscribe to both newsletters'
 			: selectedKeys.length === 1
 				? 'Subscribe to 1 newsletter'
-				: 'Subscribe to both newsletters'
+				: 'Subscribe'
 
 	const toggle = (key: NewsletterKey) => {
 		setSelected((current) => ({ ...current, [key]: !current[key] }))
@@ -106,16 +106,17 @@ export default function NewslettersPage() {
 		if (succeeded) setSucceeded(false)
 	}
 
-	const handleSubmit = (e: FormEvent) => {
+	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!canSubmit) return
-		const submittedKeys = selectedKeys
+		if (isPending) return
+		if (emailMessage || publicationsMessage) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		mutation.mutate(
-			{ email: email.trim(), newsletters: submittedKeys },
+			{ email: email.trim(), newsletters: selectedKeys },
 			{
 				onSuccess: (data) => {
-					if (submittedKeys.every((key) => data.result?.[key] === 'ok')) {
+					if (selectedKeys.every((key) => data.result?.[key] === 'ok')) {
 						setSucceeded(true)
+						setSubmitted(false)
 					}
 				}
 			}
@@ -150,7 +151,11 @@ export default function NewslettersPage() {
 						</div>
 					</header>
 
-					<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,390px)] lg:items-start">
+					<form
+						noValidate
+						onSubmit={handleSubmit}
+						className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,390px)] lg:items-start"
+					>
 						<section className="flex flex-col gap-4" aria-labelledby="newsletter-options-title">
 							<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 								<div>
@@ -162,15 +167,16 @@ export default function NewslettersPage() {
 									</p>
 								</div>
 								<p className="label-md text-link" aria-live="polite">
-									{visibleSelectionText}
+									{selectedKeys.length}/{NEWSLETTERS.length} selected
 								</p>
 							</div>
 
 							<div
 								className="grid gap-4 xl:grid-cols-2"
 								role="group"
-								aria-describedby={helperId}
-								aria-label="Newsletters"
+								aria-labelledby="newsletter-options-title"
+								aria-describedby={publicationsError ? publicationsErrorId : undefined}
+								data-invalid={publicationsError ? '' : undefined}
 							>
 								{NEWSLETTERS.map(({ key, label }) => {
 									const on = selected[key]
@@ -244,16 +250,15 @@ export default function NewslettersPage() {
 									)
 								})}
 							</div>
-							<p id={helperId} className="sr-only" aria-live="polite">
-								{helperText}
-							</p>
+							{publicationsError ? (
+								<p id={publicationsErrorId} className="body-sm text-error">
+									{publicationsError}
+								</p>
+							) : null}
 						</section>
 
 						<aside className="lg:sticky lg:top-6">
-							<form
-								onSubmit={handleSubmit}
-								className="flex flex-col gap-5 rounded-lg border border-medium bg-surface p-5"
-							>
+							<div className="flex flex-col gap-5 rounded-lg border border-medium bg-surface p-5">
 								<div className="flex flex-col gap-2">
 									<h2 className="heading-sm text-primary">Subscribe</h2>
 									<p className="body-md text-secondary">
@@ -261,20 +266,20 @@ export default function NewslettersPage() {
 									</p>
 								</div>
 
-								<label className="flex flex-col gap-1.5">
-									<span className="label-sm text-secondary">Email address</span>
-									<Input type="email" required value={email} onChange={onEmailChange} placeholder="you@example.com" />
-								</label>
+								<Field label="Email address" error={submitted ? emailMessage : null}>
+									{(control) => (
+										<Input
+											{...control}
+											type="email"
+											required
+											value={email}
+											onChange={onEmailChange}
+											placeholder="you@example.com"
+										/>
+									)}
+								</Field>
 
-								<Button
-									type="submit"
-									variant="primary"
-									size="lg"
-									pendingLabel={isPending ? 'Subscribing…' : null}
-									aria-describedby={helperId}
-									disabled={!canSubmit}
-									accessibleWhenDisabled
-								>
+								<Button type="submit" variant="primary" size="lg" pendingLabel={isPending ? 'Subscribing…' : null}>
 									{buttonText}
 								</Button>
 
@@ -284,13 +289,11 @@ export default function NewslettersPage() {
 											<Icon name="check-circle" height={18} width={18} className="mt-1 shrink-0 text-link" />
 											<span>Subscribed. You are on the selected newsletter list.</span>
 										</div>
-									) : noneSelected ? (
-										<p className="body-md text-secondary">Choose at least one publication to continue.</p>
 									) : null}
 								</div>
-							</form>
+							</div>
 						</aside>
-					</div>
+					</form>
 				</div>
 			</main>
 		</Layout>

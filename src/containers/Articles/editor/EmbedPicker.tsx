@@ -2,6 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, textareaStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tag } from '~/ui/Tag'
@@ -22,25 +24,30 @@ const ASPECT_OPTIONS: Array<{ value: ArticleEmbedAspectRatio; label: string }> =
 ]
 
 export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
-	const urlId = useId()
-	const titleId = useId()
-	const captionId = useId()
 	const aspectId = useId()
 	const [rawUrl, setRawUrl] = useState(initialConfig?.sourceUrl ?? '')
 	const [title, setTitle] = useState(initialConfig?.title ?? '')
 	const [caption, setCaption] = useState(initialConfig?.caption ?? '')
 	const [aspectRatio, setAspectRatio] = useState<ArticleEmbedAspectRatio | null>(initialConfig?.aspectRatio ?? null)
+	const [submitted, setSubmitted] = useState(false)
 
 	// Leaving with the fields changed asks first, and an outside tap never drops them.
 	const draftSnapshot = JSON.stringify({ rawUrl, title, caption, aspectRatio })
 	const [openedSnapshot] = useState(draftSnapshot)
 
 	const detection: EmbedDetection | null = useMemo(() => detectEmbed(rawUrl), [rawUrl])
-	const invalid = rawUrl.trim().length > 0 && !detection
+	const empty = rawUrl.trim().length === 0
+	// Whether the link can embed answers while the reader types; an empty field waits for Insert.
+	const urlError =
+		!empty && !detection
+			? 'Enter a link from a supported source: a tweet, YouTube, Telegram, Flourish, Datawrapper, Medium, Substack or a GitHub gist.'
+			: submitted && empty
+				? 'Enter a link to embed.'
+				: null
 
 	const submit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (!detection) return
+		if (!detection) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		const config: ArticleEmbedConfig = {
 			provider: detection.provider,
 			url: detection.url,
@@ -60,7 +67,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 
 	return (
 		<Dialog store={store} size="md" unmountOnHide portal>
-			<form onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+			<form noValidate onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
 				<DialogDiscardGuard
 					when={draftSnapshot !== openedSnapshot}
 					title="Discard this embed?"
@@ -68,70 +75,63 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 				/>
 				<DialogHeader title={initialConfig ? 'Edit embed' : 'Insert embed'} />
 				<DialogBody>
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={urlId} className="label-sm text-secondary">
-							URL
-						</label>
-						<Ariakit.Focusable
-							autoFocus
-							render={
-								<Input
-									id={urlId}
-									inputMode="url"
-									aria-describedby={`${urlId}-detection`}
-									aria-invalid={invalid || undefined}
-									value={rawUrl}
-									onChange={(e) => setRawUrl(e.target.value)}
-									placeholder="https://www.youtube.com/watch?v=…"
-								/>
-							}
-						/>
-						{/* The primary action stays disabled until this line recognises the URL, so it also says why. */}
-						<p id={`${urlId}-detection`} className="body-sm">
-							{invalid ? (
-								<span className="text-data-down">
-									This URL isn&apos;t from a supported source. Use a tweet, YouTube, Telegram, Flourish, Datawrapper,
-									Medium, Substack or GitHub gist link.
-								</span>
-							) : detection ? (
+					<Field
+						label="URL"
+						hint={
+							detection ? (
 								<span className="flex min-w-0 items-center gap-2">
 									<Tag className="shrink-0">{getEmbedProviderLabel(detection.provider)}</Tag>
-									<span className="truncate text-tertiary">{detection.url}</span>
+									<span className="truncate">{detection.url}</span>
 								</span>
-							) : (
-								<span className="text-tertiary">
+							) : empty ? (
+								<>
 									Paste a tweet, YouTube video, Telegram post, Flourish or Datawrapper chart, Medium or Substack post,
 									or GitHub gist. Other sources can&apos;t be embedded.
-								</span>
-							)}
-						</p>
-					</div>
+								</>
+							) : null
+						}
+						error={urlError}
+						live
+					>
+						{(control) => (
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										{...control}
+										inputMode="url"
+										value={rawUrl}
+										onChange={(e) => setRawUrl(e.target.value)}
+										placeholder="https://www.youtube.com/watch?v=…"
+									/>
+								}
+							/>
+						)}
+					</Field>
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={titleId} className="label-sm text-secondary">
-							Title (optional)
-						</label>
-						<Input
-							id={titleId}
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							placeholder="Short label shown above the embed"
-						/>
-					</div>
+					<Field label="Title (optional)">
+						{(control) => (
+							<Input
+								{...control}
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								placeholder="Short label shown above the embed"
+							/>
+						)}
+					</Field>
 
-					<div className="flex flex-col gap-1.5">
-						<label htmlFor={captionId} className="label-sm text-secondary">
-							Caption (optional)
-						</label>
-						<textarea
-							id={captionId}
-							value={caption}
-							onChange={(e) => setCaption(e.target.value)}
-							rows={2}
-							placeholder="Source notes or context shown below the embed"
-							className={`${textareaStyles} resize-none`}
-						/>
-					</div>
+					<Field label="Caption (optional)">
+						{(control) => (
+							<textarea
+								{...control}
+								value={caption}
+								onChange={(e) => setCaption(e.target.value)}
+								rows={2}
+								placeholder="Source notes or context shown below the embed"
+								className={`${textareaStyles} resize-none`}
+							/>
+						)}
+					</Field>
 
 					<div className="flex flex-col gap-1.5">
 						<span id={aspectId} className="label-sm text-secondary">
@@ -149,7 +149,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 					</div>
 				</DialogBody>
 				<DialogFooter dismiss={<DialogCancelButton />}>
-					<Button type="submit" size="md" variant="primary" disabled={!detection}>
+					<Button type="submit" size="md" variant="primary">
 						{initialConfig ? 'Update embed' : 'Insert embed'}
 					</Button>
 				</DialogFooter>

@@ -13,6 +13,8 @@ import {
 	type SlackAcquisition
 } from '~/containers/Subscription/utils/slackAcquisition'
 import { readAppStorage, setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
+import { FieldGroup } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -128,6 +130,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 	const router = useRouter()
 	const { user, authToken, isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
 	const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set())
+	const [submitted, setSubmitted] = useState(false)
 	const [slackAcquisition, setSlackAcquisition] = useState<SlackAcquisition | null>(null)
 
 	// The purchase params stay in the URL: the Refresh button below reloads, and without them a reload would confirm any
@@ -383,7 +386,6 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					{planName} activated
 				</span>
 				<h1 className="heading-lg tracking-tight text-primary">Welcome to DefiLlama {planName}</h1>
-				<p className="body-md text-tertiary">What brought you here? Pick all that apply.</p>
 			</div>
 
 			{slackAcquisition ? (
@@ -400,88 +402,101 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 				</div>
 			) : null}
 
-			<Ariakit.Group aria-label="What brought you here? Pick all that apply." className="flex w-full flex-col gap-2">
-				{ONBOARDING_OPTIONS.map((option, i) => {
-					const isSelected = selectedFeatures.has(option.id)
-					const c = option.color
-					return (
-						<Ariakit.Checkbox
-							render={<button type="button" aria-label={option.label} />}
-							aria-description={option.description ?? undefined}
-							key={option.id}
-							checked={isSelected}
-							onChange={() => toggleFeature(option.id)}
-							style={{
-								animationDelay: `${i * 40}ms`,
-								...(isSelected
-									? {
-											borderColor: `color-mix(in srgb, ${c} 40%, transparent)`,
-											backgroundColor: `color-mix(in srgb, ${c} 6%, transparent)`
-										}
-									: {})
-							}}
-							className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 focus-visible:focus-ring ${
-								isSelected ? '' : 'border-medium hover:bg-hover-row'
-							}`}
-						>
-							<div
-								className="flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
-								style={{
-									backgroundColor: `color-mix(in srgb, ${c} ${isSelected ? 15 : 8}%, transparent)`
-								}}
-							>
-								{option.iconType === 'svg' ? (
-									<svg className="size-[18px]" style={{ color: isSelected ? '#FDE0A9' : c }}>
-										<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
-									</svg>
-								) : (
-									<Icon
-										name={option.iconName}
-										height={18}
-										width={18}
-										className="transition-colors duration-200"
-										style={{ color: isSelected ? c : 'var(--text-tertiary)' }}
-									/>
-								)}
-							</div>
-							<div className="flex min-w-0 flex-col">
-								<span className={`label-md ${isSelected ? 'text-primary' : 'text-secondary'}`}>{option.label}</span>
-								{option.description ? (
-									<span className="mt-0.5 label-sm text-tertiary">{option.description}</span>
-								) : null}
-							</div>
-							<div className="ml-auto shrink-0">
-								<div
-									className={`flex size-[18px] items-center justify-center rounded-full border transition-all duration-200 ${
-										isSelected ? '' : 'border-medium group-hover:border-strong'
+			<form
+				noValidate
+				className="flex w-full flex-col"
+				onSubmit={(event) => {
+					event.preventDefault()
+					if (selectedFeatures.size === 0) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+					handleContinue()
+				}}
+			>
+				<FieldGroup
+					label="What brought you here? Pick all that apply."
+					error={submitted && selectedFeatures.size === 0 ? 'Choose at least one option.' : null}
+				>
+					<div className="flex flex-col gap-2">
+						{ONBOARDING_OPTIONS.map((option, i) => {
+							const isSelected = selectedFeatures.has(option.id)
+							const c = option.color
+							return (
+								<Ariakit.Checkbox
+									render={<button type="button" aria-label={option.label} />}
+									aria-description={option.description ?? undefined}
+									key={option.id}
+									checked={isSelected}
+									onChange={() => toggleFeature(option.id)}
+									style={{
+										animationDelay: `${i * 40}ms`,
+										...(isSelected
+											? {
+													borderColor: `color-mix(in srgb, ${c} 40%, transparent)`,
+													backgroundColor: `color-mix(in srgb, ${c} 6%, transparent)`
+												}
+											: {})
+									}}
+									className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 focus-visible:focus-ring ${
+										isSelected ? '' : 'border-medium hover:bg-hover-row'
 									}`}
-									style={isSelected ? { borderColor: c, backgroundColor: c } : undefined}
 								>
-									{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
-								</div>
-							</div>
-						</Ariakit.Checkbox>
-					)
-				})}
-			</Ariakit.Group>
+									<div
+										className="flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
+										style={{
+											backgroundColor: `color-mix(in srgb, ${c} ${isSelected ? 15 : 8}%, transparent)`
+										}}
+									>
+										{option.iconType === 'svg' ? (
+											<svg className="size-[18px]" style={{ color: isSelected ? '#FDE0A9' : c }}>
+												<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
+											</svg>
+										) : (
+											<Icon
+												name={option.iconName}
+												height={18}
+												width={18}
+												className="transition-colors duration-200"
+												style={{ color: isSelected ? c : 'var(--text-tertiary)' }}
+											/>
+										)}
+									</div>
+									<div className="flex min-w-0 flex-col">
+										<span className={`label-md ${isSelected ? 'text-primary' : 'text-secondary'}`}>{option.label}</span>
+										{option.description ? (
+											<span className="mt-0.5 label-sm text-tertiary">{option.description}</span>
+										) : null}
+									</div>
+									<div className="ml-auto shrink-0">
+										<div
+											className={`flex size-[18px] items-center justify-center rounded-full border transition-all duration-200 ${
+												isSelected ? '' : 'border-medium group-hover:border-strong'
+											}`}
+											style={isSelected ? { borderColor: c, backgroundColor: c } : undefined}
+										>
+											{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
+										</div>
+									</div>
+								</Ariakit.Checkbox>
+							)
+						})}
+					</div>
+				</FieldGroup>
 
-			<div className="mt-6 flex w-full flex-col items-center gap-2">
-				<button
-					type="button"
-					onClick={handleContinue}
-					disabled={selectedFeatures.size === 0}
-					className="w-full rounded-xl bg-sub-purple py-3 label-md text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled disabled:shadow-none"
-				>
-					Get started
-				</button>
-				<button
-					type="button"
-					onClick={() => void Router.push('/account')}
-					className="py-1 label-sm text-tertiary transition-colors hover:text-secondary"
-				>
-					Skip
-				</button>
-			</div>
+				<div className="mt-6 flex w-full flex-col items-center gap-2">
+					<button
+						type="submit"
+						className="w-full rounded-xl bg-sub-purple py-3 label-md text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow"
+					>
+						Get started
+					</button>
+					<button
+						type="button"
+						onClick={() => void Router.push('/account')}
+						className="py-1 label-sm text-tertiary transition-colors hover:text-secondary"
+					>
+						Skip
+					</button>
+				</div>
+			</form>
 		</div>
 	)
 }

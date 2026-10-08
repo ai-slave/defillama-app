@@ -8,23 +8,22 @@ import {
 	formatNextRunAt,
 	formatPriceDisplay,
 	formatPriceLabel,
-	getDeliveryBlockReason,
+	getDeliveryError,
 	getDeliveryReadinessBlock,
 	getPriceCaption,
-	getSubmitBlockReason,
 	isAlertCapReachedError,
 	normalizePriceInput,
 	resolveSlackChannelName,
 	resolveSlackTarget,
 	roundPriceValue,
-	validatePriceTrigger,
+	validatePrice,
 	validatePrompt
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 
 describe('validatePrompt', () => {
 	test('requires a prompt for schedule alerts', () => {
-		expect(validatePrompt('schedule', '')).toBe('Describe what the report should cover')
-		expect(validatePrompt('schedule', '   ')).toBe('Describe what the report should cover')
+		expect(validatePrompt('schedule', '')).toBe('Enter what the report should cover.')
+		expect(validatePrompt('schedule', '   ')).toBe('Enter what the report should cover.')
 	})
 
 	test('allows an empty prompt for price alerts', () => {
@@ -37,23 +36,19 @@ describe('validatePrompt', () => {
 	})
 })
 
-describe('validatePriceTrigger', () => {
-	test('requires a token to be picked', () => {
-		expect(validatePriceTrigger({ tokenNk: null, value: '100' })).toBe('Pick a token')
-	})
-
+describe('validatePrice', () => {
 	test('requires a numeric value', () => {
-		expect(validatePriceTrigger({ tokenNk: 'coingecko:aave', value: '' })).toBe('Enter a price')
-		expect(validatePriceTrigger({ tokenNk: 'coingecko:aave', value: 'abc' })).toBe('Enter a price')
+		expect(validatePrice('')).toBe('Enter a price.')
+		expect(validatePrice('abc')).toBe('Enter a price.')
 	})
 
 	test('rejects zero or negative values', () => {
-		expect(validatePriceTrigger({ tokenNk: 'coingecko:aave', value: '0' })).toBe('Price must be greater than 0')
-		expect(validatePriceTrigger({ tokenNk: 'coingecko:aave', value: '-5' })).toBe('Price must be greater than 0')
+		expect(validatePrice('0')).toBe('Enter a price above 0.')
+		expect(validatePrice('-5')).toBe('Enter a price above 0.')
 	})
 
-	test('passes for a valid token and positive value', () => {
-		expect(validatePriceTrigger({ tokenNk: 'coingecko:aave', value: '100' })).toBeNull()
+	test('passes a positive value', () => {
+		expect(validatePrice('100')).toBeNull()
 	})
 })
 
@@ -116,60 +111,6 @@ describe('getDeliveryReadinessBlock', () => {
 	test('never blocks email', () => {
 		expect(
 			getDeliveryReadinessBlock({ channel: 'email', telegramLinked: false, slackTeamId: '', slackWorkspaceCount: 0 })
-		).toBeNull()
-	})
-})
-
-describe('getSubmitBlockReason', () => {
-	const baseDelivery = {
-		channel: 'email' as const,
-		telegramLinked: false,
-		slackTeamId: '',
-		slackChannelId: '',
-		slackWorkspaceCount: 0
-	}
-
-	test('blocks a schedule alert with no prompt', () => {
-		expect(
-			getSubmitBlockReason({
-				triggerType: 'schedule',
-				prompt: '',
-				price: { tokenNk: null, value: '' },
-				delivery: baseDelivery
-			})
-		).toBe('Describe what the report should cover')
-	})
-
-	test('blocks a price alert with no token selected', () => {
-		expect(
-			getSubmitBlockReason({
-				triggerType: 'price',
-				prompt: '',
-				price: { tokenNk: null, value: '100' },
-				delivery: baseDelivery
-			})
-		).toBe('Pick a token')
-	})
-
-	test('blocks when the chosen delivery channel is not ready', () => {
-		expect(
-			getSubmitBlockReason({
-				triggerType: 'price',
-				prompt: '',
-				price: { tokenNk: 'coingecko:aave', value: '100' },
-				delivery: { ...baseDelivery, channel: 'telegram', telegramLinked: false }
-			})
-		).toBe('Link Telegram first')
-	})
-
-	test('returns null once everything is valid', () => {
-		expect(
-			getSubmitBlockReason({
-				triggerType: 'price',
-				prompt: '',
-				price: { tokenNk: 'coingecko:aave', value: '100' },
-				delivery: baseDelivery
-			})
 		).toBeNull()
 	})
 })
@@ -464,17 +405,30 @@ describe('formatPriceDisplay', () => {
 	})
 })
 
-describe('getDeliveryBlockReason', () => {
-	test('requires a slack channel once a workspace is selected', () => {
-		expect(
-			getDeliveryBlockReason({
-				channel: 'slack',
-				telegramLinked: false,
-				slackTeamId: 'team-1',
-				slackChannelId: '',
-				slackWorkspaceCount: 1
-			})
-		).toBe('Pick a Slack channel')
+describe('getDeliveryError', () => {
+	const email = {
+		channel: 'email' as const,
+		telegramLinked: false,
+		slackTeamId: '',
+		slackChannelId: '',
+		slackWorkspaceCount: 0
+	}
+
+	test('asks for a linked channel when the chosen one is not linked', () => {
+		expect(getDeliveryError({ ...email, channel: 'telegram' })).toBe('Choose a linked channel.')
+		expect(getDeliveryError({ ...email, channel: 'slack' })).toBe('Choose a linked channel.')
+	})
+
+	test('asks for the Slack workspace, then the channel', () => {
+		const slack = { ...email, channel: 'slack' as const, slackWorkspaceCount: 2 }
+		expect(getDeliveryError(slack)).toBe('Choose a Slack workspace.')
+		expect(getDeliveryError({ ...slack, slackTeamId: 'team-1' })).toBe('Choose a Slack channel.')
+		expect(getDeliveryError({ ...slack, slackTeamId: 'team-1', slackChannelId: 'C1' })).toBeNull()
+	})
+
+	test('never blocks email or a linked telegram', () => {
+		expect(getDeliveryError(email)).toBeNull()
+		expect(getDeliveryError({ ...email, channel: 'telegram', telegramLinked: true })).toBeNull()
 	})
 })
 

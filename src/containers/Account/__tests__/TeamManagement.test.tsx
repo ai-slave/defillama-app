@@ -276,12 +276,18 @@ test('invite validates the address, preserves a failed draft and retries through
 	await mount(<Harness kind="invite" />)
 	expect(namedDialog('Invite member')).toBeTruthy()
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
+	const fieldError = () => document.getElementById(input.getAttribute('aria-describedby') ?? '')?.textContent
 	await waitForUi(() => expect(document.activeElement).toBe(input))
+	await act(async () => button('Send invite').focus())
 	await click('Send invite')
+	expect(fieldError()).toBe('Enter an email address.')
+	expect(document.activeElement).toBe(input)
 	await change(input, 'not-an-email')
+	expect(fieldError()).toBe('Enter a valid email address.')
 	await click('Send invite')
 	expect(posts()).toHaveLength(0)
 	await change(input, 'colleague@example.com')
+	expect(input.hasAttribute('aria-invalid')).toBe(false)
 	await click('Send invite')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await waitForUi(() => expect(input.readOnly).toBe(true))
@@ -603,7 +609,7 @@ test('leaving the seat checkout closes it and reads the team now and again later
 test('a seat checkout returns to the team tab with the purchased type and seat count', async () => {
 	await mount(<Harness kind="purchase" />)
 	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
-	await change(document.querySelector<HTMLInputElement>('#seat-count')!, '4')
+	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '4')
 	await click('Purchase seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body).redirectUrl).toBe(
@@ -733,7 +739,7 @@ test('buying seats on a plan set to end says it resumes and how many seats renew
 	expect(warning()?.textContent).toBe(
 		'This Pro subscription is set to end on Mar 14, 2099. Buying seats resumes it, and all 4 seats renew on Mar 14, 2099.'
 	)
-	await change(document.querySelector<HTMLInputElement>('#seat-count')!, '5')
+	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '5')
 	expect(warning()?.textContent).toContain('all 8 seats renew on Mar 14, 2099.')
 })
 
@@ -834,10 +840,14 @@ test('assignment requires a selected available plan and retains it after failure
 		options?.method === 'POST' ? request.promise : Promise.resolve(Response.json({ team }))
 	)
 	await mount(<Harness kind="assign" />)
-	await click('Assign')
-	expect(posts()).toHaveLength(0)
 	const radio = document.querySelector<HTMLInputElement>('input[type=radio]')!
+	await act(async () => button('Assign').focus())
+	await click('Assign')
+	expect(dialog().querySelector('.text-error')?.textContent).toBe('Choose a subscription type.')
+	expect(document.activeElement).toBe(radio)
+	expect(posts()).toHaveLength(0)
 	await act(async () => radio.click())
+	expect(dialog().querySelector('.text-error')).toBeNull()
 	await click('Assign')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await act(async () => request.reject(new Error('No seats available')))
@@ -1096,17 +1106,25 @@ test('revoking an invite keeps its row until confirmed and returns focus to Invi
 	await waitForUi(() => expect(document.activeElement).toBe(button('Invite member')))
 })
 
-test.each(['', '1', '2.5', '0'])(
-	'seat form rejects invalid seat count "%s" without sending a request',
-	async (value) => {
-		await mount(<Harness kind="manage" />)
-		await change(document.querySelector<HTMLInputElement>('input[type=number]')!, value)
-		expect(dialog().textContent).not.toContain('Bill after update')
-		expect(dialog().textContent).not.toContain('will not be refunded')
-		await click('Update seats')
-		expect(posts()).toHaveLength(0)
-	}
-)
+test.each([
+	['', 'Enter a seat count.'],
+	['1', 'Enter 2 or more seats.'],
+	['2.5', 'Enter a whole number of seats.'],
+	['0', 'Enter 2 or more seats.']
+])('seat form says what is wrong with seat count "%s" under it, without sending a request', async (value, message) => {
+	await mount(<Harness kind="manage" />)
+	const input = document.querySelector<HTMLInputElement>('input[type=number]')!
+	await change(input, value)
+	expect(dialog().textContent).not.toContain('Bill after update')
+	expect(dialog().textContent).not.toContain('will not be refunded')
+	expect(dialog().textContent).not.toContain(message)
+	await act(async () => button('Update seats').focus())
+	await click('Update seats')
+	expect(dialog().querySelector('.text-error')?.textContent).toBe(message)
+	expect(input.getAttribute('aria-invalid')).toBe('true')
+	expect(document.activeElement).toBe(input)
+	expect(posts()).toHaveLength(0)
+})
 
 test.each(['assign', 'unassign', 'remove'] as const)(
 	'canceling %s returns focus to its member control',
@@ -1279,7 +1297,7 @@ test('creating a team hands the focus of Create to the team region that replaces
 	session.client.setQueryData(['team', 'user'], null)
 	await mount(<TeamTab />)
 	await click('Create team')
-	await change(document.querySelector<HTMLInputElement>('#create-team-name')!, 'New team')
+	await change(document.querySelector<HTMLInputElement>('form input')!, 'New team')
 	await act(async () => button('Create').focus())
 	await click('Create')
 
@@ -1302,7 +1320,7 @@ test('a retried team creation keeps its failure on screen while it runs', async 
 	refuseOnceThenHang('Team name taken')
 	await mount(<CreateTeamCard />)
 	await click('Create team')
-	await change(document.querySelector<HTMLInputElement>('#create-team-name')!, 'New team')
+	await change(document.querySelector<HTMLInputElement>('form input')!, 'New team')
 	await click('Create')
 	await waitForUi(() => expect(alertText()).toBe('Team name taken'))
 	await click('Create')

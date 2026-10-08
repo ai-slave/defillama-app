@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo } from 'react'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -28,6 +28,11 @@ type MetricTabProps = {
 	onWindowChange: (w: '7d' | '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all') => void
 	onLabelChange: (s: string) => void
 	onChartTypeChange: (v: MetricChartType) => void
+	/** What Add still needs, shown under the sentence once Add was pressed. */
+	error: string | null
+	/** Below lg the form shows one pane; AddChartModal holds it, so a failed Add can bring back the pane with the error. */
+	pane: AddCardPane
+	onPaneChange: (pane: AddCardPane) => void
 }
 
 export function MetricTab(props: MetricTabProps) {
@@ -47,7 +52,10 @@ export function MetricTab(props: MetricTabProps) {
 		onAggregatorChange,
 		onWindowChange,
 		onLabelChange,
-		onChartTypeChange
+		onChartTypeChange,
+		error,
+		pane,
+		onPaneChange
 	} = props
 
 	const { protocols: protocolList, chains: chainList } = useProDashboardCatalog()
@@ -55,7 +63,6 @@ export function MetricTab(props: MetricTabProps) {
 	const { availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const subjectParameter = useModalFieldBinding('subject', metricSubjectType)
 	const nameId = useId()
-	const [pane, setPane] = useState<AddCardPane>('configure')
 
 	const availableTypes = useMemo(() => {
 		if (metricSubjectType === 'protocol' && metricProtocol) {
@@ -119,7 +126,7 @@ export function MetricTab(props: MetricTabProps) {
 				label="Editor view"
 				options={ADD_CARD_PANES}
 				value={pane}
-				onValueChange={setPane}
+				onValueChange={onPaneChange}
 				variant="solid-responsive"
 				size="md"
 				className="shrink-0 lg:hidden"
@@ -178,6 +185,7 @@ export function MetricTab(props: MetricTabProps) {
 						onProtocolChange={onProtocolChange}
 						onWindowChange={onWindowChange}
 						onChartTypeChange={onChartTypeChange}
+						error={error}
 					/>
 				</div>
 			</div>

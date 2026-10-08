@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useId } from 'react'
 import { Icon } from '~/ui/Icon'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { ComparisonType } from '../types'
@@ -26,50 +27,68 @@ const TYPE_OPTIONS: Array<TypeOption> = [
 ]
 
 export function SelectTypeStep() {
-	const { state, actions } = useComparisonWizardContext()
+	const { state, actions, derived } = useComparisonWizardContext()
+	const id = useId()
+	const error = derived.shownStepError
 
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="text-center">
-				<h3 className="label-md text-primary">What would you like to compare?</h3>
+				<h3 id={`${id}-heading`} className="label-md text-primary">
+					What would you like to compare?
+				</h3>
 				<p className="mt-1 body-sm text-secondary">Choose whether to compare blockchain networks or DeFi protocols.</p>
 			</div>
 
-			<div className="grid gap-4 sm:grid-cols-2">
-				{TYPE_OPTIONS.map((option, index) => {
-					const isSelected = state.comparisonType === option.type
-					return (
-						// The control that opened this step leaves with the step before; the step starts on its choice.
-						<Ariakit.Button
-							key={option.type}
-							autoFocus={state.comparisonType === null ? index === 0 : isSelected}
-							type="button"
-							aria-pressed={isSelected}
-							onClick={() => actions.setComparisonType(option.type)}
-							className={`flex flex-col items-center gap-4 rounded-lg border p-6 text-center transition-colors ${
-								isSelected ? 'border-brand bg-brand-faint' : 'border-subtle bg-surface hover:border-brand-muted'
-							}`}
-						>
-							<div
-								className={`flex size-16 items-center justify-center rounded-lg transition-colors ${
-									isSelected ? 'bg-brand-muted text-link' : 'text-secondary'
+			{/* The step's heading labels the choice, so its error is wired here instead of through FieldGroup's label. */}
+			<div
+				role="group"
+				aria-labelledby={`${id}-heading`}
+				aria-describedby={error ? `${id}-error` : undefined}
+				data-invalid={error ? '' : undefined}
+				className="flex flex-col gap-1"
+			>
+				<div className="grid gap-4 sm:grid-cols-2">
+					{TYPE_OPTIONS.map((option, index) => {
+						const isSelected = state.comparisonType === option.type
+						return (
+							// The control that opened this step leaves with the step before; the step starts on its choice.
+							<Ariakit.Button
+								key={option.type}
+								autoFocus={state.comparisonType === null ? index === 0 : isSelected}
+								type="button"
+								aria-pressed={isSelected}
+								onClick={() => actions.setComparisonType(option.type)}
+								className={`flex flex-col items-center gap-4 rounded-lg border p-6 text-center transition-colors ${
+									isSelected ? 'border-brand bg-brand-faint' : 'border-subtle bg-surface hover:border-brand-muted'
 								}`}
 							>
-								<Icon name={option.icon} height={32} width={32} />
-							</div>
-							<div>
-								<span className="block label-md text-primary">{option.title}</span>
-								<span className="mt-1 block body-sm text-tertiary">{option.description}</span>
-							</div>
-							{isSelected ? (
-								<div aria-hidden className="flex items-center gap-1.5 label-sm text-link">
-									<Icon name="check" height={14} width={14} />
-									Selected
+								<div
+									className={`flex size-16 items-center justify-center rounded-lg transition-colors ${
+										isSelected ? 'bg-brand-muted text-link' : 'text-secondary'
+									}`}
+								>
+									<Icon name={option.icon} height={32} width={32} />
 								</div>
-							) : null}
-						</Ariakit.Button>
-					)
-				})}
+								<div>
+									<span className="block label-md text-primary">{option.title}</span>
+									<span className="mt-1 block body-sm text-tertiary">{option.description}</span>
+								</div>
+								{isSelected ? (
+									<div aria-hidden className="flex items-center gap-1.5 label-sm text-link">
+										<Icon name="check" height={14} width={14} />
+										Selected
+									</div>
+								) : null}
+							</Ariakit.Button>
+						)
+					})}
+				</div>
+				{error ? (
+					<p id={`${id}-error`} className="body-sm text-error">
+						{error}
+					</p>
+				) : null}
 			</div>
 		</div>
 	)

@@ -164,6 +164,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 					</div>
 
 					<form
+						noValidate
 						className="mt-6"
 						onSubmit={(e) => {
 							e.preventDefault()

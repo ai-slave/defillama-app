@@ -85,7 +85,12 @@ async function openBlankDashboardForm() {
 	await waitForUi(() => expect(dialog()?.textContent).toContain('How would you like to create your dashboard?'))
 	await click(dialog()!, 'From scratch')
 	await waitForUi(() => expect(dialog()!.querySelector('[name="dashboardName"]')).not.toBeNull())
-	dialog()!.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'First'
+	// The name is controlled state, so it changes through an input event, as typing does.
+	const name = dialog()!.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, 'First')
+		name.dispatchEvent(new Event('input', { bubbles: true }))
+	})
 }
 
 test('a free account whose dashboard count failed to load is not let through to create, and creates once the count loads', async () => {

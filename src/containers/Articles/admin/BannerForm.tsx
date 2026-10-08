@@ -29,7 +29,7 @@ import {
 	expandBannerCountrySelection
 } from '~/containers/Articles/bannerCountryGroups'
 import { articlePromoLinkUrl, landingPromoLinkUrl } from '~/containers/Articles/promoLinks'
-import type { ArticleSection, Banner, BannerKind } from '~/containers/Articles/types'
+import type { ArticleSection, Banner } from '~/containers/Articles/types'
 import {
 	ARTICLE_SECTIONS,
 	ARTICLE_SECTION_LABELS,
@@ -43,6 +43,8 @@ import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButto
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
+import { Field, FieldGroup } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Input, textareaStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -96,13 +98,15 @@ export function BannerForm({ banner }: Props) {
 		acceptSaved
 	} = useSavedDraft(banner, banner?.id ?? null, bannerToForm, sameValue)
 
+	const [submitted, setSubmitted] = useState(false)
 	const errors = validateBannerForm(state)
-	const hasError = Object.keys(errors).length > 0
+	const hasError = Object.values(errors).some(Boolean)
+	const shown = submitted ? errors : {}
 
 	// Refresh shared data after navigation; draft updates and redirects belong to this form's lifetime.
 	const saveMutation = useMutation({
-		mutationFn: async (submitted: BannerFormState) => {
-			const payload = buildPayload(submitted)
+		mutationFn: async (values: BannerFormState) => {
+			const payload = buildPayload(values)
 			if (banner) return updateBanner(banner.id, payload, authorizedFetch)
 			return createBanner(payload, authorizedFetch)
 		},
@@ -125,11 +129,6 @@ export function BannerForm({ banner }: Props) {
 	const update = (patch: Partial<BannerFormState>) => setState((prev) => ({ ...prev, ...patch }))
 	const imageUpload = imageUploadConfig(state)
 
-	const handleKindChange = (kind: BannerKind) => {
-		update({ kind })
-	}
-
-	const visibleScopes = BANNER_SCOPES
 	const countriesCoveredByGroups = new Set<string>()
 	const selectedGroupIds = new Set(state.targetGroups)
 	for (const group of BANNER_COUNTRY_GROUPS) {
@@ -138,12 +137,13 @@ export function BannerForm({ banner }: Props) {
 	}
 	const availableCountryOptions = BANNER_COUNTRY_OPTIONS.filter((option) => !countriesCoveredByGroups.has(option.value))
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (hasError) return
+		if (hasError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 		saveMutation.mutate(state, {
 			onSuccess: (saved) => {
 				acceptSaved(bannerToForm(saved), state)
+				setSubmitted(false)
 				if (!banner && saved?.id) {
 					router.push(`/research/admin/banners/${saved.id}`)
 				}
@@ -181,7 +181,7 @@ export function BannerForm({ banner }: Props) {
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-4xl gap-0 px-1 pb-28">
+		<form noValidate onSubmit={handleSubmit} className="mx-auto grid w-full max-w-4xl gap-0 px-1 pb-28">
 			<BannerPreview banner={previewBanner} />
 
 			<Section
@@ -201,7 +201,7 @@ export function BannerForm({ banner }: Props) {
 								name="kind"
 								value={kind}
 								checked={state.kind === kind}
-								onChange={() => handleKindChange(kind)}
+								onChange={() => update({ kind })}
 								className="mt-0.5 accent-link"
 							/>
 							<div className="grid gap-0.5">
@@ -234,21 +234,18 @@ export function BannerForm({ banner }: Props) {
 						<span className="label-md text-primary">Show on the landing page</span>
 					</label>
 
-					<div className="grid gap-1.5">
-						<span className="label-md text-primary">
-							Hide on these articles <span className="font-normal text-tertiary">(optional)</span>
-						</span>
+					<FieldGroup label={<Optional label="Hide on these articles" />}>
 						<ArticleMultiPicker
 							value={state.excludedArticleIds}
 							onChange={(ids) => update({ excludedArticleIds: ids })}
 							hint="The promo shows on every article except the ones listed here."
 						/>
-					</div>
+					</FieldGroup>
 				</Section>
 			) : (
 				<Section title="Scope" description="Where should this banner appear?">
 					<div className="grid gap-2">
-						{visibleScopes.map((scope) => (
+						{BANNER_SCOPES.map((scope) => (
 							<label
 								key={scope}
 								className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
@@ -280,67 +277,62 @@ export function BannerForm({ banner }: Props) {
 					</div>
 
 					{state.scope === 'section' ? (
-						<div className="grid gap-1.5">
-							<span className="label-md text-primary">Section</span>
-							<Ariakit.ComboboxProvider
-								selectedValue={state.section}
-								setSelectedValue={(v) => {
-									const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
-									update({ section: next as ArticleSection })
-								}}
-							>
-								<ComboboxSelectTrigger
-									aria-label="Banner section"
-									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 body-md transition-colors data-[state=open]:border-brand ${
-										errors.section
-											? 'border-error-strong text-primary'
-											: state.section
-												? 'border-medium text-primary'
-												: 'border-medium text-tertiary'
-									}`}
+						<Field label="Section" error={shown.section}>
+							{(control) => (
+								<Ariakit.ComboboxProvider
+									selectedValue={state.section}
+									setSelectedValue={(v) => {
+										const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
+										update({ section: next as ArticleSection })
+									}}
 								>
-									<span className="truncate text-left">
-										{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
-									</span>
-									<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
-								</ComboboxSelectTrigger>
-								<ComboboxSurface variant="panel" heading="Section" sameWidth>
-									{ARTICLE_SECTIONS.map((section) => (
-										<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
-											<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-											<span className={popoverSingleSelectCheckStyles(state.section === section)} aria-hidden>
-												{state.section === section ? <SelectCheckIcon /> : null}
-											</span>
-										</Ariakit.ComboboxItem>
-									))}
-								</ComboboxSurface>
-							</Ariakit.ComboboxProvider>
-							{errors.section ? <p className="body-sm text-error">{errors.section}</p> : null}
-						</div>
+									<ComboboxSelectTrigger
+										{...control}
+										className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 body-md transition-colors data-[state=open]:border-brand ${
+											shown.section
+												? 'border-error-strong text-primary'
+												: state.section
+													? 'border-medium text-primary'
+													: 'border-medium text-tertiary'
+										}`}
+									>
+										<span className="truncate text-left">
+											{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
+										</span>
+										<Ariakit.ComboboxSelectArrow className="shrink-0 text-tertiary" />
+									</ComboboxSelectTrigger>
+									<ComboboxSurface variant="panel" heading="Section" sameWidth>
+										{ARTICLE_SECTIONS.map((section) => (
+											<Ariakit.ComboboxItem key={section} value={section} className={popoverRowWithBorderStyles}>
+												<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
+												<span className={popoverSingleSelectCheckStyles(state.section === section)} aria-hidden>
+													{state.section === section ? <SelectCheckIcon /> : null}
+												</span>
+											</Ariakit.ComboboxItem>
+										))}
+									</ComboboxSurface>
+								</Ariakit.ComboboxProvider>
+							)}
+						</Field>
 					) : null}
 
 					{state.scope === 'article' ? (
-						<div className="grid gap-1.5">
-							<span className="label-md text-primary">Article</span>
+						<FieldGroup label="Article" error={shown.articleId}>
 							<ArticlePicker
 								value={state.articleId}
 								onChange={(article) => update({ articleId: article?.id ?? null })}
-								error={errors.articleId}
 							/>
-						</div>
+						</FieldGroup>
 					) : null}
 
 					{state.scope === 'all_articles' ? (
-						<div className="grid gap-1.5">
-							<span className="label-md text-primary">
-								Hide on these articles <span className="font-normal text-tertiary">(optional)</span>
-							</span>
+						<FieldGroup label={<Optional label="Hide on these articles" />}>
 							<ArticleMultiPicker
 								value={state.excludedArticleIds}
 								onChange={(ids) => update({ excludedArticleIds: ids })}
 								hint="The banner shows on every article except the ones listed here."
 							/>
-						</div>
+						</FieldGroup>
 					) : null}
 				</Section>
 			)}
@@ -380,8 +372,7 @@ export function BannerForm({ banner }: Props) {
 
 				{state.audienceMode === 'selected' ? (
 					<div className="grid gap-5">
-						<div className="grid gap-2">
-							<span className="label-md text-primary">Regions</span>
+						<FieldGroup label="Regions">
 							<div className="grid gap-2 sm:grid-cols-2">
 								{BANNER_COUNTRY_GROUPS.map((group) => {
 									const selected = state.targetGroups.includes(group.id)
@@ -416,12 +407,14 @@ export function BannerForm({ banner }: Props) {
 									)
 								})}
 							</div>
-						</div>
+						</FieldGroup>
 
-						<div className="grid gap-1.5">
-							<span className="label-md text-primary">
-								Countries <span className="font-normal text-tertiary">(optional when a region is selected)</span>
-							</span>
+						{/* The error is about regions and countries together, so it sits under the second of the pair. */}
+						<FieldGroup
+							label={<Optional label="Countries" note="optional when a region is selected" />}
+							hint="Countries and regions are combined with OR matching."
+							error={shown.audience}
+						>
 							<MultiSelectCombobox
 								heading="Countries"
 								data={availableCountryOptions}
@@ -430,228 +423,228 @@ export function BannerForm({ banner }: Props) {
 								setSelectedValues={(targetCountries) => update({ targetCountries })}
 								emptyMessage="No countries found"
 							/>
-							<p className="body-sm text-tertiary">Countries and regions are combined with OR matching.</p>
-						</div>
-						{errors.audience ? <p className="body-sm text-error">{errors.audience}</p> : null}
+						</FieldGroup>
 					</div>
 				) : null}
 			</Section>
 
 			{state.kind === 'text' ? (
 				<Section title="Content" description="The text readers see and an optional link.">
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Banner text
-							<CharCount value={state.text} max={TEXT_MAX} />
-						</span>
-						<textarea
-							value={state.text}
-							onChange={(e) => update({ text: e.target.value })}
-							maxLength={TEXT_MAX}
-							rows={3}
-							placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
-							className={`${textareaStyles} w-full resize-y`}
-						/>
-						{errors.text ? <p className="body-sm text-error">{errors.text}</p> : null}
-					</label>
+					<Field label="Banner text" action={<CharCount value={state.text} max={TEXT_MAX} />} error={shown.text}>
+						{(control) => (
+							<textarea
+								{...control}
+								value={state.text}
+								onChange={(e) => update({ text: e.target.value })}
+								maxLength={TEXT_MAX}
+								rows={3}
+								placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
+								className={`${textareaStyles} w-full resize-y`}
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Link URL <span className="font-normal text-tertiary">(optional)</span>
-							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.linkUrl}
-							onChange={(e) => update({ linkUrl: e.target.value })}
-							maxLength={LINK_URL_MAX}
-							placeholder="https://… or /research/…"
-							className="w-full"
-						/>
-						{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
-					</label>
+					<Field
+						label={<Optional label="Link URL" />}
+						action={<CharCount value={state.linkUrl} max={LINK_URL_MAX} />}
+						error={shown.linkUrl}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.linkUrl}
+								onChange={(e) => update({ linkUrl: e.target.value })}
+								maxLength={LINK_URL_MAX}
+								placeholder="https://… or /research/…"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Link label <span className="font-normal text-tertiary">(optional, default “Read more”)</span>
-							<CharCount value={state.linkLabel} max={LINK_LABEL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.linkLabel}
-							onChange={(e) => update({ linkLabel: e.target.value })}
-							maxLength={LINK_LABEL_MAX}
-							placeholder="Read more"
-							className="w-full"
-						/>
-					</label>
+					<Field
+						label={<Optional label="Link label" note="optional, default “Read more”" />}
+						action={<CharCount value={state.linkLabel} max={LINK_LABEL_MAX} />}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.linkLabel}
+								onChange={(e) => update({ linkLabel: e.target.value })}
+								maxLength={LINK_LABEL_MAX}
+								placeholder="Read more"
+								className="w-full"
+							/>
+						)}
+					</Field>
 				</Section>
 			) : state.kind === 'promo' ? (
 				<Section
 					title="Content"
 					description="Four renditions of the promo image, the click-through link with optional per-placement overrides for the landing and article pages, and an optional disclosure link. Placements without an uploaded image are hidden."
 				>
-					<div className="grid gap-1.5">
-						<span className="label-md text-primary">
-							Landing image <span className="font-normal text-tertiary">(desktop, below Latest)</span>
-						</span>
-						<ImageUploadButton
-							scope="banner-landing-desktop"
-							previewShape="wide"
-							currentUrl={state.imageWideUrl || null}
-							onUploaded={(result) => update({ imageWideUrl: result.url })}
-							onCleared={() => update({ imageWideUrl: '' })}
-							label="landing promo image"
-							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 2745 × 380, transcoded to WebP."
-						/>
-					</div>
+					<FieldGroup label="Images" error={shown.imageUrl}>
+						<div className="grid gap-5">
+							<FieldGroup label={<Optional label="Landing image" note="desktop, below Latest" />}>
+								<ImageUploadButton
+									scope="banner-landing-desktop"
+									previewShape="wide"
+									currentUrl={state.imageWideUrl || null}
+									onUploaded={(result) => update({ imageWideUrl: result.url })}
+									onCleared={() => update({ imageWideUrl: '' })}
+									label="landing promo image"
+									helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 2745 × 380, transcoded to WebP."
+								/>
+							</FieldGroup>
 
-					<div className="grid gap-1.5">
-						<span className="label-md text-primary">
-							Article card image <span className="font-normal text-tertiary">(desktop right rail)</span>
-						</span>
-						<ImageUploadButton
-							scope="promo-card"
-							previewShape="wide"
-							currentUrl={state.imageCardUrl || null}
-							onUploaded={(result) => update({ imageCardUrl: result.url })}
-							onCleared={() => update({ imageCardUrl: '' })}
-							label="article promo card"
-							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1600 × 900, transcoded to WebP."
-						/>
-					</div>
+							<FieldGroup label={<Optional label="Article card image" note="desktop right rail" />}>
+								<ImageUploadButton
+									scope="promo-card"
+									previewShape="wide"
+									currentUrl={state.imageCardUrl || null}
+									onUploaded={(result) => update({ imageCardUrl: result.url })}
+									onCleared={() => update({ imageCardUrl: '' })}
+									label="article promo card"
+									helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1600 × 900, transcoded to WebP."
+								/>
+							</FieldGroup>
 
-					<div className="grid gap-1.5">
-						<span className="label-md text-primary">
-							Landing mobile image <span className="font-normal text-tertiary">(landing page on mobile)</span>
-						</span>
-						<ImageUploadButton
-							scope="banner-landing-mobile"
-							previewShape="wide"
-							currentUrl={state.imageLandingMobileUrl || null}
-							onUploaded={(result) => update({ imageLandingMobileUrl: result.url })}
-							onCleared={() => update({ imageLandingMobileUrl: '' })}
-							label="landing mobile promo image"
-							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article mobile image when empty; without either the banner is hidden on the mobile landing page."
-						/>
-					</div>
+							<FieldGroup label={<Optional label="Landing mobile image" note="landing page on mobile" />}>
+								<ImageUploadButton
+									scope="banner-landing-mobile"
+									previewShape="wide"
+									currentUrl={state.imageLandingMobileUrl || null}
+									onUploaded={(result) => update({ imageLandingMobileUrl: result.url })}
+									onCleared={() => update({ imageLandingMobileUrl: '' })}
+									label="landing mobile promo image"
+									helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article mobile image when empty; without either the banner is hidden on the mobile landing page."
+								/>
+							</FieldGroup>
 
-					<div className="grid gap-1.5">
-						<span className="label-md text-primary">
-							Article mobile image <span className="font-normal text-tertiary">(article body on mobile)</span>
-						</span>
-						<ImageUploadButton
-							scope="banner-landing-mobile"
-							previewShape="wide"
-							currentUrl={state.imageMobileUrl || null}
-							onUploaded={(result) => update({ imageMobileUrl: result.url })}
-							onCleared={() => update({ imageMobileUrl: '' })}
-							label="article mobile promo image"
-							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article card image when empty."
-						/>
-					</div>
-					{errors.imageUrl ? <p className="body-sm text-error">{errors.imageUrl}</p> : null}
+							<FieldGroup label={<Optional label="Article mobile image" note="article body on mobile" />}>
+								<ImageUploadButton
+									scope="banner-landing-mobile"
+									previewShape="wide"
+									currentUrl={state.imageMobileUrl || null}
+									onUploaded={(result) => update({ imageMobileUrl: result.url })}
+									onCleared={() => update({ imageMobileUrl: '' })}
+									label="article mobile promo image"
+									helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article card image when empty."
+								/>
+							</FieldGroup>
+						</div>
+					</FieldGroup>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Alt text <span className="font-normal text-tertiary">(optional, recommended for accessibility)</span>
-							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.imageAlt}
-							onChange={(e) => update({ imageAlt: e.target.value })}
-							maxLength={IMAGE_ALT_MAX}
-							placeholder="e.g. Revolut X — built for serious crypto traders"
-							className="w-full"
-						/>
-					</label>
+					<Field
+						label={<Optional label="Alt text" note="optional, recommended for accessibility" />}
+						action={<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.imageAlt}
+								onChange={(e) => update({ imageAlt: e.target.value })}
+								maxLength={IMAGE_ALT_MAX}
+								placeholder="e.g. Revolut X — built for serious crypto traders"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Link URL <span className="font-normal text-tertiary">(default for every placement)</span>
-							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.linkUrl}
-							onChange={(e) => update({ linkUrl: e.target.value })}
-							maxLength={LINK_URL_MAX}
-							placeholder="https://…"
-							className="w-full"
-						/>
-						{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
-					</label>
+					<Field
+						label={<Optional label="Link URL" note="default for every placement" />}
+						action={<CharCount value={state.linkUrl} max={LINK_URL_MAX} />}
+						error={shown.linkUrl}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.linkUrl}
+								onChange={(e) => update({ linkUrl: e.target.value })}
+								maxLength={LINK_URL_MAX}
+								placeholder="https://…"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Landing page URL{' '}
-							<span className="font-normal text-tertiary">(optional, overrides Link URL on /research)</span>
-							<CharCount value={state.landingLinkUrl} max={LINK_URL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.landingLinkUrl}
-							onChange={(e) => update({ landingLinkUrl: e.target.value })}
-							maxLength={LINK_URL_MAX}
-							placeholder="https://…"
-							className="w-full"
-						/>
-						{errors.landingLinkUrl ? <p className="body-sm text-error">{errors.landingLinkUrl}</p> : null}
-					</label>
+					<Field
+						label={<Optional label="Landing page URL" note="optional, overrides Link URL on /research" />}
+						action={<CharCount value={state.landingLinkUrl} max={LINK_URL_MAX} />}
+						error={shown.landingLinkUrl}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.landingLinkUrl}
+								onChange={(e) => update({ landingLinkUrl: e.target.value })}
+								maxLength={LINK_URL_MAX}
+								placeholder="https://…"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Article page URL{' '}
-							<span className="font-normal text-tertiary">(optional, overrides Link URL on article pages)</span>
-							<CharCount value={state.articleLinkUrl} max={LINK_URL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.articleLinkUrl}
-							onChange={(e) => update({ articleLinkUrl: e.target.value })}
-							maxLength={LINK_URL_MAX}
-							placeholder="https://…"
-							className="w-full"
-						/>
-						{errors.articleLinkUrl ? <p className="body-sm text-error">{errors.articleLinkUrl}</p> : null}
-					</label>
+					<Field
+						label={<Optional label="Article page URL" note="optional, overrides Link URL on article pages" />}
+						action={<CharCount value={state.articleLinkUrl} max={LINK_URL_MAX} />}
+						error={shown.articleLinkUrl}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.articleLinkUrl}
+								onChange={(e) => update({ articleLinkUrl: e.target.value })}
+								maxLength={LINK_URL_MAX}
+								placeholder="https://…"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Disclosure URL <span className="font-normal text-tertiary">(optional)</span>
-							<CharCount value={state.disclosureUrl} max={LINK_URL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.disclosureUrl}
-							onChange={(e) => update({ disclosureUrl: e.target.value })}
-							maxLength={LINK_URL_MAX}
-							placeholder="https://…"
-							className="w-full"
-						/>
-						{errors.disclosureUrl ? <p className="body-sm text-error">{errors.disclosureUrl}</p> : null}
-					</label>
+					<Field
+						label={<Optional label="Disclosure URL" />}
+						action={<CharCount value={state.disclosureUrl} max={LINK_URL_MAX} />}
+						error={shown.disclosureUrl}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.disclosureUrl}
+								onChange={(e) => update({ disclosureUrl: e.target.value })}
+								maxLength={LINK_URL_MAX}
+								placeholder="https://…"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Disclosure label <span className="font-normal text-tertiary">(optional, default “Disclosure”)</span>
-							<CharCount value={state.disclosureText} max={DISCLOSURE_TEXT_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.disclosureText}
-							onChange={(e) => update({ disclosureText: e.target.value })}
-							maxLength={DISCLOSURE_TEXT_MAX}
-							placeholder="Disclosure"
-							className="w-full"
-						/>
-					</label>
+					<Field
+						label={<Optional label="Disclosure label" note="optional, default “Disclosure”" />}
+						action={<CharCount value={state.disclosureText} max={DISCLOSURE_TEXT_MAX} />}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.disclosureText}
+								onChange={(e) => update({ disclosureText: e.target.value })}
+								maxLength={DISCLOSURE_TEXT_MAX}
+								placeholder="Disclosure"
+								className="w-full"
+							/>
+						)}
+					</Field>
 				</Section>
 			) : (
 				<Section title="Content" description="The image readers see and an optional click-through link.">
-					<div className="grid gap-1.5">
-						<span className="label-md text-primary">Image</span>
+					<FieldGroup label="Image" error={shown.imageUrl}>
 						<ImageUploadButton
 							scope={imageUpload.scope}
 							previewShape="wide"
@@ -661,39 +654,42 @@ export function BannerForm({ banner }: Props) {
 							label="banner image"
 							helperText={imageUpload.helperText}
 						/>
-						{errors.imageUrl ? <p className="body-sm text-error">{errors.imageUrl}</p> : null}
-					</div>
+					</FieldGroup>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Alt text <span className="font-normal text-tertiary">(optional, recommended for accessibility)</span>
-							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.imageAlt}
-							onChange={(e) => update({ imageAlt: e.target.value })}
-							maxLength={IMAGE_ALT_MAX}
-							placeholder="e.g. State of DeFi banner — get in touch"
-							className="w-full"
-						/>
-					</label>
+					<Field
+						label={<Optional label="Alt text" note="optional, recommended for accessibility" />}
+						action={<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.imageAlt}
+								onChange={(e) => update({ imageAlt: e.target.value })}
+								maxLength={IMAGE_ALT_MAX}
+								placeholder="e.g. State of DeFi banner — get in touch"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
-					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 label-md text-primary">
-							Link URL <span className="font-normal text-tertiary">(optional)</span>
-							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
-						</span>
-						<Input
-							type="text"
-							value={state.linkUrl}
-							onChange={(e) => update({ linkUrl: e.target.value })}
-							maxLength={LINK_URL_MAX}
-							placeholder="https://… or /research/…"
-							className="w-full"
-						/>
-						{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
-					</label>
+					<Field
+						label={<Optional label="Link URL" />}
+						action={<CharCount value={state.linkUrl} max={LINK_URL_MAX} />}
+						error={shown.linkUrl}
+					>
+						{(control) => (
+							<Input
+								{...control}
+								type="text"
+								value={state.linkUrl}
+								onChange={(e) => update({ linkUrl: e.target.value })}
+								maxLength={LINK_URL_MAX}
+								placeholder="https://… or /research/…"
+								className="w-full"
+							/>
+						)}
+					</Field>
 				</Section>
 			)}
 
@@ -725,13 +721,14 @@ export function BannerForm({ banner }: Props) {
 								Delete
 							</Button>
 						) : null}
-						{/* Focusable while disabled: a save leaves nothing dirty, which disables the button that was pressed. */}
+						{/* Disabled only with nothing to save, which the status beside it says. Focusable while disabled: a save
+						    leaves nothing dirty, which disables the button that was pressed. */}
 						<Button
 							variant="primary"
 							size="md"
 							pendingLabel={saveMutation.isPending ? 'Saving…' : null}
 							type="submit"
-							disabled={hasError || (!dirty && !!banner)}
+							disabled={!dirty && !!banner}
 							accessibleWhenDisabled
 						>
 							{banner ? 'Save changes' : 'Create banner'}
@@ -900,6 +897,14 @@ function Section({ title, description, children }: { title: string; description:
 			</div>
 			<div className="grid min-w-0 gap-5">{children}</div>
 		</section>
+	)
+}
+
+function Optional({ label, note = 'optional' }: { label: string; note?: string }) {
+	return (
+		<>
+			{label} <span className="font-normal text-tertiary">({note})</span>
+		</>
 	)
 }
 

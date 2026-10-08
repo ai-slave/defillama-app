@@ -494,23 +494,22 @@ export type ArticlePublishValidationError = {
 
 export function validateLocalArticleForPublish(doc: LocalArticleDocument): Array<ArticlePublishValidationError> {
 	const errors: Array<ArticlePublishValidationError> = []
-	if (!doc.section) errors.push({ field: 'section', message: 'Section is required' })
+	if (!doc.section) errors.push({ field: 'section', message: 'Choose a section.' })
 	if (!doc.title || doc.title.trim() === '' || doc.title === 'Untitled research') {
-		errors.push({ field: 'title', message: 'Headline is required' })
+		errors.push({ field: 'title', message: 'Enter a headline.' })
 	}
 	if (!doc.coverImage || !doc.coverImage.url) {
-		errors.push({ field: 'coverImage', message: 'Cover image is required' })
+		errors.push({ field: 'coverImage', message: 'Upload a cover image.' })
 	} else {
-		if (!doc.coverImage.caption) errors.push({ field: 'coverImage.caption', message: 'Cover caption is required' })
-		if (!doc.coverImage.copyright)
-			errors.push({ field: 'coverImage.copyright', message: 'Cover copyright is required' })
-		if (!doc.coverImage.credit) errors.push({ field: 'coverImage.credit', message: 'Cover credit is required' })
+		if (!doc.coverImage.caption) errors.push({ field: 'coverImage.caption', message: 'Enter a cover caption.' })
+		if (!doc.coverImage.copyright) errors.push({ field: 'coverImage.copyright', message: 'Enter the cover copyright.' })
+		if (!doc.coverImage.credit) errors.push({ field: 'coverImage.credit', message: 'Enter a cover credit.' })
 	}
 	if (!doc.tags || doc.tags.length === 0) {
-		errors.push({ field: 'tags', message: 'At least one topic is required' })
+		errors.push({ field: 'tags', message: 'Enter at least one topic.' })
 	}
 	if (!doc.displayDate) {
-		errors.push({ field: 'displayDate', message: 'Display date is required' })
+		errors.push({ field: 'displayDate', message: 'Enter a display date.' })
 	}
 	return errors
 }

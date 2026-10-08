@@ -1,11 +1,14 @@
 import * as Ariakit from '@ariakit/react'
-import dayjs from 'dayjs'
-import { useId, useState, type Ref } from 'react'
+import { useState, type Ref } from 'react'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { formatDate } from '~/utils/dateFormat'
 import { type DateRangeConfig, type DateRangePreset, formatDateRangeLong } from './savedDownloads'
 
 const PRESET_LABELS: Array<{ label: string; preset: DateRangePreset }> = [
@@ -28,16 +31,15 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, triggerRef }: DateRangePickerProps) {
-	const id = useId()
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
-	const today = dayjs().toISOString().slice(0, 10) // the UTC day, as rows are keyed by UTC date
+	const nowSec = useNowSeconds()
+	const today = new Date(nowSec * 1000).toISOString().slice(0, 10) // the UTC day, as rows are keyed by UTC date
 	const maxAllowed = maxDate ?? today
 
 	// Local state for custom inputs — commits to onChange only on Apply, so
 	// half-typed dates don't clobber the active preset mid-edit.
 	const [customFrom, setCustomFrom] = useState<string>(value?.kind === 'custom' ? value.from : '')
 	const [customTo, setCustomTo] = useState<string>(value?.kind === 'custom' ? value.to : '')
-	const [error, setError] = useState<string | null>(null)
 
 	// The custom inputs restart from the selected range whenever the selection changes.
 	const [syncedValue, setSyncedValue] = useState(value)
@@ -45,7 +47,6 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 		setSyncedValue(value)
 		setCustomFrom(value?.kind === 'custom' ? value.from : '')
 		setCustomTo(value?.kind === 'custom' ? value.to : '')
-		setError(null)
 	}
 
 	const activePreset: DateRangePreset | null = value?.kind === 'preset' ? value.preset : null
@@ -56,7 +57,6 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 	const handlePresetClick = (preset: DateRangePreset) => {
 		setCustomFrom('')
 		setCustomTo('')
-		setError(null)
 		if (preset === 'all') {
 			onChange(null)
 		} else {
@@ -68,7 +68,6 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 	const handleClear = () => {
 		setCustomFrom('')
 		setCustomTo('')
-		setError(null)
 		popover.getState().disclosureElement?.focus()
 		onChange(null)
 		popover.hide()
@@ -112,71 +111,106 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 						</div>
 					</section>
 
-					<form
-						onSubmit={(e) => {
-							e.preventDefault()
-							// Apply stays disabled until both dates are set, which also blocks submitting with Enter.
-							if (customFrom > customTo) {
-								setError('"From" must be before or equal to "To"')
-								return
-							}
-							setError(null)
-							onChange({ kind: 'custom', from: customFrom, to: customTo })
+					{/* The surface unmounts on hide, so each opening starts with no errors; the drafts live here and survive it. */}
+					<CustomRangeForm
+						from={customFrom}
+						to={customTo}
+						setFrom={setCustomFrom}
+						setTo={setCustomTo}
+						minDate={minDate}
+						maxDate={maxAllowed}
+						onApply={(from, to) => {
+							onChange({ kind: 'custom', from, to })
 							popover.hide()
 						}}
-						className="flex flex-col gap-2 border-t border-subtle pt-3"
-					>
-						<h3 className="label-sm text-secondary">Custom range</h3>
-						<div className="grid grid-cols-2 gap-2">
-							<label className="flex min-w-0 flex-col gap-1">
-								<span className="label-sm text-secondary">From</span>
-								<Input
-									type="date"
-									aria-invalid={!!error}
-									aria-describedby={error ? `${id}-error` : undefined}
-									value={customFrom}
-									onChange={(e) => {
-										setCustomFrom(e.currentTarget.value)
-										setError(null)
-									}}
-									min={minDate}
-									max={customTo || maxAllowed}
-									className="w-full min-w-0 cursor-pointer dark:scheme-dark"
-								/>
-							</label>
-							<label className="flex min-w-0 flex-col gap-1">
-								<span className="label-sm text-secondary">To</span>
-								<Input
-									type="date"
-									aria-invalid={!!error}
-									aria-describedby={error ? `${id}-error` : undefined}
-									value={customTo}
-									onChange={(e) => {
-										setCustomTo(e.currentTarget.value)
-										setError(null)
-									}}
-									min={customFrom || minDate}
-									max={maxAllowed}
-									className="w-full min-w-0 cursor-pointer dark:scheme-dark"
-								/>
-							</label>
-						</div>
-						{error ? (
-							<p id={`${id}-error`} role="alert" className="body-sm text-error">
-								{error}
-							</p>
-						) : null}
-						<div className="flex justify-end gap-1.5 pt-1">
-							<Button type="button" variant="secondary" size="md" onClick={handleClear}>
-								Clear
-							</Button>
-							<Button type="submit" variant="primary" size="md" disabled={!customFrom || !customTo}>
-								Apply
-							</Button>
-						</div>
-					</form>
+						onClear={handleClear}
+					/>
 				</div>
 			</PopoverSurface>
 		</Ariakit.PopoverProvider>
+	)
+}
+
+/** A typed day outside the dataset's days exports nothing. The inputs' min/max only shape the calendar: the form is
+    noValidate, so the browser no longer refuses them. Days are YYYY-MM-DD UTC strings, which compare in date order. */
+function outOfRange(day: string, minDate: string | undefined, maxDate: string) {
+	if (minDate && day < minDate) return `Choose a date on or after ${formatDate(minDate)}.`
+	if (day > maxDate) return `Choose a date on or before ${formatDate(maxDate)}.`
+	return null
+}
+
+function CustomRangeForm({
+	from,
+	to,
+	setFrom,
+	setTo,
+	minDate,
+	maxDate,
+	onApply,
+	onClear
+}: {
+	from: string
+	to: string
+	setFrom: (value: string) => void
+	setTo: (value: string) => void
+	minDate: string | undefined
+	maxDate: string
+	onApply: (from: string, to: string) => void
+	onClear: () => void
+}) {
+	const [submitted, setSubmitted] = useState(false)
+	const fromError = from ? outOfRange(from, minDate, maxDate) : 'Choose a From date.'
+	const toError = !to
+		? 'Choose a To date.'
+		: (outOfRange(to, minDate, maxDate) ?? (from > to ? 'Choose a date on or after the From date.' : null))
+
+	return (
+		<form
+			noValidate
+			onSubmit={(e) => {
+				e.preventDefault()
+				if (fromError || toError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
+				onApply(from, to)
+			}}
+			className="flex flex-col gap-2 border-t border-subtle pt-3"
+		>
+			<h3 className="label-sm text-secondary">Custom range</h3>
+			<div className="grid grid-cols-2 gap-2">
+				<Field label="From" error={submitted ? fromError : null}>
+					{(control) => (
+						<Input
+							{...control}
+							type="date"
+							value={from}
+							onChange={(e) => setFrom(e.currentTarget.value)}
+							min={minDate}
+							max={to || maxDate}
+							className="w-full min-w-0 cursor-pointer dark:scheme-dark"
+						/>
+					)}
+				</Field>
+				<Field label="To" error={submitted ? toError : null}>
+					{(control) => (
+						<Input
+							{...control}
+							type="date"
+							value={to}
+							onChange={(e) => setTo(e.currentTarget.value)}
+							min={from || minDate}
+							max={maxDate}
+							className="w-full min-w-0 cursor-pointer dark:scheme-dark"
+						/>
+					)}
+				</Field>
+			</div>
+			<div className="flex justify-end gap-1.5 pt-1">
+				<Button type="button" variant="secondary" size="md" onClick={onClear}>
+					Clear
+				</Button>
+				<Button type="submit" variant="primary" size="md">
+					Apply
+				</Button>
+			</div>
+		</form>
 	)
 }

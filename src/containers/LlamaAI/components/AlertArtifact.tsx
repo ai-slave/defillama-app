@@ -9,14 +9,14 @@ import {
 	buildScheduleExpressionRaw,
 	formatNextRunAt,
 	getArtifactSubtitle,
-	getDeliveryBlockReason,
+	getDeliveryError,
 	getDeliveryReadinessBlock,
 	getUpsellCopy,
 	isAlertCapReachedError,
 	resolveSlackChannelName,
 	resolveSlackTarget,
 	roundPriceValue,
-	validatePriceTrigger,
+	validatePrice,
 	type ArtifactSaveBody,
 	type SlackTarget
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
@@ -42,7 +42,8 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
-import { takeLostFocus } from '~/ui/focus'
+import { Field, FieldGroup } from '~/ui/Field'
+import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -141,7 +142,6 @@ export function AlertArtifact({
 		intentChannelId: alertIntent.slackChannelId,
 		intentChannelName: alertIntent.slackChannelName
 	})
-	const priceValidationError = trigger ? validatePriceTrigger({ tokenNk: trigger.token_nk, value: priceValue }) : null
 	const editedTrigger: PriceTrigger | null = trigger ? { ...trigger, op: priceOp, value: Number(priceValue) } : null
 
 	const {
@@ -205,20 +205,26 @@ export function AlertArtifact({
 		slackTeamId,
 		slackWorkspaceCount: activeWorkspaces.length
 	})
-	const saveBlockReason = !title.trim()
-		? 'Name your alert'
-		: isPriceAlert && priceValidationError
-			? priceValidationError
-			: getDeliveryBlockReason({
-					channel: deliveryChannel,
-					telegramLinked,
-					slackTeamId,
-					slackChannelId,
-					slackWorkspaceCount: activeWorkspaces.length
-				})
+	const [submitted, setSubmitted] = useState(false)
+	const errors = {
+		title: title.trim() ? null : 'Enter a name for the alert.',
+		price: isPriceAlert ? validatePrice(priceValue) : null,
+		delivery: getDeliveryError({
+			channel: deliveryChannel,
+			telegramLinked,
+			slackTeamId,
+			slackChannelId,
+			slackWorkspaceCount: activeWorkspaces.length
+		})
+	}
+	const shown = submitted ? errors : null
 
-	const handleSave = () => {
-		if (!messageId || saveBlockReason || isSaving) return
+	const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (!messageId || isSaving) return
+		if (errors.title || errors.price || errors.delivery) {
+			return showFieldErrors(event.currentTarget, () => setSubmitted(true))
+		}
 		saveAlert(
 			buildArtifactSaveBody({
 				messageId,
@@ -404,14 +410,19 @@ export function AlertArtifact({
 					) : null}
 				</>
 			) : (
-				<>
-					<Input
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						placeholder="Alert title"
-						aria-label="Alert title"
-						className="w-full"
-					/>
+				<form noValidate onSubmit={handleSave} className="contents">
+					<Field label="Name" error={shown?.title}>
+						{(control) => (
+							<Input
+								{...control}
+								required
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								placeholder="Alert title"
+								className="w-full"
+							/>
+						)}
+					</Field>
 
 					{prompt ? (
 						<div className="flex flex-col gap-1">
@@ -428,19 +439,24 @@ export function AlertArtifact({
 					) : null}
 
 					{trigger ? (
-						<div className="flex flex-col gap-1.5">
-							<div className="flex flex-wrap items-center gap-2">
-								<span className="mono-md text-primary">{formatTokenLabel(trigger.token_nk)}</span>
-								<SegmentedToggle<'above' | 'below'>
-									label="Price comparison"
-									value={priceOp}
-									onChange={setPriceOp}
-									options={PRICE_OPERATOR_OPTIONS}
-								/>
-								<PriceInput value={priceValue} onValueChange={setPriceValue} />
-							</div>
-							<p className="m-0 body-sm text-tertiary">Fires once, then pauses — re-arm it anytime from your alerts.</p>
-						</div>
+						<Field
+							label="Fires when the price goes"
+							hint="Fires once, then pauses — re-arm it anytime from your alerts."
+							error={shown?.price}
+						>
+							{(control) => (
+								<div className="flex flex-wrap items-center gap-2">
+									<span className="mono-md text-primary">{formatTokenLabel(trigger.token_nk)}</span>
+									<SegmentedToggle<'above' | 'below'>
+										label="Price comparison"
+										value={priceOp}
+										onChange={setPriceOp}
+										options={PRICE_OPERATOR_OPTIONS}
+									/>
+									<PriceInput value={priceValue} onValueChange={setPriceValue} control={control} />
+								</div>
+							)}
+						</Field>
 					) : (
 						<div className="flex flex-wrap items-center gap-2">
 							<select
@@ -498,8 +514,20 @@ export function AlertArtifact({
 						</div>
 					)}
 
-					<div className="flex flex-col gap-1.5">
-						<span className={alertFieldLabelClass}>Where should it go?</span>
+					<FieldGroup
+						label="Where should it go?"
+						hint={
+							readinessBlock ? (
+								<span className="text-warning">
+									{readinessBlock.label} →{' '}
+									<span className="text-tertiary">
+										<SettingsIntegrationsLink />
+									</span>
+								</span>
+							) : null
+						}
+						error={shown?.delivery}
+					>
 						<div className="flex flex-wrap items-center gap-2">
 							<SegmentedToggle<DeliveryChannel>
 								label="Delivery channel"
@@ -520,6 +548,8 @@ export function AlertArtifact({
 												setPickedSlack({ teamId: nextTeamId, channelId: nextWorkspace?.default_channel_id ?? '' })
 											}}
 											aria-label="Slack workspace"
+											// The group's error names the Slack pick it needs; that pick takes the submit's focus.
+											aria-invalid={shown?.delivery && !slackTeamId ? true : undefined}
 											className={inputStyles}
 										>
 											<option value="" disabled>
@@ -549,6 +579,7 @@ export function AlertArtifact({
 												// The workspace travels with the channel, so a later workspace change cannot inherit it.
 												onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
 												aria-label="Slack channel"
+												aria-invalid={shown?.delivery && !slackChannelId ? true : undefined}
 												className={inputStyles}
 											>
 												<option value="" disabled>
@@ -567,31 +598,18 @@ export function AlertArtifact({
 								</>
 							) : null}
 						</div>
-						{readinessBlock ? (
-							<p className="m-0 body-sm text-warning">
-								{readinessBlock.label} →{' '}
-								<span className="text-tertiary">
-									<SettingsIntegrationsLink />
-								</span>
-							</p>
-						) : null}
-					</div>
+					</FieldGroup>
 
 					<p className="m-0 flex items-center gap-1.5 body-sm text-warning">
 						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 						Action required — confirm your alert settings and save
 					</p>
 
-					{saveBlockReason && !readinessBlock ? (
-						<p className="m-0 text-center body-sm text-tertiary">{saveBlockReason}</p>
-					) : null}
-
 					<Button
-						type="button"
+						type="submit"
 						size="md"
 						variant="primary"
-						onClick={handleSave}
-						disabled={!messageId || !!saveBlockReason}
+						disabled={!messageId}
 						pendingLabel={isSaving ? 'Saving…' : null}
 						className="w-full"
 					>
@@ -611,7 +629,7 @@ export function AlertArtifact({
 							<p className="text-center body-sm text-error">{saveError.message}</p>
 						)
 					) : null}
-				</>
+				</form>
 			)}
 		</div>
 	)

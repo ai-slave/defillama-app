@@ -60,13 +60,21 @@ async function renderPage() {
 }
 
 async function signIn() {
-	container.querySelector<HTMLInputElement>('input[name="email"]')!.value = 'subscriber@example.com'
-	container.querySelector<HTMLInputElement>('input[name="password"]')!.value = 'correct horse battery staple'
+	await typeInto(container.querySelector<HTMLInputElement>('input[name="email"]')!, 'subscriber@example.com')
+	await typeInto(container.querySelector<HTMLInputElement>('input[name="password"]')!, 'correct horse battery staple')
 	await act(async () => button('Test CAPTCHA')!.click())
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
 	await waitForUi(() => expect(container.textContent).toContain('Successfully logged in.'))
+}
+
+// The sign-in fields are controlled, so a value reaches the form through an input event.
+async function typeInto(input: HTMLInputElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
 }
 
 test('offers no close button on the page, so the inline form keeps sending sign-ins', async () => {

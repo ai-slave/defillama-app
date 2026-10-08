@@ -106,6 +106,10 @@ async function press(el: HTMLElement, key: string) {
 		await settle()
 	})
 }
+function searchField(name: string) {
+	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === name)!
+	return document.getElementById(label.htmlFor) as HTMLInputElement
+}
 async function input(el: HTMLInputElement, value: string) {
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, value)
@@ -116,9 +120,17 @@ async function input(el: HTMLInputElement, value: string) {
 test('entity filters clear search while preserving chart settings and selected series', async () => {
 	const onInsert = await mount()
 	expect(radio('Entity type', 'Protocols').checked).toBe(true)
-	expect(document.activeElement).toBe(document.querySelector('[aria-label="Search protocols"]'))
-	expect(insert().disabled).toBe(true)
+	expect(document.activeElement).toBe(searchField('Search protocols'))
+	const search = searchField('Search protocols')
+	await press(radio('Entity type', 'Protocols'), 'Home')
+	await click(insert())
+	expect(onInsert).not.toHaveBeenCalled()
+	expect(document.getElementById(search.getAttribute('aria-describedby')!)!.textContent).toBe(
+		'Choose at least one series.'
+	)
+	expect(document.activeElement).toBe(search)
 	await click(entity('Aave'))
+	expect(search.getAttribute('aria-invalid')).toBeNull()
 	expect(radio('Range', 'All').checked).toBe(true)
 	expect(radio('Y-axis scale', 'Linear').checked).toBe(true)
 	await press(radio('Range', 'All'), 'Home')
@@ -126,10 +138,10 @@ test('entity filters clear search while preserving chart settings and selected s
 	expect(document.activeElement).toBe(radio('Range', '30D'))
 	await press(radio('Y-axis scale', 'Linear'), 'ArrowRight')
 	expect(radio('Y-axis scale', 'Log').checked).toBe(true)
-	await input(document.querySelector<HTMLInputElement>('[aria-label="Search protocols"]')!, 'Aave')
+	await input(searchField('Search protocols'), 'Aave')
 	await press(radio('Entity type', 'Protocols'), 'ArrowRight')
 	expect(document.activeElement).toBe(radio('Entity type', 'Chains'))
-	expect(document.querySelector<HTMLInputElement>('[aria-label="Search chains"]')!.value).toBe('')
+	expect(searchField('Search chains').value).toBe('')
 	expect(radio('Range', '30D').checked).toBe(true)
 	expect(radio('Y-axis scale', 'Log').checked).toBe(true)
 	await click(entity('Ethereum'))
@@ -190,7 +202,6 @@ test('series limit disables additions but selected series remain removable to em
 	await click(entity('Curve'))
 	await click(entity('Lido'))
 	expect(document.querySelectorAll('[role="checkbox"][aria-checked="true"]')).toHaveLength(0)
-	expect(insert().disabled).toBe(true)
 })
 
 test('editing retains caption and annotations; All and Linear omit optional settings', async () => {

@@ -31,7 +31,8 @@ import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogHeader, useDialogLeave, useOpeningKey } from '~/ui/Dialog'
-import { neighbourRowControl, takeLostFocus } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -81,12 +82,10 @@ function isEffortAvailableForModel(effort: string, model: string) {
 	return true
 }
 
-// The spend cap commits on blur, so Enter only leaves the field.
-function handleSpendCapKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-	if (e.key === 'Enter') {
-		e.preventDefault()
-		e.currentTarget.blur()
-	}
+/** A typed spend cap the save cannot take. A blank field is not one: it keeps the saved cap. */
+function spendCapInputError(raw: string): string | null {
+	const amount = Number(raw)
+	return raw.trim() !== '' && !(Number.isFinite(amount) && amount >= 0) ? 'Enter an amount of $0 or more.' : null
 }
 
 // The reader's instructions text; `saved` is the value a save accepted for it, until settings report that value.
@@ -281,12 +280,21 @@ export const SettingsModal = memo(function SettingsModal({
 	// the save updates the cap at once and rolls it back if refused, so the field then shows whichever stands.
 	const [spendCapEdit, setSpendCapEdit] = useState<string | null>(null)
 	const spendCapValue = spendCapEdit ?? formatFixedNumber(settings.spendCapPerMessage, 2)
+	// Set by a commit (blur or Enter) of an amount the save cannot take; the typed text stays, with its error, until fixed.
+	const [spendCapSubmitted, setSpendCapSubmitted] = useState(false)
+	const spendCapError = spendCapSubmitted && spendCapEdit !== null ? spendCapInputError(spendCapEdit) : null
 
+	/** Returns false when the typed amount is refused. */
 	const commitSpendCap = (raw: string) => {
+		if (spendCapInputError(raw)) {
+			setSpendCapSubmitted(true)
+			return false
+		}
+		setSpendCapSubmitted(false)
 		const parsed = Number(raw)
-		if (!Number.isFinite(parsed) || parsed < 0 || parsed === settings.spendCapPerMessage) {
+		if (raw.trim() === '' || parsed === settings.spendCapPerMessage) {
 			setSpendCapEdit(null)
-			return
+			return true
 		}
 		const shown = formatFixedNumber(parsed, 2)
 		setSpendCapEdit(shown)
@@ -296,6 +304,7 @@ export const SettingsModal = memo(function SettingsModal({
 			"Couldn't save your spend cap. Try again.",
 			saveSettings({ spendCapPerMessage: parsed })
 		).then(() => setSpendCapEdit((edit) => (edit === shown ? null : edit)))
+		return true
 	}
 
 	const handleNotifToggle = () => {
@@ -675,32 +684,39 @@ export const SettingsModal = memo(function SettingsModal({
 												/>
 											</SettingsCard>
 											{settings.enablePremiumTools ? (
-												<div className="rounded-lg border border-subtle bg-surface p-4">
-													<label htmlFor="llamaai-spend-cap" className="block label-md text-primary">
-														Spend cap per message
-													</label>
-													<p className="mt-1 body-sm text-secondary">
-														Max external-data spend per message in USD. Each new message gets a fresh budget. Default
-														$0.50.
-													</p>
-													<div className="relative mt-3">
-														<span className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto flex items-center font-mono text-tertiary">
-															$
-														</span>
-														<Input
-															id="llamaai-spend-cap"
-															type="number"
-															inputMode="decimal"
-															min={0}
-															step={0.05}
-															value={spendCapValue}
-															onChange={(e) => setSpendCapEdit(e.target.value)}
-															onBlur={(e) => commitSpendCap(e.target.value)}
-															onKeyDown={handleSpendCapKeyDown}
-															className="w-full pl-7 font-mono"
-														/>
-													</div>
-												</div>
+												<form
+													noValidate
+													// The cap commits on blur, and Enter commits it through the form.
+													onSubmit={(e) => {
+														e.preventDefault()
+														const form = e.currentTarget
+														if (!commitSpendCap(spendCapValue)) showFieldErrors(form, () => setSpendCapSubmitted(true))
+													}}
+													className="rounded-lg border border-subtle bg-surface p-4"
+												>
+													<Field
+														label="Spend cap per message"
+														hint="Max external-data spend per message in USD. Each new message gets a fresh budget. Default $0.50."
+														error={spendCapError}
+													>
+														{(control) => (
+															<div className="relative">
+																<span className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto flex items-center font-mono text-tertiary">
+																	$
+																</span>
+																<Input
+																	{...control}
+																	type="text"
+																	inputMode="decimal"
+																	value={spendCapValue}
+																	onChange={(e) => setSpendCapEdit(e.target.value)}
+																	onBlur={(e) => commitSpendCap(e.target.value)}
+																	className="w-full pl-7 font-mono"
+																/>
+															</div>
+														)}
+													</Field>
+												</form>
 											) : null}
 										</div>
 									</div>

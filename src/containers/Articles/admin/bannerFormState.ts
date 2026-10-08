@@ -179,6 +179,14 @@ export function buildPayload(state: BannerFormState): BannerPayload {
 	}
 }
 
+/** A filled link that is neither absolute nor site-relative. */
+function urlError(value: string): string | undefined {
+	const trimmed = value.trim()
+	return trimmed && !/^(https?:\/\/|\/)/.test(trimmed)
+		? 'Enter a valid URL starting with http://, https:// or /.'
+		: undefined
+}
+
 export type BannerFormErrors = {
 	text?: string
 	section?: string
@@ -194,8 +202,8 @@ export type BannerFormErrors = {
 export function validateBannerForm(state: BannerFormState): BannerFormErrors {
 	const errors: BannerFormErrors = {}
 	if (state.kind === 'text') {
-		if (!state.text.trim()) errors.text = 'Banner text is required'
-		else if (state.text.length > TEXT_MAX) errors.text = `Max ${TEXT_MAX} characters`
+		if (!state.text.trim()) errors.text = 'Enter the banner text.'
+		else if (state.text.length > TEXT_MAX) errors.text = `Shorten the banner text to ${TEXT_MAX} characters.`
 	} else if (state.kind === 'promo') {
 		if (
 			!state.imageWideUrl.trim() &&
@@ -203,37 +211,25 @@ export function validateBannerForm(state: BannerFormState): BannerFormErrors {
 			!state.imageMobileUrl.trim() &&
 			!state.imageLandingMobileUrl.trim()
 		) {
-			errors.imageUrl = 'Upload at least one image'
+			errors.imageUrl = 'Upload at least one image.'
 		}
-		if (!state.linkUrl.trim()) errors.linkUrl = 'Link URL is required'
-		const disclosure = state.disclosureUrl.trim()
-		if (disclosure && !/^(https?:\/\/|\/)/.test(disclosure)) {
-			errors.disclosureUrl = 'Must start with http://, https://, or /'
-		}
-		const landingLink = state.landingLinkUrl.trim()
-		if (landingLink && !/^(https?:\/\/|\/)/.test(landingLink)) {
-			errors.landingLinkUrl = 'Must start with http://, https://, or /'
-		}
-		const articleLink = state.articleLinkUrl.trim()
-		if (articleLink && !/^(https?:\/\/|\/)/.test(articleLink)) {
-			errors.articleLinkUrl = 'Must start with http://, https://, or /'
-		}
+		if (!state.linkUrl.trim()) errors.linkUrl = 'Enter the link URL.'
+		errors.disclosureUrl = urlError(state.disclosureUrl)
+		errors.landingLinkUrl = urlError(state.landingLinkUrl)
+		errors.articleLinkUrl = urlError(state.articleLinkUrl)
 	} else if (!state.imageUrl.trim()) {
-		errors.imageUrl = 'Image is required'
+		errors.imageUrl = 'Upload an image.'
 	}
 	if (state.kind !== 'promo' && state.kind !== 'image-square') {
-		if (state.scope === 'section' && !state.section) errors.section = 'Pick a section'
-		if (state.scope === 'article' && !state.articleId) errors.articleId = 'Pick an article'
+		if (state.scope === 'section' && !state.section) errors.section = 'Choose a section.'
+		if (state.scope === 'article' && !state.articleId) errors.articleId = 'Choose an article.'
 	}
-	const link = state.linkUrl.trim()
-	if (link && !/^(https?:\/\/|\/)/.test(link)) {
-		errors.linkUrl = 'Must start with http://, https://, or /'
-	}
+	errors.linkUrl = urlError(state.linkUrl) ?? errors.linkUrl
 	if (
 		state.audienceMode === 'selected' &&
 		expandBannerCountrySelection(state.targetGroups, state.targetCountries).length === 0
 	) {
-		errors.audience = 'Select at least one region or country'
+		errors.audience = 'Choose at least one region or country.'
 	}
 	return errors
 }

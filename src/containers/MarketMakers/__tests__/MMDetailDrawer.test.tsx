@@ -169,10 +169,11 @@ test('the click that opens a lead form records one click id, and the sent lead c
 	await waitForUi(() => expect(ctaPosts()).toHaveLength(1))
 	expect(JSON.parse(String(ctaPosts()[0].init?.body))).toMatchObject({ kind: 'claim', market_maker_id: 'lhava' })
 
+	// Field labels point at their input with htmlFor.
 	const field = (label: string) =>
-		[...document.querySelectorAll('label')]
-			.find((element) => element.textContent?.includes(label))!
-			.querySelector('input')!
+		document.getElementById(
+			[...document.querySelectorAll('label')].find((element) => element.textContent?.includes(label))!.htmlFor
+		) as HTMLInputElement
 	const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
 	for (const [label, value] of [
 		['Position at organization', 'CEO'],

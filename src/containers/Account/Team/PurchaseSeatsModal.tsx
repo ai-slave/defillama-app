@@ -8,6 +8,8 @@ import { SubscriptionLoadError } from '~/containers/Subscription/shared/Subscrip
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogCancelButton, DialogDiscardGuard, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -64,6 +66,15 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 	const [subscriptionType, setSubscriptionType] = useState<'api' | 'llamafeed'>('llamafeed')
 	const [seatInput, setSeatInput] = useState('1')
 	const seatCount = Number(seatInput)
+	const [submitted, setSubmitted] = useState(false)
+	const seatMessage =
+		seatInput === ''
+			? 'Enter a seat count.'
+			: !Number.isInteger(seatCount)
+				? 'Enter a whole number of seats.'
+				: seatCount < 1
+					? 'Enter 1 or more seats.'
+					: null
 	const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month')
 	// Not the mutation's own error: that one clears as soon as a retry starts. Kept as the error and its plan, not
 	// a message: the unconfirmed copy names the seats the team shows now.
@@ -93,6 +104,7 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 	const handlePurchase = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		if (!canChangeTeamBilling || checkoutClientSecret || holdsForPendingCheckout) return
+		if (seatMessage) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		purchaseSeatsMutation.mutate(
 			{
 				subscriptionType,
@@ -130,7 +142,7 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 				cancelLabel="Keep paying"
 				confirmLabel="Leave"
 			/>
-			<form onSubmit={handlePurchase} className="flex min-h-0 flex-auto flex-col">
+			<form noValidate onSubmit={handlePurchase} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={checkoutClientSecret ? 'Complete payment' : 'Purchase seats'} />
 				<DialogBody>
 					{checkoutClientSecret ? (
@@ -243,57 +255,56 @@ export function PurchaseSeatsModal({ onClose }: { onClose: () => void }) {
 							</div>
 
 							{/* Seat Count */}
-							<div className="flex flex-col gap-2">
-								<label htmlFor="seat-count" className="label-sm text-secondary">
-									Number of seats
-								</label>
-								<div className="flex items-center gap-2">
-									{/* Focusable at 1 seat: the press that reaches it keeps focus. */}
-									<Tooltip
-										content="Decrease seats"
-										render={
-											<Button
-												type="button"
-												aria-label="Decrease seats"
-												size="md"
-												square
-												disabled={seatCount <= 1 || !canChangeTeamBilling}
-												accessibleWhenDisabled
-												onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
-											/>
-										}
-									>
-										<Icon name="minus" className="size-4" aria-hidden="true" />
-									</Tooltip>
-									<Input
-										id="seat-count"
-										type="number"
-										required
-										min={1}
-										step={1}
-										readOnly={!canChangeTeamBilling}
-										inputMode="numeric"
-										value={seatInput}
-										onChange={(e) => setSeatInput(e.target.value)}
-										className="w-20 text-center"
-									/>
-									<Tooltip
-										content="Increase seats"
-										render={
-											<Button
-												type="button"
-												aria-label="Increase seats"
-												disabled={!canChangeTeamBilling}
-												onClick={() => setSeatInput(String(Math.max(1, seatCount + 1)))}
-												size="md"
-												square
-											/>
-										}
-									>
-										<Icon name="plus" className="size-4" aria-hidden="true" />
-									</Tooltip>
-								</div>
-							</div>
+							<Field label="Number of seats" error={submitted ? seatMessage : null}>
+								{(control) => (
+									<div className="flex items-center gap-2">
+										{/* Focusable at 1 seat: the press that reaches it keeps focus. */}
+										<Tooltip
+											content="Decrease seats"
+											render={
+												<Button
+													type="button"
+													aria-label="Decrease seats"
+													size="md"
+													square
+													disabled={seatCount <= 1 || !canChangeTeamBilling}
+													accessibleWhenDisabled
+													onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
+												/>
+											}
+										>
+											<Icon name="minus" className="size-4" aria-hidden="true" />
+										</Tooltip>
+										<Input
+											{...control}
+											type="number"
+											required
+											min={1}
+											step={1}
+											readOnly={!canChangeTeamBilling}
+											inputMode="numeric"
+											value={seatInput}
+											onChange={(e) => setSeatInput(e.target.value)}
+											className="w-20 text-center"
+										/>
+										<Tooltip
+											content="Increase seats"
+											render={
+												<Button
+													type="button"
+													aria-label="Increase seats"
+													disabled={!canChangeTeamBilling}
+													onClick={() => setSeatInput(String(Math.max(1, seatCount + 1)))}
+													size="md"
+													square
+												/>
+											}
+										>
+											<Icon name="plus" className="size-4" aria-hidden="true" />
+										</Tooltip>
+									</div>
+								)}
+							</Field>
 
 							{/* Price Summary */}
 							<div className="flex items-center justify-between rounded-lg bg-surface-elevated-1 p-3 body-sm text-secondary">

@@ -1,10 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -118,7 +120,9 @@ function ReportSession({
 	const pending = report.isPending
 	// Kept while a retry runs: the mutation clears its own error when the retry starts.
 	const [failed, setFailed] = useState(false)
-	const messageId = useId()
+	const [message, setMessage] = useState('')
+	const [submitted, setSubmitted] = useState(false)
+	const messageError = message.trim() ? null : 'Enter what’s wrong with the data.'
 	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
 	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
 
@@ -126,6 +130,7 @@ function ReportSession({
 		event.preventDefault()
 		if (pending) return
 		const form = event.currentTarget
+		if (messageError) return showFieldErrors(form, () => setSubmitted(true))
 		const values = new FormData(form)
 		// A select cannot stay read-only; preserve focus before disabling it.
 		if (document.activeElement === form.elements.namedItem('dataType')) {
@@ -138,7 +143,7 @@ function ReportSession({
 			.mutateAsync({
 				...subjectPayload,
 				dataType: dataType ?? values.get('dataType'),
-				message: values.get('message'),
+				message,
 				correctSource: values.get('correctSource'),
 				contact: values.get('contact')
 			})
@@ -166,7 +171,7 @@ function ReportSession({
 					</DialogFooter>
 				</>
 			) : (
-				<form onSubmit={onSubmit} className="flex min-h-0 flex-auto flex-col">
+				<form noValidate onSubmit={onSubmit} className="flex min-h-0 flex-auto flex-col">
 					<DialogHeader
 						title="Report incorrect data"
 						subtitle={`${subjectLabel}: ${subject.name}${dataType ? ` · ${dataType}` : ''}`}
@@ -178,42 +183,57 @@ function ReportSession({
 							</InlineStatus>
 						) : null}
 						{dataType ? null : (
-							<label className="flex flex-col gap-1 label-sm text-secondary">
-								<span>Data type</span>
-								<select disabled={pending} name="dataType" className={inputStyles}>
-									{dataTypes.map((option) => (
-										<option key={option} value={option}>
-											{option}
-										</option>
-									))}
-								</select>
-							</label>
+							<Field label="Data type">
+								{(control) => (
+									<select {...control} disabled={pending} name="dataType" className={inputStyles}>
+										{dataTypes.map((option) => (
+											<option key={option} value={option}>
+												{option}
+											</option>
+										))}
+									</select>
+								)}
+							</Field>
 						)}
-						<div className="flex flex-col gap-1">
-							<label htmlFor={messageId} className="label-sm text-secondary">
-								What&rsquo;s wrong about it?
-							</label>
-							<Ariakit.Focusable
-								autoFocus
-								render={
-									<textarea
-										id={messageId}
-										readOnly={pending}
-										name="message"
-										required
-										className={`${textareaStyles} min-h-24 resize-y`}
-									/>
-								}
-							/>
-						</div>
-						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>Where can we find correct information? (optional)</span>
-							<textarea readOnly={pending} name="correctSource" className={`${textareaStyles} min-h-24 resize-y`} />
-						</label>
-						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>How can we contact you? (optional)</span>
-							<input readOnly={pending} name="contact" placeholder="Email address" className={inputStyles} />
-						</label>
+						<Field label="What’s wrong about it?" error={submitted ? messageError : null}>
+							{(control) => (
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<textarea
+											{...control}
+											readOnly={pending}
+											name="message"
+											required
+											value={message}
+											onChange={(event) => setMessage(event.target.value)}
+											className={`${textareaStyles} min-h-24 resize-y`}
+										/>
+									}
+								/>
+							)}
+						</Field>
+						<Field label="Where can we find correct information? (optional)">
+							{(control) => (
+								<textarea
+									{...control}
+									readOnly={pending}
+									name="correctSource"
+									className={`${textareaStyles} min-h-24 resize-y`}
+								/>
+							)}
+						</Field>
+						<Field label="How can we contact you? (optional)">
+							{(control) => (
+								<input
+									{...control}
+									readOnly={pending}
+									name="contact"
+									placeholder="Email address"
+									className={inputStyles}
+								/>
+							)}
+						</Field>
 						{failed ? <InlineStatus variant="error">Couldn&rsquo;t send the report. Try again.</InlineStatus> : null}
 					</DialogBody>
 					<DialogFooter dismiss={<DialogCancelButton />}>

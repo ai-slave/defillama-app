@@ -127,6 +127,21 @@ export function keepFocus(commit: () => void, target: () => HTMLElement | null |
 	target()?.focus()
 }
 
+/** A submit that found invalid fields: `commit` shows the errors (usually `setSubmitted(true)`), then the first invalid
+    Field or FieldGroup (./Field.tsx) inside `scope` (the form, or the region whose action checks it) takes focus, so a
+    screen reader reads the field with its error. Rendering first matters: focus that lands before the error exists
+    reads the field without it. */
+export function showFieldErrors(scope: HTMLElement, commit: () => void) {
+	flushSync(commit)
+	// A pane or step the reader cannot see holds no focus target; the commit shows the pane that needs fixing.
+	for (const field of scope.querySelectorAll<HTMLElement>('[data-invalid]')) {
+		if (!field.checkVisibility()) continue
+		const target = field.querySelector<HTMLElement>('[aria-invalid="true"]')
+		;(target?.checkVisibility() ? target : firstFocusableIn(field)).focus()
+		return
+	}
+}
+
 /** A ref callback: focus this element when it mounts, if focus has fallen to the page. A non-control target needs
     `tabIndex={-1}`. */
 export function takeLostFocus(node: HTMLElement | null) {

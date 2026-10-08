@@ -272,7 +272,8 @@ function buildNewComparisonItems({
 		return items
 	}
 
-	// The subject tabs submit only once a series is picked (resolveSubmitBlocker), so there is nothing else to add.
+	// The subject tabs submit only once a series is picked (resolveSubmitGate, resolveSubmitError), so there is nothing
+	// else to add.
 	return []
 }
 

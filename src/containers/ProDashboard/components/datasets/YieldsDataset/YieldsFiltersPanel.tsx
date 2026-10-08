@@ -2,6 +2,7 @@ import * as React from 'react'
 import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { keepFocus } from '~/ui/focus'
 import { Input } from '~/ui/Input'
 import { formatNumber } from '~/utils/numberFormat'
@@ -74,6 +75,7 @@ export function YieldsFiltersPanel({
 
 	return (
 		<form
+			noValidate
 			onSubmit={handleApply}
 			className="relative mb-4 rounded-md border border-subtle bg-surface p-4"
 			style={{ zIndex: 50, pointerEvents: 'auto' }}
@@ -148,34 +150,13 @@ export function YieldsFiltersPanel({
 							</div>
 						</div>
 
-						<label className="group flex cursor-pointer items-center gap-2">
-							<div className="relative size-4">
-								<input
-									type="checkbox"
-									checked={localFilters.hasRewards || false}
-									onChange={(e) => updateFilter('hasRewards', e.target.checked)}
-									className="sr-only"
-								/>
-								<div
-									className={`size-4 rounded-sm border-2 transition-all duration-150 ${
-										localFilters.hasRewards
-											? 'border-brand bg-brand'
-											: 'border-strong bg-transparent group-hover:border-(--text-secondary)'
-									}`}
-								>
-									{localFilters.hasRewards ? (
-										<svg className="size-3 text-on-brand" fill="currentColor" viewBox="0 0 20 20">
-											<path
-												fillRule="evenodd"
-												d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-												clipRule="evenodd"
-											/>
-										</svg>
-									) : null}
-								</div>
-							</div>
-							<span className="label-md text-primary">Has Reward Incentives</span>
-						</label>
+						<Checkbox
+							variant="inline"
+							checked={localFilters.hasRewards || false}
+							onChange={(e) => updateFilter('hasRewards', e.target.checked)}
+						>
+							Has reward incentives
+						</Checkbox>
 					</div>
 				</div>
 
@@ -212,75 +193,34 @@ export function YieldsFiltersPanel({
 					<h5 className="mb-3 title-sm text-secondary">Pool types</h5>
 
 					<div className="space-y-2">
-						<label className="group flex cursor-pointer items-center gap-2">
-							<div className="relative size-4">
-								<input
-									type="checkbox"
-									checked={localFilters.stablesOnly || false}
-									onChange={(e) => updateFilter('stablesOnly', e.target.checked)}
-									className="sr-only"
-								/>
-								<div
-									className={`size-4 border-2 transition-all duration-150 ${
-										localFilters.stablesOnly
-											? 'border-brand bg-brand'
-											: 'border-strong bg-transparent group-hover:border-(--text-secondary)'
-									}`}
-								>
-									{localFilters.stablesOnly ? (
-										<svg className="size-3 text-on-brand" fill="currentColor" viewBox="0 0 20 20">
-											<path
-												fillRule="evenodd"
-												d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-												clipRule="evenodd"
-											/>
-										</svg>
-									) : null}
-								</div>
-							</div>
-							<span className="label-md text-primary">Stablecoins Only</span>
-						</label>
+						<Checkbox
+							variant="inline"
+							checked={localFilters.stablesOnly || false}
+							onChange={(e) => updateFilter('stablesOnly', e.target.checked)}
+						>
+							Stablecoins only
+						</Checkbox>
 
 						<div className="mt-4">
 							<p className="mb-3 label-sm text-secondary">Pool categories</p>
 							<div className="space-y-2">
 								{availableCategories.map((category) => (
-									<label key={category} className="group flex cursor-pointer items-center gap-2">
-										<div className="relative size-4">
-											<input
-												type="checkbox"
-												checked={selectedCategories.has(category)}
-												onChange={(e) => {
-													const currentCategories = localFilters.categories ?? EMPTY_CATEGORIES
-													if (e.target.checked) {
-														updateFilter('categories', [...currentCategories, category])
-													} else {
-														const filtered = currentCategories.filter((value) => value !== category)
-														updateFilter('categories', filtered.length > 0 ? filtered : undefined)
-													}
-												}}
-												className="sr-only"
-											/>
-											<div
-												className={`size-4 rounded-sm border-2 transition-all duration-150 ${
-													selectedCategories.has(category)
-														? 'border-brand bg-brand'
-														: 'border-strong bg-transparent group-hover:border-(--text-secondary)'
-												}`}
-											>
-												{selectedCategories.has(category) ? (
-													<svg className="size-3 text-on-brand" fill="currentColor" viewBox="0 0 20 20">
-														<path
-															fillRule="evenodd"
-															d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-															clipRule="evenodd"
-														/>
-													</svg>
-												) : null}
-											</div>
-										</div>
-										<span className="label-md text-primary">{category}</span>
-									</label>
+									<Checkbox
+										key={category}
+										variant="inline"
+										checked={selectedCategories.has(category)}
+										onChange={(e) => {
+											const currentCategories = localFilters.categories ?? EMPTY_CATEGORIES
+											if (e.target.checked) {
+												updateFilter('categories', [...currentCategories, category])
+											} else {
+												const filtered = currentCategories.filter((value) => value !== category)
+												updateFilter('categories', filtered.length > 0 ? filtered : undefined)
+											}
+										}}
+									>
+										{category}
+									</Checkbox>
 								))}
 							</div>
 						</div>

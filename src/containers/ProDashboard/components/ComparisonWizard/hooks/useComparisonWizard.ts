@@ -123,17 +123,17 @@ function defaultDashboardName(displayNames: Array<string>) {
 }
 
 /** What the current step still needs before Next or Create, or null when it can continue. */
-function blockedReason(state: ComparisonWizardState, dashboardName: string) {
+function stepError(state: ComparisonWizardState, dashboardName: string) {
 	switch (state.step) {
 		case 'select-type':
-			return state.comparisonType === null ? 'Choose chains or protocols' : null
+			return state.comparisonType === null ? 'Choose chains or protocols.' : null
 		case 'select-items':
 			if (state.selectedItems.length > 0) return null
-			return state.comparisonType === 'chains' ? 'Pick at least 1 chain' : 'Pick at least 1 protocol'
+			return state.comparisonType === 'chains' ? 'Choose at least one chain.' : 'Choose at least one protocol.'
 		case 'select-metrics':
-			return state.selectedMetrics.length > 0 ? null : 'Pick at least 1 metric'
+			return state.selectedMetrics.length > 0 ? null : 'Choose at least one metric.'
 		case 'preview':
-			return dashboardName.trim() ? null : 'Enter a dashboard name'
+			return dashboardName.trim() ? null : 'Enter a dashboard name.'
 	}
 }
 
@@ -142,6 +142,8 @@ export function useComparisonWizard(comparisonPreset: ComparisonPreset | undefin
 	const { hasActiveSubscription } = useAuthContext()
 	const [initialState] = useState(() => createInitialWizardState({ hasActiveSubscription, comparisonPreset }))
 	const [state, dispatch] = useReducer(reducer, initialState)
+	// Whether Next or Create was pressed on this step; each step starts quiet.
+	const [submitted, setSubmitted] = useState(false)
 	const { getProtocolInfo } = useProDashboardCatalog()
 
 	// Until the reader edits them, the name and tags follow the selection, so going back to change it updates both.
@@ -162,8 +164,11 @@ export function useComparisonWizard(comparisonPreset: ComparisonPreset | undefin
 	}
 
 	const goTo = (next: ComparisonWizardState['step'] | null) => {
-		if (next) dispatch({ type: 'SET_STEP', step: next })
+		if (!next) return
+		dispatch({ type: 'SET_STEP', step: next })
+		setSubmitted(false)
 	}
+	const error = stepError(state, dashboardName)
 
 	return {
 		state,
@@ -184,12 +189,15 @@ export function useComparisonWizard(comparisonPreset: ComparisonPreset | undefin
 			setDisplayMode: (displayMode: DisplayMode) => dispatch({ type: 'SET_DISPLAY_MODE', displayMode }),
 			setIncludeTable: (include: boolean) => dispatch({ type: 'SET_INCLUDE_TABLE', include }),
 			goToNextStep: () => goTo(getNextStep(state.step)),
-			goToPrevStep: () => goTo(getPrevStep(state.step))
+			goToPrevStep: () => goTo(getPrevStep(state.step)),
+			showStepError: () => setSubmitted(true)
 		},
 		derived: {
 			dashboardName,
 			tags,
-			blockedReason: blockedReason(state, dashboardName),
+			stepError: error,
+			/** The step's error once Next or Create was pressed on it, for the control that needs it. */
+			shownStepError: submitted ? error : null,
 			canGoBack: getPrevStep(state.step) !== null,
 			dirty
 		}

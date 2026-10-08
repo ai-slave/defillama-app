@@ -8,9 +8,10 @@ import { NestedMenu } from '~/components/NestedMenu'
 import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
-import { neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { neighbourRowControl, passFocusOnLeave, showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -66,14 +67,9 @@ export function SaveViewButton({
 		return !savedFiltersEntries.some(([, filters]) => filterSelectionKey(filters) === currentKey)
 	})()
 
-	const canSave = name.trim().length > 0
-
-	const handleSave = (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!canSave) return
-		const trimmed = name.trim()
-		saveFilter(trimmed, currentFilters as Parameters<typeof saveFilter>[1])
-		trackYieldsEvent(YIELDS_EVENTS.SAVED_FILTER_CREATE, { filter: trimmed })
+	const handleSave = (viewName: string) => {
+		saveFilter(viewName, currentFilters as Parameters<typeof saveFilter>[1])
+		trackYieldsEvent(YIELDS_EVENTS.SAVED_FILTER_CREATE, { filter: viewName })
 		setName('')
 	}
 
@@ -94,22 +90,8 @@ export function SaveViewButton({
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="list" heading="Saved views" overflowPadding={16} className="w-72">
 				<div className="border-b border-subtle p-2">
-					<form onSubmit={handleSave} className="flex gap-1.5">
-						<input
-							type="text"
-							className={`${inputStyles} min-w-0 flex-1`}
-							value={name}
-							onChange={(e) => setName(e.target.value)}
-							placeholder="Save current view…"
-							maxLength={60}
-							aria-label="Saved view name"
-							autoFocus
-						/>
-						<Button type="submit" variant="primary" size="md" disabled={!canSave} accessibleWhenDisabled>
-							<Icon name="plus" className="size-3.5" />
-							Save
-						</Button>
-					</form>
+					{/* The surface unmounts on hide, so each opening starts with no error; the draft name lives here and survives it. */}
+					<SaveViewForm name={name} setName={setName} onSave={handleSave} />
 				</div>
 				{count ? (
 					<div className="max-h-64 overflow-y-auto p-1">
@@ -151,6 +133,52 @@ export function SaveViewButton({
 				)}
 			</PopoverSurface>
 		</Ariakit.PopoverProvider>
+	)
+}
+
+function SaveViewForm({
+	name,
+	setName,
+	onSave
+}: {
+	name: string
+	setName: (value: string) => void
+	onSave: (name: string) => void
+}) {
+	const [submitted, setSubmitted] = React.useState(false)
+	const trimmed = name.trim()
+	const nameError = trimmed ? null : 'Enter a view name.'
+
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault()
+		if (nameError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
+		onSave(trimmed)
+		// The field empties for the next view, which starts unchecked.
+		setSubmitted(false)
+	}
+
+	return (
+		<form noValidate onSubmit={handleSubmit}>
+			<Field label="Save current view" error={submitted ? nameError : null}>
+				{(control) => (
+					<div className="flex gap-1.5">
+						<Input
+							{...control}
+							className="min-w-0 flex-1"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="View name"
+							maxLength={60}
+							autoFocus
+						/>
+						<Button type="submit" variant="primary" size="md">
+							<Icon name="plus" className="size-3.5" />
+							Save
+						</Button>
+					</div>
+				)}
+			</Field>
+		</form>
 	)
 }
 

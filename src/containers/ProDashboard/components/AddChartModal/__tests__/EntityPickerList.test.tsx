@@ -23,6 +23,7 @@ function Picker() {
 	const [selected, setSelected] = useState(['ethereum', 'arbitrum'])
 	return (
 		<EntityPickerList
+			error={null}
 			mode="chain"
 			entities={[
 				{ value: 'ethereum', label: 'Ethereum' },
@@ -43,5 +44,6 @@ test('clearing the selection moves focus to the search instead of dropping it', 
 		clear.click()
 	})
 	expect(container.textContent).not.toContain('2 selected')
-	expect(document.activeElement).toBe(container.querySelector('input[aria-label="Search chains"]'))
+	const searchLabel = [...container.querySelectorAll('label')].find((label) => label.textContent === 'Search chains')!
+	expect(document.activeElement).toBe(document.getElementById(searchLabel.htmlFor))
 })

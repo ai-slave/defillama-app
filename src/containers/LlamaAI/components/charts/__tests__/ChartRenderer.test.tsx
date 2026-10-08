@@ -190,6 +190,12 @@ async function setSelectValue(select: HTMLSelectElement, value: string) {
 	})
 }
 
+// The style editor's title field carries a screen-reader-only label (Field hideLabel).
+function chartTitleInput(scope: ParentNode = document) {
+	const label = [...scope.querySelectorAll('label')].find((node) => node.textContent === 'Chart title')
+	return label ? (document.getElementById(label.htmlFor) as HTMLInputElement) : null
+}
+
 function getCheckbox(scope: ParentNode, label: string) {
 	const input = [...scope.querySelectorAll<HTMLLabelElement>('label')]
 		.find((candidate) => candidate.textContent?.trim() === label)
@@ -315,7 +321,7 @@ describe('ChartRenderer', () => {
 			render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
 		)
 		await click(container, '[aria-label="Edit chart style"]')
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+		expect(chartTitleInput()?.value).toBe(config.title)
 		expect(document.querySelector('[aria-label$="aggregation"]')).toBeNull()
 	})
 
@@ -328,7 +334,7 @@ describe('ChartRenderer', () => {
 		expect(viewLabels(container)).toContain('Stacked')
 
 		await click(container, '[aria-label="Edit chart style"]')
-		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		const titleInput = chartTitleInput()
 		if (!titleInput) throw new Error('Expected chart title input')
 		await setInputValue(titleInput, 'Unsaved Draft')
 		await toggleCheckbox(document, 'Stacked')
@@ -340,7 +346,7 @@ describe('ChartRenderer', () => {
 		expect(viewLabels(container)).toContain('Stacked')
 
 		await click(container, '[aria-label="Edit chart style"]')
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+		expect(chartTitleInput()?.value).toBe(config.title)
 	})
 
 	test('keeps reset local until save applies the original defaults', async () => {
@@ -353,7 +359,7 @@ describe('ChartRenderer', () => {
 
 		await chooseView(container, 'Stacked', 'Show separate')
 		await click(container, '[aria-label="Edit chart style"]')
-		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		const titleInput = chartTitleInput()
 		if (!titleInput) throw new Error('Expected chart title input')
 		await setInputValue(titleInput, 'Unsaved Draft')
 		await clickButton(document, 'Reset')
@@ -374,7 +380,7 @@ describe('ChartRenderer', () => {
 
 		await chooseGrouping(container, 'Month')
 		await click(container, '[aria-label="Edit chart style"]')
-		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		const titleInput = chartTitleInput()
 		if (!titleInput) throw new Error('Expected chart title input')
 		await setInputValue(titleInput, 'Unsaved Draft')
 		await toggleCheckbox(document, 'Stacked')
@@ -391,14 +397,14 @@ describe('ChartRenderer', () => {
 		)
 
 		await click(container, '[aria-label="Edit chart style"]')
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
-		const reopenedTitleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		expect(chartTitleInput()?.value).toBe('Unsaved Draft')
+		const reopenedTitleInput = chartTitleInput()
 		if (!reopenedTitleInput) throw new Error('Expected chart title input')
 		await setInputValue(reopenedTitleInput, 'Discarded Draft')
 		await clickButton(document, 'Cancel')
 		await discardDraft()
 		await click(container, '[aria-label="Edit chart style"]')
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
+		expect(chartTitleInput()?.value).toBe('Unsaved Draft')
 		await clickButton(document, 'Cancel')
 
 		const externallyUpdated = {
@@ -420,7 +426,7 @@ describe('ChartRenderer', () => {
 			render(<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
 		)
 		await click(container, '[aria-label="Edit chart style"]')
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+		expect(chartTitleInput()?.value).toBe(config.title)
 	})
 
 	test('Escape closes an untouched style editor at once, with nothing to confirm', async () => {
@@ -433,7 +439,7 @@ describe('ChartRenderer', () => {
 			trigger.click()
 		})
 		const title = await waitForUi(() => {
-			const input = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+			const input = chartTitleInput()
 			expect(input).not.toBeNull()
 			return input!
 		})
@@ -441,7 +447,7 @@ describe('ChartRenderer', () => {
 			title.focus()
 			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 		})
-		await waitForUi(() => expect(document.querySelector('[aria-label="Chart title"]')).toBeNull())
+		await waitForUi(() => expect(chartTitleInput()).toBeNull())
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 		expect(document.activeElement).toBe(trigger)
 	})
@@ -462,12 +468,10 @@ describe('ChartRenderer', () => {
 			trigger.click()
 		})
 		const styleEditor = () =>
-			[...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((dialog) =>
-				dialog.querySelector('[aria-label="Chart title"]')
-			)
+			[...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((dialog) => chartTitleInput(dialog))
 		await waitForUi(() => expect(styleEditor()?.contains(document.activeElement)).toBe(true))
 		expect(styleEditor()!.querySelector('h2')?.textContent).toBe('Edit chart')
-		const title = styleEditor()!.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		const title = chartTitleInput(styleEditor()!)!
 		await setInputValue(title, 'Discard this title')
 		const escape = async () =>
 			act(async () => {
@@ -492,6 +496,6 @@ describe('ChartRenderer', () => {
 		expect(styleEditor()).toBeUndefined()
 		expect(onLocalStyleSave).not.toHaveBeenCalled()
 		await act(async () => trigger.click())
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!.value).toBe('Protocol Revenue')
+		expect(chartTitleInput()!.value).toBe('Protocol Revenue')
 	})
 })

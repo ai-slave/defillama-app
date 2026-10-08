@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { DialogBody, DialogDiscardGuard, DialogToolbar, useDialogLeave } from '~/ui/Dialog'
+import { showFieldErrors } from '~/ui/focus'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -40,7 +41,11 @@ function ComparisonWizardContent({
 	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
 	const leave = useDialogLeave()
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const { chainsByName } = useAppMetadata()
+	const { chainsByName, loading: metadataLoading, error: metadataError } = useAppMetadata()
+	// The metrics step lists what the picked items have, from app metadata. While it loads or after it failed, the step
+	// shows a loader or the failure with Try again, so Next waits or stays disabled instead of an error under nothing.
+	const metricsLoad =
+		state.step !== 'select-metrics' ? null : metadataError ? 'failed' : metadataLoading ? 'loading' : null
 
 	const generateComparisonCharts = (): Array<MultiChartConfig> => {
 		const { selectedItems, selectedMetrics, comparisonType } = state
@@ -173,8 +178,6 @@ function ComparisonWizardContent({
 	}
 
 	const handleGenerate = () => {
-		if (derived.blockedReason) return
-
 		const metricCards = generateComparisonMetrics()
 		const charts = generateComparisonCharts()
 		const table = generateComparisonTable()
@@ -201,6 +204,13 @@ function ComparisonWizardContent({
 		})
 	}
 
+	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (derived.stepError) return showFieldErrors(event.currentTarget, actions.showStepError)
+		if (state.step === 'preview') handleGenerate()
+		else actions.goToNextStep()
+	}
+
 	const stepContent = (() => {
 		switch (state.step) {
 			case 'select-type':
@@ -222,25 +232,25 @@ function ComparisonWizardContent({
 				title="Discard this comparison?"
 				description="The choices you made are not saved."
 			/>
-			{/* Creating locks the steps, but not the footer: the pending Create keeps focus and its "Creating…" label. */}
-			<fieldset disabled={creating} className="contents">
-				<DialogToolbar>
-					<WizardSteps currentStep={state.step} />
-				</DialogToolbar>
-				<DialogBody>
-					{/* A floor on the step height keeps the dialog from jumping between steps on desktop. */}
-					<div className="sm:min-h-88">{stepContent}</div>
-					{feedback}
-				</DialogBody>
-			</fieldset>
-			<WizardNavigation
-				currentStep={state.step}
-				blockedReason={derived.blockedReason}
-				onNext={actions.goToNextStep}
-				onBack={derived.canGoBack ? actions.goToPrevStep : () => leave(onExit)}
-				onGenerate={handleGenerate}
-				creating={creating}
-			/>
+			<form noValidate onSubmit={handleSubmit} className="contents">
+				{/* Creating locks the steps, but not the footer: the pending Create keeps focus and its "Creating…" label. */}
+				<fieldset disabled={creating} className="contents">
+					<DialogToolbar>
+						<WizardSteps currentStep={state.step} />
+					</DialogToolbar>
+					<DialogBody>
+						{/* A floor on the step height keeps the dialog from jumping between steps on desktop. */}
+						<div className="sm:min-h-88">{stepContent}</div>
+						{feedback}
+					</DialogBody>
+				</fieldset>
+				<WizardNavigation
+					currentStep={state.step}
+					onBack={derived.canGoBack ? actions.goToPrevStep : () => leave(onExit)}
+					creating={creating}
+					metricsLoad={metricsLoad}
+				/>
+			</form>
 		</>
 	)
 }

@@ -106,7 +106,7 @@ function DashboardSettingsModalInner({
 	return (
 		<>
 			<Dialog size="sm" open={isOpen} onClose={onClose} pending={busy} portal unmountOnHide>
-				<form ref={formRef} onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col">
+				<form ref={formRef} noValidate onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col">
 					<DialogDiscardGuard
 						when={dirty}
 						title="Discard your changes?"
@@ -156,7 +156,7 @@ function DashboardSettingsModalInner({
 
 							{onDelete && dashboardId ? (
 								<div className="border-t border-subtle pt-4">
-									<p className="mb-1.5 block label-sm text-data-down">Danger zone</p>
+									<p className="mb-1.5 block label-sm text-error">Danger zone</p>
 									<p className="mb-3 body-sm text-tertiary">Once you delete a dashboard, there is no going back.</p>
 									<Button type="button" variant="destructive" size="md" onClick={() => setShowDeleteConfirm(true)}>
 										<Icon name="trash-2" height={16} width={16} />

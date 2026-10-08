@@ -64,6 +64,12 @@ const settings: LlamaAISettings = {
 
 const SIGNED_OUT: WebMobilePreference = { kind: 'signed-out' }
 
+// The spend cap field, found by its visible label.
+function spendCapInput() {
+	const label = [...document.querySelectorAll('label')].find((el) => el.textContent === 'Spend cap per message')!
+	return document.getElementById(label.htmlFor) as HTMLInputElement
+}
+
 describe('SettingsModal instructions', () => {
 	let container: HTMLDivElement
 	let root: Root
@@ -689,7 +695,7 @@ describe('SettingsModal instructions', () => {
 
 	test('the spend cap follows a settings refresh until the reader types one', async () => {
 		await act(async () => buttonNamed('Capabilities')!.click())
-		const input = () => document.querySelector<HTMLInputElement>('#llamaai-spend-cap')!
+		const input = () => spendCapInput()
 		await act(async () => root.render(<Harness currentSettings={{ ...settings, spendCapPerMessage: 0.75 }} />))
 		expect(input().value).toBe('0.75')
 
@@ -701,13 +707,33 @@ describe('SettingsModal instructions', () => {
 		expect(input().value).toBe('1.2')
 	})
 
+	test('a refused spend cap keeps what was typed, says why under the field, and saves nothing', async () => {
+		await act(async () => buttonNamed('Capabilities')!.click())
+		const input = spendCapInput()
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '-1')
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+			input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
+		})
+		expect(input.value).toBe('-1')
+		expect(document.getElementById(input.getAttribute('aria-describedby')!.split(' ').at(-1)!)!.textContent).toBe(
+			'Enter an amount of $0 or more.'
+		)
+		expect(saveSettings).not.toHaveBeenCalled()
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '1')
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		expect(input.getAttribute('aria-invalid')).toBeNull()
+	})
+
 	test('restores the spend cap after a failed save', async () => {
 		saveSettings.mockResolvedValue(false)
 		const capabilitiesTab = Array.from(document.querySelectorAll('button')).find(
 			(button) => button.textContent === 'Capabilities'
 		)
 		await act(async () => capabilitiesTab?.click())
-		const input = document.querySelector('#llamaai-spend-cap') as HTMLInputElement
+		const input = spendCapInput()
 		const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
 
 		await act(async () => {

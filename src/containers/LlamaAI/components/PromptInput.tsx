@@ -490,6 +490,7 @@ export function PromptInput({
 
 	return (
 		<form
+			noValidate
 			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand [[data-composer-tray]+&]:rounded-t-none"
 			onSubmit={handleFormSubmit}
 			onPointerDown={handleFormPointerDown}

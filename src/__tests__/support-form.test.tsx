@@ -26,7 +26,7 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function submitForm() {
+async function openForm() {
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -34,16 +34,42 @@ async function submitForm() {
 			</session.Wrapper>
 		)
 	)
-	const openForm = [...container.querySelectorAll('button')].find((button) =>
+	const formToggle = [...container.querySelectorAll('button')].find((button) =>
 		button.textContent?.includes('Submit a Form')
 	)!
-	await act(async () => openForm.click())
-	const description = container.querySelector<HTMLTextAreaElement>('#support-description')!
-	await act(async () => {
-		description.value = 'The fees chart is empty'
-	})
-	await act(async () => container.querySelector('form')!.requestSubmit())
+	await act(async () => formToggle.click())
 }
+
+async function type(control: HTMLInputElement | HTMLTextAreaElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(Object.getPrototypeOf(control), 'value')!.set!.call(control, value)
+		control.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
+async function submitForm() {
+	await openForm()
+	await type(container.querySelector('textarea')!, 'The fees chart is empty')
+	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+}
+
+const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
+
+test('a request without a description or with a malformed email says so under the fields and sends nothing', async () => {
+	session.serve({ [REPORT_URL]: { message: 'success' } })
+	await openForm()
+	const email = container.querySelector<HTMLInputElement>('input[type="email"]')!
+	const description = container.querySelector('textarea')!
+	await type(email, 'reader@example')
+	await act(async () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+
+	expect(errorTexts()).toEqual(['Enter a valid email address.', 'Enter a description of the issue.'])
+	expect(document.activeElement).toBe(email)
+	await type(email, '')
+	await type(description, 'The fees chart is empty')
+	expect(errorTexts()).toEqual([])
+	expect(session.requests.filter((request) => request.url.href === REPORT_URL)).toHaveLength(0)
+})
 
 test('a request the API rejects keeps the form and says so inline', async () => {
 	session.serve({ [REPORT_URL]: { message: 'error' } })

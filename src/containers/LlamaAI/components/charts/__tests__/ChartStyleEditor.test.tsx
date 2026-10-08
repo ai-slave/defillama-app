@@ -45,16 +45,23 @@ const view = { logScale: false, stacked: false, showLabels: false, percentage: f
 const resetView = { logScale: false, stacked: true, showLabels: false, percentage: false }
 const PREVIEW_DELAY = 350
 const noop = () => {}
+// The pane's fields carry a screen-reader-only label (Field hideLabel).
+function labelled(name: string) {
+	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === name)
+	return label ? (document.getElementById(label.htmlFor) as HTMLInputElement) : null
+}
 
 function EditorHarness({
 	onSave,
 	onPreview,
 	editorConfig = config,
 	originalConfig,
-	onCancel = noop
+	onCancel = noop,
+	previewPane
 }: {
 	onSave: (config: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
 	onCancel?: () => void
+	previewPane?: ReactNode
 	onPreview?: (config: ChartConfiguration) => void
 	editorConfig?: ChartConfiguration
 	originalConfig?: ChartConfiguration
@@ -86,6 +93,7 @@ function EditorHarness({
 				onPreview={handlePreview}
 				onSave={handleSave}
 				onCancel={onCancel}
+				preview={previewPane}
 			/>
 		</>
 	)
@@ -237,7 +245,7 @@ describe('ChartStyleEditor', () => {
 		expect(patch.series?.map((series) => series.metricClass)).toEqual(['flow', 'flow', 'stock'])
 	})
 
-	test('keeps the last valid preview and disables save while series names are duplicated', async () => {
+	test('keeps the last valid preview and says so under a series name that repeats another', async () => {
 		vi.useFakeTimers()
 		const editorConfig = {
 			...config,
@@ -256,7 +264,7 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async () => undefined)
 		await act(async () => render(<EditorHarness editorConfig={editorConfig} onSave={onSave} onPreview={onPreview} />))
 
-		const secondName = document.querySelector<HTMLInputElement>('[aria-label="Series 2 name"]')
+		const secondName = labelled('Series 2 name')
 		if (!secondName) throw new Error('Expected second series name input')
 		const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
 		if (!setInputValue) throw new Error('Expected native input value setter')
@@ -267,12 +275,9 @@ describe('ChartStyleEditor', () => {
 			vi.advanceTimersByTime(PREVIEW_DELAY)
 		})
 
-		const saveButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(button) => button.textContent === 'Save'
+		expect(document.getElementById(secondName.getAttribute('aria-describedby')!)?.textContent).toBe(
+			'Enter a name no other series uses.'
 		)
-		if (!saveButton) throw new Error('Expected save button')
-		expect(saveButton.disabled).toBe(true)
-		expect(document.querySelector('footer')?.textContent).toContain('must be unique')
 		expect(onPreview).not.toHaveBeenCalled()
 		expect(document.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Fees')
 
@@ -282,7 +287,7 @@ describe('ChartStyleEditor', () => {
 			vi.advanceTimersByTime(PREVIEW_DELAY)
 		})
 
-		expect(saveButton.disabled).toBe(false)
+		expect(secondName.getAttribute('aria-invalid')).toBeNull()
 		expect(onPreview).toHaveBeenCalledOnce()
 		expect(document.querySelector('[data-testid="preview-series-names"]')?.textContent).toBe('Revenue|Net Revenue')
 	})
@@ -344,9 +349,9 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
-		const secondSeriesInput = document.querySelector('[aria-label="Series 2 name"]')
+		const secondSeriesInput = labelled('Series 2 name')
 		await clickButton('Move series 2 up')
-		expect(document.querySelector('[aria-label="Series 1 name"]')).toBe(secondSeriesInput)
+		expect(labelled('Series 1 name')).toBe(secondSeriesInput)
 		expect(previewNames()).toBe('2 days|11-20 days|6-10 days|1 day')
 
 		await clickButton('Save')
@@ -452,7 +457,7 @@ describe('ChartStyleEditor', () => {
 	})
 
 	const typeTitle = async (value: string) => {
-		const title = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		const title = labelled('Chart title')!
 		await act(async () => {
 			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(title, value)
 			title.dispatchEvent(new Event('input', { bubbles: true }))
@@ -470,7 +475,7 @@ describe('ChartStyleEditor', () => {
 		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
 		await clickButton('Cancel')
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
-		const title = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		const title = labelled('Chart title')!
 		await act(async () =>
 			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 		)
@@ -490,7 +495,7 @@ describe('ChartStyleEditor', () => {
 		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
 		await clickButton('Reset')
 		expect(named('Cancel')!.getAttribute('aria-disabled')).toBe('true')
-		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!.value).toBe('First title')
+		expect(labelled('Chart title')!.value).toBe('First title')
 		await act(async () => saving.resolve(undefined))
 		expect(onSave.mock.calls.map(([saved]) => saved.title)).toEqual(['First title'])
 	})
@@ -502,9 +507,9 @@ describe('ChartStyleEditor', () => {
 		await clickButton('Save')
 		await waitForUi(() => expect(document.querySelector('button[aria-busy="true"]')).not.toBeNull())
 		const fields = [
-			document.querySelector('[aria-label="Chart title"]')!,
+			labelled('Chart title')!,
 			document.querySelector('input[type="color"]')!,
-			document.querySelector('[aria-label="Series 1 name"]')!,
+			labelled('Series 1 name')!,
 			document.querySelector('[aria-label="Annotation 1 label"]')!,
 			named('bar')!,
 			named('+ Add annotation')!,
@@ -527,6 +532,45 @@ describe('ChartStyleEditor', () => {
 			'Series 3 color',
 			'Series 4 color'
 		])
+	})
+
+	// Below md the editor shows one pane at a time; the errors live in the Style pane.
+	test('Save from the preview pane with a blank title switches to the style pane and focuses the title', async () => {
+		const onSave = vi.fn(async () => undefined)
+		await act(async () => render(<EditorHarness onSave={onSave} previewPane={<div>Chart preview</div>} />))
+		await typeTitle('')
+		const previewRadio = [...document.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+			(radio) => radio.closest('label')?.textContent === 'Preview'
+		)!
+		await act(async () => previewRadio.click())
+		const stylePane = document.querySelector('fieldset')!
+		expect(stylePane.classList.contains('hidden')).toBe(true)
+
+		await clickButton('Save')
+
+		expect(stylePane.classList.contains('hidden')).toBe(false)
+		const title = labelled('Chart title')!
+		expect(document.activeElement).toBe(title)
+		expect(document.getElementById(title.getAttribute('aria-describedby')!)?.textContent).toBe('Enter a chart title.')
+		expect(onSave).not.toHaveBeenCalled()
+	})
+
+	// A pie colours each slice: its series names have no field, so they never block Save.
+	test('saves a pie whose series name is blank, since no name field renders for it', async () => {
+		const pieConfig = {
+			...config,
+			type: 'pie',
+			axes: { ...config.axes, x: { field: 'protocol', label: 'Protocol', type: 'category' } },
+			hallmarks: undefined,
+			series: [{ ...revenueSeries, name: '' }]
+		} satisfies ChartConfiguration
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		await act(async () => render(<EditorHarness editorConfig={pieConfig} onSave={onSave} />))
+		expect(labelled('Series 1 name')).toBeNull()
+
+		await clickButton('Save')
+
+		expect(onSave).toHaveBeenCalledOnce()
 	})
 
 	test('an edit typed back to the opened value closes on Cancel without asking', async () => {

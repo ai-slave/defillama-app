@@ -10,6 +10,9 @@ export class OtpRequestError extends Error {
 	}
 }
 
+/** The server refused the code itself, so the sheet shows it under the code field rather than as a request failure. */
+export class InvalidCodeError extends OtpRequestError {}
+
 function requireAccount(accountId: string) {
 	if (!pb.authStore.isValid || pb.authStore.record?.id !== accountId) {
 		throw new OtpRequestError('Your account changed. Close this dialog and continue again.')
@@ -54,8 +57,7 @@ export async function verifyEmailCode(accountId: string, otp: string) {
 		body: JSON.stringify({ otp })
 	})
 	requireAccount(accountId)
-	if (response.status === 400)
-		throw new OtpRequestError('Invalid or expired code. Check the code or request a new one.')
+	if (response.status === 400) throw new InvalidCodeError('This code is wrong or has expired.')
 	if (!response.ok) throw new OtpRequestError('Could not verify your email.')
 	// The endpoint confirms this field. Keep the current token and other account data;
 	// starting another auth refresh here competes with the auth-status query.

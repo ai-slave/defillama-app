@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
@@ -15,6 +15,8 @@ import {
 	DialogHeader,
 	useOpeningKey
 } from '~/ui/Dialog'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
@@ -31,11 +33,12 @@ import {
 import { restoreItemsAfterIterate, stripCustomDataRows } from '../dashboardVariables/resolve'
 import { type DashboardSaveNotices, showDashboardSaveNotices } from '../hooks/useDashboardAPI'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { dashboardFieldHintStyles, dashboardFieldLabelStyles, TagsField, VisibilityField } from './DashboardFormFields'
+import { TagsField, VisibilityField } from './DashboardFormFields'
 
 const EMPTY_DASHBOARD_ITEMS: Array<DashboardItemConfig> = []
 const EMPTY_DASHBOARD_TAGS: Array<string> = []
 const PROMPT_MAX_LENGTH = 5000
+const PROMPT_MIN_LENGTH = 20
 const UNEXPECTED_RESPONSE = 'LlamaAI sent an unexpected response.'
 
 // fetch and stream reads reject with a TypeError ("Failed to fetch", "network error") when the connection fails.
@@ -134,10 +137,10 @@ function GenerateDashboardModalInner({
 	existingDashboard,
 	onGenerate
 }: GenerateDashboardModalProps) {
-	const id = useId()
 	const router = useRouter()
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()
 	const formRef = useRef<HTMLFormElement>(null)
+	const promptRef = useRef<HTMLTextAreaElement>(null)
 	// The last failed generation or save, not the mutations' own errors: those clear as soon as a retry starts.
 	const [error, setError] = useState<string | null>(null)
 	const showError = (failure: Error) => {
@@ -203,8 +206,20 @@ function GenerateDashboardModalInner({
 	const fieldsLocked = pending || !!generation.data
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
 	const [tags, setTags] = useState<Array<string>>([])
-	const [promptLength, setPromptLength] = useState(0)
-	const [nameLength, setNameLength] = useState(0)
+	const [name, setName] = useState('')
+	const [prompt, setPrompt] = useState('')
+	const [submitted, setSubmitted] = useState(false)
+	const dashboardName = name.trim()
+	const message = prompt.trim()
+	// The name field is only rendered in create mode.
+	const nameError = mode === 'create' && !dashboardName ? 'Enter a dashboard name.' : null
+	const promptError = !message
+		? 'Enter a description.'
+		: message.length < PROMPT_MIN_LENGTH
+			? `Enter at least ${PROMPT_MIN_LENGTH} characters.`
+			: prompt.length > PROMPT_MAX_LENGTH
+				? `Enter ${PROMPT_MAX_LENGTH} characters or fewer.`
+				: null
 
 	const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -212,40 +227,12 @@ function GenerateDashboardModalInner({
 			saveGeneratedDashboard(generation.data)
 			return
 		}
-
-		const form = e.currentTarget
-		// The name field is only rendered in create mode.
-		const nameInput = form.elements.namedItem('dashboardName') as HTMLInputElement | null
-		const descInput = form.elements.namedItem('aiDescription') as HTMLTextAreaElement
-		const dashboardName = nameInput?.value.trim() ?? ''
-		const aiDescription = descInput.value
-
-		if (mode === 'create' && !dashboardName) {
-			nameInput?.setCustomValidity('Dashboard name is required')
-			nameInput?.reportValidity()
-			return
-		}
-
-		if (!aiDescription.trim()) {
-			descInput.setCustomValidity('Description is required')
-			descInput.reportValidity()
-			return
-		}
-		if (aiDescription.trim().length < 20) {
-			descInput.setCustomValidity('Description must be at least 20 characters')
-			descInput.reportValidity()
-			return
-		}
-		if (aiDescription.length > PROMPT_MAX_LENGTH) {
-			descInput.setCustomValidity(`Description must be ${PROMPT_MAX_LENGTH} characters or less`)
-			descInput.reportValidity()
-			return
-		}
+		if (nameError || promptError) return showFieldErrors(e.currentTarget, () => setSubmitted(true))
 
 		const requestBody: DashboardCreatorRequest =
 			mode === 'iterate'
 				? {
-						message: aiDescription.trim(),
+						message,
 						mode: 'iterate',
 						existingDashboard: {
 							dashboardName: existingDashboard?.dashboardName ?? '',
@@ -253,7 +240,7 @@ function GenerateDashboardModalInner({
 							...(existingDashboard?.aiGenerated ? { aiGenerated: existingDashboard.aiGenerated } : {})
 						}
 					}
-				: { message: aiDescription.trim(), dashboardName }
+				: { message, dashboardName }
 
 		generation.mutate(
 			{
@@ -273,9 +260,9 @@ function GenerateDashboardModalInner({
 
 	return (
 		<Dialog size="md" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
-			<form ref={formRef} onSubmit={handleGenerate} className="flex min-h-0 flex-auto flex-col">
+			<form ref={formRef} noValidate onSubmit={handleGenerate} className="flex min-h-0 flex-auto flex-col">
 				<DialogDiscardGuard
-					when={nameLength > 0 || promptLength > 0 || tags.length > 0 || !!generation.data}
+					when={name !== '' || prompt !== '' || tags.length > 0 || !!generation.data}
 					title={generation.data ? 'Discard the generated dashboard?' : 'Discard this prompt?'}
 					description={
 						generation.data
@@ -287,72 +274,73 @@ function GenerateDashboardModalInner({
 				<DialogBody>
 					<div className="flex flex-col gap-4">
 						{mode === 'create' ? (
-							<div className="flex flex-col gap-1.5">
-								<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
-									Dashboard name
-								</label>
-								{/* Ariakit's autoFocus, so the dialog starts on the first field instead of the header ×. */}
+							<Field label="Dashboard name" error={submitted ? nameError : null}>
+								{(control) => (
+									// Ariakit's autoFocus, so the dialog starts on the first field instead of the header ×.
+									<Ariakit.Focusable
+										autoFocus
+										render={
+											<Input
+												{...control}
+												name="dashboardName"
+												type="text"
+												maxLength={DASHBOARD_NAME_MAX_LENGTH}
+												value={name}
+												onChange={(e) => setName(e.target.value)}
+												placeholder="e.g. Ethereum vs Arbitrum"
+												readOnly={fieldsLocked}
+												required
+											/>
+										}
+									/>
+								)}
+							</Field>
+						) : null}
+
+						<Field
+							label={
+								mode === 'iterate'
+									? 'Describe what you want to add or change'
+									: 'Describe the dashboard you want to create'
+							}
+							hint={
+								<span className="flex justify-between gap-3">
+									<span>
+										{mode === 'iterate'
+											? 'Be specific about what you want to add, remove or change.'
+											: 'Be specific about the data, charts and insights you want to see.'}
+									</span>
+									<span className="shrink-0">
+										{prompt.length}/{PROMPT_MAX_LENGTH}
+									</span>
+								</span>
+							}
+							error={submitted ? promptError : null}
+						>
+							{(control) => (
 								<Ariakit.Focusable
-									autoFocus
+									autoFocus={mode === 'iterate'}
 									render={
-										<Input
-											id={`${id}-name`}
-											name="dashboardName"
-											type="text"
-											maxLength={DASHBOARD_NAME_MAX_LENGTH}
-											onInput={(e) => {
-												e.currentTarget.setCustomValidity('')
-												setNameLength(e.currentTarget.value.length)
-											}}
-											placeholder="e.g. Ethereum vs Arbitrum"
+										<textarea
+											{...control}
+											ref={promptRef}
+											name="aiDescription"
+											value={prompt}
+											onChange={(e) => setPrompt(e.target.value)}
+											placeholder={
+												mode === 'iterate'
+													? 'e.g. Add a chart of weekly DEX volume for the top 5 protocols, or remove the stablecoin chart and add a TVL comparison…'
+													: 'e.g. Build a DeFi yields dashboard with the top earning protocols, comparing chains and showing historical performance…'
+											}
+											rows={4}
+											className={`${textareaStyles} resize-none`}
 											readOnly={fieldsLocked}
 											required
 										/>
 									}
 								/>
-							</div>
-						) : null}
-
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={`${id}-prompt`} className={dashboardFieldLabelStyles}>
-								{mode === 'iterate'
-									? 'Describe what you want to add or change'
-									: 'Describe the dashboard you want to create'}
-							</label>
-							<Ariakit.Focusable
-								autoFocus={mode === 'iterate'}
-								render={
-									<textarea
-										id={`${id}-prompt`}
-										name="aiDescription"
-										onInput={(e) => {
-											e.currentTarget.setCustomValidity('')
-											setPromptLength(e.currentTarget.value.length)
-										}}
-										placeholder={
-											mode === 'iterate'
-												? 'e.g. Add a chart of weekly DEX volume for the top 5 protocols, or remove the stablecoin chart and add a TVL comparison…'
-												: 'e.g. Build a DeFi yields dashboard with the top earning protocols, comparing chains and showing historical performance…'
-										}
-										rows={4}
-										aria-describedby={`${id}-prompt-hint`}
-										className={`${textareaStyles} resize-none`}
-										readOnly={fieldsLocked}
-										required
-									/>
-								}
-							/>
-							<p id={`${id}-prompt-hint`} className={`flex justify-between gap-3 ${dashboardFieldHintStyles}`}>
-								<span>
-									{mode === 'iterate'
-										? 'Be specific about what you want to add, remove or change.'
-										: 'Be specific about the data, charts and insights you want to see.'}
-								</span>
-								<span className="shrink-0">
-									{promptLength}/{PROMPT_MAX_LENGTH}
-								</span>
-							</p>
-						</div>
+							)}
+						</Field>
 
 						{mode === 'create' ? (
 							<>
@@ -390,7 +378,7 @@ function GenerateDashboardModalInner({
 									save.reset()
 									setError(null)
 									// This button leaves with the result; the prompt it unlocks is what the reader edits next.
-									document.getElementById(`${id}-prompt`)?.focus()
+									promptRef.current?.focus()
 								}}
 							>
 								Edit prompt and regenerate

@@ -41,6 +41,8 @@ const UNITLESS_CHART_OPTIONS = {
 }
 
 interface BorrowedChartTabProps {
+	/** What Add still needs, shown under the protocol once Add was pressed. */
+	error: string | null
 	selectedBorrowedProtocol: string | null
 	selectedBorrowedProtocolName: string | null
 	selectedBorrowedChartType: BorrowedChartType
@@ -52,6 +54,7 @@ interface BorrowedChartTabProps {
 }
 
 export function BorrowedChartTab({
+	error,
 	selectedBorrowedProtocol,
 	selectedBorrowedProtocolName,
 	selectedBorrowedChartType,
@@ -223,6 +226,7 @@ export function BorrowedChartTab({
 				<VirtualizedSelect
 					variant="field"
 					label="Protocol"
+					error={error}
 					options={selectableProtocolOptions}
 					selectedValue={selectedBorrowedProtocol || null}
 					onChange={handleProtocolChange}

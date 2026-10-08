@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useId, useMemo, useRef } from 'react'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { ChartToolbar } from '~/containers/Downloads/sql/chart/ChartToolbar'
 import { type ChartConfig as DownloadChartConfig, defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
@@ -6,6 +6,7 @@ import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
+import { Field } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { codeTextareaStyles, Input } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -54,6 +55,11 @@ interface CustomDataTabProps {
 	onError: (message: string) => void
 	onChartChange: (patch: Partial<DownloadChartConfig>) => void
 	onDisplayModeChange: (mode: 'chart' | 'table') => void
+	/** What Add still needs (a CSV), shown under the CSV fields once Add was pressed. */
+	error: string | null
+	/** Below lg the form shows one pane; AddChartModal holds it, so a failed Add can bring back the pane with the error. */
+	pane: AddCardPane
+	onPaneChange: (pane: AddCardPane) => void
 }
 
 function describeError(error: unknown): string {
@@ -78,10 +84,15 @@ function CustomDataForm({
 	onStoredRowsChange,
 	onError,
 	onChartChange,
-	onDisplayModeChange
+	onDisplayModeChange,
+	error: submitError,
+	pane,
+	onPaneChange
 }: CustomDataTabProps) {
 	const encodeToken = useRef(0)
-	const [pane, setPane] = useState<AddCardPane>('configure')
+	const csvErrorId = useId()
+	// A CSV that does not parse says so as it is read; a missing one waits for Add. No parse error is '', not null.
+	const csvError = customData.error || submitError
 	// A fresh CSV preview replaces the stored rows, so those only decode while there is no preview.
 	const stored = useDecodedRows(customData.previewRows || !customData.storedRows ? undefined : customData.storedRows)
 	const rows = customData.previewRows ?? (stored.status === 'ready' ? stored.rows : null)
@@ -165,7 +176,7 @@ function CustomDataForm({
 				label="Editor view"
 				options={ADD_CARD_PANES}
 				value={pane}
-				onValueChange={setPane}
+				onValueChange={onPaneChange}
 				variant="solid-responsive"
 				size="md"
 				className="shrink-0 lg:hidden"
@@ -173,40 +184,51 @@ function CustomDataForm({
 			<div
 				className={`min-h-0 flex-col gap-3 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'configure' ? 'flex' : 'hidden'}`}
 			>
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">Card name (optional)</span>
-					<Input
-						type="text"
-						value={customData.name}
-						onChange={(event) => onNameChange(event.target.value)}
-						maxLength={80}
-						className="w-full"
-					/>
-				</label>
+				<Field label="Card name (optional)">
+					{(control) => (
+						<Input
+							{...control}
+							type="text"
+							value={customData.name}
+							onChange={(event) => onNameChange(event.target.value)}
+							maxLength={80}
+							className="w-full"
+						/>
+					)}
+				</Field>
 
-				<label className="flex flex-col gap-1">
-					<span className="label-sm text-secondary">CSV file</span>
-					<input
-						type="file"
-						accept=".csv,text/csv"
-						data-umami-event="custom-data-file"
-						onChange={(event) => handleFile(event.target.files?.[0])}
-						className="w-full rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary file:mr-2 file:rounded-sm file:border-0 file:bg-surface file:px-2 file:py-1 file:label-sm file:text-primary"
-					/>
-				</label>
+				{/* A file or a paste fills one CSV, so their error sits under both and the paste field takes it. */}
+				<div data-invalid={csvError ? '' : undefined} className="flex min-h-0 flex-1 flex-col gap-3">
+					<label className="flex flex-col gap-1">
+						<span className="label-sm text-secondary">CSV file</span>
+						<input
+							type="file"
+							accept=".csv,text/csv"
+							data-umami-event="custom-data-file"
+							onChange={(event) => handleFile(event.target.files?.[0])}
+							className="w-full rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary file:mr-2 file:rounded-sm file:border-0 file:bg-surface file:px-2 file:py-1 file:label-sm file:text-primary"
+						/>
+					</label>
 
-				<label className="flex min-h-0 flex-1 flex-col gap-1">
-					<span className="label-sm text-secondary">Or paste CSV</span>
-					<textarea
-						value={customData.csvText}
-						onChange={(event) => handleTextChange(event.target.value)}
-						placeholder={'date,value\n2026-01-01,10'}
-						aria-label="Paste CSV"
-						className={`${codeTextareaStyles} min-h-[160px] w-full flex-1 resize-none`}
-					/>
-				</label>
+					<label className="flex min-h-0 flex-1 flex-col gap-1">
+						<span className="label-sm text-secondary">Or paste CSV</span>
+						<textarea
+							value={customData.csvText}
+							onChange={(event) => handleTextChange(event.target.value)}
+							placeholder={'date,value\n2026-01-01,10'}
+							aria-label="Paste CSV"
+							aria-invalid={csvError ? true : undefined}
+							aria-describedby={csvError ? csvErrorId : undefined}
+							className={`${codeTextareaStyles} min-h-[160px] w-full flex-1 resize-none`}
+						/>
+					</label>
 
-				{customData.error ? <p className="body-sm text-error">{customData.error}</p> : null}
+					{csvError ? (
+						<p id={csvErrorId} className="body-sm text-error">
+							{csvError}
+						</p>
+					) : null}
+				</div>
 				{customData.sourceName ? (
 					<p className="truncate body-sm text-tertiary">Source: {customData.sourceName}</p>
 				) : null}

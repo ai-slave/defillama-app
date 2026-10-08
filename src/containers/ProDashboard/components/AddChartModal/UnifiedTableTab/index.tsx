@@ -51,6 +51,8 @@ import type { useUnifiedTableWizard } from './hooks/useUnifiedTableWizard'
 import type { FilterPreset } from './presets/filterPresets'
 
 interface UnifiedTableTabProps {
+	/** What Add still needs on a simple table, shown under its picker once Add was pressed. */
+	error: string | null
 	/** Add card owns the wizard for its whole opening, so a table draft survives tab changes and counts toward its
 	    discard question. */
 	wizard: ReturnType<typeof useUnifiedTableWizard>
@@ -222,6 +224,7 @@ const EQUITIES_TABS: Array<{ value: CombinedTableType; label: string }> = [
 ]
 
 export function UnifiedTableTab({
+	error,
 	onClose,
 	chainOptions,
 	editItem,
@@ -874,6 +877,7 @@ export function UnifiedTableTab({
 				onIncludeCexChange={onIncludeCexChange}
 				onBackToTypeSelector={handleBackToTypeSelector}
 				isEditing={Boolean(editItem)}
+				error={error}
 			/>
 		)
 	}

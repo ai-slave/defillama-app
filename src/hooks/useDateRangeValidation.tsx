@@ -4,16 +4,34 @@ interface DateRangeValidationOptions {
 	/** Shown until the reader picks a date. It may move with the clock, and untouched inputs follow it. */
 	defaultStartDate?: string
 	defaultEndDate?: string
-	allowFutureDates?: boolean
 }
 
 type DateSelection = { startDate: string; endDate: string }
+
+/** Why a picked range cannot load, per field. A missing or future date sits under its own field; a range that ends
+    before it starts sits under the end date. Date-only values are UTC calendar days (docs/date-formatting.md), so
+    `today` is the UTC day of `useNowSeconds`, and YYYY-MM-DD strings compare in date order. */
+export function dateRangeErrors(startDate: string, endDate: string, today: string) {
+	return {
+		startDate: !startDate
+			? 'Choose a start date.'
+			: startDate > today
+				? 'Choose a start date no later than today.'
+				: null,
+		endDate: !endDate
+			? 'Choose an end date.'
+			: endDate > today
+				? 'Choose an end date no later than today.'
+				: endDate < startDate
+					? 'Choose an end date on or after the start date.'
+					: null
+	}
+}
 
 export const useDateRangeValidation = (options?: DateRangeValidationOptions) => {
 	// Null until the reader picks a date: a default seeded from the page clock keeps applying after
 	// hydration moves that clock to the browser, so cached HTML never pins yesterday's date.
 	const [selection, setSelection] = useState<DateSelection | null>(null)
-	const [dateError, setDateError] = useState('')
 	const defaultStartDate = options?.defaultStartDate ?? ''
 	const defaultEndDate = options?.defaultEndDate ?? ''
 	const startDate = selection ? selection.startDate : defaultStartDate
@@ -23,7 +41,6 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 	// so each reads the other endpoint from the pending selection, never from a stale render.
 	const handleStartDateChange = useCallback(
 		(value: string) => {
-			setDateError('')
 			setSelection((current) => {
 				const currentEnd = current ? current.endDate : defaultEndDate
 				// The picker cannot show an inverted range, so an end before the new start clears.
@@ -36,59 +53,10 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 
 	const handleEndDateChange = useCallback(
 		(value: string) => {
-			setDateError('')
 			setSelection((current) => ({ startDate: current ? current.startDate : defaultStartDate, endDate: value }))
 		},
 		[defaultStartDate]
 	)
 
-	const validateDateRange = (startDateValue: string, endDateValue: string): boolean => {
-		if (!startDateValue || !endDateValue) {
-			const errorMsg = 'Both start and end dates are required'
-			setDateError(errorMsg)
-			return false
-		}
-
-		// Date-only values are UTC calendar days (docs/date-formatting.md), like the pages' defaults and the inputs' max,
-		// so today is the UTC day too; YYYY-MM-DD strings compare in date order.
-		const today = new Date().toISOString().slice(0, 10)
-
-		if (endDateValue < startDateValue) {
-			const errorMsg = 'End date cannot be before start date'
-			setDateError(errorMsg)
-			return false
-		}
-
-		if (!options?.allowFutureDates) {
-			if (startDateValue > today) {
-				const errorMsg = 'Start date cannot be in the future'
-				setDateError(errorMsg)
-				return false
-			}
-
-			if (endDateValue > today) {
-				const errorMsg = 'End date cannot be in the future'
-				setDateError(errorMsg)
-				return false
-			}
-		}
-
-		setDateError('')
-		return true
-	}
-
-	const reset = () => {
-		setSelection({ startDate: '', endDate: '' })
-		setDateError('')
-	}
-
-	return {
-		startDate,
-		endDate,
-		dateError,
-		handleStartDateChange,
-		handleEndDateChange,
-		validateDateRange,
-		reset
-	}
+	return { startDate, endDate, handleStartDateChange, handleEndDateChange }
 }

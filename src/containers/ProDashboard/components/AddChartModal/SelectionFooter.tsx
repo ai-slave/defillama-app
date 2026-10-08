@@ -76,6 +76,8 @@ interface SelectionFooterProps {
 	onUnifiedChartNameChange: (name: string) => void
 	onComposerItemColorChange: (id: string, color: string) => void
 	onRemoveFromComposer: (id: string) => void
+	/** What Add still needs, shown under the layout toggle once Add was pressed. */
+	error: string | null
 }
 
 /** The series picked so far, under the category grid: the same name, layout and chips as the chart form. */
@@ -86,7 +88,8 @@ export function SelectionFooter({
 	onChartCreationModeChange,
 	onUnifiedChartNameChange,
 	onComposerItemColorChange,
-	onRemoveFromComposer
+	onRemoveFromComposer,
+	error
 }: SelectionFooterProps) {
 	if (composerItems.length === 0) return null
 	return (
@@ -99,6 +102,7 @@ export function SelectionFooter({
 					chartCreationMode={chartCreationMode}
 					seriesCount={composerItems.length}
 					onChartCreationModeChange={onChartCreationModeChange}
+					error={error}
 				/>
 			) : null}
 			<div className="flex flex-wrap items-center gap-2">

@@ -1,10 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useId, useMemo, useState, type RefObject } from 'react'
+import { useMemo, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
-import { takeLostFocus } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { popoverRowStyles } from '~/ui/Popover'
@@ -87,9 +88,6 @@ function GitHubConnectForm({
 }: Pick<GitHubConnectModalProps, 'dialogStore' | 'projectId'> & {
 	connect: ReturnType<typeof useConnectGithubSource>
 }) {
-	const installId = useId()
-	const repoInputId = useId()
-	const branchInputId = useId()
 	const installs = useGithubInstallations()
 	const [selectedInstallId, setSelectedInstallId] = useState<number | null>(null)
 	const [selectedRepo, setSelectedRepo] = useState('')
@@ -97,8 +95,8 @@ function GitHubConnectForm({
 	const [repoQuery, setRepoQuery] = useState<string | null>(null)
 	const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
 	const [branchQuery, setBranchQuery] = useState<string | null>(null)
-	// Set by a Connect click with a field still empty; the field errors then follow the selection.
-	const [checkRequired, setCheckRequired] = useState(false)
+	// Set by a Connect with a field still empty; the field errors then follow the selection.
+	const [submitted, setSubmitted] = useState(false)
 	const defaultInstallId = installs.data?.[0]?.installation_id ?? null
 	const effectiveInstallId = selectedInstallId ?? defaultInstallId
 	const repos = useGithubRepos(effectiveInstallId)
@@ -138,8 +136,13 @@ function GitHubConnectForm({
 		selectedBranch && branches.data?.some((branch) => branch.name === selectedBranch)
 			? selectedBranch
 			: (defaultBranch?.name ?? '')
-	const repoMissing = checkRequired && !selectedRepo
-	const branchMissing = checkRequired && branches.isSuccess && !effectiveBranch
+	// A picked repository that a reload no longer lists says so at once; an empty pick waits for Connect.
+	const repoError = repoSelectionIsStale
+		? 'This repository is no longer in the list. Choose it again.'
+		: submitted && !selectedRepo
+			? 'Choose a repository.'
+			: null
+	const branchError = submitted && branches.isSuccess && !effectiveBranch ? 'Choose a branch.' : null
 
 	const selectRepository = (repository: string) => {
 		setSelectedRepo(repository)
@@ -155,15 +158,15 @@ function GitHubConnectForm({
 		return all.filter((b) => b.name.toLowerCase().includes(q))
 	}, [branches.data, branchQuery])
 
-	const onConnect = async () => {
+	const onConnect = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
 		if (connect.isPending) return
 		const dialog = dialogStore.getState().contentElement
 		// The dialog can unmount while the request runs (its host re-keys it), so check after the await.
 		const isStillOpen = () => dialog?.isConnected === true
 		const repo = repoMeta
 		if (!repo || !effectiveBranch || !effectiveInstallId) {
-			setCheckRequired(true)
-			return
+			return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		}
 		try {
 			await connect.mutateAsync({
@@ -204,229 +207,213 @@ function GitHubConnectForm({
 					</span>
 				}
 			/>
-			<DialogBody>
-				{queryReadFailed(installs) ? (
-					<LoadError
-						message="Couldn't load your GitHub installations."
-						retrying={installs.isFetching}
-						onRetry={() => void installs.refetch()}
-					/>
-				) : installs.isLoading ? (
-					<div role="status" aria-live="polite">
-						<LoadingIndicator label="Loading installations" />
-					</div>
-				) : needsInstall ? (
-					<p className="body-sm text-secondary">
-						No GitHub apps installed yet. Install LlamaAI Workspace on your GitHub account to grant repo access.
-					</p>
-				) : (
-					<>
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={installId} className="label-sm text-secondary">
-								Installation
-							</label>
-							<select
-								// A retry that succeeds replaces its button with this control, which takes the focus it drops.
-								ref={takeLostFocus}
-								id={installId}
-								disabled={fieldsLocked}
-								value={effectiveInstallId ?? ''}
-								onChange={(e) => {
-									setSelectedInstallId(Number(e.target.value))
-									selectRepository('')
-								}}
-								className={inputStyles}
+			<form noValidate onSubmit={(event) => void onConnect(event)} className="flex min-h-0 flex-auto flex-col">
+				<DialogBody>
+					{queryReadFailed(installs) ? (
+						<LoadError
+							message="Couldn't load your GitHub installations."
+							retrying={installs.isFetching}
+							onRetry={() => void installs.refetch()}
+						/>
+					) : installs.isLoading ? (
+						<div role="status" aria-live="polite">
+							<LoadingIndicator label="Loading installations" />
+						</div>
+					) : needsInstall ? (
+						<p className="body-sm text-secondary">
+							No GitHub apps installed yet. Install LlamaAI Workspace on your GitHub account to grant repo access.
+						</p>
+					) : (
+						<>
+							<Field label="Installation">
+								{(control) => (
+									<select
+										{...control}
+										// A retry that succeeds replaces its button with this control, which takes the focus it drops.
+										ref={takeLostFocus}
+										disabled={fieldsLocked}
+										value={effectiveInstallId ?? ''}
+										onChange={(e) => {
+											setSelectedInstallId(Number(e.target.value))
+											selectRepository('')
+										}}
+										className={inputStyles}
+									>
+										{installs.data?.map((i) => (
+											<option key={i.installation_id} value={i.installation_id}>
+												{i.account_login}
+											</option>
+										))}
+									</select>
+								)}
+							</Field>
+
+							<Field label="Repository" error={repoError} live>
+								{(control) =>
+									queryReadFailed(repos) ? (
+										<LoadError
+											message="Couldn't load the repositories for this installation."
+											retrying={repos.isFetching}
+											onRetry={() => void repos.refetch()}
+										/>
+									) : repos.isLoading ? (
+										<div role="status" aria-live="polite">
+											<LoadingIndicator label="Loading repositories" />
+										</div>
+									) : (
+										<Ariakit.ComboboxProvider
+											inputValue={repoQuery ?? selectedRepo}
+											setInputValue={setRepoQuery}
+											selectedValue={selectedRepo}
+											setSelectedValue={(value) => {
+												if (typeof value === 'string') selectRepository(value)
+											}}
+										>
+											<Ariakit.Combobox
+												{...control}
+												ref={takeLostFocus}
+												disabled={fieldsLocked}
+												placeholder="owner/repo"
+												className={`${inputStyles} w-full`}
+											/>
+											<ComboboxSurface
+												variant="search-results"
+												sameWidth
+												className="max-h-[min(256px,var(--popover-available-height))]"
+											>
+												{filteredRepos.length === 0 ? (
+													<p className={EMPTY_RESULTS_STYLES}>No repositories match.</p>
+												) : (
+													filteredRepos.map((r) => (
+														<Ariakit.ComboboxItem
+															key={r.full_name}
+															value={r.full_name}
+															setValueOnClick={false}
+															className={popoverRowStyles}
+														>
+															<span className="truncate">{r.full_name}</span>
+															{r.private ? <Tag className="shrink-0">private</Tag> : null}
+														</Ariakit.ComboboxItem>
+													))
+												)}
+											</ComboboxSurface>
+										</Ariakit.ComboboxProvider>
+									)
+								}
+							</Field>
+
+							<Field label="Branch" error={branchError}>
+								{(control) =>
+									!repoMeta ? (
+										<p className="body-sm text-tertiary">Pick a repository first.</p>
+									) : queryReadFailed(branches) ? (
+										<LoadError
+											message="Couldn't load the branches for this repository."
+											retrying={branches.isFetching}
+											onRetry={() => void branches.refetch()}
+										/>
+									) : branches.isLoading ? (
+										<div role="status" aria-live="polite">
+											<LoadingIndicator label="Loading branches" />
+										</div>
+									) : (
+										<Ariakit.ComboboxProvider
+											inputValue={branchQuery ?? effectiveBranch}
+											setInputValue={setBranchQuery}
+											selectedValue={effectiveBranch}
+											setSelectedValue={(value) => {
+												if (typeof value !== 'string') return
+												setSelectedBranch(value || null)
+												setBranchQuery(null)
+											}}
+										>
+											<Ariakit.Combobox
+												{...control}
+												ref={takeLostFocus}
+												disabled={fieldsLocked}
+												placeholder="main"
+												className={`${inputStyles} w-full`}
+											/>
+											<ComboboxSurface
+												variant="search-results"
+												sameWidth
+												className="max-h-[min(256px,var(--popover-available-height))]"
+											>
+												{filteredBranches.length === 0 ? (
+													<p className={EMPTY_RESULTS_STYLES}>No branches match.</p>
+												) : (
+													filteredBranches.map((b) => (
+														<Ariakit.ComboboxItem
+															key={b.name}
+															value={b.name}
+															setValueOnClick={false}
+															className={popoverRowStyles}
+														>
+															<span className="truncate">{b.name}</span>
+															{b.is_default ? (
+																<Tag className="shrink-0">default</Tag>
+															) : b.protected ? (
+																<Tag className="shrink-0">protected</Tag>
+															) : null}
+														</Ariakit.ComboboxItem>
+													))
+												)}
+											</ComboboxSurface>
+										</Ariakit.ComboboxProvider>
+									)
+								}
+							</Field>
+						</>
+					)}
+					{connect.isError ? (
+						<InlineStatus variant="error">Couldn&apos;t connect this repository. Try again.</InlineStatus>
+					) : null}
+					{install.isError ? (
+						<InlineStatus variant="error">Couldn&apos;t open GitHub to install the app. Try again.</InlineStatus>
+					) : null}
+				</DialogBody>
+				<DialogFooter
+					leading={
+						hasInstalls ? (
+							<Button
+								type="button"
+								size="md"
+								variant="ghost"
+								disabled={connect.isPending}
+								pendingLabel={install.isPending ? 'Opening GitHub…' : null}
+								onClick={onStartInstall}
 							>
-								{installs.data?.map((i) => (
-									<option key={i.installation_id} value={i.installation_id}>
-										{i.account_login}
-									</option>
-								))}
-							</select>
-						</div>
-
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={repoInputId} className="label-sm text-secondary">
-								Repository
-							</label>
-							{queryReadFailed(repos) ? (
-								<LoadError
-									message="Couldn't load the repositories for this installation."
-									retrying={repos.isFetching}
-									onRetry={() => void repos.refetch()}
-								/>
-							) : repos.isLoading ? (
-								<div role="status" aria-live="polite">
-									<LoadingIndicator label="Loading repositories" />
-								</div>
-							) : (
-								<Ariakit.ComboboxProvider
-									inputValue={repoQuery ?? selectedRepo}
-									setInputValue={setRepoQuery}
-									selectedValue={selectedRepo}
-									setSelectedValue={(value) => {
-										if (typeof value === 'string') selectRepository(value)
-									}}
-								>
-									<Ariakit.Combobox
-										ref={takeLostFocus}
-										id={repoInputId}
-										disabled={fieldsLocked}
-										placeholder="owner/repo"
-										aria-invalid={repoMissing || repoSelectionIsStale || undefined}
-										aria-describedby={repoMissing || repoSelectionIsStale ? `${repoInputId}-error` : undefined}
-										className={`${inputStyles} w-full`}
-									/>
-									<ComboboxSurface
-										variant="search-results"
-										sameWidth
-										className="max-h-[min(256px,var(--popover-available-height))]"
-									>
-										{filteredRepos.length === 0 ? (
-											<p className={EMPTY_RESULTS_STYLES}>No repositories match.</p>
-										) : (
-											filteredRepos.map((r) => (
-												<Ariakit.ComboboxItem
-													key={r.full_name}
-													value={r.full_name}
-													setValueOnClick={false}
-													className={popoverRowStyles}
-												>
-													<span className="truncate">{r.full_name}</span>
-													{r.private ? <Tag className="shrink-0">private</Tag> : null}
-												</Ariakit.ComboboxItem>
-											))
-										)}
-									</ComboboxSurface>
-								</Ariakit.ComboboxProvider>
-							)}
-							{repoMissing || repoSelectionIsStale ? (
-								<p id={`${repoInputId}-error`} role="alert" className="body-sm text-data-down">
-									{repoMissing ? 'Choose a repository.' : 'This repository is no longer in the list. Pick it again.'}
-								</p>
-							) : null}
-						</div>
-
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor={branchInputId} className="label-sm text-secondary">
-								Branch
-							</label>
-							{!repoMeta ? (
-								<p className="body-sm text-tertiary">Pick a repository first.</p>
-							) : queryReadFailed(branches) ? (
-								<LoadError
-									message="Couldn't load the branches for this repository."
-									retrying={branches.isFetching}
-									onRetry={() => void branches.refetch()}
-								/>
-							) : branches.isLoading ? (
-								<div role="status" aria-live="polite">
-									<LoadingIndicator label="Loading branches" />
-								</div>
-							) : (
-								<Ariakit.ComboboxProvider
-									inputValue={branchQuery ?? effectiveBranch}
-									setInputValue={setBranchQuery}
-									selectedValue={effectiveBranch}
-									setSelectedValue={(value) => {
-										if (typeof value !== 'string') return
-										setSelectedBranch(value || null)
-										setBranchQuery(null)
-									}}
-								>
-									<Ariakit.Combobox
-										ref={takeLostFocus}
-										id={branchInputId}
-										disabled={fieldsLocked}
-										placeholder="main"
-										aria-invalid={branchMissing || undefined}
-										aria-describedby={branchMissing ? `${branchInputId}-error` : undefined}
-										className={`${inputStyles} w-full`}
-									/>
-									<ComboboxSurface
-										variant="search-results"
-										sameWidth
-										className="max-h-[min(256px,var(--popover-available-height))]"
-									>
-										{filteredBranches.length === 0 ? (
-											<p className={EMPTY_RESULTS_STYLES}>No branches match.</p>
-										) : (
-											filteredBranches.map((b) => (
-												<Ariakit.ComboboxItem
-													key={b.name}
-													value={b.name}
-													setValueOnClick={false}
-													className={popoverRowStyles}
-												>
-													<span className="truncate">{b.name}</span>
-													{b.is_default ? (
-														<Tag className="shrink-0">default</Tag>
-													) : b.protected ? (
-														<Tag className="shrink-0">protected</Tag>
-													) : null}
-												</Ariakit.ComboboxItem>
-											))
-										)}
-									</ComboboxSurface>
-								</Ariakit.ComboboxProvider>
-							)}
-							{branchMissing ? (
-								<p id={`${branchInputId}-error`} role="alert" className="body-sm text-data-down">
-									Choose a branch.
-								</p>
-							) : null}
-						</div>
-					</>
-				)}
-				{connect.isError ? (
-					<InlineStatus variant="error">Couldn&apos;t connect this repository. Try again.</InlineStatus>
-				) : null}
-				{install.isError ? (
-					<InlineStatus variant="error">Couldn&apos;t open GitHub to install the app. Try again.</InlineStatus>
-				) : null}
-			</DialogBody>
-			<DialogFooter
-				leading={
-					hasInstalls ? (
+								Manage installations
+							</Button>
+						) : null
+					}
+					dismiss={<DialogCancelButton />}
+				>
+					{hasInstalls ? (
 						<Button
+							type="submit"
+							size="md"
+							variant="primary"
+							disabled={install.isPending}
+							pendingLabel={connect.isPending ? 'Connecting…' : null}
+						>
+							Connect
+						</Button>
+					) : needsInstall ? (
+						<Button
+							ref={takeLostFocus}
 							type="button"
 							size="md"
-							variant="ghost"
-							disabled={connect.isPending}
+							variant="primary"
 							pendingLabel={install.isPending ? 'Opening GitHub…' : null}
 							onClick={onStartInstall}
 						>
-							Manage installations
+							<Icon name="github" height={14} width={14} />
+							Install GitHub App
 						</Button>
-					) : null
-				}
-				dismiss={<DialogCancelButton />}
-			>
-				{hasInstalls ? (
-					<Button
-						type="button"
-						size="md"
-						variant="primary"
-						disabled={install.isPending}
-						pendingLabel={connect.isPending ? 'Connecting…' : null}
-						onClick={() => void onConnect()}
-					>
-						Connect
-					</Button>
-				) : needsInstall ? (
-					<Button
-						ref={takeLostFocus}
-						type="button"
-						size="md"
-						variant="primary"
-						pendingLabel={install.isPending ? 'Opening GitHub…' : null}
-						onClick={onStartInstall}
-					>
-						<Icon name="github" height={14} width={14} />
-						Install GitHub App
-					</Button>
-				) : null}
-			</DialogFooter>
+					) : null}
+				</DialogFooter>
+			</form>
 		</>
 	)
 }

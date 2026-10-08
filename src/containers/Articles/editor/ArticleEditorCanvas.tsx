@@ -2,8 +2,10 @@ import * as Ariakit from '@ariakit/react'
 import { isNodeSelection } from '@tiptap/core'
 import { EditorContent, type Editor } from '@tiptap/react'
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus'
-import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
+import { useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from 'react'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { NestedDrawerHeader } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -20,6 +22,7 @@ import {
 	type MarkButton
 } from './ArticleEditorControls'
 import { Icon } from './ArticleEditorIcon'
+import { sanitizeLinkHref } from './ArticleEditorUtils'
 
 type LinkEditState = { url: string; newTab: boolean } | null
 
@@ -71,6 +74,115 @@ function CalloutMenu({
    link form) dispatches this key's 'updatePosition' meta; otherwise the form keeps the toolbar's spot and runs off a phone. */
 export const ARTICLE_BUBBLE_MENU_KEY = 'articleBubbleMenu'
 
+/** The bubble's link editor. A link with a scheme other than web, mailto or tel says so under the URL on Save. */
+function LinkEditForm({
+	editor,
+	linkEdit,
+	setLinkEdit,
+	linkInputRef,
+	applyLink,
+	canOpen
+}: {
+	editor: Editor
+	linkEdit: { url: string; newTab: boolean }
+	setLinkEdit: Dispatch<SetStateAction<LinkEditState>>
+	linkInputRef: RefObject<HTMLInputElement | null>
+	applyLink: (href: string, newTab: boolean) => void
+	canOpen: boolean
+}) {
+	const [submitted, setSubmitted] = useState(false)
+	const url = linkEdit.url.trim()
+	// An empty URL removes the link; null is a URL the editor refuses.
+	const href = url ? sanitizeLinkHref(url) : ''
+	const error = submitted && href === null ? 'Enter a valid web, email (mailto:) or phone (tel:) link.' : null
+	return (
+		// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape bubbles from the link controls to cancel their shared editor.
+		<form
+			noValidate
+			onSubmit={(e) => {
+				e.preventDefault()
+				if (href !== null) return applyLink(href, linkEdit.newTab)
+				showFieldErrors(e.currentTarget, () => setSubmitted(true))
+				// The error line makes the bubble taller, so it places itself again.
+				editor.view.dispatch(editor.state.tr.setMeta(ARTICLE_BUBBLE_MENU_KEY, 'updatePosition'))
+			}}
+			onKeyDown={(event) => {
+				if (event.key !== 'Escape') return
+				event.preventDefault()
+				event.stopPropagation()
+				setLinkEdit(null)
+				editor.commands.focus()
+			}}
+			className="w-[calc(100vw-3rem)] sm:w-auto"
+		>
+			<Field hideLabel label="Link URL" error={error}>
+				{(control) => (
+					<div className="flex flex-wrap items-center gap-1 sm:flex-nowrap">
+						<input
+							{...control}
+							ref={linkInputRef}
+							value={linkEdit.url}
+							onChange={(e) => setLinkEdit({ url: e.target.value, newTab: linkEdit.newTab })}
+							placeholder="Paste or type URL"
+							className="w-full min-w-0 rounded-md bg-transparent px-2 py-1 body-md text-primary placeholder:text-tertiary focus:outline-hidden sm:w-64"
+						/>
+						<Button
+							variant="ghost"
+							size="sm"
+							aria-pressed={linkEdit.newTab}
+							data-active={linkEdit.newTab}
+							onClick={() => setLinkEdit({ url: linkEdit.url, newTab: !linkEdit.newTab })}
+						>
+							<Icon name="external" className="size-3.5" />
+							<span>New tab</span>
+						</Button>
+						<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
+						<Tooltip
+							content="Save link"
+							render={<Button type="submit" variant="ghost" size="sm" square aria-label="Save link" />}
+						>
+							<Icon name="check" className="size-4" />
+						</Tooltip>
+						<Tooltip
+							content="Remove link"
+							render={
+								<Button
+									variant="ghost"
+									size="sm"
+									square
+									onClick={() => applyLink('', linkEdit.newTab)}
+									aria-label="Remove link"
+								/>
+							}
+						>
+							<Icon name="x" className="size-4" />
+						</Tooltip>
+						{canOpen && linkEdit.url ? (
+							<Tooltip
+								content="Open link"
+								render={
+									<Button
+										as="a"
+										variant="ghost"
+										size="sm"
+										square
+										href={linkEdit.url}
+										target="_blank"
+										rel="noreferrer"
+										aria-label="Open link"
+									/>
+								}
+							>
+								<Icon name="external" className="size-4" />
+							</Tooltip>
+						) : null}
+					</div>
+				)}
+			</Field>
+		</form>
+	)
+}
+
 type ArticleEditorCanvasProps = {
 	activeEntity: ActiveEntityLink | null
 	blockItems: Array<BlockItem>
@@ -81,7 +193,7 @@ type ArticleEditorCanvasProps = {
 	markButtons: Array<MarkButton>
 	readMins: number
 	wordCount: number
-	applyLink: (raw: string, newTab: boolean) => void
+	applyLink: (href: string, newTab: boolean) => void
 	changeActiveEntityLink: () => void
 	handleLinkRail: () => void
 	insertCallout: (tone: ArticleCalloutTone) => boolean | undefined
@@ -151,80 +263,14 @@ export function ArticleEditorCanvas({
 						{/* The URL field has no border of its own, so the bubble's border shows its focus, like Input's border-brand. */}
 						<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface-glass p-1 shadow-overlay backdrop-blur has-[input:focus]:border-brand">
 							{linkEdit ? (
-								// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape bubbles from the link controls to cancel their shared editor.
-								<form
-									onSubmit={(e) => {
-										e.preventDefault()
-										applyLink(linkEdit.url, linkEdit.newTab)
-									}}
-									onKeyDown={(event) => {
-										if (event.key !== 'Escape') return
-										event.preventDefault()
-										event.stopPropagation()
-										setLinkEdit(null)
-										editor.commands.focus()
-									}}
-									className="flex w-[calc(100vw-3rem)] flex-wrap items-center gap-1 sm:w-auto sm:flex-nowrap"
-								>
-									<input
-										ref={linkInputRef}
-										value={linkEdit.url}
-										onChange={(e) => setLinkEdit({ url: e.target.value, newTab: linkEdit.newTab })}
-										aria-label="Link URL"
-										placeholder="Paste or type URL"
-										className="w-full min-w-0 rounded-md bg-transparent px-2 py-1 body-md text-primary placeholder:text-tertiary focus:outline-hidden sm:w-64"
-									/>
-									<Button
-										variant="ghost"
-										size="sm"
-										aria-pressed={linkEdit.newTab}
-										data-active={linkEdit.newTab}
-										onClick={() => setLinkEdit({ url: linkEdit.url, newTab: !linkEdit.newTab })}
-									>
-										<Icon name="external" className="size-3.5" />
-										<span>New tab</span>
-									</Button>
-									<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
-									<Tooltip
-										content="Save link"
-										render={<Button type="submit" variant="ghost" size="sm" square aria-label="Save link" />}
-									>
-										<Icon name="check" className="size-4" />
-									</Tooltip>
-									<Tooltip
-										content="Remove link"
-										render={
-											<Button
-												variant="ghost"
-												size="sm"
-												square
-												onClick={() => applyLink('', linkEdit.newTab)}
-												aria-label="Remove link"
-											/>
-										}
-									>
-										<Icon name="x" className="size-4" />
-									</Tooltip>
-									{flags.link && linkEdit.url ? (
-										<Tooltip
-											content="Open link"
-											render={
-												<Button
-													as="a"
-													variant="ghost"
-													size="sm"
-													square
-													href={linkEdit.url}
-													target="_blank"
-													rel="noreferrer"
-													aria-label="Open link"
-												/>
-											}
-										>
-											<Icon name="external" className="size-4" />
-										</Tooltip>
-									) : null}
-								</form>
+								<LinkEditForm
+									editor={editor}
+									linkEdit={linkEdit}
+									setLinkEdit={setLinkEdit}
+									linkInputRef={linkInputRef}
+									applyLink={applyLink}
+									canOpen={flags.link}
+								/>
 							) : flags.entityLink && activeEntity ? (
 								<div className="flex items-center gap-1">
 									<span className="flex items-center gap-2 px-2 py-1">

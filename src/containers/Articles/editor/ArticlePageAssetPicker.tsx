@@ -107,7 +107,7 @@ export function ArticlePageAssetPicker({
 				>
 					{isFetching && hits.length === 0 ? <p className="p-3 text-center body-sm text-tertiary">Searching…</p> : null}
 					{!isFetching && isError ? (
-						<p className="p-3 text-center body-sm text-data-down">
+						<p className="p-3 text-center body-sm text-error">
 							Couldn&apos;t search tokens. Edit the search to try again.
 						</p>
 					) : !isFetching && debouncedQuery.length > 0 && hits.length === 0 ? (

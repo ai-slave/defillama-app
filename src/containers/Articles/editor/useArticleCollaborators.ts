@@ -100,11 +100,9 @@ export function useArticleCollaborators({
 	// sheet is on screen, a toast once the reader has left it.
 	const handleAddCollaborator = async (): Promise<string | null> => {
 		if (!articleId) return null
-		const email = collaboratorEmail.trim()
-		if (!email) return 'Enter an email address'
 		try {
-			// The new row in the authors list confirms it.
-			await addCollaboratorMutation.mutateAsync({ targetArticleId: articleId, email })
+			// The new row in the authors list confirms it. The sheet has checked the address.
+			await addCollaboratorMutation.mutateAsync({ targetArticleId: articleId, email: collaboratorEmail.trim() })
 			setCollaboratorEmail('')
 			return null
 		} catch (error) {

@@ -635,6 +635,11 @@ function reduceModalAction(state: ModalState, action: ModalAction): ModalState {
 
 		case 'SET_MANUAL_FORM_OPEN':
 			if (action.payload === state.manualFormOpen) return state
+			// The category grid adds the composed series, so leaving a single-card category's form returns to their
+			// subject: Add on the grid then adds those series, or waits for a category when there are none.
+			if (!action.payload && state.selectedChartTab !== 'chain' && state.selectedChartTab !== 'protocol') {
+				return { ...state, manualFormOpen: false, selectedChartTab: state.composerItems[0]?.subjectType ?? 'chain' }
+			}
 			return { ...state, manualFormOpen: action.payload }
 
 		case 'SET_SELECTED_CHART_TAB': {

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
+import type { FieldControlProps } from '~/ui/Field'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { TAG_GROUP_BUTTON_SIZES, TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
@@ -42,7 +43,16 @@ export function AlertsHeaderIcon() {
 	)
 }
 
-export function PriceInput({ value, onValueChange }: { value: string; onValueChange: (canonical: string) => void }) {
+/** `control` is a Field's wiring (ui/Field.tsx); the input keeps its own "Price" name beside the comparison toggle. */
+export function PriceInput({
+	value,
+	onValueChange,
+	control
+}: {
+	value: string
+	onValueChange: (canonical: string) => void
+	control: FieldControlProps
+}) {
 	// What the reader types while the field has focus; null shows the formatted value.
 	const [draft, setDraft] = useState<string | null>(null)
 
@@ -50,6 +60,7 @@ export function PriceInput({ value, onValueChange }: { value: string; onValueCha
 		<div className="relative w-32">
 			<span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 body-md text-tertiary">$</span>
 			<Input
+				{...control}
 				type="text"
 				inputMode="decimal"
 				value={draft ?? formatPriceDisplay(value)}

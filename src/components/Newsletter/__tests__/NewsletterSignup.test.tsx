@@ -42,32 +42,48 @@ afterEach(async () => {
 	localStorage.clear()
 })
 
+async function render(layout: 'card' | 'strip') {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<AuthProvider>
+					<NewsletterSignup layout={layout} />
+				</AuthProvider>
+			</QueryClientProvider>
+		)
+	)
+}
+
+async function type(input: HTMLInputElement, value: string) {
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
+const errorTexts = () => [...container.querySelectorAll('.text-error')].map((element) => element.textContent)
+
 test.each(['card', 'strip'] as const)(
-	'%s allows clearing both defaults, then submits only the reselected newsletter',
+	'%s refuses a submit with no newsletter, then submits only the reselected one',
 	async (layout) => {
 		const pending = Promise.withResolvers<Response>()
 		http.serve({ '/newsletter/subscribe': () => pending.promise })
-		await act(async () =>
-			root.render(
-				<QueryClientProvider client={client}>
-					<AuthProvider>
-						<NewsletterSignup layout={layout} />
-					</AuthProvider>
-				</QueryClientProvider>
-			)
-		)
+		await render(layout)
 		const choices = [...container.querySelectorAll<HTMLButtonElement>('[role="checkbox"], [role="switch"]')]
 		expect(choices).toHaveLength(2)
 		expect(choices.map((e) => e.getAttribute('aria-checked'))).toEqual(['true', 'true'])
-		expect(subscribeRequests()).toHaveLength(0)
 		await act(async () => {
 			for (const choice of choices) choice.click()
 		})
 		const submit = container.querySelector<HTMLButtonElement>('button[type="submit"]')!
-		expect(submit.getAttribute('aria-disabled')).toBe('true')
-		expect(submit.disabled).toBe(false)
-		expect(choices.map((e) => e.getAttribute('aria-checked'))).toEqual(['false', 'false'])
+		expect(submit.getAttribute('aria-disabled')).toBeNull()
+		expect(errorTexts()).toEqual([])
+		await act(async () => submit.click())
+		expect(errorTexts()).toEqual(['Choose at least one newsletter.'])
+		expect(document.activeElement).toBe(choices[0])
+		expect(subscribeRequests()).toHaveLength(0)
 		await act(async () => choices[1].click())
+		expect(errorTexts()).toEqual([])
 		await act(async () => submit.click())
 		await waitForUi(() => expect(submit.getAttribute('aria-disabled')).toBe('true'))
 		expect(submit.disabled).toBe(false)
@@ -82,5 +98,26 @@ test.each(['card', 'strip'] as const)(
 		expect(subscribeRequests()).toHaveLength(1)
 		await act(async () => pending.resolve(Response.json({ email: 'reader@example.com', result: { research: 'ok' } })))
 		await waitForUi(() => expect(client.isMutating()).toBe(0))
+	}
+)
+
+test.each(['card', 'strip'] as const)(
+	'%s says what is wrong with the email under its field and focuses it',
+	async (layout) => {
+		await render(layout)
+		const email = container.querySelector<HTMLInputElement>('input[type="email"]')!
+		const submit = container.querySelector<HTMLButtonElement>('button[type="submit"]')!
+		await type(email, '')
+		expect(errorTexts()).toEqual([])
+		await act(async () => submit.click())
+		expect(errorTexts()).toEqual(['Enter an email address.'])
+		expect(document.activeElement).toBe(email)
+		expect(email.getAttribute('aria-invalid')).toBe('true')
+		await type(email, 'reader@example')
+		expect(errorTexts()).toEqual(['Enter a valid email address.'])
+		await type(email, 'reader@example.com')
+		expect(errorTexts()).toEqual([])
+		expect(email.getAttribute('aria-invalid')).toBeNull()
+		expect(subscribeRequests()).toHaveLength(0)
 	}
 )

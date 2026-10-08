@@ -1,12 +1,13 @@
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { Fragment, useId, useRef, useState, type ReactNode } from 'react'
+import { Fragment, type MouseEvent, useId, useRef, useState } from 'react'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '~/containers/MarketMakers/ClaimTurnstile'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { keepFocus, neighbourRowControl, takeLostFocus } from '~/ui/focus'
+import { Field } from '~/ui/Field'
+import { keepFocus, neighbourRowControl, showFieldErrors, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { fieldFrameInputStyles, fieldFrameStyles, Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -33,7 +34,6 @@ import {
 	type UtrClaimRows
 } from './claimRequest'
 import { formatClaimProjectStatus, resolveRequestedProjectId } from './navigation'
-import { scrollToFirstUtrClaimError } from './scrollToClaimError'
 import type {
 	UtrClaimExchangeOption,
 	UtrClaimMarketMakerOption,
@@ -60,53 +60,26 @@ function createUploadStatuses(): Record<UtrClaimDocumentKey, UploadStatus> {
 	>
 }
 
-type FieldProps = {
-	id: string
-	'aria-required': true | undefined
-	'aria-invalid': true | undefined
-	'aria-describedby': string | undefined
-}
-
-/** A visible label tied to its field, and the field's error read out with it. */
-function LabeledField({
-	label,
-	required = false,
-	error,
-	children
-}: {
-	label: string
-	required?: boolean
-	error?: string | null
-	children: (field: FieldProps) => ReactNode
-}) {
-	const id = useId()
+/** The form's mark for a mandatory field, explained by its "*Mandatory fields" note. */
+function requiredLabel(label: string) {
 	return (
-		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className="label-md text-primary">
-				{label}
-				{required ? <span aria-hidden="true">*</span> : null}
-			</label>
-			{children({
-				id,
-				'aria-required': required || undefined,
-				'aria-invalid': error ? true : undefined,
-				'aria-describedby': error ? `${id}-error` : undefined
-			})}
-			{error ? (
-				<span id={`${id}-error`} data-utr-claim-error className="body-sm text-error">
-					{error}
-				</span>
-			) : null}
-		</div>
+		<>
+			{label}
+			<span aria-hidden="true">*</span>
+		</>
 	)
 }
 
+type CellControlProps = { 'aria-invalid': true | undefined; 'aria-describedby': string | undefined }
+
 function CellInput({
 	column,
+	control,
 	value,
 	onChange
 }: {
 	column: ClaimColumn
+	control: CellControlProps
 	value: string
 	onChange: (value: string) => void
 }) {
@@ -114,6 +87,7 @@ function CellInput({
 		const options = column.options ?? []
 		return (
 			<select
+				{...control}
 				className={`${inputStyles} w-full cursor-pointer`}
 				aria-label={column.label}
 				value={value}
@@ -133,6 +107,7 @@ function CellInput({
 		return (
 			<label className={`${fieldFrameStyles} w-full`}>
 				<input
+					{...control}
 					aria-label={column.label}
 					value={value}
 					onChange={(event) => onChange(event.target.value)}
@@ -145,6 +120,7 @@ function CellInput({
 	}
 	return (
 		<Input
+			{...control}
 			aria-label={column.label}
 			type={column.type === 'url' ? 'url' : 'text'}
 			value={value}
@@ -183,17 +159,21 @@ function firstSectionError(errors: Record<string, string>, sectionId: string): s
 	return Object.entries(errors).find(([path]) => path === sectionId || path.startsWith(`${sectionId}.`))?.[1] ?? null
 }
 
+/** A disclosure table. After a submit, every invalid cell is marked and the section's first error shows under the
+    table, so showFieldErrors focuses the first invalid cell. `errors` is null until the first submit. */
 function InlineTableSection({
 	section,
 	rows,
-	error,
+	errors,
 	onChange
 }: {
 	section: ClaimTableSection
 	rows: Array<ClaimDraftRow>
-	error: string | null
+	errors: Record<string, string> | null
 	onChange: (rows: Array<ClaimDraftRow>) => void
 }) {
+	const errorId = useId()
+	const error = errors ? firstSectionError(errors, section.id) : null
 	const addRef = useRef<HTMLButtonElement>(null)
 	// A deleted row's button hands focus to the next row's delete button, the one above, or Add more.
 	const deleteRow = (rowIndex: number, remove: HTMLElement) => {
@@ -204,7 +184,7 @@ function InlineTableSection({
 		)
 	}
 	return (
-		<div className="flex flex-col gap-3">
+		<div data-invalid={error ? '' : undefined} className="flex flex-col gap-3">
 			<h3 className="heading-xs">{section.title}</h3>
 			{section.description ? <p className="body-sm text-secondary">{section.description}</p> : null}
 			{rows.length > 0 ? (
@@ -227,6 +207,11 @@ function InlineTableSection({
 										<td key={column.key} className="min-w-[160px] px-2 py-2">
 											<CellInput
 												column={column}
+												control={
+													errors?.[`${section.id}.${rowIndex}.${column.key}`]
+														? { 'aria-invalid': true, 'aria-describedby': errorId }
+														: { 'aria-invalid': undefined, 'aria-describedby': undefined }
+												}
 												value={row.values[column.key] ?? ''}
 												onChange={(value) => {
 													const selectedOption = column.options?.find((option) => option.value === value)
@@ -275,9 +260,9 @@ function InlineTableSection({
 				</div>
 			) : null}
 			{error ? (
-				<span data-utr-claim-error className="body-sm text-error">
+				<p id={errorId} className="body-sm text-error">
 					{error}
-				</span>
+				</p>
 			) : null}
 			<span>
 				{/* Add more disables itself at the row limit; it stays focusable so focus does not drop to the page. */}
@@ -382,7 +367,7 @@ function AttachDocuments({
 				</div>
 			) : null}
 			{status.state === 'failed' ? (
-				<div data-utr-claim-error className="flex items-center gap-2 body-sm text-error">
+				<div className="flex items-center gap-2 body-sm text-error">
 					<span>{status.error}</span>
 					<Button variant="link" onClick={() => keepFocus(onClearError, () => inputRef.current)}>
 						Dismiss
@@ -474,13 +459,13 @@ export function ClaimTokenProfile({
 	)
 	const [documents, setDocuments] = useState<UtrClaimDocuments>(createEmptyDocuments)
 	const [uploadStatuses, setUploadStatuses] = useState<Record<UtrClaimDocumentKey, UploadStatus>>(createUploadStatuses)
-	const [submitAttempted, setSubmitAttempted] = useState(false)
+	const [submitted, setSubmitted] = useState(false)
 	const [scoringCriteriaOpen, setScoringCriteriaOpen] = useState(false)
-	const formRef = useRef<HTMLDivElement>(null)
+	const consentsErrorId = useId()
+	const submitBlockerId = useId()
 	const submit = useMutation({ mutationFn: submitUtrClaim })
 	// The last failed submit, kept on screen while a retry runs: the mutation clears its error when the retry starts.
 	const [submitError, setSubmitError] = useState<string | null>(null)
-	const scrollToError = () => window.requestAnimationFrame(() => scrollToFirstUtrClaimError(formRef.current))
 	const selectedProject = variant === 'claim' ? (projects.find((project) => project.arcticId === token) ?? null) : null
 	const selectedProjectStatus = selectedProject ? formatClaimProjectStatus(selectedProject) : null
 
@@ -504,11 +489,16 @@ export function ClaimTokenProfile({
 		turnstileToken,
 		clickId
 	})
-	const validation = buildUtrClaimRequest(requestInput(null))
-	const errors = validation.errors
-	const showError = (key: string) => (submitAttempted ? errors[key] : null)
-	const hasPendingUpload = Object.values(uploadStatuses).some((status) => status.state === 'uploading')
-	const hasUploadError = Object.values(uploadStatuses).some((status) => status.state === 'failed')
+	const errors = buildUtrClaimRequest(requestInput(null)).errors
+	const consentsError = submitted ? errors.consents : null
+	// Gates, not validation: each keeps Submit disabled and says why beside it.
+	const submitBlocker = Object.values(uploadStatuses).some((status) => status.state === 'uploading')
+		? 'Wait for the documents to finish uploading.'
+		: Object.values(uploadStatuses).some((status) => status.state === 'failed')
+			? 'A document upload failed. Dismiss its error or attach the file again.'
+			: captchaEnabled && !turnstileToken
+				? 'Waiting for the security check above to finish.'
+				: null
 
 	const uploadDocuments = async (key: UtrClaimDocumentKey, files: Array<File>) => {
 		const validationError = validateUtrClaimFiles(files, documents[key].length)
@@ -546,29 +536,22 @@ export function ClaimTokenProfile({
 		/>
 	)
 
-	// Submit refuses presses while pending, uploading, after a failed upload or before the verification check passes.
-	const onSubmit = () => {
-		setSubmitAttempted(true)
-		const clickId =
-			typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('fgclick')?.trim() || null
+	const onSubmit = (event: MouseEvent<HTMLButtonElement>) => {
+		const clickId = new URL(window.location.href).searchParams.get('fgclick')?.trim() || null
 		const result = buildUtrClaimRequest(requestInput(clickId))
-		if (!result.payload) {
-			scrollToError()
-			return
-		}
+		if (!result.payload) return showFieldErrors(event.currentTarget.form!, () => setSubmitted(true))
 		submit.mutate(result.payload, {
 			onSuccess: () => window.scrollTo({ top: 0 }),
 			onError: (error) => {
 				setSubmitError(error.message)
 				setTurnstileToken('')
 				turnstileRef.current?.reset()
-				scrollToError()
 			}
 		})
 	}
 
 	return (
-		<div ref={formRef} className="flex flex-col gap-6">
+		<div className="flex flex-col gap-6">
 			<div className="flex flex-col items-center gap-1 pt-4 text-center">
 				<h1 className="heading-sm">
 					{variant === 'claim' ? (
@@ -587,7 +570,9 @@ export function ClaimTokenProfile({
 			{submit.isSuccess ? (
 				<ClaimConfirmation />
 			) : (
-				<div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+				// Submit is type="button": with no submit button and many fields, Enter in a field never sends a half-filled
+				// disclosure (the browser skips implicit submission). The form gives showFieldErrors its fields.
+				<form noValidate className="mx-auto flex w-full max-w-5xl flex-col gap-6">
 					<Card padding="md" className="flex flex-col gap-4">
 						<div className="flex flex-col gap-1 border-b border-subtle pb-3">
 							<h2 className="heading-sm">Verify your affiliation</h2>
@@ -597,11 +582,11 @@ export function ClaimTokenProfile({
 							</p>
 						</div>
 						{variant === 'claim' ? (
-							<LabeledField label="Token to claim" error={showError('token')}>
-								{(field) => (
+							<Field label="Token to claim" error={submitted ? errors.token : null}>
+								{(control) => (
 									<span className="flex flex-wrap items-center gap-2">
 										<select
-											{...field}
+											{...control}
 											className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
 											value={token}
 											disabled={projects.length === 0}
@@ -619,86 +604,102 @@ export function ClaimTokenProfile({
 										</span>
 									</span>
 								)}
-							</LabeledField>
+							</Field>
 						) : (
-							<LabeledField label="Token to claim" required error={showError('token')}>
-								{(field) => (
-									<Input {...field} value={token} onChange={(event) => setToken(event.target.value)} maxLength={200} />
+							<Field label={requiredLabel('Token to claim')} error={submitted ? errors.token : null}>
+								{(control) => (
+									<Input
+										{...control}
+										required
+										value={token}
+										onChange={(event) => setToken(event.target.value)}
+										maxLength={200}
+									/>
 								)}
-							</LabeledField>
+							</Field>
 						)}
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<LabeledField label="First name" required error={showError('firstName')}>
-								{(field) => (
+							<Field label={requiredLabel('First name')} error={submitted ? errors.firstName : null}>
+								{(control) => (
 									<Input
-										{...field}
+										{...control}
+										required
 										value={firstName}
 										onChange={(event) => setFirstName(event.target.value)}
 										maxLength={100}
 									/>
 								)}
-							</LabeledField>
-							<LabeledField label="Last name" required error={showError('lastName')}>
-								{(field) => (
+							</Field>
+							<Field label={requiredLabel('Last name')} error={submitted ? errors.lastName : null}>
+								{(control) => (
 									<Input
-										{...field}
+										{...control}
+										required
 										value={lastName}
 										onChange={(event) => setLastName(event.target.value)}
 										maxLength={100}
 									/>
 								)}
-							</LabeledField>
-							<LabeledField label="Position at organization" required error={showError('position')}>
-								{(field) => (
+							</Field>
+							<Field label={requiredLabel('Position at organization')} error={submitted ? errors.position : null}>
+								{(control) => (
 									<Input
-										{...field}
+										{...control}
+										required
 										value={position}
 										onChange={(event) => setPosition(event.target.value)}
 										maxLength={200}
 										placeholder="E.g., CEO"
 									/>
 								)}
-							</LabeledField>
-							<LabeledField label="Your LinkedIn or X profile" error={showError('profileUrl')}>
-								{(field) => (
+							</Field>
+							<Field label="Your LinkedIn or X profile" error={submitted ? errors.profileUrl : null}>
+								{(control) => (
 									<Input
-										{...field}
+										{...control}
 										value={profileUrl}
 										onChange={(event) => setProfileUrl(event.target.value)}
 										maxLength={500}
 										placeholder="Enter a valid LinkedIn or X URL"
 									/>
 								)}
-							</LabeledField>
-							<LabeledField label="Your email address" required error={showError('email')}>
-								{(field) => (
+							</Field>
+							<Field label={requiredLabel('Your email address')} error={submitted ? errors.email : null}>
+								{(control) => (
 									<Input
-										{...field}
+										{...control}
 										type="email"
+										required
 										value={email}
 										onChange={(event) => setEmail(event.target.value)}
 										maxLength={320}
 									/>
 								)}
-							</LabeledField>
-							<LabeledField label="Telegram handle">
-								{(field) => (
+							</Field>
+							<Field label="Telegram handle">
+								{(control) => (
 									<Input
-										{...field}
+										{...control}
 										value={telegram}
 										onChange={(event) => setTelegram(event.target.value)}
 										maxLength={100}
 									/>
 								)}
-							</LabeledField>
+							</Field>
 						</div>
-						<div className="flex flex-col gap-1.5">
-							<span className="label-md text-primary">Other support document (optional)</span>
+						<div className="flex flex-col gap-1">
+							<span className="label-sm text-secondary">Other support document (optional)</span>
 							{documentUploader('alignment', 'attach-alignment')}
 						</div>
-						<div className="flex flex-col gap-1 border-t border-subtle pt-4">
+						{/* Two required consents share one error: each unticked box is marked, and focus lands on the first. */}
+						<div
+							data-invalid={consentsError ? '' : undefined}
+							className="flex flex-col gap-1 border-t border-subtle pt-4"
+						>
 							<Checkbox
 								variant="consent"
+								aria-invalid={consentsError && !alignmentConsent ? true : undefined}
+								aria-describedby={consentsError ? consentsErrorId : undefined}
 								checked={alignmentConsent}
 								onChange={(event) => setAlignmentConsent(event.target.checked)}
 							>
@@ -706,6 +707,8 @@ export function ClaimTokenProfile({
 							</Checkbox>
 							<Checkbox
 								variant="consent"
+								aria-invalid={consentsError && !termsConsent ? true : undefined}
+								aria-describedby={consentsError ? consentsErrorId : undefined}
 								checked={termsConsent}
 								onChange={(event) => setTermsConsent(event.target.checked)}
 							>
@@ -731,16 +734,14 @@ export function ClaimTokenProfile({
 									.*
 								</span>
 							</Checkbox>
-							{showError('consents') ? (
-								<span data-utr-claim-error className="body-sm text-error">
-									{showError('consents')}
-								</span>
+							{consentsError ? (
+								<p id={consentsErrorId} className="body-sm text-error">
+									{consentsError}
+								</p>
 							) : null}
 							<span className="body-sm text-tertiary">*Mandatory fields</span>
 						</div>
-						{captchaEnabled ? (
-							<ClaimTurnstile ref={turnstileRef} onVerify={setTurnstileToken} onError={() => setTurnstileToken('')} />
-						) : null}
+						<ClaimTurnstile ref={turnstileRef} onVerify={setTurnstileToken} onError={() => setTurnstileToken('')} />
 					</Card>
 
 					<h2 className="heading-sm">Disclosure details</h2>
@@ -776,7 +777,7 @@ export function ClaimTokenProfile({
 										<InlineTableSection
 											section={section}
 											rows={rows[section.id]}
-											error={submitAttempted ? firstSectionError(errors, section.id) : null}
+											errors={submitted ? errors : null}
 											onChange={(nextRows) => setRows((current) => ({ ...current, [section.id]: nextRows }))}
 										/>
 										{block.extras?.mmMonitoringQuestion && section.id === 'marketMakerEngagements' ? (
@@ -813,10 +814,11 @@ export function ClaimTokenProfile({
 						</Card>
 					))}
 
-					{submitError ? (
-						<div data-utr-claim-error>
-							<InlineStatus variant="error">{submitError}</InlineStatus>
-						</div>
+					{submitError ? <InlineStatus variant="error">{submitError}</InlineStatus> : null}
+					{submitBlocker ? (
+						<p id={submitBlockerId} className="body-sm text-tertiary">
+							{submitBlocker}
+						</p>
 					) : null}
 					{/* Focusable while disabled: a failed submit resets the verification check, which disables the pressed
 					    button until it passes again. */}
@@ -827,13 +829,14 @@ export function ClaimTokenProfile({
 						className="w-full justify-center"
 						pendingLabel={submit.isPending ? 'Submitting…' : null}
 						accessibleWhenDisabled
-						disabled={hasPendingUpload || hasUploadError || (captchaEnabled && !turnstileToken)}
+						disabled={submitBlocker !== null}
+						aria-describedby={submitBlocker ? submitBlockerId : undefined}
 						onClick={onSubmit}
 					>
 						Submit Disclosure Details
 						<Icon name="arrow-up-right" height={14} width={14} />
 					</Button>
-				</div>
+				</form>
 			)}
 			<UtrDocsDrawer
 				open={scoringCriteriaOpen}

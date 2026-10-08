@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
@@ -7,7 +7,9 @@ import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import { MetricCard } from '../components/MetricCard'
 
 export function SelectMetricsStep() {
-	const { state, actions, availableMetrics } = useComparisonWizardContext()
+	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
+	const id = useId()
+	const error = derived.shownStepError
 	// Availability comes from app metadata: until it loads every metric reads as unavailable.
 	const { loading: metadataLoading, error: metadataError, retry: retryMetadata, retrying } = useAppMetadata()
 	const [showInvalid, setShowInvalid] = useState(false)
@@ -22,7 +24,9 @@ export function SelectMetricsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h3 className="label-md text-primary">Select metrics to compare</h3>
+				<h3 id={`${id}-heading`} className="label-md text-primary">
+					Select metrics to compare
+				</h3>
 				<p className="mt-1 body-sm text-secondary">
 					Choose the metrics you want to compare across your selected {typeLabel}.
 				</p>
@@ -97,18 +101,31 @@ export function SelectMetricsStep() {
 						</div>
 					</div>
 
-					<div className="max-h-[340px] overflow-y-auto rounded-lg">
-						<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-							{displayedMetrics.map((metric) => (
-								<MetricCard
-									key={metric.metric}
-									metric={metric}
-									isSelected={state.selectedMetrics.includes(metric.metric)}
-									onToggle={() => actions.toggleMetric(metric.metric)}
-									itemLabel={typeLabel}
-								/>
-							))}
+					<div
+						role="group"
+						aria-labelledby={`${id}-heading`}
+						aria-describedby={error ? `${id}-error` : undefined}
+						data-invalid={error ? '' : undefined}
+						className="flex flex-col gap-1"
+					>
+						<div className="max-h-[340px] overflow-y-auto rounded-lg">
+							<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+								{displayedMetrics.map((metric) => (
+									<MetricCard
+										key={metric.metric}
+										metric={metric}
+										isSelected={state.selectedMetrics.includes(metric.metric)}
+										onToggle={() => actions.toggleMetric(metric.metric)}
+										itemLabel={typeLabel}
+									/>
+								))}
+							</div>
 						</div>
+						{error ? (
+							<p id={`${id}-error`} className="body-sm text-error">
+								{error}
+							</p>
+						) : null}
 					</div>
 					{displayedMetrics.length === 0 ? (
 						<InlineStatus variant="empty">

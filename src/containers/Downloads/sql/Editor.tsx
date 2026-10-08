@@ -133,6 +133,10 @@ interface EditorProps {
 	fitContentHeight?: boolean
 	// Monaco loads after its dialog opens; take focus on mount unless the reader already moved to a field.
 	autoFocus?: boolean
+	/** Field's control wiring (ui/Field.tsx), applied to Monaco's own editable element, the one that takes focus. */
+	id?: string
+	'aria-invalid'?: true | undefined
+	'aria-describedby'?: string | undefined
 }
 
 export function Editor({
@@ -144,6 +148,9 @@ export function Editor({
 	readOnly = false,
 	fitContentHeight = false,
 	autoFocus = false,
+	id,
+	'aria-invalid': ariaInvalid,
+	'aria-describedby': ariaDescribedBy,
 	ref
 }: EditorProps & { ref?: Ref<EditorHandle> }) {
 	// The theme store, not the <html> class: the class flips in an effect after the toggle renders.
@@ -151,6 +158,17 @@ export function Editor({
 	const theme = isDarkMode ? DARK_THEME_ID : LIGHT_THEME_ID
 	const [contentHeight, setContentHeight] = useState<number | null>(null)
 	const editorInstanceRef = useRef<any>(null)
+	const [inputArea, setInputArea] = useState<HTMLElement | null>(null)
+
+	// Monaco renders its editable element itself and takes no ARIA props, so Field's wiring is copied onto it.
+	useEffect(() => {
+		if (!inputArea) return
+		const attributes = { id, 'aria-invalid': ariaInvalid ? 'true' : undefined, 'aria-describedby': ariaDescribedBy }
+		for (const [name, attributeValue] of Object.entries(attributes)) {
+			if (attributeValue) inputArea.setAttribute(name, attributeValue)
+			else inputArea.removeAttribute(name)
+		}
+	}, [inputArea, id, ariaInvalid, ariaDescribedBy])
 
 	const contextRef = useRef<CompletionContext>({ tables })
 	useEffect(() => {
@@ -228,6 +246,13 @@ export function Editor({
 	const handleMount = useCallback(
 		(editor: any, monaco: any) => {
 			editorInstanceRef.current = editor
+			// The element that takes focus and typing: the EditContext div where the browser supports it (Monaco's
+			// default), else the textarea. Never the EditContext mode's .ime-text-area, which is readonly and aria-hidden.
+			setInputArea(
+				(editor.getDomNode() as HTMLElement | null)?.querySelector<HTMLElement>(
+					'.native-edit-context, textarea.inputarea'
+				) ?? null
+			)
 			const updateContentHeight = () => {
 				if (!fitContentHeight) return
 				const nextHeight = Math.max(180, Math.ceil(editor.getContentHeight()))

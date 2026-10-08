@@ -4,6 +4,8 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Field } from '~/ui/Field'
+import { showFieldErrors } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { formatDateTime } from '~/utils/dateFormat'
@@ -21,6 +23,18 @@ const ADDRESS_PLACEHOLDERS: Record<string, string> = {
 	solana: 'Token mint address',
 	tron: 'Base58 or hex contract address',
 	ton: 'Jetton master address'
+}
+
+/** What stops this address from forming a price key: an empty field, or a value the key format refuses. */
+function addressError(chain: string, address: string): string | null {
+	if (!address.trim()) return 'Enter a token address or ID.'
+	if (!chain) return null
+	try {
+		tokenPriceKey(chain, address)
+		return null
+	} catch (error) {
+		return (error as Error).message
+	}
 }
 
 function PricingResult({ tokenKey, details }: { tokenKey: string; details: PricingDetails }) {
@@ -77,13 +91,12 @@ function PricingResult({ tokenKey, details }: { tokenKey: string; details: Prici
 }
 
 export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Record<string, string> }) {
-	const chainId = useId()
-	const addressId = useId()
 	const moveHintId = useId()
 	const requestId = useRef(0)
 	const [chain, setChain] = useState('')
 	const [address, setAddress] = useState('')
 	const [result, setResult] = useState<CheckResult>({ status: 'idle' })
+	const [submitted, setSubmitted] = useState(false)
 	const chainsQuery = useQuery({
 		queryKey: ['price-check', 'chains'],
 		queryFn: fetchPricingChains,
@@ -116,17 +129,14 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 		setResult({ status: 'idle' })
 	}
 
+	const chainError = chain ? null : 'Choose a chain.'
+	const tokenError = addressError(chain, address)
+
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
+		if (chainError || tokenError) return showFieldErrors(event.currentTarget, () => setSubmitted(true))
 		const currentRequest = ++requestId.current
-		let key: string
-		try {
-			key = tokenPriceKey(chain, address)
-		} catch (error) {
-			setResult({ status: 'error', message: error instanceof Error ? error.message : 'Invalid token.' })
-			return
-		}
-
+		const key = tokenPriceKey(chain, address)
 		setResult({ status: 'loading' })
 		try {
 			const details = await checkTokenPricingDetails(key)
@@ -147,67 +157,85 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 						Check the current price and earliest price timestamp returned by DefiLlama.
 					</p>
 				</div>
-				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
-					<div className="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
-						<div className="flex flex-col gap-1">
-							<label htmlFor={chainId} className="label-sm text-secondary">
-								Chain
-							</label>
-							<div className="relative">
-								<SelectWithCombobox
-									allValues={chainOptions}
-									selectedValues={chain ? [chain] : []}
-									setSelectedValues={(values) => {
-										setChain(values[0] ?? '')
+				<form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+					{/* From md the fields share subgrid rows (label, control, error), so an error under one field never moves the
+					    controls beside it. */}
+					<div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] md:grid-rows-[auto_auto_auto] md:gap-y-0">
+						<Field
+							label="Chain"
+							error={submitted ? chainError : null}
+							className="md:row-span-3 md:grid md:grid-rows-subgrid"
+						>
+							{(control) => (
+								<div className="relative">
+									<SelectWithCombobox
+										allValues={chainOptions}
+										selectedValues={chain ? [chain] : []}
+										setSelectedValues={(values) => {
+											setChain(values[0] ?? '')
+											resetResult()
+										}}
+										label={selectedChain?.name ?? (chainsQuery.isPending ? 'Loading chains...' : 'Select a chain')}
+										variant="input"
+										size="md"
+										singleSelect
+										searchPlaceholder="Search chains..."
+										popoverClassName="sm:w-(--popover-anchor-width) sm:min-w-0"
+										className={`w-full justify-between ${selectedChain ? 'pl-9' : ''}`}
+										triggerProps={{
+											...control,
+											'aria-label': 'Chain',
+											disabled: chainsQuery.isPending || chainsQuery.isError
+										}}
+									/>
+									{selectedChain ? (
+										<span
+											aria-hidden="true"
+											className="pointer-events-none absolute inset-y-0 left-3 flex items-center"
+										>
+											<TokenLogo name={selectedChain.name} kind="chain" size={18} />
+										</span>
+									) : null}
+								</div>
+							)}
+						</Field>
+						<Field
+							label="Token address or ID"
+							error={submitted ? tokenError : null}
+							className="md:row-span-3 md:grid md:grid-rows-subgrid"
+						>
+							{(control) => (
+								<Input
+									{...control}
+									// The Move hint sits under the whole form row, outside the Field.
+									aria-describedby={
+										[control['aria-describedby'], moveTokenExample ? moveHintId : null].filter(Boolean).join(' ') ||
+										undefined
+									}
+									autoCapitalize="off"
+									autoComplete="off"
+									spellCheck={false}
+									value={address}
+									onChange={(event) => {
+										setAddress(event.currentTarget.value)
 										resetResult()
 									}}
-									label={selectedChain?.name ?? (chainsQuery.isPending ? 'Loading chains...' : 'Select a chain')}
-									variant="input"
-									size="md"
-									singleSelect
-									searchPlaceholder="Search chains..."
-									popoverClassName="sm:w-(--popover-anchor-width) sm:min-w-0"
-									className={`w-full justify-between ${selectedChain ? 'pl-9' : ''}`}
-									triggerProps={{
-										id: chainId,
-										'aria-label': 'Chain',
-										disabled: chainsQuery.isPending || chainsQuery.isError
-									}}
+									placeholder={moveTokenExample ?? ADDRESS_PLACEHOLDERS[chain] ?? 'Token address or identifier'}
+									className="w-full"
+									required
 								/>
-								{selectedChain ? (
-									<span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-										<TokenLogo name={selectedChain.name} kind="chain" size={18} />
-									</span>
-								) : null}
-							</div>
-						</div>
-						<div className="flex flex-col gap-1">
-							<label htmlFor={addressId} className="label-sm text-secondary">
-								Token address or ID
-							</label>
-							<Input
-								id={addressId}
-								aria-describedby={moveTokenExample ? moveHintId : undefined}
-								autoCapitalize="off"
-								autoComplete="off"
-								spellCheck={false}
-								value={address}
-								onChange={(event) => {
-									setAddress(event.currentTarget.value)
-									resetResult()
-								}}
-								placeholder={moveTokenExample ?? ADDRESS_PLACEHOLDERS[chain] ?? 'Token address or identifier'}
-								className="w-full"
-								required
-							/>
-						</div>
+							)}
+						</Field>
 						<Button
 							type="submit"
 							size="md"
 							variant="primary"
-							disabled={!chain}
-							pendingLabel={result.status === 'loading' ? 'Checking…' : null}
-							className="w-full md:w-auto"
+							// The chain list gates the form: the submit waits while it loads, and stays off beside the failure and its Retry.
+							pendingLabel={
+								result.status === 'loading' ? 'Checking…' : chainsQuery.isPending ? 'Loading chains…' : null
+							}
+							disabled={chainsQuery.isError}
+							className="w-full md:col-start-3 md:row-start-2 md:w-auto"
 						>
 							Check pricing
 						</Button>

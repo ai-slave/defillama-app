@@ -2,6 +2,7 @@ import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
+import { Field } from '~/ui/Field'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -23,6 +24,8 @@ interface EntityPickerListProps {
 	onToggle: (value: string) => void
 	onClear: () => void
 	isLoading?: boolean
+	/** What Add still needs (a pick), shown under the list once Add was pressed. */
+	error: string | null
 }
 
 export function EntityPickerList({
@@ -31,7 +34,8 @@ export function EntityPickerList({
 	selectedEntities,
 	onToggle,
 	onClear,
-	isLoading = false
+	isLoading = false,
+	error
 }: EntityPickerListProps) {
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
@@ -100,92 +104,102 @@ export function EntityPickerList({
 		)
 	}
 
+	// With nothing picked, the search takes the error and the focus: picking starts there.
 	return (
-		<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-subtle">
-			<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
-				<div className="relative flex-1">
-					<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
-					<Input
-						ref={searchRef}
-						onInput={(e) => setSearch(e.currentTarget.value)}
-						aria-label={`Search ${mode === 'chain' ? 'chains' : 'protocols'}`}
-						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}…`}
-						className={searchFieldInputPlacementStyles}
-					/>
+		<Field
+			hideLabel
+			label={`Search ${mode === 'chain' ? 'chains' : 'protocols'}`}
+			error={error}
+			className="h-full min-h-0"
+		>
+			{(control) => (
+				<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-subtle">
+					<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
+						<div className="relative flex-1">
+							<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+							<Input
+								{...control}
+								ref={searchRef}
+								onInput={(e) => setSearch(e.currentTarget.value)}
+								placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}…`}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</div>
+						{selectedEntities.length > 0 ? (
+							<div className="ml-3 flex items-center gap-2 label-sm">
+								<span className="text-secondary">{selectedEntities.length} selected</span>
+								<Button variant="link" onClick={() => keepFocus(onClear, () => searchRef.current)}>
+									Clear
+								</Button>
+							</div>
+						) : null}
+					</div>
+
+					<div ref={listRef} className="flex-1 overflow-y-auto">
+						{filteredEntities.length === 0 ? (
+							<div className="flex h-full items-center justify-center body-sm text-tertiary">
+								No {mode === 'chain' ? 'chains' : 'protocols'} found
+							</div>
+						) : (
+							<div
+								style={{
+									height: virtualizer.totalSize,
+									position: 'relative'
+								}}
+							>
+								{virtualizer.items.map((row) => {
+									const entity = filteredEntities[row.index]
+									if (!entity) return null
+									const isSelected = selectedEntities.includes(entity.value)
+									const iconUrl = getItemIconUrl(mode, null, entity.value)
+									const isChild = entity.isChild && !!entity.parentValue && visibleEntityValues.has(entity.parentValue)
+
+									return (
+										<button
+											key={entity.value}
+											type="button"
+											aria-pressed={isSelected}
+											onClick={() => onToggle(entity.value)}
+											className={`flex w-full items-center gap-3 py-2 pr-3 text-left label-sm transition-all ${
+												isSelected ? 'bg-brand-tint' : ''
+											} ${isChild ? 'pl-8' : 'pl-3'}`}
+											style={{
+												position: 'absolute',
+												top: 0,
+												left: 0,
+												width: '100%',
+												transform: `translateY(${row.start}px)`
+											}}
+										>
+											<div
+												className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+													isSelected ? 'border-brand bg-brand' : 'border-subtle bg-surface-elevated-1'
+												}`}
+											>
+												{isSelected ? <Icon name="check" width={10} height={10} className="text-on-brand" /> : null}
+											</div>
+
+											{iconUrl ? (
+												<img
+													src={iconUrl}
+													alt={entity.label}
+													width={20}
+													height={20}
+													className="size-5 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
+												/>
+											) : null}
+
+											<span className={`truncate ${isSelected ? 'font-medium text-link' : 'text-primary'}`}>
+												{entity.label}
+											</span>
+										</button>
+									)
+								})}
+							</div>
+						)}
+					</div>
 				</div>
-				{selectedEntities.length > 0 ? (
-					<div className="ml-3 flex items-center gap-2 label-sm">
-						<span className="text-secondary">{selectedEntities.length} selected</span>
-						<Button variant="link" onClick={() => keepFocus(onClear, () => searchRef.current)}>
-							Clear
-						</Button>
-					</div>
-				) : null}
-			</div>
-
-			<div ref={listRef} className="flex-1 overflow-y-auto">
-				{filteredEntities.length === 0 ? (
-					<div className="flex h-full items-center justify-center body-sm text-tertiary">
-						No {mode === 'chain' ? 'chains' : 'protocols'} found
-					</div>
-				) : (
-					<div
-						style={{
-							height: virtualizer.totalSize,
-							position: 'relative'
-						}}
-					>
-						{virtualizer.items.map((row) => {
-							const entity = filteredEntities[row.index]
-							if (!entity) return null
-							const isSelected = selectedEntities.includes(entity.value)
-							const iconUrl = getItemIconUrl(mode, null, entity.value)
-							const isChild = entity.isChild && !!entity.parentValue && visibleEntityValues.has(entity.parentValue)
-
-							return (
-								<button
-									key={entity.value}
-									type="button"
-									aria-pressed={isSelected}
-									onClick={() => onToggle(entity.value)}
-									className={`flex w-full items-center gap-3 py-2 pr-3 text-left label-sm transition-all ${
-										isSelected ? 'bg-brand-tint' : ''
-									} ${isChild ? 'pl-8' : 'pl-3'}`}
-									style={{
-										position: 'absolute',
-										top: 0,
-										left: 0,
-										width: '100%',
-										transform: `translateY(${row.start}px)`
-									}}
-								>
-									<div
-										className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-											isSelected ? 'border-brand bg-brand' : 'border-subtle bg-surface-elevated-1'
-										}`}
-									>
-										{isSelected ? <Icon name="check" width={10} height={10} className="text-on-brand" /> : null}
-									</div>
-
-									{iconUrl ? (
-										<img
-											src={iconUrl}
-											alt={entity.label}
-											width={20}
-											height={20}
-											className="size-5 shrink-0 rounded-full object-cover ring-1 ring-(--border-subtle)"
-										/>
-									) : null}
-
-									<span className={`truncate ${isSelected ? 'font-medium text-link' : 'text-primary'}`}>
-										{entity.label}
-									</span>
-								</button>
-							)
-						})}
-					</div>
-				)}
-			</div>
-		</div>
+			)}
+		</Field>
 	)
 }

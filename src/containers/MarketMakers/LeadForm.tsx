@@ -1,17 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import type { ReactNode } from 'react'
 import { Button } from '~/ui/Button'
 import { DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
-
-export function LeadField({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
-	return (
-		<label className="flex flex-col gap-1.5">
-			<span className="label-sm text-primary">{label}</span>
-			{children}
-			{error ? <span className="body-sm text-data-down">{error}</span> : null}
-		</label>
-	)
-}
 
 /** The outcome step: the header names the outcome, one plain sentence says what happens next, and Done closes. */
 export function LeadSuccess({ title, message }: { title: string; message: string }) {

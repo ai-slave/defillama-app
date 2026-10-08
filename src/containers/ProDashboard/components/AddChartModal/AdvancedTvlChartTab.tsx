@@ -31,6 +31,8 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
 interface AdvancedTvlChartTabProps {
+	/** What Add still needs, shown under the protocol once Add was pressed. */
+	error: string | null
 	selectedAdvancedTvlProtocol: string | null
 	selectedAdvancedTvlProtocolName: string | null
 	selectedAdvancedTvlChartType: AdvancedTvlChartType
@@ -71,6 +73,7 @@ const EMPTY_BREAKDOWN: ProtocolBreakdownChart = []
 const selectBasicTvlDataset = (data: IProtocolValueChart | null) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)
 
 export function AdvancedTvlChartTab({
+	error,
 	selectedAdvancedTvlProtocol,
 	selectedAdvancedTvlProtocolName,
 	selectedAdvancedTvlChartType,
@@ -269,6 +272,7 @@ export function AdvancedTvlChartTab({
 				<VirtualizedSelect
 					variant="field"
 					label="Protocol"
+					error={error}
 					options={selectableProtocolOptions}
 					selectedValue={selectedAdvancedTvlProtocol || null}
 					onChange={handleProtocolChange}
