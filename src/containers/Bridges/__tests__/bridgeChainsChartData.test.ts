@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { chartColor } from '~/constants/colors'
 import { buildBridgeChainsChartRows, buildBridgeChainsMultiSeriesChart } from '../queries.server'
 
 describe('bridge chains chart contract', () => {
@@ -37,7 +38,7 @@ describe('bridge chains chart contract', () => {
 				name: 'Ethereum',
 				encode: { x: 0, y: 1 },
 				stack: 'Ethereum',
-				color: '#1f67d2',
+				color: chartColor(0),
 				large: false
 			},
 			{
@@ -45,7 +46,7 @@ describe('bridge chains chart contract', () => {
 				name: 'Arbitrum',
 				encode: { x: 0, y: 2 },
 				stack: 'Arbitrum',
-				color: '#E91E63',
+				color: chartColor(1),
 				large: false
 			}
 		])

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildSelectedAdditiveChart,
 	buildSelectedPercentageChart,
@@ -71,7 +72,7 @@ describe('buildSelectedAdditiveChart', () => {
 			['Series1', '#000000', 1],
 			['Series2', '#000001', 2],
 			['Series3', '#000002', 3],
-			['Others', '#AAAAAA', 4]
+			['Others', OTHERS_COLOR, 4]
 		])
 		expect(result.charts.every((chart) => chart.type === 'bar' && chart.stack === 'A')).toBe(true)
 		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
@@ -195,7 +196,7 @@ describe('buildSelectedPercentageChart', () => {
 		expect(result.charts).toEqual([
 			{ ...charts[0], encode: { x: 0, y: 1 } },
 			{ ...charts[1], encode: { x: 0, y: 2 } },
-			{ ...charts[0], name: 'Others', color: '#AAAAAA', encode: { x: 0, y: 3 } }
+			{ ...charts[0], name: 'Others', color: OTHERS_COLOR, encode: { x: 0, y: 3 } }
 		])
 		expect(dataset.source[0]).toEqual([1, 60, 30, 10])
 		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {

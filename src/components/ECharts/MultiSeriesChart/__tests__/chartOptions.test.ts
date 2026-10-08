@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { chartColor } from '~/constants/colors'
 import { getChartTheme } from '../../shared/chartTheme'
 import {
 	buildDefaultChartSettings,
@@ -60,14 +61,14 @@ describe('mergeChartOptions', () => {
 describe('inferMultiSeriesCharts', () => {
 	test('infers series in dimension order without assigning timestamp a color', () => {
 		expect(inferMultiSeriesCharts(['First', 'timestamp', 'Second'], false)).toEqual([
-			{ type: 'line', name: 'First', encode: { x: 1, y: 0 }, color: '#1f67d2' },
-			{ type: 'line', name: 'Second', encode: { x: 1, y: 2 }, color: '#E91E63' }
+			{ type: 'line', name: 'First', encode: { x: 1, y: 0 }, color: chartColor(0) },
+			{ type: 'line', name: 'Second', encode: { x: 1, y: 2 }, color: chartColor(1) }
 		])
 	})
 
 	test('uses the first dimension as the x-axis for category datasets and stacks when asked', () => {
 		expect(inferMultiSeriesCharts(['category', 'Value'], true)).toEqual([
-			{ type: 'line', name: 'Value', encode: { x: 0, y: 1 }, color: '#1f67d2', stack: 'A' }
+			{ type: 'line', name: 'Value', encode: { x: 0, y: 1 }, color: chartColor(0), stack: 'A' }
 		])
 	})
 })

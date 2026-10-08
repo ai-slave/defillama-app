@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { OTHERS_COLOR } from '~/constants/colors'
 import type { StablecoinVolumeBreakdownChartPoint } from '../api.types'
 import { buildStablecoinVolumeChartPayload, groupStablecoinVolumeChartPayload } from '../volumeChart'
 
@@ -67,7 +68,7 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.stacked).toBe(true)
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
-		expect(payload.charts.find((chart) => chart.name === 'Others')?.color).toBe('#AAAAAA')
+		expect(payload.charts.find((chart) => chart.name === 'Others')?.color).toBe(OTHERS_COLOR)
 	})
 
 	test('keeps every breakdown series when a complete export explicitly disables the limit', () => {

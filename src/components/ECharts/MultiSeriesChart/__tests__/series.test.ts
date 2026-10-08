@@ -20,8 +20,9 @@ describe('MultiSeriesChart series construction', () => {
 	test('brightens emphasized series without dimming their peers', () => {
 		const series = buildMultiSeries({
 			charts: [
-				{ name: 'First', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'First' } },
-				{ name: 'Second', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'Second' } }
+				// Fixed inputs: this tests the brightening, not the palette.
+				{ name: 'First', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'First' }, color: '#1f67d2' },
+				{ name: 'Second', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'Second' }, color: '#e91e63' }
 			],
 			selectedCharts: undefined,
 			expandTo100Percent: false,

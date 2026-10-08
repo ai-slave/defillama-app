@@ -4,7 +4,7 @@ import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
 } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
+import { CHART_COLORS, CHART_SERIES_LIMIT, OTHERS_COLOR } from '~/constants/colors'
 import type { IProtocol } from '../types'
 import {
 	buildAdapterByChainBreakdownPresentation,
@@ -916,23 +916,25 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 	})
 
 	test('ranks visible protocol series by the latest selected window instead of lifetime totals', () => {
+		// One series under the fold, so the test reads ranking only.
+		const PEERS = CHART_SERIES_LIMIT - 1
 		const recentLeaderChartData = toDataset({
-			dimensions: ['timestamp', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`), 'Hyperliquid'],
+			dimensions: ['timestamp', ...Array.from({ length: PEERS }, (_, index) => `Protocol ${index + 1}`), 'Hyperliquid'],
 			source: [
 				Object.assign(
 					{ timestamp: toMs(2024, 1, 1), Hyperliquid: 0 },
-					Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Protocol ${index + 1}`, 100]))
+					Object.fromEntries(Array.from({ length: PEERS }, (_, index) => [`Protocol ${index + 1}`, 100]))
 				),
 				Object.assign(
 					{ timestamp: toMs(2024, 1, 2), Hyperliquid: 50 },
-					Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Protocol ${index + 1}`, 1]))
+					Object.fromEntries(Array.from({ length: PEERS }, (_, index) => [`Protocol ${index + 1}`, 1]))
 				)
 			]
 		})
 
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: recentLeaderChartData,
-			selectedProtocols: ['Hyperliquid', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)],
+			selectedProtocols: ['Hyperliquid', ...Array.from({ length: PEERS }, (_, index) => `Protocol ${index + 1}`)],
 			state: {
 				chartKind: 'bar',
 				valueMode: 'absolute',
@@ -946,24 +948,29 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 
 		expect(presentation.charts.map((chart) => chart.name)).toEqual([
 			'Hyperliquid',
-			...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)
+			...Array.from({ length: PEERS }, (_, index) => `Protocol ${index + 1}`)
 		])
 		expect(datasetValue(presentation.dataset, 1, 'Hyperliquid')).toBe(50)
-		expect(datasetValue(presentation.dataset, 1, 'Protocol 10')).toBe(1)
+		expect(datasetValue(presentation.dataset, 1, `Protocol ${PEERS}`)).toBe(1)
 	})
 
 	test('ranks cumulative dominance series by cumulative totals without collapsing overflow into Others', () => {
-		const selectedProtocols = ['History Giant', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)]
+		const PEERS = CHART_SERIES_LIMIT - 1
+		const selectedProtocols = ['History Giant', ...Array.from({ length: PEERS }, (_, index) => `Protocol ${index + 1}`)]
 		const cumulativeLineChartData = toDataset({
-			dimensions: ['timestamp', 'History Giant', ...Array.from({ length: 10 }, (_, index) => `Protocol ${index + 1}`)],
+			dimensions: [
+				'timestamp',
+				'History Giant',
+				...Array.from({ length: PEERS }, (_, index) => `Protocol ${index + 1}`)
+			],
 			source: [
 				Object.assign(
 					{ timestamp: toMs(2024, 1, 1), 'History Giant': 100 },
-					Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Protocol ${index + 1}`, 0]))
+					Object.fromEntries(Array.from({ length: PEERS }, (_, index) => [`Protocol ${index + 1}`, 0]))
 				),
 				Object.assign(
 					{ timestamp: toMs(2024, 1, 2), 'History Giant': 1 },
-					Object.fromEntries(Array.from({ length: 10 }, (_, index) => [`Protocol ${index + 1}`, 10]))
+					Object.fromEntries(Array.from({ length: PEERS }, (_, index) => [`Protocol ${index + 1}`, 10]))
 				)
 			]
 		})
@@ -981,10 +988,10 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		if (presentation.kind !== 'dominance') return
 
 		expect(presentation.charts.map((chart) => chart.name)).toEqual(selectedProtocols)
-		expect(presentation.charts).toHaveLength(11)
-		expect(datasetValue(presentation.dataset, 1, 'History Giant')).toBeCloseTo((101 / 201) * 100)
-		expect(datasetValue(presentation.dataset, 1, 'Protocol 1')).toBeCloseTo((10 / 201) * 100)
-		expect(datasetValue(presentation.dataset, 1, 'Protocol 10')).toBeCloseTo((10 / 201) * 100)
+		expect(presentation.charts).toHaveLength(CHART_SERIES_LIMIT)
+		expect(datasetValue(presentation.dataset, 1, 'History Giant')).toBeCloseTo((101 / (101 + 10 * PEERS)) * 100)
+		expect(datasetValue(presentation.dataset, 1, 'Protocol 1')).toBeCloseTo((10 / (101 + 10 * PEERS)) * 100)
+		expect(datasetValue(presentation.dataset, 1, `Protocol ${PEERS}`)).toBeCloseTo((10 / (101 + 10 * PEERS)) * 100)
 	})
 
 	test('carries sparse cumulative flows into absolute and dominance rows', () => {
@@ -1042,11 +1049,14 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 			}
 		})
 
-		expect(presentation.charts).toHaveLength(30)
+		const shown = CHART_SERIES_LIMIT - 1
+		let othersValue = 0
+		for (let index = shown; index < protocolNames.length; index++) othersValue += protocolNames.length - index
+		expect(presentation.charts).toHaveLength(CHART_SERIES_LIMIT)
 		expect(presentation.charts.at(-1)?.name).toBe('Others')
-		expect(presentation.dataset.dimensions).toEqual(['timestamp', ...protocolNames.slice(0, 29), 'Others'])
+		expect(presentation.dataset.dimensions).toEqual(['timestamp', ...protocolNames.slice(0, shown), 'Others'])
 		expect(presentation.dataset.source).toEqual([
-			[timestamp, ...protocolNames.slice(0, 29).map((_, index) => protocolNames.length - index), 6]
+			[timestamp, ...protocolNames.slice(0, shown).map((_, index) => protocolNames.length - index), othersValue]
 		])
 	})
 

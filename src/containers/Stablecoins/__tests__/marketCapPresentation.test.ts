@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
@@ -43,7 +43,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 				'Token 8': CHART_COLORS[7],
 				'Token 9': CHART_COLORS[8],
 				'Token 10': CHART_COLORS[9],
-				Others: '#AAAAAA'
+				Others: OTHERS_COLOR
 			}
 		})
 		expect(series.peers.map((peer) => peer.name)).toEqual([
@@ -133,7 +133,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 			kind: 'hbar',
 			categories: [...Array.from({ length: 9 }, (_, index) => `Chain ${index}`), 'Others'],
 			values: [...Array.from({ length: 9 }, (_, index) => 10 - index), 1],
-			colors: [...Array.from({ length: 9 }, (_, index) => CHART_COLORS[index % CHART_COLORS.length]), '#AAAAAA']
+			colors: [...Array.from({ length: 9 }, (_, index) => CHART_COLORS[index % CHART_COLORS.length]), OTHERS_COLOR]
 		})
 		expect(getTrackedName).toHaveBeenCalledTimes(10)
 	})
@@ -215,7 +215,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 				{ name: 'Token 2', value: 10 },
 				{ name: 'Others', value: 68 }
 			],
-			stackColors: { 'Token 2': CHART_COLORS[2], Others: '#AAAAAA' }
+			stackColors: { 'Token 2': CHART_COLORS[2], Others: OTHERS_COLOR }
 		})
 		expect(buildStablecoinMarketCapPresentation({ series, selectedSeries: new Set() })).toEqual({
 			kind: 'pie',
