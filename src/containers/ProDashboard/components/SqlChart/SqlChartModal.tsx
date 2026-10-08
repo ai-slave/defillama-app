@@ -368,7 +368,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 								value={name}
 								readOnly={savePending}
 								onChange={(e) => setName(e.target.value)}
-								className="shrink-0 rounded-md border border-pro-cards-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+								className="shrink-0 rounded-md border border-pro-cards-border bg-page px-3 py-2 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</label>
 
@@ -387,19 +387,19 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 
 						{loadingStage || engineLoading || engineError || controls.queryChanged ? (
 							<div className="flex shrink-0 flex-wrap items-center gap-3">
-								{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
+								{loadingStage ? <span className="body-sm text-pro-text-tertiary">{loadingStage}</span> : null}
 								{engineLoading ? (
-									<span className="text-xs text-pro-text-tertiary">
+									<span className="body-sm text-pro-text-tertiary">
 										Loading the in-browser SQL engine… queries run locally, this takes a few seconds the first time.
 									</span>
 								) : null}
 								{engineError ? (
-									<span role="alert" className="text-xs text-error">
+									<span role="alert" className="body-sm text-error">
 										SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
 									</span>
 								) : null}
 								{controls.queryChanged ? (
-									<span className="text-xs text-pro-text-tertiary">Query changed — Save will run it again.</span>
+									<span className="body-sm text-pro-text-tertiary">Query changed — Save will run it again.</span>
 								) : null}
 							</div>
 						) : null}
@@ -407,7 +407,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						{queryError ? (
 							<div
 								role="alert"
-								className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error"
+								className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 body-sm text-error"
 							>
 								{queryError}
 							</div>
@@ -417,7 +417,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex ${pane === 'results' ? 'flex' : 'hidden'}`}
 					>
 						{resultRowCount !== null && resultRowCount > rowCap ? (
-							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
+							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 body-sm text-pro-text-secondary">
 								Result has {formatNumber(resultRowCount)} rows. The card will show the first {formatNumber(rowCap)}{' '}
 								rows.
 							</div>
@@ -435,10 +435,10 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 							viewToggleLabel="Display as"
 						/>
 						<div className="flex shrink-0 flex-wrap items-center gap-4">
-							<span className="text-xs text-pro-text-tertiary">
+							<span className="body-sm text-pro-text-tertiary">
 								{displayMode === 'table' ? 'Card shows the result as a table.' : 'Card shows the result as a chart.'}
 							</span>
-							<label className="flex items-center gap-2 text-xs text-pro-text-tertiary">
+							<label className="flex items-center gap-2 label-sm text-pro-text-tertiary">
 								Rows to display
 								<input
 									type="number"
@@ -453,7 +453,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 									}}
 									onBlur={() => setRowCap((prev) => clampRowCap(prev))}
 									title={`How many query result rows the card can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The card keeps a preview of the query result and refreshes it when requested.`}
-									className="w-20 rounded-md border border-pro-cards-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-20 rounded-md border border-pro-cards-border bg-page px-2 py-1 body-sm text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</label>
 						</div>
@@ -501,11 +501,11 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 			<DialogFooter
 				leading={
 					refusalReason ? (
-						<span role="alert" className="text-xs text-error">
+						<span role="alert" className="body-sm text-error">
 							{refusalReason}
 						</span>
 					) : (
-						<span role="status" className="text-xs text-pro-text-tertiary">
+						<span role="status" className="body-sm text-pro-text-tertiary">
 							{controls.status}
 						</span>
 					)

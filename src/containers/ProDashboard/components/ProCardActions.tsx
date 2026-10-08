@@ -348,7 +348,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						) : null}
 					</Ariakit.MenuList>
 					{csvDownload.status === 'error' ? (
-						<p role="alert" className="max-w-xs px-3 py-2 text-xs text-error">
+						<p role="alert" className="max-w-xs px-3 py-2 body-sm text-error">
 							{CSV_DOWNLOAD_ERROR}
 						</p>
 					) : null}

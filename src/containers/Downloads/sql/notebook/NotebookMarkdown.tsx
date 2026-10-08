@@ -10,7 +10,7 @@ const components: Components = {
 	a: ({ node: _node, ...props }: any) => <a {...props} target="_blank" rel="noreferrer noopener" />,
 	table: ({ node: _node, children, ...props }: any) => (
 		<div className="overflow-x-auto">
-			<table {...props} className={`w-full border-collapse text-sm ${props.className ?? ''}`}>
+			<table {...props} className={`w-full border-collapse body-md ${props.className ?? ''}`}>
 				{children}
 			</table>
 		</div>
@@ -42,7 +42,7 @@ const components: Components = {
 		const isBlock = typeof className === 'string' && className.includes('language-')
 		if (isBlock) {
 			return (
-				<pre className="overflow-x-auto rounded-md border border-subtle bg-pro-app-bg p-2 font-mono text-xs">
+				<pre className="overflow-x-auto rounded-md border border-subtle bg-pro-app-bg p-2 mono-sm">
 					<code {...props} className={className}>
 						{children}
 					</code>
@@ -50,7 +50,7 @@ const components: Components = {
 			)
 		}
 		return (
-			<code {...props} className={`rounded-sm bg-pro-app-bg px-1 py-px font-mono text-xs ${className ?? ''}`}>
+			<code {...props} className={`rounded-sm bg-pro-app-bg px-1 py-px mono-sm ${className ?? ''}`}>
 				{children}
 			</code>
 		)
@@ -59,7 +59,7 @@ const components: Components = {
 
 export function NotebookMarkdown({ content }: { content: string }) {
 	if (!content.trim()) {
-		return <div className="text-xs text-pro-text-tertiary italic">Empty markdown cell</div>
+		return <div className="body-sm text-pro-text-tertiary italic">Empty markdown cell</div>
 	}
 	return (
 		<div className="prose prose-sm max-w-none text-pro-text-primary dark:prose-invert">

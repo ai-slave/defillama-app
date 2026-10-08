@@ -126,7 +126,7 @@ export function MultiSelectCombobox({
 				<Ariakit.Combobox
 					aria-label={heading}
 					placeholder={placeholder}
-					className="min-h-8 w-full flex-1 bg-transparent px-3 py-1.5 pr-8 text-base text-primary outline-hidden placeholder:text-tertiary max-sm:placeholder:text-sm/6 sm:body-sm"
+					className="min-h-8 w-full flex-1 bg-transparent px-3 py-1.5 pr-8 body-lg text-primary outline-hidden placeholder:text-tertiary max-sm:placeholder:text-sm/6 sm:body-sm"
 				/>
 				{open ? (
 					<Icon name="x" className="absolute top-0 right-2 bottom-0 my-auto size-4 text-tertiary" />

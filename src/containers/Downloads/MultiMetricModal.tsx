@@ -633,7 +633,7 @@ export function MultiMetricModal({
 								</Button>
 							) : null}
 
-							{isPreview ? <p className="ml-auto text-[11px] text-pro-text-tertiary">Preview — last 10 rows</p> : null}
+							{isPreview ? <p className="ml-auto body-sm text-pro-text-tertiary">Preview — last 10 rows</p> : null}
 						</div>
 					</DialogToolbar>
 				) : null}
@@ -769,8 +769,8 @@ function ParamPickerEmpty({
 					<Icon name="layers" className="size-5 text-brand" />
 				</div>
 				<div className="flex flex-col gap-1">
-					<p className="text-base font-medium text-pro-text-primary">Choose a {labels.singular} to begin</p>
-					<p className="text-xs text-pro-text-tertiary">
+					<p className="label-lg text-pro-text-primary">Choose a {labels.singular} to begin</p>
+					<p className="body-sm text-pro-text-tertiary">
 						Pick a {labels.singular} — we&rsquo;ll show its available metrics so you can combine them.
 					</p>
 				</div>
@@ -797,9 +797,7 @@ function ParamPickerEmpty({
 
 				{suggestions.length > 0 ? (
 					<div className="flex flex-col items-center gap-2">
-						<p className="text-[10px] font-semibold tracking-[0.08em] text-pro-text-tertiary uppercase">
-							Or start with
-						</p>
+						<p className="label-xs tracking-[0.08em] text-pro-text-tertiary uppercase">Or start with</p>
 						<div className="flex flex-wrap justify-center gap-1.5">
 							{suggestions.map((opt) => (
 								<Button key={opt.value} type="button" variant="secondary" size="sm" onClick={() => onSelect(opt)}>
@@ -830,8 +828,8 @@ function EmptyState({
 					<Icon name="layers" className="size-5 text-brand" />
 				</div>
 				<div className="flex flex-col gap-1">
-					<p className="text-sm font-medium text-pro-text-primary">Select metrics to combine</p>
-					<p className="text-xs text-pro-text-tertiary">
+					<p className="label-md text-pro-text-primary">Select metrics to combine</p>
+					<p className="body-sm text-pro-text-tertiary">
 						{availableCount > 0
 							? `Pick any of ${availableCount} time-series metrics from the toolbar above. They'll merge into one CSV with date columns aligned.`
 							: `No time-series metrics available for this ${PARAM_LABELS[paramType].singular}.`}
@@ -853,7 +851,7 @@ function CenteredLoader() {
 		<div className="flex flex-1 items-center justify-center">
 			<div className="flex flex-col items-center gap-3">
 				<LoadingSpinner size={28} />
-				<p className="text-sm text-pro-text-secondary">Fetching data...</p>
+				<p className="body-md text-pro-text-secondary">Fetching data...</p>
 			</div>
 		</div>
 	)
@@ -865,7 +863,7 @@ function CenteredError({ error }: { error: unknown }) {
 		<div className="flex flex-1 items-center justify-center px-6">
 			<div className="flex max-w-md flex-col items-center gap-2 text-center">
 				<Icon name="alert-triangle" className="size-6 text-error" />
-				<p className="text-sm text-error">{msg}</p>
+				<p className="body-md text-error">{msg}</p>
 			</div>
 		</div>
 	)
@@ -876,7 +874,7 @@ function CenteredHint({ icon, text }: { icon: IIcon['name']; text: string }) {
 		<div className="flex flex-1 items-center justify-center">
 			<div className="flex flex-col items-center gap-2 text-center">
 				<Icon name={icon} className="size-6 text-pro-text-tertiary" />
-				<p className="text-sm text-pro-text-secondary">{text}</p>
+				<p className="body-md text-pro-text-secondary">{text}</p>
 			</div>
 		</div>
 	)
@@ -894,7 +892,7 @@ function PreviewTable({
 	const filler = isPreview && display.length > 0 ? [...display, ...display] : []
 	return (
 		<div className={`relative min-h-0 flex-1 ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}>
-			<table className="w-full text-xs">
+			<table className="w-full body-sm">
 				<thead className="sticky top-0 z-10 bg-overlay">
 					<tr>
 						{headers.map((h, columnIndex) => (
@@ -942,7 +940,7 @@ function PreviewTable({
 				</tbody>
 			</table>
 			{!isPreview && rows.length > PREVIEW_ROWS ? (
-				<div className="border-t border-subtle bg-overlay px-3 py-2 text-[11px] text-pro-text-tertiary">
+				<div className="border-t border-subtle bg-overlay px-3 py-2 body-sm text-pro-text-tertiary">
 					<p>
 						Showing first {formatNumber(PREVIEW_ROWS)} of {formatNumber(rows.length)} rows · download for full data
 					</p>

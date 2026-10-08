@@ -310,10 +310,8 @@ export function PlaceholderCard({
 				className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-pro-cards-border text-center"
 				style={{ height }}
 			>
-				<span className="text-xs text-pro-text-tertiary">Awaiting data</span>
-				{note && (
-					<code className="rounded-sm bg-pro-app-bg px-2 py-0.5 font-jetbrains text-xs text-tertiary">{note}</code>
-				)}
+				<span className="body-sm text-pro-text-tertiary">Awaiting data</span>
+				{note && <code className="rounded-sm bg-pro-app-bg px-2 py-0.5 mono-sm text-tertiary">{note}</code>}
 			</div>
 		</ChartCard>
 	)
@@ -353,7 +351,7 @@ export function ChartCard({
 								<p
 									key={text}
 									aria-hidden={text === subtitle ? undefined : true}
-									className={`col-start-1 row-start-1 text-xs leading-relaxed text-pro-text-tertiary ${
+									className={`col-start-1 row-start-1 body-sm text-pro-text-tertiary ${
 										text === subtitle ? '' : 'invisible'
 									}`}
 								>
@@ -362,7 +360,7 @@ export function ChartCard({
 							))}
 						</div>
 					) : (
-						subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>
+						subtitle && <p className="mt-0.5 body-sm text-pro-text-tertiary">{subtitle}</p>
 					)}
 				</div>
 				<div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
@@ -397,7 +395,7 @@ export function MiniTable({
 				{headers.map(([label, align]) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 label-md tracking-wider text-pro-text-tertiary uppercase"
 						style={{ textAlign: align }}
 					>
 						{label}
@@ -414,7 +412,7 @@ export function MiniTable({
 								<div
 									// oxlint-disable-next-line react/no-array-index-key -- Cells retain their fixed schema position within the keyed row.
 									key={cellIndex}
-									className={`truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${
+									className={`truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary ${
 										align === 'right' ? 'text-right tabular-nums' : ''
 									} ${rowIndex % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
 								>

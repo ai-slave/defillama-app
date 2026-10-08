@@ -134,7 +134,7 @@ export default function Mandates() {
 						)}
 					</SectionHeader>
 					{data?.yieldAsOf && (
-						<p className="-mt-1 text-xs text-pro-text-secondary">
+						<p className="-mt-1 body-sm text-pro-text-secondary">
 							Positions report as of {formatDate(data.yieldAsOf)}
 							{data.yieldIsSample ? ' — sample data, so every figure in this section is frozen at that date' : ''}
 						</p>
@@ -215,7 +215,7 @@ export default function Mandates() {
 							</div>
 							<div className="flex flex-col gap-1">
 								<span className="label-sm tracking-wider text-pro-text-label uppercase">Benchmark</span>
-								<span className="text-sm text-pro-text-primary">{perf?.benchLabel ?? '—'}</span>
+								<span className="body-md text-pro-text-primary">{perf?.benchLabel ?? '—'}</span>
 							</div>
 						</div>
 						{activeDenom && perf && (

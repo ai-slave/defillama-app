@@ -11,40 +11,27 @@ function PegPill({ ratio, bps }: { ratio: number; bps?: number }) {
 	return (
 		<span className={`tabular-nums ${color}`}>
 			{formatRatio(ratio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}{' '}
-			<span className="text-[10px] text-pro-text-secondary">
-				({formatNumber(dev, { maximumFractionDigits: 0 })} bps)
-			</span>
+			<span className="body-xs text-pro-text-secondary">({formatNumber(dev, { maximumFractionDigits: 0 })} bps)</span>
 		</span>
 	)
 }
 
 function SynthTable({ rows }: { rows: Array<PegRow> }) {
-	if (!rows?.length) return <div className="px-2 py-4 text-xs text-pro-text-secondary">No data</div>
+	if (!rows?.length) return <div className="px-2 py-4 body-sm text-pro-text-secondary">No data</div>
 	return (
 		<div className="overflow-x-auto">
-			<table className="w-full text-sm">
+			<table className="w-full body-md">
 				<thead>
 					<tr className="border-b border-pro-cards-border bg-pro-app-bg/40">
-						<th className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
-							Chain
-						</th>
-						<th className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
-							Counter
-						</th>
-						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
-							Spot Peg
-						</th>
+						<th className="px-3 py-2.5 text-left title-sm tracking-wider text-pro-text-label uppercase">Chain</th>
+						<th className="px-3 py-2.5 text-left title-sm tracking-wider text-pro-text-label uppercase">Counter</th>
+						<th className="px-3 py-2.5 text-right title-sm tracking-wider text-pro-text-label uppercase">Spot Peg</th>
 						{SIZES.map((s) => (
-							<th
-								key={s}
-								className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase"
-							>
+							<th key={s} className="px-3 py-2.5 text-right title-sm tracking-wider text-pro-text-label uppercase">
 								{formatUsd(s, { compact: true, maximumFractionDigits: 0 })}
 							</th>
 						))}
-						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
-							Kyber
-						</th>
+						<th className="px-3 py-2.5 text-right title-sm tracking-wider text-pro-text-label uppercase">Kyber</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -68,7 +55,7 @@ function SynthTable({ rows }: { rows: Array<PegRow> }) {
 							})}
 							<td className="px-3 py-2.5 text-right">
 								<span
-									className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${
+									className={`rounded-sm px-2 py-0.5 title-sm ${
 										r.kyberSupported ? 'bg-success/15 text-success' : 'bg-pro-cards-border text-pro-text-secondary'
 									}`}
 								>
@@ -92,7 +79,7 @@ export default function Pegs() {
 	return (
 		<div className="flex flex-col gap-6">
 			{data?.asOf && (
-				<p className="text-[11px] text-pro-text-secondary">
+				<p className="body-sm text-pro-text-secondary">
 					As of {formatDateTime(data.asOf, { timeZone: 'UTC' }) ?? '-'} — {data.methodology}
 				</p>
 			)}

@@ -59,7 +59,7 @@ export function DashboardLoadProgress() {
 					style={{ width: `${totalCount > 0 ? (readyWithinTotal / totalCount) * 100 : 0}%` }}
 				/>
 			</div>
-			<p role="status" className="text-xs text-pro-text-tertiary md:sr-only">
+			<p role="status" className="body-sm text-pro-text-tertiary md:sr-only">
 				Loading cards… {readyWithinTotal} of {totalCount}
 			</p>
 		</div>

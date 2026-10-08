@@ -165,7 +165,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 				<LlamaAIMobileAppGate>
 					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 						<div className="text-center">
-							<div className="mb-2 text-lg text-error">{error?.message ?? 'Conversation not found'}</div>
+							<div className="mb-2 body-xl text-error">{error?.message ?? 'Conversation not found'}</div>
 							<p className="text-secondary">The conversation may have been made private or the link is invalid.</p>
 						</div>
 					</div>

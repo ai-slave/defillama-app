@@ -48,9 +48,9 @@ export default function Overview() {
 				<>
 					<SectionHeader>Protocol Rankings</SectionHeader>
 					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-						<table className="w-full text-left text-sm">
+						<table className="w-full text-left body-md">
 							<thead>
-								<tr className="border-b border-pro-cards-border text-sm font-medium tracking-wider text-pro-text-label uppercase">
+								<tr className="border-b border-pro-cards-border label-md tracking-wider text-pro-text-label uppercase">
 									<th className="p-3">#</th>
 									<th className="p-3">Protocol</th>
 									<th className="p-3">Category</th>
@@ -74,9 +74,9 @@ export default function Overview() {
 											</a>
 										</td>
 										<td className="p-3 text-pro-text-label">{p.category ?? '-'}</td>
-										<td className="p-3 text-right text-xs text-pro-text-primary tabular-nums">{p.tvlFormatted}</td>
+										<td className="p-3 text-right body-sm text-pro-text-primary tabular-nums">{p.tvlFormatted}</td>
 										<td
-											className={`p-3 text-right text-xs tabular-nums ${p.change24h >= 0 ? 'text-success' : 'text-error'}`}
+											className={`p-3 text-right body-sm tabular-nums ${p.change24h >= 0 ? 'text-success' : 'text-error'}`}
 										>
 											{p.change24hFormatted}
 										</td>

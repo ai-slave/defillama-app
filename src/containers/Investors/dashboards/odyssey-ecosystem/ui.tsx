@@ -26,11 +26,11 @@ export function KpiCard({
 				)}
 			</span>
 			{value != null ? (
-				<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
+				<span className="mono-xl text-pro-text-primary">{value}</span>
 			) : (
 				<div className="h-7 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			)}
-			{sub && <span className="text-[11px] text-pro-text-secondary">{sub}</span>}
+			{sub && <span className="body-sm text-pro-text-secondary">{sub}</span>}
 		</div>
 	)
 }
@@ -46,8 +46,8 @@ export function ChartCard({
 }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-1 text-sm font-medium text-pro-text-label">{title}</h3>
-			{subtitle && <p className="mb-3 text-xs text-pro-text-secondary">{subtitle}</p>}
+			<h3 className="mb-1 label-md text-pro-text-label">{title}</h3>
+			{subtitle && <p className="mb-3 body-sm text-pro-text-secondary">{subtitle}</p>}
 			{children}
 		</div>
 	)
@@ -60,7 +60,7 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 export function ChartSkeleton({ title, height = 'h-[350px]' }: { title: string; height?: string }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
 			<div className={`flex ${height} items-center justify-center`}>
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
@@ -92,16 +92,16 @@ export function SimpleTable<Row extends object>({
 	cols: Array<Col<Row>>
 	empty?: string
 } & RowIdentity<Row>) {
-	if (!rows || rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
+	if (!rows || rows.length === 0) return <div className="px-2 py-4 body-sm text-pro-text-secondary">{empty}</div>
 	return (
 		<div className="overflow-x-auto">
-			<table className="w-full text-sm">
+			<table className="w-full body-md">
 				<thead>
 					<tr className="border-b border-pro-cards-border bg-pro-app-bg/40">
 						{cols.map((c) => (
 							<th
 								key={c.key}
-								className={`px-3 py-2.5 text-[11px] font-semibold tracking-wider whitespace-nowrap text-pro-text-label uppercase ${c.right ? 'text-right' : 'text-left'}`}
+								className={`px-3 py-2.5 title-sm tracking-wider whitespace-nowrap text-pro-text-label uppercase ${c.right ? 'text-right' : 'text-left'}`}
 							>
 								{c.label}
 							</th>

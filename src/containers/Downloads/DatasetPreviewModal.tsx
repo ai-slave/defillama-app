@@ -581,7 +581,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 									<RowLimitPicker value={rowLimit} totalRows={sortedRows.length} onChange={setRowLimit} />
 								</>
 							) : (
-								<p className="text-xs text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
+								<p className="body-sm text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
 							)}
 						</div>
 					</DialogToolbar>
@@ -596,14 +596,14 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-3">
 									<LoadingSpinner size={28} />
-									<p className="text-sm text-pro-text-secondary">Fetching dataset...</p>
+									<p className="body-md text-pro-text-secondary">Fetching dataset...</p>
 								</div>
 							</div>
 						) : error ? (
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-2">
 									<Icon name="alert-triangle" className="size-6 text-error" />
-									<p className="text-sm text-error">
+									<p className="body-md text-error">
 										{error instanceof Error ? error.message : 'Failed to fetch data'}
 									</p>
 								</div>
@@ -612,14 +612,14 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-2 text-center">
 									<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
-									<p className="text-sm text-pro-text-secondary">No data</p>
+									<p className="body-md text-pro-text-secondary">No data</p>
 								</div>
 							</div>
 						) : sortedRows.length === 0 ? (
 							<div className="flex flex-1 items-center justify-center">
 								<div className="flex flex-col items-center gap-2 text-center">
 									<Icon name="search" className="size-6 text-pro-text-tertiary" />
-									<p className="text-sm text-pro-text-secondary">No matching rows</p>
+									<p className="body-md text-pro-text-secondary">No matching rows</p>
 								</div>
 							</div>
 						) : (
@@ -673,7 +673,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 																className="flex min-w-0 flex-1 items-center gap-1"
 															>
 																<span
-																	className={`truncate text-xs font-medium ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+																	className={`truncate label-sm ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
 																>
 																	{column.header}
 																</span>
@@ -726,7 +726,7 @@ export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial
 															<div
 																key={column.index}
 																title={rawValue || undefined}
-																className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+																className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
 																style={{
 																	textAlign: column.align,
 																	position: isSticky ? 'sticky' : undefined,

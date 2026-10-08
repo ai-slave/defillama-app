@@ -69,7 +69,7 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 					>
 						{row.original.pool}
 					</BasicLink>
-					{row.original.poolMeta ? <span className="text-xs text-secondary">{row.original.poolMeta}</span> : null}
+					{row.original.poolMeta ? <span className="body-sm text-secondary">{row.original.poolMeta}</span> : null}
 				</span>
 			),
 			size: 240
@@ -79,7 +79,7 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 			cell: ({ row }) => (
 				<BasicLink
 					href={`/yields?protocol=${encodeURIComponent(row.original.project)}`}
-					className="text-sm text-link hover:underline"
+					className="body-md text-link hover:underline"
 				>
 					{row.original.project}
 				</BasicLink>
@@ -122,7 +122,7 @@ export const yieldsDatasetColumns: TableOptions<typeof tableFeaturesConfig, ProY
 				<span className="flex items-center justify-end gap-1">
 					<PercentCell value={row.original.apyReward} />
 					{row.original.rewardTokensSymbols.length > 0 ? (
-						<span className="text-xs text-secondary">({row.original.rewardTokensSymbols.join(', ')})</span>
+						<span className="body-sm text-secondary">({row.original.rewardTokensSymbols.join(', ')})</span>
 					) : null}
 				</span>
 			),

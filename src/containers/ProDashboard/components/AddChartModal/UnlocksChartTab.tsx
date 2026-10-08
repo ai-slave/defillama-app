@@ -349,7 +349,7 @@ export function UnlocksChartTab({
 				</div>
 
 				{hasSelection && !isLoading && availableChartTypes.size === 0 ? (
-					<p className="text-xs text-pro-text-tertiary">No unlocks data available for this protocol.</p>
+					<p className="body-sm text-pro-text-tertiary">No unlocks data available for this protocol.</p>
 				) : null}
 			</div>
 
@@ -362,7 +362,7 @@ export function UnlocksChartTab({
 								<h3 className="mb-1 title-md text-pro-text-primary">
 									{previewTitle} - {selectedChartLabel}
 								</h3>
-								<p className="text-xs text-pro-text-secondary">Unlocks</p>
+								<p className="body-sm text-pro-text-secondary">Unlocks</p>
 							</div>
 							{selectedUnlocksChartType === 'schedule' && stacks.length > 1 ? (
 								<SelectWithCombobox
@@ -382,7 +382,7 @@ export function UnlocksChartTab({
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="linear-unlock" height={32} width={32} className="mx-auto mb-1" />
-							<p className="text-xs">Select a protocol to preview unlocks</p>
+							<p className="body-sm">Select a protocol to preview unlocks</p>
 						</div>
 					</div>
 				)}

@@ -205,8 +205,8 @@ export function BannerForm({ banner }: Props) {
 								className="mt-0.5 accent-link"
 							/>
 							<div className="grid gap-0.5">
-								<span className="text-sm font-medium text-primary">{BANNER_KIND_LABELS[kind]}</span>
-								<span className="text-xs text-tertiary">{BANNER_KIND_DESCRIPTIONS[kind]}</span>
+								<span className="label-md text-primary">{BANNER_KIND_LABELS[kind]}</span>
+								<span className="body-sm text-tertiary">{BANNER_KIND_DESCRIPTIONS[kind]}</span>
 							</div>
 						</label>
 					))}
@@ -215,7 +215,7 @@ export function BannerForm({ banner }: Props) {
 
 			{state.kind === 'image-square' ? (
 				<Section title="Placement" description="Where this banner appears.">
-					<p className="text-sm text-secondary">
+					<p className="body-md text-secondary">
 						Shows inside the Latest widget on /research, replacing articles 4-6. Hidden automatically when disabled.
 					</p>
 				</Section>
@@ -231,11 +231,11 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ showOnLanding: e.target.checked })}
 							className="size-4 accent-link"
 						/>
-						<span className="text-sm text-primary">Show on the landing page</span>
+						<span className="label-md text-primary">Show on the landing page</span>
 					</label>
 
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">
+						<span className="label-md text-primary">
 							Hide on these articles <span className="font-normal text-tertiary">(optional)</span>
 						</span>
 						<ArticleMultiPicker
@@ -264,8 +264,8 @@ export function BannerForm({ banner }: Props) {
 									className="mt-0.5 accent-link"
 								/>
 								<div className="grid gap-0.5">
-									<span className="text-sm font-medium text-primary">{BANNER_SCOPE_LABELS[scope]}</span>
-									<span className="text-xs text-tertiary">
+									<span className="label-md text-primary">{BANNER_SCOPE_LABELS[scope]}</span>
+									<span className="body-sm text-tertiary">
 										{scope === 'landing'
 											? 'Shows on /research'
 											: scope === 'section'
@@ -281,7 +281,7 @@ export function BannerForm({ banner }: Props) {
 
 					{state.scope === 'section' ? (
 						<div className="grid gap-1.5">
-							<span className="text-sm font-medium text-primary">Section</span>
+							<span className="label-md text-primary">Section</span>
 							<Ariakit.ComboboxProvider
 								selectedValue={state.section}
 								setSelectedValue={(v) => {
@@ -291,7 +291,7 @@ export function BannerForm({ banner }: Props) {
 							>
 								<ComboboxSelectTrigger
 									aria-label="Banner section"
-									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 text-sm transition-colors data-[state=open]:border-brand ${
+									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-page px-3 body-md transition-colors data-[state=open]:border-brand ${
 										errors.section
 											? 'border-error/60 text-primary'
 											: state.section
@@ -315,13 +315,13 @@ export function BannerForm({ banner }: Props) {
 									))}
 								</ComboboxSurface>
 							</Ariakit.ComboboxProvider>
-							{errors.section ? <p className="text-xs text-error">{errors.section}</p> : null}
+							{errors.section ? <p className="body-sm text-error">{errors.section}</p> : null}
 						</div>
 					) : null}
 
 					{state.scope === 'article' ? (
 						<div className="grid gap-1.5">
-							<span className="text-sm font-medium text-primary">Article</span>
+							<span className="label-md text-primary">Article</span>
 							<ArticlePicker
 								value={state.articleId}
 								onChange={(article) => update({ articleId: article?.id ?? null })}
@@ -332,7 +332,7 @@ export function BannerForm({ banner }: Props) {
 
 					{state.scope === 'all_articles' ? (
 						<div className="grid gap-1.5">
-							<span className="text-sm font-medium text-primary">
+							<span className="label-md text-primary">
 								Hide on these articles <span className="font-normal text-tertiary">(optional)</span>
 							</span>
 							<ArticleMultiPicker
@@ -371,8 +371,8 @@ export function BannerForm({ banner }: Props) {
 								className="mt-0.5 accent-link"
 							/>
 							<div className="grid gap-0.5">
-								<span className="text-sm font-medium text-primary">{label}</span>
-								<span className="text-xs text-tertiary">{description}</span>
+								<span className="label-md text-primary">{label}</span>
+								<span className="body-sm text-tertiary">{description}</span>
 							</div>
 						</label>
 					))}
@@ -381,7 +381,7 @@ export function BannerForm({ banner }: Props) {
 				{state.audienceMode === 'selected' ? (
 					<div className="grid gap-5">
 						<div className="grid gap-2">
-							<span className="text-sm font-medium text-primary">Regions</span>
+							<span className="label-md text-primary">Regions</span>
 							<div className="grid gap-2 sm:grid-cols-2">
 								{BANNER_COUNTRY_GROUPS.map((group) => {
 									const selected = state.targetGroups.includes(group.id)
@@ -409,8 +409,8 @@ export function BannerForm({ banner }: Props) {
 												className="mt-0.5 size-4 accent-link"
 											/>
 											<div className="grid gap-0.5">
-												<span className="text-sm font-medium text-primary">{group.label}</span>
-												<span className="text-xs text-tertiary">{group.description}</span>
+												<span className="label-md text-primary">{group.label}</span>
+												<span className="body-sm text-tertiary">{group.description}</span>
 											</div>
 										</label>
 									)
@@ -419,7 +419,7 @@ export function BannerForm({ banner }: Props) {
 						</div>
 
 						<div className="grid gap-1.5">
-							<span className="text-sm font-medium text-primary">
+							<span className="label-md text-primary">
 								Countries <span className="font-normal text-tertiary">(optional when a region is selected)</span>
 							</span>
 							<MultiSelectCombobox
@@ -430,9 +430,9 @@ export function BannerForm({ banner }: Props) {
 								setSelectedValues={(targetCountries) => update({ targetCountries })}
 								emptyMessage="No countries found"
 							/>
-							<p className="text-xs text-tertiary">Countries and regions are combined with OR matching.</p>
+							<p className="body-sm text-tertiary">Countries and regions are combined with OR matching.</p>
 						</div>
-						{errors.audience ? <p className="text-xs text-error">{errors.audience}</p> : null}
+						{errors.audience ? <p className="body-sm text-error">{errors.audience}</p> : null}
 					</div>
 				) : null}
 			</Section>
@@ -440,7 +440,7 @@ export function BannerForm({ banner }: Props) {
 			{state.kind === 'text' ? (
 				<Section title="Content" description="The text readers see and an optional link.">
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Banner text
 							<CharCount value={state.text} max={TEXT_MAX} />
 						</span>
@@ -452,11 +452,11 @@ export function BannerForm({ banner }: Props) {
 							placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
 							className={`${textareaStyles} w-full resize-y`}
 						/>
-						{errors.text ? <p className="text-xs text-error">{errors.text}</p> : null}
+						{errors.text ? <p className="body-sm text-error">{errors.text}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Link URL <span className="font-normal text-tertiary">(optional)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
@@ -468,11 +468,11 @@ export function BannerForm({ banner }: Props) {
 							placeholder="https://… or /research/…"
 							className="w-full"
 						/>
-						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
+						{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Link label <span className="font-normal text-tertiary">(optional, default “Read more”)</span>
 							<CharCount value={state.linkLabel} max={LINK_LABEL_MAX} />
 						</span>
@@ -492,7 +492,7 @@ export function BannerForm({ banner }: Props) {
 					description="Four renditions of the promo image, the click-through link with optional per-placement overrides for the landing and article pages, and an optional disclosure link. Placements without an uploaded image are hidden."
 				>
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">
+						<span className="label-md text-primary">
 							Landing image <span className="font-normal text-tertiary">(desktop, below Latest)</span>
 						</span>
 						<ImageUploadButton
@@ -507,7 +507,7 @@ export function BannerForm({ banner }: Props) {
 					</div>
 
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">
+						<span className="label-md text-primary">
 							Article card image <span className="font-normal text-tertiary">(desktop right rail)</span>
 						</span>
 						<ImageUploadButton
@@ -522,7 +522,7 @@ export function BannerForm({ banner }: Props) {
 					</div>
 
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">
+						<span className="label-md text-primary">
 							Landing mobile image <span className="font-normal text-tertiary">(landing page on mobile)</span>
 						</span>
 						<ImageUploadButton
@@ -537,7 +537,7 @@ export function BannerForm({ banner }: Props) {
 					</div>
 
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">
+						<span className="label-md text-primary">
 							Article mobile image <span className="font-normal text-tertiary">(article body on mobile)</span>
 						</span>
 						<ImageUploadButton
@@ -550,10 +550,10 @@ export function BannerForm({ banner }: Props) {
 							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article card image when empty."
 						/>
 					</div>
-					{errors.imageUrl ? <p className="text-xs text-error">{errors.imageUrl}</p> : null}
+					{errors.imageUrl ? <p className="body-sm text-error">{errors.imageUrl}</p> : null}
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Alt text <span className="font-normal text-tertiary">(optional, recommended for accessibility)</span>
 							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
 						</span>
@@ -568,7 +568,7 @@ export function BannerForm({ banner }: Props) {
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Link URL <span className="font-normal text-tertiary">(default for every placement)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
@@ -580,11 +580,11 @@ export function BannerForm({ banner }: Props) {
 							placeholder="https://…"
 							className="w-full"
 						/>
-						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
+						{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Landing page URL{' '}
 							<span className="font-normal text-tertiary">(optional, overrides Link URL on /research)</span>
 							<CharCount value={state.landingLinkUrl} max={LINK_URL_MAX} />
@@ -597,11 +597,11 @@ export function BannerForm({ banner }: Props) {
 							placeholder="https://…"
 							className="w-full"
 						/>
-						{errors.landingLinkUrl ? <p className="text-xs text-error">{errors.landingLinkUrl}</p> : null}
+						{errors.landingLinkUrl ? <p className="body-sm text-error">{errors.landingLinkUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Article page URL{' '}
 							<span className="font-normal text-tertiary">(optional, overrides Link URL on article pages)</span>
 							<CharCount value={state.articleLinkUrl} max={LINK_URL_MAX} />
@@ -614,11 +614,11 @@ export function BannerForm({ banner }: Props) {
 							placeholder="https://…"
 							className="w-full"
 						/>
-						{errors.articleLinkUrl ? <p className="text-xs text-error">{errors.articleLinkUrl}</p> : null}
+						{errors.articleLinkUrl ? <p className="body-sm text-error">{errors.articleLinkUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Disclosure URL <span className="font-normal text-tertiary">(optional)</span>
 							<CharCount value={state.disclosureUrl} max={LINK_URL_MAX} />
 						</span>
@@ -630,11 +630,11 @@ export function BannerForm({ banner }: Props) {
 							placeholder="https://…"
 							className="w-full"
 						/>
-						{errors.disclosureUrl ? <p className="text-xs text-error">{errors.disclosureUrl}</p> : null}
+						{errors.disclosureUrl ? <p className="body-sm text-error">{errors.disclosureUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Disclosure label <span className="font-normal text-tertiary">(optional, default “Disclosure”)</span>
 							<CharCount value={state.disclosureText} max={DISCLOSURE_TEXT_MAX} />
 						</span>
@@ -651,7 +651,7 @@ export function BannerForm({ banner }: Props) {
 			) : (
 				<Section title="Content" description="The image readers see and an optional click-through link.">
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">Image</span>
+						<span className="label-md text-primary">Image</span>
 						<ImageUploadButton
 							scope={imageUpload.scope}
 							previewShape="wide"
@@ -661,11 +661,11 @@ export function BannerForm({ banner }: Props) {
 							label="banner image"
 							helperText={imageUpload.helperText}
 						/>
-						{errors.imageUrl ? <p className="text-xs text-error">{errors.imageUrl}</p> : null}
+						{errors.imageUrl ? <p className="body-sm text-error">{errors.imageUrl}</p> : null}
 					</div>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Alt text <span className="font-normal text-tertiary">(optional, recommended for accessibility)</span>
 							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
 						</span>
@@ -680,7 +680,7 @@ export function BannerForm({ banner }: Props) {
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+						<span className="flex items-center justify-between gap-2 label-md text-primary">
 							Link URL <span className="font-normal text-tertiary">(optional)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
@@ -692,7 +692,7 @@ export function BannerForm({ banner }: Props) {
 							placeholder="https://… or /research/…"
 							className="w-full"
 						/>
-						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
+						{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
 					</label>
 				</Section>
 			)}
@@ -705,14 +705,14 @@ export function BannerForm({ banner }: Props) {
 						onChange={(e) => update({ enabled: e.target.checked })}
 						className="size-4 accent-link"
 					/>
-					<span className="text-sm text-primary">Enabled</span>
+					<span className="label-md text-primary">Enabled</span>
 				</label>
 			</Section>
 
 			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
 				{conflict ? <SavedChangedNotice noun="banner" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
+					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
 						<span
 							aria-hidden
 							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}
@@ -760,7 +760,7 @@ export function BannerForm({ banner }: Props) {
 function BannerPreview({ banner }: { banner: Banner }) {
 	return (
 		<div className="grid gap-2 pt-2 pb-6">
-			<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Preview</span>
+			<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Preview</span>
 			{banner.type === 'text' ? (
 				<div className="overflow-hidden rounded-md border border-medium">
 					<TextPreviewInner banner={banner} />
@@ -776,7 +776,7 @@ function BannerPreview({ banner }: { banner: Banner }) {
 
 function PromoPreview({ banner }: { banner: Banner }) {
 	const disclosure = banner.disclosureUrl ? (
-		<span className="text-xs text-secondary underline">{banner.disclosureText || 'Disclosure'}</span>
+		<span className="body-sm text-secondary underline">{banner.disclosureText || 'Disclosure'}</span>
 	) : null
 	const landingLink = landingPromoLinkUrl(banner)
 	const articleLink = articlePromoLinkUrl(banner)
@@ -824,7 +824,7 @@ function PromoPreview({ banner }: { banner: Banner }) {
 		<div className="grid gap-4">
 			{slots.map((slot) => (
 				<div key={slot.label} className={`grid gap-1 ${slot.widthClass}`}>
-					<span className="text-[10px] tracking-[0.14em] text-tertiary uppercase">{slot.label}</span>
+					<span className="body-xs tracking-[0.14em] text-tertiary uppercase">{slot.label}</span>
 					{slot.imageUrl ? (
 						<>
 							<div className="overflow-hidden rounded-md border border-medium bg-surface">
@@ -835,7 +835,7 @@ function PromoPreview({ banner }: { banner: Banner }) {
 							{disclosure}
 						</>
 					) : (
-						<div className="flex h-24 items-center justify-center rounded-md border border-dashed border-medium bg-surface px-4 text-center text-xs text-tertiary">
+						<div className="flex h-24 items-center justify-center rounded-md border border-dashed border-medium bg-surface px-4 text-center body-sm text-tertiary">
 							{slot.placeholder}
 						</div>
 					)}
@@ -864,7 +864,7 @@ function ImagePreview({ banner }: { banner: Banner }) {
 				</div>
 			) : (
 				<div
-					className={`flex ${placeholderHeight} items-center justify-center rounded-md border border-dashed border-medium bg-surface px-4 text-center text-xs text-tertiary`}
+					className={`flex ${placeholderHeight} items-center justify-center rounded-md border border-dashed border-medium bg-surface px-4 text-center body-sm text-tertiary`}
 				>
 					{placeholderCopy}
 				</div>
@@ -877,7 +877,7 @@ function TextPreviewInner({ banner }: { banner: Banner }) {
 	return (
 		<div className="flex w-full items-center gap-3 bg-research-banner px-4 py-2.5 text-on-brand">
 			<div className="flex flex-1 items-center justify-center">
-				<p className="m-0 text-center font-jetbrains text-[11px] font-bold tracking-[0.18em] uppercase">
+				<p className="m-0 text-center label-xs tracking-[0.18em] uppercase">
 					<span>{banner.text}</span>
 					{banner.linkUrl ? (
 						<>
@@ -896,7 +896,7 @@ function Section({ title, description, children }: { title: string; description:
 		<section className="grid gap-6 border-t border-medium py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
 			<div>
 				<h2 className="title-lg text-primary">{title}</h2>
-				<p className="mt-1.5 text-sm leading-relaxed text-secondary">{description}</p>
+				<p className="mt-1.5 body-md text-secondary">{description}</p>
 			</div>
 			<div className="grid min-w-0 gap-5">{children}</div>
 		</section>
@@ -907,9 +907,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	const remaining = max - value.length
 	const tight = remaining < Math.max(20, Math.round(max * 0.1))
 	return (
-		<span
-			className={`font-jetbrains text-[10px] tracking-[0.16em] uppercase ${tight ? 'text-warning' : 'text-tertiary'}`}
-		>
+		<span className={`label-xs tracking-[0.16em] uppercase ${tight ? 'text-warning' : 'text-tertiary'}`}>
 			{value.length} / {max}
 		</span>
 	)

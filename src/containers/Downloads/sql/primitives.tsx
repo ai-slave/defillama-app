@@ -24,7 +24,7 @@ export function StatusDot({ tone, blink = false }: { tone: StatusTone; blink?: b
 export function Keycap({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
 	return (
 		<kbd
-			className={`inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-[3px] border px-0.75 font-mono text-[10px] leading-none tabular-nums ${
+			className={`inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-[3px] border px-0.75 mono-sm tabular-nums ${
 				muted
 					? 'border-white/20 bg-white/10 text-on-brand/85'
 					: 'border-subtle bg-pro-app-bg text-pro-text-secondary shadow-inset-divider'
@@ -40,7 +40,7 @@ export function SectionLabel({ label, count, action }: { label: string; count?: 
 		<div className="flex items-baseline justify-between gap-2">
 			<div className="flex items-baseline gap-2">
 				<h3 className="title-sm tracking-tight text-pro-text-primary">{label}</h3>
-				{count !== undefined ? <span className="text-[11px] text-pro-text-tertiary tabular-nums">{count}</span> : null}
+				{count !== undefined ? <span className="body-sm text-pro-text-tertiary tabular-nums">{count}</span> : null}
 			</div>
 			{action ? <div className="shrink-0">{action}</div> : null}
 		</div>
@@ -71,7 +71,7 @@ export function TypeBadge({ kind }: { kind: FineKind }) {
 	return (
 		<span
 			aria-label={`${kind} column`}
-			className={`inline-flex h-[14px] shrink-0 items-center rounded-[3px] bg-pro-app-bg/60 px-1 font-mono text-[9px] leading-none tracking-tight ${KIND_TONE[kind]}`}
+			className={`inline-flex h-[14px] shrink-0 items-center rounded-[3px] bg-pro-app-bg/60 px-1 mono-sm tracking-tight ${KIND_TONE[kind]}`}
 		>
 			{KIND_LABEL[kind]}
 		</span>

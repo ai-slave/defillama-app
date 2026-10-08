@@ -7,7 +7,7 @@ export function AutosaveStatus() {
 	const pending = queued !== null || saving
 	const canRetry = !pending && state?.status === 'error'
 	return (
-		<div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-pro-text-secondary">
+		<div className="flex min-w-0 flex-wrap items-center gap-2 body-md text-pro-text-secondary">
 			{pending || state !== undefined ? (
 				// One element in every state, so a focused Retry keeps focus through saving and saved.
 				<Button

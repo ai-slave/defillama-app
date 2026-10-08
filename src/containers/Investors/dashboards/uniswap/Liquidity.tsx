@@ -225,9 +225,7 @@ export default function Liquidity() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Liquidity Providers</SectionHeader>
-				{lpOptions.length > 1 && (
-					<p className="-mt-3 text-xs leading-relaxed text-pro-text-tertiary">{LP_OVERLAP_NOTE}</p>
-				)}
+				{lpOptions.length > 1 && <p className="-mt-3 body-sm text-pro-text-tertiary">{LP_OVERLAP_NOTE}</p>}
 				<TimeAreaCard
 					chart={lpCharts[resolvedLpView] ?? data.activeLps}
 					title={LP_VIEWS[resolvedLpView].title}

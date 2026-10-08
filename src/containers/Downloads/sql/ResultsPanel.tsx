@@ -50,12 +50,12 @@ export function ResultsPanel({
 		return (
 			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-10 text-center">
 				<Icon name="bar-chart-2" className="size-5 text-pro-text-tertiary" />
-				<p className="text-sm text-pro-text-secondary">
+				<p className="body-md text-pro-text-secondary">
 					Run a query to see results here. Press{' '}
-					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-pro-app-bg px-1 font-mono text-[10px] text-pro-text-secondary">
+					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-pro-app-bg px-1 mono-sm text-pro-text-secondary">
 						⌘
 					</kbd>{' '}
-					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-pro-app-bg px-1 font-mono text-[10px] text-pro-text-secondary">
+					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-pro-app-bg px-1 mono-sm text-pro-text-secondary">
 						↵
 					</kbd>{' '}
 					or click <span className="font-medium text-pro-text-primary">Run query</span>.
@@ -66,7 +66,7 @@ export function ResultsPanel({
 
 	if (!result && busy) {
 		return (
-			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-subtle bg-surface px-4 text-sm text-pro-text-secondary">
+			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-subtle bg-surface px-4 body-md text-pro-text-secondary">
 				<LoadingSpinner size={14} />
 				<span>{busyMessage}</span>
 			</div>
@@ -83,7 +83,7 @@ export function ResultsPanel({
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div className="flex items-baseline gap-2">
 						<h3 className="title-md tracking-tight text-pro-text-primary">Results</h3>
-						<span className="text-xs text-pro-text-tertiary tabular-nums">
+						<span className="body-sm text-pro-text-tertiary tabular-nums">
 							{formatNumber(result.rows.length)} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
 							{result.columns.length === 1 ? '' : 's'}
 							{durationMs != null ? ` · ${formatSqlDuration(durationMs)}` : ''}

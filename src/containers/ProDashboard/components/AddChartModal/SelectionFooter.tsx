@@ -104,7 +104,7 @@ export function SelectionFooter({
 					onRemoveFromComposer={onRemoveFromComposer}
 				/>
 			</div>
-			<div className="text-xs text-pro-text-tertiary">
+			<div className="body-sm text-pro-text-tertiary">
 				{chartCreationMode === 'combined'
 					? `1 combined chart with ${composerItems.length} series (max ${MAX_MULTI_CHART_SERIES})`
 					: `${composerItems.length} separate card${composerItems.length !== 1 ? 's' : ''}`}

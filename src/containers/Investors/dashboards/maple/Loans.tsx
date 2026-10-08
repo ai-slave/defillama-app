@@ -141,7 +141,7 @@ function LoansTable({ data }: { data: Array<LoanRow> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Open-Term Loans</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Open-Term Loans</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>

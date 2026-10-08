@@ -232,7 +232,7 @@ export function YieldsColumnManagementPanel({
 					placeholder="Search columns…"
 					value={searchTerm}
 					onChange={(event) => setSearchTerm(event.currentTarget.value)}
-					className="bg-surface-secondary w-full rounded-md border border-subtle py-2 pr-3 pl-9 text-sm text-primary"
+					className="bg-surface-secondary w-full rounded-md border border-subtle py-2 pr-3 pl-9 body-md text-primary"
 				/>
 			</div>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

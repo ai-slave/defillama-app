@@ -74,7 +74,7 @@ function NewsletterCard({ item, isLarge }: NewsletterCardProps) {
 					{item.title}
 				</h3>
 				{item.publishedAt ? (
-					<time dateTime={item.publishedAt} className="text-sm font-medium text-secondary dark:text-on-brand/80">
+					<time dateTime={item.publishedAt} className="label-md text-secondary dark:text-on-brand/80">
 						{formatDate(item.publishedAt)}
 					</time>
 				) : null}

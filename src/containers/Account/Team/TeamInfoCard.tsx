@@ -37,12 +37,12 @@ export function TeamInfoCard() {
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
 				<Icon name="users" height={28} width={28} className="text-sub-text-primary" />
-				<span className="text-base leading-5 font-medium text-sub-text-primary">Team</span>
+				<span className="label-lg text-sub-text-primary">Team</span>
 			</div>
 
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
-					<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Name</span>
+					<span className="shrink-0 body-sm text-sub-text-muted">Name</span>
 					{/* On a phone the editor takes the leader line's place, so the field, Save and Cancel stay on one line. */}
 					<div
 						className={`h-0 min-w-0 flex-1 border-b border-dashed border-sub-border ${isEditing ? 'max-sm:hidden' : ''}`}
@@ -63,7 +63,7 @@ export function TeamInfoCard() {
 								onKeyDown={(e) => {
 									if (e.key === 'Escape' && !updateTeamMutation.isPending) closeEditor()
 								}}
-								className="h-8 w-40 min-w-0 shrink rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 text-xs text-sub-text-primary user-invalid:border-error focus:border-sub-brand-primary focus:outline-hidden user-invalid:focus:border-error dark:border-sub-border-strong dark:bg-sub-surface-dark dark:user-invalid:border-error"
+								className="h-8 w-40 min-w-0 shrink rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 body-sm text-sub-text-primary user-invalid:border-error focus:border-sub-brand-primary focus:outline-hidden user-invalid:focus:border-error dark:border-sub-border-strong dark:bg-sub-surface-dark dark:user-invalid:border-error"
 								autoFocus
 							/>
 							<Button
@@ -80,9 +80,7 @@ export function TeamInfoCard() {
 						</form>
 					) : (
 						<div className="flex min-w-0 items-center gap-2">
-							<span className="min-w-0 text-right text-xs leading-4 break-words text-sub-text-primary">
-								{team.name}
-							</span>
+							<span className="min-w-0 text-right body-sm break-words text-sub-text-primary">{team.name}</span>
 							{isAdmin && (
 								<Tooltip
 									content="Rename team"
@@ -105,15 +103,15 @@ export function TeamInfoCard() {
 				</div>
 
 				<div className="flex items-center gap-2">
-					<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Your role</span>
+					<span className="shrink-0 body-sm text-sub-text-muted">Your role</span>
 					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
-					<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.isAdmin ? 'Admin' : 'Member'}</span>
+					<span className="shrink-0 body-sm text-sub-text-primary">{team.isAdmin ? 'Admin' : 'Member'}</span>
 				</div>
 				<p role="status" className="sr-only">
 					{updateTeamMutation.isPending ? 'Saving team name…' : ''}
 				</p>
 				{isEditing && error ? (
-					<p id={errorId} role="alert" className="text-xs text-error">
+					<p id={errorId} role="alert" className="body-sm text-error">
 						{error}
 					</p>
 				) : null}

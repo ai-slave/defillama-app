@@ -174,7 +174,7 @@ export function InsidersTable({
 		<Panel padding="none">
 			<PanelHeader className="flex-col items-start gap-1">
 				<PanelTitle as="h3">Insiders</PanelTitle>
-				{methodology ? <p className="text-sm text-secondary">{methodology}</p> : null}
+				{methodology ? <p className="body-md text-secondary">{methodology}</p> : null}
 			</PanelHeader>
 			<div className="max-h-100 overflow-y-auto">
 				<Table table={instance} stripedBg />

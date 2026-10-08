@@ -300,7 +300,7 @@ export function AlertArtifact({
 						// The saved card replaces the form and its Save button; the status line of a save made here takes focus.
 						ref={savedAlert ? takeLostFocus : undefined}
 						tabIndex={-1}
-						className="m-0 flex items-center gap-1.5 text-xs text-success"
+						className="m-0 flex items-center gap-1.5 body-sm text-success"
 					>
 						<Icon name="check" className="size-3.5 shrink-0" />
 						{isPriceAlert
@@ -311,7 +311,7 @@ export function AlertArtifact({
 					</p>
 
 					<div className="flex flex-col gap-1.5 rounded-lg bg-surface-elevated-1 px-3 py-2.5">
-						<p className="m-0 flex items-center gap-2 text-xs text-tertiary">
+						<p className="m-0 flex items-center gap-2 body-sm text-tertiary">
 							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-3.5 shrink-0 text-tertiary" />
 							<span className="truncate font-mono">
 								{isPriceAlert && editedTrigger
@@ -319,7 +319,7 @@ export function AlertArtifact({
 									: scheduleSummary}
 							</span>
 						</p>
-						<p className="m-0 flex items-center gap-2 text-xs text-tertiary">
+						<p className="m-0 flex items-center gap-2 body-sm text-tertiary">
 							<Icon name="mail" className="size-3.5 shrink-0 text-tertiary" />
 							<span className="truncate">{destinationLabel}</span>
 						</p>
@@ -355,7 +355,7 @@ export function AlertArtifact({
 						<p
 							ref={takeLostFocus}
 							tabIndex={-1}
-							className="flex items-center justify-center gap-1.5 text-xs text-success"
+							className="flex items-center justify-center gap-1.5 body-sm text-success"
 						>
 							<Icon name="check" className="size-3.5" />
 							{deliveryChannel === 'slack'
@@ -373,7 +373,7 @@ export function AlertArtifact({
 							ref={takeLostFocus}
 							tabIndex={-1}
 							role="status"
-							className="flex items-center justify-center gap-1.5 text-xs text-tertiary"
+							className="flex items-center justify-center gap-1.5 body-sm text-tertiary"
 						>
 							<LoadingSpinner size={12} />
 							Sending test alert…
@@ -417,9 +417,7 @@ export function AlertArtifact({
 					{prompt ? (
 						<div className="flex flex-col gap-1">
 							<span className={alertFieldLabelClass}>What it will tell you</span>
-							<p className={`m-0 text-sm leading-relaxed text-secondary ${promptExpanded ? '' : 'line-clamp-2'}`}>
-								{prompt}
-							</p>
+							<p className={`m-0 body-md text-secondary ${promptExpanded ? '' : 'line-clamp-2'}`}>{prompt}</p>
 							{prompt.length > 140 ? (
 								<span className="self-start label-sm">
 									<Button variant="link" onClick={() => setPromptExpanded((v) => !v)} aria-expanded={promptExpanded}>
@@ -433,7 +431,7 @@ export function AlertArtifact({
 					{trigger ? (
 						<div className="flex flex-col gap-1.5">
 							<div className="flex flex-wrap items-center gap-2">
-								<span className="font-mono text-sm text-primary">{formatTokenLabel(trigger.token_nk)}</span>
+								<span className="mono-md text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 								<SegmentedToggle<'above' | 'below'>
 									label="Price comparison"
 									value={priceOp}
@@ -442,7 +440,7 @@ export function AlertArtifact({
 								/>
 								<PriceInput value={priceValue} onValueChange={setPriceValue} />
 							</div>
-							<p className="m-0 text-xs text-tertiary">Fires once, then pauses — re-arm it anytime from your alerts.</p>
+							<p className="m-0 body-sm text-tertiary">Fires once, then pauses — re-arm it anytime from your alerts.</p>
 						</div>
 					) : (
 						<div className="flex flex-wrap items-center gap-2">
@@ -471,7 +469,7 @@ export function AlertArtifact({
 								</select>
 							) : null}
 
-							<span className="text-xs text-tertiary">at</span>
+							<span className="body-sm text-tertiary">at</span>
 
 							<select
 								value={hour}
@@ -571,7 +569,7 @@ export function AlertArtifact({
 							) : null}
 						</div>
 						{readinessBlock ? (
-							<p className="m-0 text-xs text-warning">
+							<p className="m-0 body-sm text-warning">
 								{readinessBlock.label} →{' '}
 								<span className="text-tertiary">
 									<SettingsIntegrationsLink />
@@ -580,7 +578,7 @@ export function AlertArtifact({
 						) : null}
 					</div>
 
-					<p className="m-0 flex items-center gap-1.5 text-xs text-warning">
+					<p className="m-0 flex items-center gap-1.5 body-sm text-warning">
 						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 						Action required — confirm your alert settings and save
 					</p>

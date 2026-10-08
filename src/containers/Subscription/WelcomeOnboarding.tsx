@@ -310,7 +310,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					<button
 						type="button"
 						onClick={() => void Router.push('/subscription')}
-						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+						className="rounded-lg border border-sub-line px-4 py-2 label-md text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
 					>
 						Back to plans
 					</button>
@@ -328,7 +328,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					<button
 						type="button"
 						onClick={onSignIn}
-						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+						className="rounded-lg border border-sub-line px-4 py-2 label-md text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
 					>
 						Sign in
 					</button>
@@ -363,7 +363,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					<button
 						type="button"
 						onClick={() => window.location.reload()}
-						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+						className="rounded-lg border border-sub-line px-4 py-2 label-md text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
 					>
 						Refresh
 					</button>
@@ -382,8 +382,8 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					<Icon name="check-circle" height={13} width={13} />
 					{planName} activated
 				</span>
-				<h1 className="text-2xl font-bold tracking-tight text-on-brand">Welcome to DefiLlama {planName}</h1>
-				<p className="text-sm text-sub-text-muted">What brought you here? Pick all that apply.</p>
+				<h1 className="heading-lg tracking-tight text-on-brand">Welcome to DefiLlama {planName}</h1>
+				<p className="body-md text-sub-text-muted">What brought you here? Pick all that apply.</p>
 			</div>
 
 			{slackAcquisition ? (
@@ -392,8 +392,8 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 						<Icon name="chat" height={16} width={16} className="text-sub-purple-soft" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-0.5">
-						<span className="text-sm font-medium text-on-brand">LlamaAI is ready in Slack</span>
-						<span className="text-xs leading-snug text-sub-text-muted">
+						<span className="label-md text-on-brand">LlamaAI is ready in Slack</span>
+						<span className="body-sm text-sub-text-muted">
 							Mention <span className="font-mono text-sub-text-soft">@LlamaAI</span> in any channel, or DM the bot
 							directly.
 						</span>
@@ -441,13 +441,11 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 								)}
 							</div>
 							<div className="flex min-w-0 flex-col">
-								<span
-									className={`text-sm leading-tight font-medium ${isSelected ? 'text-on-brand' : 'text-sub-text-soft'}`}
-								>
+								<span className={`label-md ${isSelected ? 'text-on-brand' : 'text-sub-text-soft'}`}>
 									{option.label}
 								</span>
 								{option.description ? (
-									<span className="mt-0.5 text-xs leading-tight text-sub-text-muted">{option.description}</span>
+									<span className="mt-0.5 label-sm text-sub-text-muted">{option.description}</span>
 								) : null}
 							</div>
 							<div className="ml-auto shrink-0">
@@ -470,14 +468,14 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 					type="button"
 					onClick={handleContinue}
 					disabled={selectedFeatures.size === 0}
-					className="w-full rounded-xl bg-sub-purple py-3 text-sm font-semibold text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+					className="w-full rounded-xl bg-sub-purple py-3 label-md text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
 				>
 					Get started
 				</button>
 				<button
 					type="button"
 					onClick={() => void Router.push('/account')}
-					className="py-1 text-xs text-sub-text-muted transition-colors hover:text-sub-text-soft"
+					className="py-1 label-sm text-sub-text-muted transition-colors hover:text-sub-text-soft"
 				>
 					Skip
 				</button>

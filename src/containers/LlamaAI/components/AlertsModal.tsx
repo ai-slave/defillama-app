@@ -432,7 +432,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 					/>
 				</div>
 			) : selectedExec.error_message ? (
-				<p className="text-xs text-error">{selectedExec.error_message}</p>
+				<p className="body-sm text-error">{selectedExec.error_message}</p>
 			) : (
 				<p className="body-sm text-tertiary">No content available.</p>
 			)}
@@ -676,7 +676,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 										className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 									>
 										<div className="flex items-baseline gap-2">
-											<span className="font-mono text-xs text-primary">{formatExecDate(exec.executed_at)}</span>
+											<span className="mono-sm text-primary">{formatExecDate(exec.executed_at)}</span>
 											<span className="label-xs text-tertiary">{formatDuration(exec.duration_ms)}</span>
 										</div>
 										<StatusChip tone={execChipTone(exec.status, !!exec.error_message)}>

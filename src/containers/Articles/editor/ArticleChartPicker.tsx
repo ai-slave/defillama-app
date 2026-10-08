@@ -467,8 +467,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 											<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-surface">
 												<img src={entityLogo(entity)} alt="" className="size-full object-cover" />
 											</span>
-											<span className="min-w-0 flex-1 truncate text-sm">{entity.name}</span>
-											{tvl ? <span className="shrink-0 text-[11px] text-tertiary tabular-nums">{tvl}</span> : null}
+											<span className="min-w-0 flex-1 truncate label-md">{entity.name}</span>
+											{tvl ? <span className="shrink-0 body-sm text-tertiary tabular-nums">{tvl}</span> : null}
 										</Ariakit.Checkbox>
 									</li>
 								)
@@ -509,9 +509,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 														<img src={entityLogo(s)} alt="" className="size-full object-cover" />
 													</span>
 													<span className="truncate label-sm text-primary">{s.name}</span>
-													<span className="font-jetbrains text-[9px] tracking-[0.16em] text-tertiary uppercase">
-														{s.entityType}
-													</span>
+													<span className="label-xs tracking-[0.16em] text-tertiary uppercase">{s.entityType}</span>
 												</span>
 												<div className="col-start-2 row-start-2 sm:col-auto sm:row-auto">
 													<Select
@@ -634,9 +632,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 												key={annotation.id}
 												className="grid grid-cols-[16px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-medium bg-page px-2 py-1.5 sm:grid-cols-[16px_auto_minmax(0,1fr)_auto]"
 											>
-												<span className="font-jetbrains text-[10px] font-bold text-tertiary">
-													{String.fromCharCode(65 + i)}
-												</span>
+												<span className="mono-sm-bold text-tertiary">{String.fromCharCode(65 + i)}</span>
 												<Input
 													type="date"
 													aria-label={`Annotation ${i + 1} date`}

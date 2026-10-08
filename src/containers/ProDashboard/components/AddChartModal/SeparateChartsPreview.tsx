@@ -43,7 +43,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 							key={item.id}
 							className="flex flex-col gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2"
 						>
-							<span className="truncate text-xs text-pro-text-secondary">{series.name}</span>
+							<span className="truncate body-sm text-pro-text-secondary">{series.name}</span>
 							<div className="h-[120px]">
 								{chartView.charts.length > 0 ? (
 									<Suspense fallback={<div className="size-full animate-pulse rounded-sm bg-pro-cards-bg" />}>
@@ -59,7 +59,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 										/>
 									</Suspense>
 								) : (
-									<div className="flex size-full flex-col items-center justify-center gap-1.5 text-xs text-pro-text-tertiary">
+									<div className="flex size-full flex-col items-center justify-center gap-1.5 body-sm text-pro-text-tertiary">
 										{item.hasError ? (
 											<>
 												<p role="alert" className="text-data-down">
@@ -88,7 +88,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 					)
 				})}
 			</div>
-			{hiddenCount > 0 ? <p className="text-xs text-pro-text-tertiary">+{hiddenCount} more</p> : null}
+			{hiddenCount > 0 ? <p className="body-sm text-pro-text-tertiary">+{hiddenCount} more</p> : null}
 		</div>
 	)
 }

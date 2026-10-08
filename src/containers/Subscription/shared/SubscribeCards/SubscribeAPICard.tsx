@@ -41,22 +41,22 @@ export function SubscribeAPICard({
 
 	return (
 		<div className="sub-api-accent contents">
-			<h2 className="relative z-10 text-center text-[2rem] font-extrabold whitespace-nowrap text-sub-purple">API</h2>
+			<h2 className="relative z-10 text-center heading-lg whitespace-nowrap text-sub-purple">API</h2>
 			<div className="relative z-10 mt-1 flex flex-col items-center justify-center">
 				<div className="flex items-center">
-					<span className="bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-center text-2xl font-medium text-transparent">
+					<span className="bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-center label-xl text-transparent">
 						{displayPrice} USD
 					</span>
 					<span className="ml-1 text-sub-text-muted">{displayPeriod}</span>
 				</div>
 				{billingInterval === 'year' ? (
-					<span className="text-sm text-sub-text-muted">{formatUsd(yearlyPrice)}/year</span>
+					<span className="body-md text-sub-text-muted">{formatUsd(yearlyPrice)}/year</span>
 				) : null}
 			</div>
 			{billingInterval === 'month' ? (
 				<p className="relative z-10 mt-1 text-center font-medium text-sub-text-muted">Multiple payment options</p>
 			) : null}
-			<ul className="mx-auto mb-auto flex w-full flex-col gap-3 py-6 max-sm:text-sm">
+			<ul className="mx-auto mb-auto flex w-full flex-col gap-3 py-6 max-sm:body-md">
 				<li className="flex flex-nowrap items-start gap-2.5">
 					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
 					<span>All features included in Pro tier</span>

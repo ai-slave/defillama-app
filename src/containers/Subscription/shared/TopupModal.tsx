@@ -165,7 +165,7 @@ export function TopupForm({
 							{/* The same size as the field's text, which stays 16px below sm so iOS does not zoom. */}
 							<span
 								aria-hidden="true"
-								className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-base text-secondary sm:body-sm"
+								className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 body-lg text-secondary sm:body-sm"
 							>
 								$
 							</span>

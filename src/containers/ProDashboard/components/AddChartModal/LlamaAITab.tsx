@@ -114,7 +114,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 				aria-label="Search saved charts"
 				placeholder="Search saved charts…"
 				onInput={(e) => setSearchQuery(e.currentTarget.value)}
-				className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+				className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 			/>
 
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -157,13 +157,13 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 									<Icon name="trash-2" height={16} width={16} />
 								</Tooltip>
 							</div>
-							<p className="line-clamp-2 text-xs text-pro-text-tertiary">{chart.original_query}</p>
+							<p className="line-clamp-2 body-sm text-pro-text-tertiary">{chart.original_query}</p>
 							{chart.session_id ? (
 								<a
 									href={`/ai/chat/${chart.session_id}`}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="relative self-start text-xs text-link hover:underline"
+									className="relative self-start body-sm text-link hover:underline"
 								>
 									View chat →
 								</a>

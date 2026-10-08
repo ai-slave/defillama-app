@@ -52,18 +52,18 @@ export function SpawnProgressCard({
 			>
 				<img src={LLAMA_AI_ANIMATION_SRC} alt="" className="size-6 shrink-0" loading="eager" fetchPriority="high" />
 
-				<p className="m-0 flex-1 truncate text-xs text-tertiary sm:text-sm">
+				<p className="m-0 flex-1 truncate body-sm text-tertiary sm:body-md">
 					{isResearchMode ? <>Researching in parallel&hellip;</> : <>Working in herd&hellip;</>}
 				</p>
 
-				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 text-xs text-tertiary">
+				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 body-sm text-tertiary">
 					{completed}/{total} done
 				</p>
 
 				{/* Out of the button's name, so a screen reader is not re-read the name every second. */}
 				<time
 					aria-hidden
-					className="flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 font-mono text-xs text-tertiary tabular-nums"
+					className="flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 mono-sm text-tertiary tabular-nums"
 				>
 					{formatTime(elapsed)}
 				</time>
@@ -87,7 +87,7 @@ export function SpawnProgressCard({
 							) : (
 								<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 							)}
-							<p className="m-0 text-xs text-tertiary">
+							<p className="m-0 body-sm text-tertiary">
 								{agent.id}
 								{agent.status === 'tool_call' && agent.tool ? (
 									<span className="opacity-60"> - {getToolLabel(agent.tool)}</span>

@@ -246,11 +246,11 @@ export function BorrowedChartTab({
 				</Tooltip>
 
 				{hasProtocolSelection && isLoading ? (
-					<p className="text-xs text-pro-text-tertiary">Loading selected chart...</p>
+					<p className="body-sm text-pro-text-tertiary">Loading selected chart...</p>
 				) : null}
 
 				{hasProtocolSelection && !isLoading && !hasData ? (
-					<p className="text-xs text-pro-text-tertiary">No data available for this chart type.</p>
+					<p className="body-sm text-pro-text-tertiary">No data available for this chart type.</p>
 				) : null}
 			</div>
 
@@ -262,7 +262,7 @@ export function BorrowedChartTab({
 						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
 							<div>
 								<h3 className="mb-1 title-md text-pro-text-primary">{previewTitle}</h3>
-								<p className="text-xs text-pro-text-secondary">Borrowed chart</p>
+								<p className="body-sm text-pro-text-secondary">Borrowed chart</p>
 							</div>
 							{activeChartType === 'tokensBorrowedPie' && pieSeriesNames.length > 1 ? (
 								<SelectWithCombobox
@@ -299,7 +299,7 @@ export function BorrowedChartTab({
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="trending-up" height={32} width={32} className="mx-auto mb-1" />
-							<p className="text-xs">Select a protocol to see available borrowed charts</p>
+							<p className="body-sm">Select a protocol to see available borrowed charts</p>
 						</div>
 					</div>
 				)}

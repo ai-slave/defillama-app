@@ -44,7 +44,7 @@ function CaptionEditor({ caption, onChange }: { caption: string; onChange: (capt
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent body-md text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
 		/>
 	)
 }
@@ -95,7 +95,7 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 							: 'opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100'
 					}`}
 				>
-					<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase shadow-xs">
+					<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-xs">
 						<Icon name="sparkles" className="size-3 text-link" />
 						LlamaAI · {config?.type ?? 'chart'}
 					</span>
@@ -135,14 +135,14 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 				) : config && chartData ? (
 					<div className="h-[338px]" />
 				) : (
-					<div className="flex items-center justify-center rounded-md border border-dashed border-medium py-10 text-sm text-tertiary">
+					<div className="flex items-center justify-center rounded-md border border-dashed border-medium py-10 body-md text-tertiary">
 						Invalid LlamaAI chart data — remove this block and re-export it.
 					</div>
 				)}
 				{isEditable ? (
 					<CaptionEditor caption={caption} onChange={(next) => updateAttributes({ caption: next })} />
 				) : caption ? (
-					<p className="text-[13px] leading-snug text-secondary">{caption}</p>
+					<p className="body-md text-secondary">{caption}</p>
 				) : null}
 			</div>
 		</NodeViewWrapper>

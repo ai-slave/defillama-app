@@ -28,7 +28,7 @@ export function UploadSelectionNotice({
 	if (!feedback) return null
 	const label = formatUploadSelectionSummary(feedback)
 	return (
-		<div className="flex items-start gap-2 px-1 py-1 text-xs leading-5 text-secondary">
+		<div className="flex items-start gap-2 px-1 py-1 body-sm text-secondary">
 			{feedback.skipped.length > 0 ? (
 				<details className="flex-1">
 					<summary className="flex cursor-pointer flex-wrap items-center gap-x-2 rounded-sm">

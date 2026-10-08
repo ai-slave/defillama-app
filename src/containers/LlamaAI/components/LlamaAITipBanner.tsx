@@ -42,7 +42,7 @@ export function LlamaAITipBanner() {
 			<Tooltip
 				content={tip.title}
 				render={<p />}
-				className="m-0 min-w-0 flex-1 truncate text-[13px] text-secondary"
+				className="m-0 min-w-0 flex-1 truncate body-md text-secondary"
 				data-fullwidth
 			>
 				{tip.title}

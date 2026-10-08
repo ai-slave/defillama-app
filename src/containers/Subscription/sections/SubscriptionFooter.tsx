@@ -73,10 +73,10 @@ export function SubscriptionFooter() {
 					</div>
 					<SocialIcons size={18} />
 				</div>
-				<div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] leading-3 text-sub-footer-text">
+				<div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 body-xs text-sub-footer-text">
 					<FooterLinks />
 				</div>
-				<StaleText as="p" className="mt-4 text-[10px] leading-3 text-sub-footer-text">
+				<StaleText as="p" className="mt-4 body-xs text-sub-footer-text">
 					{`© ${COPYRIGHT_YEAR} DefiLlama. All rights reserved.`}
 				</StaleText>
 			</footer>
@@ -100,7 +100,7 @@ export function SubscriptionFooter() {
 						</div>
 						<SocialIcons size={20} />
 					</div>
-					<div className="flex items-center justify-between text-xs text-sub-footer-text">
+					<div className="flex items-center justify-between body-sm text-sub-footer-text">
 						<StaleText as="p">{`© ${COPYRIGHT_YEAR} DefiLlama. All rights reserved.`}</StaleText>
 						<div className="flex items-center gap-8">
 							<FooterLinks />

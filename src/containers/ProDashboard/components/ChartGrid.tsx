@@ -808,7 +808,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		<button
 			type="button"
 			onClick={() => onAddChartClick(placement)}
-			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-pro-cards-border text-sm font-medium text-link hover:bg-hover-row focus-visible:bg-hover-row"
+			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-pro-cards-border label-md text-link hover:bg-hover-row focus-visible:bg-hover-row"
 		>
 			<Icon name="plus" height={16} width={16} />
 			Add card
@@ -847,7 +847,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 					{showEmptyTabNotice ? (
 						<div
 							{...(showAddTile ? {} : { role: 'status' })}
-							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-pro-cards-border px-3 text-center text-sm text-pro-text-tertiary"
+							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-pro-cards-border px-3 text-center body-md text-pro-text-tertiary"
 						>
 							{showAddTile ? 'This tab has no cards yet. Add one or drag a card here.' : 'Nothing in this tab yet'}
 						</div>

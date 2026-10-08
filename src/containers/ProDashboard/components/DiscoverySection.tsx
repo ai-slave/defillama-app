@@ -29,13 +29,10 @@ export function DiscoveryShelfHeading({
 		<div className="flex items-end justify-between gap-3">
 			<div className="flex min-w-0 flex-col gap-0.5">
 				<h3 className="title-lg text-pro-text-primary">{title}</h3>
-				{subtitle ? <p className="text-xs text-pro-text-tertiary">{subtitle}</p> : null}
+				{subtitle ? <p className="body-sm text-pro-text-tertiary">{subtitle}</p> : null}
 			</div>
 			{seeAllHref ? (
-				<BasicLink
-					href={seeAllHref}
-					className="flex shrink-0 items-center gap-1 text-sm font-medium text-link hover:underline"
-				>
+				<BasicLink href={seeAllHref} className="flex shrink-0 items-center gap-1 label-md text-link hover:underline">
 					See all
 					<Icon name="arrow-right" height={14} width={14} />
 				</BasicLink>
@@ -78,7 +75,7 @@ export function DiscoverySection({
 		return (
 			<div className="flex flex-col gap-3">
 				<DiscoveryShelfHeading title={title} subtitle={subtitle} />
-				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-secondary">
+				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center body-md text-pro-text-secondary">
 					{emptyMessage}
 				</p>
 			</div>

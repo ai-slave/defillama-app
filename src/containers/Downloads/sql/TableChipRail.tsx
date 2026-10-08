@@ -111,7 +111,7 @@ function TableChip({
 				type="button"
 				onClick={onToggle}
 				aria-expanded={open}
-				className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-pro-text-primary"
+				className="flex items-center gap-1.5 px-2.5 py-1 label-sm text-pro-text-primary"
 			>
 				<Icon
 					name="chevron-right"
@@ -156,7 +156,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 				failed ? `Failed to load ${table.label}` : loading ? `Loading ${table.label}` : `Queued ${table.label}`
 			}
 			title={table.label}
-			className={`flex items-center gap-1.5 overflow-hidden rounded-md border border-dashed px-2.5 py-1 text-xs transition-colors ${
+			className={`flex items-center gap-1.5 overflow-hidden rounded-md border border-dashed px-2.5 py-1 body-sm transition-colors ${
 				failed
 					? 'border-error/50 bg-error/5 text-error'
 					: loading
@@ -175,7 +175,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 			</span>
 			<span className="max-w-[180px] truncate font-mono">{table.name}</span>
 			<span
-				className={`text-[10px] tracking-wide uppercase tabular-nums ${
+				className={`body-xs tracking-wide uppercase tabular-nums ${
 					failed ? 'text-error/80' : 'text-pro-text-tertiary'
 				}`}
 			>
@@ -189,7 +189,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 	return (
 		<div className="rounded-md border border-subtle bg-surface px-3 py-2.5">
 			<div className="flex items-baseline justify-between gap-3">
-				<div className="flex flex-wrap items-baseline gap-2 text-xs">
+				<div className="flex flex-wrap items-baseline gap-2 body-sm">
 					<span className="font-mono font-bold text-pro-text-primary">{table.name}</span>
 					<span className="text-pro-text-tertiary">
 						{table.columns.length} cols · {prettyLabelForSource(table.source)}
@@ -220,7 +220,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 				{table.columns.map((c) => (
 					<li
 						key={c.name}
-						className="flex items-center gap-1.5 text-xs"
+						className="flex items-center gap-1.5 body-sm"
 						title={c.type ? `${c.name} · ${c.type}` : c.name}
 					>
 						<TypeBadge kind={inferFineKindFromArrowType(c.type)} />
@@ -240,7 +240,7 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface/60 px-3 py-2 text-xs text-pro-text-secondary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-subtle bg-surface/60 px-3 py-2 body-sm text-pro-text-secondary">
 			<span className="text-pro-text-primary">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
 			</span>

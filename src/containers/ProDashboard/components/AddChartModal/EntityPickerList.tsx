@@ -113,7 +113,7 @@ export function EntityPickerList({
 						ref={searchRef}
 						onInput={(e) => setSearch(e.currentTarget.value)}
 						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}...`}
-						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 body-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 				{selectedEntities.length > 0 ? (
@@ -128,7 +128,7 @@ export function EntityPickerList({
 
 			<div ref={listRef} className="flex-1 overflow-y-auto">
 				{filteredEntities.length === 0 ? (
-					<div className="flex h-full items-center justify-center text-xs text-pro-text-tertiary">
+					<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">
 						No {mode === 'chain' ? 'chains' : 'protocols'} found
 					</div>
 				) : (
@@ -151,7 +151,7 @@ export function EntityPickerList({
 									type="button"
 									aria-pressed={isSelected}
 									onClick={() => onToggle(entity.value)}
-									className={`flex w-full items-center gap-3 py-2 pr-3 text-left text-xs transition-all ${
+									className={`flex w-full items-center gap-3 py-2 pr-3 text-left label-sm transition-all ${
 										isSelected ? 'bg-brand/10' : ''
 									} ${isChild ? 'pl-8' : 'pl-3'}`}
 									style={{

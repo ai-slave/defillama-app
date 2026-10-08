@@ -18,12 +18,12 @@ export default function ResearchAdminHubPage() {
 						<header className="pt-2 pb-2">
 							<Link
 								href="/research"
-								className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+								className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 							>
 								<span aria-hidden>←</span> Research
 							</Link>
-							<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Admin</h1>
-							<p className="mt-1 text-sm text-secondary">Internal tools for the research platform.</p>
+							<h1 className="mt-2 heading-lg tracking-tight text-primary">Admin</h1>
+							<p className="mt-1 body-md text-secondary">Internal tools for the research platform.</p>
 						</header>
 
 						<div className="grid gap-4 sm:grid-cols-2">
@@ -31,17 +31,17 @@ export default function ResearchAdminHubPage() {
 								href="/research/new"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Authoring</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Write new article</span>
-								<span className="text-sm text-secondary">Start a fresh draft in the research editor.</span>
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Authoring</span>
+								<span className="heading-xs text-primary group-hover:text-link">Write new article</span>
+								<span className="body-md text-secondary">Start a fresh draft in the research editor.</span>
 							</Link>
 							<Link
 								href="/research/mine"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Authoring</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">My articles</span>
-								<span className="text-sm text-secondary">
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Authoring</span>
+								<span className="heading-xs text-primary group-hover:text-link">My articles</span>
+								<span className="body-md text-secondary">
 									Review and edit drafts and published articles you authored.
 								</span>
 							</Link>
@@ -49,9 +49,9 @@ export default function ResearchAdminHubPage() {
 								href="/research/admin/curation"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Editorial</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Curation</span>
-								<span className="text-sm text-secondary">
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Editorial</span>
+								<span className="heading-xs text-primary group-hover:text-link">Curation</span>
+								<span className="body-md text-secondary">
 									Pick the Spotlight and Insights articles shown on /research.
 								</span>
 							</Link>
@@ -59,9 +59,9 @@ export default function ResearchAdminHubPage() {
 								href="/research/admin/banners"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Promotions</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Banners</span>
-								<span className="text-sm text-secondary">
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Promotions</span>
+								<span className="heading-xs text-primary group-hover:text-link">Banners</span>
+								<span className="body-md text-secondary">
 									Configure the dismissible strip shown above articles or on /research.
 								</span>
 							</Link>
@@ -70,8 +70,8 @@ export default function ResearchAdminHubPage() {
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Promotions</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Trusted By</span>
-								<span className="text-sm text-secondary">
+								<span className="heading-xs text-primary group-hover:text-link">Trusted By</span>
+								<span className="body-md text-secondary">
 									Manage the Trusted By logos and social media mentions shown on /research.
 								</span>
 							</Link>
@@ -79,9 +79,9 @@ export default function ResearchAdminHubPage() {
 								href="/research/admin/reports"
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
-								<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Reports</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Report PDFs</span>
-								<span className="text-sm text-secondary">
+								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Reports</span>
+								<span className="heading-xs text-primary group-hover:text-link">Report PDFs</span>
+								<span className="body-md text-secondary">
 									Attach a PDF, carousel image, sponsor logo, and description to each Report article.
 								</span>
 							</Link>
@@ -90,8 +90,8 @@ export default function ResearchAdminHubPage() {
 								className="group grid gap-2 rounded-md border border-medium bg-surface p-5 transition-colors hover:border-link/40"
 							>
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Clients</span>
-								<span className="text-lg font-semibold text-primary group-hover:text-link">Clients</span>
-								<span className="text-sm text-secondary">
+								<span className="heading-xs text-primary group-hover:text-link">Clients</span>
+								<span className="body-md text-secondary">
 									Keep the client list and link each Research article to its client.
 								</span>
 							</Link>

@@ -65,7 +65,7 @@ export function InputTextarea({
 						onCompositionStart={onCompositionStart}
 						onCompositionEnd={onCompositionEnd}
 						name="prompt"
-						className="relative z-1 block min-h-4 w-full resize-none overflow-x-hidden overflow-y-hidden overscroll-contain border-0 bg-transparent p-0 leading-normal wrap-break-word whitespace-pre-wrap text-primary caret-primary outline-hidden placeholder:text-tertiary max-sm:text-base"
+						className="relative z-1 block min-h-4 w-full resize-none overflow-x-hidden overflow-y-hidden overscroll-contain border-0 bg-transparent p-0 leading-normal wrap-break-word whitespace-pre-wrap text-primary caret-primary outline-hidden placeholder:text-tertiary max-sm:body-lg"
 						autoCorrect="on"
 						autoCapitalize="none"
 						autoComplete="off"
@@ -76,7 +76,7 @@ export function InputTextarea({
 			/>
 			<div
 				aria-hidden="true"
-				className="highlighted-text pointer-events-none absolute top-0 right-0 bottom-0 left-0 z-0 min-h-4 overflow-x-hidden overflow-y-hidden overscroll-contain p-0 leading-normal wrap-break-word whitespace-pre-wrap max-sm:text-base"
+				className="highlighted-text pointer-events-none absolute top-0 right-0 bottom-0 left-0 z-0 min-h-4 overflow-x-hidden overflow-y-hidden overscroll-contain p-0 leading-normal wrap-break-word whitespace-pre-wrap max-sm:body-lg"
 				ref={highlightRef}
 				// Safe here: highlightWord escapes user text and only injects internal highlight spans.
 				// eslint-disable-next-line react/no-danger

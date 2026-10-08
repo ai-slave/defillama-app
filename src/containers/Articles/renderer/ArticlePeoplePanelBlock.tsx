@@ -9,9 +9,7 @@ export function ArticlePeoplePanelBlock({ config, compact = false }: Props) {
 	if (config.items.length === 0) return null
 	return (
 		<section data-people-panel className={`article-people-panel not-prose grid gap-6 ${compact ? '' : 'my-8'}`}>
-			{config.label ? (
-				<div className="font-jetbrains text-[11px] tracking-[0.18em] text-tertiary uppercase">{config.label}</div>
-			) : null}
+			{config.label ? <div className="label-xs tracking-[0.18em] text-tertiary uppercase">{config.label}</div> : null}
 			<div className="grid gap-7">
 				{config.items.map((item, idx) => {
 					const nameNode = item.href ? (
@@ -47,8 +45,8 @@ export function ArticlePeoplePanelBlock({ config, compact = false }: Props) {
 								/>
 							)}
 							<div className="grid gap-1.5">
-								{item.name ? <h4 className="text-base leading-tight font-semibold">{nameNode}</h4> : null}
-								{item.bio ? <p className="text-sm leading-relaxed text-secondary">{item.bio}</p> : null}
+								{item.name ? <h4 className="title-lg">{nameNode}</h4> : null}
+								{item.bio ? <p className="body-md text-secondary">{item.bio}</p> : null}
 							</div>
 						</article>
 					)

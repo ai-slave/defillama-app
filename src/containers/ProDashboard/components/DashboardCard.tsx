@@ -56,7 +56,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 				<img src={author.avatarUrl} alt="" loading="lazy" className="size-4 shrink-0 rounded-full object-cover" />
 			) : (
 				<span
-					className="flex size-4 shrink-0 items-center justify-center rounded-full text-xs"
+					className="flex size-4 shrink-0 items-center justify-center rounded-full body-sm"
 					style={avatarColorStyle(author.slug)}
 				>
 					🦙
@@ -149,7 +149,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	const titleRow = (
 		<div className="flex min-w-0 items-start gap-2">
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<h2 className="line-clamp-1 text-base leading-snug font-semibold text-pro-text-primary">{name}</h2>
+				<h2 className="line-clamp-1 title-lg text-pro-text-primary">{name}</h2>
 				<DashboardAuthorLink author={dashboard.author} />
 			</div>
 			{isPrivate ? (

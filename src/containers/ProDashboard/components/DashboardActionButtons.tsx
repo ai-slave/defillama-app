@@ -37,7 +37,7 @@ export function EditDoneButton({
 				{editing ? 'Done' : 'Edit'}
 			</Button>
 			{!editing && navigation.isError ? (
-				<p role="alert" className="text-sm text-error">
+				<p role="alert" className="body-md text-error">
 					Could not open the editor. Please try again.
 				</p>
 			) : null}
@@ -89,12 +89,12 @@ export function CopyDashboardButton({
 				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}
 			</span>
 			{copy.isSuccess ? (
-				<BasicLink href={`/pro/${dashboardUrlKey(copy.data)}`} className="text-sm text-pro-text-secondary underline">
+				<BasicLink href={`/pro/${dashboardUrlKey(copy.data)}`} className="body-md text-pro-text-secondary underline">
 					Open copy
 				</BasicLink>
 			) : null}
 			{copy.error ? (
-				<p role="alert" className="max-w-xs text-sm text-error">
+				<p role="alert" className="max-w-xs body-md text-error">
 					{copy.error.message}
 				</p>
 			) : null}
@@ -130,7 +130,7 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 				{undo.isPending ? 'Undoing AI changes' : ''}
 			</span>
 			{undo.error ? (
-				<p role="alert" className="max-w-xs text-sm text-error">
+				<p role="alert" className="max-w-xs body-md text-error">
 					{undo.error.message}
 				</p>
 			) : null}

@@ -141,7 +141,7 @@ function ChartCaptionEditor({
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent body-md text-secondary placeholder:text-tertiary/70 hover:border-medium focus:text-primary"
 		/>
 	)
 }
@@ -198,7 +198,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes, e
 					selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
 				}`}
 			>
-				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase shadow-xs">
+				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 label-xs tracking-[0.22em] text-tertiary uppercase shadow-xs">
 					<Icon name="bar-chart-2" className="size-3 text-link" />
 					{tagLabel}
 				</span>
@@ -281,7 +281,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 	return (
 		<NodeViewWrapper className={`my-4 rounded-md border p-4 ${styles.wrap}`}>
 			<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-				<span className={`text-xs font-medium ${styles.tone}`}>{calloutToneLabels[tone]}</span>
+				<span className={`label-sm ${styles.tone}`}>{calloutToneLabels[tone]}</span>
 				<SegmentedControl
 					label="Callout tone"
 					variant="chips"
@@ -319,7 +319,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 	return (
 		<NodeViewWrapper
 			as="span"
-			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border bg-brand-muted align-baseline font-jetbrains text-[10px] leading-none text-link-on-tint ${
+			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border bg-brand-muted align-baseline mono-sm text-link-on-tint ${
 				selected ? 'border-brand' : 'border-medium'
 			}`}
 		>
@@ -354,7 +354,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 					<div className="flex items-center gap-1.5">
 						<label
 							htmlFor={`${fieldId}-label`}
-							className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase"
+							className="w-12 shrink-0 label-xs tracking-wider text-tertiary uppercase"
 						>
 							Label
 						</label>
@@ -362,14 +362,11 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							id={`${fieldId}-label`}
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary"
+							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 mono-sm text-primary"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
-						<label
-							htmlFor={`${fieldId}-url`}
-							className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase"
-						>
+						<label htmlFor={`${fieldId}-url`} className="w-12 shrink-0 label-xs tracking-wider text-tertiary uppercase">
 							URL
 						</label>
 						<input
@@ -377,13 +374,13 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary placeholder:text-tertiary"
+							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 mono-sm text-primary placeholder:text-tertiary"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
 						<label
 							htmlFor={`${fieldId}-title`}
-							className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase"
+							className="w-12 shrink-0 label-xs tracking-wider text-tertiary uppercase"
 						>
 							Title
 						</label>
@@ -392,7 +389,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={title}
 							onChange={(e) => updateAttributes({ title: e.target.value })}
 							placeholder="Source title"
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary placeholder:text-tertiary"
+							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 mono-sm text-primary placeholder:text-tertiary"
 						/>
 					</div>
 				</div>

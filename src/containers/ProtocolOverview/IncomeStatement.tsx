@@ -629,7 +629,7 @@ export function IncomeStatement({
 													<span className="truncate">{header[1]}</span>
 													<Tooltip
 														content={`Current ${groupBy.toLowerCase()} data is incomplete`}
-														className="text-xs text-data-down"
+														className="title-sm text-data-down"
 													>
 														*
 													</Tooltip>
@@ -1025,7 +1025,7 @@ function PerformanceTooltipContent({
 	})
 	const displayLabel = label ? label.toLowerCase() : dataType
 	return (
-		<p className="text-xs">
+		<p className="body-sm">
 			<span className={percentageChange > 0 ? 'text-data-up' : 'text-data-down'}>{`${percentageChangeText}`}</span>{' '}
 			<span>
 				compared to previous {groupBy === 'Yearly' ? 'year' : groupBy === 'Quarterly' ? 'quarter' : 'month'} total{' '}

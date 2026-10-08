@@ -531,7 +531,7 @@ export function ChartBuilderTab({
 					type="text"
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
-					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
@@ -570,7 +570,7 @@ export function ChartBuilderTab({
 
 						{isChainsMode ? null : isProtocolUnsupportedMetric ? (
 							<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
-								<p className="text-xs text-pro-text-tertiary">This metric is available only for all protocols.</p>
+								<p className="body-sm text-pro-text-tertiary">This metric is available only for all protocols.</p>
 							</div>
 						) : (
 							<div className="mb-1.5 flex flex-col gap-1.5">
@@ -691,7 +691,7 @@ export function ChartBuilderTab({
 						</div>
 
 						{!hasExactRemainder ? (
-							<p className="mb-1 text-xs text-pro-text-secondary">
+							<p className="mb-1 body-sm text-pro-text-secondary">
 								This source returns exact Top {chartBuilder.limit} chain series only.
 							</p>
 						) : isChainsMode || !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
@@ -741,7 +741,7 @@ export function ChartBuilderTab({
 									>
 										<Ariakit.Radio value={option.value} className="sr-only" />
 										<Icon name={option.icon} height={14} width={14} />
-										<span className="text-xs">{option.label}</span>
+										<span className="label-sm">{option.label}</span>
 									</label>
 								))}
 							</Ariakit.RadioGroup>
@@ -779,7 +779,7 @@ export function ChartBuilderTab({
 				>
 					<div className="mb-2 flex shrink-0 items-center justify-between">
 						<h3 className="title-sm text-pro-text-primary">Preview</h3>
-						<div className="flex items-center gap-1 text-xs text-pro-text-tertiary">
+						<div className="flex items-center gap-1 body-sm text-pro-text-tertiary">
 							<span>ⓘ</span>
 							<span>Updates as you configure</span>
 						</div>
@@ -791,7 +791,7 @@ export function ChartBuilderTab({
 					>
 						{queryReadFailed(preview) && !previewData ? (
 							<div role="alert" className="flex flex-col items-center gap-2 text-center">
-								<p className="text-sm text-data-down">Couldn't load the preview.</p>
+								<p className="body-md text-data-down">Couldn't load the preview.</p>
 								<Button
 									type="button"
 									size="sm"
@@ -804,7 +804,7 @@ export function ChartBuilderTab({
 						) : previewLoading ? (
 							<div className="flex flex-col items-center gap-2 text-center text-pro-text-tertiary">
 								<LoadingSpinner size={24} />
-								<p className="text-sm text-pro-text-secondary">Loading preview…</p>
+								<p className="body-md text-pro-text-secondary">Loading preview…</p>
 							</div>
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
@@ -831,12 +831,12 @@ export function ChartBuilderTab({
 								</Suspense>
 							</div>
 						) : previewData ? (
-							<p className="text-sm text-pro-text-secondary">No data for these settings.</p>
+							<p className="body-md text-pro-text-secondary">No data for these settings.</p>
 						) : (
 							<div className="text-center">
 								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 text-pro-text-tertiary" />
-								<p className="text-sm text-pro-text-secondary">Configure chart settings to see preview</p>
-								<p className="mt-1 text-xs text-pro-text-tertiary">
+								<p className="body-md text-pro-text-secondary">Configure chart settings to see preview</p>
+								<p className="mt-1 body-sm text-pro-text-tertiary">
 									Select a metric to generate chart (all chains by default)
 								</p>
 							</div>
@@ -893,8 +893,8 @@ export function ChartBuilderTab({
 
 					<div className="mt-2 shrink-0 rounded-sm bg-surface-elevated-1 p-2">
 						<div className="flex items-start gap-1">
-							<span className="text-xs text-pro-text-tertiary">ⓘ</span>
-							<p className="text-xs leading-relaxed text-pro-text-tertiary">
+							<span className="body-sm text-pro-text-tertiary">ⓘ</span>
+							<p className="body-sm text-pro-text-tertiary">
 								This chart shows {chartBuilder.metric}
 								{chartBuilder.mode === 'protocol'
 									? ` for ${

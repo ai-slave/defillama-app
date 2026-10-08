@@ -24,27 +24,27 @@ export default function Sheets() {
 					<div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-4 sm:px-6 md:px-8">
 						<BasicLink href="/" className="flex items-center gap-2.5">
 							<img src="/assets/llama.webp" alt="DefiLlama" width={32} height={32} className="rounded-full" />
-							<span className="text-[15px] font-bold tracking-[-0.02em]">DefiLlama</span>
+							<span className="title-md tracking-[-0.02em]">DefiLlama</span>
 						</BasicLink>
 
 						<nav aria-label="Sheets navigation" className="hidden items-center gap-1.5 sm:flex">
 							<BasicLink
 								href="https://docs.llama.fi/spreadsheet-functions/function-reference"
 								data-umami-event="sheets-functions-reference-click"
-								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
+								className="rounded-lg px-3.5 py-1.5 label-md text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
 							>
 								Functions Reference
 							</BasicLink>
 							<BasicLink
 								href="https://docs.llama.fi/spreadsheet-functions/templates"
 								data-umami-event="sheets-templates-click-header"
-								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
+								className="rounded-lg px-3.5 py-1.5 label-md text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
 							>
 								Templates
 							</BasicLink>
 							<BasicLink
 								href="/"
-								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
+								className="rounded-lg px-3.5 py-1.5 label-md text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
 							>
 								Return to Main Page
 							</BasicLink>
@@ -64,7 +64,7 @@ export default function Sheets() {
 									gutter={8}
 								>
 									<Ariakit.MenuItem
-										className="flex min-h-11 cursor-pointer items-center px-4 text-sm text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
+										className="flex min-h-11 cursor-pointer items-center px-4 label-md text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
 										render={
 											<BasicLink
 												href="https://docs.llama.fi/spreadsheet-functions/function-reference"
@@ -75,7 +75,7 @@ export default function Sheets() {
 										Functions Reference
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
-										className="flex min-h-11 cursor-pointer items-center px-4 text-sm text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
+										className="flex min-h-11 cursor-pointer items-center px-4 label-md text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
 										render={
 											<BasicLink
 												href="https://docs.llama.fi/spreadsheet-functions/templates"
@@ -86,7 +86,7 @@ export default function Sheets() {
 										Templates
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
-										className="flex min-h-11 cursor-pointer items-center px-4 text-sm text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
+										className="flex min-h-11 cursor-pointer items-center px-4 label-md text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand focus:bg-sub-dark-card-raised focus:text-on-brand focus:outline-hidden"
 										render={<BasicLink href="/" />}
 									>
 										Return to Main Page
@@ -102,7 +102,7 @@ export default function Sheets() {
 				</main>
 
 				<footer className="mt-10 border-t border-sub-line/40">
-					<p className="mx-auto max-w-[1200px] px-4 pt-6 text-center text-[13px] text-sub-text-muted sm:px-6 md:px-8">
+					<p className="mx-auto max-w-[1200px] px-4 pt-6 text-center body-md text-sub-text-muted sm:px-6 md:px-8">
 						If you have any questions or feedback, send it to{' '}
 						<a
 							href="mailto:support@defillama.com"
@@ -111,7 +111,7 @@ export default function Sheets() {
 							support@defillama.com
 						</a>
 					</p>
-					<div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-4 px-4 py-6 text-[13px] text-sub-text-muted sm:px-6 md:justify-between md:px-8">
+					<div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-4 px-4 py-6 body-md text-sub-text-muted sm:px-6 md:justify-between md:px-8">
 						<StaleText>{`© ${COPYRIGHT_YEAR} DefiLlama`}</StaleText>
 						<div className="flex gap-5">
 							<BasicLink href="/privacy-policy" className="transition-colors hover:text-sub-text-soft">

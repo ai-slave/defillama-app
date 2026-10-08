@@ -292,7 +292,7 @@ export function AdvancedTvlChartTab({
 				</Tooltip>
 
 				{hasProtocolSelection && isLoading ? (
-					<p className="text-xs text-pro-text-tertiary">Loading selected chart...</p>
+					<p className="body-sm text-pro-text-tertiary">Loading selected chart...</p>
 				) : null}
 			</div>
 
@@ -306,7 +306,7 @@ export function AdvancedTvlChartTab({
 								<h3 className="mb-1 title-md text-pro-text-primary">
 									{selectedAdvancedTvlProtocolName} - {chartTypeLabel}
 								</h3>
-								<p className="text-xs text-pro-text-secondary">Advanced TVL Chart</p>
+								<p className="body-sm text-pro-text-secondary">Advanced TVL Chart</p>
 							</div>
 							{chartType === 'tokensPie' && pieSeriesNames.length > 1 ? (
 								<SelectWithCombobox
@@ -337,7 +337,7 @@ export function AdvancedTvlChartTab({
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="trending-up" height={32} width={32} className="mx-auto mb-1" />
-							<p className="text-xs">Select a protocol to see available TVL charts</p>
+							<p className="body-sm">Select a protocol to see available TVL charts</p>
 						</div>
 					</div>
 				)}

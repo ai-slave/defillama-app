@@ -10,7 +10,7 @@ export function GenericCard({ article }: { article: ArticleDocument }) {
 			href={articleHref(article)}
 			className="group grid content-start gap-3 rounded-md border border-medium bg-surface/40 p-4 transition-colors hover:border-link/40"
 		>
-			<div className="flex items-center justify-between gap-3 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+			<div className="flex items-center justify-between gap-3 label-xs tracking-[0.18em] text-tertiary uppercase">
 				<span>{primaryTag?.replace(/-/g, ' ') || 'Story'}</span>
 				<span className="tabular-nums">{readingMinutes(article)} min</span>
 			</div>
@@ -19,13 +19,11 @@ export function GenericCard({ article }: { article: ArticleDocument }) {
 					<img src={cover} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
 				</div>
 			) : null}
-			<h3 className="text-base leading-snug font-semibold tracking-tight text-primary group-hover:text-link">
-				{article.title}
-			</h3>
+			<h3 className="title-lg tracking-tight text-primary group-hover:text-link">{article.title}</h3>
 			{article.excerpt || article.subtitle ? (
-				<p className="line-clamp-3 text-sm leading-relaxed text-secondary">{article.excerpt || article.subtitle}</p>
+				<p className="line-clamp-3 body-md text-secondary">{article.excerpt || article.subtitle}</p>
 			) : null}
-			<span className="flex items-center gap-2 text-xs text-tertiary">
+			<span className="flex items-center gap-2 body-sm text-tertiary">
 				{article.brandByline ? (
 					<>
 						<span className="font-medium text-secondary">DefiLlama Research</span>

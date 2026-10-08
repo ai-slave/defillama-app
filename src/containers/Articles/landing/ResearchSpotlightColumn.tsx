@@ -59,7 +59,7 @@ export function ResearchSpotlightColumn({ title, articles }: ResearchSpotlightCo
 										</div>
 
 										<div className="flex grow flex-col justify-between gap-1.75 pr-3">
-											<div className="line-clamp-3 text-base leading-[135%] font-medium text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
+											<div className="line-clamp-3 label-lg text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
 												{i === 0 && (
 													<InViewAnalytics
 														eventParams={[article, 'widget_impression', 'DefiLlama Research Spotlight column']}
@@ -67,7 +67,7 @@ export function ResearchSpotlightColumn({ title, articles }: ResearchSpotlightCo
 												)}
 												{article.title}
 											</div>
-											<div className="text-xs font-bold text-research-accent dark:text-on-brand/80">
+											<div className="title-sm text-research-accent dark:text-on-brand/80">
 												{formatDate(article.displayDate ?? article.publishedAt)}
 											</div>
 										</div>

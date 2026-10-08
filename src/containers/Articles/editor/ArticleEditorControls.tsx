@@ -130,30 +130,30 @@ function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement 
 			className="article-table-overlay z-40 max-w-[calc(100vw-16px)] overflow-x-auto rounded-lg border border-medium bg-surface/95 p-1 shadow-raised backdrop-blur supports-[backdrop-filter]:bg-surface/90"
 		>
 			<div role="group" aria-label="Table controls" className="flex w-max items-center gap-0.5">
-				<span className="px-1.5 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Table</span>
+				<span className="px-1.5 label-xs tracking-[0.18em] text-tertiary uppercase">Table</span>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableRailButton label="Toggle header row" onClick={() => editor.chain().focus().toggleHeaderRow().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">HDR</span>
+					<span className="mono-sm tracking-wider">HDR</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableRailButton label="Add row above" onClick={() => editor.chain().focus().addRowBefore().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">↑R</span>
+					<span className="mono-sm tracking-wider">↑R</span>
 				</TableRailButton>
 				<TableRailButton label="Add row below" onClick={() => editor.chain().focus().addRowAfter().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">↓R</span>
+					<span className="mono-sm tracking-wider">↓R</span>
 				</TableRailButton>
 				<TableRailButton label="Delete row" onClick={() => editor.chain().focus().deleteRow().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">−R</span>
+					<span className="mono-sm tracking-wider">−R</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableRailButton label="Add column left" onClick={() => editor.chain().focus().addColumnBefore().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">←C</span>
+					<span className="mono-sm tracking-wider">←C</span>
 				</TableRailButton>
 				<TableRailButton label="Add column right" onClick={() => editor.chain().focus().addColumnAfter().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">→C</span>
+					<span className="mono-sm tracking-wider">→C</span>
 				</TableRailButton>
 				<TableRailButton label="Delete column" onClick={() => editor.chain().focus().deleteColumn().run()}>
-					<span className="font-jetbrains text-[10px] tracking-wider">−C</span>
+					<span className="mono-sm tracking-wider">−C</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableImageButtons

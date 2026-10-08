@@ -24,15 +24,15 @@ export function TextCard({ text }: TextCardProps) {
 					remarkPlugins={REMARK_PLUGINS}
 					rehypePlugins={SANITIZE_REHYPE_PLUGINS}
 					components={{
-						h1: ({ children }) => <h3 className="m-0! text-xl font-bold text-pro-text-primary">{children}</h3>,
-						h2: ({ children }) => <h4 className="m-0! text-lg font-semibold text-pro-text-primary">{children}</h4>,
-						h3: ({ children }) => <h5 className="m-0! text-base font-medium text-pro-text-primary">{children}</h5>,
+						h1: ({ children }) => <h3 className="m-0! heading-sm text-pro-text-primary">{children}</h3>,
+						h2: ({ children }) => <h4 className="m-0! heading-xs text-pro-text-primary">{children}</h4>,
+						h3: ({ children }) => <h5 className="m-0! label-lg text-pro-text-primary">{children}</h5>,
 						p: ({ children }) => <p className="m-0! leading-relaxed text-pro-text-secondary">{children}</p>,
 						ul: ({ children }) => <ul className="m-0! flex list-disc flex-col gap-1 pl-4">{children}</ul>,
 						ol: ({ children }) => <ol className="m-0! flex list-decimal flex-col gap-1 pl-4">{children}</ol>,
 						li: ({ children }) => <li className="m-0! text-pro-text-secondary">{children}</li>,
 						code: ({ children }) => (
-							<code className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 px-1 py-0.5 text-xs">
+							<code className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 px-1 py-0.5 body-sm">
 								{children}
 							</code>
 						),
@@ -70,7 +70,7 @@ export function TextCard({ text }: TextCardProps) {
 						em: ({ children }) => <em className="m-0! text-pro-text-secondary italic">{children}</em>,
 						table: ({ children }) => (
 							<div className="overflow-x-auto">
-								<table className="m-0! w-full border-collapse text-sm">{children}</table>
+								<table className="m-0! w-full border-collapse body-md">{children}</table>
 							</div>
 						),
 						thead: ({ children }) => <thead>{children}</thead>,

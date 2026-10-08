@@ -96,7 +96,7 @@ export default function SparkHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
+						className={`items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
 							key === 'website' ? 'flex' : 'hidden sm:flex'
 						}`}
 					>
@@ -108,7 +108,7 @@ export default function SparkHeader() {
 					href="https://app.spark.fi"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold text-on-brand transition-opacity hover:opacity-85"
+					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-on-brand transition-opacity hover:opacity-85"
 					style={{ background: 'linear-gradient(135deg, #FA43BD, #FFA930)' }}
 				>
 					Launch App

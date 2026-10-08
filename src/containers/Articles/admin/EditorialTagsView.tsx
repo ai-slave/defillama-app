@@ -36,12 +36,12 @@ export function EditorialTagsView() {
 			<header className="pt-2 pb-2">
 				<Link
 					href="/research/admin"
-					className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+					className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Curation</h1>
-				<p className="mt-1 text-sm text-secondary">
+				<h1 className="mt-2 heading-lg tracking-tight text-primary">Curation</h1>
+				<p className="mt-1 body-md text-secondary">
 					Pick which published articles surface in editor-curated widgets on /research.
 				</p>
 			</header>
@@ -133,20 +133,20 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			<header className="grid gap-2 sm:flex sm:items-end sm:justify-between">
 				<div>
 					<div className="flex items-center gap-2">
-						<h2 className="text-xl font-semibold text-primary">{definition.label}</h2>
-						<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link-on-tint uppercase">
+						<h2 className="heading-sm text-primary">{definition.label}</h2>
+						<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link-on-tint uppercase">
 							{definition.cardinality === 'singleton' ? '1 article' : 'Many articles'}
 						</span>
 					</div>
-					<p className="mt-1 text-sm text-secondary">{definition.description}</p>
+					<p className="mt-1 body-md text-secondary">{definition.description}</p>
 				</div>
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase tabular-nums">
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase tabular-nums">
 					Current · {items.length}
 				</span>
 			</header>
 
 			<div className="grid gap-1.5">
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">
 					{definition.cardinality === 'singleton' ? 'Set article' : 'Add article'}
 				</span>
 				<ArticlePicker
@@ -169,13 +169,13 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			</div>
 
 			{error ? (
-				<div role="alert" className="rounded-md border border-error/30 bg-error/5 px-3 py-2 text-xs text-error">
+				<div role="alert" className="rounded-md border border-error/30 bg-error/5 px-3 py-2 body-sm text-error">
 					<p>{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}</p>
 				</div>
 			) : isLoading ? (
-				<p className="text-sm text-tertiary">Loading…</p>
+				<p className="body-md text-tertiary">Loading…</p>
 			) : items.length === 0 ? (
-				<div className="rounded-md border border-dashed border-medium bg-page/40 p-3 text-center text-xs text-tertiary">
+				<div className="rounded-md border border-dashed border-medium bg-page/40 p-3 text-center body-sm text-tertiary">
 					<p>No articles tagged as {definition.label.toLowerCase()} yet.</p>
 				</div>
 			) : canReorder ? (
@@ -300,7 +300,7 @@ export function ReportHighlightControls({
 			{conflict ? <SavedChangedNotice noun="highlight" onLoadSaved={loadSaved} /> : null}
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
 				<label className="grid gap-1.5">
-					<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+					<span className="flex items-baseline justify-between gap-2 label-xs tracking-[0.18em] text-tertiary uppercase">
 						<span>Highlight text</span>
 						<span>{highlightText.length}/2000</span>
 					</span>
@@ -343,7 +343,7 @@ export function ReportHighlightControls({
 				</label>
 
 				<div className="grid content-start gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Sponsor logo</span>
+					<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Sponsor logo</span>
 					<ImageUploadButton
 						scope="report-sponsor-logo"
 						articleId={article.id}
@@ -367,18 +367,18 @@ export function ReportHighlightControls({
 			</div>
 
 			<div className="grid gap-2 bg-page/40 p-3">
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Current highlight</span>
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Current highlight</span>
 				<div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-start">
 					<div className="grid gap-2">
 						{sponsorLogo?.url ? (
 							<div className="flex items-center gap-2">
-								<span className="text-[10px] tracking-[0.18em] text-tertiary uppercase">Sponsored by</span>
+								<span className="body-xs tracking-[0.18em] text-tertiary uppercase">Sponsored by</span>
 								<img src={sponsorLogo.url} alt="" className="h-5 max-w-24 object-contain" />
 							</div>
 						) : null}
 						<span className="title-md text-primary">{article.title}</span>
 					</div>
-					<p className="line-clamp-4 text-sm leading-relaxed text-secondary">
+					<p className="line-clamp-4 body-md text-secondary">
 						{previewText || 'No highlight text, report description, excerpt, or subtitle set.'}
 					</p>
 				</div>

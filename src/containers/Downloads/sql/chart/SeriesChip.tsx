@@ -51,7 +51,7 @@ export function SeriesChip({
 	return (
 		<div data-series-chip className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
 			<ColorPicker name={name} value={color} fallback={paletteColor} onChange={setColor} />
-			<span className="truncate font-mono text-[10.5px] text-pro-text-primary" style={{ maxWidth: '14ch' }}>
+			<span className="truncate mono-sm text-pro-text-primary" style={{ maxWidth: '14ch' }}>
 				{name}
 			</span>
 			{seriesKindEligible ? (

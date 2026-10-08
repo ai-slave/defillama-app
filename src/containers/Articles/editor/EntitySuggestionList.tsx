@@ -70,8 +70,8 @@ function MetricChip({ item }: { item: ArticleEntitySuggestionItem }) {
 		if (!tvl && !change) return null
 		return (
 			<span className="ml-1 flex shrink-0 flex-col items-end gap-0.5 leading-none">
-				{tvl ? <span className="text-[11px] text-secondary tabular-nums">{tvl}</span> : null}
-				{change ? <span className={`text-[10px] tabular-nums ${changeColor(p.change7d)}`}>{change}</span> : null}
+				{tvl ? <span className="body-sm text-secondary tabular-nums">{tvl}</span> : null}
+				{change ? <span className={`body-xs tabular-nums ${changeColor(p.change7d)}`}>{change}</span> : null}
 			</span>
 		)
 	}
@@ -174,20 +174,18 @@ export function EntitySuggestionList({
 					{item.logo ? (
 						<img src={item.logo} alt="" className="size-full object-cover" loading="lazy" />
 					) : (
-						<span className="text-[9px] font-medium tracking-wider text-tertiary">
-							{item.label.slice(0, 2).toUpperCase()}
-						</span>
+						<span className="label-xs tracking-wider text-tertiary">{item.label.slice(0, 2).toUpperCase()}</span>
 					)}
 				</span>
 				<span className="flex min-w-0 flex-1 flex-col">
-					<span className="truncate text-sm text-primary">{item.label}</span>
-					<span className="truncate text-[11px] text-tertiary">
+					<span className="truncate label-md text-primary">{item.label}</span>
+					<span className="truncate body-sm text-tertiary">
 						{opts?.recent ? 'Recent · ' : ''}
 						{item.subLabel || item.route}
 					</span>
 				</span>
 				<MetricChip item={item} />
-				<span className="ml-1 shrink-0 rounded-sm border border-medium px-1.5 py-px text-[9px] font-medium tracking-wider text-tertiary">
+				<span className="ml-1 shrink-0 rounded-sm border border-medium px-1.5 py-px label-xs tracking-wider text-tertiary">
 					{TYPE_BADGE[item.entityType] ?? item.entityType.toUpperCase()}
 				</span>
 			</button>
@@ -202,7 +200,7 @@ export function EntitySuggestionList({
 			className="article-mention-pop flex w-[22rem] max-w-full flex-col overflow-hidden rounded-md border border-medium bg-surface shadow-xl"
 			style={{ maxHeight: 'var(--popover-available-height)' }}
 		>
-			<div className="flex shrink-0 items-center justify-between gap-2 border-b border-medium px-3 py-1.5 text-[11px] text-tertiary">
+			<div className="flex shrink-0 items-center justify-between gap-2 border-b border-medium px-3 py-1.5 body-sm text-tertiary">
 				<span className="truncate">
 					{query ? (
 						<>
@@ -256,7 +254,7 @@ export function EntitySuggestionList({
 				role="listbox"
 			>
 				{flat.length === 0 ? (
-					<div className="px-3 py-8 text-center text-xs text-tertiary">{loading ? 'Searching…' : 'No matches'}</div>
+					<div className="px-3 py-8 text-center body-sm text-tertiary">{loading ? 'Searching…' : 'No matches'}</div>
 				) : (
 					<>
 						{showRecents ? recents.map((i) => renderItem(i, { recent: true })) : null}
@@ -265,7 +263,7 @@ export function EntitySuggestionList({
 					</>
 				)}
 			</div>
-			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 text-[10px] text-tertiary">
+			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 body-xs text-tertiary">
 				<span>
 					<kbd className="rounded-sm border border-medium px-1">↑</kbd>{' '}
 					<kbd className="rounded-sm border border-medium px-1">↓</kbd> nav{' '}

@@ -143,7 +143,7 @@ export default function NewslettersPage() {
 							<h1 className="max-w-3xl text-[clamp(2.25rem,4.25vw,4.5rem)] leading-[0.96] font-bold tracking-tight text-primary">
 								Subscribe for onchain fundamentals and analysis from DefiLlama
 							</h1>
-							<p className="max-w-2xl text-base leading-7 text-secondary">
+							<p className="max-w-2xl body-lg text-secondary">
 								Market updates and Research Notes from the DefiLlama team, delivered to your inbox.
 							</p>
 						</div>
@@ -156,11 +156,11 @@ export default function NewslettersPage() {
 									<h2 id="newsletter-options-title" className="heading-sm text-primary">
 										Pick your publications
 									</h2>
-									<p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
+									<p className="mt-2 max-w-2xl body-md text-secondary">
 										Subscribe to either publication below, or select both.
 									</p>
 								</div>
-								<p className="text-sm font-medium text-link" aria-live="polite">
+								<p className="label-md text-link" aria-live="polite">
 									{visibleSelectionText}
 								</p>
 							</div>
@@ -216,7 +216,7 @@ export default function NewslettersPage() {
 														<span className="title-sm tracking-[0.14em] text-link uppercase">{details.eyebrow}</span>
 													</span>
 													<span
-														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors ${
+														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 label-sm whitespace-nowrap transition-colors ${
 															on ? 'border-link bg-link text-on-brand' : 'border-medium text-secondary'
 														}`}
 														aria-hidden
@@ -227,14 +227,12 @@ export default function NewslettersPage() {
 												</span>
 												<span>
 													<span className="block text-xl leading-tight font-semibold text-primary">{label}</span>
-													<span className="mt-2 block max-w-2xl text-sm leading-6 text-secondary">
-														{details.description}
-													</span>
+													<span className="mt-2 block max-w-2xl body-md text-secondary">{details.description}</span>
 												</span>
-												<span className="block text-sm font-medium text-primary">{details.bestFor}</span>
+												<span className="block label-md text-primary">{details.bestFor}</span>
 												<span className="grid gap-2">
 													{details.bullets.map((bullet) => (
-														<span key={bullet} className="flex gap-2 text-sm leading-5 text-secondary">
+														<span key={bullet} className="flex gap-2 body-md text-secondary">
 															<span className="mt-2 size-1 shrink-0 rounded-full bg-link" aria-hidden />
 															{bullet}
 														</span>
@@ -257,20 +255,20 @@ export default function NewslettersPage() {
 							>
 								<div className="flex flex-col gap-2">
 									<h2 className="heading-sm text-primary">Subscribe</h2>
-									<p className="text-sm leading-6 text-secondary">
+									<p className="body-md text-secondary">
 										Enter the email address where you want to receive the selected newsletters.
 									</p>
 								</div>
 
 								<label className="flex flex-col gap-2">
-									<span className="text-sm font-medium text-primary">Email address</span>
+									<span className="label-md text-primary">Email address</span>
 									<input
 										type="email"
 										required
 										value={email}
 										onChange={onEmailChange}
 										placeholder="you@example.com"
-										className="h-12 rounded-lg border border-medium bg-surface px-3 text-sm text-primary outline-hidden transition-colors placeholder:text-tertiary focus-visible:border-link"
+										className="h-12 rounded-lg border border-medium bg-surface px-3 body-md text-primary outline-hidden transition-colors placeholder:text-tertiary focus-visible:border-link"
 									/>
 								</label>
 
@@ -288,12 +286,12 @@ export default function NewslettersPage() {
 
 								<div className="min-h-14">
 									{succeeded ? (
-										<div role="status" className="flex items-start gap-2 text-sm leading-6 text-primary">
+										<div role="status" className="flex items-start gap-2 body-md text-primary">
 											<Icon name="check-circle" height={18} width={18} className="mt-1 shrink-0 text-link" />
 											<span>Subscribed. You are on the selected newsletter list.</span>
 										</div>
 									) : noneSelected ? (
-										<p className="text-sm leading-6 text-secondary">Choose at least one publication to continue.</p>
+										<p className="body-md text-secondary">Choose at least one publication to continue.</p>
 									) : null}
 								</div>
 							</form>

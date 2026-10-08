@@ -33,7 +33,7 @@ export default function Unlocks() {
 					hideTokenStats
 				/>
 			) : (
-				<p className="flex h-[360px] items-center justify-center text-center text-xs text-pro-text-tertiary">
+				<p className="flex h-[360px] items-center justify-center text-center body-sm text-pro-text-tertiary">
 					No unlocks data.
 				</p>
 			)}

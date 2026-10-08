@@ -1074,7 +1074,7 @@ export function ChartDatasetModal({
 								/>
 							</>
 						) : hasData && isPreview ? (
-							<p className="text-xs text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
+							<p className="body-sm text-pro-text-tertiary">Preview — showing first {sortedRows.length} rows</p>
 						) : null}
 						{isBulk ? (
 							<Button
@@ -1102,7 +1102,7 @@ export function ChartDatasetModal({
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center">
 										<Icon name="search" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">
+										<p className="body-md text-pro-text-secondary">
 											Select a {dataset.paramLabel.toLowerCase()} above to load chart data
 										</p>
 									</div>
@@ -1111,14 +1111,14 @@ export function ChartDatasetModal({
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-3">
 										<LoadingSpinner size={28} />
-										<p className="text-sm text-pro-text-secondary">Fetching chart data...</p>
+										<p className="body-md text-pro-text-secondary">Fetching chart data...</p>
 									</div>
 								</div>
 							) : dataError ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2">
 										<Icon name="alert-triangle" className="size-6 text-error" />
-										<p className="text-sm text-error">
+										<p className="body-md text-error">
 											{dataError instanceof Error ? dataError.message : 'Failed to fetch data'}
 										</p>
 									</div>
@@ -1127,7 +1127,7 @@ export function ChartDatasetModal({
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center">
 										<Icon name="eye-off" className="size-6 text-pro-text-tertiary" />
-										<p className="text-sm text-pro-text-secondary">No data</p>
+										<p className="body-md text-pro-text-secondary">No data</p>
 									</div>
 								</div>
 							) : sortedRows.length === 0 ? (
@@ -1209,7 +1209,7 @@ export function ChartDatasetModal({
 																	className="flex min-w-0 flex-1 items-center gap-1"
 																>
 																	<span
-																		className={`truncate text-xs font-medium ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
+																		className={`truncate label-sm ${isSelected ? 'text-pro-text-secondary' : 'text-pro-text-tertiary'}`}
 																	>
 																		{column.header}
 																	</span>
@@ -1262,7 +1262,7 @@ export function ChartDatasetModal({
 																<div
 																	key={column.index}
 																	title={rawValue || undefined}
-																	className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+																	className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
 																	style={{
 																		textAlign: column.align,
 																		position: isSticky ? 'sticky' : undefined,

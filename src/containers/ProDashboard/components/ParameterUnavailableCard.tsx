@@ -21,7 +21,7 @@ export function ParameterUnavailableCard({
 			data-testid="parameter-unavailable"
 		>
 			<Icon name="alert-triangle" height={20} width={20} className="text-sub-orange" />
-			<p className="text-sm text-pro-text-secondary">
+			<p className="body-md text-pro-text-secondary">
 				This card follows the “{label}” parameter, but {unavailable.reason}
 			</p>
 			{onEdit ? (

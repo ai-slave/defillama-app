@@ -11,7 +11,7 @@ export function DataFreshness({
 	className?: string
 }) {
 	return (
-		<p className={`flex items-center gap-1.5 text-sm text-warning ${className ?? ''}`.trim()}>
+		<p className={`flex items-center gap-1.5 body-md text-warning ${className ?? ''}`.trim()}>
 			<Icon name="alert-triangle" height={14} width={14} className="shrink-0" />
 			<RelativeTime value={timestamp} input="seconds" prefix={label} />
 		</p>

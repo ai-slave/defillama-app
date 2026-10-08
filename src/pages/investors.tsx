@@ -159,8 +159,8 @@ function LightbulbBoltIcon() {
 }
 
 // Book a call is the primary action in both button blocks; the other action in each is secondary.
-const PRIMARY_CTA = tw`flex h-13 items-center justify-center gap-2 rounded-xl bg-sl-accent px-6 text-base font-medium text-on-brand transition-colors hover:bg-sl-accent-hover`
-const SECONDARY_CTA = tw`flex h-13 items-center justify-center gap-2 rounded-xl bg-black/5 px-6 text-base font-medium text-sl-accent transition-colors hover:bg-black/10 dark:bg-white/12 dark:text-white dark:hover:bg-white/25`
+const PRIMARY_CTA = tw`flex h-13 items-center justify-center gap-2 rounded-xl bg-sl-accent px-6 label-lg text-on-brand transition-colors hover:bg-sl-accent-hover`
+const SECONDARY_CTA = tw`flex h-13 items-center justify-center gap-2 rounded-xl bg-black/5 px-6 label-lg text-sl-accent transition-colors hover:bg-black/10 dark:bg-white/12 dark:text-white dark:hover:bg-white/25`
 
 const VALUE_PROPS = [
 	{
@@ -439,21 +439,18 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 					{content?.icon ?? <ProjectFallbackIcon name={project.name} />}
 					<span className="title-lg text-pro-text-primary">{project.name}</span>
 				</div>
-				<p className="text-xs leading-relaxed text-pro-text-secondary">
+				<p className="body-sm text-pro-text-secondary">
 					{content?.description ?? `Verified metrics and reporting for ${project.name}.`}
 				</p>
 				<div className="mt-auto flex flex-wrap gap-1.5">
 					{tags.map((tag) => (
-						<span
-							key={tag}
-							className="rounded-full bg-sl-accent-muted px-2 py-0.5 text-[10px] font-medium text-sl-accent"
-						>
+						<span key={tag} className="rounded-full bg-sl-accent-muted px-2 py-0.5 label-xs text-sl-accent">
 							{tag}
 						</span>
 					))}
 				</div>
 			</div>
-			<div className="flex h-10 shrink-0 items-center justify-center gap-1.5 bg-black/4 text-sm font-bold text-sl-accent transition-colors duration-200 group-hover:bg-black/7 dark:bg-white/8 dark:group-hover:bg-white/12">
+			<div className="flex h-10 shrink-0 items-center justify-center gap-1.5 bg-black/4 title-md text-sl-accent transition-colors duration-200 group-hover:bg-black/7 dark:bg-white/8 dark:group-hover:bg-white/12">
 				{isExternal ? 'Open Dashboard' : 'View Dashboard'}
 				<Icon name={isExternal ? 'external-link' : 'arrow-right'} className="size-3.5" />
 			</div>
@@ -505,7 +502,7 @@ export default function InvestorsPage() {
 				<h1 className="ir-rise relative mt-8 max-w-2xl text-center text-[28px] leading-tight text-pro-text-primary [animation-delay:60ms] sm:text-3xl">
 					Investor Relations built on <span className="font-semibold text-sl-accent">verified data</span>
 				</h1>
-				<p className="ir-rise relative mt-3 max-w-[560px] text-center text-[13px] leading-relaxed font-light tracking-[0.12em] text-pro-text-primary/80 [animation-delay:110ms]">
+				<p className="ir-rise relative mt-3 max-w-[560px] text-center body-md tracking-[0.12em] text-pro-text-primary/80 [animation-delay:110ms]">
 					A dedicated hub where DeFi protocols publish official, DefiLlama-attested metrics, reports, and calls — one
 					canonical link for everything your investors need.
 				</p>
@@ -535,11 +532,11 @@ export default function InvestorsPage() {
 								i > 0 ? 'lg:border-l lg:border-pro-cards-border' : ''
 							}`}
 						>
-							<h2 className="flex items-center gap-2 text-[13px] font-bold tracking-[0.12em] text-sl-accent uppercase">
+							<h2 className="flex items-center gap-2 title-md tracking-[0.12em] text-sl-accent uppercase">
 								{prop.icon}
 								{prop.title}
 							</h2>
-							<p className="max-w-[160px] text-[11px] leading-[1.35] font-light tracking-[0.12em] text-pro-text-primary/90 capitalize">
+							<p className="max-w-[160px] body-sm tracking-[0.12em] text-pro-text-primary/90 capitalize">
 								{prop.description}
 							</p>
 						</div>
@@ -559,11 +556,11 @@ export default function InvestorsPage() {
 
 				<section className="ir-rise relative mt-7 grid w-full max-w-[968px] grid-cols-1 overflow-hidden rounded-[20px] bg-linear-to-r from-[#2172e51f] from-[42%] to-[#716e7512] to-[58%] [animation-delay:340ms] md:grid-cols-2 dark:from-[#1f67d229] dark:to-[#716e7514]">
 					<div className="flex flex-col gap-5 px-7 py-8 md:px-13">
-						<h2 className="flex items-center gap-2.5 text-base font-bold tracking-[0.04em] text-sl-accent uppercase">
+						<h2 className="flex items-center gap-2.5 title-lg tracking-[0.04em] text-sl-accent uppercase">
 							<Icon name="check-circle" className="size-5.5 shrink-0" />
 							What it is
 						</h2>
-						<ul className="flex flex-col gap-3.5 text-[13px] leading-snug text-pro-text-primary">
+						<ul className="flex flex-col gap-3.5 body-md text-pro-text-primary">
 							{WHAT_IT_IS.map((line) => (
 								<li key={line} className="flex items-start gap-2.5">
 									<Icon name="check" className="mt-0.5 size-4 shrink-0 text-sl-accent" />
@@ -574,11 +571,11 @@ export default function InvestorsPage() {
 					</div>
 					<div className="absolute top-1/2 left-1/2 hidden h-[60%] w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pro-form-control-border md:block" />
 					<div className="flex flex-col gap-5 border-t border-pro-cards-border px-7 py-8 md:border-t-0 md:px-13">
-						<h2 className="flex items-center gap-2.5 text-base tracking-[0.04em] text-[#b8485f] uppercase dark:text-[#ffb8c4]">
+						<h2 className="flex items-center gap-2.5 body-lg tracking-[0.04em] text-[#b8485f] uppercase dark:text-[#ffb8c4]">
 							<Icon name="circle-x" className="size-5.5 shrink-0" />
 							What it isn&apos;t
 						</h2>
-						<ul className="flex flex-col gap-3.5 text-[13px] leading-snug text-pro-text-secondary">
+						<ul className="flex flex-col gap-3.5 body-md text-pro-text-secondary">
 							{WHAT_IT_ISNT.map((line) => (
 								<li key={line} className="flex items-start gap-2.5">
 									<Icon name="x" className="mt-0.5 size-4 shrink-0 text-[#b8485f] dark:text-[#ffb8c4]" />

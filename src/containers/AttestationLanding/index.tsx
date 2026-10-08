@@ -168,7 +168,7 @@ function CheckIcon({ className }: { className?: string }) {
 
 function VerifiedByDefiLlamaMark() {
 	return (
-		<span className="inline-flex items-center gap-1.5 label-xs font-semibold text-link">
+		<span className="inline-flex items-center gap-1.5 label-xs text-link">
 			<Image src="/assets/llama.webp" alt="" width={14} height={14} className="rounded-full" />
 			Verified by DefiLlama
 		</span>
@@ -176,10 +176,10 @@ function VerifiedByDefiLlamaMark() {
 }
 
 const primaryCtaStyles =
-	'inline-flex items-center justify-center rounded-lg bg-brand px-7 py-3.5 text-sm font-semibold text-on-brand transition-[filter] hover:brightness-110 focus-visible:brightness-110 focus-visible:focus-ring-on-brand'
+	'inline-flex items-center justify-center rounded-lg bg-brand px-7 py-3.5 label-md text-on-brand transition-[filter] hover:brightness-110 focus-visible:brightness-110 focus-visible:focus-ring-on-brand'
 
 const secondaryCtaStyles =
-	'inline-flex items-center justify-center gap-2 rounded-lg border border-subtle px-7 py-3.5 text-sm font-semibold text-primary transition-colors hover:bg-hover-row focus-visible:focus-ring'
+	'inline-flex items-center justify-center gap-2 rounded-lg border border-subtle px-7 py-3.5 label-md text-primary transition-colors hover:bg-hover-row focus-visible:focus-ring'
 
 function SiteHeader() {
 	return (
@@ -211,7 +211,7 @@ function SiteHeader() {
 						<a
 							key={href}
 							href={href}
-							className="rounded-md px-3.5 py-2 label-md font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+							className="rounded-md px-3.5 py-2 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 						>
 							{label}
 						</a>
@@ -393,15 +393,15 @@ function DemoFrame({
 						aria-hidden
 					/>
 					<div className="min-w-0">
-						<p className="truncate label-md font-semibold text-primary">Live verification run</p>
+						<p className="truncate label-md text-primary">Live verification run</p>
 						<p className="truncate label-xs text-tertiary" aria-live="polite">
 							{activityText ?? (stage >= verificationStageDelays.length ? completionText : 'Checking 9 sources')}
 						</p>
 					</div>
 				</div>
 				<div className="flex shrink-0 items-center gap-2">
-					<span className="hidden label-sm font-semibold text-primary min-[390px]:inline">Acme Protocol</span>
-					<span className="flex size-7 items-center justify-center rounded-full bg-brand-muted label-xs font-semibold text-link-on-tint">
+					<span className="hidden label-sm text-primary min-[390px]:inline">Acme Protocol</span>
+					<span className="flex size-7 items-center justify-center rounded-full bg-brand-muted label-xs text-link-on-tint">
 						AC
 					</span>
 					<Tooltip
@@ -504,7 +504,7 @@ function LedgerColumn({
 
 	return (
 		<section className="p-4 sm:p-5">
-			<p className="label-xs font-semibold tracking-[0.08em] text-tertiary uppercase">{label}</p>
+			<p className="label-xs tracking-[0.08em] text-tertiary uppercase">{label}</p>
 			<p className="mt-2 mono-lg tracking-tight text-primary tabular-nums" aria-live="polite" aria-atomic="true">
 				<span key={displayValue} className="attn-total-dissolve">
 					{displayValue}
@@ -642,7 +642,7 @@ function ReconciliationLedger() {
 								/>
 							)}
 						</span>
-						<span className="label-xs font-semibold text-primary" aria-live="polite">
+						<span className="label-xs text-primary" aria-live="polite">
 							{reconciliationState === 'matched'
 								? 'Matched'
 								: reconciliationState === 'checking'
@@ -727,13 +727,13 @@ function ReconciliationLedger() {
 					data-active={stage >= verificationStages.coveragePublished}
 				>
 					<div>
-						<p className="label-xs font-semibold tracking-[0.08em] text-tertiary uppercase">Coverage</p>
+						<p className="label-xs tracking-[0.08em] text-tertiary uppercase">Coverage</p>
 						<p className="mt-1 font-jetbrains text-3xl font-bold text-primary tabular-nums" aria-hidden>
 							{coverageLabel}
 						</p>
 						<span className="sr-only">167 percent coverage</span>
 					</div>
-					<p className="flex items-center gap-1.5 label-sm font-semibold text-data-up">
+					<p className="flex items-center gap-1.5 label-sm text-data-up">
 						<CheckIcon className="size-3.5" /> 9 of 9 sources verified
 					</p>
 				</div>
@@ -768,7 +768,7 @@ function CadenceCompare() {
 	return (
 		<div className="mt-8 rounded-lg border border-subtle bg-surface-elevated-1/50 p-6 dark:bg-surface/50">
 			<div className="grid items-center gap-x-5 gap-y-4 sm:grid-cols-[170px_1fr_auto]">
-				<span className="label-md font-semibold text-secondary">Monthly PDF</span>
+				<span className="label-md text-secondary">Monthly PDF</span>
 				<span className="flex items-center gap-1">
 					{days.map((d) => (
 						<span
@@ -778,7 +778,7 @@ function CadenceCompare() {
 					))}
 				</span>
 				<span className="label-md text-warning">29-day blind spot</span>
-				<span className="label-md font-semibold text-secondary">Verified by DefiLlama</span>
+				<span className="label-md text-secondary">Verified by DefiLlama</span>
 				<span className="flex items-center gap-1">
 					{days.map((d) => (
 						<span key={d} className="h-5 w-full max-w-2 rounded-full bg-data-up/70" />
@@ -834,7 +834,7 @@ function PersonaDossier() {
 							type="button"
 							className="px-5 py-4 text-left transition-colors hover:bg-hover-row aria-selected:bg-brand-faint aria-selected:shadow-[inset_0_-2px_0_var(--bg-brand)] sm:px-6"
 						>
-							<span className="block label-lg font-semibold text-primary">{personas[key].tab}</span>
+							<span className="block label-lg text-primary">{personas[key].tab}</span>
 							<span className="mt-0.5 block body-sm text-tertiary">{personas[key].sub}</span>
 						</Tab>
 					))}
@@ -846,7 +846,7 @@ function PersonaDossier() {
 							<h3 className="max-w-2xl text-[clamp(1.3rem,2.2vw,1.65rem)] leading-snug font-bold text-primary">
 								{p.punch}
 							</h3>
-							<p className="mt-4 max-w-[64ch] body-md leading-relaxed text-secondary">
+							<p className="mt-4 max-w-[64ch] body-md text-secondary">
 								{p.proseLead} <b className="font-medium text-primary">{p.proseBold}</b> {p.proseTail}
 							</p>
 							<ul className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">
@@ -1008,7 +1008,7 @@ function PlaybackIcon({ isPlaying }: { isPlaying: boolean }) {
 
 function RegisterStatus({ state, label }: { state: ProofStateConfig; label: string }) {
 	return (
-		<span className={`flex min-w-0 items-center gap-2 label-sm font-semibold whitespace-nowrap ${state.textTone}`}>
+		<span className={`flex min-w-0 items-center gap-2 label-sm whitespace-nowrap ${state.textTone}`}>
 			<span className={`size-2 shrink-0 rounded-full ${state.dotTone}`} aria-hidden />
 			<span className="min-w-0">{label}</span>
 		</span>
@@ -1032,22 +1032,19 @@ function SourceRegister({
 		<div className="overflow-hidden rounded-xl border border-medium bg-surface dark:bg-surface-elevated-1">
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-subtle px-5 py-4 sm:px-6">
 				<div className="flex items-center gap-3">
-					<span className="flex size-8 items-center justify-center rounded-full bg-brand-muted label-sm font-semibold text-link-on-tint">
+					<span className="flex size-8 items-center justify-center rounded-full bg-brand-muted label-sm text-link-on-tint">
 						AC
 					</span>
 					<div className="min-w-0">
 						<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-							<p className="label-md font-semibold text-primary">Acme Protocol</p>
+							<p className="label-md text-primary">Acme Protocol</p>
 							<VerifiedByDefiLlamaMark />
 						</div>
 						<p className="label-xs text-tertiary">Public verification record · Example data</p>
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
-					<p
-						key={state.headline}
-						className={`attn-register-change flex items-center gap-2 label-sm font-semibold ${state.textTone}`}
-					>
+					<p key={state.headline} className={`attn-register-change flex items-center gap-2 label-sm ${state.textTone}`}>
 						<span className={`size-2 rounded-full ${state.dotTone}`} aria-hidden /> {state.headline}
 					</p>
 					{/* Reduced motion never autoplays, so there is nothing to play or pause; the state buttons still step through. */}
@@ -1062,7 +1059,7 @@ function SourceRegister({
 				</div>
 			</div>
 
-			<div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(7rem,.72fr)_minmax(6rem,.55fr)] gap-4 border-b border-very-subtle px-6 py-2.5 label-xs font-semibold tracking-[0.08em] text-tertiary uppercase sm:grid">
+			<div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(7rem,.72fr)_minmax(6rem,.55fr)] gap-4 border-b border-very-subtle px-6 py-2.5 label-xs tracking-[0.08em] text-tertiary uppercase sm:grid">
 				<span>Source</span>
 				<span>Verification method</span>
 				<span>Freshness</span>
@@ -1085,7 +1082,7 @@ function SourceRegister({
 						>
 							<div className="flex min-w-0 items-start justify-between gap-4 sm:block">
 								<div className="min-w-0">
-									<p className="label-sm font-semibold text-primary">{source.name}</p>
+									<p className="label-sm text-primary">{source.name}</p>
 									<p className="mt-0.5 label-xs text-tertiary">{source.kind}</p>
 								</div>
 								<span key={statusLabel} className="attn-register-change sm:hidden">
@@ -1099,7 +1096,7 @@ function SourceRegister({
 							<div className="min-w-0">
 								<p
 									key={freshness}
-									className={`attn-register-change label-sm font-medium whitespace-nowrap ${isAffected ? statusState.textTone : 'text-secondary'}`}
+									className={`attn-register-change label-sm whitespace-nowrap ${isAffected ? statusState.textTone : 'text-secondary'}`}
 								>
 									{freshness}
 								</p>
@@ -1250,11 +1247,11 @@ function PublicProofSection() {
 			<div className="mx-auto max-w-[1140px] px-4 py-24 sm:px-6 md:px-8 lg:py-32">
 				<div className="grid gap-8 lg:grid-cols-[minmax(0,330px)_1fr] lg:items-start lg:gap-16">
 					<div>
-						<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">The public record</p>
+						<p className="label-sm tracking-[0.08em] text-link uppercase">The public record</p>
 						<h2 className="mt-4 text-[clamp(1.95rem,3.8vw,2.9rem)] leading-[1.07] font-bold tracking-tight">
 							Every published metric shows its source, method, and freshness
 						</h2>
-						<p className="mt-5 body-lg leading-relaxed text-secondary">
+						<p className="mt-5 body-lg text-secondary">
 							Investors see how each source was checked, when it was last confirmed, what cadence to expect, and whether
 							anything sits outside the verification scope. Private records and positions stay private. Verification
 							covers only the sources and metrics listed in the record; it is not a financial audit or guarantee.
@@ -1300,7 +1297,7 @@ function PublicProofSection() {
 								) : null}
 								<span className={`mt-1 size-2 rounded-full ${state.dotTone}`} aria-hidden />
 								<span>
-									<span className="block label-sm font-semibold">{state.label}</span>
+									<span className="block label-sm">{state.label}</span>
 									<span className="mt-1 block body-sm text-tertiary">{state.detail}</span>
 								</span>
 							</button>
@@ -1338,13 +1335,11 @@ export default function VerifiedLanding() {
 							<div className="relative mx-auto flex min-h-[94svh] max-w-[1140px] flex-col justify-center px-4 pt-32 pb-20 sm:px-6 md:px-8 lg:pt-36">
 								<div className="grid items-center gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)]">
 									<div className="max-w-[560px]">
-										<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">
-											Verified by DefiLlama
-										</p>
+										<p className="label-sm tracking-[0.08em] text-link uppercase">Verified by DefiLlama</p>
 										<h1 className="mt-4 max-w-[17ch] text-[clamp(2.45rem,5vw,4.15rem)] leading-[1.02] font-extrabold tracking-[-0.035em]">
 											Your offchain metrics, <span className="text-link">verified</span> and published by DefiLlama
 										</h1>
-										<p className="mt-7 max-w-[52ch] body-xl leading-relaxed text-secondary">
+										<p className="mt-7 max-w-[52ch] body-xl text-secondary">
 											DefiLlama verifies private reserves and financial statements through read-only access, reconciles
 											them with public liabilities, and publishes a current verification record.
 										</p>
@@ -1352,7 +1347,7 @@ export default function VerifiedLanding() {
 											<a href="#get" className={primaryCtaStyles}>
 												Get verified
 											</a>
-											<a href="#reconcile" className="label-sm font-semibold text-link hover:underline">
+											<a href="#reconcile" className="label-sm text-link hover:underline">
 												See the public record ↓
 											</a>
 										</div>
@@ -1385,7 +1380,7 @@ export default function VerifiedLanding() {
 
 						<section id="how" className="scroll-mt-24 border-t border-subtle">
 							<div className="mx-auto max-w-[1140px] px-4 py-24 sm:px-6 md:px-8">
-								<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">How it works</p>
+								<p className="label-sm tracking-[0.08em] text-link uppercase">How it works</p>
 								<h2 className="mt-4 max-w-xl text-[clamp(1.9rem,3.6vw,2.75rem)] leading-[1.08] font-bold tracking-tight">
 									From private source to public verification record
 								</h2>
@@ -1394,12 +1389,10 @@ export default function VerifiedLanding() {
 										<div key={step.number} className="border-t border-subtle pt-5">
 											<div className="flex items-baseline justify-between gap-3">
 												<span className="mono-sm-bold text-tertiary">{step.number}</span>
-												<span className="label-xs font-semibold tracking-[0.08em] text-link uppercase">
-													{step.label}
-												</span>
+												<span className="label-xs tracking-[0.08em] text-link uppercase">{step.label}</span>
 											</div>
-											<h3 className="mt-6 label-lg font-semibold text-primary">{step.title}</h3>
-											<p className="mt-2 body-md leading-relaxed text-secondary">{step.desc}</p>
+											<h3 className="mt-6 label-lg text-primary">{step.title}</h3>
+											<p className="mt-2 body-md text-secondary">{step.desc}</p>
 										</div>
 									))}
 								</div>
@@ -1415,8 +1408,8 @@ export default function VerifiedLanding() {
 									<div className="grid gap-x-16 gap-y-9 sm:grid-cols-2">
 										{faqs.map((f) => (
 											<div key={f.q}>
-												<h3 className="label-lg font-semibold text-primary">{f.q}</h3>
-												<p className="mt-2 body-md leading-relaxed text-secondary">{f.a}</p>
+												<h3 className="label-lg text-primary">{f.q}</h3>
+												<p className="mt-2 body-md text-secondary">{f.a}</p>
 											</div>
 										))}
 									</div>

@@ -231,7 +231,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 				</div>
 			</div>
 			<div className="overflow-x-auto">
-				<table className="w-full border-collapse text-sm">
+				<table className="w-full border-collapse body-md">
 					<thead>
 						<tr>
 							<th className="min-w-[220px] truncate border border-medium bg-pro-app-bg p-2 text-left font-semibold">

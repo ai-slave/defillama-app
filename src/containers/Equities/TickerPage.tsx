@@ -203,7 +203,7 @@ function EquityTitle({
 	return (
 		<span className="flex items-center gap-2">
 			<TokenLogo kind="equities" name={ticker} country={country} alt={`Logo of ${ticker}`} />
-			<h1 className="flex flex-1 flex-wrap items-center gap-2 text-xl">
+			<h1 className="flex flex-1 flex-wrap items-center gap-2 heading-sm">
 				<span className="font-bold">{name}</span>
 				<span className="font-normal text-secondary">
 					({ticker}:{country})

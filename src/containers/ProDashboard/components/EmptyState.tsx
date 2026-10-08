@@ -39,8 +39,8 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false, e
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
 			<Icon name="bar-chart-2" height={48} width={48} className="text-pro-text-label" />
-			<h1 className="text-3xl font-bold">{isReadOnly ? 'This dashboard is empty' : 'No cards yet'}</h1>
-			<p className="max-w-lg text-center text-base text-pro-text-label">
+			<h1 className="heading-lg">{isReadOnly ? 'This dashboard is empty' : 'No cards yet'}</h1>
+			<p className="max-w-lg text-center body-lg text-pro-text-label">
 				{isReadOnly
 					? editHref
 						? 'Switch to editing to add charts, tables, metrics or text.'
@@ -84,11 +84,11 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false, e
 							key={hint.title}
 							className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-surface-elevated-1/45 p-3 text-left"
 						>
-							<span className="flex items-center gap-2 text-sm font-medium text-pro-text-primary">
+							<span className="flex items-center gap-2 label-md text-pro-text-primary">
 								<Icon name={hint.icon} height={16} width={16} className="text-pro-text-label" />
 								{hint.title}
 							</span>
-							<span className="text-xs leading-5 text-pro-text-tertiary">{hint.description}</span>
+							<span className="body-sm text-pro-text-tertiary">{hint.description}</span>
 						</li>
 					))}
 				</ul>

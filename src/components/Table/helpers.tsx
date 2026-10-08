@@ -48,7 +48,7 @@ export function TokenPageTable({
 	return (
 		<table
 			className={clsx(
-				'w-max min-w-full text-sm',
+				'w-max min-w-full body-md',
 				separated ? 'border-separate border-spacing-0' : 'border-collapse',
 				className
 			)}

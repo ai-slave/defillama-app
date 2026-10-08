@@ -130,12 +130,10 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				addOverlayLink && 'pointer-events-none'
 			)}
 		>
-			<p className="my-3 line-clamp-4 text-[11px] leading-[150%] font-normal lg:text-[11px]">
-				{blurb || article.title}
-			</p>
+			<p className="my-3 line-clamp-4 body-sm">{blurb || article.title}</p>
 			{addOverlayLink ? (
 				<div className="grid gap-2">
-					<span className="inline-block w-full rounded-sm border border-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium">
+					<span className="inline-block w-full rounded-sm border border-research-white px-3 py-2 text-center label-sm">
 						Read more
 					</span>
 					{pdfUrl ? (
@@ -144,7 +142,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="pointer-events-auto w-full rounded-sm bg-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-research-heading transition-opacity hover:opacity-90"
+							className="pointer-events-auto w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-heading transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -158,7 +156,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				>
 					<Link
 						href={href}
-						className="w-full rounded-sm border border-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-on-brand transition-colors hover:bg-research-white/10"
+						className="w-full rounded-sm border border-research-white px-3 py-2 text-center label-sm text-on-brand transition-colors hover:bg-research-white/10"
 					>
 						Read more
 					</Link>
@@ -167,7 +165,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
-							className="w-full rounded-sm bg-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-research-heading transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-research-white px-3 py-2 text-center label-sm text-research-heading transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>

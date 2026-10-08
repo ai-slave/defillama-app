@@ -216,7 +216,7 @@ function YearlyTip({ subscriptions }: { subscriptions: Array<TeamSubscription> }
 	return (
 		<div className="flex items-start gap-2">
 			<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-sub-text-muted" />
-			<p className="text-xs leading-5 text-sub-text-muted">
+			<p className="body-sm text-sub-text-muted">
 				Tip: switch to yearly billing and get 2 months free — save {formatUsd(savings)}/year on your current seats.
 			</p>
 		</div>

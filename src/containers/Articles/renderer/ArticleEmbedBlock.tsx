@@ -64,12 +64,10 @@ function EmbedFigure({
 		<figure className="article-embed-figure not-prose my-8 grid gap-2">
 			<div className="article-embed-body relative">{children}</div>
 
-			<figcaption className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 border-t border-medium pt-2 text-[12.5px] leading-snug text-secondary">
+			<figcaption className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 border-t border-medium pt-2 body-sm text-secondary">
 				<div className="min-w-0 flex-1">
 					{figureLabel ? (
-						<span className="mr-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-							{figureLabel}
-						</span>
+						<span className="mr-2 label-xs tracking-[0.18em] text-tertiary uppercase">{figureLabel}</span>
 					) : null}
 					{captionText ? <span>{captionText}</span> : null}
 				</div>
@@ -78,7 +76,7 @@ function EmbedFigure({
 						href={config.sourceUrl}
 						target="_blank"
 						rel="noreferrer noopener"
-						className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase transition-colors hover:text-link"
+						className="shrink-0 label-xs tracking-[0.18em] text-tertiary uppercase transition-colors hover:text-link"
 					>
 						{providerLabel} ↗
 					</a>
@@ -123,14 +121,14 @@ function LinkCard({ config, action }: { config: ArticleEmbedConfig; action: stri
 			className="group flex flex-col gap-2 rounded-md border border-medium bg-page p-5 no-underline transition-colors hover:border-link/50"
 		>
 			<div className="flex items-baseline justify-between gap-4">
-				<div className="min-w-0 flex-1 text-base leading-snug font-semibold text-primary group-hover:text-link">
+				<div className="min-w-0 flex-1 title-lg text-primary group-hover:text-link">
 					{config.title || `Open ${display}`}
 				</div>
-				<span className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase transition-colors group-hover:text-link">
+				<span className="shrink-0 label-xs tracking-[0.18em] text-tertiary uppercase transition-colors group-hover:text-link">
 					{action} ↗
 				</span>
 			</div>
-			<div className="truncate font-jetbrains text-[11px] text-tertiary">{display}</div>
+			<div className="truncate mono-sm text-tertiary">{display}</div>
 		</a>
 	)
 }
@@ -219,7 +217,7 @@ export function TweetEmbed({
 					</a>
 				</blockquote>
 			) : (
-				<div className="flex h-32 items-center justify-center font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+				<div className="flex h-32 items-center justify-center label-xs tracking-[0.18em] text-tertiary uppercase">
 					Loading…
 				</div>
 			)}

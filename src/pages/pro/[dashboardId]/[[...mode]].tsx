@@ -96,8 +96,8 @@ function DashboardPageNotice({
 }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-			<h1 className="text-3xl font-bold">{title}</h1>
-			{message ? <p className="text-center text-base text-pro-text-label">{message}</p> : null}
+			<h1 className="heading-lg">{title}</h1>
+			{message ? <p className="text-center body-lg text-pro-text-label">{message}</p> : null}
 			{children}
 		</div>
 	)
@@ -335,32 +335,32 @@ function DashboardPageContent({
 		if (!hasActiveSubscription && dashboardVisibility !== 'public' && !hasServerAccess) {
 			return (
 				<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
-					<h1 className="text-3xl font-bold">Pro Dashboard Access</h1>
-					<p className="-mt-6 text-center text-base text-pro-text-label">
+					<h1 className="heading-lg">Pro Dashboard Access</h1>
+					<p className="-mt-6 text-center body-lg text-pro-text-label">
 						Subscribe to Pro to access this dashboard and unlock advanced features
 					</p>
 
 					<div className="mx-auto flex flex-wrap items-center justify-center gap-4">
-						<div className="flex items-center gap-2 text-sm">
+						<div className="flex items-center gap-2 body-md">
 							<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-pro-accent" />
 							<span>Customizable Charts</span>
 						</div>
-						<div className="flex items-center gap-2 text-sm">
+						<div className="flex items-center gap-2 body-md">
 							<Icon name="activity" height={16} width={16} className="shrink-0 text-pro-accent" />
 							<span>Multiple Dashboards</span>
 						</div>
-						<div className="flex items-center gap-2 text-sm">
+						<div className="flex items-center gap-2 body-md">
 							<Icon name="percent" height={16} width={16} className="shrink-0 text-pro-accent" />
 							<span>Advanced Analytics</span>
 						</div>
-						<div className="flex items-center gap-2 text-sm">
+						<div className="flex items-center gap-2 body-md">
 							<Icon name="layers" height={16} width={16} className="shrink-0 text-pro-accent" />
 							<span>Multi-Charts</span>
 						</div>
 					</div>
 
-					<h2 className="text-3xl font-bold text-pro-text-primary">
-						$49<span className="text-lg font-normal text-pro-text-secondary">/month</span>
+					<h2 className="heading-lg text-pro-text-primary">
+						$49<span className="body-xl text-pro-text-secondary">/month</span>
 					</h2>
 
 					<Button

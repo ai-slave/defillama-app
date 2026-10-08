@@ -213,7 +213,7 @@ function renderCitation(node: TiptapJson, key: string) {
 		...(stringAttr(node.attrs, 'title') ? { title: stringAttr(node.attrs, 'title') } : {})
 	}
 	const className =
-		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-research-tint px-1 text-[11px] leading-4 text-link no-underline'
+		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-research-tint px-1 body-sm text-link no-underline'
 	if (citation.url) {
 		const link = <a href={citation.url} target="_blank" rel="noreferrer noopener" className={className} />
 		// Tooltip renders only its children when content is empty, which would drop the link.
@@ -269,7 +269,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		tone === 'warning' ? 'text-callout-accent dark:text-research-gold' : tone === 'data' ? 'text-link' : 'text-tertiary'
 	return (
 		<aside key={key} className={`my-6 rounded-md border p-4 ${wrap}`}>
-			<div className={`mb-1.5 text-xs font-medium capitalize ${toneText}`}>{tone}</div>
+			<div className={`mb-1.5 label-sm capitalize ${toneText}`}>{tone}</div>
 			<div className="article-callout-body">{renderChildren(node, key, ctx)}</div>
 		</aside>
 	)
@@ -429,7 +429,7 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 	return (
 		<ArticleTableFrame key={key}>
 			<table
-				className={`article-table relative z-10 w-full border-collapse text-sm ${hasColWidths ? 'table-fixed' : ''}`}
+				className={`article-table relative z-10 w-full border-collapse body-md ${hasColWidths ? 'table-fixed' : ''}`}
 			>
 				{headerRows.length > 0 ? (
 					<thead className="bg-page">{headerRows.map((row, i) => renderNode(row, `${key}-thead-${i}`, ctx))}</thead>
@@ -465,7 +465,7 @@ function formatHeaderDate(iso: string | null | undefined) {
 }
 
 const metaChipClassName =
-	'inline-flex items-center rounded-[3px] bg-link px-2 py-0.75 text-[10px] leading-none font-semibold tracking-tight whitespace-nowrap text-on-brand transition-opacity hover:opacity-90'
+	'inline-flex items-center rounded-[3px] bg-link px-2 py-0.75 label-xs tracking-tight whitespace-nowrap text-on-brand transition-opacity hover:opacity-90'
 
 function MetaChip({ children, href }: { children: ReactNode; href?: string }) {
 	if (href) {
@@ -642,22 +642,18 @@ function CompactTocBar({
 			className="group relative flex w-full flex-col gap-3 border-y border-medium py-3.5 text-left transition-colors hover:bg-surface/40"
 		>
 			<div className="flex items-center justify-between gap-3">
-				<span className="text-[10px] leading-none font-semibold tracking-[0.18em] text-tertiary uppercase">
-					On this page
-				</span>
-				<span className="flex items-center gap-1 text-[10px] leading-none font-medium tracking-[0.12em] text-tertiary uppercase transition-colors group-hover:text-link">
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">On this page</span>
+				<span className="flex items-center gap-1 label-xs tracking-[0.12em] text-tertiary uppercase transition-colors group-hover:text-link">
 					<span>Top</span>
 					<Icon name="arrow-up" className="size-3" />
 				</span>
 			</div>
 			<div className="flex items-baseline gap-3">
-				<span className="font-jetbrains text-[11px] leading-none tracking-tight text-tertiary tabular-nums">
+				<span className="mono-sm tracking-tight text-tertiary tabular-nums">
 					{displayNumber}
 					<span className="text-tertiary/50">/{displayTotal}</span>
 				</span>
-				<span className="min-w-0 flex-1 truncate text-[15px] leading-6 font-bold text-primary">
-					{currentEntry?.text ?? '—'}
-				</span>
+				<span className="min-w-0 flex-1 truncate label-md text-primary">{currentEntry?.text ?? '—'}</span>
 			</div>
 			<div className="relative h-px w-full bg-border-medium">
 				<span
@@ -713,7 +709,7 @@ function TocList({
 						<li key={group.id} className="relative">
 							{hasChildren ? (
 								// The link and its disclosure are siblings: a link inside a button is unreachable by keyboard.
-								<div className="flex w-full items-center justify-between gap-2 pr-3 pl-5 text-[15px] leading-6 font-bold text-primary">
+								<div className="flex w-full items-center justify-between gap-2 pr-3 pl-5 title-md text-primary">
 									<a
 										href={`#${group.id}`}
 										onClick={() => setActive(group.id)}
@@ -738,7 +734,7 @@ function TocList({
 									href={`#${group.id}`}
 									onClick={() => setActive(group.id)}
 									aria-current={isParentActive ? 'location' : undefined}
-									className={`flex items-center px-5 py-1.5 text-[15px] leading-6 font-bold text-primary hover:text-link ${
+									className={`flex items-center px-5 py-1.5 title-md text-primary hover:text-link ${
 										isParentActive ? 'underline' : ''
 									}`}
 								>
@@ -756,8 +752,8 @@ function TocList({
 													href={`#${child.id}`}
 													onClick={() => setActive(child.id)}
 													aria-current={isActive ? 'location' : undefined}
-													className={`block truncate py-1.5 pr-3 pl-10 text-[15px] leading-6 transition-colors ${
-														isActive ? 'font-semibold text-primary underline' : 'text-secondary hover:text-primary'
+													className={`block truncate py-1.5 pr-3 pl-10 transition-colors ${
+														isActive ? 'title-md text-primary underline' : 'body-md text-secondary hover:text-primary'
 													}`}
 												>
 													{child.text}
@@ -830,7 +826,7 @@ function ShareBlock({ url, title, compactMode = false }: { url: string; title: s
 	if (compactMode) {
 		return (
 			<div className="flex items-center justify-between gap-3 border-y border-medium py-3.5">
-				<span className="flex items-center gap-1.5 text-[10px] leading-none font-semibold tracking-[0.18em] text-tertiary uppercase">
+				<span className="flex items-center gap-1.5 label-xs tracking-[0.18em] text-tertiary uppercase">
 					Share
 					<Icon name="share" className="size-3" />
 				</span>
@@ -931,7 +927,7 @@ export function ArticleRenderer({
 	const bylineLabel = isInterview ? 'Interviewer' : 'By'
 	const bylineAuthorEntries = getArticleBylineAuthorEntries(article)
 	const bylineNode = bylineAuthorEntries ? (
-		<span className="flex flex-wrap items-center gap-1 text-xs text-secondary">
+		<span className="flex flex-wrap items-center gap-1 body-sm text-secondary">
 			<span className="font-normal">{bylineLabel}</span>
 			{bylineAuthorEntries.map((entry, index) => (
 				<span key={entry.key} className="flex items-center gap-1">
@@ -952,7 +948,7 @@ export function ArticleRenderer({
 	const intervieweesList = isInterview ? (article.interviewees ?? []).filter((p) => p?.name?.trim()) : []
 	const intervieweeNode =
 		intervieweesList.length > 0 ? (
-			<span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary">
+			<span className="flex flex-wrap items-center gap-x-2 gap-y-1 body-sm text-secondary">
 				<span className="font-normal">Interviewee{intervieweesList.length > 1 ? 's' : ''}</span>
 				{keyedOccurrences(intervieweesList, (person) =>
 					JSON.stringify([person.authorSlug, person.externalUrl, person.name])
@@ -1007,9 +1003,7 @@ export function ArticleRenderer({
 					<h1 className="text-[26px] leading-[1.2] font-bold tracking-tight text-primary sm:text-3xl sm:leading-[1.15] md:text-4xl md:leading-[1.32]">
 						{article.title}
 					</h1>
-					{article.subtitle ? (
-						<p className="text-base leading-snug text-secondary md:text-lg">{article.subtitle}</p>
-					) : null}
+					{article.subtitle ? <p className="body-lg text-secondary md:body-xl">{article.subtitle}</p> : null}
 					{article.client ? (
 						<Link
 							href={researchClientHref(article.client.id)}
@@ -1024,7 +1018,7 @@ export function ArticleRenderer({
 								article={article as ArticleDocument}
 								pdfUrl={article.reportPdf.url}
 								widgetLabel="Article page"
-								className="inline-flex items-center gap-2 rounded-md bg-link px-3.5 py-2 text-sm font-medium text-on-brand transition-opacity hover:opacity-90"
+								className="inline-flex items-center gap-2 rounded-md bg-link px-3.5 py-2 label-md text-on-brand transition-opacity hover:opacity-90"
 							>
 								<Icon name="download-cloud" className="size-4" />
 								Download PDF
@@ -1039,7 +1033,7 @@ export function ArticleRenderer({
 							<img src={cover.url} alt={cover.alt || ''} className="block size-full object-cover" />
 						</div>
 						{hasCoverMeta ? (
-							<figcaption className="grid gap-1 text-xs text-tertiary">
+							<figcaption className="grid gap-1 body-sm text-tertiary">
 								{coverHeadline ? <span className="font-medium text-secondary">{coverHeadline}</span> : null}
 								{coverCaption ? <span>{coverCaption}</span> : null}
 								{coverMetaParts.length > 0 ? (
@@ -1067,7 +1061,7 @@ export function ArticleRenderer({
 							</div>
 						)}
 					</div>
-					{publishedLabel ? <span className="text-xs whitespace-nowrap text-secondary">{publishedLabel}</span> : null}
+					{publishedLabel ? <span className="body-sm whitespace-nowrap text-secondary">{publishedLabel}</span> : null}
 				</div>
 
 				<div className={`grid gap-3 lg:hidden ${cover ? 'mt-5' : 'mt-6'} pb-6`}>
@@ -1076,7 +1070,7 @@ export function ArticleRenderer({
 							{bylineNode}
 							{intervieweeNode}
 						</div>
-						{publishedLabel ? <span className="text-xs whitespace-nowrap text-secondary">{publishedLabel}</span> : null}
+						{publishedLabel ? <span className="body-sm whitespace-nowrap text-secondary">{publishedLabel}</span> : null}
 					</div>
 					{(sectionLabel || tagChips.length > 0) && (
 						<div className="flex flex-wrap items-center gap-1.5">
@@ -1089,7 +1083,7 @@ export function ArticleRenderer({
 						</div>
 					)}
 					<div className="flex items-center gap-2">
-						<span className="text-[13px] leading-none font-semibold tracking-wide text-primary">SHARE</span>
+						<span className="title-md tracking-wide text-primary">SHARE</span>
 						<Icon name="share" className="size-3.5 text-primary" />
 						<div className="ml-1">
 							<ShareIcons url={shareUrl} title={article.title} size="sm" />

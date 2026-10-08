@@ -38,7 +38,7 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 						className="relative -mx-2 min-h-0 w-full flex-1 overflow-auto px-2 sm:mx-0 sm:px-0"
 						style={{ height: '100%' }}
 					>
-						<table className="w-full min-w-[600px] border-collapse text-xs text-pro-text-primary sm:text-sm">
+						<table className="w-full min-w-[600px] border-collapse body-sm text-pro-text-primary sm:body-md">
 							<thead className="sticky top-0 z-10">
 								{table.getHeaderGroups().map((headerGroup) => {
 									let firstVisibleHeaderId: string | null = null

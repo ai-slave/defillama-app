@@ -19,11 +19,11 @@ export default function NewTrustedLogoPage() {
 						<header className="pt-2 pb-2">
 							<Link
 								href="/research/admin/trusted-by"
-								className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+								className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 							>
 								<span aria-hidden>←</span> Trusted By
 							</Link>
-							<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">New logo</h1>
+							<h1 className="mt-2 heading-lg tracking-tight text-primary">New logo</h1>
 						</header>
 					</div>
 					<TrustedLogoForm />

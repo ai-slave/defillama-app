@@ -208,7 +208,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
 					/>
 				</div>
-				<table className="z-10 w-full border-collapse text-sm">
+				<table className="z-10 w-full border-collapse body-md">
 					<thead>
 						<tr>
 							<th className="min-w-[220px] truncate border border-subtle bg-page p-2 text-left font-medium">Name</th>

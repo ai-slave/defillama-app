@@ -173,7 +173,7 @@ export default function Incentives() {
 						exportButtons="hidden"
 					/>
 				) : (
-					<div className="px-2 py-6 text-xs text-pro-text-secondary">No weekly pool data</div>
+					<div className="px-2 py-6 body-sm text-pro-text-secondary">No weekly pool data</div>
 				)}
 			</ChartCard>
 

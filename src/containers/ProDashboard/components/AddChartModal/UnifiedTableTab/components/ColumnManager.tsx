@@ -604,7 +604,7 @@ export function ColumnManager({
 				>
 					<div className="max-h-[100px] overflow-y-auto">
 						{selectedColumns.length === 0 ? (
-							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-pro-cards-border text-xs text-pro-text-tertiary">
+							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-pro-cards-border body-sm text-pro-text-tertiary">
 								No columns selected
 							</div>
 						) : (
@@ -637,7 +637,7 @@ export function ColumnManager({
 					</DragOverlay>
 				</DndContext>
 
-				<p className="mt-2 text-xs text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
+				<p className="mt-2 body-sm text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
 			</section>
 
 			<SortingSection
@@ -673,14 +673,14 @@ export function ColumnManager({
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label="Search columns"
 							placeholder="Search columns…"
-							className="w-full rounded-md border border-pro-cards-border py-1.5 pr-2.5 pl-8 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border border-pro-cards-border py-1.5 pr-2.5 pl-8 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
 
 				<div className="max-h-[240px] overflow-y-auto p-2">
 					{filteredColumns.length === 0 ? (
-						<p className="flex h-16 items-center justify-center text-xs text-pro-text-tertiary">No columns match</p>
+						<p className="flex h-16 items-center justify-center body-sm text-pro-text-tertiary">No columns match</p>
 					) : (
 						<div className="flex flex-col gap-1">
 							{filteredColumns.map((column) => {
@@ -705,7 +705,7 @@ export function ColumnManager({
 											{isSelected ? <Icon name="check" width={8} height={8} /> : null}
 										</div>
 										<span
-											className={`flex-1 truncate text-xs ${isSelected ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'}`}
+											className={`flex-1 truncate label-sm ${isSelected ? 'text-pro-text-primary' : 'text-pro-text-secondary'}`}
 										>
 											{column.header}
 										</span>
@@ -810,7 +810,7 @@ export function ColumnManager({
 									onKeyDown={handleExpressionKeyDown}
 									onFocus={() => customExpression && setShowAutocomplete(true)}
 									placeholder="e.g., tvl / mcap, fees24h * 365"
-									className={`w-full rounded-md border px-2 py-1.5 pr-8 font-mono text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
+									className={`w-full rounded-md border px-2 py-1.5 pr-8 mono-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
 										customExpression && !expressionValidation.isValid
 											? 'border-error'
 											: customExpression && expressionValidation.isValid
@@ -835,7 +835,7 @@ export function ColumnManager({
 												type="button"
 												onClick={() => insertSuggestion(suggestion)}
 												onMouseEnter={() => setAutocompleteIndex(index)}
-												className={`flex cursor-pointer items-center gap-2 px-2 py-1 text-xs ${
+												className={`flex cursor-pointer items-center gap-2 px-2 py-1 label-sm ${
 													index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-pro-text-primary'
 												}`}
 											>
@@ -892,7 +892,7 @@ export function ColumnManager({
 
 						{customExpression ? (
 							<div
-								className={`rounded-md border p-2 text-xs ${
+								className={`rounded-md border p-2 body-sm ${
 									expressionValidation.isValid ? 'border-success/30 bg-success/5' : 'border-error/30 bg-error/5'
 								}`}
 							>
@@ -907,7 +907,7 @@ export function ColumnManager({
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success/20 pt-1">
 										{usedVariables.map((v) => (
-											<span key={v.key} className="text-xs text-pro-text-tertiary">
+											<span key={v.key} className="body-sm text-pro-text-tertiary">
 												<code>{v.key}</code>={v.formatted}
 											</span>
 										))}
@@ -945,7 +945,7 @@ export function ColumnManager({
 											{AGGREGATION_OPTIONS.find((a) => a.value === col.aggregation)?.label}
 										</span>
 									</div>
-									<code className="block truncate text-xs text-pro-text-tertiary">{col.expression}</code>
+									<code className="block truncate body-sm text-pro-text-tertiary">{col.expression}</code>
 								</div>
 								<div className="ml-2 flex shrink-0 items-center gap-1">
 									<Tooltip
@@ -1012,7 +1012,7 @@ function SortableChip({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs transition-colors ${
+			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 body-sm transition-colors ${
 				isFirst
 					? 'border-brand/50 bg-brand/10'
 					: isCustom
@@ -1083,7 +1083,7 @@ function SortingSection({
 				<div className="min-w-[140px] flex-1">
 					<PopoverDisclosure
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border px-2 py-1.5 body-sm transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span className={`truncate ${currentSortColumn ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
 							{selectedLabel}
@@ -1106,8 +1106,8 @@ function SortingSection({
 									onColumnChange('')
 									popover.setOpen(false)
 								}}
-								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-									!currentSortColumn ? 'bg-brand/10 font-semibold text-brand' : 'text-pro-text-secondary'
+								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
+									!currentSortColumn ? 'bg-brand/10 text-brand' : 'text-pro-text-secondary'
 								}`}
 							>
 								<span>No sorting</span>
@@ -1125,8 +1125,8 @@ function SortingSection({
 											onColumnChange(col.id)
 											popover.setOpen(false)
 										}}
-										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-											isActive ? 'bg-brand/10 font-semibold text-brand' : 'text-pro-text-secondary'
+										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
+											isActive ? 'bg-brand/10 text-brand' : 'text-pro-text-secondary'
 										}`}
 									>
 										<span className="truncate">{col.header}</span>

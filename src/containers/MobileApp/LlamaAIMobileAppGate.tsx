@@ -64,14 +64,14 @@ function MobileAppPromotion() {
 						Now on iOS and Android
 					</span>
 
-					<Ariakit.DialogHeading className="text-4xl leading-[1.1] font-semibold tracking-tight text-sub-text-primary">
+					<Ariakit.DialogHeading className="heading-lg tracking-tight text-sub-text-primary">
 						The{' '}
 						<span className="bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-transparent">
 							DefiLlama App
 						</span>{' '}
 						is here
 					</Ariakit.DialogHeading>
-					<p className="max-w-sm text-base leading-7 text-sub-text-secondary">
+					<p className="max-w-sm body-lg text-sub-text-secondary">
 						Get extra free LlamaAI queries and take your crypto research with you.
 					</p>
 				</div>
@@ -110,7 +110,7 @@ function MobileAppPromotion() {
 						type="button"
 						onClick={continueOnWeb}
 						data-umami-event="mobile-app-llamaai-gate-continue-web"
-						className="flex h-11 w-full max-w-[300px] items-center justify-center rounded-xl border border-sub-border bg-sub-surface-panel px-6 text-sm font-medium text-sub-text-secondary transition-colors hover:border-sub-brand-primary/40 hover:text-sub-text-primary dark:bg-sub-dark-card"
+						className="flex h-11 w-full max-w-[300px] items-center justify-center rounded-xl border border-sub-border bg-sub-surface-panel px-6 label-md text-sub-text-secondary transition-colors hover:border-sub-brand-primary/40 hover:text-sub-text-primary dark:bg-sub-dark-card"
 					>
 						Continue on the web
 					</button>

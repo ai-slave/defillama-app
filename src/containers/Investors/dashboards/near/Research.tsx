@@ -89,7 +89,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				className="flex size-10 shrink-0 items-center justify-center rounded-lg"
 				style={{ backgroundColor: `${color}18` }}
 			>
-				<span className="text-sm font-bold" style={{ color }}>
+				<span className="title-md" style={{ color }}>
 					{source.charAt(0)}
 				</span>
 			</div>
@@ -97,9 +97,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				<span className="title-sm tracking-wider uppercase" style={{ color }}>
 					{source}
 				</span>
-				<span className="text-sm leading-snug font-medium text-pro-text-primary transition-colors group-hover:text-sl-accent">
-					{title}
-				</span>
+				<span className="label-md text-pro-text-primary transition-colors group-hover:text-sl-accent">{title}</span>
 			</div>
 			<svg
 				viewBox="0 0 24 24"
@@ -133,11 +131,11 @@ function PaperCard({
 			className="group flex gap-4 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-5 transition-all hover:border-sl-accent/20 hover:shadow-md"
 		>
 			<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sl-accent-muted">
-				<span className="text-sm font-bold text-sl-accent">{icon}</span>
+				<span className="title-md text-sl-accent">{icon}</span>
 			</div>
 			<div className="flex flex-1 flex-col gap-1">
 				<span className="title-md text-pro-text-primary transition-colors group-hover:text-sl-accent">{title}</span>
-				<span className="text-xs leading-relaxed text-pro-text-secondary">{description}</span>
+				<span className="body-sm text-pro-text-secondary">{description}</span>
 			</div>
 			<svg
 				viewBox="0 0 24 24"
@@ -160,9 +158,7 @@ function LinkItem({ title, url }: { title: string; url: string }) {
 			rel="noopener noreferrer"
 			className="group flex items-center justify-between gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-5 py-3.5 transition-all hover:border-sl-accent/20 hover:shadow-sm"
 		>
-			<span className="text-sm font-medium text-pro-text-primary transition-colors group-hover:text-sl-accent">
-				{title}
-			</span>
+			<span className="label-md text-pro-text-primary transition-colors group-hover:text-sl-accent">{title}</span>
 			<svg
 				viewBox="0 0 24 24"
 				fill="none"
@@ -181,7 +177,7 @@ export default function Research() {
 		<div className="flex flex-col gap-8">
 			<div className="flex flex-col gap-2 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-6">
 				<h1 className="heading-sm text-pro-text-primary">Reports & Research</h1>
-				<p className="max-w-2xl text-sm leading-relaxed text-pro-text-secondary">
+				<p className="max-w-2xl body-md text-pro-text-secondary">
 					Independent analysis, technical papers, and foundational resources covering NEAR&apos;s investment case,
 					architecture, and ecosystem growth.
 				</p>

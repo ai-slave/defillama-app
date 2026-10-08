@@ -146,7 +146,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	const len = value.length
 	const near = len >= Math.floor(max * 0.9)
 	return (
-		<span className={`text-[11px] tabular-nums ${near ? 'text-warning' : 'text-tertiary'}`}>
+		<span className={`body-sm tabular-nums ${near ? 'text-warning' : 'text-tertiary'}`}>
 			{formatNumber(len)}/{formatNumber(max)}
 		</span>
 	)
@@ -164,8 +164,8 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 	return (
 		<section className="grid gap-4 rounded-md border border-medium bg-surface p-5 md:p-6">
 			<div className="flex items-center justify-between gap-2">
-				<span className="font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase">Live preview</span>
-				<span className="text-[11px] text-tertiary">How readers see you</span>
+				<span className="label-xs tracking-[0.2em] text-tertiary uppercase">Live preview</span>
+				<span className="body-sm text-tertiary">How readers see you</span>
 			</div>
 			<div className="flex items-start gap-4">
 				{state.avatarUrl ? (
@@ -176,20 +176,20 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 						className="size-20 shrink-0 rounded-full border border-medium object-cover"
 					/>
 				) : (
-					<div className="flex size-20 shrink-0 items-center justify-center rounded-full border border-medium bg-page text-xl font-semibold text-secondary">
+					<div className="flex size-20 shrink-0 items-center justify-center rounded-full border border-medium bg-page heading-sm text-secondary">
 						{initials}
 					</div>
 				)}
 				<div className="grid min-w-0 gap-1.5">
-					<h2 className="text-xl font-semibold tracking-tight text-primary md:text-2xl">{displayName}</h2>
-					<p className="font-jetbrains text-xs text-tertiary">@{slug}</p>
+					<h2 className="heading-sm tracking-tight text-primary">{displayName}</h2>
+					<p className="mono-sm text-tertiary">@{slug}</p>
 					{state.bio.trim() ? (
-						<p className="line-clamp-3 max-w-prose text-sm leading-relaxed text-secondary">{state.bio.trim()}</p>
+						<p className="line-clamp-3 max-w-prose body-md text-secondary">{state.bio.trim()}</p>
 					) : (
-						<p className="max-w-prose text-sm text-tertiary italic">Add a bio so readers know what you cover.</p>
+						<p className="max-w-prose body-md text-tertiary italic">Add a bio so readers know what you cover.</p>
 					)}
 					{joined || socialCount > 0 ? (
-						<div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-tertiary">
+						<div className="mt-1 flex flex-wrap items-center gap-2 body-sm text-tertiary">
 							{joined ? <span>Joined {joined}</span> : null}
 							{joined && socialCount > 0 ? <span aria-hidden>·</span> : null}
 							{socialCount > 0 ? (
@@ -216,7 +216,7 @@ function Section({ title, description, children }: { title: string; description:
 		<section className="grid gap-6 border-t border-medium py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
 			<div>
 				<h2 className="title-lg text-primary">{title}</h2>
-				<p className="mt-1.5 text-sm leading-relaxed text-secondary">{description}</p>
+				<p className="mt-1.5 body-md text-secondary">{description}</p>
 			</div>
 			{/* content-start: the description column can be taller, and a stretched grid would pad out every field. */}
 			<div className="grid min-w-0 content-start gap-5">{children}</div>
@@ -240,7 +240,7 @@ export function AuthorProfileForm() {
 
 	if (loaders.userLoading || (isAuthenticated && isLoading)) {
 		return (
-			<div className="mx-auto flex max-w-3xl items-center justify-center py-24 text-sm text-tertiary">Loading…</div>
+			<div className="mx-auto flex max-w-3xl items-center justify-center py-24 body-md text-tertiary">Loading…</div>
 		)
 	}
 
@@ -250,8 +250,8 @@ export function AuthorProfileForm() {
 		const message = loadError instanceof ArticleApiError ? loadError.message : 'Failed to load profile'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't load profile</h1>
-				<p className="text-sm text-secondary">{message}</p>
+				<h1 className="heading-sm text-primary">Couldn't load profile</h1>
+				<p className="body-md text-secondary">{message}</p>
 			</div>
 		)
 	}
@@ -331,12 +331,12 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				<div>
 					<Link
 						href="/research/mine"
-						className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+						className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 					>
 						<span aria-hidden>←</span> My articles
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Profile</h1>
-					<p className="mt-1 text-sm text-secondary">How readers see you on research and author pages.</p>
+					<h1 className="mt-2 heading-lg tracking-tight text-primary">Profile</h1>
+					<p className="mt-1 body-md text-secondary">How readers see you on research and author pages.</p>
 				</div>
 				<ExternalLinkButton href={`/research/authors/${profile.slug}`}>View public page</ExternalLinkButton>
 			</header>
@@ -359,7 +359,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					/>
 				</div>
 				<label className="grid gap-1.5">
-					<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+					<span className="flex items-center justify-between gap-2 label-md text-primary">
 						Display name
 						<CharCount value={state.displayName} max={DISPLAY_NAME_MAX} />
 					</span>
@@ -370,7 +370,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 						onChange={(e) => update({ displayName: e.target.value })}
 						className="w-full"
 					/>
-					{displayNameError ? <span className="text-xs text-error">{displayNameError}</span> : null}
+					{displayNameError ? <span className="label-sm text-error">{displayNameError}</span> : null}
 				</label>
 			</Section>
 
@@ -384,27 +384,27 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				}
 			>
 				<label className="grid gap-1.5">
-					<span className="text-sm font-medium text-primary">Public URL</span>
+					<span className="label-md text-primary">Public URL</span>
 					{/* Input has no prefix slot, so the wrapper draws the Input recipe's border and focus; the prefix and the
 					    value each take the recipe's type (text-base, sm:body-sm): the base layer sets every input to text-sm. */}
 					<div className="flex min-h-8 items-center rounded-lg border border-medium bg-page px-3 focus-within:border-brand has-[[aria-invalid=true]]:border-error">
-						<span className="shrink-0 text-base text-tertiary sm:body-sm">/research/authors/</span>
+						<span className="shrink-0 body-lg text-tertiary sm:body-sm">/research/authors/</span>
 						<input
 							type="text"
 							maxLength={SLUG_MAX}
 							value={state.slug}
 							onChange={(e) => update({ slug: e.target.value })}
 							aria-invalid={slugError ? true : undefined}
-							className="min-w-0 flex-1 bg-transparent py-0.5 text-base text-primary focus:outline-hidden sm:body-sm"
+							className="min-w-0 flex-1 bg-transparent py-0.5 body-lg text-primary focus:outline-hidden sm:body-sm"
 							spellCheck={false}
 							autoCapitalize="none"
 							autoCorrect="off"
 						/>
 					</div>
 					{slugError ? (
-						<span className="text-xs text-error">{slugError}</span>
+						<span className="label-sm text-error">{slugError}</span>
 					) : slugChanged ? (
-						<span className="inline-flex items-center gap-1.5 text-xs text-warning">
+						<span className="inline-flex items-center gap-1.5 label-sm text-warning">
 							<span aria-hidden className="size-1.5 rounded-full bg-warning" />
 							Old links to <span className="font-jetbrains">/research/authors/{initial.slug}</span> will 404.
 						</span>
@@ -417,7 +417,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				description="One or two sentences. Shown at the top of your author page and in research bylines."
 			>
 				<label className="grid gap-1.5">
-					<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+					<span className="flex items-center justify-between gap-2 label-md text-primary">
 						About you
 						<CharCount value={state.bio} max={BIO_MAX} />
 					</span>
@@ -452,7 +452,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				{showCustom ? (
 					<div className="grid gap-3 border-t border-medium pt-4">
 						<div className="flex items-center justify-between gap-2 label-sm">
-							<h3 className="text-sm font-medium text-primary">Custom links</h3>
+							<h3 className="label-md text-primary">Custom links</h3>
 							<Button variant="link" onClick={addCustom}>
 								+ add another
 							</Button>
@@ -538,7 +538,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 
 			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
+					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
 						<span
 							aria-hidden
 							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}

@@ -58,7 +58,7 @@ export function EmbedChart() {
 
 			<PopoverSurface variant="panel" heading="Embed chart" className="w-80">
 				<span className="flex flex-col items-end gap-2 p-3">
-					<code className="block rounded-lg bg-page p-2 text-xs break-all">{url}</code>
+					<code className="block rounded-lg bg-page p-2 body-sm break-all">{url}</code>
 					<Button size="md" onClick={() => void copy(url)}>
 						<Icon name={copied ? 'check' : 'copy'} className="size-3.5" />
 						{copied ? 'Copied' : 'Copy code'}

@@ -208,7 +208,7 @@ function AuthorDashboardPreview({ dashboard, className }: { dashboard: AuthorDas
 function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const itemsCount = dashboardItemCount(dashboard)
 	return (
-		<div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-tertiary">
+		<div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 body-sm text-tertiary">
 			<span>
 				{formatNumber(itemsCount)} {itemsCount === 1 ? 'item' : 'items'}
 			</span>
@@ -238,12 +238,12 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 				</div>
 
 				<div className="grid content-start gap-3">
-					<p className="line-clamp-4 text-sm leading-6 text-secondary">{dashboardDescription(dashboard)}</p>
+					<p className="line-clamp-4 body-md text-secondary">{dashboardDescription(dashboard)}</p>
 
 					{tags.length > 0 ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
-								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 text-[11px] text-secondary">
+								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 body-sm text-secondary">
 									{tag}
 								</li>
 							))}
@@ -252,7 +252,7 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 				</div>
 
 				<div className="grid gap-3 border-t border-medium pt-3">
-					<p className="text-xs text-tertiary">
+					<p className="body-sm text-tertiary">
 						<RelativeTime value={dashboardUpdatedAt(dashboard)} prefix="Updated" fallback="Unknown" />
 					</p>
 					<DashboardCardStats dashboard={dashboard} />
@@ -272,15 +272,15 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 			<div className="absolute inset-x-0 top-0 h-1 bg-link/70" />
 			<div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-7">
 				<div className="grid content-start gap-3">
-					<p className="text-[10px] font-semibold tracking-[0.2em] text-link uppercase">Featured dashboard</p>
+					<p className="label-xs tracking-[0.2em] text-link uppercase">Featured dashboard</p>
 					<h2 className="max-w-3xl text-2xl leading-tight font-semibold text-primary group-hover:text-link md:text-3xl">
 						{dashboardName(dashboard)}
 					</h2>
-					<p className="line-clamp-3 max-w-3xl text-sm leading-6 text-secondary">{dashboardDescription(dashboard)}</p>
+					<p className="line-clamp-3 max-w-3xl body-md text-secondary">{dashboardDescription(dashboard)}</p>
 					{tags.length > 0 ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
-								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 text-[11px] text-secondary">
+								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 body-sm text-secondary">
 									{tag}
 								</li>
 							))}
@@ -291,10 +291,10 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 					<AuthorDashboardPreview dashboard={dashboard} className="rounded-md border border-pro-cards-border" />
 					<DashboardCardStats dashboard={dashboard} />
 					<div className="grid gap-2">
-						<p className="text-xs text-tertiary">
+						<p className="body-sm text-tertiary">
 							<RelativeTime value={dashboardUpdatedAt(dashboard)} prefix="Updated" fallback="Unknown" />
 						</p>
-						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-link">
+						<span className="inline-flex items-center gap-1.5 label-md text-link">
 							Open dashboard
 							<Icon name="arrow-up-right" className="size-4" />
 						</span>
@@ -311,8 +311,8 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 function AuthorStat({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="grid gap-1 border-t border-medium pt-3">
-			<span className="text-[10px] font-semibold tracking-[0.18em] text-tertiary uppercase">{label}</span>
-			<span className="text-sm font-medium text-primary">{value}</span>
+			<span className="label-xs tracking-[0.18em] text-tertiary uppercase">{label}</span>
+			<span className="label-md text-primary">{value}</span>
 		</div>
 	)
 }
@@ -348,10 +348,10 @@ function AuthorHero({
 			<div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="grid gap-6 p-5 sm:p-6 lg:p-8">
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="rounded-md border border-link/25 bg-research-tint px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] text-link uppercase">
+						<span className="rounded-md border border-link/25 bg-research-tint px-2.5 py-1 label-xs tracking-[0.2em] text-link uppercase">
 							Dashboard author
 						</span>
-						<span className="text-sm text-tertiary">@{author.slug}</span>
+						<span className="body-md text-tertiary">@{author.slug}</span>
 					</div>
 
 					<div className="grid gap-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-end">
@@ -360,7 +360,7 @@ function AuthorHero({
 							<h1 className="max-w-4xl text-[clamp(2rem,1.2rem+3vw,4.75rem)] leading-[0.95] font-semibold text-primary">
 								{author.displayName}
 							</h1>
-							<p className="mt-4 max-w-2xl text-base leading-7 text-secondary">
+							<p className="mt-4 max-w-2xl body-lg text-secondary">
 								{author.bio || `${author.displayName} publishes public DefiLlama Pro dashboards for the community.`}
 							</p>
 						</div>
@@ -403,10 +403,10 @@ function AuthorHero({
 
 				<aside className="grid content-between gap-6 border-t border-medium bg-page/60 p-5 sm:p-6 lg:border-t-0 lg:border-l lg:p-8">
 					<div className="grid gap-2">
-						<p className="text-[10px] font-semibold tracking-[0.22em] text-tertiary uppercase">Published dashboards</p>
+						<p className="label-xs tracking-[0.22em] text-tertiary uppercase">Published dashboards</p>
 						<div className="flex items-end gap-3">
 							<span className="text-5xl leading-none font-semibold text-primary">{formatNumber(totalDashboards)}</span>
-							<span className="pb-1 text-sm leading-5 text-secondary">
+							<span className="pb-1 body-md text-secondary">
 								public {dashboardNoun}
 								<br />
 								live on DefiLlama Pro
@@ -438,7 +438,7 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 					params={{ sort: option.value }}
 					nav={nav}
 					ariaCurrent={sort === option.value ? 'page' : undefined}
-					className={`rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors ${
+					className={`rounded-sm px-2.5 py-1.5 label-sm transition-colors ${
 						sort === option.value ? 'bg-research-tint text-link' : 'text-secondary hover:text-primary'
 					}`}
 				>
@@ -454,10 +454,10 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 		return (
 			<div className="grid justify-items-start gap-3 rounded-md border border-dashed border-medium bg-surface p-8">
 				<p className="title-lg text-primary">Your profile is live, but it has no dashboards yet</p>
-				<p className="max-w-lg text-sm leading-6 text-tertiary">
+				<p className="max-w-lg body-md text-tertiary">
 					Build a dashboard and make it public to start collecting views, likes, and followers here.
 				</p>
-				<BasicLink href="/pro" className="rounded-md bg-link px-4 py-2 text-sm font-medium text-on-brand">
+				<BasicLink href="/pro" className="rounded-md bg-link px-4 py-2 label-md text-on-brand">
 					Create your first dashboard
 				</BasicLink>
 			</div>
@@ -466,7 +466,7 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 	return (
 		<div className="grid gap-2 rounded-md border border-dashed border-medium bg-surface p-8">
 			<p className="title-lg text-primary">No public dashboards yet</p>
-			<p className="max-w-lg text-sm leading-6 text-tertiary">
+			<p className="max-w-lg body-md text-tertiary">
 				When this author publishes a dashboard, it will appear here with its tags, activity, and latest update.
 			</p>
 		</div>
@@ -493,20 +493,20 @@ function Pagination({
 				params={{ page: prev, sort }}
 				nav={nav}
 				ariaDisabled={page <= 1}
-				className={`rounded-md border border-medium px-3 py-2 text-sm ${
+				className={`rounded-md border border-medium px-3 py-2 body-md ${
 					page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-research-tint-hover'
 				}`}
 			>
 				Previous
 			</NavLink>
-			<span className="text-sm text-tertiary">
+			<span className="body-md text-tertiary">
 				Page {page} of {totalPages}
 			</span>
 			<NavLink
 				params={{ page: page >= totalPages ? page : next, sort }}
 				nav={nav}
 				ariaDisabled={page >= totalPages}
-				className={`rounded-md border border-medium px-3 py-2 text-sm ${
+				className={`rounded-md border border-medium px-3 py-2 body-md ${
 					page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-research-tint-hover'
 				}`}
 			>
@@ -555,7 +555,7 @@ export function AuthorProfileView({
 			<section className="grid gap-5">
 				<div className="flex flex-wrap items-end justify-between gap-3">
 					<div>
-						<p className="text-[10px] font-semibold tracking-[0.2em] text-tertiary uppercase">Published dashboards</p>
+						<p className="label-xs tracking-[0.2em] text-tertiary uppercase">Published dashboards</p>
 						<h2 className="mt-1 text-2xl leading-tight font-semibold text-primary">Public dashboard library</h2>
 					</div>
 					<SortControl sort={sort} nav={nav} />

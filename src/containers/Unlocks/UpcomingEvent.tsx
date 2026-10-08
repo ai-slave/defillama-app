@@ -325,9 +325,9 @@ export function UpcomingEvent({
 		const LineTag = variant === 'protocol' ? 'div' : 'span'
 		const iconSize = variant === 'protocol' ? 14 : 16
 		const rowClass = variant === 'protocol' ? 'flex flex-col gap-0.5' : 'flex flex-col gap-1'
-		const lineClass = variant === 'protocol' ? 'body-md text-primary' : 'text-sm'
-		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-secondary'
-		const suffixClass = variant === 'protocol' ? 'body-sm text-tertiary' : 'text-xs text-tertiary'
+		const lineClass = variant === 'protocol' ? 'body-md text-primary' : 'body-md'
+		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'body-sm text-secondary'
+		const suffixClass = variant === 'protocol' ? 'body-sm text-tertiary' : 'body-sm text-tertiary'
 		const valueClass = variant === 'protocol' ? '' : 'font-medium'
 		const isOngoing = item.endTime != null && nowSec >= item.timestamp && nowSec <= item.endTime
 
@@ -519,7 +519,7 @@ export function UpcomingEvent({
 				</Ariakit.HovercardAnchor>
 				<Ariakit.HovercardDisclosure />
 				<Ariakit.Hovercard
-					className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 text-sm text-primary shadow-overlay-sm"
+					className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay-sm"
 					unmountOnHide
 					hideOnInteractOutside
 					overflowPadding={16}
@@ -538,7 +538,7 @@ export function UpcomingEvent({
 						</span>
 						<span className="flex flex-col items-end">
 							<span className="font-medium">{dayjs(timestamp * 1e3).format('MMM D, YYYY')}</span>
-							<span className="text-xs text-tertiary">
+							<span className="body-sm text-tertiary">
 								{`${dayjs(timestamp * 1e3).format('HH:mm')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
 							</span>
 						</span>
@@ -551,7 +551,7 @@ export function UpcomingEvent({
 
 					<span className="flex flex-col gap-2">
 						{eventSummaries.length === 0 ? (
-							<span className="text-xs text-tertiary">Amount unavailable</span>
+							<span className="body-sm text-tertiary">Amount unavailable</span>
 						) : (
 							eventSummaries.map((summary) => (
 								<span key={summary.label} className="flex flex-col gap-1">
@@ -568,7 +568,7 @@ export function UpcomingEvent({
 											{summary.displayUnit ? <span className="body-sm text-tertiary">/ week</span> : null}
 										</span>
 									</span>
-									<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+									<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
 										<span>
 											{summary.percentage !== null
 												? formatPercent(summary.percentage, { input: 'percent', compact: true })

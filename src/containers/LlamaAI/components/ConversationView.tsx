@@ -760,7 +760,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 								{paginationState.isLoadingNewer ? (
 									<div className="flex justify-center py-2">
-										<p className="m-0 text-xs text-tertiary">Loading newer messages&hellip;</p>
+										<p className="m-0 body-sm text-tertiary">Loading newer messages&hellip;</p>
 									</div>
 								) : null}
 
@@ -987,7 +987,7 @@ export function EmptyConversationErrorState({
 }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-2">
-			<p role="alert" className="text-sm text-error">
+			<p role="alert" className="body-md text-error">
 				{message}
 			</p>
 			<div className="flex items-center gap-2">

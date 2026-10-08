@@ -50,7 +50,7 @@ export function PriceInput({ value, onValueChange }: { value: string; onValueCha
 
 	return (
 		<div className="relative w-32">
-			<span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-tertiary">$</span>
+			<span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 body-md text-tertiary">$</span>
 			<Input
 				type="text"
 				inputMode="decimal"

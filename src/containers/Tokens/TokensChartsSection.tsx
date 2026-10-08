@@ -217,7 +217,7 @@ export function TokensChartsSection({
 					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-2 body-sm text-tertiary">
 						{treemap.stablecoinsHidden > 0 ? <p>{treemap.stablecoinsHidden} stablecoins hidden</p> : null}
 						<div
-							className="ml-auto w-40 shrink-0 text-xs"
+							className="ml-auto w-40 shrink-0 body-sm"
 							role="img"
 							aria-label={`Treemap color scale: loss through zero to gain for price ${colorBy}`}
 						>

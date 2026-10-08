@@ -50,7 +50,7 @@ export function ChartRouter({ config, result, classified, onReady, height = SQL_
 			return <CandlestickChartAdapter {...common} />
 		default:
 			return (
-				<div className="flex h-[220px] items-center justify-center gap-2 rounded-md border border-dashed border-subtle text-sm text-pro-text-secondary">
+				<div className="flex h-[220px] items-center justify-center gap-2 rounded-md border border-dashed border-subtle body-md text-pro-text-secondary">
 					<Icon name="bar-chart-2" className="size-4" />
 					Unknown chart type
 				</div>

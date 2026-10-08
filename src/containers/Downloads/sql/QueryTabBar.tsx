@@ -265,7 +265,7 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 				<MenuItem onClick={onNewTab}>
 					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					<span className="flex-1">New query tab</span>
-					<span className="font-mono text-[10px] text-pro-text-tertiary">⌘T</span>
+					<span className="mono-sm text-pro-text-tertiary">⌘T</span>
 				</MenuItem>
 				<MenuItem onClick={onNewNotebook}>
 					<Icon name="layers" className="size-3.5 shrink-0 text-pro-text-tertiary" />
@@ -315,7 +315,7 @@ function TabPill({
 		<div
 			ref={active ? scrollIntoViewNearest : undefined}
 			data-active={active}
-			className={`group before:bg-border-subtle/70 relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center rounded-t-md border-x border-t pr-1.5 text-[13px] transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 first:before:hidden hover:before:hidden data-[active=true]:before:hidden [[data-active=true]+&]:before:hidden ${active ? 'border-subtle bg-pro-app-bg text-pro-text-primary' : 'border-transparent bg-transparent text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'}`}
+			className={`group before:bg-border-subtle/70 relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center rounded-t-md border-x border-t pr-1.5 body-md transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 first:before:hidden hover:before:hidden data-[active=true]:before:hidden [[data-active=true]+&]:before:hidden ${active ? 'border-subtle bg-pro-app-bg text-pro-text-primary' : 'border-transparent bg-transparent text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'}`}
 		>
 			<Tab
 				value={tab.id}
@@ -434,7 +434,7 @@ function RenameInput({
 					onCommit(value, false)
 				}
 			}}
-			className="absolute inset-y-1 right-12 left-2 min-w-0 rounded-sm px-1 py-px text-[13px] font-medium text-pro-text-primary ring-1 ring-brand outline-hidden"
+			className="absolute inset-y-1 right-12 left-2 min-w-0 rounded-sm px-1 py-px label-md text-pro-text-primary ring-1 ring-brand outline-hidden"
 		/>
 	)
 }

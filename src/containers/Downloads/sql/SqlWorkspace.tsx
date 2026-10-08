@@ -1129,7 +1129,7 @@ function StatusStrip({
 	const runTone = error ? 'error' : busy ? 'busy' : lastRun ? 'ready' : 'muted'
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 text-xs text-pro-text-secondary">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 body-sm text-pro-text-secondary">
 			<span className="flex items-center gap-1.5">
 				<StatusDot tone={envTone} />
 				<span className="text-pro-text-tertiary">LlamaSQL</span>
@@ -1264,8 +1264,8 @@ function SavedQueriesTab({
 		return (
 			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
 				<Icon name="bookmark" className="size-6 text-pro-text-tertiary" />
-				<p className="text-sm text-pro-text-secondary">No saved queries yet.</p>
-				<p className="max-w-sm text-xs text-pro-text-tertiary">
+				<p className="body-md text-pro-text-secondary">No saved queries yet.</p>
+				<p className="max-w-sm body-sm text-pro-text-tertiary">
 					Click Save in the editor to bookmark a query — saved queries survive across sessions.
 				</p>
 			</div>
@@ -1303,7 +1303,7 @@ function SavedQueriesTab({
 									<span className="truncate title-md text-pro-text-primary transition-colors group-hover:text-brand">
 										{q.name}
 									</span>
-									<span className="truncate font-mono text-xs text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
+									<span className="truncate mono-sm text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>
 								</span>
 							</Ariakit.Button>
 							{/* A touch screen cannot hover, so it always shows the actions. */}

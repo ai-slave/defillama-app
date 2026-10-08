@@ -97,7 +97,7 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
 				<h1 className="heading-sm text-primary">Couldn't load this topic</h1>
-				<p className="text-sm text-secondary">{message}</p>
+				<p className="body-md text-secondary">{message}</p>
 			</div>
 		)
 	}
@@ -114,19 +114,14 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 			<div className="mx-auto grid w-full max-w-[1180px] gap-8 px-4 pt-8 pb-10 sm:px-6">
 				<header className="grid gap-3 border-b border-medium pb-6">
 					<div className="flex items-center justify-between gap-3">
-						<Link
-							href="/research"
-							className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase hover:text-link"
-						>
+						<Link href="/research" className="label-xs tracking-[0.18em] text-tertiary uppercase hover:text-link">
 							← All research
 						</Link>
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase tabular-nums">
+						<span className="label-xs tracking-[0.18em] text-tertiary uppercase tabular-nums">
 							{total} {total === 1 ? 'story' : 'stories'}
 						</span>
 					</div>
-					<h1 className="text-3xl leading-tight font-bold tracking-tight text-primary capitalize sm:text-4xl">
-						{topicLabel}
-					</h1>
+					<h1 className="heading-lg tracking-tight text-primary capitalize">{topicLabel}</h1>
 				</header>
 
 				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

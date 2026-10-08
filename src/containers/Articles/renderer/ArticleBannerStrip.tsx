@@ -113,7 +113,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 			contentClassName="flex items-center justify-center"
 			dismissLabel="Dismiss banner"
 		>
-			<p className="m-0 text-center font-jetbrains text-[11px] font-bold tracking-[0.18em] uppercase">
+			<p className="m-0 text-center label-xs tracking-[0.18em] uppercase">
 				<span>{banner.text}</span>
 				{hasLink ? (
 					<>

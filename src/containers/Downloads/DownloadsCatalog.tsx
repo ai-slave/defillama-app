@@ -209,8 +209,8 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 		>
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-1">
-					<h1 className="text-2xl font-semibold">Downloads</h1>
-					<p className="text-sm text-pro-text-secondary">
+					<h1 className="heading-lg">Downloads</h1>
+					<p className="body-md text-pro-text-secondary">
 						Download CSV datasets from DefiLlama. Click a dataset to preview and choose columns.
 					</p>
 				</div>
@@ -255,7 +255,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					) : null}
 
 					{activeTab !== 'saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
-						<p className="text-xs text-pro-text-tertiary">
+						<p className="body-sm text-pro-text-tertiary">
 							Showing {totalFilteredCount} of {totalCount} datasets
 							{selectedCategory !== ALL_CATEGORY ? ` in ${selectedCategory}` : ''}
 							{deferredSearch ? ` matching "${deferredSearch}"` : ''}
@@ -294,7 +294,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
 														/>
 													</div>
-													<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
+													<p className="body-md text-pro-text-secondary">{dataset.description}</p>
 												</button>
 											)
 										})}
@@ -302,7 +302,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								</section>
 							))}
 							{filteredDatasetsByCategory.length === 0 && (
-								<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
+								<p className="py-8 text-center body-md text-pro-text-tertiary">No datasets match your search.</p>
 							)}
 						</div>
 					) : activeTab === 'time-series' ? (
@@ -320,7 +320,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 									</div>
 									<div className="flex flex-col gap-0.5">
 										<p className="font-medium text-pro-text-primary">Combine multiple metrics</p>
-										<p className="text-sm text-pro-text-secondary">
+										<p className="body-md text-pro-text-secondary">
 											Pick a protocol or chain, mix any of its metrics — TVL, fees, volume, revenue — into a single CSV.
 										</p>
 									</div>
@@ -361,8 +361,8 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
 														/>
 													</div>
-													<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
-													<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-pro-text-tertiary">
+													<p className="body-md text-pro-text-secondary">{dataset.description}</p>
+													<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 body-sm text-pro-text-tertiary">
 														Select {dataset.paramLabel}
 													</span>
 												</button>
@@ -370,7 +370,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 										})}
 									</div>
 									{category === 'RWA' ? (
-										<p className="text-sm text-pro-text-secondary">
+										<p className="body-md text-pro-text-secondary">
 											Download more RWA data from the{' '}
 											<a href="https://defillama.com/rwa" className="text-brand underline hover:opacity-80">
 												RWA overview
@@ -381,7 +381,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								</section>
 							))}
 							{filteredChartsByCategory.length === 0 && (
-								<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
+								<p className="py-8 text-center body-md text-pro-text-tertiary">No datasets match your search.</p>
 							)}
 						</div>
 					) : (
@@ -487,7 +487,7 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 	return (
 		<details className="group">
 			<summary className="flex cursor-pointer items-center gap-4 py-4">
-				<span className="flex-1 text-sm font-medium text-pro-text-primary">{question}</span>
+				<span className="flex-1 label-md text-pro-text-primary">{question}</span>
 				<Icon
 					name="chevron-down"
 					height={16}
@@ -495,7 +495,7 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 					className="shrink-0 text-pro-text-secondary transition-transform duration-200 group-open:rotate-180"
 				/>
 			</summary>
-			<div className="pb-4 text-sm text-pro-text-secondary">{children}</div>
+			<div className="pb-4 body-md text-pro-text-secondary">{children}</div>
 		</details>
 	)
 }
@@ -670,10 +670,10 @@ function SavedDownloadsContent({
 	return (
 		<>
 			<div className="flex items-baseline justify-between gap-3 px-0.5">
-				<p className="text-[11px] font-semibold tracking-[0.14em] text-pro-text-tertiary uppercase">
+				<p className="title-sm tracking-[0.14em] text-pro-text-tertiary uppercase">
 					{savedDownloads.length} {savedDownloads.length === 1 ? 'preset' : 'presets'}
 				</p>
-				<p className="flex items-center gap-3 text-[11px] text-pro-text-tertiary tabular-nums">
+				<p className="flex items-center gap-3 body-sm text-pro-text-tertiary tabular-nums">
 					{bucketCounts.dataset > 0 ? (
 						<span className="flex items-center gap-1.5">
 							<span className={`size-1.5 rounded-full ${KIND_STYLES.dataset.accent}`} aria-hidden="true" />
@@ -739,13 +739,13 @@ function SavedEmptyState() {
 			</div>
 			<div className="flex flex-col gap-1.5">
 				<h3 className="title-lg text-pro-text-primary">Pin your first preset</h3>
-				<p className="max-w-sm text-sm text-pro-text-secondary">
+				<p className="max-w-sm body-md text-pro-text-secondary">
 					Save any dataset or chart configuration to run it again from here.
 				</p>
 			</div>
-			<p className="text-xs text-pro-text-tertiary">
+			<p className="body-sm text-pro-text-tertiary">
 				Open a dataset, tweak your columns and filters, then click{' '}
-				<span className="inline-flex items-center gap-1 rounded-sm border border-subtle px-1.5 py-0.5 text-[11px] font-medium text-pro-text-primary">
+				<span className="inline-flex items-center gap-1 rounded-sm border border-subtle px-1.5 py-0.5 label-sm text-pro-text-primary">
 					<Icon name="bookmark" className="size-3" />
 					Save preset
 				</span>
@@ -788,12 +788,10 @@ function SavedDownloadRow({
 				className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 text-left after:absolute after:inset-0"
 			>
 				<span className="flex items-baseline gap-2">
-					<span className={`shrink-0 text-[10px] font-semibold tracking-wider uppercase ${style.fg}`}>
-						{style.label}
-					</span>
-					<span className="truncate text-[15px] font-semibold text-pro-text-primary">{preset.name}</span>
+					<span className={`shrink-0 label-xs tracking-wider uppercase ${style.fg}`}>{style.label}</span>
+					<span className="truncate label-md text-pro-text-primary">{preset.name}</span>
 				</span>
-				<span className="flex min-w-0 items-center gap-2 text-[11.5px] text-pro-text-tertiary">
+				<span className="flex min-w-0 items-center gap-2 body-sm text-pro-text-tertiary">
 					<span className="truncate text-pro-text-secondary">{sourceLabel}</span>
 					{description ? (
 						<>

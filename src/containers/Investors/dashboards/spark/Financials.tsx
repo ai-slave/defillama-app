@@ -39,7 +39,7 @@ function ChartCard({
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="text-sm font-medium text-pro-text-label">{title}</h3>
+				<h3 className="label-md text-pro-text-label">{title}</h3>
 				{actions}
 			</div>
 			{children}
@@ -51,7 +51,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
+			<span className="mono-xl text-pro-text-primary">{value}</span>
 		</div>
 	)
 }
@@ -115,7 +115,7 @@ function AllocatedAssetsSection({
 			<SectionHeader>SLL Allocated Assets</SectionHeader>
 			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 				<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-					<h3 className="text-sm font-medium text-pro-text-label">{allocatedAssets.title}</h3>
+					<h3 className="label-md text-pro-text-label">{allocatedAssets.title}</h3>
 					<div className="flex flex-wrap items-center gap-2">
 						<SegmentedControl<typeof view>
 							variant="default"
@@ -188,7 +188,7 @@ function AllocatedAssetsSection({
 											{isOpen && entry.children && (
 												<div className="pb-2 pl-8">
 													{entry.children.map((child) => (
-														<div key={child.name} className="flex items-center py-1.5 text-xs text-pro-text-label">
+														<div key={child.name} className="flex items-center py-1.5 body-sm text-pro-text-label">
 															<span className="min-w-0 flex-1 truncate">{child.name}</span>
 															<span className="shrink-0">{child.formatted}</span>
 														</div>
@@ -200,8 +200,8 @@ function AllocatedAssetsSection({
 								})}
 							</div>
 							<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-								<span className="text-sm text-pro-text-label">Total AUM</span>
-								<span className="text-sm font-bold text-pro-text-primary">{allocatedAssets.totalFormatted}</span>
+								<span className="body-md text-pro-text-label">Total AUM</span>
+								<span className="title-md text-pro-text-primary">{allocatedAssets.totalFormatted}</span>
 							</div>
 						</div>
 					</div>
@@ -507,41 +507,37 @@ function TreasurySection({ data }: { data: FinData }) {
 			<SectionHeader>Treasury &amp; Buybacks</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-3 text-sm font-medium text-pro-text-label">Treasury</h3>
+					<h3 className="mb-3 label-md text-pro-text-label">Treasury</h3>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="text-xs text-pro-text-label">Total Treasury Assets</span>
+							<span className="body-sm text-pro-text-label">Total Treasury Assets</span>
 							<span className="title-md text-pro-text-primary">{data.treasuryKpis.totalAssets.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="text-xs text-pro-text-label">Buyback Threshold</span>
+							<span className="body-sm text-pro-text-label">Buyback Threshold</span>
 							<span className="title-md text-pro-text-primary">{data.treasuryKpis.buybackThreshold.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
-							<span className="text-xs text-pro-text-label">Current vs Threshold</span>
-							<span
-								className={`text-sm font-semibold ${
-									data.treasuryKpis.vsThreshold.value >= 0 ? 'text-success' : 'text-error'
-								}`}
-							>
+							<span className="body-sm text-pro-text-label">Current vs Threshold</span>
+							<span className={`title-md ${data.treasuryKpis.vsThreshold.value >= 0 ? 'text-success' : 'text-error'}`}>
 								{data.treasuryKpis.vsThreshold.formatted}
 							</span>
 						</div>
 					</div>
 				</div>
 				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-3 text-sm font-medium text-pro-text-label">SPK Buyback Tracker</h3>
+					<h3 className="mb-3 label-md text-pro-text-label">SPK Buyback Tracker</h3>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="text-xs text-pro-text-label">USDS Spent</span>
+							<span className="body-sm text-pro-text-label">USDS Spent</span>
 							<span className="title-md text-pro-text-primary">{data.buybackKpis.usdsSpent.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
-							<span className="text-xs text-pro-text-label">SPK Bought</span>
+							<span className="body-sm text-pro-text-label">SPK Bought</span>
 							<span className="title-md text-pro-text-primary">{data.buybackKpis.spkBought.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
-							<span className="text-xs text-pro-text-label">Avg Price</span>
+							<span className="body-sm text-pro-text-label">Avg Price</span>
 							<span className="title-md text-pro-text-primary">{data.buybackKpis.avgPrice.formatted}</span>
 						</div>
 					</div>
@@ -614,7 +610,7 @@ export default function Financials() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Projected Returns Breakdown</SectionHeader>
 				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-3 text-sm font-medium text-pro-text-label">{data.projectedBreakdown.title}</h3>
+					<h3 className="mb-3 label-md text-pro-text-label">{data.projectedBreakdown.title}</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[300px]">
 							<PieChart
@@ -637,7 +633,7 @@ export default function Financials() {
 								<tbody>
 									{data.projectedBreakdown.series.map((item) => (
 										<tr key={item.name} className="border-b border-pro-cards-border last:border-b-0">
-											<td className="py-2.5 text-sm text-pro-text-primary">
+											<td className="py-2.5 body-md text-pro-text-primary">
 												<span
 													className="mr-2 inline-block size-2 rounded-full"
 													style={{ background: data.breakdownColors[item.name] || 'var(--pro-text-tertiary)' }}
@@ -645,7 +641,7 @@ export default function Financials() {
 												{item.name}
 											</td>
 											<td className="py-2.5 text-right title-md text-pro-text-primary">{item.formatted}</td>
-											<td className="py-2.5 text-right text-sm text-pro-text-label">
+											<td className="py-2.5 text-right body-md text-pro-text-label">
 												{formatPercent(item.pct, { input: 'percent' })}
 											</td>
 										</tr>
@@ -653,10 +649,8 @@ export default function Financials() {
 								</tbody>
 							</table>
 							<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-								<span className="text-sm text-pro-text-label">Total</span>
-								<span className="text-sm font-bold text-pro-text-primary">
-									{data.projectedBreakdown.totalFormatted}
-								</span>
+								<span className="body-md text-pro-text-label">Total</span>
+								<span className="title-md text-pro-text-primary">{data.projectedBreakdown.totalFormatted}</span>
 							</div>
 						</div>
 					</div>
@@ -690,7 +684,7 @@ export default function Financials() {
 									href={report.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="border-b border-pro-cards-border py-3 text-sm font-medium text-link last:border-b-0 hover:underline"
+									className="border-b border-pro-cards-border py-3 label-md text-link last:border-b-0 hover:underline"
 								>
 									{report.label}
 								</a>

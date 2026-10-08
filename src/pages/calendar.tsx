@@ -234,16 +234,16 @@ function SimpleUpcomingEvent({ timestamp, name }: { timestamp: number; name: str
 			<span>{name}</span>
 			<span className="h-10 w-px bg-border-subtle" />
 			<span className="flex items-center gap-1">
-				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 body-md">
 					{days}D
 				</span>
-				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 body-md">
 					{hours}H
 				</span>
-				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 body-md">
 					{minutes}M
 				</span>
-				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 body-md">
 					{seconds}S
 				</span>
 			</span>

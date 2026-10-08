@@ -23,7 +23,7 @@ function EditBannerInner({ id }: { id: string }) {
 	})
 
 	if (isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>
+		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
 	}
 
 	if (error || !banner) {
@@ -31,8 +31,8 @@ function EditBannerInner({ id }: { id: string }) {
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
 				<h1 className="heading-sm text-primary">Couldn't load banner</h1>
-				<p className="text-sm text-secondary">{message}</p>
-				<Link href="/research/admin/banners" className="text-sm text-link hover:underline">
+				<p className="body-md text-secondary">{message}</p>
+				<Link href="/research/admin/banners" className="body-md text-link hover:underline">
 					Back to banners
 				</Link>
 			</div>
@@ -45,11 +45,11 @@ function EditBannerInner({ id }: { id: string }) {
 				<header className="pt-2 pb-2">
 					<Link
 						href="/research/admin/banners"
-						className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+						className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 					>
 						<span aria-hidden>←</span> Banners
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Edit banner</h1>
+					<h1 className="mt-2 heading-lg tracking-tight text-primary">Edit banner</h1>
 				</header>
 			</div>
 			<BannerForm key={banner.id} banner={banner} />

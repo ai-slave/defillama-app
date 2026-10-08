@@ -79,7 +79,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 			}
 		>
 			{query.isLoading ? (
-				<div className="flex h-[320px] items-center justify-center text-xs text-pro-text-tertiary">Loading…</div>
+				<div className="flex h-[320px] items-center justify-center body-sm text-pro-text-tertiary">Loading…</div>
 			) : hasData ? (
 				<IncomeStatement
 					name={NAME}
@@ -90,7 +90,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 					className="border-none bg-transparent p-0"
 				/>
 			) : (
-				<div className="flex h-[320px] items-center justify-center text-xs text-pro-text-tertiary">
+				<div className="flex h-[320px] items-center justify-center body-sm text-pro-text-tertiary">
 					No income statement data
 				</div>
 			)}

@@ -130,7 +130,7 @@ function PoolsTable({ data }: { data: Array<PoolRow> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Active Pools</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Active Pools</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>

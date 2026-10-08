@@ -53,10 +53,10 @@ const LEGAL_LINKS: Array<FooterLink> = [
 	{ label: 'Sitemap', href: '/research/sitemap.xml', external: true }
 ]
 
-const headingClassName = 'font-extrabold text-xs uppercase leading-tight tracking-widest text-primary'
-const linkClassName = 'font-medium text-sm leading-snug text-primary transition-opacity hover:opacity-60'
-const descriptionClassName = 'font-light text-sm leading-relaxed text-secondary'
-const legalLinkClassName = 'font-light text-xs leading-tight text-tertiary transition-opacity hover:opacity-60'
+const headingClassName = 'title-sm uppercase tracking-widest text-primary'
+const linkClassName = 'label-md text-primary transition-opacity hover:opacity-60'
+const descriptionClassName = 'body-md text-secondary'
+const legalLinkClassName = 'body-sm text-tertiary transition-opacity hover:opacity-60'
 
 function FooterLinkItem({ link }: { link: FooterLink }) {
 	if (link.external) {
@@ -233,7 +233,7 @@ function FooterMediaKit() {
 					value={email}
 					onChange={onEmailChange}
 					placeholder="Email address"
-					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
+					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 body-md text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
 				{/* Sending leaves nothing to submit until the email changes, so the pressed button disables itself. */}
 				<Ariakit.Button
@@ -241,7 +241,7 @@ function FooterMediaKit() {
 					aria-busy={isPending}
 					disabled={!canSubmit}
 					accessibleWhenDisabled
-					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-link px-6 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90 aria-disabled:opacity-70 ${
+					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-link px-6 label-md text-on-brand transition-opacity hover:opacity-90 aria-disabled:opacity-70 ${
 						isPending ? 'aria-disabled:cursor-wait' : 'aria-disabled:cursor-not-allowed'
 					}`}
 				>
@@ -281,7 +281,7 @@ function FooterMediaKit() {
 function FooterLegalBar() {
 	return (
 		<div className="mt-10 flex flex-col items-center gap-4 border-t border-medium pt-6 text-center sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:text-left">
-			<p className="text-xs leading-tight font-light text-tertiary">© DefiLlama Research. All rights reserved.</p>
+			<p className="body-sm text-tertiary">© DefiLlama Research. All rights reserved.</p>
 			<ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-start">
 				{LEGAL_LINKS.map((link) => (
 					<li key={link.label}>

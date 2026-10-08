@@ -20,7 +20,7 @@ export function KpiCard({
 }) {
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-pro-text-label uppercase">
+			<span className="flex items-center gap-1 label-sm tracking-wider text-pro-text-label uppercase">
 				{label}
 				{def && (
 					<Tooltip content={def} className="-my-2 -mr-2 cursor-help p-2" aria-label={def}>
@@ -32,14 +32,14 @@ export function KpiCard({
 				<span className="mono-xl tracking-tight text-pro-text-primary tabular-nums">{value}</span>
 				{change && (
 					<span
-						className={`flex items-center gap-0.5 font-mono text-xs tabular-nums ${change.value >= 0 ? 'text-success' : 'text-error'}`}
+						className={`flex items-center gap-0.5 mono-sm tabular-nums ${change.value >= 0 ? 'text-success' : 'text-error'}`}
 					>
 						<span aria-hidden>{change.value >= 0 ? '▲' : '▼'}</span>
 						{change.formatted}
 					</span>
 				)}
 			</div>
-			{sub && <span className="font-mono text-[11px] text-pro-text-label tabular-nums">{sub}</span>}
+			{sub && <span className="mono-sm text-pro-text-label tabular-nums">{sub}</span>}
 		</div>
 	)
 }
@@ -73,7 +73,7 @@ export function ChartCard({
 							</Tooltip>
 						)}
 					</h3>
-					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">{subtitle}</p>}
+					{subtitle && <p className="mt-0.5 body-sm text-pro-text-label">{subtitle}</p>}
 				</div>
 				{value && <p className="mono-xl tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
 			</div>
@@ -89,7 +89,7 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 export function NarrativeCallout({ children }: { children: React.ReactNode }) {
 	return (
 		<div
-			className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 pl-5 text-sm leading-relaxed text-pro-text-secondary"
+			className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 pl-5 body-md text-pro-text-secondary"
 			style={{ borderLeft: '3px solid #FF7A1A' }}
 		>
 			{children}

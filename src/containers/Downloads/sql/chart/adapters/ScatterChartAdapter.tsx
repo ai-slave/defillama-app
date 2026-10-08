@@ -95,7 +95,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady, heigh
 
 function EmptyHint({ message }: { message: string }) {
 	return (
-		<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle text-sm text-pro-text-secondary">
+		<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-pro-text-secondary">
 			{message}
 		</div>
 	)

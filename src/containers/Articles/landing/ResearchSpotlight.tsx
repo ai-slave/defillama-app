@@ -86,7 +86,7 @@ export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 							>
 								{article.title}
 							</div>
-							<time className="mt-2.5 hidden text-sm font-medium text-secondary lg:block dark:text-research-ink">
+							<time className="mt-2.5 hidden label-md text-secondary lg:block dark:text-research-ink">
 								{formatDate(article.displayDate ?? article.publishedAt)}
 							</time>
 						</div>

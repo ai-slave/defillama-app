@@ -22,7 +22,7 @@ export default function Roundup({ messages, date }: RoundupProps) {
 			<Card padding="sm" className="flex flex-col gap-3">
 				<h1 className="text-center heading-sm">{`🦙 Llama News Round-Up ${date ?? ''}`}</h1>
 
-				<div className="mx-auto flex max-w-lg flex-col gap-2 text-base">
+				<div className="mx-auto flex max-w-lg flex-col gap-2 body-lg">
 					{messages.map((x) => {
 						if (typeof x === 'string') {
 							return (

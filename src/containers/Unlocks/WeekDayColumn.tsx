@@ -44,7 +44,7 @@ export function WeekDayColumn({ dayInfo, unlocksData, isToday }: WeekDayColumnPr
 							href={`/unlocks/${slug(event.protocol)}`}
 							target="_blank"
 						>
-							<div className="rounded-md border border-medium p-2 text-xs hover:bg-hover-row">
+							<div className="rounded-md border border-medium p-2 body-sm hover:bg-hover-row">
 								<div className="mb-0.5 flex items-start justify-between gap-1">
 									<div className="flex min-w-0 shrink items-center gap-1.5 font-medium">
 										<TokenLogo
@@ -74,7 +74,7 @@ export function WeekDayColumn({ dayInfo, unlocksData, isToday }: WeekDayColumnPr
 						</BasicLink>
 					))
 				) : (
-					<div className="flex grow items-center justify-center text-center text-xs text-secondary opacity-75">
+					<div className="flex grow items-center justify-center text-center body-sm text-secondary opacity-75">
 						No unlocks
 					</div>
 				)}

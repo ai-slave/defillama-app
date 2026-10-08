@@ -154,7 +154,7 @@ export function CompositionSection({
 					/>
 				)}
 			</SectionHeader>
-			{subtitle && <p className="-mt-1 text-xs text-pro-text-secondary">{subtitle}</p>}
+			{subtitle && <p className="-mt-1 body-sm text-pro-text-secondary">{subtitle}</p>}
 			{/* `minmax(0,…)` on both tracks: the default `auto` minimum is min-content, which lets
 			    the share table push the chart column off the page instead of scrolling itself.
 			    Splits at the mockup's own 900px-ish breakpoint rather than waiting for xl. One

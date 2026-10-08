@@ -93,7 +93,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady, hei
 
 	if (!valueCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle text-sm text-pro-text-secondary">
+			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle body-md text-pro-text-secondary">
 				Histogram needs a numeric column.
 			</div>
 		)

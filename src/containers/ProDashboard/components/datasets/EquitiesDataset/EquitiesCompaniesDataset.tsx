@@ -53,7 +53,7 @@ const columns = columnHelper.columns([
 		id: 'name',
 		header: 'Name',
 		enableSorting: false,
-		cell: (info) => <span className="block truncate text-sm">{info.getValue()}</span>,
+		cell: (info) => <span className="block truncate body-md">{info.getValue()}</span>,
 		size: 200,
 		maxSize: 200
 	}),
@@ -271,7 +271,7 @@ export function EquitiesCompaniesDataset() {
 							type="text"
 							placeholder="Search companies..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

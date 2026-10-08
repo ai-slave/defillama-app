@@ -57,15 +57,15 @@ export function BannersListView() {
 	})
 
 	if (isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>
+		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
 	}
 
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banners'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't load banners</h1>
-				<p className="text-sm text-secondary">{message}</p>
+				<h1 className="heading-sm text-primary">Couldn't load banners</h1>
+				<p className="body-md text-secondary">{message}</p>
 			</div>
 		)
 	}
@@ -78,12 +78,12 @@ export function BannersListView() {
 				<div>
 					<Link
 						href="/research/admin"
-						className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+						className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 					>
 						<span aria-hidden>←</span> Admin
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Banners</h1>
-					<p className="mt-1 text-sm text-secondary">
+					<h1 className="mt-2 heading-lg tracking-tight text-primary">Banners</h1>
+					<p className="mt-1 body-md text-secondary">
 						Configure the dismissible top strip, the desktop right-rail image, or the mobile inline image shown on
 						/research, all articles, a section's articles, or a single article.
 					</p>
@@ -111,7 +111,7 @@ export function BannersListView() {
 			) : null}
 			{items.length === 0 ? (
 				<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-					<p className="text-sm text-secondary">No banners yet.</p>
+					<p className="body-md text-secondary">No banners yet.</p>
 					<Button
 						as={BasicLink}
 						variant="primary"
@@ -128,19 +128,19 @@ export function BannersListView() {
 						<li key={banner.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
 							<div className="grid min-w-0 gap-1">
 								<div className="flex flex-wrap items-center gap-2">
-									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+									<span className="label-xs tracking-[0.18em] text-tertiary uppercase">
 										{banner.type === 'promo' ? 'Landing + all articles' : BANNER_SCOPE_LABELS[banner.scope]}
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
-									<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link-on-tint uppercase">
+									<span className="inline-flex items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link-on-tint uppercase">
 										{BANNER_KIND_LABELS[banner.type]}
 									</span>
 									<span className="inline-flex items-center rounded-full bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-[0.12em] text-secondary uppercase">
 										{bannerAudienceLabel(banner.targetCountries)}
 									</span>
 									<span
-										className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] uppercase ${
+										className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-xs tracking-[0.18em] uppercase ${
 											banner.enabled ? 'bg-success/10 text-success' : 'bg-tertiary/10 text-tertiary'
 										}`}
 									>
@@ -150,9 +150,9 @@ export function BannersListView() {
 								</div>
 								{banner.type === 'text' ? (
 									<>
-										<p className="line-clamp-2 text-sm text-primary">{banner.text}</p>
+										<p className="line-clamp-2 body-md text-primary">{banner.text}</p>
 										{banner.linkUrl ? (
-											<p className="truncate text-xs text-tertiary">
+											<p className="truncate body-sm text-tertiary">
 												→ {banner.linkLabel?.trim() || 'Read more'} · {banner.linkUrl}
 											</p>
 										) : null}
@@ -179,7 +179,7 @@ export function BannersListView() {
 												}`}
 											/>
 										) : null}
-										<p className="line-clamp-2 text-sm text-secondary">
+										<p className="line-clamp-2 body-md text-secondary">
 											{banner.imageAlt?.trim() || <span className="text-tertiary italic">no alt text</span>}
 										</p>
 									</div>

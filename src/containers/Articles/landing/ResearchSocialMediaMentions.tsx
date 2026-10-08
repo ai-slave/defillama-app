@@ -86,7 +86,7 @@ export function QuoteBlock({ quote, variant = 'primary', size = 'large', mobile 
 	const textColor = variant === 'secondary' ? 'text-research-accent-strong' : 'text-on-brand'
 
 	const textStyles = mobile
-		? 'text-base leading-[20px] text-center px-6.5 py-3'
+		? 'body-lg text-center px-6.5 py-3'
 		: size === 'small'
 			? 'text-xl leading-[28px] text-center px-11.25 py-2.5'
 			: 'text-xl leading-[24px] px-7.5 py-5'
@@ -113,7 +113,7 @@ export function QuoteBlock({ quote, variant = 'primary', size = 'large', mobile 
 				</blockquote>
 			)}
 			{quote.username && quote.social_media_name && (
-				<div className={`mt-auto pl-7.5 text-sm font-bold uppercase ${textColor}`}>
+				<div className={`mt-auto pl-7.5 title-md uppercase ${textColor}`}>
 					@{quote.username} via {quote.social_media_name}
 				</div>
 			)}

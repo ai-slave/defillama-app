@@ -45,7 +45,7 @@ export function ArticleImageBlock({ attrs }: { attrs: ArticleImageBlockAttrs | n
 				imgEl
 			)}
 			{hasMeta ? (
-				<figcaption className="mt-2 grid gap-1 text-xs leading-relaxed text-tertiary">
+				<figcaption className="mt-2 grid gap-1 body-sm text-tertiary">
 					{headline ? <span className="font-medium text-secondary">{headline}</span> : null}
 					{caption ? <span>{caption}</span> : null}
 					{metaParts.length > 0 ? <span className="text-tertiary/80">{metaParts.join(' · ')}</span> : null}

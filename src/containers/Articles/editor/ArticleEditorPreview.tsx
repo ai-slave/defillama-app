@@ -44,15 +44,13 @@ export function ArticleEditorPreview({
 							<Icon name="eye" className="size-4 text-link" />
 						</div>
 						<div className="min-w-0 flex-1">
-							<div className="font-jetbrains text-[10px] tracking-[0.24em] text-tertiary uppercase">Rendered proof</div>
-							<div className="text-sm leading-snug font-medium break-words text-primary">
-								{article.title || 'Untitled research'}
-							</div>
+							<div className="label-xs tracking-[0.24em] text-tertiary uppercase">Rendered proof</div>
+							<div className="label-md break-words text-primary">{article.title || 'Untitled research'}</div>
 						</div>
 					</div>
 
 					<div className="flex flex-wrap items-center gap-2">
-						<div className="hidden items-center gap-2 rounded-md border border-medium bg-surface px-2.5 py-1.5 font-jetbrains text-[10px] tracking-wider whitespace-nowrap text-tertiary uppercase sm:flex">
+						<div className="hidden items-center gap-2 rounded-md border border-medium bg-surface px-2.5 py-1.5 label-xs tracking-wider whitespace-nowrap text-tertiary uppercase sm:flex">
 							<span>{formatNumber(wordCount)} words</span>
 							<span aria-hidden className="h-3 w-px bg-border-medium" />
 							<span>{readMins} min</span>

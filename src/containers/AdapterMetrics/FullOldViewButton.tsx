@@ -24,7 +24,7 @@ export function FullOldViewButton() {
 	}
 
 	const featureContent = (
-		<div className="space-y-1 text-xs">
+		<div className="space-y-1 body-sm">
 			<p className="font-semibold">Full View includes:</p>
 			<ul className="list-inside list-disc pl-2">
 				<li>Protocol Name & Logo</li>

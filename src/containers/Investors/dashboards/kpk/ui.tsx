@@ -227,10 +227,10 @@ export function LedgerTile({
 				<div className="mx-auto h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			) : (
 				<span
-					className={`flex font-mono text-3xl tracking-tight tabular-nums ${suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'} ${valueClass ?? 'text-pro-text-primary'} font-bold`}
+					className={`flex mono-xl tracking-tight tabular-nums ${suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'} ${valueClass ?? 'text-pro-text-primary'}`}
 				>
 					{value}
-					{suffix && <small className="text-sm font-normal text-pro-text-label">{suffix}</small>}
+					{suffix && <small className="mono-md text-pro-text-label">{suffix}</small>}
 				</span>
 			)}
 			{sub && (
@@ -249,7 +249,7 @@ export function LedgerTile({
 				<span className="mt-auto flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
 					{pairs.map((pair) => (
 						<span key={`${pair.value}${pair.label ?? ''}`}>
-							<b className="font-mono text-sm text-pro-text-primary tabular-nums">{pair.value}</b>
+							<b className="mono-md text-pro-text-primary tabular-nums">{pair.value}</b>
 							{pair.label ? ` ${pair.label}` : null}
 							<InfoTip text={pair.title} className="ml-1" />
 							{pair.ref && (
@@ -327,7 +327,7 @@ export function Disclaimer({ title, children }: { title: string; children: React
 export function QueryError({ label }: { label: string }) {
 	return (
 		<Card>
-			<p className="text-sm text-pro-text-secondary">{label} data is unavailable right now. Please try again later.</p>
+			<p className="body-md text-pro-text-secondary">{label} data is unavailable right now. Please try again later.</p>
 		</Card>
 	)
 }
@@ -626,7 +626,7 @@ export function DataTable<Row extends object>({
 	empty?: string
 } & RowIdentity<Row>) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
-	if (rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
+	if (rows.length === 0) return <div className="px-2 py-4 body-sm text-pro-text-secondary">{empty}</div>
 
 	const footerRows: Array<FooterRow> = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]
 	const keyedRows = getRowKey
@@ -668,7 +668,7 @@ export function DataTable<Row extends object>({
 			    narrower than the card when there is room to spare. `fit` trades that for
 			    a table that never outgrows its card. */}
 			<table
-				className={`text-xs ${fit ? 'w-full' : 'w-max min-w-full'} ${freeze ? 'border-separate border-spacing-0' : ''}`}
+				className={`body-sm ${fit ? 'w-full' : 'w-max min-w-full'} ${freeze ? 'border-separate border-spacing-0' : ''}`}
 			>
 				<thead>
 					<tr className={freeze ? '' : 'border-b border-pro-cards-border'}>

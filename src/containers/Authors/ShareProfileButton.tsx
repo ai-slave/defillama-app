@@ -29,7 +29,7 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 								type="text"
 								value={shareUrl}
 								readOnly
-								className="flex-1 rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 text-xs"
+								className="flex-1 rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-sm"
 							/>
 							<CopyHelper toCopy={shareUrl} aria-label="Copy profile link" />
 						</div>

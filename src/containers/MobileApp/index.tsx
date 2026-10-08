@@ -185,7 +185,7 @@ export function StoreButtons({
 					target="_blank"
 					rel="noopener noreferrer"
 					data-umami-event={`mobile-app-other-store-${eventSuffix}`}
-					className="text-xs text-sub-text-muted underline"
+					className="body-sm text-sub-text-muted underline"
 				>
 					{platform === 'ios' ? 'Also on Google Play' : 'Also on the App Store'}
 				</a>
@@ -195,7 +195,7 @@ export function StoreButtons({
 }
 
 const chipClassName =
-	'rounded-full border border-sub-border bg-sub-surface-panel px-3 py-1.5 text-xs text-sub-text-secondary dark:bg-sub-dark-card'
+	'rounded-full border border-sub-border bg-sub-surface-panel px-3 py-1.5 body-sm text-sub-text-secondary dark:bg-sub-dark-card'
 
 function QuotaChips() {
 	return (
@@ -212,8 +212,7 @@ function QuotaChips() {
 	)
 }
 
-const sectionHeadingClassName =
-	'text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-[40px] md:leading-[1.15]'
+const sectionHeadingClassName = 'heading-lg tracking-tight text-sub-text-primary'
 
 function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
 	return <section className={`mx-auto max-w-[1440px] px-4 md:px-10 2xl:px-32 ${className}`}>{children}</section>
@@ -262,7 +261,7 @@ function HeroPhone() {
 					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-sub-brand-primary to-sub-brand-soft text-on-brand">
 						<Icon name={chip.icon} height={15} width={15} />
 					</span>
-					<span className="text-sm font-medium whitespace-nowrap text-sub-text-primary">{chip.label}</span>
+					<span className="label-md whitespace-nowrap text-sub-text-primary">{chip.label}</span>
 				</div>
 			))}
 		</div>
@@ -278,11 +277,11 @@ function Hero({ protocols, chains }: { protocols: number; chains: number }) {
 					Now on iOS and Android
 				</span>
 
-				<h1 className="max-w-[820px] text-center text-[40px] leading-[1.05] font-semibold tracking-[-0.03em] text-sub-text-primary md:text-7xl">
+				<h1 className="max-w-[820px] text-center heading-lg tracking-[-0.03em] text-sub-text-primary">
 					Meet <GradientWord>LlamaAI</GradientWord>
 				</h1>
 
-				<p className="max-w-[620px] text-center text-lg leading-8 text-sub-text-secondary md:text-xl md:leading-9">
+				<p className="max-w-[620px] text-center body-xl text-sub-text-secondary">
 					Your AI research analyst for crypto — full theses, live charts, forecasts and backtests, backed by DefiLlama
 					data on {formatNumber(protocols)} protocols across {formatNumber(chains)} chains.
 				</p>
@@ -303,14 +302,14 @@ function Features() {
 			<div className="mx-auto flex max-w-[680px] flex-col items-center gap-4 text-center">
 				<SectionEyebrow>LlamaAI</SectionEyebrow>
 				<h2 className={sectionHeadingClassName}>DeFi and TradFi data, live insights, actionable analysis</h2>
-				<p className="text-base leading-6 text-sub-text-secondary">
+				<p className="body-lg text-sub-text-secondary">
 					Everything DefiLlama knows, with an analyst that reads it for you and shows the work.
 				</p>
 				<div className="flex flex-wrap justify-center gap-2">
 					{ASK_EXAMPLES.map((example) => (
 						<span
 							key={example}
-							className="rounded-full border border-sub-border bg-sub-surface-panel px-3 py-1.5 text-xs text-sub-text-secondary transition-colors duration-200 hover:border-sub-brand-primary/40 hover:text-sub-text-primary dark:bg-sub-dark-card"
+							className="rounded-full border border-sub-border bg-sub-surface-panel px-3 py-1.5 body-sm text-sub-text-secondary transition-colors duration-200 hover:border-sub-brand-primary/40 hover:text-sub-text-primary dark:bg-sub-dark-card"
 						>
 							{example}
 						</span>
@@ -327,8 +326,8 @@ function Features() {
 						<span className="flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-sub-brand-primary to-sub-brand-soft text-on-brand shadow-sub-blue-glow">
 							<Icon name={feature.icon} height={20} width={20} />
 						</span>
-						<h3 className="text-lg leading-6 font-semibold text-sub-text-primary">{feature.title}</h3>
-						<p className="text-sm leading-6 text-sub-text-secondary">{feature.description}</p>
+						<h3 className="heading-xs text-sub-text-primary">{feature.title}</h3>
+						<p className="body-md text-sub-text-secondary">{feature.description}</p>
 					</div>
 				))}
 			</div>
@@ -355,9 +354,7 @@ function Previews() {
 							loading="lazy"
 							className="w-full rounded-3xl border border-sub-border/60 shadow-xl shadow-black/5 transition-transform duration-300 md:hover:-translate-y-1.5 dark:shadow-black/30"
 						/>
-						<figcaption className="text-center text-base leading-6 font-medium text-sub-text-secondary">
-							{preview.caption}
-						</figcaption>
+						<figcaption className="text-center label-lg text-sub-text-secondary">{preview.caption}</figcaption>
 					</figure>
 				))}
 			</div>
@@ -380,10 +377,10 @@ function FinalCta() {
 
 				<div className="relative flex flex-col items-center gap-8">
 					<div className="flex max-w-[640px] flex-col items-center gap-4">
-						<h2 className="text-3xl leading-10 font-semibold tracking-tight text-sub-text-primary md:text-5xl md:leading-[1.1]">
+						<h2 className="heading-lg tracking-tight text-sub-text-primary">
 							Put <GradientWord>LlamaAI</GradientWord> in your pocket
 						</h2>
-						<p className="max-w-[560px] text-base leading-6 text-sub-text-secondary">
+						<p className="max-w-[560px] body-lg text-sub-text-secondary">
 							Try 3 prompts straight away, no account needed. Sign in for 10 free prompts a day, or go unlimited with a
 							DefiLlama Pro subscription — the same one that works on the web.
 						</p>

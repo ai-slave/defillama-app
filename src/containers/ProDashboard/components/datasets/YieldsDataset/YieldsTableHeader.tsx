@@ -55,7 +55,7 @@ export function YieldsTableHeader({
 						placeholder="Search pools…"
 						value={poolName}
 						onChange={(e) => setPoolName(e.target.value)}
-						className="w-full rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden"
+						className="w-full rounded-md border border-subtle bg-surface px-3 py-1.5 body-md focus:border-primary focus:outline-hidden"
 					/>
 				</div>
 			</div>
@@ -87,7 +87,7 @@ export function YieldsTableHeader({
 						<Icon name="align-left" className="size-3.5" />
 						Filters
 						{activeFilterCount > 0 ? (
-							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-brand text-xs text-on-brand">
+							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-brand label-sm text-on-brand">
 								{activeFilterCount}
 							</span>
 						) : null}

@@ -173,12 +173,10 @@ function MyArticlesContent() {
 			<header className="grid gap-6 border-b border-medium pb-6">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div className="grid gap-2">
-						<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-							Research · Workspace
-						</span>
-						<h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">My research</h1>
+						<span className="label-xs tracking-[0.22em] text-tertiary uppercase">Research · Workspace</span>
+						<h1 className="heading-lg tracking-tight text-primary">My research</h1>
 						{!showLoading ? (
-							<p className="text-sm text-secondary">
+							<p className="body-md text-secondary">
 								<span className="text-primary tabular-nums">{draftCount}</span> draft
 								{draftCount === 1 ? '' : 's'}
 								{scheduledCount > 0 ? (
@@ -277,7 +275,7 @@ function MyArticlesContent() {
 			</header>
 
 			{error ? (
-				<div className="rounded-md border border-error/30 bg-error/5 p-4 text-sm text-error">
+				<div className="rounded-md border border-error/30 bg-error/5 p-4 body-md text-error">
 					{error instanceof Error ? error.message : 'Failed to load research'}
 				</div>
 			) : null}
@@ -295,10 +293,10 @@ function MyArticlesContent() {
 				</ul>
 			) : filtered.length === 0 ? (
 				<div className="grid gap-3 px-4 py-16 text-center">
-					<h2 className="text-2xl font-semibold tracking-tight text-primary">
+					<h2 className="heading-sm tracking-tight text-primary">
 						{totalCount === 0 ? 'Nothing here yet' : 'No matches'}
 					</h2>
-					<p className="mx-auto max-w-md text-sm text-secondary">
+					<p className="mx-auto max-w-md body-md text-secondary">
 						{totalCount === 0
 							? "Notes turn into drafts the moment you start typing. Publish when you're ready."
 							: search || sectionFilter !== 'all' || statusFilter !== 'all'
@@ -338,24 +336,24 @@ function MyArticlesContent() {
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded-sm bg-brand-muted px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link-on-tint uppercase"
+													className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-[0.12em] text-link-on-tint uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
 												</span>
 											) : null}
 											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded-sm bg-brand-muted px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-link-on-tint uppercase">
+												<span className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-wide text-link-on-tint uppercase">
 													Co-author
 												</span>
 											) : null}
 											{article.section ? (
-												<span className="font-jetbrains text-[10px] tracking-[0.14em] text-tertiary uppercase">
+												<span className="label-xs tracking-[0.14em] text-tertiary uppercase">
 													{ARTICLE_SECTION_LABELS[article.section]}
 												</span>
 											) : null}
 										</div>
-										<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-tertiary">
+										<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 body-sm text-tertiary">
 											{scheduled ? (
 												<span>Scheduled {formatArticleDate(article.goLiveAt)}</span>
 											) : (
@@ -366,7 +364,7 @@ function MyArticlesContent() {
 												/>
 											)}
 											<span aria-hidden>·</span>
-											<span className="truncate font-jetbrains text-[11px]">/{article.slug}</span>
+											<span className="truncate mono-sm">/{article.slug}</span>
 											{words > 0 ? (
 												<>
 													<span aria-hidden>·</span>
@@ -436,8 +434,8 @@ function MyArticlesContent() {
 					</ul>
 
 					{totalPages > 1 ? (
-						<div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-tertiary">
-							<span className="font-jetbrains text-xs tabular-nums">
+						<div className="flex flex-wrap items-center justify-between gap-3 px-1 body-md text-tertiary">
+							<span className="mono-sm tabular-nums">
 								{rangeStart}–{rangeEnd} of {formatNumber(filtered.length)}
 							</span>
 							<div className="flex items-center gap-1">
@@ -450,7 +448,7 @@ function MyArticlesContent() {
 								>
 									<span aria-hidden>←</span> Prev
 								</Button>
-								<span className="px-3 font-jetbrains text-xs tabular-nums">
+								<span className="px-3 mono-sm tabular-nums">
 									{safePage} / {totalPages}
 								</span>
 								<Button

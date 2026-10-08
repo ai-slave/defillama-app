@@ -49,7 +49,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor('chain', {
 		id: 'chain',
 		header: 'Chain',
-		cell: (info) => <span className="block truncate text-sm font-medium">{info.getValue()}</span>,
+		cell: (info) => <span className="block truncate label-md">{info.getValue()}</span>,
 		size: 200,
 		maxSize: 200
 	}),
@@ -240,7 +240,7 @@ export function RWAChainsDataset() {
 							type="text"
 							placeholder="Search chains..."
 							onInput={(e) => setChainName(e.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

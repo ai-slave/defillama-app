@@ -13,7 +13,7 @@ function resolveGradeOrLabel(
 
 const GRADE_BADGE_SIZE_CLASSES = {
 	md: 'h-6 w-10 label-sm',
-	lg: 'h-8 w-12 text-base'
+	lg: 'h-8 w-12 body-lg'
 } as const
 
 export function GradeBadge({
@@ -58,7 +58,7 @@ export function GradeChip({
 			className={`inline-flex flex-col items-center justify-center rounded-sm px-2 py-1 ${color.tinted} ${color.text} ${className}`.trim()}
 		>
 			<span className="label-xs">Token Grade</span>
-			<span className="text-base leading-none font-semibold">{grade ?? 'N/A'}</span>
+			<span className="title-lg">{grade ?? 'N/A'}</span>
 		</span>
 	)
 }

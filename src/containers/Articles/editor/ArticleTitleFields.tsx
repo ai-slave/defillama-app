@@ -44,9 +44,9 @@ export function ArticleTitleFields({ article, updateArticle }: ArticleTitleField
 				className="mt-3 w-full bg-transparent text-lg leading-snug text-secondary italic placeholder:text-tertiary/60 focus:outline-hidden md:text-xl"
 			/>
 			{article.brandByline ? (
-				<div className="mt-4 text-xs tracking-[0.18em] text-tertiary uppercase">By DefiLlama Research</div>
+				<div className="mt-4 body-sm tracking-[0.18em] text-tertiary uppercase">By DefiLlama Research</div>
 			) : article.author ? (
-				<div className="mt-4 text-xs tracking-[0.18em] text-tertiary uppercase">
+				<div className="mt-4 body-sm tracking-[0.18em] text-tertiary uppercase">
 					{(() => {
 						const names = [article.author, ...(article.coAuthors ?? []).map((p) => p.displayName)]
 						if (names.length <= 1) return `By ${names[0]}`

@@ -74,8 +74,8 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="text-2xl font-semibold text-pro-text-primary">{value ?? '—'}</span>
-			{helper ? <span className="text-[11px] text-pro-text-label">{helper}</span> : null}
+			<span className="mono-xl text-pro-text-primary">{value ?? '—'}</span>
+			{helper ? <span className="body-sm text-pro-text-label">{helper}</span> : null}
 		</div>
 	)
 }
@@ -144,8 +144,8 @@ function PortfolioTrend({
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h3 className="text-sm font-medium text-pro-text-label">Portfolio Trend ({window})</h3>
-				<span className={changePct >= 0 ? 'text-xs text-success' : 'text-xs text-error'}>
+				<h3 className="label-md text-pro-text-label">Portfolio Trend ({window})</h3>
+				<span className={changePct >= 0 ? 'body-sm text-success' : 'body-sm text-error'}>
 					{changePct >= 0 ? '+' : ''}
 					{formatPercent(changePct, {
 						input: 'percent',
@@ -166,7 +166,7 @@ function PortfolioTrend({
 					exportButtons="hidden"
 				/>
 			</Suspense>
-			<div className="mt-2 flex items-center justify-between text-xs text-pro-text-label">
+			<div className="mt-2 flex items-center justify-between body-sm text-pro-text-label">
 				<span>{formatDate(points[0].time, { input: 'milliseconds' })}</span>
 				<span>
 					Last: {formatUsd(last, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
@@ -420,7 +420,7 @@ function DataTable<T>({
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
 			{/* Auto layout sizes each column to its nowrap cells, so a phone scrolls the table sideways instead of
 			    squashing every column into the card's width. */}
 			<Table table={instance} tableLayout="auto" />
@@ -537,7 +537,7 @@ export default function Positions() {
 					onValueChange={setVaultFilter}
 				/>
 
-				<div className="ml-auto text-xs text-pro-text-label">Snapshot: {kpis.snapshotTime}</div>
+				<div className="ml-auto body-sm text-pro-text-label">Snapshot: {kpis.snapshotTime}</div>
 			</div>
 
 			<div className="grid grid-cols-2 gap-4 xl:grid-cols-4">

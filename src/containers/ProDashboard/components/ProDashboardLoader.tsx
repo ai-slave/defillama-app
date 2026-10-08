@@ -49,7 +49,7 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 			</div>
 
 			<div className="flex flex-col items-center gap-1 text-center">
-				{heading ? <h1 className="text-lg font-semibold text-pro-text-primary">{heading}</h1> : null}
+				{heading ? <h1 className="heading-xs text-pro-text-primary">{heading}</h1> : null}
 				<p className="flex items-center gap-1 text-pro-text-label">
 					Loading
 					<LoadingDots />

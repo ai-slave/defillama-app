@@ -61,12 +61,22 @@ const PRODUCT_SURFACE_FILES = new Set([
 	'src/pages/reports.tsx'
 ])
 
-// The /mcp and /verified landings set hero and section headlines above the type ramp, as designed (design.md →
-// Typography). The type rules skip them; every other rule still counts them in core.
-const LANDING_DISPLAY_TYPE = [
+// Marketing landings and editorial pages keep display type: a class set with text 18px or larger keeps its size, as
+// designed (design.md → Typography). Their smaller text, and every other rule, still counts.
+const LANDING_DISPLAY = [
 	'src/containers/AttestationLanding/index.tsx',
 	'src/containers/MCP/index.tsx',
-	'src/pages/mcp/index.tsx'
+	'src/pages/mcp/index.tsx',
+	'src/pages/ai/index.tsx',
+	'src/pages/investors.tsx',
+	'src/containers/Articles/landing/',
+	'src/containers/Authors/AuthorProfileView.tsx',
+	'src/pages/authors/[slug].tsx',
+	'src/pages/newsletters.tsx',
+	'src/containers/Sheets/index.tsx',
+	// An article's title and dek are editorial display type, in the reader and in the editor that mirrors it.
+	'src/containers/Articles/renderer/ArticleRenderer.tsx',
+	'src/containers/Articles/editor/ArticleTitleFields.tsx'
 ]
 
 function isProductSurfaceFile(file) {
@@ -357,6 +367,106 @@ function matchRawTypePair(content) {
 	return found.length > 0 ? found : null
 }
 
+// The font size a text-* utility sets, in px at the default root: a number, NaN when it is a size whose px value
+// depends on the viewport (vw, calc), or null when the utility is not a font size (a color, an alignment).
+const NAMED_TEXT_PX = {
+	xs: 12,
+	sm: 14,
+	base: 16,
+	lg: 18,
+	xl: 20,
+	'2xl': 24,
+	'3xl': 30,
+	'4xl': 36,
+	'5xl': 48,
+	'6xl': 60,
+	'7xl': 72,
+	'8xl': 96,
+	'9xl': 128
+}
+const LENGTH = /^(-?(?:\d+\.?\d*|\.\d+))(px|rem|em|%|vw|vh|svh|dvh|vmin|vmax|ch|ex|pt|cqi|cqw|lh)$/
+function lengthPx(value) {
+	const length = value.match(LENGTH)
+	if (length) return length[2] === 'px' ? +length[1] : /^(?:rem|em)$/.test(length[2]) ? +length[1] * 16 : Number.NaN
+	// clamp() and max() reach their largest argument; min() stops at its smallest.
+	const fn = value.match(/^(clamp|min|max|calc)\((.*)\)$/)
+	if (!fn) return Number.NaN
+	const args = fn[2].split(',').map((arg) => lengthPx(arg.trim()))
+	if (fn[1] === 'clamp') return args[2]
+	if (fn[1] === 'max') return Math.max(...args)
+	if (fn[1] === 'min') return Math.min(...args)
+	return Number.NaN
+}
+function textSizePx(utility) {
+	const named = utility.match(/^text-(xs|sm|base|lg|xl|[2-9]xl)(?:\/\S+)?$/)
+	if (named) return NAMED_TEXT_PX[named[1]]
+	const arbitrary = utility.match(/^text-\[(.+)\](?:\/\S+)?$/)
+	if (!arbitrary) return null
+	const value = arbitrary[1].replace(/_/g, ' ')
+	if (value.startsWith('length:')) return lengthPx(value.slice(7))
+	// Tailwind reads a bare var() or a color function as a text color.
+	if (/^(?:color:|#|var\(|rgb|hsl|oklch|oklab|lab\(|lch\(|color\(|color-mix\()/.test(value)) return null
+	return LENGTH.test(value) || /^(?:clamp|min|max|calc)\(/.test(value) ? lengthPx(value) : null
+}
+
+function classTokens(text) {
+	return text.replace(/\$\{|[{}'"`]/g, ' ').split(/\s+/)
+}
+
+// Splits `md:hover:text-[length:14px]` into its variants and utility; a colon inside brackets is part of the value.
+function splitVariants(token) {
+	const parts = []
+	let depth = 0
+	let start = 0
+	for (let i = 0; i < token.length; i++) {
+		if (token[i] === '[') depth++
+		else if (token[i] === ']') depth--
+		else if (token[i] === ':' && depth === 0) {
+			parts.push(token.slice(start, i))
+			start = i + 1
+		}
+	}
+	return { variants: parts, utility: token.slice(start).replace(/^!|!$/g, '') }
+}
+
+// Every raw size in a class string, alone or under a breakpoint. A placeholder's size belongs to the field recipe,
+// and prose-* variants style article bodies through the typography plugin, so neither counts.
+function matchRawTypeSize(content, arbitraryOnly = false) {
+	const found = []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		for (const token of classTokens(literal.slice(1, -1))) {
+			const { variants, utility } = splitVariants(token)
+			if (textSizePx(utility) === null || (arbitraryOnly && !utility.startsWith('text-['))) continue
+			if (variants.some((v) => v.startsWith('placeholder') || v.startsWith('prose-'))) continue
+			found.push(token)
+		}
+	}
+	return found.length > 0 ? found : null
+}
+
+// A class set on a landing holds display type when one of its sizes reaches 18px; the type rules skip it whole,
+// because its smaller breakpoint sizes belong to the same headline.
+function isDisplaySet(text) {
+	return classTokens(text).some((token) => textSizePx(splitVariants(token).utility) >= 18)
+}
+const blank = (text) => text.replace(/[^\n]/g, ' ')
+function withoutLandingDisplay(content) {
+	let source = content
+	for (const call of [...source.matchAll(/\b(?:clsx|cn)\(/g)].reverse()) {
+		let depth = 1
+		let i = call.index + call[0].length
+		while (depth > 0 && i < source.length) {
+			if (source[i] === '(') depth++
+			else if (source[i] === ')') depth--
+			i++
+		}
+		const group = source.slice(call.index, i)
+		if (isDisplaySet(group)) source = source.slice(0, call.index) + blank(group) + source.slice(i)
+	}
+	return source.replace(STRING_LITERAL, (literal) => (isDisplaySet(literal) ? blank(literal) : literal))
+}
+
 function matchChartToolbarAutoMargin(content) {
 	// Inside a ChartPanelToolbar, an ml-auto group or a last-of-type:mr-auto hack decides left vs right by
 	// hand, and the left side jumps right once the row wraps. The toolbar's `leading` slot owns that split.
@@ -385,8 +495,8 @@ const RULES = [
 	{
 		id: 'arbitrary-font-size',
 		description: 'arbitrary font size (use the type ramp: label-sm, body-xs, …)',
-		pattern: /text-\[(?:\d+(?:\.\d+)?px|0?\.\d+rem)\]/g,
-		ownedBy: LANDING_DISPLAY_TYPE
+		match: (content) => matchRawTypeSize(content, true),
+		landingDisplay: true
 	},
 	{
 		id: 'arbitrary-spacing',
@@ -558,7 +668,7 @@ const RULES = [
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',
 		match: matchConflictingNamedTypography,
-		ownedBy: LANDING_DISPLAY_TYPE
+		landingDisplay: true
 	},
 	{
 		id: 'unknown-named-typography',
@@ -579,7 +689,15 @@ const RULES = [
 		description:
 			'a raw text-* size with a font-* weight is a type style without a name; use the named style for its role in design.md → Typography (title-md, label-md, body-sm, …)',
 		match: matchRawTypePair,
-		ownedBy: LANDING_DISPLAY_TYPE,
+		landingDisplay: true,
+		skipTests: true
+	},
+	{
+		id: 'raw-type-size',
+		description:
+			'a raw text-* size, alone or with a breakpoint, is a type style without a name; use the named style for its role in design.md → Typography (body-md, label-sm, heading-sm, …)',
+		match: matchRawTypeSize,
+		landingDisplay: true,
 		skipTests: true
 	}
 ]
@@ -620,6 +738,10 @@ for (const file of files) {
 			continue
 		if (rule.uiOwned && file.startsWith('src/ui/')) continue
 		if (rule.ownedBy?.some((prefix) => file.startsWith(prefix))) continue
+		const source =
+			rule.landingDisplay && LANDING_DISPLAY.some((prefix) => file.startsWith(prefix))
+				? withoutLandingDisplay(content)
+				: content
 		if (rule.skipTests && /(?:^|\/)__tests__\/|\.test\.tsx?$/.test(file)) continue
 		if (
 			rule.productLeak &&
@@ -629,7 +751,7 @@ for (const file of files) {
 				file.startsWith('public/'))
 		)
 			continue
-		const matches = rule.match ? rule.match(content) : content.match(rule.pattern)
+		const matches = rule.match ? rule.match(source) : source.match(rule.pattern)
 		if (matches) {
 			counts[bucket][rule.id] += matches.length
 			offenders[bucket][rule.id].set(file, matches.length)

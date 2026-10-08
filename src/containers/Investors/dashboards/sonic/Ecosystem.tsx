@@ -47,11 +47,9 @@ function KpiCard({
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<div className="flex items-baseline gap-2">
-				<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
+				<span className="mono-xl text-pro-text-primary">{value}</span>
 				{change && (
-					<span className={`text-xs font-medium ${change.value >= 0 ? 'text-success' : 'text-error'}`}>
-						{change.formatted}
-					</span>
+					<span className={`label-sm ${change.value >= 0 ? 'text-success' : 'text-error'}`}>{change.formatted}</span>
 				)}
 			</div>
 		</div>
@@ -61,7 +59,7 @@ function KpiCard({
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
 			{children}
 		</div>
 	)
@@ -98,7 +96,7 @@ function makeProtocolColumns(valueLabel: string) {
 								}}
 							/>
 						) : (
-							<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted text-[10px] font-bold text-sl-accent">
+							<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted label-xs text-sl-accent">
 								{row.name.charAt(0)}
 							</span>
 						)}
@@ -163,7 +161,7 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 							{headerGroup.headers.map((header) => (
 								<th
 									key={header.id}
-									className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase"
+									className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
 									style={{ width: header.getSize() }}
 									onClick={header.column.getToggleSortingHandler()}
 								>
@@ -184,7 +182,7 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 					{table.getRowModel().rows.map((row) => (
 						<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
 							{row.getVisibleCells().map((cell) => (
-								<td key={cell.id} className="px-4 py-2.5 text-sm text-pro-text-primary">
+								<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
 									{typeof cell.column.columnDef.cell === 'function'
 										? cell.column.columnDef.cell(cell.getContext())
 										: (cell.getValue() as string)}
@@ -236,7 +234,7 @@ function AssetBreakdownSection({
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-4 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-4 label-md text-pro-text-label">{title}</h3>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
 					<PieChart
@@ -289,7 +287,7 @@ function AssetBreakdownSection({
 									{isOpen && (
 										<div className="pb-2 pl-8">
 											{breakdownEntries.map(([symbol, value]) => (
-												<div key={symbol} className="flex items-center py-1.5 text-xs text-pro-text-label">
+												<div key={symbol} className="flex items-center py-1.5 body-sm text-pro-text-label">
 													<span className="min-w-0 flex-1 truncate">{symbol}</span>
 													<span className="shrink-0">{formatSonicUsd(value)}</span>
 												</div>
@@ -301,8 +299,8 @@ function AssetBreakdownSection({
 						})}
 					</div>
 					<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-						<span className="text-sm text-pro-text-label">Total</span>
-						<span className="text-sm font-bold text-pro-text-primary">{totalFormatted}</span>
+						<span className="body-md text-pro-text-label">Total</span>
+						<span className="title-md text-pro-text-primary">{totalFormatted}</span>
 					</div>
 				</div>
 			</div>
@@ -419,7 +417,7 @@ export default function Ecosystem() {
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
 				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-					<h3 className="mb-4 text-sm font-medium text-pro-text-label">Stablecoin Supply Breakdown</h3>
+					<h3 className="mb-4 label-md text-pro-text-label">Stablecoin Supply Breakdown</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<PieChart
@@ -440,9 +438,9 @@ export default function Ecosystem() {
 											className="flex items-center gap-2 border-b border-pro-cards-border py-2.5 last:border-b-0"
 										>
 											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-											<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary">{coin.name}</span>
+											<span className="min-w-0 flex-1 truncate body-md text-pro-text-primary">{coin.name}</span>
 											<span className="shrink-0 title-md text-pro-text-primary">{coin.formatted}</span>
-											<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
+											<span className="w-12 shrink-0 text-right body-sm text-pro-text-label">
 												{formatPercent(coin.pct, { input: 'percent' })}
 											</span>
 										</div>
@@ -450,10 +448,8 @@ export default function Ecosystem() {
 								})}
 							</div>
 							<div className="mt-3 flex items-center justify-between border-t border-pro-cards-border pt-3">
-								<span className="text-sm text-pro-text-label">Total</span>
-								<span className="text-sm font-bold text-pro-text-primary">
-									{data.stablecoins.breakdownTotalFormatted}
-								</span>
+								<span className="body-md text-pro-text-label">Total</span>
+								<span className="title-md text-pro-text-primary">{data.stablecoins.breakdownTotalFormatted}</span>
 							</div>
 						</div>
 					</div>

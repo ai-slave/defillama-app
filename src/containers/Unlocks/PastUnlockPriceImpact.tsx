@@ -142,7 +142,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 									<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
 								</Ariakit.HovercardAnchor>
 								<Ariakit.Hovercard
-									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 text-sm text-primary shadow-overlay-sm"
+									className="z-10 flex max-h-(--popover-available-height) w-96 max-w-(--popover-available-width) flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-4 body-md text-primary shadow-overlay-sm"
 									unmountOnHide
 									hideOnInteractOutside
 									overflowPadding={16}
@@ -161,7 +161,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 										</span>
 										<span className="flex flex-col items-end">
 											<span className="font-medium">{dayjs(impact.timestamp * 1e3).format('MMM D, YYYY')}</span>
-											<span className="text-xs text-tertiary">
+											<span className="body-sm text-tertiary">
 												{dayjs(impact.timestamp * 1e3).format('HH:mm')} GMT
 												{dayjs(impact.timestamp * 1e3).format('Z')}
 											</span>
@@ -205,7 +205,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 															{item.unlockType === 'linear' ? ' / week' : ''}
 														</span>
 													</span>
-													<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+													<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
 														<span>
 															{percentage != null ? (
 																<>
@@ -258,7 +258,7 @@ export function PastUnlockPriceImpact({ data, title, className, initialNowSec }:
 															{summary.displayUnit ? ' / week' : ''}
 														</span>
 													</span>
-													<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
+													<span className="flex items-center justify-between gap-2 body-sm text-tertiary">
 														<span>
 															{impact.maxSupply > 0
 																? formatPercent(summary.amount / impact.maxSupply, { input: 'fraction', compact: true })

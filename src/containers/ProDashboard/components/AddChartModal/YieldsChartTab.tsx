@@ -368,7 +368,7 @@ export function YieldsChartTab({
 									placeholder="Min"
 									value={minTvl ?? ''}
 									onChange={(e) => onMinTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 								<input
 									type="number"
@@ -376,7 +376,7 @@ export function YieldsChartTab({
 									placeholder="Max"
 									value={maxTvl ?? ''}
 									onChange={(e) => onMaxTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -397,7 +397,7 @@ export function YieldsChartTab({
 									) : null}
 									<div className="min-w-0">
 										<p className="title-md text-pro-text-primary">{selectedYieldPool.name}</p>
-										<div className="flex flex-wrap items-center gap-x-2 text-xs text-pro-text-tertiary">
+										<div className="flex flex-wrap items-center gap-x-2 body-sm text-pro-text-tertiary">
 											<span>{selectedYieldPool.project}</span>
 											<span>•</span>
 											<span>{selectedYieldPool.chain}</span>
@@ -458,10 +458,10 @@ export function YieldsChartTab({
 											onInput={(e) => setPoolSearch(e.currentTarget.value)}
 											placeholder="Search pools…"
 											aria-label="Search pools"
-											className="w-36 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
+											className="w-36 rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 label-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
 										/>
 									</div>
-									<span className="text-xs text-pro-text-tertiary">
+									<span className="label-sm text-pro-text-tertiary">
 										{filteredPools.length} pool
 										{filteredPools.length !== 1 ? 's' : ''}
 									</span>
@@ -512,7 +512,7 @@ export function YieldsChartTab({
 
 							<div ref={poolListRef} className="h-[240px] overflow-y-auto">
 								{searchedAndSortedPools.length === 0 ? (
-									<div className="flex h-full items-center justify-center text-xs text-pro-text-tertiary">
+									<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">
 										No pools match your search
 									</div>
 								) : (
@@ -541,7 +541,7 @@ export function YieldsChartTab({
 														})
 														closePoolPicker()
 													}}
-													className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left text-xs transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
+													className={`grid w-full grid-cols-[1fr_72px_72px] items-center gap-2 px-3 py-2 text-left label-sm transition-all sm:grid-cols-[1fr_100px_100px_80px] ${
 														isSelected ? 'bg-brand/10' : ''
 													}`}
 													style={{
@@ -568,7 +568,7 @@ export function YieldsChartTab({
 															>
 																{pool.pool}
 															</div>
-															<div className="truncate text-xs text-pro-text-tertiary">
+															<div className="truncate body-sm text-pro-text-tertiary">
 																{pool.project} • {pool.chains[0]}
 															</div>
 														</div>
@@ -594,7 +594,7 @@ export function YieldsChartTab({
 															}) ?? '0.00%'}
 														</div>
 														{pool.apyMean30d != null ? (
-															<div className="text-xs text-pro-text-tertiary">
+															<div className="body-sm text-pro-text-tertiary">
 																30d:{' '}
 																{formatPercent(pool.apyMean30d, {
 																	input: 'percent',
@@ -608,7 +608,7 @@ export function YieldsChartTab({
 
 													<div className="text-right max-sm:hidden">
 														{pool.category ? (
-															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 text-xs text-pro-text-tertiary">
+															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 body-sm text-pro-text-tertiary">
 																{pool.category}
 															</span>
 														) : null}
@@ -652,7 +652,7 @@ export function YieldsChartTab({
 
 						{selectedYieldPool ? (
 							<div className="bg-pro-cards-bg p-3">
-								<div className="mb-2 flex items-center gap-2 text-xs">
+								<div className="mb-2 flex items-center gap-2 body-sm">
 									<span className="text-pro-text-tertiary">{selectedYieldPool.project}</span>
 									<span className="text-pro-text-tertiary">•</span>
 									<span className="text-pro-text-tertiary">{selectedYieldPool.chain}</span>
@@ -663,14 +663,14 @@ export function YieldsChartTab({
 								latestYieldData.tvl !== null ? (
 									<div className="mb-3 flex gap-4">
 										<div className="flex flex-col">
-											<span className="text-xs text-pro-text-tertiary uppercase">Latest APY</span>
-											<span className="font-jetbrains text-base font-bold" style={{ color: '#cc3e82' }}>
+											<span className="body-sm text-pro-text-tertiary uppercase">Latest APY</span>
+											<span className="mono-md-bold" style={{ color: '#cc3e82' }}>
 												{formatPercent(latestYieldData.apy, { input: 'percent' })}
 											</span>
 										</div>
 										<div className="flex flex-col">
-											<span className="text-xs text-pro-text-tertiary uppercase">TVL</span>
-											<span className="font-jetbrains text-base font-bold" style={{ color: '#3e79cc' }}>
+											<span className="body-sm text-pro-text-tertiary uppercase">TVL</span>
+											<span className="mono-md-bold" style={{ color: '#3e79cc' }}>
 												{formatUsd(latestYieldData.tvl, {
 													compact: true,
 													minimumCompactValue: 1_000_000,
@@ -684,7 +684,7 @@ export function YieldsChartTab({
 								<div className="h-[280px]">
 									{queryReadFailed(previewHistory) && !previewHistory.data ? (
 										<div role="alert" className="flex h-full flex-col items-center justify-center gap-2">
-											<p className="text-sm text-data-down">Couldn't load this pool's history.</p>
+											<p className="body-md text-data-down">Couldn't load this pool's history.</p>
 											<Button
 												type="button"
 												size="sm"
@@ -765,7 +765,7 @@ export function YieldsChartTab({
 							<div className="flex h-[280px] items-center justify-center bg-pro-cards-bg text-center text-pro-text-tertiary">
 								<div>
 									<Icon name="bar-chart-2" height={32} width={32} className="mx-auto mb-1" />
-									<p className="text-xs">Select a yield pool to see preview</p>
+									<p className="body-sm">Select a yield pool to see preview</p>
 								</div>
 							</div>
 						)}

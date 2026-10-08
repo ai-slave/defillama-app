@@ -49,14 +49,14 @@ export function StablecoinChangeStats({ stats }: { stats: Array<StablecoinChange
 	const secondary = validStats.slice(1)
 	if (secondary.length === 0) {
 		return (
-			<div className="text-base">
+			<div className="body-lg">
 				<ChangeValue stat={primary} prominent />
 			</div>
 		)
 	}
 
 	return (
-		<details className="group text-base">
+		<details className="group body-lg">
 			<summary className="flex items-center">
 				<Icon
 					name="chevron-right"

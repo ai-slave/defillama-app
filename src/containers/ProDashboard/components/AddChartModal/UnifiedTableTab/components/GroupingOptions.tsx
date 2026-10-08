@@ -49,7 +49,7 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 
 	return (
 		<>
-			<div className="rounded-md border border-pro-cards-border/70 px-2.5 py-1.5 text-xs text-pro-text-tertiary">
+			<div className="rounded-md border border-pro-cards-border/70 px-2.5 py-1.5 body-sm text-pro-text-tertiary">
 				<strong className="text-pro-text-secondary">Grouping:</strong> {groupingSummary}
 			</div>
 			<div className="grid gap-2 border-t border-pro-cards-border/70 pt-2 sm:grid-cols-2">
@@ -79,7 +79,7 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 								<span className="title-sm text-pro-text-primary">{option.label}</span>
 								{active ? <Icon name="check" height={11} width={11} className="text-brand" /> : null}
 							</span>
-							<p className="text-xs leading-tight text-pro-text-secondary">{option.description}</p>
+							<p className="body-sm text-pro-text-secondary">{option.description}</p>
 						</button>
 					)
 				})}

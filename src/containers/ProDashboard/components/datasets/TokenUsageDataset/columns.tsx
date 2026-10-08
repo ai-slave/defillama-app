@@ -41,9 +41,9 @@ export const getColumns = (
 
 				return (
 					<div className="flex items-center gap-2">
-						<span className="min-w-[30px] shrink-0 text-sm font-medium text-pro-text-tertiary">{index + 1}</span>
+						<span className="min-w-[30px] shrink-0 label-md text-pro-text-tertiary">{index + 1}</span>
 						<TokenLogo src={row.original.logo} alt={`Logo of ${value}`} data-lgonly />
-						<BasicLink href={`/protocol/${slug(value)}`} className="text-sm font-medium text-link hover:underline">
+						<BasicLink href={`/protocol/${slug(value)}`} className="label-md text-link hover:underline">
 							{value}
 						</BasicLink>
 					</div>
@@ -69,11 +69,11 @@ export const getColumns = (
 				cell: ({ row }) => {
 					const value = row.original.tokens[symbol] ?? 0
 					return value > 0 ? (
-						<span className="text-sm font-medium">
+						<span className="label-md">
 							{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 					) : (
-						<span className="text-sm text-pro-text-tertiary">-</span>
+						<span className="body-md text-pro-text-tertiary">-</span>
 					)
 				},
 				meta: {

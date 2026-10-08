@@ -32,7 +32,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-subtle bg-surface/60 px-2.5 py-1.5 text-xs">
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-subtle bg-surface/60 px-2.5 py-1.5 body-sm">
 				<span className="text-pro-text-tertiary">Source</span>
 				{availableSources.length === 0 ? (
 					<span className="text-pro-text-tertiary italic">
@@ -42,7 +42,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 					<select
 						value={cell.source}
 						onChange={(e) => onSourceChange(e.target.value)}
-						className="rounded-sm border border-subtle bg-pro-app-bg px-1.5 py-0.5 font-mono text-xs text-pro-text-primary outline-hidden focus:border-brand"
+						className="rounded-sm border border-subtle bg-pro-app-bg px-1.5 py-0.5 mono-sm text-pro-text-primary outline-hidden focus:border-brand"
 					>
 						<option value="">— pick cell —</option>
 						{availableSources.map((s) => (
@@ -64,12 +64,12 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 						<span aria-hidden>·</span>
 						<span className="flex min-w-0 flex-wrap items-center gap-1">
 							{selectedCols.slice(0, 4).map((c) => (
-								<span key={c.name} className="truncate font-mono text-[10.5px] text-pro-text-secondary">
+								<span key={c.name} className="truncate mono-sm text-pro-text-secondary">
 									{c.name}
 								</span>
 							))}
 							{selectedCols.length > 4 ? (
-								<span className="text-[10.5px] text-pro-text-tertiary">+{selectedCols.length - 4}</span>
+								<span className="body-xs text-pro-text-tertiary">+{selectedCols.length - 4}</span>
 							) : null}
 						</span>
 					</span>
@@ -81,7 +81,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 			) : (
 				<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-10 text-center">
 					<Icon name="bar-chart-2" className="size-5 text-pro-text-tertiary" />
-					<p className="text-sm text-pro-text-secondary">
+					<p className="body-md text-pro-text-secondary">
 						{cell.source
 							? `${cell.source} has no results yet — run it first.`
 							: 'Pick a source cell above to visualize its output.'}

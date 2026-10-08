@@ -112,7 +112,7 @@ export function VerifyEmailDialog({
 									maxLength={6}
 									required
 									placeholder="000000"
-									className={`${authInputStyles} text-center text-base tracking-[0.4em] placeholder:tracking-normal`}
+									className={`${authInputStyles} text-center body-lg tracking-[0.4em] placeholder:tracking-normal`}
 									value={otp}
 									// Read-only rather than disabled while a request runs, so the field keeps focus.
 									readOnly={pending}

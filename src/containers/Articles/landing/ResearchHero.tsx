@@ -37,7 +37,7 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 							<Link
 								href="/newsletters"
 								aria-label="Subscribe to DefiLlama newsletters"
-								className="flex items-center gap-2 rounded-full bg-research-white px-3.5 py-3 text-base leading-[50%] text-research-accent-strong md:px-6 md:py-3.5"
+								className="flex items-center gap-2 rounded-full bg-research-white px-3.5 py-3 body-lg text-research-accent-strong md:px-6 md:py-3.5"
 							>
 								<span>Subscribe</span>
 								<ResearchIcon
@@ -50,7 +50,7 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 							</Link>
 							<a
 								href="mailto:research@defillama.com"
-								className="flex items-center rounded-full bg-research-white px-3.5 py-3 text-base leading-[50%] text-research-accent-strong md:px-6 md:py-3.5"
+								className="flex items-center rounded-full bg-research-white px-3.5 py-3 body-lg text-research-accent-strong md:px-6 md:py-3.5"
 							>
 								Contact us
 							</a>
@@ -58,7 +58,7 @@ export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 rounded-full border border-research-white px-3.5 py-3 text-base leading-[50%] text-on-brand md:px-6 md:py-3.5"
+								className="flex items-center gap-2 rounded-full border border-research-white px-3.5 py-3 body-lg text-on-brand md:px-6 md:py-3.5"
 							>
 								<span>Book a call</span>
 

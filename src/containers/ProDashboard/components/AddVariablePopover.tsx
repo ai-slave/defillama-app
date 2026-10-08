@@ -45,7 +45,7 @@ const VARIABLE_KIND_OPTIONS: Array<SegmentedControlOption<DashboardVariableKind>
 
 type BindMode = 'matching' | 'all' | 'none'
 
-const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 text-sm text-pro-text-primary has-disabled:cursor-not-allowed has-disabled:opacity-50`
+const BIND_OPTION_STYLES = tw`flex cursor-pointer items-center gap-2 label-md text-pro-text-primary has-disabled:cursor-not-allowed has-disabled:opacity-50`
 
 function cardsLabel(count: number) {
 	return `${count} ${count === 1 ? 'card' : 'cards'}`
@@ -130,7 +130,7 @@ export function AddVariablePopover() {
 			</Ariakit.PopoverDisclosure>
 			<PopoverSurface variant="panel" gutter={8} heading="Add a dashboard parameter">
 				<form onSubmit={handleSubmit} className="flex w-[320px] max-w-full flex-col gap-3 p-3">
-					<p className="text-xs text-pro-text-tertiary">
+					<p className="body-sm text-pro-text-tertiary">
 						A parameter lets viewers switch every bound card to another chain or protocol. Bind cards below or later
 						from each card’s editor.
 					</p>

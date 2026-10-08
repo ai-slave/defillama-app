@@ -22,7 +22,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 		return (
 			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle px-4 py-8 text-center">
 				<Icon name="bookmark" className="size-4 text-tertiary" />
-				<p className="text-xs text-secondary">No saved queries yet.</p>
+				<p className="body-sm text-secondary">No saved queries yet.</p>
 				<p className="body-sm text-tertiary">
 					Saving a SQL card stores its query here — reusable on any dashboard and in SQL Studio.
 				</p>

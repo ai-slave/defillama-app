@@ -394,7 +394,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: Arr
 	}
 
 	return (
-		<details className="flex flex-col text-sm">
+		<details className="flex flex-col body-md">
 			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-surface-elevated-2 px-2 py-1 text-brand">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

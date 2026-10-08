@@ -58,15 +58,15 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 
 	return (
 		<div className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Order Book</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Order Book</h3>
 
-			<div className="mb-2 grid grid-cols-3 text-[11px] font-medium text-pro-text-label">
+			<div className="mb-2 grid grid-cols-3 label-sm text-pro-text-label">
 				<span>Price</span>
 				<span className="text-right">Size</span>
 				<span className="text-right">Orders</span>
 			</div>
 
-			<div className="flex flex-col text-xs tabular-nums">
+			<div className="flex flex-col body-sm tabular-nums">
 				{reversedAsks.map((level) => {
 					const pct = (level.sz / maxSize) * 100
 					return (
@@ -86,7 +86,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 						<span className="title-md text-pro-text-primary">
 							{formatUsd(midPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
-						<span className="text-[10px] text-pro-text-label">
+						<span className="body-xs text-pro-text-label">
 							Spread:{' '}
 							{formatPercent(spread, {
 								input: 'percent',
@@ -114,7 +114,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 			</div>
 
 			{bids.length === 0 && asks.length === 0 ? (
-				<div className="flex flex-1 items-center justify-center py-10 text-sm text-pro-text-label">
+				<div className="flex flex-1 items-center justify-center py-10 body-md text-pro-text-label">
 					Waiting for order book data...
 				</div>
 			) : null}
@@ -125,16 +125,16 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 	return (
 		<div className="flex max-h-[800px] flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 shrink-0 text-sm font-medium text-pro-text-label">Recent Trades</h3>
+			<h3 className="mb-3 shrink-0 label-md text-pro-text-label">Recent Trades</h3>
 
-			<div className="mb-2 grid shrink-0 grid-cols-4 text-[11px] font-medium text-pro-text-label">
+			<div className="mb-2 grid shrink-0 grid-cols-4 label-sm text-pro-text-label">
 				<span>Time</span>
 				<span className="text-right">Price</span>
 				<span className="text-right">Size</span>
 				<span className="text-right">Side</span>
 			</div>
 
-			<div className="min-h-0 flex-1 overflow-y-auto text-xs tabular-nums">
+			<div className="min-h-0 flex-1 overflow-y-auto body-sm tabular-nums">
 				{trades.map((trade) => {
 					const isBuy = trade.side === 'B'
 					return (
@@ -152,7 +152,7 @@ function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 					)
 				})}
 				{trades.length === 0 ? (
-					<div className="flex items-center justify-center py-10 text-sm text-pro-text-label">
+					<div className="flex items-center justify-center py-10 body-md text-pro-text-label">
 						Waiting for trades...
 					</div>
 				) : null}
@@ -179,8 +179,8 @@ function MetricStrip({
 	return (
 		<div className="grid grid-cols-2 gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 md:grid-cols-6">
 			<div>
-				<div className="text-[11px] text-pro-text-label">Spread</div>
-				<div className="text-sm text-pro-text-primary">
+				<div className="body-sm text-pro-text-label">Spread</div>
+				<div className="body-md text-pro-text-primary">
 					{formatPercent(spreadPct, {
 						input: 'percent',
 						minimumFractionDigits: 4,
@@ -190,8 +190,8 @@ function MetricStrip({
 				</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-pro-text-label">Buy Ratio 1m</div>
-				<div className="text-sm text-pro-text-primary">
+				<div className="body-sm text-pro-text-label">Buy Ratio 1m</div>
+				<div className="body-md text-pro-text-primary">
 					{formatPercent(buyRatio1m, {
 						input: 'fraction',
 						minimumFractionDigits: 1,
@@ -201,8 +201,8 @@ function MetricStrip({
 				</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-pro-text-label">Buy Ratio 5m</div>
-				<div className="text-sm text-pro-text-primary">
+				<div className="body-sm text-pro-text-label">Buy Ratio 5m</div>
+				<div className="body-md text-pro-text-primary">
 					{formatPercent(buyRatio5m, {
 						input: 'fraction',
 						minimumFractionDigits: 1,
@@ -212,20 +212,20 @@ function MetricStrip({
 				</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-pro-text-label">CVD 5m</div>
-				<div className={cvd5m >= 0 ? 'text-sm text-success' : 'text-sm text-error'}>
+				<div className="body-sm text-pro-text-label">CVD 5m</div>
+				<div className={cvd5m >= 0 ? 'body-md text-success' : 'body-md text-error'}>
 					{formatCompactNumber(cvd5m, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-pro-text-label">Depth ±0.25%</div>
-				<div className="text-sm text-pro-text-primary">
+				<div className="body-sm text-pro-text-label">Depth ±0.25%</div>
+				<div className="body-md text-pro-text-primary">
 					{formatUsd(depth025, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-pro-text-label">Depth ±1%</div>
-				<div className="text-sm text-pro-text-primary">
+				<div className="body-sm text-pro-text-label">Depth ±1%</div>
+				<div className="body-md text-pro-text-primary">
 					{formatUsd(depth1, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</div>
 			</div>
@@ -361,7 +361,7 @@ export default function Trades() {
 				<select
 					value={coin}
 					onChange={(e) => setCoin(e.target.value)}
-					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-sm font-medium text-pro-text-primary outline-hidden"
+					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-md text-pro-text-primary outline-hidden"
 				>
 					{coinOptions.length > 0
 						? coinOptions.map((value) => (
@@ -379,7 +379,7 @@ export default function Trades() {
 				<select
 					value={nSigFigs}
 					onChange={(e) => setNSigFigs(Number(e.target.value))}
-					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-sm font-medium text-pro-text-primary outline-hidden"
+					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 label-md text-pro-text-primary outline-hidden"
 				>
 					{[2, 3, 4, 5].map((value) => (
 						<option key={value} value={value}>
@@ -390,7 +390,7 @@ export default function Trades() {
 
 				<div className="ml-auto flex items-center gap-1.5">
 					<div className={`size-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error'}`} />
-					<span className="text-xs text-pro-text-label">{isConnected ? 'Connected' : 'Reconnecting...'}</span>
+					<span className="body-sm text-pro-text-label">{isConnected ? 'Connected' : 'Reconnecting...'}</span>
 				</div>
 			</div>
 

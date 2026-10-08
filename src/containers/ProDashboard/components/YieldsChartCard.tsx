@@ -227,14 +227,14 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				{chartType === 'tvl-apy' && latestData.apy !== null && latestData.tvl !== null ? (
 					<div className="mb-2 flex gap-4">
 						<div className="flex flex-col">
-							<span className="text-xs text-pro-text-tertiary uppercase">Latest Supply APY</span>
-							<span className="font-jetbrains text-sm font-bold" style={{ color: '#cc3e82' }}>
+							<span className="body-sm text-pro-text-tertiary uppercase">Latest Supply APY</span>
+							<span className="mono-md-bold" style={{ color: '#cc3e82' }}>
 								{formatPercent(latestData.apy, { input: 'percent' })}
 							</span>
 						</div>
 						<div className="flex flex-col">
-							<span className="text-xs text-pro-text-tertiary uppercase">TVL</span>
-							<span className="font-jetbrains text-sm font-bold" style={{ color: '#3e79cc' }}>
+							<span className="body-sm text-pro-text-tertiary uppercase">TVL</span>
+							<span className="mono-md-bold" style={{ color: '#3e79cc' }}>
 								{formatUsd(latestData.tvl, {
 									compact: true,
 									minimumCompactValue: 1_000_000,

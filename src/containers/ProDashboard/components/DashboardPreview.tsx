@@ -206,7 +206,7 @@ export function DashboardPreview({
 			className={`relative aspect-[2/1] w-full overflow-hidden border-b border-pro-cards-border bg-pro-app-bg p-2 ${className ?? ''}`.trim()}
 		>
 			{tiles.length === 0 ? (
-				<p className="flex h-full items-center justify-center text-xs text-pro-text-tertiary">No cards yet</p>
+				<p className="flex h-full items-center justify-center body-sm text-pro-text-tertiary">No cards yet</p>
 			) : (
 				<div className="grid h-full grid-flow-dense grid-cols-4 grid-rows-3 gap-1">
 					{tiles.map((tile) => (
@@ -215,7 +215,7 @@ export function DashboardPreview({
 							data-testid="dashboard-preview-tile"
 							className={`${SPAN_CLASS[tile.span]} flex min-h-0 flex-col gap-1 overflow-hidden rounded-sm border border-pro-cards-border/60 bg-pro-cards-bg p-1.5`}
 						>
-							<span className="truncate text-xs leading-none text-pro-text-tertiary">{tile.label}</span>
+							<span className="truncate body-sm text-pro-text-tertiary">{tile.label}</span>
 							<span className="min-h-0 flex-1">
 								<TileShape tile={tile} />
 							</span>

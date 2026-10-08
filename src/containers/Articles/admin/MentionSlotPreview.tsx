@@ -44,7 +44,7 @@ export function MentionSlotPreview({ quote, slotIndex, scale = 1 }: Props) {
 				style={{ width: config.width * scale, height: SLOT_HEIGHT * scale }}
 				className="flex items-center justify-center rounded-[4px] border border-dashed border-medium bg-page/60"
 			>
-				<span className="text-xs text-tertiary">Empty quote</span>
+				<span className="body-sm text-tertiary">Empty quote</span>
 			</div>
 		)
 	}
@@ -60,7 +60,7 @@ export function MentionSlotPreview({ quote, slotIndex, scale = 1 }: Props) {
 					<QuoteBlock quote={quote} variant={config.variant} size={config.size} />
 				</div>
 			</div>
-			{clipped ? <p className="text-xs text-error">Content overflows the {config.label} slot</p> : null}
+			{clipped ? <p className="body-sm text-error">Content overflows the {config.label} slot</p> : null}
 		</div>
 	)
 }

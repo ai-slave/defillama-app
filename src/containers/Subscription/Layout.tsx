@@ -56,7 +56,7 @@ export function SubscribeLayout({
 										gutter={8}
 									>
 										<Ariakit.MenuItem
-											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-on-brand transition-colors hover:bg-sub-dark-card-raised focus:bg-sub-dark-card-raised focus:outline-hidden"
+											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 label-md text-on-brand transition-colors hover:bg-sub-dark-card-raised focus:bg-sub-dark-card-raised focus:outline-hidden"
 											render={<BasicLink href="/" />}
 										>
 											<Icon name="arrow-left" height={14} width={14} className="text-sub-text-muted" />
@@ -64,7 +64,7 @@ export function SubscribeLayout({
 										</Ariakit.MenuItem>
 										<div className="my-1 h-px bg-sub-line" />
 										<Ariakit.MenuItem
-											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-on-brand transition-colors hover:bg-sub-dark-card-raised focus:bg-sub-dark-card-raised focus:outline-hidden"
+											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 label-md text-on-brand transition-colors hover:bg-sub-dark-card-raised focus:bg-sub-dark-card-raised focus:outline-hidden"
 											onClick={logout}
 										>
 											<Icon name="x" height={14} width={14} className="text-error" />
@@ -103,7 +103,7 @@ export function SubscribeLayout({
 							</div>
 						</div>
 
-						<div className="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-sub-line/40 pt-6 text-xs text-sub-text-muted md:justify-between">
+						<div className="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-sub-line/40 pt-6 body-sm text-sub-text-muted md:justify-between">
 							<StaleText as="div">{`© ${COPYRIGHT_YEAR} DefiLlama. All rights reserved.`}</StaleText>
 							<div className="flex flex-wrap items-center gap-4">
 								<BasicLink href="/privacy-policy" className="transition-colors hover:text-on-brand">

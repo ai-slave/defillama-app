@@ -16,7 +16,7 @@ import { ProBadge } from '../ui'
 import { generateItemId } from '../utils/dashboardUtils'
 
 const INPUT_STYLES =
-	'min-w-0 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus-visible:border-brand focus-visible:outline-hidden read-only:cursor-not-allowed read-only:opacity-60'
+	'min-w-0 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus-visible:border-brand focus-visible:outline-hidden read-only:cursor-not-allowed read-only:opacity-60'
 
 export function AnnotationsPopover() {
 	const { annotations, setAnnotations } = useProDashboardAnnotations()
@@ -74,7 +74,7 @@ export function AnnotationsPopover() {
 									key={annotation.id}
 									className="flex items-center gap-2 border-b border-subtle px-3 py-1.5 body-sm last-of-type:border-b-0"
 								>
-									<span className="shrink-0 font-jetbrains text-xs text-pro-text-secondary">{annotation.date}</span>
+									<span className="shrink-0 mono-sm text-pro-text-secondary">{annotation.date}</span>
 									<span className="min-w-0 flex-1 truncate text-pro-text-primary">{annotation.label}</span>
 									<Tooltip
 										content="Delete annotation"

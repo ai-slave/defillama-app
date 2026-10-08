@@ -57,11 +57,11 @@ export function ApiAccessCard({
 			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex items-center gap-2">
 					<Icon name="cli" height={28} width={28} className="text-sub-text-primary" />
-					<span className="text-base leading-5 font-medium text-sub-text-primary">API access</span>
+					<span className="label-lg text-sub-text-primary">API access</span>
 				</div>
 
 				<div className="flex flex-col items-center gap-4 rounded-lg bg-sub-surface-panel px-4 py-8 text-center dark:bg-sub-dark-page">
-					<p className="max-w-sm text-sm text-sub-text-muted">
+					<p className="max-w-sm body-md text-sub-text-muted">
 						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
 					</p>
 					<Button
@@ -76,7 +76,7 @@ export function ApiAccessCard({
 						Generate API key
 					</Button>
 					{generateError ? (
-						<p role="alert" className="text-sm text-error">
+						<p role="alert" className="body-md text-error">
 							{generateError}
 						</p>
 					) : null}
@@ -90,13 +90,13 @@ export function ApiAccessCard({
 			{/* Header */}
 			<div className="flex items-center gap-2">
 				<Icon name="cli" height={28} width={28} className="text-sub-text-primary" />
-				<span className="text-base leading-5 font-medium text-sub-text-primary">API access</span>
+				<span className="label-lg text-sub-text-primary">API access</span>
 			</div>
 
 			{/* API Key Section */}
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-					<span className="text-sm text-sub-text-primary">Your API key</span>
+					<span className="body-md text-sub-text-primary">Your API key</span>
 					<div className="flex flex-wrap gap-2">
 						<Button
 							// A key generated here replaces the Generate button, so its first control takes that focus.
@@ -123,14 +123,12 @@ export function ApiAccessCard({
 					</div>
 				</div>
 				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
-					<code className="font-mono text-xs leading-5 break-all text-sub-text-muted">
-						{showKey ? apiKey : '•'.repeat(apiKey.length)}
-					</code>
+					<code className="mono-sm break-all text-sub-text-muted">{showKey ? apiKey : '•'.repeat(apiKey.length)}</code>
 				</div>
 			</div>
 
 			{copy.error ? (
-				<p role="alert" className="text-sm text-error">
+				<p role="alert" className="body-md text-error">
 					Could not copy the API key. Try again.
 				</p>
 			) : null}
@@ -147,13 +145,13 @@ export function ApiAccessCard({
 			) : null}
 			{/* API Usage */}
 			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
-				<span className="text-sm text-sub-text-primary">API usage</span>
+				<span className="body-md text-sub-text-primary">API usage</span>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-sub-text-muted">
+						<span className="body-sm text-sub-text-muted">
 							Remaining API calls: {formatPercent(usagePercentage, { input: 'percent' })}
 						</span>
-						<span className="text-xs text-sub-text-primary">
+						<span className="body-sm text-sub-text-primary">
 							{formatNumber(remaining)} <span className="text-sub-text-muted">/{formatNumber(API_CREDITS_LIMIT)}</span>
 						</span>
 					</div>
@@ -161,8 +159,8 @@ export function ApiAccessCard({
 						<div className="h-full rounded-full bg-sub-brand-primary" style={{ width: `${usagePercentage}%` }} />
 					</div>
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-sub-text-muted">Rate limit:</span>
-						<span className="text-xs text-sub-text-primary">
+						<span className="body-sm text-sub-text-muted">Rate limit:</span>
+						<span className="body-sm text-sub-text-primary">
 							1,000 Requests<span className="text-sub-text-muted">/minute</span>
 						</span>
 					</div>
@@ -173,7 +171,7 @@ export function ApiAccessCard({
 			{overage && (
 				<div className="flex flex-col gap-2 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 					<div className="flex items-center justify-between gap-4">
-						<span className="text-sm text-sub-text-primary">
+						<span className="body-md text-sub-text-primary">
 							Allow extra usage charges{' '}
 							<span className="text-sub-text-muted">({overage.enabled ? 'Enabled' : 'Disabled'})</span>
 						</span>
@@ -184,14 +182,14 @@ export function ApiAccessCard({
 							aria-label="Allow extra usage charges"
 						/>
 					</div>
-					<p className="text-xs leading-4 text-sub-text-muted">
+					<p className="body-sm text-sub-text-muted">
 						When enabled, API usage beyond your plan's included limits continues uninterrupted and the additional usage
 						is billed to your card. Pricing after included limits: $0.60 per 1,000 calls.
 						<br />
 						We will notify you via email if you approach your plan limits.
 					</p>
 					{overage.error ? (
-						<p role="alert" className="text-xs leading-4 text-error">
+						<p role="alert" className="body-sm text-error">
 							{overage.error}
 						</p>
 					) : null}

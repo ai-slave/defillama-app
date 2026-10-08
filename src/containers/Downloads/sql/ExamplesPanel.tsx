@@ -114,7 +114,7 @@ function ExpandedExamplesPanel({
 			<header className="flex items-baseline justify-between gap-2">
 				<div className="flex items-baseline gap-2">
 					<h3 className="title-md tracking-tight text-pro-text-primary">Playbook</h3>
-					<span className="text-[11px] text-pro-text-tertiary tabular-nums">{EXAMPLE_QUERIES.length}</span>
+					<span className="body-sm text-pro-text-tertiary tabular-nums">{EXAMPLE_QUERIES.length}</span>
 				</div>
 				<div className="flex items-center gap-1">
 					<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary" />
@@ -155,7 +155,7 @@ function ExpandedExamplesPanel({
 						value={filter}
 						onChange={(e) => setFilter(e.target.value)}
 						placeholder="Filter queries…"
-						className="w-full border-b border-subtle bg-transparent pr-6 pb-1.5 pl-5 text-xs text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
+						className="w-full border-b border-subtle bg-transparent pr-6 pb-1.5 pl-5 body-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
 					/>
 					{filter ? (
 						<Button
@@ -180,7 +180,7 @@ function ExpandedExamplesPanel({
 
 			<div className="-mr-1 flex flex-col gap-4 overflow-y-auto pr-1" onMouseLeave={() => setHoveredGroup(null)}>
 				{filteredGroups.length === 0 ? (
-					<p className="py-8 text-center text-xs text-pro-text-tertiary">
+					<p className="py-8 text-center body-sm text-pro-text-tertiary">
 						No queries match <span className="font-mono text-pro-text-secondary">"{filter}"</span>
 					</p>
 				) : null}
@@ -188,7 +188,7 @@ function ExpandedExamplesPanel({
 				{filteredGroups.map(({ meta, items }, groupIndex) => (
 					<section key={meta.name} onMouseEnter={() => setHoveredGroup(meta.name)} className="flex flex-col gap-1">
 						<header className="flex items-baseline justify-between">
-							<h4 className="flex items-center gap-1.5 text-[11px] font-semibold text-pro-text-secondary">
+							<h4 className="flex items-center gap-1.5 title-sm text-pro-text-secondary">
 								<span
 									aria-hidden
 									className="inline-block size-1.5 shrink-0 rounded-full"
@@ -196,7 +196,7 @@ function ExpandedExamplesPanel({
 								/>
 								{meta.name}
 							</h4>
-							<span className="text-[11px] text-pro-text-tertiary tabular-nums">{items.length}</span>
+							<span className="body-sm text-pro-text-tertiary tabular-nums">{items.length}</span>
 						</header>
 						<ul className="border-subtle/60 flex flex-col border-t">
 							{items.map((ex, itemIndex) => {
@@ -222,7 +222,7 @@ function ExpandedExamplesPanel({
 			</div>
 
 			<footer className="border-t border-subtle pt-2">
-				<p className="flex items-baseline gap-1.5 text-[11px] leading-snug text-pro-text-tertiary">
+				<p className="flex items-baseline gap-1.5 body-sm text-pro-text-tertiary">
 					<span
 						aria-hidden
 						className="inline-block size-1 shrink-0 translate-y-[-1px] rounded-full"
@@ -232,7 +232,7 @@ function ExpandedExamplesPanel({
 						<span className="font-semibold text-pro-text-secondary">{activeBlurb.name}.</span> {activeBlurb.blurb}
 					</span>
 				</p>
-				<p className="mt-1 text-[11px] text-pro-text-tertiary/80">
+				<p className="mt-1 body-sm text-pro-text-tertiary/80">
 					Click an example to load tables and run it.
 					{totalVisible !== EXAMPLE_QUERIES.length ? ` · ${totalVisible} shown` : ''}
 				</p>

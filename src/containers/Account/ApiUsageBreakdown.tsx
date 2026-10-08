@@ -163,8 +163,8 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 			{/* Header */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="flex flex-col gap-1">
-					<span className="text-sm text-sub-text-primary">API usage breakdown</span>
-					<span className="text-xs text-sub-text-muted">Last {windowDays} days</span>
+					<span className="body-md text-sub-text-primary">API usage breakdown</span>
+					<span className="body-sm text-sub-text-muted">Last {windowDays} days</span>
 				</div>
 				<div className="flex flex-wrap items-center justify-end gap-3">
 					{hasData && routeSeries.length > 1 ? (
@@ -180,11 +180,11 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 					) : null}
 					<div className="flex flex-col items-end">
 						<span className="title-md text-sub-text-primary">{totalLabel}</span>
-						<span className="text-[10px] text-sub-text-muted">Total requests</span>
+						<span className="body-xs text-sub-text-muted">Total requests</span>
 					</div>
 					<div className="flex flex-col items-end">
 						<span className="title-md text-sub-text-primary">{avgLabel}</span>
-						<span className="text-[10px] text-sub-text-muted">Avg/day</span>
+						<span className="body-xs text-sub-text-muted">Avg/day</span>
 					</div>
 				</div>
 			</div>
@@ -197,7 +197,7 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 						.map((series) => (
 							<div key={series.name} className="flex items-center gap-1.5">
 								<span className="inline-block size-2 rounded-full" style={{ backgroundColor: series.color }} />
-								<span className="text-[10px] text-sub-text-muted">{series.name}</span>
+								<span className="body-xs text-sub-text-muted">{series.name}</span>
 							</div>
 						))}
 				</div>
@@ -205,16 +205,16 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 
 			{/* Chart */}
 			{isLoading ? (
-				<div className="flex min-h-[200px] items-center justify-center gap-2 text-xs text-sub-text-muted">
+				<div className="flex min-h-[200px] items-center justify-center gap-2 body-sm text-sub-text-muted">
 					<LoadingSpinner size={14} />
 					<span>Loading usage stats...</span>
 				</div>
 			) : isError ? (
-				<div className="flex min-h-[200px] items-center justify-center text-xs text-sub-text-muted">
+				<div className="flex min-h-[200px] items-center justify-center body-sm text-sub-text-muted">
 					Unable to load usage stats right now.
 				</div>
 			) : sortedStats.length === 0 ? (
-				<div className="flex min-h-[200px] items-center justify-center text-xs text-sub-text-muted">
+				<div className="flex min-h-[200px] items-center justify-center body-sm text-sub-text-muted">
 					No usage data yet.
 				</div>
 			) : (

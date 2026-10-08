@@ -106,7 +106,7 @@ export function ArticleEditorHeader({
 				isPublished ? 'border-success/25' : 'border-medium'
 			}`}
 		>
-			<nav className="flex min-w-0 items-center gap-2.5 text-sm">
+			<nav className="flex min-w-0 items-center gap-2.5 body-md">
 				<Link
 					href="/research/admin"
 					className="inline-flex items-center gap-1 text-tertiary transition-colors hover:text-primary"
@@ -138,7 +138,7 @@ export function ArticleEditorHeader({
 								cancelSlugEdit()
 							}
 						}}
-						className="w-[24ch] rounded-sm border border-medium bg-page px-1.5 py-0.5 font-jetbrains text-xs text-primary"
+						className="w-[24ch] rounded-sm border border-medium bg-page px-1.5 py-0.5 mono-sm text-primary"
 					/>
 				) : (
 					<Button
@@ -170,14 +170,12 @@ export function ArticleEditorHeader({
 					<Tooltip
 						content={`Scheduled for ${formatArticleDate(article.goLiveAt)}`}
 						tabIndex={0}
-						render={<span className="font-jetbrains text-[10px] tracking-[0.22em] text-link uppercase" />}
+						render={<span className="label-xs tracking-[0.22em] text-link uppercase" />}
 					>
 						draft · scheduled
 					</Tooltip>
 				) : (
-					<span
-						className={`font-jetbrains text-[10px] tracking-[0.22em] uppercase ${isPublished ? 'text-success' : 'text-warning'}`}
-					>
+					<span className={`label-xs tracking-[0.22em] uppercase ${isPublished ? 'text-success' : 'text-warning'}`}>
 						{article.status}
 					</span>
 				)}
@@ -211,7 +209,7 @@ export function ArticleEditorHeader({
 							disabled={pillState === 'saving' || pillState === 'idle'}
 							accessibleWhenDisabled
 							onClick={() => void saveArticle()}
-							className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 font-jetbrains text-[11px] tracking-tight transition-colors aria-disabled:cursor-default ${
+							className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 mono-sm tracking-tight transition-colors aria-disabled:cursor-default ${
 								pillState === 'error'
 									? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
 									: pillState === 'unsaved'
@@ -229,7 +227,7 @@ export function ArticleEditorHeader({
 					{pillState === 'unsaved' || pillState === 'error' ? (
 						<kbd
 							aria-hidden
-							className="hidden rounded-sm border border-current/25 px-1 py-px font-jetbrains text-[9px] tracking-wider opacity-70 lg:inline"
+							className="hidden rounded-sm border border-current/25 px-1 py-px label-xs tracking-wider opacity-70 lg:inline"
 						>
 							⌘S
 						</kbd>

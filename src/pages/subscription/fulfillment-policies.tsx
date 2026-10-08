@@ -11,10 +11,10 @@ export default function FulfillmentPolicies() {
 			canonicalUrl="/subscription/fulfillment-policies"
 		>
 			<div className="mx-auto mb-16 flex w-full max-w-xl flex-col gap-8 text-[#d5d5d5]">
-				<h1 className="text-center text-3xl font-bold text-on-brand">Fulfillment Policies</h1>
+				<h1 className="text-center heading-lg text-on-brand">Fulfillment Policies</h1>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-on-brand">Refund Policy</h2>
+					<h2 className="heading-sm text-on-brand">Refund Policy</h2>
 					<p>
 						If you haven't made any request to the API yet and all your credits are unused, please send an email to{' '}
 						<a href="mailto:support@defillama.com" className="underline">
@@ -26,7 +26,7 @@ export default function FulfillmentPolicies() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-on-brand">Cancellation Policy</h2>
+					<h2 className="heading-sm text-on-brand">Cancellation Policy</h2>
 					<p>You can cancel your subscription at any time.</p>
 				</div>
 			</div>
@@ -57,13 +57,10 @@ export function SubscribeLayout2({
 					<div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 xl:max-w-7xl 2xl:max-w-[1440px]">
 						<BasicLink href="/" className="flex items-center gap-3">
 							<img src="/assets/llama.webp" alt="DefiLlama" width={32} height={32} className="rounded-full" />
-							<span className="hidden text-lg font-bold sm:inline-block">DefiLlama</span>
+							<span className="hidden heading-xs sm:inline-block">DefiLlama</span>
 						</BasicLink>
 						<div className="flex items-center gap-4">
-							<BasicLink
-								href="/"
-								className="text-sm font-medium text-sub-text-soft transition-colors hover:text-on-brand"
-							>
+							<BasicLink href="/" className="label-md text-sub-text-soft transition-colors hover:text-on-brand">
 								Return to Main Page
 							</BasicLink>
 						</div>

@@ -57,18 +57,18 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					{anyLoading ? (
 						<div className="flex flex-col items-center gap-2 text-pro-text-tertiary">
 							<LoadingSpinner size={20} />
-							<p className="text-xs text-pro-text-tertiary">Loading chart data…</p>
+							<p className="body-sm text-pro-text-tertiary">Loading chart data…</p>
 						</div>
 					) : (
 						<>
-							<p className="mb-2 text-sm text-pro-text-secondary">Chart preview</p>
-							<p className="text-xs text-pro-text-tertiary">
+							<p className="mb-2 body-md text-pro-text-secondary">Chart preview</p>
+							<p className="body-sm text-pro-text-tertiary">
 								{composerItems.length} chart
 								{composerItems.length > 1 ? 's' : ''} selected
 							</p>
 							<div className="mt-3 space-y-1">
 								{composerItems.map((item) => (
-									<div key={item.id} className="text-xs text-pro-text-tertiary">
+									<div key={item.id} className="body-sm text-pro-text-tertiary">
 										• {item.subjectType === 'protocol' ? item.protocol : item.chain} -{' '}
 										{getProDashboardChartTypeConfig(item.type)?.title || item.type}
 									</div>

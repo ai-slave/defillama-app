@@ -44,9 +44,9 @@ type RwaBarRow = {
 
 /** A labelled bar list: the bar takes its share of the column, the text sits beside it. */
 function RWABars({ rows }: { rows: Array<RwaBarRow> }) {
-	if (rows.length === 0) return <p className="my-auto text-center text-xs text-tertiary">No data yet.</p>
+	if (rows.length === 0) return <p className="my-auto text-center body-sm text-tertiary">No data yet.</p>
 	return (
-		<ul className="my-auto flex flex-col gap-1 text-xs">
+		<ul className="my-auto flex flex-col gap-1 body-sm">
 			{rows.map((row) => (
 				<li key={row.name} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-center gap-2">
 					<span className="flex items-center justify-end gap-1 text-secondary">

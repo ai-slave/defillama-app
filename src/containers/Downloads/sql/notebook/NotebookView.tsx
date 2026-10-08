@@ -265,7 +265,7 @@ export function NotebookView({
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
 					<h3 className="title-md tracking-tight text-pro-text-primary">{tab.title}</h3>
-					<span className="text-[11px] text-pro-text-tertiary tabular-nums">
+					<span className="body-sm text-pro-text-tertiary tabular-nums">
 						{cells.length} cell{cells.length === 1 ? '' : 's'}
 						{hasRunnableSql ? ` · ${runnableSqlCount} SQL` : ''}
 						{chartCount > 0 ? ` · ${chartCount} chart${chartCount === 1 ? '' : 's'}` : ''}
@@ -273,7 +273,7 @@ export function NotebookView({
 				</div>
 				<div className="flex items-center gap-2">
 					{promoteRunAll && hasRunnableSql ? (
-						<span className="hidden text-[11px] text-pro-text-tertiary sm:inline">
+						<span className="hidden body-sm text-pro-text-tertiary sm:inline">
 							Not yet run — <span className="text-pro-text-secondary tabular-nums">{runnableSqlCount}</span>{' '}
 							{runnableSqlCount === 1 ? 'query' : 'queries'}
 							{chartCount > 0 ? (
@@ -428,7 +428,7 @@ function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; 
 	const triggerCls =
 		variant === 'between'
 			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-subtle bg-pro-app-bg text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand/50 hover:text-brand aria-expanded:opacity-100 aria-expanded:border-brand/50 aria-expanded:text-brand'
-			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 text-[11.5px] font-medium text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-brand'
+			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-brand'
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton className={triggerCls} aria-label="Add cell">
@@ -460,7 +460,7 @@ function AddMenuItem({
 		<MenuItem onClick={onClick}>
 			<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${dot}`} />
 			<span className="flex-1 font-medium">{label}</span>
-			<span className="text-[10.5px] text-pro-text-tertiary">{hint}</span>
+			<span className="body-xs text-pro-text-tertiary">{hint}</span>
 		</MenuItem>
 	)
 }

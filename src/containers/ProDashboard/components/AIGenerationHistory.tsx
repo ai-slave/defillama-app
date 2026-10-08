@@ -30,8 +30,8 @@ export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
 				>
 					<Icon name="sparkles" height={14} width={14} className="shrink-0 text-pro-info-400 dark:text-pro-info-200" />
 					<div className="flex flex-col gap-1">
-						<div className="-mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-							<h2 className="text-sm font-medium">
+						<div className="-mt-0.5 flex flex-wrap items-center gap-2 body-sm">
+							<h2 className="label-md">
 								{session.mode === 'create' ? 'Initial Generation' : 'Iteration'} #{sessions.length - index}
 							</h2>
 							<p className="text-pro-text-form">{formatDateTime(session.timestamp, { timeZone: 'UTC' }) ?? '-'}</p>

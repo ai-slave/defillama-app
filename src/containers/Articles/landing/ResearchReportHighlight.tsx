@@ -53,7 +53,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 					>
 						<div className="flex flex-col justify-between gap-6">
 							{excerpt ? (
-								<div className="text-sm leading-[150%] text-primary/90 dark:text-research-ink">
+								<div className="body-md text-primary/90 dark:text-research-ink">
 									<p className="mb-2 whitespace-break-spaces last:mb-0">{excerpt}</p>
 								</div>
 							) : null}
@@ -66,7 +66,7 @@ export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchRep
 								article={highlight}
 								pdfUrl={pdfUrl}
 								widgetLabel="Report highlight"
-								className="text-[13px] font-medium text-research-heading underline-offset-4 hover:underline dark:text-research-ink"
+								className="label-md text-research-heading underline-offset-4 hover:underline dark:text-research-ink"
 							/>
 						) : null}
 						<ReadMoreLink url={articleHref(highlight)} title="Read this report" />

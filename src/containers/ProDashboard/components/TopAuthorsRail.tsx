@@ -30,7 +30,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					<img src={author.avatarUrl} alt="" loading="lazy" className="size-8 shrink-0 rounded-full object-cover" />
 				) : (
 					<span
-						className="flex size-8 shrink-0 items-center justify-center rounded-full text-base"
+						className="flex size-8 shrink-0 items-center justify-center rounded-full body-lg"
 						style={avatarColorStyle(author.slug)}
 					>
 						🦙
@@ -38,10 +38,10 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 				)}
 				<div className="min-w-0">
 					<p className="truncate title-md text-pro-text-primary group-hover:text-pro-accent">{author.displayName}</p>
-					<p className="truncate text-xs text-pro-text-tertiary">@{author.slug}</p>
+					<p className="truncate body-sm text-pro-text-tertiary">@{author.slug}</p>
 				</div>
 			</div>
-			{author.bio ? <p className="line-clamp-2 text-xs leading-5 text-pro-text-secondary">{author.bio}</p> : null}
+			{author.bio ? <p className="line-clamp-2 body-sm text-pro-text-secondary">{author.bio}</p> : null}
 			<ProMeta
 				className="mt-auto tabular-nums"
 				items={[
@@ -81,7 +81,7 @@ export function TopAuthorsRail() {
 		return (
 			<div className="flex flex-col gap-3">
 				<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
-				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-secondary">
+				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center body-md text-pro-text-secondary">
 					No authors to show yet
 				</p>
 			</div>

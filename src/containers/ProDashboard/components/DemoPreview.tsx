@@ -79,7 +79,7 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 	return (
 		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
 			<div className="mr-auto flex items-center gap-1 p-1 md:p-3">
-				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-accent text-xs text-on-brand">
+				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-accent body-sm text-on-brand">
 					{itemName.charAt(0).toUpperCase()}
 				</div>
 				<h2 className="title-lg">
@@ -475,8 +475,8 @@ export function DemoPreview() {
 			<div className="border-b border-subtle bg-(--bg) py-6">
 				<div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
 					<div className="text-center">
-						<h1 className="mb-2 text-3xl font-bold text-pro-text-primary">Build your own DeFi dashboard</h1>
-						<p className="text-lg text-pro-text-secondary">
+						<h1 className="mb-2 heading-lg text-pro-text-primary">Build your own DeFi dashboard</h1>
+						<p className="body-xl text-pro-text-secondary">
 							Combine TVL, fees, volume and protocol tables into one live view, then share it with a link.
 						</p>
 					</div>
@@ -486,11 +486,11 @@ export function DemoPreview() {
 							{features.map((feature) => (
 								<div
 									key={feature.title}
-									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 text-sm text-pro-text-secondary"
+									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 body-md text-pro-text-secondary"
 								>
 									<div className="align-center flex gap-2">
 										<Icon name={feature.icon} height={32} width={32} className="shrink-0 text-brand" />
-										<span className="text-lg leading-[170%] font-bold whitespace-nowrap">{feature.title}</span>
+										<span className="heading-xs whitespace-nowrap">{feature.title}</span>
 									</div>
 								</div>
 							))}
@@ -500,12 +500,12 @@ export function DemoPreview() {
 					<div className="mx-auto max-w-5xl">
 						<div className="grid items-stretch gap-8 md:grid-cols-2">
 							<div className="flex flex-col rounded-sm border border-medium bg-page/50 px-6 py-8 text-center dark:border-subtle dark:bg-pro-glass-bg">
-								<h3 className="mb-3 text-2xl font-bold text-secondary dark:text-pro-text-primary">Free Account</h3>
-								<div className="mb-6 text-3xl font-bold text-gray-800 dark:text-pro-text-primary">
+								<h3 className="mb-3 heading-sm text-secondary dark:text-pro-text-primary">Free Account</h3>
+								<div className="mb-6 heading-lg text-gray-800 dark:text-pro-text-primary">
 									$0
 									<span className="body-lg text-secondary dark:text-pro-text-secondary">/month</span>
 								</div>
-								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
+								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
 										<span className="text-secondary dark:text-pro-text-secondary">Access to public dashboards</span>
@@ -522,20 +522,20 @@ export function DemoPreview() {
 									</li>
 								</ul>
 								<Link href={createAccountHref}>
-									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand hover:text-on-brand">
+									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 label-md text-brand transition-colors hover:bg-brand hover:text-on-brand">
 										Create Free Account
 									</span>
 								</Link>
 							</div>
 
 							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand/10 to-purple-600/10 px-6 py-8 text-center shadow-overlay-sm transition-transform hover:scale-[1.02]">
-								<h3 className="mb-3 bg-linear-to-r from-brand to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+								<h3 className="mb-3 bg-linear-to-r from-brand to-purple-600 bg-clip-text heading-sm text-transparent">
 									Pro
 								</h3>
-								<div className="mb-6 text-4xl font-bold text-brand">
+								<div className="mb-6 heading-lg text-brand">
 									$49<span className="body-lg text-pro-text-secondary">/month</span>
 								</div>
-								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
+								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
 										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-brand" />
 										<span className="font-semibold text-pro-text-primary">Everything in Free, plus:</span>
@@ -575,7 +575,7 @@ export function DemoPreview() {
 
 			<div className="sticky top-0 z-20 border-b border-subtle bg-(--bg)">
 				<div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-					<p className="text-sm text-pro-text-secondary">
+					<p className="body-md text-pro-text-secondary">
 						Start free to browse community dashboards, upgrade to Pro to build your own.
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
@@ -596,7 +596,7 @@ export function DemoPreview() {
 			</div>
 
 			<div className="mx-auto grid w-full max-w-7xl grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-2">
-				<p className="col-span-full p-2 text-center text-xs text-pro-text-form italic">
+				<p className="col-span-full p-2 text-center body-sm text-pro-text-form italic">
 					Sample charts use illustrative data
 				</p>
 
@@ -671,7 +671,7 @@ export function DemoPreview() {
 			</div>
 
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-2">
-				<p className="p-2 text-center text-xs text-pro-text-form italic">Live data from DefiLlama</p>
+				<p className="p-2 text-center body-sm text-pro-text-form italic">Live data from DefiLlama</p>
 				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg">
 					<UnifiedTable
 						config={{

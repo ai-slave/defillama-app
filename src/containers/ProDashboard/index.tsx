@@ -124,14 +124,14 @@ function DashboardAuthorByline({ author }: { author?: PublicDashboardAuthor }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="inline-flex items-center gap-2 text-sm text-pro-text-secondary hover:text-link"
+			className="inline-flex items-center gap-2 body-md text-pro-text-secondary hover:text-link"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
 				<img src={author.avatarUrl} alt="" loading="lazy" className="size-6 rounded-full object-cover" />
 			) : (
 				<span
-					className="flex size-6 items-center justify-center rounded-full text-sm"
+					className="flex size-6 items-center justify-center rounded-full body-md"
 					style={avatarColorStyle(author.slug)}
 				>
 					🦙
@@ -622,7 +622,7 @@ function ProDashboardContent() {
 					<Tooltip
 						content="Views"
 						render={<p />}
-						className="flex min-h-8 items-center gap-1.5 px-2 text-sm text-pro-text-tertiary"
+						className="flex min-h-8 items-center gap-1.5 px-2 label-md text-pro-text-tertiary"
 					>
 						<Icon name="eye" height={14} width={14} />
 						<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
@@ -701,7 +701,7 @@ function ProDashboardContent() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-				<h1 className="text-2xl leading-tight font-semibold text-pro-text-primary md:text-3xl">
+				<h1 className="heading-lg text-pro-text-primary">
 					{canEditHeaderText ? (
 						<InlineTextField
 							value={dashboardName}
@@ -709,7 +709,7 @@ function ProDashboardContent() {
 							maxLength={DASHBOARD_NAME_MAX_LENGTH}
 							status={renameDashboard.isPending ? 'saving' : renameDashboard.isError ? 'error' : 'idle'}
 							{...(renameDashboard.error ? { errorMessage: renameDashboard.error.message } : {})}
-							className="max-w-full text-2xl leading-tight font-semibold md:text-3xl"
+							className="max-w-full heading-sm md:heading-lg"
 							onCommit={(next) => {
 								if (next) renameDashboard.mutate(next)
 							}}
@@ -745,7 +745,7 @@ function ProDashboardContent() {
 			</div>
 
 			<div className="flex min-w-0 flex-col gap-2">
-				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-pro-text-secondary">
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-md text-pro-text-secondary">
 					<DashboardAuthorByline {...(currentDashboard?.author ? { author: currentDashboard.author } : {})} />
 					{currentDashboard?.author && (canEditHeaderText || dashboardDescription) ? (
 						<span aria-hidden="true">·</span>
@@ -758,7 +758,7 @@ function ProDashboardContent() {
 							maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
 							status={describeDashboard.isPending ? 'saving' : describeDashboard.isError ? 'error' : 'idle'}
 							{...(describeDashboard.error ? { errorMessage: describeDashboard.error.message } : {})}
-							className="w-full max-w-3xl text-sm"
+							className="w-full max-w-3xl body-md"
 							onCommit={(next) => describeDashboard.mutate(next)}
 						/>
 					) : dashboardDescription ? (
@@ -766,7 +766,7 @@ function ProDashboardContent() {
 					) : null}
 				</div>
 				{currentDashboard?.copiedFrom ? (
-					<p className="text-xs text-pro-text-secondary">
+					<p className="body-sm text-pro-text-secondary">
 						Forked from{' '}
 						<BasicLink
 							href={`/pro/${currentDashboard.copiedFrom.slug ?? currentDashboard.copiedFrom.id}`}

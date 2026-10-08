@@ -208,7 +208,7 @@ export const getUnifiedTableColumns = ({
 					return renderDash()
 				}
 				return (
-					<BasicLink href={getCategoryRoute(slug(category))} className="text-sm font-medium text-link hover:underline">
+					<BasicLink href={getCategoryRoute(slug(category))} className="label-md text-link hover:underline">
 						{category}
 					</BasicLink>
 				)
@@ -250,11 +250,7 @@ export const getUnifiedTableColumns = ({
 				return (
 					<span className="flex flex-wrap items-center justify-end gap-1">
 						{visible.map((oracle) => (
-							<BasicLink
-								key={oracle}
-								href={`/oracles/${slug(oracle)}`}
-								className="text-sm font-medium text-link hover:underline"
-							>
+							<BasicLink key={oracle} href={`/oracles/${slug(oracle)}`} className="label-md text-link hover:underline">
 								{oracle}
 							</BasicLink>
 						))}

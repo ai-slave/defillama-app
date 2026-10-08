@@ -28,7 +28,7 @@ export function ChartCreationModeToggle({
 				onValueChange={onChartCreationModeChange}
 			/>
 			{chartCreationMode === 'combined' && seriesCount > MAX_MULTI_CHART_SERIES ? (
-				<span className="text-xs text-pro-text-tertiary">max {MAX_MULTI_CHART_SERIES} series</span>
+				<span className="body-sm text-pro-text-tertiary">max {MAX_MULTI_CHART_SERIES} series</span>
 			) : null}
 		</div>
 	)

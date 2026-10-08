@@ -51,13 +51,13 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string; tool
 							<circle cx="12" cy="12" r="10" strokeWidth="2" />
 							<path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round" />
 						</svg>
-						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 text-xs text-pro-text-secondary shadow-lg group-hover:block">
+						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 body-sm text-pro-text-secondary shadow-lg group-hover:block">
 							{tooltip}
 						</span>
 					</span>
 				)}
 			</div>
-			<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
+			<span className="mono-xl text-pro-text-primary">{value}</span>
 		</div>
 	)
 }
@@ -65,8 +65,8 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string; tool
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-1 text-sm font-medium text-pro-text-label">{title}</h3>
-			{subtitle && <p className="mb-3 text-xs text-pro-text-secondary">{subtitle}</p>}
+			<h3 className="mb-1 label-md text-pro-text-label">{title}</h3>
+			{subtitle && <p className="mb-3 body-sm text-pro-text-secondary">{subtitle}</p>}
 			{children}
 		</div>
 	)
@@ -84,16 +84,11 @@ const walletColumns = walletColumnHelper.columns([
 		cell: (info) => {
 			const row = info.row.original
 			return row.link ? (
-				<a
-					href={row.link}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="font-mono text-sm text-sl-accent hover:underline"
-				>
+				<a href={row.link} target="_blank" rel="noopener noreferrer" className="mono-md text-sl-accent hover:underline">
 					{info.getValue()}
 				</a>
 			) : (
-				<span className="font-mono text-sm">{info.getValue()}</span>
+				<span className="mono-md">{info.getValue()}</span>
 			)
 		},
 		size: 300
@@ -169,7 +164,7 @@ export default function Revenue() {
 	return (
 		<div className="flex flex-col gap-6">
 			<details className="group rounded-xl border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label">
-				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-base font-semibold text-pro-text-primary">
+				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 label-lg text-pro-text-primary">
 					<span>Quick Investment Thesis</span>
 					<svg
 						className="size-5 shrink-0 text-pro-text-label transition-transform duration-200 group-open:rotate-180"
@@ -180,7 +175,7 @@ export default function Revenue() {
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 					</svg>
 				</summary>
-				<div className="flex flex-col gap-4 border-t border-pro-cards-border px-5 pt-4 pb-5 text-sm leading-relaxed text-pro-text-secondary">
+				<div className="flex flex-col gap-4 border-t border-pro-cards-border px-5 pt-4 pb-5 body-md text-pro-text-secondary">
 					<p>
 						The standard way to evaluate NEAR understates its traction. Base-chain metrics alone miss the majority of
 						fee-generating activity. When NEAR Intents volume is included, the annualized fee run rate as of early 2026
@@ -370,7 +365,7 @@ export default function Revenue() {
 										{headerGroup.headers.map((header) => (
 											<th
 												key={header.id}
-												className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase"
+												className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
 												style={{ width: header.getSize() }}
 												onClick={header.column.getToggleSortingHandler()}
 											>
@@ -391,7 +386,7 @@ export default function Revenue() {
 								{walletTable.getRowModel().rows.map((row) => (
 									<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
 										{row.getVisibleCells().map((cell) => (
-											<td key={cell.id} className="px-4 py-2.5 text-sm text-pro-text-primary">
+											<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
 												{typeof cell.column.columnDef.cell === 'function'
 													? cell.column.columnDef.cell(cell.getContext())
 													: (cell.getValue() as string)}
@@ -414,9 +409,9 @@ export default function Revenue() {
 								key={key}
 								className="group overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label"
 							>
-								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 text-sm font-medium text-pro-text-primary transition-colors hover:bg-sl-hover-bg">
+								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 label-md text-pro-text-primary transition-colors hover:bg-sl-hover-bg">
 									<span className="flex items-start gap-3">
-										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-pro-text-label text-xs font-bold text-pro-cards-bg">
+										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-pro-text-label label-sm text-pro-cards-bg">
 											{idx + 1}
 										</span>
 										<span className="pt-0.5">{item.question}</span>
@@ -431,7 +426,7 @@ export default function Revenue() {
 									</svg>
 								</summary>
 								<div className="border-t border-pro-cards-border bg-sl-hover-bg px-5 pt-4 pb-5">
-									<p className="pl-9 text-sm leading-relaxed text-pro-text-secondary">{item.answer}</p>
+									<p className="pl-9 body-md text-pro-text-secondary">{item.answer}</p>
 								</div>
 							</details>
 						))}
@@ -440,7 +435,7 @@ export default function Revenue() {
 			)}
 
 			{data.metadata && (
-				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 text-xs text-pro-text-label">
+				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 body-sm text-pro-text-label">
 					<p>
 						Data via{' '}
 						{Object.entries(data.metadata.links || {}).map(([key, url], idx, arr) => (

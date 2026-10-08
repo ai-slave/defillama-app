@@ -50,7 +50,7 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 					}
 				}}
 				placeholder="Write markdown… ⌘↵ to render"
-				className="min-h-[60px] w-full resize-none rounded-sm border-0 bg-transparent px-0 py-1 font-mono text-[13px] text-pro-text-primary outline-hidden placeholder:text-pro-text-tertiary/70"
+				className="min-h-[60px] w-full resize-none rounded-sm border-0 bg-transparent px-0 py-1 mono-sm text-pro-text-primary outline-hidden placeholder:text-pro-text-tertiary/70"
 			/>
 		)
 	}
@@ -71,7 +71,7 @@ export function MarkdownCell({ source, onChange, focused, onFocus, onBlur }: Mar
 			{source.trim() ? (
 				<NotebookMarkdown content={source} />
 			) : (
-				<span className="text-xs">Click to write markdown…</span>
+				<span className="body-sm">Click to write markdown…</span>
 			)}
 		</div>
 	)

@@ -152,7 +152,7 @@ export function SubscriptionComparisonSection({
 							role="columnheader"
 							className="sticky left-0 z-30 box-border flex h-[132px] w-[233px] shrink-0 items-center bg-white px-2 md:h-[129px] md:w-[400px] md:rounded-tl-[24px] md:px-4 dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg"
 						>
-							<h2 className="text-xl leading-7 font-semibold text-sub-heading md:w-[220px] md:text-2xl md:leading-[34px] md:text-sub-text-primary dark:text-sub-text-primary">
+							<h2 className="heading-sm text-sub-heading md:w-[220px] md:text-sub-text-primary dark:text-sub-text-primary">
 								Compare Plans and Features
 							</h2>
 						</div>
@@ -197,7 +197,7 @@ export function SubscriptionComparisonSection({
 										>
 											<div
 												role="rowheader"
-												className="sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-sub-mobile-table-header-bg px-2 text-sm leading-[21px] font-medium text-sub-heading md:w-[400px] md:bg-sub-desktop-table-header-bg md:px-4 md:text-base md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary"
+												className="sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-sub-mobile-table-header-bg px-2 label-md text-sub-heading md:w-[400px] md:bg-sub-desktop-table-header-bg md:px-4 md:label-lg md:text-sub-text-primary dark:text-sub-text-primary"
 											>
 												{section.title}
 											</div>
@@ -225,8 +225,8 @@ export function SubscriptionComparisonSection({
 												? ''
 												: 'border-b border-b-sub-mobile-table-border md:border-b-sub-desktop-table-border'
 											const rowHeaderClassName = row.wrapLabel
-												? `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-start bg-white px-2 py-2 text-sm leading-[21px] text-sub-mobile-text-muted md:w-[400px] md:items-center md:px-4 md:py-0 md:text-xs md:text-sub-desktop-text-muted dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg ${rowHeaderDividerClassName}`
-												: `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-white px-2 text-sm leading-[21px] text-sub-mobile-text-muted md:w-[400px] md:px-4 md:text-xs md:text-sub-desktop-text-muted dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg ${rowHeaderDividerClassName}`
+												? `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-start bg-white px-2 py-2 body-md text-sub-mobile-text-muted md:w-[400px] md:items-center md:px-4 md:py-0 md:body-sm md:text-sub-desktop-text-muted dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg ${rowHeaderDividerClassName}`
+												: `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-white px-2 body-md text-sub-mobile-text-muted md:w-[400px] md:px-4 md:body-sm md:text-sub-desktop-text-muted dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg ${rowHeaderDividerClassName}`
 											const rowLabelClassName = row.wrapLabel
 												? 'block w-full whitespace-normal break-words md:overflow-hidden md:text-ellipsis md:whitespace-nowrap'
 												: 'block w-full truncate'

@@ -170,7 +170,7 @@ function TxTable({ data }: { data: Array<TxRow> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Recent stSyrup Transactions</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Recent stSyrup Transactions</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
@@ -194,7 +194,7 @@ function DripTable({ data }: { data: Array<DripRow> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Recent Drip Reward Claims</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Recent Drip Reward Claims</h3>
 			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>

@@ -291,7 +291,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 							}}
 						/>
 					) : (
-						<p className="text-sm text-secondary">{attrs.caption}</p>
+						<p className="body-md text-secondary">{attrs.caption}</p>
 					)}
 				</div>
 			) : null}

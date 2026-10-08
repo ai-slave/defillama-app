@@ -35,8 +35,8 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 					<Icon name="file-lock-2" height={24} width={24} className="text-brand" />
 				</div>
 				<div className="space-y-2">
-					<h3 className="text-lg font-semibold text-pro-text-primary">{featureName}</h3>
-					<p className="max-w-sm text-sm text-pro-text-secondary">
+					<h3 className="heading-xs text-pro-text-primary">{featureName}</h3>
+					<p className="max-w-sm body-md text-pro-text-secondary">
 						This feature requires a Pro subscription. Upgrade to unlock it.
 					</p>
 				</div>

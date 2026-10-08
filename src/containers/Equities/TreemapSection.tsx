@@ -243,7 +243,7 @@ export function EquitiesTreemapSection({
 						{chartNote ? <p>{chartNote}</p> : null}
 						{treeData.length > 0 ? (
 							<div
-								className="ml-auto w-40 shrink-0 text-xs"
+								className="ml-auto w-40 shrink-0 body-sm"
 								role="img"
 								aria-label={`Treemap color scale: loss through zero to gain for ${colorLabel}`}
 							>

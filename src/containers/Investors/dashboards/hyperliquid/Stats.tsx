@@ -206,8 +206,8 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="text-2xl font-semibold text-pro-text-primary">{value != null ? value : '—'}</span>
-			{helper ? <span className="text-[11px] text-pro-text-label">{helper}</span> : null}
+			<span className="mono-xl text-pro-text-primary">{value != null ? value : '—'}</span>
+			{helper ? <span className="body-sm text-pro-text-label">{helper}</span> : null}
 		</div>
 	)
 }
@@ -219,7 +219,7 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Funding Rates (Annualized) — Top 20 by OI</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Funding Rates (Annualized) — Top 20 by OI</h3>
 			<HBarChart
 				categories={sorted.map((d) => d.name)}
 				values={sorted.map((d) => d.value)}
@@ -459,7 +459,7 @@ function OIDistributionChart({ data }: { data: Array<{ name: string; value: numb
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Open Interest Distribution</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Open Interest Distribution</h3>
 			<PieChart chartData={data} stackColors={stackColors} radius={['45%', '70%']} height="400px" />
 		</div>
 	)
@@ -483,9 +483,7 @@ function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">
-				Volume vs Open Interest (bubble size = funding magnitude)
-			</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Volume vs Open Interest (bubble size = funding magnitude)</h3>
 			<ScatterChart
 				chartData={points}
 				xAxisLabel="24h Volume ($)"
@@ -519,9 +517,7 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">
-				Predicted Funding Rates (Annualized) — HL vs CEXs
-			</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Predicted Funding Rates (Annualized) — HL vs CEXs</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
@@ -544,7 +540,7 @@ function PerpsTable({ data }: { data: Array<PerpMarket> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Perpetual Markets</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Perpetual Markets</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
@@ -567,7 +563,7 @@ function SpotTable({ data }: { data: Array<SpotMarket> }) {
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Spot Markets</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">Spot Markets</h3>
 			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>

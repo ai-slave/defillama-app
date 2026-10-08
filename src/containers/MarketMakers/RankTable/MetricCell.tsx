@@ -20,7 +20,7 @@ export function MetricCell({ metric, market, mode, kind }: IProps) {
 			<span className="flex flex-col items-start">
 				<span className="whitespace-nowrap">{formatMetricValue(metric.value, kind)}</span>
 				{hasTwin ? (
-					<span className="text-xs whitespace-nowrap opacity-70">{formatMarketPct(market!.value)}</span>
+					<span className="body-sm whitespace-nowrap opacity-70">{formatMarketPct(market!.value)}</span>
 				) : null}
 			</span>
 		)
@@ -45,7 +45,7 @@ export function MetricCell({ metric, market, mode, kind }: IProps) {
 				{topLabel}
 				{top}
 			</span>
-			{sub ? <span className="text-xs whitespace-nowrap opacity-70">{sub}</span> : null}
+			{sub ? <span className="body-sm whitespace-nowrap opacity-70">{sub}</span> : null}
 		</span>
 	)
 }

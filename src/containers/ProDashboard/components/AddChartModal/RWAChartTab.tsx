@@ -267,7 +267,7 @@ function AssetControls({
 				placeholder={isLoading ? 'Loading assets…' : 'Search for an RWA asset…'}
 			/>
 			<div className="flex flex-wrap gap-2">
-				<span className="text-sm text-pro-text-secondary">Metrics:</span>
+				<span className="body-md text-pro-text-secondary">Metrics:</span>
 				{ALL_METRICS.map((metric) => {
 					const isSelected = selectedMetrics.includes(metric)
 					return (

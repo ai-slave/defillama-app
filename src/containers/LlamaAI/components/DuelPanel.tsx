@@ -103,8 +103,8 @@ export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: 
 	return (
 		<div className="mx-auto flex w-full max-w-[80rem] flex-col gap-4 px-2 py-6">
 			<header className="flex flex-col items-center gap-1 text-center">
-				<h2 className="text-base font-medium">You’re giving feedback on a new version of LlamaAI.</h2>
-				<p className="text-sm text-secondary">Which response do you prefer? Responses may take a moment to load.</p>
+				<h2 className="label-lg">You’re giving feedback on a new version of LlamaAI.</h2>
+				<p className="body-md text-secondary">Which response do you prefer? Responses may take a moment to load.</p>
 			</header>
 
 			<div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">

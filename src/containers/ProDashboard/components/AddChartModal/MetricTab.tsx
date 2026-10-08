@@ -130,10 +130,10 @@ export function MetricTab(props: MetricTabProps) {
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-sm sm:p-3">
 						<div className="flex items-start justify-between gap-2 sm:gap-3">
 							<div>
-								<label htmlFor={nameId} className="block text-xs font-semibold text-pro-text-primary">
+								<label htmlFor={nameId} className="block label-sm text-pro-text-primary">
 									Card name (optional)
 								</label>
-								<p className="text-xs text-pro-text-tertiary">Shown above the metric tile</p>
+								<p className="body-sm text-pro-text-tertiary">Shown above the metric tile</p>
 							</div>
 							<div className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-brand md:flex">
 								<Icon name="pencil" width={14} height={14} />
@@ -145,10 +145,10 @@ export function MetricTab(props: MetricTabProps) {
 								type="text"
 								value={metricLabel}
 								onChange={(e) => onLabelChange(e.target.value)}
-								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-2 focus:ring-brand/40 focus:outline-hidden"
+								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-md text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-2 focus:ring-brand/40 focus:outline-hidden"
 								maxLength={64}
 							/>
-							<div className="flex items-center justify-between text-xs text-pro-text-tertiary">
+							<div className="flex items-center justify-between body-sm text-pro-text-tertiary">
 								<span>Leave blank to use the automatic title.</span>
 								<span>{metricLabel.length}/64</span>
 							</div>
@@ -188,7 +188,7 @@ export function MetricTab(props: MetricTabProps) {
 					{previewMetric ? (
 						<MetricCard metric={previewMetric} />
 					) : (
-						<div className="flex h-full items-center justify-center text-xs text-pro-text-tertiary sm:text-sm">
+						<div className="flex h-full items-center justify-center body-sm text-pro-text-tertiary sm:body-md">
 							<div className="text-center">
 								<Icon name="activity" height={28} width={28} className="mx-auto mb-1 sm:size-8" />
 								<p>Select subject and metric to preview</p>

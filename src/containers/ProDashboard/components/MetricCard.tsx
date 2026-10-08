@@ -175,7 +175,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		return (
 			<div className="flex h-full flex-1 flex-col items-start justify-center gap-2">
 				<div className="flex flex-wrap items-baseline gap-2">
-					<p className="text-3xl leading-tight font-semibold tabular-nums">{displayValue}</p>
+					<p className="mono-xl tabular-nums">{displayValue}</p>
 					{change.label && metric.aggregator !== 'growth' ? (
 						<ProBadge
 							tone={change.direction === 'up' ? 'success' : change.direction === 'down' ? 'warning' : 'neutral'}
@@ -196,7 +196,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 						</div>
 					</Suspense>
 				) : null}
-				<p className="text-sm text-pro-text-secondary">{summaryText}</p>
+				<p className="body-md text-pro-text-secondary">{summaryText}</p>
 			</div>
 		)
 	}, [

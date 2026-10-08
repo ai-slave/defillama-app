@@ -92,7 +92,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 						<img src={author.avatarUrl} alt="" loading="lazy" className="size-10 rounded-full object-cover" />
 					) : (
 						<span
-							className="flex size-10 items-center justify-center rounded-full text-xl"
+							className="flex size-10 items-center justify-center rounded-full body-xl"
 							style={avatarColorStyle(author.slug)}
 						>
 							🦙
@@ -102,11 +102,11 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 				<div className="min-w-0 flex-1">
 					<BasicLink
 						href={`/authors/${author.slug}`}
-						className="block truncate text-base font-semibold text-pro-text-primary hover:text-pro-accent"
+						className="block truncate title-lg text-pro-text-primary hover:text-pro-accent"
 					>
 						{author.displayName}
 					</BasicLink>
-					<p className="truncate text-xs text-pro-text-tertiary">
+					<p className="truncate body-sm text-pro-text-tertiary">
 						{shelf.dashboardCount} {shelf.dashboardCount === 1 ? 'dashboard' : 'dashboards'}
 					</p>
 				</div>
@@ -114,7 +114,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 			</div>
 
 			{shelf.dashboards.length === 0 ? (
-				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-secondary">
+				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center body-md text-pro-text-secondary">
 					No public dashboards yet
 				</p>
 			) : (
@@ -130,7 +130,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					{hasMore ? (
 						<BasicLink
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-pro-cards-border text-sm text-pro-text-secondary transition-colors hover:border-pro-accent/40 hover:text-pro-accent md:snap-align-none"
+							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-pro-cards-border body-md text-pro-text-secondary transition-colors hover:border-pro-accent/40 hover:text-pro-accent md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />
@@ -154,7 +154,7 @@ export function FollowingShelves() {
 			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
 				<Icon name="users" height={32} width={32} className="text-pro-text-tertiary" />
 				<h2 className="text-center title-lg text-pro-text-primary">You're not following anyone yet</h2>
-				<p className="text-center text-sm text-pro-text-secondary">
+				<p className="text-center body-md text-pro-text-secondary">
 					Follow authors and their public dashboards will show up here.
 				</p>
 				<div className="mt-7">

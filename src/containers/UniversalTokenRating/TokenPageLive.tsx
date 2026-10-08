@@ -1213,7 +1213,7 @@ export function TokenPageLive({
 														{vestingCommentary}
 													</p>
 												) : (
-													<p className="text-xl leading-relaxed text-tertiary">N/A</p>
+													<p className="body-xl text-tertiary">N/A</p>
 												)}
 												{vestingCriterion ? (
 													<Button

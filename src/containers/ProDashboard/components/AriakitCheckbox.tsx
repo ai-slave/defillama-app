@@ -35,8 +35,8 @@ export function AriakitCheckbox({
 				</div>
 				{label ? (
 					<div className="flex flex-col">
-						<span className="text-xs text-pro-text-secondary">{label}</span>
-						{description ? <span className="text-xs text-pro-text-tertiary">{description}</span> : null}
+						<span className="body-sm text-pro-text-secondary">{label}</span>
+						{description ? <span className="body-sm text-pro-text-tertiary">{description}</span> : null}
 					</div>
 				) : null}
 			</label>

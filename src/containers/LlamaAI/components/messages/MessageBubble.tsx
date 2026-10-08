@@ -105,7 +105,7 @@ function GeneratedImageBlock({
 					href={url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-xs underline opacity-80 hover:opacity-100"
+					className="body-sm underline opacity-80 hover:opacity-100"
 				>
 					Open original
 				</a>

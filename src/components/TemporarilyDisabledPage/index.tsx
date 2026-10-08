@@ -20,7 +20,7 @@ export function TemporarilyDisabledPage({
 		<Layout title={title} description={description} canonicalUrl={canonicalUrl}>
 			<Card padding="md" className="isolate flex flex-1 flex-col items-center justify-center gap-4 text-center">
 				<h1 className="heading-sm">{heading}</h1>
-				<div className="flex max-w-xl flex-col gap-3 text-base text-secondary">{children}</div>
+				<div className="flex max-w-xl flex-col gap-3 body-lg text-secondary">{children}</div>
 			</Card>
 		</Layout>
 	)

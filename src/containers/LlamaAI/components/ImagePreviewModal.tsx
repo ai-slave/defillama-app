@@ -96,7 +96,7 @@ function ImagePreviewContent({
 	return (
 		<div className="relative flex max-h-full min-h-0 max-w-full flex-col items-center gap-3 overflow-y-auto">
 			{imageFailed ? (
-				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center text-sm text-ai-white">
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center body-md text-ai-white">
 					Couldn’t load this image. Use Open to try it in a new tab.
 				</p>
 			) : (
@@ -156,12 +156,12 @@ function ImagePreviewContent({
 				</a>
 			</div>
 			{copy.isError ? (
-				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center text-sm text-ai-white">
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center body-md text-ai-white">
 					Couldn’t copy the image URL. Try again, or use Open to copy it from your browser.
 				</p>
 			) : null}
 			{download.isError ? (
-				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center text-sm text-ai-white">
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center body-md text-ai-white">
 					Couldn’t download the image. Try again, or use Open to save it from your browser.
 				</p>
 			) : null}

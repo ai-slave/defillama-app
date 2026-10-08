@@ -124,7 +124,7 @@ export function GoogleLinkForm({
 					maxLength={6}
 					required
 					placeholder="000000"
-					className={`${authInputStyles} text-center text-base tracking-[0.4em] placeholder:tracking-normal`}
+					className={`${authInputStyles} text-center body-lg tracking-[0.4em] placeholder:tracking-normal`}
 					onInput={(event) => {
 						event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 6)
 					}}

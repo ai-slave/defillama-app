@@ -379,7 +379,7 @@ export function PeggedAssetInfo({
 			<SummaryCardGrid>
 				{/* Stats card — variant 3 stat stack; body is intentionally not StatItem */}
 				<SummaryStatsCard>
-					<h1 className="flex flex-wrap items-center gap-2 text-xl">
+					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						{showStablecoinMenu ? (
 							<span className="flex min-w-0 flex-col gap-0.5">

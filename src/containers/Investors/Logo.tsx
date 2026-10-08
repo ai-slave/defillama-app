@@ -61,7 +61,7 @@ export function TextLoader() {
 		return (
 			<div className="sl-loader text-center leading-none select-none">
 				<span
-					className="block text-[34px] font-black tracking-[0.08em] text-transparent"
+					className="block heading-lg tracking-[0.08em] text-transparent"
 					style={{ WebkitTextStroke: '1px var(--sl-stroke-brand)' }}
 				>
 					ENTERPRISE
@@ -71,9 +71,9 @@ export function TextLoader() {
 	}
 	return (
 		<div className="sl-loader text-center leading-none select-none">
-			<span className="block text-[13px] font-medium tracking-[0.4em] text-sl-text-brand">INVESTOR</span>
+			<span className="block label-md tracking-[0.4em] text-sl-text-brand">INVESTOR</span>
 			<span
-				className="block text-[34px] font-black tracking-[0.08em] text-transparent"
+				className="block heading-lg tracking-[0.08em] text-transparent"
 				style={{ WebkitTextStroke: '1px var(--sl-stroke-brand)' }}
 			>
 				RELATIONS

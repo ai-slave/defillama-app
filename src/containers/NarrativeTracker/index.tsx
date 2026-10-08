@@ -231,7 +231,7 @@ export function CategoryPerformanceContainer({
 		<>
 			<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3">
 				{isCoinPage && categoryName ? <h1 className="heading-sm">Category: {categoryName ?? ''}</h1> : null}
-				<p className="text-sm text-secondary">
+				<p className="body-md text-secondary">
 					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
 					and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each
 					individual coin in the category. 2. weighting these changes based on each coin's market capitalization. 3.
@@ -239,7 +239,7 @@ export function CategoryPerformanceContainer({
 					baskets.
 				</p>
 				{disabledDenoms.includes(groupByDenom) ? (
-					<p role="status" className="text-sm text-secondary">
+					<p role="status" className="body-md text-secondary">
 						{groupByDenom} benchmark data is unavailable for this period. Relative returns are shown only where
 						benchmark data exists.
 					</p>

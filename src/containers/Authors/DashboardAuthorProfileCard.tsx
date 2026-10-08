@@ -142,14 +142,14 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 			{missing.length > 0 ? (
 				<ul className="grid gap-1">
 					{missing.map((label) => (
-						<li key={label} className="flex items-center gap-1.5 text-xs text-secondary">
+						<li key={label} className="flex items-center gap-1.5 body-sm text-secondary">
 							<Icon name="plus" height={12} width={12} />
 							{label}
 						</li>
 					))}
 				</ul>
 			) : (
-				<p className="text-xs text-secondary">Your profile is complete and ready to gain followers.</p>
+				<p className="body-sm text-secondary">Your profile is complete and ready to gain followers.</p>
 			)}
 		</div>
 	)
@@ -158,7 +158,7 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 function CharCount({ value, max }: { value: string; max: number }) {
 	const near = value.length >= Math.floor(max * 0.9)
 	return (
-		<span className={`text-[11px] tabular-nums ${near ? 'text-warning' : 'text-tertiary'}`}>
+		<span className={`body-sm tabular-nums ${near ? 'text-warning' : 'text-tertiary'}`}>
 			{formatNumber(value.length)}/{formatNumber(max)}
 		</span>
 	)
@@ -251,10 +251,10 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
 					<Icon name="users" height={24} width={24} className="text-primary" />
-					<span className="text-base font-medium text-primary">Public Profile</span>
+					<span className="label-lg text-primary">Public Profile</span>
 				</div>
 				{profile.slug ? (
-					<BasicLink href={publicHref} className="text-sm font-medium text-link hover:underline">
+					<BasicLink href={publicHref} className="label-md text-link hover:underline">
 						View profile
 					</BasicLink>
 				) : null}
@@ -273,7 +273,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 					/>
 
 					<label className="grid gap-1.5">
-						<span className="text-sm font-medium text-primary">Display name</span>
+						<span className="label-md text-primary">Display name</span>
 						<Input
 							value={state.displayName}
 							maxLength={DISPLAY_NAME_MAX}
@@ -294,7 +294,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 
 					<label className="grid gap-1.5">
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-primary">Handle</span>
+							<span className="label-md text-primary">Handle</span>
 							<CharCount value={state.slug} max={SLUG_MAX} />
 						</div>
 						<Input
@@ -306,7 +306,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 
 					<label className="grid gap-1.5">
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-primary">Bio</span>
+							<span className="label-md text-primary">Bio</span>
 							<CharCount value={state.bio} max={BIO_MAX} />
 						</div>
 						<textarea
@@ -319,7 +319,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 					</label>
 
 					<div className="grid gap-3">
-						<span className="text-sm font-medium text-primary">Links</span>
+						<span className="label-md text-primary">Links</span>
 						<div className="grid gap-3 md:grid-cols-2">
 							{SOCIALS.map((social) => (
 								<label key={social.id} className="grid gap-1.5">
@@ -352,7 +352,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 							<img src={state.avatarUrl} alt="" className="size-14 rounded-full object-cover" />
 						) : (
 							<div
-								className="flex size-14 items-center justify-center rounded-full text-3xl"
+								className="flex size-14 items-center justify-center rounded-full body-xl"
 								style={avatarColorStyle(state.slug || displayName)}
 							>
 								🦙
@@ -360,18 +360,16 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 						)}
 						<div className="min-w-0">
 							<p className="truncate title-md text-primary">{displayName}</p>
-							<p className="truncate text-xs text-secondary">@{state.slug || 'handle'}</p>
+							<p className="truncate body-sm text-secondary">@{state.slug || 'handle'}</p>
 						</div>
 					</div>
-					{state.bio.trim() ? (
-						<p className="mt-3 line-clamp-4 text-sm leading-6 text-secondary">{state.bio.trim()}</p>
-					) : null}
+					{state.bio.trim() ? <p className="mt-3 line-clamp-4 body-md text-secondary">{state.bio.trim()}</p> : null}
 					<ProfileCompletenessMeter state={state} />
 				</aside>
 			</div>
 
 			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle pt-4">
-				<p className={`text-xs ${validationError ? 'text-warning' : 'text-secondary'}`}>
+				<p className={`body-sm ${validationError ? 'text-warning' : 'text-secondary'}`}>
 					{validationError || 'Profile changes appear on public dashboard pages after saving.'}
 				</p>
 				<Button

@@ -99,8 +99,8 @@ function AuthorPageState({
 	return (
 		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface px-6 py-16">
 			<div className="grid max-w-md gap-3 text-center">
-				<h1 className="text-3xl font-bold text-primary">{title}</h1>
-				{description ? <p className="text-base text-secondary">{description}</p> : null}
+				<h1 className="heading-lg text-primary">{title}</h1>
+				{description ? <p className="body-lg text-secondary">{description}</p> : null}
 				{children}
 			</div>
 		</div>
@@ -115,13 +115,13 @@ function OwnerChips({ authorPbUserId }: { authorPbUserId?: string }) {
 		<>
 			<BasicLink
 				href="/research/profile"
-				className="rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-link/40 hover:text-link"
+				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-link/40 hover:text-link"
 			>
 				Edit profile
 			</BasicLink>
 			<BasicLink
 				href="/research/mine"
-				className="rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-link/40 hover:text-link"
+				className="rounded-md border border-medium px-2.5 py-1 body-sm text-secondary transition-colors hover:border-link/40 hover:text-link"
 			>
 				Your research
 			</BasicLink>
@@ -142,7 +142,7 @@ function BrandHero() {
 			<ResearchAuthorHeaderGradient />
 			<div className="relative z-10 mx-auto grid w-full max-w-[1368px] gap-6 px-4 pt-8 pb-12 sm:px-6 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,249px)] lg:items-start lg:gap-10 lg:px-8 lg:pt-12 lg:pb-16">
 				<div className="grid gap-2">
-					<h1 className="text-[28px] leading-tight font-bold tracking-widest text-on-brand sm:text-3xl dark:text-research-accent">
+					<h1 className="heading-lg tracking-widest text-on-brand dark:text-research-accent">
 						<BasicLink
 							href="/research"
 							className="text-inherit transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
@@ -150,12 +150,10 @@ function BrandHero() {
 							DefiLlama Research
 						</BasicLink>
 					</h1>
-					<p className="text-lg leading-tight font-semibold tracking-widest text-research-white italic sm:text-xl">
-						Editor
-					</p>
+					<p className="heading-xs tracking-widest text-research-white italic sm:heading-sm">Editor</p>
 				</div>
 
-				<p className="max-w-[60ch] text-base leading-relaxed font-medium text-on-brand lg:text-2xl lg:leading-snug">
+				<p className="max-w-[60ch] label-lg text-on-brand lg:label-xl">
 					<span className="font-bold text-research-accent">DefiLlama Research</span> is the research arm of{' '}
 					<span className="font-semibold">DefiLlama</span>, delivering bespoke digital asset research, market
 					intelligence, and strategic advisory services powered by the DefiLlama ecosystem.
@@ -164,7 +162,7 @@ function BrandHero() {
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
 					<a
 						href="mailto:research@defillama.com"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-research-accent transition-opacity hover:opacity-90"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 label-lg whitespace-nowrap text-research-accent transition-opacity hover:opacity-90"
 					>
 						<span>Contact us</span>
 						<Icon name="mail" className="size-5 shrink-0" />
@@ -173,7 +171,7 @@ function BrandHero() {
 						href="https://calendly.com/research-defillama/30min"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-white px-6 text-base font-medium whitespace-nowrap text-on-brand transition-colors hover:bg-white/10"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-white px-6 label-lg whitespace-nowrap text-on-brand transition-colors hover:bg-white/10"
 					>
 						<span>Book a call</span>
 						<ResearchIcon name="calendly-mark" className="size-7 shrink-0" />
@@ -213,7 +211,7 @@ function ResearchArticleListRow({
 					) : (
 						<div className="h-16 w-full rounded-md bg-research-heading/10 dark:bg-research-wash-strong" aria-hidden />
 					)}
-					<h3 className="line-clamp-3 text-base leading-snug font-medium text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
+					<h3 className="line-clamp-3 label-lg text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
 						{article.title}
 					</h3>
 				</BasicLink>
@@ -246,10 +244,10 @@ function ResearchArticleListRow({
 					/>
 				)}
 				<div className="grid min-w-0 content-between gap-4 py-0.5">
-					<h3 className="line-clamp-4 text-lg leading-7 font-bold text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
+					<h3 className="line-clamp-4 heading-xs text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
 						{article.title}
 					</h3>
-					<p className="text-sm leading-tight font-bold text-research-accent">{getResearchArticleLabel(article)}</p>
+					<p className="title-md text-research-accent">{getResearchArticleLabel(article)}</p>
 				</div>
 			</BasicLink>
 		</li>
@@ -275,7 +273,7 @@ function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }
 			<div className="flex items-center gap-2">
 				<h2
 					id="latest-research"
-					className="shrink-0 text-base font-medium text-research-heading lg:text-lg lg:uppercase dark:text-research-ink"
+					className="shrink-0 label-lg text-research-heading lg:heading-xs lg:uppercase dark:text-research-ink"
 				>
 					Our Latest Research
 				</h2>
@@ -297,7 +295,7 @@ function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }
 
 			<BasicLink
 				href="/research"
-				className="inline-flex items-center gap-2 justify-self-end text-sm font-bold text-research-accent-strong uppercase transition-colors hover:text-research-heading lg:text-lg dark:hover:text-research-ink"
+				className="inline-flex items-center gap-2 justify-self-end title-md text-research-accent-strong uppercase transition-colors hover:text-research-heading lg:heading-xs dark:hover:text-research-ink"
 			>
 				<span>View all</span>
 				<Icon name="arrow-right" className="size-4" />
@@ -364,7 +362,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 	if (!data && !error) {
 		return (
 			<AuthorPageState title="Author not found">
-				<BasicLink href="/research" className="text-sm text-link hover:underline">
+				<BasicLink href="/research" className="body-md text-link hover:underline">
 					Browse all research
 				</BasicLink>
 			</AuthorPageState>
@@ -375,7 +373,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load author'
 		return (
 			<AuthorPageState title="Couldn't load author" description={message}>
-				<BasicLink href="/research" className="text-sm text-link hover:underline">
+				<BasicLink href="/research" className="body-md text-link hover:underline">
 					Browse all research
 				</BasicLink>
 			</AuthorPageState>
@@ -404,7 +402,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 				<div className="flex items-center justify-between gap-3">
 					<BasicLink
 						href="/research"
-						className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+						className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 					>
 						<Icon name="arrow-left" className="size-3.5" />
 						<span>All research</span>
@@ -422,19 +420,17 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							className="size-24 shrink-0 rounded-full border border-medium object-cover md:h-32 md:w-32"
 						/>
 					) : (
-						<div className="flex size-24 shrink-0 items-center justify-center rounded-full border border-medium bg-surface text-2xl font-semibold text-secondary md:h-32 md:w-32 md:text-3xl">
+						<div className="flex size-24 shrink-0 items-center justify-center rounded-full border border-medium bg-surface heading-sm text-secondary md:h-32 md:w-32 md:heading-lg">
 							{author.displayName.slice(0, 2).toUpperCase()}
 						</div>
 					)}
 					<div className="grid min-w-0 gap-4">
 						<div className="grid gap-1.5">
-							<h1 className="text-3xl leading-tight font-semibold tracking-tight text-primary md:text-5xl">
-								{author.displayName}
-							</h1>
-							<p className="font-jetbrains text-xs text-tertiary">@{author.slug}</p>
+							<h1 className="heading-lg tracking-tight text-primary">{author.displayName}</h1>
+							<p className="mono-sm text-tertiary">@{author.slug}</p>
 						</div>
-						{author.bio ? <p className="max-w-prose text-base leading-relaxed text-secondary">{author.bio}</p> : null}
-						<div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-tertiary">
+						{author.bio ? <p className="max-w-prose body-lg text-secondary">{author.bio}</p> : null}
+						<div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 body-sm text-tertiary">
 							<span>
 								<strong className="font-semibold text-primary">{articles.length}</strong>{' '}
 								{articles.length === 1 ? 'piece' : 'pieces'}
@@ -466,7 +462,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 
 				{articles.length === 0 ? (
 					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-						<p className="text-sm text-secondary">No published research yet.</p>
+						<p className="body-md text-secondary">No published research yet.</p>
 					</div>
 				) : (
 					<>
@@ -477,20 +473,20 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 									className="group grid overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/40 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
 								>
 									<div className="order-2 grid content-start gap-3 p-6 md:order-1 md:p-8">
-										<div className="flex items-center gap-2 text-xs tracking-wide text-tertiary uppercase">
+										<div className="flex items-center gap-2 body-sm tracking-wide text-tertiary uppercase">
 											<span className="font-jetbrains">Latest</span>
 											<span aria-hidden>/</span>
 											<span>{formatDate(lead.displayDate ?? lead.publishedAt)}</span>
 											<span aria-hidden>/</span>
 											<span>{readingMinutes(lead)} min read</span>
 										</div>
-										<h2 className="text-2xl leading-[1.15] font-semibold tracking-tight text-primary group-hover:text-link md:text-3xl">
+										<h2 className="heading-sm tracking-tight text-primary group-hover:text-link md:heading-lg">
 											{lead.title}
 										</h2>
 										{lead.subtitle ? (
-											<p className="text-base leading-snug text-secondary">{lead.subtitle}</p>
+											<p className="body-lg text-secondary">{lead.subtitle}</p>
 										) : lead.excerpt ? (
-											<p className="line-clamp-3 text-sm leading-relaxed text-secondary">{lead.excerpt}</p>
+											<p className="line-clamp-3 body-md text-secondary">{lead.excerpt}</p>
 										) : null}
 									</div>
 									{lead.coverImage?.url ? (
@@ -510,7 +506,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							<section className="grid gap-4">
 								<div className="flex items-baseline justify-between gap-2 border-b border-medium pb-3">
 									<h2 className="title-md tracking-[0.16em] text-tertiary uppercase">Archive</h2>
-									<p className="font-jetbrains text-xs text-tertiary">
+									<p className="mono-sm text-tertiary">
 										{filteredArchive.length} {filteredArchive.length === 1 ? 'note' : 'notes'}
 									</p>
 								</div>
@@ -540,7 +536,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 											key={article.id}
 											className="grid grid-cols-[64px_72px_minmax(0,1fr)] items-start gap-4 border-b border-medium py-5 last:border-b-0 sm:grid-cols-[88px_96px_minmax(0,1fr)] sm:gap-6"
 										>
-											<div className="pt-1 font-jetbrains text-xs tracking-tight text-tertiary tabular-nums">
+											<div className="pt-1 mono-sm tracking-tight text-tertiary tabular-nums">
 												{formatShort(article.publishedAt)}
 											</div>
 											{article.coverImage?.url ? (
@@ -557,13 +553,13 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 												<div className="aspect-4/3 w-full rounded-sm border border-medium bg-page" aria-hidden />
 											)}
 											<BasicLink href={articleHref(article)} className="group grid gap-1.5">
-												<h3 className="text-base leading-tight font-semibold text-primary transition-colors group-hover:text-link md:text-lg">
+												<h3 className="title-lg text-primary transition-colors group-hover:text-link md:heading-xs">
 													{article.title}
 												</h3>
 												{article.excerpt ? (
-													<p className="line-clamp-2 text-sm leading-relaxed text-secondary">{article.excerpt}</p>
+													<p className="line-clamp-2 body-md text-secondary">{article.excerpt}</p>
 												) : null}
-												<div className="flex items-center gap-2 text-xs text-tertiary">
+												<div className="flex items-center gap-2 body-sm text-tertiary">
 													<span>{readingMinutes(article)} min read</span>
 													{article.tags && article.tags.length > 0 ? (
 														<>

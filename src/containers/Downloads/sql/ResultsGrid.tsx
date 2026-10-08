@@ -61,7 +61,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 			<div style={{ width: Math.max(totalWidth, 0), minWidth: '100%' }}>
 				<div
 					role="row"
-					className="sticky top-0 z-20 grid border-b border-subtle font-mono text-[11px] text-pro-text-secondary"
+					className="sticky top-0 z-20 grid border-b border-subtle mono-sm text-pro-text-secondary"
 					style={{
 						gridTemplateColumns: gridTemplate,
 						height: HEADER_HEIGHT,
@@ -82,9 +82,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 									<TypeBadge kind={col.kind} />
 									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
 								</div>
-								<span className="truncate font-mono text-[10px] tracking-tight text-pro-text-tertiary/80">
-									{col.type}
-								</span>
+								<span className="truncate mono-sm tracking-tight text-pro-text-tertiary/80">{col.type}</span>
 							</div>
 						)
 					})}
@@ -97,7 +95,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							<div
 								role="row"
 								key={v.index}
-								className={`absolute inset-x-0 grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-brand/5 ${
+								className={`absolute inset-x-0 grid mono-sm tabular-nums transition-colors hover:bg-brand/5 ${
 									zebra ? 'bg-pro-app-bg/25' : ''
 								}`}
 								style={{
@@ -121,7 +119,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 											title={isNull || isList ? '' : cellToTitle(value)}
 										>
 											{isList ? (
-												<Suspense fallback={<span className="text-[10px] text-pro-text-tertiary">…</span>}>
+												<Suspense fallback={<span className="mono-sm text-pro-text-tertiary">…</span>}>
 													<SparklineChart data={toSparklineData(value as Array<unknown>)} height={20} />
 												</Suspense>
 											) : (
@@ -136,9 +134,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 						)
 					})}
 					{result.rows.length === 0 ? (
-						<div className="flex items-center justify-center py-8 font-mono text-[11px] text-pro-text-tertiary">
-							0 rows
-						</div>
+						<div className="flex items-center justify-center py-8 mono-sm text-pro-text-tertiary">0 rows</div>
 					) : null}
 				</div>
 			</div>

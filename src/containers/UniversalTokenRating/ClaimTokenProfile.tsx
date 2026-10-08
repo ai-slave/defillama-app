@@ -570,7 +570,7 @@ export function ClaimTokenProfile({
 	return (
 		<div ref={formRef} className="flex flex-col gap-6">
 			<div className="flex flex-col items-center gap-1 pt-4 text-center">
-				<h1 className="text-xl">
+				<h1 className="heading-sm">
 					{variant === 'claim' ? (
 						<>
 							<strong className="font-bold">Universal Token Rating</strong> - Claim Your Token Profile

@@ -55,7 +55,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 			className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
 		>
 			<div className="flex flex-wrap items-center gap-4">
-				<h3 className="text-lg font-semibold">
+				<h3 className="heading-xs">
 					{mode === 'create' ? 'Rate this AI-generated dashboard' : 'Rate this AI improvement'}
 				</h3>
 				<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} />
@@ -79,7 +79,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 				</Tooltip>
 			</div>
 
-			<p className="text-sm text-pro-text-label">
+			<p className="body-md text-pro-text-label">
 				{mode === 'create'
 					? 'How well did LlamaAI understand your requirements?'
 					: 'How well did LlamaAI improve your dashboard?'}
@@ -87,14 +87,14 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 
 			{prompt ? (
 				<div className="flex flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
-					<p className="text-xs text-pro-text-label">Prompt used:</p>
-					<p className="text-center text-sm">{prompt}</p>
+					<p className="body-sm text-pro-text-label">Prompt used:</p>
+					<p className="text-center body-md">{prompt}</p>
 				</div>
 			) : null}
 
 			{rating > 0 ? (
 				<div className="flex w-full flex-col gap-1">
-					<label htmlFor={feedbackId} className="text-xs font-semibold tracking-wide text-pro-text-label uppercase">
+					<label htmlFor={feedbackId} className="label-sm tracking-wide text-pro-text-label uppercase">
 						Your Feedback (Optional)
 					</label>
 					<textarea
@@ -137,7 +137,7 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 				{submission.isPending ? (skipping ? 'Dismissing rating' : 'Saving rating') : ''}
 			</span>
 			{submission.error ? (
-				<p role="alert" className="text-sm text-error">
+				<p role="alert" className="body-md text-error">
 					{submission.error.message}
 				</p>
 			) : null}

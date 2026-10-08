@@ -242,25 +242,21 @@ function HeroMock() {
 
 	return (
 		<div className="overflow-hidden rounded-2xl border border-sub-line/40 bg-sub-dark-panel shadow-brand-glow-combo">
-			<div className="flex items-center gap-2.5 border-b border-sub-line/40 px-4 py-2 text-xs">
-				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-dark-card px-2 py-0.75 text-center font-mono text-[11px] text-sub-text-muted">
+			<div className="flex items-center gap-2.5 border-b border-sub-line/40 px-4 py-2 body-sm">
+				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-dark-card px-2 py-0.75 text-center mono-sm text-sub-text-muted">
 					B2
 				</span>
-				<span className="max-w-full min-w-0 truncate font-mono text-xs">
-					{highlightFormula('=DEFILLAMA("tvl", "ethereum")')}
-				</span>
+				<span className="max-w-full min-w-0 truncate mono-sm">{highlightFormula('=DEFILLAMA("tvl", "ethereum")')}</span>
 			</div>
 			<div
 				className="grid border-b border-sub-line/40 bg-sub-dark-card/50"
 				style={{ gridTemplateColumns: heroGridCols }}
 			>
 				<div className="border-r border-sub-line/40 px-3 py-2.5" />
-				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-sub-text-muted uppercase">
+				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 title-sm tracking-[0.5px] text-sub-text-muted uppercase">
 					A
 				</div>
-				<div className="flex items-center px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-sub-text-muted uppercase">
-					B
-				</div>
+				<div className="flex items-center px-3 py-2.5 title-sm tracking-[0.5px] text-sub-text-muted uppercase">B</div>
 			</div>
 			{heroRows.map((row) => (
 				<div
@@ -268,14 +264,14 @@ function HeroMock() {
 					className="grid border-b border-sub-line/40 last:border-b-0"
 					style={{ gridTemplateColumns: heroGridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 text-[11px] text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 body-sm text-sub-text-muted tabular-nums">
 						{row.num}
 					</div>
-					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 font-mono text-xs">
+					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 mono-sm">
 						<span className="block max-w-full min-w-0 truncate whitespace-nowrap">{highlightFormula(row.formula)}</span>
 					</div>
 					<div
-						className={`flex items-center px-3 py-2.5 text-xs text-sub-live tabular-nums ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''} font-bold`}
+						className={`flex items-center px-3 py-2.5 title-sm text-sub-live tabular-nums ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
 					>
 						{row.value}
 					</div>
@@ -306,12 +302,12 @@ function ShowcaseSection({
 				className={`grid grid-cols-1 items-center gap-8 md:gap-15 ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
 			>
 				<div className={reversed ? 'md:order-2' : ''}>
-					<p className="mb-3 text-[13px] font-semibold tracking-[2px] text-brand uppercase">{overline}</p>
+					<p className="mb-3 title-md tracking-[2px] text-brand uppercase">{overline}</p>
 					<h2 className="mb-3.5 text-[28px] leading-[1.25] font-bold tracking-[-0.02em]">{heading}</h2>
-					<p className="mb-6 text-[15px] leading-relaxed text-sub-text-soft">{description}</p>
+					<p className="mb-6 body-md text-sub-text-soft">{description}</p>
 					<ul className="flex flex-col gap-3">
 						{bullets.map((bullet) => (
-							<li key={bullet} className="flex items-start gap-2.5 text-sm leading-normal text-sub-text-soft">
+							<li key={bullet} className="flex items-start gap-2.5 body-md text-sub-text-soft">
 								<CheckIcon />
 								{bullet}
 							</li>
@@ -358,7 +354,7 @@ function MockTable({
 			{formulaBar ? (
 				<div className="grid grid-cols-[28px_1fr] border-b border-sub-line/40">
 					<div className="border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-2" />
-					<p className="flex items-center px-2.5 py-2 font-mono text-[11px]">{highlightFormula(formulaBar)}</p>
+					<p className="flex items-center px-2.5 py-2 mono-sm">{highlightFormula(formulaBar)}</p>
 				</div>
 			) : null}
 			{headers ? (
@@ -366,13 +362,13 @@ function MockTable({
 					className="border-b border-sub-line/40 bg-sub-dark-card/40"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 text-[10px] text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-sub-text-muted tabular-nums">
 						{headers.num}
 					</div>
 					{headers.labels.map((label, i) => (
 						<div
 							key={label}
-							className={`flex items-center px-2.5 py-1.75 text-[10px] font-semibold tracking-[0.3px] text-sub-text-muted uppercase ${i < colCount - 1 ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex items-center px-2.5 py-1.75 label-xs tracking-[0.3px] text-sub-text-muted uppercase ${i < colCount - 1 ? 'border-r border-sub-line/40' : ''}`}
 						>
 							{label}
 						</div>
@@ -385,14 +381,14 @@ function MockTable({
 					className="border-b border-sub-line/40 last:border-b-0"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 text-[10px] text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-sub-text-muted tabular-nums">
 						{row.num}
 					</div>
 					{row.cells.map((cell, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 text-[11px] whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -402,14 +398,14 @@ function MockTable({
 			))}
 			{footer ? (
 				<div className="border-t border-sub-line/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 text-[10px] text-sub-text-muted tabular-nums">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 body-xs text-sub-text-muted tabular-nums">
 						{footer.num}
 					</div>
 					{footer.cells.map((cell, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 text-[11px] whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 body-sm whitespace-nowrap tabular-nums ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -426,7 +422,7 @@ function TemplatesSection() {
 		<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
 			<div className="mb-12 text-center">
 				<h2 className="mb-2.5 text-[32px] font-bold tracking-[-0.02em]">Templates</h2>
-				<p className="mx-auto max-w-[500px] text-base text-sub-text-soft">
+				<p className="mx-auto max-w-[500px] body-lg text-sub-text-soft">
 					Pre-built spreadsheets to get you started. Clone and customize to fit your workflow.
 				</p>
 			</div>
@@ -444,11 +440,9 @@ function TemplatesSection() {
 						<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 							{tpl.icon}
 						</div>
-						<h3 className="text-[15px] font-semibold">{tpl.title}</h3>
-						<p className="text-[13px] leading-normal text-sub-text-muted">{tpl.desc}</p>
-						<span className="mt-auto flex items-center gap-1 text-[13px] font-medium text-brand">
-							View template &rarr;
-						</span>
+						<h3 className="title-md">{tpl.title}</h3>
+						<p className="body-md text-sub-text-muted">{tpl.desc}</p>
+						<span className="mt-auto flex items-center gap-1 label-md text-brand">View template &rarr;</span>
 					</a>
 				))}
 			</div>
@@ -481,7 +475,7 @@ export default function SheetsContainer() {
 					<h1 className="text-[clamp(32px,4vw,48px)] leading-[1.15] font-extrabold tracking-[-0.03em]">
 						Your spreadsheet, powered by DeFi data
 					</h1>
-					<p className="max-w-[480px] text-[17px] leading-relaxed text-sub-text-soft">
+					<p className="max-w-[480px] body-lg text-sub-text-soft">
 						Custom functions that pull TVL, fees, yields, stablecoin stats and historical data for 6,000+ protocols.
 					</p>
 					<div className="mt-1 flex flex-col gap-3 sm:flex-row">
@@ -489,7 +483,7 @@ export default function SheetsContainer() {
 							type="button"
 							onClick={onGoogleSheetsButtonClick}
 							data-umami-event="sheets-google-sheets-click"
-							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a3a2a] px-6 py-3 text-sm font-semibold text-on-brand transition-all hover:-translate-y-px hover:bg-[#224a35] hover:shadow-sub-google"
+							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a3a2a] px-6 py-3 label-md text-on-brand transition-all hover:-translate-y-px hover:bg-[#224a35] hover:shadow-sub-google"
 						>
 							<img src="/assets/google-sheets.svg" alt="" className="size-[18px]" />
 							Google Sheets
@@ -498,7 +492,7 @@ export default function SheetsContainer() {
 							type="button"
 							onClick={onExcelButtonClick}
 							data-umami-event="sheets-excel-addin-click"
-							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#162e22] px-6 py-3 text-sm font-semibold text-on-brand transition-all hover:-translate-y-px hover:bg-[#1e3d2d] hover:shadow-sub-google-deep"
+							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#162e22] px-6 py-3 label-md text-on-brand transition-all hover:-translate-y-px hover:bg-[#1e3d2d] hover:shadow-sub-google-deep"
 						>
 							<img src="/assets/microsoft-excel-v2.svg" alt="" className="size-[18px]" />
 							Excel Add-in

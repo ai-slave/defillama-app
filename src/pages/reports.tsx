@@ -83,7 +83,7 @@ export default function ReportsPage() {
 						<a href="https://www.dlnews.com/research/" target="_blank" rel="noopener noreferrer">
 							<DLResearchLogo />
 						</a>
-						<p className="max-w-2xl text-sm text-secondary">
+						<p className="max-w-2xl body-md text-secondary">
 							In-depth research reports covering DeFi markets, protocols, infrastructure, and emerging trends —
 							published by the DL Research team.
 						</p>
@@ -134,8 +134,8 @@ function DLReportCard({ report }: { report: Report }) {
 						<img src={report.image} alt="" className="size-full object-cover opacity-40" />
 						<div className="absolute inset-0 bg-linear-to-t from-sub-navy via-sub-navy/60 to-transparent" />
 						<div className="absolute bottom-3 left-4 flex items-center gap-2">
-							<h3 className="text-lg font-semibold text-on-brand">{report.title}</h3>
-							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 text-[11px] font-semibold text-on-brand">
+							<h3 className="heading-xs text-on-brand">{report.title}</h3>
+							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 title-sm text-on-brand">
 								Coming Soon
 							</span>
 						</div>
@@ -144,13 +144,13 @@ function DLReportCard({ report }: { report: Report }) {
 				<div className="flex flex-1 flex-col gap-3 p-4">
 					{!report.image && (
 						<div className="flex items-center gap-2">
-							<h3 className="text-lg font-semibold">{report.title}</h3>
-							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 text-[11px] font-semibold text-on-brand">
+							<h3 className="heading-xs">{report.title}</h3>
+							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 title-sm text-on-brand">
 								Coming Soon
 							</span>
 						</div>
 					)}
-					<div className="flex items-center gap-3 text-xs text-secondary">
+					<div className="flex items-center gap-3 body-sm text-secondary">
 						<span className="flex items-center gap-1">
 							<Icon name="calendar" height={12} width={12} />
 							{report.date}
@@ -162,12 +162,12 @@ function DLReportCard({ report }: { report: Report }) {
 							</span>
 						)}
 					</div>
-					<p className="text-sm text-secondary">{report.description}</p>
+					<p className="body-md text-secondary">{report.description}</p>
 					<div className="flex flex-wrap gap-1.5">
 						{report.topics.map((topic) => (
 							<span
 								key={topic}
-								className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 text-[11px] font-medium text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
+								className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 label-sm text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
 							>
 								{topic}
 							</span>
@@ -178,7 +178,7 @@ function DLReportCard({ report }: { report: Report }) {
 							href={report.spotlightHref}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="mt-1 flex items-center gap-1.5 rounded-md border border-research-accent-strong/20 bg-research-accent-strong/5 px-3 py-2 text-sm text-research-accent-strong transition-colors hover:bg-research-accent-strong/10 dark:text-sub-blue"
+							className="mt-1 flex items-center gap-1.5 rounded-md border border-research-accent-strong/20 bg-research-accent-strong/5 px-3 py-2 body-md text-research-accent-strong transition-colors hover:bg-research-accent-strong/10 dark:text-sub-blue"
 						>
 							<Icon name="file-text" height={14} width={14} />
 							<span className="flex-1">Spotlight: {report.spotlightTitle}</span>
@@ -205,12 +205,12 @@ function DLReportCard({ report }: { report: Report }) {
 						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
 					/>
 					<div className="absolute inset-0 bg-linear-to-t from-sub-navy via-sub-navy/60 to-transparent" />
-					<h3 className="absolute bottom-3 left-4 text-lg font-semibold text-on-brand">{report.title}</h3>
+					<h3 className="absolute bottom-3 left-4 heading-xs text-on-brand">{report.title}</h3>
 				</div>
 			)}
 			<div className="flex flex-1 flex-col gap-3 p-4">
-				{!report.image && <h3 className="text-lg font-semibold">{report.title}</h3>}
-				<div className="flex items-center gap-3 text-xs text-secondary">
+				{!report.image && <h3 className="heading-xs">{report.title}</h3>}
+				<div className="flex items-center gap-3 body-sm text-secondary">
 					<span className="flex items-center gap-1">
 						<Icon name="calendar" height={12} width={12} />
 						{report.date}
@@ -234,12 +234,12 @@ function DLReportCard({ report }: { report: Report }) {
 						className="ml-auto shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
 					/>
 				</div>
-				<p className="text-sm text-secondary">{report.description}</p>
+				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{report.topics.map((topic) => (
 						<span
 							key={topic}
-							className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 text-[11px] font-medium text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
+							className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 label-sm text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
 						>
 							{topic}
 						</span>
@@ -266,12 +266,12 @@ function ReportCard({ report }: { report: Report }) {
 						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
 					/>
 					<div className="absolute inset-0 bg-linear-to-t from-sub-navy to-transparent" />
-					<h3 className="absolute bottom-3 left-4 text-lg font-semibold text-on-brand">{report.title}</h3>
+					<h3 className="absolute bottom-3 left-4 heading-xs text-on-brand">{report.title}</h3>
 				</div>
 			)}
 			<div className="flex flex-1 flex-col gap-3 p-4">
-				{!report.image && <h3 className="text-lg font-semibold">{report.title}</h3>}
-				<div className="flex items-center gap-3 text-xs text-secondary">
+				{!report.image && <h3 className="heading-xs">{report.title}</h3>}
+				<div className="flex items-center gap-3 body-sm text-secondary">
 					<span className="flex items-center gap-1">
 						<Icon name="calendar" height={12} width={12} />
 						{report.date}
@@ -295,13 +295,10 @@ function ReportCard({ report }: { report: Report }) {
 						className="ml-auto shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
 					/>
 				</div>
-				<p className="text-sm text-secondary">{report.description}</p>
+				<p className="body-md text-secondary">{report.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{report.topics.map((topic) => (
-						<span
-							key={topic}
-							className="rounded-full bg-black/5 px-2.5 py-0.5 text-[11px] font-medium text-secondary dark:bg-white/5"
-						>
+						<span key={topic} className="rounded-full bg-black/5 px-2.5 py-0.5 label-sm text-secondary dark:bg-white/5">
 							{topic}
 						</span>
 					))}

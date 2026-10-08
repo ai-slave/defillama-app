@@ -402,7 +402,7 @@ export function SimpleTableConfig({
 										) : (
 											<div className="size-4 rounded-full bg-surface-elevated-2" />
 										)}
-										<span className="text-sm text-pro-text-primary">{option?.label ?? token}</span>
+										<span className="body-md text-pro-text-primary">{option?.label ?? token}</span>
 										<Tooltip
 											content={`Remove ${option?.label ?? token}`}
 											render={

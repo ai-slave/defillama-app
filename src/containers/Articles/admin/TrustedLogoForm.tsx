@@ -96,7 +96,7 @@ export function TrustedLogoForm({ logoId }: Props) {
 	if (logoId && queryReadFailed(logosQuery) && !logosQuery.data) {
 		return (
 			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't load the logos</h1>
+				<h1 className="heading-sm text-primary">Couldn't load the logos</h1>
 				<Button
 					size="sm"
 					onClick={() => void logosQuery.refetch()}
@@ -109,13 +109,13 @@ export function TrustedLogoForm({ logoId }: Props) {
 	}
 
 	if (logoId && logosQuery.isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>
+		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
 	}
 
 	if (logoId && !logo) {
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't find this logo</h1>
+				<h1 className="heading-sm text-primary">Couldn't find this logo</h1>
 			</div>
 		)
 	}
@@ -137,7 +137,7 @@ export function TrustedLogoForm({ logoId }: Props) {
 	return (
 		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Name</span>
+				<span className="label-md text-primary">Name</span>
 				<Input
 					type="text"
 					value={state.name}
@@ -145,11 +145,11 @@ export function TrustedLogoForm({ logoId }: Props) {
 					placeholder="e.g. Coinbase"
 					className="w-full"
 				/>
-				{errors.name ? <p className="text-xs text-error">{errors.name}</p> : null}
+				{errors.name ? <p className="body-sm text-error">{errors.name}</p> : null}
 			</label>
 
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Link URL</span>
+				<span className="label-md text-primary">Link URL</span>
 				<Input
 					type="url"
 					value={state.linkUrl}
@@ -157,11 +157,11 @@ export function TrustedLogoForm({ logoId }: Props) {
 					placeholder="https://…"
 					className="w-full"
 				/>
-				{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
+				{errors.linkUrl ? <p className="body-sm text-error">{errors.linkUrl}</p> : null}
 			</label>
 
 			<div className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Logo image</span>
+				<span className="label-md text-primary">Logo image</span>
 				<ImageUploadButton
 					scope="trusted-logo"
 					previewShape="wide"
@@ -171,13 +171,13 @@ export function TrustedLogoForm({ logoId }: Props) {
 					label="logo image"
 					helperText="webp/png, transparent background, at least 400px wide"
 				/>
-				{errors.imageUrl ? <p className="text-xs text-error">{errors.imageUrl}</p> : null}
+				{errors.imageUrl ? <p className="body-sm text-error">{errors.imageUrl}</p> : null}
 			</div>
 
 			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
 				{conflict ? <SavedChangedNotice noun="logo" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
+					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
 						<span
 							aria-hidden
 							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}

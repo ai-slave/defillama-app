@@ -160,8 +160,8 @@ export function ArticleChartBlock({
 						</span>
 					) : null}
 					<div className="flex min-w-0 flex-col leading-tight">
-						<span className="truncate text-[15px] font-semibold tracking-tight text-primary">{titleText}</span>
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+						<span className="truncate title-md tracking-tight text-primary">{titleText}</span>
+						<span className="label-xs tracking-[0.18em] text-tertiary uppercase">
 							{chartLabel} · {rangeLabel}
 						</span>
 					</div>
@@ -169,20 +169,18 @@ export function ArticleChartBlock({
 				<div className="flex shrink-0 items-end gap-4 text-right">
 					{latestLabel ? (
 						<div className="flex flex-col leading-tight">
-							<span className="font-jetbrains text-[9px] tracking-[0.2em] text-tertiary uppercase">Latest</span>
-							<span className="font-jetbrains text-base font-bold text-primary tabular-nums">{latestLabel}</span>
+							<span className="label-xs tracking-[0.2em] text-tertiary uppercase">Latest</span>
+							<span className="mono-md-bold text-primary tabular-nums">{latestLabel}</span>
 						</div>
 					) : null}
 					{figureLabel ? (
-						<span className="hidden font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase sm:inline">
-							{figureLabel}
-						</span>
+						<span className="hidden label-xs tracking-[0.18em] text-tertiary uppercase sm:inline">{figureLabel}</span>
 					) : null}
 				</div>
 			</header>
 
 			{isMulti ? (
-				<div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-secondary">
+				<div className="flex flex-wrap gap-x-4 gap-y-1.5 body-sm text-secondary">
 					{series.map((s, i) => (
 						<span key={`${s.entityType}:${s.slug}:${s.chartType}`} className="inline-flex items-center gap-1.5">
 							<span
@@ -199,11 +197,11 @@ export function ArticleChartBlock({
 			<div className="article-chart-body relative">
 				<div className="h-[380px] w-full">
 					{isLoading ? (
-						<div className="flex h-full items-center justify-center text-xs text-tertiary">Loading chart…</div>
+						<div className="flex h-full items-center justify-center body-sm text-tertiary">Loading chart…</div>
 					) : isError || chartModel.charts.length === 0 ? (
-						<div className="flex h-full items-center justify-center text-xs text-tertiary">No data available</div>
+						<div className="flex h-full items-center justify-center body-sm text-tertiary">No data available</div>
 					) : (
-						<Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-tertiary">…</div>}>
+						<Suspense fallback={<div className="flex h-full items-center justify-center body-sm text-tertiary">…</div>}>
 							<MultiSeriesChart
 								dataset={chartModel.dataset}
 								charts={charts}
@@ -220,7 +218,7 @@ export function ArticleChartBlock({
 				</div>
 			</div>
 
-			<figcaption className="flex flex-wrap items-baseline justify-between gap-3 border-t border-medium pt-2 text-[13px] leading-snug text-secondary">
+			<figcaption className="flex flex-wrap items-baseline justify-between gap-3 border-t border-medium pt-2 body-md text-secondary">
 				<div className="min-w-0 flex-1">
 					{figureLabel ? <span className="mr-1.5 font-semibold text-primary">{figureLabel}.</span> : null}
 					{captionSlot !== undefined ? (
@@ -235,12 +233,12 @@ export function ArticleChartBlock({
 						</span>
 					)}
 					{config.logScale ? (
-						<span className="ml-2 rounded-sm border border-medium px-1.5 py-px font-jetbrains text-[10px] tracking-wider text-tertiary uppercase">
+						<span className="ml-2 rounded-sm border border-medium px-1.5 py-px label-xs tracking-wider text-tertiary uppercase">
 							log scale
 						</span>
 					) : null}
 				</div>
-				<div className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+				<div className="shrink-0 label-xs tracking-[0.18em] text-tertiary uppercase">
 					Source ·{' '}
 					<a href={route} target="_blank" rel="noreferrer noopener" className="text-tertiary hover:text-link">
 						DefiLlama
@@ -249,12 +247,12 @@ export function ArticleChartBlock({
 			</figcaption>
 
 			{config.annotations && config.annotations.length > 0 ? (
-				<ol className="grid gap-1 border-t border-dashed border-medium pt-2 text-xs text-secondary">
+				<ol className="grid gap-1 border-t border-dashed border-medium pt-2 body-sm text-secondary">
 					{config.annotations.map((a, i) => (
 						// oxlint-disable-next-line react/no-array-index-key -- Lettered annotation legend slots may share dates and labels.
 						<li key={`${a.date}-${i}`} className="flex gap-2">
-							<span className="font-jetbrains text-[10px] font-bold text-tertiary">{String.fromCharCode(65 + i)}</span>
-							<span className="font-jetbrains text-[10px] text-tertiary">{formatDate(a.date)}</span>
+							<span className="mono-sm-bold text-tertiary">{String.fromCharCode(65 + i)}</span>
+							<span className="mono-sm text-tertiary">{formatDate(a.date)}</span>
 							<span className="text-secondary">{a.label}</span>
 						</li>
 					))}

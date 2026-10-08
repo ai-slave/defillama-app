@@ -75,7 +75,7 @@ export function ReorderableEditorialTagList({
 					</ul>
 				</SortableContext>
 			</DndContext>
-			<p className="text-xs text-tertiary">Drag to reorder. Order is reflected on /research after save.</p>
+			<p className="body-sm text-tertiary">Drag to reorder. Order is reflected on /research after save.</p>
 		</div>
 	)
 }

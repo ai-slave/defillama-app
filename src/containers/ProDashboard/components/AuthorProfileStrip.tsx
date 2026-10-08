@@ -22,13 +22,13 @@ export function AuthorProfileStrip() {
 
 	return (
 		<div className="flex flex-col gap-1">
-			<div className="flex items-center gap-3 text-sm">
+			<div className="flex items-center gap-3 body-md">
 				{profile.avatarUrl ? (
 					// eslint-disable-next-line @next/next/no-img-element
 					<img src={profile.avatarUrl} alt="" loading="lazy" className="size-6 shrink-0 rounded-full object-cover" />
 				) : (
 					<span
-						className="flex size-6 shrink-0 items-center justify-center rounded-full text-sm"
+						className="flex size-6 shrink-0 items-center justify-center rounded-full body-md"
 						style={avatarColorStyle(profile.slug)}
 					>
 						🦙
@@ -53,7 +53,7 @@ export function AuthorProfileStrip() {
 				</div>
 			</div>
 			{customized ? null : (
-				<p className="text-xs text-pro-text-tertiary">
+				<p className="body-sm text-pro-text-tertiary">
 					Add your name, avatar, and links to stand out on your dashboards and Top Authors.
 				</p>
 			)}

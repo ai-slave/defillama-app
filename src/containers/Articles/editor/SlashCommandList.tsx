@@ -64,7 +64,7 @@ export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<Sl
 		>
 			<div id={listId} aria-label="Insert a block" className="max-h-80 min-h-0 overflow-y-auto py-1" role="listbox">
 				{items.length === 0 ? (
-					<div className="p-3 text-xs text-tertiary" role="status">
+					<div className="p-3 body-sm text-tertiary" role="status">
 						No matches
 					</div>
 				) : null}
@@ -75,9 +75,7 @@ export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<Sl
 					return (
 						<div key={item.id}>
 							{showHeader ? (
-								<div className="px-3 pt-2 pb-1 text-[9px] font-medium tracking-wider text-tertiary uppercase">
-									{item.group}
-								</div>
+								<div className="px-3 pt-2 pb-1 label-xs tracking-wider text-tertiary uppercase">{item.group}</div>
 							) : null}
 							<button
 								type="button"
@@ -92,19 +90,19 @@ export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<Sl
 								}}
 								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-hover-row aria-selected:bg-hover-row"
 							>
-								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-medium bg-page font-jetbrains text-[11px] text-secondary">
+								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-medium bg-page mono-sm text-secondary">
 									{item.icon}
 								</span>
 								<span className="flex min-w-0 flex-1 flex-col">
-									<span className="truncate text-sm text-primary">{item.title}</span>
-									<span className="truncate text-[11px] text-tertiary">{item.description}</span>
+									<span className="truncate label-md text-primary">{item.title}</span>
+									<span className="truncate body-sm text-tertiary">{item.description}</span>
 								</span>
 							</button>
 						</div>
 					)
 				})}
 			</div>
-			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 text-[10px] text-tertiary">
+			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 body-xs text-tertiary">
 				<span>
 					<kbd className="rounded-sm border border-medium px-1">↑</kbd>{' '}
 					<kbd className="rounded-sm border border-medium px-1">↓</kbd> nav

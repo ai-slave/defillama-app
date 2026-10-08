@@ -381,10 +381,10 @@ export function OnboardingWalkthrough({
 										height={56}
 									/>
 								</div>
-								<Ariakit.DialogHeading className="text-lg font-bold tracking-tight text-primary">
+								<Ariakit.DialogHeading className="heading-xs tracking-tight text-primary">
 									Welcome to LlamaAI
 								</Ariakit.DialogHeading>
-								<p className="text-[13px] leading-relaxed text-secondary">
+								<p className="body-md text-secondary">
 									AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
 									all in one conversation.
 								</p>
@@ -394,7 +394,7 @@ export function OnboardingWalkthrough({
 								{CAPABILITY_BADGES.map(([icon, label]) => (
 									<span
 										key={label}
-										className="flex items-center gap-1 rounded-md border border-ai-bronze-deep/20 bg-ai-gold-tint px-2 py-0.5 text-[10px] text-ai-bronze-deep"
+										className="flex items-center gap-1 rounded-md border border-ai-bronze-deep/20 bg-ai-gold-tint px-2 py-0.5 body-xs text-ai-bronze-deep"
 									>
 										<Icon name={icon} height={12} width={12} className="opacity-70" />
 										{label}
@@ -405,7 +405,7 @@ export function OnboardingWalkthrough({
 							<button
 								type="button"
 								onClick={nextStep}
-								className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring not-disabled:not-aria-disabled:hover:shadow-ai-gold-ring-hover"
+								className="w-full rounded-xl bg-ai-gold-cta py-2.5 label-md text-ai-on-gold-strong shadow-ai-gold-ring not-disabled:not-aria-disabled:hover:shadow-ai-gold-ring-hover"
 							>
 								Show me around
 							</button>
@@ -548,9 +548,7 @@ export function OnboardingWalkthrough({
 									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-success/12">
 										<Icon name="check" height={14} width={14} className="text-success" />
 									</div>
-									<Ariakit.DialogHeading className="text-[15px] font-bold text-primary">
-										Research mode is on
-									</Ariakit.DialogHeading>
+									<Ariakit.DialogHeading className="title-md text-primary">Research mode is on</Ariakit.DialogHeading>
 									<span className="body-sm text-secondary">Unsure what to ask? Try one of these:</span>
 								</div>
 

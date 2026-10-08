@@ -10,8 +10,8 @@ function DemoPreviewFallback() {
 			role="alert"
 			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center pro-dashboard"
 		>
-			<p className="text-sm text-pro-text-secondary">The preview could not be displayed.</p>
-			<BasicLink href="/pro?tab=discover" className="text-sm font-medium text-link hover:underline">
+			<p className="body-md text-pro-text-secondary">The preview could not be displayed.</p>
+			<BasicLink href="/pro?tab=discover" className="label-md text-link hover:underline">
 				See community dashboards
 			</BasicLink>
 		</div>

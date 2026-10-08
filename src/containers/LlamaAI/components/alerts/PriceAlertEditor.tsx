@@ -50,7 +50,7 @@ export function PriceAlertEditor({
 			{children}
 			<div className="flex flex-col gap-1">
 				<span className={alertFieldLabelClass}>Token</span>
-				<span className="font-mono text-sm text-primary">{formatTokenLabel(trigger.token_nk)}</span>
+				<span className="mono-md text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 			</div>
 			<div className="flex flex-col gap-1.5">
 				<span className={alertFieldLabelClass}>Fires when the price goes</span>

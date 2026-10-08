@@ -43,7 +43,7 @@ function UploadStatus({
 					<Ariakit.PopoverDisclosure
 						aria-label={`Upload error for ${name}`}
 						aria-describedby={errorId}
-						className="flex h-6 items-center gap-1 rounded-sm text-xs text-error hover:bg-error/10"
+						className="flex h-6 items-center gap-1 rounded-sm body-sm text-error hover:bg-error/10"
 					>
 						Failed <Icon name="help-circle" height={14} width={14} />
 					</Ariakit.PopoverDisclosure>
@@ -89,7 +89,7 @@ function UploadStatus({
 			<span role="status" className="sr-only">
 				{name}: {label}
 			</span>
-			<div aria-hidden="true" className="flex items-center gap-1.5 text-xs leading-4 text-secondary">
+			<div aria-hidden="true" className="flex items-center gap-1.5 body-sm text-secondary">
 				{upload.status === 'done' ? (
 					<Icon name="check" height={14} width={14} className="text-brand" />
 				) : upload.status === 'pending' ? (
@@ -208,13 +208,13 @@ export function TextChip({
 						{topLine}
 					</p>
 					<div className="flex items-center gap-1.5">
-						<span className="text-xs leading-4 text-secondary">{badgeLabel}</span>
+						<span className="body-sm text-secondary">{badgeLabel}</span>
 						{size ? (
 							<>
 								<span aria-hidden className="text-tertiary">
 									·
 								</span>
-								<span className="text-xs leading-4 text-secondary">{size}</span>
+								<span className="body-sm text-secondary">{size}</span>
 							</>
 						) : null}
 						{openStatus === 'pending' ? (

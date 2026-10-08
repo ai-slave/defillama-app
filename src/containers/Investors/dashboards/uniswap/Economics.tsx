@@ -83,12 +83,12 @@ function FeeMechanics() {
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 				{FEE_MECHANICS.map(([version, text]) => (
 					<div key={version} className="flex flex-col gap-1">
-						<span className="font-jetbrains text-sm font-bold text-pro-text-primary">{version}</span>
-						<p className="text-xs leading-relaxed text-pro-text-secondary">{text}</p>
+						<span className="mono-md-bold text-pro-text-primary">{version}</span>
+						<p className="body-sm text-pro-text-secondary">{text}</p>
 					</div>
 				))}
 			</div>
-			<p className="mt-3 text-xs leading-relaxed text-pro-text-tertiary">
+			<p className="mt-3 body-sm text-pro-text-tertiary">
 				Protocol fees are set by governance-controlled policy and can be adjusted per pool.
 			</p>
 		</div>
@@ -119,7 +119,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 				>
 					{feeSwitch.status}
 				</span>
-				<p className="text-xs leading-relaxed text-pro-text-tertiary">{feeSwitch.mechanism}</p>
+				<p className="body-sm text-pro-text-tertiary">{feeSwitch.mechanism}</p>
 			</div>
 			<div className="flex flex-wrap gap-y-4">
 				{waves.map((wave, index) => {
@@ -178,7 +178,7 @@ function FeeActivationTable({ rows }: { rows: Array<FeeActivationRow> }) {
 				{ACTIVATION_HEADERS.map(([label, align]) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 label-md tracking-wider text-pro-text-tertiary uppercase"
 						style={{ textAlign: align }}
 					>
 						{label}
@@ -186,7 +186,7 @@ function FeeActivationTable({ rows }: { rows: Array<FeeActivationRow> }) {
 				))}
 				{rows.map((row, index) => {
 					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
+					const cell = `truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary ${rowBg}`
 					const numCell = `${cell} text-right tabular-nums`
 					return [
 						<div key={`${row.chain}-chain`} className={cell}>
@@ -526,7 +526,7 @@ export default function Economics() {
 						disableClientTokenStatsFetch
 					/>
 				) : (
-					<p className="flex h-[360px] items-center justify-center text-center text-xs text-pro-text-tertiary">
+					<p className="flex h-[360px] items-center justify-center text-center body-sm text-pro-text-tertiary">
 						No unlocks data.
 					</p>
 				)}

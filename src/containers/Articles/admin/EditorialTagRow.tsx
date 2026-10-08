@@ -43,15 +43,15 @@ export function EditorialTagRow({
 				<div className="flex items-center gap-2 sm:col-start-1">
 					{leading}
 					{position != null ? (
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary tabular-nums">#{position}</span>
+						<span className="mono-sm tracking-[0.18em] text-tertiary tabular-nums">#{position}</span>
 					) : null}
 				</div>
 			) : null}
 			<div className={`grid min-w-0 gap-1${leading ? ' sm:col-start-2' : ''}`}>
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+				<span className="label-xs tracking-[0.18em] text-tertiary uppercase">
 					{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 				</span>
-				<span className="truncate text-sm text-primary">{article.title}</span>
+				<span className="truncate body-md text-primary">{article.title}</span>
 			</div>
 			<Button
 				ref={focusNeighbourOnLeave}

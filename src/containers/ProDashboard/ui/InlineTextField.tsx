@@ -61,7 +61,7 @@ export function InlineTextField({
 				</span>
 			) : null}
 			{failed && errorMessage ? (
-				<span role="alert" className="mt-1 block text-xs text-error">
+				<span role="alert" className="mt-1 block body-sm text-error">
 					{errorMessage}
 				</span>
 			) : null}

@@ -109,7 +109,7 @@ export function CopyDashboardLinkButton({
 			<PopoverSurface variant="list" heading="Share dashboard" gutter={8} style={{ minWidth: '280px' }}>
 				{isPrivate ? (
 					<div className="flex flex-col gap-2 p-3">
-						<p className="text-xs text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>
+						<p className="body-sm text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>
 						{onMakePublic ? (
 							<Button
 								type="button"
@@ -148,7 +148,7 @@ export function CopyDashboardLinkButton({
 									type="text"
 									value={shareUrl}
 									readOnly
-									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs"
+									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 body-sm"
 								/>
 								<Tooltip
 									content={copied === 'link' ? 'Copied' : 'Copy link'}
@@ -189,7 +189,7 @@ export function CopyDashboardLinkButton({
 									aria-label="Embed code"
 									spellCheck={false}
 									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 resize-none rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 font-mono text-xs"
+									className="flex-1 resize-none rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 mono-sm"
 								/>
 								<Tooltip
 									content={copied === 'embed' ? 'Copied' : 'Copy embed code'}

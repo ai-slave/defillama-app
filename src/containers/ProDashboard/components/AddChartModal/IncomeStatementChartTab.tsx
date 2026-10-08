@@ -113,7 +113,7 @@ export function IncomeStatementChartTab({
 					isLoading={protocolsLoading}
 				/>
 				{!protocolsLoading && filteredProtocolOptions.length === 0 ? (
-					<p className="text-xs text-pro-text-tertiary">No protocols with both fees and revenue.</p>
+					<p className="body-sm text-pro-text-tertiary">No protocols with both fees and revenue.</p>
 				) : null}
 			</div>
 
@@ -142,7 +142,7 @@ export function IncomeStatementChartTab({
 					<div className="flex h-[360px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="file-text" height={32} width={32} className="mx-auto mb-1" />
-							<p className="text-xs">Select a protocol to preview the income statement</p>
+							<p className="body-sm">Select a protocol to preview the income statement</p>
 						</div>
 					</div>
 				)}

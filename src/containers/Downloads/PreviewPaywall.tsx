@@ -21,12 +21,12 @@ export function PreviewPaywall() {
 			<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
 				<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
 					<p className="title-md text-pro-text-primary">This is a preview — subscribe to download full datasets</p>
-					<p className="text-xs text-pro-text-tertiary">
+					<p className="body-sm text-pro-text-tertiary">
 						Get access to all rows, all columns, and unlimited CSV downloads
 					</p>
 					<Link
 						href="/subscribe"
-						className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 text-sm font-semibold text-on-brand shadow-md transition-all hover:opacity-90"
+						className="mt-1 inline-flex items-center gap-2 rounded-lg bg-brand px-8 py-2.5 title-md text-on-brand shadow-md transition-all hover:opacity-90"
 					>
 						<Icon name="arrow-up-right" className="size-4" />
 						Subscribe
@@ -72,7 +72,7 @@ export function PlaceholderRows({
 							return (
 								<div
 									key={column.index}
-									className={`truncate border-t border-r border-subtle p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
+									className={`truncate border-t border-r border-subtle p-2 body-md last:border-r-0 ${tone} ${!isSelected ? 'text-pro-text-tertiary opacity-40' : ''}`}
 									style={{
 										textAlign: column.align,
 										position: isSticky ? 'sticky' : undefined,

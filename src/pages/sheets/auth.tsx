@@ -87,8 +87,8 @@ function AuthContent() {
 							<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/10">
 								<Icon name="check" height={24} width={24} className="text-success" />
 							</div>
-							<h2 className="mb-2 text-2xl font-bold text-on-brand">Successfully logged in.</h2>
-							{user?.email ? <p className="text-sm text-sub-text-muted">Signed in as {user.email}</p> : null}
+							<h2 className="mb-2 heading-sm text-on-brand">Successfully logged in.</h2>
+							{user?.email ? <p className="body-md text-sub-text-muted">Signed in as {user.email}</p> : null}
 							{isUnknownRedirect ? (
 								<div className="mt-2 text-left">
 									<InlineStatus variant="error">
@@ -104,7 +104,7 @@ function AuthContent() {
 									/>
 								</div>
 							) : (
-								<p className="mt-2 text-sm text-sub-text-muted">
+								<p className="mt-2 body-md text-sub-text-muted">
 									You should be automatically redirected to finish the authentication process.
 								</p>
 							)}

@@ -96,7 +96,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 						ref={inputRef}
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-primary placeholder:text-tertiary"
+						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 body-md text-primary placeholder:text-tertiary"
 					/>
 					{value ? (
 						<Button
@@ -125,10 +125,10 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					className="max-h-[min(288px,var(--popover-available-height))]"
 				>
 					{isFetching && items.length === 0 ? (
-						<p className="p-3 text-center text-xs text-tertiary">Searching…</p>
+						<p className="p-3 text-center body-sm text-tertiary">Searching…</p>
 					) : null}
 					{!isFetching && items.length === 0 ? (
-						<p className="p-3 text-center text-xs text-tertiary">No results</p>
+						<p className="p-3 text-center body-sm text-tertiary">No results</p>
 					) : null}
 					{items.map((article) => (
 						<Ariakit.ComboboxItem
@@ -147,7 +147,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 						>
 							<span className="grid min-w-0 gap-0.5">
 								<span className="truncate">{article.title}</span>
-								<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
+								<span className="label-xs tracking-[0.16em] text-tertiary uppercase">
 									{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 								</span>
 							</span>
@@ -156,7 +156,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{value && selectedLabel ? (
-				<p className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
+				<p className="label-xs tracking-[0.16em] text-tertiary uppercase">
 					Selected: <span className="tracking-normal text-secondary normal-case">{selectedLabel}</span>
 				</p>
 			) : null}

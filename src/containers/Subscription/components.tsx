@@ -75,7 +75,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 	return (
 		<li className={`flex items-start gap-2${item.isSubItem ? ' ml-7 sm:ml-5' : ''}`}>
 			{item.isSubItem ? (
-				<span className="inline-flex size-6 shrink-0 items-center justify-center text-base leading-6 text-sub-text-secondary sm:h-5 sm:w-5 sm:text-[13px] sm:leading-5">
+				<span className="inline-flex size-6 shrink-0 items-center justify-center body-lg text-sub-text-secondary sm:h-5 sm:w-5 sm:body-md">
 					–
 				</span>
 			) : (
@@ -97,12 +97,12 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 				</span>
 			)}
 			{item.highlightText ? (
-				<span className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text text-base leading-6 text-transparent sm:pt-0.5 sm:text-[13px] sm:leading-[18px] dark:from-sub-brand-secondary dark:to-sub-brand-softest">
+				<span className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text body-lg text-transparent sm:pt-0.5 sm:body-md dark:from-sub-brand-secondary dark:to-sub-brand-softest">
 					<FeatureLabel item={item} />
 				</span>
 			) : (
 				<span
-					className={`text-base leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' || item.availability === 'x' ? 'text-sub-text-primary' : 'text-sub-text-muted dark:text-sub-text-muted'}`}
+					className={`body-lg sm:pt-0.5 sm:body-md ${item.availability === 'check' || item.availability === 'x' ? 'text-sub-text-primary' : 'text-sub-text-muted dark:text-sub-text-muted'}`}
 				>
 					<FeatureLabel item={item} />
 				</span>
@@ -420,52 +420,48 @@ export function PricingCardContent({
 	return (
 		<div className="flex flex-col gap-7 sm:gap-5">
 			<div className="flex flex-col gap-2 sm:min-h-[140px] sm:gap-3">
-				<h3 className="text-[22px] leading-[28px] font-semibold text-sub-heading sm:text-xl sm:leading-[26px] sm:text-sub-text-primary dark:text-sub-text-primary">
+				<h3 className="heading-sm text-sub-heading sm:text-sub-text-primary dark:text-sub-text-primary">
 					{card.title}
 				</h3>
 				{card.subtitle ? (
-					<p className="text-[15px] leading-5 font-medium text-sub-text-cool sm:text-sm sm:leading-4 sm:text-sub-text-secondary dark:text-sub-text-muted">
+					<p className="label-md text-sub-text-cool sm:text-sub-text-secondary dark:text-sub-text-muted">
 						{card.subtitle}
 					</p>
 				) : null}
 				{card.priceMain ? (
 					<div className="flex flex-col gap-1 sm:gap-0">
 						<div className="flex items-end gap-0.5">
-							<p className="bg-linear-to-r from-sub-brand-primary to-sub-heading bg-clip-text text-[40px] leading-[40px] font-semibold text-transparent sm:text-[32px] sm:leading-[42px] dark:from-sub-brand-secondary dark:to-sub-brand-softest">
+							<p className="bg-linear-to-r from-sub-brand-primary to-sub-heading bg-clip-text heading-lg text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest">
 								{card.priceMain}
 							</p>
-							<p className="text-base leading-6 text-sub-text-cool sm:text-base sm:text-sub-text-secondary dark:sm:text-sub-text-secondary">
+							<p className="body-lg text-sub-text-cool sm:text-sub-text-secondary dark:sm:text-sub-text-secondary">
 								{card.priceUnit}
 							</p>
 						</div>
 						{card.key === 'pro' && isTrialAvailable ? (
 							<div className="mt-1 flex items-center gap-1.5">
-								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs leading-4 font-semibold text-success ring-1 ring-emerald-200 dark:bg-success/10 dark:ring-emerald-500/30">
+								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 title-sm text-success ring-1 ring-emerald-200 dark:bg-success/10 dark:ring-emerald-500/30">
 									7-day free trial available
 								</span>
 							</div>
 						) : card.priceSecondary ? (
-							<p className="text-[22px] leading-6 text-sub-text-cool-muted sm:text-base dark:text-sub-text-muted">
+							<p className="body-xl text-sub-text-cool-muted sm:body-lg dark:text-sub-text-muted">
 								{card.priceSecondary}
 							</p>
 						) : null}
 					</div>
 				) : card.description ? (
-					<p className="text-[28px] leading-[36px] font-semibold text-sub-heading sm:text-2xl sm:leading-[32px] dark:text-sub-text-primary">
-						{card.description}
-					</p>
+					<p className="heading-lg text-sub-heading sm:heading-sm dark:text-sub-text-primary">{card.description}</p>
 				) : null}
 			</div>
 
 			{card.includedTierText ? (
-				<p className="text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
-					{card.includedTierText}
-				</p>
+				<p className="body-md text-sub-text-cool-muted dark:text-sub-text-muted">{card.includedTierText}</p>
 			) : null}
 
 			{card.sections.map((section) => (
 				<div key={`${card.key}-${section.title}`} className="flex flex-col gap-3">
-					<h4 className="text-xl leading-7 font-semibold text-sub-heading sm:text-base sm:leading-5 sm:font-medium sm:text-sub-text-primary dark:text-sub-text-primary">
+					<h4 className="heading-sm text-sub-heading sm:label-lg sm:text-sub-text-primary dark:text-sub-text-primary">
 						{section.title}
 					</h4>
 					<ul className="flex flex-col gap-3 sm:gap-2">
@@ -635,7 +631,7 @@ export function ComparisonCell({
 					placement="top"
 					className="cursor-help rounded-sm px-1"
 				>
-					<span className="text-[13px] font-medium text-warning">Limited</span>
+					<span className="label-md text-warning">Limited</span>
 				</Tooltip>
 			) : (
 				<Icon

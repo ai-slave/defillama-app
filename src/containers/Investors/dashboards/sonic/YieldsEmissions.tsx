@@ -15,7 +15,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
+			<span className="mono-xl text-pro-text-primary">{value}</span>
 		</div>
 	)
 }
@@ -23,7 +23,7 @@ function KpiCard({ label, value }: { label: string; value: string }) {
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
 			{children}
 		</div>
 	)
@@ -119,7 +119,7 @@ export default function YieldsEmissions() {
 							href="https://burn.soniclabs.com"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="inline-flex items-center gap-1 text-sm font-medium text-sl-accent transition-colors hover:underline"
+							className="inline-flex items-center gap-1 label-md text-sl-accent transition-colors hover:underline"
 						>
 							View Burn Counter
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3">
@@ -152,7 +152,7 @@ export default function YieldsEmissions() {
 									{headerGroup.headers.map((header) => (
 										<th
 											key={header.id}
-											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase"
+											className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase"
 											style={{ width: header.getSize() }}
 											onClick={header.column.getToggleSortingHandler()}
 										>
@@ -173,7 +173,7 @@ export default function YieldsEmissions() {
 							{table.getRowModel().rows.map((row) => (
 								<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-2.5 text-sm text-pro-text-primary">
+										<td key={cell.id} className="px-4 py-2.5 body-md text-pro-text-primary">
 											{typeof cell.column.columnDef.cell === 'function'
 												? cell.column.columnDef.cell(cell.getContext())
 												: (cell.getValue() as string)}

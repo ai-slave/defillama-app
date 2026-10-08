@@ -159,8 +159,8 @@ function StatCard({ label, value, description }: { label: string; value: string;
 	return (
 		<div className="flex flex-col gap-2 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-5 transition-all hover:border-sl-accent/20 hover:shadow-md">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
-			<span className="text-3xl font-bold tracking-tight text-pro-text-primary">{value}</span>
-			<span className="text-xs text-pro-text-secondary">{description}</span>
+			<span className="mono-xl tracking-tight text-pro-text-primary">{value}</span>
+			<span className="body-sm text-pro-text-secondary">{description}</span>
 		</div>
 	)
 }
@@ -170,7 +170,7 @@ function KpiCard({ label, value }: { label: string; value?: string }) {
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			{value ? (
-				<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
+				<span className="mono-xl text-pro-text-primary">{value}</span>
 			) : (
 				<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			)}
@@ -194,7 +194,7 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
 			{children}
 		</div>
 	)
@@ -203,7 +203,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function ChartSkeleton({ title }: { title: string }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
+			<h3 className="mb-3 label-md text-pro-text-label">{title}</h3>
 			<div className="flex h-[350px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
@@ -259,9 +259,9 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-2 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="heading-sm text-pro-text-primary">Ecosystem</h1>
+					<h1 className="mono-xl text-pro-text-primary">Ecosystem</h1>
 				</div>
-				<p className="max-w-2xl text-sm leading-relaxed text-pro-text-secondary">
+				<p className="max-w-2xl body-md text-pro-text-secondary">
 					Live metrics across NEAR Intents, base-chain activity, and token supply.
 				</p>
 			</div>

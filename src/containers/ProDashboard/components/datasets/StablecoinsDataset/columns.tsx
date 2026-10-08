@@ -153,7 +153,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 
 			return (
 				<Tooltip content={chains.join(', ')}>
-					<span className="text-sm text-pro-text-secondary">
+					<span className="body-md text-pro-text-secondary">
 						{displayChains.join(', ')}
 						{remainingCount > 0 ? ` +${remainingCount}` : null}
 					</span>

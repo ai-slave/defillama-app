@@ -49,7 +49,7 @@ export function SimilarDashboards({ dashboardId, tags }: SimilarDashboardsProps)
 
 	return (
 		<section aria-labelledby="similar-dashboards-heading" className="flex flex-col gap-3">
-			<h2 id="similar-dashboards-heading" className="text-lg font-semibold text-pro-text-primary">
+			<h2 id="similar-dashboards-heading" className="heading-xs text-pro-text-primary">
 				Similar dashboards
 			</h2>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

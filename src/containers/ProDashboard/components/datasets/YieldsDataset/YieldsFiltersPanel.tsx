@@ -110,7 +110,7 @@ export function YieldsFiltersPanel({
 									placeholder="Min %"
 									value={localFilters.apyMin || ''}
 									onChange={(e) => updateFilter('apyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 								<span className="text-pro-text-tertiary">-</span>
 								<input
@@ -119,7 +119,7 @@ export function YieldsFiltersPanel({
 									placeholder="Max %"
 									value={localFilters.apyMax || ''}
 									onChange={(e) => updateFilter('apyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -133,7 +133,7 @@ export function YieldsFiltersPanel({
 									placeholder="Min %"
 									value={localFilters.baseApyMin || ''}
 									onChange={(e) => updateFilter('baseApyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 								<span className="text-pro-text-tertiary">-</span>
 								<input
@@ -142,7 +142,7 @@ export function YieldsFiltersPanel({
 									placeholder="Max %"
 									value={localFilters.baseApyMax || ''}
 									onChange={(e) => updateFilter('baseApyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -173,7 +173,7 @@ export function YieldsFiltersPanel({
 									) : null}
 								</div>
 							</div>
-							<span className="text-sm text-pro-text-primary">Has Reward Incentives</span>
+							<span className="label-md text-pro-text-primary">Has Reward Incentives</span>
 						</label>
 					</div>
 				</div>
@@ -191,7 +191,7 @@ export function YieldsFiltersPanel({
 									placeholder="Min"
 									value={formatNumber(localFilters.tvlMin, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMin', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 								<span className="text-pro-text-tertiary">-</span>
 								<input
@@ -200,7 +200,7 @@ export function YieldsFiltersPanel({
 									placeholder="Max"
 									value={formatNumber(localFilters.tvlMax, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMax', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1.5 body-md text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -237,7 +237,7 @@ export function YieldsFiltersPanel({
 									) : null}
 								</div>
 							</div>
-							<span className="text-sm text-pro-text-primary">Stablecoins Only</span>
+							<span className="label-md text-pro-text-primary">Stablecoins Only</span>
 						</label>
 
 						<div className="mt-4">
@@ -278,7 +278,7 @@ export function YieldsFiltersPanel({
 												) : null}
 											</div>
 										</div>
-										<span className="text-sm text-pro-text-primary">{category}</span>
+										<span className="label-md text-pro-text-primary">{category}</span>
 									</label>
 								))}
 							</div>

@@ -2,10 +2,10 @@ export function SubscriptionTrustedBlock({ trustLogos }: { trustLogos: Array<{ s
 	return (
 		<div className="flex w-full flex-col items-center md:w-auto">
 			<div className="flex w-full flex-col items-center gap-2 text-center md:w-[448px] md:gap-4">
-				<h2 className="text-xl leading-7 font-semibold text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary">
+				<h2 className="heading-sm text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary">
 					Trusted by DeFi Natives and Global Regulators
 				</h2>
-				<p className="text-xs leading-4 text-sub-text-cool md:text-sm md:leading-[21px] md:text-sub-text-secondary dark:md:text-sub-text-secondary">
+				<p className="body-sm text-sub-text-cool md:body-md md:text-sub-text-secondary dark:md:text-sub-text-secondary">
 					From top crypto exchanges to global central banks
 				</p>
 			</div>

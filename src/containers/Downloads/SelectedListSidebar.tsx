@@ -96,7 +96,7 @@ export function SelectedListSidebar({
 					return (
 						<div
 							key={item.value}
-							className={`flex items-center gap-1.5 border-b border-subtle px-2.5 py-2 text-xs transition-colors ${
+							className={`flex items-center gap-1.5 border-b border-subtle px-2.5 py-2 body-sm transition-colors ${
 								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
 							}`}
 						>

@@ -74,7 +74,7 @@ export function TodoChecklistPanel({
 	return (
 		<section className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-2" aria-label="Progress">
 			<div className="flex items-center gap-2 px-0.5">
-				<span aria-hidden="true" className="text-sm">
+				<span aria-hidden="true" className="body-md">
 					📋
 				</span>
 				<p className="m-0 flex-1 truncate label-sm text-primary">Progress</p>

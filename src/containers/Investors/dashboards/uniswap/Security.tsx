@@ -145,7 +145,7 @@ function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 				{REPORT_HEADERS.map((label) => (
 					<div
 						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
+						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 label-md tracking-wider text-pro-text-tertiary uppercase"
 					>
 						{label}
 					</div>
@@ -153,7 +153,7 @@ function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 				{keyedOccurrences(sorted, (report) => JSON.stringify([report.repo, report.file, report.url])).map(
 					({ item: report, key }, index) => {
 						const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-						const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
+						const cell = `truncate border-b border-subtle px-3 py-2.5 body-md text-pro-text-primary ${rowBg}`
 						return (
 							<Fragment key={key}>
 								<div className={cell}>{report.repo}</div>

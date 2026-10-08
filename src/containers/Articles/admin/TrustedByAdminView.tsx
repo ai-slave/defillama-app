@@ -208,19 +208,19 @@ export function TrustedByAdminView() {
 			<header className="pt-2 pb-2">
 				<Link
 					href="/research/admin"
-					className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+					className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Trusted By</h1>
-				<p className="mt-1 text-sm text-secondary">
+				<h1 className="mt-2 heading-lg tracking-tight text-primary">Trusted By</h1>
+				<p className="mt-1 body-md text-secondary">
 					Manage the logos and social media mentions shown in the Trusted By section on /research.
 				</p>
 			</header>
 
 			<section className="grid gap-3">
 				<div className="flex flex-wrap items-end justify-between gap-3">
-					<h2 className="text-lg font-semibold text-primary">Logos</h2>
+					<h2 className="heading-xs text-primary">Logos</h2>
 					<Button
 						ref={addLogoRef}
 						as={BasicLink}
@@ -234,16 +234,16 @@ export function TrustedByAdminView() {
 				</div>
 
 				{logosQuery.isLoading ? (
-					<div className="py-10 text-center text-sm text-tertiary">Loading…</div>
+					<div className="py-10 text-center body-md text-tertiary">Loading…</div>
 				) : logosQuery.error ? (
 					<div className="rounded-md border border-error/30 bg-error/5 p-6">
-						<p className="text-sm text-secondary">
+						<p className="body-md text-secondary">
 							{logosQuery.error instanceof ArticleApiError ? logosQuery.error.message : 'Failed to load logos'}
 						</p>
 					</div>
 				) : logos.length === 0 ? (
 					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-						<p className="text-sm text-secondary">No logos yet.</p>
+						<p className="body-md text-secondary">No logos yet.</p>
 					</div>
 				) : (
 					<DndContext sensors={logoSensors} onDragEnd={handleLogoDragEnd} modifiers={VERTICAL_SORTING_MODIFIERS}>
@@ -264,12 +264,12 @@ export function TrustedByAdminView() {
 						</SortableContext>
 					</DndContext>
 				)}
-				<p className="text-xs text-tertiary">Drag to reorder. Order is reflected on /research after save.</p>
+				<p className="body-sm text-tertiary">Drag to reorder. Order is reflected on /research after save.</p>
 			</section>
 
 			<section className="grid gap-3">
 				<div className="flex flex-wrap items-end justify-between gap-3">
-					<h2 className="text-lg font-semibold text-primary">Mentions</h2>
+					<h2 className="heading-xs text-primary">Mentions</h2>
 					<Button
 						ref={addMentionRef}
 						as={BasicLink}
@@ -283,16 +283,16 @@ export function TrustedByAdminView() {
 				</div>
 
 				{mentionsQuery.isLoading ? (
-					<div className="py-10 text-center text-sm text-tertiary">Loading…</div>
+					<div className="py-10 text-center body-md text-tertiary">Loading…</div>
 				) : mentionsQuery.error ? (
 					<div className="rounded-md border border-error/30 bg-error/5 p-6">
-						<p className="text-sm text-secondary">
+						<p className="body-md text-secondary">
 							{mentionsQuery.error instanceof ArticleApiError ? mentionsQuery.error.message : 'Failed to load mentions'}
 						</p>
 					</div>
 				) : mentions.length === 0 ? (
 					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-						<p className="text-sm text-secondary">No mentions yet.</p>
+						<p className="body-md text-secondary">No mentions yet.</p>
 					</div>
 				) : (
 					<DndContext sensors={mentionSensors} onDragEnd={handleMentionDragEnd} modifiers={VERTICAL_SORTING_MODIFIERS}>
@@ -330,13 +330,13 @@ export function TrustedByAdminView() {
 						</SortableContext>
 					</DndContext>
 				)}
-				<p className="text-xs text-tertiary">Drag to reorder. Order is reflected on /research after save.</p>
+				<p className="body-sm text-tertiary">Drag to reorder. Order is reflected on /research after save.</p>
 			</section>
 
 			{enabledMentions.length > 0 ? (
 				<section className="grid min-w-0 gap-3">
 					<div className="flex flex-wrap items-end justify-between gap-3">
-						<h2 className="text-lg font-semibold text-primary">Slide preview</h2>
+						<h2 className="heading-xs text-primary">Slide preview</h2>
 						<Button variant="secondary" size="md" onClick={() => setShowFullPreview((prev) => !prev)}>
 							{showFullPreview ? 'Show quote cards only' : 'Load full preview with X posts'}
 						</Button>
@@ -383,7 +383,7 @@ export function TrustedByAdminView() {
 							</div>
 						))}
 					</div>
-					<p className="text-xs text-tertiary">
+					<p className="body-sm text-tertiary">
 						{showFullPreview
 							? 'Full slides as rendered on /research, including X post embeds. Even slides are mirrored, like in the carousel.'
 							: 'Quote cards as rendered on /research. X post embeds are not shown here.'}
@@ -462,12 +462,12 @@ function SortableLogoRow({
 			<img src={logo.imageUrl} alt="" className="h-8 shrink-0 object-contain" />
 
 			<div className="grid min-w-0 gap-0.5">
-				<p className="truncate text-sm font-medium text-primary">{logo.name}</p>
-				<p className="truncate text-xs text-tertiary">{linkHost(logo.linkUrl)}</p>
+				<p className="truncate label-md text-primary">{logo.name}</p>
+				<p className="truncate body-sm text-tertiary">{linkHost(logo.linkUrl)}</p>
 			</div>
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
-				<label className="flex items-center gap-1.5 text-xs text-secondary">
+				<label className="flex items-center gap-1.5 label-sm text-secondary">
 					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. */}
 					<Ariakit.Checkbox
 						checked={logo.enabled}
@@ -552,10 +552,10 @@ function SortableMentionRow({
 			)}
 
 			<div className="grid min-w-0 gap-0.5">
-				<p className="line-clamp-1 text-sm text-primary">
+				<p className="line-clamp-1 body-md text-primary">
 					{mention.quote || <span className="text-tertiary italic">no quote</span>}
 				</p>
-				<p className="truncate text-xs text-tertiary">
+				<p className="truncate body-sm text-tertiary">
 					{mention.username ? `@${mention.username}` : null}
 					{mention.username && mention.xPostId ? ' · ' : null}
 					{mention.xPostId}
@@ -563,7 +563,7 @@ function SortableMentionRow({
 			</div>
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
-				<label className="flex items-center gap-1.5 text-xs text-secondary">
+				<label className="flex items-center gap-1.5 label-sm text-secondary">
 					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. */}
 					<Ariakit.Checkbox
 						checked={mention.enabled}

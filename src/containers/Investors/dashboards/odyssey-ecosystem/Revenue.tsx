@@ -97,12 +97,12 @@ function SubSectionCard({
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
 				<div>
 					<h3 className="title-md text-pro-text-primary">{title}</h3>
-					{subtitle && <p className="mt-0.5 text-xs text-pro-text-secondary">{subtitle}</p>}
+					{subtitle && <p className="mt-0.5 body-sm text-pro-text-secondary">{subtitle}</p>}
 				</div>
 				{total != null && (
 					<div className="text-right">
-						<div className="text-[10px] font-medium tracking-wider text-pro-text-label uppercase">Subtotal</div>
-						<div className="text-lg font-semibold text-pro-text-primary tabular-nums">{fmtUsd(total)}</div>
+						<div className="label-xs tracking-wider text-pro-text-label uppercase">Subtotal</div>
+						<div className="heading-xs text-pro-text-primary tabular-nums">{fmtUsd(total)}</div>
 					</div>
 				)}
 			</div>
@@ -268,7 +268,7 @@ export default function Revenue() {
 								exportButtons="hidden"
 							/>
 						) : (
-							<div className="px-2 py-6 text-xs text-pro-text-secondary">No monthly holder data</div>
+							<div className="px-2 py-6 body-sm text-pro-text-secondary">No monthly holder data</div>
 						)
 					) : holderModel ? (
 						<MultiSeriesChart
@@ -281,7 +281,7 @@ export default function Revenue() {
 							exportButtons="hidden"
 						/>
 					) : (
-						<div className="px-2 py-6 text-xs text-pro-text-secondary">No daily holder data</div>
+						<div className="px-2 py-6 body-sm text-pro-text-secondary">No daily holder data</div>
 					)}
 				</ChartCard>
 			)}
@@ -308,7 +308,7 @@ export default function Revenue() {
 								]}
 							/>
 						) : (
-							<div className="px-2 py-3 text-xs text-pro-text-secondary">
+							<div className="px-2 py-3 body-sm text-pro-text-secondary">
 								Per-source breakdown not yet available for this month — only the total is reported.
 							</div>
 						)}
@@ -325,9 +325,9 @@ export default function Revenue() {
 				<div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
 					<div>
 						<div className="label-sm tracking-wide text-pro-text-label uppercase">Pipeline Total</div>
-						<div className="mt-1 text-3xl font-bold text-pro-text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
+						<div className="mt-1 mono-xl text-pro-text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
 					</div>
-					{up.asOf && <span className="text-[11px] text-pro-text-secondary">As of {up.asOf}</span>}
+					{up.asOf && <span className="body-sm text-pro-text-secondary">As of {up.asOf}</span>}
 				</div>
 				{up.pie && (
 					<PieChart
@@ -453,11 +453,11 @@ export default function Revenue() {
 							<div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 								<div>
 									<span className="title-md text-pro-text-primary">{r.asset}</span>
-									<span className="ml-2 text-xs text-pro-text-secondary">
+									<span className="ml-2 body-sm text-pro-text-secondary">
 										{formatPercent(r.annualRatePct, { input: 'percent' })} APR · debt {fmtUsd(r.totalDebtUsd)}
 									</span>
 								</div>
-								<div className="text-xs text-pro-text-secondary">
+								<div className="body-sm text-pro-text-secondary">
 									<span className="mr-3">Daily {fmtUsd(r.estimatedDailyUsd)}</span>
 									<span>Monthly {fmtUsd(r.estimatedMonthlyUsd)}</span>
 								</div>

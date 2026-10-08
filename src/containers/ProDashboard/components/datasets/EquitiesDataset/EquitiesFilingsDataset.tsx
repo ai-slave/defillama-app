@@ -60,7 +60,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor('documentDescription', {
 		id: 'documentDescription',
 		header: 'Description',
-		cell: (info) => <span className="block truncate text-sm">{info.getValue()}</span>,
+		cell: (info) => <span className="block truncate body-md">{info.getValue()}</span>,
 		size: 400
 	}),
 	columnHelper.accessor('primaryDocumentUrl', {
@@ -214,12 +214,12 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<label className="flex items-center gap-2 text-sm">
+						<label className="flex items-center gap-2 label-md">
 							<span className="text-pro-text-secondary">Form</span>
 							<select
 								value={selectedForm}
 								onChange={(e) => setSelectedForm(e.currentTarget.value)}
-								className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1 text-sm text-pro-text-primary"
+								className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1 label-md text-pro-text-primary"
 							>
 								<option value="All">All</option>
 								{filingForms.map((form) => (
@@ -252,7 +252,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							type="text"
 							placeholder="Search filings..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

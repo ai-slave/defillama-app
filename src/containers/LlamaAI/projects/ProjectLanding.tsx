@@ -148,7 +148,7 @@ export function ProjectLanding({
 				<p role="alert" className="label-md text-error">
 					{notFound ? 'Project not found' : 'Project unavailable'}
 				</p>
-				<p className="text-xs text-secondary">
+				<p className="body-sm text-secondary">
 					{notFound
 						? 'This project does not exist or you do not have access to it.'
 						: project.error instanceof Error
@@ -375,7 +375,7 @@ export function ProjectLanding({
 										rows={1}
 										aria-label={`New chat in ${project.data.name}`}
 										placeholder="New chat in this project…"
-										className="block min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-6 text-primary placeholder:text-tertiary focus:outline-hidden"
+										className="block min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 body-lg text-primary placeholder:text-tertiary focus:outline-hidden"
 									/>
 									<Button
 										type="submit"

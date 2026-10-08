@@ -22,7 +22,7 @@ export default function MCP() {
 					<div className="mx-auto flex h-14 max-w-[1100px] items-center justify-between px-4 sm:px-6 md:px-8">
 						<BasicLink href="/" className="flex items-center gap-2.5">
 							<img src="/assets/llama.webp" alt="DefiLlama" width={28} height={28} className="rounded-full" />
-							<span className="text-sm font-bold tracking-tight">DefiLlama</span>
+							<span className="title-md tracking-tight">DefiLlama</span>
 						</BasicLink>
 
 						<nav className="flex items-center gap-1">

@@ -78,7 +78,7 @@ function openUrl(reference: UnifiedCitationReference): string | null {
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
 	return (
-		<a href={href} target="_blank" rel="noopener noreferrer" className="text-xs text-link hover:underline">
+		<a href={href} target="_blank" rel="noopener noreferrer" className="body-sm text-link hover:underline">
 			{children}
 		</a>
 	)
@@ -185,15 +185,15 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 				</div>
 			) : null}
 			<div className="flex items-baseline justify-between gap-3 border-b border-subtle pb-2">
-				<span className="text-xs text-secondary">{metricLabel(citedCell.column)}</span>
+				<span className="body-sm text-secondary">{metricLabel(citedCell.column)}</span>
 				<span className="label-lg text-link tabular-nums">
 					{formatMetricValue(citedCell.column, row[citedCell.column])}
 				</span>
 			</div>
 			{others.map((c) => (
 				<div key={c} className="flex items-baseline justify-between gap-3">
-					<span className="text-xs text-secondary">{metricLabel(c)}</span>
-					<span className="text-xs text-secondary tabular-nums">{formatMetricValue(c, row[c])}</span>
+					<span className="body-sm text-secondary">{metricLabel(c)}</span>
+					<span className="body-sm text-secondary tabular-nums">{formatMetricValue(c, row[c])}</span>
 				</div>
 			))}
 		</div>
@@ -249,15 +249,15 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{reference.formula ? (
-				<p className="m-0 font-mono text-xs text-secondary">{reference.formula}</p>
+				<p className="m-0 mono-sm text-secondary">{reference.formula}</p>
 			) : summary ? (
-				<p className="m-0 text-xs text-secondary">{summary}</p>
+				<p className="m-0 body-sm text-secondary">{summary}</p>
 			) : null}
 			{outputs.length > 0 ? (
 				<div className="flex flex-col gap-1.5 rounded-lg border border-medium bg-surface-elevated-1 p-3">
 					{outputs.map((o) => (
 						<div key={o.key} className="flex items-baseline justify-between gap-3">
-							<span className="text-xs text-secondary">{humanizeColumn(o.key)}</span>
+							<span className="body-sm text-secondary">{humanizeColumn(o.key)}</span>
 							<span className="label-sm text-secondary tabular-nums">{formatOutputValue(o.key, o.value)}</span>
 						</div>
 					))}
@@ -288,7 +288,7 @@ function WebView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{domain ? <span className="body-sm text-tertiary">{domain}</span> : null}
-			{excerpt ? <p className="m-0 text-xs leading-snug text-secondary">{excerpt}</p> : null}
+			{excerpt ? <p className="m-0 body-sm text-secondary">{excerpt}</p> : null}
 			{safeUrl ? <ExternalLink href={safeUrl}>Open link ↗</ExternalLink> : null}
 		</>
 	)
@@ -299,7 +299,7 @@ function XView({ reference }: { reference: UnifiedCitationReference }) {
 	const excerpt = sanitizeExcerpt(reference.excerpt)
 	return (
 		<>
-			{excerpt ? <p className="m-0 text-xs leading-snug text-secondary">{excerpt}</p> : null}
+			{excerpt ? <p className="m-0 body-sm text-secondary">{excerpt}</p> : null}
 			{safeUrl ? <ExternalLink href={safeUrl}>Open tweet ↗</ExternalLink> : null}
 		</>
 	)
@@ -483,12 +483,12 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 				{description ? <p className="m-0 body-sm text-secondary">{description}</p> : null}
 
 				{mismatch ? (
-					<div className="flex items-start gap-1.5 text-xs text-warning">
+					<div className="flex items-start gap-1.5 body-sm text-warning">
 						<Icon name="alert-triangle" height={14} width={14} className="mt-px shrink-0" />
 						<span>{mismatchLabel(reference)}</span>
 					</div>
 				) : unverified ? (
-					<div className="flex items-start gap-1.5 text-xs text-tertiary">
+					<div className="flex items-start gap-1.5 body-sm text-tertiary">
 						<Icon name="help-circle" height={14} width={14} className="mt-px shrink-0" />
 						<span>{unverifiedLabel()}</span>
 					</div>

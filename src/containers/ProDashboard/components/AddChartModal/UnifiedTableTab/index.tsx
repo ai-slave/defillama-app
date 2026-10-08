@@ -530,7 +530,7 @@ export function UnifiedTableTab({
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
 									<h4 className="title-sm text-pro-text-secondary">Recommended data views</h4>
-									<p className="text-xs text-pro-text-tertiary">Based on your filters</p>
+									<p className="body-sm text-pro-text-tertiary">Based on your filters</p>
 								</div>
 								<PresetPicker
 									activePresetId={activePresetId}
@@ -544,7 +544,7 @@ export function UnifiedTableTab({
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
-								<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-xs text-pro-text-tertiary">
+								<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-2 body-sm text-pro-text-tertiary">
 									All available data views are shown above.
 								</div>
 							)}
@@ -587,7 +587,7 @@ export function UnifiedTableTab({
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
 							<h5 className="title-sm tracking-wide text-pro-text-secondary uppercase">Active filters</h5>
-							<span className="text-xs text-pro-text-tertiary">
+							<span className="body-sm text-pro-text-tertiary">
 								{activeFilterCount > 0 ? `${activeFilterCount} applied` : 'None'}
 							</span>
 						</div>
@@ -597,7 +597,7 @@ export function UnifiedTableTab({
 					<div className="space-y-2">
 						<div>
 							<h5 className="title-sm text-pro-text-secondary">Filter presets</h5>
-							<p className="text-xs text-pro-text-tertiary">Start from curated combinations.</p>
+							<p className="body-sm text-pro-text-tertiary">Start from curated combinations.</p>
 						</div>
 						<PresetSelector currentFilters={filters ?? {}} onApplyPreset={handleApplyPreset} />
 					</div>
@@ -605,7 +605,7 @@ export function UnifiedTableTab({
 					<div className="space-y-2">
 						<div>
 							<h5 className="title-sm text-pro-text-secondary">Scope</h5>
-							<p className="text-xs text-pro-text-tertiary">
+							<p className="body-sm text-pro-text-tertiary">
 								Choose which chains, categories, protocols, or oracles to focus on.
 							</p>
 						</div>
@@ -621,7 +621,7 @@ export function UnifiedTableTab({
 					<div className="space-y-2">
 						<div>
 							<h5 className="title-sm text-pro-text-secondary">Metric & flag filters</h5>
-							<p className="text-xs text-pro-text-tertiary">
+							<p className="body-sm text-pro-text-tertiary">
 								Add filters for TVL, volume, fees, revenue, and other metrics.
 							</p>
 						</div>
@@ -773,7 +773,7 @@ export function UnifiedTableTab({
 							<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10">
 								<Icon name={heroCard.icon} height={22} width={22} className="text-brand" />
 							</div>
-							<h3 className="text-lg font-semibold text-pro-text-primary">{heroCard.label}</h3>
+							<h3 className="heading-xs text-pro-text-primary">{heroCard.label}</h3>
 						</div>
 						<Icon
 							name="arrow-right"
@@ -782,7 +782,7 @@ export function UnifiedTableTab({
 							className="text-pro-text-secondary transition-transform group-hover:translate-x-1 group-hover:text-brand"
 						/>
 					</div>
-					<p className="mb-4 text-sm text-pro-text-secondary">{heroCard.description}</p>
+					<p className="mb-4 body-md text-pro-text-secondary">{heroCard.description}</p>
 					<div className="flex flex-wrap gap-1.5">
 						{heroCard.tags.map((tag) => (
 							<span
@@ -836,11 +836,11 @@ export function UnifiedTableTab({
 										/>
 									</div>
 									<div className="min-w-0 flex-1">
-										<span className="text-sm font-medium text-pro-text-primary">
+										<span className="label-md text-pro-text-primary">
 											{card.label}
 											{isProLocked ? <span className="ml-1 body-sm opacity-60">(Pro)</span> : null}
 										</span>
-										<p className="mt-0.5 line-clamp-1 text-xs text-pro-text-secondary">{card.description}</p>
+										<p className="mt-0.5 line-clamp-1 body-sm text-pro-text-secondary">{card.description}</p>
 									</div>
 								</button>
 							)
@@ -930,7 +930,7 @@ export function UnifiedTableTab({
 			<DialogFooter
 				leading={
 					refusalReason ? (
-						<p role="alert" className="text-xs text-error">
+						<p role="alert" className="body-sm text-error">
 							{refusalReason}
 						</p>
 					) : null

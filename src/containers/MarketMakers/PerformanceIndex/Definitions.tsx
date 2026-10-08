@@ -42,7 +42,7 @@ export function Definitions() {
 	return (
 		<Card padding="md" className="flex flex-col gap-3">
 			<h2 className="heading-xs">Definitions</h2>
-			<div className="flex flex-col text-sm">
+			<div className="flex flex-col body-md">
 				{DEFINITIONS.map((def) => (
 					<div
 						key={def.term}

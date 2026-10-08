@@ -58,7 +58,7 @@ function buildSearchUrl(
 
 function ResultBadge({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="rounded-[4px] border border-research-white px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
+		<span className="rounded-[4px] border border-research-white px-2 py-0.75 label-xs tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
 			{children}
 		</span>
 	)
@@ -78,7 +78,7 @@ function ByLine({ article }: { article: ArticleDocument }) {
 			: null)
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-research-heading/60 dark:text-on-brand/55">
+		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-sm text-research-heading/60 dark:text-on-brand/55">
 			{authorEntries?.length ? (
 				<span className="flex flex-wrap items-center gap-1 font-medium text-research-heading/80 dark:text-on-brand/75">
 					{authorEntries.map((entry, index) => (
@@ -142,12 +142,12 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 					value={draft}
 					onChange={(e) => setDraft(e.target.value)}
 					placeholder="Search reports, interviews, spotlights…"
-					className="w-full bg-transparent py-2.5 text-sm text-research-heading placeholder:text-research-heading/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
+					className="w-full bg-transparent py-2.5 body-md text-research-heading placeholder:text-research-heading/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
 				/>
 			</label>
 			<button
 				type="submit"
-				className="ml-2 inline-flex items-center gap-1 p-1 font-jetbrains text-[11px] tracking-[0.18em] text-research-accent-strong uppercase transition-colors hover:text-research-heading dark:hover:text-research-ink"
+				className="ml-2 inline-flex items-center gap-1 p-1 label-xs tracking-[0.18em] text-research-accent-strong uppercase transition-colors hover:text-research-heading dark:hover:text-research-ink"
 			>
 				<span>Search</span>
 				<span aria-hidden>→</span>
@@ -175,13 +175,13 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 
 	// The current section draws its accent and underline from aria-current.
 	const linkStyles =
-		'relative inline-flex items-center font-jetbrains text-[11px] tracking-[0.18em] uppercase transition-colors text-research-heading/55 hover:text-research-accent-strong dark:text-on-brand/55 dark:hover:text-research-ink aria-[current=page]:text-research-accent-strong dark:aria-[current=page]:text-research-ink after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong after:opacity-0 aria-[current=page]:after:opacity-100 dark:after:bg-research-white'
+		'relative inline-flex items-center label-xs tracking-[0.18em] uppercase transition-colors text-research-heading/55 hover:text-research-accent-strong dark:text-on-brand/55 dark:hover:text-research-ink aria-[current=page]:text-research-accent-strong dark:aria-[current=page]:text-research-ink after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong after:opacity-0 aria-[current=page]:after:opacity-100 dark:after:bg-research-white'
 
 	return (
 		<nav aria-labelledby={labelId} className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
 			<span
 				id={labelId}
-				className="font-jetbrains text-[10px] tracking-[0.24em] text-research-heading/40 uppercase dark:text-on-brand/40"
+				className="label-xs tracking-[0.24em] text-research-heading/40 uppercase dark:text-on-brand/40"
 			>
 				Sections
 			</span>
@@ -237,7 +237,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 						{article.title}
 					</h3>
 					{article.excerpt || article.subtitle ? (
-						<p className="mt-2.5 line-clamp-2 text-sm leading-[150%] text-research-heading/70 dark:text-on-brand/70">
+						<p className="mt-2.5 line-clamp-2 body-md text-research-heading/70 dark:text-on-brand/70">
 							{article.excerpt || article.subtitle}
 						</p>
 					) : null}
@@ -288,7 +288,7 @@ function Pagination({
 	const nextPage = Math.min(totalPages, page + 1)
 
 	const btnBase =
-		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-1.75 text-xs font-semibold tracking-[0.08em] uppercase transition-colors'
+		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-1.75 label-sm tracking-[0.08em] uppercase transition-colors'
 	const enabledStyle =
 		'bg-research-accent-tint text-research-accent hover:bg-research-accent-tint-hover dark:border dark:border-research-invert/40 dark:bg-transparent dark:text-research-ink dark:hover:bg-research-wash-strong'
 	const disabledStyle =
@@ -299,7 +299,7 @@ function Pagination({
 			aria-label="Search results pagination"
 			className="flex flex-wrap items-center justify-between gap-3 border-t border-research-heading/10 pt-5 dark:border-research-line"
 		>
-			<span className="font-jetbrains text-[11px] tracking-[0.18em] text-research-heading/55 uppercase tabular-nums dark:text-on-brand/55">
+			<span className="label-xs tracking-[0.18em] text-research-heading/55 uppercase tabular-nums dark:text-on-brand/55">
 				{rangeStart}–{rangeEnd} of {formatNumber(totalItems)}
 			</span>
 			<div className="flex items-center gap-2">
@@ -315,7 +315,7 @@ function Pagination({
 					<span aria-hidden>←</span>
 					<span>Prev</span>
 				</Ariakit.Button>
-				<span className="px-2 font-jetbrains text-xs tracking-[0.12em] text-research-heading/80 tabular-nums dark:text-on-brand/80">
+				<span className="px-2 mono-sm tracking-[0.12em] text-research-heading/80 tabular-nums dark:text-on-brand/80">
 					{page} / {totalPages}
 				</span>
 				<Ariakit.Button
@@ -346,7 +346,7 @@ function EmptyState({ query, tag, section, client }: { query: string; tag: strin
 				<h2 className="text-[22px] leading-[130%] font-semibold tracking-tight text-research-heading dark:text-research-ink">
 					{hasFilters ? 'Nothing matches that.' : 'No research yet.'}
 				</h2>
-				<p className="text-sm leading-[150%] text-research-heading/65 dark:text-on-brand/65">
+				<p className="body-md text-research-heading/65 dark:text-on-brand/65">
 					{hasFilters
 						? 'Try a different keyword, drop a filter, or browse the sections below.'
 						: 'Once research is published, you can search across reports, interviews, and more from here.'}
@@ -481,7 +481,7 @@ export default function ResearchSearch() {
 	return (
 		<div className="mx-auto grid w-full max-w-6xl gap-7 px-3 pt-4 pb-20 sm:px-6 lg:px-8">
 			<header className="grid gap-4 pr-16 lg:pr-0">
-				<div className="flex items-baseline justify-between gap-6 font-jetbrains text-[10px] tracking-[0.22em] uppercase">
+				<div className="flex items-baseline justify-between gap-6 label-xs tracking-[0.22em] uppercase">
 					<span className="text-research-accent-strong">Research / Archive</span>
 					<Button variant="link" onClick={clearSearchParams} className="shrink-0">
 						<span aria-hidden>←</span>
@@ -492,7 +492,7 @@ export default function ResearchSearch() {
 				<ResultsTitle query={query} tag={tag} clientName={clientName} />
 
 				<div className="flex items-center gap-x-3 text-research-heading/55 dark:text-on-brand/55">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
+					<span className="label-xs tracking-[0.18em] uppercase tabular-nums">
 						{/* A failed read has no count to give: the block below says why. */}
 						{failed
 							? null
@@ -512,7 +512,7 @@ export default function ResearchSearch() {
 			{failed ? (
 				<div className="grid justify-items-start gap-3 border border-error/30 bg-error/5 p-6">
 					<h2 className="text-xl font-semibold text-research-heading dark:text-research-ink">Couldn't load research</h2>
-					<p role="alert" className="text-sm text-error">
+					<p role="alert" className="body-md text-error">
 						{error instanceof ArticleApiError ? error.message : 'Failed to load articles'}
 					</p>
 					<Button

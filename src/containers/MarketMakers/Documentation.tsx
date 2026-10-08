@@ -495,7 +495,7 @@ function WeightTable({ rows, showRanking = true }: { rows: Array<WeightRow>; sho
 	return (
 		<div className="overflow-hidden rounded-lg border border-subtle">
 			<div className="overflow-x-auto">
-				<table className="w-full border-collapse text-sm">
+				<table className="w-full border-collapse body-md">
 					<thead>
 						<tr className="bg-brand text-on-brand">
 							<th className="px-4 py-3 text-center font-medium">Metric</th>
@@ -523,7 +523,7 @@ function GradeBandsTable() {
 	return (
 		<div className="overflow-hidden rounded-lg border border-subtle">
 			<div className="overflow-x-auto">
-				<table className="w-full border-collapse text-sm">
+				<table className="w-full border-collapse body-md">
 					<thead>
 						<tr className="bg-brand text-on-brand">
 							<th className="w-40 px-4 py-3 text-center font-medium">Composite Score</th>
@@ -558,7 +558,7 @@ function GlossaryItem({ entry }: { entry: GlossaryEntry }) {
 			</p>
 			{entry.bullets ? <Bullets items={entry.bullets} /> : null}
 			{entry.code ? (
-				<pre className="overflow-x-auto rounded-md bg-page p-3 text-sm text-primary">
+				<pre className="overflow-x-auto rounded-md bg-page p-3 body-md text-primary">
 					<code>{entry.code}</code>
 				</pre>
 			) : null}
@@ -945,7 +945,7 @@ export function MarketMakersDocumentation() {
 										]}
 									/>
 									<P>The total fill volume in this example is $2.36m, allowing us to calculate VWAS as:</P>
-									<pre className="overflow-x-auto rounded-md bg-page p-3 text-sm text-primary">
+									<pre className="overflow-x-auto rounded-md bg-page p-3 body-md text-primary">
 										<code>
 											VWAS = [(1.0m×5) + (0.75m×10) + (0.5m×10) + (0.1m×50) + (0.01m×100)] / 2.36m ≈ 9.96 bps (~10 bps)
 										</code>

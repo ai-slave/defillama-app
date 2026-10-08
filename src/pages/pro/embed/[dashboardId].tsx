@@ -54,7 +54,7 @@ export default function DashboardEmbedPage({
 				<meta name="robots" content="noindex" />
 			</Head>
 			<div className="col-span-full flex min-h-dvh flex-col gap-2 p-2 text-pro-text-primary pro-dashboard">
-				<header className="flex items-center justify-between gap-3 text-xs">
+				<header className="flex items-center justify-between gap-3 body-sm">
 					<div className="flex min-w-0 items-center gap-2">
 						<img
 							src={theme === 'dark' ? '/assets/defillama.webp' : '/assets/defillama-dark.webp'}
@@ -116,8 +116,8 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center">
 				<p className="title-lg">Card not found</p>
-				<p className="text-sm text-pro-text-secondary">This card is no longer part of the dashboard.</p>
-				<a href={dashboardHref} target="_blank" rel="noreferrer" className="text-sm text-link hover:underline">
+				<p className="body-md text-pro-text-secondary">This card is no longer part of the dashboard.</p>
+				<a href={dashboardHref} target="_blank" rel="noreferrer" className="body-md text-link hover:underline">
 					Open the dashboard
 				</a>
 			</div>

@@ -129,7 +129,7 @@ export function InvestorContainer({
 				<SummaryStatsCard>
 					<h1 className="heading-sm">{investorName}</h1>
 
-					<details className="group text-base">
+					<details className="group body-lg">
 						<summary>
 							<Icon
 								name="chevron-right"

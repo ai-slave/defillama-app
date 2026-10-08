@@ -1455,14 +1455,14 @@ function StatCard({
 					changeTooltip ? (
 						<Tooltip
 							content={changeTooltip}
-							className={`text-base underline decoration-current decoration-dotted ${changeDecorationClass}`}
+							className={`mono-md underline decoration-current decoration-dotted ${changeDecorationClass}`}
 						>
 							<span>
 								<PercentChange percent={change} fontWeight={500} />
 							</span>
 						</Tooltip>
 					) : (
-						<span className="text-base">
+						<span className="mono-md">
 							<PercentChange percent={change} fontWeight={500} />
 						</span>
 					)

@@ -77,7 +77,7 @@ const columns = columnHelper.columns([
 		cell: (info) => (
 			<span className="flex flex-col items-end">
 				<span>{formatCompactNumber(info.getValue())}</span>
-				<span className="text-xs text-tertiary">
+				<span className="body-sm text-tertiary">
 					{info.row.original.dexVenues} DEX · {info.row.original.cexVenues} CEX
 				</span>
 			</span>

@@ -839,7 +839,7 @@ function PreviewSpecimenHeader({
 						{status ? <span className="label-sm text-tertiary capitalize">{status}</span> : null}
 					</div>
 					<h3
-						className="text-xl leading-tight font-semibold tracking-tight break-words text-primary"
+						className="heading-sm tracking-tight break-words text-primary"
 						style={{ fontFamily: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif" }}
 						title={title}
 					>
@@ -999,7 +999,7 @@ function MetadataDiffSection({ changes }: { changes: Array<FieldChange> }) {
 						<dt className="label-sm text-tertiary">{change.label}</dt>
 						<dd className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
 							<MetaValue value={change.before} tone="remove" />
-							<span aria-hidden className="hidden font-jetbrains text-[10px] text-tertiary/60 sm:inline">
+							<span aria-hidden className="hidden mono-sm text-tertiary/60 sm:inline">
 								→
 							</span>
 							<MetaValue value={change.after} tone="add" />
@@ -1013,14 +1013,14 @@ function MetadataDiffSection({ changes }: { changes: Array<FieldChange> }) {
 
 function MetaValue({ value, tone }: { value: string | null; tone: 'add' | 'remove' }) {
 	if (value == null) {
-		return <span className="font-jetbrains text-[11px] text-tertiary/60 italic">empty</span>
+		return <span className="mono-sm text-tertiary/60 italic">empty</span>
 	}
 	const styles =
 		tone === 'remove'
 			? 'border-error/30 bg-error/5 text-error dark:text-error line-through'
 			: 'border-emerald-500/30 bg-success/5 text-success dark:text-success'
 	return (
-		<span className={`inline-block max-w-full truncate rounded-sm border px-2 py-0.5 text-xs ${styles}`}>{value}</span>
+		<span className={`inline-block max-w-full truncate rounded-sm border px-2 py-0.5 body-sm ${styles}`}>{value}</span>
 	)
 }
 
@@ -1045,20 +1045,20 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	if (op.type === 'equal') {
 		return (
 			<div className={`${baseClasses} text-secondary`}>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[10px] text-tertiary/60">
+				<span aria-hidden className="pt-0.5 text-center mono-sm text-tertiary/60">
 					·
 				</span>
-				<p className="text-sm">{op.value}</p>
+				<p className="body-md">{op.value}</p>
 			</div>
 		)
 	}
 	if (op.type === 'add') {
 		return (
 			<div className={`${baseClasses} bg-success/7.000000000000001 text-primary ring-1 ring-emerald-500/20 ring-inset`}>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-success">
+				<span aria-hidden className="pt-0.5 text-center mono-sm text-success">
 					+
 				</span>
-				<p className="text-sm">{op.value}</p>
+				<p className="body-md">{op.value}</p>
 			</div>
 		)
 	}
@@ -1067,19 +1067,19 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 			<div
 				className={`${baseClasses} bg-error/6 text-error/85 line-through ring-1 ring-red-500/20 ring-inset dark:text-error/85`}
 			>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-error no-underline">
+				<span aria-hidden className="pt-0.5 text-center mono-sm text-error no-underline">
 					−
 				</span>
-				<p className="text-sm">{op.value}</p>
+				<p className="body-md">{op.value}</p>
 			</div>
 		)
 	}
 	return (
 		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-warning/20 ring-inset`}>
-			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-warning">
+			<span aria-hidden className="pt-0.5 text-center mono-sm text-warning">
 				~
 			</span>
-			<p className="text-sm [overflow-wrap:anywhere]">
+			<p className="body-md [overflow-wrap:anywhere]">
 				{op.words.map((word, idx) => {
 					// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 					if (word.type === 'equal') return <span key={idx}>{word.value}</span>

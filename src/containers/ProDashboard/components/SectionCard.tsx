@@ -113,11 +113,11 @@ export function SectionCard({
 						value={section.description ?? ''}
 						placeholder="Add a description"
 						maxLength={SECTION_DESCRIPTION_MAX_LENGTH}
-						className="text-sm text-pro-text-secondary"
+						className="body-md text-pro-text-secondary"
 						onCommit={(description) => editing.onUpdate({ description })}
 					/>
 				) : section.description ? (
-					<p className="text-sm text-pro-text-secondary">{section.description}</p>
+					<p className="body-md text-pro-text-secondary">{section.description}</p>
 				) : null}
 			</div>
 			<div aria-hidden="true" className="h-px min-w-6 flex-1 bg-pro-cards-border" />

@@ -62,7 +62,7 @@ export function BalanceSettings({ result, balanceBefore }: { result?: TopupResul
 					{isLoading && !readFailed ? (
 						<p role="status">Loading balance…</p>
 					) : balance ? (
-						<p className="text-xl font-semibold text-primary tabular-nums">
+						<p className="mono-lg text-primary tabular-nums">
 							{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 						</p>
 					) : null}

@@ -326,7 +326,7 @@ function Breakdown({ data }: { data: BreakdownData }) {
 	const name = `${data.name} (${formatPercent(data.dominance, { input: 'percent' })})`
 
 	return (
-		<span className="flex flex-col gap-1 border-l-3 pl-1 text-xs" style={{ borderColor: data.color }}>
+		<span className="flex flex-col gap-1 border-l-3 pl-1 body-sm" style={{ borderColor: data.color }}>
 			<span className="break-words">{name}</span>
 			{data.amount != null ? (
 				<span>{`Amount: ${formatCompactNumber(data.amount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${data.ticker}`}</span>

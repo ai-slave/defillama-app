@@ -30,12 +30,13 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 0
+		"raw-type-pair": 0,
+		"raw-type-size": 0
 	},
 	"product": {
 		"hex-in-classname": 21,
 		"dark-hex-variant": 7,
-		"arbitrary-font-size": 455,
+		"arbitrary-font-size": 0,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
@@ -63,6 +64,7 @@
 		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 631
+		"raw-type-pair": 0,
+		"raw-type-size": 0
 	}
 }

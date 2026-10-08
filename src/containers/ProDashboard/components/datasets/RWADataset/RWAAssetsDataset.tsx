@@ -46,7 +46,7 @@ const columns = columnHelper.columns([
 		id: 'name',
 		header: 'Name',
 		cell: (info) => (
-			<span className="flex items-center gap-1 text-sm font-medium">
+			<span className="flex items-center gap-1 label-md">
 				<span className="truncate">{info.getValue()}</span>
 				{info.row.original.suspicious ? <RWASuspiciousWarning reason={info.row.original.suspiciousReason} /> : null}
 			</span>
@@ -204,7 +204,7 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 							type="text"
 							placeholder="Search assets..."
 							onInput={(event) => setProjectName(event.currentTarget.value)}
-							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 body-md text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

@@ -43,7 +43,7 @@ function NearLogo() {
 	return (
 		<div className="flex items-center gap-2.5">
 			<NearIcon className="size-7 shrink-0" />
-			<span className="text-lg font-bold text-pro-text-primary">NEAR Protocol</span>
+			<span className="heading-xs text-pro-text-primary">NEAR Protocol</span>
 		</div>
 	)
 }
@@ -67,7 +67,7 @@ export default function NearHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
+						className={`items-center gap-1.5 rounded-md px-2 py-1.5 body-md text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
 							key === 'website' ? 'flex' : 'hidden sm:flex'
 						}`}
 					>
@@ -79,7 +79,7 @@ export default function NearHeader() {
 					href="https://near.org"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold text-on-brand transition-opacity hover:opacity-85"
+					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 title-md text-on-brand transition-opacity hover:opacity-85"
 					style={{ background: 'linear-gradient(135deg, #00C1DE, #00E4AA)' }}
 				>
 					Visit NEAR

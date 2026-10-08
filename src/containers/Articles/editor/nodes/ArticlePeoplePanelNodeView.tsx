@@ -27,13 +27,13 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 				<ArticlePeoplePanelBlock config={config} compact />
 			) : isEditable ? (
 				<div className="grid justify-items-center gap-2 py-6">
-					<p className="text-sm text-tertiary">Empty people panel</p>
+					<p className="body-md text-tertiary">Empty people panel</p>
 					<Button variant="secondary" size="sm" onClick={handleEdit}>
 						Configure
 					</Button>
 				</div>
 			) : (
-				<p className="py-6 text-center text-sm text-tertiary">Empty people panel</p>
+				<p className="py-6 text-center body-md text-tertiary">Empty people panel</p>
 			)}
 
 			{isEditable ? (

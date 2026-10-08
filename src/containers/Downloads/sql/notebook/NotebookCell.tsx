@@ -215,11 +215,7 @@ function CellTypeBadge({ type }: { type: CellType }) {
 			: type === 'markdown'
 				? 'bg-pro-ai-300/15 text-pro-ai-300'
 				: 'bg-pro-premium-300/15 text-pro-premium-300'
-	return (
-		<span className={`inline-flex h-[14px] items-center rounded-[3px] px-1 font-mono text-[9px] leading-none ${tone}`}>
-			{label}
-		</span>
-	)
+	return <span className={`inline-flex h-[14px] items-center rounded-[3px] px-1 mono-sm ${tone}`}>{label}</span>
 }
 
 function CellMenu({

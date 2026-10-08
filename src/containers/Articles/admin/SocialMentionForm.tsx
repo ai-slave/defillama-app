@@ -113,7 +113,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 	if (mentionId && queryReadFailed(mentionsQuery) && !mentionsQuery.data) {
 		return (
 			<div className="mx-auto grid max-w-xl justify-items-start gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't load the mentions</h1>
+				<h1 className="heading-sm text-primary">Couldn't load the mentions</h1>
 				<Button
 					size="sm"
 					onClick={() => void mentionsQuery.refetch()}
@@ -126,13 +126,13 @@ export function SocialMentionForm({ mentionId }: Props) {
 	}
 
 	if (mentionId && mentionsQuery.isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>
+		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
 	}
 
 	if (mentionId && !mention) {
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't find this mention</h1>
+				<h1 className="heading-sm text-primary">Couldn't find this mention</h1>
 			</div>
 		)
 	}
@@ -154,7 +154,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 	return (
 		<form onSubmit={handleSubmit} className="mx-auto grid w-full max-w-2xl gap-6 px-1 pb-16">
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Quote</span>
+				<span className="label-md text-primary">Quote</span>
 				<textarea
 					value={state.quote}
 					onChange={(e) => update({ quote: e.target.value })}
@@ -165,7 +165,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 			</label>
 
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Username</span>
+				<span className="label-md text-primary">Username</span>
 				<Input
 					type="text"
 					value={state.username}
@@ -176,7 +176,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 			</label>
 
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Social media name</span>
+				<span className="label-md text-primary">Social media name</span>
 				<Input
 					type="text"
 					value={state.socialMediaName}
@@ -187,7 +187,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 			</label>
 
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">
+				<span className="label-md text-primary">
 					Social media link <span className="font-normal text-tertiary">(optional)</span>
 				</span>
 				<Input
@@ -200,7 +200,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 			</label>
 
 			<label className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">X post id</span>
+				<span className="label-md text-primary">X post id</span>
 				<Input
 					type="text"
 					value={state.xPostId}
@@ -208,13 +208,13 @@ export function SocialMentionForm({ mentionId }: Props) {
 					placeholder="2020885843125178639"
 					className="w-full"
 				/>
-				<p className="text-xs text-tertiary">numeric id from the X post URL, e.g. 2020885843125178639</p>
+				<p className="body-sm text-tertiary">numeric id from the X post URL, e.g. 2020885843125178639</p>
 			</label>
 
-			{!submittable ? <p className="text-xs text-warning">Quote, username, and X post id are all required.</p> : null}
+			{!submittable ? <p className="body-sm text-warning">Quote, username, and X post id are all required.</p> : null}
 
 			<div className="grid gap-1.5">
-				<span className="text-sm font-medium text-primary">Slot previews</span>
+				<span className="label-md text-primary">Slot previews</span>
 				<div className="flex flex-wrap items-start gap-3">
 					{[0, 1, 2].map((slotIndex) => {
 						const isCurrent = slotIndex === (previewSlotIndex < 0 ? 0 : previewSlotIndex)
@@ -228,7 +228,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 						)
 					})}
 				</div>
-				<p className="text-xs text-tertiary">
+				<p className="body-sm text-tertiary">
 					The highlighted slot matches this mention's position in the list — reordering or toggling other mentions
 					changes it. The other two show how the text fits if it moves.
 				</p>
@@ -237,7 +237,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 			<div className="sticky bottom-0 -mx-1 mt-2 grid gap-2 border-t border-medium bg-page/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-page/70">
 				{conflict ? <SavedChangedNotice noun="mention" onLoadSaved={loadSaved} /> : null}
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-2 text-xs text-tertiary">
+					<span className="inline-flex items-center gap-2 body-sm text-tertiary">
 						<span
 							aria-hidden
 							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-warning' : 'bg-success'}`}

@@ -218,7 +218,7 @@ function DashboardPanelInner({
 							>
 								<Icon name="chevron-left" className="size-3.5" />
 							</Tooltip>
-							<span className="text-xs text-tertiary">
+							<span className="body-sm text-tertiary">
 								Version {versionIndex + 1} of {versions.length}
 							</span>
 							<Tooltip

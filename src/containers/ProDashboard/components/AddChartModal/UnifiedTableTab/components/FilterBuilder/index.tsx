@@ -312,7 +312,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						) : null}
 						{categoryBadge}
 					</div>
-					<span className="truncate text-xs opacity-80">{displayValue}</span>
+					<span className="truncate body-sm opacity-80">{displayValue}</span>
 				</div>
 				{removeButton}
 			</div>
@@ -340,7 +340,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 							) : null}
 							{categoryBadge}
 						</div>
-						<span className="truncate text-xs opacity-80">{displayValue}</span>
+						<span className="truncate label-sm opacity-80">{displayValue}</span>
 					</div>
 				</button>
 				{removeButton}
@@ -366,7 +366,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					{removeButton}
 				</div>
 				<div className="flex items-center gap-1.5">
-					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
+					{prefix ? <span className="body-sm opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
@@ -378,7 +378,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						placeholder="e.g. 10, 1k, 1m"
 						className={`${inputStyles} min-w-0 flex-1`}
 					/>
-					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
+					{suffix ? <span className="body-sm opacity-70">{suffix}</span> : null}
 				</div>
 				<Button size="sm" onClick={onEndEdit}>
 					Done
@@ -416,7 +416,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			/>
 			{filter.operator === 'between' ? (
 				<div className="flex items-center gap-1.5">
-					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
+					{prefix ? <span className="body-sm opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
@@ -428,7 +428,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						placeholder="Min"
 						className={`${inputStyles} min-w-0 flex-1`}
 					/>
-					<span className="text-xs opacity-70">-</span>
+					<span className="body-sm opacity-70">-</span>
 					<input
 						type="text"
 						inputMode="decimal"
@@ -439,11 +439,11 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						placeholder="Max"
 						className={`${inputStyles} min-w-0 flex-1`}
 					/>
-					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
+					{suffix ? <span className="body-sm opacity-70">{suffix}</span> : null}
 				</div>
 			) : (
 				<div className="flex items-center gap-1.5">
-					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
+					{prefix ? <span className="body-sm opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
@@ -455,7 +455,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						placeholder="e.g. 10, 1k, 1m"
 						className={`${inputStyles} min-w-0 flex-1`}
 					/>
-					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
+					{suffix ? <span className="body-sm opacity-70">{suffix}</span> : null}
 				</div>
 			)}
 			<Button size="sm" onClick={onEndEdit}>
@@ -608,7 +608,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-2">
 						<span className="title-sm text-pro-text-secondary">Browse filters</span>
-						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 text-xs text-pro-text-tertiary">
+						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 body-sm text-pro-text-tertiary">
 							{search
 								? `${visibleAvailableCount} match${visibleAvailableCount === 1 ? '' : 'es'}`
 								: `${inactiveFiltersCount} available`}
@@ -652,7 +652,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 								>
 									<div className="flex items-center gap-2">
 										<span className={`rounded-sm px-1.5 py-0.5 label-sm ${badgeColor}`}>{label}</span>
-										<span className="text-xs text-pro-text-tertiary">{availableFilters.length}</span>
+										<span className="body-sm text-pro-text-tertiary">{availableFilters.length}</span>
 									</div>
 									<Icon
 										name="chevron-down"
@@ -670,7 +670,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 												className="group flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 text-left transition-all hover:bg-(--cards-bg2)"
 											>
 												<div className="flex items-center gap-1.5">
-													<span className="truncate text-xs text-pro-text-primary">{filter.label}</span>
+													<span className="truncate label-sm text-pro-text-primary">{filter.label}</span>
 													{filter.description ? (
 														<Tooltip content={filter.description} placement="right">
 															<Icon name="circle-help" className="size-3 text-pro-text-tertiary opacity-50" />
@@ -689,7 +689,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						)
 					})}
 					{filteredCategories.length === 0 ? (
-						<div className="flex items-center justify-between rounded-md border border-dashed border-pro-cards-border bg-(--cards-bg2) p-3 text-xs text-pro-text-tertiary">
+						<div className="flex items-center justify-between rounded-md border border-dashed border-pro-cards-border bg-(--cards-bg2) p-3 body-sm text-pro-text-tertiary">
 							<span>No filters match "{search}".</span>
 							<Button
 								size="sm"
@@ -726,7 +726,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 					{allActiveFilters.length === 0 ? (
 						<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-pro-cards-border py-6 text-center">
 							<Icon name="settings" className="mb-2 size-5 text-pro-text-tertiary" />
-							<p className="text-xs text-pro-text-tertiary">
+							<p className="body-sm text-pro-text-tertiary">
 								No filters applied. Add from the left to start narrowing results.
 							</p>
 						</div>

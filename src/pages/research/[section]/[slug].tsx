@@ -158,7 +158,7 @@ function OwnerEditChip({ article }: { article: PublicArticleDocument }) {
 		<div className="pointer-events-none fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 justify-center sm:bottom-8">
 			<Link
 				href={`/research/edit/${article.id}`}
-				className="pointer-events-auto flex items-center gap-2 rounded-md border border-medium bg-surface px-3 py-2 text-sm font-medium text-primary shadow-lg transition-colors hover:border-link/40 hover:text-link"
+				className="pointer-events-auto flex items-center gap-2 rounded-md border border-medium bg-surface px-3 py-2 label-md text-primary shadow-lg transition-colors hover:border-link/40 hover:text-link"
 			>
 				<Icon name="pencil" className="size-4" />
 				Edit research
@@ -209,7 +209,7 @@ function SectionArticleContent({
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
 				<h1 className="heading-sm text-primary">Section not found</h1>
-				<Link href="/research" className="text-sm text-link hover:underline">
+				<Link href="/research" className="body-md text-link hover:underline">
 					Browse all research →
 				</Link>
 			</div>
@@ -224,7 +224,7 @@ function SectionArticleContent({
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
 				<h1 className="heading-sm text-primary">Research not found</h1>
-				<Link href="/research" className="text-sm text-link hover:underline">
+				<Link href="/research" className="body-md text-link hover:underline">
 					Browse all research →
 				</Link>
 			</div>
@@ -236,7 +236,7 @@ function SectionArticleContent({
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
 				<h1 className="heading-sm text-primary">Couldn't load research</h1>
-				<p className="text-sm text-secondary">{message}</p>
+				<p className="body-md text-secondary">{message}</p>
 			</div>
 		)
 	}

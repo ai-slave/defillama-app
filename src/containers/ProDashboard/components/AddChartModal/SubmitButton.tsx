@@ -34,7 +34,7 @@ export function SubmitButton({ editItem, state, onSubmit, submitError }: SubmitB
 			leading={
 				<div id={reasonId} className="flex min-h-4 min-w-0 items-center">
 					{submitError ? (
-						<p role="alert" className="text-xs text-error">
+						<p role="alert" className="body-sm text-error">
 							{submitError}
 						</p>
 					) : (

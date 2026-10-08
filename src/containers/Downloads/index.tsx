@@ -31,9 +31,7 @@ const MODE_OPTIONS = [
 			<span className="inline-flex items-center gap-1.5">
 				<Icon name="code" className="size-3.5" />
 				SQL Studio
-				<span className="rounded-sm bg-pro-success-200/15 px-1 text-[10px] font-bold tracking-wider text-pro-success-300">
-					NEW
-				</span>
+				<span className="rounded-sm bg-pro-success-200/15 px-1 label-xs tracking-wider text-pro-success-300">NEW</span>
 			</span>
 		)
 	}
@@ -85,11 +83,11 @@ function ModeBand({ mode }: { mode: DownloadsMode }) {
 		<div className="flex flex-col gap-3 rounded-xl border border-sub-brand-primary/25 bg-linear-to-br from-sub-brand-primary/8 to-surface p-3 sm:flex-row sm:items-center sm:gap-5 sm:p-4">
 			<div className="flex flex-col gap-0.5">
 				<span className="title-md tracking-tight text-pro-text-primary">{title}</span>
-				<span className="text-xs leading-relaxed text-pro-text-secondary">{subtitle}</span>
+				<span className="body-sm text-pro-text-secondary">{subtitle}</span>
 			</div>
 			{isSql ? null : (
 				<div aria-hidden className="hidden shrink-0 items-center sm:ml-auto sm:flex">
-					<span className="rounded-md border border-subtle bg-surface px-2.5 py-1 font-mono text-[10.5px] tracking-tight">
+					<span className="rounded-md border border-subtle bg-surface px-2.5 py-1 mono-sm tracking-tight">
 						<span className="font-semibold text-sub-brand-primary">SELECT</span>
 						<span className="text-pro-text-tertiary"> * </span>
 						<span className="font-semibold text-sub-brand-primary">FROM</span>

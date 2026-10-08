@@ -11,7 +11,7 @@ import { tw } from './tw'
    placeholder are body-sm (text-primary / text-tertiary); focus swaps the
    border to brand, and `aria-invalid` keeps it border-error while focused
    too, so callers never add their own error border. Entered text stays
-   text-base below the sm breakpoint so iOS Safari does not zoom the page
+   body-lg (16px) below the sm breakpoint so iOS Safari does not zoom the page
    when the field focuses (it reads the typed size only), while the
    placeholder drops to 14px on the same 24px line, so the hint reads as a
    hint; sm:body-sm takes over from there. The recipe sizes the
@@ -44,7 +44,7 @@ import { tw } from './tw'
    `className={inputStyles}` (plus layout classes) instead of the component.
 ---------------------------------------------------------------------------- */
 
-const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error aria-invalid:focus:border-error`
+const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 body-lg text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error aria-invalid:focus:border-error`
 
 export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
 

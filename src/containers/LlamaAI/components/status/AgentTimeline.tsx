@@ -51,7 +51,7 @@ export function ElapsedTimeLabel({ startedAt }: { startedAt?: number }) {
 	if (!startedAt) return null
 	const elapsed = Math.max(0, currentSecond - Math.floor(startedAt / 1000))
 
-	return <span className="font-mono text-xs text-tertiary tabular-nums">{elapsed}s</span>
+	return <span className="mono-sm text-tertiary tabular-nums">{elapsed}s</span>
 }
 
 function Caret() {
@@ -161,7 +161,7 @@ export function AgentTimeline({
 						onClick={() => setToggled(!expanded)}
 						aria-expanded={expanded}
 						aria-label={expanded ? 'Hide steps' : 'Show steps'}
-						className={`flex w-full items-center gap-2 text-left text-sm font-semibold ${text}`}
+						className={`flex w-full items-center gap-2 text-left label-md ${text}`}
 					>
 						<span className="min-w-0 flex-1 truncate">{phrase}&hellip;</span>
 						<ElapsedTimeLabel startedAt={executionStartedAt} />
@@ -185,7 +185,7 @@ export function AgentTimeline({
 				type="button"
 				onClick={() => setToggled(!expanded)}
 				aria-expanded={expanded}
-				className={`flex w-full items-center gap-2 rounded-md py-1 text-left text-xs not-disabled:not-aria-disabled:hover:bg-hover-row ${text}`}
+				className={`flex w-full items-center gap-2 rounded-md py-1 text-left label-sm not-disabled:not-aria-disabled:hover:bg-hover-row ${text}`}
 			>
 				<Icon
 					name="check"
@@ -275,7 +275,7 @@ function TimelineRows({
 				<li className="overflow-clip">
 					<div className="flex items-center gap-2 py-0.5 motion-safe:animate-ai-step-enter">
 						<Icon name="layers" height={14} width={14} className="shrink-0 text-tertiary motion-safe:animate-pulse" />
-						<span className={`text-xs ${muted}`}>Optimizing context memory&hellip;</span>
+						<span className={`body-sm ${muted}`}>Optimizing context memory&hellip;</span>
 					</div>
 				</li>
 			) : null}
@@ -283,7 +283,7 @@ function TimelineRows({
 				<li className="overflow-clip">
 					<div className="flex items-center gap-2 py-0.5 motion-safe:animate-ai-step-enter">
 						<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
-						<span className={`text-xs ${muted}`}>{FACT_CHECK_LABELS[factCheckPhase]}&hellip;</span>
+						<span className={`body-sm ${muted}`}>{FACT_CHECK_LABELS[factCheckPhase]}&hellip;</span>
 					</div>
 				</li>
 			) : null}
@@ -297,7 +297,7 @@ function TimelineRows({
 						) : (
 							<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 						)}
-						<span className={`truncate text-xs ${muted}`}>
+						<span className={`truncate body-sm ${muted}`}>
 							{agent.id}
 							{agent.status === 'tool_call' && agent.tool ? ` — ${getToolLabel(agent.tool)}` : ''}
 							{agent.status === 'thinking' ? ' — Thinking…' : ''}
@@ -308,7 +308,7 @@ function TimelineRows({
 			))}
 			{showTrailingThinking ? (
 				<li className="overflow-clip">
-					<div className={`flex items-center gap-2 py-0.5 text-xs motion-safe:animate-ai-step-enter ${muted}`}>
+					<div className={`flex items-center gap-2 py-0.5 body-sm motion-safe:animate-ai-step-enter ${muted}`}>
 						<span className="size-1.5 shrink-0 rounded-full bg-border-strong" />
 						<span>
 							Thinking&hellip;
@@ -341,7 +341,7 @@ function ReasoningRow({
 					type="button"
 					onClick={() => setToggled(!open)}
 					aria-expanded={open}
-					className="flex items-center gap-2 py-0.5 text-left text-xs"
+					className="flex items-center gap-2 py-0.5 text-left label-sm"
 				>
 					<span
 						className={`size-1.5 shrink-0 rounded-full ${live ? 'bg-brand motion-safe:animate-pulse' : 'bg-border-strong'}`}
@@ -360,7 +360,7 @@ function ReasoningRow({
 				</button>
 				{open ? (
 					<div
-						className={`mt-0.5 mb-1 ml-3.5 border-l border-subtle pl-3 font-mono text-xs leading-relaxed whitespace-pre-wrap ${
+						className={`mt-0.5 mb-1 ml-3.5 border-l border-subtle pl-3 mono-sm whitespace-pre-wrap ${
 							hackerMode ? 'text-ai-terminal/80' : 'text-tertiary'
 						}`}
 					>
@@ -438,12 +438,12 @@ function ToolRow({
 						type="button"
 						onClick={() => setOpen(!open)}
 						aria-expanded={open}
-						className="flex w-full items-center gap-2 rounded-md py-0.5 text-left text-xs not-disabled:not-aria-disabled:hover:bg-hover-row"
+						className="flex w-full items-center gap-2 rounded-md py-0.5 text-left label-sm not-disabled:not-aria-disabled:hover:bg-hover-row"
 					>
 						{row}
 					</button>
 				) : (
-					<div className="flex w-full items-center gap-2 py-0.5 text-xs">{row}</div>
+					<div className="flex w-full items-center gap-2 py-0.5 body-sm">{row}</div>
 				)}
 				{open && hasDetails ? (
 					<div

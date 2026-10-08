@@ -210,7 +210,7 @@ export function DimensionProtocolChartByType({
 		return (
 			<ChartPanelExportShellFallback role="alert" className="col-span-2 flex flex-col items-center justify-center">
 				<div className="flex flex-col gap-2 p-2">
-					<p className="text-xs break-all text-error">
+					<p className="body-sm break-all text-error">
 						{error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error)}
 					</p>
 				</div>

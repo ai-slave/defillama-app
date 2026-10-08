@@ -177,7 +177,7 @@ function CopyBox({ text, label }: { text: string; label: string }) {
 					<CopyButton text={text} label={label} />
 				</div>
 				<div className="p-4">
-					<p className="font-jetbrains text-sm leading-relaxed text-primary">{text}</p>
+					<p className="mono-md text-primary">{text}</p>
 				</div>
 			</Card>
 		</div>
@@ -286,7 +286,7 @@ function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string
 		<Card padding="md">
 			<div className="mb-3 flex size-9 items-center justify-center rounded-md bg-brand-faint text-lg">{icon}</div>
 			<h3 className="mb-1.5 font-semibold text-primary">{title}</h3>
-			<p className="text-sm leading-relaxed text-secondary">{children}</p>
+			<p className="body-md text-secondary">{children}</p>
 		</Card>
 	)
 }
@@ -294,7 +294,7 @@ function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string
 function StepCard({ step, title, children }: { step: number; title: string; children: ReactNode }) {
 	return (
 		<Card padding="md">
-			<div className="mb-3 flex size-8 items-center justify-center rounded-md bg-brand-faint text-sm font-bold text-link">
+			<div className="mb-3 flex size-8 items-center justify-center rounded-md bg-brand-faint title-md text-link">
 				{step}
 			</div>
 			<h3 className="mb-1.5 font-semibold text-primary">{title}</h3>
@@ -334,7 +334,7 @@ function ToolCategoryGroup({
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-controls={panelId}
-				className="mb-2 flex w-full items-center gap-2 text-left text-xs font-semibold tracking-widest text-secondary uppercase transition-colors hover:text-primary"
+				className="mb-2 flex w-full items-center gap-2 text-left label-sm tracking-widest text-secondary uppercase transition-colors hover:text-primary"
 			>
 				<svg
 					viewBox="0 0 24 24"
@@ -355,7 +355,7 @@ function ToolCategoryGroup({
 					{tools.map((t) => (
 						<Card key={t.name} padding="sm">
 							<code className="mono-md text-link">{t.name}</code>
-							<p className="mt-0.5 text-xs leading-relaxed text-secondary">{t.desc}</p>
+							<p className="mt-0.5 body-sm text-secondary">{t.desc}</p>
 						</Card>
 					))}
 				</div>
@@ -490,7 +490,7 @@ export default function MCPContainer() {
 							<h3 className="font-semibold text-primary">
 								Need more than raw data? <span className="text-warning">Try LlamaAI</span>
 							</h3>
-							<p className="mt-1 max-w-lg text-sm text-secondary">
+							<p className="mt-1 max-w-lg body-md text-secondary">
 								Charts, onchain analysis, price forecasts, web search, and more. All in one AI chat. Available with the
 								Pro plan at a lower price point.
 							</p>
@@ -539,7 +539,7 @@ export default function MCPContainer() {
 							</span>
 							<div>
 								<code className="mono-md text-primary">{s.name}</code>
-								<p className="mt-0.5 text-xs text-secondary">{s.desc}</p>
+								<p className="mt-0.5 body-sm text-secondary">{s.desc}</p>
 							</div>
 						</Card>
 					))}

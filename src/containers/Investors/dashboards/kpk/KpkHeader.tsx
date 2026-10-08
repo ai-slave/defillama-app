@@ -18,7 +18,7 @@ export default function KpkHeader() {
 	return (
 		<header className="flex flex-col gap-2.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-3">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-				<span className="text-lg font-semibold tracking-[0.14em] text-pro-text-primary">KPK</span>
+				<span className="heading-xs tracking-[0.14em] text-pro-text-primary">KPK</span>
 				<span className="label-sm tracking-[0.13em] text-pro-text-label uppercase">
 					{data?.tagline ?? 'Investor relations'}
 				</span>

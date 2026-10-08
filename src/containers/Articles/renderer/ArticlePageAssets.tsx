@@ -58,19 +58,19 @@ function AssetRow({
 				<TokenLogo src={logoSrc} size={22} alt={asset.symbol} title={asset.name} />
 			</span>
 			<span
-				className="min-w-0 truncate text-[13px] leading-none font-bold text-primary transition-colors group-hover/asset:text-link"
+				className="min-w-0 truncate title-md text-primary transition-colors group-hover/asset:text-link"
 				title={asset.name}
 			>
 				{symbol}
 			</span>
-			<span className="ml-auto text-[13px] leading-none font-semibold text-primary tabular-nums">
+			<span className="ml-auto title-md text-primary tabular-nums">
 				{showSkeleton ? (
 					<span className="inline-block h-3.5 w-14 animate-pulse rounded-sm bg-surface-elevated-2 align-middle" />
 				) : (
 					formatAssetPrice(market?.price ?? null)
 				)}
 			</span>
-			<span className="w-[52px] shrink-0 text-right text-xs leading-none tabular-nums">
+			<span className="w-[52px] shrink-0 text-right body-sm tabular-nums">
 				{showSkeleton ? (
 					<span className="inline-block h-3 w-9 animate-pulse rounded-sm bg-surface-elevated-2 align-middle" />
 				) : change != null ? (
@@ -120,9 +120,9 @@ export function ArticlePageAssets({ pageAssets }: { pageAssets?: Array<ArticlePa
 					open ? 'min-h-0' : 'min-h-[66px]'
 				}`}
 			>
-				<span className="flex items-center gap-2 text-[10px] leading-none font-semibold tracking-[0.18em] text-tertiary uppercase">
+				<span className="flex items-center gap-2 label-xs tracking-[0.18em] text-tertiary uppercase">
 					Assets on this page
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-normal text-tertiary">
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs tracking-normal text-tertiary">
 						{assets.length}
 					</span>
 				</span>

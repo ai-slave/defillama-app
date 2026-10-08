@@ -172,7 +172,7 @@ export function ArticleEditorCanvas({
 										onChange={(e) => setLinkEdit({ url: e.target.value, newTab: linkEdit.newTab })}
 										aria-label="Link URL"
 										placeholder="Paste or type URL"
-										className="w-full min-w-0 rounded-md bg-transparent px-2 py-1 text-sm text-primary placeholder:text-tertiary focus:outline-hidden sm:w-64"
+										className="w-full min-w-0 rounded-md bg-transparent px-2 py-1 body-md text-primary placeholder:text-tertiary focus:outline-hidden sm:w-64"
 									/>
 									<Button
 										variant="ghost"
@@ -244,10 +244,10 @@ export function ArticleEditorCanvas({
 												/>
 											</span>
 										) : null}
-										<span className="max-w-[160px] truncate text-sm font-medium text-primary">
+										<span className="max-w-[160px] truncate label-md text-primary">
 											{activeEntity.label || activeEntity.slug || 'Entity'}
 										</span>
-										<span className="font-jetbrains text-[9px] tracking-[0.18em] text-tertiary uppercase">
+										<span className="label-xs tracking-[0.18em] text-tertiary uppercase">
 											{activeEntity.entityType ?? ''}
 										</span>
 									</span>
@@ -338,44 +338,44 @@ export function ArticleEditorCanvas({
 								{blockItems.map((item) => (
 									<MenuItem key={item.label} onClick={item.run} className="justify-between">
 										<span>{item.label}</span>
-										{item.hint ? <span className="font-jetbrains text-[10px] text-tertiary">{item.hint}</span> : null}
+										{item.hint ? <span className="mono-sm text-tertiary">{item.hint}</span> : null}
 									</MenuItem>
 								))}
 								<MenuItem onClick={onOpenChartPicker} className="justify-between border-t border-subtle">
 									<span>DefiLlama chart</span>
-									<span className="font-jetbrains text-[10px] text-tertiary">↗</span>
+									<span className="mono-sm text-tertiary">↗</span>
 								</MenuItem>
 								<MenuItem
 									onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
 									className="justify-between"
 								>
 									<span>Table</span>
-									<span className="font-jetbrains text-[10px] text-tertiary">3×3</span>
+									<span className="mono-sm text-tertiary">3×3</span>
 								</MenuItem>
 								<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
 									<span>Embed</span>
-									<span className="font-jetbrains text-[10px] text-tertiary">URL</span>
+									<span className="mono-sm text-tertiary">URL</span>
 								</MenuItem>
 								<MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
 									className="justify-between"
 								>
 									<span>Image</span>
-									<span className="font-jetbrains text-[10px] text-tertiary">Upload</span>
+									<span className="mono-sm text-tertiary">Upload</span>
 								</MenuItem>
 								<MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
 									className="justify-between"
 								>
 									<span>People panel</span>
-									<span className="font-jetbrains text-[10px] text-tertiary">Bios</span>
+									<span className="mono-sm text-tertiary">Bios</span>
 								</MenuItem>
 								<CalloutMenu insertCallout={insertCallout}>
 									<span>Callout</span>
 								</CalloutMenu>
 								<MenuItem onClick={insertCitation} className="justify-between">
 									<span>Citation</span>
-									<span className="font-jetbrains text-[10px] text-tertiary">[n]</span>
+									<span className="mono-sm text-tertiary">[n]</span>
 								</MenuItem>
 							</MenuSurface>
 						</Ariakit.MenuProvider>
@@ -402,7 +402,7 @@ export function ArticleEditorCanvas({
 								active={flags.paragraph}
 								onClick={() => editor.chain().focus().setParagraph().run()}
 							>
-								<span aria-hidden className="text-base">
+								<span aria-hidden className="label-lg">
 									¶
 								</span>
 							</RailButton>
@@ -474,14 +474,14 @@ export function ArticleEditorCanvas({
 											<Icon name="table" className="size-3.5" />
 											Table
 										</span>
-										<span className="font-jetbrains text-[10px] text-tertiary">3×3</span>
+										<span className="mono-sm text-tertiary">3×3</span>
 									</MenuItem>
 									<MenuItem onClick={onOpenEmbedPicker} className="justify-between">
 										<span className="flex items-center gap-2">
 											<Icon name="embed" className="size-3.5" />
 											Embed
 										</span>
-										<span className="font-jetbrains text-[10px] text-tertiary">URL</span>
+										<span className="mono-sm text-tertiary">URL</span>
 									</MenuItem>
 									<MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
@@ -491,7 +491,7 @@ export function ArticleEditorCanvas({
 											<Icon name="image" className="size-3.5" />
 											Image
 										</span>
-										<span className="font-jetbrains text-[10px] text-tertiary">Upload</span>
+										<span className="mono-sm text-tertiary">Upload</span>
 									</MenuItem>
 									<MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
@@ -501,7 +501,7 @@ export function ArticleEditorCanvas({
 											<Icon name="people" className="size-3.5" />
 											People panel
 										</span>
-										<span className="font-jetbrains text-[10px] text-tertiary">Bios</span>
+										<span className="mono-sm text-tertiary">Bios</span>
 									</MenuItem>
 									<CalloutMenu insertCallout={insertCallout}>
 										<span className="flex items-center gap-2">
@@ -514,7 +514,7 @@ export function ArticleEditorCanvas({
 											<Icon name="cite" className="size-3.5" />
 											Citation
 										</span>
-										<span className="font-jetbrains text-[10px] text-tertiary">[n]</span>
+										<span className="mono-sm text-tertiary">[n]</span>
 									</MenuItem>
 								</MenuSurface>
 							</Ariakit.MenuProvider>
@@ -522,7 +522,7 @@ export function ArticleEditorCanvas({
 
 						<RailDivider />
 
-						<div className="hidden shrink-0 items-center gap-3 px-2 font-jetbrains text-[10px] tracking-wider whitespace-nowrap text-tertiary uppercase md:flex">
+						<div className="hidden shrink-0 items-center gap-3 px-2 label-xs tracking-wider whitespace-nowrap text-tertiary uppercase md:flex">
 							<span>{formatNumber(wordCount)} words</span>
 							<span aria-hidden className="h-3 w-px bg-border-medium" />
 							<span>{readMins} min</span>

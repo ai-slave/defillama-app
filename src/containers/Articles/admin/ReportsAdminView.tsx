@@ -112,7 +112,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
 						<span
-							className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] uppercase ${
+							className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-xs tracking-[0.18em] uppercase ${
 								isPublished ? 'bg-success/10 text-success' : 'bg-tertiary/10 text-tertiary'
 							}`}
 						>
@@ -120,20 +120,15 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 							{isPublished ? 'Live' : 'Draft'}
 						</span>
 						{hasPending ? (
-							<span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-warning uppercase">
+							<span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 label-xs tracking-[0.18em] text-warning uppercase">
 								Pending edits
 							</span>
 						) : null}
 					</div>
-					<Link
-						href={articleEditHref(article)}
-						className="mt-1 block truncate text-base font-semibold text-primary hover:text-link"
-					>
+					<Link href={articleEditHref(article)} className="mt-1 block truncate title-lg text-primary hover:text-link">
 						{article.title}
 					</Link>
-					<p className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
-						/research/report/{article.slug}
-					</p>
+					<p className="label-xs tracking-[0.16em] text-tertiary uppercase">/research/report/{article.slug}</p>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					<Button
@@ -166,7 +161,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 
 			<div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
 				<div className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">PDF</span>
+					<span className="label-xs tracking-[0.18em] text-tertiary uppercase">PDF</span>
 					<PdfUploadButton
 						articleId={article.id}
 						currentPdf={state.reportPdf}
@@ -185,7 +180,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 					/>
 				</div>
 				<div className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Carousel image</span>
+					<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Carousel image</span>
 					<ImageUploadButton
 						scope="report-carousel"
 						articleId={article.id}
@@ -206,7 +201,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 					/>
 				</div>
 				<div className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Sponsor logo</span>
+					<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Sponsor logo</span>
 					<ImageUploadButton
 						scope="report-sponsor-logo"
 						articleId={article.id}
@@ -229,7 +224,7 @@ export function ReportRow({ article }: { article: ArticleDocument }) {
 			</div>
 
 			<label className="grid gap-1.5">
-				<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
+				<span className="flex items-baseline justify-between gap-2 label-xs tracking-[0.18em] text-tertiary uppercase">
 					<span>Description</span>
 					<span className="text-tertiary">{state.reportDescription.length}/600</span>
 				</span>
@@ -272,15 +267,15 @@ export function ReportsAdminView() {
 	})
 
 	if (isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-tertiary">Loading…</div>
+		return <div className="mx-auto py-24 text-center body-md text-tertiary">Loading…</div>
 	}
 
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load reports'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-primary">Couldn't load reports</h1>
-				<p className="text-sm text-secondary">{message}</p>
+				<h1 className="heading-sm text-primary">Couldn't load reports</h1>
+				<p className="body-md text-secondary">{message}</p>
 			</div>
 		)
 	}
@@ -294,12 +289,12 @@ export function ReportsAdminView() {
 				<div>
 					<Link
 						href="/research/admin"
-						className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
+						className="inline-flex items-center gap-1 body-sm text-tertiary transition-colors hover:text-primary"
 					>
 						<span aria-hidden>←</span> Admin
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Reports</h1>
-					<p className="mt-1 text-sm text-secondary">
+					<h1 className="mt-2 heading-lg tracking-tight text-primary">Reports</h1>
+					<p className="mt-1 body-md text-secondary">
 						Attach a PDF, carousel image, sponsor logo, and description to each Report article. Changes to published
 						reports go to a pending revision — use <span className="font-medium">Save &amp; publish</span> to push them
 						live.
@@ -317,7 +312,7 @@ export function ReportsAdminView() {
 
 			{filtered.length === 0 ? (
 				<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
-					<p className="text-sm text-secondary">
+					<p className="body-md text-secondary">
 						{all.length === 0 ? 'No Report articles yet.' : 'No reports match this filter.'}
 					</p>
 				</div>

@@ -7,7 +7,7 @@ export const authWalletPickerStyles = 'min-h-62 sm:min-h-58'
 // Kept off ~/ui/Input: `peer` drives the FieldError sibling and user-invalid draws the error border from native
 // validation without React state, and the 40px field seats the 32px password-eye button inside it.
 export const authInputStyles =
-	'peer h-10 w-full rounded-lg border border-medium bg-surface px-3 text-base sm:body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden user-invalid:border-error user-invalid:focus:border-error aria-invalid:border-error aria-invalid:focus:border-error disabled:opacity-60'
+	'peer h-10 w-full rounded-lg border border-medium bg-surface px-3 body-lg sm:body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden user-invalid:border-error user-invalid:focus:border-error aria-invalid:border-error aria-invalid:focus:border-error disabled:opacity-60'
 // Sign-in method buttons keep a centred label; the "Last used" chip sits on the top-right corner (LastUsedCorner),
 // so no label moves to make room at any width. A pending spinner takes the icon's slot.
 export const authProviderButtonStyles =

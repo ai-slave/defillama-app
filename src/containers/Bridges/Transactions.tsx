@@ -266,7 +266,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 
 				if (!explorer) {
 					return (
-						<span className="font-mono text-xs text-secondary" title={value}>
+						<span className="mono-sm text-secondary" title={value}>
 							{truncateMiddle(value, 8, 4)}
 						</span>
 					)
@@ -279,7 +279,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 								href={explorer.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center gap-1 font-mono text-xs text-link hover:underline"
+								className="inline-flex items-center gap-1 mono-sm text-link hover:underline"
 							/>
 						}
 					>
@@ -333,7 +333,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					chainName: row.original.chain,
 					urlType: 'address'
 				})
-				const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
+				const display = <span className="mono-sm">{truncateMiddle(value)}</span>
 				if (!explorer) return display
 				return (
 					<Tooltip
@@ -367,7 +367,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					chainName: row.original.chain,
 					urlType: 'address'
 				})
-				const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
+				const display = <span className="mono-sm">{truncateMiddle(value)}</span>
 				if (!explorer) return display
 				return (
 					<Tooltip
@@ -403,7 +403,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 				})
 				if (!explorer) {
 					return (
-						<span className="font-mono text-xs" title={value}>
+						<span className="mono-sm" title={value}>
 							{truncateMiddle(value)}
 						</span>
 					)
@@ -420,7 +420,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 							/>
 						}
 					>
-						<span className="font-mono text-xs">{truncateMiddle(value)}</span>
+						<span className="mono-sm">{truncateMiddle(value)}</span>
 						<Icon name="external-link" height={10} width={10} />
 					</Tooltip>
 				)
@@ -656,7 +656,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				{formError ? (
 					<div
 						role="alert"
-						className="col-span-full flex items-center gap-2 rounded-md border border-error/30 bg-error/10 px-3 py-2 text-sm text-error"
+						className="col-span-full flex items-center gap-2 rounded-md border border-error/30 bg-error/10 px-3 py-2 body-md text-error"
 					>
 						<Icon name="alert-triangle" height={14} width={14} />
 						<p>{formError}</p>
@@ -735,7 +735,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 			{!isPending && transactionResult.truncated ? (
 				<div
 					role="status"
-					className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-primary"
+					className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 body-md text-primary"
 				>
 					<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-warning" />
 					<p>

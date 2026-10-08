@@ -41,7 +41,7 @@ export function StickyTable<T extends RowData>({ table }: { table: ReactTable<So
 		<table.Subscribe source={table.atoms.sorting}>
 			{() => (
 				<div className="w-full overflow-x-auto">
-					<table className="w-full text-sm" style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+					<table className="w-full body-md" style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
 								<tr key={headerGroup.id}>

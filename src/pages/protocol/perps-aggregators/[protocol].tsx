@@ -198,7 +198,7 @@ export default function Protocols(props: PerpsAggregatorProtocolPageProps) {
 		>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Panel padding="sm" className="col-span-1 gap-6 xl:min-h-[360px]">
-					<h1 className="flex flex-wrap items-center gap-2 text-xl">
+					<h1 className="flex flex-wrap items-center gap-2 heading-sm">
 						<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 						<span className="font-bold">{props.name}</span>
 						{props.deprecated ? <DeprecatedProtocolMarker size={16} /> : null}

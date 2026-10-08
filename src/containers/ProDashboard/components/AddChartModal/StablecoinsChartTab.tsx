@@ -515,7 +515,7 @@ export function StablecoinsChartTab({
 					</>
 				)}
 
-				<div className="text-xs text-pro-text-tertiary">
+				<div className="body-sm text-pro-text-tertiary">
 					{stablecoinMode === 'chain' && totalMcapCurrent !== null ? (
 						<p>
 							Total Market Cap:{' '}
@@ -597,7 +597,7 @@ export function StablecoinsChartTab({
 									? `${selectedStablecoinChain === 'All' ? 'All chains' : selectedStablecoinChain} - ${chartTypeLabel}`
 									: `${stablecoinName || selectedStablecoinAsset}${stablecoinSymbol ? ` (${stablecoinSymbol})` : ''} - ${chartTypeLabel}`}
 							</h3>
-							<p className="text-xs text-pro-text-secondary">
+							<p className="body-sm text-pro-text-secondary">
 								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by chain'}
 							</p>
 						</div>
@@ -609,7 +609,7 @@ export function StablecoinsChartTab({
 					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="dollar-sign" height={32} width={32} className="mx-auto mb-1" />
-							<div className="text-xs">
+							<div className="body-sm">
 								{stablecoinMode === 'chain'
 									? 'Select a chain and chart type to see preview'
 									: 'Select a stablecoin and chart type to see preview'}

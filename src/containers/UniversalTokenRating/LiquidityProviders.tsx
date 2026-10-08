@@ -16,7 +16,7 @@ export function LpPerformanceInsights({
 			<div className="border-b border-subtle px-4 py-3">
 				<h3 className="label-lg">Performance Insights</h3>
 			</div>
-			<p className="p-4 text-xl leading-relaxed">
+			<p className="p-4 body-xl">
 				Within all spot exchanges, all market makers represent{' '}
 				<span className="text-link">{formatPercent(mmDepthPct, UTR_PERCENT_OPTIONS) ?? 'N/A'}</span> of two-sided
 				liquidity, <span className="text-link">{formatPercent(mmVolumePct, UTR_PERCENT_OPTIONS) ?? 'N/A'}</span> of

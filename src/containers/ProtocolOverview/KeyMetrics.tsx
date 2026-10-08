@@ -370,7 +370,7 @@ function StakedValue({
 	return (
 		<span className="flex items-center gap-1">
 			<span className="font-jetbrains">{formatPrice(staking)}</span>
-			<span className="text-xs text-tertiary">({formatPercent(share, { input: 'percent' })} of mcap)</span>
+			<span className="body-sm text-tertiary">({formatPercent(share, { input: 'percent' })} of mcap)</span>
 		</span>
 	)
 }
@@ -1026,7 +1026,7 @@ function TokenCGData(props: IKeyMetricsProps) {
 									{props.tokenCGData.volume24h.dex != null ? props.formatPrice(props.tokenCGData.volume24h.dex) : '-'}
 								</span>
 								{dexVolumeShare != null ? (
-									<span className="text-xs text-tertiary">
+									<span className="body-sm text-tertiary">
 										(
 										{formatCompactNumber(dexVolumeShare, {
 											minimumCompactValue: 1_000_000,
