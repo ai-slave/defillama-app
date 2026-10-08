@@ -2,7 +2,7 @@
 	"core": {
 		"hex-in-classname": 37,
 		"dark-hex-variant": 13,
-		"arbitrary-font-size": 1,
+		"arbitrary-font-size": 0,
 		"arbitrary-spacing": 0,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 3,
@@ -27,10 +27,10 @@
 		"toolbar-justify-override": 0,
 		"chart-toolbar-auto-margin": 0,
 		"raw-echarts-init": 3,
-		"conflicting-named-typography": 29,
+		"conflicting-named-typography": 0,
 		"unknown-named-typography": 0,
 		"off-scale-mono-weight": 0,
-		"raw-type-pair": 15
+		"raw-type-pair": 0
 	},
 	"product": {
 		"hex-in-classname": 21,

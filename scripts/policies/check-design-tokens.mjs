@@ -61,6 +61,14 @@ const PRODUCT_SURFACE_FILES = new Set([
 	'src/pages/reports.tsx'
 ])
 
+// The /mcp and /verified landings set hero and section headlines above the type ramp, as designed (design.md →
+// Typography). The type rules skip them; every other rule still counts them in core.
+const LANDING_DISPLAY_TYPE = [
+	'src/containers/AttestationLanding/index.tsx',
+	'src/containers/MCP/index.tsx',
+	'src/pages/mcp/index.tsx'
+]
+
 function isProductSurfaceFile(file) {
 	if (PRODUCT_SURFACE_FILES.has(file)) return true
 	return PRODUCT_SURFACE_PREFIXES.some((prefix) => file.startsWith(prefix))
@@ -377,7 +385,8 @@ const RULES = [
 	{
 		id: 'arbitrary-font-size',
 		description: 'arbitrary font size (use the type ramp: label-sm, body-xs, …)',
-		pattern: /text-\[(?:\d+(?:\.\d+)?px|0?\.\d+rem)\]/g
+		pattern: /text-\[(?:\d+(?:\.\d+)?px|0?\.\d+rem)\]/g,
+		ownedBy: LANDING_DISPLAY_TYPE
 	},
 	{
 		id: 'arbitrary-spacing',
@@ -548,7 +557,8 @@ const RULES = [
 		id: 'conflicting-named-typography',
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',
-		match: matchConflictingNamedTypography
+		match: matchConflictingNamedTypography,
+		ownedBy: LANDING_DISPLAY_TYPE
 	},
 	{
 		id: 'unknown-named-typography',
@@ -569,6 +579,7 @@ const RULES = [
 		description:
 			'a raw text-* size with a font-* weight is a type style without a name; use the named style for its role in design.md → Typography (title-md, label-md, body-sm, …)',
 		match: matchRawTypePair,
+		ownedBy: LANDING_DISPLAY_TYPE,
 		skipTests: true
 	}
 ]
