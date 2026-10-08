@@ -52,10 +52,7 @@ function ScoreBar({ score, emphasis = false }: { score: number | null; emphasis?
 					}}
 				/>
 			</span>
-			<span
-				className={`w-7 text-right tabular-nums ${emphasis ? 'title-md' : ''} ${measured ? '' : 'text-tertiary'}`}
-				style={measured && emphasis ? { color: scoreColor(score) } : undefined}
-			>
+			<span className={`w-7 text-right tabular-nums ${emphasis ? 'title-md' : ''} ${measured ? '' : 'text-tertiary'}`}>
 				{measured ? Math.round(score) : 'n/a'}
 			</span>
 		</span>
@@ -252,7 +249,8 @@ function ExampleChip({ label, row, pillarKey }: { label: string; row: ExchangeRa
 			<BasicLink href={row.profileHref} className="label-sm text-link hover:underline">
 				{row.name}
 			</BasicLink>
-			<span className="mono-sm-bold" style={{ color: scoreColor(score) }}>
+			<span className="flex items-center gap-1 mono-sm-bold">
+				<span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: scoreColor(score) }} />
 				{Math.round(score)}
 			</span>
 		</span>

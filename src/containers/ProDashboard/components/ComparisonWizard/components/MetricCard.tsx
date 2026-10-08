@@ -28,7 +28,7 @@ export function MetricCard({ metric, isSelected, onToggle, itemLabel }: MetricCa
 				<span className="flex items-center gap-1.5 body-sm text-tertiary group-disabled:text-disabled">
 					<span className="capitalize">{metric.chartType}</span>
 					<span aria-hidden>•</span>
-					<span className={metric.isValid ? 'text-secondary' : 'text-data-down'}>
+					<span className={metric.isValid ? 'text-secondary' : 'text-error'}>
 						{metric.availableCount}/{metric.totalCount} {itemLabel}
 					</span>
 				</span>

@@ -4,7 +4,7 @@ import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { type ChartTheme, useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -129,7 +129,8 @@ export function ChartLegend({ items }: { items: Array<{ label: string; color: st
 	)
 }
 
-export function buildCandleOption(candles: Array<SimpleCandle>, axisColor?: string): EChartsOption {
+export function buildCandleOption(candles: Array<SimpleCandle>, chartTheme: ChartTheme): EChartsOption {
+	const axisColor = chartTheme.axisLabel
 	return {
 		...baseOption(axisColor),
 		yAxis: {
@@ -145,7 +146,12 @@ export function buildCandleOption(candles: Array<SimpleCandle>, axisColor?: stri
 					value: [candle.open, candle.close, candle.low, candle.high],
 					name: new Date(candle.time).toISOString().slice(0, 10)
 				})),
-				itemStyle: { color: '#11935f', color0: '#b23a38', borderColor: '#11935f', borderColor0: '#b23a38' }
+				itemStyle: {
+					color: chartTheme.up,
+					color0: chartTheme.down,
+					borderColor: chartTheme.up,
+					borderColor0: chartTheme.down
+				}
 			}
 		],
 		xAxis: {
@@ -182,7 +188,7 @@ export function SimpleChart({ option, className = 'h-[200px] w-full' }: { option
 	return <div ref={containerRef} className={className} />
 }
 
-export function useChartAxisColor(): string | undefined {
+export function useSimpleChartTheme(): ChartTheme {
 	const [isDark] = useDarkModeManager()
-	return useChartTheme(isDark).axisLabel
+	return useChartTheme(isDark)
 }

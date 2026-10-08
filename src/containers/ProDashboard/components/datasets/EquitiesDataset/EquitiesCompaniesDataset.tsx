@@ -91,7 +91,7 @@ const columns = columnHelper.columns([
 		cell: (info) => {
 			const val = info.getValue()
 			if (val == null) return '—'
-			const color = val >= 0 ? 'text-success' : 'text-error'
+			const color = val >= 0 ? 'text-data-up' : 'text-data-down'
 			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
 		meta: { align: 'end' },
@@ -103,7 +103,7 @@ const columns = columnHelper.columns([
 		cell: (info) => {
 			const val = info.getValue()
 			if (val == null) return '—'
-			const color = val >= 0 ? 'text-success' : 'text-error'
+			const color = val >= 0 ? 'text-data-up' : 'text-data-down'
 			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
 		meta: { align: 'end' },
@@ -115,7 +115,7 @@ const columns = columnHelper.columns([
 		cell: (info) => {
 			const val = info.getValue()
 			if (val == null) return '—'
-			const color = val >= 0 ? 'text-success' : 'text-error'
+			const color = val >= 0 ? 'text-data-up' : 'text-data-down'
 			return <span className={color}>{formatPercentChange(val) ?? '—'}</span>
 		},
 		meta: { align: 'end' },

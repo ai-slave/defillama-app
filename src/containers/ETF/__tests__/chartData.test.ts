@@ -52,7 +52,7 @@ describe('buildETFFlowChartData', () => {
 		const flows: IProcessedFlows = {
 			[jan1]: { date: jan1, Bitcoin: 1, Ethereum: -2, Solana: 3 }
 		}
-		const result = buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Ethereum', 'Solana'] })
+		const result = buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Ethereum', 'Solana'], isDark: true })
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Solana'],
@@ -64,7 +64,7 @@ describe('buildETFFlowChartData', () => {
 				name: 'Ethereum',
 				encode: { x: 0, y: 1 },
 				stack: 'Ethereum',
-				color: '#6B7280'
+				color: '#627eea'
 			},
 			{
 				type: 'bar',
@@ -78,10 +78,22 @@ describe('buildETFFlowChartData', () => {
 
 	test('uses line series for cumulative flows and supports an empty selection', () => {
 		const flows: IProcessedFlows = { [jan1]: { date: jan1, Bitcoin: 1 } }
-		expect(buildETFChartSpec({ flows, groupBy: 'cumulative', assets: ['Bitcoin'] }).charts[0]?.type).toBe('line')
-		expect(buildETFChartSpec({ flows, groupBy: 'weekly', assets: [] })).toMatchObject({
+		expect(buildETFChartSpec({ flows, groupBy: 'cumulative', assets: ['Bitcoin'], isDark: true }).charts[0]?.type).toBe(
+			'line'
+		)
+		expect(buildETFChartSpec({ flows, groupBy: 'weekly', assets: [], isDark: true })).toMatchObject({
 			dataset: { dimensions: ['timestamp'] },
 			charts: []
 		})
+	})
+
+	test('darkens Bitcoin orange for the light theme, where the brand hex is under 3:1', () => {
+		const flows: IProcessedFlows = { [jan1]: { date: jan1, Bitcoin: 1 } }
+		expect(buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Bitcoin'], isDark: false }).charts[0]?.color).toBe(
+			'#d27a02'
+		)
+		expect(buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Bitcoin'], isDark: true }).charts[0]?.color).toBe(
+			'#f7931a'
+		)
 	})
 })

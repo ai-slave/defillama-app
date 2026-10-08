@@ -17,6 +17,7 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -42,10 +43,11 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 		setSelectedSeries: setTickers
 	} = useLocalSelection({ scope: 'etf-assets', availableSeries: ETF_ASSET_NAMES })
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const [isDark] = useDarkModeManager()
 
 	const finalCharts = React.useMemo(() => {
-		return buildETFChartSpec({ flows, groupBy, assets: [...ETF_ASSET_NAMES] })
-	}, [flows, groupBy])
+		return buildETFChartSpec({ flows, groupBy, assets: [...ETF_ASSET_NAMES], isDark })
+	}, [flows, groupBy, isDark])
 
 	return (
 		<>

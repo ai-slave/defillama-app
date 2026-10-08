@@ -9,7 +9,6 @@ type DefillamaPage = {
 	name?: string
 	route: string
 	tab?: unknown
-	tags?: unknown
 	totalTrackedKey?: unknown
 	[key: string]: unknown
 }
@@ -75,7 +74,6 @@ export function buildTrendingPages(
 				description: pageData?.description ?? '',
 				...(pageData?.totalTrackedKey ? { totalTrackedKey: pageData.totalTrackedKey } : {}),
 				...(pageData?.keys ? { keys: pageData.keys } : {}),
-				...(pageData?.tags ? { tags: pageData.tags } : {}),
 				...(pageData?.tab ? { tab: pageData.tab } : {})
 			}
 		})

@@ -1,13 +1,11 @@
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Hovercard } from '~/ui/Hovercard'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { DailyUnlocks, DayInfo } from './calendarTypes'
-import { interpolateColor } from './colorUtils'
 
 interface CalendarDayCellProps {
 	dayInfo: DayInfo
@@ -19,9 +17,9 @@ interface CalendarDayCellProps {
 }
 
 export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday }: CalendarDayCellProps) {
-	const [isDarkMode] = useDarkModeManager()
-
-	if (!dayInfo.date) return <div className="h-24 w-full bg-surface opacity-40" />
+	// In-month days sit on the card; other days and empty slots recede to the page colour. The grid lines between
+	// cells are the parent's translucent border colour, so a cell without its own background turns grey.
+	if (!dayInfo.date) return <div className="h-24 w-full bg-page" />
 
 	const dateStr = dayInfo.date.format('YYYY-MM-DD')
 	const dayData = unlocksData[dateStr]
@@ -40,24 +38,18 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue, isToday 
 		intensityFactor = Math.min(1, Math.max(0, intensityFactor))
 	}
 
-	const baseColorRgb = [243, 244, 246]
-	const darkModeBaseColorRgb = [30, 41, 59]
-	const highlightColorRgb = [59, 130, 246]
-	let interpolatedColorRgb = baseColorRgb
-	if (dayInfo.isCurrentMonth && intensityFactor > 0) {
-		const baseColor = isDarkMode ? darkModeBaseColorRgb : baseColorRgb
-		interpolatedColorRgb = interpolateColor(baseColor, highlightColorRgb, intensityFactor)
-	}
-
-	const cellStyle: React.CSSProperties = {}
-	if (dayInfo.isCurrentMonth && hasUnlocks) {
-		cellStyle.backgroundColor = `rgb(${interpolatedColorRgb.join(', ')})`
-	}
+	// Brand blue mixed into the card, so the heat is opaque and follows the mode: a small day is a faint tint, the
+	// month's largest is the full brand fill. Days with only weekly rates stay clear.
+	const brandShare = intensityFactor > 0 ? Math.round(10 + 90 * intensityFactor) : 0
+	const backgroundColor =
+		brandShare > 0 ? `color-mix(in oklab, var(--bg-brand) ${brandShare}%, var(--bg-surface))` : undefined
+	// In light mode primary text passes AA up to 90% brand and white from 92%; dark mode passes white throughout.
+	const onBrand = brandShare > 90
 
 	const cellContent = (
 		<div
-			className={`relative h-24 w-full ${dayInfo.isCurrentMonth ? 'hover:brightness-110' : 'bg-surface opacity-60 hover:opacity-80'}`}
-			style={cellStyle}
+			className={`relative h-24 w-full ${dayInfo.isCurrentMonth ? 'bg-surface hover:brightness-110' : 'bg-page text-tertiary'} ${onBrand ? 'text-on-brand' : ''}`}
+			style={{ backgroundColor }}
 		>
 			<div className="relative z-10 flex h-full w-full flex-col justify-between p-2">
 				{/* Today is a filled brand disc: a brand ring or brand text disappears on the blue unlock tints. */}

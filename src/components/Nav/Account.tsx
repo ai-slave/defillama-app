@@ -54,7 +54,7 @@ export function Account() {
 						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 							<span className="label-sm text-primary">My Account</span>
 							<span
-								className={`truncate label-xs ${unavailable ? 'text-data-down' : hasActiveSubscription ? 'text-data-up' : 'text-tertiary'}`}
+								className={`truncate label-xs ${unavailable ? 'text-error' : hasActiveSubscription ? 'text-success' : 'text-tertiary'}`}
 							>
 								{unavailable
 									? 'Subscription unavailable'
@@ -67,7 +67,7 @@ export function Account() {
 					</BasicLink>
 					{failed ? (
 						<div className="ml-10 flex flex-wrap items-center gap-2">
-							{unavailable ? null : <span className="label-xs text-data-down">Subscription unavailable</span>}
+							{unavailable ? null : <span className="label-xs text-error">Subscription unavailable</span>}
 							<Button
 								size="sm"
 								ref={focusAccountOnLeave}

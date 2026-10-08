@@ -94,9 +94,9 @@ export function FreshnessFooter({
 				<span className="flex items-center gap-1.5">
 					<span aria-hidden className="relative flex size-2">
 						{healthy ? (
-							<span className="absolute inset-0 animate-ping rounded-full bg-data-up opacity-40 motion-reduce:hidden" />
+							<span className="absolute inset-0 animate-ping rounded-full bg-success opacity-40 motion-reduce:hidden" />
 						) : null}
-						<span className={`relative size-2 rounded-full ${healthy ? 'bg-data-up' : 'bg-warning'}`} />
+						<span className={`relative size-2 rounded-full ${healthy ? 'bg-success' : 'bg-warning'}`} />
 					</span>
 					{updatedLabel}
 				</span>

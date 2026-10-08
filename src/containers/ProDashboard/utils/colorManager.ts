@@ -1,4 +1,4 @@
-import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { ChartConfig } from '../types'
 
@@ -42,25 +42,4 @@ export function getMultiChartSeriesColors(
 		colors[item.id] = item.color ?? (distinct ? dashboardColors[index] : chartColor(index))
 	}
 	return colors
-}
-
-/** Stablecoin brand colours, kept over the palette because readers know them. */
-export const STABLECOIN_TOKEN_COLORS: Record<string, string> = {
-	USDT: '#009393',
-	Tether: '#009393',
-	USDC: '#2775CA',
-	'USD Coin': '#2775CA',
-	DAI: '#F4B731',
-	Dai: '#F4B731',
-	USDe: '#3A3A3A',
-	'Ethena USDe': '#3A3A3A',
-	BUIDL: '#111111',
-	USD1: '#D2B48C',
-	USDS: '#1BAB9B',
-	'Sky Dollar': '#1BAB9B',
-	PYUSD: '#0070E0',
-	'PayPal USD': '#0070E0',
-	USDTB: '#C0C0C0',
-	FDUSD: '#00D395',
-	Others: OTHERS_COLOR
 }

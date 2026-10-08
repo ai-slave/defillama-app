@@ -50,7 +50,7 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 				<div className="min-w-0 flex-1">
 					<span className="block truncate body-md text-primary">{invite.email}</span>
 					<div className="mt-1 flex items-center gap-2">
-						<span className={`body-sm ${isExpired ? 'text-data-down' : 'text-tertiary'}`}>
+						<span className={`body-sm ${isExpired ? 'text-error' : 'text-tertiary'}`}>
 							{/* An expired token can't be resent; the supported flow is revoke, then invite again. */}
 							{isExpired
 								? 'Expired — revoke this invite and send a new one'

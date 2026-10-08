@@ -707,7 +707,7 @@ export function PoolGrowthChart({
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : error ? (
-					<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+					<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 						Couldn&apos;t load {range} history.
 					</ChartPanelBodyFallback>
 				) : !anchoredOn ? (

@@ -99,7 +99,7 @@ export function UtrPopover({
 								<Tooltip
 									content="Change over the last month"
 									className={`label-sm tabular-nums ${
-										utr.momChangePct! > 0 ? 'text-success' : utr.momChangePct! < 0 ? 'text-error' : 'text-tertiary'
+										utr.momChangePct! > 0 ? 'text-data-up' : utr.momChangePct! < 0 ? 'text-data-down' : 'text-tertiary'
 									}`}
 								>
 									{change} MoM

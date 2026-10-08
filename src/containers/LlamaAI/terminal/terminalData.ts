@@ -726,11 +726,11 @@ const studyConstructor = (PineJS: TerminalPineJs) =>
 // candle. `small` is 15px, which covers the candle it is marking.
 const MARKER_SIZE = 'tiny'
 
-const BUY = { plottype: 'shape_triangle_up', location: 'BelowBar', color: '#089981' }
-const SELL = { plottype: 'shape_triangle_down', location: 'AboveBar', color: '#cc2f3c' }
+const BUY = { plottype: 'shape_triangle_up', location: 'BelowBar', mark: 'up' } as const
+const SELL = { plottype: 'shape_triangle_down', location: 'AboveBar', mark: 'down' } as const
 
 // The pairs render identically; they stay four plots so the legend can name which side filled.
-const TRADE_PLOTS: Array<{ kind: TradeFillKind; title: string } & typeof BUY> = [
+const TRADE_PLOTS: Array<{ kind: TradeFillKind; title: string } & (typeof BUY | typeof SELL)> = [
 	{ kind: 'long_entry', title: 'Long entry', ...BUY },
 	{ kind: 'long_exit', title: 'Long exit', ...SELL },
 	{ kind: 'short_entry', title: 'Short entry', ...SELL },
@@ -773,7 +773,8 @@ const tradesConstructor = (PineJS: TerminalPineJs) =>
 		}
 	}
 
-export function createTerminalStudies() {
+/** The widget is rebuilt on a theme change, so the trade markers take that theme's up and down marks here. */
+export function createTerminalStudies(marks: { up: string; down: string }) {
 	return (PineJS: TerminalPineJs) =>
 		Promise.resolve([
 			{
@@ -835,7 +836,7 @@ export function createTerminalStudies() {
 									location: plot.location,
 									visible: true,
 									transparency: 0,
-									color: plot.color
+									color: marks[plot.mark]
 								}
 							])
 						),

@@ -6,6 +6,7 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { parseApyWindow } from '../data/query'
 import type { VerifiedBlock } from '../data/types'
@@ -113,7 +114,7 @@ export function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; c
 					<SealGlyph size={15} />
 					{content.headline}
 				</span>
-				<span className="shrink-0 rounded-md bg-brand-muted px-1.5 py-0.5 label-xs tracking-widest text-link">PRO</span>
+				<PromoBadge>Pro</PromoBadge>
 			</span>
 			<span className="flex items-baseline justify-between gap-6">
 				<span className="text-secondary">
@@ -192,7 +193,7 @@ export function MeasuredExitOffer({ poolName, onUpgrade }: { poolName: string; o
 
 /**
  * The padlock on the APY column head and its card: what "verified" means, and what else is
- * measured. A reader without a subscription gets the padlock plus the offer (PRO badge and unlock
+ * measured. A reader without a subscription gets the padlock plus the offer (Pro badge and unlock
  * button); a subscriber gets the seal and the same card without them. Sits beside the header's
  * sort button, never inside it. Tier-driven, not row-driven: a page sorted onto unmeasured pools
  * still has the measurements behind it.
@@ -216,11 +217,7 @@ export function MeasuredColumnHint() {
 										<SealGlyph size={15} />
 										Verified APY
 									</span>
-									{isDenied ? (
-										<span className="shrink-0 rounded-md bg-brand-muted px-1.5 py-0.5 label-xs tracking-widest text-link">
-											PRO
-										</span>
-									) : null}
+									{isDenied ? <PromoBadge>Pro</PromoBadge> : null}
 								</span>
 								<span className="text-secondary">What holders actually received.</span>
 							</span>
@@ -290,11 +287,7 @@ export function MeasuredExitColumnHint() {
 										<SealGlyph size={15} />
 										Verified Exit Status
 									</span>
-									{isDenied ? (
-										<span className="shrink-0 rounded-md bg-brand-muted px-1.5 py-0.5 label-xs tracking-widest text-link">
-											PRO
-										</span>
-									) : null}
+									{isDenied ? <PromoBadge>Pro</PromoBadge> : null}
 								</span>
 								<span className="text-secondary">Whether a real holder could actually withdraw.</span>
 							</span>

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildPieLayoutOption,
 	buildRuntimePieChartCsvDataset,
@@ -147,10 +147,10 @@ describe('runtime pie selection', () => {
 			A: CHART_COLORS[0],
 			B: CHART_COLORS[1],
 			C: CHART_COLORS[2],
-			Others: CHART_COLORS[3]
+			Others: OTHERS_COLOR
 		})
 		expect(buildRuntimePieChartPresentation({ series, selectedSeries: new Set(['D']) }).stackColors).toMatchObject({
-			D: CHART_COLORS[4]
+			D: CHART_COLORS[3]
 		})
 		const selectedTailPresentation = buildRuntimePieChartPresentation({
 			series,
@@ -169,25 +169,6 @@ describe('runtime pie selection', () => {
 				{ name: 'Others', value: 5 }
 			])
 		}
-	})
-
-	test('keeps Others distinct from selected peers after the palette wraps', () => {
-		const series = prepareRuntimePieChartData({
-			data: Object.fromEntries(
-				Array.from({ length: CHART_COLORS.length + 6 }, (_, index) => [`Peer ${index}`, 1000 - index])
-			),
-			limit: 3
-		})
-		const selectedSeries = new Set([
-			'Peer 0',
-			'Peer 1',
-			`Peer ${CHART_COLORS.length + 2}`,
-			`Peer ${CHART_COLORS.length + 3}`
-		])
-		const presentation = buildRuntimePieChartPresentation({ series, selectedSeries })
-
-		expect(presentation.chartData.at(-1)?.name).toBe('Others')
-		expect(presentation.stackColors[`Peer ${CHART_COLORS.length + 2}`]).not.toBe(presentation.stackColors.Others)
 	})
 
 	test('keeps peer colors stable across related views with different rankings', () => {

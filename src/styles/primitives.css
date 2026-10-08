@@ -10,8 +10,8 @@
    once and follows the mode. `.theme-dark` gets the dark values in either
    mode, for a surface that is always dark.
 
-   The *-500 accents below are fixed across modes (chart series and the
-   scrollbar thumb). Do not promote the --sub-* product ramps into this file.
+   --neutral-500 is fixed across modes (the scrollbar thumb). Do not promote
+   the --sub-* product ramps into this file.
 
    These are deliberately NOT registered as Tailwind theme colors: names like
    neutral/blue/green would override Tailwind's built-in palettes and change
@@ -19,13 +19,8 @@
 ---------------------------------------------------------------------------- */
 
 :root {
-	/* Fixed accents: the same value in light and dark */
+	/* Fixed: the same value in light and dark */
 	--neutral-500: #878787;
-	--blue-500: #1f67d2;
-	--green-500: #3eb84f;
-	--red-500: #e24a42;
-	--violet-500: #9333ea;
-	--orange-500: #ff8e2b;
 }
 
 /* generated:color-ramps:start */

@@ -1130,7 +1130,7 @@ export function UnlocksCharts({
 	if (!resolvedData || resolvedData.name === null) {
 		return (
 			<div role="alert" className="flex flex-1 flex-col items-center justify-center">
-				<p className="p-2 body-sm text-data-down">{error instanceof Error ? error.message : 'Failed to fetch'}</p>
+				<p className="p-2 body-sm text-error">{error instanceof Error ? error.message : 'Failed to fetch'}</p>
 			</div>
 		)
 	}

@@ -80,7 +80,7 @@ const STATUS_PRESENTATION: Record<
 > = {
 	available: {
 		label: 'Available',
-		chipClassName: 'border-data-up bg-data-up-tint text-data-up',
+		chipClassName: 'border-success bg-success-tint text-success',
 		sentence: (exchange, country) => `${exchange} is available in ${country}.`
 	},
 	restricted: {
@@ -95,7 +95,7 @@ const STATUS_PRESENTATION: Record<
 	},
 	unavailable: {
 		label: 'Unavailable',
-		chipClassName: 'border-data-down bg-data-down-tint text-data-down',
+		chipClassName: 'border-error bg-error-tint text-error',
 		sentence: (exchange, country) => `${exchange} is not available in ${country}.`
 	}
 }
@@ -131,7 +131,7 @@ export function ProfileCountryCard({
 				</p>
 			) : view.status === 'error' ? (
 				<div className="flex flex-wrap items-center justify-between gap-2" role="alert">
-					<p className="body-sm text-data-down">
+					<p className="body-sm text-error">
 						Country-specific information for {countryLabel(view.country)} could not be loaded. Showing global
 						information.
 					</p>
@@ -167,7 +167,7 @@ export function ExchangeRegionalInformation({
 		return (
 			<Card as="section" padding="none" className="overflow-hidden">
 				<div className="flex items-center gap-2 border-b border-subtle px-3 py-2.5">
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-data-down-tint text-data-down">
+					<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-error-tint text-error">
 						<Icon name="circle-x" height={17} width={17} />
 					</span>
 					<h2 className="label-lg">Not available in {country}</h2>

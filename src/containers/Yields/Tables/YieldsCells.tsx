@@ -75,7 +75,7 @@ export function DepegWarningIcon({
 	const severity = getDepegWarningSeverity(deviation)
 	if (!severity) return null
 	const abs = Math.abs(deviation)
-	const colorClass = severity === 'danger' ? 'text-data-down' : 'text-warning'
+	const colorClass = severity === 'danger' ? 'text-error' : 'text-warning'
 	const token = symbol ?? 'The underlying stablecoin'
 	const content = `${token} is ${formatPercent(abs, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} off peg — ${consequence}.`
 	return (
@@ -104,7 +104,7 @@ export function SupplyCapBar({ tvl, available }: { tvl: number | null; available
 				className="hidden h-1 w-20 overflow-hidden rounded-full bg-surface-elevated-2 md:block"
 			>
 				<span
-					className={`block h-full rounded-full ${full ? 'bg-data-down' : 'bg-brand'}`}
+					className={`block h-full rounded-full ${full ? 'bg-error' : 'bg-brand'}`}
 					style={{ width: `${fill * 100}%` }}
 				/>
 			</span>

@@ -359,7 +359,7 @@ function ChainProtocolsTableInner({
 
 						if (result.status === 'error') {
 							return (
-								<Tooltip content={result.error} className="cursor-help text-data-down">
+								<Tooltip content={result.error} className="cursor-help text-error">
 									Err
 								</Tooltip>
 							)

@@ -58,9 +58,6 @@ function isTreemapNode(value: unknown): value is TreemapNode {
 	)
 }
 
-const VISUAL_MIN = -100
-const VISUAL_MAX = 100
-
 echarts.use([TreemapLabelContrast, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent])
 
 function TreemapChart({
@@ -157,13 +154,6 @@ function TreemapChart({
 					left: 0,
 					right: 0,
 					bottom: 0,
-					...(isRwaVariant || isCategoricalColor
-						? {}
-						: {
-								visualMin: VISUAL_MIN,
-								visualMax: VISUAL_MAX,
-								visualDimension: 3
-							}),
 					...(isNarrativeVariant
 						? {
 								roam: false,
@@ -269,17 +259,7 @@ function TreemapChart({
 										}
 						},
 						{
-							...(isRwaVariant
-								? {}
-								: isCategoricalColor
-									? {
-											color: CHART_COLORS,
-											colorMappingBy: 'index'
-										}
-									: {
-											color: ['#942e38', '#aaa', '#269f3c'],
-											colorMappingBy: 'value'
-										}),
+							...(isCategoricalColor && !isRwaVariant ? { color: CHART_COLORS, colorMappingBy: 'index' } : {}),
 							itemStyle: isRwaVariant
 								? {
 										borderColor: isDark ? '#2d3139' : '#d1d5db',
@@ -313,7 +293,7 @@ function TreemapChart({
 							}
 						},
 						{
-							...(isRwaVariant ? {} : { colorSaturation: isCategoricalColor ? [0.55, 0.9] : [0, 1] }),
+							...(isCategoricalColor && !isRwaVariant ? { colorSaturation: [0.55, 0.9] } : {}),
 							itemStyle: isRwaVariant
 								? {
 										borderWidth: 1,

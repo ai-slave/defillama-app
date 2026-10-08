@@ -25,7 +25,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
-import { oldBlue } from '~/constants/colors'
+import { chartColor, oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -58,7 +58,9 @@ echarts.use([
 
 const EMPTY_INDICATORS: NonNullable<ICandlestickChartProps['indicators']> = []
 
-const INDICATOR_COLORS = ['#ff7f0e', '#2ca02c', '#9467bd', '#e377c2', '#17becf', '#bcbd22', '#7f7f7f']
+/* Indicator lines take the palette after brand blue, which the volume bars use, and skip its greens and crimson so
+   no line reads as the candles' rise or fall. */
+const INDICATOR_COLORS = [chartColor(1), chartColor(2), chartColor(3), chartColor(4), chartColor(6), chartColor(8)]
 
 const PANEL_HEIGHT = 60
 const VOLUME_HEIGHT = 80
@@ -364,7 +366,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
 					data: panel.values.map((v) => [v[0], v[1].signal ?? null]),
-					lineStyle: { color: '#ff7f0e', width: 1 },
+					lineStyle: { color: INDICATOR_COLORS[1], width: 1 },
 					symbol: 'none'
 				})
 				result.push({
@@ -373,7 +375,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
 					data: panel.values.map((v) => [v[0], v[1].macd ?? null]),
-					lineStyle: { color: '#2ca02c', width: 1 },
+					lineStyle: { color: INDICATOR_COLORS[0], width: 1 },
 					symbol: 'none'
 				})
 			} else if (panel.values && panel.name.toLowerCase().includes('stoch')) {
@@ -383,7 +385,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
 					data: panel.values.map((v) => [v[0], v[1].k ?? null]),
-					lineStyle: { color: '#2ca02c', width: 1 },
+					lineStyle: { color: INDICATOR_COLORS[0], width: 1 },
 					symbol: 'none'
 				})
 				result.push({
@@ -392,7 +394,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
 					data: panel.values.map((v) => [v[0], v[1].d ?? null]),
-					lineStyle: { color: '#ff7f0e', width: 1 },
+					lineStyle: { color: INDICATOR_COLORS[1], width: 1 },
 					symbol: 'none'
 				})
 			} else {

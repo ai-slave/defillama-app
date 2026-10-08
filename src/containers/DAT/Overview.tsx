@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
+import { type CSSProperties, lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildTimeSeriesChart } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
@@ -18,6 +18,7 @@ import { SearchTableProvider } from '~/components/Table/search/SearchTableProvid
 import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -44,27 +45,31 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 	const router = useRouter()
 	const groupBy = normalizeChartGroup(readSingleQueryValue(router.query.groupBy)) ?? 'weekly'
 
+	const [isDark] = useDarkModeManager()
+
 	const { chartData } = useMemo(() => {
+		const theme = isDark ? 1 : 0
 		if (groupBy === 'cumulative') {
 			const series: Array<{ name: string; color: string; points: IDATOverviewFlowSeries['points'] }> = []
 			for (const name in dailyFlowsByAsset) {
 				const item = dailyFlowsByAsset[name]
-				series.push({ name: item.name, color: item.color, points: item.points })
+				series.push({ name: item.name, color: item.color[theme], points: item.points })
 			}
 			return {
 				chartData: { ...buildTimeSeriesChart({ kind: 'cumulativeLines', series }), groupBy }
 			}
 		}
 
-		const series: Array<IDATOverviewFlowSeries> = []
+		const series: Array<Omit<IDATOverviewFlowSeries, 'color'> & { color: string }> = []
 		for (const name in dailyFlowsByAsset) {
-			series.push(dailyFlowsByAsset[name])
+			const item = dailyFlowsByAsset[name]
+			series.push({ ...item, color: item.color[theme] })
 		}
 		return {
 			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
 			chartData: { ...buildTimeSeriesChart({ kind: 'periodBars', groupBy, series }), groupBy }
 		}
-	}, [dailyFlowsByAsset, groupBy])
+	}, [dailyFlowsByAsset, groupBy, isDark])
 	const deferredChartData = useDeferredValue(chartData)
 	const assetSeries = useMemo(() => chartData.charts.map((chart) => chart.name), [chartData.charts])
 	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
@@ -197,8 +202,8 @@ const overviewColumns = columnHelper.columns([
 						{assetBreakdown.map((asset) => (
 							<span
 								key={asset.asset}
-								style={{ width: `${asset.dominance}%`, background: asset.color }}
-								className="h-5"
+								style={{ width: `${asset.dominance}%`, ...assetColorVars(asset.color) }}
+								className="h-5 bg-(--asset-light) dark:bg-(--asset-dark)"
 							/>
 						))}
 					</Hovercard>
@@ -319,14 +324,21 @@ interface BreakdownData {
 	usdValue?: number | null
 	avgPrice?: number | null
 	dominance: number
-	color: string
+	color: readonly [light: string, dark: string]
 }
+
+// Table cells and tooltips switch an asset's brand pair in CSS, so they need no theme hook.
+const assetColorVars = ([light, dark]: readonly [light: string, dark: string]) =>
+	({ '--asset-light': light, '--asset-dark': dark }) as CSSProperties
 
 function Breakdown({ data }: { data: BreakdownData }) {
 	const name = `${data.name} (${formatPercent(data.dominance, { input: 'percent' })})`
 
 	return (
-		<span className="flex flex-col gap-1 border-l-3 pl-1 body-sm" style={{ borderColor: data.color }}>
+		<span
+			className="flex flex-col gap-1 border-l-3 border-(--asset-light) pl-1 body-sm dark:border-(--asset-dark)"
+			style={assetColorVars(data.color)}
+		>
 			<span className="break-words">{name}</span>
 			{data.amount != null ? (
 				<span>{`Amount: ${formatCompactNumber(data.amount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${data.ticker}`}</span>

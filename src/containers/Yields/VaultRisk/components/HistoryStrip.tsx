@@ -249,9 +249,9 @@ export function buildHistoryStrip(
 }
 
 const INCIDENT_TONE: Record<IncidentPoint['tone'], string> = {
-	loss: 'border-data-down-strong bg-data-down-tint-strong',
-	'made-whole': 'border-data-up bg-data-up-tint-strong',
-	averted: 'border-data-up border-dashed bg-data-up-tint-strong'
+	loss: 'border-error-strong bg-error-tint-strong',
+	'made-whole': 'border-success bg-success-tint-strong',
+	averted: 'border-success border-dashed bg-success-tint-strong'
 }
 
 const INCIDENT_TONE_TEXT: Record<IncidentPoint['tone'], { label: string; className: string }> = {
@@ -334,7 +334,7 @@ function ProtocolIncidentDot({
 						aria-label={p.label}
 						data-hs-pt
 						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed bg-surface outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${
-							p.recovered ? 'border-data-up-strong' : 'border-secondary'
+							p.recovered ? 'border-success-strong' : 'border-secondary'
 						} ${selected ? 'ring-2 ring-brand' : ''}`}
 						style={{
 							left: `${p.x}%`,

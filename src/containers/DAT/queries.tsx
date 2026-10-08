@@ -1,5 +1,5 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS, chartColor, oldBlue } from '~/constants/colors'
+import { ASSET_BRAND_COLORS, CHART_COLORS, chartColor, oldBlue } from '~/constants/colors'
 import { getDominancePercent } from '~/utils'
 import { fetchDATInstitutions, fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
 import type { IDATInstitutionsResponse } from './api.types'
@@ -15,33 +15,22 @@ import type {
 	IDATTransactionRow
 } from './types'
 
-function breakdownColor(type: string): string | null {
-	switch (type) {
-		case 'Bitcoin':
-			return '#f97316'
-		case 'Ethereum':
-			return '#2563eb'
-		case 'Solana':
-			return '#6d28d9'
-		case 'Hyperliquid':
-			return '#16a34a'
-		case 'XRP':
-			return '#6b7280'
-		case 'Tron Network':
-			return '#E91E63'
-		default:
-			return null
-	}
+// Asset brand colours by name, [light, dark]; XRP and Tron pass 3:1 in both modes as they are.
+const DAT_ASSET_BRAND_COLORS: Record<string, readonly [light: string, dark: string]> = {
+	...ASSET_BRAND_COLORS,
+	XRP: ['#6b7280', '#6b7280'],
+	'Tron Network': ['#E91E63', '#E91E63']
 }
 
 // Assets without a brand colour take the palette colour for their rank by USD value.
-function buildColorByAsset(res: IDATInstitutionsResponse): Record<string, string> {
+function buildColorByAsset(res: IDATInstitutionsResponse): Record<string, readonly [light: string, dark: string]> {
 	const assets = Object.keys(res.assetMetadata).sort(
 		(a, b) => (res.assetMetadata[b].totalUsdValue ?? 0) - (res.assetMetadata[a].totalUsdValue ?? 0)
 	)
-	const colorByAsset: Record<string, string> = {}
+	const colorByAsset: Record<string, readonly [light: string, dark: string]> = {}
 	for (const [index, asset] of assets.entries()) {
-		colorByAsset[asset] = breakdownColor(res.assetMetadata[asset].name) ?? chartColor(index)
+		const color = chartColor(index)
+		colorByAsset[asset] = DAT_ASSET_BRAND_COLORS[res.assetMetadata[asset].name] ?? [color, color]
 	}
 	return colorByAsset
 }

@@ -458,7 +458,7 @@ function SelectedChainsChart({
 	}
 	if (isError || !data) {
 		return (
-			<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+			<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 				Chart unavailable
 			</ChartPanelBodyFallback>
 		)

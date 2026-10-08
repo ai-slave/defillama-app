@@ -6,6 +6,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogToolbar } from '~
 import { Icon } from '~/ui/Icon'
 import { metricOptionChipStyles } from '~/ui/MetricChip'
 import { NoResults } from '~/ui/NoResults'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { SearchField } from '~/ui/SearchField'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -15,7 +16,7 @@ export interface ChartMetricOption {
 	/** The series color for the active theme; tints the dot on a picked chip. */
 	color: string
 	active: boolean
-	/** Withheld from this reader: listed with a PRO badge, and a click opens the upgrade path instead of toggling. */
+	/** Withheld from this reader: listed with a Pro badge, and a click opens the upgrade path instead of toggling. */
 	locked?: boolean
 	/** A mark before the label, such as the Yields verified seal. */
 	leading?: ReactNode
@@ -143,7 +144,7 @@ function MetricsDialog<O extends ChartMetricOption>({
 									>
 										<Icon name="lock" className="size-3 text-tertiary" aria-hidden="true" />
 										<span className="text-tertiary">{option.label}</span>
-										<span className="rounded-md bg-brand-muted px-1 py-px label-xs tracking-widest text-link">PRO</span>
+										<PromoBadge>Pro</PromoBadge>
 									</button>
 								) : (
 									<MetricChip key={option.key} option={option} onToggle={onToggle} />

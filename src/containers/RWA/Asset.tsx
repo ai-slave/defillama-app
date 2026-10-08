@@ -559,7 +559,7 @@ export function RWAAssetPage({
 									<LoadingIndicator />
 								</ChartPanelBodyFallback>
 							) : flowError ? (
-								<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+								<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 									{flowError instanceof Error ? flowError.message : 'Failed to load flow data.'}
 								</ChartPanelBodyFallback>
 							) : flowChart ? (
@@ -670,7 +670,7 @@ export function RWAAssetPage({
 								>
 									{definitions.rwaClassification.label}
 								</Tooltip>
-								<span className={`flex items-center gap-1 font-medium ${asset.trueRWA ? 'text-data-up' : ''}`}>
+								<span className={`flex items-center gap-1 font-medium ${asset.trueRWA ? 'text-success' : ''}`}>
 									{asset.rwaClassification || '-'}
 									{asset.rwaClassificationDescription ? (
 										<QuestionHelper text={asset.rwaClassificationDescription} />

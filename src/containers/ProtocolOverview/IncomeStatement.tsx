@@ -9,6 +9,7 @@ import {
 	TokenPageTableScroller,
 	TokenPageTableShell
 } from '~/components/Table/helpers'
+import { CHART_DOWN, CHART_UP, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -278,13 +279,7 @@ export function IncomeStatement({
 		}> = []
 		const links: Array<{ source: string; target: string; value: number; color?: string }> = []
 
-		// Colors: gray for neutral/input, green for profit, red for costs
-		const COLORS = {
-			gray: '#6b7280',
-			green: '#22c55e',
-			red: '#ef4444'
-		}
-
+		// Inputs are neutral grey, profit rises and costs fall.
 		// Helper to format percentage
 		const formatIncomePercent = (value: number, total: number) => {
 			if (total === 0) return '0%'
@@ -307,7 +302,7 @@ export function IncomeStatement({
 		if (hasGrossRevenueBreakdown) {
 			nodes.push({
 				name: 'Gross Protocol Revenue',
-				color: COLORS.gray,
+				color: OTHERS_COLOR,
 				description: incomeStatement.methodology['Gross Protocol Revenue'] ?? '',
 				displayValue: grossProtocolRevenue, // Show actual gross protocol revenue value, not sum of flows
 				depth: 1
@@ -317,7 +312,7 @@ export function IncomeStatement({
 				if (value !== undefined && value > 0) {
 					nodes.push({
 						name: label,
-						color: COLORS.gray,
+						color: OTHERS_COLOR,
 						description: incomeStatement.breakdownMethodology['Gross Protocol Revenue']?.[label] ?? '',
 						depth: 0,
 						percentageLabel: formatIncomePercent(value, grossProtocolRevenue)
@@ -329,7 +324,7 @@ export function IncomeStatement({
 			// No breakdown available, start from Gross Protocol Revenue directly
 			nodes.push({
 				name: 'Gross Protocol Revenue',
-				color: COLORS.gray,
+				color: OTHERS_COLOR,
 				description: incomeStatement.methodology['Gross Protocol Revenue'] ?? '',
 				displayValue: grossProtocolRevenue, // Show actual gross protocol revenue value, not sum of flows
 				depth: 1
@@ -339,7 +334,7 @@ export function IncomeStatement({
 		if (costOfRevenue > 0) {
 			nodes.push({
 				name: 'Cost of Revenue',
-				color: COLORS.red,
+				color: CHART_DOWN,
 				description: incomeStatement.methodology['Cost Of Revenue'] ?? '',
 				displayValue: costOfRevenue, // Show actual cost of revenue value
 				depth: 2,
@@ -360,7 +355,7 @@ export function IncomeStatement({
 						const costLabel = `${label} (Cost)`
 						nodes.push({
 							name: costLabel,
-							color: COLORS.red,
+							color: CHART_DOWN,
 							description: incomeStatement.breakdownMethodology['Cost Of Revenue']?.[label] ?? '',
 							depth: 3,
 							percentageLabel: formatIncomePercent(value, costOfRevenue)
@@ -376,7 +371,7 @@ export function IncomeStatement({
 
 			nodes.push({
 				name: 'Gross Profit',
-				color: COLORS.green,
+				color: CHART_UP,
 				description: incomeStatement.methodology['Gross Profit'] ?? '',
 				displayValue: grossProfit, // Show actual revenue value
 				depth: 2,
@@ -388,7 +383,7 @@ export function IncomeStatement({
 				// Incentives is at the same depth as Gross Profit so both flow horizontally into Earnings
 				nodes.push({
 					name: 'Incentives',
-					color: COLORS.red,
+					color: CHART_DOWN,
 					description: incomeStatement.methodology['Incentives'] ?? '',
 					displayValue: incentives,
 					depth: 2 // Same depth as Gross Profit
@@ -407,7 +402,7 @@ export function IncomeStatement({
 							const incentiveLabel = `${label} (Incentive)`
 							nodes.push({
 								name: incentiveLabel,
-								color: COLORS.red,
+								color: CHART_DOWN,
 								description: incomeStatement.breakdownMethodology['Incentives']?.[label] ?? '',
 								percentageLabel: formatIncomePercent(value, incentives)
 							})
@@ -419,22 +414,22 @@ export function IncomeStatement({
 				// Both Gross Profit and Incentives flow into Earnings
 				nodes.push({
 					name: 'Earnings',
-					color: earnings >= 0 ? COLORS.green : COLORS.red,
+					color: earnings >= 0 ? CHART_UP : CHART_DOWN,
 					description: `Gross Profit (${formatUsd(grossProfit, { compact: true })}) minus Incentives (${formatUsd(incentives, { compact: true })})`,
 					displayValue: earnings, // Show actual earnings value, not the sum of flows
 					depth: 3,
 					percentageLabel: formatIncomePercent(earnings, grossProfit)
 				})
 
-				// Gross Profit flows to Earnings (green)
-				links.push({ source: 'Gross Profit', target: 'Earnings', value: grossProfit, color: COLORS.green })
-				// Incentives flows to Earnings (red - as a cost being subtracted)
-				links.push({ source: 'Incentives', target: 'Earnings', value: incentives, color: COLORS.red })
+				// Gross Profit flows to Earnings
+				links.push({ source: 'Gross Profit', target: 'Earnings', value: grossProfit, color: CHART_UP })
+				// Incentives flows to Earnings as a cost being subtracted
+				links.push({ source: 'Incentives', target: 'Earnings', value: incentives, color: CHART_DOWN })
 
 				if (earnings > 0 && tokenHolderNetIncome > 0) {
 					nodes.push({
 						name: 'Value Distributed to Token Holders',
-						color: COLORS.green,
+						color: CHART_UP,
 						description: incomeStatement.methodology['Token Holder Net Income'] ?? '',
 						depth: 4,
 						percentageLabel: formatIncomePercent(tokenHolderNetIncome, earnings)
@@ -445,7 +440,7 @@ export function IncomeStatement({
 				// No incentives: Gross Profit flows directly to Earnings
 				nodes.push({
 					name: 'Earnings',
-					color: COLORS.green,
+					color: CHART_UP,
 					description: incomeStatement.methodology['Gross Profit'] ?? '',
 					depth: 3,
 					percentageLabel: formatIncomePercent(earnings, grossProfit)
@@ -455,7 +450,7 @@ export function IncomeStatement({
 				if (tokenHolderNetIncome > 0) {
 					nodes.push({
 						name: 'Value Distributed to Token Holders',
-						color: COLORS.green,
+						color: CHART_UP,
 						description: incomeStatement.methodology['Token Holder Net Income'] ?? '',
 						depth: 4,
 						percentageLabel: formatIncomePercent(tokenHolderNetIncome, earnings)
@@ -629,7 +624,7 @@ export function IncomeStatement({
 													<span className="truncate">{header[1]}</span>
 													<Tooltip
 														content={`Current ${groupBy.toLowerCase()} data is incomplete`}
-														className="title-sm text-data-down"
+														className="title-sm text-warning"
 													>
 														*
 													</Tooltip>

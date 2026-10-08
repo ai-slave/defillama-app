@@ -141,7 +141,7 @@ function TokenCombobox({
 						<LoadingIndicator label="Searching" />
 					</div>
 				) : results.isError ? (
-					<p role="alert" className="px-3 py-6 text-center body-sm text-data-down">
+					<p role="alert" className="px-3 py-6 text-center body-sm text-error">
 						Couldn&apos;t search tokens.
 					</p>
 				) : tokens.length === 0 ? (

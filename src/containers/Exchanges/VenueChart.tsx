@@ -154,7 +154,7 @@ export function VenueChart({
 					<ChartPanelBodyFallback
 						role={query.isError ? 'alert' : 'status'}
 						aria-live={query.isError ? undefined : 'polite'}
-						className={query.isError ? 'body-sm text-data-down' : undefined}
+						className={query.isError ? 'body-sm text-error' : undefined}
 					>
 						{query.isError ? 'Failed to load venue history.' : <LoadingIndicator />}
 					</ChartPanelBodyFallback>

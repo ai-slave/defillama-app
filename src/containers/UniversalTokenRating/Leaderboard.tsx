@@ -397,7 +397,7 @@ export function Leaderboard({
 											<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
 											<span
 												className={`tabular-nums ${
-													(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
+													(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-data-up' : 'text-data-down'
 												}`}
 											>
 												{momText ?? '—'}

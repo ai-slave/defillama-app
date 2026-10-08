@@ -239,7 +239,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						<LoadingIndicator />
 					</ChartPanelBodyFallback>
 				) : chartErrorMessage ? (
-					<ChartPanelBodyFallback role="alert" className="p-4 text-center body-sm text-data-down">
+					<ChartPanelBodyFallback role="alert" className="p-4 text-center body-sm text-error">
 						Failed to load chart data: {chartErrorMessage}
 					</ChartPanelBodyFallback>
 				) : (

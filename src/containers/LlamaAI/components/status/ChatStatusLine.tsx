@@ -24,9 +24,7 @@ export function ChatStatusLine({
 			aria-live={variant === 'progress' ? 'polite' : undefined}
 			className={`flex flex-wrap items-center gap-x-3 gap-y-1 body-sm ${align === 'end' ? 'justify-end text-right' : ''}`}
 		>
-			<span
-				className={`flex min-w-0 items-center gap-1.5 ${variant === 'error' ? 'text-data-down' : 'text-secondary'}`}
-			>
+			<span className={`flex min-w-0 items-center gap-1.5 ${variant === 'error' ? 'text-error' : 'text-secondary'}`}>
 				{variant === 'error' ? (
 					<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 				) : (

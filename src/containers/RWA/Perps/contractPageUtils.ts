@@ -6,6 +6,7 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
+import { chartColor } from '~/constants/colors'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import {
 	formatUsd,
@@ -39,7 +40,7 @@ export const RWA_PERPS_CONTRACT_CHART_METRICS: ReadonlyArray<RWAPerpsContractCha
 		label: d.openInterest.label,
 		queryKey: 'oi',
 		defaultEnabled: true,
-		color: '#3B82F6',
+		color: chartColor(0),
 		defaultType: 'line',
 		valueSymbol: '$'
 	},
@@ -48,7 +49,7 @@ export const RWA_PERPS_CONTRACT_CHART_METRICS: ReadonlyArray<RWAPerpsContractCha
 		label: 'Volume 24h',
 		queryKey: 'vol24h',
 		defaultEnabled: true,
-		color: '#7DD3FC',
+		color: chartColor(1),
 		defaultType: 'bar',
 		valueSymbol: '$'
 	},
@@ -57,7 +58,7 @@ export const RWA_PERPS_CONTRACT_CHART_METRICS: ReadonlyArray<RWAPerpsContractCha
 		label: d.price.label,
 		queryKey: 'price',
 		defaultEnabled: true,
-		color: '#22C55E',
+		color: chartColor(2),
 		defaultType: 'line',
 		yAxisIndex: 1,
 		valueSymbol: '$'
@@ -67,7 +68,7 @@ export const RWA_PERPS_CONTRACT_CHART_METRICS: ReadonlyArray<RWAPerpsContractCha
 		label: 'Funding Rate',
 		queryKey: 'funding',
 		defaultEnabled: false,
-		color: '#F59E0B',
+		color: chartColor(3),
 		defaultType: 'line',
 		yAxisIndex: 2,
 		valueSymbol: '%'
@@ -77,7 +78,7 @@ export const RWA_PERPS_CONTRACT_CHART_METRICS: ReadonlyArray<RWAPerpsContractCha
 		label: d.premium.label,
 		queryKey: 'premium',
 		defaultEnabled: false,
-		color: '#EF4444',
+		color: chartColor(4),
 		defaultType: 'line',
 		yAxisIndex: 2,
 		valueSymbol: '%'

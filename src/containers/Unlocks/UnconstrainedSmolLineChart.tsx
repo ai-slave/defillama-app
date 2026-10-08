@@ -1,15 +1,11 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { EmissionEvent } from './api.types'
 import { getEmissionEventAmount } from './eventAmount'
-
-const COLOR_MAP = {
-	green: { dark: '#3fb84f', light: '#008a13' },
-	red: { dark: '#e24a42', light: '#e60d02' }
-} as const
 
 function smoothPath(points: Array<[number, number]>): string {
 	if (points.length < 2) return ''
@@ -49,6 +45,8 @@ export function UnconstrainedSmolLineChart({
 	extraData?: ExtraData
 }) {
 	const [isThemeDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isThemeDark)
+	const stroke = color === 'green' ? chartTheme.dataUp : chartTheme.dataDown
 	const containerRef = useRef<HTMLDivElement>(null)
 	const tooltipRef = useRef<HTMLDivElement>(null)
 	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -80,8 +78,8 @@ export function UnconstrainedSmolLineChart({
 		el.style.top = `${flipY ? mousePos.y - el.offsetHeight + 12 : mousePos.y - 12}px`
 	}, [mousePos, hoveredIndex])
 
-	const { pathD, stroke, markLineX } = useMemo(() => {
-		if (series.length === 0) return { pathD: '', stroke: '', markLineX: 0 }
+	const { pathD, markLineX } = useMemo(() => {
+		if (series.length === 0) return { pathD: '', markLineX: 0 }
 
 		const values = series.map((s) => s[1])
 		const min = Math.min(...values)
@@ -101,13 +99,8 @@ export function UnconstrainedSmolLineChart({
 		const mlX =
 			unlockIndex < series.length ? (series.length === 1 ? VB_W / 2 : (unlockIndex / (series.length - 1)) * VB_W) : 0
 
-		const themeKey = isThemeDark ? 'dark' : 'light'
-		return {
-			pathD: smoothPath(pts),
-			stroke: COLOR_MAP[color][themeKey],
-			markLineX: mlX
-		}
-	}, [series, color, isThemeDark])
+		return { pathD: smoothPath(pts), markLineX: mlX }
+	}, [series])
 
 	if (series.length === 0 || series.length < 8) return null
 
@@ -139,7 +132,7 @@ export function UnconstrainedSmolLineChart({
 						y1={0}
 						x2={markLineX}
 						y2={100}
-						stroke={isThemeDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)'}
+						stroke={chartTheme.ink(0.8)}
 						strokeWidth="1.5"
 						vectorEffect="non-scaling-stroke"
 					/>
@@ -180,15 +173,7 @@ export function UnconstrainedSmolLineChart({
 									)}
 								</div>
 								{percentChange != null ? (
-									<div
-										style={{
-											color:
-												percentChange >= 0
-													? COLOR_MAP.green[isThemeDark ? 'dark' : 'light']
-													: COLOR_MAP.red[isThemeDark ? 'dark' : 'light']
-										}}
-										className="opacity-80"
-									>
+									<div className={percentChange >= 0 ? 'text-data-up opacity-80' : 'text-data-down opacity-80'}>
 										{percentChange >= 0 ? '+' : ''}
 										{formatPercent(percentChange, {
 											input: 'percent',

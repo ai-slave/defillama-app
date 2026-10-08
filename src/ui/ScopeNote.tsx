@@ -48,7 +48,7 @@ export function failedDataNote(labels: ReadonlyArray<string>, shows: string): st
 export function FailedDataNote({ labels, shows }: { labels: ReadonlyArray<string>; shows: string }) {
 	if (labels.length === 0) return null
 	return (
-		<p role="alert" className="px-2 pt-2 body-sm text-data-down">
+		<p role="alert" className="px-2 pt-2 body-sm text-error">
 			{failedDataNote(labels, shows)}
 		</p>
 	)

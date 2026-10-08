@@ -3,6 +3,7 @@ import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
+import { divergingColor } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -97,23 +98,32 @@ function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
 }
 
 // Tier chip — the public summary of the venue's REAL score.
-// Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
+// Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D. Each tier takes the value
+// scale at its band's place, so tier and score colours agree.
 export const TIER_COLORS: Record<string, string> = {
-	S: '#c9a227',
-	A: '#16a34a',
-	B: '#64748b',
-	C: '#c97c27',
-	D: '#dc2626'
+	S: divergingColor(1),
+	A: divergingColor(0.5),
+	B: divergingColor(0),
+	C: divergingColor(-0.5),
+	D: divergingColor(-1)
 }
 
+// The end tiers are solid (white text passes AA on both), A and C a tint of their colour, B an outline, so each tier
+// reads at a glance; the scale passes 3:1, not text contrast, so text is never the scale colour.
+const TIER_SOLID = new Set(['S', 'D'])
+
 export function TierBadge({ tier }: { tier: string }) {
-	const color = TIER_COLORS[tier] ?? 'inherit'
+	const color = TIER_COLORS[tier] ?? 'currentColor'
+	const solid = TIER_SOLID.has(tier)
 	return (
 		// Fixed height, not padding: the cell is a fixed-height <td> with overflow:hidden,
 		// so a padding-sized badge clips its own top and bottom border.
 		<span
-			className="inline-flex h-[18px] min-w-[22px] items-center justify-center rounded-sm border border-current px-1.5 title-sm"
-			style={{ color }}
+			className={`inline-flex h-[18px] min-w-[22px] items-center justify-center rounded-sm border px-1.5 title-sm ${solid ? 'text-on-brand' : 'text-primary'}`}
+			style={{
+				borderColor: color,
+				backgroundColor: solid ? color : tier === 'B' ? undefined : `color-mix(in oklab, ${color} 18%, transparent)`
+			}}
 		>
 			{tier}
 		</span>

@@ -74,7 +74,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 								<span>{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'}</span>
 								<span aria-hidden>·</span>
 								<span className="truncate">/{article.slug}</span>
-								<span className={article.lifecycleStatus === 'published' ? 'text-data-up' : 'text-warning'}>
+								<span className={article.lifecycleStatus === 'published' ? 'text-success' : 'text-warning'}>
 									{article.lifecycleStatus}
 								</span>
 							</span>

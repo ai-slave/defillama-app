@@ -217,7 +217,7 @@ export function TerminalMarketStrip({ symbol, fetchFn }: { symbol: string; fetch
 	if (data === undefined && isError) {
 		return (
 			<Card padding="strip">
-				<p role="alert" className="body-sm text-data-down">
+				<p role="alert" className="body-sm text-error">
 					Market data for {pairName(symbol)} could not be loaded.
 				</p>
 			</Card>

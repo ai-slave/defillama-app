@@ -21,7 +21,6 @@ interface IPage {
 	name: string
 	route: string
 	description: string
-	tags?: Array<string>
 	tab?: string
 	totalTrackedKey?: string
 }
@@ -44,8 +43,6 @@ const metricsByCategory = trending.concat(
 
 const TABS = ['All', 'Protocols', 'Chains'] as const
 type Tab = (typeof TABS)[number]
-
-const newMetricTagStyles = 'flex items-center gap-1 rounded-md bg-brand px-1.5 py-1 label-xs text-on-brand'
 
 function findCurrentCategory(pathname: string) {
 	if (pathname === '/') return null
@@ -274,22 +271,6 @@ export function LinkToMetricOrToolPage({
 			>
 				<span className="flex w-full flex-wrap items-center gap-1">
 					<span className="label-md">{page.name}</span>
-					{page.tags?.map((tag) =>
-						tag === 'Hot' ? (
-							<span
-								className="flex items-center gap-1 rounded-md bg-[#D24C1F] px-1.5 py-1 label-xs text-on-brand"
-								key={`tag-${page.route}-${tag}`}
-							>
-								<Icon name="flame" height={10} width={10} />
-								<span>Hot</span>
-							</span>
-						) : (
-							<span className={newMetricTagStyles} key={`tag-${page.route}-${tag}`}>
-								<Icon name="sparkles" height={10} width={10} />
-								<span>New</span>
-							</span>
-						)
-					)}
 					{/* On touch the pin is always shown in this corner instead. */}
 					<Icon name="arrow-right" height={16} width={16} className="ml-auto pointer-coarse:invisible" />
 				</span>

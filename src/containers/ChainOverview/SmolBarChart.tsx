@@ -1,18 +1,19 @@
 import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { chartColor, purple } from '~/constants/colors'
+import { CHART_DOWN, CHART_UP, chartColor } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { useSmolChartHover } from './useSmolChartHover'
 
-const POSITIVE_BAR_COLOR = chartColor(0)
-
 export function SmolBarChart({
 	series,
+	signed = false,
 	className,
 	groupBy
 }: {
 	series: Array<[number, number]>
+	/** A net flow (ETF inflows): bars rise and fall in the up/down colours. Otherwise a total, in brand blue. */
+	signed?: boolean
 	className?: string
 	groupBy?: 'daily' | 'weekly' | 'monthly'
 }) {
@@ -31,18 +32,19 @@ export function SmolBarChart({
 				timestamp,
 				heightPct: v >= 0 ? (v / maxPos) * 100 : (Math.abs(v) / (maxNeg || 1)) * 100,
 				isNegative: v < 0,
-				fill: v >= 0 ? POSITIVE_BAR_COLOR : purple
+				fill: !signed ? chartColor(0) : v >= 0 ? CHART_UP : CHART_DOWN
 			})),
 			hasNegative: neg,
 			posRatio: neg ? maxPos / (maxPos + maxNeg) : 1
 		}
-	}, [series])
+	}, [series, signed])
 
 	if (series.length === 0) return null
 
 	const posHeight = `${posRatio * 100}%`
 	const negHeight = `${(1 - posRatio) * 100}%`
 	const hoveredPoint = hoveredIndex == null ? undefined : series[hoveredIndex]
+	const hoveredBar = hoveredIndex == null ? undefined : bars[hoveredIndex]
 
 	return (
 		<div className={className ?? 'my-auto h-[132px]'}>
@@ -89,7 +91,7 @@ export function SmolBarChart({
 									width: '10px',
 									height: '10px',
 									borderRadius: '50%',
-									backgroundColor: hoveredPoint[1] >= 0 ? POSITIVE_BAR_COLOR : purple
+									backgroundColor: hoveredBar?.fill
 								}}
 							/>
 							{formatUsd(hoveredPoint[1], {

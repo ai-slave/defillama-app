@@ -244,7 +244,7 @@ export function RWAPerpsBreakdownChartPanel({
 				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={`${title} ${metricLabel}`} />
 			</ChartPanelToolbar>
 			{error ? (
-				<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+				<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 					{error}
 				</ChartPanelBodyFallback>
 			) : isLoading ? (

@@ -20,7 +20,7 @@ import type {
 	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
 import type { SelectionIntent } from '~/components/Select/localSelection'
-import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
+import { CHART_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { getDominancePercent } from '~/utils'
 import { getGroupedBarCharts } from './chartGrouping'
 import type { IBuildStablecoinChartDataParams, StablecoinMcapPoint } from './utils'
@@ -216,20 +216,6 @@ const resolveStablecoinBreakdownSelection = ({
 	}
 }
 
-const TOKEN_COLORS: Record<string, string> = {
-	USDT: '#009393',
-	USDC: '#0B53BF',
-	DAI: '#F4B731',
-	USDe: '#3A3A3A',
-	BUIDL: '#111111',
-	USD1: '#D2B48C',
-	USDS: '#E67E22',
-	PYUSD: '#4A90E2',
-	USDTB: '#C0C0C0',
-	FDUSD: '#00FF00',
-	Others: OTHERS_COLOR
-}
-
 const TOTAL_MCAP_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Mcap', encode: { x: 0, y: 1 }, color: CHART_COLORS[0] }
 ]
@@ -247,8 +233,10 @@ const USD_INFLOWS_CHART: MultiSeriesChartSeriesConfig = {
 
 const USD_INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [USD_INFLOWS_CHART]
 
+// Payloads are cached for every reader, so a series takes its rank colour here and each chart swaps in the
+// stablecoin's brand colour for its theme (`stablecoinBrandColors`).
 const getStablecoinSeriesColor = (name: string, index: number): string =>
-	TOKEN_COLORS[name] ?? CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
+	name === STABLECOIN_OTHERS_SERIES_NAME ? OTHERS_COLOR : chartColor(index)
 
 const buildTimestampValueRows = (timestamps: ReadonlyArray<number>, values: ReadonlyArray<number>) => {
 	const source: MultiSeriesTimeSeriesDataset['source'] = []

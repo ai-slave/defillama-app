@@ -97,8 +97,8 @@ function GeneratedImageBlock({
 				className={`${IMAGE_FRAME} flex flex-col items-center justify-center gap-2 bg-surface-elevated-2 p-6 text-center text-secondary`}
 				style={{ aspectRatio: aspect ?? '1 / 1' }}
 			>
-				<Icon name="alert-triangle" height={20} width={20} className="text-data-down" />
-				<p className="label-md text-data-down">Image failed to load</p>
+				<Icon name="alert-triangle" height={20} width={20} className="text-error" />
+				<p className="label-md text-error">Image failed to load</p>
 				<a
 					href={url}
 					target="_blank"

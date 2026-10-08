@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { chartColor } from '~/constants/colors'
 import type { IRWAPerpsMarketChartPoint } from '../api.types'
 import { RWAPerpsContractSummaryMetrics } from '../Contract'
 import {
@@ -199,9 +200,9 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		})
 
 		expect(spec.charts.map((chart) => [chart.name, chart.type, chart.color])).toEqual([
-			['Open Interest', 'line', '#3B82F6'],
-			['Volume 24h', 'bar', '#7DD3FC'],
-			['Price', 'line', '#22C55E']
+			['Open Interest', 'line', chartColor(0)],
+			['Volume 24h', 'bar', chartColor(1)],
+			['Price', 'line', chartColor(2)]
 		])
 
 		expect(spec.charts.map((chart) => chart.data)).toEqual([

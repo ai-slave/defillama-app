@@ -104,7 +104,7 @@ export function getCellTone(value: string, column: ColumnMeta): string {
 	if (column.kind !== 'percent') return ''
 	const numeric = parseNumericValue(value)
 	if (numeric === null) return ''
-	if (numeric > 0) return 'text-success'
-	if (numeric < 0) return 'text-error'
+	if (numeric > 0) return 'text-data-up'
+	if (numeric < 0) return 'text-data-down'
 	return ''
 }

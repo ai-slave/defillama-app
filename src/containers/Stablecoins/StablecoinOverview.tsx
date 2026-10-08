@@ -656,7 +656,7 @@ function SelectedAssetChart({
 	}
 	if (isError || !data) {
 		return (
-			<ChartPanelBodyFallback role="alert" className="w-full body-sm text-data-down">
+			<ChartPanelBodyFallback role="alert" className="w-full body-sm text-error">
 				Chart unavailable
 			</ChartPanelBodyFallback>
 		)

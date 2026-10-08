@@ -4,6 +4,7 @@ import * as echarts from 'echarts/core'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { divergingColor } from '~/constants/colors'
 import type { EquitiesTreemapNode, IEquitiesTreemapLeaf } from '~/containers/Equities/treemapData'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import MarketTreemapChart from '..'
@@ -14,7 +15,7 @@ function leaf(marketCap: number): IEquitiesTreemapLeaf {
 		value: [marketCap, 1.5],
 		iconKey: 0,
 		iconUrl: 'US:TEST',
-		itemStyle: { color: 'rgb(104, 165, 115)' },
+		itemStyle: { color: divergingColor(0.5) },
 		companyName: 'Test Company',
 		country: 'US',
 		sector: 'Technology',

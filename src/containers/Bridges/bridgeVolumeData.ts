@@ -1,5 +1,6 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
+import { CHART_DOWN, CHART_UP, chartColor } from '~/constants/colors'
 import { getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import type { BridgeVolumePoint } from './api.types'
 
@@ -32,7 +33,7 @@ export const BRIDGE_VOLUME_SPLIT_CHARTS = [
 		type: 'bar' as const,
 		name: 'Deposits',
 		encode: { x: 0, y: 1 },
-		color: '#3b82f6',
+		color: CHART_UP,
 		stack: 'metric',
 		large: false
 	},
@@ -40,14 +41,14 @@ export const BRIDGE_VOLUME_SPLIT_CHARTS = [
 		type: 'bar' as const,
 		name: 'Withdrawals',
 		encode: { x: 0, y: 2 },
-		color: '#ef4444',
+		color: CHART_DOWN,
 		stack: 'metric',
 		large: false
 	}
 ]
 
 export const BRIDGE_VOLUME_COMBINED_CHARTS = [
-	{ type: 'bar' as const, name: 'Total', encode: { x: 0, y: 1 }, color: '#22c55e' }
+	{ type: 'bar' as const, name: 'Total', encode: { x: 0, y: 1 }, color: chartColor(0) }
 ]
 
 function getBridgeMetricValues(item: BridgeVolumePoint, metricType: BridgeVolumeMetricType) {

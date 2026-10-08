@@ -1,6 +1,6 @@
 import type * as echarts from 'echarts/core'
 
-/** `change` is a percent change: value-colored tiles shade by it, and the RWA tooltip shows it as the 1D return. */
+/** `change` is a percent change the RWA tooltip shows as the 1D return. */
 export type TreemapValue = [size: number, secondary: number | null, color: number | null, change?: number | null]
 
 export type TreemapNode = {
@@ -16,6 +16,7 @@ export type TreemapVariant = 'narrative' | 'rwa'
 export interface TreemapChartProps {
 	treeData: Array<TreemapNode>
 	variant: TreemapVariant
+	/** 'value': each node brings its own `itemStyle.color` from `divergingColor`. 'categorical': the palette by rank. */
 	colorMode?: 'value' | 'categorical'
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void

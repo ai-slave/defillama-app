@@ -158,10 +158,10 @@ export function exitTone(verified: VerifiedBlock): ExitTone {
 
 /** Tone colours ride on the status ICON. Text keeps the table's own colours so a column of exits does not become a column of colours. */
 export const EXIT_TONE_CLASS: Record<ExitTone, string> = {
-	good: 'text-data-up',
+	good: 'text-success',
 	neutral: 'text-secondary',
 	warning: 'text-warning',
-	bad: 'text-data-down'
+	bad: 'text-error'
 }
 
 /**

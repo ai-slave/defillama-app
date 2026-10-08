@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { divergingColor, HEAT_DOWN, HEAT_UP, OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildEquitiesTreemapLeaves,
 	groupEquitiesTreemapLeaves,
@@ -129,11 +130,11 @@ describe('buildEquitiesTreemapLeaves', () => {
 			makeRow({ ticker: 'GAIN_CAP', marketCap: 100, priceChangePercentage1d: 3 })
 		])
 		expect(leaves.map((leaf) => leaf.itemStyle.color)).toEqual([
-			'rgb(148, 46, 56)',
-			'rgb(159, 108, 113)',
-			'#aaaaaa',
-			'rgb(104, 165, 115)',
-			'rgb(38, 159, 60)'
+			HEAT_DOWN,
+			divergingColor(-0.5),
+			OTHERS_COLOR,
+			divergingColor(0.5),
+			HEAT_UP
 		])
 	})
 

@@ -95,23 +95,14 @@ function PercentValue({ value, tone }: { value: string | null; tone: TokensDispl
 	return <span className={VALUE_TONE_CLASSES[tone]}>{value}</span>
 }
 
-function ProgressPercentValue({
-	value,
-	width,
-	tone = 'link'
-}: {
-	value: string | null
-	width: string | null
-	tone?: 'link' | 'success'
-}) {
+function ProgressPercentValue({ value, width }: { value: string | null; width: string | null }) {
 	if (value === null || width === null) return <Dash />
-	const barClassName = tone === 'success' ? 'bg-data-up' : 'bg-brand'
 
 	return (
 		<span className="flex min-w-[92px] flex-col items-end gap-1">
 			<span>{value}</span>
 			<span className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-elevated-2">
-				<span className={`block h-full rounded-full ${barClassName}`} style={{ width }} />
+				<span className="block h-full rounded-full bg-brand" style={{ width }} />
 			</span>
 		</span>
 	)
@@ -332,11 +323,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.trsPercent ?? undefined, {
 		...specColumn('trsPercent'),
 		cell: ({ row }) => (
-			<ProgressPercentValue
-				value={row.original.display.trsPercent}
-				width={row.original.display.trsPercentWidth}
-				tone="success"
-			/>
+			<ProgressPercentValue value={row.original.display.trsPercent} width={row.original.display.trsPercentWidth} />
 		),
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',

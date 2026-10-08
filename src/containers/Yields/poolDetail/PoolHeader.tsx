@@ -20,7 +20,7 @@ function shortAddress(a: string): string {
 function AuditPill({ audited }: { audited: boolean }) {
 	return (
 		<span className="inline-flex items-center gap-1 rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 label-sm text-primary">
-			<span className={`size-1.5 rounded-full ${audited ? 'bg-data-up' : 'bg-warning'}`} aria-hidden />
+			<span className={`size-1.5 rounded-full ${audited ? 'bg-success' : 'bg-warning'}`} aria-hidden />
 			{audited ? 'Yes' : 'No'}
 		</span>
 	)

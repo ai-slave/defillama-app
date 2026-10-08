@@ -62,7 +62,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 									<div className="flex size-full flex-col items-center justify-center gap-1.5 body-sm text-tertiary">
 										{item.hasError ? (
 											<>
-												<p role="alert" className="text-data-down">
+												<p role="alert" className="text-error">
 													Couldn't load this series.
 												</p>
 												{item.canRetry ? (

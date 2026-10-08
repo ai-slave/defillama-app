@@ -5,7 +5,7 @@ import type { QueryRetry } from '~/utils/query'
 import { ProCardSkeleton, type ProCardSkeletonVariant } from './ProCardSkeleton'
 
 // Pro cards follow the src/ui/Status.tsx states: body-sm copy, tertiary
-// for empty, data-down for errors, warning text for notices, no icons.
+// for empty, text-error for errors, warning text for notices, no icons.
 // Retry and recovery actions are small secondary Buttons, never text links.
 interface ProCardStatusAction {
 	label: string
@@ -73,7 +73,7 @@ export function ProCardError({
 	return (
 		<div role={role} className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center">
 			{/* A status is a lasting state of the card (nothing to draw, needs regenerating), not a failure: not red. */}
-			<p className={`body-sm ${role === 'alert' ? 'text-data-down' : 'text-secondary'}`}>{title}</p>
+			<p className={`body-sm ${role === 'alert' ? 'text-error' : 'text-secondary'}`}>{title}</p>
 			{detail ? <p className="body-sm text-tertiary">{detail}</p> : null}
 			{retry || action ? (
 				<div className="mt-1 flex flex-wrap justify-center gap-2">
@@ -124,7 +124,7 @@ export function ProCardNotice({
 		<div
 			role={isError ? 'alert' : 'status'}
 			title={title}
-			className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-1 body-sm md:px-3 ${isError ? 'text-data-down' : 'text-warning'}`}
+			className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-1 body-sm md:px-3 ${isError ? 'text-error' : 'text-warning'}`}
 		>
 			<span>{children}</span>
 			{retry ? <ProCardRetryButton retry={retry} /> : null}

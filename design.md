@@ -12,7 +12,7 @@ The system is not frozen. When a new pattern, a new requirement or a clearly bet
 
 Tokens come in three tiers, and components use only tier 2 and tier 3:
 
-1. **Primitives** (`src/styles/primitives.css`): the generated color ramps (`--blue-1` … `--blue-12`, see [Color ramps](#color-ramps)) and the fixed `*-500` chart accents. Components never use them. They are not registered as Tailwind colors, because names like `blue` and `neutral` would override Tailwind's own palettes.
+1. **Primitives** (`src/styles/primitives.css`): the generated color ramps (`--blue-1` … `--blue-12`, see [Color ramps](#color-ramps)) and `--neutral-500`, the scrollbar thumb, fixed in both modes. Components never use them. They are not registered as Tailwind colors, because names like `blue` and `neutral` would override Tailwind's own palettes.
 2. **Semantics** (`src/styles/semantics.css`): role tokens such as `--bg-surface` and `--text-data-up`, light values on `:root` and dark values under `html.dark`, registered as utilities (`bg-surface`, `text-primary`, `border-subtle`).
 3. **Domain tokens**: only when a value differs from every semantic, such as the Yields text accents in `src/tailwind.css`. A token that would alias a semantic binds the semantic instead.
 
@@ -60,19 +60,18 @@ Class composition:
 | `bg-screen-dim`                                                | Dialog and drawer backdrops                                                                                                                                                                    |
 | `bg-equity-logo`                                               | Fixed light canvas behind company logos, in both modes                                                                                                                                         |
 
-| Text                                      | Use                                                                                        |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `text-primary`                            | Main text                                                                                  |
-| `text-secondary`                          | Supporting text and resting interactive text                                               |
-| `text-tertiary`                           | Qualifiers: units, suffixes, timestamps, counts, placeholders, empty and missing values    |
-| `text-disabled`                           | Disabled controls only                                                                     |
-| `text-link`                               | Links, selected labels on `bg-brand-muted`, active sort carets                             |
-| `text-on-brand`                           | Text on `bg-brand`                                                                         |
-| `text-data-up` / `text-data-down`         | Positive and negative movement                                                             |
-| `text-data-up-alt` / `text-data-down-alt` | A second axis of meaning in chart contexts                                                 |
-| `text-warning`                            | Warnings                                                                                   |
-| `text-error` / `text-success`             | Feedback on the reader's own action: validation, destructive rows, failed and done actions |
-| `text-verified`                           | The verified mark on yields                                                                |
+| Text                              | Use                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `text-primary`                    | Main text                                                                                     |
+| `text-secondary`                  | Supporting text and resting interactive text                                                  |
+| `text-tertiary`                   | Qualifiers: units, suffixes, timestamps, counts, placeholders, empty and missing values       |
+| `text-disabled`                   | Disabled controls only                                                                        |
+| `text-link`                       | Links, selected labels on `bg-brand-muted`, active sort carets                                |
+| `text-on-brand`                   | Text on `bg-brand`                                                                            |
+| `text-data-up` / `text-data-down` | Positive and negative movement                                                                |
+| `text-warning`                    | Warnings                                                                                      |
+| `text-error` / `text-success`     | Errors and successes: failed requests and actions, validation, destructive rows, done actions |
+| `text-verified`                   | The verified mark on yields                                                                   |
 
 | Border                                         | Use                                                                                         |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -112,7 +111,7 @@ Usage rules:
 - Text tiers are text-only: never `bg-primary`.
 - Use solid colors for text, fills and tints, translucent ones for neutral borders, dividers, hover washes, glass, veils and seams. Translucency lives in a token; never put a `/NN` opacity modifier on a color utility (`opacity-color-modifier`): use the ramp step for that role.
 - The `opacity` utility is for imagery, decoration and show/hide motion, never for text or a control's state. Dimmed text takes the next text tier. A disabled control takes `text-disabled`, plus `bg-disabled` when filled and `border-disabled` when outlined, in every variant (`disabled-opacity`). Only a disabled composite whose children carry their own colors or imagery (an avatar picker, a logo row, a dataset card) keeps `opacity-60` on the whole.
-- Movement uses `text-data-up`/`text-data-down`, with a sign or arrow where the direction matters. A price drop is never `text-error`.
+- Movement uses `text-data-up`/`text-data-down`, with a sign or arrow where the direction matters. A price drop is never `text-error`, and an error is never `text-data-down`: the two share a hue, not a meaning.
 - Brand blue and every other palette value come only from tokens, never from a literal.
 - `bg-brand` is a fill. Blue text is `text-link`, never `text-brand`, which fails AA in dark mode (`brand-fill-as-text`).
 - Do not add a token for a one-off value. When a role is missing, add it to `semantics.css` with its rule here.
@@ -160,7 +159,6 @@ Every color role comes from a 12-step ramp per hue: neutral, blue (brand), emera
 - A tinted control uses its hue's steps: rest on 3, hover on 4, text on 11, border on 7. That is how `ProButton`, the row-link pills and the destructive states are built.
 - Disabled controls sit on the neutral ramp: `bg-disabled` is step 3, `border-disabled` step 5 and `text-disabled` step 8. Disabled text is exempt from AA; it has to read as unavailable, not pass.
 - Colors ship as hex, so browsers, chart canvases and exports render the same value.
-- Fixed chart accents (`--green-500`, `--red-500`, …) stay outside the ramps until the chart palettes move onto them.
 
 ### Always-dark surfaces
 
@@ -276,6 +274,7 @@ Each component's header comment holds its own rules. Read it before using the co
 | A standalone full-width conversion CTA                                 | `Button size="lg"`; beside an input it stays md                                                                                                                                                        | `src/ui/Button.tsx`                                                  |
 | A product palette on a control                                         | A token scope that re-points the brand tokens (`.sub-api-accent`), never a Button variant                                                                                                              | `src/styles/themes/`                                                 |
 | Chart metric or series chips                                           | `metricChipStyles`, `metricOptionChipStyles`, `metricSeriesToggleStyles`                                                                                                                               | `src/ui/MetricChip.tsx`                                              |
+| A promo pill: New, Try free, Free, Pro                                 | `PromoBadge` (`promoBadgeStyles` on a link or an A/B-gated pill)                                                                                                                                       | `src/ui/PromoBadge.tsx`                                              |
 | The count in a picker or dialog trigger                                | `CountBadge`                                                                                                                                                                                           | `src/ui/CountBadge.tsx`                                              |
 | A row of link pills with overflow                                      | `LinksWithDropdown`                                                                                                                                                                                    | `src/components/RowLinksWithDropdown/LinksWithDropdown.tsx`          |
 | Pick from a short list                                                 | `Select`                                                                                                                                                                                               | `src/components/Select/Select.tsx`                                   |
@@ -334,7 +333,7 @@ Icons:
 - Affordance indicators (chevrons, resting sort carets, help circles, drag handles) are `text-tertiary`; never ship an icon that inherits whatever tier surrounds it.
 - An icon beside a label in the same control inherits `currentColor`, so it moves with its label on hover and active.
 - An icon-only action (copy, close, download, settings, pagination) rests on `text-secondary` and turns `text-primary` on hover and focus, never dimmed with opacity.
-- Status icons use the status tokens (`text-warning`, `text-data-down`); empty-state illustrations are `text-tertiary`; the active sort caret is `text-link`.
+- Status icons use the status tokens (`text-warning`, `text-error`); a good / caution / bad assessment (a flag, a rating, a compliance state) uses `success` / `warning` / `error`; empty-state illustrations are `text-tertiary`; the active sort caret is `text-link`.
 - An icon beside a label is 14px (`size-3.5`); an icon-only control's icon is 16px (`size-4`). Never mix the two in one role.
 - An icon-only control carries `aria-label` plus a `Tooltip` that renders as the control (`render={<Button … />}`), never one wrapped around it, so the tooltip describes the focusable control and a tap keeps the control's action. Exceptions, named by what sits beside them: a field's clear ✕ (the field's label names it), a row's expand chevron and a disclosure chevron beside its own label (`aria-expanded` says what it does), and a composer's send arrow. Never put data in a native `title=`: touch cannot reach it.
 
@@ -397,7 +396,10 @@ Every chart draws through the renderer for its shape in [`src/components/ECharts
 - Renderers own the instance, resize, theme, tooltip surface, grid geometry and export, so a page never calls `echarts.init` (`raw-echarts-init`). When no renderer fits, extend the closest one.
 - Categorical series colors come from the one palette in [`src/constants/colors.ts`](src/constants/colors.ts): `chartColor(rank)` / `chartColors(n)`, brand blue first, each color at 3:1 or more on every chart background in both modes. Series take colors by rank in the chart; a Pro dashboard gives each entity one color across its cards, in order of first appearance. Never add a hex list, a color generator or a name hash.
 - A chart that can draw more than `CHART_SERIES_LIMIT` (10) series folds the rest into one "Others" series in `OTHERS_COLOR`, unless a picker chooses the series (see `docs/charts.md`). Treemap children are `childColors(parent, n)`.
-- Colors that carry meaning stay with their meaning: up/down and supply/borrow on the data ramps (Yields included), risk on the status ramps, and brand colors that come with the data (stablecoins, partner dashboards).
+- Rising and falling marks (candles, up/down bars, inflow/outflow, Sankey links, trade markers) are `chartTheme.up`/`down`, or the `CHART_UP`/`CHART_DOWN` variables in a chart payload, which the renderers resolve per theme. Light mode uses emerald-9 and a crimson matched to its lightness and saturation, so a red bar never outweighs a green one; dark mode uses the step-11 text colours, which match the labels beside them. Fills that text sits on (heat cells, the value scale) are the fixed `HEAT_UP`/`HEAT_DOWN`, because white text fails on the bright dark marks. Lines, labels and tooltip numbers that rise or fall use `chartTheme.dataUp`/`dataDown`, the `text-data-*` colors. A series with no direction (a total, a price) takes the palette, never green or red. The palette's deep green and crimson (its 8th and 10th colours) sit close to the up and down colours, so a chart that draws up/down beside palette series gives them to its least-paired metrics or skips them.
+- A value scale (a treemap colored by change, a correlation matrix, a score) is `divergingColor(t)`: `HEAT_DOWN` through the Others grey to `HEAT_UP`, so gains and losses weigh the same. It colors fills, bars and borders (3:1), never text: a score number beside its bar stays in the text tiers. A heat cell behind text uses `HEAT_UP`, `HEAT_DOWN` or the brand color at an alpha (`color-mix(in srgb, ${HEAT_UP} 40%, transparent)`), so it follows the card in both modes.
+- Colors that carry meaning stay with their meaning: supply/borrow on the data ramps (Yields included), risk on the status ramps, and brand colors that come with the data (stablecoins, exchange venues, ETF assets, partner dashboards). A brand color under 3:1 on either chart background gets a light/dark pair in the same hue, lightened or darkened just far enough; one that passes keeps its hex.
+- Candlestick indicators take the palette from its second color, because brand blue is the volume bars.
 - Chart chrome (axis labels, gridlines, legends, dataZoom, PNG export framing, candlestick colors) reads the `--chart-*` tokens through `useChartTheme(isThemeDark)` or `getChartTheme(isDark)` in [`chartTheme.ts`](src/components/ECharts/shared/chartTheme.ts), because canvas cannot read `var()`. Never read `--chart-*` by hand or fork chrome on `isDark`.
 - HTML tooltips use the `.defillama-echarts-tooltip` recipe in `src/tailwind.css`.
 - Cartesian geometry comes from [`chartSpacing.ts`](src/components/ECharts/shared/chartSpacing.ts) (`chartGrid()`). Never copy grid, legend or slider offsets, and never pad a chart body in the DOM.

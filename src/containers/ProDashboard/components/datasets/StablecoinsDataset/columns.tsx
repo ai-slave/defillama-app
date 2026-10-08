@@ -49,7 +49,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 								name="alert-triangle"
 								height={14}
 								width={14}
-								className={pegDeviation > 0 ? 'text-success' : 'text-error'}
+								className={pegDeviation > 0 ? 'text-data-up' : 'text-data-down'}
 							/>
 						</Tooltip>
 					) : null}
@@ -99,7 +99,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		cell: ({ row }) => {
 			const value = row.original.change_1d
 			return (
-				<span className={value == null ? undefined : value < 0 ? 'text-error' : 'text-success'}>
+				<span className={value == null ? undefined : value < 0 ? 'text-data-down' : 'text-data-up'}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -116,7 +116,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		cell: ({ row }) => {
 			const value = row.original.change_7d
 			return (
-				<span className={value == null ? undefined : value < 0 ? 'text-error' : 'text-success'}>
+				<span className={value == null ? undefined : value < 0 ? 'text-data-down' : 'text-data-up'}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -133,7 +133,7 @@ export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConf
 		cell: ({ row }) => {
 			const value = row.original.change_1m
 			return (
-				<span className={value == null ? undefined : value < 0 ? 'text-error' : 'text-success'}>
+				<span className={value == null ? undefined : value < 0 ? 'text-data-down' : 'text-data-up'}>
 					<PercentChange percent={value} />
 				</span>
 			)

@@ -15,7 +15,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
-import { useChartTheme } from '../shared/chartTheme'
+import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { formatChartValue } from '../shared/formatters'
 import {
 	buildSankeyNodeMetadata,
@@ -109,7 +109,9 @@ function SankeyChart({
 				...(useMobileLayout ? { label: { position: mobileLabelPosition } } : {}),
 				...(node.depth !== undefined ? { depth: node.depth } : {})
 			}
-			return color === undefined ? dataItem : { ...dataItem, itemStyle: { color } }
+			return color === undefined
+				? dataItem
+				: { ...dataItem, itemStyle: { color: resolveChartColor(color, chartTheme) } }
 		})
 		return {
 			type: 'sankey',
@@ -158,7 +160,7 @@ function SankeyChart({
 			data: nodeData,
 			links: links.map((link) => {
 				const dataItem = { source: link.source, target: link.target, value: link.value }
-				return link.color ? { ...dataItem, lineStyle: { color: link.color } } : dataItem
+				return link.color ? { ...dataItem, lineStyle: { color: resolveChartColor(link.color, chartTheme) } } : dataItem
 			})
 		}
 	}, [

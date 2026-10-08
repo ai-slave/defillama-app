@@ -10,9 +10,10 @@ import {
 	STABLECOIN_SINGLE_UNITLESS_CHART_OPTIONS
 } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 import { useStablecoinsChartData } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
-import { STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
+import { stablecoinBrandColors } from '~/containers/Stablecoins/brandColors'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
@@ -51,6 +52,8 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const { chain, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const [isDark] = useDarkModeManager()
+	const brandColors = stablecoinBrandColors(isDark)
 	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${chain}:${chartType}`)
 	const selectionOptions = useMemo(
 		() => ({
@@ -89,10 +92,10 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			chartPayload.charts.map((chart) => ({
 				...chart,
 				// The payload colours series by rank; a stablecoin's brand colour wins.
-				color: STABLECOIN_TOKEN_COLORS[chart.name] ?? chart.color,
+				color: brandColors[chart.name] ?? chart.color,
 				...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
 			})),
-		[chartPayload.charts, chartType]
+		[brandColors, chartPayload.charts, chartType]
 	)
 	const dataset = useMemo(
 		() => filterChartDatasetByTimePeriod(chartPayload.dataset, timePeriod, customTimePeriod),
@@ -201,7 +204,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					<div className="mb-2 flex gap-4">
 						<div className="flex flex-col">
 							<span className="body-sm text-tertiary uppercase">Total Market Cap</span>
-							<span className="mono-md-bold" style={{ color: '#3e79cc' }}>
+							<span className="mono-md-bold text-primary">
 								{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>
 						</div>
@@ -219,7 +222,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 						{chartType === 'pie' ? (
 							<PieChart
 								chartData={piePresentation.chartData}
-								stackColors={{ ...piePresentation.stackColors, ...STABLECOIN_TOKEN_COLORS }}
+								stackColors={{ ...piePresentation.stackColors, ...brandColors }}
 								exportButtons="hidden"
 								height={chartHeight}
 								onReady={handleChartReady}

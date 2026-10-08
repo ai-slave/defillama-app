@@ -92,7 +92,7 @@ export function LiquidationsShellError({
 	...props
 }: LiquidationsShellChromeProps & { errorMessage: string }) {
 	return (
-		<LiquidationsShellCard {...props} statusVariant="error" textClassName="body-sm text-data-down">
+		<LiquidationsShellCard {...props} statusVariant="error" textClassName="body-sm text-error">
 			{errorMessage}
 		</LiquidationsShellCard>
 	)

@@ -393,7 +393,7 @@ export function TokenUsageSearch() {
 						<LoadingIndicator />
 					</p>
 				) : error ? (
-					<p className="px-3 py-6 text-center body-sm text-data-down" role="alert">{`Error: ${error.message}`}</p>
+					<p className="px-3 py-6 text-center body-sm text-error" role="alert">{`Error: ${error.message}`}</p>
 				) : !data?.length ? (
 					<NoResults />
 				) : (

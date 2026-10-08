@@ -227,7 +227,7 @@ export function ExchangeTokenFinder({
 						<LoadingIndicator />
 					</div>
 				) : listingsQuery.isError ? (
-					<p className="p-4 body-sm text-data-down">Token listings failed to load.</p>
+					<p className="p-4 body-sm text-error">Token listings failed to load.</p>
 				) : rows.length === 0 ? (
 					<p className="p-4 body-sm text-tertiary">No exchanges match the selected tokens and region.</p>
 				) : (

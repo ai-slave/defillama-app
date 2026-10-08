@@ -69,7 +69,7 @@ export function SmolStats(props: IChainOverviewData) {
 							value={latestEtf ? formatUsd(latestEtf[1], USD_LOWERCASE_MILLIONS_OPTIONS) : null}
 							qualifier="24h"
 						>
-							<SmolBarChart series={etfs} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
+							<SmolBarChart series={etfs} signed className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
 						</SmolStatCard>
 					) : null}
 					{totalRwaActiveMcap && totalRwaActiveMcap.chart.length > 0 ? (

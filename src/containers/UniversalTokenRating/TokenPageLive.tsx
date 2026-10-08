@@ -25,7 +25,7 @@ import {
 	ChartCaption,
 	ChartLegend,
 	SimpleChart,
-	useChartAxisColor,
+	useSimpleChartTheme,
 	type SimpleSeries
 } from './SimpleChart'
 import {
@@ -350,7 +350,8 @@ export function TokenPageLive({
 	defillamaDescription?: string | null
 	disclosures?: UtrDisclosures | null
 }) {
-	const axisColor = useChartAxisColor()
+	const chartTheme = useSimpleChartTheme()
+	const axisColor = chartTheme.axisLabel
 	const [criteriaDrawer, setCriteriaDrawer] = useState<CriteriaDrawerState | null>(null)
 	const [aboutOpen, setAboutOpen] = useState(false)
 
@@ -886,7 +887,7 @@ export function TokenPageLive({
 															low: candle.lowUsd,
 															high: candle.highUsd
 														})),
-														axisColor
+														chartTheme
 													)}
 												/>
 												<CardDivider />

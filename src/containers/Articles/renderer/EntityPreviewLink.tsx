@@ -40,7 +40,7 @@ function entityLogoUrl(entity: ArticleEntityRef) {
 }
 
 const changeColor = (n?: number | null) =>
-	typeof n !== 'number' ? 'text-tertiary' : n > 0 ? 'text-success' : n < 0 ? 'text-error' : 'text-tertiary'
+	typeof n !== 'number' ? 'text-tertiary' : n > 0 ? 'text-data-up' : n < 0 ? 'text-data-down' : 'text-tertiary'
 
 function fetchEntityPreview(
 	type: ArticleEntityType,

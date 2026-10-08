@@ -801,7 +801,7 @@ export function ChartBuilderTab({
 					>
 						{queryReadFailed(preview) && !previewData ? (
 							<div role="alert" className="flex flex-col items-center gap-2 text-center">
-								<p className="body-md text-data-down">Couldn't load the preview.</p>
+								<p className="body-md text-error">Couldn't load the preview.</p>
 								<Button
 									type="button"
 									size="sm"

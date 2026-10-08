@@ -1,16 +1,11 @@
 import { useMemo } from 'react'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { chartColor } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useSmolChartHover } from './useSmolChartHover'
-
-const COLOR_MAP = {
-	blue: { dark: chartColor(0), light: chartColor(0) },
-	green: { dark: '#3fb84f', light: '#008a13' },
-	red: { dark: '#e24a42', light: '#e60d02' }
-} as const
 
 export function smoothPath(points: Array<[number, number]>): string {
 	const first = points[0]
@@ -44,14 +39,16 @@ export function SmolLineChart({
 	className
 }: {
 	series: Array<[number, number]>
-	color: keyof typeof COLOR_MAP
+	color: 'blue' | 'green' | 'red'
 	className?: string
 }) {
 	const [isThemeDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isThemeDark)
+	const stroke = color === 'green' ? chartTheme.dataUp : color === 'red' ? chartTheme.dataDown : chartColor(0)
 	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(series.length)
 
-	const { pathD, stroke } = useMemo(() => {
-		if (series.length === 0) return { pathD: '', stroke: '' }
+	const pathD = useMemo(() => {
+		if (series.length === 0) return ''
 
 		const values = series.map((s) => s[1])
 		const min = Math.min(...values)
@@ -68,9 +65,8 @@ export function SmolLineChart({
 			return [x, y]
 		})
 
-		const themeKey = isThemeDark ? 'dark' : 'light'
-		return { pathD: smoothPath(pts), stroke: COLOR_MAP[color][themeKey] }
-	}, [series, color, isThemeDark])
+		return smoothPath(pts)
+	}, [series])
 
 	if (series.length === 0) return null
 	const hoveredPoint = hoveredIndex == null ? undefined : series[hoveredIndex]

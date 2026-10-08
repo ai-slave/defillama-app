@@ -192,7 +192,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 								<p className="flex flex-wrap items-center gap-2 body-sm text-tertiary">
 									<span>{report.section ? ARTICLE_SECTION_LABELS[report.section] : 'No section'}</span>
 									<span aria-hidden>·</span>
-									<span className={report.lifecycleStatus === 'published' ? 'text-data-up' : 'text-warning'}>
+									<span className={report.lifecycleStatus === 'published' ? 'text-success' : 'text-warning'}>
 										{report.lifecycleStatus}
 									</span>
 								</p>

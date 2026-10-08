@@ -9,7 +9,7 @@ import type { tableFeaturesConfig } from './index'
 import type { RewardLifecycle, RewardProgram } from './types'
 
 export const lifecycleStyles: Record<RewardLifecycle, string> = {
-	Live: 'text-data-up',
+	Live: 'text-success',
 	Upcoming: 'text-link',
 	'Season Gap': 'text-warning',
 	Ended: 'text-secondary',

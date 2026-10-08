@@ -22,14 +22,14 @@ export function RWAPlatformKeyMetrics({ meta, kpi }: RWAPlatformKeyMetricsProps)
 						{meta.logo ? <TokenLogo src={meta.logo} size={24} alt={`${meta.name} logo`} /> : null}
 						<span>{meta.name}</span>
 						{meta.suspicious === true ? (
-							<span className="flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-data-down">
+							<span className="flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-sm text-error">
 								<Icon name="alert-triangle" className="size-3.5" />
 								Suspicious
 							</span>
 						) : null}
 					</h1>
 					{meta.suspicious === true && meta.suspiciousReason ? (
-						<p className="flex items-start gap-1.5 body-sm text-data-down">
+						<p className="flex items-start gap-1.5 body-sm text-error">
 							<Icon name="alert-triangle" className="mt-0.5 size-3.5 shrink-0" />
 							{meta.suspiciousReason}
 						</p>

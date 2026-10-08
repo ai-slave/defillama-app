@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 
 /**
  * Chart chrome colors (axis labels, gridlines, dataZoom, PNG-export framing),
@@ -10,9 +11,8 @@ import { useMemo } from 'react'
  * Series colors are NOT part of this: they come from the one palette in
  * src/constants/colors.ts and pass 3:1 in both modes, so they are not theme tokens.
  *
- * The fallbacks below are the exact literals the chart configs used before
- * tokenization — if a token is missing or this runs before the stylesheet
- * loads (SSR), rendering stays byte-identical to the pre-token behavior.
+ * The fallbacks below are the tokens' resolved values, used on the server and
+ * before the stylesheet loads; keep them equal to the tokens.
  */
 export interface ChartTheme {
 	text: string
@@ -20,7 +20,7 @@ export interface ChartTheme {
 	axisLabel: string
 	legendPageActive: string
 	legendPageInactive: string
-	/** Chart accents (candles, up/down fills) — fixed across modes per the library. */
+	/** Rising and falling marks (candles, up/down bars): emerald-9 and a matched crimson in light, step 11 in dark. */
 	up: string
 	down: string
 	/** Rising and falling values drawn as data (sparklines), the --text-data-* text colours. */
@@ -62,10 +62,10 @@ const TOKENS: Record<
 		light: '#6f6f6f80',
 		dark: '#87878780'
 	},
-	up: { cssVar: '--chart-up', light: '#3eb84f', dark: '#3eb84f' },
-	down: { cssVar: '--chart-down', light: '#e24a42', dark: '#e24a42' },
-	dataUp: { cssVar: '--text-data-up', light: '#32933f', dark: '#3eb84f' },
-	dataDown: { cssVar: '--text-data-down', light: '#b53b35', dark: '#e24a42' },
+	up: { cssVar: '--chart-up', light: '#007b45', dark: '#12b167' },
+	down: { cssVar: '--chart-down', light: '#a5464a', dark: '#ff686f' },
+	dataUp: { cssVar: '--text-data-up', light: '#016d3c', dark: '#12b167' },
+	dataDown: { cssVar: '--text-data-down', light: '#bd0a31', dark: '#ff686f' },
 	brand: { cssVar: '--bg-brand', light: '#1f67d2', dark: '#1f67d2' },
 	gridline: { cssVar: '--chart-gridline', light: 'rgba(0, 0, 0, 0.03)', dark: 'rgba(255, 255, 255, 0.02)' },
 	areaGradientTo: {
@@ -141,6 +141,12 @@ export function getChartTheme(isThemeDark: boolean): ChartTheme {
 	theme.ink = (alpha) => (isThemeDark ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`)
 	theme.inkInverted = (alpha) => (isThemeDark ? `rgba(0, 0, 0, ${alpha})` : `rgba(255, 255, 255, ${alpha})`)
 	return theme
+}
+
+/** The canvas colour for a series colour: the up/down mark variables (CHART_UP/CHART_DOWN) become the theme's marks,
+    so a chart payload built without the theme still follows it; every other colour passes through. */
+export function resolveChartColor(color: string, theme: ChartTheme): string {
+	return color === CHART_UP ? theme.up : color === CHART_DOWN ? theme.down : color
 }
 
 export function useChartTheme(isThemeDark: boolean): ChartTheme {

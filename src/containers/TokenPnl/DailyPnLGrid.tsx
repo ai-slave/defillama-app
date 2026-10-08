@@ -1,3 +1,4 @@
+import { HEAT_DOWN, HEAT_UP, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDateLabel, formatPnlPercent } from './format'
@@ -20,12 +21,11 @@ export function DailyPnLGrid({ timeline }: { timeline: Array<TimelinePoint> }) {
 				{displayDays.map((day) => {
 					const isPositive = day.percentChange > 0
 					const isZero = day.percentChange === 0
-					const alpha = Math.min(0.6, Math.max(0.22, Math.abs(day.percentChange) / 9))
+					const alpha = Math.min(60, Math.max(22, (Math.abs(day.percentChange) / 9) * 100))
+					// Up, down and Others colours at an alpha, so the cell follows the card in both modes.
 					const backgroundColor = isZero
-						? 'rgba(148, 163, 184, 0.22)'
-						: isPositive
-							? `rgba(16, 185, 129, ${alpha})`
-							: `rgba(239, 68, 68, ${alpha})`
+						? `color-mix(in srgb, ${OTHERS_COLOR} 22%, transparent)`
+						: `color-mix(in srgb, ${isPositive ? HEAT_UP : HEAT_DOWN} ${alpha}%, transparent)`
 					return (
 						<li key={day.timestamp}>
 							<Tooltip

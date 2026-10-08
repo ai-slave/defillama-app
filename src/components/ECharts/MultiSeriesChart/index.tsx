@@ -42,7 +42,7 @@ import {
 	chartHorizontalScrollLegend,
 	chartLegendScrollStyle
 } from '../shared/chartSpacing'
-import { useChartTheme } from '../shared/chartTheme'
+import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { useLoadedIconUrls } from '../shared/icon'
 import { mergeDeep } from '../shared/merge'
 import {
@@ -178,7 +178,12 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 	const datasetDimensions = dataset.dimensions
 	const inferredCharts = useMemo(() => inferMultiSeriesCharts(datasetDimensions, stacked), [datasetDimensions, stacked])
-	const effectiveCharts = charts && charts.length > 0 ? charts : inferredCharts
+	const effectiveCharts = useMemo(() => {
+		const source = charts && charts.length > 0 ? charts : inferredCharts
+		return source.map((chart) =>
+			chart.color ? { ...chart, color: resolveChartColor(chart.color, chartTheme) } : chart
+		)
+	}, [charts, inferredCharts, chartTheme])
 	const legendIconUrls: Array<string> = []
 	for (const chart of effectiveCharts) {
 		if (chart.legendIconUrl) legendIconUrls.push(chart.legendIconUrl)

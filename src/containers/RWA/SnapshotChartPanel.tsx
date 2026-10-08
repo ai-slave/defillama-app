@@ -129,7 +129,7 @@ export function RWASnapshotChartPanel({
 				<ChartPngExportButton chartInstance={chartInstance} filename={viewFilename} title={exportTitle} />
 			</ChartPanelToolbar>
 			{error ? (
-				<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+				<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 					{error}
 				</ChartPanelBodyFallback>
 			) : isLoading ? (

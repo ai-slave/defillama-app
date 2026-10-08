@@ -477,7 +477,7 @@ export function PoolApyChart({
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : error ? (
-					<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+					<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 						Couldn't load {range} history.
 					</ChartPanelBodyFallback>
 				) : !hasData ? (

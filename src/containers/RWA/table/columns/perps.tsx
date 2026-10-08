@@ -9,21 +9,13 @@ const d = perpsDefinitions
 
 const GROUP_RATE_NOTE = 'On a venue or group row the value is the open-interest weighted average of its contracts.'
 
-const VENUE_TYPE_TONE: Record<string, string> = { DEX: 'text-data-up', CEX: 'text-data-down' }
-
 export function getPerpsMarket(row: RWATableRow): RWAPerpsContractOverlayRow | null {
 	return row.kind === 'leaf' && row.asset.kind === 'perps' ? row.asset : null
 }
 
 /** DEX or CEX belongs to the venue: beside a venue group's name and in the Venue cell, never on a market's name. */
 export function VenueTypeTag({ type }: { type: string }) {
-	return (
-		<span
-			className={`shrink-0 rounded-sm border border-medium px-1 label-xs ${VENUE_TYPE_TONE[type] ?? 'text-secondary'}`}
-		>
-			{type}
-		</span>
-	)
+	return <span className="shrink-0 rounded-sm border border-medium px-1 label-xs text-secondary">{type}</span>
 }
 
 export const venueTypeColumn = columnHelper.accessor(

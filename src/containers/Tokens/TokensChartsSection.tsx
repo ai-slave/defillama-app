@@ -4,7 +4,8 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
-import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
+import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/colors'
+import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
@@ -41,8 +42,6 @@ const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as 
 
 const MAP_HEIGHT = '600px'
 const MOVERS_HEIGHT = '360px'
-const GAINER_COLOR = '#269f3c'
-const LOSER_COLOR = '#942e38'
 const EXPORT_FILENAME = 'tokens-market-map'
 
 const UNIVERSE_OPTIONS = TOKENS_UNIVERSES.map((universe) => ({ value: universe, label: `Top ${universe}` }))
@@ -190,7 +189,7 @@ export function TokensChartsSection({
 			{data == null ? (
 				<ChartPanelBodyFallback
 					role={datasetQuery.isError ? 'alert' : 'status'}
-					className={datasetQuery.isError ? 'body-sm text-data-down' : undefined}
+					className={datasetQuery.isError ? 'body-sm text-error' : undefined}
 					style={{ height: MAP_HEIGHT }}
 				>
 					{datasetQuery.isError ? 'Chart unavailable' : <LoadingSpinner size={24} />}
@@ -221,12 +220,7 @@ export function TokensChartsSection({
 							role="img"
 							aria-label={`Treemap color scale: loss through zero to gain for price ${colorBy}`}
 						>
-							<div
-								className="h-1.5 rounded-full border border-subtle"
-								style={{
-									background: `linear-gradient(to right, ${EQUITIES_TREEMAP_COLORS.negative}, ${EQUITIES_TREEMAP_COLORS.neutral}, ${EQUITIES_TREEMAP_COLORS.positive})`
-								}}
-							/>
+							<div className="h-1.5 rounded-full border border-subtle" style={{ background: CHANGE_SCALE_GRADIENT }} />
 							<div className="flex justify-between pt-0.5">
 								<span>Loss</span>
 								<span>0%</span>
@@ -237,18 +231,13 @@ export function TokensChartsSection({
 				</>
 			) : movers ? (
 				<div className="grid grid-cols-1 lg:grid-cols-2">
-					<MoversChart
-						title="Top Gainers"
-						titleClassName="text-data-up"
-						entries={movers.gainers}
-						color={GAINER_COLOR}
-					/>
+					<MoversChart title="Top Gainers" titleClassName="text-data-up" entries={movers.gainers} color={CHART_UP} />
 					<MoversChart
 						title="Top Losers"
 						titleClassName="text-data-down"
 						className="border-t border-subtle lg:border-t-0 lg:border-l"
 						entries={movers.losers}
-						color={LOSER_COLOR}
+						color={CHART_DOWN}
 					/>
 				</div>
 			) : null}

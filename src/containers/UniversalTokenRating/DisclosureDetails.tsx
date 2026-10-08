@@ -6,7 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { disclosedVestingDurationMonths, disclosedVestingSchedule, uniqueGroupLabels } from './disclosedVesting'
-import { ChartCaption, ChartLegend, SimpleChart, useChartAxisColor } from './SimpleChart'
+import { ChartCaption, ChartLegend, SimpleChart, useSimpleChartTheme } from './SimpleChart'
 import type { UtrDisclosedAllocation, UtrDisclosedTokenomicsGroup, UtrDisclosures } from './types'
 
 const HTTP_URL = /^https?:\/\//i
@@ -168,7 +168,7 @@ export function DisclosedVestingChart({
 	groups: Array<UtrDisclosedTokenomicsGroup>
 	className?: string
 }) {
-	const axisColor = useChartAxisColor()
+	const axisColor = useSimpleChartTheme().axisLabel
 	return (
 		<div className="flex flex-col gap-2">
 			<ChartCaption>Disclosed Maximum Token Supply (%) | Months Since TGE</ChartCaption>

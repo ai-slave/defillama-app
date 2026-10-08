@@ -23,9 +23,10 @@ import {
 	useStablecoinsChartData
 } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
 import type { StablecoinAssetChartType, StablecoinChartType } from '~/containers/ProDashboard/types'
-import { STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
+import { stablecoinBrandColors } from '~/containers/Stablecoins/brandColors'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
@@ -103,6 +104,8 @@ export function StablecoinsChartTab({
 }: StablecoinsChartTabProps) {
 	const chainChartType = selectedStablecoinChartType
 	const assetChartType = selectedStablecoinAssetChartType
+	const [isDark] = useDarkModeManager()
+	const brandColors = stablecoinBrandColors(isDark)
 	const { data: chainsListData, isLoading: chainsLoading } = useStablecoinChainsList()
 	const { data: assetsListData, isLoading: assetsLoading } = useStablecoinAssetsList()
 	const chainsList = chainsListData ?? EMPTY_CHAIN_LIST
@@ -267,10 +270,10 @@ export function StablecoinsChartTab({
 		() =>
 			chainChartPayload.charts.map((chart) => ({
 				...chart,
-				color: STABLECOIN_TOKEN_COLORS[chart.name] ?? chart.color,
+				color: brandColors[chart.name] ?? chart.color,
 				...(chainChartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
 			})),
-		[chainChartPayload.charts, chainChartType]
+		[brandColors, chainChartPayload.charts, chainChartType]
 	)
 	const assetChainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
@@ -310,7 +313,7 @@ export function StablecoinsChartTab({
 				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<PieChart
 						chartData={chainPiePresentation.chartData}
-						stackColors={{ ...chainPiePresentation.stackColors, ...STABLECOIN_TOKEN_COLORS }}
+						stackColors={{ ...chainPiePresentation.stackColors, ...brandColors }}
 					/>
 				</Suspense>
 			)

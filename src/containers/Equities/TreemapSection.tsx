@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useMemo, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
+import { CHANGE_SCALE_GRADIENT } from '~/components/ECharts/TreemapChart/Market/colors'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -216,7 +216,7 @@ export function EquitiesTreemapSection({
 			{data == null ? (
 				<ChartPanelBodyFallback
 					role={datasetQuery.isError ? 'alert' : 'status'}
-					className={datasetQuery.isError ? 'body-sm text-data-down' : undefined}
+					className={datasetQuery.isError ? 'body-sm text-error' : undefined}
 					style={{ height: CHART_HEIGHT }}
 				>
 					{datasetQuery.isError ? 'Chart unavailable' : <LoadingSpinner size={24} />}
@@ -249,9 +249,7 @@ export function EquitiesTreemapSection({
 							>
 								<div
 									className="h-1.5 rounded-full border border-subtle"
-									style={{
-										background: `linear-gradient(to right, ${EQUITIES_TREEMAP_COLORS.negative}, ${EQUITIES_TREEMAP_COLORS.neutral}, ${EQUITIES_TREEMAP_COLORS.positive})`
-									}}
+									style={{ background: CHANGE_SCALE_GRADIENT }}
 								/>
 								<div className="flex justify-between pt-0.5">
 									<span>Loss</span>

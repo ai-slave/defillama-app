@@ -1,7 +1,8 @@
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { useIsClient } from '~/hooks/useIsClient'
-import { freeTrialBadgeStyles, SidebarDivider } from './shared'
+import { promoBadgeStyles } from '~/ui/PromoBadge'
+import { SidebarDivider } from './shared'
 
 export function PremiumHeader() {
 	const { hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
@@ -17,7 +18,7 @@ export function PremiumHeader() {
 				<span className="label-sm tracking-wide text-secondary">PREMIUM</span>
 				<BasicLink
 					href="/subscription"
-					className={`${freeTrialBadgeStyles} ${showFreeTrial ? '' : 'invisible'}`.trim()}
+					className={`hover-wash relative inline-flex ${promoBadgeStyles} ${showFreeTrial ? '' : 'invisible'}`.trim()}
 				>
 					Try free
 				</BasicLink>

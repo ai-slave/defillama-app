@@ -9,6 +9,7 @@
 
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { boundSelection } from '~/components/Select/localSelection'
+import { divergingColor } from '~/constants/colors'
 import type { TimeSeriesEntry } from './api.types'
 import type { IPctChangeRow } from './types'
 
@@ -98,7 +99,7 @@ export function buildNarrativeTreemapTreeData(
 		let group = categoryGroups.get(categoryName)
 		if (!group) {
 			const node: NarrativeTreemapCategory = {
-				value: [0, null, null, 0],
+				value: [0, null, null],
 				name: categoryName,
 				path: categoryName,
 				children: []
@@ -119,18 +120,13 @@ export function buildNarrativeTreemapTreeData(
 		})
 	}
 
-	// Value colors are normalized within each category, matching ECharts' previous
-	// recursive sibling-local mapping without cloning the finished tree in the chart.
+	// Shades are relative to each category: its best gain and worst loss take the full colour and every other
+	// move starts at 40% of it, so a small move still reads as a rise or fall.
 	for (const { node, min, max } of categoryGroups.values()) {
 		for (const child of node.children) {
 			const value = child.value[2] ?? 0
-			if (value > 0) {
-				child.value[3] = value === max ? 100 : (value / max) * 60 + 40
-			} else if (value < 0) {
-				child.value[3] = value === min ? -100 : ((value - min) / -min) * 60 - 100
-			} else {
-				child.value[3] = 0
-			}
+			const shade = value > 0 ? (value / max) * 0.6 + 0.4 : value < 0 ? ((value - min) / -min) * 0.6 - 1 : 0
+			child.itemStyle = { color: divergingColor(shade) }
 		}
 	}
 
@@ -148,7 +144,7 @@ export function filterNarrativeTreemapTreeData(
 		if (children.length === 0) continue
 		let marketCap = 0
 		for (const child of children) marketCap += child.value[0]
-		filtered.push({ ...category, value: [marketCap, null, null, 0], children })
+		filtered.push({ ...category, value: [marketCap, null, null], children })
 	}
 	return filtered
 }

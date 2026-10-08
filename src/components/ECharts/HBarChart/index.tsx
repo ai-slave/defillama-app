@@ -10,7 +10,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '../shared/chartSpacing'
-import { useChartTheme } from '../shared/chartTheme'
+import { resolveChartColor, useChartTheme } from '../shared/chartTheme'
 import { formatTooltipValue } from '../shared/formatters'
 import { useLoadedIconUrls } from '../shared/icon'
 import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
@@ -202,7 +202,7 @@ function HBarChart({
 					name: s.name,
 					type: 'bar' as const,
 					data: s.values,
-					itemStyle: { color: s.color },
+					itemStyle: { color: s.color && resolveChartColor(s.color, chartTheme) },
 					barMaxWidth: 22
 				}))
 			: [
@@ -211,7 +211,7 @@ function HBarChart({
 						data: values.map((value, index) => {
 							const item: { value: number; itemStyle?: { color: string } } = { value }
 							const barColor = colors?.[index] ?? color
-							if (barColor) item.itemStyle = { color: barColor }
+							if (barColor) item.itemStyle = { color: resolveChartColor(barColor, chartTheme) }
 							return item
 						}),
 						emphasis: { focus: 'series' as const },

@@ -394,7 +394,7 @@ function createEarnColumns(
 			cell: (info) => {
 				const value = info.getValue()
 				if (value == null) return <EmptyCell />
-				const accentClass = value >= 80 ? 'bg-data-down' : value >= 50 ? 'bg-warning' : 'bg-data-up'
+				const accentClass = value >= 80 ? 'bg-error' : value >= 50 ? 'bg-warning' : 'bg-success'
 				const riskLabel =
 					value >= 80 ? 'High concentration' : value >= 50 ? 'Medium concentration' : 'Low concentration'
 				return (

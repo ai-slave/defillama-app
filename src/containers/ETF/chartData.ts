@@ -1,17 +1,11 @@
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { LowercaseDwmcGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
+import { ASSET_BRAND_COLORS } from '~/constants/colors'
 import type { IProcessedFlows } from './types'
 
 export const ETF_ASSET_NAMES = ['Bitcoin', 'Ethereum', 'Solana', 'Hyperliquid'] as const
 export type ETFAssetName = (typeof ETF_ASSET_NAMES)[number]
-
-const ETF_CHART_COLORS: Record<ETFAssetName, string> = {
-	Bitcoin: '#F7931A',
-	Ethereum: '#6B7280',
-	Solana: '#9945FF',
-	Hyperliquid: '#50D2C1'
-}
 
 export function buildETFFlowChartData(
 	flows: IProcessedFlows,
@@ -56,11 +50,13 @@ export function buildETFFlowChartData(
 export function buildETFChartSpec({
 	flows,
 	groupBy,
-	assets
+	assets,
+	isDark
 }: {
 	flows: IProcessedFlows
 	groupBy: LowercaseDwmcGrouping
 	assets: Array<ETFAssetName>
+	isDark: boolean
 }): {
 	dataset: MultiSeriesChartDataset
 	charts: NonNullable<IMultiSeriesChartProps['charts']>
@@ -71,7 +67,7 @@ export function buildETFChartSpec({
 		name,
 		encode: { x: 0, y: index + 1 },
 		stack: name,
-		color: ETF_CHART_COLORS[name]
+		color: ASSET_BRAND_COLORS[name][isDark ? 1 : 0]
 	}))
 
 	return {

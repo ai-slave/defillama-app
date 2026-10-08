@@ -8,6 +8,7 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -200,10 +201,10 @@ const columns = columnHelper.columns([
 ])
 
 const BREAKDOWN_COLORS: Record<string, string> = {
-	stablecoins: '#16a34a',
-	majors: '#2563eb',
-	ownTokens: '#f97316',
-	others: '#6d28d9'
+	majors: chartColor(0),
+	stablecoins: chartColor(1),
+	ownTokens: chartColor(2),
+	others: OTHERS_COLOR
 }
 
 const BREAKDOWN_LABELS: Record<string, string> = {
@@ -213,7 +214,7 @@ const BREAKDOWN_LABELS: Record<string, string> = {
 	others: 'Others'
 }
 
-const breakdownColor = (type: string) => BREAKDOWN_COLORS[type] ?? '#f85149'
+const breakdownColor = (type: string) => BREAKDOWN_COLORS[type] ?? OTHERS_COLOR
 
 const formatBreakdownType = (type: string) => BREAKDOWN_LABELS[type] ?? type
 

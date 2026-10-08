@@ -4,8 +4,10 @@ import { GridComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { withEChartsRenderVisibility } from '../renderVisibility'
+import { useChartTheme } from '../shared/chartTheme'
 import { sparklineAxisMax, sparklineAxisMin } from './extent'
 
 echarts.use([BarChart, GridComponent, CanvasRenderer])
@@ -19,14 +21,13 @@ interface BarSparklineProps {
 	maxBars?: number
 }
 
-const SUCCESS_COLOR = 'rgb(34, 197, 94)'
-const ERROR_COLOR = 'rgb(239, 68, 68)'
-
 function BarSparklineRenderer({ data, className, height = 48, maxBars = 60 }: BarSparklineProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	useChartResize(chartRef, containerRef)
+	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
 
 	const chartData = useMemo(() => {
 		const xAxisData: Array<number> = []
@@ -42,7 +43,7 @@ function BarSparklineRenderer({ data, className, height = 48, maxBars = 60 }: Ba
 			bars.push({
 				value,
 				itemStyle: {
-					color: previousValue !== undefined && value < previousValue ? ERROR_COLOR : SUCCESS_COLOR,
+					color: previousValue !== undefined && value < previousValue ? chartTheme.down : chartTheme.up,
 					borderRadius: [2, 2, 0, 0]
 				}
 			})
@@ -58,7 +59,7 @@ function BarSparklineRenderer({ data, className, height = 48, maxBars = 60 }: Ba
 		}
 
 		return { xAxisData, bars }
-	}, [data, maxBars])
+	}, [data, maxBars, chartTheme])
 	const hasData = chartData.xAxisData.length > 0
 
 	useEffect(() => {

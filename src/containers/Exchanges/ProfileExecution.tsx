@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
+import { HEAT_DOWN } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -91,7 +92,7 @@ export function IntraSpread({ pct }: { pct: number | null | undefined }) {
 				content="A large share of this volume did not trade against the order book on show."
 				className="ms-auto w-fit"
 			>
-				<span className="flex items-center gap-1 text-data-down">
+				<span className="flex items-center gap-1 text-warning">
 					<Icon name="alert-triangle" height={14} width={14} aria-hidden="true" />
 					{text}
 				</span>
@@ -279,16 +280,18 @@ function dearShade(values: Array<number | null>): (value: number | null) => CSSP
 		const ties = sorted.filter((other) => other === value).length
 		const rank = (below + (ties - 1) / 2) / (sorted.length - 1)
 		const alpha = (rank - 0.5) * 0.18
-		return alpha < 0.015 ? undefined : { backgroundColor: `rgba(220, 38, 38, ${Math.round(alpha * 1000) / 1000})` }
+		return alpha < 0.015
+			? undefined
+			: { backgroundColor: `color-mix(in srgb, ${HEAT_DOWN} ${Math.round(alpha * 1000) / 10}%, transparent)` }
 	}
 }
 const insideShade = (pct: number | null): CSSProperties | undefined =>
 	pct == null
 		? undefined
 		: pct >= INSIDE_WARN_PCT
-			? { backgroundColor: 'rgba(220, 38, 38, 0.09)' }
+			? { backgroundColor: `color-mix(in srgb, ${HEAT_DOWN} 9%, transparent)` }
 			: pct >= INSIDE_NOTE_PCT
-				? { backgroundColor: 'rgba(217, 119, 6, 0.07)' }
+				? { backgroundColor: 'var(--bg-warning-tint)' }
 				: undefined
 
 interface ExecutionColumn {

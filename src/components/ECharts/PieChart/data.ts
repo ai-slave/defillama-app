@@ -1,5 +1,5 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 
 type PieInputRow = Record<string, unknown>
 type RuntimePieInput = Record<string, number> | Array<PieInputRow> | ReadonlyMap<string, number>
@@ -161,19 +161,13 @@ export function buildRuntimePieChartPresentation({
 			continue
 		}
 		chartData.push(peer)
-		const canonicalIndex = colorIndexByPeer?.get(peer.name) ?? index
-		const reservedColorIndex = series.limit % CHART_COLORS.length
-		const colorIndexBeforeReservedSlot = canonicalIndex % (CHART_COLORS.length - 1)
-		const colorIndex =
-			colorIndexBeforeReservedSlot < reservedColorIndex
-				? colorIndexBeforeReservedSlot
-				: colorIndexBeforeReservedSlot + 1
-		stackColors[peer.name] = CHART_COLORS[colorIndex % CHART_COLORS.length]!
+		// Others is grey, outside the palette, so a peer keeps its palette colour without a reserved slot.
+		stackColors[peer.name] = chartColor(colorIndexByPeer?.get(peer.name) ?? index)
 	}
 	if (chartData.length === 0 && series.peers.length > 0) return { chartData, stackColors }
 	if (othersValue > 0) {
 		chartData.push({ name: 'Others', value: othersValue })
-		stackColors.Others = CHART_COLORS[series.limit % CHART_COLORS.length]!
+		stackColors.Others = OTHERS_COLOR
 	}
 	return { chartData, stackColors }
 }

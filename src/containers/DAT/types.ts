@@ -13,14 +13,14 @@ export interface IDATInstitutionOverview extends Omit<IDATInstitutionMetadata, '
 		usdValue: number | null
 		avgPrice: number | null
 		dominance: number
-		color: string
+		color: readonly [light: string, dark: string]
 	}>
 }
 
 export interface IDATOverviewFlowSeries {
 	name: string
 	stack: 'asset'
-	color: string
+	color: readonly [light: string, dark: string]
 	points: ReadonlyArray<readonly [number, number]>
 }
 

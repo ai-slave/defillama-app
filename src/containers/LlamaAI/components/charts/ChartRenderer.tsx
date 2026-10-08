@@ -822,7 +822,7 @@ function ChartErrorPlaceholder({ message = 'This chart couldn’t be drawn.' }: 
 	return (
 		<div
 			role="alert"
-			className="flex h-[360px] flex-col items-center justify-center gap-2 px-4 text-center body-sm text-data-down"
+			className="flex h-[360px] flex-col items-center justify-center gap-2 px-4 text-center body-sm text-error"
 		>
 			<Icon name="alert-triangle" height={16} width={16} />
 			<p>{message}</p>

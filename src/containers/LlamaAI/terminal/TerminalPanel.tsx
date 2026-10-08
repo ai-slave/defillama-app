@@ -183,7 +183,7 @@ export function TerminalPanel() {
 						'mainSeriesProperties.candleStyle.wickUpColor': chartTheme.up,
 						'mainSeriesProperties.candleStyle.wickDownColor': chartTheme.down
 					},
-					custom_indicators_getter: createTerminalStudies(),
+					custom_indicators_getter: createTerminalStudies({ up: chartTheme.up, down: chartTheme.down }),
 					// localStorage settings are off, so this seed applies on every load rather than
 					// being shadowed by whatever a browser happens to remember.
 					favorites: { indicators: [STUDY_NAME], intervals: ['15', '60', '240', '1D'] },

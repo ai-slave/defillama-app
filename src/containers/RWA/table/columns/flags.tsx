@@ -54,7 +54,7 @@ function createFlagColumn({ key, width, yesIsWarning = false, csvOnly = false }:
 				if (value == null || typeof value !== 'boolean') return null
 				const isBad = yesIsWarning ? value : !value
 				return (
-					<span className={isBad ? (yesIsWarning ? 'text-warning' : 'text-data-down') : 'text-data-up'}>
+					<span className={isBad ? (yesIsWarning ? 'text-warning' : 'text-error') : 'text-success'}>
 						{value ? 'Yes' : 'No'}
 					</span>
 				)

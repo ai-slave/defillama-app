@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useAuthContext } from '~/auth'
-import { Icon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { Tab } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
-import { ProBadge, proTabStyles } from '../../ui'
+import { proTabStyles } from '../../ui'
 import type { MainTabType } from './types'
 
 const PRO_ONLY_TABS = new Set<MainTabType>(['llamaai', 'custom-data'])
@@ -49,9 +49,7 @@ export function TabNavigation({ isSqlAllowed }: { isSqlAllowed: boolean }) {
 							{tab.subtitle ? <span className="hidden text-tertiary lg:inline">{tab.subtitle}</span> : null}
 							{lockLabel ? (
 								<Tooltip content={lockTooltip}>
-									<ProBadge tone="premium" icon={<Icon name="file-lock-2" height={12} width={12} />}>
-										{lockLabel}
-									</ProBadge>
+									<PromoBadge icon="file-lock-2">{lockLabel}</PromoBadge>
 								</Tooltip>
 							) : null}
 						</span>

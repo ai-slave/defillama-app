@@ -246,7 +246,7 @@ function DemoPreviewFallback() {
 			role="alert"
 			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-subtle bg-surface p-6 text-center"
 		>
-			<p className="body-sm text-data-down">The preview could not be displayed.</p>
+			<p className="body-sm text-error">The preview could not be displayed.</p>
 			<BasicLink href="/pro?tab=discover" className="label-sm text-link hover:underline">
 				See community dashboards
 			</BasicLink>
@@ -728,7 +728,7 @@ function ProDashboardContent() {
 						Public
 					</ProBadge>
 				) : (
-					<ProBadge tone="premium" icon={<Icon name="key" height={12} width={12} />}>
+					<ProBadge tone="neutral" icon={<Icon name="key" height={12} width={12} />}>
 						Private
 					</ProBadge>
 				)}

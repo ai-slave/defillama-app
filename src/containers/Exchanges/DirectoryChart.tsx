@@ -221,7 +221,7 @@ export function DirectoryChart({ chart, range, status, country }: DirectoryChart
 					style={CHART_BODY_HEIGHT}
 					role={status === 'error' ? 'alert' : 'status'}
 					aria-live={status === 'error' ? undefined : 'polite'}
-					className={status === 'error' ? 'body-sm text-data-down' : undefined}
+					className={status === 'error' ? 'body-sm text-error' : undefined}
 				>
 					{status === 'error' ? 'Failed to load the exchange overview.' : <LoadingIndicator />}
 				</ChartPanelBodyFallback>

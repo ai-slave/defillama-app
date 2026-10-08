@@ -528,7 +528,7 @@ export function RWAOverviewChartPanel({
 								<LoadingIndicator />
 							</ChartPanelBodyFallback>
 						) : flowError || (isFlowVsPrice && flowMcapError) ? (
-							<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+							<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 								{flowError instanceof Error
 									? flowError.message
 									: isFlowVsPrice && flowMcapError
@@ -565,7 +565,7 @@ export function RWAOverviewChartPanel({
 							</ChartPanelBodyFallback>
 						)
 					) : chartError ? (
-						<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+						<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 							{chartError}
 						</ChartPanelBodyFallback>
 					) : isChartLoading ? (

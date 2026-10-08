@@ -4,6 +4,7 @@ import { ResearchIcon } from '~/components/ResearchIcon'
 import { UniversalTokenRatingNavIcon } from '~/containers/UniversalTokenRating/NavIcon'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { navPath } from './path'
 
 type NavIconName = IIcon['name']
@@ -16,9 +17,6 @@ export const navSortableRowStyles =
 
 export const navSummaryStyles =
 	'-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row'
-
-export const freeTrialBadgeStyles =
-	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-wide text-warning'
 
 function NavGroupSummary({ name, icon, onToggle }: { name: string; icon?: NavIconName; onToggle: () => void }) {
 	return (
@@ -97,7 +95,6 @@ export function LinkToPage({
 	name,
 	icon,
 	attention,
-	freeTrial,
 	isNew,
 	asPath,
 	umamiEvent,
@@ -108,7 +105,6 @@ export function LinkToPage({
 	name: string
 	icon?: NavIconName
 	attention?: boolean
-	freeTrial?: boolean
 	isNew?: boolean
 	asPath: string
 	umamiEvent?: string
@@ -136,7 +132,6 @@ export function LinkToPage({
 				name={name}
 				icon={icon}
 				attention={attention}
-				freeTrial={freeTrial}
 				freeLabel={isLlamaAI && freeLabel.showFree}
 				isNew={isNew}
 				hideIcon={hideIcon}
@@ -149,7 +144,6 @@ export function NavItemContent({
 	name,
 	icon,
 	attention,
-	freeTrial,
 	freeLabel,
 	isNew,
 	hideIcon,
@@ -158,7 +152,6 @@ export function NavItemContent({
 	name: string
 	icon?: NavIconName
 	attention?: boolean
-	freeTrial?: boolean
 	freeLabel?: boolean
 	isNew?: boolean
 	hideIcon?: boolean
@@ -180,16 +173,10 @@ export function NavItemContent({
 			<span className="relative flex min-w-0 flex-1 flex-nowrap items-center gap-2 text-left leading-tight">
 				<span className={wrapLabel ? 'min-w-0 flex-1' : 'min-w-0 flex-1 truncate'}>{name}</span>
 				{attention ? (
-					<span aria-hidden className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-page-ring" />
+					<span aria-hidden className="inline-block size-2 shrink-0 rounded-full bg-error shadow-page-ring" />
 				) : null}
-				{freeTrial ? <span className={freeTrialBadgeStyles}>Try free</span> : null}
 				{freeLabel ? <span className={freeBadgeBOnly}>Free</span> : null}
-				{isNew ? (
-					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs text-on-brand">
-						<Icon name="sparkles" height={10} width={10} />
-						<span>New</span>
-					</span>
-				) : null}
+				{isNew ? <PromoBadge icon="sparkles">New</PromoBadge> : null}
 			</span>
 		</>
 	)

@@ -38,7 +38,7 @@ export function ComposerTray({
 			<span className="flex min-w-0 flex-[1_1_auto] items-start gap-1.5">
 				<Icon
 					name="alert-triangle"
-					className={`mt-0.5 size-3.5 shrink-0 ${tone === 'error' ? 'text-data-down' : 'text-warning'}`}
+					className={`mt-0.5 size-3.5 shrink-0 ${tone === 'error' ? 'text-error' : 'text-warning'}`}
 				/>
 				<span className="min-w-0">{children}</span>
 			</span>

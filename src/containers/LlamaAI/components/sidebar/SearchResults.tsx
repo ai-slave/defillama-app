@@ -36,7 +36,7 @@ export const SearchResults = memo(function SearchResults({
 		return (
 			<div
 				role="alert"
-				className="flex flex-col items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 text-center body-sm text-data-down"
+				className="flex flex-col items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 text-center body-sm text-error"
 			>
 				<span>Search failed</span>
 				<Button type="button" size="sm" onClick={onRetry}>

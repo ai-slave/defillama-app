@@ -21,9 +21,9 @@ import {
 
 const ACCESS_MODEL_TONE: Record<string, string> = {
 	Permissioned: 'text-warning',
-	Permissionless: 'text-data-up',
-	'Non-transferable': 'text-data-down',
-	'Custodial Only': 'text-data-down'
+	Permissionless: 'text-success',
+	'Non-transferable': 'text-error',
+	'Custodial Only': 'text-error'
 }
 
 function getAsset(row: Parameters<typeof getLeafRow>[0]): RWAOverviewDisplayRow | null {
@@ -186,7 +186,7 @@ export const rwaClassificationColumn = columnHelper.accessor(
 				: value
 					? definitions.rwaClassification.values?.[value]
 					: undefined
-			return <DefinedValueCell value={value} definition={definition} className={asset?.trueRWA ? 'text-data-up' : ''} />
+			return <DefinedValueCell value={value} definition={definition} className={asset?.trueRWA ? 'text-success' : ''} />
 		},
 		meta: textColumnMeta('w-[min(180px,40vw)]', definitions.rwaClassification.description)
 	}

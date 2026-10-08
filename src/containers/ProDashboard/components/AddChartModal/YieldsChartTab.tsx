@@ -663,13 +663,13 @@ export function YieldsChartTab({
 									<div className="mb-3 flex gap-4">
 										<div className="flex flex-col">
 											<span className="body-sm text-tertiary uppercase">Latest APY</span>
-											<span className="mono-md-bold" style={{ color: '#cc3e82' }}>
+											<span className="mono-md-bold text-primary">
 												{formatPercent(latestYieldData.apy, { input: 'percent' })}
 											</span>
 										</div>
 										<div className="flex flex-col">
 											<span className="body-sm text-tertiary uppercase">TVL</span>
-											<span className="mono-md-bold" style={{ color: '#3e79cc' }}>
+											<span className="mono-md-bold text-primary">
 												{formatUsd(latestYieldData.tvl, {
 													compact: true,
 													minimumCompactValue: 1_000_000,
@@ -683,7 +683,7 @@ export function YieldsChartTab({
 								<div className="h-[280px]">
 									{queryReadFailed(previewHistory) && !previewHistory.data ? (
 										<div role="alert" className="flex h-full flex-col items-center justify-center gap-2">
-											<p className="body-md text-data-down">Couldn't load this pool's history.</p>
+											<p className="body-md text-error">Couldn't load this pool's history.</p>
 											<Button
 												type="button"
 												size="sm"

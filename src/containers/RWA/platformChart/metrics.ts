@@ -1,6 +1,6 @@
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, CHART_DOWN, CHART_UP } from '~/constants/colors'
 import type { IRWAFlowAggregatePoint } from '../api.types'
 import { isRwaTotalSeriesLabel, type RWAPositionalChartDataset } from '../chartDataset'
 import { definitions } from '../definitions'
@@ -30,9 +30,6 @@ const MONEY_AXIS = 0
 const FLOW_AXIS = 1
 const PERCENT_AXIS = 2
 const COUNT_AXIS = 3
-
-const GREEN = '#3fb950'
-const RED = '#f85149'
 
 export const RWA_PLATFORM_CHART: RWAEntityChartCatalogue<RWAPlatformChartMetricKey> = {
 	groups: ['Core', 'Flows', 'Ratios', 'Assets', 'Annotations'],
@@ -286,7 +283,7 @@ export function buildRwaPlatformEntityChart(
 					flowBar(
 						label(key),
 						flows.filter(([, value]) => value > 0),
-						GREEN
+						CHART_UP
 					)
 				)
 				break
@@ -295,7 +292,7 @@ export function buildRwaPlatformEntityChart(
 					flowBar(
 						label(key),
 						flows.filter(([, value]) => value < 0),
-						RED
+						CHART_DOWN
 					)
 				)
 				break

@@ -1,5 +1,6 @@
 import { fetchCoinsChart } from '~/api'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import type { ComparisonEntry, PricePoint, TimelinePoint } from './types'
 
 const DAY_IN_SECONDS = 86_400
@@ -27,7 +28,6 @@ export type TokenPnlResult = {
 		max: number
 		interval: number
 	}
-	primaryColor: string
 }
 
 export type TokenPnlComparisonResult = Pick<
@@ -174,7 +174,6 @@ export async function computeTokenPnl(params: {
 
 	const series = await fetchPriceSeries(id, start, end)
 	if (series.length === 0) {
-		const primaryColor = '#10b981'
 		return {
 			priceSeries: [],
 			timeline: [],
@@ -200,12 +199,11 @@ export async function computeTokenPnl(params: {
 						name: 'Token Price',
 						encode: { x: 'timestamp', y: 'Token Price' },
 						stack: 'Token Price',
-						color: primaryColor
+						color: CHART_UP
 					}
 				]
 			},
-			yAxisConfig: { min: 0, max: 0, interval: 1000 },
-			primaryColor
+			yAxisConfig: { min: 0, max: 0, interval: 1000 }
 		}
 	}
 
@@ -213,8 +211,6 @@ export async function computeTokenPnl(params: {
 	const endPrice = series[series.length - 1].price
 	const percentChange = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0
 	const absoluteChange = endPrice - startPrice
-	const isPositive = endPrice >= startPrice
-	const primaryColor = isPositive ? '#10b981' : '#ef4444'
 	const holdingPeriodDays = Math.max(1, Math.round((end - start) / DAY_IN_SECONDS))
 	const annualizedBase = Math.max(Number.EPSILON, 1 + percentChange / 100)
 	const annualizedReturn = (annualizedBase ** (365 / holdingPeriodDays) - 1) * 100
@@ -248,7 +244,9 @@ export async function computeTokenPnl(params: {
 				name: 'Token Price',
 				encode: { x: 0, y: 1 },
 				stack: 'Token Price',
-				color: primaryColor
+				// The line and its area fill take the period's direction. The result is cached across theme
+				// changes, so it uses the fixed fills rather than the mode-aware line colours.
+				color: endPrice >= startPrice ? CHART_UP : CHART_DOWN
 			}
 		]
 	}
@@ -271,8 +269,7 @@ export async function computeTokenPnl(params: {
 		},
 		currentPrice: endPrice,
 		chartData,
-		yAxisConfig: calculateYAxisConfigFromPrices(rangeLow, rangeHigh),
-		primaryColor
+		yAxisConfig: calculateYAxisConfigFromPrices(rangeLow, rangeHigh)
 	}
 }
 

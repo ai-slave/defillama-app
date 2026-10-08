@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { Icon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -31,7 +32,7 @@ const MODE_OPTIONS = [
 			<>
 				<Icon name="code" className="size-3.5" />
 				SQL Studio
-				<span className="rounded-sm bg-success-tint px-1 label-xs tracking-wider text-success">NEW</span>
+				<PromoBadge icon="sparkles">New</PromoBadge>
 			</>
 		)
 	}

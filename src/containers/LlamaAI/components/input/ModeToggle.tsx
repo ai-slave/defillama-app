@@ -1,6 +1,7 @@
 import { useAuthContext } from '~/auth'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
+import { PromoBadge } from '~/ui/PromoBadge'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -28,7 +29,7 @@ export function ModeUsage({
 	const { isAuthenticated } = useAuthContext()
 	const signedOut = !usage && !isAuthenticated
 	if (feature === 'fact_checked' && (usage?.period === 'blocked' || signedOut)) {
-		return <span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link uppercase">Pro</span>
+		return <PromoBadge>Pro</PromoBadge>
 	}
 	if (feature === 'research' && (usage?.period === 'biweekly' || signedOut)) {
 		return <span className="body-sm text-tertiary tabular-nums">{usage ? usage.remainingUsage : 1} free</span>

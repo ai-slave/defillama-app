@@ -121,7 +121,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					stack: 'Total',
 					data: negativeData,
 					itemStyle: {
-						color: '#ef4444',
+						color: chartTheme.down,
 						borderRadius: [0, 4, 4, 0]
 					},
 					barWidth: '50%',
@@ -138,7 +138,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 								: ''
 						},
 						backgroundColor: 'transparent',
-						color: '#ef4444',
+						color: chartTheme.dataDown,
 						fontSize: 12,
 						fontWeight: 500
 					}
@@ -149,7 +149,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					stack: 'Total',
 					data: positiveData,
 					itemStyle: {
-						color: '#22c55e',
+						color: chartTheme.up,
 						borderRadius: [4, 0, 0, 4]
 					},
 					barWidth: '50%',
@@ -166,7 +166,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 								: ''
 						},
 						backgroundColor: 'transparent',
-						color: '#22c55e',
+						color: chartTheme.dataUp,
 						fontSize: 12,
 						fontWeight: 500
 					}

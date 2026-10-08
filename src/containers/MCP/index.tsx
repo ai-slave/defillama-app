@@ -130,7 +130,7 @@ function TerminalMock() {
 						<span className="text-link">⚡ get_protocol_metrics</span>
 						<span className="text-tertiary"> sort_by: &quot;tvl_base desc&quot;, limit: 5</span>
 					</div>
-					<div className="text-data-up">
+					<div className="text-success">
 						<div>1. Aave · $25.7B</div>
 						<div>2. Lido · $20.0B</div>
 						<div>3. SSV Network · $15.5B</div>

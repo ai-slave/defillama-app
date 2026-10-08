@@ -55,8 +55,6 @@
 	--text-on-brand: #ffffff;
 	--text-data-up: var(--emerald-11);
 	--text-data-down: var(--crimson-11);
-	--text-data-up-alt: var(--blue-11);
-	--text-data-down-alt: var(--violet-11);
 	--text-verified: #3b82f6; /* The verified-yields mark; brighter than bg-brand, 3.7:1 on white (a filled glyph, not text) */
 	--text-warning: var(--amber-11);
 
@@ -90,6 +88,7 @@
 	--border-error-muted: var(--crimson-7);
 	--border-error-strong: var(--crimson-8);
 	--border-success-muted: var(--emerald-7);
+	--border-success-strong: var(--emerald-8);
 	--border-warning-muted: var(--amber-7);
 	--border-warning-strong: var(--amber-8);
 
@@ -157,11 +156,13 @@
 	--chart-export-label-stroke: rgba(0, 0, 0, 0.45); /* treemap label outline (black in both modes) */
 	--chart-treemap-label: #111; /* treemap upper label, live + export */
 
-	/* Chart accents: the same in both modes. Never swap them in bulk. */
-	--chart-up: var(--green-500);
-	--chart-down: var(--red-500);
-	--chart-up-alt: var(--blue-500);
-	--chart-down-alt: var(--violet-500);
+	/* Rising and falling marks (candles, up/down bars, Sankey links, trade markers), 3:1 or more on every chart
+	   background. Down is a crimson at emerald-9's OKLCH lightness and chroma (not a ramp step): crimson-9 is far more
+	   saturated and outweighs the green. In dark mode the marks are the step-11 text colours, which are near-equal in
+	   weight there and match the labels beside them. Heat cells and the value scale stay on HEAT_UP/HEAT_DOWN in
+	   src/constants/colors.ts, because text sits on them. */
+	--chart-up: var(--emerald-9);
+	--chart-down: #a5464a;
 }
 
 html.dark,
@@ -217,6 +218,8 @@ html.dark,
 	--chart-logo-bg: #1a1a1a;
 	--chart-export-label-stroke: rgba(0, 0, 0, 0.7);
 	--chart-treemap-label: #fff;
+	--chart-up: var(--emerald-11);
+	--chart-down: var(--crimson-11);
 }
 
 /* ----------------------------------------------------------------------------
@@ -248,8 +251,6 @@ html.dark,
 	--color-link: var(--text-link);
 	--color-data-up: var(--text-data-up);
 	--color-data-down: var(--text-data-down);
-	--color-data-up-alt: var(--text-data-up-alt);
-	--color-data-down-alt: var(--text-data-down-alt);
 	--color-verified: var(--text-verified);
 	--color-warning: var(--text-warning);
 	--color-error: var(--text-error);
@@ -360,6 +361,9 @@ html.dark,
 }
 @utility border-success-muted {
 	border-color: var(--border-success-muted);
+}
+@utility border-success-strong {
+	border-color: var(--border-success-strong);
 }
 @utility border-warning-muted {
 	border-color: var(--border-warning-muted);

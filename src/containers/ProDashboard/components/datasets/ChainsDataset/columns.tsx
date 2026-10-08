@@ -14,7 +14,7 @@ import type { tableFeaturesConfig } from './index'
 
 const renderChange = (value: number | null) => (
 	<span
-		className={`${value != null && value > 0 ? 'text-success' : value != null && value < 0 ? 'text-error' : 'text-secondary'}`}
+		className={`${value != null && value > 0 ? 'text-data-up' : value != null && value < 0 ? 'text-data-down' : 'text-secondary'}`}
 	>
 		{value == null ? '-' : <PercentChange percent={value} fontWeight={100} />}
 	</span>

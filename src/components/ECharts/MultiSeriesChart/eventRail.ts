@@ -76,46 +76,23 @@ function normalizeTimestamp(value: number, dateInMs: boolean) {
 	return dateInMs ? value : value * 1e3
 }
 
+// Steps of the crimson, violet and neutral ramps in primitives.css, as hex because canvas cannot read var().
 function getEventDotPalette(label: string, isThemeDark: boolean, isRange = false) {
 	if (isDangerLabel(label)) {
 		return isThemeDark
-			? {
-					fill: 'rgba(220, 38, 38, 0.95)',
-					border: 'rgba(252, 165, 165, 1)',
-					icon: 'rgba(255, 255, 255, 0.98)'
-				}
-			: {
-					fill: 'rgba(220, 38, 38, 1)',
-					border: 'rgba(185, 28, 28, 1)',
-					icon: 'rgba(255, 255, 255, 0.98)'
-				}
+			? { fill: 'rgba(209, 26, 59, 0.95)', border: '#ff686f', icon: 'rgba(255, 255, 255, 0.98)' }
+			: { fill: '#d11b3b', border: '#bd0a31', icon: 'rgba(255, 255, 255, 0.98)' }
 	}
 
 	if (isRange) {
 		return isThemeDark
-			? {
-					fill: 'rgba(196, 181, 253, 0.95)',
-					border: 'rgba(221, 214, 254, 1)',
-					icon: 'rgba(76, 29, 149, 1)'
-				}
-			: {
-					fill: 'rgba(147, 51, 234, 1)',
-					border: 'rgba(126, 34, 206, 1)',
-					icon: 'rgba(59, 7, 100, 1)'
-				}
+			? { fill: 'rgba(168, 132, 255, 0.95)', border: '#e3dcff', icon: '#351e5f' }
+			: { fill: '#7d4dd7', border: '#6f41c2', icon: '#351e5f' }
 	}
 
 	return isThemeDark
-		? {
-				fill: 'rgba(148, 163, 184, 0.9)',
-				border: 'rgba(203, 213, 225, 1)',
-				icon: 'rgba(30, 41, 59, 1)'
-			}
-		: {
-				fill: 'rgba(148, 163, 184, 1)',
-				border: 'rgba(100, 116, 139, 1)',
-				icon: 'rgba(30, 41, 59, 1)'
-			}
+		? { fill: 'rgba(152, 155, 156, 0.9)', border: '#dee1e2', icon: '#2b2b2b' }
+		: { fill: '#989898', border: '#656565', icon: '#2b2b2b' }
 }
 
 export function buildEventRailData({
@@ -260,7 +237,7 @@ export function mergeGraphicWithEventMarkLinePlaceholder(graphic: unknown, isThe
 			invisible: true,
 			shape: { x1: 0, y1: 0, x2: 0, y2: 0 },
 			style: {
-				stroke: isThemeDark ? 'rgba(148, 163, 184, 0.7)' : 'rgba(71, 85, 105, 0.55)',
+				stroke: isThemeDark ? 'rgba(152, 155, 156, 0.7)' : 'rgba(106, 106, 106, 0.55)',
 				lineWidth: 1,
 				lineDash: [6, 4]
 			}

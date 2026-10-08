@@ -335,9 +335,9 @@ export function PortfolioNotifications({
 							{preferences ? (
 								preferences.active ? (
 									<span className="flex items-center gap-2">
-										<Icon name="check-circle" height={14} width={14} className="text-data-up" />
+										<Icon name="check-circle" height={14} width={14} className="text-success" />
 										<span>
-											Weekly email notifications are <strong className="text-data-up">active</strong> for "
+											Weekly email notifications are <strong className="text-success">active</strong> for "
 											{selectedPortfolio}" portfolio
 										</span>
 									</span>

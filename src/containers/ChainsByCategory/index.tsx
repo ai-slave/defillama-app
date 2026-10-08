@@ -166,7 +166,7 @@ export function ChainsByCategory({
 						{chartErrorMessage ? (
 							<ChartPanelExportShellFallback
 								role="alert"
-								className="flex items-center justify-center text-center body-sm text-data-down"
+								className="flex items-center justify-center text-center body-sm text-error"
 							>
 								Failed to load chart data: {chartErrorMessage}
 							</ChartPanelExportShellFallback>

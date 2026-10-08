@@ -388,7 +388,7 @@ function DemoFrame({
 				<div className="flex min-w-0 items-center gap-2.5">
 					<span
 						className={`size-2 shrink-0 rounded-full ${
-							isRechecking ? 'bg-brand' : stage >= verificationStageDelays.length ? 'bg-data-up' : 'bg-warning'
+							isRechecking ? 'bg-brand' : stage >= verificationStageDelays.length ? 'bg-success' : 'bg-warning'
 						}`}
 						aria-hidden
 					/>
@@ -527,7 +527,7 @@ function LedgerColumn({
 								{isRechecking || isChecking ? (
 									<span className="attn-recheck-spinner size-3 rounded-full" aria-hidden />
 								) : isVerified ? (
-									<CheckIcon className="size-3 text-data-up" />
+									<CheckIcon className="size-3 text-success" />
 								) : (
 									<span className="size-1.5 rounded-full bg-border-strong" aria-hidden />
 								)}
@@ -618,7 +618,7 @@ function ReconciliationLedger() {
 						<p className="label-xs text-secondary">3 private sources</p>
 						<div className="flex items-center gap-2" aria-hidden>
 							<span
-								className={`size-2 shrink-0 rounded-full ${stage >= verificationStages.fundAdminVerified ? 'bg-data-up' : 'bg-border-strong'}`}
+								className={`size-2 shrink-0 rounded-full ${stage >= verificationStages.fundAdminVerified ? 'bg-success' : 'bg-border-strong'}`}
 							/>
 							<span className="relative h-px grow overflow-hidden bg-border-medium">
 								<span
@@ -635,7 +635,7 @@ function ReconciliationLedger() {
 							aria-hidden
 						>
 							{reconciliationState === 'matched' ? (
-								<CheckIcon className="size-3.5 text-data-up" />
+								<CheckIcon className="size-3.5 text-success" />
 							) : (
 								<span
 									className={`size-1.5 rounded-full ${reconciliationState === 'checking' ? 'bg-brand' : 'bg-border-strong'}`}
@@ -661,7 +661,7 @@ function ReconciliationLedger() {
 								/>
 							</span>
 							<span
-								className={`size-2 shrink-0 rounded-full ${stage >= verificationStages.remainingChainsIndexed ? 'bg-data-up' : 'bg-border-strong'}`}
+								className={`size-2 shrink-0 rounded-full ${stage >= verificationStages.remainingChainsIndexed ? 'bg-success' : 'bg-border-strong'}`}
 							/>
 						</div>
 					</div>
@@ -710,7 +710,7 @@ function ReconciliationLedger() {
 					</span>
 					<div className="min-w-0 text-right">
 						<p className="label-xs text-tertiary">Verified surplus</p>
-						<p className="attn-equation-value mt-1 truncate font-jetbrains font-bold text-data-up tabular-nums">
+						<p className="attn-equation-value mt-1 truncate font-jetbrains font-bold text-success tabular-nums">
 							<AuditValue
 								key={`surplus-${run}`}
 								prefix="+$"
@@ -733,14 +733,14 @@ function ReconciliationLedger() {
 						</p>
 						<span className="sr-only">167 percent coverage</span>
 					</div>
-					<p className="flex items-center gap-1.5 label-sm text-data-up">
+					<p className="flex items-center gap-1.5 label-sm text-success">
 						<CheckIcon className="size-3.5" /> 9 of 9 sources verified
 					</p>
 				</div>
 				<div className="attn-result mt-3" data-active={stage >= verificationStages.coveragePublished}>
 					<div className="flex items-center justify-between gap-3 label-xs">
 						<span className="text-tertiary">Minimum solvency 100.00%</span>
-						<span className="font-semibold text-data-up" aria-hidden>
+						<span className="font-semibold text-success" aria-hidden>
 							Current {coverageLabel}
 						</span>
 					</div>
@@ -748,12 +748,12 @@ function ReconciliationLedger() {
 						<span className="absolute top-1/2 right-0 left-0 h-px bg-border-medium" />
 						<span className="absolute top-0 left-[34%] h-3 w-px bg-border-strong" />
 						<span
-							className="attn-threshold-fill absolute top-1/2 left-[34%] h-px w-[48%] bg-data-up"
+							className="attn-threshold-fill absolute top-1/2 left-[34%] h-px w-[48%] bg-success"
 							data-active={stage >= verificationStages.coveragePublished}
 						/>
 						<span
 							ref={thresholdMarkerRef}
-							className="attn-threshold-marker absolute top-1/2 left-[82%] size-2 rounded-full bg-data-up"
+							className="attn-threshold-marker absolute top-1/2 left-[82%] size-2 rounded-full bg-success"
 							data-active={stage >= verificationStages.coveragePublished}
 						/>
 					</div>
@@ -781,10 +781,10 @@ function CadenceCompare() {
 				<span className="label-md text-secondary">Verified by DefiLlama</span>
 				<span className="flex items-center gap-1">
 					{days.map((d) => (
-						<span key={d} className="h-5 w-full max-w-2 rounded-full bg-data-up" />
+						<span key={d} className="h-5 w-full max-w-2 rounded-full bg-success" />
 					))}
 				</span>
-				<span className="label-md text-data-up">checked hourly</span>
+				<span className="label-md text-success">checked hourly</span>
 			</div>
 		</div>
 	)
@@ -807,7 +807,7 @@ function VenueFlow() {
 			<div className="my-3 text-center text-lg text-tertiary">↓</div>
 			<p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-center">
 				<span className="flex items-center gap-2.5 mono-xl text-primary tabular-nums">
-					<CheckIcon className="size-5 text-data-up" />
+					<CheckIcon className="size-5 text-success" />
 					NAV $86,412,904
 				</span>
 				<span className="body-sm text-tertiary">one verified figure, positions stay private</span>
@@ -852,7 +852,7 @@ function PersonaDossier() {
 							<ul className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">
 								{p.checklist.map((item) => (
 									<li key={item} className="flex items-start gap-2.5 body-md text-secondary">
-										<CheckIcon className="mt-1 size-3.5 shrink-0 text-data-up" />
+										<CheckIcon className="mt-1 size-3.5 shrink-0 text-success" />
 										{item}
 									</li>
 								))}
@@ -935,8 +935,8 @@ const proofStates: Record<ProofState, ProofStateConfig> = {
 		label: 'Current',
 		detail: 'All disclosed sources are current',
 		headline: 'Current · checked 12s ago',
-		dotTone: 'bg-data-up',
-		textTone: 'text-data-up',
+		dotTone: 'bg-success',
+		textTone: 'text-success',
 		scope: '9 / 9 in scope',
 		exception: 'No exceptions',
 		nextCheck: 'Next check in 48m'
@@ -971,8 +971,8 @@ const proofStates: Record<ProofState, ProofStateConfig> = {
 		label: 'Unverified',
 		detail: 'A metric could not be independently checked',
 		headline: 'Unverified · bank cash not confirmed',
-		dotTone: 'bg-data-down',
-		textTone: 'text-data-down',
+		dotTone: 'bg-error',
+		textTone: 'text-error',
 		scope: '8 / 9 in scope',
 		exception: '1 failed check',
 		nextCheck: 'Manual review required',
@@ -1354,7 +1354,7 @@ export default function VerifiedLanding() {
 										<ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 body-sm text-secondary">
 											{['Read-only access', 'Private by default', 'Public on DefiLlama'].map((promise) => (
 												<li key={promise} className="flex items-center gap-2">
-													<CheckIcon className="size-3.5 text-data-up" /> {promise}
+													<CheckIcon className="size-3.5 text-success" /> {promise}
 												</li>
 											))}
 										</ul>

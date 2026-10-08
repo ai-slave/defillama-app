@@ -191,8 +191,8 @@ export function getRwaSourceGroups(meta: RWAPlatformMeta): Array<RWALinkGroup> {
 }
 
 const CONFIDENCE_TONE: Record<RWAPlatformRevenueConfidence, string> = {
-	'Public Filings': 'text-data-up',
-	'Issuer-Disclosed': 'text-data-up-alt',
+	'Public Filings': 'text-success',
+	'Issuer-Disclosed': 'text-secondary',
 	'Reasoned Estimate': 'text-warning',
 	'No-public-data': 'text-tertiary'
 }

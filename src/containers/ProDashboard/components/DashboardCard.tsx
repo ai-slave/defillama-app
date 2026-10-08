@@ -153,7 +153,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 				<DashboardAuthorLink author={dashboard.author} />
 			</div>
 			{isPrivate ? (
-				<ProBadge tone="premium" icon={<Icon name="key" height={12} width={12} />}>
+				<ProBadge tone="neutral" icon={<Icon name="key" height={12} width={12} />}>
 					Private
 				</ProBadge>
 			) : (

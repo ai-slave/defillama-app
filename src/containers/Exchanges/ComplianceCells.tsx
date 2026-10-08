@@ -13,7 +13,7 @@ import {
 /* KYC requirement chips give each requirement type its own stock hue (ID sky, selfie violet, proof of address amber,
    income profile teal, knowledge quiz indigo), an exception the `builtin-palette-color` baseline keeps. The hue marks
    a category, not a state; the icon and tooltip carry the meaning. Keep the palette in KYC_REQUIREMENT_BY_TOKEN and
-   never use it for status: compliance status badges use the data-up, warning and data-down tones of ValueBadge. */
+   never use it for status: compliance status badges use the success, warning and error tones of ValueBadge. */
 
 type ComplianceTone = 'positive' | 'caution' | 'negative'
 
@@ -258,7 +258,7 @@ function KycSummaryHovercard({ summary, name }: { summary: string; name: string 
 
 export function KycRequirementValue({ name, kyc }: { name: string; kyc: KycValueModel | null }) {
 	if (kyc === null) return <span className="text-tertiary">–</span>
-	if (!kyc.required) return <span className="text-data-up">No KYC</span>
+	if (!kyc.required) return <span className="text-success">No KYC</span>
 	const shortSummary = kyc.short ?? 'Required'
 	const summary = kyc.summary ?? shortSummary
 	const requirements = getKycRequirementIndicators(shortSummary)

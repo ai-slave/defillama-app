@@ -114,10 +114,10 @@ function TokenPnlContent({
 	if (isError) {
 		return (
 			<Panel padding="sm" className="flex-1 items-center justify-center gap-2 text-center">
-				<p className="heading-xs text-data-down" role="alert">
+				<p className="heading-xs text-error" role="alert">
 					Failed to load data
 				</p>
-				<p className="body-sm text-data-down">
+				<p className="body-sm text-error">
 					{error instanceof Error ? error.message : 'Something went wrong fetching price data.'}
 				</p>
 				<Button

@@ -17,8 +17,8 @@ function datasetDimensions(series: Array<YieldSeries>): MultiSeriesChartDataset[
 }
 
 const tvlApySeries = [
-	{ type: 'line' as const, name: 'APY', color: '#cc3e82', yAxisIndex: 0, valueSymbol: '%' },
-	{ type: 'line' as const, name: 'TVL', color: '#3e79cc', yAxisIndex: 1, valueSymbol: '$' }
+	{ type: 'line' as const, name: 'APY', color: CHART_COLORS[0], yAxisIndex: 0, valueSymbol: '%' },
+	{ type: 'line' as const, name: 'TVL', color: CHART_COLORS[1], yAxisIndex: 1, valueSymbol: '$' }
 ] satisfies Array<YieldSeries>
 
 const supplyApySeries = [

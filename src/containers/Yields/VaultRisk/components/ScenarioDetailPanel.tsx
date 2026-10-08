@@ -470,7 +470,7 @@ function NarrativeBody({
 			{scenario.mitigations.length > 0 ? (
 				<div className="flex flex-col gap-1.5">
 					<p className="label-sm text-primary">What softens it</p>
-					<ul className="list-disc space-y-1 pl-5 body-md marker:text-data-up">
+					<ul className="list-disc space-y-1 pl-5 body-md marker:text-success">
 						{scenario.mitigations.map((mitigation) => (
 							<li key={mitigation} className="text-secondary">
 								{mitigation}

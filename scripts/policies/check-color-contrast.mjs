@@ -9,8 +9,8 @@ import { contrast } from '../generate-color-ramps.mjs'
  *    selected brand tint and on every faint, tint and tint-strong token.
  * 2. text-on-brand at 4.5:1 or more on bg-brand, and border-strong at 3:1 or more on every surface.
  * 3. Every ramp keeps its pair rules: step 11 at 4.5:1 or more on steps 1–4, and white at 4.5:1 or more on step 9.
- * 4. Every chart series color (CHART_COLORS and OTHERS_COLOR in src/constants/colors.ts) at 3:1 or more on the page
- *    and surface in both modes, so one palette serves both themes and PNG exports.
+ * 4. Every chart color in src/constants/colors.ts (CHART_COLORS, OTHERS_COLOR, CHART_UP, CHART_DOWN) at 3:1 or more
+ *    on the page and surface in both modes, so one value serves both themes and PNG exports.
  *
  *   bun scripts/policies/check-color-contrast.mjs
  */
@@ -20,7 +20,7 @@ const FILES = ['src/styles/primitives.css', 'src/styles/semantics.css']
 const paletteSource = fs.readFileSync('src/constants/colors.ts', 'utf8')
 const paletteBlock = paletteSource.slice(
 	paletteSource.indexOf('export const CHART_COLORS'),
-	paletteSource.indexOf('export function chartColor')
+	paletteSource.indexOf('const toLinear')
 )
 const CHART_SERIES_COLORS = [
 	paletteSource.match(/export const oldBlue = '(#[0-9a-fA-F]{6})'/)[1],
@@ -33,8 +33,6 @@ const TEXT = [
 	'text-link',
 	'text-data-up',
 	'text-data-down',
-	'text-data-up-alt',
-	'text-data-down-alt',
 	'text-warning',
 	'text-success',
 	'text-error'

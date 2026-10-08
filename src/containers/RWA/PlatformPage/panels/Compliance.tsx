@@ -17,7 +17,7 @@ export function CompliancePanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWA
 				<div className="flex items-baseline justify-between gap-2">
 					<span className="body-md text-secondary">{definitions.accessModel.label}</span>
 					<span className="label-sm">
-						<span className="text-data-up-alt">Permissionless {split.permissionless}</span>{' '}
+						Permissionless {split.permissionless}{' '}
 						<span className="text-tertiary">Permissioned {split.permissioned}</span>
 					</span>
 				</div>
@@ -27,7 +27,7 @@ export function CompliancePanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWA
 			</div>
 			<div className="flex flex-col">
 				<h3 className="mb-1 label-md text-secondary">Of {metrics.assetCount} assets</h3>
-				<TallyRow label="Attested" yes={flags.attestations.yes} known={flags.attestations.known} tone="bg-data-up" />
+				<TallyRow label="Attested" yes={flags.attestations.yes} known={flags.attestations.known} tone="bg-success" />
 				<TallyRow label="KYC to mint or redeem" yes={flags.kycForMintRedeem.yes} known={flags.kycForMintRedeem.known} />
 				<TallyRow
 					label="Allowlisted to hold"

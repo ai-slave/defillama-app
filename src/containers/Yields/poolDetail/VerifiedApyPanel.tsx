@@ -141,7 +141,7 @@ export function VerifiedApyPanel({
 						<span className="flex items-center gap-1.5 rounded-full border border-medium px-2.5 py-0.5 label-sm text-secondary">
 							<span
 								aria-hidden
-								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-data-up' : 'text-warning'}`}
+								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-success' : 'text-warning'}`}
 								style={{ backgroundColor: 'currentColor' }}
 							/>
 							<span className="underline decoration-dotted">

@@ -7,6 +7,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { CHART_DOWN, CHART_UP } from '~/constants/colors'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -48,15 +49,29 @@ const NetflowChart = React.lazy(() => import('~/components/ECharts/NetflowChart'
 const NET_FLOW_CHARTS = [{ type: 'bar' as const, name: 'Net Flow', encode: { x: 'timestamp', y: 'Net Flow' } }]
 
 const NET_FLOW_PCT_CHARTS = [
-	{ type: 'bar' as const, name: 'Inflows', encode: { x: 'timestamp', y: 'Inflows' }, stack: 'stackA', large: false },
-	{ type: 'bar' as const, name: 'Outflows', encode: { x: 'timestamp', y: 'Outflows' }, stack: 'stackA', large: false }
+	{
+		type: 'bar' as const,
+		name: 'Inflows',
+		encode: { x: 'timestamp', y: 'Inflows' },
+		color: CHART_UP,
+		stack: 'stackA',
+		large: false
+	},
+	{
+		type: 'bar' as const,
+		name: 'Outflows',
+		encode: { x: 'timestamp', y: 'Outflows' },
+		color: CHART_DOWN,
+		stack: 'stackA',
+		large: false
+	}
 ]
 const CHAIN_INFLOW_CHARTS = [
 	{
 		type: 'bar' as const,
 		name: 'Deposits',
 		encode: { x: 'timestamp', y: 'Deposits' },
-		color: '#3b82f6',
+		color: CHART_UP,
 		stack: 'inflows',
 		large: false
 	},
@@ -64,7 +79,7 @@ const CHAIN_INFLOW_CHARTS = [
 		type: 'bar' as const,
 		name: 'Withdrawals',
 		encode: { x: 'timestamp', y: 'Withdrawals' },
-		color: '#ef4444',
+		color: CHART_DOWN,
 		stack: 'inflows',
 		large: false
 	}

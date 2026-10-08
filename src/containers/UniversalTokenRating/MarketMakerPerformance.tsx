@@ -10,7 +10,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { LpPerformanceInsights } from './LiquidityProviders'
-import { buildSeriesOption, ChartLegend, SimpleChart, useChartAxisColor, type SimpleSeries } from './SimpleChart'
+import { buildSeriesOption, ChartLegend, SimpleChart, type SimpleSeries, useSimpleChartTheme } from './SimpleChart'
 import { GradeFooterColumns } from './TokenPage'
 import type {
 	UtrCriterionBreakdown,
@@ -193,7 +193,7 @@ function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit)
 }
 
 function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerformanceBreakdown }) {
-	const axisColor = useChartAxisColor()
+	const axisColor = useSimpleChartTheme().axisLabel
 	const [mode, setMode] = useState<BreakdownMode>('depth')
 	const [depthSide, setDepthSide] = useState<DepthSide>('bidAsk')
 	const [depthBand, setDepthBand] = useState<DepthBand>('depth200')

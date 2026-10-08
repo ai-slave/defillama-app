@@ -50,6 +50,7 @@ import { PeggedFilters } from '~/containers/Stablecoins/Filters'
 import { calcCirculating } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
@@ -60,6 +61,7 @@ import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { stablecoinBrandColors } from './brandColors'
 import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
 import {
 	buildStablecoinMarketCapCsvDataset,
@@ -338,13 +340,18 @@ export function StablecoinsByChain({
 		() => (volumeChartQuery.data ? groupStablecoinVolumeChartPayload(volumeChartQuery.data, volumeGroupBy) : null),
 		[volumeChartQuery.data, volumeGroupBy]
 	)
-	const groupedSelectedChartData = React.useMemo(
-		() =>
-			chartType === 'inflows' && selectedChartData
-				? groupStablecoinBarChartPayload(selectedChartData, volumeGroupBy)
-				: selectedChartData,
-		[chartType, selectedChartData, volumeGroupBy]
-	)
+	const [isDark] = useDarkModeManager()
+	const groupedSelectedChartData = React.useMemo(() => {
+		if (!selectedChartData) return selectedChartData
+		const payload =
+			chartType === 'inflows' ? groupStablecoinBarChartPayload(selectedChartData, volumeGroupBy) : selectedChartData
+		// The payload colours series by rank; a stablecoin's brand colour wins.
+		const brandColors = stablecoinBrandColors(isDark)
+		return {
+			...payload,
+			charts: payload.charts.map((chart) => ({ ...chart, color: brandColors[chart.name] ?? chart.color }))
+		}
+	}, [chartType, isDark, selectedChartData, volumeGroupBy])
 
 	// Each grouping and export request is deferred with its rows, so labels and the CSV never pair old rows with a
 	// new grouping or chart.
@@ -653,7 +660,7 @@ function MultiSeriesChartPanel({
 	}
 	if (state.status === 'unavailable') {
 		return (
-			<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+			<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 				Chart unavailable
 			</ChartPanelBodyFallback>
 		)

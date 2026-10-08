@@ -1,3 +1,4 @@
+import { HEAT_DOWN, HEAT_UP } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 
 export function FAQ() {
@@ -22,14 +23,20 @@ export function FAQ() {
 					<h3 className="label-md text-primary">Values</h3>
 					<div className="flex flex-col gap-2 body-sm">
 						<div className="flex items-start gap-2">
-							<span className="mt-0.5 inline-block size-3 shrink-0 rounded-sm bg-[rgba(53,222,59,0.8)]" />
+							<span
+								className="mt-0.5 inline-block size-3 shrink-0 rounded-sm"
+								style={{ backgroundColor: `color-mix(in srgb, ${HEAT_UP} 85%, transparent)` }}
+							/>
 							<p>
 								<span className="font-medium text-secondary">Positive:</span> Indicates a positive correlation between
 								two variables.
 							</p>
 						</div>
 						<div className="flex items-start gap-2">
-							<span className="mt-0.5 inline-block size-3 shrink-0 rounded-sm bg-[rgba(255,0,0,0.8)]" />
+							<span
+								className="mt-0.5 inline-block size-3 shrink-0 rounded-sm"
+								style={{ backgroundColor: `color-mix(in srgb, ${HEAT_DOWN} 85%, transparent)` }}
+							/>
 							<p>
 								<span className="font-medium text-secondary">Negative:</span> Indicates a negative correlation between
 								two variables.

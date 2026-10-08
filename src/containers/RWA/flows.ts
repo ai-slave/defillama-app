@@ -6,7 +6,7 @@ import type {
 	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, CHART_DOWN, CHART_UP, chartColor } from '~/constants/colors'
 import { formatUsd } from '~/utils/numberFormat'
 import { rwaUnixSecondsToMilliseconds } from './api'
 import type {
@@ -202,14 +202,6 @@ export type RWAFlowRotationChart = {
 }
 
 const MAX_FLOW_ROTATION_SERIES = 30
-
-export const RWA_FLOW_COLORS = {
-	inflow: '#3fb950',
-	outflow: '#f85149',
-	level: '#4f9fff',
-	cumulative: '#a98cff',
-	change: '#98a2b3'
-} as const
 
 export function aggregateRWAFlowRows(
 	rows: Array<IRWAFlowAssetBreakdownRow>,
@@ -430,7 +422,7 @@ function buildDailyFlowChart(
 				name: INFLOWS,
 				stack: 'flows',
 				encode: { x: 0, y: 1 },
-				color: RWA_FLOW_COLORS.inflow,
+				color: CHART_UP,
 				barMaxWidth: 16
 			},
 			{
@@ -438,7 +430,7 @@ function buildDailyFlowChart(
 				name: OUTFLOWS,
 				stack: 'flows',
 				encode: { x: 0, y: 2 },
-				color: RWA_FLOW_COLORS.outflow,
+				color: CHART_DOWN,
 				barMaxWidth: 16
 			},
 			...buildRWAFlowOverlayCharts(overlays, 3)
@@ -474,7 +466,8 @@ function buildCumulativeFlowChart(
 				type: 'line',
 				name: CUMULATIVE_FLOWS,
 				encode: { x: 0, y: 1 },
-				color: RWA_FLOW_COLORS.cumulative,
+				// The overlays own CHART_COLORS 0, 3 and 4, so the cumulative line takes the next free rank.
+				color: chartColor(1),
 				hideAreaStyle: true
 			},
 			...buildRWAFlowOverlayCharts(overlays, 2)
@@ -517,7 +510,7 @@ function buildGroupedFlowChart(
 				name: INFLOWS,
 				stack: 'flows',
 				encode: { x: 0, y: 1 },
-				color: RWA_FLOW_COLORS.inflow,
+				color: CHART_UP,
 				barMaxWidth: 16
 			},
 			{
@@ -525,7 +518,7 @@ function buildGroupedFlowChart(
 				name: OUTFLOWS,
 				stack: 'flows',
 				encode: { x: 0, y: 2 },
-				color: RWA_FLOW_COLORS.outflow,
+				color: CHART_DOWN,
 				barMaxWidth: 16
 			},
 			...buildRWAFlowOverlayCharts(groupedOverlays, 3)
@@ -549,7 +542,7 @@ function buildFlowVsPriceChart(
 				name: NET_CAPITAL_INFLOWS,
 				stack: 'mcap-change',
 				encode: { x: 0, y: 1 },
-				color: RWA_FLOW_COLORS.inflow,
+				color: CHART_UP,
 				barMaxWidth: 22
 			},
 			{
@@ -557,7 +550,7 @@ function buildFlowVsPriceChart(
 				name: NET_CAPITAL_OUTFLOWS,
 				stack: 'mcap-change',
 				encode: { x: 0, y: 2 },
-				color: RWA_FLOW_COLORS.outflow,
+				color: CHART_DOWN,
 				barMaxWidth: 22
 			},
 			{
@@ -565,14 +558,14 @@ function buildFlowVsPriceChart(
 				name: PRICE,
 				stack: 'mcap-change',
 				encode: { x: 0, y: 3 },
-				color: RWA_FLOW_COLORS.level,
+				color: chartColor(0),
 				barMaxWidth: 22
 			},
 			{
 				type: 'line',
 				name: MCAP_CHANGE,
 				encode: { x: 0, y: 4 },
-				color: RWA_FLOW_COLORS.change,
+				color: chartColor(1),
 				hideAreaStyle: true
 			}
 		],

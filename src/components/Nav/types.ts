@@ -6,7 +6,6 @@ export type TNavLink = {
 	children?: Array<{ name: string; route: string }>
 	icon?: IIcon['name']
 	attention?: boolean
-	freeTrial?: boolean
 	isNew?: boolean
 	requireLlama?: boolean
 	/** Only for external links - internal pages are auto-tracked by Umami */

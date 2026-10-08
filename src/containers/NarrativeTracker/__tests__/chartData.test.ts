@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { divergingColor, HEAT_DOWN, HEAT_UP, OTHERS_COLOR } from '~/constants/colors'
 import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedTimeSeries,
@@ -32,19 +33,19 @@ describe('buildNarrativeTreemapTreeData', () => {
 			])
 		).toEqual([
 			{
-				value: [125, null, null, 0],
+				value: [125, null, null],
 				name: 'Lending',
 				path: 'Lending',
 				children: [
-					{ value: [100, 12.35, 12.35, 100], name: 'Aave', path: 'Lending/Aave' },
-					{ value: [25, 0, 0, 0], name: 'Compound', path: 'Lending/Compound' }
+					{ value: [100, 12.35, 12.35], name: 'Aave', path: 'Lending/Aave', itemStyle: { color: HEAT_UP } },
+					{ value: [25, 0, 0], name: 'Compound', path: 'Lending/Compound', itemStyle: { color: OTHERS_COLOR } }
 				]
 			},
 			{
-				value: [50, null, null, 0],
+				value: [50, null, null],
 				name: 'DEX',
 				path: 'DEX',
-				children: [{ value: [50, -1.23, -1.23, -100], name: 'Uniswap', path: 'DEX/Uniswap' }]
+				children: [{ value: [50, -1.23, -1.23], name: 'Uniswap', path: 'DEX/Uniswap', itemStyle: { color: HEAT_DOWN } }]
 			}
 		])
 	})
@@ -52,10 +53,10 @@ describe('buildNarrativeTreemapTreeData', () => {
 	test('uses zero treemap weight for coins without market cap data', () => {
 		expect(buildNarrativeTreemapTreeData([row({ name: 'SpiritSwap', mcap: null, returnField: 1.23 })])).toEqual([
 			{
-				value: [0, null, null, 0],
+				value: [0, null, null],
 				name: '',
 				path: '',
-				children: [{ value: [0, 1.23, 1.23, 100], name: 'SpiritSwap', path: '/SpiritSwap' }]
+				children: [{ value: [0, 1.23, 1.23], name: 'SpiritSwap', path: '/SpiritSwap', itemStyle: { color: HEAT_UP } }]
 			}
 		])
 	})
@@ -69,8 +70,13 @@ describe('buildNarrativeTreemapTreeData', () => {
 			row({ name: 'Only gain', categoryName: 'DEX', returnField: 10 })
 		])
 
-		expect(tree[0].children.map((node) => node.value[3])).toEqual([-100, -70, 70, 100])
-		expect(tree[1].children[0].value[3]).toBe(100)
+		expect(tree[0].children.map((node) => node.itemStyle?.color)).toEqual([
+			HEAT_DOWN,
+			divergingColor(-0.7),
+			divergingColor(0.7),
+			HEAT_UP
+		])
+		expect(tree[1].children[0].itemStyle?.color).toBe(HEAT_UP)
 	})
 
 	test('reads the selected period directly without an intermediate row copy', () => {
@@ -82,9 +88,9 @@ describe('buildNarrativeTreemapTreeData', () => {
 			'change1M'
 		)
 
-		expect(tree[0].children.map((node) => node.value.slice(1))).toEqual([
-			[12.35, 12.35, 100],
-			[-1.23, -1.23, -100]
+		expect(tree[0].children.map((node) => [...node.value.slice(1), node.itemStyle?.color])).toEqual([
+			[12.35, 12.35, HEAT_UP],
+			[-1.23, -1.23, HEAT_DOWN]
 		])
 	})
 
@@ -97,11 +103,11 @@ describe('buildNarrativeTreemapTreeData', () => {
 		expect(filterNarrativeTreemapTreeData(tree, new Set(['Low']))).toEqual([
 			{
 				...tree[0],
-				value: [3, null, null, 0],
+				value: [3, null, null],
 				children: [tree[0].children[0]]
 			}
 		])
-		expect(tree[0].children[0].value[3]).toBe(70)
+		expect(tree[0].children[0].itemStyle?.color).toBe(divergingColor(0.7))
 	})
 
 	test('filters whole category nodes on the category overview', () => {
@@ -121,11 +127,11 @@ describe('buildNarrativeTreemapTreeData', () => {
 
 		expect(filterNarrativeTreemapTreeData(tree, new Set(['Lending', 'DEX']))).toEqual(tree)
 		expect(filterNarrativeTreemapTreeData(tree, new Set(['Lending']))).toEqual([
-			{ ...tree[0], value: [3, null, null, 0], children: [tree[0].children[0]] }
+			{ ...tree[0], value: [3, null, null], children: [tree[0].children[0]] }
 		])
 		expect(filterNarrativeTreemapTreeData(tree, new Set())).toEqual([])
 		expect(tree[0].children).toHaveLength(2)
-		expect(tree[0].children[0].value[3]).toBe(70)
+		expect(tree[0].children[0].itemStyle?.color).toBe(divergingColor(0.7))
 	})
 })
 

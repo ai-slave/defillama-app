@@ -54,7 +54,8 @@ describe('ETF API response to chart contract', () => {
 		const chart = buildETFChartSpec({
 			flows: result.flows,
 			groupBy: 'daily',
-			assets: ['Bitcoin', 'Ethereum']
+			assets: ['Bitcoin', 'Ethereum'],
+			isDark: true
 		})
 
 		expect(result.snapshot.map(({ ticker, chain }) => ({ ticker, chain }))).toEqual([

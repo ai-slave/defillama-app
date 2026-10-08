@@ -1,14 +1,15 @@
 import { Fragment } from 'react'
 import { BasicLink } from '~/components/Link'
+import { divergingColor } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatNumber } from '~/utils/numberFormat'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import type { ExchangeExecutionModel, ExchangeProfileModel, ExchangeProfileQualityModel } from './models'
 
-// Score → hue: 0 red, ~50 amber, 100 green. Moderate saturation so the fills sit
-// comfortably on both themes.
-export const scoreColor = (score: number) => `hsl(${Math.round(Math.max(0, Math.min(100, score)) * 1.2)}, 55%, 42%)`
+// A 0–100 score on the one value scale, centred on 50: 0 falling, 50 neutral grey, 100 rising. It colours fills and
+// borders only (3:1); the score number beside them stays in the text tiers.
+export const scoreColor = (score: number) => divergingColor((score - 50) / 50)
 
 // Fixed public bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
 const TIER_BANDS = [
@@ -73,10 +74,7 @@ function PillarRow({ pillar }: { pillar: ExchangeProfileQualityModel['components
 					}}
 				/>
 			</div>
-			<span
-				className={`w-24 shrink-0 text-right label-sm ${measured ? 'font-semibold' : 'text-tertiary'}`}
-				style={measured ? { color: scoreColor(score) } : undefined}
-			>
+			<span className={`w-24 shrink-0 text-right label-sm ${measured ? 'font-semibold' : 'text-tertiary'}`}>
 				{measured ? Math.round(score) : 'not measured'}
 			</span>
 		</div>

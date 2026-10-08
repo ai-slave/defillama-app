@@ -282,7 +282,7 @@ function ReferenceRatesSummary({
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : chartStatus === 'error' ? (
-					<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
+					<ChartPanelBodyFallback role="alert" className="body-sm text-error">
 						Couldn't load {range} history.
 					</ChartPanelBodyFallback>
 				) : (

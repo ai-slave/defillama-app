@@ -20,6 +20,9 @@ import {
 } from '../terminalOps'
 import { setTerminalSymbol, setTerminalWidget, type TerminalChart, type TerminalWidget } from '../terminalViewStore'
 
+// The chart theme's up and down marks, as TerminalPanel passes them.
+const MARKS = { up: '#007b45', down: '#a5464a' }
+
 /**
  * A backtest's fills are a study, not drawings: the library has no size control over a drawing, and
  * a study can say `tiny`. The cost is that a study belongs to the user's saved layout with no
@@ -90,7 +93,7 @@ afterEach(async () => {
 
 describe('the study that draws the fills', () => {
 	const trades = async () => {
-		const [, entry] = await createTerminalStudies()(pineStub())
+		const [, entry] = await createTerminalStudies(MARKS)(pineStub())
 		return entry
 	}
 
@@ -110,8 +113,8 @@ describe('the study that draws the fills', () => {
 	// the bar it is also unambiguous about which way the fill went, now that nothing is labelled.
 	test('a buy is a green triangle under the bar and a sell a red one over it', async () => {
 		const styles = ((await trades()) as any).metainfo.defaults.styles
-		const buy = ['shape_triangle_up', 'BelowBar', '#089981']
-		const sell = ['shape_triangle_down', 'AboveBar', '#cc2f3c']
+		const buy = ['shape_triangle_up', 'BelowBar', MARKS.up]
+		const sell = ['shape_triangle_down', 'AboveBar', MARKS.down]
 		expect(
 			[0, 1, 2, 3].map((i) => [styles[`plot_${i}`].plottype, styles[`plot_${i}`].location, styles[`plot_${i}`].color])
 		).toEqual([buy, sell, sell, buy])

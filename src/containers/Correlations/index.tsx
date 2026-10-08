@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
+import { HEAT_DOWN, HEAT_UP } from '~/constants/colors'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -59,11 +60,10 @@ function CorrelationCell({
 	const aligned = alignedPointCounts[coinId]?.[coin1Id] ?? 0
 	const returns = returnPointCounts[coinId]?.[coin1Id] ?? 0
 
+	// The heat sits behind the value, so it caps at 85% to keep the text readable on a perfect correlation.
 	const backgroundColor =
 		corr != null
-			? corr > 0
-				? `rgba(53, 222, 59, ${Math.abs(corr)})`
-				: `rgba(255, 0, 0, ${Math.abs(corr)})`
+			? `color-mix(in srgb, ${corr > 0 ? HEAT_UP : HEAT_DOWN} ${Math.abs(corr) * 85}%, transparent)`
 			: undefined
 
 	return (

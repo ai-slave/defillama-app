@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
-import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { ASSET_BRAND_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -37,41 +38,44 @@ function accessibleValue(value: number, symbol: ExchangeResearchChartModel['valu
  * colour on every chart it appears in, and BTC reads as BTC rather than as whatever slot
  * it landed in. Anything not named here takes the chart palette colour for its rank.
  *
+ * Each is [light, dark]: a brand under 3:1 on a chart background in one mode moves its
+ * lightness (OKLCH, same hue) just far enough there; a brand that passes keeps its hex.
+ *
  * ponytail: a flat map, not a token per venue — these are third-party brand colours, not
  * ours to systematize. Add a row when a venue starts reaching a top-eight slot.
  *
  * `btc-spot` / `btc-usd-perp` / `btc-coin-perp` are deliberately absent: they are three
  * BTC series on one chart, so brand orange would make all three the same line.
  */
-const BRAND_COLORS: Record<string, string> = {
+const BRAND_COLORS: Record<string, readonly [light: string, dark: string]> = {
 	// Assets. the leftover `other` line takes the neutral via researchSeriesColor's fallback.
-	btc: '#f7931a',
-	eth: '#627eea',
+	btc: ASSET_BRAND_COLORS.Bitcoin,
+	eth: ASSET_BRAND_COLORS.Ethereum,
 	// Venues.
-	binance: '#f3ba2f',
-	bybit: '#f7a600',
+	binance: ['#b6880f', '#f3ba2f'],
+	bybit: ['#c1820b', '#f7a600'],
 	// OKX's brand is black, which disappears on the dark theme; this is its lightest
 	// readable stand-in rather than a colour they actually publish.
-	okx: '#b4bcc8',
-	coinbase: '#0052ff',
-	kraken: '#7132f5',
-	bitget: '#00e8d0',
-	gate: '#17e6a1',
-	mexc: '#00b897',
-	htx: '#1b8fe3',
-	kucoin: '#24ae8f',
-	hyperliquid: '#50d2c1',
-	upbit: '#1e5eff',
-	'crypto-com': '#03316c',
-	bitfinex: '#16b157',
-	dydx: '#6966ff',
-	deribit: '#04a7c8',
-	bingx: '#2b5cff'
+	okx: ['#88909b', '#b4bcc8'],
+	coinbase: ['#0052ff', '#0052ff'],
+	kraken: ['#7132f5', '#7132f5'],
+	bitget: ['#17a08f', '#00e8d0'],
+	gate: ['#0ea371', '#17e6a1'],
+	mexc: ['#12a285', '#00b897'],
+	htx: ['#1b8fe3', '#1b8fe3'],
+	kucoin: ['#04a284', '#24ae8f'],
+	hyperliquid: ASSET_BRAND_COLORS.Hyperliquid,
+	upbit: ['#1e5eff', '#1e5eff'],
+	'crypto-com': ['#03316c', '#3763a2'],
+	bitfinex: ['#03a54f', '#16b157'],
+	dydx: ['#6966ff', '#6966ff'],
+	deribit: ['#199cba', '#04a7c8'],
+	bingx: ['#2b5cff', '#2b5cff']
 }
 
-export function researchSeriesColor(lineId: string, index: number): string {
+export function researchSeriesColor(lineId: string, index: number, isDark: boolean): string {
 	const brand = BRAND_COLORS[lineId]
-	if (brand) return brand
+	if (brand) return brand[isDark ? 1 : 0]
 	return lineId === 'other' ? OTHERS_COLOR : chartColor(index)
 }
 
@@ -95,6 +99,7 @@ export function researchChartAriaLabel(chart: ExchangeResearchChartModel): strin
 }
 
 export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChartModel; toolbar?: React.ReactNode }) {
+	const [isDark] = useDarkModeManager()
 	const chartModel = React.useMemo(
 		() =>
 			buildAlignedCartesianChartModel(
@@ -102,7 +107,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 				chart.lines.map((line, index) => ({
 					name: line.label,
 					type: 'line' as const,
-					color: researchSeriesColor(line.id, index),
+					color: researchSeriesColor(line.id, index, isDark),
 					areaStyle: { opacity: 0 },
 					values: chart.days.map((_, dayIndex) => {
 						const value = line.values[dayIndex]
@@ -110,7 +115,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 					})
 				}))
 			),
-		[chart]
+		[chart, isDark]
 	)
 	const hallmarks = React.useMemo(() => researchHallmarks(chart.metric), [chart.metric])
 	return (
@@ -152,7 +157,7 @@ export function ResearchChartStatus({
 			<ChartPanelBodyFallback
 				role={status === 'error' ? 'alert' : 'status'}
 				aria-live={status === 'error' ? undefined : 'polite'}
-				className={status === 'error' ? 'body-sm text-data-down' : undefined}
+				className={status === 'error' ? 'body-sm text-error' : undefined}
 			>
 				{status === 'error' ? 'Failed to load this chart.' : <LoadingIndicator />}
 			</ChartPanelBodyFallback>

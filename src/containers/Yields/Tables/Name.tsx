@@ -103,7 +103,7 @@ export function PoolNameLockup({
 				<span className="ml-auto flex shrink-0 items-center gap-2">
 					{exploited ? (
 						<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
-							<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-data-down" />
+							<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-error" />
 						</Tooltip>
 					) : null}
 					{hasRiskData ? <RiskDataHint configID={configID} poolName={value} /> : null}

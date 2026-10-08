@@ -19,7 +19,7 @@ import { Panel } from './Panel'
      these parts, with the quiet LoadingIndicator they render by default.
      A loading state never sits on the bare page background.
    - Copy is text-center body-sm: loading and empty text-tertiary, error
-     text-data-down with role="alert". Ad-hoc placeholders use the same
+     text-error with role="alert". Ad-hoc placeholders use the same
      tokens; never raw `text-red-*` or text-primary for "No results found".
    - Shells reserve space with min-h: 360px by default, 400px for a lazy
      chart that renders its own export toolbar, larger only when the route's
@@ -35,7 +35,7 @@ export type StatusVariant = 'loading' | 'empty' | 'error'
 const STATUS_TEXT = {
 	loading: 'text-tertiary',
 	empty: 'text-tertiary',
-	error: 'text-data-down'
+	error: 'text-error'
 } as const
 
 type PanelStatusProps = {

@@ -180,10 +180,16 @@ describe('surface model selection', () => {
 	})
 
 	test('keeps named series colors stable when reordered and distinguishes unnamed venues from Other', () => {
-		expect(researchSeriesColor('binance', 0)).toBe(researchSeriesColor('binance', 3))
-		expect(researchSeriesColor('other', 0)).toBe(researchSeriesColor('other', 3))
-		expect(researchSeriesColor('unnamed-venue', 0)).not.toBe(researchSeriesColor('other', 0))
-		expect(researchSeriesColor('unnamed-venue', 0)).not.toBe(researchSeriesColor('another-venue', 1))
+		expect(researchSeriesColor('binance', 0, true)).toBe(researchSeriesColor('binance', 3, true))
+		expect(researchSeriesColor('other', 0, true)).toBe(researchSeriesColor('other', 3, true))
+		expect(researchSeriesColor('unnamed-venue', 0, true)).not.toBe(researchSeriesColor('other', 0, true))
+		expect(researchSeriesColor('unnamed-venue', 0, true)).not.toBe(researchSeriesColor('another-venue', 1, true))
+	})
+
+	test('darkens a brand colour under 3:1 on the light theme and keeps one that passes', () => {
+		expect(researchSeriesColor('binance', 0, false)).toBe('#b6880f')
+		expect(researchSeriesColor('binance', 0, true)).toBe('#f3ba2f')
+		expect(researchSeriesColor('coinbase', 0, false)).toBe(researchSeriesColor('coinbase', 0, true))
 	})
 
 	test('keeps observed one-sided zero depth visible in MiCA details', () => {

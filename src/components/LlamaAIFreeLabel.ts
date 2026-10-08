@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
+import { promoBadgeStyles } from '~/ui/PromoBadge'
 import {
 	readExperimentVariant,
 	trackExperimentAction,
@@ -12,8 +13,7 @@ const EXPERIMENT_ID: ExperimentId = 'llamaai-free-label-v1'
 
 export const freeLabelAOnly = '[html[data-ab-llamaai-free-label-v1=b]_&]:hidden'
 export const freeLabelBOnly = 'hidden [html[data-ab-llamaai-free-label-v1=b]_&]:inline'
-export const freeBadgeBOnly =
-	'hidden shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-wide text-warning [html[data-ab-llamaai-free-label-v1=b]_&]:inline-flex'
+export const freeBadgeBOnly = `hidden ${promoBadgeStyles} [html[data-ab-llamaai-free-label-v1=b]_&]:inline-flex`
 
 export function useLlamaAIFreeLabel(enabled = true) {
 	const isClient = useIsClient()

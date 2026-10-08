@@ -53,7 +53,7 @@ const FILTER_ORDER: Array<{ key: Filter; label: string }> = [
 ]
 
 const changeColor = (n?: number | null) =>
-	typeof n !== 'number' ? '' : n > 0 ? 'text-success' : n < 0 ? 'text-error' : ''
+	typeof n !== 'number' ? '' : n > 0 ? 'text-data-up' : n < 0 ? 'text-data-down' : ''
 
 function MetricChip({ item }: { item: ArticleEntitySuggestionItem }) {
 	const p = item.preview

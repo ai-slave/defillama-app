@@ -631,7 +631,7 @@ export function AdapterByChainChart({
 				</ScopeNote>
 			) : null}
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
-				<ChartPanelBodyFallback className="body-sm text-data-down" role="alert">
+				<ChartPanelBodyFallback className="body-sm text-error" role="alert">
 					{breakdownChartDataState.message}
 				</ChartPanelBodyFallback>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
@@ -1044,7 +1044,7 @@ export function ChainsByAdapterChart({
 				) : baseChartErrorMessage ? (
 					<div
 						role="alert"
-						className="flex items-center justify-center p-4 text-center body-sm text-data-down"
+						className="flex items-center justify-center p-4 text-center body-sm text-error"
 						style={{ height: chartHeight }}
 					>
 						Failed to load chart data: {baseChartErrorMessage}

@@ -32,7 +32,7 @@ function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 			<span
 				key="mom"
 				className={`font-jetbrains tabular-nums ${
-					(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
+					(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-data-up' : 'text-data-down'
 				}`}
 			>
 				{momText ?? 'N/A'}

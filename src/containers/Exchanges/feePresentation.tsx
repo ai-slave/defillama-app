@@ -14,9 +14,9 @@ const SPOT_FEE_TIER_LIMITS = { low: 0.001, medium: 0.004 }
 const PERP_FEE_TIER_LIMITS = { low: 0.0003, medium: 0.0006 }
 
 export const FEE_TONE_CLASS: Record<FeeTone, string> = {
-	low: 'border-data-up bg-data-up-tint text-data-up',
+	low: 'border-success bg-success-tint text-success',
 	medium: 'border-warning bg-warning-tint text-warning',
-	high: 'border-data-down bg-surface text-data-down'
+	high: 'border-error bg-surface text-error'
 }
 
 /** Compliance statuses (EU availability, MiCA license) share the badge with fees. */
@@ -24,9 +24,9 @@ export type ValueTone = FeeTone | 'positive' | 'caution' | 'negative'
 
 const VALUE_TONE_CLASS: Record<ValueTone, string> = {
 	...FEE_TONE_CLASS,
-	positive: 'border-data-up bg-data-up-tint text-data-up',
+	positive: 'border-success bg-success-tint text-success',
 	caution: 'border-warning bg-warning-tint text-warning',
-	negative: 'border-data-down bg-data-down-tint text-data-down'
+	negative: 'border-error bg-error-tint text-error'
 }
 
 /** The badge box every Exchanges value cell shares, so a row of fees, statuses and requirement chips lines up. */

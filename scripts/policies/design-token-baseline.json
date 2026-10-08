@@ -1,6 +1,6 @@
 {
 	"core": {
-		"hex-in-classname": 37,
+		"hex-in-classname": 36,
 		"dark-hex-variant": 13,
 		"arbitrary-font-size": 0,
 		"arbitrary-spacing": 0,
@@ -13,7 +13,7 @@
 		"disabled-opacity": 1,
 		"neutral-hover-on-hued-control": 0,
 		"fixed-dark-fill": 7,
-		"arbitrary-color-function": 11,
+		"arbitrary-color-function": 9,
 		"arbitrary-shadow": 7,
 		"stock-shadow": 0,
 		"product-utility-leak": 7,
@@ -21,7 +21,7 @@
 		"arbitrary-standard-radius": 0,
 		"product-role-token": 0,
 		"unresolved-token-utility": 0,
-		"implicit-border-color": 2,
+		"implicit-border-color": 1,
 		"deprecated-tailwind-spelling": 0,
 		"raw-popover-surface": 0,
 		"menu-item-color-class": 0,
