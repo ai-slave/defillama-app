@@ -70,6 +70,7 @@ export type MultiSeriesChartSeriesConfig = {
 	symbol?: string
 	symbolSize?: number
 	barMinWidth?: number
+	barMinHeight?: number
 	barMaxWidth?: number
 	large?: boolean
 }

@@ -11,6 +11,7 @@ import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/EC
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue } from '~/components/ECharts/shared/tooltip'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -71,6 +72,14 @@ interface SeriesDef {
 	verified?: boolean
 }
 
+const isNoPayoutDay = (value: number | null | undefined): boolean => value != null && value >= 0 && value < 0.01
+
+// At least 1 in 20 measured days had no payout.
+function hasPayoutGaps(values: Array<number | null>): boolean {
+	const measured = values.filter((value) => value != null)
+	return measured.length > 0 && measured.filter(isNoPayoutDay).length >= measured.length * 0.05
+}
+
 function fmtVal(v: number, symbol: string): string {
 	if (!Number.isFinite(v)) return '-'
 	return symbol === '$' ? formatUsd(v, USD_LOWERCASE_MILLIONS_OPTIONS) : formatPercent(v, YIELD_PERCENT_OPTIONS)
@@ -95,7 +104,8 @@ function buildChartInputs(
 	apyWindow: PoolChartWindow,
 	range: PoolHistoryRange,
 	isDark: boolean,
-	today: number
+	today: number,
+	payoutGaps: boolean
 ): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; hasData: boolean } {
 	const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const standIn = model.bars.find((b) => enabled[b.key] === true && b.replaces != null)
@@ -134,6 +144,7 @@ function buildChartInputs(
 			color: resolve(b.colorKey),
 			yAxisIndex: 0,
 			barMaxWidth: 16,
+			...(payoutGaps && apyWindow === 'daily' && b.key === VERIFIED_APY_SERIES.key ? { barMinHeight: 2 } : {}),
 			...(model.net ? { excludeFromTooltipTotal: true } : {})
 		})
 	}
@@ -201,7 +212,7 @@ const tooltipRow = (p: ChartTooltipItem, symbol: string) => {
 }
 
 // Components keep their declared order (never re-sorted by value).
-function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow) {
+function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow, payoutGaps: boolean) {
 	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
 	const barLabels = model.bars.map((b) => b.label + rateSuffix)
 	const netLabel = model.netLine ? model.netLine.label + rateSuffix : null
@@ -237,6 +248,9 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 			html += tooltipRow(p, '%')
 		}
 
+		const verifiedItem = payoutGaps && apyWindow === 'daily' ? byName.get(VERIFIED_APY_SERIES.label) : undefined
+		if (verifiedItem && isNoPayoutDay(valueOf(verifiedItem))) html += li('No payout this day')
+
 		const summaryStyle = 'font-weight:600;'
 		if (model.net && netLabel) {
 			const item = byName.get(netLabel)
@@ -262,7 +276,8 @@ export function PoolApyChart({
 	kind,
 	initialRange = 'max',
 	intrinsicApy = null,
-	lockedVerifiedApy = false
+	lockedVerifiedApy = false,
+	stepAccrual = false
 }: {
 	model: PoolChartModel
 	/** When the model's history was read: its last day is still partial on that UTC day. */
@@ -274,6 +289,7 @@ export function PoolApyChart({
 	// The pool is measured but this reader's model has no measured line. The picker still lists
 	// it, greyed, so the reader learns the line exists and what unlocks it.
 	lockedVerifiedApy?: boolean
+	stepAccrual?: boolean
 }) {
 	const router = useRouter()
 	const { show: showUpgrade, modal: upgradeModal } = useSubscribeProModal('verified-yields', 'apy-chart-metrics')
@@ -314,6 +330,12 @@ export function PoolApyChart({
 			? '7d'
 			: undefined
 	const apyWindow = getPoolChartWindow(router.query[getPoolSeriesQueryKey(kind, 'window')] ?? legacyWindow)
+	const verifiedValues = currentModel.bars.find((bar) => bar.key === VERIFIED_APY_SERIES.key)?.values
+	const payoutGaps = stepAccrual && verifiedValues != null && hasPayoutGaps(verifiedValues)
+	const selectWindow = (next: PoolChartWindow) => {
+		writeStickyPref(POOL_CHART_WINDOW_PREFS[kind], getWindowQueryValue(next))
+		void pushShallowQuery(router, getWindowQueryPatch(kind, next), router.pathname)
+	}
 
 	const seriesDefs = useMemo<Array<SeriesDef>>(() => {
 		const defs: Array<SeriesDef> = []
@@ -362,12 +384,12 @@ export function PoolApyChart({
 		}
 		return {
 			enabled,
-			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark, today)
+			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark, today, payoutGaps)
 		}
-	}, [apyWindow, currentModel, isDark, kind, range, router.query, seriesDefs, today])
+	}, [apyWindow, currentModel, isDark, kind, payoutGaps, range, router.query, seriesDefs, today])
 	const chartOptions = useMemo(
-		() => ({ tooltip: { formatter: buildTooltipFormatter(currentModel, apyWindow) } }),
-		[apyWindow, currentModel]
+		() => ({ tooltip: { formatter: buildTooltipFormatter(currentModel, apyWindow, payoutGaps) } }),
+		[apyWindow, currentModel, payoutGaps]
 	)
 
 	const toggle = (key: string, active: boolean, defaultEnabled: boolean) => {
@@ -437,15 +459,17 @@ export function PoolApyChart({
 					/>
 				}
 			>
-				<ChartGroupingSelector
-					value={apyWindow}
-					options={WINDOW_OPTIONS}
-					onValueChange={(next) => {
-						writeStickyPref(POOL_CHART_WINDOW_PREFS[kind], getWindowQueryValue(next))
-						void pushShallowQuery(router, getWindowQueryPatch(kind, next), router.pathname)
-					}}
-				/>
+				<ChartGroupingSelector value={apyWindow} options={WINDOW_OPTIONS} onValueChange={selectWindow} />
 			</ChartPanelToolbar>
+			{payoutGaps && apyWindow === 'daily' && enabled[VERIFIED_APY_SERIES.key] ? (
+				<p className="px-2 pt-2 body-md text-secondary">
+					This pool's rewards arrive in lumps rather than daily, so single days swing between little or no yield and
+					more than the true rate.{' '}
+					<Button variant="link" onClick={() => selectWindow('30d')}>
+						Show 30d average
+					</Button>
+				</p>
+			) : null}
 
 			<ChartPanelBody>
 				{loading ? (

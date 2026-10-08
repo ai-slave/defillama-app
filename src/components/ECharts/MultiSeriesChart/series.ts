@@ -131,6 +131,7 @@ export function buildMultiSeries({
 				type: 'bar',
 				large: chart.large ?? chart.stack == null,
 				...(chart.barMinWidth != null ? { barMinWidth: chart.barMinWidth } : {}),
+				...(chart.barMinHeight != null ? { barMinHeight: chart.barMinHeight } : {}),
 				...(chart.barMaxWidth != null ? { barMaxWidth: chart.barMaxWidth } : {})
 			}
 		}

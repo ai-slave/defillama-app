@@ -369,6 +369,7 @@ export function PoolDetailView({
 								initialRange={initialRange}
 								intrinsicApy={intrinsicApy}
 								lockedVerifiedApy={locked && !hasAccess}
+								stepAccrual={stepAccrual}
 							/>
 						) : (
 							<PoolChartPlaceholder key="supply" title={supplyChart.title} />
