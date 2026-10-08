@@ -4,6 +4,7 @@ import {
 	dropRwaRedundantTotal,
 	ensureRwaTotalSeries,
 	foldRwaTopSeries,
+	getRwaRankedSeriesNames,
 	RWA_OTHERS_SERIES_LABEL,
 	toRwaShareDataset
 } from '../chartFold'
@@ -97,6 +98,39 @@ describe('foldRwaTopSeries', () => {
 	})
 })
 
+describe('foldRwaTopSeries with a pick', () => {
+	/* Twelve venues V1..V12 whose latest value is their number, so V12 is the largest; a Total line and an upstream Others. */
+	const names = Array.from({ length: 12 }, (_, index) => `V${index + 1}`)
+	const twelve = dataset(
+		['timestamp', 'Total Open Interest', ...names, 'Others'],
+		[
+			[1, 100, ...names.map(() => 1), 2],
+			[2, 200, ...names.map((_, index) => index + 1), 3]
+		]
+	)
+	const top10 = names.slice(2).reverse()
+
+	test('lists the members largest first, without the Total line or the upstream Others', () => {
+		expect(getRwaRankedSeriesNames(twelve)).toEqual([...top10, 'V2', 'V1'])
+	})
+
+	test('the ten largest picked draw what the top ten fold draws', () => {
+		expect(foldRwaTopSeries(twelve, { picked: top10 })).toEqual(foldRwaTopSeries(twelve, {}))
+	})
+
+	test('a small member picked gets its own series and every unpicked one, the upstream Others included, folds into Others', () => {
+		const folded = foldRwaTopSeries(twelve, { picked: ['V1', 'V12'] })
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Open Interest', 'V12', 'V1', 'Others'])
+		expect(folded.source[1]).toEqual([2, 200, 12, 1, 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 3])
+	})
+
+	test('every member picked leaves no Others but the upstream one', () => {
+		const folded = foldRwaTopSeries(twelve, { picked: names })
+		expect(folded.dimensions.at(-1)).toBe('Others')
+		expect(folded.source[1]?.at(-1)).toBe(3)
+	})
+})
+
 describe('toRwaShareDataset', () => {
 	test('draws every row as percent of its total and drops the Total series', () => {
 		const share = toRwaShareDataset(
@@ -146,6 +180,16 @@ describe('toRwaShareDataset', () => {
 })
 
 describe('ensureRwaTotalSeries', () => {
+	test('a member named "Total something" is a member: the Total line is still added and the member is ranked', () => {
+		const withTotal = ensureRwaTotalSeries(
+			dataset(['timestamp', 'Total Crypto Market Cap ex-BTC', 'Gold'], [[1, 1, 18]]),
+			'Total Open Interest'
+		)
+		expect(withTotal.dimensions).toEqual(['timestamp', 'Total Open Interest', 'Total Crypto Market Cap ex-BTC', 'Gold'])
+		expect(withTotal.source).toEqual([[1, 19, 1, 18]])
+		expect(getRwaRankedSeriesNames(withTotal)).toEqual(['Gold', 'Total Crypto Market Cap ex-BTC'])
+	})
+
 	test('adds a Total series first when the dataset has none', () => {
 		const withTotal = ensureRwaTotalSeries(
 			dataset(

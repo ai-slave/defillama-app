@@ -37,3 +37,5 @@ The pickers in this folder share one surface (`ComboboxSurface` in `src/ui/Popov
 ## Long lists
 
 Never build a long list from a plain input over buttons, or cap it with `slice()`. Use the virtualized pickers; their header in `VirtualizedSelect.tsx` covers measured rows, trigger variants and server search.
+
+An option with `muted: true` is drawn on the secondary tier: a value the page's current settings leave out, still selectable, with its `help` saying what brings it back.

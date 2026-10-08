@@ -1,24 +1,17 @@
 import { Select } from '~/components/Select/Select'
-import {
-	getRwaGroupByLabel,
-	getRwaGroupByOptions,
-	type RWAGroupBy,
-	type RWAGroupByScope,
-	type RWATableView
-} from '../groupBy'
+import type { RWAPageKind } from '../../layout/pageLayout'
+import { getRwaGroupByLabel, getRwaGroupByOptions, type RWAGroupBy } from '../groupBy'
 
 export function RWATableGroupBySelect({
-	view,
-	scope,
+	pageKind,
 	value,
 	onChange
 }: {
-	view: RWATableView
-	scope: RWAGroupByScope
+	pageKind: RWAPageKind
 	value: RWAGroupBy
 	onChange: (groupBy: RWAGroupBy) => void
 }) {
-	const options = getRwaGroupByOptions(view, { scope })
+	const options = getRwaGroupByOptions(pageKind)
 	return (
 		<Select
 			heading="Group by"
@@ -28,7 +21,7 @@ export function RWATableGroupBySelect({
 				const groupBy = options.find((option) => option.key === next)?.key
 				if (groupBy) onChange(groupBy)
 			}}
-			label={`Group by: ${getRwaGroupByLabel(value, view)}`}
+			label={`Group by: ${getRwaGroupByLabel(value, pageKind)}`}
 			labelType="none"
 			variant="filter"
 			size="md"

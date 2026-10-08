@@ -1,8 +1,6 @@
 import type { IRWAAssetsOverview, IRWAChartMetricRows, RWAChartMetricKey } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import {
-	appendRwaChartDatasetTotal,
-	emptyChartDataset,
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
 	isRwaTotalSeriesLabel,
@@ -236,8 +234,6 @@ export function applyDefaultAssetFilters(
 }
 
 export {
-	appendRwaChartDatasetTotal,
-	emptyChartDataset,
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
 	isRwaTotalSeriesLabel,

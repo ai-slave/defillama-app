@@ -23,8 +23,3 @@ export function findByRwaSlug<T extends string>(input: string, values: Array<T>)
 
 	return null
 }
-
-export function resolveCanonicalRwaSlug(input: string, values: Array<string>): string | null {
-	const value = findByRwaSlug(input, values)
-	return value ? rwaSlug(value) : null
-}

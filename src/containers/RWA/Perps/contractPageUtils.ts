@@ -258,11 +258,6 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 				label: d.premium.label,
 				tooltip: d.premium.description,
 				value: formatFractionPercent(contractData.market.premium)
-			},
-			{
-				label: d.cumulativeFunding.label,
-				tooltip: d.cumulativeFunding.description,
-				value: formatUsd(contractData.market.cumulativeFunding, USD_LOWERCASE_MILLIONS_OPTIONS)
 			}
 		]
 	}

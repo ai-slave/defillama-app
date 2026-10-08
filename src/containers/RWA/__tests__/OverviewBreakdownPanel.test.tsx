@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { RWAOverviewBreakdownPanel, type RWAOverviewBreakdownPanelProps } from '../OverviewBreakdownPanel'
-import { getRankedRwaFilterValues } from '../rankedFilterValues'
 import { spotAsset } from '../table/__tests__/fixtures'
 
 vi.mock('next/router', () => ({
@@ -16,20 +15,11 @@ function render(props: Partial<RWAOverviewBreakdownPanelProps> = {}) {
 		metricLabel: 'Active AUM',
 		groupLabel: 'Asset Group',
 		exportTitle: 'RWA Active AUM',
-		filenameSuffix: 'active-mcap-all',
+		filename: 'rwa-active-aum-all',
 		treemapNestedBy: 'none',
 		onTreemapNestedByChange: () => {},
 		assets: [spotAsset(), spotAsset({ id: 'gold', canonicalMarketId: 'paxos/paxg', assetGroup: 'Precious Metals' })],
-		rankedFilterValues: getRankedRwaFilterValues({
-			typeOptions: [],
-			categoriesOptions: [],
-			assetClassOptions: [],
-			rwaClassificationOptions: [],
-			accessModelOptions: []
-		}),
-		selectedAssetNames: [],
 		selectedCategories: [],
-		isAssetGroupMode: false,
 		includeBridgeTvl: true,
 		toolbarStart: <span>toolbar-start</span>,
 		...props

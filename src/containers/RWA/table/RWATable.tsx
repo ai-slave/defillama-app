@@ -1,7 +1,12 @@
+import { useRouter } from 'next/router'
 import { useDeferredValue, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { getHideableColumns } from '~/components/Table/search/columnSelect'
+import {
+	getColumnSelectState,
+	getColumnVisibilityForSelection,
+	getHideableColumns
+} from '~/components/Table/search/columnSelect'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { Icon } from '~/ui/Icon'
@@ -14,107 +19,112 @@ import {
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import type { RWAOverviewDisplayRow } from '../api.types'
 import { useRWAFlowSummary } from '../flows.hooks'
-import { RWA_CHANGE_PERIODS, type RWAChangePeriod } from './change'
+import { getRwaPageLayout, type RWAPageKind } from '../layout/pageLayout'
+import { RWA_CHANGE_PERIODS, RWA_DEFAULT_CHANGE_PERIOD, type RWAChangePeriod } from './change'
 import type { RWAFlowStatus } from './columns/flows'
-import {
-	getRwaColumnOptions,
-	getRwaColumnVisibilityForSelection,
-	getRwaSelectedColumnIds,
-	RWA_TABLE_PRESETS,
-	type RWATablePreset
-} from './columnSets'
-import { getRwaCsvRows } from './csv'
-import type { RWAGroupBy, RWAPlatformLogos, RWATableView } from './groupBy'
+import { getRwaTableColumnSetQuery, parseRwaTableColumnSet, type RWATableColumnSet } from './columnSetQuery'
+import { getRwaColumnOptions, getRwaColumnSet, leafColumns } from './columnSets'
+import { getRwaCsvFileName } from './csv'
+import type { RWAGroupBy, RWAPlatformLogos } from './groupBy'
+import { RWATableColumnSetSwitch } from './toolbar/ColumnSetSwitch'
 import { useRwaTable } from './useRwaTable'
 
-/** The view, the Group by and the CEX flag are set in the strip above the chart (RWATableControls); the table reads them. */
-export type RWATableProps = {
+/**
+ * The row kind comes from the page kind and the Group by from the strip above the chart; the table owns its column
+ * set, `?table=`, switched after its title.
+ */
+type RWATableProps = {
 	assets: Array<RWAOverviewDisplayRow>
-	view: RWATableView
 	groupBy: RWAGroupBy
-	includeCex: boolean
-	period: RWAChangePeriod
-	onPeriodChange: (period: RWAChangePeriod) => void
-	selectedChain: string
+	/** The 1d, 7d, 1m switch of asset rows; perps rows carry no prior values, so a perps table has none. */
+	period?: RWAChangePeriod
+	onPeriodChange?: (period: RWAChangePeriod) => void
+	/** The page the table sits on: its rows, the page's own dimension it hides, and the csv name. */
+	pageKind: RWAPageKind
+	/** The page's scope slug (the chain, the venue, the asset), null on the overviews. */
+	pageSlug: string | null
 	includeBridgeTvl: boolean
-	platformLogos: RWAPlatformLogos
+	/** The group logos under Group by Platform. */
+	platformLogos?: RWAPlatformLogos
 	headerSlot?: React.ReactNode
-	/** Shown when the view has no rows. */
-	emptyMessage?: string
-	/** The column set over the rows; a platform page's Compliance view shows the detail columns. */
-	preset?: RWATablePreset
 }
 
 export function RWATable(props: RWATableProps) {
-	// State restarts with the view and the preset; they share no column set.
-	return <RWATableView key={`${props.view}-${props.preset ?? 'assets'}`} {...props} />
+	const router = useRouter()
+	const { section } = getRwaPageLayout(props.pageKind)
+	const columnSet = parseRwaTableColumnSet(router.query, section)
+	const onColumnSetChange = (next: RWATableColumnSet) =>
+		void pushShallowQuery(router, getRwaTableColumnSetQuery(next, router.query))
+	// State restarts with the row kind, which shares no columns; a column set switch keeps the search, sort and groups.
+	return <RWATableView key={section} {...props} columnSet={columnSet} onColumnSetChange={onColumnSetChange} />
 }
 
 function RWATableView({
 	assets,
-	view,
 	groupBy,
-	includeCex,
-	period,
+	period = RWA_DEFAULT_CHANGE_PERIOD,
 	onPeriodChange,
-	selectedChain,
+	pageKind,
+	pageSlug,
 	includeBridgeTvl,
 	platformLogos,
 	headerSlot,
-	emptyMessage,
-	preset = 'assets'
-}: RWATableProps) {
-	const { data: flowSummary, isLoading, isError } = useRWAFlowSummary()
+	columnSet,
+	onColumnSetChange
+}: RWATableProps & { columnSet: RWATableColumnSet; onColumnSetChange: (columnSet: RWATableColumnSet) => void }) {
+	const { section } = getRwaPageLayout(pageKind)
+	const { data: flowSummary, isLoading, isError } = useRWAFlowSummary(section === 'assets')
 	const flowStatus: RWAFlowStatus = isLoading ? 'loading' : isError && !flowSummary ? 'unavailable' : 'ready'
 	const [searchValue, setSearchValue] = useState('')
 	const search = useDeferredValue(searchValue)
-	const { instance, columns, columnVisibility, rowCount } = useRwaTable({
+	const { instance, columns, columnVisibility } = useRwaTable({
 		assets,
-		view,
 		groupBy,
 		search,
 		flowSummary,
 		flowStatus,
 		period,
 		includeBridgeTvl,
-		includeCex,
 		platformLogos,
-		preset
+		columnSet,
+		pageKind
 	})
 
-	const hideableIds = new Set(getHideableColumns(instance.getAllLeafColumns()).map((column) => column.id))
-	const columnOptions = getRwaColumnOptions(columns, groupBy).filter((option) => hideableIds.has(option.key))
-	/* Read from the visibility state, not the instance: the instance keeps its identity across changes. */
-	const selectedColumns = getRwaSelectedColumnIds(columns, columnVisibility).filter((id) => hideableIds.has(id))
+	/* Read from the columns and the visibility state, not the instance: the instance keeps its identity across
+	   column set changes, so a memoized read of it would go stale. */
+	const pickerColumns = leafColumns(columns).map((column) => ({ id: column.id, columnDef: column }))
+	const hideableIds = new Set(getHideableColumns(pickerColumns).map((column) => column.id))
+	const columnOptions = getRwaColumnOptions(columns, groupBy, pageKind).filter((option) => hideableIds.has(option.key))
+	const { selected: selectedColumns } = getColumnSelectState(pickerColumns, columnVisibility)
 	const setSelectedColumns = (next: Array<string> | ((prev: Array<string>) => Array<string>)) => {
-		const resolved = new Set(Array.isArray(next) ? next : next(selectedColumns))
-		instance.setColumnVisibility(getRwaColumnVisibilityForSelection(columns, resolved))
+		const resolved = Array.isArray(next) ? next : next(selectedColumns)
+		instance.setColumnVisibility(getColumnVisibilityForSelection(pickerColumns, resolved))
 	}
-	const csvFilename = getCsvFilename(view, selectedChain, includeBridgeTvl, preset)
+	const { csvPart, periodSwitch } = getRwaColumnSet(section, columnSet)
 
 	return (
 		<Panel padding="none">
 			{/* The home page's Protocol Rankings header: a label-md title in the toolbar row, controls right. */}
 			<div className="border-b border-subtle">
 				<TableToolbar>
-					{headerSlot ?? (
-						<h1 className="mr-auto label-md">
-							{view === 'perps' ? 'Perps Rankings' : RWA_TABLE_PRESETS[preset].title}
-						</h1>
-					)}
+					<div className="mr-auto flex flex-wrap items-center gap-3">
+						{headerSlot ?? <h2 className="label-md">{section === 'perps' ? 'Perps Rankings' : 'Assets Rankings'}</h2>}
+						<RWATableColumnSetSwitch section={section} value={columnSet} onChange={onColumnSetChange} />
+					</div>
 					<TableToolbarControlGroup>
 						<label className={searchFieldInlineWrapperStyles}>
-							<span className="sr-only">Search assets</span>
+							<span className="sr-only">{section === 'perps' ? 'Search markets' : 'Search assets'}</span>
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 							<Input
 								onInput={(event) => setSearchValue(event.currentTarget.value)}
-								placeholder="Search assets..."
+								placeholder={section === 'perps' ? 'Search markets…' : 'Search assets…'}
 								className={searchFieldInputPlacementStyles}
 							/>
 						</label>
-						{view === 'assets' ? (
+						{periodSwitch && onPeriodChange ? (
 							<TagGroup
 								variant="default"
 								setValue={onPeriodChange}
@@ -135,26 +145,14 @@ function RWATableView({
 							size="md"
 						/>
 						<CSVDownloadButton
-							prepareCsv={() => prepareTableCsv({ instance, filename: csvFilename, rows: getRwaCsvRows(instance) })}
+							prepareCsv={() => prepareTableCsv({ instance, filename: getRwaCsvFileName(pageKind, pageSlug, csvPart) })}
 							smol
 							size="md"
 						/>
 					</TableToolbarControlGroup>
 				</TableToolbar>
 			</div>
-			{rowCount === 0 && emptyMessage ? <p className="p-3 body-sm text-secondary">{emptyMessage}</p> : null}
 			<VirtualTable table={instance} />
 		</Panel>
 	)
-}
-
-function getCsvFilename(
-	view: RWATableView,
-	selectedChain: string,
-	includeBridgeTvl: boolean,
-	preset: RWATablePreset
-): string {
-	const chainSuffix = selectedChain !== 'All' ? `-${selectedChain.toLowerCase()}` : ''
-	const bridgeSuffix = view === 'assets' && !includeBridgeTvl ? '-without-bridge-tvl' : ''
-	return `rwa-${RWA_TABLE_PRESETS[preset].csvName ?? view}${chainSuffix}${bridgeSuffix}`
 }

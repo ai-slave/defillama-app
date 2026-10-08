@@ -10,7 +10,9 @@ vi.mock('~/components/TokenLogo', () => ({ TokenLogo: () => <span data-logo /> }
 
 import type { RWAPlatformMeta } from '../../PlatformPage/api.types'
 import { spotAsset } from '../../table/__tests__/fixtures'
-import { buildRwaPlatformKeyMetricsCsv, RWAPlatformKeyMetrics } from '../PlatformKeyMetrics'
+import { getRwaAssetsKpiHeadline, getRwaPlatformKpiRows, RWA_PLATFORM_KPI_LABEL } from '../assetsKpiRows'
+import { buildRwaKpiCsv } from '../kpiRows'
+import { RWAPlatformKeyMetrics } from '../PlatformKeyMetrics'
 import { foldRwaPlatformKpi } from '../platformKpi'
 
 const meta = {
@@ -71,13 +73,36 @@ describe('RWAPlatformKeyMetrics', () => {
 		expect(plain).not.toContain('Suspicious')
 	})
 
-	test('writes the csv rows the way the panel reads', () => {
-		const csv = buildRwaPlatformKeyMetricsCsv({ meta, kpi })
-		expect(csv.filename).toBe('rwa-platform-ondo-key-metrics.csv')
-		expect(csv.rows[0]).toEqual(['Metric', 'Value'])
-		expect(csv.rows).toContainEqual(['Active AUM', 1_600_000])
-		expect(csv.rows).toContainEqual(['Live Assets', 2])
-		expect(csv.rows).toContainEqual(['Issuers', 1])
-		expect(csv.rows.map((row) => row[0])).not.toContain('Attested')
+	test('writes every panel row to the csv, raw values', () => {
+		const { rows } = buildRwaKpiCsv({
+			filename: 'key-metrics.csv',
+			headline: getRwaAssetsKpiHeadline(kpi.metrics, RWA_PLATFORM_KPI_LABEL),
+			rows: getRwaPlatformKpiRows(kpi, {
+				...meta,
+				estAnnualRevenueUsd: 4_200_000,
+				revenueConfidence: 'Issuer-Disclosed'
+			})
+		})
+		const expected = [
+			['Metric', 'Value'],
+			['Active AUM', 1_600_000],
+			['Active AUM change (24h) %', 1.2658227848101267],
+			['Onchain AUM', 2_000_000],
+			['Onchain AUM change (24h) %', 1.0101010101010102],
+			['Active / Onchain %', 80],
+			['DeFi Active TVL', 200_000],
+			['DeFi Active TVL change (24h) %', 1.0101010101010102],
+			['Utilization %', 12.5],
+			['Largest protocol', 'Aave'],
+			['Largest protocol DeFi Active TVL', 200_000],
+			['Net Flows 30d', null],
+			['Net Flows 7d', null],
+			['Live Assets', 2],
+			['Issuers', 1],
+			['Est. Annual Revenue', 4_200_000],
+			['Revenue confidence', 'Issuer-Disclosed']
+		]
+		expect(rows).toEqual(expect.arrayContaining(expected))
+		expect(rows).toHaveLength(expected.length)
 	})
 })

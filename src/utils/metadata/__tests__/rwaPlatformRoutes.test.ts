@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
-import { RWA_PERPS_SERVER_URL, RWA_SERVER_URL } from '~/constants'
+import { AI_SERVER, RWA_PERPS_SERVER_URL, RWA_SERVER_URL } from '~/constants'
 import { getRWASitemapRoutes } from '~/containers/RWA/server/routes'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installMetadataSeeder } from '~/utils/testing/metadataCache'
@@ -65,6 +65,7 @@ describe('published RWA platform routes', () => {
 				}
 			],
 			[`${RWA_PERPS_SERVER_URL}/current`]: [],
+			[`${AI_SERVER}/suggested-questions`]: { questions: [], suggestGlobal: false },
 			[`${RWA_SERVER_URL}/chart/platform/ondo/asset-breakdown`]: {
 				onChainMcap: [],
 				activeMcap: [],
@@ -80,22 +81,24 @@ describe('published RWA platform routes', () => {
 			const page = await import('~/pages/rwa/platform/[platform]')
 
 			expect(getRWASitemapRoutes(cache)).toEqual([
-				'rwa/perps/forex',
 				'rwa/asset/OUSG',
 				'rwa/platform/ondo',
 				'rwa/platform/sivo',
-				'rwa/platform/trade-xyz',
+				'rwa/asset-group/unknown',
 				'rwa/perps/contract/xyz%3AGOLD',
 				'rwa/perps/venue/trade-xyz'
 			])
 			await expect(page.getStaticProps({ params: { platform: 'ondo' } })).resolves.toMatchObject({
 				props: {
-					platformLinks: [
-						{ label: 'All', to: '/rwa/platforms' },
-						{ label: 'Ondo', to: '/rwa/platform/ondo' },
-						{ label: 'Sivo', to: '/rwa/platform/sivo' },
-						{ label: 'trade[XYZ]', to: '/rwa/platform/trade-xyz' }
-					]
+					nav: {
+						heading: 'Platforms',
+						links: [
+							{ label: 'All', to: '/rwa/platforms' },
+							{ label: 'Ondo', to: '/rwa/platform/ondo' },
+							{ label: 'Sivo', to: '/rwa/platform/sivo' }
+						],
+						active: 'Ondo'
+					}
 				}
 			})
 		} finally {

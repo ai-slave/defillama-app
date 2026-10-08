@@ -19,13 +19,21 @@ import type {
 	IRWAChartMetricRows,
 	IRWAInitialChartDataset,
 	RWAChartMetricKey,
-	RWAOverviewDisplayRow,
 	RWASpotOverviewAsset,
 	RWAAssetChartTarget,
 	RWADefiTvlProtocolBreakdown
 } from './api.types'
 import { UNKNOWN_RWA_ASSET_GROUP, appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from './assetGroup'
-import { buildRwaOverviewCards, type RwaOverviewCards } from './cards/cardData'
+import {
+	buildRwaOpenInterestCard,
+	buildRwaSplitCard,
+	foldRwaPerpsTotals,
+	rankRwaChainChanges,
+	RWA_CARD_CHAIN_EACH,
+	RWA_CARD_CHANGE_DAYS,
+	type RwaOverviewCards,
+	type RwaPerpsSplitCards
+} from './cards/cardData'
 import { foldRwaChainSeries, rankRwaChains } from './chainFold'
 import { aggregateRwaMetricData, applyDefaultAssetFilters, buildRwaCanonicalMetricDataset } from './chartAggregation'
 import { getRwaSpotChartSource } from './chartBreakdown'
@@ -36,18 +44,18 @@ import {
 	filterCategoriesForStandardRwaOverview,
 	getDefaultRWAOverviewInclusion,
 	inferPlatformRWAOverviewInclusion,
-	isCategoryIncludedInStandardRwaOverview,
-	type RWAOverviewMode
+	isCategoryIncludedInStandardRwaOverview
 } from './constants'
 import { definitions } from './definitions'
 import { getRwaRowFilterValues, type RWASelectFilterKey } from './filterState'
+import { getRwaPageLayout } from './layout/pageLayout'
+import { getRwaAssetsPageNav, type RWAAssetsPageKind } from './layout/pageNav'
 import { aggregateRwaMetrics, hasMetricBreakdown } from './overviewAssembly'
 import { fetchRWAPerpsCurrent, fetchRWAPerpsOverviewBreakdownChartData } from './Perps/api'
 import type { IRWAPerpsMarket } from './Perps/api.types'
 import { toRWAPerpsBreakdownChartDataset } from './Perps/breakdownDataset'
 import { buildRWAPerpsContractOverlayRows, getRealRwaPlatforms } from './perpsOverlay'
 import type { RWAPlatformsIndex } from './PlatformPage/api.types'
-import { getRWAPlatformRoutes } from './platformRoutes'
 import { rwaSlug } from './rwaSlug'
 import { buildRwaPriorIndex } from './series/priorValues'
 import { getRwaDefaultGroupBy } from './table/groupBy'
@@ -62,6 +70,8 @@ type RWAAssetsOverviewParams = {
 	rwaList: IRWAList
 	/** For the platform logos on group rows. */
 	rwaPlatformsIndex?: RWAPlatformsIndex
+	/** The platform routes that redirect to their venue page (getRwaPerpsOnlyPlatformSlugs); the nav row skips them. */
+	redirectingPlatforms?: ReadonlySet<string>
 }
 
 /** Transpose the raw chain → protocol → tvl map into per-protocol rows with their chain splits, sorted desc. */
@@ -103,11 +113,22 @@ function getSortedBreakdownEntries(breakdown: Record<string, number>, selectedCh
 type RWAFilterOptionKey = Exclude<RWASelectFilterKey, 'assetNames'>
 type RWAFilterOptionWeights = Record<RWAFilterOptionKey, Map<string, number>>
 
-function addRwaFilterOptions(options: RWAFilterOptionWeights, row: RWAOverviewDisplayRow, weight: number) {
+function emptyRwaFilterOptions(): RWAFilterOptionWeights {
+	return {
+		types: new Map(),
+		assetGroups: new Map(),
+		categories: new Map(),
+		platforms: new Map(),
+		assetClasses: new Map(),
+		rwaClassifications: new Map(),
+		accessModels: new Map(),
+		issuers: new Map()
+	}
+}
+
+function addRwaFilterOptions(options: RWAFilterOptionWeights, row: RWASpotOverviewAsset, weight: number) {
 	let key: RWAFilterOptionKey
 	for (key in options) {
-		// Types is a spot filter; the view switch owns the perps rows.
-		if (key === 'types' && row.kind === 'perps') continue
 		for (const value of getRwaRowFilterValues(row, key)) {
 			options[key].set(value, (options[key].get(value) ?? 0) + weight)
 		}
@@ -155,33 +176,20 @@ async function buildInitialChainChartDataset({
 }
 
 /**
- * The front page cards, folded at build time: the chain split for Change by Chain and the perps venue split,
- * with and without CEX venues, for the open interest line. A split that fails leaves its card empty.
+ * The front page cards' build-time part: the chain split's bars for Change by Chain and the perps venue split behind
+ * the open interest line. A split that fails leaves its card empty; the rest folds the page's rows in the browser.
  */
-async function buildOverviewCards(assets: IRWAAssetsOverview['assets']): Promise<RwaOverviewCards> {
-	const [chainRows, withCex, dexOnly] = await Promise.all([
+async function buildOverviewCards(): Promise<RwaOverviewCards> {
+	const [chainRows, perpsVenueRows] = await Promise.all([
 		fetchRWAChainBreakdownChartData({ key: 'activeMcap' }),
-		fetchRWAPerpsOverviewBreakdownChartData({
-			breakdown: 'venue',
-			key: 'openInterest',
-			target: { kind: 'all' },
-			includeCex: true
-		}),
-		fetchRWAPerpsOverviewBreakdownChartData({
-			breakdown: 'venue',
-			key: 'openInterest',
-			target: { kind: 'all' },
-			includeCex: false
-		})
+		fetchRwaPerpsVenueOpenInterestRows(true)
 	])
-	return buildRwaOverviewCards({
-		assets,
-		chainRows: chainRows ?? [],
-		openInterestRows: {
-			withCex: toRWAPerpsBreakdownChartDataset(withCex).source,
-			dexOnly: toRWAPerpsBreakdownChartDataset(dexOnly).source
-		}
-	})
+	return {
+		chainChange: {
+			bars: rankRwaChainChanges(chainRows ?? [], { days: RWA_CARD_CHANGE_DAYS, each: RWA_CARD_CHAIN_EACH })
+		},
+		perpsOpenInterest: buildRwaOpenInterestCard(perpsVenueRows)
+	}
 }
 
 export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Promise<IRWAAssetsOverview | null> {
@@ -204,13 +212,8 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					: selectedAssetGroup
 						? { kind: 'assetGroup', slug: selectedAssetGroup }
 						: { kind: 'all' }
-		const mode: RWAOverviewMode = selectedAssetGroup
-			? 'assetGroup'
-			: selectedPlatform
-				? 'platform'
-				: selectedCategory
-					? 'category'
-					: 'chain'
+		const pageKind: RWAAssetsPageKind = target.kind === 'all' ? 'overview' : target.kind
+		const { mode } = getRwaPageLayout(pageKind)
 		const routeDefaultInclusion = getDefaultRWAOverviewInclusion({
 			mode,
 			...(selectedChain ? { chainSlug: selectedChain } : {}),
@@ -223,7 +226,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			IRWAChartDataByAsset | null | undefined
 		] = await Promise.all([
 			fetchRWACurrentListing(),
-			fetchRWAPerpsCurrent(true).catch(() => []),
+			fetchRWAPerpsCurrent().catch(() => []),
 			// Both scope flags on, or toggling stablecoins or governance in blanks every change.
 			selectedPlatform
 				? Promise.resolve(undefined)
@@ -240,10 +243,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		const filteredData = data.filter(
 			(item) => !(item.category ?? []).some((category) => !isCategoryIncludedInStandardRwaOverview(category))
 		)
-		const filteredPerpsMarkets = perpsMarkets.map((market) => ({
-			...market,
-			category: (market.category ?? []).filter((category) => isCategoryIncludedInStandardRwaOverview(category))
-		}))
 		const hasUnknownAssetGroup = filteredData.some(
 			(item) => normalizeRwaAssetGroup(item.assetGroup) === UNKNOWN_RWA_ASSET_GROUP
 		)
@@ -290,7 +289,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		let actualPlatformName: string | null = null
 		if (selectedPlatform) {
 			const platformCandidates = new Set(params.rwaList.platforms)
-			for (const market of filteredPerpsMarkets) {
+			for (const market of perpsMarkets) {
 				for (const platform of getRealRwaPlatforms(market.parentPlatform)) {
 					platformCandidates.add(platform)
 				}
@@ -324,33 +323,8 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		}
 
 		const assets: IRWAAssetsOverview['assets'] = []
-		const filterOptions: RWAFilterOptionWeights = {
-			types: new Map(),
-			assetGroups: new Map(),
-			categories: new Map(),
-			platforms: new Map(),
-			assetClasses: new Map(),
-			rwaClassifications: new Map(),
-			accessModels: new Map(),
-			issuers: new Map()
-		}
+		const filterOptions = emptyRwaFilterOptions()
 		const assetNames = new Map<string, number>()
-		const issuerSet = new Set<string>()
-		const issuerSetStablecoinsOnly = new Set<string>()
-		const issuerSetGovernanceOnly = new Set<string>()
-		const issuerSetStablecoinsAndGovernance = new Set<string>()
-		let totalOnChainMcap = 0
-		let totalActiveMcap = 0
-		let totalDeFiActiveTvl = 0
-		let totalOnChainMcapStablecoinsOnly = 0
-		let totalActiveMcapStablecoinsOnly = 0
-		let totalDeFiActiveTvlStablecoinsOnly = 0
-		let totalOnChainMcapGovernanceOnly = 0
-		let totalActiveMcapGovernanceOnly = 0
-		let totalDeFiActiveTvlGovernanceOnly = 0
-		let totalOnChainMcapStablecoinsAndGovernance = 0
-		let totalActiveMcapStablecoinsAndGovernance = 0
-		let totalDeFiActiveTvlStablecoinsAndGovernance = 0
 		let spotAssetCount = 0
 		let hasTrackedActiveMcapAsset = false
 
@@ -499,14 +473,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 
 			// Only include asset if it exists on the selected chain/category (or no route filter)
 			if (hasChainInTvl && hasCategoryMatch && hasPlatformMatch && hasAssetGroupMatch && asset.assetName) {
-				const isStablecoin = !!item.stablecoin
-				const isGovernance = !!item.governance
-				const isStablecoinOnly = isStablecoin && !isGovernance
-				const isGovernanceOnly = isGovernance && !isStablecoin
-				const isStablecoinAndGovernance = isStablecoin && isGovernance
-				const isBaseAsset = !isStablecoin && !isGovernance
-				const includeInAggregates = selectedPlatform != null || item.suspicious !== true
-
 				assets.push(asset)
 				spotAssetCount += 1
 				if (item.activeMcapData !== false) hasTrackedActiveMcapAsset = true
@@ -515,60 +481,21 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					assetNames.set(asset.assetName, (assetNames.get(asset.assetName) ?? 0) + effectiveOnChainMcap)
 				}
 
-				// Track base totals (exclude stablecoin/governance buckets entirely)
-				if (includeInAggregates && isBaseAsset) {
-					totalOnChainMcap += effectiveOnChainMcap
-					totalActiveMcap += effectiveActiveMcap
-					totalDeFiActiveTvl += effectiveDeFiActiveTvl
-				}
-
-				if (includeInAggregates && isStablecoinOnly) {
-					totalOnChainMcapStablecoinsOnly += effectiveOnChainMcap
-					totalActiveMcapStablecoinsOnly += effectiveActiveMcap
-					totalDeFiActiveTvlStablecoinsOnly += effectiveDeFiActiveTvl
-				} else if (includeInAggregates && isGovernanceOnly) {
-					totalOnChainMcapGovernanceOnly += effectiveOnChainMcap
-					totalActiveMcapGovernanceOnly += effectiveActiveMcap
-					totalDeFiActiveTvlGovernanceOnly += effectiveDeFiActiveTvl
-				} else if (includeInAggregates && isStablecoinAndGovernance) {
-					totalOnChainMcapStablecoinsAndGovernance += effectiveOnChainMcap
-					totalActiveMcapStablecoinsAndGovernance += effectiveActiveMcap
-					totalDeFiActiveTvlStablecoinsAndGovernance += effectiveDeFiActiveTvl
-				}
-
 				// Filter options come from the rows they filter, Unknown included, ranked by onchain mcap.
 				addRwaFilterOptions(filterOptions, asset, effectiveOnChainMcap)
-				if (asset.issuer) {
-					// issuerSet is used for *base* issuer count (exclude stablecoin/governance buckets)
-					if (includeInAggregates && isBaseAsset) {
-						issuerSet.add(asset.issuer)
-					} else if (includeInAggregates && isStablecoinOnly) {
-						issuerSetStablecoinsOnly.add(asset.issuer)
-					} else if (includeInAggregates && isGovernanceOnly) {
-						issuerSetGovernanceOnly.add(asset.issuer)
-					} else if (includeInAggregates && isStablecoinAndGovernance) {
-						issuerSetStablecoinsAndGovernance.add(asset.issuer)
-					}
-				}
 			}
 		}
 
-		const perpsOverlayRows = selectedChain
-			? []
-			: buildRWAPerpsContractOverlayRows({
-					markets: filteredPerpsMarkets,
-					...(selectedCategory ? { selectedCategory } : {}),
-					...(selectedPlatform ? { selectedPlatform } : {}),
-					...(selectedAssetGroup ? { selectedAssetGroup } : {})
-				})
-
-		for (const asset of perpsOverlayRows) {
-			assets.push(asset)
-			if (selectedPlatform) {
-				assetNames.set(asset.assetName, assetNames.get(asset.assetName) ?? 0)
-			}
-			addRwaFilterOptions(filterOptions, asset, 0)
-		}
+		/* Assets pages show no perps rows: they read the perps totals of their Key Metrics card, folded here over the
+		   page's markets under the page rules (CEX venues in, no suspicious markets). Perps markets have no chain and
+		   share one category, so a chain or category page reads the overview's figure. */
+		const perpsTotals = foldRwaPerpsTotals(
+			buildRWAPerpsContractOverlayRows({
+				markets: perpsMarkets,
+				...(selectedPlatform ? { selectedPlatform } : {}),
+				...(selectedAssetGroup ? { selectedAssetGroup } : {})
+			}).filter((market) => !market.suspicious)
+		)
 
 		const formattedRwaClassifications = rankRwaFilterOptions(filterOptions.rwaClassifications)
 		const formattedAccessModels = rankRwaFilterOptions(filterOptions.accessModels)
@@ -576,25 +503,15 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		const formattedAssetClasses = rankRwaFilterOptions(filterOptions.assetClasses)
 		const formattedCategories = rankRwaFilterOptions(filterOptions.categories)
 
-		const chainNavValues = params.rwaList.chains.map((chain) => ({
-			label: chain,
-			to: `/rwa/chain/${rwaSlug(chain)}`
-		}))
-		const categoryNavValues = filterCategoriesForStandardRwaOverview(params.rwaList.categories).map((category) => ({
-			label: category,
-			to: `/rwa/category/${rwaSlug(category)}`
-		}))
-		const platformNavValues = getRWAPlatformRoutes(params.rwaList).map((platform) => ({
-			label: platform.name,
-			to: `/rwa/platform/${platform.slug}`
-		}))
-		const assetGroupNavValues = assetGroupValues.map((assetGroup) => {
-			const normalizedAssetGroup = normalizeRwaAssetGroup(assetGroup)
-			return {
-				label: normalizedAssetGroup,
-				to: `/rwa/asset-group/${rwaSlug(normalizedAssetGroup)}`
-			}
-		})
+		const nav = getRwaAssetsPageNav(
+			pageKind,
+			{
+				rwaList: params.rwaList,
+				assetGroups: assetGroupValues,
+				...(params.redirectingPlatforms ? { redirectingPlatforms: params.redirectingPlatforms } : {})
+			},
+			actualChainName ?? actualCategoryName ?? actualPlatformName ?? actualAssetGroupName
+		)
 
 		// Pre-aggregate chart data server-side so we don't ship the huge ticker-level payload to the client.
 		const defaultInclusion = selectedPlatform
@@ -623,9 +540,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			asset.priors = priorIndex.priors(asset.canonicalMarketId)
 			asset.firstSeen = priorIndex.firstSeenMs(asset.canonicalMarketId)
 		}
-		const defaultGroupBy = getRwaDefaultGroupBy('assets', {
-			scope: target.kind
-		})
+		const defaultGroupBy = getRwaDefaultGroupBy(pageKind)
 		const defaultChartSource = getRwaSpotChartSource(defaultGroupBy)
 		const defaultFilteredAssets = applyDefaultAssetFilters(assets, {
 			includeStablecoins: defaultInclusion.includeStablecoins,
@@ -660,7 +575,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 						metric: defaultChartMetric
 					})
 				: Promise.resolve(null),
-			target.kind === 'all' ? buildOverviewCards(defaultAggregateAssets) : Promise.resolve(null)
+			target.kind === 'all' ? buildOverviewCards() : Promise.resolve(null)
 		])
 		if (chainDataset)
 			initialChartDatasets.push({
@@ -671,34 +586,11 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		return {
 			platformPage: null,
 			assets: assets.sort((a, b) => (b.onChainMcap?.total ?? 0) - (a.onChainMcap?.total ?? 0)),
-			typeOptions: formattedTypes.map((type) => {
-				const help = definitions.type.values?.[type]
-				return { key: type, name: type, ...(help ? { help } : {}) }
-			}),
-			assetClassOptions: formattedAssetClasses.map((assetClass) => {
-				const help = definitions.assetClass.values?.[assetClass]
-				return { key: assetClass, name: assetClass, ...(help ? { help } : {}) }
-			}),
-			rwaClassificationOptions: formattedRwaClassifications.map((classification) => {
-				const help = definitions.rwaClassification.values?.[classification]
-				return {
-					key: classification,
-					name: classification,
-					...(help ? { help } : {})
-				}
-			}),
-			accessModelOptions: formattedAccessModels.map((accessModel) => {
-				const help = definitions.accessModel.values?.[accessModel]
-				return {
-					key: accessModel,
-					name: accessModel,
-					...(help ? { help } : {})
-				}
-			}),
-			categoriesOptions: formattedCategories.map((category) => {
-				const help = definitions.category.values?.[category]
-				return { key: category, name: category, ...(help ? { help } : {}) }
-			}),
+			typeOptions: toRwaFilterOptions(formattedTypes, definitions.type.values),
+			assetClassOptions: toRwaFilterOptions(formattedAssetClasses, definitions.assetClass.values),
+			rwaClassificationOptions: toRwaFilterOptions(formattedRwaClassifications, definitions.rwaClassification.values),
+			accessModelOptions: toRwaFilterOptions(formattedAccessModels, definitions.accessModel.values),
+			categoriesOptions: toRwaFilterOptions(formattedCategories, definitions.category.values),
 			platforms: rankRwaFilterOptions(filterOptions.platforms),
 			assetGroups: rankRwaFilterOptions(filterOptions.assetGroups),
 			assetNames: selectedPlatform
@@ -707,48 +599,13 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 						.map(([key]) => key)
 				: [],
 			issuers: rankRwaFilterOptions(filterOptions.issuers),
+			nav,
 			selectedChain: actualChainName ?? 'All',
-			chainLinks:
-				selectedCategory || selectedPlatform || selectedAssetGroup || chainNavValues.length === 0
-					? []
-					: [{ label: 'All', to: '/rwa' }, ...chainNavValues],
-			categoryLinks:
-				selectedCategory && categoryNavValues.length > 0
-					? [{ label: 'All', to: '/rwa/categories' }, ...categoryNavValues]
-					: [],
 			selectedCategory: actualCategoryName ?? 'All',
-			platformLinks:
-				selectedPlatform && platformNavValues.length > 0
-					? [{ label: 'All', to: '/rwa/platforms' }, ...platformNavValues]
-					: [],
 			selectedPlatform: actualPlatformName ?? 'All',
-			assetGroupLinks: selectedAssetGroup ? [{ label: 'All', to: '/rwa/asset-groups' }, ...assetGroupNavValues] : [],
 			selectedAssetGroup: actualAssetGroupName ?? 'All',
 			defaultInclusion,
-			totals: {
-				onChainMcap: totalOnChainMcap,
-				activeMcap: totalActiveMcap,
-				defiActiveTvl: totalDeFiActiveTvl,
-				issuers: Array.from(issuerSet),
-				stablecoins: {
-					onChainMcap: totalOnChainMcapStablecoinsOnly,
-					activeMcap: totalActiveMcapStablecoinsOnly,
-					defiActiveTvl: totalDeFiActiveTvlStablecoinsOnly,
-					issuers: Array.from(issuerSetStablecoinsOnly)
-				},
-				governance: {
-					onChainMcap: totalOnChainMcapGovernanceOnly,
-					activeMcap: totalActiveMcapGovernanceOnly,
-					defiActiveTvl: totalDeFiActiveTvlGovernanceOnly,
-					issuers: Array.from(issuerSetGovernanceOnly)
-				},
-				stablecoinsAndGovernance: {
-					onChainMcap: totalOnChainMcapStablecoinsAndGovernance,
-					activeMcap: totalActiveMcapStablecoinsAndGovernance,
-					defiActiveTvl: totalDeFiActiveTvlStablecoinsAndGovernance,
-					issuers: Array.from(issuerSetStablecoinsAndGovernance)
-				}
-			},
+			perpsTotals,
 			initialChartDatasets,
 			cards,
 			chartMetricAvailability,
@@ -762,6 +619,28 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 	} catch (error) {
 		throw new Error(error instanceof Error ? error.message : 'Failed to get RWA assets overview', { cause: error })
 	}
+}
+
+function toRwaFilterOptions(values: Array<string>, help: Record<string, string> | undefined) {
+	return values.map((value) => ({ key: value, name: value, ...(help?.[value] ? { help: help[value] } : {}) }))
+}
+
+async function fetchRwaPerpsVenueOpenInterestRows(includeCex: boolean) {
+	const split = await fetchRWAPerpsOverviewBreakdownChartData({
+		breakdown: 'venue',
+		key: 'openInterest',
+		target: { kind: 'all' },
+		includeCex
+	})
+	return toRWAPerpsBreakdownChartDataset(split).source
+}
+
+export async function fetchRwaPerpsVenueSplitCards(): Promise<RwaPerpsSplitCards> {
+	const [withCex, dexOnly] = await Promise.all([
+		fetchRwaPerpsVenueOpenInterestRows(true),
+		fetchRwaPerpsVenueOpenInterestRows(false)
+	])
+	return { withCex: buildRwaSplitCard(withCex), dexOnly: buildRwaSplitCard(dexOnly) }
 }
 
 // The asset's own DeFiLlama protocol listing(s), so the RWA page can link to the TVL page for the

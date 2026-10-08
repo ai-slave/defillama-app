@@ -30,23 +30,41 @@ function latestValue(dataset: RWAPositionalChartDataset, index: number): number 
 	return typeof value === 'number' && Number.isFinite(value) ? value : 0
 }
 
+function rankByLatest(dataset: RWAPositionalChartDataset, columns: Array<SeriesColumn>): Array<SeriesColumn> {
+	return [...columns].sort(
+		(a, b) => latestValue(dataset, b.index) - latestValue(dataset, a.index) || a.name.localeCompare(b.name)
+	)
+}
+
+/** The members of a split, largest first by their latest value, ties by name: the order the fold ranks them in. */
+export function getRwaRankedSeriesNames(dataset: RWAPositionalChartDataset): Array<string> {
+	return rankByLatest(dataset, getRankedColumns(dataset).ranked).map((column) => column.name)
+}
+
 /**
- * Keeps the `max` largest series by their latest value, ordered largest first, and folds the rest into one
- * Others series; an Others series already in the dataset joins that fold and stays last. Total lines keep
- * their place and stay out of the ranking. An Others cell stays null when every folded cell of that row is null.
+ * Keeps the `max` largest series by their latest value, or the `picked` ones when given, ordered largest first, and
+ * folds the rest into one Others series; an Others series already in the dataset joins that fold and stays last.
+ * Total lines keep their place and stay out of the ranking. An Others cell stays null when every folded cell of
+ * that row is null.
  */
 export function foldRwaTopSeries(
 	dataset: RWAPositionalChartDataset,
-	{ max = RWA_MAX_CHART_SERIES, othersLabel = RWA_OTHERS_SERIES_LABEL }: { max?: number; othersLabel?: string }
+	{
+		max = RWA_MAX_CHART_SERIES,
+		othersLabel = RWA_OTHERS_SERIES_LABEL,
+		picked
+	}: { max?: number; othersLabel?: string; picked?: ReadonlyArray<string> }
 ): RWAPositionalChartDataset {
 	if (dataset.source.length === 0) return dataset
 	const { ranked, reserved, others } = getRankedColumns(dataset)
 	if (ranked.length === 0) return dataset
-	const ordered = [...ranked].sort(
-		(a, b) => latestValue(dataset, b.index) - latestValue(dataset, a.index) || a.name.localeCompare(b.name)
-	)
-	const kept = ordered.slice(0, max)
-	const folded = [...ordered.slice(max), ...(others ? [others] : [])]
+	const ordered = rankByLatest(dataset, ranked)
+	const pickedSet = picked ? new Set(picked) : null
+	const kept = pickedSet ? ordered.filter((column) => pickedSet.has(column.name)) : ordered.slice(0, max)
+	const folded = [
+		...(pickedSet ? ordered.filter((column) => !pickedSet.has(column.name)) : ordered.slice(max)),
+		...(others ? [others] : [])
+	]
 	const columns = [...reserved, ...kept]
 	const dimensions: RWAPositionalChartDataset['dimensions'] = [
 		'timestamp',

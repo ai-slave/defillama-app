@@ -2,7 +2,7 @@ import type { NextRouter } from 'next/router'
 import { readSelectionFromQuery } from '~/components/Select/query'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { isTrueQueryParam, parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
-import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
+import type { RWAAssetOverviewRow, RWAOverviewDisplayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAOverviewMode } from './constants'
 import { toUniqueNonEmptyValues } from './grouping'
@@ -49,11 +49,40 @@ export const RWA_RATIO_FILTER_KEYS = [
 /** The option for rows that lack a field, so a picker never keeps or hides them out of sight. */
 export const UNKNOWN_RWA_FILTER_VALUE = 'Unknown'
 
-export function getRwaExcludeQueryKey(key: RWASelectFilterKey | RWAAttributeFilterKey): ExcludeQueryKey {
+/** The exclude twin of a picker's key; the Perps tree's pickers (perpsFilters.ts) follow the same rule. */
+export function getRwaExcludeQueryKey(key: string): ExcludeQueryKey {
 	return `exclude${key.charAt(0).toUpperCase()}${key.slice(1)}`
 }
 
-/** The picker options a row belongs to. The options list and the row filter both read it, so they cannot disagree. */
+/** The inclusion toggles: Include in TVL and the dialog's Include group. */
+const RWA_INCLUSION_QUERY_KEYS = [
+	'includeStablecoins',
+	'includeGovernance',
+	'includeBridgeTvl',
+	'includeWrappers'
+] as const
+
+/** Every URL key a filter or toggle writes; the view, Group by, period, column set and chart keys are not filters. */
+export const RWA_FILTER_QUERY_KEYS: ReadonlyArray<string> = [
+	...RWA_SELECT_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
+	...RWA_ATTRIBUTE_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
+	...RWA_RATIO_FILTER_KEYS,
+	...RWA_INCLUSION_QUERY_KEYS
+]
+
+/** Reset all: the patch that clears the filter keys the page reads (`keys`) and the URL holds; the page's own count of
+    active filters decides whether the button shows, so a stray or empty key never does. */
+export function getRwaFilterResetPatch(
+	query: NextRouter['query'],
+	keys: ReadonlyArray<string>
+): Record<string, undefined> {
+	const patch: Record<string, undefined> = {}
+	for (const key of keys) {
+		if (query[key] !== undefined) patch[key] = undefined
+	}
+	return patch
+}
+
 /** Removes the keys from the URL, as a filter pill or reset does. */
 export function clearRwaFilterQueryKeys(router: NextRouter, keys: ReadonlyArray<string>) {
 	const updates: Record<string, undefined> = {}
@@ -61,6 +90,7 @@ export function clearRwaFilterQueryKeys(router: NextRouter, keys: ReadonlyArray<
 	void pushShallowQuery(router, updates)
 }
 
+/** The picker options a row belongs to. The options list and the row filter both read it, so they cannot disagree. */
 export function getRwaRowFilterValues(row: RWAOverviewDisplayRow, key: RWASelectFilterKey): Array<string> {
 	switch (key) {
 		case 'types':
@@ -88,14 +118,17 @@ function valuesOrUnknown(values: Array<string>): Array<string> {
 	return values.length > 0 ? values : [UNKNOWN_RWA_FILTER_VALUE]
 }
 
-/** A picker shows when it has a choice to offer; a route never gets a picker for its own dimension. */
+/** A picker shows when it has a choice to offer; a route never gets a picker for its own dimension (an asset group
+    page gets Category and loses Asset Group). */
 export function isRwaSelectFilterShown(key: RWASelectFilterKey, mode: RWAOverviewMode, optionCount: number): boolean {
 	if (optionCount < 2) return false
 	switch (key) {
 		case 'assetNames':
 			return mode === 'platform'
 		case 'categories':
-			return mode === 'chain' || mode === 'platform'
+			return mode !== 'category'
+		case 'assetGroups':
+			return mode !== 'assetGroup'
 		case 'platforms':
 			return mode === 'chain' || mode === 'category'
 		default:
@@ -129,9 +162,8 @@ export function readRwaQueryFilters(
 		return selected
 	}
 
-	const selectedAssetNames = select('assetNames')
 	const filters = {
-		selectedAssetNames,
+		selectedAssetNames: select('assetNames'),
 		selectedTypes: select('types'),
 		selectedCategories: select('categories'),
 		selectedPlatforms: select('platforms'),
@@ -165,10 +197,7 @@ export function readRwaQueryFilters(
 	return {
 		...filters,
 		/** Any Filters dialog selection narrows the rows; the scope toggles and the view do not count. */
-		hasDialogFilters: hasSelectFilter || hasAttributeFilter || hasRatioFilter,
-		/** Perps rows have no asset names, attributes or ratios, so narrowing any of them leaves no perps row. */
-		hasPerpsOverlayBlockingFilters:
-			hasAttributeFilter || hasRatioFilter || selectedAssetNames.length < options.assetNames.length
+		hasDialogFilters: hasSelectFilter || hasAttributeFilter || hasRatioFilter
 	}
 }
 
@@ -192,11 +221,8 @@ export type RWAFilterState = {
 	selectedSelfCustodyStates: Array<RWAAttributeFilterState>
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeRwaPerps: boolean
-	includeCex: boolean
 	includeBridgeTvl: boolean
 	includeWrappers: boolean
-	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
 	minActiveMcapToOnChainMcapPct: number | null
@@ -274,37 +300,15 @@ export function hasActiveInclusionOverride(
 	return resolveRWAOverviewInclusionFlag(queryValue, defaultValue) !== defaultValue
 }
 
-export function filterRwaPerpsContractOverlayRows(
-	rows: Array<RWAPerpsContractOverlayRow>,
-	filterState: RWAFilterState
-): Array<RWAPerpsContractOverlayRow> {
-	if (!filterState.includeRwaPerps || filterState.hasPerpsOverlayBlockingFilters) return []
-	const preparedFilters = prepareRwaFilters(filterState)
-	return rows.filter(
-		(row) => (filterState.includeCex || row.venueType !== 'CEX') && matchesSharedRwaFilters(row, preparedFilters)
-	)
-}
-
 export function filterRwaOverviewDisplayRows(
 	assets: Array<RWAOverviewDisplayRow>,
 	filterState: RWAFilterState
 ): RWAFilteredRowsResult {
 	const preparedFilters = prepareRwaFilters(filterState)
-	const filteredSpotRows: Array<RWAAssetOverviewRow> = []
-	const filteredPerpsRows: Array<RWAPerpsContractOverlayRow> = []
-	const includePerps = filterState.includeRwaPerps && !filterState.hasPerpsOverlayBlockingFilters
-	for (const asset of assets) {
-		if (asset.kind === 'spot') {
-			if (matchesRwaAssetFilters(asset, filterState, preparedFilters)) filteredSpotRows.push(asset)
-		} else if (
-			includePerps &&
-			(filterState.includeCex || asset.venueType !== 'CEX') &&
-			matchesSharedRwaFilters(asset, preparedFilters)
-		) {
-			filteredPerpsRows.push(asset)
-		}
-	}
-	const filteredAssets: Array<RWAOverviewDisplayRow> = [...filteredSpotRows, ...filteredPerpsRows]
+	// The Assets tree's rows; the Perps tree filters its markets with perpsFilters.ts alone.
+	const filteredAssets: Array<RWAOverviewDisplayRow> = assets.filter(
+		(asset) => asset.kind === 'spot' && matchesRwaAssetFilters(asset, filterState, preparedFilters)
+	)
 	const aggregateAssets = filterState.isPlatformMode
 		? filteredAssets
 		: filteredAssets.filter((asset) => asset.suspicious !== true)

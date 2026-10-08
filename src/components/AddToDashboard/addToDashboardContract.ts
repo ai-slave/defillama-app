@@ -2,6 +2,7 @@ import type { ChartArtifactRef } from '~/containers/LlamaAI/types'
 import type {
 	ChartBuilderConfig,
 	MultiChartConfig,
+	RWAOverviewChartConfig,
 	StablecoinAssetChartConfig,
 	StablecoinsChartConfig,
 	YieldsChartConfig
@@ -13,6 +14,7 @@ export type DashboardChartConfig =
 	| YieldsChartConfig
 	| StablecoinsChartConfig
 	| StablecoinAssetChartConfig
+	| RWAOverviewChartConfig
 
 export interface LlamaAIChartInput {
 	chartId: string

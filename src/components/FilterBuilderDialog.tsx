@@ -3,6 +3,7 @@ import { Fragment, useDeferredValue, useState, type ReactNode } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { CountBadge } from '~/ui/CountBadge'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey, DialogCancelButton } from '~/ui/Dialog'
 import { keepFocus, neighbourRowControl, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -32,7 +33,19 @@ import { Tooltip } from '~/ui/Tooltip'
    rendered (disabled at zero) so it keeps focus too.
 ---------------------------------------------------------------------------- */
 
-export function FilterBuilderDialog({ appliedCount, children }: { appliedCount: number; children: ReactNode }) {
+export function FilterBuilderDialog({
+	appliedCount,
+	label = 'Filters',
+	labelType = 'regular',
+	children
+}: {
+	appliedCount: number
+	/** The trigger's text; a page with inline filters beside it says "More filters". */
+	label?: string
+	/** 'smol' reads like the inline pickers beside it: the count first, always shown, then the label and a gear. */
+	labelType?: 'regular' | 'smol'
+	children: ReactNode
+}) {
 	const [open, setOpen] = useState(false)
 	const opening = useOpeningKey(open)
 	return (
@@ -40,10 +53,19 @@ export function FilterBuilderDialog({ appliedCount, children }: { appliedCount: 
 			<Ariakit.DialogDisclosure
 				render={<Button type="button" size="md" />}
 				data-filter-builder
-				aria-label={appliedCount > 0 ? `Filters, ${appliedCount} applied` : undefined}
+				// The smol trigger draws its count first, so the name is set here: "More filters", never "0 More filters".
+				aria-label={appliedCount > 0 ? `${label}, ${appliedCount} applied` : label}
 			>
-				<span>Filters</span>
-				{appliedCount > 0 ? (
+				{labelType === 'smol' ? (
+					<>
+						<CountBadge count={appliedCount} />
+						<span>{label}</span>
+						<Icon name="settings" height={14} width={14} className="text-tertiary" />
+					</>
+				) : (
+					<span>{label}</span>
+				)}
+				{labelType === 'regular' && appliedCount > 0 ? (
 					<span className="min-w-4 rounded-full bg-brand-muted px-1 text-center label-xs text-link">
 						{appliedCount}
 					</span>

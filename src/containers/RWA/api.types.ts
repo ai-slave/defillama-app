@@ -1,5 +1,5 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
-import type { RwaOverviewCards } from './cards/cardData'
+import type { RwaOverviewCards, RwaPerpsTotals } from './cards/cardData'
 import type { RWAPositionalChartDataset } from './chartDataset'
 import type { RWAChartMetricAvailability } from './chartState'
 import type { RWAOverviewInclusionDefaults } from './constants'
@@ -221,11 +221,35 @@ export type RWAPerpsContractOverlayRow = RWAOverviewDisplayRowBase & {
 	premium?: number | null
 	maxLeverage?: number | null
 	protocolFees24h?: number | null
+	/** Snapshot time, in seconds. */
+	timestamp?: number | null
+	venue?: string | null
+	/** 24h volume change, in percent. */
+	volume24hChange24h?: number | null
+	volumeAllTime?: number | null
+	oraclePrice?: number | null
+	midPrice?: number | null
+	previousDayPrice?: number | null
+	protocolFees7d?: number | null
+	protocolFees30d?: number | null
+	protocolFeesAllTime?: number | null
+	pair?: string | null
+	marginAsset?: string | null
+	settlementAsset?: string | null
+	sizeDecimals?: number | null
+	/** Fee rates as fractions. */
+	makerFeeRate?: number | null
+	takerFeeRate?: number | null
+	oracleProvider?: string | null
+	website?: Array<string> | null
 }
 
 export type RWAOverviewDisplayRow = RWAAssetOverviewRow | RWAPerpsContractOverlayRow
 
 export type RWASpotOverviewAsset = RWAAssetOverviewRow
+
+/** A page's nav row: its heading, its links ('All' first) and the label of the page it is on. */
+export type RWAPageNav = { heading: string; links: Array<{ label: string; to: string }>; active: string }
 
 export interface IRWAAssetsOverview {
 	platformPage: RWAPlatformPageData | null
@@ -239,39 +263,15 @@ export interface IRWAAssetsOverview {
 	assetGroups: Array<string>
 	assetNames: Array<string>
 	issuers: Array<string>
-	platformLinks: Array<{ label: string; to: string }>
+	/** The row of sibling pages under the tabs. */
+	nav: RWAPageNav
 	selectedPlatform: string
-	assetGroupLinks: Array<{ label: string; to: string }>
 	selectedAssetGroup: string
 	defaultInclusion: RWAOverviewInclusionDefaults
-	chainLinks: Array<{ label: string; to: string }>
 	selectedChain: string
-	categoryLinks: Array<{ label: string; to: string }>
 	selectedCategory: string
-	totals: {
-		onChainMcap: number
-		activeMcap: number
-		defiActiveTvl: number
-		issuers: Array<string>
-		stablecoins: {
-			onChainMcap: number
-			activeMcap: number
-			defiActiveTvl: number
-			issuers: Array<string>
-		}
-		governance: {
-			onChainMcap: number
-			activeMcap: number
-			defiActiveTvl: number
-			issuers: Array<string>
-		}
-		stablecoinsAndGovernance: {
-			onChainMcap: number
-			activeMcap: number
-			defiActiveTvl: number
-			issuers: Array<string>
-		}
-	}
+	/** The Key Metrics card's perps section on an Assets page, folded at build: the page ships no perps rows. */
+	perpsTotals: RwaPerpsTotals
 	/** The chart datasets folded at build time: the default Group by on every page, plus Chain on the front page. */
 	initialChartDatasets: Array<IRWAInitialChartDataset>
 	/** The front page cards, folded at build time; null on scoped pages. */
@@ -285,6 +285,38 @@ export interface IRWAAssetsOverview {
 	platformSlug: string | null
 	assetGroupSlug: string | null
 }
+
+/** The lists and scope names the Assets tree's spot filters read; the Perps tree filters through perpsFilters.ts. */
+export type RWASpotFilterKey =
+	| 'typeOptions'
+	| 'assetClassOptions'
+	| 'rwaClassificationOptions'
+	| 'accessModelOptions'
+	| 'categoriesOptions'
+	| 'platforms'
+	| 'assetGroups'
+	| 'assetNames'
+	| 'issuers'
+	| 'selectedPlatform'
+	| 'selectedChain'
+	| 'selectedCategory'
+	| 'chainSlug'
+	| 'categorySlug'
+	| 'platformSlug'
+
+/** The fields only an Assets page reads: its spot chart, its spot cards, its platform profile, its perps totals and its spot filters. */
+type RWASpotOnlyKey =
+	| RWASpotFilterKey
+	| 'platformPage'
+	| 'perpsTotals'
+	| 'initialChartDatasets'
+	| 'cards'
+	| 'chartMetricAvailability'
+	| 'seriesLatestTimestamp'
+
+/** What the overview container reads: an Assets page fills every field, a Perps page leaves the spot-only ones out. */
+export type RWAOverviewFrame = Omit<IRWAAssetsOverview, RWASpotOnlyKey> &
+	Partial<Pick<IRWAAssetsOverview, RWASpotOnlyKey>>
 
 export type RWAChartMetricKey = 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'
 export type IRWAChartMetricRows = Array<{ timestamp: number } & Record<string, number>>

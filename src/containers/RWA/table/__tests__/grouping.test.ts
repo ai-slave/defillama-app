@@ -97,6 +97,18 @@ describe('groupRwaRows', () => {
 		expect(ondo.flags.redeemable).toEqual({ yes: 0, known: 0 })
 	})
 
+	test('gives an asset under two categories one row per category, each with its own id', () => {
+		const groups = groupRwaRows(
+			buildRwaLeafRows([spotAsset({ category: ['Treasuries', 'Private Credit'] })], { includeBridgeTvl: true }),
+			'category'
+		)
+		expect(groups.map((group) => (group.kind === 'group' ? group.children.map((child) => child.id) : []))).toEqual([
+			['usdy@Treasuries'],
+			['usdy@Private Credit']
+		])
+		expect(groups.map((group) => group.metrics.activeMcap)).toEqual([800_000, 800_000])
+	})
+
 	test('compares like for like: a child without a prior leaves both sides of the change', () => {
 		const groups = groupRwaRows(rows, 'platform')
 		const securitize = groups[1]
@@ -133,37 +145,77 @@ describe('groupRwaRows', () => {
 		expect(solana.children[0].metrics.netFlow7d).toBeNull()
 	})
 
-	test('weights funding and premium by open interest and compares OI like for like', () => {
+	test('leaves funding, premium and leverage empty on a group, where a blend means nothing, and compares OI like for like', () => {
+		const perpsRows = buildRwaLeafRows(
+			[
+				perpsAsset({ id: 'big', openInterest: 9000, premium: 0.01, openInterestChange24h: 12.5 }),
+				perpsAsset({ id: 'small', openInterest: 1000, premium: -0.01, openInterestChange24h: null, maxLeverage: 100 })
+			],
+			{ includeBridgeTvl: true }
+		)
+		const [venue] = groupRwaRows(perpsRows, 'platform')
+		if (venue.kind !== 'group') throw new Error('expected a group row')
+		expect(venue.metrics).toMatchObject({ fundingApr: null, fundingRate: null, premium: null, maxLeverage: null })
+		expect(venue.metrics.openInterestChange24h).toMatchObject({ current: 9000, prior: 8000 })
+	})
+
+	test('a group compares the markets it can rebuild and counts the ones that fell to zero', () => {
+		const [venue] = groupRwaRows(
+			buildRwaLeafRows(
+				[
+					perpsAsset({ id: 'up', openInterest: 1_000_000, openInterestChange24h: 25 }),
+					perpsAsset({ id: 'gone', openInterest: 0, openInterestChange24h: -100 })
+				],
+				{ includeBridgeTvl: true }
+			),
+			'platform'
+		)
+		if (venue.kind !== 'group') throw new Error('expected a group row')
+		expect(venue.metrics.openInterestChange24h).toMatchObject({ percent: 25, dropped: 1 })
+		const [allGone] = groupRwaRows(
+			buildRwaLeafRows([perpsAsset({ id: 'gone', openInterest: 0, openInterestChange24h: -100 })], {
+				includeBridgeTvl: true
+			}),
+			'platform'
+		)
+		expect(allGone.metrics.openInterestChange24h).toMatchObject({ percent: -100, dropped: 1 })
+	})
+
+	test('sums the perps fees and shares, weights the fee rates by open interest and lists the specs', () => {
 		const perpsRows = buildRwaLeafRows(
 			[
 				perpsAsset({
 					id: 'big',
 					openInterest: 9000,
-					fundingRate: 0.0001,
-					fundingIntervalHours: 8,
-					premium: 0.01,
-					openInterestChange24h: 12.5
+					protocolFees30d: 100,
+					volumeAllTime: 1000,
+					makerFeeRate: 0.0002,
+					pair: 'USDY/USDC',
+					marginAsset: 'USDC',
+					oraclePrice: 1.01
 				}),
 				perpsAsset({
 					id: 'small',
 					openInterest: 1000,
-					fundingRate: 0.001,
-					fundingIntervalHours: 1,
-					premium: -0.01,
-					openInterestChange24h: null,
-					maxLeverage: 100
+					protocolFees30d: null,
+					volumeAllTime: 500,
+					makerFeeRate: 0.001,
+					pair: 'USDY/USDT',
+					marginAsset: 'USDC',
+					fundingIntervalHours: 1
 				})
 			],
 			{ includeBridgeTvl: true }
 		)
 		const [venue] = groupRwaRows(perpsRows, 'platform')
 		if (venue.kind !== 'group') throw new Error('expected a group row')
-		const bigApr = 0.0001 * (8760 / 8) * 100
-		const smallApr = 0.001 * 8760 * 100
-		expect(venue.metrics.fundingApr).toBeCloseTo((bigApr * 9000 + smallApr * 1000) / 10_000)
-		expect(venue.metrics.premium).toBeCloseTo((1 * 9000 + -1 * 1000) / 10_000)
-		expect(venue.metrics.openInterestChange24h).toEqual({ current: 9000, prior: 8000 })
-		expect(venue.metrics.maxLeverage).toBe(100)
-		expect(venue.metrics.fundingRate).toBeNull()
+		expect(venue.metrics.protocolFees30d).toBe(100)
+		expect(venue.metrics.volumeAllTime).toBe(1500)
+		expect(venue.metrics.makerFeeRate).toBeCloseTo((0.0002 * 9000 + 0.001 * 1000) / 10_000)
+		expect(venue.metrics.oraclePrice).toBeNull()
+		expect(venue.distinct.pair).toEqual(['USDY/USDC', 'USDY/USDT'])
+		expect(venue.distinct.marginAsset).toEqual(['USDC'])
+		expect(venue.distinct.fundingInterval).toEqual(['8h', '1h'])
+		expect(venue.distinct.asset).toEqual(['USDY Perp'])
 	})
 })

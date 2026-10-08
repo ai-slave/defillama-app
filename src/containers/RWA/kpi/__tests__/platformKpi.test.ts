@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { perpsAsset, spotAsset } from '../../table/__tests__/fixtures'
-import { foldRwaPlatformKpi } from '../platformKpi'
+import {
+	filterRwaOverviewDisplayRows,
+	getRwaRowFilterValues,
+	readRwaQueryFilters,
+	resolveRWAOverviewInclusionFlag,
+	RWA_SELECT_FILTER_KEYS,
+	type RWASelectFilterOptions
+} from '../../filterState'
+import { spotAsset } from '../../table/__tests__/fixtures'
+import { foldRwaPlatformKpi, getRwaPlatformFold } from '../platformKpi'
 
 const assets = [
 	spotAsset({ id: 'a', canonicalMarketId: 'a', issuer: 'BlackRock', accessModel: 'Permissioned', attestations: true }),
@@ -86,11 +94,52 @@ describe('foldRwaPlatformKpi', () => {
 		expect(foldRwaPlatformKpi(assets, { includeBridgeTvl: true, flowSummary }).metrics.netFlow30d).toBe(100)
 		expect(foldRwaPlatformKpi(assets, { includeBridgeTvl: true }).metrics.netFlow30d).toBeNull()
 	})
+})
 
-	test('ignores the perps markets the Perps view adds to the page rows', () => {
-		const withPerps = foldRwaPlatformKpi([...assets, perpsAsset()], { includeBridgeTvl: true })
-		const spotOnly = foldRwaPlatformKpi(assets, { includeBridgeTvl: true })
-		expect(withPerps.metrics.assetCount).toBe(spotOnly.metrics.assetCount)
-		expect(withPerps.flags).toEqual(spotOnly.flags)
+describe('getRwaPlatformFold', () => {
+	const stablecoin = spotAsset({ id: 's', canonicalMarketId: 's', issuer: 'Circle', stablecoin: true })
+	const rows = [...assets, stablecoin]
+	const defaultInclusion = {
+		includeStablecoins: false,
+		includeGovernance: false,
+		includeBridgeTvl: true,
+		includeWrappers: true
+	}
+	// Every value the rows carry, as the page's loader lists them.
+	const options = {} as RWASelectFilterOptions
+	for (const key of RWA_SELECT_FILTER_KEYS) {
+		options[key] = [...new Set(rows.flatMap((row) => getRwaRowFilterValues(row, key)))]
+	}
+	/** The Assets view's fold under an address, read as the platform page reads it. */
+	const assetsViewFold = (query: Record<string, string>) => {
+		const includeStablecoins = resolveRWAOverviewInclusionFlag(query.includeStablecoins, false)
+		const includeBridgeTvl = resolveRWAOverviewInclusionFlag(query.includeBridgeTvl, true)
+		const { aggregateAssets } = filterRwaOverviewDisplayRows(rows, {
+			...readRwaQueryFilters(query, options, 'platform'),
+			isPlatformMode: true,
+			includeStablecoins,
+			includeGovernance: false,
+			includeBridgeTvl,
+			includeWrappers: true
+		})
+		return { aggregateAssets, includeStablecoins, includeGovernance: false, includeBridgeTvl, activeFilters: true }
+	}
+	const query = { issuers: 'Apollo', includeStablecoins: 'true', includeBridgeTvl: 'false' }
+
+	test('under Information the card folds every asset the platform counts by default, whatever the address filters', () => {
+		const fold = getRwaPlatformFold('information', rows, defaultInclusion, assetsViewFold(query))
+		const kpi = foldRwaPlatformKpi(fold.aggregateAssets, { includeBridgeTvl: fold.includeBridgeTvl })
+		expect(kpi.metrics.assetCount).toBe(3)
+		expect(kpi.metrics.activeMcap).toBe(1_800_000)
+		expect(kpi.distinct.issuer).toEqual(['BlackRock', 'Apollo'])
+		// The chart draws the build-time dataset, folded over the same rows.
+		expect(fold.activeFilters).toBe(false)
+	})
+
+	test('under Assets the card folds the rows the table shows', () => {
+		const fold = getRwaPlatformFold('list', rows, defaultInclusion, assetsViewFold(query))
+		const kpi = foldRwaPlatformKpi(fold.aggregateAssets, { includeBridgeTvl: fold.includeBridgeTvl })
+		expect(kpi.metrics.assetCount).toBe(1)
+		expect(kpi.distinct.issuer).toEqual(['Apollo'])
 	})
 })

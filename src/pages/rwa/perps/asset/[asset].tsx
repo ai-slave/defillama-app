@@ -1,9 +1,10 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { DEFAULT_CHART_VIEW } from '~/containers/RWA/Perps/chartState'
-import { RWAPerpsDashboard } from '~/containers/RWA/Perps/Dashboard'
-import { getRWAPerpsAssetPage } from '~/containers/RWA/Perps/queries'
-import { RWAPerpsTabNav } from '~/containers/RWA/Perps/TabNav'
+import { getRwaPageMeta } from '~/containers/RWA/layout/pageCopy'
+import { RWAPerpsTreePage } from '~/containers/RWA/layout/PerpsTreePage'
+import { fetchRwaPageQuestions } from '~/containers/RWA/layout/questions.server'
+import { unpackRwaPerpsMarkets } from '~/containers/RWA/perpsPayload'
+import { getRWAPerpsPageProps } from '~/containers/RWA/perpsQueries'
 import { findByRwaSlug, rwaSlug } from '~/containers/RWA/rwaSlug'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -22,14 +23,14 @@ export async function getStaticPaths() {
 	}
 }
 
+/* A Perps scope page: the overview container with the markets of one underlying across venues. */
 export const getStaticProps = withPerformanceLogging(
 	'rwa/perps/asset/[asset]',
 	async ({ params }: GetStaticPropsContext<{ asset: string }>) => {
 		if (!params?.asset) return { notFound: true }
 
 		const metadataCache = await import('~/utils/metadata').then((m) => m.default)
-		const assets = metadataCache.rwaPerpsList.assets
-		const asset = findByRwaSlug(params.asset, assets)
+		const asset = findByRwaSlug(params.asset, metadataCache.rwaPerpsList.assets)
 		if (!asset) return { notFound: true }
 
 		const assetSlug = rwaSlug(asset)
@@ -37,17 +38,21 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/rwa/perps/asset/${assetSlug}`)
 		}
 
-		const data = await getRWAPerpsAssetPage({
-			asset,
-			assetLinks: [
-				{ label: 'All', to: '/rwa/perps/assets' },
-				...assets.map((item) => ({ label: item, to: `/rwa/perps/asset/${rwaSlug(item)}` }))
-			],
-			activeView: DEFAULT_CHART_VIEW
+		const props = await getRWAPerpsPageProps({
+			scope: { kind: 'asset', asset },
+			perpsAssetGroups: metadataCache.rwaPerpsList.assetGroups,
+			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex
+		})
+		if (!props) return { notFound: true, revalidate: maxAgeForNext([22]) }
+
+		const entityQuestions = await fetchRwaPageQuestions({
+			kind: 'perpsAsset',
+			scopeName: asset,
+			rows: unpackRwaPerpsMarkets(props.markets)
 		})
 
 		return {
-			props: { data },
+			props: { ...props, asset, entityQuestions },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -55,16 +60,11 @@ export const getStaticProps = withPerformanceLogging(
 
 const pageName = ['RWA Perps']
 
-export default function RWAPerpsAssetPage({ data }: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function RWAPerpsAssetPage({ asset, ...props }: InferGetStaticPropsType<typeof getStaticProps>) {
+	const meta = getRwaPageMeta('perpsAsset', { name: asset, slug: rwaSlug(asset) })
 	return (
-		<Layout
-			title={`${data.asset} Perpetual Markets - DefiLlama`}
-			description={`Compare ${data.asset} perpetual markets across venues by open interest, volume, funding, and market activity.`}
-			pageName={pageName}
-			canonicalUrl={`/rwa/perps/asset/${rwaSlug(data.asset)}`}
-		>
-			<RWAPerpsTabNav active="assets" />
-			<RWAPerpsDashboard mode="asset" data={data} />
+		<Layout title={meta.title} description={meta.description} pageName={pageName} canonicalUrl={meta.canonicalUrl}>
+			<RWAPerpsTreePage {...props} pageKind="perpsAsset" perpsAsset={asset} />
 		</Layout>
 	)
 }

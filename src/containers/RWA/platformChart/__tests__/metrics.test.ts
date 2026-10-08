@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	buildRwaPlatformEntityChart,
-	buildRwaPlatformEntityCsvDataset,
-	getRwaPlatformChartMetricsQuery,
-	parseRwaPlatformChartMetrics,
-	type RWAPlatformChartInputs
-} from '../metrics'
+import { buildRwaPlatformEntityChart, buildRwaPlatformEntityCsvDataset, type RWAPlatformChartInputs } from '../metrics'
 
 const DAY = 86_400_000
 const T0 = 1_700_000_000_000 - (1_700_000_000_000 % DAY)
@@ -49,21 +43,6 @@ const inputs: RWAPlatformChartInputs = {
 	],
 	period: 'daily'
 }
-
-describe('the metrics query', () => {
-	test('opens with Active AUM alone, reads a comma list, drops unknown keys and keeps the catalogue order', () => {
-		expect(parseRwaPlatformChartMetrics(undefined)).toEqual(['activeMcap'])
-		expect(parseRwaPlatformChartMetrics('netFlows,activeMcap,nope')).toEqual(['activeMcap', 'netFlows'])
-		expect(parseRwaPlatformChartMetrics(['events', 'utilization'])).toEqual(['utilization', 'events'])
-		expect(parseRwaPlatformChartMetrics('nope')).toEqual(['activeMcap'])
-	})
-
-	test('writes the selection as a comma list and leaves the default and an empty selection out of the URL', () => {
-		expect(getRwaPlatformChartMetricsQuery(['activeMcap'])).toBeUndefined()
-		expect(getRwaPlatformChartMetricsQuery([])).toBeUndefined()
-		expect(getRwaPlatformChartMetricsQuery(['activeMcap', 'netFlows'])).toBe('activeMcap,netFlows')
-	})
-})
 
 describe('buildRwaPlatformEntityChart', () => {
 	test('draws the money levels as lines on the first axis with the active AUM filled', () => {
@@ -113,6 +92,17 @@ describe('buildRwaPlatformEntityChart', () => {
 		const sunday = Date.UTC(2023, 10, 19)
 		expect(byName['Net Flows']?.data).toEqual([[sunday, 2]])
 		expect(byName['Active AUM']?.data).toEqual([[sunday, 120]])
+	})
+
+	test('Cumulative runs each bar metric up as a line and keeps the levels on their days', () => {
+		const chart = buildRwaPlatformEntityChart(['activeMcap', 'netFlows'], { ...inputs, period: 'cumulative' })
+		const byName = Object.fromEntries(chart.series.map((series) => [series.name, series]))
+		expect(byName['Net Flows']?.type).toBe('line')
+		expect(byName['Net Flows']?.data).toEqual([
+			[day(0), 5],
+			[day(2), 2]
+		])
+		expect(byName['Active AUM']?.data).toEqual(inputs.activeMcap)
 	})
 
 	test('draws the ratios as percent lines on the percent axis, over the days both sides have a value', () => {

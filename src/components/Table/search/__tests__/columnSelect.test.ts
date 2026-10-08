@@ -33,3 +33,11 @@ test('refuses a picker for a table without an identity column', () => {
 		'A table with a column picker needs an identity column: set enableHiding: false on the column that names the row (columns: tvl, fees, csvOnly)'
 	)
 })
+
+test('keeps a csv-only column visible through any selection, so the export still carries it', () => {
+	const withExportField = [
+		...columns,
+		{ id: 'tradeUrl', columnDef: { header: 'Trade URL', meta: { hidden: true, csvOnly: true } } }
+	]
+	expect(getColumnVisibilityForSelection(withExportField, [])).toMatchObject({ csvOnly: false, tradeUrl: true })
+})

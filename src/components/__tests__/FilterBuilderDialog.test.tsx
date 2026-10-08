@@ -164,3 +164,20 @@ test('a removed filter pill hands focus to the next pill, else the previous one,
 	await click(control('Remove Price'))
 	expect(document.activeElement).toBe(control('Filters'))
 })
+
+test('the smol trigger is named by its label, with the count only when filters apply', async () => {
+	await act(async () =>
+		root.render(
+			<>
+				<FilterBuilderDialog appliedCount={0} label="More filters" labelType="smol">
+					{null}
+				</FilterBuilderDialog>
+				<FilterBuilderDialog appliedCount={2} label="Filters" labelType="smol">
+					{null}
+				</FilterBuilderDialog>
+			</>
+		)
+	)
+	const names = [...document.querySelectorAll<HTMLElement>('[data-filter-builder]')].map(accessibleName)
+	expect(names).toEqual(['More filters', 'Filters, 2 applied'])
+})

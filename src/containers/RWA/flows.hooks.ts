@@ -23,13 +23,15 @@ export type RWAFlowScope =
 /** A scope with a slug: the only ones with an asset breakdown small enough to read in the browser. */
 export type RWAFlowScopedTarget = Exclude<RWAFlowScope, { kind: 'overview' }>
 
-export function useRWAFlowSummary() {
+/** The per-asset flow summary, about 2.8 MB: only a page that reads spot flows asks for it. */
+export function useRWAFlowSummary(enabled = true) {
 	return useQuery<IRWAFlowSummaryResponse>({
 		queryKey: ['rwa-flows', 'summary'],
 		queryFn: () => fetchJson<IRWAFlowSummaryResponse>(`${RWA_FLOWS_API}/summary`),
 		staleTime: RWA_FLOWS_STALE_TIME,
 		refetchOnWindowFocus: false,
-		retry: 1
+		retry: 1,
+		enabled
 	})
 }
 

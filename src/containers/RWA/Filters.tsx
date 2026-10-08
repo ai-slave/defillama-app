@@ -14,7 +14,6 @@ import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { formatPercent } from '~/utils/numberFormat'
 import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
@@ -35,9 +34,8 @@ import {
 	type RWAAttributeFilterState,
 	type RWASelectFilterKey
 } from './filterState'
-import { RWAIncludeInTvlSelect } from './IncludeInTvl'
 import { getRwaInclusionDefault, RWA_INCLUSION_OPTIONS, type RWAInclusionKey } from './inclusion'
-import { RWAListYourAssetsButton } from './links'
+import type { RWAAssetsInlineFilterKey } from './layout/inlineFilters'
 
 /* inputStyles as a label shell: the wrapper carries the field chrome and
    focus-within lights the border while the inner input stays bare. */
@@ -51,11 +49,24 @@ const ATTRIBUTE_FILTER_OPTIONS = RWA_ATTRIBUTE_FILTER_STATES.map((state) => ({
 	name: ATTRIBUTE_FILTER_STATE_LABELS[state]
 }))
 
-const DIALOG_FILTER_QUERY_KEYS: Array<string> = [
-	...RWA_SELECT_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
-	...RWA_ATTRIBUTE_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
-	...RWA_RATIO_FILTER_KEYS
-]
+/** The keys More filters owns: every filter except the page's inline ones, which their own pickers write. */
+function getDialogFilterQueryKeys(inlineFilters: ReadonlyArray<RWAAssetsInlineFilterKey>): Array<string> {
+	return [
+		...RWA_SELECT_FILTER_KEYS.filter((key) => !isInlineSelectFilter(key, inlineFilters)).flatMap((key) => [
+			key,
+			getRwaExcludeQueryKey(key)
+		]),
+		...RWA_ATTRIBUTE_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
+		...RWA_RATIO_FILTER_KEYS
+	]
+}
+
+function isInlineSelectFilter(
+	key: RWASelectFilterKey,
+	inlineFilters: ReadonlyArray<RWAAssetsInlineFilterKey>
+): boolean {
+	return (inlineFilters as ReadonlyArray<string>).includes(key)
+}
 
 const formatPercentRange = (minPercent: number | null, maxPercent: number | null) => {
 	const minLabel = minPercent != null ? formatPercent(minPercent, { input: 'percent' }) : 'no min'
@@ -122,13 +133,17 @@ type RWAFilterActions = {
 	setDefiActiveTvlToActiveMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
 }
 
-type RWAOverviewFiltersProps = {
+export type RWAOverviewFiltersProps = {
 	enabled: boolean
 	defaultInclusion: IRWAAssetsOverview['defaultInclusion']
 	modes: RWAFilterModes
 	options: RWAFilterOptions
 	selections: RWAFilterSelections
 	actions: RWAFilterActions
+	/** The page's inline filters (layout/inlineFilters.ts); More filters holds the rest. */
+	inlineFilters: ReadonlyArray<RWAAssetsInlineFilterKey>
+	/** Include in TVL reads spot rows only, so the Perps tree leaves it out. */
+	showIncludeInTvl: boolean
 }
 
 type RWAAttributeFilterConfig = {
@@ -333,7 +348,7 @@ function getRwaFilterDefinitions(props: RWAOverviewFiltersProps): Array<RWAFilte
 	const filterDefinitions: Array<RWAFilterDefinition> = []
 
 	for (const config of getRwaSelectFilters(props)) {
-		if (config.enabled) {
+		if (config.enabled && !isInlineSelectFilter(config.includeQueryKey, props.inlineFilters)) {
 			filterDefinitions.push({
 				id: config.includeQueryKey,
 				kind: 'select',
@@ -370,7 +385,7 @@ function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
 	}
 
 	for (const config of getRwaSelectFilters(props)) {
-		if (!config.enabled) continue
+		if (!config.enabled || isInlineSelectFilter(config.includeQueryKey, props.inlineFilters)) continue
 		selectValues[config.includeQueryKey] = config.selectedValues.slice()
 		if (isSelectFilterNarrowed(config, config.selectedValues)) pushActiveId(config.includeQueryKey)
 	}
@@ -405,7 +420,7 @@ function serializeRwaFilterDraft(
 ): Record<string, string | Array<string> | undefined> {
 	const filterDefinitions = getRwaFilterDefinitions(props)
 	const updates: Record<string, string | Array<string> | undefined> = {}
-	for (const key of DIALOG_FILTER_QUERY_KEYS) {
+	for (const key of getDialogFilterQueryKeys(props.inlineFilters)) {
 		updates[key] = undefined
 	}
 	for (const config of getRwaInclusionFilters(props)) {
@@ -457,6 +472,8 @@ function getRwaActiveFilterPills(
 
 	for (const config of getRwaSelectFilters(props)) {
 		if (!config.enabled || !isSelectFilterNarrowed(config, config.selectedValues)) continue
+		// An inline picker shows its own selection on its trigger.
+		if (isInlineSelectFilter(config.includeQueryKey, props.inlineFilters)) continue
 		activeFilters.push({
 			id: config.includeQueryKey,
 			label: `${config.label}: ${describeSelection(config.allValues, config.selectedValues)}`,
@@ -527,41 +544,23 @@ function RWAIncludeDraftSection({
 	)
 }
 
-/** Include in TVL and the Filters dialog. */
-export function RWAOverviewFilterControls(props: RWAOverviewFiltersProps) {
-	if (!props.enabled) return null
-
-	const selectedFilterCount = createRwaFilterDraft(props).activeIds.length + countRwaInclusionOverrides(props)
-
+/** The Assets tree's More filters: every filter but the page's inline ones, and the Include group. */
+export function RWAAssetsMoreFilters(props: RWAOverviewFiltersProps) {
 	return (
-		<>
-			<RWAIncludeInTvlSelect defaultInclusion={props.defaultInclusion} size="md" />
-			<FilterBuilderDialog appliedCount={selectedFilterCount}>
-				<RWAFiltersSession {...props} />
-			</FilterBuilderDialog>
-		</>
+		<FilterBuilderDialog
+			appliedCount={createRwaFilterDraft(props).activeIds.length + countRwaInclusionOverrides(props)}
+			label="More filters"
+			labelType="smol"
+		>
+			<RWAFiltersSession {...props} />
+		</FilterBuilderDialog>
 	)
 }
 
-/**
- * The strip above the chart: the page controls (leading), the active filter pills, then Include in TVL,
- * Filters and List Your Assets. Everything here changes the page, so it sits above the page.
- */
-export function RWAOverviewFilters(props: RWAOverviewFiltersProps & { leading?: ReactNode }) {
+/** The strip's pills for the set More filters filters and the Include in TVL overrides. */
+export function RWAAssetsFilterPills(props: RWAOverviewFiltersProps) {
 	const router = useRouter()
-
-	if (!props.enabled) return null
-
-	return (
-		<Card padding="sm" className="flex flex-wrap items-center gap-2">
-			{props.leading}
-			<ActiveFilterPills pills={getRwaActiveFilterPills(props, router)} />
-			<div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-				<RWAOverviewFilterControls {...props} />
-				<RWAListYourAssetsButton />
-			</div>
-		</Card>
-	)
+	return <ActiveFilterPills pills={getRwaActiveFilterPills(props, router)} />
 }
 
 function RWAFiltersSession(props: RWAOverviewFiltersProps) {
@@ -685,7 +684,7 @@ function RWASelectDraftEditor({
 			size="md"
 			visibleOptionLimit={null}
 			selectAllScope="matches"
-			searchPlaceholder={`Search ${definition.label.toLowerCase()}...`}
+			searchPlaceholder={`Search ${definition.label.toLowerCase()}…`}
 			emptyLabel="No matches found"
 			triggerProps={{ 'aria-label': `${definition.label} values` }}
 		/>

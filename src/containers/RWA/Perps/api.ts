@@ -5,10 +5,8 @@ import type {
 	IRWAPerpsFundingHistoryParams,
 	IRWAPerpsFundingHistoryPoint,
 	IRWAPerpsFundingHistoryWirePoint,
-	IRWAPerpsListResponse,
 	IRWAPerpsMarket,
-	IRWAPerpsMarketChartPoint,
-	IRWAPerpsStatsResponse
+	IRWAPerpsMarketChartPoint
 } from './api.types'
 import type {
 	IRWAPerpsContractBreakdownRequest,
@@ -43,12 +41,6 @@ export function setRWAPerpsChartScope(
 	}
 }
 
-function createRWAPerpsScopedUrl(path: string, includeCex: boolean): string {
-	const searchParams = new URLSearchParams({ cachebust: '091626' })
-	if (includeCex) searchParams.set('includeCex', 'true')
-	return `${RWA_PERPS_SERVER_URL}/${path}?${searchParams.toString()}`
-}
-
 function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHistoryParams): string {
 	const encodedId = encodeURIComponent(id)
 	const searchParams = new URLSearchParams()
@@ -67,25 +59,12 @@ function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHi
 }
 
 /**
- * Fetch the latest DEX snapshot, optionally including CEX markets.
+ * Fetch the latest snapshot of every market, CEX markets included.
  */
-export async function fetchRWAPerpsCurrent(includeCex: boolean): Promise<Array<IRWAPerpsMarket>> {
-	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl('current', includeCex))
+export async function fetchRWAPerpsCurrent(): Promise<Array<IRWAPerpsMarket>> {
+	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/current?cachebust=091626&includeCex=true`)
 }
 
-/**
- * Fetch the DEX filter options, optionally including CEX options.
- */
-export async function fetchRWAPerpsList(includeCex: boolean): Promise<IRWAPerpsListResponse> {
-	return fetchJson<IRWAPerpsListResponse>(createRWAPerpsScopedUrl('list', includeCex))
-}
-
-/**
- * Fetch DEX aggregate totals, optionally including CEX totals.
- */
-export async function fetchRWAPerpsStats(includeCex: boolean): Promise<IRWAPerpsStatsResponse> {
-	return fetchJson<IRWAPerpsStatsResponse>(createRWAPerpsScopedUrl('stats', includeCex))
-}
 /**
  * Fetch all markets for a contract across venues.
  */
@@ -95,30 +74,16 @@ export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<
 }
 
 /**
- * Fetch all markets listed on a venue.
+ * Fetch all markets listed on a venue; none when the server answers 404, its answer for a venue with no market.
  */
 export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<Array<IRWAPerpsMarket>> {
 	const encodedVenue = encodeURIComponent(venue)
-	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?cachebust=091626`)
-}
-
-/**
- * Fetch all markets for an asset group.
- */
-export async function fetchRWAPerpsMarketsByAssetGroup(
-	assetGroup: string,
-	includeCex: boolean
-): Promise<Array<IRWAPerpsMarket>> {
-	const encodedAssetGroup = encodeURIComponent(assetGroup)
-	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl(`assetGroup/${encodedAssetGroup}`, includeCex))
-}
-
-/**
- * Fetch all markets mapped to one canonical reference asset.
- */
-export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boolean): Promise<Array<IRWAPerpsMarket>> {
-	const encodedAsset = encodeURIComponent(asset)
-	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl(`asset/${encodedAsset}`, includeCex))
+	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?cachebust=091626`).catch(
+		(error) => {
+			if (error instanceof Error && error.message.includes('[404]')) return []
+			throw error
+		}
+	)
 }
 
 /**

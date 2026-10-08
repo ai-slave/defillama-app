@@ -1,89 +1,30 @@
-import type { CsvPayload } from '~/components/CsvDownloadButton'
-import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
-import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { StatItem, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import type { RwaNamedBar, RwaPerpsTotals } from '../cards/cardData'
-import { definitions } from '../definitions'
-import { perpsDefinitions } from '../Perps/definitions'
-import { percentChange, type RWAValueWithPrior } from '../table/change'
+import type { RWAPageKind } from '../layout/pageLayout'
 import type { RWATableMetrics } from '../table/rows'
-import { formatRwaKpiUsd } from './format'
-import { formatRwaKpiRatio, RWA_KPI_PERIOD, RWA_KPI_PERIOD_LABEL, RwaMetricChange } from './MetricChange'
-import { buildRwaCoreKpiCsvRows, DefiActiveTvlSection, OnchainMcapSection, type RwaKpiLabels } from './MetricSections'
+import { getRwaAssetsKpiHeadline, getRwaOverviewKpiRows, RWA_OVERVIEW_KPI_LABEL } from './assetsKpiRows'
+import { RWAKpiCard } from './KpiCard'
+import { getRwaKpiCsvName } from './kpiRows'
 
 export type RWAKeyMetricsProps = {
 	/** The page totals after its filters, the fold the tiles used. */
 	metrics: RWATableMetrics
-	/** Open interest over the venues the CEX toggle allows, whichever view is open. */
+	/** The server's RWA Perps totals over the page's markets, CEX venues in. */
 	perps: RwaPerpsTotals
 	largestProtocol: RwaNamedBar | null
+	/** The page's h1 (layout/pageCopy.ts). Absent inside another page, where the default label is an h2. */
+	headline?: string
+	pageKind: RWAPageKind
+	/** The page's scope (a chain, a category), for the csv name. */
+	scopeName?: string | null
 }
 
-/** The overview reads the totals over every asset, so the labels say so. */
-const LABELS: RwaKpiLabels = {
-	activeMcap: definitions.totalActiveMcap,
-	onChainMcap: definitions.totalOnChainMcap,
-	defiActiveTvl: definitions.totalDefiActiveTvl
-}
-
-const change = (value: RWAValueWithPrior) => percentChange(value.current, value.prior)
-
-/** The rows the csv button writes: one label and value per line, the way the panel reads. */
-export function buildRwaKeyMetricsCsv({ metrics, perps, largestProtocol }: RWAKeyMetricsProps): CsvPayload {
-	return {
-		filename: 'rwa-key-metrics.csv',
-		rows: [
-			['Metric', 'Value'],
-			...buildRwaCoreKpiCsvRows(metrics, largestProtocol, LABELS),
-			['RWA Perps OI', perps.openInterest],
-			['RWA Perps OI change (24h) %', change(perps.openInterestChange24h)],
-			['DEX share %', perps.dexShare],
-			['Perps volume (24h)', perps.volume24h]
-		]
-	}
-}
-
-/** The home page Key Metrics panel with the RWA rows. The KPI tiles folded into it. */
-export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
-	const { metrics, perps, largestProtocol } = props
-	const headlineChange = metrics.change[RWA_KPI_PERIOD].activeMcap
-	const headlinePercent = percentChange(headlineChange.current, headlineChange.prior)
-
+/** The Assets Key Metrics card: active AUM heads it, the AUM sections and the perps totals open under it. */
+export function RWAKeyMetrics({ metrics, perps, largestProtocol, headline, pageKind, scopeName }: RWAKeyMetricsProps) {
 	return (
-		<SummaryStatsCard padding="sm">
-			<div className="flex flex-nowrap items-end justify-between gap-8">
-				<StatItem
-					label={definitions.totalActiveMcap.label}
-					labelAs="h2"
-					tooltip={definitions.totalActiveMcap.description}
-					value={formatRwaKpiUsd(metrics.activeMcap)}
-					truncate
-				/>
-				{headlinePercent != null ? (
-					<SummaryChange percent={headlinePercent} comparison={`over ${RWA_KPI_PERIOD_LABEL}`} />
-				) : null}
-			</div>
-			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaKeyMetricsCsv(props)} smol />}>
-				<OnchainMcapSection metrics={metrics} labels={LABELS} />
-				<DefiActiveTvlSection metrics={metrics} largestProtocol={largestProtocol} labels={LABELS} />
-				<MetricSection
-					label="RWA Perps OI"
-					tooltip={perpsDefinitions.totalOpenInterest.description}
-					value={formatRwaKpiUsd(perps.openInterest)}
-				>
-					<SubMetricRow
-						label="Change (24h)"
-						value={<RwaMetricChange change={perps.openInterestChange24h} total={perps.openInterest} />}
-					/>
-					<SubMetricRow
-						label="DEX share"
-						tooltip="Open interest on DEX venues as a share of all open interest."
-						value={formatRwaKpiRatio(perps.dexShare)}
-					/>
-					<SubMetricRow label="Volume (24h)" value={formatRwaKpiUsd(perps.volume24h)} />
-				</MetricSection>
-			</KeyMetricsPanel>
-		</SummaryStatsCard>
+		<RWAKpiCard
+			headline={getRwaAssetsKpiHeadline(metrics, RWA_OVERVIEW_KPI_LABEL, headline)}
+			rows={getRwaOverviewKpiRows(metrics, perps, largestProtocol)}
+			csvName={getRwaKpiCsvName(pageKind, scopeName)}
+		/>
 	)
 }

@@ -1,9 +1,16 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAOverview } from '~/containers/RWA'
-import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
+import { getRwaPageMeta } from '~/containers/RWA/layout/pageCopy'
+import { fetchRwaPageQuestions } from '~/containers/RWA/layout/questions.server'
+import {
+	getRwaPerpsOnlyPlatformSlugs,
+	getRwaPlatformPageOutcome,
+	getRWAPlatformRoutes
+} from '~/containers/RWA/platformRoutes'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { findByRwaSlug, rwaSlug } from '~/containers/RWA/rwaSlug'
+import { keepKnownProtocolSlug } from '~/containers/RWA/server/protocolLink'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -22,8 +29,11 @@ export async function getStaticPaths() {
 
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const rwaList = metadataCache.rwaList
+	// A prerendered path may not redirect (Next fails the build), so the platforms that send to their venue are left out.
+	const redirecting = getRwaPerpsOnlyPlatformSlugs(metadataCache)
 	return {
 		paths: getRWAPlatformRoutes(rwaList)
+			.filter((platform) => !redirecting.has(platform.slug))
 			.slice(0, 10)
 			.map((platform) => ({ params: { platform: platform.slug } })),
 		fallback: 'blocking'
@@ -61,22 +71,37 @@ export const getStaticProps = withPerformanceLogging(
 		const props = await getRWAAssetsOverview({
 			platform: platformSlug,
 			rwaList,
-			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex
+			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex,
+			redirectingPlatforms: getRwaPerpsOnlyPlatformSlugs(metadataCache)
 		})
 
 		const meta = platformsIndex.platforms[platformSlug] ?? null
-		const isPerpsVenue = findByRwaSlug(platformSlug, metadataCache.rwaPerpsList.venues) != null
-
-		// 404 only when the listing and the index both have nothing (e.g. an unpublished perps adapter), so a
-		// transient empty listing or failed perps fetch can't hide a platform with index AUM or a live perps venue.
-		const isIndexedEmpty = meta != null && !isPerpsVenue && meta.onchainAum <= 0 && (meta.activeAum ?? 0) <= 0
-		if (!props || (props.assets.length === 0 && isIndexedEmpty)) {
+		if (!props) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
-		const platformPage = meta ? { meta } : null
+		// The page is spot only: a platform that only runs a perps venue goes to its venue page. The venue comes from
+		// the list the venue route resolves against, so the redirect never lands on a 404.
+		const outcome = getRwaPlatformPageOutcome({
+			spotRows: props.assets.filter((asset) => asset.kind === 'spot').length,
+			meta,
+			perpsVenue: findByRwaSlug(platformSlug, metadataCache.rwaPerpsList.venues)
+		})
+		if (outcome.kind === 'notFound') {
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
+		}
+		if (outcome.kind === 'redirect') {
+			return { ...canonicalRouteRedirect(outcome.destination), revalidate: maxAgeForNext([22]) }
+		}
+		const platformPage = meta ? { meta: keepKnownProtocolSlug(meta, metadataCache) } : null
+		const entityQuestions = await fetchRwaPageQuestions({
+			kind: 'platform',
+			scopeName: platformName,
+			rows: props.assets,
+			defaultInclusion: props.defaultInclusion
+		})
 
 		return {
-			props: { ...props, platformPage, platformName },
+			props: { ...props, platformPage, platformName, perpsVenueHref: outcome.perpsVenueHref, entityQuestions },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -85,17 +110,14 @@ export const getStaticProps = withPerformanceLogging(
 const pageName = ['RWA']
 
 export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
+	const meta = getRwaPageMeta(
+		'platform',
+		{ name: props.platformName, slug: props.platformSlug },
+		props.platformPage?.meta.description
+	)
 	return (
-		<Layout
-			title={`${props.platformName} RWA Dashboard & Analytics - DefiLlama`}
-			description={
-				props.platformPage?.meta.description ??
-				`Explore ${props.platformName}, an RWA platform enabling issuance, custody, trading, or management of tokenized real-world assets across blockchains.`
-			}
-			pageName={pageName}
-			canonicalUrl={`/rwa/platform/${props.platformSlug}`}
-		>
-			<RWAOverview {...props} />
+		<Layout title={meta.title} description={meta.description} pageName={pageName} canonicalUrl={meta.canonicalUrl}>
+			<RWAOverview {...props} pageKind="platform" />
 		</Layout>
 	)
 }

@@ -758,5 +758,26 @@ export const legacyRedirects = [
 		source: '/rwa/categories',
 		destination: '/rwa?groupBy=category',
 		permanent: false
+	},
+	/* The perps list pages became the Perps overview's Group by and filters. Venue is its default Group by. */
+	{
+		source: '/rwa/perps/venues',
+		destination: '/rwa/perps',
+		permanent: false
+	},
+	{
+		source: '/rwa/perps/assets',
+		destination: '/rwa/perps?groupBy=asset',
+		permanent: false
+	},
+	{
+		source: '/rwa/perps/asset-groups',
+		destination: '/rwa/perps?groupBy=assetGroup',
+		permanent: false
+	},
+	{
+		source: '/rwa/perps/forex',
+		destination: '/rwa/perps?assetClasses=Forex%20Perps',
+		permanent: false
 	}
 ] satisfies Array<LegacyRedirect>

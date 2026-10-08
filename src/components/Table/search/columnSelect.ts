@@ -1,6 +1,10 @@
 type SelectableColumn = {
 	id: string
-	columnDef: { header?: unknown; enableHiding?: boolean; meta?: { hidden?: boolean; headerHelperText?: string } }
+	columnDef: {
+		header?: unknown
+		enableHiding?: boolean
+		meta?: { hidden?: boolean; csvOnly?: boolean; headerHelperText?: string }
+	}
 }
 
 /**
@@ -41,6 +45,7 @@ export function getColumnSelectState(columns: ReadonlyArray<SelectableColumn>, v
 	return { options, selected }
 }
 
+/** The identity column and the csv-only ones stay visible whatever is picked: the export reads visible columns. */
 export function getColumnVisibilityForSelection(
 	columns: ReadonlyArray<SelectableColumn>,
 	selectedIds: ReadonlyArray<string>
@@ -48,6 +53,7 @@ export function getColumnVisibilityForSelection(
 	const selected = new Set(selectedIds)
 	const visibility: Record<string, boolean> = {}
 	for (const column of columns)
-		visibility[column.id] = column.columnDef.enableHiding === false || selected.has(column.id)
+		visibility[column.id] =
+			column.columnDef.enableHiding === false || column.columnDef.meta?.csvOnly === true || selected.has(column.id)
 	return visibility
 }

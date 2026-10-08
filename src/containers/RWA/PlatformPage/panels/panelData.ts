@@ -64,6 +64,28 @@ export function rankRwaPlatformIssuers(issuers: Array<RwaNamedBar>): { shown: Ar
 	}
 }
 
+/** A link to another DefiLlama page in About's links row: a platform's venue page, a venue's platform page. */
+export type RWAAboutCrossLink = { label: string; href: string }
+
+/** About draws only when it has one thing to say: a profile with only a name would be an empty box. */
+export function hasRwaAboutContent(
+	meta: RWAPlatformMeta,
+	issuers: Array<RwaNamedBar>,
+	crossLink: RWAAboutCrossLink | null
+): boolean {
+	const links = getRwaPlatformLinks(meta)
+	return (
+		!!meta.description ||
+		getRwaPlatformTags(meta).length > 0 ||
+		links.websites.length > 0 ||
+		links.docs != null ||
+		links.protocolHref != null ||
+		links.socials.length > 0 ||
+		crossLink != null ||
+		rankRwaPlatformIssuers(issuers).shown.length > 0
+	)
+}
+
 export type RWAPanelRow = { label: string; value: string; mono: boolean }
 
 function bps(value: number): string {

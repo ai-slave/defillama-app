@@ -1,45 +1,66 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchJson } from '~/utils/async'
-import type { RWAPerpsChartMetric, RWAPerpsChartSource } from './chartBreakdown'
+import type { IRWAAssetsOverview } from './api.types'
+import { getRwaPerpsChartServerKey, type RWAPerpsChartMetric, type RWAPerpsChartSource } from './chartBreakdown'
 import { toRwaMultiSeriesChartDataset, type RWAChartDataset, type RWAPositionalChartDataset } from './chartDataset'
+import { setRWAPerpsChartScope } from './Perps/api'
+import type { RWAPerpsMarketBreakdownTarget } from './Perps/types'
 
 const RWA_PERPS_CHART_API = '/api/public/rwa/perps'
 const EMPTY_DATASET: RWAPositionalChartDataset = { source: [], dimensions: ['timestamp'] }
 const STALE_TIME = 60 * 60 * 1000
 
+/** The markets a Perps tree page covers, by name as the server reads them: all, one asset group, one underlying or one venue. */
+export type RwaPerpsChartScope = Extract<
+	RWAPerpsMarketBreakdownTarget,
+	{ kind: 'all' | 'assetGroup' | 'baseAsset' | 'venue' }
+>
+
 export type RwaPerpsChartDatasetRequest = {
 	source: RWAPerpsChartSource
 	metric: RWAPerpsChartMetric
 	includeCex: boolean
+	scope: RwaPerpsChartScope
 	enabled: boolean
 }
 
-/** The public route and query for a perps chart source; the server key for volume is the 24h one. */
-export function getRwaPerpsChartUrl({
-	source,
-	metric,
-	includeCex
-}: Omit<RwaPerpsChartDatasetRequest, 'enabled'>): string {
-	const searchParams = new URLSearchParams()
-	if (source.kind === 'split') searchParams.set('breakdown', source.breakdown)
-	searchParams.set('key', metric === 'volume' ? 'volume24h' : 'openInterest')
-	if (includeCex) searchParams.set('includeCex', 'true')
-	const route = source.kind === 'split' ? 'overview-breakdown' : 'contract-breakdown'
-	return `${RWA_PERPS_CHART_API}/${route}?${searchParams.toString()}`
+/** An asset group page is the frame with an asset group slug; an underlying page names its asset, as the frame cannot. */
+export function getRwaPerpsChartScope(
+	overview: Pick<IRWAAssetsOverview, 'assetGroupSlug' | 'selectedAssetGroup'>,
+	asset?: string | null
+): RwaPerpsChartScope {
+	if (asset) return { kind: 'baseAsset', slug: asset }
+	if (overview.assetGroupSlug) return { kind: 'assetGroup', slug: overview.selectedAssetGroup }
+	return { kind: 'all' }
 }
 
 /**
- * The Perps view time series by the Group by: a server split per venue, asset group or reference asset, or the
- * per-contract split (about 8 MB, so only when None is picked). The CEX toggle is the one flag the split honours.
+ * The public route and query for a perps chart source and metric. The two split
+ * routes reject a base asset, so an underlying's page reads its per-market split whatever the Group by.
  */
-export function useRwaPerpsChartDataset({ source, metric, includeCex, enabled }: RwaPerpsChartDatasetRequest): {
-	chartDataset: RWAPositionalChartDataset
-	isChartLoading: boolean
-	chartError: string | null
-} {
-	const url = getRwaPerpsChartUrl({ source, metric, includeCex })
-	const { data, isLoading, error } = useQuery({
+export function getRwaPerpsChartUrl({
+	source,
+	metric,
+	includeCex,
+	scope
+}: Omit<RwaPerpsChartDatasetRequest, 'enabled'>): string {
+	const searchParams = new URLSearchParams()
+	const route =
+		scope.kind === 'baseAsset'
+			? 'market-breakdown'
+			: source.kind === 'split'
+				? 'overview-breakdown'
+				: 'contract-breakdown'
+	if (route === 'overview-breakdown' && source.kind === 'split') searchParams.set('breakdown', source.breakdown)
+	searchParams.set('key', getRwaPerpsChartServerKey(metric))
+	setRWAPerpsChartScope(searchParams, { target: scope, includeCex })
+	return `${RWA_PERPS_CHART_API}/${route}?${searchParams.toString()}`
+}
+
+/** One perps chart route through react-query; the chart panels, the venue totals and the history fold share its cache. */
+export function useRwaPerpsChartQuery(url: string, enabled: boolean) {
+	return useQuery({
 		queryKey: ['rwa-perps-chart', url],
 		queryFn: () => fetchJson<RWAChartDataset>(url),
 		staleTime: STALE_TIME,
@@ -47,6 +68,19 @@ export function useRwaPerpsChartDataset({ source, metric, includeCex, enabled }:
 		retry: 1,
 		enabled
 	})
+}
+
+/**
+ * The Perps time series by the Group by: a server split per venue, asset group or reference asset, or the
+ * per-contract split (about 8 MB, so only when None is picked). Venue Type DEX only is the one flag the split honours.
+ */
+export function useRwaPerpsChartDataset({ source, metric, includeCex, scope, enabled }: RwaPerpsChartDatasetRequest): {
+	chartDataset: RWAPositionalChartDataset
+	isChartLoading: boolean
+	chartError: string | null
+} {
+	const url = getRwaPerpsChartUrl({ source, metric, includeCex, scope })
+	const { data, isLoading, error } = useRwaPerpsChartQuery(url, enabled)
 	const chartDataset = useMemo(
 		() => (enabled && data ? toRwaMultiSeriesChartDataset(data) : EMPTY_DATASET),
 		[data, enabled]

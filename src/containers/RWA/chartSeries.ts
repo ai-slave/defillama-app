@@ -1,6 +1,5 @@
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
-import type { RWAPerpsChartMetric } from './chartBreakdown'
 import {
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
@@ -35,18 +34,8 @@ export function buildRwaTimeSeriesCharts(dataset: RWAPositionalChartDataset): Ar
 	})
 }
 
-/** A "Total " label so the site's series rules (first colour, no fill, out of the tooltip sum) apply. */
-export const RWA_PERPS_OI_TOTAL_LABEL = 'Total Open Interest'
-
-/**
- * Open interest keeps the site's time series drawing, Total on top; volume is a bar per period, one stack
- * per group, whose tooltip sums the groups.
- */
-export function buildRwaPerpsChartSeries(
-	dataset: RWAPositionalChartDataset,
-	metric: RWAPerpsChartMetric
-): Array<MultiSeriesChartSeriesConfig> {
-	if (metric === 'openInterest') return buildRwaTimeSeriesCharts(dataset)
+/** Volume is a bar per period, one stack per group, whose tooltip sums the groups. */
+export function buildRwaPerpsChartSeries(dataset: RWAPositionalChartDataset): Array<MultiSeriesChartSeriesConfig> {
 	return dataset.dimensions.slice(1).map((name, index) => ({
 		name,
 		type: 'bar',

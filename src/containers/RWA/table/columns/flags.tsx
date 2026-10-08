@@ -69,7 +69,7 @@ function createFlagColumn({ key, width, yesIsWarning = false, csvOnly = false }:
 }
 
 export const flagColumns = FLAG_COLUMNS.map(createFlagColumn)
-/** The Compliance preset shows six flags in the reader's order: proof first, then the gates, then the exits. CEX
+/** The Compliance set shows six flags in the reader's order: proof first, then the gates, then the exits. CEX
     listing is known on a third of the assets and reads Yes wherever known, so it stays csv-only. */
 const COMPLIANCE_FLAG_ORDER: ReadonlyArray<RWAFlagKey> = [
 	'attestations',

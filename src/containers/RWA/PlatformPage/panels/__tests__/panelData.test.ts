@@ -13,6 +13,7 @@ import {
 	getRwaSourceGroups,
 	hasRwaFeesContent,
 	hasRwaMilestones,
+	hasRwaAboutContent,
 	hasRwaEntityContent,
 	rankRwaPlatformIssuers
 } from '../panelData'
@@ -191,5 +192,30 @@ describe('entity', () => {
 		expect(hasRwaEntityContent(meta({ issuerSourceLink: ['https://src'] }))).toBe(true)
 		expect(hasRwaMilestones(empty)).toBe(false)
 		expect(hasRwaMilestones(meta({ keyMilestones: '2024: launch' }))).toBe(true)
+	})
+})
+
+describe('hasRwaAboutContent', () => {
+	test('a profile with only a name has nothing to say, so About is not drawn', () => {
+		expect(hasRwaAboutContent(empty, [], null)).toBe(false)
+	})
+
+	test('a description, a tag, a link, a cross link or two issuers is enough', () => {
+		expect(hasRwaAboutContent(meta({ description: 'A venue.' }), [], null)).toBe(true)
+		expect(hasRwaAboutContent(meta({ accessModel: 'Permissionless' }), [], null)).toBe(true)
+		expect(hasRwaAboutContent(meta({ docs: 'https://docs.example' }), [], null)).toBe(true)
+		expect(
+			hasRwaAboutContent(empty, [], { label: 'Spot assets on the platform page', href: '/rwa/platform/ondo' })
+		).toBe(true)
+		expect(
+			hasRwaAboutContent(
+				empty,
+				[
+					{ name: 'A', value: 2 },
+					{ name: 'B', value: 1 }
+				],
+				null
+			)
+		).toBe(true)
 	})
 })

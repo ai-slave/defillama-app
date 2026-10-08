@@ -10,7 +10,9 @@ vi.mock('next/router', () => ({
 import { METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
 import { foldRwaPerpsTotals } from '../../cards/cardData'
 import { perpsAsset, spotAsset } from '../../table/__tests__/fixtures'
-import { buildRwaKeyMetricsCsv, RWAKeyMetrics, type RWAKeyMetricsProps } from '../KeyMetrics'
+import { getRwaAssetsKpiHeadline, getRwaOverviewKpiRows, RWA_OVERVIEW_KPI_LABEL } from '../assetsKpiRows'
+import { RWAKeyMetrics, type RWAKeyMetricsProps } from '../KeyMetrics'
+import { buildRwaKpiCsv } from '../kpiRows'
 import { sumRwaKpiTotals } from '../kpiTotals'
 
 const assets = [spotAsset(), perpsAsset()]
@@ -18,8 +20,9 @@ const assets = [spotAsset(), perpsAsset()]
 function props(overrides: Partial<RWAKeyMetricsProps> = {}): RWAKeyMetricsProps {
 	return {
 		metrics: sumRwaKpiTotals(assets, true),
-		perps: foldRwaPerpsTotals(assets, true),
+		perps: foldRwaPerpsTotals([perpsAsset()]),
 		largestProtocol: { name: 'Aave', value: 100_000 },
+		pageKind: 'overview',
 		...overrides
 	}
 }
@@ -55,6 +58,14 @@ describe('RWAKeyMetrics', () => {
 		])
 	})
 
+	test('heads the page with its headline as the one h1, or as an h2 inside another page', () => {
+		const page = render({ headline: 'Ethereum RWA Active AUM' })
+		expect(Array.from(page.querySelectorAll('h1'), (heading) => heading.textContent)).toEqual([
+			'Ethereum RWA Active AUM'
+		])
+		expect(render().querySelectorAll('h1')).toHaveLength(0)
+	})
+
 	test('opens with every section collapsed, like the home page', () => {
 		const sections = Array.from(render().querySelectorAll('details'))
 		expect(sections).toHaveLength(3)
@@ -62,7 +73,7 @@ describe('RWAKeyMetrics', () => {
 	})
 
 	test('shows gaps as N/A, never as zero', () => {
-		const root = render({ perps: foldRwaPerpsTotals([spotAsset()], true), largestProtocol: null })
+		const root = render({ perps: foldRwaPerpsTotals([]), largestProtocol: null })
 		expect(rowValues(root).slice(6)).toEqual(['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])
 	})
 
@@ -73,13 +84,31 @@ describe('RWAKeyMetrics', () => {
 		expect(markup).toContain('N/A')
 	})
 
-	test('writes the rows to a csv', () => {
-		const csv = buildRwaKeyMetricsCsv(props())
-		expect(csv.filename).toBe('rwa-key-metrics.csv')
-		expect(csv.rows[0]).toEqual(['Metric', 'Value'])
-		expect(csv.rows).toContainEqual(['Total RWA Active AUM', 800_000])
-		expect(csv.rows).toContainEqual(['Utilization %', 12.5])
-		expect(csv.rows).toContainEqual(['Largest protocol', 'Aave'])
-		expect(csv.rows).toContainEqual(['DEX share %', 100])
+	test('writes every panel row to the csv, raw values', () => {
+		const { metrics, perps, largestProtocol } = props()
+		const { rows } = buildRwaKpiCsv({
+			filename: 'key-metrics.csv',
+			headline: getRwaAssetsKpiHeadline(metrics, RWA_OVERVIEW_KPI_LABEL),
+			rows: getRwaOverviewKpiRows(metrics, perps, largestProtocol)
+		})
+		const expected = [
+			['Metric', 'Value'],
+			['Total RWA Active AUM', 800_000],
+			['Active AUM change (24h) %', 1.2658227848101267],
+			['Total RWA Onchain AUM', 1_000_000],
+			['Onchain AUM change (24h) %', 1.0101010101010102],
+			['Active / Onchain %', 80],
+			['DeFi Active TVL', 100_000],
+			['DeFi Active TVL change (24h) %', 1.0101010101010102],
+			['Utilization %', 12.5],
+			['Largest protocol', 'Aave'],
+			['Largest protocol DeFi Active TVL', 100_000],
+			['RWA Perps OI', 5000],
+			['RWA Perps OI change (24h) %', 25],
+			['DEX share %', 100],
+			['Perps volume (24h)', 1000]
+		]
+		expect(rows).toEqual(expect.arrayContaining(expected))
+		expect(rows).toHaveLength(expected.length)
 	})
 })

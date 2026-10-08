@@ -4,18 +4,37 @@ import { Menu } from '~/components/Menu'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-import type { RWAPlatformKpi } from '../../kpi/platformKpi'
+import type { RwaNamedBar } from '../../cards/cardData'
 import type { RWAPlatformMeta } from '../api.types'
-import { getRwaPlatformLinks, getRwaPlatformTags, rankRwaPlatformIssuers } from './panelData'
+import {
+	getRwaPlatformLinks,
+	getRwaPlatformTags,
+	hasRwaAboutContent,
+	rankRwaPlatformIssuers,
+	type RWAAboutCrossLink
+} from './panelData'
 import { PanelCard, Pill, Pills, Prose } from './PanelParts'
 
-/** What the platform is: the description, its tags, where to find it, and the issuers it hosts. Always rendered. */
-export function AboutPanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWAPlatformKpi }) {
+/**
+ * What the entity is: the description, its tags, where to find it, and the issuers it hosts; drawn when it has one of
+ * them. `issuers`: Active AUM by issuer (none on a venue). `crossLink`: the other tree's page of the same entity.
+ */
+export function AboutPanel({
+	meta,
+	issuers: issuersByMcap,
+	crossLink
+}: {
+	meta: RWAPlatformMeta
+	issuers: Array<RwaNamedBar>
+	crossLink: RWAAboutCrossLink | null
+}) {
+	if (!hasRwaAboutContent(meta, issuersByMcap, crossLink)) return null
 	const tags = getRwaPlatformTags(meta)
 	const links = getRwaPlatformLinks(meta)
-	const issuers = rankRwaPlatformIssuers(kpi.issuersByMcap)
-	const hasLinks =
-		links.websites.length > 0 || links.docs != null || links.protocolHref != null || links.socials.length > 0
+	const issuers = rankRwaPlatformIssuers(issuersByMcap)
+	const hasPageLinks =
+		links.websites.length > 0 || links.docs != null || links.protocolHref != null || crossLink != null
+	const hasLinks = hasPageLinks || links.socials.length > 0
 
 	return (
 		<PanelCard title={`About ${meta.name}`}>
@@ -40,19 +59,29 @@ export function AboutPanel({ meta, kpi }: { meta: RWAPlatformMeta; kpi: RWAPlatf
 							<span>Protocol page</span>
 						</Button>
 					) : null}
-					{links.socials.length > 0 ? (
-						<span className="mx-1 h-6 w-px bg-surface-elevated-2" aria-hidden="true" />
+					{crossLink ? (
+						<Button as={BasicLink} href={crossLink.href} size="md">
+							<span>{crossLink.label}</span>
+						</Button>
 					) : null}
-					{links.socials.map((social) => (
-						<Tooltip
-							key={social.label}
-							content={social.label}
-							render={<Button as="a" href={social.href} target="_blank" rel="noopener noreferrer" size="md" square />}
-						>
-							<Icon name={social.icon} className="size-4" />
-							<span className="sr-only">{social.label}</span>
-						</Tooltip>
-					))}
+					{links.socials.length > 0 ? (
+						/* The divider and the icons wrap as one group, so neither is left alone at a line end. */
+						<span className="flex flex-wrap items-center gap-1.5">
+							{hasPageLinks ? <span className="mx-1 h-6 w-px bg-surface-elevated-2" aria-hidden="true" /> : null}
+							{links.socials.map((social) => (
+								<Tooltip
+									key={social.label}
+									content={social.label}
+									render={
+										<Button as="a" href={social.href} target="_blank" rel="noopener noreferrer" size="md" square />
+									}
+								>
+									<Icon name={social.icon} className="size-4" />
+									<span className="sr-only">{social.label}</span>
+								</Tooltip>
+							))}
+						</span>
+					) : null}
 				</div>
 			) : null}
 			{issuers.shown.length > 0 ? (

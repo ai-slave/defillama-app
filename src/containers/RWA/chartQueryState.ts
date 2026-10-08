@@ -3,14 +3,10 @@ import { readSingleQueryValue } from '~/utils/routerQuery'
 import { getRwaChartTotalLabel } from './chartAggregation'
 import {
 	getRwaChartViewOptions,
-	getRwaPerpsChartMetricOptions,
 	getRwaTreemapParentGrouping,
-	parseRwaPerpsChartMetric,
-	type RWAOverviewChartMetric,
-	type RWAPerpsChartMetric,
+	type RWASpotChartMetric,
 	type RwaChartAxis
 } from './chartBreakdown'
-import { RWA_PERPS_OI_TOTAL_LABEL } from './chartSeries'
 import {
 	getChartMetricOptions,
 	parseRwaChartState,
@@ -24,10 +20,9 @@ import type { RWAGroupBy } from './table/groupBy'
 
 export type RwaChartQueryState = {
 	flowQueryState: RWAFlowQueryState
-	perpsChartMetric: RWAPerpsChartMetric
 	treemapParentGrouping: RwaChartAxis
 	chartState: RWAChartState
-	selectedChartMetric: RWAOverviewChartMetric
+	selectedChartMetric: RWASpotChartMetric
 	chartView: RWAChartView
 	chartTotalLabel: string
 }
@@ -36,35 +31,28 @@ export type RwaChartQueryState = {
 export function resolveRwaChartQueryState(
 	query: NextRouter['query'],
 	{
-		isPerpsView,
 		isPlatformMode,
 		groupBy,
 		availability
-	}: { isPerpsView: boolean; isPlatformMode: boolean; groupBy: RWAGroupBy; availability: RWAChartMetricAvailability }
+	}: { isPlatformMode: boolean; groupBy: RWAGroupBy; availability: RWAChartMetricAvailability }
 ): RwaChartQueryState {
-	const chartTypeQuery = readSingleQueryValue(query.chartType)
-	const flowModeQuery = readSingleQueryValue(query.flowMode)
-	/* Flows are an asset metric; the Perps view reads the period control for its volume bars instead. */
-	const flowQueryState = parseRWAFlowQueryState(isPerpsView ? undefined : chartTypeQuery, flowModeQuery, isPlatformMode)
-	const perpsChartMetric = parseRwaPerpsChartMetric(chartTypeQuery)
+	const flowQueryState = parseRWAFlowQueryState(
+		readSingleQueryValue(query.chartType),
+		readSingleQueryValue(query.flowMode),
+		isPlatformMode
+	)
 	const treemapParentGrouping = getRwaTreemapParentGrouping(groupBy)
 	const chartState = parseRwaChartState(query, { treemapParentGrouping, availability })
-	const selectedChartMetric: RWAOverviewChartMetric = isPerpsView
-		? perpsChartMetric
-		: flowQueryState.view === 'flowVsPrice'
-			? 'flowVsPrice'
-			: flowQueryState.view != null
-				? 'flows'
-				: chartState.metric
+	const selectedChartMetric: RWASpotChartMetric =
+		flowQueryState.view === 'flowVsPrice' ? 'flowVsPrice' : flowQueryState.view != null ? 'flows' : chartState.metric
 	const chartView: RWAChartView = getRwaChartViewOptions(selectedChartMetric).some(
 		(option) => option.key === chartState.view
 	)
 		? chartState.view
 		: 'timeSeries'
-	const chartTotalLabel = isPerpsView ? RWA_PERPS_OI_TOTAL_LABEL : getRwaChartTotalLabel(chartState.metric)
+	const chartTotalLabel = getRwaChartTotalLabel(chartState.metric)
 	return {
 		flowQueryState,
-		perpsChartMetric,
 		treemapParentGrouping,
 		chartState,
 		selectedChartMetric,
@@ -73,17 +61,14 @@ export function resolveRwaChartQueryState(
 	}
 }
 
-/** The chart type switch: open interest and volume in the Perps view; the tracked asset metrics plus flows otherwise. */
+/** The chart type switch: the tracked asset metrics plus flows, and flow vs price on a platform page. */
 export function getRwaOverviewChartMetricOptions({
-	isPerpsView,
 	isPlatformMode,
 	availability
 }: {
-	isPerpsView: boolean
 	isPlatformMode: boolean
 	availability: RWAChartMetricAvailability
-}): ReadonlyArray<{ key: RWAOverviewChartMetric; label: string }> {
-	if (isPerpsView) return getRwaPerpsChartMetricOptions()
+}): ReadonlyArray<{ key: RWASpotChartMetric; label: string }> {
 	return [
 		...getChartMetricOptions(availability),
 		{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label },

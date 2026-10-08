@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { limitRwaHorizontalBarData, toRwaMultiSeriesChartDataset } from '../chartDataset'
+import { getRwaChartTotalLabel } from '../chartAggregation'
+import { getRwaPerpsChartMetricSpec } from '../chartBreakdown'
+import { isRwaTotalSeriesLabel, limitRwaHorizontalBarData, toRwaMultiSeriesChartDataset } from '../chartDataset'
 
 describe('toRwaMultiSeriesChartDataset', () => {
 	test('preserves dimension order, zero values, and missing values', () => {
@@ -22,24 +24,36 @@ describe('toRwaMultiSeriesChartDataset', () => {
 })
 
 describe('limitRwaHorizontalBarData', () => {
-	test('sorts the bars, drops non-positive values and folds the overflow into Others', () => {
+	test('sorts the bars, drops non-positive values and keeps up to twenty, the overflow folded into Others last', () => {
 		const items = [
 			{ name: 'Zero', value: 0 },
 			{ name: 'Negative', value: -3 },
 			{ name: 'Others', value: 5 },
-			{ name: 'Tie', value: 11 },
-			...Array.from({ length: 11 }, (_, index) => ({ name: `Asset ${index + 1}`, value: index + 1 }))
+			{ name: 'Tie', value: 21 },
+			...Array.from({ length: 21 }, (_, index) => ({ name: `Asset ${index + 1}`, value: index + 1 }))
 		]
-		expect(limitRwaHorizontalBarData(items, { sort: true })).toEqual([
-			{ name: 'Asset 11', value: 11 },
-			{ name: 'Tie', value: 11 },
-			{ name: 'Asset 10', value: 10 },
-			{ name: 'Asset 9', value: 9 },
-			{ name: 'Asset 8', value: 8 },
-			{ name: 'Asset 7', value: 7 },
-			{ name: 'Asset 6', value: 6 },
-			{ name: 'Asset 5', value: 5 },
-			{ name: 'Others', value: 5 + 4 + 3 + 2 + 1 }
+		const bars = limitRwaHorizontalBarData(items, { sort: true })
+		expect(bars).toHaveLength(20)
+		expect(bars.slice(0, 3)).toEqual([
+			{ name: 'Asset 21', value: 21 },
+			{ name: 'Tie', value: 21 },
+			{ name: 'Asset 20', value: 20 }
 		])
+		expect(bars.slice(-2)).toEqual([
+			{ name: 'Asset 4', value: 4 },
+			{ name: 'Others', value: 5 + 3 + 2 + 1 }
+		])
+	})
+})
+
+describe('isRwaTotalSeriesLabel', () => {
+	test('knows the Total line of every metric the charts draw, and no member named Total something', () => {
+		for (const metric of ['activeMcap', 'onChainMcap', 'defiActiveTvl'] as const) {
+			expect(isRwaTotalSeriesLabel(getRwaChartTotalLabel(metric))).toBe(true)
+		}
+		for (const metric of ['openInterest', 'volume', 'markets'] as const) {
+			expect(isRwaTotalSeriesLabel(getRwaPerpsChartMetricSpec(metric).totalLabel)).toBe(true)
+		}
+		expect(isRwaTotalSeriesLabel('Total Crypto Market Cap ex-BTC')).toBe(false)
 	})
 })

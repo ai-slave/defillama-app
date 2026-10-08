@@ -1,10 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { perpsAsset, spotAsset } from '../../table/__tests__/fixtures'
 import {
-	buildRwaOverviewCards,
+	buildRwaDefiProtocolCard,
+	buildRwaOpenInterestCard,
+	buildRwaSplitCard,
 	changeOver,
 	foldRwaPerpsTotals,
 	foldRwaSeriesTotal,
+	getRwaPerpsMarkets,
 	getRwaRatio,
 	rankRwaChainChanges,
 	rankRwaDefiProtocols
@@ -107,6 +110,32 @@ describe('rankRwaChainChanges', () => {
 		])
 	})
 
+	test('skips a name with no value on either day, never reading it as zero', () => {
+		expect(
+			rankRwaChainChanges(
+				[
+					{ timestamp: 0, Ethereum: 100, 'ZKsync Lite': 50 },
+					{ timestamp: 31 * DAY, Ethereum: 120, 'ZKsync Era': 80 }
+				],
+				{ days: 30, each: 5 }
+			)
+		).toEqual([{ name: 'Ethereum', changeUsd: 20, changePct: 20 }])
+	})
+
+	test('compares days that have a total, as the card total does', () => {
+		expect(
+			rankRwaChainChanges(
+				[
+					{ timestamp: 0, Ethereum: 100 },
+					{ timestamp: 1 * DAY, Ethereum: null },
+					{ timestamp: 32 * DAY, Ethereum: 150 },
+					{ timestamp: 33 * DAY, Ethereum: null }
+				],
+				{ days: 31, each: 5 }
+			)
+		).toEqual([{ name: 'Ethereum', changeUsd: 50, changePct: 50 }])
+	})
+
 	test('is empty without a point 30 days back', () => {
 		expect(rankRwaChainChanges([rows[1]!], { days: 30, each: 5 })).toEqual([])
 	})
@@ -137,14 +166,14 @@ describe('foldRwaPerpsTotals', () => {
 		volume24h: 3000
 	})
 
-	test('sums open interest and volume over the venues the CEX toggle allows and reads the DEX share', () => {
-		expect(foldRwaPerpsTotals([dex, cex, spotAsset()], true)).toEqual({
+	test('sums open interest and volume over the markets and reads the DEX share', () => {
+		expect(foldRwaPerpsTotals([dex, cex])).toEqual({
 			openInterest: 20_000,
 			openInterestChange24h: { current: 20_000, prior: 14_000 },
 			dexShare: 25,
 			volume24h: 4000
 		})
-		expect(foldRwaPerpsTotals([dex, cex], false)).toEqual({
+		expect(foldRwaPerpsTotals([dex])).toEqual({
 			openInterest: 5000,
 			openInterestChange24h: { current: 5000, prior: 4000 },
 			dexShare: 100,
@@ -152,8 +181,8 @@ describe('foldRwaPerpsTotals', () => {
 		})
 	})
 
-	test('is a gap without perps rows', () => {
-		expect(foldRwaPerpsTotals([spotAsset()], true)).toEqual({
+	test('is a gap without markets', () => {
+		expect(foldRwaPerpsTotals([])).toEqual({
 			openInterest: null,
 			openInterestChange24h: { current: null, prior: null },
 			dexShare: null,
@@ -162,46 +191,65 @@ describe('foldRwaPerpsTotals', () => {
 	})
 })
 
-describe('buildRwaOverviewCards', () => {
-	test('builds the three cards with their toggle variants from the page data', () => {
-		const cards = buildRwaOverviewCards({
-			assets: [spotAsset(), perpsAsset()],
-			chainRows: [
-				{ timestamp: 0, Ethereum: 100 },
-				{ timestamp: 31 * DAY, Ethereum: 150 }
-			],
-			openInterestRows: {
-				withCex: [
-					{ timestamp: 0, Hyperliquid: 10, Binance: 30 },
-					{ timestamp: 31 * DAY, Hyperliquid: 20, Binance: 40 }
-				],
-				dexOnly: [
-					{ timestamp: 0, Hyperliquid: 10 },
-					{ timestamp: 31 * DAY, Hyperliquid: 20 }
-				]
-			}
-		})
-		expect(cards.defiByProtocol.withBridges).toEqual({
-			value: 100_000,
-			changeUsd: 50_000,
-			changePct: 100,
-			bars: [{ name: 'Aave', value: 100_000 }]
-		})
-		expect(cards.defiByProtocol.withoutBridges.bars).toEqual(cards.defiByProtocol.withBridges.bars)
-		expect(cards.chainChange).toEqual({
-			value: 800_000,
-			changeUsd: 300_000,
-			changePct: 60,
-			bars: [{ name: 'Ethereum', changeUsd: 50, changePct: 50 }]
-		})
-		expect(cards.perpsOpenInterest.withCex).toEqual({
-			value: 60,
-			changePct: 50,
-			series: [
-				[0, 40],
-				[31 * DAY, 60]
+describe('getRwaPerpsMarkets', () => {
+	test('keeps the perps rows the Venue Type choice allows and drops spot rows', () => {
+		const assets = [perpsAsset({ id: 'hl' }), perpsAsset({ id: 'bn', venueType: 'CEX' }), spotAsset()]
+		expect(getRwaPerpsMarkets(assets, true).map((row) => row.id)).toEqual(['hl', 'bn'])
+		expect(getRwaPerpsMarkets(assets, false).map((row) => row.id)).toEqual(['hl'])
+	})
+})
+
+describe('buildRwaSplitCard', () => {
+	test('reads the total change over 30d and ranks the names by their own change', () => {
+		expect(
+			buildRwaSplitCard([
+				{ timestamp: 0, Hyperliquid: 100, Binance: 300 },
+				{ timestamp: 31 * DAY, Hyperliquid: 250, Binance: 200 }
+			])
+		).toEqual({
+			changeUsd: 50,
+			changePct: 12.5,
+			bars: [
+				{ name: 'Hyperliquid', changeUsd: 150, changePct: 150 },
+				{ name: 'Binance', changeUsd: -100, changePct: -33.33333333333333 }
 			]
 		})
-		expect(cards.perpsOpenInterest.dexOnly.value).toBe(20)
+	})
+
+	test('is empty without rows', () => {
+		expect(buildRwaSplitCard([])).toEqual({ changeUsd: null, changePct: null, bars: [] })
+	})
+})
+
+describe('buildRwaOpenInterestCard', () => {
+	test('reads the total now, its change over 30d and its line', () => {
+		expect(
+			buildRwaOpenInterestCard([
+				{ timestamp: 0, Hyperliquid: 100, Binance: 300 },
+				{ timestamp: 31 * DAY, Hyperliquid: 250, Binance: 200 }
+			])
+		).toEqual({
+			value: 450,
+			changePct: 12.5,
+			series: [
+				[0, 400],
+				[31 * DAY, 450]
+			]
+		})
+	})
+
+	test('is empty without rows', () => {
+		expect(buildRwaOpenInterestCard([])).toEqual({ value: null, changePct: null, series: [] })
+	})
+})
+
+describe('buildRwaDefiProtocolCard', () => {
+	test('reads the DeFi Active TVL of the rows it is given and its 30d change, bridges out of the bars', () => {
+		expect(buildRwaDefiProtocolCard([spotAsset(), perpsAsset()], true)).toEqual({
+			value: 100_000,
+			changeUsd: 50_000,
+			bars: [{ name: 'Aave', value: 100_000 }]
+		})
+		expect(buildRwaDefiProtocolCard([perpsAsset()], true).value).toBeNull()
 	})
 })

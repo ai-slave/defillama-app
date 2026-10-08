@@ -5,6 +5,8 @@ export type SelectOption = {
 	name: string
 	help?: string
 	icon?: ReactNode
+	/** Drawn greyed out: a value the page's current settings leave out. */
+	muted?: boolean
 }
 
 export type SelectValues = ReadonlyArray<SelectOption> | ReadonlyArray<string>

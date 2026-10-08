@@ -1,79 +1,59 @@
 import { describe, expect, test } from 'vitest'
+import type { RWAPageKind } from '../../layout/pageLayout'
 import {
 	getRwaDefaultGroupBy,
 	getRwaGroupByOptions,
 	getRwaGroupByQueryValue,
 	getRwaGroupMemberships,
-	parseRwaGroupBy
+	parseRwaGroupBy,
+	type RWAGroupBy
 } from '../groupBy'
 import { buildRwaLeafRows } from '../rows'
 import { perpsAsset, spotAsset } from './fixtures'
 
-describe('parseRwaGroupBy', () => {
-	test('defaults to platform in both views, ignoring unknown values', () => {
-		expect(parseRwaGroupBy(undefined, 'assets')).toBe('platform')
-		expect(parseRwaGroupBy('nope', 'assets')).toBe('platform')
-		expect(parseRwaGroupBy(['chain', 'none'], 'assets')).toBe('chain')
-		expect(parseRwaGroupBy(undefined, 'perps')).toBe('platform')
-	})
+const GROUP_BY_PER_PAGE: Array<[RWAPageKind, RWAGroupBy, Array<string>]> = [
+	['overview', 'platform', ['Platform', 'Chain', 'Asset Group', 'Category', 'None']],
+	['chain', 'platform', ['Platform', 'Asset Group', 'Category', 'None']],
+	['category', 'platform', ['Platform', 'Chain', 'Asset Group', 'None']],
+	['assetGroup', 'platform', ['Platform', 'Chain', 'Category', 'None']],
+	['platform', 'none', ['None', 'Chain', 'Asset Group', 'Category']],
+	['perpsOverview', 'platform', ['Venue', 'Asset Group', 'Asset Class', 'Asset', 'None']],
+	['perpsAssetGroup', 'platform', ['Venue', 'Asset Class', 'Asset', 'None']],
+	['venue', 'none', ['None', 'Asset Group', 'Asset Class']],
+	['perpsAsset', 'none', ['None', 'Venue']]
+]
 
-	test('has no chain or category option in the perps view, offers asset there and calls platform Venue', () => {
-		expect(parseRwaGroupBy('chain', 'perps')).toBe('platform')
-		expect(parseRwaGroupBy('category', 'perps')).toBe('platform')
-		expect(parseRwaGroupBy('asset', 'perps')).toBe('asset')
-		expect(parseRwaGroupBy('asset', 'assets')).toBe('platform')
-		expect(getRwaGroupByOptions('perps').map((option) => [option.key, option.name])).toEqual([
-			['platform', 'Venue'],
-			['assetGroup', 'Asset Group'],
-			['asset', 'Asset'],
-			['none', 'None']
-		])
-		expect(getRwaGroupByOptions('assets').map((option) => option.name)).toEqual([
-			'Platform',
-			'Chain',
-			'Asset Group',
-			'Category',
-			'None'
-		])
-	})
-
-	test('serialises the view default as absent', () => {
-		expect(getRwaGroupByQueryValue('platform', 'assets')).toBeUndefined()
-		expect(getRwaGroupByQueryValue('chain', 'assets')).toBe('chain')
-		expect(getRwaGroupByQueryValue('platform', 'perps')).toBeUndefined()
-		expect(getRwaGroupByQueryValue('asset', 'perps')).toBe('asset')
-	})
-
-	test('opens every page by platform and hides Chain on a chain page', () => {
-		for (const scope of ['all', 'chain', 'category', 'assetGroup'] as const) {
-			expect(getRwaDefaultGroupBy('assets', { scope })).toBe('platform')
+describe('the Group by of each page', () => {
+	test.each(GROUP_BY_PER_PAGE)(
+		'%s opens with %s and offers its options in order',
+		(pageKind, defaultGroupBy, names) => {
+			expect(getRwaDefaultGroupBy(pageKind)).toBe(defaultGroupBy)
+			expect(getRwaGroupByOptions(pageKind).map((option) => option.name)).toEqual(names)
+			expect(parseRwaGroupBy(undefined, pageKind)).toBe(defaultGroupBy)
+			expect(getRwaGroupByQueryValue(defaultGroupBy, pageKind)).toBeUndefined()
 		}
-		expect(getRwaDefaultGroupBy('perps', { scope: 'chain' })).toBe('platform')
-		expect(parseRwaGroupBy(undefined, 'assets', { scope: 'chain' })).toBe('platform')
-		expect(parseRwaGroupBy('chain', 'assets', { scope: 'chain' })).toBe('platform')
-		expect(getRwaGroupByOptions('assets', { scope: 'chain' }).map((option) => option.key)).toEqual([
-			'platform',
-			'assetGroup',
-			'category',
-			'none'
-		])
-		expect(getRwaGroupByQueryValue('platform', 'assets', { scope: 'chain' })).toBeUndefined()
+	)
+
+	test('a page never takes its own dimension from the URL, it falls back to its default', () => {
+		expect(parseRwaGroupBy('chain', 'chain')).toBe('platform')
+		expect(parseRwaGroupBy('category', 'category')).toBe('platform')
+		expect(parseRwaGroupBy('assetGroup', 'assetGroup')).toBe('platform')
+		expect(parseRwaGroupBy('platform', 'platform')).toBe('none')
+		expect(parseRwaGroupBy('assetGroup', 'perpsAssetGroup')).toBe('platform')
+		expect(parseRwaGroupBy('platform', 'venue')).toBe('none')
+		expect(parseRwaGroupBy('asset', 'perpsAsset')).toBe('none')
 	})
 
-	test('opens a platform page flat and never offers Platform there', () => {
-		expect(getRwaDefaultGroupBy('assets', { scope: 'platform' })).toBe('none')
-		expect(parseRwaGroupBy(undefined, 'assets', { scope: 'platform' })).toBe('none')
-		expect(parseRwaGroupBy('platform', 'assets', { scope: 'platform' })).toBe('none')
-		expect(parseRwaGroupBy('chain', 'assets', { scope: 'platform' })).toBe('chain')
-		expect(getRwaGroupByOptions('assets', { scope: 'platform' }).map((option) => option.key)).toEqual([
-			'chain',
-			'assetGroup',
-			'category',
-			'none'
-		])
-		expect(getRwaGroupByQueryValue('none', 'assets', { scope: 'platform' })).toBeUndefined()
-		expect(getRwaGroupByQueryValue('assetGroup', 'assets', { scope: 'platform' })).toBe('assetGroup')
-		expect(getRwaDefaultGroupBy('perps', { scope: 'platform' })).toBe('platform')
+	test('spot-only and perps-only dimensions stay in their tree', () => {
+		expect(parseRwaGroupBy('chain', 'perpsOverview')).toBe('platform')
+		expect(parseRwaGroupBy('assetClass', 'overview')).toBe('platform')
+		expect(parseRwaGroupBy('asset', 'overview')).toBe('platform')
+	})
+
+	test('reads the first value of a repeated key and writes a picked option to the URL', () => {
+		expect(parseRwaGroupBy(['assetClass', 'none'], 'perpsOverview')).toBe('assetClass')
+		expect(getRwaGroupByQueryValue('chain', 'platform')).toBe('chain')
+		expect(getRwaGroupByQueryValue('assetClass', 'venue')).toBe('assetClass')
 	})
 })
 
@@ -85,6 +65,12 @@ describe('getRwaGroupMemberships', () => {
 		expect(getRwaGroupMemberships(perp, 'asset')).toEqual([
 			{ key: 'Gold', label: 'Gold', href: '/rwa/perps/asset/gold', icon: null, chain: null }
 		])
+	})
+
+	test('links an asset group into the tree of the row: Perps for a market, Assets for a spot asset', () => {
+		const [perp] = buildRwaLeafRows([perpsAsset({ assetGroup: 'Bonds' })], { includeBridgeTvl: true })
+		expect(getRwaGroupMemberships(perp, 'assetGroup')[0].href).toBe('/rwa/perps/asset-group/bonds')
+		expect(getRwaGroupMemberships(row, 'assetGroup')[0].href).toMatch(/^\/rwa\/asset-group\//)
 	})
 
 	test('puts an asset under its platform with a link', () => {
@@ -119,7 +105,17 @@ describe('getRwaGroupMemberships', () => {
 		])
 	})
 
-	test('uses the primary category and the normalised asset group', () => {
+	test('puts an asset under every category it carries, as the category page counts it', () => {
+		const [both] = buildRwaLeafRows([spotAsset({ category: ['Bond & MMF Funds', 'Private Credit'] })], {
+			includeBridgeTvl: true
+		})
+		expect(getRwaGroupMemberships(both, 'category').map((membership) => membership.href)).toEqual([
+			'/rwa/category/bond-mmf-funds',
+			'/rwa/category/private-credit'
+		])
+	})
+
+	test('uses the category and the normalised asset group', () => {
 		expect(getRwaGroupMemberships(row, 'category')).toEqual([
 			{ key: 'Treasuries', label: 'Treasuries', href: '/rwa/category/treasuries', icon: null, chain: null }
 		])
@@ -147,6 +143,17 @@ describe('getRwaGroupMemberships', () => {
 	test('keeps an unknown platform without a link', () => {
 		const [unknown] = buildRwaLeafRows([spotAsset({ parentPlatform: null })], { includeBridgeTvl: true })
 		expect(getRwaGroupMemberships(unknown, 'platform')).toEqual([
+			{ key: 'Unknown', label: 'Unknown', href: null, icon: null, chain: null }
+		])
+	})
+
+	test('puts a perps market under its first asset class, Unknown without one', () => {
+		const [perp] = buildRwaLeafRows([perpsAsset({ assetClass: ['Commodities', 'Metals'] })], { includeBridgeTvl: true })
+		expect(getRwaGroupMemberships(perp, 'assetClass')).toEqual([
+			{ key: 'Commodities', label: 'Commodities', href: null, icon: null, chain: null }
+		])
+		const [bare] = buildRwaLeafRows([perpsAsset({ assetClass: null })], { includeBridgeTvl: true })
+		expect(getRwaGroupMemberships(bare, 'assetClass')).toEqual([
 			{ key: 'Unknown', label: 'Unknown', href: null, icon: null, chain: null }
 		])
 	})

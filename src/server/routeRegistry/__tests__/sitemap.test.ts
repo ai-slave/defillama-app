@@ -212,11 +212,11 @@ describe('cache-backed sitemap sections', () => {
 			expect.arrayContaining([
 				'rwa/asset/ondo%2Fusdy',
 				'rwa/perps/asset/s-p-500-index',
-				'rwa/perps/contract/xyz%3Asp500',
-				'rwa/perps/forex'
+				'rwa/perps/contract/xyz%3Asp500'
 			])
 		)
 		expect(entriesBySection.get('rwa')).not.toContain('rwa/perps/category/rwa-perps')
+		expect(entriesBySection.get('rwa')).not.toContain('rwa/perps/forex')
 		expect(entriesBySection.get('liquidations')).toEqual(
 			expect.arrayContaining(['liquidations/aave', 'liquidations/aave/ethereum'])
 		)

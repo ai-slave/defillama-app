@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IRWAAssetsOverview } from '../../api.types'
+import { foldRwaPerpsTotals } from '../../cards/cardData'
 import type { RWAPlatformMeta } from '../../PlatformPage/api.types'
 import { spotAsset } from '../../table/__tests__/fixtures'
 
@@ -38,6 +39,7 @@ function overview(): IRWAAssetsOverview {
 	return {
 		platformPage: { meta },
 		assets,
+		perpsTotals: foldRwaPerpsTotals([]),
 		typeOptions: [],
 		assetClassOptions: [],
 		rwaClassificationOptions: [],
@@ -47,29 +49,16 @@ function overview(): IRWAAssetsOverview {
 		assetGroups: ['Bonds'],
 		assetNames: ['Ondo USDY', 'Beta'],
 		issuers: ['Ondo'],
-		platformLinks: [],
 		selectedPlatform: 'Ondo',
-		assetGroupLinks: [],
 		selectedAssetGroup: 'All',
 		defaultInclusion: {
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true
 		},
-		chainLinks: [],
 		selectedChain: 'All',
-		categoryLinks: [],
 		selectedCategory: 'All',
-		totals: {
-			onChainMcap: 0,
-			activeMcap: 0,
-			defiActiveTvl: 0,
-			issuers: [],
-			stablecoins: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, issuers: [] },
-			governance: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, issuers: [] },
-			stablecoinsAndGovernance: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, issuers: [] }
-		},
+		nav: { heading: 'Platforms', links: [], active: 'Ondo' },
 		initialChartDatasets: [
 			{
 				metric: 'activeMcap',

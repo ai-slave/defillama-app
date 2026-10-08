@@ -1,4 +1,4 @@
-import type { RWAOverviewDisplayRow } from '../api.types'
+import type { RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from '../api.types'
 import type { RWAChartRow } from '../chartDataset'
 import { getRwaDisplayedDefiActiveTvlByProtocol } from '../filterState'
 import { sumRwaRowValues } from '../flowSplit'
@@ -16,19 +16,20 @@ export const RWA_CARD_CHAIN_EACH = 5
 export type RwaNamedBar = { name: string; value: number }
 export type RwaChangeBar = { name: string; changeUsd: number; changePct: number | null }
 export type RwaChange = { changeUsd: number | null; changePct: number | null }
-export type RwaValueChange = RwaChange & { value: number | null }
-export type RwaDefiProtocolCard = RwaValueChange & { bars: Array<RwaNamedBar> }
-export type RwaChainChangeCard = RwaValueChange & { bars: Array<RwaChangeBar> }
+export type RwaDefiProtocolCard = { value: number | null; changeUsd: number | null; bars: Array<RwaNamedBar> }
+/** A total's 30d change and the names' own changes, as Change by Chain and Change by Venue draw them. */
+export type RwaChangeCard = RwaChange & { bars: Array<RwaChangeBar> }
 export type RwaOpenInterestCard = { value: number | null; changePct: number | null; series: Array<[number, number]> }
+/** The perps venue split of open interest as a change card, one variant per Venue Type choice. */
+export type RwaPerpsSplitCards = { withCex: RwaChangeCard; dexOnly: RwaChangeCard }
 
 /**
- * The three front page cards, folded at build time over the page's default assets. The toggles that change
- * a card carry their own variant; the attribute filters do not apply, which the card tooltip says.
+ * The parts of the front page cards the browser cannot fold: the server chain split's bars, read while no filter is
+ * set, and the perps venue split behind the RWA Perps Open Interest line. The rest folds the page's rows.
  */
 export type RwaOverviewCards = {
-	defiByProtocol: { withBridges: RwaDefiProtocolCard; withoutBridges: RwaDefiProtocolCard }
-	chainChange: RwaChainChangeCard
-	perpsOpenInterest: { withCex: RwaOpenInterestCard; dexOnly: RwaOpenInterestCard }
+	chainChange: { bars: Array<RwaChangeBar> }
+	perpsOpenInterest: RwaOpenInterestCard
 }
 
 export type RwaPerpsTotals = {
@@ -89,7 +90,8 @@ export function rankRwaChainChanges(
 	rows: Array<RWAChartRow>,
 	{ days, each }: { days: number; each: number }
 ): Array<RwaChangeBar> {
-	const sorted = [...rows].sort((a, b) => a.timestamp - b.timestamp)
+	/* The two days come from rows that have a total, as the card's own total does. */
+	const sorted = rows.filter((row) => sumRwaRowValues(row) != null).sort((a, b) => a.timestamp - b.timestamp)
 	const latest = sorted[sorted.length - 1]
 	if (!latest) return []
 	const windowStart = latest.timestamp - days * DAY_MS
@@ -100,13 +102,14 @@ export function rankRwaChainChanges(
 	}
 	if (!prior) return []
 	const changes: Array<RwaChangeBar> = []
-	for (const chain of new Set([...Object.keys(latest), ...Object.keys(prior)])) {
-		if (chain === 'timestamp') continue
-		const now = latest[chain] ?? 0
-		const then = prior[chain] ?? 0
+	for (const name of Object.keys(latest)) {
+		const now = latest[name]
+		const then = prior[name]
+		/* A name missing on either day is a gap in the data (a late publish, a renamed chain), never a fall to zero. */
+		if (name === 'timestamp' || now == null || then == null) continue
 		const changeUsd = now - then
 		if (changeUsd === 0) continue
-		changes.push({ name: chain, changeUsd, changePct: percentChange(now, then) })
+		changes.push({ name, changeUsd, changePct: percentChange(now, then) })
 	}
 	const gains = changes
 		.filter((change) => change.changeUsd > 0)
@@ -131,25 +134,33 @@ export function foldRwaSeriesTotal(rows: Array<RWAChartRow>): Array<[number, num
 	return series.sort((a, b) => a[0] - b[0])
 }
 
-/** Open interest and volume over the perps rows the CEX toggle allows; 24h priors from each row's own change. */
-export function foldRwaPerpsTotals(assets: Array<RWAOverviewDisplayRow>, includeCex: boolean): RwaPerpsTotals {
+/** The perps rows the Venue Type choice allows. */
+export function getRwaPerpsMarkets(
+	assets: ReadonlyArray<RWAOverviewDisplayRow>,
+	includeCex: boolean
+): Array<RWAPerpsContractOverlayRow> {
+	return assets.filter(
+		(asset): asset is RWAPerpsContractOverlayRow => asset.kind === 'perps' && (includeCex || asset.venueType !== 'CEX')
+	)
+}
+
+/** Open interest and volume over the given perps rows; 24h priors from each row's own change. */
+export function foldRwaPerpsTotals(markets: Array<RWAPerpsContractOverlayRow>): RwaPerpsTotals {
 	let openInterest: number | null = null
 	let dexOpenInterest = 0
 	let volume24h: number | null = null
 	let current: number | null = null
 	let prior: number | null = null
-	for (const asset of assets) {
-		if (asset.kind !== 'perps') continue
-		if (!includeCex && asset.venueType === 'CEX') continue
-		if (asset.openInterest != null) {
-			openInterest = (openInterest ?? 0) + asset.openInterest
-			if (asset.venueType === 'DEX') dexOpenInterest += asset.openInterest
-			if (asset.openInterestChange24h != null && asset.openInterestChange24h > -100) {
-				current = (current ?? 0) + asset.openInterest
-				prior = (prior ?? 0) + asset.openInterest / (1 + asset.openInterestChange24h / 100)
+	for (const market of markets) {
+		if (market.openInterest != null) {
+			openInterest = (openInterest ?? 0) + market.openInterest
+			if (market.venueType === 'DEX') dexOpenInterest += market.openInterest
+			if (market.openInterestChange24h != null && market.openInterestChange24h > -100) {
+				current = (current ?? 0) + market.openInterest
+				prior = (prior ?? 0) + market.openInterest / (1 + market.openInterestChange24h / 100)
 			}
 		}
-		if (asset.volume24h != null) volume24h = (volume24h ?? 0) + asset.volume24h
+		if (market.volume24h != null) volume24h = (volume24h ?? 0) + market.volume24h
 	}
 	return {
 		openInterest,
@@ -159,56 +170,35 @@ export function foldRwaPerpsTotals(assets: Array<RWAOverviewDisplayRow>, include
 	}
 }
 
-/** The value follows the Bridge TVL toggle; the bars leave bridges out either way (outline-final-final.pdf). */
-function buildDefiProtocolCard(assets: Array<RWAOverviewDisplayRow>, includeBridgeTvl: boolean): RwaDefiProtocolCard {
+/** The value follows the Bridge TVL toggle; the bars leave bridges out either way. */
+export function buildRwaDefiProtocolCard(
+	assets: Array<RWAOverviewDisplayRow>,
+	includeBridgeTvl: boolean
+): RwaDefiProtocolCard {
 	const totals = sumRwaKpiTotals(assets, includeBridgeTvl)
 	const { current, prior } = totals.change['1m'].defiActiveTvl
 	return {
 		value: totals.defiActiveTvl,
 		changeUsd: current == null || prior == null ? null : current - prior,
-		changePct: percentChange(current, prior),
 		bars: rankRwaDefiProtocols(assets, false)
 	}
 }
 
-function buildOpenInterestCard(rows: Array<RWAChartRow>): RwaOpenInterestCard {
+/** A split's total now against 30 days ago, and the split's largest gains and losses. */
+export function buildRwaSplitCard(rows: Array<RWAChartRow>): RwaChangeCard {
+	return {
+		...changeOver(foldRwaSeriesTotal(rows), RWA_CARD_CHANGE_DAYS),
+		bars: rankRwaChainChanges(rows, { days: RWA_CARD_CHANGE_DAYS, each: RWA_CARD_CHAIN_EACH })
+	}
+}
+
+/** A split's total now, its change over 30 days and its line. */
+export function buildRwaOpenInterestCard(rows: Array<RWAChartRow>): RwaOpenInterestCard {
 	const series = foldRwaSeriesTotal(rows)
 	const latest = series[series.length - 1]
 	return {
 		value: latest ? latest[1] : null,
 		changePct: changeOver(series, RWA_CARD_CHANGE_DAYS).changePct,
 		series
-	}
-}
-
-export function buildRwaOverviewCards({
-	assets,
-	chainRows,
-	openInterestRows
-}: {
-	/** The page's assets after its default rules: no stablecoins, governance, wrappers or suspicious rows. */
-	assets: Array<RWAOverviewDisplayRow>
-	/** The server chain split for active mcap, timestamps in ms. */
-	chainRows: Array<RWAChartRow>
-	/** The perps venue split for open interest, timestamps in ms, per CEX toggle. */
-	openInterestRows: { withCex: Array<RWAChartRow>; dexOnly: Array<RWAChartRow> }
-}): RwaOverviewCards {
-	const totals = sumRwaKpiTotals(assets, true)
-	const { current, prior } = totals.change['1m'].activeMcap
-	return {
-		defiByProtocol: {
-			withBridges: buildDefiProtocolCard(assets, true),
-			withoutBridges: buildDefiProtocolCard(assets, false)
-		},
-		chainChange: {
-			value: totals.activeMcap,
-			changeUsd: current == null || prior == null ? null : current - prior,
-			changePct: percentChange(current, prior),
-			bars: rankRwaChainChanges(chainRows, { days: RWA_CARD_CHANGE_DAYS, each: RWA_CARD_CHAIN_EACH })
-		},
-		perpsOpenInterest: {
-			withCex: buildOpenInterestCard(openInterestRows.withCex),
-			dexOnly: buildOpenInterestCard(openInterestRows.dexOnly)
-		}
 	}
 }

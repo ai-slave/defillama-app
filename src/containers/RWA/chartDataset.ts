@@ -8,11 +8,7 @@ export type RWAChartDataset = { source: Array<RWAChartRow>; dimensions: Array<st
 export type RWAPositionalChartDataset = MultiSeriesTimeSeriesDataset
 export type RwaNamedValue = { name: string; value: number }
 
-export const RWA_MAX_HORIZONTAL_BARS = 9
-
-export function emptyChartDataset(): RWAChartDataset {
-	return { source: [], dimensions: ['timestamp'] }
-}
+export const RWA_MAX_HORIZONTAL_BARS = 20
 
 /** Materialize the named public RWA API contract once before a Cartesian renderer consumes it. */
 export function toRwaMultiSeriesChartDataset(dataset: RWAChartDataset): MultiSeriesTimeSeriesDataset {
@@ -27,64 +23,6 @@ export function toRwaMultiSeriesChartDataset(dataset: RWAChartDataset): MultiSer
 		source.push(row)
 	}
 	return { source, dimensions }
-}
-
-export function buildRwaChartDatasetTotal({
-	dataset,
-	totalLabel = 'Total',
-	onlyTotal = false,
-	isSeriesDimension
-}: {
-	dataset: RWAChartDataset
-	totalLabel?: string
-	onlyTotal?: boolean
-	isSeriesDimension?: (dimension: string) => boolean
-}): RWAChartDataset {
-	if (dataset.source.length === 0) return emptyChartDataset()
-
-	const seriesDimensions: Array<string> = []
-	for (const dimension of dataset.dimensions) {
-		const includeSeries = isSeriesDimension
-			? isSeriesDimension(dimension)
-			: dimension !== 'timestamp' && dimension !== totalLabel
-		if (includeSeries) {
-			seriesDimensions.push(dimension)
-		}
-	}
-	if (seriesDimensions.length === 0) return onlyTotal ? emptyChartDataset() : dataset
-
-	const source: RWAChartDataset['source'] = []
-	for (const row of dataset.source) {
-		const nextRow: RWAChartRow = { timestamp: row.timestamp }
-		if (!onlyTotal) {
-			for (const key in row) {
-				nextRow[key] = row[key]
-			}
-		}
-
-		let total = 0
-		for (const dimension of seriesDimensions) {
-			total += row[dimension] ?? 0
-		}
-		nextRow[totalLabel] = total
-		source.push(nextRow)
-	}
-
-	if (onlyTotal) {
-		return {
-			source,
-			dimensions: ['timestamp', totalLabel]
-		}
-	}
-
-	return {
-		source,
-		dimensions: ['timestamp', totalLabel, ...seriesDimensions]
-	}
-}
-
-export function appendRwaChartDatasetTotal(dataset: RWAChartDataset): RWAChartDataset {
-	return buildRwaChartDatasetTotal({ dataset })
 }
 
 export function limitRwaHorizontalBarData(
@@ -119,8 +57,24 @@ export function limitRwaHorizontalBarData(
 	return overflowValue > 0 ? [...limited, { name: 'Others', value: overflowValue }] : limited
 }
 
+/** The perps Total lines, by metric; the spot ones come from getRwaChartTotalLabel. */
+export const RWA_PERPS_TOTAL_LABELS = {
+	openInterest: 'Total Open Interest',
+	volume: 'Total Volume',
+	markets: 'Total Markets'
+} as const
+
+/* Every Total line a chart adds. A member can be named "Total ..." too (an index called Total Crypto Market Cap
+   ex-BTC), so the Total is the exact label, never a prefix. */
+const RWA_TOTAL_SERIES_LABELS: ReadonlySet<string> = new Set([
+	'Total Active AUM',
+	'Total Onchain AUM',
+	'Total DeFi Active TVL',
+	...Object.values(RWA_PERPS_TOTAL_LABELS)
+])
+
 export function isRwaTotalSeriesLabel(label: string): boolean {
-	return label.startsWith('Total ')
+	return RWA_TOTAL_SERIES_LABELS.has(label)
 }
 
 export function sortRwaChartSeriesLabels(labels: Array<string>): Array<string> {

@@ -1,10 +1,12 @@
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatLineChart, getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
+import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import type { IRWAFlowAggregatePoint } from '../api.types'
 import { isRwaTotalSeriesLabel, type RWAPositionalChartDataset } from '../chartDataset'
 import { definitions } from '../definitions'
+import type { RWAFlowGrouping } from '../flows'
 import type { RWAPlatformMilestone } from '../PlatformPage/api.types'
+import type { RWAEntityChart, RWAEntityChartCatalogue } from './entityChart'
 
 /* The entity chart of a platform page: the platform as one series per metric, the protocol page's Add Metrics
    pattern over the series the page already folds. Pure: the panel feeds it datasets and reads series back. */
@@ -23,15 +25,6 @@ export type RWAPlatformChartMetricKey =
 	| 'topAssetShare'
 	| 'events'
 
-export type RWAPlatformChartGroup = 'Core' | 'Flows' | 'Ratios' | 'Assets' | 'Annotations'
-
-export type RWAPlatformChartMetric = {
-	key: RWAPlatformChartMetricKey
-	label: string
-	group: RWAPlatformChartGroup
-	description: string
-}
-
 /** Axis 0 money levels, 1 money flows, 2 percent, 3 counts: a level and a flow on one axis would squash the flow. */
 const MONEY_AXIS = 0
 const FLOW_AXIS = 1
@@ -41,85 +34,63 @@ const COUNT_AXIS = 3
 const GREEN = '#3fb950'
 const RED = '#f85149'
 
-export const RWA_PLATFORM_CHART_METRICS: ReadonlyArray<RWAPlatformChartMetric> = [
-	{ key: 'activeMcap', label: 'Active AUM', group: 'Core', description: definitions.activeMcap.description },
-	{ key: 'onChainMcap', label: 'Onchain AUM', group: 'Core', description: definitions.onChainMcap.description },
-	{ key: 'defiActiveTvl', label: 'DeFi Active TVL', group: 'Core', description: definitions.defiActiveTvl.description },
-	{ key: 'netFlows', label: 'Net Flows', group: 'Flows', description: definitions.flows.assetNetFlows.description },
-	{ key: 'inflows', label: 'Inflows', group: 'Flows', description: definitions.flows.inflows.description },
-	{ key: 'outflows', label: 'Outflows', group: 'Flows', description: definitions.flows.outflows.description },
-	{
-		key: 'cumulativeNetFlows',
-		label: 'Cumulative Net Flows',
-		group: 'Flows',
-		description: definitions.flows.cumulativeLegend.description
-	},
-	{
-		key: 'utilization',
-		label: 'Utilization',
-		group: 'Ratios',
-		description: 'DeFi Active TVL as a share of active AUM.'
-	},
-	{
-		key: 'activeShare',
-		label: 'Active / Onchain',
-		group: 'Ratios',
-		description: 'Active mcap as a share of onchain AUM.'
-	},
-	{
-		key: 'liveAssets',
-		label: 'Live Assets',
-		group: 'Assets',
-		description: 'Assets with active AUM above zero on the day.'
-	},
-	{
-		key: 'topAssetShare',
-		label: 'Top Asset Share',
-		group: 'Assets',
-		description: "The largest asset's share of the platform's active AUM on the day."
-	},
-	{
-		key: 'events',
-		label: 'Events',
-		group: 'Annotations',
-		description: 'The milestones the index records, marked on the time axis.'
-	}
-]
-
-export const RWA_PLATFORM_CHART_DEFAULT_METRICS: ReadonlyArray<RWAPlatformChartMetricKey> = ['activeMcap']
-export const RWA_PLATFORM_CHART_METRICS_QUERY_KEY = 'metrics'
-
-const METRIC_KEYS = RWA_PLATFORM_CHART_METRICS.map((metric) => metric.key)
-
-function isMetricKey(value: string): value is RWAPlatformChartMetricKey {
-	return (METRIC_KEYS as Array<string>).includes(value)
+export const RWA_PLATFORM_CHART: RWAEntityChartCatalogue<RWAPlatformChartMetricKey> = {
+	groups: ['Core', 'Flows', 'Ratios', 'Assets', 'Annotations'],
+	defaults: ['activeMcap'],
+	metrics: [
+		{ key: 'activeMcap', label: 'Active AUM', group: 'Core', description: definitions.activeMcap.description },
+		{ key: 'onChainMcap', label: 'Onchain AUM', group: 'Core', description: definitions.onChainMcap.description },
+		{
+			key: 'defiActiveTvl',
+			label: 'DeFi Active TVL',
+			group: 'Core',
+			description: definitions.defiActiveTvl.description
+		},
+		{ key: 'netFlows', label: 'Net Flows', group: 'Flows', description: definitions.flows.assetNetFlows.description },
+		{ key: 'inflows', label: 'Inflows', group: 'Flows', description: definitions.flows.inflows.description },
+		{ key: 'outflows', label: 'Outflows', group: 'Flows', description: definitions.flows.outflows.description },
+		{
+			key: 'cumulativeNetFlows',
+			label: 'Cumulative Net Flows',
+			group: 'Flows',
+			description: definitions.flows.cumulativeLegend.description
+		},
+		{
+			key: 'utilization',
+			label: 'Utilization',
+			group: 'Ratios',
+			description: 'DeFi Active TVL as a share of active AUM.'
+		},
+		{
+			key: 'activeShare',
+			label: 'Active / Onchain',
+			group: 'Ratios',
+			description: 'Active mcap as a share of onchain AUM.'
+		},
+		{
+			key: 'liveAssets',
+			label: 'Live Assets',
+			group: 'Assets',
+			description: 'Assets with active AUM above zero on the day.'
+		},
+		{
+			key: 'topAssetShare',
+			label: 'Top Asset Share',
+			group: 'Assets',
+			description: "The largest asset's share of the platform's active AUM on the day."
+		},
+		{
+			key: 'events',
+			label: 'Events',
+			group: 'Annotations',
+			description: 'The milestones the index records, marked on the time axis.'
+		}
+	]
 }
 
-/** `?metrics=a,b` in catalogue order; unknown keys drop; nothing selected means the default. */
-export function parseRwaPlatformChartMetrics(
-	value: string | Array<string> | undefined
-): Array<RWAPlatformChartMetricKey> {
-	const raw = (Array.isArray(value) ? value : value ? [value] : []).flatMap((entry) => entry.split(','))
-	const wanted = new Set(raw.map((entry) => entry.trim()).filter(isMetricKey))
-	const selected = METRIC_KEYS.filter((key) => wanted.has(key))
-	return selected.length > 0 ? selected : [...RWA_PLATFORM_CHART_DEFAULT_METRICS]
-}
-
-/** The default and an empty selection both stay out of the URL: the chart never draws nothing. */
-export function getRwaPlatformChartMetricsQuery(
-	selected: ReadonlyArray<RWAPlatformChartMetricKey>
-): string | undefined {
-	const ordered = METRIC_KEYS.filter((key) => selected.includes(key))
-	const isDefault =
-		ordered.length === 0 ||
-		(ordered.length === RWA_PLATFORM_CHART_DEFAULT_METRICS.length &&
-			ordered.every((key, index) => key === RWA_PLATFORM_CHART_DEFAULT_METRICS[index]))
-	return isDefault ? undefined : ordered.join(',')
-}
+const METRIC_KEYS = RWA_PLATFORM_CHART.metrics.map((metric) => metric.key)
 
 export type RWAPlatformChartPoints = Array<[timestamp: number, value: number | null]>
-export type RWAPlatformChartPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-
 export type RWAPlatformChartInputs = {
 	activeMcap: RWAPlatformChartPoints
 	onChainMcap: RWAPlatformChartPoints
@@ -129,12 +100,7 @@ export type RWAPlatformChartInputs = {
 	/** The platform's daily net flow, seconds timestamps as the flows api sends them. */
 	flows: Array<IRWAFlowAggregatePoint> | null
 	milestones: Array<RWAPlatformMilestone>
-	period: RWAPlatformChartPeriod
-}
-
-export type RWAPlatformEntityChart = {
-	series: Array<MultiSeriesChartSeriesConfig>
-	hallmarks: Array<[number, string]>
+	period: RWAFlowGrouping
 }
 
 /** The Total column of a folded dataset as points, for the panel to hand in. */
@@ -171,18 +137,12 @@ function flowPoints(flows: Array<IRWAFlowAggregatePoint> | null): Array<[number,
 	return out
 }
 
-/** Bars sum per bucket; a bucket with no measured day is left out, unknown is not zero. */
-function bucketed(points: Array<[number, number]>, period: RWAPlatformChartPeriod): Array<[number, number]> {
-	if (period === 'daily') return points
-	const sums = new Map<number, number>()
-	for (const [timestamp, value] of points) {
-		const bucket = getBucketTimestampMs(timestamp, period)
-		sums.set(bucket, (sums.get(bucket) ?? 0) + value)
-	}
-	return Array.from(sums, ([timestamp, value]) => [timestamp, value] as [number, number]).sort((a, b) => a[0] - b[0])
+/** Bars sum per period, or run up under Cumulative; a period with no measured day is left out, unknown is not zero. */
+function bucketRwaPeriodBars(points: Array<[number, number]>, period: RWAFlowGrouping): Array<[number, number | null]> {
+	return formatBarChart({ data: points, groupBy: period, dateInMs: true, denominationPriceHistory: null })
 }
 
-function cumulative(points: Array<[number, number]>): Array<[number, number]> {
+export function cumulativeRwaPoints(points: Array<[number, number]>): Array<[number, number]> {
 	let running = 0
 	return points.map(([timestamp, value]) => {
 		running += value
@@ -236,7 +196,7 @@ export function getRwaMilestoneHallmarks(milestones: Array<RWAPlatformMilestone>
 	return hallmarks.sort((a, b) => a[0] - b[0])
 }
 
-function line(
+export function rwaLineSeries(
 	name: string,
 	data: Array<[number, number | null]>,
 	{ axis, color, symbol, fill }: { axis: number; color: string; symbol: string; fill?: boolean }
@@ -253,14 +213,21 @@ function line(
 	}
 }
 
-function bar(name: string, data: Array<[number, number]>, color: string): MultiSeriesChartSeriesConfig {
+/** A flow per period as a bar; under Cumulative its running total, drawn as a line like the protocol charts. */
+export function periodBarSeries(
+	name: string,
+	points: Array<[number, number]>,
+	{ axis, color, period }: { axis: number; color: string; period: RWAFlowGrouping }
+): MultiSeriesChartSeriesConfig {
+	const data = bucketRwaPeriodBars(points, period)
+	if (period === 'cumulative') return rwaLineSeries(name, data, { axis, color, symbol: '$' })
 	return {
 		type: 'bar',
 		name,
 		encode: { x: 0, y: 1 },
 		data,
 		color,
-		yAxisIndex: FLOW_AXIS,
+		yAxisIndex: axis,
 		valueSymbol: '$',
 		large: false
 	}
@@ -270,20 +237,22 @@ function bar(name: string, data: Array<[number, number]>, color: string): MultiS
 export function buildRwaPlatformEntityChart(
 	selected: ReadonlyArray<RWAPlatformChartMetricKey>,
 	inputs: RWAPlatformChartInputs
-): RWAPlatformEntityChart {
+): RWAEntityChart {
 	const series: Array<MultiSeriesChartSeriesConfig> = []
 	const flows = flowPoints(inputs.flows)
 	// Like the protocol and chain charts: bars sum each period and lines keep its last value, on the same period key.
 	const levels = (points: Array<[number, number]>) =>
 		formatLineChart({ data: points, groupBy: inputs.period, dateInMs: true, denominationPriceHistory: null })
 	const label = (key: RWAPlatformChartMetricKey) =>
-		RWA_PLATFORM_CHART_METRICS.find((metric) => metric.key === key)!.label
+		RWA_PLATFORM_CHART.metrics.find((metric) => metric.key === key)!.label
+	const flowBar = (name: string, points: Array<[number, number]>, color: string) =>
+		periodBarSeries(name, points, { axis: FLOW_AXIS, color, period: inputs.period })
 	for (const key of METRIC_KEYS) {
 		if (!selected.includes(key)) continue
 		switch (key) {
 			case 'activeMcap':
 				series.push(
-					line(label(key), levels(definedPoints(inputs.activeMcap)), {
+					rwaLineSeries(label(key), levels(definedPoints(inputs.activeMcap)), {
 						axis: MONEY_AXIS,
 						color: CHART_COLORS[0],
 						symbol: '$',
@@ -293,7 +262,7 @@ export function buildRwaPlatformEntityChart(
 				break
 			case 'onChainMcap':
 				series.push(
-					line(label(key), levels(definedPoints(inputs.onChainMcap)), {
+					rwaLineSeries(label(key), levels(definedPoints(inputs.onChainMcap)), {
 						axis: MONEY_AXIS,
 						color: CHART_COLORS[6] ?? CHART_COLORS[1],
 						symbol: '$'
@@ -302,7 +271,7 @@ export function buildRwaPlatformEntityChart(
 				break
 			case 'defiActiveTvl':
 				series.push(
-					line(label(key), levels(definedPoints(inputs.defiActiveTvl)), {
+					rwaLineSeries(label(key), levels(definedPoints(inputs.defiActiveTvl)), {
 						axis: MONEY_AXIS,
 						color: CHART_COLORS[3],
 						symbol: '$'
@@ -310,40 +279,38 @@ export function buildRwaPlatformEntityChart(
 				)
 				break
 			case 'netFlows':
-				series.push(bar(label(key), bucketed(flows, inputs.period), CHART_COLORS[4]))
+				series.push(flowBar(label(key), flows, CHART_COLORS[4]))
 				break
 			case 'inflows':
 				series.push(
-					bar(
+					flowBar(
 						label(key),
-						bucketed(
-							flows.filter(([, value]) => value > 0),
-							inputs.period
-						),
+						flows.filter(([, value]) => value > 0),
 						GREEN
 					)
 				)
 				break
 			case 'outflows':
 				series.push(
-					bar(
+					flowBar(
 						label(key),
-						bucketed(
-							flows.filter(([, value]) => value < 0),
-							inputs.period
-						),
+						flows.filter(([, value]) => value < 0),
 						RED
 					)
 				)
 				break
 			case 'cumulativeNetFlows':
 				series.push(
-					line(label(key), levels(cumulative(flows)), { axis: FLOW_AXIS, color: CHART_COLORS[1], symbol: '$' })
+					rwaLineSeries(label(key), levels(cumulativeRwaPoints(flows)), {
+						axis: FLOW_AXIS,
+						color: CHART_COLORS[1],
+						symbol: '$'
+					})
 				)
 				break
 			case 'utilization':
 				series.push(
-					line(label(key), levels(ratio(inputs.defiActiveTvl, inputs.activeMcap)), {
+					rwaLineSeries(label(key), levels(ratio(inputs.defiActiveTvl, inputs.activeMcap)), {
 						axis: PERCENT_AXIS,
 						color: CHART_COLORS[2],
 						symbol: '%'
@@ -352,7 +319,7 @@ export function buildRwaPlatformEntityChart(
 				break
 			case 'activeShare':
 				series.push(
-					line(label(key), levels(ratio(inputs.activeMcap, inputs.onChainMcap)), {
+					rwaLineSeries(label(key), levels(ratio(inputs.activeMcap, inputs.onChainMcap)), {
 						axis: PERCENT_AXIS,
 						color: CHART_COLORS[5],
 						symbol: '%'
@@ -362,7 +329,7 @@ export function buildRwaPlatformEntityChart(
 			case 'liveAssets':
 				if (inputs.perAsset)
 					series.push(
-						line(label(key), levels(liveAssets(inputs.perAsset)), {
+						rwaLineSeries(label(key), levels(liveAssets(inputs.perAsset)), {
 							axis: COUNT_AXIS,
 							color: CHART_COLORS[7] ?? CHART_COLORS[2],
 							symbol: ''
@@ -372,7 +339,7 @@ export function buildRwaPlatformEntityChart(
 			case 'topAssetShare':
 				if (inputs.perAsset)
 					series.push(
-						line(label(key), levels(topAssetShare(inputs.perAsset)), {
+						rwaLineSeries(label(key), levels(topAssetShare(inputs.perAsset)), {
 							axis: PERCENT_AXIS,
 							color: CHART_COLORS[8] ?? CHART_COLORS[1],
 							symbol: '%'
@@ -398,11 +365,11 @@ function assertNever(value: never): never {
  */
 export function buildRwaPlatformEntityCsvDataset(
 	series: Array<MultiSeriesChartSeriesConfig>,
-	period: RWAPlatformChartPeriod
+	period: RWAFlowGrouping
 ): {
 	dimensions: Array<string>
 	source: Array<Array<number | null>>
-	groupBy: RWAPlatformChartPeriod
+	groupBy: RWAFlowGrouping
 } {
 	const timestamps = new Set<number>()
 	const columns = series.map((entry) => new Map((entry.data ?? []).map(([timestamp, value]) => [timestamp, value])))

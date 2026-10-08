@@ -1,23 +1,42 @@
 import { normalizeRwaAssetGroup } from '../assetGroup'
 import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from '../grouping'
+import { getRwaPageLayout, type RWAPageKind } from '../layout/pageLayout'
 import { rwaSlug } from '../rwaSlug'
+import { getRwaAssetGroupHref } from './classificationHrefs'
 import type { RWAGroupIcon, RWALeafRow } from './rows'
 
-export type RWATableView = 'assets' | 'perps'
-export const RWA_GROUP_BY_OPTIONS = ['platform', 'chain', 'assetGroup', 'category', 'asset', 'none'] as const
+export const RWA_GROUP_BY_OPTIONS = [
+	'platform',
+	'chain',
+	'assetGroup',
+	'category',
+	'assetClass',
+	'asset',
+	'none'
+] as const
 export type RWAGroupBy = (typeof RWA_GROUP_BY_OPTIONS)[number]
 export const RWA_GROUP_BY_QUERY_KEY = 'groupBy'
 
-/** The page a table sits on: the overview, or one chain, category, platform or asset group. */
-export type RWAGroupByScope = 'all' | 'chain' | 'category' | 'platform' | 'assetGroup'
-export type RWAGroupByOptions = { scope?: RWAGroupByScope }
-
 /**
- * Every page opens by platform; the Perps view calls it Venue. A platform page is one platform, so its Assets view
- * opens flat: the assets are what the reader came for, and Platform would be one row.
+ * The Group by each page offers, in strip order. A page never offers its own dimension, nor one with a single value
+ * on it: perps markets carry no chain and share one category, a spot row is its own asset, and a perps asset has one
+ * asset class and one asset group.
  */
-export function getRwaDefaultGroupBy(view: RWATableView, { scope = 'all' }: RWAGroupByOptions = {}): RWAGroupBy {
-	return view === 'assets' && scope === 'platform' ? 'none' : 'platform'
+const GROUP_BY_PER_PAGE: Record<RWAPageKind, ReadonlyArray<RWAGroupBy>> = {
+	overview: ['platform', 'chain', 'assetGroup', 'category', 'none'],
+	chain: ['platform', 'assetGroup', 'category', 'none'],
+	category: ['platform', 'chain', 'assetGroup', 'none'],
+	assetGroup: ['platform', 'chain', 'category', 'none'],
+	platform: ['none', 'chain', 'assetGroup', 'category'],
+	perpsOverview: ['platform', 'assetGroup', 'assetClass', 'asset', 'none'],
+	perpsAssetGroup: ['platform', 'assetClass', 'asset', 'none'],
+	venue: ['none', 'assetGroup', 'assetClass'],
+	perpsAsset: ['none', 'platform']
+}
+
+/** The page layout names the default: by platform (Venue on perps rows), None on the entity and perps asset pages. */
+export function getRwaDefaultGroupBy(pageKind: RWAPageKind): RWAGroupBy {
+	return getRwaPageLayout(pageKind).defaultGroupBy
 }
 
 const GROUP_BY_LABELS: Record<RWAGroupBy, string> = {
@@ -25,6 +44,7 @@ const GROUP_BY_LABELS: Record<RWAGroupBy, string> = {
 	chain: 'Chain',
 	assetGroup: 'Asset Group',
 	category: 'Category',
+	assetClass: 'Asset Class',
 	asset: 'Asset',
 	none: 'None'
 }
@@ -45,41 +65,31 @@ export type RWAPlatformLogos = Record<string, string>
 export type RWAGroupOptions = { platformLogos?: RWAPlatformLogos }
 
 const GROUP_BY_HELP: Partial<Record<RWAGroupBy, string>> = {
-	chain: 'An asset sits under every chain it has onchain AUM on; unpriced rows sit under no chain.'
+	chain: 'An asset sits under every chain it has onchain AUM on; unpriced rows sit under no chain.',
+	category: 'An asset sits under every category it carries, so the groups can add up to more than the total.'
 }
 
-export function getRwaGroupByOptions(
-	view: RWATableView,
-	options: RWAGroupByOptions = {}
-): Array<{ key: RWAGroupBy; name: string; help?: string }> {
-	return RWA_GROUP_BY_OPTIONS.filter((groupBy) => isRwaGroupByAllowed(groupBy, view, options)).map((key) => ({
+export function getRwaGroupByOptions(pageKind: RWAPageKind): Array<{ key: RWAGroupBy; name: string; help?: string }> {
+	return GROUP_BY_PER_PAGE[pageKind].map((key) => ({
 		key,
-		name: getRwaGroupByLabel(key, view),
+		name: getRwaGroupByLabel(key, pageKind),
 		...(GROUP_BY_HELP[key] ? { help: GROUP_BY_HELP[key] } : {})
 	}))
 }
 
-/** The platform option reads Venue in the Perps view. */
-export function getRwaGroupByLabel(groupBy: RWAGroupBy, view: RWATableView): string {
-	return view === 'perps' && groupBy === 'platform' ? 'Venue' : GROUP_BY_LABELS[groupBy]
+/** The platform option reads Venue on perps rows. */
+export function getRwaGroupByLabel(groupBy: RWAGroupBy, pageKind: RWAPageKind): string {
+	return getRwaPageLayout(pageKind).section === 'perps' && groupBy === 'platform' ? 'Venue' : GROUP_BY_LABELS[groupBy]
 }
 
-export function parseRwaGroupBy(
-	query: string | Array<string> | undefined,
-	view: RWATableView,
-	options: RWAGroupByOptions = {}
-): RWAGroupBy {
+/** A value the page does not offer, its own dimension included, falls back to the page's default. */
+export function parseRwaGroupBy(query: string | Array<string> | undefined, pageKind: RWAPageKind): RWAGroupBy {
 	const value = Array.isArray(query) ? query[0] : query
-	const groupBy = RWA_GROUP_BY_OPTIONS.find((option) => option === value)
-	return groupBy && isRwaGroupByAllowed(groupBy, view, options) ? groupBy : getRwaDefaultGroupBy(view, options)
+	return GROUP_BY_PER_PAGE[pageKind].find((option) => option === value) ?? getRwaDefaultGroupBy(pageKind)
 }
 
-export function getRwaGroupByQueryValue(
-	groupBy: RWAGroupBy,
-	view: RWATableView,
-	options: RWAGroupByOptions = {}
-): string | undefined {
-	return groupBy === getRwaDefaultGroupBy(view, options) ? undefined : groupBy
+export function getRwaGroupByQueryValue(groupBy: RWAGroupBy, pageKind: RWAPageKind): string | undefined {
+	return groupBy === getRwaDefaultGroupBy(pageKind) ? undefined : groupBy
 }
 
 export function getRwaGroupMemberships(
@@ -103,8 +113,19 @@ export function getRwaGroupMemberships(
 		case 'assetGroup': {
 			const assetGroup = normalizeRwaAssetGroup(row.asset.assetGroup)
 			return [
-				{ key: assetGroup, label: assetGroup, href: `/rwa/asset-group/${rwaSlug(assetGroup)}`, icon: null, chain: null }
+				{
+					key: assetGroup,
+					label: assetGroup,
+					// A perps group links into the Perps tree, a spot group into the Assets tree.
+					href: getRwaAssetGroupHref(assetGroup, row.asset.kind === 'perps' ? 'perps' : 'spot'),
+					icon: null,
+					chain: null
+				}
 			]
+		}
+		case 'assetClass': {
+			const assetClass = getPrimaryRwaCategory(row.asset.assetClass) ?? UNKNOWN_GROUP
+			return [{ key: assetClass, label: assetClass, href: null, icon: null, chain: null }]
 		}
 		case 'asset': {
 			const asset = (row.asset.assetName || row.asset.ticker || UNKNOWN_GROUP).trim() || UNKNOWN_GROUP
@@ -119,12 +140,17 @@ export function getRwaGroupMemberships(
 			]
 		}
 		case 'category': {
-			const category = getPrimaryRwaCategory(row.asset.category)
-			return [
-				category
-					? { key: category, label: category, href: `/rwa/category/${rwaSlug(category)}`, icon: null, chain: null }
-					: { key: UNKNOWN_GROUP, label: UNKNOWN_GROUP, href: null, icon: null, chain: null }
-			]
+			// Every category the asset carries, as the category page counts it; the group rows may then overlap.
+			const categories = [...new Set((row.asset.category ?? []).map((category) => category.trim()).filter(Boolean))]
+			if (categories.length === 0)
+				return [{ key: UNKNOWN_GROUP, label: UNKNOWN_GROUP, href: null, icon: null, chain: null }]
+			return categories.map((category) => ({
+				key: category,
+				label: category,
+				href: `/rwa/category/${rwaSlug(category)}`,
+				icon: null,
+				chain: null
+			}))
 		}
 		default:
 			return assertNever(groupBy)
@@ -144,18 +170,6 @@ function platformMembership(row: RWALeafRow, platformLogos: RWAPlatformLogos | u
 		icon: logo ? { kind: 'src', src: logo } : null,
 		chain: null
 	}
-}
-
-/**
- * Perps markets carry no chain and share one category, so both groupings are spot-only; a spot row is its own
- * asset, so Asset is perps-only. A chain page is one chain, so it has no Chain grouping; a platform page is one
- * platform, so its Assets view has no Platform grouping.
- */
-function isRwaGroupByAllowed(groupBy: RWAGroupBy, view: RWATableView, { scope = 'all' }: RWAGroupByOptions): boolean {
-	if (view === 'perps') return groupBy !== 'chain' && groupBy !== 'category'
-	if (scope === 'chain' && groupBy === 'chain') return false
-	if (scope === 'platform' && groupBy === 'platform') return false
-	return groupBy !== 'asset'
 }
 
 function assertNever(value: never): never {

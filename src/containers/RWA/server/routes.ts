@@ -1,16 +1,19 @@
-import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
+import { appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from '~/containers/RWA/assetGroup'
+import { getRwaPerpsOnlyPlatformSlugs, getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
 export function getRWASitemapRoutes(metadataCache: MetadataCache): Array<string> {
-	const routes: Array<string> = ['rwa/perps/forex']
+	const routes: Array<string> = []
 	const { rwaList, rwaPerpsList } = metadataCache
 
 	for (const canonicalMarketId of rwaList.canonicalMarketIds) {
 		routes.push(`rwa/asset/${encodeURIComponent(canonicalMarketId)}`)
 	}
+	// A sitemap lists final addresses: a platform that redirects to its venue page is listed as the venue.
+	const redirecting = getRwaPerpsOnlyPlatformSlugs(metadataCache)
 	for (const platform of getRWAPlatformRoutes(rwaList)) {
-		routes.push(`rwa/platform/${platform.slug}`)
+		if (!redirecting.has(platform.slug)) routes.push(`rwa/platform/${platform.slug}`)
 	}
 	for (const chain of rwaList.chains) {
 		routes.push(`rwa/chain/${rwaSlug(chain)}`)
@@ -19,8 +22,8 @@ export function getRWASitemapRoutes(metadataCache: MetadataCache): Array<string>
 		const categorySlug = rwaSlug(category)
 		if (categorySlug !== 'rwa-perps') routes.push(`rwa/category/${categorySlug}`)
 	}
-	for (const assetGroup of rwaList.assetGroups) {
-		routes.push(`rwa/asset-group/${rwaSlug(assetGroup)}`)
+	for (const assetGroup of appendUnknownRwaAssetGroup(rwaList.assetGroups)) {
+		routes.push(`rwa/asset-group/${rwaSlug(normalizeRwaAssetGroup(assetGroup))}`)
 	}
 
 	for (const contract of rwaPerpsList.contracts) {

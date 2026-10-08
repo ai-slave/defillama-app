@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest'
 import type { RWAAssetOverviewRow, RWAPerpsContractOverlayRow } from '../api.types'
 import {
 	filterRwaOverviewDisplayRows,
+	getRwaFilterResetPatch,
+	RWA_FILTER_QUERY_KEYS,
 	readRwaQueryFilters,
 	getRwaDisplayedDefiActiveTvl,
 	getRwaDisplayedDefiActiveTvlByChain,
@@ -69,11 +71,8 @@ const baseFilterState: RWAFilterState = {
 	selectedSelfCustodyStates: ['yes', 'no', 'unknown'],
 	includeStablecoins: true,
 	includeGovernance: true,
-	includeRwaPerps: true,
-	includeCex: false,
 	includeBridgeTvl: true,
 	includeWrappers: true,
-	hasPerpsOverlayBlockingFilters: false,
 	minDefiActiveTvlToOnChainMcapPct: null,
 	maxDefiActiveTvlToOnChainMcapPct: null,
 	minActiveMcapToOnChainMcapPct: null,
@@ -96,17 +95,6 @@ const dexPerp: RWAPerpsContractOverlayRow = {
 	defiActiveTvl: null,
 	defiActiveTvlByChain: null
 }
-const cexPerp: RWAPerpsContractOverlayRow = {
-	...dexPerp,
-	id: 'binance:usdy',
-	contract: 'binance:USDY',
-	venueType: 'CEX',
-	openInterest: 200
-}
-
-const sumOpenInterest = (rows: Array<{ openInterest: number | null }>) =>
-	rows.reduce((total, row) => total + (row.openInterest ?? 0), 0)
-
 const OPTIONS = {
 	types: ['Asset', 'Wrapper'],
 	assetNames: ['USDY', 'USTB'],
@@ -139,6 +127,13 @@ describe('readRwaQueryFilters', () => {
 		expect(oneType.selectedTypes).toEqual(['Asset'])
 	})
 
+	test('an asset group page reads its Category filter and ignores its own Asset Group', () => {
+		const query = { categories: 'Treasuries', assetGroups: 'Bonds' }
+		const assetGroupPage = readRwaQueryFilters(query, OPTIONS, 'assetGroup')
+		expect(assetGroupPage.selectedCategories).toEqual(['Treasuries'])
+		expect(assetGroupPage.selectedAssetGroups).toEqual(['Bonds', 'Private Credit'])
+	})
+
 	test('counts a filter as active only when it narrows the rows', () => {
 		const active = (query: Record<string, string>) => readRwaQueryFilters(query, OPTIONS, 'chain').hasDialogFilters
 
@@ -152,80 +147,57 @@ describe('readRwaQueryFilters', () => {
 		expect(active({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
 	})
 
-	test('hides perps rows only for asset names, attributes and ratios, which perps rows lack', () => {
-		const blocks = (query: Record<string, string>) =>
-			readRwaQueryFilters(query, OPTIONS, 'platform').hasPerpsOverlayBlockingFilters
+	test('an empty key narrows nothing', () => {
+		expect(readRwaQueryFilters({ assetClasses: '' }, OPTIONS, 'chain').hasDialogFilters).toBe(false)
+	})
+})
 
-		expect(blocks({ types: 'Asset', categories: 'Treasuries', platforms: 'Ondo', perps: 'false' })).toBe(false)
-		expect(blocks({ assetNames: 'USDY' })).toBe(true)
-		expect(readRwaQueryFilters({ assetNames: 'USDY' }, OPTIONS, 'chain').hasPerpsOverlayBlockingFilters).toBe(false)
-		expect(blocks({ kycForMintRedeemStates: 'yes' })).toBe(true)
-		expect(blocks({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
+describe('getRwaFilterResetPatch', () => {
+	test('Reset all clears every Assets filter and toggle and keeps the view, grouping, period and Perps keys', () => {
+		expect(
+			getRwaFilterResetPatch(
+				{
+					categories: 'Treasuries',
+					excludeAssetGroups: 'Bonds',
+					redeemableStates: 'yes',
+					minActiveMcapToOnChainMcapPct: '10',
+					includeStablecoins: 'true',
+					includeCex: 'false',
+					venues: 'Binance',
+					groupBy: 'chain',
+					view: 'information',
+					period: '7d'
+				},
+				RWA_FILTER_QUERY_KEYS
+			)
+		).toStrictEqual({
+			categories: undefined,
+			excludeAssetGroups: undefined,
+			redeemableStates: undefined,
+			minActiveMcapToOnChainMcapPct: undefined,
+			includeStablecoins: undefined
+		})
 	})
 })
 
 describe('RWA filter state', () => {
-	test('includes CEX perps only when both inclusion flags are enabled without changing spot totals', () => {
-		const rows = [baseAsset, dexPerp, cexPerp]
-		for (const [includeRwaPerps, includeCex, expectedIds, expectedOi] of [
-			[false, false, ['asset-1'], 0],
-			[true, false, ['asset-1', 'xyz:usdy'], 100],
-			[true, true, ['asset-1', 'xyz:usdy', 'binance:usdy'], 300],
-			[false, true, ['asset-1'], 0],
-			[true, false, ['asset-1', 'xyz:usdy'], 100]
-		] as const) {
-			const result = filterRwaOverviewDisplayRows(rows, { ...baseFilterState, includeRwaPerps, includeCex })
-			expect(result.filteredAssets.map((asset) => asset.id)).toEqual(expectedIds)
-			expect(sumOpenInterest(result.aggregateAssets)).toBe(expectedOi)
-			expect(result.aggregateAssets.map((asset) => asset.id)).toEqual(expectedIds)
-		}
-	})
-
-	test('adds stablecoins and governance tokens without removing selected perps', () => {
+	test('an Assets page keeps its spot rows and never a market, under every inclusion toggle', () => {
 		const rows = [
 			baseAsset,
 			{ ...baseAsset, id: 'stablecoin', stablecoin: true },
 			{ ...baseAsset, id: 'governance', governance: true },
-			dexPerp,
-			cexPerp
+			dexPerp
 		]
 		for (const includeStablecoins of [false, true]) {
 			for (const includeGovernance of [false, true]) {
-				const result = filterRwaOverviewDisplayRows(rows, {
-					...baseFilterState,
-					includeStablecoins,
-					includeGovernance,
-					includeCex: true
-				})
-				expect(sumOpenInterest(result.aggregateAssets)).toBe(300)
+				const result = filterRwaOverviewDisplayRows(rows, { ...baseFilterState, includeStablecoins, includeGovernance })
 				expect(result.filteredAssets.map((asset) => asset.id)).toEqual([
 					'asset-1',
 					...(includeStablecoins ? ['stablecoin'] : []),
-					...(includeGovernance ? ['governance'] : []),
-					'xyz:usdy',
-					'binance:usdy'
+					...(includeGovernance ? ['governance'] : [])
 				])
 			}
 		}
-	})
-
-	test('applies shared category filters to perps overlay rows', () => {
-		const commoditiesPerp = { ...dexPerp, id: 'xyz:gold', contract: 'xyz:GOLD', category: ['Commodities'] }
-
-		const result = filterRwaOverviewDisplayRows([baseAsset, dexPerp, commoditiesPerp], baseFilterState)
-
-		expect(result.filteredAssets.map((asset) => asset.id)).toEqual(['asset-1', 'xyz:usdy'])
-	})
-
-	test('excludes both kinds of perps when filtering for attested assets', () => {
-		const result = filterRwaOverviewDisplayRows([{ ...baseAsset, attestations: true }, dexPerp, cexPerp], {
-			...baseFilterState,
-			includeCex: true,
-			selectedAttestationsStates: ['yes'],
-			hasPerpsOverlayBlockingFilters: true
-		})
-		expect(result.filteredAssets.map((asset) => asset.id)).toEqual(['asset-1'])
-		expect(sumOpenInterest(result.aggregateAssets)).toBe(0)
 	})
 
 	test('rows missing a field match only the Unknown option', () => {

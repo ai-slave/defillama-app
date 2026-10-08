@@ -5,12 +5,19 @@ import { Tooltip } from '~/ui/Tooltip'
 import type { RWAOverviewDisplayRow } from '../../api.types'
 import { normalizeRwaAssetGroup } from '../../assetGroup'
 import { definitions } from '../../definitions'
-import { getRwaPlatforms, UNKNOWN_PLATFORM } from '../../grouping'
-import { rwaSlug } from '../../rwaSlug'
+import { getRwaAssetGroupHref } from '../classificationHrefs'
 import { getRwaCategoryLabels, type RWATableRow } from '../rows'
-import { asCsvOnly, columnHelper, DefinedValueCell, DistinctListCell, getLeafRow, textColumnMeta } from './shared'
-
-const PLATFORM_HELP = 'Platform associated with issuance, custody, trading, or management of the asset.'
+import { platformColumn } from './platform'
+import {
+	asCsvOnly,
+	columnHelper,
+	createDistinctTextColumn,
+	DefinedValueCell,
+	DistinctListCell,
+	getLeafRow,
+	type RWAGroupTextFold,
+	textColumnMeta
+} from './shared'
 
 const ACCESS_MODEL_TONE: Record<string, string> = {
 	Permissioned: 'text-warning',
@@ -23,18 +30,29 @@ function getAsset(row: Parameters<typeof getLeafRow>[0]): RWAOverviewDisplayRow 
 	return getLeafRow(row)?.asset ?? null
 }
 
-/** Classes on the cell, the asset group in the tooltip. */
+function AssetGroupLink({ assetGroup, kind }: { assetGroup: string; kind: RWAOverviewDisplayRow['kind'] }) {
+	const href = getRwaAssetGroupHref(assetGroup, kind)
+	if (!href) return <span className="truncate">{assetGroup}</span>
+	return (
+		<BasicLink href={href} className="truncate text-link hover:underline">
+			{assetGroup}
+		</BasicLink>
+	)
+}
+
+/** Classes on the cell, the asset group in the tooltip as a link to its page; no class shows the group link itself. */
 function LeafAssetTypeCell({ asset }: { asset: RWAOverviewDisplayRow }) {
 	const assetClasses = asset.assetClass ?? []
 	const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-	if (assetClasses.length === 0) return <span className="truncate">{assetGroup}</span>
+	if (assetClasses.length === 0) return <AssetGroupLink assetGroup={assetGroup} kind={asset.kind} />
 	return (
 		<Hovercard
 			placement="right-start"
 			content={
 				<span className="flex flex-col gap-1">
 					<span>
-						<strong>{definitions.assetGroup.label}</strong>: {assetGroup}
+						<strong>{definitions.assetGroup.label}</strong>:{' '}
+						<AssetGroupLink assetGroup={assetGroup} kind={asset.kind} />
 					</span>
 					{assetClasses.map((assetClass) => (
 						<span key={assetClass}>
@@ -61,12 +79,18 @@ export const assetTypeColumn = columnHelper.accessor(
 		id: 'assetGroup',
 		header: 'Asset Type',
 		enableSorting: false,
-		cell: ({ row }) =>
-			row.original.kind === 'group' ? (
-				<DistinctListCell values={row.original.distinct.assetGroup} />
-			) : (
-				<LeafAssetTypeCell asset={row.original.asset} />
-			),
+		cell: ({ row }) => {
+			const original = row.original
+			if (original.kind !== 'group') return <LeafAssetTypeCell asset={original.asset} />
+			// A group holds one row kind, so its first child says which tree the group pages live in.
+			const kind = original.children[0]?.asset.kind ?? 'spot'
+			return (
+				<DistinctListCell
+					values={original.distinct.assetGroup}
+					href={(assetGroup) => getRwaAssetGroupHref(assetGroup, kind)}
+				/>
+			)
+		},
 		meta: {
 			...textColumnMeta(
 				'w-[168px]',
@@ -76,29 +100,6 @@ export const assetTypeColumn = columnHelper.accessor(
 			csvValue: (row: RWATableRow) =>
 				row.kind === 'group' ? row.distinct.assetGroup.join(', ') : normalizeRwaAssetGroup(row.asset.assetGroup)
 		}
-	}
-)
-
-export const platformColumn = columnHelper.accessor(
-	(row) =>
-		row.kind === 'group' ? row.distinct.platform.join(', ') : getRwaPlatforms(row.asset.parentPlatform).join(', '),
-	{
-		id: 'platform',
-		header: 'Platform',
-		enableSorting: false,
-		cell: ({ row }) => {
-			if (row.original.kind === 'group') return <DistinctListCell values={row.original.distinct.platform} />
-			const asset = getAsset(row.original)
-			if (!asset) return null
-			const [platform] = getRwaPlatforms(asset.parentPlatform)
-			if (platform === UNKNOWN_PLATFORM) return <span className="truncate">{platform}</span>
-			return (
-				<BasicLink href={`/rwa/platform/${rwaSlug(platform)}`} className="truncate text-link hover:underline">
-					{platform}
-				</BasicLink>
-			)
-		},
-		meta: textColumnMeta('w-[168px]', PLATFORM_HELP)
 	}
 )
 
@@ -144,34 +145,30 @@ export const categoryColumn = columnHelper.accessor(
 	}
 )
 
-const assetClassColumn = columnHelper.accessor(
-	(row) => (row.kind === 'group' ? row.distinct.assetClass.join(', ') : (row.asset.assetClass?.join(', ') ?? '')),
-	{
-		id: 'assetClass',
-		header: definitions.assetClass.label,
-		meta: textColumnMeta('w-[168px]', definitions.assetClass.description, definitions.assetClass.label)
-	}
-)
+const assetClassColumn = createDistinctTextColumn({
+	id: 'assetClass',
+	header: definitions.assetClass.label,
+	pick: (asset) => asset.assetClass?.join(', '),
+	meta: textColumnMeta('w-[168px]', definitions.assetClass.description, definitions.assetClass.label)
+})
 
-export const accessModelColumn = columnHelper.accessor(
-	(row) => (row.kind === 'group' ? row.distinct.accessModel.join(', ') : (row.asset.accessModel ?? undefined)),
-	{
+/** Coloured wherever one value applies: on a leaf, and on a group whose children share it. */
+export function createAccessModelColumn(fold: RWAGroupTextFold) {
+	return createDistinctTextColumn({
 		id: 'accessModel',
 		header: definitions.accessModel.label,
-		enableSorting: false,
-		cell: ({ row, getValue }) =>
-			row.original.kind === 'group' ? (
-				<DistinctListCell values={row.original.distinct.accessModel} />
-			) : (
-				<DefinedValueCell
-					value={getValue()}
-					definition={getValue() ? definitions.accessModel.values?.[getValue()] : undefined}
-					className={clsx(getValue() && ACCESS_MODEL_TONE[getValue()])}
-				/>
-			),
+		pick: (asset) => asset.accessModel,
+		fold,
+		render: (value) => (
+			<DefinedValueCell
+				value={value}
+				definition={definitions.accessModel.values?.[value]}
+				className={clsx(ACCESS_MODEL_TONE[value])}
+			/>
+		),
 		meta: textColumnMeta('w-[min(180px,40vw)]', definitions.accessModel.description)
-	}
-)
+	})
+}
 
 export const rwaClassificationColumn = columnHelper.accessor(
 	(row) =>
@@ -195,23 +192,13 @@ export const rwaClassificationColumn = columnHelper.accessor(
 	}
 )
 
-export const issuerColumn = columnHelper.accessor(
-	(row) => (row.kind === 'group' ? row.distinct.issuer.join(', ') : (row.asset.issuer ?? undefined)),
-	{
-		id: 'issuer',
-		header: definitions.issuer.label,
-		enableSorting: false,
-		cell: ({ row, getValue }) =>
-			row.original.kind === 'group' ? (
-				<DistinctListCell values={row.original.distinct.issuer} />
-			) : (
-				<span title={getValue()} className="truncate">
-					{getValue()}
-				</span>
-			),
-		meta: textColumnMeta('w-[168px]', definitions.issuer.description)
-	}
-)
+const accessModelColumn = createAccessModelColumn('list')
+const issuerColumn = createDistinctTextColumn({
+	id: 'issuer',
+	header: definitions.issuer.label,
+	pick: (asset) => asset.issuer,
+	meta: textColumnMeta('w-[168px]', definitions.issuer.description)
+})
 
 /** Export only; the name cell shows the flag as an icon. */
 export const suspiciousCsvColumns = [
@@ -236,9 +223,7 @@ export const assetDetailColumns = [
 	asCsvOnly(rwaClassificationColumn)
 ]
 
-export const perpsDetailColumns = [platformColumn, asCsvOnly(assetClassColumn)]
-
-/** The Compliance preset's own columns, painted; the rest of the asset details stay csv-only behind them. */
+/** The Compliance set's own columns, painted; the rest of the asset details stay csv-only behind them. */
 export const complianceDetailColumns = [issuerColumn, accessModelColumn]
 export const complianceHiddenDetailColumns = [
 	platformColumn,

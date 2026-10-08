@@ -164,20 +164,22 @@ describe('rwa platform page', () => {
 		await expect(getPlatformProps('ondo')).resolves.toMatchObject({ props: { platformName: 'Ondo', assets: [] } })
 	})
 
-	test('renders a perps-only venue from its live markets', async () => {
+	test('sends a perps-only venue to its venue page', async () => {
 		seed({ index: { entropy: {} }, perpsVenues: ['Entropy'] })
 
 		await expect(getPlatformProps('entropy')).resolves.toMatchObject({
-			props: { platformName: 'Entropy', assets: [{ kind: 'perps', contract: 'entropy:gold' }] }
+			redirect: { destination: '/rwa/perps/venue/entropy', permanent: false }
 		})
 	})
 
-	test('keeps a live perps venue up when the perps feed fails, whatever the index says about it', async () => {
+	test('sends a live perps venue to its venue page when the perps feed fails, whatever the index says about it', async () => {
 		upstream.routes[PERPS_CURRENT] = new Error('[503] perps unavailable')
 		// When its own perps join fails, the server publishes isPerpsVenue: false for every platform.
 		seed({ index: { entropy: { isPerpsVenue: false } }, perpsVenues: ['Entropy'] })
 
-		await expect(getPlatformProps('entropy')).resolves.toMatchObject({ props: { platformName: 'Entropy', assets: [] } })
+		await expect(getPlatformProps('entropy')).resolves.toMatchObject({
+			redirect: { destination: '/rwa/perps/venue/entropy', permanent: false }
+		})
 	})
 
 	test('keeps a platform the index has no row for, since nothing confirms it is dead', async () => {

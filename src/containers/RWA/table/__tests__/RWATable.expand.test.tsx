@@ -1,33 +1,42 @@
-// @vitest-environment happy-dom
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+// @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { getRwaDefaultColumnVisibility, getRwaTableColumns, type RWATablePreset } from '../columnSets'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import type { RWATableColumnSet } from '../columnSetQuery'
+import { getRwaDefaultColumnVisibility, getRwaTableColumns } from '../columnSets'
 import type { RWAGroupBy } from '../groupBy'
 import { RWATable } from '../RWATable'
 import { getRwaEffectiveColumnVisibility } from '../useRwaTable'
 import { spotAsset } from './fixtures'
 
-vi.mock('next/router', () => ({
-	useRouter: () => ({ query: {}, pathname: '/rwa', asPath: '/rwa', push: vi.fn() })
+const router = vi.hoisted(() => ({
+	query: {} as Record<string, string>,
+	pathname: '/rwa',
+	asPath: '/rwa',
+	push: vi.fn(() => Promise.resolve(true))
 }))
+vi.mock('next/router', () => ({ useRouter: () => router }))
+// The Assets table asks for the flow summary; the fixture answers with no windows, so the flow cells stay empty.
+const http = installFixtureFetch()
+const EMPTY_FLOW_WINDOW = { asset: {}, assetGroup: {}, platform: {}, category: {}, chain: {} }
 
 function visibility(
 	groupBy: RWAGroupBy,
 	{
-		preset = 'assets',
+		columnSet = 'metrics',
 		expanded = {},
 		chosenByReader = false
-	}: { preset?: RWATablePreset; expanded?: Record<string, boolean>; chosenByReader?: boolean } = {}
+	}: { columnSet?: RWATableColumnSet; expanded?: Record<string, boolean>; chosenByReader?: boolean } = {}
 ) {
-	const columns = getRwaTableColumns('assets', 'ready', '7d', { preset })
+	const columns = getRwaTableColumns('overview', 'ready', '7d', columnSet)
 	const result = getRwaEffectiveColumnVisibility({
-		columnVisibility: getRwaDefaultColumnVisibility('assets', columns, preset),
+		columnVisibility: getRwaDefaultColumnVisibility('assets', columns, columnSet),
 		columns,
-		preset,
+		columnSet,
 		groupBy,
+		pageKind: 'overview',
 		expanded,
 		expandedColumnsChosenByReader: chosenByReader
 	})
@@ -50,8 +59,8 @@ describe('RWA column visibility', () => {
 		expect(visibility('chain').chains).toBe(false)
 	})
 
-	test('keeps the compliance preset free of the expand-only and money columns', () => {
-		expect(visibility('none', { preset: 'compliance' })).toEqual({
+	test('keeps the compliance column set free of the expand-only and money columns', () => {
+		expect(visibility('none', { columnSet: 'compliance' })).toEqual({
 			assetGroup: false,
 			price: false,
 			chains: false,
@@ -64,6 +73,46 @@ describe('RWA column visibility', () => {
 	})
 })
 
+function perpsVisibility(groupBy: RWAGroupBy, expanded: Record<string, boolean> = {}) {
+	const columns = getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics')
+	const result = getRwaEffectiveColumnVisibility({
+		columnVisibility: getRwaDefaultColumnVisibility('perps', columns, 'metrics'),
+		columns,
+		columnSet: 'metrics',
+		groupBy,
+		pageKind: 'perpsOverview',
+		expanded,
+		expandedColumnsChosenByReader: false
+	})
+	const { pair, price, premium, fundingApr, maxLeverage, accessModel, assetGroup, openInterest } = result
+	return { pair, price, premium, fundingApr, maxLeverage, accessModel, assetGroup, openInterest }
+}
+
+describe('RWA perps column visibility', () => {
+	test('shows Pair, the Price and Funding columns only while a group is open, on every Group by; Access Model always', () => {
+		const closed = {
+			pair: false,
+			price: false,
+			premium: false,
+			fundingApr: false,
+			maxLeverage: false,
+			accessModel: true
+		}
+		const open = {
+			pair: true,
+			price: true,
+			premium: true,
+			fundingApr: true,
+			maxLeverage: true,
+			accessModel: true
+		}
+		expect(perpsVisibility('platform')).toEqual({ ...closed, assetGroup: true, openInterest: true })
+		expect(perpsVisibility('asset')).toMatchObject(closed)
+		expect(perpsVisibility('platform', { 'platform:Hyperliquid': true })).toMatchObject(open)
+		expect(perpsVisibility('none')).toMatchObject(open)
+	})
+})
+
 describe('RWATable expansion', () => {
 	let container: HTMLDivElement
 	let root: Root
@@ -71,6 +120,14 @@ describe('RWATable expansion', () => {
 	const assets = [spotAsset(), spotAsset({ id: 'ousg', canonicalMarketId: 'ondo/ousg', assetName: 'Ondo OUSG' })]
 
 	beforeEach(() => {
+		http.serve({
+			'/api/public/rwa/flows/summary': {
+				generatedAt: 0,
+				windows: { '7d': EMPTY_FLOW_WINDOW, '30d': EMPTY_FLOW_WINDOW }
+			}
+		})
+		router.query = {}
+		router.push.mockClear()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -87,12 +144,11 @@ describe('RWATable expansion', () => {
 				<QueryClientProvider client={client}>
 					<RWATable
 						assets={assets}
-						view="assets"
 						groupBy={groupBy}
-						includeCex={false}
 						period={period}
 						onPeriodChange={() => {}}
-						selectedChain="All"
+						pageKind="overview"
+						pageSlug={null}
 						includeBridgeTvl
 						platformLogos={{}}
 					/>
@@ -114,6 +170,42 @@ describe('RWATable expansion', () => {
 		await render('1m')
 		expect(rows()).toHaveLength(3)
 		expect(rows()[1].textContent).toContain('+60.00%')
+	})
+
+	test('opens Compliance from a shared view=compliance link and writes the table key when the reader switches', async () => {
+		const headers = () => [...container.querySelectorAll('thead th')].map((header) => header.textContent?.trim())
+		const segment = (name: string) =>
+			[...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+				(radio) => radio.labels?.[0].textContent === name
+			)!
+		router.query = { view: 'compliance' }
+		await render('7d', 'none')
+		expect(segment('Compliance').checked).toBe(true)
+		expect(headers()).toContain('Issuer')
+		await act(async () => segment('Metrics').click())
+		expect(router.push).toHaveBeenCalledWith(
+			{ pathname: '/rwa', query: {} },
+			undefined,
+			expect.objectContaining({ shallow: true })
+		)
+	})
+
+	test('keeps the search and the open groups when the reader switches the column set', async () => {
+		const periodSwitch = () => container.querySelector('[aria-label="Change period"]')
+		await render('7d')
+		await act(async () => chevron().click())
+		const search = container.querySelector<HTMLInputElement>('input[placeholder="Search assets…"]')!
+		await act(async () => {
+			search.value = 'OUSG'
+			search.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		expect(rows()).toHaveLength(2)
+		expect(periodSwitch()).not.toBeNull()
+		router.query = { table: 'compliance' }
+		await render('7d')
+		expect(chevron().getAttribute('aria-expanded')).toBe('true')
+		expect(rows()).toHaveLength(2)
+		expect(periodSwitch()).toBeNull()
 	})
 
 	test('stops painting the asset-row columns after a grouping switch collapses the groups', async () => {

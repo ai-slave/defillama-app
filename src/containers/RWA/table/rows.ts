@@ -20,6 +20,12 @@ export type RWAChange = {
 }
 export type RWAChanges = Record<RWAChangePeriod, RWAChange>
 
+/**
+ * A perps 24h change: both sides for the group sum, the percent the cell shows (the API's own on a market) and the
+ * markets a group leaves out because they fell to zero, where yesterday's value cannot be rebuilt.
+ */
+export type RWAPerpsChange = RWAValueWithPrior & { percent: number | null; dropped: number }
+
 export type RWATableMetrics = {
 	activeMcap: number | null
 	onChainMcap: number | null
@@ -33,7 +39,7 @@ export type RWATableMetrics = {
 	priceChange24h: number | null
 	openInterest: number | null
 	/** Perps: open interest now and 24h ago. */
-	openInterestChange24h: RWAValueWithPrior
+	openInterestChange24h: RWAPerpsChange
 	volume24h: number | null
 	volume7d: number | null
 	volume30d: number | null
@@ -46,6 +52,18 @@ export type RWATableMetrics = {
 	premium: number | null
 	maxLeverage: number | null
 	protocolFees24h: number | null
+	/** Perps: 24h volume now and a day before. */
+	volume24hChange24h: RWAPerpsChange
+	volumeAllTime: number | null
+	oraclePrice: number | null
+	midPrice: number | null
+	previousDayPrice: number | null
+	protocolFees7d: number | null
+	protocolFees30d: number | null
+	protocolFeesAllTime: number | null
+	/** Perps: fractions, open-interest weighted on a group row. */
+	makerFeeRate: number | null
+	takerFeeRate: number | null
 	chains: Array<RWAChainShare>
 	assetCount: number
 	issuerCount: number
@@ -87,7 +105,11 @@ export const RWA_GROUP_DISTINCT_KEYS = [
 	'accessModel',
 	'type',
 	'rwaClassification',
-	'issuer'
+	'issuer',
+	'asset',
+	'pair',
+	'marginAsset',
+	'fundingInterval'
 ] as const
 export type RWAGroupDistinctKey = (typeof RWA_GROUP_DISTINCT_KEYS)[number]
 export type RWAGroupDistinct = Record<RWAGroupDistinctKey, Array<string>>
@@ -145,7 +167,7 @@ export function emptyRwaTableMetrics(): RWATableMetrics {
 		price: null,
 		priceChange24h: null,
 		openInterest: null,
-		openInterestChange24h: { current: null, prior: null },
+		openInterestChange24h: { current: null, prior: null, percent: null, dropped: 0 },
 		volume24h: null,
 		volume7d: null,
 		volume30d: null,
@@ -155,6 +177,16 @@ export function emptyRwaTableMetrics(): RWATableMetrics {
 		premium: null,
 		maxLeverage: null,
 		protocolFees24h: null,
+		volume24hChange24h: { current: null, prior: null, percent: null, dropped: 0 },
+		volumeAllTime: null,
+		oraclePrice: null,
+		midPrice: null,
+		previousDayPrice: null,
+		protocolFees7d: null,
+		protocolFees30d: null,
+		protocolFeesAllTime: null,
+		makerFeeRate: null,
+		takerFeeRate: null,
 		chains: [],
 		assetCount: 0,
 		issuerCount: 0,
@@ -240,6 +272,7 @@ function buildPerpsLeafRow(
 	asset: Extract<RWAOverviewDisplayRow, { kind: 'perps' }>,
 	period: RWAChangePeriod
 ): RWALeafRow {
+	const volume24h = asset.volume24h
 	return {
 		kind: 'leaf',
 		id: asset.id,
@@ -251,11 +284,9 @@ function buildPerpsLeafRow(
 			price: asset.price,
 			priceChange24h: asset.priceChange24h ?? null,
 			openInterest: asset.openInterest,
-			openInterestChange24h: {
-				current: asset.openInterest,
-				prior: priorFromPercentChange(asset.openInterest, asset.openInterestChange24h ?? null)
-			},
-			volume24h: asset.volume24h,
+			openInterestChange24h: toPerpsChange(asset.openInterest, asset.openInterestChange24h ?? null),
+			volume24h,
+			volume24hChange24h: toPerpsChange(volume24h, asset.volume24hChange24h ?? null),
 			volume7d: asset.volume7d ?? null,
 			volume30d: asset.volume30d,
 			fundingApr: annualiseFundingRate(asset.fundingRate ?? null, asset.fundingIntervalHours ?? null),
@@ -264,6 +295,15 @@ function buildPerpsLeafRow(
 			premium: asset.premium == null ? null : asset.premium * 100,
 			maxLeverage: asset.maxLeverage ?? null,
 			protocolFees24h: asset.protocolFees24h ?? null,
+			volumeAllTime: asset.volumeAllTime ?? null,
+			oraclePrice: asset.oraclePrice ?? null,
+			midPrice: asset.midPrice ?? null,
+			previousDayPrice: asset.previousDayPrice ?? null,
+			protocolFees7d: asset.protocolFees7d ?? null,
+			protocolFees30d: asset.protocolFees30d ?? null,
+			protocolFeesAllTime: asset.protocolFeesAllTime ?? null,
+			makerFeeRate: asset.makerFeeRate ?? null,
+			takerFeeRate: asset.takerFeeRate ?? null,
 			assetCount: 1,
 			issuerCount: asset.issuer ? 1 : 0
 		},
@@ -282,10 +322,11 @@ function getAssetFlows(canonicalMarketId: string, flowSummary: IRWAFlowSummaryRe
 	return flows
 }
 
-/** The value 24h ago implied by a percent change. */
-export function priorFromPercentChange(current: number | null, change: number | null): number | null {
-	if (current == null || change == null || change <= -100) return null
-	return current / (1 + change / 100)
+/** A market's change as the API sends it; at -100% the value 24h ago cannot be rebuilt, so it counts as a drop. */
+function toPerpsChange(current: number | null, percent: number | null): RWAPerpsChange {
+	const dropped = percent != null && percent <= -100
+	const prior = current == null || percent == null || dropped ? null : current / (1 + percent / 100)
+	return { current, prior, percent, dropped: dropped ? 1 : 0 }
 }
 
 export const HOURS_PER_YEAR = 24 * 365

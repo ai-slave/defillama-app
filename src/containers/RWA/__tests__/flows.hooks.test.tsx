@@ -4,7 +4,12 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { waitForUi } from '~/utils/testing/waitForUi'
-import { useRWAFlowSeries, type RWAFlowSeriesRequest, type RWAFlowSeriesResult } from '../flows.hooks'
+import {
+	useRWAFlowSeries,
+	useRWAFlowSummary,
+	type RWAFlowSeriesRequest,
+	type RWAFlowSeriesResult
+} from '../flows.hooks'
 
 const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
 
@@ -56,6 +61,17 @@ async function renderFlowSeries(request: RWAFlowSeriesRequest) {
 	await waitForUi(() => expect(results.at(-1)?.isLoading).toBe(false))
 	return results.at(-1)
 }
+
+describe('useRWAFlowSummary', () => {
+	test('a page that reads no flows does not download the summary', async () => {
+		await mount(() => {
+			useRWAFlowSummary(false)
+			return null
+		})
+
+		expect(fetchJsonMock).not.toHaveBeenCalled()
+	})
+})
 
 describe('useRWAFlowSeries', () => {
 	test('reads the asset group split on the front page and never the unscoped asset breakdown', async () => {

@@ -2,7 +2,7 @@ import type { RWAOverviewDisplayRow } from '../api.types'
 import { normalizeRwaAssetGroup } from '../assetGroup'
 import { getRwaPlatforms } from '../grouping'
 import { findBreakdownValue, getChainShares, mergeBreakdowns } from './chains'
-import { RWA_CHANGE_PERIODS, sumValues, sumValuesWithPrior, type RWAValueWithPrior } from './change'
+import { percentChange, RWA_CHANGE_PERIODS, sumValues, sumValuesWithPrior, type RWAValueWithPrior } from './change'
 import { getRwaGroupMemberships, type RWAGroupBy, type RWAGroupMembership, type RWAGroupOptions } from './groupBy'
 import {
 	emptyRwaTableMetrics,
@@ -15,6 +15,7 @@ import {
 	type RWAGroupFlags,
 	type RWAGroupRow,
 	type RWALeafRow,
+	type RWAPerpsChange,
 	type RWATableMetrics,
 	type RWATableRow
 } from './rows'
@@ -29,8 +30,14 @@ export function groupRwaRows(
 
 	const groups = new Map<string, { membership: RWAGroupMembership; children: Array<RWALeafRow> }>()
 	for (const row of rows) {
-		for (const membership of getRwaGroupMemberships(row, groupBy, options)) {
-			const child = membership.chain ? sliceRwaLeafRowToChain(row, membership.chain) : row
+		const memberships = getRwaGroupMemberships(row, groupBy, options)
+		for (const membership of memberships) {
+			// A row under several groups takes one id per group, so the table never sees one id twice.
+			const child = membership.chain
+				? sliceRwaLeafRowToChain(row, membership.chain)
+				: memberships.length > 1
+					? { ...row, id: `${row.id}@${membership.key}` }
+					: row
 			const group = groups.get(membership.key)
 			if (group) group.children.push(child)
 			else groups.set(membership.key, { membership, children: [child] })
@@ -116,6 +123,8 @@ export function aggregateRwaGroupMetrics(children: Array<RWALeafRow>): RWATableM
 	}
 
 	return {
+		// Price, funding, premium and leverage blend unrelated underlyings on a group, so the group leaves them empty.
+		...emptyRwaTableMetrics(),
 		activeMcap: sumValues(metrics.map((m) => m.activeMcap)),
 		onChainMcap: sumValues(metrics.map((m) => m.onChainMcap)),
 		defiActiveTvl: sumValues(metrics.map((m) => m.defiActiveTvl)),
@@ -131,19 +140,19 @@ export function aggregateRwaGroupMetrics(children: Array<RWALeafRow>): RWATableM
 		) as RWAChanges,
 		netFlow7d: sumValues(metrics.map((m) => m.netFlow7d)),
 		netFlow30d: sumValues(metrics.map((m) => m.netFlow30d)),
-		price: null,
-		priceChange24h: null,
 		openInterest: sumValues(metrics.map((m) => m.openInterest)),
-		openInterestChange24h: sumValuesWithPrior(metrics.map((m) => m.openInterestChange24h)),
+		openInterestChange24h: foldPerpsChanges(metrics.map((m) => m.openInterestChange24h)),
 		volume24h: sumValues(metrics.map((m) => m.volume24h)),
 		volume7d: sumValues(metrics.map((m) => m.volume7d)),
 		volume30d: sumValues(metrics.map((m) => m.volume30d)),
-		fundingApr: weightedByOpenInterest(metrics, (m) => m.fundingApr),
-		fundingRate: null,
-		fundingIntervalHours: null,
-		premium: weightedByOpenInterest(metrics, (m) => m.premium),
-		maxLeverage: maxValue(metrics.map((m) => m.maxLeverage)),
 		protocolFees24h: sumValues(metrics.map((m) => m.protocolFees24h)),
+		volume24hChange24h: foldPerpsChanges(metrics.map((m) => m.volume24hChange24h)),
+		volumeAllTime: sumValues(metrics.map((m) => m.volumeAllTime)),
+		protocolFees7d: sumValues(metrics.map((m) => m.protocolFees7d)),
+		protocolFees30d: sumValues(metrics.map((m) => m.protocolFees30d)),
+		protocolFeesAllTime: sumValues(metrics.map((m) => m.protocolFeesAllTime)),
+		makerFeeRate: weightedByOpenInterest(metrics, (m) => m.makerFeeRate),
+		takerFeeRate: weightedByOpenInterest(metrics, (m) => m.takerFeeRate),
 		chains,
 		assetCount: children.length,
 		issuerCount: issuers.size,
@@ -160,7 +169,11 @@ const DISTINCT_PICKS: Record<RWAGroupDistinctKey, (asset: RWAOverviewDisplayRow)
 	accessModel: (asset) => [asset.accessModel],
 	type: (asset) => [asset.type],
 	rwaClassification: (asset) => [asset.rwaClassification],
-	issuer: (asset) => [asset.issuer]
+	issuer: (asset) => [asset.issuer],
+	asset: (asset) => [asset.kind === 'perps' ? asset.assetName : null],
+	pair: (asset) => [asset.kind === 'perps' ? (asset.pair ?? null) : null],
+	marginAsset: (asset) => [asset.kind === 'perps' ? (asset.marginAsset ?? null) : null],
+	fundingInterval: (asset) => [asset.kind === 'perps' ? formatFundingInterval(asset.fundingIntervalHours) : null]
 }
 
 export function collectRwaGroupDistinct(children: Array<RWALeafRow>): RWAGroupDistinct {
@@ -194,9 +207,24 @@ export function tallyRwaGroupFlags(children: Array<RWALeafRow>): RWAGroupFlags {
 	return out
 }
 
+export function formatFundingInterval(hours: number | null | undefined): string | null {
+	return hours == null || hours <= 0 ? null : `${hours}h`
+}
+
 function getChainFlow(row: RWALeafRow, window: '7d' | '30d', chain: string): number | null {
 	const summary = row.flows[window]?.byChain[chain]
 	return summary?.status === 'measured' ? summary.flow : null
+}
+
+/**
+ * Like for like over the markets with both sides; the ones that fell to zero are counted, not summed. A group whose
+ * every market with a change fell to zero fell 100 percent.
+ */
+function foldPerpsChanges(changes: Array<RWAPerpsChange>): RWAPerpsChange {
+	const sides = sumValuesWithPrior(changes)
+	const dropped = changes.reduce((total, change) => total + change.dropped, 0)
+	const percent = sides.current == null && dropped > 0 ? -100 : percentChange(sides.current, sides.prior)
+	return { ...sides, percent, dropped }
 }
 
 /** Rates weighted by open interest. */
@@ -213,14 +241,6 @@ function weightedByOpenInterest(
 		weight += m.openInterest
 	}
 	return weight > 0 ? weighted / weight : null
-}
-
-function maxValue(values: Array<number | null>): number | null {
-	let max: number | null = null
-	for (const value of values) {
-		if (value != null && (max == null || value > max)) max = value
-	}
-	return max
 }
 
 function splitPriorByShare(

@@ -7,8 +7,7 @@ import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSer
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { IRWAAssetsOverview } from '../api.types'
 import {
-	buildRwaAssetGroupPieChartData,
-	buildRwaAssetCategoryPieChartData,
+	buildRwaBreakdownSlices,
 	buildRwaChartDataset,
 	hasRwaInclusionOverrides,
 	resolveRWAOverviewInclusionFlag,
@@ -283,8 +282,18 @@ describe('hasRwaInclusionOverrides', () => {
 	})
 })
 
-describe('buildRwaAssetGroupPieChartData', () => {
-	const chartAssets: IRWAAssetsOverview['assets'] = [
+describe('buildRwaBreakdownSlices', () => {
+	const slices = (overrides: Partial<Parameters<typeof buildRwaBreakdownSlices>[0]>) =>
+		buildRwaBreakdownSlices({
+			axis: 'assetGroup',
+			assets: [],
+			metric: 'activeMcap',
+			selectedCategories: [],
+			includeBridgeTvl: true,
+			...overrides
+		})
+
+	const groupAssets: IRWAAssetsOverview['assets'] = [
 		createSpotAsset({
 			assetGroup: 'Stablecoins',
 			onChainMcap: { total: 100, breakdown: [] },
@@ -304,18 +313,15 @@ describe('buildRwaAssetGroupPieChartData', () => {
 		{ metric: 'activeMcap', stablecoins: 90, unknown: 20 },
 		{ metric: 'defiActiveTvl', stablecoins: 30, unknown: 10 }
 	] as const)('groups only the selected $metric values and keeps Unknown', ({ metric, stablecoins, unknown }) => {
-		expect(
-			buildRwaAssetGroupPieChartData({ assets: chartAssets, metric, includeBridgeTvl: true }).pieChartData
-		).toEqual([
+		expect(slices({ axis: 'assetGroup', assets: groupAssets, metric })).toEqual([
 			{ name: 'Stablecoins', value: stablecoins },
 			{ name: 'Unknown', value: unknown }
 		])
 	})
-})
 
-describe('buildRwaAssetCategoryPieChartData', () => {
 	test('attributes category totals only to the primary category', () => {
-		const data = buildRwaAssetCategoryPieChartData({
+		const data = slices({
+			axis: 'category',
 			assets: [
 				createSpotAsset({
 					category: ['Treasuries', 'Private Credit'],
@@ -323,27 +329,80 @@ describe('buildRwaAssetCategoryPieChartData', () => {
 					activeMcap: { total: 90, breakdown: [] }
 				})
 			],
-			categories: ['Treasuries', 'Private Credit'],
-			selectedCategories: ['Treasuries', 'Private Credit'],
-			metric: 'activeMcap',
-			includeBridgeTvl: true
+			selectedCategories: ['Treasuries', 'Private Credit']
 		})
 
-		expect(data.pieChartData).toEqual([{ name: 'Treasuries', value: 90 }])
+		expect(data).toEqual([{ name: 'Treasuries', value: 90 }])
 	})
 
 	test('leaves out categories the user deselected', () => {
-		const data = buildRwaAssetCategoryPieChartData({
+		const data = slices({
+			axis: 'category',
 			assets: [
 				createSpotAsset({ category: ['Treasuries'], activeMcap: { total: 90, breakdown: [] } }),
 				createSpotAsset({ id: '2', category: ['Private Credit'], activeMcap: { total: 40, breakdown: [] } })
 			],
-			categories: ['Treasuries', 'Private Credit'],
-			selectedCategories: ['Private Credit'],
-			metric: 'activeMcap',
-			includeBridgeTvl: true
+			selectedCategories: ['Private Credit']
 		})
 
-		expect(data.pieChartData).toEqual([{ name: 'Private Credit', value: 40 }])
+		expect(data).toEqual([{ name: 'Private Credit', value: 40 }])
+	})
+
+	test('merges platforms that differ only in case or spacing and names the missing one Unknown', () => {
+		const data = slices({
+			axis: 'platform',
+			assets: [
+				createSpotAsset({ parentPlatform: 'Ondo', activeMcap: { total: 50, breakdown: [] } }),
+				createSpotAsset({ id: '2', parentPlatform: ' ondo ', activeMcap: { total: 30, breakdown: [] } }),
+				createSpotAsset({ id: '3', parentPlatform: null, activeMcap: { total: 100, breakdown: [] } }),
+				createSpotAsset({ id: '4', parentPlatform: 'Maple', activeMcap: { total: 0, breakdown: [] } })
+			]
+		})
+
+		expect(data).toEqual([
+			{ name: 'Unknown', value: 100 },
+			{ name: 'Ondo', value: 80 }
+		])
+	})
+
+	test("sums each chain from the assets' per-chain breakdown of the selected metric", () => {
+		const data = slices({
+			axis: 'chain',
+			metric: 'onChainMcap',
+			assets: [
+				createSpotAsset({
+					onChainMcap: {
+						total: 70,
+						breakdown: [
+							['Ethereum', 50],
+							['Solana', 20]
+						]
+					},
+					activeMcap: { total: 900, breakdown: [['Solana', 900]] }
+				}),
+				createSpotAsset({ id: '2', onChainMcap: { total: 30, breakdown: [['ethereum', 30]] } })
+			]
+		})
+
+		expect(data).toEqual([
+			{ name: 'Ethereum', value: 80 },
+			{ name: 'Solana', value: 20 }
+		])
+	})
+
+	test('under one slice per asset draws every asset of the page, largest first', () => {
+		const data = slices({
+			axis: 'assetName',
+			assets: [
+				createSpotAsset({ assetName: 'Alpha', activeMcap: { total: 10, breakdown: [] } }),
+				createSpotAsset({ id: '2', assetName: '', ticker: 'BBB', activeMcap: { total: 40, breakdown: [] } }),
+				createSpotAsset({ id: '3', assetName: 'Alpha', activeMcap: { total: 5, breakdown: [] } })
+			]
+		})
+
+		expect(data).toEqual([
+			{ name: 'BBB', value: 40 },
+			{ name: 'Alpha', value: 15 }
+		])
 	})
 })

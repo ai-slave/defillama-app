@@ -3,7 +3,6 @@ import { CHART_COLORS } from '~/constants/colors'
 import type { IRWAAssetsOverview } from '../api.types'
 import {
 	aggregateRwaMetricData,
-	appendRwaChartDatasetTotal,
 	buildRwaCanonicalMetricDataset,
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
@@ -216,26 +215,6 @@ describe('aggregateRwaMetricData', () => {
 		).toEqual({
 			source: [{ timestamp: 1, Stablecoins: 100, Unknown: 50 }],
 			dimensions: ['timestamp', 'Stablecoins', 'Unknown']
-		})
-	})
-})
-
-describe('appendRwaChartDatasetTotal', () => {
-	test('adds a Total column and promotes it to the first visible series dimension', () => {
-		expect(
-			appendRwaChartDatasetTotal({
-				source: [
-					{ timestamp: 1, Treasuries: 100, Credit: 40 },
-					{ timestamp: 2, Treasuries: 90, Credit: 60 }
-				],
-				dimensions: ['timestamp', 'Treasuries', 'Credit']
-			})
-		).toEqual({
-			source: [
-				{ timestamp: 1, Treasuries: 100, Credit: 40, Total: 140 },
-				{ timestamp: 2, Treasuries: 90, Credit: 60, Total: 150 }
-			],
-			dimensions: ['timestamp', 'Total', 'Treasuries', 'Credit']
 		})
 	})
 })

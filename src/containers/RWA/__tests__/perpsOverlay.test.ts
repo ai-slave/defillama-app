@@ -1,0 +1,80 @@
+import { describe, expect, test } from 'vitest'
+import type { IRWAPerpsMarket } from '../Perps/api.types'
+import { toRWAPerpsContractOverlayRow } from '../perpsOverlay'
+
+const market: IRWAPerpsMarket = {
+	id: 'xyz:TSLA',
+	timestamp: 1_760_000_000,
+	contract: 'xyz:TSLA',
+	venue: 'trade[XYZ]',
+	venueType: 'DEX',
+	openInterest: 5_000_000,
+	openInterestChange24h: 4,
+	volume24h: 1_000_000,
+	volume24hChange24h: -10,
+	price: 430,
+	priceChange24h: 1.5,
+	fundingRate: 0.00001,
+	premium: 0.0004,
+	cumulativeFunding: 1.25,
+	referenceAsset: 'Tesla',
+	referenceAssetGroup: 'Equities',
+	assetClass: ['Stock Perp'],
+	parentPlatform: 'trade[XYZ]',
+	pair: 'TSLA/USDC',
+	marginAsset: 'USDC',
+	settlementAsset: 'USDC',
+	category: ['RWA Perps'],
+	issuer: 'Tesla',
+	website: ['https://trade.xyz'],
+	link: 'https://app.trade.xyz/trade/TSLA',
+	oracleProvider: 'Pyth',
+	description: null,
+	accessModel: 'Permissionless',
+	rwaClassification: 'RWA Perp',
+	makerFeeRate: 0.0001,
+	takerFeeRate: 0.00045,
+	deployerFeeShare: 0.5,
+	oraclePx: 429,
+	midPx: 430.5,
+	prevDayPx: 424,
+	maxLeverage: 10,
+	szDecimals: 3,
+	fundingIntervalHours: 1,
+	volume7d: 7_000_000,
+	volume30d: 30_000_000,
+	volumeAllTime: 200_000_000,
+	estimatedProtocolFees24h: 400,
+	estimatedProtocolFees7d: 2800,
+	estimatedProtocolFees30d: 12_000,
+	estimatedProtocolFeesAllTime: 80_000,
+	suspicious: false
+}
+
+describe('toRWAPerpsContractOverlayRow', () => {
+	test('carries every market field the table and the export place', () => {
+		expect(toRWAPerpsContractOverlayRow(market)).toMatchObject({
+			timestamp: 1_760_000_000,
+			contract: 'xyz:TSLA',
+			venue: 'trade[XYZ]',
+			assetName: 'Tesla',
+			volume24hChange24h: -10,
+			volumeAllTime: 200_000_000,
+			pair: 'TSLA/USDC',
+			marginAsset: 'USDC',
+			settlementAsset: 'USDC',
+			website: ['https://trade.xyz'],
+			oracleProvider: 'Pyth',
+			makerFeeRate: 0.0001,
+			takerFeeRate: 0.00045,
+			oraclePrice: 429,
+			midPrice: 430.5,
+			previousDayPrice: 424,
+			sizeDecimals: 3,
+			protocolFees24h: 400,
+			protocolFees7d: 2800,
+			protocolFees30d: 12_000,
+			protocolFeesAllTime: 80_000
+		})
+	})
+})

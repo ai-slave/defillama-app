@@ -1,27 +1,16 @@
 import { useMemo } from 'react'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey } from '../api.types'
 import { getRwaChartTotalLabel } from '../chartAggregation'
-import { aggregateRWAFlowRows } from '../flows'
+import { aggregateRWAFlowRows, type RWAFlowGrouping } from '../flows'
 import { useRWAFlowSeries } from '../flows.hooks'
 import { useRwaChartDataset } from '../hooks'
 import type { RWAPlatformMeta } from '../PlatformPage/api.types'
 import { rwaSlug } from '../rwaSlug'
-import {
-	buildRwaPlatformEntityChart,
-	getRwaDatasetPoints,
-	type RWAPlatformChartMetricKey,
-	type RWAPlatformChartPeriod,
-	type RWAPlatformEntityChart
-} from './metrics'
+import type { RWAEntityChartData } from './entityChart'
+import { buildRwaPlatformEntityChart, getRwaDatasetPoints, type RWAPlatformChartMetricKey } from './metrics'
 
 const FLOW_METRICS: ReadonlyArray<RWAPlatformChartMetricKey> = ['netFlows', 'inflows', 'outflows', 'cumulativeNetFlows']
 const PER_ASSET_METRICS: ReadonlyArray<RWAPlatformChartMetricKey> = ['liveAssets', 'topAssetShare']
-
-export type RWAPlatformEntityChartData = {
-	chart: RWAPlatformEntityChart & { period: RWAPlatformChartPeriod }
-	isLoading: boolean
-	error: string | null
-}
 
 /**
  * The datasets behind the entity chart. Active AUM and the per-asset counts read the fold the page ships; the other
@@ -42,12 +31,12 @@ export function usePlatformEntityChart({
 	meta: RWAPlatformMeta
 	aggregateAssets: IRWAAssetsOverview['assets']
 	selected: ReadonlyArray<RWAPlatformChartMetricKey>
-	period: RWAPlatformChartPeriod
+	period: RWAFlowGrouping
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeBridgeTvl: boolean
 	activeFilters: boolean
-}): RWAPlatformEntityChartData {
+}): RWAEntityChartData {
 	const target: RWAAssetChartTarget = { kind: 'platform', slug: meta.slug || rwaSlug(meta.name) }
 	const wantsFlows = FLOW_METRICS.some((key) => selected.includes(key))
 	const wantsPerAsset = PER_ASSET_METRICS.some((key) => selected.includes(key))

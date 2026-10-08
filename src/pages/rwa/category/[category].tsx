@@ -2,6 +2,8 @@ import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAOverview } from '~/containers/RWA'
 import { filterCategoriesForStandardRwaOverview } from '~/containers/RWA/constants'
+import { getRwaPageMeta } from '~/containers/RWA/layout/pageCopy'
+import { fetchRwaPageQuestions } from '~/containers/RWA/layout/questions.server'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import Layout from '~/layout'
@@ -66,8 +68,15 @@ export const getStaticProps = withPerformanceLogging(
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
+		const entityQuestions = await fetchRwaPageQuestions({
+			kind: 'category',
+			scopeName: categoryName,
+			rows: props.assets,
+			defaultInclusion: props.defaultInclusion
+		})
+
 		return {
-			props: { ...props, categoryName },
+			props: { ...props, categoryName, entityQuestions },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -76,14 +85,10 @@ export const getStaticProps = withPerformanceLogging(
 const pageName = ['RWA']
 
 export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
+	const meta = getRwaPageMeta('category', { name: props.categoryName, slug: props.categorySlug ?? '' })
 	return (
-		<Layout
-			title={`${props.categoryName} RWA Dashboard & Analytics - DefiLlama`}
-			description={`Track ${props.categoryName} RWA assets onchain. Compare Active AUM, Onchain AUM, DeFi Active TVL, and utilization.`}
-			pageName={pageName}
-			canonicalUrl={`/rwa/category/${props.categorySlug}`}
-		>
-			<RWAOverview {...props} />
+		<Layout title={meta.title} description={meta.description} pageName={pageName} canonicalUrl={meta.canonicalUrl}>
+			<RWAOverview {...props} pageKind="category" />
 		</Layout>
 	)
 }

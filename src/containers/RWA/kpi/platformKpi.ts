@@ -1,5 +1,8 @@
 import type { RWAOverviewDisplayRow } from '../api.types'
 import { rankRwaDefiProtocols, type RwaNamedBar } from '../cards/cardData'
+import { applyDefaultAssetFilters } from '../chartAggregation'
+import type { RWAOverviewInclusionDefaults } from '../constants'
+import type { RWAEntityView } from '../PlatformPage/view'
 import { aggregateRwaGroupMetrics, collectRwaGroupDistinct, tallyRwaGroupFlags } from '../table/grouping'
 import {
 	buildRwaLeafRows,
@@ -10,7 +13,7 @@ import {
 } from '../table/rows'
 
 export type RWAPlatformKpi = {
-	/** The same fold a group row uses, over the page's rows after its filters. */
+	/** The same fold a group row uses, over the rows the view folds (getRwaPlatformFold). */
 	metrics: RWATableMetrics
 	flags: RWAGroupFlags
 	distinct: RWAGroupDistinct
@@ -20,16 +23,47 @@ export type RWAPlatformKpi = {
 	issuersByMcap: Array<RwaNamedBar>
 }
 
+/** The rows a platform's card and Information chart fold, and the Include in TVL toggles they read. */
+type RWAPlatformFold = {
+	aggregateAssets: Array<RWAOverviewDisplayRow>
+	includeStablecoins: boolean
+	includeGovernance: boolean
+	includeBridgeTvl: boolean
+	/** A toggle or a filter differs from the page defaults, so the chart cannot draw its build-time dataset. */
+	activeFilters: boolean
+}
+
 /**
- * Every number the platform header shows, from the rows the table shows with the same options (bridges, the flow
+ * Information describes the whole platform, as a venue's does: every spot row the page holds at its default Include
+ * in TVL, whatever filters the address carries over from the Assets view, which draws no strip there. The Assets view
+ * folds the rows its table shows.
+ */
+export function getRwaPlatformFold(
+	view: RWAEntityView,
+	assets: Array<RWAOverviewDisplayRow>,
+	defaultInclusion: RWAOverviewInclusionDefaults,
+	filtered: RWAPlatformFold
+): RWAPlatformFold {
+	if (view !== 'information') return filtered
+	const { includeStablecoins, includeGovernance } = defaultInclusion
+	return {
+		aggregateAssets: applyDefaultAssetFilters(assets, {
+			includeStablecoins,
+			includeGovernance,
+			includeWrappers: defaultInclusion.includeWrappers ?? false
+		}),
+		includeStablecoins,
+		includeGovernance,
+		includeBridgeTvl: defaultInclusion.includeBridgeTvl ?? true,
+		activeFilters: false
+	}
+}
+
+/**
+ * Every number the platform header shows, from the rows it is given with the table's options (bridges, the flow
  * summary); the index's own AUM is not read.
  */
-export function foldRwaPlatformKpi(
-	displayRows: Array<RWAOverviewDisplayRow>,
-	options: RWALeafRowOptions
-): RWAPlatformKpi {
-	/* The Perps view adds the platform's perps markets to the page rows; the header counts assets only. */
-	const assets = displayRows.filter((row) => row.kind === 'spot')
+export function foldRwaPlatformKpi(assets: Array<RWAOverviewDisplayRow>, options: RWALeafRowOptions): RWAPlatformKpi {
 	const rows = buildRwaLeafRows(assets, options)
 	let permissionlessCount = 0
 	const issuerMcap = new Map<string, number>()

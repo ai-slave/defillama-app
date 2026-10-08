@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { NestedMenu } from '~/components/NestedMenu'
+import { CountBadge } from '~/ui/CountBadge'
 import { Icon } from '~/ui/Icon'
 import {
 	nestedMenuSelectRowStyles,
@@ -113,9 +114,12 @@ export function Select(props: ISelect) {
 		return typeof option === 'string' ? option : option.key
 	}, [])
 
-	const isSelectOption = React.useCallback((option: string | { key: string; name: string; help?: string }) => {
-		return typeof option !== 'string'
-	}, [])
+	const isSelectOption = React.useCallback(
+		(option: string | { key: string; name: string; help?: string; muted?: boolean }) => {
+			return typeof option !== 'string'
+		},
+		[]
+	)
 
 	// Helper to extract keys from allValues
 	const getAllKeys = React.useCallback(() => allValues.map((v) => (typeof v === 'string' ? v : v.key)), [allValues])
@@ -250,9 +254,7 @@ export function Select(props: ISelect) {
 			>
 				{labelType === 'smol' ? (
 					<span className="flex items-center gap-1">
-						<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
-							{selectedCount}
-						</span>
+						<CountBadge count={selectedCount} />
 						<span>{label}</span>
 					</span>
 				) : labelType === 'regular' && selectedCount > 0 ? (
@@ -308,11 +310,13 @@ export function Select(props: ISelect) {
 								>
 									{isSelectOption(option) && option.help ? (
 										<Tooltip content={option.help}>
-											<span className="mr-1">{option.name}</span>
+											<span className={option.muted ? 'mr-1 text-secondary' : 'mr-1'}>{option.name}</span>
 											<Icon name="help-circle" height={15} width={15} />
 										</Tooltip>
 									) : (
-										<span>{optionName}</span>
+										<span className={isSelectOption(option) && option.muted ? 'text-secondary' : undefined}>
+											{optionName}
+										</span>
 									)}
 									{/* The space "Only" lies over, so a long name never runs under it. */}
 									{showCheckboxes ? <span aria-hidden className="ml-auto w-11 shrink-0 max-sm:w-14" /> : null}

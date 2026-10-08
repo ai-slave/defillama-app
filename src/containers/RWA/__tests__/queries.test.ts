@@ -97,9 +97,6 @@ describe('rwa queries', () => {
 
 		expect(result?.assets.map((asset) => asset.assetName)).toEqual(['Treasury One'])
 		expect(result?.categoriesOptions.map((option) => option.key)).toEqual(['Treasuries'])
-		expect(result).not.toHaveProperty('categories')
-		expect(result).not.toHaveProperty('categoryValues')
-		expect(result?.categoryLinks).toEqual([])
 	})
 
 	test('serializes one canonical active-mcap history for the initial regular-page chart', async () => {
@@ -220,10 +217,6 @@ describe('rwa queries', () => {
 			[venueSplit(true)]: [
 				{ timestamp: 1, Hyperliquid: 5, Binance: 20 },
 				{ timestamp: 2, Hyperliquid: 6, Binance: 24 }
-			],
-			[venueSplit(false)]: [
-				{ timestamp: 1, Hyperliquid: 5 },
-				{ timestamp: 2, Hyperliquid: 6 }
 			]
 		})
 
@@ -236,10 +229,8 @@ describe('rwa queries', () => {
 			} as never
 		})
 		expect(result?.cards?.chainChange.bars).toEqual([{ name: 'Ethereum', changeUsd: 2, changePct: 25 }])
-		expect(result?.cards?.defiByProtocol.withBridges.bars).toEqual([{ name: 'Aave', value: 4 }])
-		expect(result?.cards?.perpsOpenInterest.withCex.value).toBe(30)
-		expect(result?.cards?.perpsOpenInterest.dexOnly.value).toBe(6)
-		expect(result?.cards?.perpsOpenInterest.withCex.series).toEqual([
+		expect(result?.cards?.perpsOpenInterest.value).toBe(30)
+		expect(result?.cards?.perpsOpenInterest.series).toEqual([
 			[1000, 25],
 			[2000, 30]
 		])
@@ -306,7 +297,6 @@ describe('rwa queries', () => {
 			suspicious: true,
 			suspiciousReason: 'Unverified valuation source'
 		})
-		expect(result?.totals).toMatchObject({ onChainMcap: 12, activeMcap: 10 })
 		expect(result?.initialChartDatasets.map((initial) => initial.dataset)).toEqual([
 			{ dimensions: ['timestamp', 'Total Active AUM', 'Unknown'], source: [[1000, 10, 10]] },
 			{ dimensions: ['timestamp', 'Total Active AUM', 'Ethereum'], source: [[1000, 10, 10]] }
@@ -543,9 +533,10 @@ describe('rwa queries', () => {
 		})
 	})
 
-	test('merges perps contracts into the overview rows', async () => {
+	test('ships the perps totals instead of the perps rows on an Assets page', async () => {
 		serveBreakdown('chain/all', NO_HISTORY)
 		serveBreakdown('chain/ethereum', NO_HISTORY)
+		serveBreakdown('category/treasuries', NO_HISTORY)
 		serveListing([
 			{
 				id: 'treasury-1',
@@ -621,6 +612,14 @@ describe('rwa queries', () => {
 					parentPlatform: 'Binance',
 					issuer: null,
 					openInterest: 200
+				},
+				{
+					...dexMarket,
+					id: 'shady:usdy',
+					contract: 'shady:USDY',
+					openInterest: 1000,
+					volume24h: 1000,
+					suspicious: true
 				}
 			]
 		})
@@ -633,42 +632,18 @@ describe('rwa queries', () => {
 			} as never
 		})
 
-		expect(result?.assets.map((asset) => asset.kind)).toEqual(['spot', 'perps', 'perps'])
-		expect(result?.assets[0]).toMatchObject({
-			kind: 'spot',
-			detailHref: '/rwa/asset/ondo%2Fusdy'
+		// Assets pages show no perps rows: the page ships the perps totals its Key Metrics card reads, CEX in, suspicious out.
+		expect(result?.assets.map((asset) => asset.kind)).toEqual(['spot'])
+		expect(result?.perpsTotals).toEqual({
+			openInterest: 210,
+			openInterestChange24h: { current: null, prior: null },
+			dexShare: (10 / 210) * 100,
+			volume24h: 40
 		})
-		expect(result?.assets[1]).toMatchObject({
-			kind: 'perps',
-			priceChange24h: 0,
-			detailHref: '/rwa/perps/contract/xyz%3Ausdy',
-			assetName: 'Ondo USDY',
-			category: ['Treasuries'],
-			openInterest: 10,
-			volume24h: 20,
-			volume30d: 0,
-			onChainMcap: null,
-			activeMcap: null,
-			defiActiveTvl: null
-		})
-		// The Perps view chart reads its splits in the browser; no contract history ships with the page.
-		expect(result).not.toHaveProperty('initialOpenInterestChartDataset')
-		expect(result?.totals.onChainMcap).toBe(100)
-		expect(result?.totals.activeMcap).toBe(90)
-		expect(result?.totals.defiActiveTvl).toBe(20)
 		expect(result?.typeOptions.map((option) => option.key)).not.toContain('Perp')
-		expect(result?.platforms).toContain('Ondo')
-		expect(result?.assetGroups).toContain('Treasuries')
-		expect(result?.assets[1]).toMatchObject({
-			venueType: 'DEX',
-			attestations: null
-		})
-		expect(result?.assets[2]).toMatchObject({
-			venueType: 'CEX',
-			attestations: null
-		})
-		expect(result?.platforms).toContain('Binance')
-		expect(result?.issuers).toContain('Unknown')
+		// Filter options come from the rows the page shows, so no perps venue lands in the spot filters.
+		expect(result?.platforms).toEqual(['Ondo'])
+		expect(result?.assetGroups).toEqual(['Treasuries'])
 
 		const chainResult = await getRWAAssetsOverview({
 			chain: 'ethereum',
@@ -680,6 +655,25 @@ describe('rwa queries', () => {
 			} as never
 		})
 		expect(chainResult?.assets.map((asset) => asset.kind)).toEqual(['spot'])
+		expect(chainResult?.perpsTotals.openInterest).toBe(210)
+		const categoryResult = await getRWAAssetsOverview({
+			category: 'treasuries',
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: ['Ondo'],
+				assetGroups: ['Treasuries']
+			} as never
+		})
+		expect(categoryResult?.perpsTotals.openInterest).toBe(210)
+		expect(categoryResult?.nav).toEqual({
+			heading: 'Categories',
+			links: [
+				{ label: 'All', to: '/rwa/categories' },
+				{ label: 'Treasuries', to: '/rwa/category/treasuries' }
+			],
+			active: 'Treasuries'
+		})
 	})
 
 	test('falls back to the spot overview when the perps markets request fails', async () => {
@@ -788,7 +782,6 @@ describe('rwa queries', () => {
 		expect(result?.defaultInclusion).toMatchObject({
 			includeStablecoins: true,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true
 		})
 		expect(requestedUrls()).toContain(assetBreakdown('platform/curve'))
@@ -1017,8 +1010,6 @@ describe('rwa queries', () => {
 			isPlatformMode: false,
 			includeStablecoins: true,
 			includeGovernance: true,
-			includeRwaPerps: false,
-			includeCex: false,
 			includeBridgeTvl: true,
 			includeWrappers: true
 		})
@@ -1092,7 +1083,8 @@ describe('rwa queries', () => {
 		})
 
 		expect(result?.selectedPlatform).toBe('Trade[XYZ]')
-		expect(result?.assets.map((asset) => asset.kind)).toEqual(['perps'])
+		expect(result?.assets).toEqual([])
+		expect(result?.perpsTotals.openInterest).toBe(10)
 	})
 
 	test('drops the active mcap chart metric for a platform whose whole supply is excluded', async () => {

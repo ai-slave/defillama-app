@@ -3,16 +3,18 @@ import { storeReactivityBindings } from '@tanstack/table-core/store-reactivity-b
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { prepareTableCsv } from '~/components/Table/utils'
+import { formatRwaMultiple } from '../../kpi/format'
+import type { RWAPageKind, RWASection } from '../../layout/pageLayout'
+import { formatFundingRateDetail } from '../columns/perpsMetrics'
+import type { RWATableColumnSet } from '../columnSetQuery'
 import {
 	getRwaColumnOptions,
 	getRwaDefaultColumnVisibility,
 	getRwaTableColumns,
-	RWA_COMPLIANCE_COLUMN_IDS,
-	RWA_DEFAULT_COLUMN_IDS
+	RWA_COMPLIANCE_COLUMN_IDS
 } from '../columnSets'
-import { getRwaCsvRows } from '../csv'
 import { rwaTableFeatures, type RwaTableFeatures } from '../features'
-import type { RWAGroupBy, RWATableView } from '../groupBy'
+import type { RWAGroupBy } from '../groupBy'
 import { groupRwaRows } from '../grouping'
 import { buildRwaLeafRows, type RWATableRow } from '../rows'
 import { perpsAsset, spotAsset } from './fixtures'
@@ -22,18 +24,31 @@ type RwaTestTable = Table<RwaTableFeatures, RWATableRow>
 /** A headless instance outside React needs a store for its state. */
 const headlessFeatures = { ...rwaTableFeatures, coreReactivityFeature: storeReactivityBindings() }
 
-function buildTable(view: RWATableView, groupBy: RWAGroupBy, expanded: ExpandedState = true): RwaTestTable {
-	const kind = view === 'perps' ? 'perps' : 'spot'
+function buildTable(
+	section: RWASection,
+	groupBy: RWAGroupBy,
+	expanded: ExpandedState = true,
+	columnSet: RWATableColumnSet = 'metrics'
+): RwaTestTable {
+	const kind = section === 'perps' ? 'perps' : 'spot'
 	const assets = [spotAsset(), perpsAsset()].filter((asset) => asset.kind === kind)
-	const columns = getRwaTableColumns(view, 'ready', '7d', { includeCex: true })
+	const columns = getRwaTableColumns(section === 'perps' ? 'perpsOverview' : 'overview', 'ready', '7d', columnSet)
 	return constructTable({
 		features: headlessFeatures,
 		data: groupRwaRows(buildRwaLeafRows(assets, { includeBridgeTvl: true }), groupBy),
 		columns,
 		getRowId: (row) => row.id,
 		getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
-		state: { expanded, columnVisibility: getRwaDefaultColumnVisibility(view, columns) }
+		state: { expanded, columnVisibility: getRwaDefaultColumnVisibility(section, columns, columnSet) }
 	})
+}
+
+/** The header groups the table paints over its visible columns. */
+function paintedGroupHeaders(table: RwaTestTable): Array<string> {
+	return table
+		.getHeaderGroups()[0]
+		.headers.filter((header) => !header.isPlaceholder && header.column.columns.length > 0)
+		.map((header) => String(header.column.columnDef.header))
 }
 
 /** Visible columns the table paints; csv-only columns stay visible for the export but are never painted. */
@@ -58,25 +73,43 @@ const cellText = (table: RwaTestTable, rowId: string, columnId: string) =>
 describe('RWA table column set', () => {
 	test('paints the default columns and keeps csv-only columns out of the table and the picker', () => {
 		const table = buildTable('assets', 'platform')
-		expect(paintedColumnIds(table)).toEqual(RWA_DEFAULT_COLUMN_IDS.assets)
+		expect(paintedColumnIds(table)).toEqual([
+			'name',
+			'chains',
+			'assetGroup',
+			'activeMcap',
+			'onChainMcap',
+			'activeMcapChange',
+			'defiActiveTvl',
+			'utilization',
+			'defiActiveTvlChange',
+			'netFlow'
+		])
 		const csvOnly = table
 			.getAllLeafColumns()
 			.filter((column) => column.columnDef.meta?.csvOnly)
 			.map((column) => column.id)
 		expect(csvOnly).toContain('kycForMintRedeem')
-		const pickerKeys = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.key)
+		const pickerKeys = getRwaColumnOptions(
+			getRwaTableColumns('overview', 'ready', '7d', 'metrics'),
+			'none',
+			'overview'
+		).map((option) => option.key)
 		for (const id of csvOnly) expect(pickerKeys).not.toContain(id)
 	})
 
 	test('drops the column a grouping makes redundant from the picker', () => {
-		const columns = getRwaTableColumns('assets', 'ready', '7d')
-		expect(getRwaColumnOptions(columns, 'chain').map((option) => option.key)).not.toContain('chains')
-		expect(getRwaColumnOptions(columns, 'platform').map((option) => option.key)).not.toContain('platform')
-		expect(getRwaColumnOptions(columns, 'assetGroup').map((option) => option.key)).toContain('chains')
+		const columns = getRwaTableColumns('overview', 'ready', '7d', 'metrics')
+		const keys = (groupBy: RWAGroupBy) => getRwaColumnOptions(columns, groupBy, 'overview').map((option) => option.key)
+		expect(keys('chain')).not.toContain('chains')
+		expect(keys('platform')).not.toContain('platform')
+		expect(keys('assetGroup')).toContain('chains')
 	})
 
 	test('names picker entries with their header group so the period columns stay distinguishable', () => {
-		const names = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.name)
+		const names = getRwaColumnOptions(getRwaTableColumns('overview', 'ready', '7d', 'metrics'), 'none', 'overview').map(
+			(option) => option.name
+		)
 		expect(new Set(names).size).toBe(names.length)
 		expect(names.filter((name) => name.endsWith('7d'))).toEqual(['AUM: 7d', 'DeFi: 7d', 'Flows: 7d'])
 	})
@@ -89,25 +122,206 @@ describe('RWA table column set', () => {
 		expect(ids).not.toContain('activeMcap')
 	})
 
-	test('offers the venue column only when CEX venues are included', () => {
-		expect(getRwaTableColumns('perps', 'ready', '7d', { includeCex: true }).map((column) => column.id)).toContain(
-			'venue'
+	test('paints the single perps set with Asset Group only, the open-only columns left to the expand rule, specs in the picker', () => {
+		const table = buildTable('perps', 'none')
+		expect(paintedColumnIds(table)).toEqual([
+			'name',
+			'platform',
+			'assetGroup',
+			'accessModel',
+			'openInterest',
+			'openInterestChange24h',
+			'volume24h',
+			'volume7d',
+			'volume30d',
+			'protocolFees24h',
+			'protocolFees30d'
+		])
+		expect(paintedGroupHeaders(table)).toEqual(['Market', 'Open Interest', 'Volume', 'Est. Fees'])
+		const options = getRwaColumnOptions(
+			getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics'),
+			'none',
+			'perpsOverview'
 		)
-		expect(getRwaTableColumns('perps', 'ready', '7d').map((column) => column.id)).not.toContain('venue')
+		const keys = options.map((option) => option.key)
+		for (const id of [
+			'asset',
+			'assetClass',
+			'marginAsset',
+			'maxLeverage',
+			'fundingInterval',
+			'accessModel',
+			'makerFeeRate',
+			'takerFeeRate',
+			'sizeDecimals',
+			'venueType'
+		]) {
+			expect(keys).toContain(id)
+		}
+		expect(keys).not.toContain('openInterestShare')
+		expect(keys).not.toContain('trade')
+		const names = options.map((option) => option.name)
+		expect(names).toContain('Volume: 24h')
+		expect(names).not.toContain('Volume: 24h Change')
+		expect(new Set(names).size).toBe(names.length)
+		expect(names).toContain('Volume: Turnover 30d')
+		expect(names).toContain('Price: Oracle')
 	})
 
-	test('renders the perps cells with an annualised funding rate', () => {
+	test('drops the Venue column under Group by Venue and on a venue page', () => {
+		const columns = getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics')
+		const keys = (groupBy: RWAGroupBy, pageKind: RWAPageKind) =>
+			getRwaColumnOptions(columns, groupBy, pageKind).map((option) => option.key)
+		expect(keys('none', 'perpsOverview')).toContain('platform')
+		expect(keys('platform', 'perpsOverview')).not.toContain('platform')
+		expect(keys('none', 'venue')).not.toContain('platform')
+	})
+
+	test('renders the perps cells with the venue type on the venue, not the market name', () => {
 		const table = buildTable('perps', 'platform')
+		const name = cellText(table, 'perps-usdy', 'name')
+		expect(name).toContain('hl:USDY')
+		expect(name).not.toContain('USDY/USDC')
+		expect(name).not.toContain('DEX')
+		expect(cellText(table, 'platform:Hyperliquid', 'name')).toContain('DEX')
+		expect(cellText(table, 'perps-usdy', 'platform')).toBe('HyperliquidDEX')
+		expect(cellMarkup(table, 'perps-usdy', 'platform')).toContain('href="/rwa/perps/venue/hyperliquid"')
+		expect(cellText(table, 'perps-usdy', 'asset')).toBe('USDY Perp')
+		expect(cellText(table, 'perps-usdy', 'pair')).toBe('USDY/USDC')
 		expect(cellText(table, 'perps-usdy', 'openInterest')).toBe('$5,000')
-		expect(cellText(table, 'perps-usdy', 'venue')).toBe('DEX')
+		expect(cellText(table, 'perps-usdy', 'turnover30d')).toBe('4x')
 		expect(cellText(table, 'perps-usdy', 'fundingApr')).toContain('+10.95%')
-		expect(cellText(table, 'platform:Hyperliquid', 'premium')).toContain('+0.2%')
-		expect(cellText(table, 'perps-usdy', 'maxLeverage')).toBe('50x')
+		expect(cellText(table, 'perps-usdy', 'premium')).toContain('+0.2%')
+		// A venue's premium is a blend of unrelated underlyings, so its row leaves the cell empty.
+		expect(cellText(table, 'platform:Hyperliquid', 'premium')).toBe('')
+		// The perps classification is the assets table's Asset Type: groups on the group row, the class on a market.
+		expect(cellText(table, 'platform:Hyperliquid', 'assetGroup')).toBe('Bonds')
+		expect(cellText(table, 'perps-usdy', 'assetGroup')).toBe('Bond Perp')
 		expect(cellMarkup(table, 'perps-usdy', 'priceChange24h')).toContain('+2.50%')
+		expect(cellText(table, 'perps-usdy', 'maxLeverage')).toBe('50x')
+		expect(cellText(table, 'platform:Hyperliquid', 'maxLeverage')).toBe('')
+		expect(cellText(table, 'perps-usdy', 'fundingInterval')).toBe('8h')
+		expect(cellText(table, 'perps-usdy', 'makerFeeRate')).toBe('0.0150%')
+		expect(cellText(table, 'platform:Hyperliquid', 'pair')).toBe('USDY/USDC')
+	})
+
+	test('counts the venues of a group that spans several, the names in the tooltip', () => {
+		const rows = groupRwaRows(
+			buildRwaLeafRows(
+				[perpsAsset(), perpsAsset({ id: 'bin', contract: 'bin:USDY', venue: 'Binance', parentPlatform: 'Binance' })],
+				{ includeBridgeTvl: true }
+			),
+			'assetGroup'
+		)
+		const table = constructTable({
+			features: headlessFeatures,
+			data: rows,
+			columns: getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics'),
+			getRowId: (row) => row.id,
+			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+			state: { expanded: {} }
+		})
+		expect(cellText(table, 'assetGroup:Bonds', 'platform')).toBe('2 venues')
+		expect(cellText(buildTable('perps', 'assetGroup'), 'assetGroup:Bonds', 'platform')).toBe('Hyperliquid')
+	})
+
+	test('fills an access model or funding cell on a group row only where one value applies to the whole group', () => {
+		const rows = groupRwaRows(
+			buildRwaLeafRows(
+				[
+					perpsAsset({ accessModel: 'Permissionless', marginAsset: 'USDC' }),
+					perpsAsset({
+						id: 'b',
+						contract: 'hl:B',
+						accessModel: 'Permissionless',
+						marginAsset: 'USDT',
+						fundingIntervalHours: 1
+					})
+				],
+				{ includeBridgeTvl: true }
+			),
+			'platform'
+		)
+		const table = constructTable({
+			features: headlessFeatures,
+			data: rows,
+			columns: getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics'),
+			getRowId: (row) => row.id,
+			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+			state: { expanded: {} }
+		})
+		const group = table.getRowModel().rows[0]
+		expect(group.getValue('fundingInterval')).toBeUndefined()
+		expect(group.getValue('accessModel')).toBe('Permissionless')
+		expect(cellText(table, 'platform:Hyperliquid', 'accessModel')).toBe('Permissionless')
+	})
+
+	test('shows -100% on a market that fell to zero and marks the group change that leaves it out', () => {
+		const rows = groupRwaRows(
+			buildRwaLeafRows(
+				[
+					perpsAsset({ id: 'up', openInterest: 1_000_000, openInterestChange24h: 25 }),
+					perpsAsset({ id: 'gone', contract: 'hl:GONE', openInterest: 0, openInterestChange24h: -100 })
+				],
+				{ includeBridgeTvl: true }
+			),
+			'platform'
+		)
+		const table = constructTable({
+			features: headlessFeatures,
+			data: rows,
+			columns: getRwaTableColumns('perpsOverview', 'ready', '7d', 'metrics'),
+			getRowId: (row) => row.id,
+			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+			state: { expanded: true }
+		})
+		expect(cellText(table, 'gone', 'openInterestChange24h')).toBe('-100.00%')
+		expect(cellText(table, 'platform:Hyperliquid', 'openInterestChange24h')).toBe('+25.00%*')
+		expect(table.getRowModel().rows[0].getValue('openInterestChange24h')).toBe(25)
+	})
+
+	test('drops the asset line under a market name on the asset page, which names the asset', () => {
+		const table = constructTable({
+			features: headlessFeatures,
+			data: buildRwaLeafRows([perpsAsset()], { includeBridgeTvl: true }),
+			columns: getRwaTableColumns('perpsAsset', 'ready', '7d', 'metrics'),
+			getRowId: (row) => row.id,
+			state: {}
+		})
+		expect(cellText(table, 'perps-usdy', 'name')).toBe('hl:USDY')
+		expect(cellText(buildTable('perps', 'none'), 'perps-usdy', 'name')).toContain('USDY Perp')
+	})
+
+	test('keeps the venue type off a non-venue group row', () => {
+		expect(cellText(buildTable('perps', 'assetGroup'), 'assetGroup:Bonds', 'name')).not.toContain('DEX')
+	})
+
+	test('exports the csv-only perps fields with every market, none of them empty on every row', () => {
+		const csv = prepareTableCsv({ instance: buildTable('perps', 'none'), filename: 'rwa-perps' }).rows
+		for (const header of ['RWA Classification', 'Parent Platform', 'Settlement Asset']) {
+			expect(csv[0]).toContain(header)
+		}
+		expect(csv[0]).not.toContain('Category')
+		expect(csv[0]).not.toContain('Description')
+		expect(csv[1][csv[0].indexOf('ID')]).toBe('perps-usdy')
+		expect(csv[1][csv[0].indexOf('Timestamp')]).toBe(1_760_000_000)
 	})
 })
 
-describe('RWA table compliance preset', () => {
+describe('perps cell formats', () => {
+	test('the funding tooltip prints the raw rate per interval with three significant digits', () => {
+		expect(formatFundingRateDetail(0.00000625, 1)).toBe('+0.000625% per 1h, annualised.')
+		expect(formatFundingRateDetail(-0.000123456, 8)).toBe('-0.0123% per 8h, annualised.')
+	})
+
+	test('max leverage prints a rounded ratio', () => {
+		expect(formatRwaMultiple(3.0003000300030003, 2)).toBe('3x')
+		expect(formatRwaMultiple(30.03003003003003, 2)).toBe('30.03x')
+		expect(formatRwaMultiple(50, 2)).toBe('50x')
+	})
+})
+
+describe('RWA table compliance column set', () => {
 	const assets = [
 		spotAsset({ attestations: false, kycForMintRedeem: true, transferable: true, selfCustody: true, redeemable: null }),
 		spotAsset({
@@ -123,7 +337,7 @@ describe('RWA table compliance preset', () => {
 	]
 
 	function buildCompliance(groupBy: RWAGroupBy): RwaTestTable {
-		const columns = getRwaTableColumns('assets', 'ready', '7d', { preset: 'compliance' })
+		const columns = getRwaTableColumns('overview', 'ready', '7d', 'compliance')
 		return constructTable({
 			features: headlessFeatures,
 			data: groupRwaRows(buildRwaLeafRows(assets, { includeBridgeTvl: true }), groupBy),
@@ -138,7 +352,7 @@ describe('RWA table compliance preset', () => {
 		const table = buildCompliance('none')
 		expect(paintedColumnIds(table)).toEqual(RWA_COMPLIANCE_COLUMN_IDS)
 		expect(table.getAllLeafColumns().map((column) => column.id)).toContain('activeMcap')
-		const picker = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d', { preset: 'compliance' }))
+		const picker = getRwaColumnOptions(getRwaTableColumns('overview', 'ready', '7d', 'compliance'), 'none', 'platform')
 		expect(picker.map((option) => option.key).slice(0, RWA_COMPLIANCE_COLUMN_IDS.length)).toEqual(
 			RWA_COMPLIANCE_COLUMN_IDS
 		)
@@ -177,12 +391,41 @@ describe('RWA table cells', () => {
 				}),
 				'platform'
 			),
-			columns: getRwaTableColumns('assets', 'ready', '7d'),
+			columns: getRwaTableColumns('overview', 'ready', '7d', 'metrics'),
 			getRowId: (row) => row.id,
 			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
 			state: { expanded: {} }
 		})
 		expect(mixed.getRowModel().rows[0].getValue('assetGroup')).toBe('Bonds, Private Equity & Venture')
+	})
+
+	test('links every asset group a group row lists to its page, on asset and perps rows alike', () => {
+		const groupRows = (section: RWASection) => {
+			const assets =
+				section === 'perps'
+					? [
+							perpsAsset(),
+							perpsAsset({ id: 'p2', contract: 'hl:SPX', assetName: 'Nasdaq 100', assetGroup: 'Equity Indices' })
+						]
+					: [spotAsset(), spotAsset({ id: 'b', assetGroup: 'Private Equity & Venture' })]
+			return constructTable({
+				features: headlessFeatures,
+				data: groupRwaRows(buildRwaLeafRows(assets, { includeBridgeTvl: true }), 'platform'),
+				columns: getRwaTableColumns(section === 'perps' ? 'perpsOverview' : 'overview', 'ready', '7d', 'metrics'),
+				getRowId: (row) => row.id,
+				getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+				state: { expanded: {} }
+			})
+		}
+		const spot = cellMarkup(groupRows('assets'), 'platform:Ondo', 'assetGroup')
+		expect(spot).toContain('href="/rwa/asset-group/bonds"')
+		expect(spot).toContain('href="/rwa/asset-group/private-equity-venture"')
+		const perps = groupRows('perps')
+		expect(cellMarkup(perps, 'platform:Hyperliquid', 'assetGroup')).toContain(
+			'href="/rwa/perps/asset-group/equity-indices"'
+		)
+		expect(cellMarkup(perps, 'platform:Hyperliquid', 'asset')).toContain('href="/rwa/perps/asset/nasdaq-100"')
+		expect(cellText(perps, 'platform:Hyperliquid', 'asset')).toBe('USDY Perp, Nasdaq 100')
 	})
 
 	test('lists distinct details and a Yes tally on a group row instead of leaving them blank', () => {
@@ -199,7 +442,7 @@ describe('RWA table cells', () => {
 				),
 				'platform'
 			),
-			columns: getRwaTableColumns('assets', 'ready', '7d'),
+			columns: getRwaTableColumns('overview', 'ready', '7d', 'metrics'),
 			getRowId: (row) => row.id,
 			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
 			state: { expanded: {} }
@@ -227,7 +470,7 @@ describe('RWA table cells', () => {
 	})
 
 	test('shows the summed active AUM on the group row and each leaf on its own row', () => {
-		const columns = getRwaTableColumns('assets', 'ready', '7d')
+		const columns = getRwaTableColumns('overview', 'ready', '7d', 'metrics')
 		const twoAssets = constructTable({
 			features: headlessFeatures,
 			data: groupRwaRows(
@@ -240,7 +483,7 @@ describe('RWA table cells', () => {
 			columns,
 			getRowId: (row) => row.id,
 			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
-			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns) }
+			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns, 'metrics') }
 		})
 		expect(cellText(twoAssets, 'platform:Ondo', 'activeMcap')).toBe('$1.7m')
 		expect(cellText(twoAssets, 'usdy', 'activeMcap')).toContain('$800,000')
@@ -264,25 +507,27 @@ describe('RWA table cells', () => {
 			}
 		} as Parameters<typeof spotAsset>[0])
 		const rows = groupRwaRows(buildRwaLeafRows([twoChains], { includeBridgeTvl: true }), 'platform')
-		const columns = getRwaTableColumns('assets', 'ready', '7d', { includeCex: true })
+		const columns = getRwaTableColumns('overview', 'ready', '7d', 'metrics')
 		const small = constructTable({
 			features: headlessFeatures,
 			data: rows,
 			columns,
 			getRowId: (row) => row.id,
 			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
-			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns) }
+			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns, 'metrics') }
 		})
 		const markup = cellMarkup(small, 'usdy', 'chains')
 		expect(markup).toContain('Ethereum')
 		expect(markup).toContain('/rwa/chain/solana')
 	})
 
-	test('exports every leaf under a collapsed group', () => {
-		const collapsed = buildTable('assets', 'platform', {})
-		expect(collapsed.getPrePaginatedRowModel().rows.map((row) => row.id)).toEqual(['platform:Ondo'])
-		const csv = prepareTableCsv({ instance: collapsed, filename: 'rwa-assets', rows: getRwaCsvRows(collapsed) }).rows
-		expect(csv.slice(1).map((row) => row[0])).toEqual(['Ondo', 'Ondo USDY'])
+	test('exports the rows as the table shows them: a closed group alone, an open one with its assets', () => {
+		const exported = (expanded: ExpandedState) =>
+			prepareTableCsv({ instance: buildTable('assets', 'platform', expanded), filename: 'rwa-table' })
+				.rows.slice(1)
+				.map((row) => row[0])
+		expect(exported({})).toEqual(['Ondo'])
+		expect(exported({ 'platform:Ondo': true })).toEqual(['Ondo', 'Ondo USDY'])
 	})
 
 	test('exports the csv-only columns and the chains as names', () => {
@@ -298,7 +543,7 @@ describe('RWA table cells', () => {
 	})
 
 	test('exports the stored flag for spot rows and the tally for groups', () => {
-		const columns = getRwaTableColumns('assets', 'ready', '7d')
+		const columns = getRwaTableColumns('overview', 'ready', '7d', 'metrics')
 		const grouped = constructTable({
 			features: headlessFeatures,
 			data: groupRwaRows(
@@ -315,7 +560,7 @@ describe('RWA table cells', () => {
 			columns,
 			getRowId: (row) => row.id,
 			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
-			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns) }
+			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns, 'metrics') }
 		})
 		const csv = prepareTableCsv({ instance: grouped, filename: 'rwa-assets', includeHiddenColumns: true }).rows
 		const column = csv[0].indexOf('Attestations')

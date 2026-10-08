@@ -19,7 +19,6 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug })).toEqual({
 			includeStablecoins: stablecoins,
 			includeGovernance: governance,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: wrappers
 		})
@@ -29,21 +28,18 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'private-credit' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: false
 		})
 		expect(getDefaultRWAOverviewInclusion({ mode: 'platform', platformSlug: 'other-platform' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: true
 		})
 		expect(getDefaultRWAOverviewInclusion({ mode: 'chain' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: false
 		})
@@ -57,7 +53,6 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: true,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: true
 		})
@@ -114,7 +109,6 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: true
 		})
@@ -129,7 +123,6 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: true,
 			includeGovernance: false,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: true
 		})
@@ -142,7 +135,6 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toEqual({
 			includeStablecoins: false,
 			includeGovernance: true,
-			includeRwaPerps: false,
 			includeBridgeTvl: true,
 			includeWrappers: true
 		})

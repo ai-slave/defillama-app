@@ -61,36 +61,8 @@ export interface IRWAPerpsMarketChartPoint {
 	cumulativeFunding: number
 }
 
-export interface IRWAPerpsListResponse {
-	contracts: Array<string>
-	venues: Array<string>
-	categories: Array<string>
-	assets: Array<string>
-	assetGroups: Array<string>
-	total: number
-}
-
-export interface IRWAPerpsStatsBucket {
-	openInterest: number
-	volume24h: number
-	markets: number
-}
-
-export interface IRWAPerpsStatsResponse {
-	totalMarkets: number
-	totalOpenInterest: number
-	totalVolume24h: number
-	totalCumulativeFunding: number
-	byVenue: Record<string, IRWAPerpsStatsBucket>
-	byCategory: Record<string, IRWAPerpsStatsBucket>
-	byAssetGroup: Record<string, IRWAPerpsStatsBucket>
-	lastUpdated: string
-}
-
 export type IRWAPerpsBreakdownChartRow = { timestamp: number } & Record<string, number>
 export type IRWAPerpsBreakdownChartResponse = Array<IRWAPerpsBreakdownChartRow>
-
-export type IRWAPerpsIdMapResponse = Record<string, string>
 
 export interface IRWAPerpsFundingHistoryWirePoint {
 	timestamp: number

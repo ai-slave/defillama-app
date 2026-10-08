@@ -1,8 +1,4 @@
 {
-	"contract": {
-		"label": "Contract",
-		"description": "Ticker symbol of the perpetual futures contract as listed on the venue."
-	},
 	"baseAsset": {
 		"label": "Base Asset",
 		"description": "Reference asset, fund, index, or benchmark the perpetual contract tracks."
@@ -31,11 +27,6 @@
 			"Other RWAs": "Tokens tied to less common real-world assets such as art, collectibles, royalties, or intellectual property, plus platforms that issue or enable trading of them.",
 			"ETFs": "Tokenized ETFs providing onchain exposure to exchange-traded fund shares, either fully backed by custodied shares or via synthetic replication."
 		}
-	},
-	"assetGroup": {
-		"label": "Asset Group",
-		"description": "Grouping of the reference asset by broad economic family, such as equities, ETFs, bonds, or commodities.",
-		"values": {}
 	},
 	"assetClass": {
 		"label": "Asset Class",
@@ -182,22 +173,6 @@
 		"label": "Deployer Fee Share",
 		"description": "Share of trading fees allocated to the contract deployer."
 	},
-	"cumulativeFunding": {
-		"label": "Cum. Funding / Unit",
-		"description": "Total cumulative funding payments per unit since the contract's inception."
-	},
-	"oraclePx": {
-		"label": "Oracle Px",
-		"description": "Current price reported by the oracle price feed."
-	},
-	"midPx": {
-		"label": "Mid Px",
-		"description": "Midpoint between the best bid and best ask price on the order book."
-	},
-	"prevDayPx": {
-		"label": "Prev Day Px",
-		"description": "Closing or settlement price from the previous trading day."
-	},
 	"volume7d": {
 		"label": "Volume 7d",
 		"description": "Total USD notional volume traded on this contract over the last 7 days."
@@ -234,21 +209,9 @@
 		"label": "Total 24h Volume",
 		"description": "Aggregate USD notional volume traded across all tracked markets in the last 24 hours."
 	},
-	"totalMarkets": {
-		"label": "Total Markets",
-		"description": "Total number of perpetual contract markets tracked."
-	},
 	"markets": {
 		"label": "Markets",
 		"description": "Number of tracked perpetual contract markets in the current scope."
-	},
-	"openInterestShare": {
-		"label": "% of Total OI",
-		"description": "This venue's share of total open interest across all tracked venues."
-	},
-	"volume24hShare": {
-		"label": "% of Total 24h Volume",
-		"description": "This venue's share of total 24-hour trading volume across all tracked venues."
 	},
 	"sizeDecimals": {
 		"label": "Size Decimals",

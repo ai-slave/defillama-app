@@ -3,15 +3,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterAll, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
-import { RWA_PERPS_SERVER_URL as base } from '~/constants'
+import { AI_SERVER, RWA_PERPS_SERVER_URL as base } from '~/constants'
+import * as overviewPage from '~/pages/rwa/perps'
 import * as groupPage from '~/pages/rwa/perps/asset-group/[assetGroup]'
-import * as groupsPage from '~/pages/rwa/perps/asset-groups'
 import * as assetPage from '~/pages/rwa/perps/asset/[asset]'
 import * as contractPage from '~/pages/rwa/perps/contract/[contract]'
-import * as overviewPage from '~/pages/rwa/perps/index'
 import * as venuePage from '~/pages/rwa/perps/venue/[venue]'
-import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { unpackRwaPerpsMarkets } from '../../perpsPayload'
 import type { IRWAPerpsMarket } from '../api.types'
 
 vi.hoisted(() => vi.stubEnv('SKIP_BUILD_STATIC_GENERATION', 'false'))
@@ -144,23 +144,6 @@ test.each(scopes)('redirects display-name $name URLs before fetching', async ({ 
 	})
 	expect(http.requests).toHaveLength(0)
 })
-test.each(scopes)(
-	'loads actual market totals and navigation for a canonical $name',
-	async ({ load, canonical, display, key, route }) => {
-		const result = await load(canonical)
-		assert('props' in result)
-		expect(result.props.data).toMatchObject({
-			[key]: display,
-			markets: [market],
-			totals: { openInterest: 100, volume24h: 50, markets: 1, protocolFees24h: 1 }
-		})
-		const linksKey = `${key}Links` as 'assetLinks' | 'venueLinks' | 'assetGroupLinks'
-		expect(result.props.data).toMatchObject({
-			[linksKey]: expect.arrayContaining([{ label: display, to: `/rwa/perps/${route}/${canonical}` }])
-		})
-		expect(result.props.data.initialChartDataset.source).toHaveLength(1)
-	}
-)
 test('keeps raw contract identifiers in static paths', async () => {
 	await expect(contractPage.getStaticPaths()).resolves.toEqual({
 		paths: [{ params: { contract: 'xyz:META' } }],
@@ -202,56 +185,61 @@ test('renders the raw contract identifier in the document title', async () => {
 	expect(html).toContain('<title>xyz:META - RWA Perps Analytics - DefiLlama</title>')
 	client.clear()
 })
-test('builds overview totals from the actual market response', async () => {
-	const result = await overviewPage.getStaticProps({})
-	assert('props' in result)
-	expect(result.props.data.totals).toMatchObject({
-		openInterest: 100,
-		volume24h: 50,
-		markets: 1,
-		protocolFees24h: 1,
-		cumulativeFunding: 10
-	})
+
+const nav = (active: string) => ({
+	heading: 'Asset groups',
+	links: [
+		{ label: 'All', to: '/rwa/perps' },
+		{ label: 'US Equities', to: '/rwa/perps/asset-group/us-equities' }
+	],
+	active
 })
-test('builds asset-group rows from markets and links from metadata', async () => {
-	// A second group makes each share a real fraction of the page total.
-	http.serve({
-		[`${base}/current`]: [
-			market,
-			{
-				...market,
-				id: 'xyz:gold',
-				contract: 'xyz:GOLD',
-				referenceAssetGroup: 'Commodities',
-				openInterest: 300,
-				volume24h: 150
-			}
-		]
-	})
-	const result = await groupsPage.getStaticProps({})
+test.each([
+	{ name: 'the overview', load: () => overviewPage.getStaticProps({}), active: 'All', assetGroupSlug: null },
+	{
+		name: 'an asset group',
+		load: () => groupPage.getStaticProps({ params: { assetGroup: 'us-equities' } }),
+		active: 'US Equities',
+		assetGroupSlug: 'us-equities'
+	},
+	{
+		name: 'an underlying',
+		load: () => assetPage.getStaticProps({ params: { asset: 's-p-500-index' } }),
+		active: 'US Equities',
+		assetGroupSlug: null
+	}
+])('builds $name from its markets, with the asset group nav row', async ({ load, active, assetGroupSlug }) => {
+	http.serve({ [`${AI_SERVER}/suggested-questions`]: { questions: [] } })
+	const result = await load()
 	assert('props' in result)
-	expect(result.props.assetGroupLinks).toContainEqual({
-		label: 'US Equities',
-		to: '/rwa/perps/asset-group/us-equities'
-	})
-	const groups = [
-		{
-			assetGroup: 'Commodities',
-			openInterest: 300,
-			openInterestShare: 0.75,
-			volume24h: 150,
-			volume24hShare: 0.75,
-			markets: 1
-		},
-		{
-			assetGroup: 'US Equities',
-			openInterest: 100,
-			openInterestShare: 0.25,
-			volume24h: 50,
-			volume24hShare: 0.25,
-			markets: 1
+	expect(unpackRwaPerpsMarkets(result.props.markets).map((row) => row.id)).toEqual(['xyz:meta'])
+	expect(result.props.overview.nav).toEqual(nav(active))
+	expect(result.props.overview.assetGroupSlug).toBe(assetGroupSlug)
+})
+test('answers notFound for a listed venue the server has no market for', async () => {
+	http.serve({ [`${base}/venue/XYZ%20Venue`]: fixtureStatus(404, { error: 'venue "XYZ Venue" not found' }) })
+	await expect(venuePage.getStaticProps({ params: { venue: 'xyz-venue' } })).resolves.toMatchObject({ notFound: true })
+})
+test('throws on a failed venue markets request, so the last good page stays up', async () => {
+	http.serve({ [`${base}/venue/XYZ%20Venue`]: fixtureStatus(500) })
+	await expect(venuePage.getStaticProps({ params: { venue: 'xyz-venue' } })).rejects.toThrow('[500]')
+})
+test('throws when the Perps overview gets no market, so the last good page stays up', async () => {
+	http.serve({ [`${base}/current`]: [] })
+	await expect(overviewPage.getStaticProps({})).rejects.toThrow('Missing page data for route=/rwa/perps')
+})
+test('sends a perps address of an asset group with no perps markets to the Perps overview', async () => {
+	metadata.seed({
+		rwaList: {
+			canonicalMarketIds: [],
+			idMap: {},
+			platforms: [],
+			chains: [],
+			categories: [],
+			assetGroups: ['Private Credit']
 		}
-	]
-	expect(result.props.assetGroups).toEqual(groups)
-	expect(result.props.dexAssetGroups).toEqual(groups)
+	})
+	await expect(groupPage.getStaticProps({ params: { assetGroup: 'private-credit' } })).resolves.toMatchObject({
+		redirect: { destination: '/rwa/perps', permanent: false }
+	})
 })

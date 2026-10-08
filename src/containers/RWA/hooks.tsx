@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
 import { useMemo } from 'react'
-import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
@@ -13,6 +12,7 @@ import {
 	buildRwaCanonicalMetricDataset,
 	type RWAChartAggregationMode
 } from './chartAggregation'
+import type { RwaChartAxis } from './chartBreakdown'
 import type { RWAPositionalChartDataset } from './chartDataset'
 import type { RWAOverviewInclusionDefaults, RWAOverviewMode } from './constants'
 import {
@@ -28,19 +28,15 @@ import {
 	getRwaInclusionQueryValue
 } from './filterState'
 import { getPrimaryRwaCategory } from './grouping'
+import type { RWASection } from './layout/pageLayout'
+import { readRwaVenueTypeChoice } from './perpsFilters'
 import { rwaSlug } from './rwaSlug'
-import { getRwaTableViewQuery, parseRwaTableView } from './table/view'
 
 export { resolveRWAOverviewInclusionFlag } from './filterState'
 
 type PieChartDatum = { name: string; value: number }
 
-export function emptyPieChartResult(): {
-	pieChartData: Array<PieChartDatum>
-	pieChartStackColors: Record<string, string>
-} {
-	return { pieChartData: [], pieChartStackColors: {} }
-}
+const UNKNOWN_SLICE = 'Unknown'
 
 export const limitRwaPieChartData = (data: Array<PieChartDatum>, maxLabels: number): Array<PieChartDatum> => {
 	if (data.length <= maxLabels) return data
@@ -52,14 +48,6 @@ export const limitRwaPieChartData = (data: Array<PieChartDatum>, maxLabels: numb
 	const visible = data.slice(0, maxLabels - 1)
 	if (othersValue > 0) visible.push({ name: 'Others', value: othersValue })
 	return visible
-}
-
-const buildStackColors = (order: Array<string>): Record<string, string> => {
-	const stackColors: Record<string, string> = {}
-	for (const [index, key] of order.entries()) {
-		stackColors[key] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
-	}
-	return stackColors
 }
 
 const updateNumberRangeQuery = (
@@ -77,30 +65,35 @@ const updateNumberRangeQuery = (
 	})
 }
 
+const EMPTY_QUERY: NextRouter['query'] = {}
+
 export const useRWATableQueryParams = ({
 	options,
 	mode,
-	defaultInclusion
+	defaultInclusion,
+	section
 }: {
 	options: RWASelectFilterOptions
 	mode: RWAOverviewMode
 	defaultInclusion: RWAOverviewInclusionDefaults
+	/** The route decides the rows: /rwa/perps and its tree show perps, every other page spot. */
+	section: RWASection
 }) => {
 	const router = useRouter()
-	const filters = useMemo(() => readRwaQueryFilters(router.query, options, mode), [router.query, options, mode])
+	// The Perps tree filters its markets with perpsFilters.ts alone, so an Assets key in its URL (an old link) reads as
+	// no filter there.
+	const filterQuery = section === 'perps' ? EMPTY_QUERY : router.query
+	const filters = useMemo(() => readRwaQueryFilters(filterQuery, options, mode), [filterQuery, options, mode])
 	const {
 		includeStablecoins: stablecoinsQ,
 		includeGovernance: governanceQ,
-		includeCex: cexQ,
 		includeBridgeTvl: bridgeTvlQ,
 		includeWrappers: wrappersQ
 	} = router.query
 	const includeStablecoins = resolveRWAOverviewInclusionFlag(stablecoinsQ, defaultInclusion.includeStablecoins)
 	const includeGovernance = resolveRWAOverviewInclusionFlag(governanceQ, defaultInclusion.includeGovernance)
-	// The view key is `perps`; the flag keeps its old name inside the code so the thirty call sites stay put.
-	const includeRwaPerps = parseRwaTableView(router.query, defaultInclusion.includeRwaPerps) === 'perps'
-	// CEX venues are on by default in the Perps view.
-	const includeCex = includeRwaPerps && resolveRWAOverviewInclusionFlag(cexQ, true)
+	// Venue Type keeps the CEX venues unless it reads DEX only.
+	const includeCex = section === 'perps' && readRwaVenueTypeChoice(router.query) !== 'dex'
 	const includeBridgeTvl = resolveRWAOverviewInclusionFlag(bridgeTvlQ, defaultInclusion.includeBridgeTvl ?? true)
 	const includeWrappers = resolveRWAOverviewInclusionFlag(wrappersQ, defaultInclusion.includeWrappers ?? false)
 
@@ -135,17 +128,6 @@ export const useRWATableQueryParams = ({
 		})
 	}
 
-	const setIncludeRwaPerps = (value: boolean) => {
-		void pushShallowQuery(router, {
-			...getRwaTableViewQuery(value ? 'perps' : 'assets', defaultInclusion.includeRwaPerps),
-			includeCex: undefined
-		})
-	}
-
-	const setIncludeCex = (value: boolean) => {
-		void pushShallowQuery(router, { includeCex: includeRwaPerps ? getRwaInclusionQueryValue(value, true) : undefined })
-	}
-
 	const setIncludeBridgeTvl = (value: boolean) => {
 		void pushShallowQuery(router, {
 			includeBridgeTvl: getRwaInclusionQueryValue(value, defaultInclusion.includeBridgeTvl ?? true)
@@ -162,7 +144,6 @@ export const useRWATableQueryParams = ({
 		...filters,
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
 		includeWrappers,
@@ -171,8 +152,6 @@ export const useRWATableQueryParams = ({
 		setDefiActiveTvlToActiveMcapPctRange,
 		setIncludeStablecoins,
 		setIncludeGovernance,
-		setIncludeRwaPerps,
-		setIncludeCex,
 		setIncludeWrappers,
 		setIncludeBridgeTvl
 	}
@@ -201,11 +180,8 @@ export const useFilteredRwaAssets = ({
 	selectedSelfCustodyStates,
 	includeStablecoins,
 	includeGovernance,
-	includeRwaPerps,
-	includeCex,
 	includeBridgeTvl = true,
 	includeWrappers = true,
-	hasPerpsOverlayBlockingFilters,
 	minDefiActiveTvlToOnChainMcapPct,
 	maxDefiActiveTvlToOnChainMcapPct,
 	minActiveMcapToOnChainMcapPct,
@@ -233,11 +209,8 @@ export const useFilteredRwaAssets = ({
 	selectedSelfCustodyStates: Array<RWAAttributeFilterState>
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeRwaPerps: boolean
-	includeCex: boolean
 	includeBridgeTvl?: boolean
 	includeWrappers?: boolean
-	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
 	minActiveMcapToOnChainMcapPct: number | null
@@ -271,11 +244,8 @@ export const useFilteredRwaAssets = ({
 			selectedSelfCustodyStates,
 			includeStablecoins,
 			includeGovernance,
-			includeRwaPerps,
-			includeCex,
 			includeBridgeTvl,
 			includeWrappers,
-			hasPerpsOverlayBlockingFilters,
 			minDefiActiveTvlToOnChainMcapPct,
 			maxDefiActiveTvlToOnChainMcapPct,
 			minActiveMcapToOnChainMcapPct,
@@ -304,11 +274,8 @@ export const useFilteredRwaAssets = ({
 		selectedSelfCustodyStates,
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps,
-		includeCex,
 		includeBridgeTvl,
 		includeWrappers,
-		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
 		maxDefiActiveTvlToOnChainMcapPct,
 		minActiveMcapToOnChainMcapPct,
@@ -318,262 +285,72 @@ export const useFilteredRwaAssets = ({
 	])
 }
 
-/** Category pie slices: each asset counts only toward its primary category. */
-export function buildRwaAssetCategoryPieChartData({
+/**
+ * The pie, treemap and bar slices of the Assets chart: one value per group of the axis, positive only, largest first.
+ * The assets are the page's filtered rows, so every filter, the Asset Name filter of a platform page included,
+ * reaches the chart; one slice per asset draws every asset left.
+ */
+export function buildRwaBreakdownSlices({
+	axis,
 	assets,
-	categories,
+	metric,
 	selectedCategories,
-	metric,
 	includeBridgeTvl
 }: {
+	axis: RwaChartAxis
 	assets: IRWAAssetsOverview['assets']
-	categories: Array<string>
+	metric: RWAChartMetricKey
 	selectedCategories: Array<string>
-	metric: RWAChartMetricKey
 	includeBridgeTvl: boolean
-}) {
-	const pieChartStackColors = buildStackColors(categories)
-	const selectedCategoriesSet = new Set(selectedCategories)
-	const categoryTotals = new Map<string, number>()
+}): Array<PieChartDatum> {
+	const totals = new Map<string, { label: string; value: number }>()
+	// Labels that differ only in case or spacing are one group; a known label wins over Unknown.
+	const add = (rawLabel: string | null | undefined, value: number, bySlug: boolean) => {
+		const label = rawLabel?.trim() || UNKNOWN_SLICE
+		const key = bySlug ? rwaSlug(label) : label
+		const prev = totals.get(key) ?? { label, value: 0 }
+		if (prev.label === UNKNOWN_SLICE && label !== UNKNOWN_SLICE) prev.label = label
+		prev.value += value
+		totals.set(key, prev)
+	}
 
 	for (const asset of assets) {
-		const primaryCategory = getPrimaryRwaCategory(asset.category)
-		if (!primaryCategory || !selectedCategoriesSet.has(primaryCategory)) continue
-
-		categoryTotals.set(
-			primaryCategory,
-			(categoryTotals.get(primaryCategory) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
-		)
-	}
-
-	const pieChartData: Array<PieChartDatum> = []
-	for (const [name, value] of categoryTotals) {
-		if (value > 0) pieChartData.push({ name, value })
-	}
-	pieChartData.sort((a, b) => b.value - a.value)
-
-	return {
-		pieChartData,
-		pieChartStackColors
-	}
-}
-
-export function useRwaAssetNamePieChartData({
-	enabled,
-	assets,
-	selectedAssetNames,
-	metric,
-	includeBridgeTvl = true
-}: {
-	enabled: boolean
-	assets: IRWAAssetsOverview['assets']
-	selectedAssetNames: Array<string>
-	metric: RWAChartMetricKey
-	includeBridgeTvl?: boolean
-}) {
-	return useMemo(() => {
-		if (!enabled) {
-			return emptyPieChartResult()
-		}
-
-		const selectedAssetNamesSet = new Set(selectedAssetNames)
-		if (selectedAssetNamesSet.size === 0) {
-			return emptyPieChartResult()
-		}
-
-		const discoveredNames = new Set<string>()
-		const totals = new Map<string, number>()
-		for (const asset of assets) {
-			const name = asset.assetName || asset.ticker
-			if (!selectedAssetNamesSet.has(name)) continue
-			discoveredNames.add(name)
-			totals.set(name, (totals.get(name) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl))
-		}
-
-		const colorOrder = Array.from(discoveredNames)
-		colorOrder.sort()
-		// Keep existing label colors stable while ensuring "Others" exists.
-		if (!colorOrder.includes('Others')) colorOrder.push('Others')
-		const pieChartStackColors = buildStackColors(colorOrder)
-
-		const pieChartData: Array<PieChartDatum> = []
-		for (const [name, value] of totals) {
-			if (value > 0) pieChartData.push({ name, value })
-		}
-		pieChartData.sort((a, b) => b.value - a.value)
-		return {
-			pieChartData,
-			pieChartStackColors
-		}
-	}, [assets, enabled, includeBridgeTvl, metric, selectedAssetNames])
-}
-
-/** Asset-group pie slices, with missing groups counted as Unknown. */
-export function buildRwaAssetGroupPieChartData({
-	assets,
-	metric,
-	includeBridgeTvl
-}: {
-	assets: IRWAAssetsOverview['assets']
-	metric: RWAChartMetricKey
-	includeBridgeTvl: boolean
-}) {
-	const totalsByGroup = new Map<string, number>()
-	for (const asset of assets) {
-		const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-		totalsByGroup.set(
-			assetGroup,
-			(totalsByGroup.get(assetGroup) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
-		)
-	}
-
-	const colorOrder = Array.from(totalsByGroup.keys()).sort()
-	if (!colorOrder.includes('Others')) colorOrder.push('Others')
-	const pieChartStackColors = buildStackColors(colorOrder)
-
-	const pieChartData: Array<PieChartDatum> = []
-	for (const [name, value] of totalsByGroup) {
-		if (value > 0) pieChartData.push({ name, value })
-	}
-	pieChartData.sort((a, b) => b.value - a.value)
-	return {
-		pieChartData,
-		pieChartStackColors
-	}
-}
-
-export function useRwaAssetPlatformPieChartData({
-	enabled,
-	assets,
-	metric,
-	includeBridgeTvl = true
-}: {
-	enabled: boolean
-	assets: IRWAAssetsOverview['assets']
-	metric: RWAChartMetricKey
-	includeBridgeTvl?: boolean
-}) {
-	return useMemo(() => {
-		const UNKNOWN = 'Unknown'
-
-		if (!enabled || assets.length === 0) {
-			return emptyPieChartResult()
-		}
-
-		// Coalesce by slug to avoid casing/spacing duplicates in platform names.
-		const totalsBySlug = new Map<string, { label: string; value: number }>()
-		for (const asset of assets) {
-			const platform = asset.parentPlatform?.trim() || UNKNOWN
-			const key = rwaSlug(platform)
-			const prev = totalsBySlug.get(key) ?? { label: platform, value: 0 }
-
-			// Prefer a non-Unknown label if we previously only had Unknown.
-			if (prev.label === UNKNOWN && platform !== UNKNOWN) prev.label = platform
-
-			prev.value += getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
-			totalsBySlug.set(key, prev)
-		}
-
-		const colorOrder: Array<string> = []
-		for (const value of totalsBySlug.values()) {
-			if (value.label) {
-				colorOrder.push(value.label)
+		const value = () => getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
+		switch (axis) {
+			case 'category': {
+				// Each asset counts only toward its primary category.
+				const primaryCategory = getPrimaryRwaCategory(asset.category)
+				if (primaryCategory && selectedCategories.includes(primaryCategory)) add(primaryCategory, value(), false)
+				break
 			}
-		}
-		colorOrder.sort()
-		// Keep existing label colors stable while ensuring "Others" exists.
-		if (!colorOrder.includes('Others')) colorOrder.push('Others')
-		const pieChartStackColors = buildStackColors(colorOrder)
-
-		const pieChartData: Array<PieChartDatum> = []
-		for (const { label, value } of totalsBySlug.values()) {
-			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
-		}
-		pieChartData.sort((a, b) => b.value - a.value)
-		return {
-			pieChartData,
-			pieChartStackColors
-		}
-	}, [assets, enabled, includeBridgeTvl, metric])
-}
-
-export function useRwaChainBreakdownPieChartData({
-	enabled,
-	assets,
-	metric,
-	includeBridgeTvl = true
-}: {
-	enabled: boolean
-	assets: IRWAAssetsOverview['assets']
-	metric: RWAChartMetricKey
-	includeBridgeTvl?: boolean
-}) {
-	return useMemo(() => {
-		const UNKNOWN = 'Unknown'
-
-		if (!enabled) {
-			return emptyPieChartResult()
-		}
-
-		if (assets.length === 0) {
-			return emptyPieChartResult()
-		}
-
-		// Aggregate using per-chain breakdowns (prevents "random" chain attribution on multi-chain assets).
-		// We retain the union's insertion order so tied values and label colors stay stable across metric toggles.
-		const totalsBySlug = new Map<string, { label: string; value: number }>()
-		const upsert = (
-			chainRaw: string | null | undefined,
-			breakdownMetric: RWAChartMetricKey,
-			valueRaw: number | null | undefined
-		) => {
-			const value = valueRaw ?? 0
-			if (value <= 0) return
-
-			const chain = (chainRaw ?? '').trim() || UNKNOWN
-			const key = rwaSlug(chain)
-			const prev = totalsBySlug.get(key) ?? { label: chain, value: 0 }
-			// Prefer a non-Unknown label if we previously only had Unknown.
-			if (prev.label === UNKNOWN && chain !== UNKNOWN) prev.label = chain
-			if (breakdownMetric === metric) prev.value += value
-			totalsBySlug.set(key, prev)
-		}
-
-		for (const asset of assets) {
-			for (const [chain, value] of asset.onChainMcap?.breakdown ?? []) {
-				upsert(chain, 'onChainMcap', value)
+			case 'assetName':
+				add(asset.assetName || asset.ticker, value(), false)
+				break
+			case 'assetGroup':
+				add(normalizeRwaAssetGroup(asset.assetGroup), value(), false)
+				break
+			case 'platform':
+				add(asset.parentPlatform, value(), true)
+				break
+			case 'chain': {
+				// The per-chain breakdown, so a multi-chain asset splits across its chains.
+				const breakdown =
+					metric === 'defiActiveTvl'
+						? asset.kind === 'spot'
+							? getRwaDisplayedDefiActiveTvlByChain(asset, includeBridgeTvl)
+							: []
+						: (asset[metric]?.breakdown ?? [])
+				for (const [chain, chainValue] of breakdown) if ((chainValue ?? 0) > 0) add(chain, chainValue ?? 0, true)
+				break
 			}
-			for (const [chain, value] of asset.activeMcap?.breakdown ?? []) {
-				upsert(chain, 'activeMcap', value)
-			}
-			// New: chain-level TVL breakdown (fallback: none if missing).
-			const chainBreakdown = asset.kind === 'spot' ? getRwaDisplayedDefiActiveTvlByChain(asset, includeBridgeTvl) : []
-			for (const [chain, value] of chainBreakdown) {
-				upsert(chain, 'defiActiveTvl', value)
-			}
+			default:
+				assertNever(axis)
 		}
+	}
 
-		const colorOrder: Array<string> = []
-		for (const value of totalsBySlug.values()) {
-			if (value.label) {
-				colorOrder.push(value.label)
-			}
-		}
-		colorOrder.sort()
-		// Keep existing label colors stable while ensuring "Others" exists.
-		if (!colorOrder.includes('Others')) colorOrder.push('Others')
-		const pieChartStackColors = buildStackColors(colorOrder)
-
-		const pieChartData: Array<PieChartDatum> = []
-		for (const { label, value } of totalsBySlug.values()) {
-			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
-		}
-		pieChartData.sort((a, b) => b.value - a.value)
-		return {
-			pieChartData,
-			pieChartStackColors
-		}
-	}, [assets, enabled, includeBridgeTvl, metric])
+	const slices: Array<PieChartDatum> = []
+	for (const { label, value } of totals.values()) if (value > 0) slices.push({ name: label, value })
+	return slices.sort((a, b) => b.value - a.value)
 }
 
 /** True when an Include toggle differs from the page default. */

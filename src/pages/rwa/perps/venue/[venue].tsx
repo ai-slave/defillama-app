@@ -1,10 +1,12 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { DEFAULT_CHART_VIEW } from '~/containers/RWA/Perps/chartState'
-import { RWAPerpsDashboard } from '~/containers/RWA/Perps/Dashboard'
-import { getRWAPerpsVenuePage } from '~/containers/RWA/Perps/queries'
-import { RWAPerpsTabNav } from '~/containers/RWA/Perps/TabNav'
-import { resolveCanonicalRwaSlug, rwaSlug } from '~/containers/RWA/rwaSlug'
+import { getRwaPageMeta } from '~/containers/RWA/layout/pageCopy'
+import { fetchRwaPageQuestions } from '~/containers/RWA/layout/questions.server'
+import { unpackRwaPerpsMarkets } from '~/containers/RWA/perpsPayload'
+import { findByRwaSlug, rwaSlug } from '~/containers/RWA/rwaSlug'
+import { keepKnownProtocolSlug } from '~/containers/RWA/server/protocolLink'
+import { RWAVenuePage } from '~/containers/RWA/VenuePage/VenuePage'
+import { getRWAVenuePageProps } from '~/containers/RWA/VenuePage/venuePageData'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -33,22 +35,35 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const metadataCache = await import('~/utils/metadata').then((m) => m.default)
-		const venue = resolveCanonicalRwaSlug(params.venue, metadataCache.rwaPerpsList.venues)
+		const venue = findByRwaSlug(params.venue, metadataCache.rwaPerpsList.venues)
 		if (!venue) {
 			return { notFound: true }
 		}
 
-		if (params.venue !== venue) {
-			return canonicalRouteRedirect(`/rwa/perps/venue/${venue}`)
+		const venueSlug = rwaSlug(venue)
+
+		if (params.venue !== venueSlug) {
+			return canonicalRouteRedirect(`/rwa/perps/venue/${venueSlug}`)
 		}
 
-		const data = await getRWAPerpsVenuePage({ venue, activeView: DEFAULT_CHART_VIEW })
-		if (!data) {
-			throw new Error(`Missing page data for route=/rwa/perps/venue/[venue] venue=${venue}`)
+		const props = await getRWAVenuePageProps({
+			venue,
+			rwaPerpsList: metadataCache.rwaPerpsList,
+			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex,
+			rwaList: metadataCache.rwaList
+		})
+		if (!props) {
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
+
+		const entityQuestions = await fetchRwaPageQuestions({
+			kind: 'venue',
+			scopeName: venue,
+			rows: unpackRwaPerpsMarkets(props.markets)
+		})
 
 		return {
-			props: { data },
+			props: { ...props, meta: props.meta && keepKnownProtocolSlug(props.meta, metadataCache), entityQuestions },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -56,16 +71,11 @@ export const getStaticProps = withPerformanceLogging(
 
 const pageName = ['RWA Perps']
 
-export default function RWAPerpsVenuePage({ data }: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function RWAPerpsVenueRoute(props: InferGetStaticPropsType<typeof getStaticProps>) {
+	const meta = getRwaPageMeta('venue', { name: props.venue, slug: props.venueSlug })
 	return (
-		<Layout
-			title={`${data.venue} RWA Perps Dashboard & Analytics - DefiLlama`}
-			description={`Track ${data.venue} RWA perpetual markets by open interest, volume, market activity, and instrument-level breakdowns.`}
-			pageName={pageName}
-			canonicalUrl={`/rwa/perps/venue/${rwaSlug(data.venue)}`}
-		>
-			<RWAPerpsTabNav active="venues" />
-			<RWAPerpsDashboard mode="venue" data={data} />
+		<Layout title={meta.title} description={meta.description} pageName={pageName} canonicalUrl={meta.canonicalUrl}>
+			<RWAVenuePage {...props} />
 		</Layout>
 	)
 }

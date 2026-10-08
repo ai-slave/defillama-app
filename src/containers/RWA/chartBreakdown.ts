@@ -1,5 +1,6 @@
 import type { RWAFlowOverviewSplitBy } from './api.types'
 import type { RWAChartAggregationMode } from './chartAggregation'
+import { RWA_PERPS_TOTAL_LABELS } from './chartDataset'
 import {
 	getChartViewOptions,
 	type RWAChartMetric,
@@ -7,30 +8,33 @@ import {
 	type RWAChartView,
 	type RwaTreemapParentGrouping
 } from './chartState'
+import type { RWAPerpsChartMetricKey } from './Perps/types'
+import type { RwaPerpsHistoryGroupBy } from './perpsHistoryFold'
 import type { RWAGroupBy } from './table/groupBy'
+import type { RwaPerpsChartScope } from './usePerpsChartDataset'
 
-/** Every metric the overview panel can draw; open interest and volume belong to the Perps view. */
-export type RWAOverviewChartMetric = RWAChartMetric | 'flows' | 'flowVsPrice' | 'openInterest' | 'volume'
+/** Every metric the overview panel can draw; open interest, volume and markets belong to the Perps pages. */
+export type RWAOverviewChartMetric = RWASpotChartMetric | 'openInterest' | 'volume' | 'markets'
+/** What the Assets chart panel draws: the tracked asset metrics and the flows. */
+export type RWASpotChartMetric = RWAChartMetric | 'flows' | 'flowVsPrice'
 
 /**
  * Where a spot time series comes from. `assets` folds the page's per-asset history by one attribute;
  * `chains` folds the per-chain asset histories, one series per chain, because the payload carries no chain axis.
  */
 export type RWASpotChartSource =
-	| { kind: 'assets'; mode: Exclude<RWAChartAggregationMode, 'total' | 'assetClass'> }
+	| {
+			kind: 'assets'
+			mode: Exclude<RWAChartAggregationMode, 'total' | 'assetClass'>
+	  }
 	| { kind: 'chains' }
-
-/** A fold honours the table's filters; a server split honours the scope flags only. */
-export type RWAChartDataOrigin = 'fold' | 'split'
-
-export const RWA_CHART_FILTER_NOTE =
-	'This chart ignores the table filters and shows every asset under the Group by and scope toggles.'
 
 const GROUP_LABELS: Record<RWAGroupBy, string> = {
 	platform: 'Platform',
 	chain: 'Chain',
 	assetGroup: 'Asset Group',
 	category: 'Category',
+	assetClass: 'Asset Class',
 	asset: 'Asset',
 	none: 'Asset'
 }
@@ -44,6 +48,7 @@ export function getRwaSpotChartSource(groupBy: RWAGroupBy): RWASpotChartSource {
 		case 'category':
 			return { kind: 'assets', mode: groupBy }
 		case 'asset':
+		case 'assetClass':
 		case 'none':
 			return { kind: 'assets', mode: 'assetName' }
 		default:
@@ -63,6 +68,7 @@ export function getRwaTreemapParentGrouping(groupBy: RWAGroupBy): RwaChartAxis {
 		case 'category':
 			return groupBy
 		case 'asset':
+		case 'assetClass':
 		case 'none':
 			return 'assetName'
 		default:
@@ -71,14 +77,17 @@ export function getRwaTreemapParentGrouping(groupBy: RWAGroupBy): RwaChartAxis {
 }
 
 /**
- * Where a Perps view time series comes from: a server split per venue, asset group or reference asset, or the
- * per-contract split folded to the largest contracts. Both are splits, so the table filters do not apply.
+ * Where an unfiltered Perps time series comes from: a server split per venue, asset group or reference asset,
+ * or the per-contract split folded to the largest contracts.
  */
 export type RWAPerpsChartSource =
-	| { kind: 'split'; breakdown: 'venue' | 'assetGroup' | 'baseAsset' }
+	| {
+			kind: 'split'
+			breakdown: 'venue' | 'assetGroup' | 'assetClass' | 'baseAsset'
+	  }
 	| { kind: 'contracts' }
 
-export type RWAPerpsChartMetric = Extract<RWAOverviewChartMetric, 'openInterest' | 'volume'>
+export type RWAPerpsChartMetric = Extract<RWAOverviewChartMetric, 'openInterest' | 'volume' | 'markets'>
 
 export function getRwaPerpsChartSource(groupBy: RWAGroupBy): RWAPerpsChartSource {
 	switch (groupBy) {
@@ -88,6 +97,8 @@ export function getRwaPerpsChartSource(groupBy: RWAGroupBy): RWAPerpsChartSource
 			return { kind: 'split', breakdown: 'venue' }
 		case 'assetGroup':
 			return { kind: 'split', breakdown: 'assetGroup' }
+		case 'assetClass':
+			return { kind: 'split', breakdown: 'assetClass' }
 		case 'asset':
 			return { kind: 'split', breakdown: 'baseAsset' }
 		case 'none':
@@ -97,22 +108,93 @@ export function getRwaPerpsChartSource(groupBy: RWAGroupBy): RWAPerpsChartSource
 	}
 }
 
-const PERPS_CHART_METRIC_OPTIONS: ReadonlyArray<{ key: RWAPerpsChartMetric; label: string }> = [
+/** The fold's Group by for a perps table Group by; None keeps one series per market. */
+function getRwaPerpsHistoryGroupBy(groupBy: RWAGroupBy): RwaPerpsHistoryGroupBy | null {
+	const source = getRwaPerpsChartSource(groupBy)
+	return source.kind === 'split' ? source.breakdown : null
+}
+
+/**
+ * Where the perps chart reads: the server split of the scope, or the per-market history folded in the browser when
+ * a filter other than Venue Type narrows the markets, or when an underlying's page groups its markets, which the
+ * split routes do not serve. `groupBy` names the members either way.
+ */
+export function getRwaPerpsChartPlan({
+	scope,
+	groupBy,
+	isFiltered
+}: {
+	scope: RwaPerpsChartScope
+	groupBy: RWAGroupBy
+	isFiltered: boolean
+}): { kind: 'split' | 'fold'; groupBy: RwaPerpsHistoryGroupBy | null } {
+	const historyGroupBy = getRwaPerpsHistoryGroupBy(groupBy)
+	const isFolded = isFiltered || (scope.kind === 'baseAsset' && historyGroupBy != null)
+	return { kind: isFolded ? 'fold' : 'split', groupBy: historyGroupBy }
+}
+
+const PERPS_GROUP_LABELS: Record<RwaPerpsHistoryGroupBy | 'market', { one: string; many: string }> = {
+	venue: { one: 'Venue', many: 'Venues' },
+	assetGroup: { one: 'Asset Group', many: 'Asset Groups' },
+	assetClass: { one: 'Asset Class', many: 'Asset Classes' },
+	baseAsset: { one: 'Asset', many: 'Assets' },
+	market: { one: 'Market', many: 'Markets' }
+}
+
+/** What one member of a perps chart is, for the series picker, the treemap and the csv header. */
+export function getRwaPerpsGroupLabels(groupBy: RwaPerpsHistoryGroupBy | null): { one: string; many: string } {
+	return PERPS_GROUP_LABELS[groupBy ?? 'market']
+}
+
+const PERPS_CHART_METRIC_OPTIONS: ReadonlyArray<{
+	key: RWAPerpsChartMetric
+	label: string
+}> = [
 	{ key: 'openInterest', label: 'Open Interest' },
-	{ key: 'volume', label: 'Volume' }
+	{ key: 'volume', label: 'Volume' },
+	{ key: 'markets', label: 'Markets' }
 ]
 
-export function getRwaPerpsChartMetricOptions(): ReadonlyArray<{ key: RWAPerpsChartMetric; label: string }> {
+export function getRwaPerpsChartMetricOptions(): ReadonlyArray<{
+	key: RWAPerpsChartMetric
+	label: string
+}> {
 	return PERPS_CHART_METRIC_OPTIONS
 }
 
-/** The Perps view reads the same `chartType` key as the Assets view; open interest is its default. */
+export function getRwaPerpsMetricLabel(metric: RWAPerpsChartMetric): string {
+	return PERPS_CHART_METRIC_OPTIONS.find((option) => option.key === metric)!.label
+}
+
+/** The Perps pages read the same `chartType` key as the Assets pages; open interest is their default. */
 export function parseRwaPerpsChartMetric(value: string | undefined): RWAPerpsChartMetric {
-	return value === 'volume' ? 'volume' : 'openInterest'
+	return value === 'volume' || value === 'markets' ? value : 'openInterest'
 }
 
 export function getRwaPerpsChartMetricQueryValue(metric: RWAPerpsChartMetric): string | undefined {
 	return metric === 'openInterest' ? undefined : metric
+}
+
+/** The key the perps breakdown routes read; volume is the 24h series. */
+export function getRwaPerpsChartServerKey(metric: RWAPerpsChartMetric): RWAPerpsChartMetricKey {
+	return metric === 'volume' ? 'volume24h' : metric
+}
+
+/** Markets is a count of listings: the series sum per day into a Total, with no dollar sign. */
+export function getRwaPerpsChartMetricSpec(metric: RWAPerpsChartMetric): {
+	valueSymbol: string
+	totalLabel: string
+} {
+	switch (metric) {
+		case 'openInterest':
+			return { valueSymbol: '$', totalLabel: RWA_PERPS_TOTAL_LABELS.openInterest }
+		case 'volume':
+			return { valueSymbol: '$', totalLabel: RWA_PERPS_TOTAL_LABELS.volume }
+		case 'markets':
+			return { valueSymbol: '', totalLabel: RWA_PERPS_TOTAL_LABELS.markets }
+		default:
+			return assertNever(metric)
+	}
 }
 
 /** The flows split the front page reads for a Group by; None and Asset read the total, summed from one split. */
@@ -124,6 +206,7 @@ export function getRwaFlowSplitBy(groupBy: RWAGroupBy): RWAFlowOverviewSplitBy |
 		case 'category':
 			return groupBy
 		case 'asset':
+		case 'assetClass':
 		case 'none':
 			return null
 		default:
@@ -135,26 +218,32 @@ export function getRwaChartGroupLabel(groupBy: RWAGroupBy): string {
 	return GROUP_LABELS[groupBy]
 }
 
-export function getRwaChartFilterNote(origin: RWAChartDataOrigin, hasAttributeFilters: boolean): string | null {
-	return origin === 'split' && hasAttributeFilters ? RWA_CHART_FILTER_NOTE : null
-}
-
-/** Share is a time series drawn as percent of the row, so it needs series that sum to a total. */
+/**
+ * Share is a time series drawn as percent of the row, so it needs series that sum to a total. Pie, treemap and bar
+ * read one value per group: a balance (open interest, markets, the spot metrics) on its latest day, a flow (volume)
+ * over the picked period, as the chains-by-adapter charts on /dexs do. Flows chart in and out, so they keep the line.
+ */
 export function getRwaChartViewOptions(metric: RWAOverviewChartMetric): ReadonlyArray<RWAChartOption<RWAChartView>> {
 	switch (metric) {
 		case 'activeMcap':
 		case 'onChainMcap':
 		case 'defiActiveTvl':
-			return getChartViewOptions()
 		case 'openInterest':
-			return getChartViewOptions().filter((option) => option.key === 'timeSeries' || option.key === 'share')
+		case 'markets':
+		case 'volume':
+			return getChartViewOptions()
 		case 'flows':
 		case 'flowVsPrice':
-		case 'volume':
 			return getChartViewOptions().filter((option) => option.key === 'timeSeries')
 		default:
 			return assertNever(metric)
 	}
+}
+
+/** The venue chart reads the same `chartView` key; the legacy `bar` is the horizontal bar view. */
+export function parseRwaPerpsChartView(metric: RWAPerpsChartMetric, value: string | undefined): RWAChartView {
+	const key = value === 'bar' ? 'hbar' : value
+	return getRwaChartViewOptions(metric).find((option) => option.key === key)?.key ?? 'timeSeries'
 }
 
 function assertNever(value: never): never {

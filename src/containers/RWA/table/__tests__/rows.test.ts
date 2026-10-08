@@ -57,7 +57,7 @@ describe('buildRwaLeafRows', () => {
 			price: 1.05,
 			priceChange24h: null,
 			openInterest: null,
-			openInterestChange24h: { current: null, prior: null },
+			openInterestChange24h: { current: null, prior: null, percent: null, dropped: 0 },
 			volume24h: null,
 			volume7d: null,
 			fundingApr: null,
@@ -67,6 +67,16 @@ describe('buildRwaLeafRows', () => {
 			maxLeverage: null,
 			protocolFees24h: null,
 			volume30d: null,
+			volume24hChange24h: { current: null, prior: null, percent: null, dropped: 0 },
+			volumeAllTime: null,
+			oraclePrice: null,
+			midPrice: null,
+			previousDayPrice: null,
+			protocolFees7d: null,
+			protocolFees30d: null,
+			protocolFeesAllTime: null,
+			makerFeeRate: null,
+			takerFeeRate: null,
 			chains: [
 				{ chain: 'Ethereum', value: 700_000, share: 0.7 },
 				{ chain: 'Solana', value: 295_000, share: 0.295 },
@@ -113,7 +123,7 @@ describe('buildRwaLeafRows', () => {
 		expect(row.metrics.volume24h).toBe(1000)
 		expect(row.metrics.volume30d).toBe(20_000)
 		expect(row.metrics.priceChange24h).toBe(2.5)
-		expect(row.metrics.openInterestChange24h).toEqual({ current: 5000, prior: 4000 })
+		expect(row.metrics.openInterestChange24h).toEqual({ current: 5000, prior: 4000, percent: 25, dropped: 0 })
 		expect(row.metrics.volume7d).toBe(6000)
 		expect(row.metrics.fundingApr).toBeCloseTo(0.0001 * (8760 / 8) * 100)
 		expect(row.metrics.premium).toBeCloseTo(0.2)
@@ -122,5 +132,45 @@ describe('buildRwaLeafRows', () => {
 		expect(row.metrics.activeMcap).toBeNull()
 		expect(row.metrics.chains).toEqual([])
 		expect(row.metrics.chainCount).toBe(0)
+	})
+
+	test('a market that fell to zero keeps the -100% the API sends and counts as a drop', () => {
+		const [row] = buildRwaLeafRows([perpsAsset({ openInterest: 0, openInterestChange24h: -100 })], {
+			includeBridgeTvl: true
+		})
+		expect(row.metrics.openInterestChange24h).toEqual({ current: 0, prior: null, percent: -100, dropped: 1 })
+	})
+
+	test('fills the widened perps fields', () => {
+		const [big] = buildRwaLeafRows(
+			[
+				perpsAsset({
+					openInterest: 3000,
+					volume24hChange24h: 25,
+					volumeAllTime: 90_000,
+					oraclePrice: 1.01,
+					midPrice: 1.02,
+					previousDayPrice: 0.99,
+					protocolFees7d: 2000,
+					protocolFees30d: 8000,
+					protocolFeesAllTime: 50_000,
+					makerFeeRate: 0.0001,
+					takerFeeRate: 0.0005
+				})
+			],
+			{ includeBridgeTvl: true }
+		)
+		expect(big.metrics).toMatchObject({
+			volume24hChange24h: { current: 1000, prior: 800, percent: 25 },
+			volumeAllTime: 90_000,
+			oraclePrice: 1.01,
+			midPrice: 1.02,
+			previousDayPrice: 0.99,
+			protocolFees7d: 2000,
+			protocolFees30d: 8000,
+			protocolFeesAllTime: 50_000,
+			makerFeeRate: 0.0001,
+			takerFeeRate: 0.0005
+		})
 	})
 })

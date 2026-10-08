@@ -1,11 +1,15 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
+import { BasicLink } from '~/components/Link'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { RWAOverview } from '~/containers/RWA'
+import { getRwaPlatformPageOutcome } from '~/containers/RWA/platformRoutes'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
+import { findByRwaSlug } from '~/containers/RWA/rwaSlug'
+import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -47,10 +51,20 @@ export const getStaticProps = withPerformanceLogging(
 
 		const platformMeta = metadataCache.rwaPlatformsIndex.platforms[platformSlug] ?? null
 		const platformPage = platformMeta ? { meta: platformMeta } : null
+		// The tab reads spot assets only; a protocol whose RWA activity is a perps venue points to its venue page.
+		const outcome = getRwaPlatformPageOutcome({
+			spotRows: rwaOverview.assets.filter((asset) => asset.kind === 'spot').length,
+			meta: platformMeta,
+			perpsVenue: findByRwaSlug(platformSlug, metadataCache.rwaPerpsList.venues)
+		})
+		const perpsVenueHref =
+			outcome.kind === 'redirect' ? outcome.destination : outcome.kind === 'page' ? outcome.perpsVenueHref : null
+		const perpsOnly = outcome.kind === 'redirect'
 
 		return {
 			props: {
-				rwaOverview: { ...rwaOverview, platformPage },
+				rwaOverview: { ...rwaOverview, platformPage, perpsVenueHref },
+				perpsOnly,
 				name: protocolData.name,
 				otherProtocols: protocolData?.otherProtocols ?? [],
 				category: protocolData?.category ?? null,
@@ -90,7 +104,17 @@ export default function ProtocolRWA(props: InferGetStaticPropsType<typeof getSta
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<RWAOverview {...props.rwaOverview} hideEntityNav />
+			{props.perpsOnly && props.rwaOverview.perpsVenueHref ? (
+				<Card padding="sm" className="body-md">
+					{props.name} lists RWA perpetual markets, not spot assets.{' '}
+					<BasicLink href={props.rwaOverview.perpsVenueHref} className="text-link hover:underline">
+						See its markets on the venue page
+					</BasicLink>
+					.
+				</Card>
+			) : (
+				<RWAOverview {...props.rwaOverview} pageKind="platform" hideEntityNav />
+			)}
 		</ProtocolOverviewLayout>
 	)
 }

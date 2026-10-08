@@ -6,7 +6,6 @@ export type RWAOverviewMode = 'chain' | 'category' | 'platform' | 'assetGroup'
 export type RWAOverviewInclusionDefaults = {
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeRwaPerps: boolean
 	// Include the bridge/interop portion of DeFi Active TVL. Default true = today's numbers. Optional so existing callers/fixtures compile.
 	includeBridgeTvl?: boolean
 	/** Wrapper rows; off unless the page is about them. */
@@ -23,9 +22,6 @@ export type RWAOverviewInclusionContext = {
 
 type RWAOverviewPath = `/rwa${string}`
 
-export const OTHER_RWAS_SLUG = 'other-rwas'
-export const RWA_WRAPPERS_SLUG = 'rwa-wrappers'
-export const RWA_YIELD_WRAPPER_SLUG = 'rwa-yield-wrapper'
 export const EXCLUDED_STANDARD_RWA_CATEGORY_SLUGS = new Set(['rwa-perps'])
 const STABLECOINS_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/fiat-stablecoins',
@@ -82,7 +78,6 @@ export function inferPlatformRWAOverviewInclusion(
 	return {
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps: false,
 		includeBridgeTvl: true,
 		includeWrappers: true
 	}
@@ -115,7 +110,6 @@ export function getDefaultRWAOverviewInclusion({
 	return {
 		includeStablecoins: path ? STABLECOINS_DEFAULT_RWA_PATHS.has(path) : false,
 		includeGovernance: path ? GOVERNANCE_DEFAULT_RWA_PATHS.has(path) : false,
-		includeRwaPerps: false,
 		includeBridgeTvl: true,
 		includeWrappers: areWrappersIncludedByDefault(mode, categorySlug)
 	}

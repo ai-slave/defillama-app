@@ -6,6 +6,7 @@ import {
 	getInvestorsSiteWithPathFallback
 } from '~/containers/Investors/config'
 import { isExtraConversationPath, legacyTerminalRedirect } from '~/containers/LlamaAI/terminal/terminalRoutes'
+import { legacyRwaPerpsRedirect } from '~/containers/RWA/perpsFlagRedirect'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_GROUP_COOKIE_NAME,
@@ -205,6 +206,11 @@ export function proxy(request: NextRequest) {
 	const terminalRedirect = legacyTerminalRedirect(request.nextUrl.pathname, request.nextUrl.searchParams)
 	if (terminalRedirect) {
 		return NextResponse.redirect(new URL(terminalRedirect, request.url))
+	}
+
+	const rwaPerpsRedirect = legacyRwaPerpsRedirect(request.nextUrl.pathname, request.nextUrl.searchParams)
+	if (rwaPerpsRedirect) {
+		return NextResponse.redirect(new URL(rwaPerpsRedirect, request.url))
 	}
 
 	if (isExtraConversationPath(request.nextUrl.pathname)) {

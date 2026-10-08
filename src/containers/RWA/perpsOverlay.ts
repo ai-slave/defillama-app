@@ -27,6 +27,25 @@ export function toRWAPerpsContractOverlayRow(market: IRWAPerpsMarket): RWAPerpsC
 		premium: market.premium,
 		maxLeverage: market.maxLeverage,
 		protocolFees24h: market.estimatedProtocolFees24h,
+		// Page props serialise to JSON, so a field an older payload lacks reads null, not undefined.
+		timestamp: market.timestamp ?? null,
+		venue: market.venue ?? null,
+		volume24hChange24h: market.volume24hChange24h ?? null,
+		volumeAllTime: market.volumeAllTime ?? null,
+		oraclePrice: market.oraclePx ?? null,
+		midPrice: market.midPx ?? null,
+		previousDayPrice: market.prevDayPx ?? null,
+		protocolFees7d: market.estimatedProtocolFees7d ?? null,
+		protocolFees30d: market.estimatedProtocolFees30d ?? null,
+		protocolFeesAllTime: market.estimatedProtocolFeesAllTime ?? null,
+		pair: market.pair ?? null,
+		marginAsset: market.marginAsset ?? null,
+		settlementAsset: market.settlementAsset ?? null,
+		sizeDecimals: market.szDecimals ?? null,
+		makerFeeRate: market.makerFeeRate ?? null,
+		takerFeeRate: market.takerFeeRate ?? null,
+		oracleProvider: market.oracleProvider ?? null,
+		website: market.website ?? null,
 		openInterest: market.openInterest,
 		volume24h: market.volume24h,
 		volume30d: market.volume30d,
@@ -59,12 +78,10 @@ export function toRWAPerpsContractOverlayRow(market: IRWAPerpsMarket): RWAPerpsC
 
 export function buildRWAPerpsContractOverlayRows({
 	markets,
-	selectedCategory,
 	selectedPlatform,
 	selectedAssetGroup
 }: {
 	markets: Array<IRWAPerpsMarket>
-	selectedCategory?: string
 	selectedPlatform?: string
 	selectedAssetGroup?: string
 }): Array<RWAPerpsContractOverlayRow> {
@@ -72,9 +89,6 @@ export function buildRWAPerpsContractOverlayRows({
 
 	for (const market of markets) {
 		const row = toRWAPerpsContractOverlayRow(market)
-		const hasCategoryMatch = selectedCategory
-			? (row.category ?? []).some((category) => rwaSlug(category) === selectedCategory)
-			: true
 		const hasPlatformMatch = selectedPlatform
 			? getRealRwaPlatforms(row.parentPlatform).some((platform) => rwaSlug(platform) === selectedPlatform)
 			: true
@@ -82,7 +96,7 @@ export function buildRWAPerpsContractOverlayRows({
 			? rwaSlug(normalizeRwaAssetGroup(row.assetGroup)) === selectedAssetGroup
 			: true
 
-		if (!hasCategoryMatch || !hasPlatformMatch || !hasAssetGroupMatch) {
+		if (!hasPlatformMatch || !hasAssetGroupMatch) {
 			continue
 		}
 

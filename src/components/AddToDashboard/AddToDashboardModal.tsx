@@ -30,6 +30,7 @@ import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { dashboardAPI, type LiteDashboardSummary } from '~/containers/ProDashboard/services/DashboardAPI'
 import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
+import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { ConfirmDialog } from '~/ui/ConfirmDialog'
@@ -83,6 +84,10 @@ function getConfigName(config: DashboardChartConfig | null, llamaAIChart?: Llama
 		}
 		const label = chartTypeLabels[config.chartType] || config.chartType
 		return `${config.stablecoin} ${label}`
+	}
+	if (config.kind === 'rwa-overview') {
+		const label = `RWA ${getChartMetricLabel(config.metric)}`
+		return config.chain ? `${config.chain} ${label}` : label
 	}
 	return config.name || ''
 }

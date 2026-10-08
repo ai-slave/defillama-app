@@ -578,17 +578,6 @@
       ]
     },
     {
-      "name": "RWA Perps by Venue",
-      "route": "/rwa/perps/venues",
-      "category": "RWA",
-      "description": "Overview of all Real World Assets (RWAs) perps by venue",
-      "searchKeywords": [
-        "rwa perp venues",
-        "rwa perps by venue",
-        "real world asset perps by venue"
-      ]
-    },
-    {
       "name": "RWA: Perps",
       "route": "/rwa/perps",
       "category": "RWA",
@@ -598,28 +587,6 @@
         "rwa perp",
         "real world asset perps",
         "real world assets perps"
-      ]
-    },
-    {
-      "name": "RWA Perps by Asset",
-      "route": "/rwa/perps/assets",
-      "category": "RWA",
-      "description": "Compare RWA perpetual markets grouped by their underlying reference asset",
-      "searchKeywords": [
-        "rwa perp assets",
-        "rwa perps by asset",
-        "real world asset perpetual markets"
-      ]
-    },
-    {
-      "name": "RWA Perps by Asset Group",
-      "route": "/rwa/perps/asset-groups",
-      "category": "RWA",
-      "description": "Overview of all Real World Assets (RWAs) perps by asset group",
-      "searchKeywords": [
-        "rwa perp asset groups",
-        "rwa perps by asset group",
-        "real world asset perps by asset group"
       ]
     },
     {

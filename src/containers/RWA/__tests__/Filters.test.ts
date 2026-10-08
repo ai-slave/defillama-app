@@ -1,6 +1,5 @@
-import type { ComponentProps } from 'react'
 import { describe, expect, test } from 'vitest'
-import { RWA_FILTERS_TEST_UTILS, type RWAOverviewFilters } from '../Filters'
+import { RWA_FILTERS_TEST_UTILS, type RWAOverviewFiltersProps } from '../Filters'
 import { readRwaQueryFilters } from '../filterState'
 
 const actions = {
@@ -9,9 +8,9 @@ const actions = {
 	setDefiActiveTvlToActiveMcapPctRange: () => {}
 }
 
-const baseProps: ComponentProps<typeof RWAOverviewFilters> = {
+const baseProps: RWAOverviewFiltersProps = {
 	enabled: true,
-	defaultInclusion: { includeStablecoins: false, includeGovernance: false, includeRwaPerps: false },
+	defaultInclusion: { includeStablecoins: false, includeGovernance: false },
 	modes: {
 		mode: 'chain',
 		isChainMode: true,
@@ -78,7 +77,9 @@ const baseProps: ComponentProps<typeof RWAOverviewFilters> = {
 		includeBridgeTvl: true,
 		includeWrappers: false
 	},
-	actions
+	actions,
+	inlineFilters: [],
+	showIncludeInTvl: true
 }
 
 function makeProps(overrides: Record<string, unknown> = {}) {
@@ -166,6 +167,24 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(filters.selectedRedeemableStates).toEqual(['yes', 'no'])
 		expect(filters.selectedAttestationsStates).toEqual([])
 		expect(filters.selectedCategories).toEqual(['Treasuries', 'Private Credit'])
+	})
+
+	test('More filters leaves the inline filters out: not offered, not counted, not cleared on apply', () => {
+		const props = makeProps({
+			inlineFilters: ['categories', 'assetGroups', 'accessModels'],
+			selections: { selectedCategories: ['Treasuries'], selectedTypes: ['Asset'] }
+		})
+		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
+		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, { ...draft, activeIds: [] })
+		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, { query: {} } as any)
+
+		expect(definitions.map((definition) => definition.id)).not.toContain('categories')
+		expect(draft.activeIds).toEqual(['types'])
+		expect('categories' in updates || 'excludeCategories' in updates).toBe(false)
+		expect(updates.types).toBeUndefined()
+		expect('types' in updates).toBe(true)
+		expect(pills.map((pill) => pill.label)).toEqual(['Types: Asset'])
 	})
 
 	test('labels a narrowed filter pill the way the picker trigger describes it', () => {

@@ -1,31 +1,23 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
-import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import { slug } from '~/utils'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey } from './api.types'
 import { getRwaChartTotalLabel } from './chartAggregation'
 import {
-	getRwaChartFilterNote,
 	getRwaChartGroupLabel,
 	getRwaChartViewOptions,
 	getRwaFlowSplitBy,
-	getRwaPerpsChartMetricOptions,
-	getRwaPerpsChartMetricQueryValue,
-	getRwaPerpsChartSource,
 	getRwaSpotChartSource,
-	type RWAChartDataOrigin,
-	type RWAOverviewChartMetric
+	type RWASpotChartMetric
 } from './chartBreakdown'
 import type { RWAPositionalChartDataset } from './chartDataset'
 import {
@@ -36,7 +28,7 @@ import {
 	toRwaShareDataset
 } from './chartFold'
 import { getRwaOverviewChartMetricOptions, resolveRwaChartQueryState, type RwaChartQueryState } from './chartQueryState'
-import { buildRwaPerpsChartSeries, buildRwaTimeSeriesCharts } from './chartSeries'
+import { buildRwaTimeSeriesCharts } from './chartSeries'
 import {
 	getChartMetricLabel,
 	getChartMetricQueryValue,
@@ -46,6 +38,7 @@ import {
 	type RwaTreemapNestedBy
 } from './chartState'
 import type { RWAOverviewMode } from './constants'
+import { getRwaOverviewDashboardChart } from './dashboard/rwaDashboardChart'
 import { definitions } from './definitions'
 import { RWAFlowVsPriceStrip } from './FlowPanelParts'
 import {
@@ -69,12 +62,11 @@ import {
 import { type RWAFlowScope, useRWAFlowSeries } from './flows.hooks'
 import { sumRwaFlowSplit } from './flowSplit'
 import { useRwaChartDataset } from './hooks'
+import type { RWAPageKind } from './layout/pageLayout'
 import { RWAOverviewBreakdownPanel } from './OverviewBreakdownPanel'
-import type { getRankedRwaFilterValues } from './rankedFilterValues'
-import { rwaSlug } from './rwaSlug'
-import type { RWAGroupBy, RWATableView } from './table/groupBy'
+import { getRwaCsvFileName } from './table/csv'
+import type { RWAGroupBy } from './table/groupBy'
 import { useRwaChainChartDataset } from './useChainChartDataset'
-import { useRwaPerpsChartDataset } from './usePerpsChartDataset'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
@@ -83,22 +75,17 @@ export type RWAOverviewChartPanelProps = {
 	overview: IRWAAssetsOverview
 	mode: RWAOverviewMode
 	selectedModeLabel: string
+	pageKind: RWAPageKind
+	pageSlug: string | null
 	aggregateAssets: IRWAAssetsOverview['assets']
-	/** The Assets or Perps view; the Perps view draws open interest and volume by the Group by. */
-	view: RWATableView
 	/** The table's Group by, the one axis every chart follows. */
 	groupBy: RWAGroupBy
-	rankedFilterValues: ReturnType<typeof getRankedRwaFilterValues>
-	selectedAssetNames: Array<string>
 	selectedCategories: Array<string>
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeCex: boolean
 	includeBridgeTvl: boolean
 	/** A scope flag or a filter differs from the page defaults, so the build-time datasets do not apply. */
 	activeFilters: boolean
-	/** A filter from the Filters dialog is active; a server split cannot follow it. */
-	activeAttributeFilters: boolean
 }
 
 /**
@@ -114,40 +101,26 @@ export function RWAOverviewChartPanel({
 	overview,
 	mode,
 	selectedModeLabel,
+	pageKind,
+	pageSlug,
 	aggregateAssets,
-	view,
 	groupBy,
-	rankedFilterValues,
-	selectedAssetNames,
 	selectedCategories,
 	includeStablecoins,
 	includeGovernance,
-	includeCex,
 	includeBridgeTvl,
-	activeFilters,
-	activeAttributeFilters
+	activeFilters
 }: RWAOverviewChartPanelProps) {
 	const router = useRouter()
 	const isPlatformMode = mode === 'platform'
-	const isAssetGroupMode = mode === 'assetGroup'
-	const isPerpsView = view === 'perps'
 	const chartMetricAvailability = overview.chartMetricAvailability
-	const {
-		flowQueryState,
-		perpsChartMetric,
-		treemapParentGrouping,
-		chartState,
-		selectedChartMetric,
-		chartView,
-		chartTotalLabel
-	} = useRwaChartQueryState(router.query, {
-		isPerpsView,
-		isPlatformMode,
-		groupBy,
-		availability: chartMetricAvailability
-	})
+	const { flowQueryState, treemapParentGrouping, chartState, selectedChartMetric, chartView, chartTotalLabel } =
+		useRwaChartQueryState(router.query, {
+			isPlatformMode,
+			groupBy,
+			availability: chartMetricAvailability
+		})
 	const isFlowVsPrice = flowQueryState.view === 'flowVsPrice'
-	const perpsChartSource = getRwaPerpsChartSource(groupBy)
 	const [flowZoom, setFlowZoom] = useState<RWAFlowZoom | null>(null)
 	const isFlowMetric = flowQueryState.view != null
 	const chartTypeKey = chartState.metric
@@ -192,7 +165,9 @@ export function RWAOverviewChartPanel({
 	const groupedFlowChart = useMemo(
 		() =>
 			isGroupedFlowChart && flowSplitPoints
-				? buildRWAFlowRotationChart(flowSplitPoints, flowGroupBy, { maxSeries: RWA_MAX_CHART_SERIES })
+				? buildRWAFlowRotationChart(flowSplitPoints, flowGroupBy, {
+						maxSeries: RWA_MAX_CHART_SERIES
+					})
 				: null,
 		[flowGroupBy, flowSplitPoints, isGroupedFlowChart]
 	)
@@ -201,7 +176,7 @@ export function RWAOverviewChartPanel({
 		[router.query.flowOverlays, chartMetricAvailability]
 	)
 	const flowOverlayOptions = getRWAFlowOverlayOptions(chartMetricAvailability)
-	const isSpotTimeSeries = !isPerpsView && !isFlowMetric && isTimeSeriesView
+	const isSpotTimeSeries = !isFlowMetric && isTimeSeriesView
 	/* A build-time dataset applies while the page sits at its defaults; its Total line serves every Group by. */
 	const hasInitialMetricDataset = getInitialMetricDataset(chartTypeKey) != null && !activeFilters
 	const useInitialGroupedDataset = initialGroupedDataset != null && !activeFilters
@@ -235,28 +210,13 @@ export function RWAOverviewChartPanel({
 		total: assetChartDataset,
 		enabled: isSpotTimeSeries && isChainSource && !useInitialGroupedDataset
 	})
-	const {
-		chartDataset: perpsChartDataset,
-		isChartLoading: isPerpsChartLoading,
-		chartError: perpsChartError
-	} = useRwaPerpsChartDataset({
-		source: perpsChartSource,
-		metric: perpsChartMetric,
-		includeCex,
-		enabled: isPerpsView && isTimeSeriesView
-	})
-	const groupedChartDataset = isPerpsView
-		? perpsChartDataset
-		: isChainSource
-			? useInitialGroupedDataset && initialGroupedDataset
-				? initialGroupedDataset.dataset
-				: chainChartDataset
-			: assetChartDataset
-	const isChartLoading = isAssetChartLoading || isChainChartLoading || isPerpsChartLoading
-	const chartError = assetChartError ?? chainChartError ?? perpsChartError
-	const chartDataOrigin: RWAChartDataOrigin =
-		isPerpsView || (isFlowMetric && flowScope.kind === 'overview') ? 'split' : 'fold'
-	const chartNote = getRwaChartFilterNote(chartDataOrigin, activeAttributeFilters)
+	const groupedChartDataset = isChainSource
+		? useInitialGroupedDataset && initialGroupedDataset
+			? initialGroupedDataset.dataset
+			: chainChartDataset
+		: assetChartDataset
+	const isChartLoading = isAssetChartLoading || isChainChartLoading
+	const chartError = assetChartError ?? chainChartError
 	const {
 		chartDataset: flowOnChainMcapDataset,
 		assetRows: flowOnChainMcapAssetRows,
@@ -324,19 +284,14 @@ export function RWAOverviewChartPanel({
 		[selectedFlowOverlayMetrics, flowOnChainMcapByTimestamp, flowActiveMcapByTimestamp, flowDefiActiveTvlByTimestamp]
 	)
 
-	const showCharts = overview.assets.length > 1 || isPlatformMode || isFlowMetric
-
 	const { chartInstance: multiSeriesChart2Instance, handleChartReady: handleMultiSeriesChartReady } =
 		useGetChartInstance()
-	const chartMetricLabel = isPerpsView
-		? (getRwaPerpsChartMetricOptions().find((option) => option.key === perpsChartMetric)?.label ?? 'Open Interest')
-		: isFlowVsPrice
-			? 'Flow vs Price'
-			: isFlowMetric
-				? 'Net Flows'
-				: getChartMetricLabel(chartTypeKey)
+	const chartMetricLabel = isFlowVsPrice
+		? 'Flow vs Price'
+		: isFlowMetric
+			? 'Net Flows'
+			: getChartMetricLabel(chartTypeKey)
 	const chartMetricOptions = getRwaOverviewChartMetricOptions({
-		isPerpsView,
 		isPlatformMode,
 		availability: chartMetricAvailability
 	})
@@ -345,7 +300,7 @@ export function RWAOverviewChartPanel({
 		metricLabel: chartMetricLabel,
 		selectedModeLabel
 	})
-	const timeSeriesChartFilename = `rwa-time-series-chart-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
+	const chartFilename = getRwaCsvFileName(pageKind, pageSlug, 'chart').replace(/\.csv$/, '')
 	const flowChartSelection = useMemo<RWAFlowChartSelection>(
 		() =>
 			isFlowVsPrice
@@ -359,7 +314,12 @@ export function RWAOverviewChartPanel({
 	)
 	const flowChart = useMemo(
 		() =>
-			isFlowMetric && flowData ? buildRWAFlowChart({ points: flowData.series, selection: flowChartSelection }) : null,
+			isFlowMetric && flowData
+				? buildRWAFlowChart({
+						points: flowData.series,
+						selection: flowChartSelection
+					})
+				: null,
 		[flowChartSelection, flowData, isFlowMetric]
 	)
 	const flowDefaultStartTimestamp =
@@ -382,46 +342,31 @@ export function RWAOverviewChartPanel({
 				: undefined,
 		[aggregateAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
 	)
-	const isPerpsVolume = isPerpsView && perpsChartMetric === 'volume'
-	const chartPeriod = flowQueryState.groupBy
 	const selectedTimeSeriesDataset = useMemo(() => {
 		if (isFlowMetric || !isTimeSeriesView) return groupedChartDataset
-		/* Volume bars stack per group and carry no Total line; the tooltip sums them. */
-		const withTotal = isPerpsVolume ? groupedChartDataset : ensureRwaTotalSeries(groupedChartDataset, chartTotalLabel)
-		/* One member equal to the Total is one line: a one-asset platform, or a scope with one group. */
-		const folded = foldRwaTopSeries(dropRwaRedundantTotal(withTotal), {})
-		if (chartView === 'share') return toRwaShareDataset(folded)
-		return isPerpsVolume ? groupMultiSeriesBarChartDataset({ dataset: folded, groupBy: chartPeriod }) : folded
-	}, [chartPeriod, chartTotalLabel, chartView, groupedChartDataset, isFlowMetric, isPerpsVolume, isTimeSeriesView])
-	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
-		() =>
-			!isTimeSeriesView
-				? []
-				: isPerpsView
-					? buildRwaPerpsChartSeries(selectedTimeSeriesDataset, perpsChartMetric)
-					: buildRwaTimeSeriesCharts(selectedTimeSeriesDataset),
-		[isPerpsView, isTimeSeriesView, perpsChartMetric, selectedTimeSeriesDataset]
+		/* One member equal to the Total is one line: a one-asset platform, or a scope with one group. The ten
+		   largest draw their own series and the rest fold into Others. */
+		const folded = foldRwaTopSeries(
+			dropRwaRedundantTotal(ensureRwaTotalSeries(groupedChartDataset, chartTotalLabel)),
+			{}
+		)
+		return chartView === 'share' ? toRwaShareDataset(folded) : folded
+	}, [chartTotalLabel, chartView, groupedChartDataset, isFlowMetric, isTimeSeriesView])
+	const timeSeriesCharts = useMemo(
+		() => (isTimeSeriesView ? buildRwaTimeSeriesCharts(selectedTimeSeriesDataset) : []),
+		[isTimeSeriesView, selectedTimeSeriesDataset]
 	)
-	// One deferred snapshot, so the chart never pairs old rows with new series, share mode or grouping.
+	// One deferred snapshot, so the chart never pairs old rows with new series or share mode.
 	const timeSeriesChart = useMemo(
-		() => ({
-			dataset: selectedTimeSeriesDataset,
-			charts: timeSeriesCharts,
-			isShare: chartView === 'share',
-			groupBy: isPerpsVolume && chartView !== 'share' ? chartPeriod : undefined
-		}),
-		[chartPeriod, chartView, isPerpsVolume, selectedTimeSeriesDataset, timeSeriesCharts]
+		() => ({ dataset: selectedTimeSeriesDataset, charts: timeSeriesCharts, isShare: chartView === 'share' }),
+		[chartView, selectedTimeSeriesDataset, timeSeriesCharts]
 	)
 	const deferredTimeSeriesChart = useDeferredValue(timeSeriesChart)
 
 	const chartTypeSwitch = (
-		<SegmentedControl<RWAOverviewChartMetric>
+		<SegmentedControl<RWASpotChartMetric>
 			value={selectedChartMetric}
 			onValueChange={(key) => {
-				if (key === 'openInterest' || key === 'volume') {
-					void pushShallowQuery(router, { chartType: getRwaPerpsChartMetricQueryValue(key) })
-					return
-				}
 				if (key === 'flows' || key === 'flowVsPrice') {
 					void pushShallowQuery(router, {
 						chartType: key,
@@ -465,7 +410,9 @@ export function RWAOverviewChartPanel({
 				allValues={flowOverlayOptions}
 				selectedValues={selectedFlowOverlayMetrics}
 				setSelectedValues={(values: Array<string>) => {
-					void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })
+					void pushShallowQuery(router, {
+						flowOverlays: getRWAFlowOverlayQueryValue(values)
+					})
 				}}
 				label="Overlays"
 				labelType="smol"
@@ -475,10 +422,27 @@ export function RWAOverviewChartPanel({
 		</Tooltip>
 	)
 
+	const periodSwitch = (
+		<SegmentedControl<RWAFlowGrouping>
+			value={flowGroupBy}
+			onValueChange={(nextFlowMode) => {
+				void pushShallowQuery(router, {
+					flowMode: getRWAFlowModeQueryValue(nextFlowMode, flowQueryState.view)
+				})
+			}}
+			options={RWA_FLOW_GROUPING_OPTIONS}
+			label="Flow period"
+			variant="default"
+			size="md"
+		/>
+	)
+
 	const handleTreemapNestedByChange = useCallback(
 		(nestedBy: RwaTreemapNestedBy) => {
 			const nextState = setTreemapNestedBy(chartState, treemapParentGrouping, nestedBy)
-			void pushShallowQuery(router, { treemapNestedBy: getTreemapNestedByQueryValue(nextState, treemapParentGrouping) })
+			void pushShallowQuery(router, {
+				treemapNestedBy: getTreemapNestedByQueryValue(nextState, treemapParentGrouping)
+			})
 		},
 		[chartState, router, treemapParentGrouping]
 	)
@@ -489,7 +453,9 @@ export function RWAOverviewChartPanel({
 			selectedValues={chartView}
 			setSelectedValues={(value: string) => {
 				const selectedView = chartViewOptions.find((option) => option.key === value)?.key ?? chartView
-				void pushShallowQuery(router, { chartView: getChartViewQueryValue(selectedView) })
+				void pushShallowQuery(router, {
+					chartView: getChartViewQueryValue(selectedView)
+				})
 			}}
 			label={chartViewOptions.find(({ key }) => key === chartView)?.name ?? 'Time Series Chart'}
 			labelType="none"
@@ -498,7 +464,20 @@ export function RWAOverviewChartPanel({
 		/>
 	)
 
-	if (!showCharts) return null
+	/* Pins the chart to a Pro dashboard; nothing renders when no dashboard card draws the current state. */
+	const dashboardChart = getRwaOverviewDashboardChart({
+		metric: selectedChartMetric,
+		chartView,
+		treemapNestedBy: chartState.treemapNestedBy,
+		groupBy,
+		target: chartTarget,
+		chainName: overview.chainSlug ? overview.selectedChain : null,
+		activeFilters,
+		includeStablecoins,
+		includeGovernance,
+		includeBridgeTvl
+	})
+	const addToDashboardButton = dashboardChart ? <AddToDashboardButton chartConfig={dashboardChart} smol /> : null
 
 	return (
 		<>
@@ -506,25 +485,14 @@ export function RWAOverviewChartPanel({
 				<ChartPanel className="flex flex-1 flex-col">
 					<ChartPanelToolbar>
 						{chartTypeSwitchRow}
-						{isFlowMetric || isPerpsVolume ? (
-							<SegmentedControl<RWAFlowGrouping>
-								value={flowGroupBy}
-								onValueChange={(nextFlowMode) => {
-									void pushShallowQuery(router, {
-										flowMode: getRWAFlowModeQueryValue(nextFlowMode, flowQueryState.view)
-									})
-								}}
-								options={RWA_FLOW_GROUPING_OPTIONS}
-								label={isPerpsVolume ? 'Volume period' : 'Flow period'}
-								variant="default"
-								size="md"
-							/>
-						) : null}
+						{isFlowMetric ? periodSwitch : null}
 						{isFlowMetric ? null : chartViewSwitch}
 						{isFlowMetric && !isFlowVsPrice && !isGroupedFlowChart ? flowOverlaySelect : null}
+						{addToDashboardButton}
 						<ChartCsvExportButton
 							chartInstance={multiSeriesChart2Instance}
-							filename={timeSeriesChartFilename}
+							filename={chartFilename}
+							disabled={isFlowMetric ? isFlowLoading : isChartLoading}
 							source={{
 								type: 'dataset',
 								prepare: () => {
@@ -537,18 +505,17 @@ export function RWAOverviewChartPanel({
 										? groupedFlowChart.groupBy
 										: isFlowMetric && flowChart
 											? flowChart.groupBy
-											: (deferredTimeSeriesChart.groupBy ?? 'daily')
+											: 'daily'
 									return { ...exportDataset, groupBy: exportGroupBy }
 								}
 							}}
 						/>
 						<ChartPngExportButton
 							chartInstance={multiSeriesChart2Instance}
-							filename={timeSeriesChartFilename}
+							filename={chartFilename}
 							title={exportChartTitle}
 						/>
 					</ChartPanelToolbar>
-					{chartNote ? <ScopeNote>{chartNote}</ScopeNote> : null}
 					{isFlowVsPrice && flowVsPriceSummary ? (
 						<RWAFlowVsPriceStrip
 							summary={flowVsPriceSummary}
@@ -617,7 +584,6 @@ export function RWAOverviewChartPanel({
 									!deferredTimeSeriesChart.isShare && !deferredTimeSeriesChart.dataset.dimensions.includes('Total')
 								}
 								valueSymbol="$"
-								{...(deferredTimeSeriesChart.groupBy ? { groupBy: deferredTimeSeriesChart.groupBy } : {})}
 								onReady={handleMultiSeriesChartReady}
 							/>
 						</Suspense>
@@ -632,19 +598,17 @@ export function RWAOverviewChartPanel({
 					metricLabel={chartMetricLabel}
 					groupLabel={chartGroupLabel}
 					exportTitle={exportChartTitle}
-					filenameSuffix={`${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`}
+					filename={chartFilename}
 					treemapNestedBy={chartState.treemapNestedBy}
 					onTreemapNestedByChange={handleTreemapNestedByChange}
 					assets={aggregateAssets}
-					rankedFilterValues={rankedFilterValues}
-					selectedAssetNames={selectedAssetNames}
 					selectedCategories={selectedCategories}
-					isAssetGroupMode={isAssetGroupMode}
 					includeBridgeTvl={includeBridgeTvl}
 					toolbarStart={
 						<>
 							{chartTypeSwitchRow}
 							{chartViewSwitch}
+							{addToDashboardButton}
 						</>
 					}
 				/>
@@ -657,7 +621,7 @@ function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
 }
 
-export const getAssetChartTarget = (props: IRWAAssetsOverview): RWAAssetChartTarget => {
+const getAssetChartTarget = (props: IRWAAssetsOverview): RWAAssetChartTarget => {
 	if (props.assetGroupSlug) return { kind: 'assetGroup', slug: props.assetGroupSlug }
 	if (props.categorySlug) return { kind: 'category', slug: props.categorySlug }
 	if (props.platformSlug) return { kind: 'platform', slug: props.platformSlug }

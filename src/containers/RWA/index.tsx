@@ -1,45 +1,82 @@
 import { useRouter } from 'next/router'
 import { useCallback, useMemo } from 'react'
+import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { Card } from '~/ui/Card'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { SummaryCardGrid } from '~/ui/SummaryStats'
-import { Tabs } from '~/ui/Tabs'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import type { IRWAAssetsOverview } from './api.types'
-import { foldRwaPerpsTotals, rankRwaDefiProtocols } from './cards/cardData'
+import type { IRWAAssetsOverview, RWAOverviewFrame } from './api.types'
+import { getRwaPerpsMarkets, rankRwaDefiProtocols } from './cards/cardData'
 import { RWAOverviewCards } from './cards/OverviewCards'
-import type { RWAOverviewMode } from './constants'
-import { RWAOverviewFilters } from './Filters'
+import type { RwaPerpsCards } from './cards/perpsCardData'
+import { RWAPerpsCards } from './cards/PerpsCards'
+import { RWA_FILTER_QUERY_KEYS } from './filterState'
+import { RWAOverviewFilters } from './FilterStrip'
 import { useRWAFlowSummary } from './flows.hooks'
 import { RWAHighlights } from './highlights/Highlights'
 import { useFilteredRwaAssets, useRWATableQueryParams, hasRwaInclusionOverrides } from './hooks'
 import { RWAKeyMetrics } from './kpi/KeyMetrics'
 import { sumRwaKpiTotals } from './kpi/kpiTotals'
+import { RWAPerpsKeyMetrics } from './kpi/PerpsKeyMetrics'
+import { foldRwaPerpsKpi } from './kpi/perpsKpi'
 import { RWAPlatformKeyMetrics } from './kpi/PlatformKeyMetrics'
-import { foldRwaPlatformKpi } from './kpi/platformKpi'
-import { getAssetChartTarget, RWAOverviewChartPanel } from './OverviewChartPanel'
+import { foldRwaPlatformKpi, getRwaPlatformFold } from './kpi/platformKpi'
+import { getRwaAssetsInlineFilters } from './layout/inlineFilters'
+import { getRwaPageHeadline } from './layout/pageCopy'
+import { getRwaPageLayout, type RWAPageKind } from './layout/pageLayout'
+import { RWA_QUERY_ZONE } from './layout/QueryZoneGuard'
+import { getRwaQuestionsEntityName, getRwaQuestionsEntitySlug } from './layout/questions'
+import { RWAPageTabs } from './layout/SectionTabs'
+import { RWAOverviewChartPanel } from './OverviewChartPanel'
+import { RWAPerpsBreakdownChartPanel } from './PerpsBreakdownChartPanel'
+import {
+	countRwaPerpsFilters,
+	readRwaVenueTypeChoice,
+	filterRwaPerpsRows,
+	getRwaPerpsFilterDefinitions,
+	getRwaPerpsFilterQueryKeys
+} from './perpsFilters'
+import { useRwaPerpsHistoryFold } from './perpsHistoryFold'
 import { RWAPlatformEntityChartPanel } from './platformChart/PlatformEntityChartPanel'
 import { RWAPlatformViews } from './PlatformPage/PlatformViews'
 import {
-	getRwaPlatformViewQuery,
-	parseRwaPlatformView,
-	RWA_PLATFORM_VIEW_OPTIONS,
-	RWA_PLATFORM_VIEW_QUERY_KEY,
-	RWA_PLATFORM_VIEWS
+	getRwaEntityViewOptions,
+	getRwaEntityViewQueryPatch,
+	parseRwaEntityView,
+	RWA_ENTITY_VIEW_QUERY_KEY
 } from './PlatformPage/view'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
+import { rwaSlug } from './rwaSlug'
+import { RWA_SERIES_PICK_CLEARED } from './seriesPick'
 import {
 	getRwaChangePeriodQueryValue,
 	parseRwaChangePeriod,
 	RWA_CHANGE_PERIOD_QUERY_KEY,
 	type RWAChangePeriod
 } from './table/change'
-import { getRwaGroupByQueryValue, parseRwaGroupBy, type RWAGroupByScope, type RWATableView } from './table/groupBy'
+import { getRwaGroupByQueryValue, parseRwaGroupBy } from './table/groupBy'
 import { RWATable } from './table/RWATable'
-import { RWATableControls } from './table/toolbar/TableControls'
+import { RWATableGroupBySelect } from './table/toolbar/GroupBySelect'
+import { getRwaPerpsChartScope } from './usePerpsChartDataset'
 
-/** `hideEntityNav`: a protocol's own RWA tab fixes the entity, so the platform and chain switcher row is dead weight there. */
-export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolean }) {
+/**
+ * `hideEntityNav`: a protocol's own RWA tab fixes the entity, so the top tab row, the switcher row, the Ask strip and
+ * the page h1 are dead weight there. `pageKind`: every page names its kind; the layout record gives its section, rows
+ * and filter mode. `perpsCards`: the three cards of /rwa/perps. `perpsAsset`: the underlying of /rwa/perps/asset/:key.
+ * `entityQuestions`: the Ask strip's questions, fetched at build. `perpsVenueHref`: the platform's venue page, linked
+ * from its About panel.
+ */
+export function RWAOverview(
+	props: RWAOverviewFrame & {
+		hideEntityNav?: boolean
+		pageKind: RWAPageKind
+		perpsCards?: RwaPerpsCards | null
+		perpsAsset?: string
+		entityQuestions?: Array<string>
+		perpsVenueHref?: string | null
+	}
+) {
 	const rankedFilterValues = useMemo(
 		() =>
 			getRankedRwaFilterValues({
@@ -59,7 +96,8 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 	)
 	const router = useRouter()
 
-	const mode = getRWAOverviewMode(props)
+	const { section, mode } = getRwaPageLayout(props.pageKind)
+	const pageKind = props.pageKind
 	const isChainMode = mode === 'chain'
 	const isCategoryMode = mode === 'category'
 	const isPlatformMode = mode === 'platform'
@@ -100,24 +138,21 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		maxDefiActiveTvlToActiveMcapPct,
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
 		includeWrappers,
-		hasPerpsOverlayBlockingFilters,
 		hasDialogFilters,
 		setDefiActiveTvlToOnChainMcapPctRange,
 		setActiveMcapToOnChainMcapPctRange,
-		setDefiActiveTvlToActiveMcapPctRange,
-		setIncludeRwaPerps,
-		setIncludeCex
+		setDefiActiveTvlToActiveMcapPctRange
 	} = useRWATableQueryParams({
 		options: selectFilterOptions,
 		mode,
-		defaultInclusion: props.defaultInclusion
+		defaultInclusion: props.defaultInclusion,
+		section
 	})
 
-	const { filteredAssets, aggregateAssets } = useFilteredRwaAssets({
+	const { filteredAssets: spotFilteredAssets, aggregateAssets: spotAggregateAssets } = useFilteredRwaAssets({
 		assets: props.assets,
 		isPlatformMode,
 		selectedAssetNames,
@@ -138,11 +173,8 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		selectedSelfCustodyStates,
 		includeStablecoins,
 		includeGovernance,
-		includeRwaPerps,
-		includeCex,
 		includeBridgeTvl,
 		includeWrappers,
-		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
 		maxDefiActiveTvlToOnChainMcapPct,
 		minActiveMcapToOnChainMcapPct,
@@ -151,104 +183,222 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		maxDefiActiveTvlToActiveMcapPct
 	})
 
-	const activeFilters = hasDialogFilters || hasRwaInclusionOverrides(router.query, props.defaultInclusion)
-	/* A platform page is spot only: its perps live on the venue page, whatever a shared link says. */
-	const tableView: RWATableView = includeRwaPerps && !props.platformPage ? 'perps' : 'assets'
-	const groupByScope: RWAGroupByScope = getAssetChartTarget(props).kind
-	const tableGroupBy = parseRwaGroupBy(router.query.groupBy, tableView, { scope: groupByScope })
-	const handleTableViewChange = useCallback(
-		(view: RWATableView) => setIncludeRwaPerps(view === 'perps'),
-		[setIncludeRwaPerps]
+	/* The Perps tree filters its markets through its filter records alone (perpsFilters.ts), inline and in More
+	   filters; the Assets tree through the readers above. */
+	// Keyed on props.pageKind: the compiler can prove a prop.
+	const perpsFilters = useMemo(
+		() =>
+			getRwaPageLayout(props.pageKind).section === 'perps'
+				? getRwaPerpsFilterDefinitions(props.assets, props.pageKind, router.query)
+				: null,
+		[props.pageKind, props.assets, router.query]
 	)
-	const handleGroupByChange = useCallback(
-		(groupBy: Parameters<typeof getRwaGroupByQueryValue>[0]) => {
-			void pushShallowQuery(router, { groupBy: getRwaGroupByQueryValue(groupBy, tableView, { scope: groupByScope }) })
-		},
-		[groupByScope, router, tableView]
+	const filteredAssets = useMemo(
+		() => (perpsFilters ? filterRwaPerpsRows(props.assets, router.query, perpsFilters) : spotFilteredAssets),
+		[perpsFilters, props.assets, router.query, spotFilteredAssets]
 	)
+	// The totals leave out suspicious markets, as they leave out suspicious assets.
+	const aggregateAssets = useMemo(
+		() => (perpsFilters ? filteredAssets.filter((market) => !market.suspicious) : spotAggregateAssets),
+		[perpsFilters, filteredAssets, spotAggregateAssets]
+	)
+	/* One count decides Reset all and the cards' and charts' filter flags, so a key the page does not read, or an
+	   empty one, never shows a reset with nothing to reset. */
+	const hasPerpsFilters = perpsFilters != null && countRwaPerpsFilters(router.query, perpsFilters) > 0
+	const activeFilters = perpsFilters
+		? hasPerpsFilters
+		: hasDialogFilters || hasRwaInclusionOverrides(router.query, props.defaultInclusion)
+	const perpsFiltersButVenueType = useMemo(
+		() => perpsFilters?.filter((definition) => definition.kind !== 'venueType') ?? null,
+		[perpsFilters]
+	)
+	/* The split routes honour Venue Type DEX only (`includeCex=false`); CEX only and every other filter fold the
+	   per-market history in the browser (the chart, Change by Venue and the Volume card). */
+	const hasPerpsHistoryFilters =
+		perpsFiltersButVenueType != null &&
+		(countRwaPerpsFilters(router.query, perpsFiltersButVenueType) > 0 || readRwaVenueTypeChoice(router.query) === 'cex')
+	const tableGroupBy = parseRwaGroupBy(router.query.groupBy, pageKind)
+	// No useCallback: the page kind comes from a call, so the compiler cannot prove a manual memo; it memoizes this itself.
+	const handleGroupByChange = (groupBy: Parameters<typeof getRwaGroupByQueryValue>[0]) => {
+		void pushShallowQuery(router, {
+			groupBy: getRwaGroupByQueryValue(groupBy, pageKind),
+			...RWA_SERIES_PICK_CLEARED
+		})
+	}
 	const changePeriod = parseRwaChangePeriod(router.query[RWA_CHANGE_PERIOD_QUERY_KEY])
 	const handlePeriodChange = useCallback(
 		(period: RWAChangePeriod) => {
-			void pushShallowQuery(router, { [RWA_CHANGE_PERIOD_QUERY_KEY]: getRwaChangePeriodQueryValue(period) })
+			void pushShallowQuery(router, {
+				[RWA_CHANGE_PERIOD_QUERY_KEY]: getRwaChangePeriodQueryValue(period)
+			})
 		},
 		[router]
 	)
 
-	// Switching chain starts a clean page: filter values from one chain may not exist on another.
-	const navLinks = getModeLinks(mode, props.chainLinks, props.categoryLinks, props.platformLinks, props.assetGroupLinks)
-
-	const selectedModeLabel = getSelectedModeLabel(mode, props)
 	const showFilters = props.assets.length > 0
+	const scopeName = getRwaScopeName(pageKind, props)
+	const scopeSlug = scopeName ? rwaSlug(scopeName) : null
+	/* One h1 per page: the headline metric here, the name on the platform card; inside a protocol page, neither. */
+	const headline = props.hideEntityNav ? undefined : (getRwaPageHeadline(pageKind, scopeName) ?? undefined)
 
 	const kpiTotals = useMemo(
-		() => sumRwaKpiTotals(aggregateAssets, includeBridgeTvl),
-		[aggregateAssets, includeBridgeTvl]
+		() => (section === 'assets' ? sumRwaKpiTotals(aggregateAssets, includeBridgeTvl) : null),
+		[section, aggregateAssets, includeBridgeTvl]
 	)
-	/* The CEX toggle lives in the Perps view; the Assets view reads the panel and the cards with CEX venues in. */
-	const panelIncludeCex = includeRwaPerps ? includeCex : true
-	/* The Perps view reads the filtered rows like every other number; the Assets view has no perps rows in its
-	   fold, so it reads the page's perps rows under the page rules (no suspicious markets). */
-	const perpsRows = useMemo(
+	/* A Perps page folds its filtered markets into its own card; an Assets page ships no perps rows, so its perps
+	   section reads the totals the server folded over the page's markets (no suspicious markets). */
+	/* The DEX share row reads over both venue types whatever Venue Type says, so it never reads 100% or 0%. */
+	const everyVenueTypeAssets = useMemo(
 		() =>
-			includeRwaPerps ? aggregateAssets : props.assets.filter((asset) => asset.kind === 'perps' && !asset.suspicious),
-		[aggregateAssets, includeRwaPerps, props.assets]
+			perpsFiltersButVenueType
+				? filterRwaPerpsRows(props.assets, router.query, perpsFiltersButVenueType).filter(
+						(market) => !market.suspicious
+					)
+				: aggregateAssets,
+		[perpsFiltersButVenueType, props.assets, router.query, aggregateAssets]
 	)
-	const perpsTotals = useMemo(() => foldRwaPerpsTotals(perpsRows, panelIncludeCex), [perpsRows, panelIncludeCex])
+	const perpsKpi = useMemo(
+		() => (section === 'perps' ? foldRwaPerpsKpi(aggregateAssets, includeCex, everyVenueTypeAssets) : null),
+		[aggregateAssets, everyVenueTypeAssets, includeCex, section]
+	)
+	const perpsTotals = section === 'perps' ? null : (props.perpsTotals ?? null)
 	const largestProtocol = useMemo(
-		() => rankRwaDefiProtocols(aggregateAssets, includeBridgeTvl, 1)[0] ?? null,
-		[aggregateAssets, includeBridgeTvl]
+		() => (section === 'assets' ? (rankRwaDefiProtocols(aggregateAssets, includeBridgeTvl, 1)[0] ?? null) : null),
+		[section, aggregateAssets, includeBridgeTvl]
 	)
-	const keyMetrics = <RWAKeyMetrics metrics={kpiTotals} perps={perpsTotals} largestProtocol={largestProtocol} />
-	const overviewCards = props.cards ? (
-		<RWAOverviewCards cards={props.cards} includeBridgeTvl={includeBridgeTvl} includeCex={panelIncludeCex} />
+	const keyMetrics = perpsKpi ? (
+		<RWAPerpsKeyMetrics kpi={perpsKpi} headline={headline} pageKind={pageKind} scopeName={scopeName} />
+	) : perpsTotals && kpiTotals ? (
+		<RWAKeyMetrics
+			metrics={kpiTotals}
+			perps={perpsTotals}
+			largestProtocol={largestProtocol}
+			headline={headline}
+			pageKind={pageKind}
+			scopeName={scopeName}
+		/>
 	) : null
+	/* The cards fold the page's filtered rows; where a card needs a history, a filter swaps the server split for the
+	   per-chain or per-market history folded over those rows. */
+	/* Change by Venue and the Volume card under a filter: the per-market history folded by venue, loaded only on
+	   /rwa/perps with a filter set. */
+	const historyMarketIds = useMemo(
+		() => getRwaPerpsMarkets(aggregateAssets, includeCex).map((market) => market.id),
+		[aggregateAssets, includeCex]
+	)
+	const perpsVenueHistory = useRwaPerpsHistoryFold({
+		metric: 'openInterest',
+		marketIds: historyMarketIds,
+		rows: aggregateAssets,
+		includeCex,
+		enabled: section === 'perps' && hasPerpsHistoryFilters && props.perpsCards != null
+	})
+	const perpsVolumeHistory = useRwaPerpsHistoryFold({
+		metric: 'volume',
+		marketIds: historyMarketIds,
+		rows: aggregateAssets,
+		includeCex,
+		enabled: section === 'perps' && hasPerpsHistoryFilters && props.perpsCards != null
+	})
+	const overviewCards =
+		section === 'perps' ? (
+			props.perpsCards && perpsKpi ? (
+				<RWAPerpsCards
+					filtered={hasPerpsHistoryFilters}
+					venueHistory={perpsVenueHistory}
+					volumeHistory={perpsVolumeHistory}
+					cards={props.perpsCards}
+					markets={aggregateAssets}
+					kpi={perpsKpi}
+					includeCex={includeCex}
+				/>
+			) : null
+		) : props.cards ? (
+			<RWAOverviewCards
+				cards={props.cards}
+				assets={aggregateAssets}
+				filtered={activeFilters}
+				includeStablecoins={includeStablecoins}
+				includeGovernance={includeGovernance}
+				includeBridgeTvl={includeBridgeTvl}
+				perpsOpenInterest={perpsTotals?.openInterest ?? null}
+			/>
+		) : null
 
-	/* The platform header reads the same fold as the table's rows; nothing on it comes from the index's own totals. */
-	const { data: flowSummary } = useRWAFlowSummary()
+	/* A platform page's views are its top tab row (layout/pageTabs.ts); embedded in a protocol's RWA tab, the strip. */
+	const platformView = parseRwaEntityView(router.query[RWA_ENTITY_VIEW_QUERY_KEY])
+	/* The platform header folds the table's rows under Assets and the whole platform under Information; nothing on it
+	   comes from the index's own totals. */
+	const platformFold = useMemo(
+		() =>
+			getRwaPlatformFold(platformView, props.assets, props.defaultInclusion, {
+				aggregateAssets,
+				includeStablecoins,
+				includeGovernance,
+				includeBridgeTvl,
+				activeFilters
+			}),
+		[
+			platformView,
+			props.assets,
+			props.defaultInclusion,
+			aggregateAssets,
+			includeStablecoins,
+			includeGovernance,
+			includeBridgeTvl,
+			activeFilters
+		]
+	)
+	const { data: flowSummary } = useRWAFlowSummary(pageKind === 'platform')
 	const platformKpi = useMemo(
-		() => (props.platformPage ? foldRwaPlatformKpi(aggregateAssets, { includeBridgeTvl, flowSummary }) : null),
-		[aggregateAssets, flowSummary, includeBridgeTvl, props.platformPage]
+		() =>
+			props.platformPage
+				? foldRwaPlatformKpi(platformFold.aggregateAssets, {
+						includeBridgeTvl: platformFold.includeBridgeTvl,
+						flowSummary
+					})
+				: null,
+		[platformFold, flowSummary, props.platformPage]
 	)
 
-	/* A platform page has its own views in the strip and no Perps switch. */
-	const platformView = parseRwaPlatformView(router.query[RWA_PLATFORM_VIEW_QUERY_KEY])
 	const handlePlatformViewChange = useCallback(
-		(view: ReturnType<typeof parseRwaPlatformView>) => {
-			void pushShallowQuery(router, { [RWA_PLATFORM_VIEW_QUERY_KEY]: getRwaPlatformViewQuery(view) })
+		(view: ReturnType<typeof parseRwaEntityView>) => {
+			void pushShallowQuery(router, getRwaEntityViewQueryPatch(view, router.query))
 		},
 		[router]
 	)
 	/* Under Information a platform page draws itself as one entity with Add Metrics; the table views keep the breakdown. */
+	const spotOverview = isRwaSpotOverview(props) ? props : null
 	const chartSection =
-		props.platformPage && platformView === 'information' ? (
-			<RWAPlatformEntityChartPanel
-				overview={props}
-				meta={props.platformPage.meta}
-				aggregateAssets={aggregateAssets}
-				includeStablecoins={includeStablecoins}
-				includeGovernance={includeGovernance}
-				includeBridgeTvl={includeBridgeTvl}
-				activeFilters={activeFilters}
-			/>
-		) : (
-			<RWAOverviewChartPanel
-				overview={props}
-				mode={mode}
-				selectedModeLabel={selectedModeLabel}
-				aggregateAssets={aggregateAssets}
-				view={tableView}
+		spotOverview?.platformPage && platformView === 'information' ? (
+			<RWAPlatformEntityChartPanel overview={spotOverview} meta={spotOverview.platformPage.meta} {...platformFold} />
+		) : section === 'perps' ? (
+			<RWAPerpsBreakdownChartPanel
+				scope={getRwaPerpsChartScope(props, props.perpsAsset)}
 				groupBy={tableGroupBy}
-				rankedFilterValues={rankedFilterValues}
-				selectedAssetNames={selectedAssetNames}
+				includeCex={includeCex}
+				markets={aggregateAssets}
+				isFiltered={hasPerpsHistoryFilters}
+				title={scopeName ? `RWA Perps ${scopeName}` : 'RWA Perps'}
+				pageKind={pageKind}
+				slug={scopeSlug}
+			/>
+		) : spotOverview ? (
+			<RWAOverviewChartPanel
+				overview={spotOverview}
+				pageKind={pageKind}
+				pageSlug={scopeSlug}
+				mode={mode}
+				selectedModeLabel={props.nav.active}
+				aggregateAssets={aggregateAssets}
+				groupBy={tableGroupBy}
 				selectedCategories={selectedCategories}
 				includeStablecoins={includeStablecoins}
 				includeGovernance={includeGovernance}
-				includeCex={includeCex}
 				includeBridgeTvl={includeBridgeTvl}
 				activeFilters={activeFilters}
-				activeAttributeFilters={hasDialogFilters}
 			/>
-		)
+		) : null
 
 	const filterProps = {
 		enabled: showFilters,
@@ -307,132 +457,138 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 			setDefiActiveTvlToOnChainMcapPctRange,
 			setActiveMcapToOnChainMcapPctRange,
 			setDefiActiveTvlToActiveMcapPctRange
-		}
+		},
+		inlineFilters: getRwaAssetsInlineFilters(pageKind),
+		rows: props.assets,
+		active: activeFilters,
+		resetKeys: perpsFilters ? getRwaPerpsFilterQueryKeys(perpsFilters) : RWA_FILTER_QUERY_KEYS,
+		showIncludeInTvl: section === 'assets'
 	}
 
+	/* The page controls lead the strip: the Group by (none under Information, which has nothing to group). A platform
+	   page embedded in a protocol's RWA tab has no top row of its own, so its view switch leads the strip there. */
 	const tableControls = (
-		<RWATableControls
-			view={tableView}
-			onViewChange={handleTableViewChange}
-			groupBy={tableGroupBy}
-			groupByScope={groupByScope}
-			onGroupByChange={handleGroupByChange}
-			includeCex={includeCex}
-			onIncludeCexChange={setIncludeCex}
-			{...(props.platformPage
-				? {
-						// First in the strip, where the overview's Assets or Perps switch sits.
-						viewSwitch: (
-							<SegmentedControl
-								semantics="tabs"
-								options={RWA_PLATFORM_VIEW_OPTIONS}
-								label="Platform view"
-								variant="default"
-								size="md"
-							/>
-						),
-						showPerpsSwitch: false,
-						showGroupBy: platformView !== 'information'
-					}
-				: {})}
-		/>
+		<>
+			{props.platformPage && props.hideEntityNav ? (
+				<SegmentedControl
+					options={PLATFORM_VIEW_OPTIONS}
+					value={platformView}
+					onValueChange={handlePlatformViewChange}
+					label="Platform view"
+					variant="default"
+					size="md"
+				/>
+			) : null}
+			{props.platformPage && platformView === 'information' ? null : (
+				<RWATableGroupBySelect pageKind={pageKind} value={tableGroupBy} onChange={handleGroupByChange} />
+			)}
+		</>
 	)
 
 	const tableProps = {
 		assets: filteredAssets,
-		view: tableView,
 		groupBy: tableGroupBy,
-		includeCex,
-		period: changePeriod,
-		onPeriodChange: handlePeriodChange,
-		selectedChain: props.selectedChain,
+		...(section === 'assets' ? { period: changePeriod, onPeriodChange: handlePeriodChange } : {}),
+		pageKind,
+		pageSlug: scopeSlug,
 		includeBridgeTvl,
-		platformLogos: props.platformLogos,
-		...(tableView === 'perps' && hasPerpsOverlayBlockingFilters
-			? { emptyMessage: 'Perps rows are hidden while asset-only filters are active. Clear them or switch to Assets.' }
-			: {})
+		platformLogos: props.platformLogos
 	}
 
-	const page = (
+	return (
 		<>
 			{/* <Announcement>
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
 			</Announcement> */}
+			<RWAPageTabs kind={pageKind} embedded={props.hideEntityNav} />
+			{/* The loader builds the row from the page kind: a page lists its siblings in its own tree. */}
 			{props.hideEntityNav ? null : (
-				<RowLinksWithDropdown heading={MODE_LINKS_HEADING[mode]} links={navLinks} activeLink={selectedModeLabel} />
+				<RowLinksWithDropdown heading={props.nav.heading} links={props.nav.links} activeLink={props.nav.active} />
 			)}
-			<RWAOverviewFilters {...filterProps} leading={tableControls} />
-			{props.platformPage && platformKpi ? (
-				<SummaryCardGrid>
-					<RWAPlatformKeyMetrics meta={props.platformPage.meta} kpi={platformKpi} />
-					<div className="col-span-2 flex flex-col gap-2">{chartSection}</div>
-				</SummaryCardGrid>
+			{!props.hideEntityNav && props.entityQuestions != null && props.entityQuestions.length > 0 ? (
+				<EntityQuestionsStrip
+					questions={props.entityQuestions}
+					entitySlug={getRwaQuestionsEntitySlug(pageKind, scopeName)}
+					entityType="page"
+					entityName={getRwaQuestionsEntityName(pageKind, scopeName)}
+				/>
+			) : null}
+			{/* Information is a profile, so it draws no strip (the venue rule); a protocol's RWA tab keeps its view switch there. */}
+			{props.platformPage && platformView === 'information' ? (
+				props.hideEntityNav ? (
+					<Card padding="sm" className="flex flex-wrap items-center gap-2">
+						{tableControls}
+					</Card>
+				) : null
 			) : (
-				<>
+				<RWAOverviewFilters {...filterProps} leading={tableControls} perpsFilters={perpsFilters ?? undefined} />
+			)}
+			{/* Everything below reads the address query: it waits for the router when the address carries one. */}
+			<div {...RWA_QUERY_ZONE} className="contents">
+				{props.platformPage && platformKpi ? (
 					<SummaryCardGrid>
-						{keyMetrics}
+						<RWAPlatformKeyMetrics meta={props.platformPage.meta} kpi={platformKpi} />
 						<div className="col-span-2 flex flex-col gap-2">{chartSection}</div>
 					</SummaryCardGrid>
-					{overviewCards}
-				</>
-			)}
-			{props.platformPage && platformKpi ? (
-				<RWAPlatformViews
-					meta={props.platformPage.meta}
-					kpi={platformKpi}
-					view={platformView}
-					renderTable={(view) => <RWATable {...tableProps} preset={view} />}
-				/>
-			) : (
-				<>
-					<RWATable {...tableProps} />
-					{includeRwaPerps ? null : (
-						<RWAHighlights assets={aggregateAssets} seriesLatestTimestamp={props.seriesLatestTimestamp} />
-					)}
-				</>
-			)}
+				) : (
+					<>
+						<SummaryCardGrid>
+							{keyMetrics}
+							<div className="col-span-2 flex flex-col gap-2">{chartSection}</div>
+						</SummaryCardGrid>
+						{overviewCards}
+					</>
+				)}
+				{props.platformPage && platformKpi ? (
+					<RWAPlatformViews
+						meta={props.platformPage.meta}
+						kpi={platformKpi}
+						view={platformView}
+						perpsVenueHref={props.perpsVenueHref}
+						renderTable={() => <RWATable {...tableProps} />}
+					/>
+				) : (
+					<>
+						<RWATable {...tableProps} />
+						{section === 'perps' ? null : (
+							<RWAHighlights assets={aggregateAssets} seriesLatestTimestamp={props.seriesLatestTimestamp ?? null} />
+						)}
+					</>
+				)}
+			</div>
 		</>
 	)
-	/* A platform page's views are tabs: the provider spans the strip, which holds the tab list, and RWAPlatformViews. */
-	return props.platformPage ? (
-		<Tabs value={platformView} values={RWA_PLATFORM_VIEWS} onValueChange={handlePlatformViewChange}>
-			{page}
-		</Tabs>
-	) : (
-		page
+}
+
+const PLATFORM_VIEW_OPTIONS = getRwaEntityViewOptions('platform')
+
+/** The name of what the page is scoped to; null on the two overviews. */
+function getRwaScopeName(kind: RWAPageKind, props: RWAOverviewFrame & { perpsAsset?: string }): string | null {
+	switch (kind) {
+		case 'chain':
+			return props.selectedChain
+		case 'category':
+			return props.selectedCategory
+		case 'assetGroup':
+		case 'perpsAssetGroup':
+			return props.selectedAssetGroup
+		case 'platform':
+			return props.selectedPlatform
+		case 'perpsAsset':
+			return props.perpsAsset ?? null
+		default:
+			return null
+	}
+}
+
+/** True when the frame is an Assets page's: every spot-only field is there. */
+function isRwaSpotOverview<T extends RWAOverviewFrame>(frame: T): frame is T & IRWAAssetsOverview {
+	return (
+		frame.platformPage !== undefined &&
+		frame.perpsTotals !== undefined &&
+		frame.initialChartDatasets !== undefined &&
+		frame.cards !== undefined &&
+		frame.chartMetricAvailability !== undefined &&
+		frame.seriesLatestTimestamp !== undefined
 	)
-}
-
-const getRWAOverviewMode = (props: IRWAAssetsOverview): RWAOverviewMode => {
-	if (props.assetGroupLinks.length > 0) return 'assetGroup'
-	if (props.categoryLinks.length > 0) return 'category'
-	if (props.platformLinks.length > 0) return 'platform'
-	return 'chain'
-}
-
-const MODE_LINKS_HEADING: Record<RWAOverviewMode, string> = {
-	chain: 'Chains',
-	category: 'Categories',
-	platform: 'Platforms',
-	assetGroup: 'Asset groups'
-}
-
-const getModeLinks = (
-	mode: RWAOverviewMode,
-	chainLinks: IRWAAssetsOverview['chainLinks'],
-	categoryLinks: IRWAAssetsOverview['categoryLinks'],
-	platformLinks: IRWAAssetsOverview['platformLinks'],
-	assetGroupLinks: IRWAAssetsOverview['assetGroupLinks']
-) => {
-	if (mode === 'assetGroup') return assetGroupLinks
-	if (mode === 'category') return categoryLinks
-	if (mode === 'platform') return platformLinks
-	return chainLinks
-}
-
-const getSelectedModeLabel = (mode: RWAOverviewMode, props: IRWAAssetsOverview) => {
-	if (mode === 'assetGroup') return props.selectedAssetGroup
-	if (mode === 'category') return props.selectedCategory
-	if (mode === 'platform') return props.selectedPlatform
-	return props.selectedChain
 }
