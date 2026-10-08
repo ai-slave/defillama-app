@@ -249,7 +249,7 @@ export function buildHistoryStrip(
 }
 
 const INCIDENT_TONE: Record<IncidentPoint['tone'], string> = {
-	loss: 'border-error-strong bg-error-tint-strong',
+	loss: 'border-error bg-error-tint-strong',
 	'made-whole': 'border-success bg-success-tint-strong',
 	averted: 'border-success border-dashed bg-success-tint-strong'
 }

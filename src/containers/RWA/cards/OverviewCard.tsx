@@ -37,7 +37,7 @@ type RwaBarRow = {
 	/** Null for groups with no logo of their own, such as asset groups. */
 	logo: 'token' | 'chain' | null
 	share: number
-	tone: 'bg-brand' | 'bg-data-up' | 'bg-data-down'
+	tone: 'bg-brand' | 'bg-chart-up' | 'bg-chart-down'
 	text: string
 }
 
@@ -92,7 +92,7 @@ export function RWAChangeBars({ bars, logo }: { bars: Array<RwaChangeBar>; logo:
 				name: bar.name,
 				logo,
 				share: Math.abs(bar.changeUsd) / max,
-				tone: bar.changeUsd >= 0 ? 'bg-data-up' : 'bg-data-down',
+				tone: bar.changeUsd >= 0 ? 'bg-chart-up' : 'bg-chart-down',
 				text: `${formatRwaBarUsd(bar.changeUsd)}${bar.changePct == null ? '' : ` (${formatBarPercent(bar.changePct)})`}`
 			}))}
 		/>

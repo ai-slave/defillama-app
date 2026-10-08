@@ -296,6 +296,13 @@ html.dark,
 @utility bg-brand-tint-strong {
 	background-color: var(--bg-brand-tint-strong);
 }
+/* Rising and falling marks drawn in the DOM (a change bar), the same colours the charts draw. */
+@utility bg-chart-up {
+	background-color: var(--chart-up);
+}
+@utility bg-chart-down {
+	background-color: var(--chart-down);
+}
 @utility bg-data-down-tint {
 	background-color: var(--bg-data-down-tint);
 }
