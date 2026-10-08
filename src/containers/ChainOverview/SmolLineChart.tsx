@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { chartColor } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
-import { getChainOverviewPaletteColor } from './constants'
 import { useSmolChartHover } from './useSmolChartHover'
 
 const COLOR_MAP = {
-	blue: { dark: getChainOverviewPaletteColor(0), light: getChainOverviewPaletteColor(0) },
+	blue: { dark: chartColor(0), light: chartColor(0) },
 	green: { dark: '#3fb84f', light: '#008a13' },
 	red: { dark: '#e24a42', light: '#e60d02' }
 } as const

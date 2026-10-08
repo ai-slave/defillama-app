@@ -5,7 +5,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import type { LowercaseDwmcGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import { LINE_DIMENSIONS } from './constants'
 
 export type CombinedChartPresentation = {
@@ -30,12 +30,6 @@ function getCombinedChartSeriesConfig(series: SeriesDefinition, index: number): 
 	}
 }
 
-function getChartColor(index: number): string {
-	const color = CHART_COLORS[index % CHART_COLORS.length]
-	if (color === undefined) throw new Error(`Chart palette is missing color ${index}`)
-	return color
-}
-
 export function buildAdapterByChainCombinedChartPresentation({
 	chartData,
 	chartName,
@@ -58,7 +52,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 			dimension,
 			isSnapshotMetric,
 			type: isSnapshotMetric || isCumulative ? 'line' : 'bar',
-			color: getChartColor(index)
+			color: chartColor(index)
 		})
 	}
 

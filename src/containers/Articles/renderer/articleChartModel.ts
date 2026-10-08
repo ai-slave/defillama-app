@@ -1,10 +1,9 @@
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
+import { chartColor } from '~/constants/colors'
 import { CHART_TYPES, getDashboardChartValueSymbol } from '~/containers/ProDashboard/types'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ArticleChartSeries } from '../types'
-
-export const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
 
 type Points = Array<[number, number]>
 
@@ -39,7 +38,7 @@ export function buildArticleChartModel(series: Array<ArticleChartSeries>, data: 
 			type: seriesType,
 			// A chart can mix metrics, e.g. TVL next to transactions, so each series carries its own unit.
 			valueSymbol: getDashboardChartValueSymbol(s.chartType),
-			color: SERIES_COLORS[i % SERIES_COLORS.length]!,
+			color: chartColor(i),
 			data: points,
 			// Each API series owns its calendar; connect across union rows belonging only to sibling series.
 			...(seriesType === 'line' ? { connectNulls: true } : {}),

@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+import { chartColor } from '~/constants/colors'
 import {
 	articleChartDefaultCaption,
 	articleChartLatestLabel,
@@ -53,5 +54,5 @@ test('a series still loading or without points has no headline value and is left
 		[undefined, POINTS, []]
 	)
 	// The remaining series keeps the color of its legend slot, not the next free one.
-	expect(model.charts.map((chart) => [chart.name, chart.color])).toEqual([['Base TVL', '#e07b39']])
+	expect(model.charts.map((chart) => [chart.name, chart.color])).toEqual([['Base TVL', chartColor(1)]])
 })

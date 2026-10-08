@@ -391,6 +391,7 @@ export function UnifiedChartTab({
 						<div className="flex shrink-0 items-center gap-2 overflow-x-auto py-1">
 							<ComposerChips
 								composerItems={composerItems}
+								chartCreationMode={chartCreationMode}
 								onComposerItemColorChange={onComposerItemColorChange}
 								onRemoveFromComposer={onRemoveFromComposer}
 							/>

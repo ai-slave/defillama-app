@@ -5,6 +5,7 @@ import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeries
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
+import { chartColor } from '~/constants/colors'
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
@@ -40,7 +41,6 @@ import type {
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
 const ARTICLE_TOOLTIP_FORMATTER = createCappedRemainderTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const MAX_SERIES = 4
 const MAX_ANNOTATIONS = 5
@@ -140,7 +140,7 @@ function MultiPreview({
 				return {
 					name: `${s.name} · ${meta?.title || s.chartType}`,
 					type,
-					color: SERIES_COLORS[i % SERIES_COLORS.length]!,
+					color: chartColor(i),
 					data,
 					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
 					...(type === 'line' ? { connectNulls: true } : {}),
@@ -499,11 +499,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 												key={id}
 												className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-medium bg-page px-2.5 py-1.5 sm:grid-cols-[12px_minmax(0,1fr)_auto_auto]"
 											>
-												<span
-													aria-hidden
-													className="size-2 rounded-full"
-													style={{ background: SERIES_COLORS[i % SERIES_COLORS.length] }}
-												/>
+												<span aria-hidden className="size-2 rounded-full" style={{ background: chartColor(i) }} />
 												<span className="flex min-w-0 items-center gap-2">
 													<span className="relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-surface">
 														<img src={entityLogo(s)} alt="" className="size-full object-cover" />

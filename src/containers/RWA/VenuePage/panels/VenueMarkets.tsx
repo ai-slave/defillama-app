@@ -1,4 +1,4 @@
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColors, OTHERS_COLOR } from '~/constants/colors'
 import { Hovercard } from '~/ui/Hovercard'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
@@ -6,8 +6,8 @@ import { formatRwaKpiUsd, formatRwaMultiple } from '../../kpi/format'
 import { PanelCard, Pill } from '../../PlatformPage/panels/PanelParts'
 import type { RwaVenueMarketsSummary, RwaVenueOracleProviders } from '../venueData'
 
-/** The group bars in the series colours, largest first: blue, green, orange, purple, red. */
-const GROUP_BAR_COLORS = [CHART_COLORS[0], CHART_COLORS[2], CHART_COLORS[3], CHART_COLORS[4], CHART_COLORS[1]]
+/** The group bars in the series colours by rank, largest first; groups past these are Others grey. */
+const GROUP_BAR_COLORS = chartColors(5)
 const ROW_CLASS =
 	'flex min-h-6 flex-wrap items-center justify-start gap-x-2 gap-y-1 border-b border-dashed border-subtle py-1 last:border-none'
 const SHARE_ROW_CLASS = ROW_CLASS.replace('flex-wrap', 'flex-nowrap')
@@ -33,8 +33,8 @@ function ShareRow({ label, share, value, color }: { label: string; share: number
 			<span className="ml-auto flex shrink-0 items-center gap-3">
 				<span className="h-1.5 w-28 overflow-hidden rounded-full bg-surface-elevated-1">
 					<span
-						className={`block h-full rounded-full${color ? '' : ' bg-border-strong'}`}
-						style={{ width: `${share}%`, backgroundColor: color }}
+						className="block h-full rounded-full"
+						style={{ width: `${share}%`, backgroundColor: color ?? OTHERS_COLOR }}
 					/>
 				</span>
 				<span className="min-w-20 text-right mono-md-bold">{formatRwaKpiUsd(value)}</span>

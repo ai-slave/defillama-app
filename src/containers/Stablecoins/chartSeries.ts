@@ -20,7 +20,7 @@ import type {
 	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
 import type { SelectionIntent } from '~/components/Select/localSelection'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import { getDominancePercent } from '~/utils'
 import { getGroupedBarCharts } from './chartGrouping'
 import type { IBuildStablecoinChartDataParams, StablecoinMcapPoint } from './utils'
@@ -227,7 +227,7 @@ const TOKEN_COLORS: Record<string, string> = {
 	PYUSD: '#4A90E2',
 	USDTB: '#C0C0C0',
 	FDUSD: '#00FF00',
-	Others: '#AAAAAA'
+	Others: OTHERS_COLOR
 }
 
 const TOTAL_MCAP_CHARTS: Array<MultiSeriesChartSeriesConfig> = [

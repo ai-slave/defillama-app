@@ -1,3 +1,4 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import {
 	fetchAdapterChainChartData,
 	fetchAdapterChainChartDataByChainBreakdown,
@@ -24,7 +25,6 @@ import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry
 import { cachedResult } from '~/server/api/resultCache'
 import { mapWithConcurrency } from '~/utils/async'
 import {
-	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
 	filterOutToday,
 	normalizeDailyPairs,
@@ -109,12 +109,6 @@ const sumValues = (values: Record<string, number>): number => {
 		total += value
 	}
 	return total
-}
-
-const getBreakdownColor = (index: number): string => {
-	const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
-	if (color === undefined) throw new Error('Breakdown color palette must not be empty')
-	return color
 }
 
 const fetchCachedAdapterChainMetrics = async (config: AdapterMetricChartBuilderConfig): Promise<IAdapterChainMetrics> =>
@@ -250,16 +244,9 @@ async function getDimensionsProtocolChainData(
 		}
 
 		const series: Array<ChartSeries> = []
-		let colorIndex = 0
-
 		for (const [chain, chainSeriesData] of chainDataMap) {
 			const sortedData = chainSeriesData.toSorted((a, b) => a[0] - b[0])
-			series.push({
-				name: chain,
-				data: filterOutToday(sortedData),
-				color: getBreakdownColor(colorIndex)
-			})
-			colorIndex++
+			series.push({ name: chain, data: filterOutToday(sortedData) })
 		}
 
 		const sortedSeries = series.toSorted((a, b) => {
@@ -267,6 +254,7 @@ async function getDimensionsProtocolChainData(
 			const lastB = b.data[b.data.length - 1]?.[1] || 0
 			return lastB - lastA
 		})
+		for (const [rank, entry] of sortedSeries.entries()) entry.color = chartColor(rank)
 
 		const availableChains = sortedSeries.map((s) => s.name)
 
@@ -286,7 +274,7 @@ async function getDimensionsProtocolChainData(
 			finalSeries.push({
 				name: `Others (${othersSeries.length} chains)`,
 				data: othersData,
-				color: '#999999'
+				color: OTHERS_COLOR
 			})
 		}
 		addApiRoutePhase('adapter_protocol_chain_project', Date.now() - projectStartedAt)
@@ -472,7 +460,7 @@ async function getAllProtocolsTopChainsDimensionsData(
 				return {
 					name: displayChainName(slug),
 					data: normalized,
-					color: getBreakdownColor(idx)
+					color: chartColor(idx)
 				}
 			})
 		)
@@ -630,13 +618,13 @@ async function getCompleteAllProtocolsAdapterChainSeries(
 	}
 
 	const series: Array<ChartSeries> = []
-	let colorIndex = 0
 	for (const [chain, values] of valuesByChain) {
 		const data = filterOutToday(normalizeDailyPairs(values, config.dailyMode))
 		if (data.length === 0) continue
-		series.push({ name: displayChainName(chain), data, color: getBreakdownColor(colorIndex++) })
+		series.push({ name: displayChainName(chain), data })
 	}
 	series.sort((left, right) => left.name.localeCompare(right.name))
+	for (const [rank, entry] of series.entries()) entry.color = chartColor(rank)
 	const total = Array.from(sumSeriesByTimestamp(series.map((entry) => entry.data))).sort(
 		([left], [right]) => left - right
 	)

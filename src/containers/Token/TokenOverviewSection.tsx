@@ -7,6 +7,7 @@ import { ChartMetricsDialog } from '~/components/ChartMetricsDialog'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { chartColor } from '~/constants/colors'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
 import type { MarketTotalsBySegment, TokenMarketSummary } from '~/containers/Markets/api.types'
 import type { Segment } from '~/containers/Markets/segments'
@@ -56,10 +57,10 @@ import type { TokenIssuer } from './types'
 import { useFetchTokenOverviewChartData } from './useFetchTokenOverviewChartData'
 
 const TOKEN_OVERVIEW_CHART_COLORS: Record<TokenOverviewChartLabel, string> = {
-	'Token Price': '#2563eb',
-	'Token Volume': '#92400e',
-	Mcap: '#b45309',
-	FDV: '#0f766e'
+	'Token Price': chartColor(0),
+	'Token Volume': chartColor(1),
+	Mcap: chartColor(2),
+	FDV: chartColor(3)
 }
 
 const FDV_TOOLTIP =

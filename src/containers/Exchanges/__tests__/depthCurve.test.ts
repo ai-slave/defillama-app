@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import {
 	aggregateEntries,
 	applySlippageHaircut,
@@ -76,7 +77,7 @@ describe('depthCurveDataset', () => {
 
 	test('omits bands that were forward-filled past the measured book', () => {
 		const partial = DEEP.map((point, index) => ({ ...point, coverage: index < 2 ? 1 : 0.5 }))
-		const partialDataset = depthCurveDataset([{ name: 'Partial', ladder: partial }])!
+		const partialDataset = depthCurveDataset([{ name: 'Partial', ladder: partial, color: chartColor(0) }])!
 		expect(partialDataset.source.map((entry) => entry[1])).toEqual([null, 20, 10, 0, 12, 24, null])
 	})
 
@@ -85,18 +86,18 @@ describe('depthCurveDataset', () => {
 	// Demanding exactly 1 there erased three quarters of the drawable points.
 	test('draws a band a rounding error short of complete coverage', () => {
 		const nearly = DEEP.map((point) => ({ ...point, coverage: 0.9987 }))
-		const nearlyDataset = depthCurveDataset([{ name: 'Nearly', ladder: nearly }])!
+		const nearlyDataset = depthCurveDataset([{ name: 'Nearly', ladder: nearly, color: chartColor(0) }])!
 		expect(nearlyDataset.source.map((entry) => entry[1])).toEqual([30, 20, 10, 0, 12, 24, 36])
 	})
 
 	test('has nothing to draw when every band is unmeasured', () => {
 		const unmeasured = DEEP.map((point) => ({ ...point, coverage: 0 }))
-		expect(depthCurveDataset([{ name: 'Unmeasured', ladder: unmeasured }])).toBeNull()
+		expect(depthCurveDataset([{ name: 'Unmeasured', ladder: unmeasured, color: chartColor(0) }])).toBeNull()
 	})
 
 	test('summarizes the widest fully measured point for screen readers', () => {
 		const partial = DEEP.map((point, index) => ({ ...point, coverage: index < 2 ? 1 : 0.5 }))
-		const label = depthCurveAriaLabel([{ name: 'Venue A', ladder: partial }])
+		const label = depthCurveAriaLabel([{ name: 'Venue A', ladder: partial, color: chartColor(0) }])
 		expect(label).toContain('Venue A: $20 bid and $24 ask within 2% of mid.')
 		expect(label).toContain('Unmeasured outer bands are omitted.')
 	})
@@ -141,6 +142,7 @@ describe('venueEntries', () => {
 		const venues = depthCurveVenues([row('a', DEEP), row('b', DEEP), row('c', DEEP)], 'spot')
 		const entries = venueEntries(venues, 1)
 		expect(entries.map((entry) => entry.name)).toEqual(['a', 'Others (2)'])
+		expect(entries.map((entry) => entry.color)).toEqual([chartColor(0), OTHERS_COLOR])
 
 		const widest = (name: string) => entries.find((entry) => entry.name === name)!.ladder[2].bidUsd!
 		expect(widest('a') + widest('Others (2)')).toBe(aggregateEntries(venues)[0].ladder[2].bidUsd)

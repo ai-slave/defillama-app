@@ -5,6 +5,7 @@ import { Input } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
 import { ChartCreationModeToggle } from './ChartCreationModeToggle'
+import { useComposerSeriesColors } from './useComposerSeriesColors'
 
 /** The combined card's optional name, asked only while the series combine into one chart. */
 export function ComposerNameField({ value, onChange }: { value: string; onChange: (name: string) => void }) {
@@ -19,16 +20,19 @@ export function ComposerNameField({ value, onChange }: { value: string; onChange
 	)
 }
 
-/** One chip per picked series: its colour and a remove button. */
+/** One chip per picked series: the colour the saved card draws it in, and a remove button. */
 export function ComposerChips({
 	composerItems,
+	chartCreationMode,
 	onComposerItemColorChange,
 	onRemoveFromComposer
 }: {
 	composerItems: Array<ChartConfig>
+	chartCreationMode: 'separate' | 'combined'
 	onComposerItemColorChange: (id: string, color: string) => void
 	onRemoveFromComposer: (id: string) => void
 }) {
+	const colors = useComposerSeriesColors(composerItems, chartCreationMode === 'combined')
 	return composerItems.map((item) => {
 		const chartType = getProDashboardChartTypeConfig(item.type)
 		const label = `${item.subjectType === 'protocol' ? item.protocol : item.chain} - ${chartType?.title || item.type}`
@@ -40,7 +44,7 @@ export function ComposerChips({
 				<span className="whitespace-nowrap">{label}</span>
 				<input
 					type="color"
-					value={item.color || chartType?.color || '#3e61cc'}
+					value={colors[item.id]}
 					onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
 					className="size-5 cursor-pointer rounded-sm border border-medium bg-transparent p-0"
 					aria-label={`Color for ${label}`}
@@ -100,6 +104,7 @@ export function SelectionFooter({
 			<div className="flex flex-wrap items-center gap-2">
 				<ComposerChips
 					composerItems={composerItems}
+					chartCreationMode={chartCreationMode}
 					onComposerItemColorChange={onComposerItemColorChange}
 					onRemoveFromComposer={onRemoveFromComposer}
 				/>

@@ -1,5 +1,6 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
-import { BREAKDOWN_COLOR_PALETTE, type ChartSeries } from '~/utils/breakdowns'
+import type { ChartSeries } from '~/utils/breakdowns'
 
 export interface ProtocolTvlChainFilter {
 	includeChains?: ReadonlySet<string>
@@ -103,23 +104,15 @@ export function buildTopProtocolChainSeries({
 	}
 
 	const series: Array<ChartSeries> = []
-	let colorIndex = 0
-	for (const chain of selectedChains) {
+	for (const [rank, chain] of selectedChains.entries()) {
 		const data = pointsByChain.get(chain)
 		if (!data) throw new Error(`Missing selected protocol TVL series for ${chain}`)
-		const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
-		if (color === undefined) throw new Error('Breakdown color palette must not be empty')
-		series.push({
-			name: chain,
-			data,
-			color
-		})
-		colorIndex++
+		series.push({ name: chain, data, color: chartColor(rank) })
 	}
 
 	const othersCount = rankedChains.length - selectedCount
 	if (othersCount > 0 && hasOthersValue) {
-		series.push({ name: `Others (${othersCount} chains)`, data: othersData, color: '#999999' })
+		series.push({ name: `Others (${othersCount} chains)`, data: othersData, color: OTHERS_COLOR })
 	}
 
 	return {

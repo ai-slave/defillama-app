@@ -79,19 +79,19 @@ describe('calendar chart tooltip', () => {
 		expect(totalValue(html)).toBe('$182.37m')
 	})
 
-	test('keeps values aligned when more than 30 protocols collapse into Others', () => {
-		// 32 protocols on one day: P1 = $32m down to P32 = $1m. The 30 largest stay named and
-		// P31 + P32 ($2m + $1m) collapse into Others, which remaps every dataset column.
-		const events = Array.from({ length: 32 }, (_, index) => unlockEvent(`P${index + 1}`, (32 - index) * 1_000_000))
-		const html = hoverDay(buildChart({ '2026-09-24': { totalValue: 528_000_000, events } }, ['2026-09-24']), 0)
+	test('keeps values aligned when more than 10 protocols collapse into Others', () => {
+		// 12 protocols on one day: P1 = $12m down to P12 = $1m. The 10 largest stay named and
+		// P11 + P12 ($2m + $1m) collapse into Others, which remaps every dataset column.
+		const events = Array.from({ length: 12 }, (_, index) => unlockEvent(`P${index + 1}`, (12 - index) * 1_000_000))
+		const html = hoverDay(buildChart({ '2026-09-24': { totalValue: 78_000_000, events } }, ['2026-09-24']), 0)
 
-		expect(rowValue(html, 'P1')).toBe('$32m')
-		expect(rowValue(html, 'P2')).toBe('$31m')
-		expect(rowValue(html, 'P30')).toBe('$3m')
+		expect(rowValue(html, 'P1')).toBe('$12m')
+		expect(rowValue(html, 'P2')).toBe('$11m')
+		expect(rowValue(html, 'P10')).toBe('$3m')
 		expect(rowValue(html, 'Others')).toBe('$3m')
-		expect(rowValue(html, 'P31')).toBeUndefined()
-		// 1 + 2 + … + 32 = 528
-		expect(totalValue(html)).toBe('$528m')
+		expect(rowValue(html, 'P11')).toBeUndefined()
+		// 1 + 2 + … + 12 = 78
+		expect(totalValue(html)).toBe('$78m')
 	})
 })
 

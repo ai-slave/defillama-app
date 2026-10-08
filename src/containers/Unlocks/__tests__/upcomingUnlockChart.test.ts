@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { chartColor } from '~/constants/colors'
 import type { EmissionEvent } from '../api.types'
 import {
 	buildUpcomingUnlockChart,
@@ -207,7 +208,7 @@ describe('buildUpcomingUnlockChart', () => {
 				type: 'bar',
 				name: 'Total Upcoming Unlock Value',
 				encode: { x: 0, y: 1 },
-				color: '#8884d8'
+				color: chartColor(0)
 			}
 		])
 	})

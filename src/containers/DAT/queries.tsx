@@ -1,6 +1,6 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS, oldBlue } from '~/constants/colors'
-import { getDominancePercent, getNDistinctColors } from '~/utils'
+import { CHART_COLORS, chartColor, oldBlue } from '~/constants/colors'
+import { getDominancePercent } from '~/utils'
 import { fetchDATInstitutions, fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
 import type { IDATInstitutionsResponse } from './api.types'
 import type {
@@ -34,29 +34,14 @@ function breakdownColor(type: string): string | null {
 	}
 }
 
-const RESERVED_DYNAMIC_COLOR_OFFSET = 6
-const EXTRA_DYNAMIC_COLOR_BUFFER = RESERVED_DYNAMIC_COLOR_OFFSET + 1
-const EXCLUDED_DISTINCT_COLOR = '#673AB7'
-
+// Assets without a brand colour take the palette colour for their rank by USD value.
 function buildColorByAsset(res: IDATInstitutionsResponse): Record<string, string> {
-	const colorByAsset = {}
-	let totalAssets = 0
-	for (const _asset in res.assetMetadata) {
-		totalAssets++
-	}
-	// Keep a small offset so fallback colors do not overlap too closely with fixed asset colors.
-	const colors = getNDistinctColors(totalAssets + EXTRA_DYNAMIC_COLOR_BUFFER).filter(
-		(color) => color !== EXCLUDED_DISTINCT_COLOR
+	const assets = Object.keys(res.assetMetadata).sort(
+		(a, b) => (res.assetMetadata[b].totalUsdValue ?? 0) - (res.assetMetadata[a].totalUsdValue ?? 0)
 	)
-	let i = 0
-	for (const asset in res.assetMetadata) {
-		const color = breakdownColor(res.assetMetadata[asset].name)
-		if (color != null) {
-			colorByAsset[asset] = color
-		} else {
-			colorByAsset[asset] = colors[i + RESERVED_DYNAMIC_COLOR_OFFSET]
-		}
-		i++
+	const colorByAsset: Record<string, string> = {}
+	for (const [index, asset] of assets.entries()) {
+		colorByAsset[asset] = breakdownColor(res.assetMetadata[asset].name) ?? chartColor(index)
 	}
 	return colorByAsset
 }
@@ -220,7 +205,6 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 		return { source, dimensions }
 	}
 
-	const chartColors = getNDistinctColors(finalInstitutions.length)
 	const assetFlows = res.flows[asset] ?? []
 	const dailyFlowSource = new Array<Array<number>>(assetFlows.length)
 	for (let i = 0; i < assetFlows.length; i++) {
@@ -254,7 +238,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				name: inst.ticker,
 				stack: inst.ticker,
 				type: 'line' as const,
-				color: chartColors[i],
+				color: chartColor(i),
 				encode: { x: 0, y: i + 1 }
 			})),
 			dataset: buildDataset(mNAVRealized)
@@ -264,7 +248,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				name: inst.ticker,
 				stack: inst.ticker,
 				type: 'line' as const,
-				color: chartColors[i],
+				color: chartColor(i),
 				encode: { x: 0, y: i + 1 }
 			})),
 			dataset: buildDataset(mNAVRealistic)
@@ -274,7 +258,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 				name: inst.ticker,
 				stack: inst.ticker,
 				type: 'line' as const,
-				color: chartColors[i],
+				color: chartColor(i),
 				encode: { x: 0, y: i + 1 }
 			})),
 			dataset: buildDataset(mNAVMax)

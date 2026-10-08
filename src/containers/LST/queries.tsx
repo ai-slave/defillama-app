@@ -11,9 +11,10 @@
  */
 
 import { prepareRuntimePieChartData } from '~/components/ECharts/PieChart/data'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
-import { getNDistinctColors, slug } from '~/utils'
+import { slug } from '~/utils'
 import { fetchEthPrice, fetchLsdRates, fetchProtocolBySlug, fetchYieldPools } from './api'
 import type { ILsdRateApiItem } from './api.types'
 import type { ILSTPeg, ILSTTokenRow, InflowsChartData, LSTHistoryRow, LSTOverviewProps } from './types'
@@ -98,14 +99,6 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 	const chartData = await Promise.all(
 		members.map(async (member) => ({ member, protocol: await fetchProtocolBySlug(member.protocolSlug) }))
 	)
-
-	const allColors = getNDistinctColors(members.length)
-	const lsdColors: Record<string, string> = {}
-	for (const [index, member] of members.entries()) {
-		const color = allColors[index]
-		if (color !== undefined) lsdColors[member.name] = color
-	}
-	lsdColors['Others'] = '#AAAAAA'
 
 	// --- Beth: combine Ethereum + BSC ---
 	const beth = chartData.find(({ member }) => member.protocolSlug === 'binance-staked-eth')?.protocol
@@ -353,6 +346,10 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 		tokens.push(row.name)
 		tokensList.push(row)
 	}
+
+	// Colours go by staked ETH rank, the order every chart on the page ranks LSTs in.
+	const lsdColors: Record<string, string> = { Others: OTHERS_COLOR }
+	for (const [index, name] of tokens.entries()) lsdColors[name] = chartColor(index)
 
 	const pieSeries = prepareRuntimePieChartData({
 		data: tokenTvls,

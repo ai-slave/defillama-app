@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { chartColor } from '~/constants/colors'
 import { useInViewOnce } from '~/hooks/useInViewOnce'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { ScopeNote } from '~/ui/ScopeNote'
@@ -54,8 +55,6 @@ interface MetricTab {
 	series: Array<MetricSeriesSpec>
 }
 
-const SEGMENT_COLORS = { spot: '#5c9cf5', linear: '#9b7cf7', inverse: '#33b38f' }
-
 // One tab per metric; each keeps spot, linear perp, and inverse perp lines separate.
 // Tabs with no data for a venue are hidden.
 const VENUE_TABS: Array<MetricTab> = [
@@ -69,14 +68,14 @@ const VENUE_TABS: Array<MetricTab> = [
 		// and a hallmark marks the first day it exists (see VenueChartView). COIN perps have
 		// no normalized-volume band, so no twin.
 		series: [
-			{ key: 'spot_volume', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_volume', label: 'USD Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_volume', label: 'COIN Perps', color: SEGMENT_COLORS.inverse },
-			{ key: 'spot_normalized_volume', label: 'Spot normalized', color: `${SEGMENT_COLORS.spot}66`, stack: 'nvol' },
+			{ key: 'spot_volume', label: 'Spot', color: chartColor(0) },
+			{ key: 'linear_perp_volume', label: 'USD Perps', color: chartColor(1) },
+			{ key: 'inverse_perp_volume', label: 'COIN Perps', color: chartColor(2) },
+			{ key: 'spot_normalized_volume', label: 'Spot normalized', color: `${chartColor(0)}66`, stack: 'nvol' },
 			{
 				key: 'linear_perp_normalized_volume',
 				label: 'USD Perps normalized',
-				color: `${SEGMENT_COLORS.linear}66`,
+				color: `${chartColor(1)}66`,
 				stack: 'nvol'
 			}
 		]
@@ -87,8 +86,8 @@ const VENUE_TABS: Array<MetricTab> = [
 		valueSymbol: '$',
 		type: 'line',
 		series: [
-			{ key: 'linear_perp_oi', label: 'USD Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_oi', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'linear_perp_oi', label: 'USD Perps', color: chartColor(1) },
+			{ key: 'inverse_perp_oi', label: 'COIN Perps', color: chartColor(2) }
 		]
 	},
 	{
@@ -97,9 +96,9 @@ const VENUE_TABS: Array<MetricTab> = [
 		valueSymbol: '$',
 		type: 'line',
 		series: [
-			{ key: 'spot_depth_2pct', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_depth_2pct', label: 'USD Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_depth_2pct', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'spot_depth_2pct', label: 'Spot', color: chartColor(0) },
+			{ key: 'linear_perp_depth_2pct', label: 'USD Perps', color: chartColor(1) },
+			{ key: 'inverse_perp_depth_2pct', label: 'COIN Perps', color: chartColor(2) }
 		]
 	},
 	{
@@ -108,9 +107,9 @@ const VENUE_TABS: Array<MetricTab> = [
 		valueSymbol: '',
 		type: 'line',
 		series: [
-			{ key: 'spot_market_count', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_market_count', label: 'USD Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_market_count', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'spot_market_count', label: 'Spot', color: chartColor(0) },
+			{ key: 'linear_perp_market_count', label: 'USD Perps', color: chartColor(1) },
+			{ key: 'inverse_perp_market_count', label: 'COIN Perps', color: chartColor(2) }
 		]
 	}
 ]

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 
@@ -396,6 +397,27 @@ describe('ProtocolTaxonomy queries', () => {
 			expect.objectContaining({ type: 'bar', name: 'New Card', stack: 'protocolBreakdown' }),
 			expect.objectContaining({ type: 'bar', name: 'Small Card', stack: 'protocolBreakdown' })
 		])
+	})
+
+	test('folds a breakdown past the series limit into one grey Others with any upstream remainder', () => {
+		const names = Array.from({ length: 12 }, (_, index) => `Card ${index + 1}`)
+		const values = Object.fromEntries(names.map((name, index) => [name, 120 - index * 10]))
+		const chart = buildBreakdownCharts([[1_710_000_000, { ...values, Others: 3 }]], 'protocolBreakdown')
+
+		expect(chart?.dataset.dimensions).toEqual(['timestamp', ...names.slice(0, 10), 'Others'])
+		expect(chart?.dataset.source).toEqual([[1_710_000_000_000, 120, 110, 100, 90, 80, 70, 60, 50, 40, 30, 20 + 10 + 3]])
+		expect(chart?.charts.map(({ color }) => color)).toEqual([...CHART_COLORS, OTHERS_COLOR])
+	})
+
+	test('keeps every series of a breakdown within the series limit', () => {
+		const names = Array.from({ length: 10 }, (_, index) => `Card ${index + 1}`)
+		const chart = buildBreakdownCharts(
+			[[1_710_000_000, Object.fromEntries(names.map((name, index) => [name, 100 - index]))]],
+			'protocolBreakdown'
+		)
+
+		expect(chart?.dataset.dimensions).toEqual(['timestamp', ...names])
+		expect(chart?.charts.map(({ color }) => color)).toEqual(CHART_COLORS)
 	})
 
 	test('returns no volume breakdown when the response is empty or all-zero', () => {

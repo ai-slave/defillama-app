@@ -16,7 +16,7 @@ describe('active address series names', () => {
 				themeText: '#000'
 			}).charts.map((chart) => chart.name)
 		const chain = (groupBy: 'daily' | 'monthly') =>
-			buildChainChartPresentation({ 'Active Addresses': data, 'New Addresses': data }, groupBy).charts.map(
+			buildChainChartPresentation({ 'Active Addresses': data, 'New Addresses': data }, groupBy, {}).charts.map(
 				(chart) => chart.name
 			)
 

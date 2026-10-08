@@ -36,14 +36,14 @@ describe('buildTokenUsageTreemapTreeData', () => {
 				path: 'LINK usage/DeFi/Alpha',
 				selectorKey: '["DeFi","Alpha"]',
 				value: [75, 75, 50],
-				itemStyle: { color: 'rgb(58, 121, 215)' }
+				itemStyle: { color: CHART_COLORS[0] }
 			},
 			{
 				name: 'Beta',
 				path: 'LINK usage/DeFi/Beta',
 				selectorKey: '["DeFi","Beta"]',
 				value: [25, 25, 16.67],
-				itemStyle: { color: 'rgb(134, 173, 231)' }
+				itemStyle: { color: '#578ce1' }
 			}
 		])
 		expect(tree[1].children?.[0].itemStyle?.color).toBe(CHART_COLORS[1])

@@ -16,7 +16,6 @@ import {
 } from '../../types'
 import type { DashboardItemPlacement } from '../../useDashboardActions'
 import { getItemIconUrl } from '../../utils'
-import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
 import type { ChartBuilderUpdate, ChartTabType, MainTabType } from './types'
@@ -119,7 +118,6 @@ export function useModalActions(
 			}
 
 			const targetGrouping = resolveTargetGrouping()
-			const getNextColorIndex = () => state.composerItems.length
 
 			const effectiveMode = options?.mode ?? state.selectedChartTab
 
@@ -141,10 +139,8 @@ export function useModalActions(
 						)
 					})
 					if (filteredTypes.length > 0) {
-						const colorStartIndex = getNextColorIndex() + addedCount
 						const newCharts: Array<ChartConfig> = []
-						for (const [idx, chartType] of filteredTypes.slice(0, remainingSlots).entries()) {
-							const color = EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
+						for (const chartType of filteredTypes.slice(0, remainingSlots)) {
 							const geckoId = isChainTokenChartType(chartType) ? chain?.gecko_id : undefined
 							const chart = createChartConfig({
 								id: `${chainName}-${chartType}-${Date.now()}-${Math.random()}`,
@@ -153,8 +149,7 @@ export function useModalActions(
 								chain: chainName,
 								type: chartType,
 								...(targetGrouping ? { grouping: targetGrouping } : {}),
-								...(geckoId === undefined ? {} : { geckoId }),
-								...(color ? { color } : {})
+								...(geckoId === undefined ? {} : { geckoId })
 							})
 							if (chart) newCharts.push(chart)
 						}
@@ -180,10 +175,8 @@ export function useModalActions(
 						)
 					})
 					if (filteredTypes.length > 0) {
-						const colorStartIndex = getNextColorIndex() + addedCount
 						const newCharts: Array<ChartConfig> = []
-						for (const [idx, chartType] of filteredTypes.slice(0, remainingSlots).entries()) {
-							const color = EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
+						for (const chartType of filteredTypes.slice(0, remainingSlots)) {
 							const chart = createChartConfig({
 								id: `${slug}-${chartType}-${Date.now()}-${Math.random()}`,
 								kind: 'chart',
@@ -192,7 +185,6 @@ export function useModalActions(
 								type: chartType,
 								...(targetGrouping ? { grouping: targetGrouping } : {}),
 								...(protocol?.geckoId === undefined ? {} : { geckoId: protocol.geckoId }),
-								...(color ? { color } : {}),
 								...(chartType === 'unlocks' ? { dataType: 'documented' } : {})
 							})
 							if (chart) newCharts.push(chart)

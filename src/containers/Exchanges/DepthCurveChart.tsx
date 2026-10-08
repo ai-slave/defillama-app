@@ -3,6 +3,7 @@
  * venue, bids and asks on one axis.
  */
 import * as React from 'react'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { aggregateEntries, depthCurveVenues, venueEntries, type DepthCurveRow } from './depthCurve'
@@ -12,9 +13,6 @@ import { EXCHANGE_SEGMENT_LABELS, type ExchangeSegment } from './models'
 /** Depth exists for spot and USD perps; COIN perps carry too few venues to compare. */
 const DEPTH_SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 type DepthSegment = (typeof DEPTH_SEGMENTS)[number]
-
-/** Named venues in the split view; the rest fold into one "Others" curve. */
-const BREAKDOWN_VENUES = 12
 
 type DepthView = 'aggregate' | 'breakdown'
 
@@ -31,7 +29,7 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 	const entries = React.useMemo(
 		// Both views read every venue: the split view groups its tail rather than
 		// truncating it, so the two always account for the same book.
-		() => (view === 'breakdown' ? venueEntries(venues, BREAKDOWN_VENUES) : aggregateEntries(venues)),
+		() => (view === 'breakdown' ? venueEntries(venues, CHART_SERIES_LIMIT) : aggregateEntries(venues)),
 		[venues, view]
 	)
 

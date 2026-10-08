@@ -12,11 +12,13 @@ import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { buildChainChartPresentation } from './chartPresentation'
 import { buildChainYAxis } from './chartYAxis'
-import { chainOverviewChartColors } from './constants'
+import type { ChainChartLabels } from './constants'
 import type { ChainOverviewChartData } from './types'
 
 interface ChainCoreChartProps {
 	chartData: ChainOverviewChartData
+	/** From `getChainChartColors`, so the series match the page's metric chips. */
+	chartColors: Partial<Record<ChainChartLabels, string>>
 	valueSymbol?: string
 	chartOptions?: MultiSeriesChartOptions
 	height?: string
@@ -39,6 +41,7 @@ const EMPTY_CHART_OPTIONS: NonNullable<ChainCoreChartProps['chartOptions']> = {}
 
 export default function ChainCoreChart({
 	chartData,
+	chartColors,
 	valueSymbol = '',
 	chartOptions = EMPTY_CHART_OPTIONS,
 	height,
@@ -49,12 +52,15 @@ export default function ChainCoreChart({
 }: ChainCoreChartProps) {
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
 	const chartTheme = useChartTheme(isThemeDark)
-	const presentation = useMemo(() => buildChainChartPresentation(chartData, groupBy ?? 'daily'), [chartData, groupBy])
+	const presentation = useMemo(
+		() => buildChainChartPresentation(chartData, groupBy ?? 'daily', chartColors),
+		[chartData, groupBy, chartColors]
+	)
 	const finalChartOptions = useMemo(() => {
 		const domainAxes = buildChainYAxis({
 			allYAxis: presentation.allYAxis,
 			baseYAxis: {},
-			chartColors: chainOverviewChartColors,
+			chartColors,
 			chartsInSeries: presentation.chartsInSeries,
 			themeText: chartTheme.text
 		})
@@ -74,6 +80,7 @@ export default function ChainCoreChart({
 			)
 		} satisfies MultiSeriesChartOptions
 	}, [
+		chartColors,
 		chartOptions,
 		chartTheme.text,
 		presentation.allYAxis,

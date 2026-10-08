@@ -1,4 +1,3 @@
-import { CHART_COLORS } from '~/constants/colors'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { chainIconUrl, equityIconUrl, geckoTokenIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 
@@ -41,9 +40,6 @@ export function buildLogoByCategory(x: ChartConfiguration['axes']['x']): Map<str
 	}
 	return map.size > 0 ? map : undefined
 }
-
-export const getChartColor = (seriesIndex: number): string =>
-	CHART_COLORS[seriesIndex % CHART_COLORS.length] ?? CHART_COLORS[0]
 
 export const parseStringNumber = (value: unknown): number => {
 	if (typeof value === 'number') return value

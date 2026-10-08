@@ -1,9 +1,10 @@
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices as fetchCoinPricesBatched } from '~/api/pricing'
 import { DATASETS_SERVER_URL } from '~/constants'
+import { chartColor } from '~/constants/colors'
 import { buildUnlocksMultiSeriesChartForDateRange } from '~/containers/Unlocks/buildUnlocksMultiSeriesChart'
 import type { PrecomputedData, UnlocksData } from '~/containers/Unlocks/calendarTypes'
-import { batchFetchHistoricalPrices, capitalizeFirstLetter, getNDistinctColors } from '~/utils'
+import { batchFetchHistoricalPrices, capitalizeFirstLetter } from '~/utils'
 import { fetchJson, getSlowJsonTimeoutMs } from '~/utils/async'
 import type { IEmissionsHistoricalPrices, ITokenListEntry } from '~/utils/metadata/types'
 import { buildUnlocksHistoricalPriceRequests } from '~/utils/unlocks/historicalPriceRequests'
@@ -333,9 +334,8 @@ function buildColorsForPie(
 	}
 
 	const primary = pie.filter((entry) => baseNameOf(entry.name) === entry.name)
-	const palette = getNDistinctColors(primary.length)
 	for (let index = 0; index < primary.length; index++) {
-		colors[primary[index]!.name] = palette[index]!
+		colors[primary[index]!.name] = chartColor(index)
 	}
 	for (const entry of pie) {
 		if (colors[entry.name]) continue
@@ -415,21 +415,10 @@ export async function getProtocolEmissionsScheduleData(protocolName: string): Pr
 	const realtimeChart = seriesToChartRows(realtimeBuilt.series)
 
 	// Assign colors by category order to keep schedule charts fully colored.
-	const documentedPalette = getNDistinctColors(categories.documented.length)
 	const documentedColors: Record<string, string> = {}
-	for (let index = 0; index < categories.documented.length; index++) {
-		const category = categories.documented[index]!
-		const color = documentedPalette[index]!
-		documentedColors[category] = color
-	}
-
-	const realtimePalette = getNDistinctColors(categories.realtime.length)
+	for (const [index, category] of categories.documented.entries()) documentedColors[category] = chartColor(index)
 	const realtimeColors: Record<string, string> = {}
-	for (let index = 0; index < categories.realtime.length; index++) {
-		const category = categories.realtime[index]!
-		const color = realtimePalette[index]!
-		realtimeColors[category] = color
-	}
+	for (const [index, category] of categories.realtime.entries()) realtimeColors[category] = chartColor(index)
 
 	const datasets = {
 		documented: buildEmissionsDataset(documentedChart, categories.documented),

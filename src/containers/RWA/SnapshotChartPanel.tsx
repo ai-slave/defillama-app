@@ -3,7 +3,7 @@ import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportBut
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -79,7 +79,7 @@ export function RWASnapshotChartPanel({
 		for (const [index, slice] of deferredSlices.entries()) {
 			colors[slice.name] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
 		}
-		colors.Others = colors.Others ?? CHART_COLORS[RWA_MAX_CHART_SERIES % CHART_COLORS.length] ?? CHART_COLORS[0]
+		colors.Others = OTHERS_COLOR
 		const bars = limitRwaHorizontalBarData(deferredSlices, { sort: true })
 		return {
 			colors,

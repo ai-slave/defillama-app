@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import { buildChainYAxis } from '../chartYAxis'
-import { chainOverviewChartColors } from '../constants'
 
 describe('chain chart y-axis layout', () => {
 	test('gives each metric axis its own color, unit formatter and stacked offset', () => {
@@ -11,7 +10,7 @@ describe('chain chart y-axis layout', () => {
 				['Token Price', 2]
 			],
 			baseYAxis: {},
-			chartColors: { ...chainOverviewChartColors, TVL: '#111', 'Active Addresses': '#222', 'Token Price': '#333' },
+			chartColors: { TVL: '#111', 'Active Addresses': '#222', 'Token Price': '#333' },
 			chartsInSeries: new Set(['TVL', 'Active Addresses', 'Token Price']),
 			themeText: '#aaa'
 		})

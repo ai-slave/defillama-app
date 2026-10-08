@@ -9,11 +9,23 @@ import { contrast } from '../generate-color-ramps.mjs'
  *    selected brand tint and on every faint, tint and tint-strong token.
  * 2. text-on-brand at 4.5:1 or more on bg-brand, and border-strong at 3:1 or more on every surface.
  * 3. Every ramp keeps its pair rules: step 11 at 4.5:1 or more on steps 1–4, and white at 4.5:1 or more on step 9.
+ * 4. Every chart series color (CHART_COLORS and OTHERS_COLOR in src/constants/colors.ts) at 3:1 or more on the page
+ *    and surface in both modes, so one palette serves both themes and PNG exports.
  *
  *   bun scripts/policies/check-color-contrast.mjs
  */
 
 const FILES = ['src/styles/primitives.css', 'src/styles/semantics.css']
+// The chart palette is TS (canvas cannot read var()): read its hex literals from the palette block.
+const paletteSource = fs.readFileSync('src/constants/colors.ts', 'utf8')
+const paletteBlock = paletteSource.slice(
+	paletteSource.indexOf('export const CHART_COLORS'),
+	paletteSource.indexOf('export function chartColor')
+)
+const CHART_SERIES_COLORS = [
+	paletteSource.match(/export const oldBlue = '(#[0-9a-fA-F]{6})'/)[1],
+	...[...paletteBlock.matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1])
+]
 const TEXT = [
 	'text-primary',
 	'text-secondary',
@@ -106,6 +118,13 @@ for (const mode of ['light', 'dark']) {
 		if (ratio < 3) failures.push(`${mode}: --border-strong on --${surface} is ${ratio.toFixed(2)}:1`)
 	}
 
+	for (const series of CHART_SERIES_COLORS) {
+		for (const surface of ['bg-page', 'bg-surface']) {
+			const ratio = contrast(series, color(surface))
+			if (ratio < 3) failures.push(`${mode}: chart color ${series} on --${surface} is ${ratio.toFixed(2)}:1`)
+		}
+	}
+
 	for (const ramp of RAMPS) {
 		for (const step of [1, 2, 3, 4]) {
 			const ratio = contrast(color(`${ramp}-11`), color(`${ramp}-${step}`))
@@ -121,4 +140,4 @@ if (failures.length > 0) {
 	for (const failure of failures) console.error(`  ${failure}`)
 	process.exit(1)
 }
-console.log('Color contrast policy: all text tokens and ramp pairs pass AA in light and dark.')
+console.log('Color contrast policy: all text tokens, ramp pairs and chart colors pass in light and dark.')

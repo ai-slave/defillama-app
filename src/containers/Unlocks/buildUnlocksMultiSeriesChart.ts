@@ -1,6 +1,6 @@
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { chartColor } from '~/constants/colors'
 import { isWeeklyRateCalendarEvent, type UnlocksData } from './calendarTypes'
-import { COLOR_PALETTE } from './constants'
 
 type UnlocksMultiSeriesChartResult = {
 	dataset: MultiSeriesChartDataset
@@ -67,7 +67,7 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 		name,
 		encode: { x: 0, y: i + 1 },
 		stack: 'unlocks',
-		color: COLOR_PALETTE[i % COLOR_PALETTE.length]!,
+		color: chartColor(i),
 		large: false
 	}))
 

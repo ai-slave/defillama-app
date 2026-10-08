@@ -7,7 +7,6 @@ import {
 } from '~/components/ECharts/shared/timeSeries'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { isDailyAverageChartType, type Chain, type DashboardGrouping, type Protocol } from './types'
-import { generateConsistentChartColor } from './utils/colorManager'
 
 type NumericChartTuple = readonly [timestamp: string | number, value: string | number]
 
@@ -135,10 +134,4 @@ export const getItemIconUrl = (
 	if (itemInfo && 'logo' in itemInfo && itemInfo.logo) return itemInfo.logo
 	const key = (itemInfo && 'id' in itemInfo ? itemInfo.id : itemIdentifier)?.toString()
 	return tokenIconUrl(key)
-}
-
-export const generateChartColor = (itemName: string, fallbackColor: string): string => {
-	const itemType = itemName?.includes('_') ? 'protocol' : 'chain'
-
-	return generateConsistentChartColor(itemName, fallbackColor, itemType)
 }

@@ -3,14 +3,7 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getDailyAverageLabel } from '~/components/ECharts/shared/timeSeries'
-import {
-	BAR_CHARTS,
-	type ChainChartLabels,
-	chainOverviewChartColors,
-	chainCharts,
-	DISABLED_CUMULATIVE_CHARTS,
-	yAxisByChart
-} from './constants'
+import { BAR_CHARTS, type ChainChartLabels, chainCharts, DISABLED_CUMULATIVE_CHARTS, yAxisByChart } from './constants'
 import type { ChainOverviewChartData } from './types'
 
 const BAR_CHARTS_SET = new Set<ChainChartLabels>(BAR_CHARTS)
@@ -29,7 +22,8 @@ export function getChainSeriesName(label: string, groupBy: ChartTimeGroupingWith
 
 export function buildChainChartPresentation(
 	chartData: ChainOverviewChartData,
-	groupBy: ChartTimeGroupingWithCumulative
+	groupBy: ChartTimeGroupingWithCumulative,
+	chartColors: Partial<Record<ChainChartLabels, string>>
 ) {
 	const isCumulative = groupBy === 'cumulative'
 	const axisIndexByType = new Map<ChainChartLabels, number>()
@@ -59,7 +53,7 @@ export function buildChainChartPresentation(
 			name: getChainSeriesName(label, groupBy),
 			encode: { x: 0, y: 1 },
 			data,
-			color: chainOverviewChartColors[label],
+			color: chartColors[label],
 			yAxisIndex,
 			...(seriesValueSymbol !== undefined ? { valueSymbol: seriesValueSymbol } : {}),
 			...(type === 'bar' ? { large: data.length > 0 } : {})

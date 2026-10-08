@@ -9,6 +9,7 @@ import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Se
 import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
+import { childColors } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -36,8 +37,7 @@ import {
 	ReturnMatrix,
 	RowNumber,
 	sectorColor,
-	StaleDataNotice,
-	treemapChildColors
+	StaleDataNotice
 } from './AggregateShared'
 import type { EquitiesPageDataState } from './types'
 
@@ -214,7 +214,7 @@ function IndustriesReadyPage({
 	const industryTreemapColors = new Map<string, string>()
 	for (const colorSectorSlug of new Set(treemapRows.map((row) => row.sectorSlug))) {
 		const sectorIndustries = treemapRows.filter((row) => row.sectorSlug === colorSectorSlug)
-		const colors = treemapChildColors(sectorColor(colorSectorSlug), sectorIndustries.length)
+		const colors = childColors(sectorColor(colorSectorSlug), sectorIndustries.length)
 		for (const [index, row] of sectorIndustries.entries()) {
 			industryTreemapColors.set(`${row.sectorSlug}:${row.industrySlug}`, colors[index]!)
 		}

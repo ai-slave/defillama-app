@@ -7,10 +7,10 @@ import type {
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { chartColor } from '~/constants/colors'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import {
 	buildLogoByCategory,
-	getChartColor,
 	parseChartDateMs,
 	parseStringNumber
 } from '~/containers/LlamaAI/utils/chartAdapters/shared'
@@ -366,7 +366,7 @@ export function adaptCartesianChartData(
 			const entityValue = entityFilter?.value
 			const normalizedEntityValue = entityValue == null ? null : String(entityValue).toLowerCase()
 
-			const resolvedColor = apiColor || getChartColor(seriesIndex)
+			const resolvedColor = apiColor || chartColor(seriesIndex)
 
 			runtimeSeries.push({
 				baseType,

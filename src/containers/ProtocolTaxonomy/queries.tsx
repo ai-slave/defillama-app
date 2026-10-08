@@ -15,7 +15,7 @@
  *   contributor is unavailable.
  */
 
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import {
 	fetchAdapterChainChartData,
 	fetchAdapterChainChartDataByChainBreakdown,
@@ -38,7 +38,7 @@ import {
 	type ProtocolLite,
 	type ProtocolsResponse
 } from '~/containers/ProtocolLists/api.types'
-import { getNDistinctColors, getPercentChange, slug } from '~/utils'
+import { getPercentChange, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import type { ICategoriesAndTags, ICategoriesAndTagsConfig, IChainMetadata } from '~/utils/metadata/types'
 import { fetchCardBreakdownChart, fetchCategoriesSummary, fetchCategoryChart, fetchTagChart } from './api'
@@ -305,7 +305,7 @@ export const buildCategoryCharts = ({
 		},
 		charts: finalMetrics.map((metric, index) => {
 			const dimension = getProtocolCategoryChartMetricLabel(metric, effectiveCategory)
-			const color = CHART_COLORS[index]
+			const color = chartColor(index)
 			return {
 				type: CHART_METRIC_SERIES_TYPE[metric],
 				name: dimension,
@@ -321,6 +321,8 @@ export const buildCategoryCharts = ({
 /**
  * Turns a `[timestamp, valueBySeriesName]` breakdown response into one stacked series per name,
  * ordered by all-time total so the largest contributors sit at the bottom of the stack.
+ * The chart has no series picker, so past CHART_SERIES_LIMIT the smaller names and any upstream
+ * "Others" fold into one "Others" series; the table below the chart still lists every protocol.
  * Shared by the protocol, card-network, and custody breakdowns, which all use this shape.
  */
 export const buildBreakdownCharts = (
@@ -337,19 +339,24 @@ export const buildBreakdownCharts = (
 		}
 	}
 
-	const protocolNames: Array<string> = []
+	const rankedNames: Array<string> = []
 	for (const [protocolName, total] of Array.from(totalByProtocol.entries()).sort((a, b) => b[1] - a[1])) {
-		if (total > 0) protocolNames.push(protocolName)
+		if (total > 0) rankedNames.push(protocolName)
 	}
-	if (protocolNames.length === 0) return null
+	if (rankedNames.length === 0) return null
 
+	const protocolNames = rankedNames.filter((name) => name !== 'Others').slice(0, CHART_SERIES_LIMIT)
+	const seriesNames = protocolNames.length < rankedNames.length ? [...protocolNames, 'Others'] : protocolNames
 	const columnIndexByProtocol = new Map<string, number>()
-	for (const [index, protocolName] of protocolNames.entries()) columnIndexByProtocol.set(protocolName, index + 1)
+	for (const protocolName of rankedNames) {
+		const index = protocolNames.indexOf(protocolName)
+		columnIndexByProtocol.set(protocolName, index === -1 ? seriesNames.length : index + 1)
+	}
 
 	const source: Array<ProtocolTaxonomyChartRow> = []
 	for (const [timestamp, valueByProtocol] of breakdownChartData) {
 		const row: ProtocolTaxonomyChartRow = [normalizeChartTimestamp(timestamp)]
-		for (const _ of protocolNames) row.push(null)
+		for (const _ of seriesNames) row.push(null)
 		for (const protocolName in valueByProtocol) {
 			const columnIndex = columnIndexByProtocol.get(protocolName)
 			if (columnIndex === undefined) continue
@@ -359,19 +366,17 @@ export const buildBreakdownCharts = (
 	}
 	source.sort((a, b) => a[0] - b[0])
 
-	const colors = getNDistinctColors(protocolNames.length)
-
 	return {
 		dataset: {
 			source,
-			dimensions: ['timestamp', ...protocolNames]
+			dimensions: ['timestamp', ...seriesNames]
 		},
-		charts: protocolNames.map((protocolName, index) => ({
+		charts: seriesNames.map((name, index) => ({
 			type: 'bar',
-			name: protocolName,
+			name,
 			encode: { x: 0, y: index + 1 },
 			stack: stackId,
-			color: colors[index] ?? '#999999',
+			color: name === 'Others' ? OTHERS_COLOR : chartColor(index),
 			valueSymbol: '$'
 		}))
 	}
@@ -1381,11 +1386,8 @@ export async function getProtocolsCategoriesPageData(): Promise<IProtocolsCatego
 		(a, b) => (categoryRows.get(b)?.tvl ?? 0) - (categoryRows.get(a)?.tvl ?? 0)
 	)
 
-	const allColors = getNDistinctColors(categoryKeys.length)
 	const categoryColors: Record<string, string> = {}
-	for (const [index, categoryName] of categoryKeys.entries()) {
-		categoryColors[categoryName] = allColors[index] ?? '#999999'
-	}
+	for (const [index, categoryName] of categoryKeys.entries()) categoryColors[categoryName] = chartColor(index)
 
 	const tableData: Array<IProtocolsCategoriesTableRow> = []
 	for (const categoryName of categoryKeys) {

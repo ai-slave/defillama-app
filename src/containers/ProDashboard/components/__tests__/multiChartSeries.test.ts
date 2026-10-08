@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import type { ChartRuntimeView } from '../../chartRuntime'
-import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import {
 	buildComposerPreviewSeries,
 	buildMultiChartCardSeries,
@@ -248,26 +247,19 @@ describe('buildComposerPreviewSeries', () => {
 	const point: Array<[number, number]> = [[1_789_516_800, 40]]
 
 	test('names grouped active addresses as a daily average and daily ones plainly', () => {
-		expect(buildComposerPreviewSeries({ type: 'activeUsers', data: point }, 'week', 'Ethereum', 0).name).toBe(
+		expect(buildComposerPreviewSeries({ type: 'activeUsers', data: point }, 'week', 'Ethereum', '#1f67d2').name).toBe(
 			'Ethereum Active Addresses (daily average)'
 		)
-		expect(buildComposerPreviewSeries({ type: 'activeUsers', data: point }, 'day', 'Ethereum', 0).name).toBe(
+		expect(buildComposerPreviewSeries({ type: 'activeUsers', data: point }, 'day', 'Ethereum', '#1f67d2').name).toBe(
 			'Ethereum Active Addresses'
 		)
-		expect(buildComposerPreviewSeries({ type: 'txs', data: point }, 'week', 'Ethereum', 0).name).toBe(
+		expect(buildComposerPreviewSeries({ type: 'txs', data: point }, 'week', 'Ethereum', '#1f67d2').name).toBe(
 			'Ethereum Transactions'
 		)
 	})
 
-	test('takes its default color from the palette slot of its position', () => {
-		const first = buildComposerPreviewSeries({ type: 'fees', data: point }, 'day', 'Aave', 0).color
-		const second = buildComposerPreviewSeries({ type: 'fees', data: point }, 'day', 'Aave', 1).color
-		expect([first, second]).toEqual([EXTENDED_COLOR_PALETTE[0], EXTENDED_COLOR_PALETTE[1]])
-		expect(first).not.toBe(second)
-	})
-
-	test('keeps a chosen color and draws the metric with its configured mark', () => {
-		expect(buildComposerPreviewSeries({ type: 'fees', data: point, color: '#123456' }, 'day', 'Aave', 3)).toEqual({
+	test('draws the metric with its configured mark in the given color', () => {
+		expect(buildComposerPreviewSeries({ type: 'fees', data: point }, 'day', 'Aave', '#123456')).toEqual({
 			name: 'Aave Fees',
 			baseType: 'bar',
 			data: point,
@@ -295,7 +287,7 @@ describe('buildMultiChartCardSeries', () => {
 		...runtime
 	})
 	const names = (items: Array<ChartRuntimeView>, showCumulative: boolean, grouping: 'day' | 'week') =>
-		buildMultiChartCardSeries(items, { showCumulative, grouping, getProtocolName: () => undefined }).map(
+		buildMultiChartCardSeries(items, { showCumulative, grouping, getProtocolName: () => undefined, colors: {} }).map(
 			(series) => series.name
 		)
 
@@ -324,29 +316,20 @@ describe('buildMultiChartCardSeries', () => {
 			buildMultiChartCardSeries([protocol('a', 'aave'), protocol('b', 'unknown')], {
 				showCumulative: false,
 				grouping: 'day',
-				getProtocolName: (slug) => (slug === 'aave' ? 'Aave' : undefined)
+				getProtocolName: (slug) => (slug === 'aave' ? 'Aave' : undefined),
+				colors: {}
 			}).map((series) => series.name)
 		).toEqual(['Aave Fees', 'unknown Fees'])
 	})
 
-	const colors = (items: Array<ChartRuntimeView>) =>
-		buildMultiChartCardSeries(items, { showCumulative: false, grouping: 'day', getProtocolName: () => undefined }).map(
-			(series) => series.color
-		)
-
-	test('colors each chain by its alphabetical place in the palette and keeps a chosen color', () => {
+	test('draws each series in the colour given for its item', () => {
 		expect(
-			colors([
-				loaded('a', 'tvl', 'Solana'),
-				loaded('b', 'tvl', 'Ethereum'),
-				{ ...loaded('c', 'tvl', 'Base'), color: '#123456' }
-			])
-		).toEqual([COLOR_PALETTE_2[2], COLOR_PALETTE_2[1], '#123456'])
-	})
-
-	test('metrics of one chain take the extended palette in order', () => {
-		const [first, second] = colors([loaded('a', 'tvl'), loaded('b', 'txs')])
-		expect([first, second]).toEqual([EXTENDED_COLOR_PALETTE[0], EXTENDED_COLOR_PALETTE[1]])
-		expect(first).not.toBe(second)
+			buildMultiChartCardSeries([loaded('a', 'tvl', 'Solana'), loaded('b', 'tvl', 'Base')], {
+				showCumulative: false,
+				grouping: 'day',
+				getProtocolName: () => undefined,
+				colors: { a: '#111111', b: '#222222' }
+			}).map((series) => series.color)
+		).toEqual(['#111111', '#222222'])
 	})
 })

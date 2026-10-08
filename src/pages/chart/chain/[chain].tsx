@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import { getChainChartColors } from '~/containers/ChainOverview/constants'
 import {
 	getActiveAddressesCumulativeNotice,
 	getEmbeddedChainChartSettings
@@ -101,6 +102,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		[queryParamsString, props.charts, props.chainTokenInfo, props.metadata]
 	)
 
+	const chartColors = useMemo(() => getChainChartColors(toggledCharts), [toggledCharts])
 	const { finalCharts, valueSymbol, isFetchingChartData } = useFetchChainChartData({
 		denomination,
 		selectedChain,
@@ -145,6 +147,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 					) : null}
 					<ChainCoreChart
 						chartData={finalCharts}
+						chartColors={chartColors}
 						valueSymbol={valueSymbol}
 						isThemeDark={isThemeDark}
 						groupBy={groupBy}

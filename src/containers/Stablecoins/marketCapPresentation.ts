@@ -1,6 +1,6 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
-import { CHART_COLORS, oldBlue } from '~/constants/colors'
+import { CHART_COLORS, oldBlue, OTHERS_COLOR } from '~/constants/colors'
 import { roundNumber } from '~/utils/numberFormat'
 
 const PIE_SLICE_LIMIT = 10
@@ -119,7 +119,7 @@ export function buildStablecoinMarketCapPresentation({
 			else if (peer.value > 0) visibleSlices.push(peer)
 		}
 		if (visibleSlices.length > 0 && othersValue > 0) {
-			visibleSlices.push({ name: 'Others', value: othersValue, color: '#AAAAAA' })
+			visibleSlices.push({ name: 'Others', value: othersValue, color: OTHERS_COLOR })
 		}
 		const treeData: Array<TreemapNode> = []
 		for (const slice of visibleSlices) {
@@ -157,7 +157,7 @@ export function buildStablecoinMarketCapPresentation({
 		visibleSlices.push({
 			name: 'Others',
 			value: othersValue,
-			color: '#AAAAAA'
+			color: OTHERS_COLOR
 		})
 	}
 

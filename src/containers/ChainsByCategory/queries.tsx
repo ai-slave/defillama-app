@@ -1,3 +1,4 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchAdapterChainProtocolTotals } from '~/containers/AdapterMetrics/api'
 import type { AdapterChainProtocolTotalsResponse } from '~/containers/AdapterMetrics/api.types'
 import { getDimensionAdapterOverviewOfAllChains } from '~/containers/AdapterMetrics/queries'
@@ -8,7 +9,7 @@ import type { ChainsByCategoryResponse } from '~/containers/Chains/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { sumStablecoinPegBalances } from '~/containers/Stablecoins/utils'
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
-import { getNDistinctColors, slug } from '~/utils'
+import { slug } from '~/utils'
 import type { IChainMetadata } from '~/utils/metadata/types'
 import { shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
 import { normalizeChainsBaseTvlValue, removeStaleChainExtraTvlEntries } from './tvl'
@@ -260,18 +261,12 @@ export const getChainsByCategory = async ({
 		categoryName = categories.find((cat) => slug(cat) === category) || category
 	}
 
-	const allColors = getNDistinctColors(rest.chainsUnique.length)
+	// Colours go by TVL rank, the order the pie and dominance charts rank chains in.
+	const tvlByChain = new Map(chainTvls.map((chain) => [chain.name, chain.tvl ?? 0]))
+	const rankedChains = rest.chainsUnique.toSorted((a, b) => (tvlByChain.get(b) ?? 0) - (tvlByChain.get(a) ?? 0))
 	const colorsByChain: Record<string, string> = {}
-
-	for (let index = 0; index < rest.chainsUnique.length; index++) {
-		const chain = rest.chainsUnique[index]
-		if (chain === undefined) continue
-		const color = allColors[index]
-		if (color == null) throw new Error(`Missing chart color for chain ${chain}`)
-		colorsByChain[chain] = color
-	}
-
-	colorsByChain['Others'] = '#AAAAAA'
+	for (const [index, chain] of rankedChains.entries()) colorsByChain[chain] = chartColor(index)
+	colorsByChain['Others'] = OTHERS_COLOR
 
 	const stablesChainMcapMap = new Map<string, number>()
 	for (const chain of stablecoins.chains) {

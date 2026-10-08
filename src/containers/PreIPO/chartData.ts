@@ -1,9 +1,6 @@
+import { chartColor } from '~/constants/colors'
 import type { PreIpoRaise, PreIpoValuation } from './api.types'
 import type { PreIpoValuationChart } from './types'
-
-const MONTHLY_VALUATION_COLOR = '#2f80ed'
-const ROUND_VALUATION_COLOR = '#f97316'
-const RAISED_COLOR = '#10b981'
 
 function utcDateTimestamp(date: string): number {
 	return new Date(`${date}T00:00:00.000Z`).getTime()
@@ -31,7 +28,7 @@ export function buildPreIpoValuationChart(
 			name: 'Monthly valuation',
 			encode: { x: 0, y: 1 },
 			data: valuationData,
-			color: MONTHLY_VALUATION_COLOR,
+			color: chartColor(0),
 			hideAreaStyle: true
 		})
 	}
@@ -57,7 +54,7 @@ export function buildPreIpoValuationChart(
 			name: 'Round valuation',
 			encode: { x: 0, y: 1 },
 			data: roundValuationData,
-			color: ROUND_VALUATION_COLOR,
+			color: chartColor(1),
 			hideAreaStyle: true,
 			lineStyle: { type: 'dashed', width: 2 },
 			step: 'end',
@@ -72,7 +69,7 @@ export function buildPreIpoValuationChart(
 			name: 'Raised',
 			encode: { x: 0, y: 1 },
 			data: raisedData,
-			color: RAISED_COLOR,
+			color: chartColor(2),
 			barMaxWidth: 16
 		})
 	}

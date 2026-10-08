@@ -1,14 +1,15 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { OTHERS_COLOR } from '~/constants/colors'
 import type { RefRatePoint } from './fetch'
 
-// Chart series colors, [light, dark] per theme. Supply/Borrow mirror the ONE yields green/red —
-// `--apy-mid` (#089981 / #22ab94) and `--apy-very` (#f23645 / #f7525f) from tailwind.css — so the
-// rates chart matches the sparklines, stability pills, signed APYs, and the pool-page chart's
-// `accent`/`warn` series (ECharts needs literals, so the hex is inlined; keep in sync with the vars).
+// Chart series colors, [light, dark] per theme. Supply/Borrow are the app's up/down text steps
+// (emerald-11, crimson-11: --text-data-up/down, which --apy-mid/--apy-very read), so the rates chart
+// matches the sparklines, signed APYs and the pool chart's `accent`/`warn` series. ECharts needs
+// literals, so the ramp hex is inlined; keep it in sync with src/styles/primitives.css.
 const RATES_COLORS = {
-	supply: ['#089981', '#22ab94'],
-	borrow: ['#f23645', '#f7525f'],
-	spread: ['#7e8aa0', '#7e8aa0']
+	supply: ['#016d3c', '#12b167'],
+	borrow: ['#bd0a31', '#ff686f'],
+	spread: [OTHERS_COLOR, OTHERS_COLOR]
 } as const
 
 function ms(date: string): number {

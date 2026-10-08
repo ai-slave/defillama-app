@@ -454,18 +454,17 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 		--interim-brand-tint-hover: #1f67d233;
 
 		/* Yields v2 APY tiers (light). The top tier is intentionally red: a very-high APY reads as a risk signal. */
-		--apy-mid: #089981;
-		--apy-very: #f23645;
-		/* Text counterparts stay in the same product hues but meet AA on page,
-		   surface, and elevated-1. Chart accents above remain unchanged. */
-		--yield-positive-text: #067565;
-		--yield-negative-text: #b53b35;
-		--yield-warning-text: #9b5000;
-		--yield-reward-text: #9b5000;
+		--apy-mid: var(--text-data-up);
+		--apy-very: var(--text-data-down);
+		/* Yields text and badge colours read the app's data and status tokens, so a good APY is the one up green. */
+		--yield-positive-text: var(--text-data-up);
+		--yield-negative-text: var(--text-data-down);
+		--yield-warning-text: var(--text-warning);
+		--yield-reward-text: var(--amber-11);
 		/* Inset well for measured-on-chain figures: a tint of the product's positive hue, so the
 		   block reads as its own region inside the summary card without a second border or shadow.
 		   Deliberately not a nested card. */
-		--yield-verified-badge: #08998114;
+		--yield-verified-badge: var(--bg-data-up-tint);
 	}
 
 	* {
@@ -480,15 +479,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	}
 
 	html.dark {
-		/* Yields v2 APY tiers (dark) */
-		--apy-mid: #22ab94;
-		--apy-very: #f7525f;
-		--yield-positive-text: #22ab94;
-		--yield-negative-text: #f7525f;
-		--yield-warning-text: #ffa455;
-		--yield-reward-text: #ffa726;
 		/* Dark needs a touch more tint to separate from the surface it sits on. */
-		--yield-verified-badge: #22ab941f;
 
 		--dlnews-logo: oklch(1 0 0);
 		--interim-brand-tint-hover: #1f67d24d;

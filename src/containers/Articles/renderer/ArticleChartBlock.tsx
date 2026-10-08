@@ -1,6 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { chartColor } from '~/constants/colors'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
@@ -20,7 +21,6 @@ import {
 	articleChartLatestLabel,
 	articleChartValueSymbol,
 	buildArticleChartModel,
-	SERIES_COLORS,
 	seriesDisplayName,
 	uniqueChartTypeTitles
 } from './articleChartModel'
@@ -183,11 +183,7 @@ export function ArticleChartBlock({
 				<div className="flex flex-wrap gap-x-4 gap-y-1.5 body-sm text-secondary">
 					{series.map((s, i) => (
 						<span key={`${s.entityType}:${s.slug}:${s.chartType}`} className="inline-flex items-center gap-1.5">
-							<span
-								aria-hidden
-								className="size-2 rounded-full"
-								style={{ background: SERIES_COLORS[i % SERIES_COLORS.length] }}
-							/>
+							<span aria-hidden className="size-2 rounded-full" style={{ background: chartColor(i) }} />
 							<span className="text-primary">{seriesDisplayName(s)}</span>
 						</span>
 					))}

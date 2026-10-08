@@ -8,7 +8,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatCompactNumber } from '~/utils/numberFormat'
-import { type ApiUsageChartColors, buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
+import { buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -30,18 +30,16 @@ interface ApiUsageBreakdownProps {
 }
 
 const DEFAULT_WINDOW_DAYS = 30
-// ECharts draws to canvas and cannot read var(), so the palette is literal hex. Only the split lines and the axis
-// differ between themes.
-const LIGHT_CHART_COLORS: ApiUsageChartColors = {
-	routes: ['#1f67d2', '#22c55e', '#f59e0b', '#38bdf8', '#f97316', '#a855f7', '#14b8a6'],
-	others: '#64748b',
+// ECharts draws to canvas and cannot read var(), so the chrome colours are literal. Only the split lines and the
+// axis differ between themes.
+const LIGHT_CHART_COLORS = {
 	split: 'rgba(0, 0, 0, 0.06)',
 	muted: '#878787',
 	axis: '#ced8e6',
 	tooltipBg: '#131516',
 	tooltipBorder: '#2f3336'
 }
-const DARK_CHART_COLORS: ApiUsageChartColors = {
+const DARK_CHART_COLORS = {
 	...LIGHT_CHART_COLORS,
 	split: 'rgba(255, 255, 255, 0.06)',
 	axis: '#2f3336'
@@ -83,7 +81,6 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 		windowDays,
 		routeSeries,
 		activeSeries,
-		activeColors,
 		usageStats?.fetchedAt ?? null
 	)
 	const renderedCharts = useMemo(() => new Set(charts.map((chart) => chart.name)), [charts])

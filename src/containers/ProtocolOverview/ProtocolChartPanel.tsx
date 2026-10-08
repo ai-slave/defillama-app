@@ -10,6 +10,7 @@ import {
 import { prepareChartCsv } from '~/components/ECharts/shared/csv'
 import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { EmbedChart } from '~/components/EmbedChart'
+import { OTHERS_COLOR } from '~/constants/colors'
 import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -141,7 +142,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 			byCategory.get(PROTOCOL_CATEGORY_BY_METRIC.get(chart) ?? 'Other')!.push({
 				key: chart,
 				label: getProtocolMetricLabel(chart, props.token?.symbol),
-				color: props.chartColors[chart] ?? '#9CA3AF',
+				color: props.chartColors[chart] ?? OTHERS_COLOR,
 				active: toggledMetrics[protocolCharts[chart]] === 'true',
 				type: 'chart'
 			})
@@ -151,7 +152,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				{
 					key: 'events',
 					label: 'Events',
-					color: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? '#9CA3AF',
+					color: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? OTHERS_COLOR,
 					active: toggledMetrics.events === 'true',
 					type: 'events'
 				}
@@ -257,7 +258,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 								<span
 									className={metricChipStyles}
 									style={{
-										borderColor: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? '#9CA3AF'
+										borderColor: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? OTHERS_COLOR
 									}}
 								>
 									<span>Events</span>

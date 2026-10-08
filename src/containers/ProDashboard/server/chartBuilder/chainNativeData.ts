@@ -1,10 +1,10 @@
+import { chartColor } from '~/constants/colors'
 import { fetchAdapterChainMetrics, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { cachedJsonResult, type CachedJsonPayload } from '~/server/api/resultCache'
 import { mapWithConcurrency } from '~/utils/async'
 import {
-	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
 	filterOutToday,
 	normalizeDailyPairs,
@@ -45,12 +45,6 @@ const displayNameFromSlug = (slug: string): string =>
 		.filter(Boolean)
 		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
 		.join(' ')
-
-const getBreakdownColor = (index: number): string => {
-	const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
-	if (color === undefined) throw new Error('Breakdown color palette must not be empty')
-	return color
-}
 
 async function getChainNativeByChainBreakdownData({
 	metric,
@@ -132,7 +126,7 @@ async function getChainNativeByChainBreakdownData({
 		return {
 			name: entry.name,
 			data: filterOutToday(normalizeDailyPairs(chart, 'sum')),
-			color: getBreakdownColor(index)
+			color: chartColor(index)
 		}
 	})
 	const totalNormalized = Array.from(sumSeriesByTimestamp(seriesRaw.map((series) => series.data))).sort(

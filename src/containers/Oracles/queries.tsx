@@ -18,11 +18,12 @@
  * - `/lite/protocols2` only enriches exact member names with protocol metadata.
  */
 
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { toStrikeTvl } from '~/containers/ProtocolRankings/utils'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
-import { getNDistinctColors, slug } from '~/utils'
+import { slug } from '~/utils'
 import {
 	fetchOracleMetrics,
 	fetchOracleProtocolBreakdownChart,
@@ -247,11 +248,10 @@ export async function getOraclesListPageData({
 	})
 	const oracles = tableData.map((row) => row.name)
 	const oraclesColors: Record<string, string> = {
-		Others: '#AAAAAA'
+		Others: OTHERS_COLOR
 	}
-	const sortedColors = getNDistinctColors(oracles.length)
 	for (const [index, oracleName] of oracles.entries()) {
-		oraclesColors[oracleName] = sortedColors[index] ?? '#ccc'
+		oraclesColors[oracleName] = chartColor(index)
 	}
 
 	const uniqueChains = getAllChains(protocolsByOracleChain).sort(

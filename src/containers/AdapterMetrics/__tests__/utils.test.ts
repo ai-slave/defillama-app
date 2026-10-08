@@ -4,6 +4,7 @@ import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { CHART_COLORS, OTHERS_COLOR } from '~/constants/colors'
 import type { IProtocol } from '../types'
 import {
 	buildAdapterByChainBreakdownPresentation,
@@ -491,7 +492,7 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		})
 	})
 
-	test('uses ECharts-parseable colors for selected overflow chains', () => {
+	test('gives selected overflow chains the palette colours their canonical peers leave free', () => {
 		const chains = Array.from({ length: 12 }, (_, index) => `Chain ${index + 1}`)
 		const chartData = toDataset({
 			dimensions: ['timestamp', ...chains],
@@ -502,23 +503,19 @@ describe('buildChainsByAdapterChartPresentation', () => {
 				)
 			]
 		})
-		buildChainsByAdapterChartPresentation({
-			chartData,
-			selectedChains: chains,
-			state: { chartKind: 'dominance', groupBy: 'daily' }
-		})
+		const state = { chartKind: 'dominance', groupBy: 'daily' } as const
+		const full = buildChainsByAdapterChartPresentation({ chartData, selectedChains: chains, state })
 		const overflow = buildChainsByAdapterChartPresentation({
 			chartData,
-			selectedChains: ['Chain 12'],
-			state: { chartKind: 'dominance', groupBy: 'daily' }
+			selectedChains: ['Chain 1', 'Chain 12'],
+			state
 		})
-		if (overflow.kind !== 'dominance') return
-		const colors = overflow.charts.flatMap(({ color }) => (color === undefined ? [] : [color]))
-		expect(colors).toHaveLength(overflow.charts.length)
-		for (const color of colors) {
-			// A numeric hue, so the pattern alone proves echarts can read the colour.
-			expect(color).toMatch(/^hsl\(\d+(\.\d+)?, 68%, 48%\)$/)
-		}
+		assert(full.kind === 'dominance' && overflow.kind === 'dominance')
+		expect(full.charts.map(({ color }) => color)).toEqual([...CHART_COLORS, OTHERS_COLOR])
+		expect(Object.fromEntries(overflow.charts.map(({ name, color }) => [name, color]))).toEqual({
+			'Chain 1': CHART_COLORS[0],
+			'Chain 12': CHART_COLORS[1]
+		})
 	})
 
 	test('builds treemap data from the last complete daily chart timestamp', () => {

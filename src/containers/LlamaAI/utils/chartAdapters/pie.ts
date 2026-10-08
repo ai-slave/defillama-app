@@ -1,6 +1,7 @@
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { chartColor } from '~/constants/colors'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
-import { getChartColor, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
+import { parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 
 export interface AdaptedPieChartData {
 	chartType: 'pie'
@@ -34,7 +35,7 @@ export function adaptPieChartData(config: ChartConfiguration, rawData: ChartData
 		for (const [index, point] of pieData.entries()) {
 			const name = point.name
 			// Honor an explicit per-slice color from the config; fall back to the palette.
-			stackColors[name] = config.seriesColors?.[name] ?? getChartColor(index)
+			stackColors[name] = config.seriesColors?.[name] ?? chartColor(index)
 		}
 
 		return {

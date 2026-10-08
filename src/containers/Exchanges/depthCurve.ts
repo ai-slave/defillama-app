@@ -20,6 +20,7 @@
  * Every value is cumulative outward from mid: the point at 2% is everything within 2%,
  * not a slice at 2%.
  */
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ExchangeDepthLadder, ExchangeLiquidityRelation, ExchangeSegment } from './models'
 
@@ -45,6 +46,7 @@ export interface DepthCurveRow {
 export interface DepthCurveEntry {
 	name: string
 	ladder: ExchangeDepthLadder
+	color: string
 }
 
 export interface DepthCurveDataset {
@@ -143,7 +145,7 @@ export function sumLadders(ladders: Array<ExchangeDepthLadder>): ExchangeDepthLa
 /** Every venue's book added together, as one curve. */
 export function aggregateEntries(venues: Array<DepthCurveVenue>): Array<DepthCurveEntry> {
 	const summed = sumLadders(venues.map((venue) => venue.ladder))
-	return summed ? [{ name: 'All exchanges', ladder: summed }] : []
+	return summed ? [{ name: 'All exchanges', ladder: summed, color: chartColor(0) }] : []
 }
 
 /**
@@ -152,10 +154,13 @@ export function aggregateEntries(venues: Array<DepthCurveVenue>): Array<DepthCur
  * silently disappears.
  */
 export function venueEntries(venues: Array<DepthCurveVenue>, limit: number): Array<DepthCurveEntry> {
-	const entries: Array<DepthCurveEntry> = venues.slice(0, limit)
+	const entries: Array<DepthCurveEntry> = []
+	for (const [index, venue] of venues.slice(0, limit).entries()) {
+		entries.push({ name: venue.name, ladder: venue.ladder, color: chartColor(index) })
+	}
 	const tail = venues.slice(limit)
 	const others = tail.length > 0 ? sumLadders(tail.map((venue) => venue.ladder)) : null
-	if (others) entries.push({ name: `${OTHERS_LABEL} (${tail.length})`, ladder: others })
+	if (others) entries.push({ name: `${OTHERS_LABEL} (${tail.length})`, ladder: others, color: OTHERS_COLOR })
 	return entries
 }
 

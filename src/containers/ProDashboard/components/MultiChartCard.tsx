@@ -12,7 +12,12 @@ import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { getChartDataPrerequisite, toChartRuntimeState, type ChartRuntimeView } from '../chartRuntime'
 import { requestDashboardItemReveal } from '../hooks/useDashboardItemDeepLink'
-import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
+import {
+	useDashboardEntityColors,
+	useProDashboardCatalog,
+	useProDashboardEditorActions,
+	useProDashboardTime
+} from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData } from '../queries'
 import {
 	getProDashboardChartTypeConfig,
@@ -23,6 +28,7 @@ import {
 import { ProMeta } from '../ui'
 import { toastRefusal } from '../useDashboardActions'
 import { DASHBOARD_CHART_GROUPING } from '../utils'
+import { getMultiChartSeriesColors } from '../utils/colorManager'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
@@ -80,6 +86,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 		handleDuplicateMultiChart
 	} = useProDashboardEditorActions()
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const entityColors = useDashboardEntityColors()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
@@ -137,14 +144,20 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 	}, [failedItemRetries])
 	const retryingFailedItems = failedItems.some((item) => item.isFetching)
 
+	// Colours come from every configured series, so one still loading or failing does not shift the rest.
+	const seriesColors = useMemo(
+		() => getMultiChartSeriesColors(limitedItems, entityColors),
+		[limitedItems, entityColors]
+	)
 	const baseSeries = useMemo(
 		() =>
 			buildMultiChartCardSeries(validItems, {
 				showCumulative,
 				grouping,
-				getProtocolName: (protocol) => getProtocolInfo(protocol)?.name
+				getProtocolName: (protocol) => getProtocolInfo(protocol)?.name,
+				colors: seriesColors
 			}),
-		[validItems, getProtocolInfo, showCumulative, grouping]
+		[validItems, getProtocolInfo, showCumulative, grouping, seriesColors]
 	)
 	const hidesDailyAverage = showCumulative && validItems.some((cfg) => isDailyAverageChartType(cfg.type))
 
@@ -169,7 +182,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 
 	const treemapData = useMemo(() => {
 		if (!showTreemap) return []
-		return buildProTreemapData(baseSeries, 'latest', (_name, color) => color ?? '#8884d8')
+		return buildProTreemapData(baseSeries, 'latest', (_name, color) => color)
 	}, [baseSeries, showTreemap])
 
 	const chartView = useMemo(() => {

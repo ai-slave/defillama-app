@@ -17,26 +17,6 @@ const categoryOptions = createCategoryChartOptions('$')
 
 const CHART_HEIGHT = '360px'
 
-/** Distinct hues so overlapping curves stay separable. */
-export const DEPTH_COLORS = [
-	'#5c9cf5',
-	'#9b7cf7',
-	'#33b38f',
-	'#e48b52',
-	'#d76184',
-	'#c9a227',
-	'#4bc0c0',
-	'#a06cd5',
-	'#6b8f3a',
-	'#c2582f',
-	'#3f7fd1',
-	'#7a5bc4',
-	'#2a8f72',
-	'#b06a3c',
-	'#a84a68',
-	'#8c8c8c'
-]
-
 export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> }) {
 	const dataset = React.useMemo(() => depthCurveDataset(entries), [entries])
 	const ariaLabel = React.useMemo(() => depthCurveAriaLabel(entries), [entries])
@@ -45,7 +25,7 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 			(dataset?.series ?? []).map((name, index) => ({
 				type: 'line' as const,
 				name,
-				color: DEPTH_COLORS[index % DEPTH_COLORS.length],
+				color: entries[index].color,
 				encode: { x: 0, y: dataset!.dimensions.indexOf(name) },
 				// Light fill only: with several curves overlapping, a solid area would bury
 				// whatever sits behind it.
@@ -54,7 +34,7 @@ export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> })
 				showSymbol: false,
 				connectNulls: false
 			})),
-		[dataset]
+		[dataset, entries]
 	)
 
 	if (!dataset) {

@@ -6,6 +6,7 @@ import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { DASHBOARD_CHART_GROUPING } from '../../utils'
 import { buildComposerPreviewSeries, buildMultiChartSeriesView, getMultiChartGrouping } from '../multiChartSeries'
+import { useComposerSeriesColors } from './useComposerSeriesColors'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -22,17 +23,18 @@ interface SeparateChartsPreviewProps {
 
 export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewProps) {
 	const { getProtocolInfo } = useProDashboardCatalog()
+	const colors = useComposerSeriesColors(composerItems, false)
 	const visibleItems = composerItems.slice(0, MAX_PREVIEW_CARDS)
 	const hiddenCount = composerItems.length - visibleItems.length
 
 	return (
 		<div className="flex size-full flex-col gap-2 overflow-y-auto p-2">
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-				{visibleItems.map((item, index) => {
+				{visibleItems.map((item) => {
 					const grouping = getMultiChartGrouping([item], item.grouping) ?? 'day'
 					const subject =
 						item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
-					const series = buildComposerPreviewSeries(item, grouping, subject, index)
+					const series = buildComposerPreviewSeries(item, grouping, subject, colors[item.id])
 					const chartView = buildMultiChartSeriesView({
 						series: item.data.length > 0 ? [series] : [],
 						showCumulative: false,

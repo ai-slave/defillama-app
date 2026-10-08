@@ -85,6 +85,7 @@ import { ProxyAuthTokenContext, StreamDoneContext, StreamItemReadinessContext, u
 import { DashboardError, dashboardUrlKey, matchesDashboardKey } from './services/DashboardAPI'
 import type { Chain, DashboardBindableField, Protocol } from './types'
 import { useDashboardActions } from './useDashboardActions'
+import { getDashboardEntityColors } from './utils/colorManager'
 import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
 const EMPTY_PROTOCOLS: Array<Protocol> = []
@@ -289,6 +290,7 @@ const ProDashboardVariablesContext = createContext<ProDashboardVariablesContextT
 const ProDashboardAnnotationsContext = createContext<ProDashboardAnnotationsContextType | undefined>(undefined)
 const ProDashboardHistoryContext = createContext<ProDashboardHistoryContextType | undefined>(undefined)
 const ProDashboardStreamProgressContext = createContext<ProDashboardStreamProgressContextType | undefined>(undefined)
+const ProDashboardEntityColorsContext = createContext<Record<string, string> | undefined>(undefined)
 const EMPTY_VARIABLE_OVERRIDES: Record<string, string> = {}
 
 function readInitialVariableOverrides(): Record<string, string> {
@@ -1021,6 +1023,7 @@ function ProDashboardAPIProviderInner({
 		() => resolveDashboardItems(items, variables, variableOverrides, variableCatalog),
 		[items, variables, variableOverrides, variableCatalog]
 	)
+	const entityColors = useMemo(() => getDashboardEntityColors(resolution.items), [resolution.items])
 	const canEditVariables = !isReadOnlyUntilDashboardLoaded
 	const parameterCandidates = useMemo(
 		() => (canEditVariables && variables.length === 0 ? detectParameterCandidates(items) : []),
@@ -1353,7 +1356,9 @@ function ProDashboardAPIProviderInner({
 											<ProDashboardAnnotationsContext.Provider value={annotationsContextValue}>
 												<ProDashboardHistoryContext.Provider value={historyContextValue}>
 													<ProDashboardUIContext.Provider value={uiContextValue}>
-														{children}
+														<ProDashboardEntityColorsContext.Provider value={entityColors}>
+															{children}
+														</ProDashboardEntityColorsContext.Provider>
 													</ProDashboardUIContext.Provider>
 												</ProDashboardHistoryContext.Provider>
 											</ProDashboardAnnotationsContext.Provider>
@@ -1457,6 +1462,15 @@ export function useProDashboardUI() {
 	return context
 }
 
+/** Each protocol's and chain's colour on this dashboard, keyed by `getChartEntityKey`. */
+export function useDashboardEntityColors() {
+	const context = useContext(ProDashboardEntityColorsContext)
+	if (context === undefined) {
+		throw new Error('useDashboardEntityColors must be used within a ProDashboardAPIProvider')
+	}
+	return context
+}
+
 export function useProDashboardSave() {
 	const context = useContext(ProDashboardSaveContext)
 	if (!context) throw new Error('useProDashboardSave requires ProDashboardAPIProvider')
@@ -1477,5 +1491,6 @@ export const ProDashboardContexts = {
 	Variables: ProDashboardVariablesContext,
 	Annotations: ProDashboardAnnotationsContext,
 	History: ProDashboardHistoryContext,
-	UI: ProDashboardUIContext
+	UI: ProDashboardUIContext,
+	EntityColors: ProDashboardEntityColorsContext
 }

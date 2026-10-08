@@ -5,8 +5,6 @@ import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/ch
 import type { RWAChartMetricKey, RWAOverviewBreakdownRequest } from '~/containers/RWA/api.types'
 import type { StoredColSpan } from './dashboardConfig/colSpan'
 
-const dashboardBlue = '#326abd'
-
 export const DASHBOARD_CARD_HEIGHTS = ['compact', 'default', 'tall'] as const
 export type DashboardCardHeight = (typeof DASHBOARD_CARD_HEIGHTS)[number]
 
@@ -571,223 +569,190 @@ export function getDashboardChartValueSymbol(type: string): '' | '%' | '$' {
 }
 
 export const CHART_TYPES = {
-	tvl: { id: 'tvl', title: 'TVL', chartType: 'area', color: dashboardBlue },
+	tvl: { id: 'tvl', title: 'TVL', chartType: 'area' },
 	volume: {
 		id: 'volume',
 		title: 'Volume',
 		chartType: 'bar',
-		color: '#46c385',
 		groupable: true
 	},
 	fees: {
 		id: 'fees',
 		title: 'Fees',
 		chartType: 'bar',
-		color: '#cc803e',
 		groupable: true
 	},
 	txs: {
 		id: 'txs',
 		title: 'Transactions',
 		chartType: 'bar',
-		color: '#cc533e',
 		groupable: true
 	},
 	revenue: {
 		id: 'revenue',
 		title: 'Revenue',
 		chartType: 'bar',
-		color: '#cb8e3a',
 		groupable: true
 	},
 	incentives: {
 		id: 'incentives',
 		title: 'Incentives',
 		chartType: 'bar',
-		color: '#2a9d77',
 		groupable: true
 	},
 	unlocks: {
 		id: 'unlocks',
 		title: 'Unlocks',
-		chartType: 'line',
-		color: '#3e6dcc'
+		chartType: 'line'
 	},
 	treasury: {
 		id: 'treasury',
 		title: 'Treasury',
-		chartType: 'area',
-		color: '#65758b'
+		chartType: 'area'
 	},
 	aggregators: {
 		id: 'aggregators',
 		title: 'DEX Aggregators Volume',
 		chartType: 'bar',
-		color: '#c98c36',
 		groupable: true
 	},
 	perps: {
 		id: 'perps',
 		title: 'Perps Volume',
 		chartType: 'bar',
-		color: '#a92d2d',
 		groupable: true
 	},
 	bridgeAggregators: {
 		id: 'bridgeAggregators',
 		title: 'Bridge Aggregators Volume',
 		chartType: 'bar',
-		color: '#7b2c90',
 		groupable: true
 	},
 	perpsAggregators: {
 		id: 'perpsAggregators',
 		title: 'Perps Aggregators Volume',
 		chartType: 'bar',
-		color: '#cb3a3a',
 		groupable: true
 	},
 	holdersRevenue: {
 		id: 'holdersRevenue',
 		title: 'Holders Revenue',
 		chartType: 'bar',
-		color: '#778192',
 		groupable: true
 	},
 	openInterest: {
 		id: 'openInterest',
 		title: 'Open Interest',
-		chartType: 'area',
-		color: '#3394c1'
+		chartType: 'area'
 	},
 	optionsOpenInterest: {
 		id: 'optionsOpenInterest',
 		title: 'Options Open Interest',
-		chartType: 'area',
-		color: '#9f4fd1'
+		chartType: 'area'
 	},
 	optionsPremium: {
 		id: 'optionsPremium',
 		title: 'Options Premium Volume',
 		chartType: 'bar',
-		color: '#cc3e87',
 		groupable: true
 	},
 	optionsNotional: {
 		id: 'optionsNotional',
 		title: 'Options Notional Volume',
 		chartType: 'bar',
-		color: '#cc3e53',
 		groupable: true
 	},
 	tokenPrice: {
 		id: 'tokenPrice',
 		title: 'Token Price',
-		chartType: 'area',
-		color: '#27914e'
+		chartType: 'area'
 	},
 	tokenMcap: {
 		id: 'tokenMcap',
 		title: 'Token Market Cap',
-		chartType: 'area',
-		color: '#426ecd'
+		chartType: 'area'
 	},
 	tokenVolume: {
 		id: 'tokenVolume',
 		title: 'Token Volume',
 		chartType: 'bar',
-		color: '#c99336',
 		groupable: true
 	},
 	activeUsers: {
 		id: 'activeUsers',
 		title: 'Active Addresses',
 		chartType: 'bar',
-		color: '#cc3e85',
 		groupable: true
 	},
 	newUsers: {
 		id: 'newUsers',
 		title: 'New Addresses',
 		chartType: 'bar',
-		color: '#683ecc',
 		groupable: true
 	},
 	gasUsed: {
 		id: 'gasUsed',
 		title: 'Gas Used',
 		chartType: 'bar',
-		color: '#c99336',
 		groupable: true
 	},
 	medianApy: {
 		id: 'medianApy',
 		title: 'Median APY',
-		chartType: 'area',
-		color: '#299976'
+		chartType: 'area'
 	},
 	stablecoins: {
 		id: 'stablecoins',
 		title: 'Stablecoins',
-		chartType: 'area',
-		color: '#2e9aad'
+		chartType: 'area'
 	},
 	stablecoinInflows: {
 		id: 'stablecoinInflows',
 		title: 'Stablecoin Inflows',
 		chartType: 'bar',
-		color: '#c99336',
 		groupable: true
 	},
 	chainFees: {
 		id: 'chainFees',
 		title: 'Chain Fees',
 		chartType: 'bar',
-		color: '#c99336',
 		groupable: true
 	},
 	chainRevenue: {
 		id: 'chainRevenue',
 		title: 'Chain Revenue',
 		chartType: 'bar',
-		color: '#c99336',
 		groupable: true
 	},
 	bridgedTvl: {
 		id: 'bridgedTvl',
 		title: 'Bridged TVL',
-		chartType: 'area',
-		color: '#873ecc'
+		chartType: 'area'
 	},
 	chainMcap: {
 		id: 'chainMcap',
 		title: 'Native Token Market Cap',
-		chartType: 'area',
-		color: '#426ecd'
+		chartType: 'area'
 	},
 	chainPrice: {
 		id: 'chainPrice',
 		title: 'Native Token Price',
-		chartType: 'area',
-		color: '#27914e'
+		chartType: 'area'
 	},
 	borrowed: {
 		id: 'borrowed',
 		title: 'Borrowed',
-		chartType: 'area',
-		color: '#cc3e3e'
+		chartType: 'area'
 	},
 	pfRatio: {
 		id: 'pfRatio',
 		title: 'P/F Ratio (30d Run Rate)',
-		chartType: 'line',
-		color: '#683ecc'
+		chartType: 'line'
 	},
 	psRatio: {
 		id: 'psRatio',
 		title: 'P/S Ratio (30d Run Rate)',
-		chartType: 'line',
-		color: '#2e9aad'
+		chartType: 'line'
 	}
 }
 

@@ -5,6 +5,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
+import { CHART_COLORS } from '~/constants/colors'
 import {
 	type StablecoinAssetInfo,
 	useStablecoinAssetChartData,
@@ -22,11 +23,7 @@ import {
 	useStablecoinsChartData
 } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
 import type { StablecoinAssetChartType, StablecoinChartType } from '~/containers/ProDashboard/types'
-import {
-	colorManager,
-	generateConsistentChartColor,
-	STABLECOIN_TOKEN_COLORS
-} from '~/containers/ProDashboard/utils/colorManager'
+import { STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
@@ -82,7 +79,7 @@ const EMPTY_CHAIN_LIST: Array<StablecoinChainInfo> = []
 const EMPTY_ASSET_LIST: Array<StablecoinAssetInfo> = []
 const EMPTY_SERIES: Array<string> = []
 const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
-	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
+	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: CHART_COLORS[0] }
 ]
 const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
 const BAR_EXPORT_BUTTONS = { csv: true, png: false, filename: 'bar-chart-data' }
@@ -155,7 +152,6 @@ export function StablecoinsChartTab({
 	const {
 		chartPayload: chainChartPayload,
 		pieSeries: chainPieSeries,
-		seriesNames,
 		defaultSeries: chainDefaultSeries,
 		totalMcapCurrent,
 		prepareCsvDataset: prepareChainCsvDataset,
@@ -206,7 +202,6 @@ export function StablecoinsChartTab({
 
 	const {
 		presentation: assetPresentation,
-		chainsUnique,
 		stablecoinName,
 		stablecoinSymbol,
 		prepareCsvDataset: prepareAssetCsvDataset,
@@ -264,53 +259,26 @@ export function StablecoinsChartTab({
 		setSelectionIntent: setAssetSelectionIntent
 	})
 
-	const assetChainColors = useMemo(() => {
-		const colors: Record<string, string> = {}
-		for (const chain of chainsUnique) {
-			colors[chain] = colorManager.getItemColor(chain, 'chain')
-		}
-		return colors
-	}, [chainsUnique])
-
-	const stackColors = useMemo(() => {
-		const colors: Record<string, string> = { ...STABLECOIN_TOKEN_COLORS }
-		for (const name of seriesNames) {
-			if (!colors[name]) {
-				colors[name] = generateConsistentChartColor(name, '#8884d8', 'protocol')
-			}
-		}
-		return colors
-	}, [seriesNames])
-
+	// The payloads colour series by rank, like the saved cards; a stablecoin's brand colour wins.
 	const chainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			chainChartPayload.charts.map((chart) => ({
 				...chart,
-				color: stackColors[chart.name] ?? chart.color ?? '#3e79cc',
+				color: STABLECOIN_TOKEN_COLORS[chart.name] ?? chart.color,
 				...(chainChartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
 			})),
-		[chainChartPayload.charts, chainChartType, stackColors]
+		[chainChartPayload.charts, chainChartType]
 	)
 	const assetChainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			assetPresentation.chartType === 'chainMcaps'
-				? assetPresentation.charts.map((chart) => ({
-						...chart,
-						color: assetChainColors[chart.name] ?? chart.color ?? '#3e79cc',
-						hideAreaStyle: true
-					}))
+				? assetPresentation.charts.map((chart) => ({ ...chart, hideAreaStyle: true }))
 				: [],
-		[assetPresentation, assetChainColors]
+		[assetPresentation]
 	)
 	const assetChainDominanceCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
-		() =>
-			assetPresentation.chartType === 'chainDominance'
-				? assetPresentation.charts.map((chart) => ({
-						...chart,
-						color: assetChainColors[chart.name] ?? chart.color ?? '#3e79cc'
-					}))
-				: [],
-		[assetPresentation, assetChainColors]
+		() => (assetPresentation.chartType === 'chainDominance' ? assetPresentation.charts : []),
+		[assetPresentation]
 	)
 	const showsChainSeriesSelection =
 		chainChartType === 'tokenMcaps' || chainChartType === 'dominance' || chainChartType === 'tokenInflows'
@@ -339,7 +307,7 @@ export function StablecoinsChartTab({
 				<Suspense fallback={<ChartPanelExportShellFallback />}>
 					<PieChart
 						chartData={chainPiePresentation.chartData}
-						stackColors={{ ...chainPiePresentation.stackColors, ...stackColors }}
+						stackColors={{ ...chainPiePresentation.stackColors, ...STABLECOIN_TOKEN_COLORS }}
 					/>
 				</Suspense>
 			)
@@ -419,7 +387,7 @@ export function StablecoinsChartTab({
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
 							chartData={assetPiePresentation.chartData}
-							stackColors={{ ...assetPiePresentation.stackColors, ...assetChainColors }}
+							stackColors={assetPiePresentation.stackColors}
 							valueSymbol={stablecoinSymbol}
 						/>
 					</Suspense>

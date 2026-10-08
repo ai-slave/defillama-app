@@ -10,7 +10,7 @@ import {
 	STABLECOIN_SINGLE_UNITLESS_CHART_OPTIONS
 } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 import { useStablecoinsChartData } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
-import { generateConsistentChartColor, STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
+import { STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -60,7 +60,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		[selectionIntent]
 	)
 	const chartRead = useStablecoinsChartData(chain, chartType, true, selectionOptions)
-	const { chartPayload, pieSeries, seriesNames, defaultSeries, prepareCsvDataset, isLoading, readFailed } = chartRead
+	const { chartPayload, pieSeries, defaultSeries, prepareCsvDataset, isLoading, readFailed } = chartRead
 	const runtimeSeries = useMemo(() => getStablecoinRuntimeSeries(chartPayload), [chartPayload])
 	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
 		marketCapSeries: null,
@@ -84,26 +84,15 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		[pieSelection.selectedCharts, pieSeries]
 	)
 
-	const stackColors = useMemo(() => {
-		const colors: Record<string, string> = { ...STABLECOIN_TOKEN_COLORS }
-		for (const name of seriesNames) {
-			if (!colors[name]) colors[name] = generateConsistentChartColor(name, '#8884d8', 'protocol')
-		}
-		return colors
-	}, [seriesNames])
-
 	const charts = useMemo(
 		() =>
-			chartPayload.charts.map((chart) => {
-				const { color, ...chartWithoutColor } = chart
-				const resolvedColor = stackColors[chart.name] ?? color
-				return {
-					...chartWithoutColor,
-					...(resolvedColor ? { color: resolvedColor } : {}),
-					...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
-				}
-			}),
-		[chartPayload.charts, chartType, stackColors]
+			chartPayload.charts.map((chart) => ({
+				...chart,
+				// The payload colours series by rank; a stablecoin's brand colour wins.
+				color: STABLECOIN_TOKEN_COLORS[chart.name] ?? chart.color,
+				...(chartType === 'tokenMcaps' ? { hideAreaStyle: true } : {})
+			})),
+		[chartPayload.charts, chartType]
 	)
 	const dataset = useMemo(
 		() => filterChartDatasetByTimePeriod(chartPayload.dataset, timePeriod, customTimePeriod),
@@ -230,7 +219,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 						{chartType === 'pie' ? (
 							<PieChart
 								chartData={piePresentation.chartData}
-								stackColors={{ ...piePresentation.stackColors, ...stackColors }}
+								stackColors={{ ...piePresentation.stackColors, ...STABLECOIN_TOKEN_COLORS }}
 								exportButtons="hidden"
 								height={chartHeight}
 								onReady={handleChartReady}

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -9,9 +10,6 @@ import type { ResearchPresentation } from './researchPresentation'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const EXCHANGE_COLORS = ['#5c9cf5', '#9b7cf7', '#33b38f', '#e48b52', '#d76184', '#58a8b8', '#d6a84b', '#7b8f52']
-const OTHER_COLOR = '#8b8f97'
-export const RESEARCH_SERIES_PALETTE = [...EXCHANGE_COLORS, OTHER_COLOR]
 const UTC_DAY = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
 const UTC_TIMESTAMP = new Intl.DateTimeFormat('en', {
 	year: 'numeric',
@@ -37,7 +35,7 @@ function accessibleValue(value: number, symbol: ExchangeResearchChartModel['valu
 /**
  * Brand and asset colors, keyed by the line id the mappers emit. A venue keeps the same
  * colour on every chart it appears in, and BTC reads as BTC rather than as whatever slot
- * it landed in. Anything not named here falls through to the index palette.
+ * it landed in. Anything not named here takes the chart palette colour for its rank.
  *
  * ponytail: a flat map, not a token per venue — these are third-party brand colours, not
  * ours to systematize. Add a row when a venue starts reaching a top-eight slot.
@@ -74,7 +72,7 @@ const BRAND_COLORS: Record<string, string> = {
 export function researchSeriesColor(lineId: string, index: number): string {
 	const brand = BRAND_COLORS[lineId]
 	if (brand) return brand
-	return lineId === 'other' ? OTHER_COLOR : (EXCHANGE_COLORS[index % EXCHANGE_COLORS.length] ?? OTHER_COLOR)
+	return lineId === 'other' ? OTHERS_COLOR : chartColor(index)
 }
 
 export function researchChartAriaLabel(chart: ExchangeResearchChartModel): string {

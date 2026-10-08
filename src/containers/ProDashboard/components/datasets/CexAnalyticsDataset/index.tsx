@@ -18,6 +18,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type {
 	CexAnalyticsMarketSharePoint,
 	CexAnalyticsMetric,
@@ -85,17 +86,6 @@ const STACK_COLORS = {
 	Spot: '#2d8cf0',
 	Derivatives: '#f28b36'
 }
-const SHARE_PALETTE = [
-	'#2d8cf0',
-	'#2cb67d',
-	'#f28b36',
-	'#9b5de5',
-	'#ef476f',
-	'#06d6a0',
-	'#ffa94d',
-	'#577590',
-	'#94a3b8'
-] as const
 const SPOT_VS_DERIVATIVES_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
@@ -430,6 +420,10 @@ function VenueMarketShareChart({
 			values.set(venue, point.share)
 		}
 
+		// The remainder draws last, in the Others grey.
+		const othersIndex = order.indexOf('Others')
+		if (othersIndex !== -1) order.push(...order.splice(othersIndex, 1))
+
 		// The server query is ordered by date, and filtering preserves that order.
 		const source: MultiSeriesChartDataset['source'] = new Array(byDate.size)
 		let rowIndex = 0
@@ -443,14 +437,12 @@ function VenueMarketShareChart({
 		}
 		const charts: Array<MultiSeriesChartSeriesConfig> = []
 		for (const [index, venue] of order.entries()) {
-			const color = SHARE_PALETTE[index % SHARE_PALETTE.length]
-			if (!color) throw new Error('CEX market-share palette must not be empty')
 			charts.push({
 				type: 'line',
 				name: venue,
 				encode: { x: 0, y: index + 1 },
 				stack: 'Total',
-				color
+				color: venue === 'Others' ? OTHERS_COLOR : chartColor(index)
 			})
 		}
 

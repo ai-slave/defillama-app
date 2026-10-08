@@ -3,7 +3,7 @@ import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButt
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import type { IProtocolValueChart, ProtocolTreasuryKey } from './api.types'
 import { useFetchProtocolChartsByKeys, type IFetchProtocolChartsByKeysParams } from './queries.client'
@@ -20,7 +20,7 @@ type BuiltTokenInflows = {
 }
 /** Maximum allowed difference (in milliseconds) between chart latest timestamps for alignment. */
 const MAX_BREAKDOWN_TIMESTAMP_ALIGNMENT_DIFF_MS = 24 * 60 * 60 * 1e3
-const OTHERS_SERIES_COLOR = '#AAAAAA'
+const OTHERS_SERIES_COLOR = OTHERS_COLOR
 
 interface IUseProtocolBreakdownChartsCommonParams {
 	protocol: string
@@ -399,10 +399,7 @@ export const buildProtocolBreakdownPresentation = ({
 		if (name !== OTHERS_SERIES_NAME) {
 			const canonicalIndex = canonicalColorIndex.get(name)
 			if (canonicalIndex === undefined) throw new Error(`Missing canonical color index for ${name}`)
-			const colorIndex = canonicalIndex % CHART_COLORS.length
-			const paletteColor = CHART_COLORS[colorIndex]
-			if (paletteColor === undefined) throw new Error(`Missing chart color at index ${colorIndex}`)
-			color = paletteColor
+			color = chartColor(canonicalIndex)
 		}
 		charts.push({
 			type,

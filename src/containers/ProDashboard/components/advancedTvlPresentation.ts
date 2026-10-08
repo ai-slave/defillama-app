@@ -3,11 +3,9 @@ import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { createSignedInflowsTooltipFormatter } from '~/components/ECharts/shared/tooltip'
+import { CHART_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { buildProtocolBreakdownChartConfigs } from '~/containers/ProtocolOverview/buildProtocolBreakdownChartConfigs'
 import type { AdvancedTvlChartType } from '../types'
-import { generateConsistentChartColor } from '../utils/colorManager'
-
-const DASHBOARD_BLUE = '#326abd'
 
 const DOLLAR_CHART_OPTIONS = {
 	...createTimeSeriesChartOptions('$'),
@@ -35,7 +33,7 @@ const TVL_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 		type: 'line',
 		name: 'TVL',
 		encode: { x: 'timestamp', y: 'TVL' },
-		color: DASHBOARD_BLUE
+		color: CHART_COLORS[0]
 	}
 ]
 const USD_INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
@@ -43,7 +41,7 @@ const USD_INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 		type: 'bar',
 		name: 'USD Inflows',
 		encode: { x: 'timestamp', y: 'USD Inflows' },
-		color: DASHBOARD_BLUE,
+		color: CHART_COLORS[0],
 		stack: 'stackA'
 	}
 ]
@@ -52,7 +50,9 @@ export function orderAdvancedTvlChains(dataset: TimestampDataset, chainNames: Ar
 	const latest = dataset.source[dataset.source.length - 1]
 	if (!latest) return chainNames
 	const dimensionIndex = new Map(dataset.dimensions.map((dimension, index) => [dimension, index]))
+	// Largest first by the latest value, with the folded Others last.
 	return chainNames.toSorted((a, b) => {
+		if (a === 'Others' || b === 'Others') return (a === 'Others' ? 1 : 0) - (b === 'Others' ? 1 : 0)
 		const bIndex = dimensionIndex.get(b)
 		const aIndex = dimensionIndex.get(a)
 		const bValue = bIndex === undefined ? undefined : (latest[bIndex] as number | null | undefined)
@@ -82,13 +82,11 @@ export function buildAdvancedTvlPresentation({
 				  chartType === 'tokenInflows'
 				? tokenNames
 				: []
-	const itemType = chartType === 'chainsTvl' ? 'chain' : 'protocol'
-	const stackColors = Object.fromEntries(
-		colorNames.map((name) => [name, generateConsistentChartColor(name, '#8884d8', itemType)])
-	)
-	if (chartType === 'tokensPie') {
-		stackColors.Others = generateConsistentChartColor('Others', '#8884d8', 'protocol')
-	}
+	// Series take the palette by rank in the chart; the folded remainder is always the Others grey.
+	const stackColors: Record<string, string> = {}
+	let rank = 0
+	for (const name of colorNames) stackColors[name] = name === 'Others' ? OTHERS_COLOR : chartColor(rank++)
+	if (chartType === 'tokensPie') stackColors.Others = OTHERS_COLOR
 
 	let charts: Array<MultiSeriesChartSeriesConfig> = []
 	let chartOptions = DOLLAR_CHART_OPTIONS

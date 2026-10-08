@@ -1,6 +1,6 @@
+import { chartColor } from '~/constants/colors'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
 import { buildLogoByCategory, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
-import { getNDistinctColors } from '~/utils'
 
 export interface HBarGroupedSeries {
 	name: string
@@ -54,7 +54,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		if (!primarySeries) throw new Error('No series configuration found')
 
 		// Multi-series hbar → grouped bars (two+ bars per category). Single-series keeps the
-		// per-bar distinct-color ranking look below.
+		// per-bar colour ranking look below.
 		if (config.series.length > 1) {
 			const xField = primarySeries.dataMapping.xField
 			const logoByCategory = buildLogoByCategory(config.axes.x)
@@ -68,7 +68,6 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 					categories.push(category)
 				}
 			}
-			const palette = getNDistinctColors(config.series.length)
 			const runtimeSeries: Array<{ config: ChartConfiguration['series'][number]; output: HBarGroupedSeries }> = []
 			for (const [seriesIndex, seriesConfig] of config.series.entries()) {
 				runtimeSeries.push({
@@ -76,7 +75,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 					output: {
 						name: seriesConfig.name,
 						values: new Array<number>(categories.length).fill(0),
-						color: seriesConfig.styling.color || palette[seriesIndex] || '#2563eb'
+						color: seriesConfig.styling.color || chartColor(seriesIndex)
 					}
 				})
 			}
@@ -128,14 +127,10 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		}
 		const completeLogos = logos?.every(Boolean) ? logos : undefined
 
-		// Distinct color per bar by default; honor an explicit per-category override from the editor.
-		const distinct = getNDistinctColors(chartData.length)
+		// A palette colour per bar by rank; honor an explicit per-category override from the editor.
 		const colors: Array<string> = []
-		const distinctColors = distinct.values()
-		for (const [category] of chartData) {
-			const nextColor = distinctColors.next()
-			if (nextColor.done) throw new Error('Distinct color count did not match chart data')
-			colors.push(config.seriesColors?.[category] ?? nextColor.value)
+		for (const [index, [category]] of chartData.entries()) {
+			colors.push(config.seriesColors?.[category] ?? chartColor(index))
 		}
 
 		return {

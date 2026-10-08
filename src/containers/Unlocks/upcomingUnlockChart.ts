@@ -5,7 +5,7 @@ import {
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import type { LowercaseDwmGrouping } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import {
 	getCliffEmissionAmount,
 	getEmissionAmountBreakdownOverInterval,
@@ -198,7 +198,7 @@ export function buildUpcomingUnlockChart({
 			series: [
 				{
 					name: getTotalSeriesName(unlockType),
-					color: '#8884d8',
+					color: chartColor(0),
 					points: Array.from(totalPoints.entries())
 				}
 			]
@@ -217,7 +217,7 @@ export function buildUpcomingUnlockChart({
 		groupBy,
 		series: sortedSeries.map((item, index) => ({
 			name: item.name,
-			color: CHART_COLORS[index % CHART_COLORS.length]!,
+			color: chartColor(index),
 			stack: 'A',
 			points: item.points
 		}))

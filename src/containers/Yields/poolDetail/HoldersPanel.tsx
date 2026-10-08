@@ -11,6 +11,7 @@ import {
 	TokenPageTableHeaderCell,
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
+import { childColors, OTHERS_COLOR } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
@@ -41,21 +42,8 @@ const PERCENT_OPTIONS = {
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-const OTHERS_COLOR = '#8a8a8a'
-const RAMP_FROM = '#0a5c4f'
-const RAMP_TO = '#86e3d2'
-
-function lerpHex(a: string, b: string, t: number): string {
-	const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16))
-	const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16))
-	return `#${pa
-		.map((value, i) =>
-			Math.round(value + (pb[i]! - value) * t)
-				.toString(16)
-				.padStart(2, '0')
-		)
-		.join('')}`
-}
+// Holders shade from the up green (emerald-9) to lighter steps, like treemap children.
+const HOLDER_BASE_COLOR = '#007b45'
 
 function shortAddr(address: string): string {
 	return address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
@@ -427,7 +415,7 @@ export function HoldersPanel({
 		)
 	}
 
-	const colors = list.map((_, i) => (list.length > 1 ? lerpHex(RAMP_FROM, RAMP_TO, i / (list.length - 1)) : RAMP_FROM))
+	const colors = childColors(HOLDER_BASE_COLOR, list.length)
 	return (
 		<Card as="section" padding="none">
 			<PanelHeader>

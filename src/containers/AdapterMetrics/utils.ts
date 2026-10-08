@@ -9,8 +9,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { getNDistinctColors } from '~/utils'
-import { formatFixedNumber } from '~/utils/numberFormat'
+import { CHART_COLORS, CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type { ADAPTER_TYPES } from './constants'
 import type { IAdapterByChainPageData, IChainsByAdapterPageData, IProtocol } from './types'
 
@@ -342,16 +341,45 @@ const VALID_GROUPINGS = new Set<ChartTimeGroupingWithCumulative>([
 	'yearly',
 	'cumulative'
 ])
-const MAX_BREAKDOWN_SERIES = 10
-const MAX_PROTOCOL_BREAKDOWN_SERIES = 30
-const MAX_TREEMAP_ITEMS = 100
+const MAX_PROTOCOL_BREAKDOWN_SERIES = CHART_SERIES_LIMIT
 const MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS = 9
 const MIN_COMPLETE_DAILY_GAP_MS = 23 * 60 * 60 * 1000
 
-function getPaletteColor(colors: Array<string>, index: number): string {
-	const color = colors[index]
-	if (color === undefined) throw new Error(`Generated palette is missing color ${index}`)
-	return color
+/**
+ * Palette colours for the series a chart draws, in rank order. A series keeps its canonical colour (its colour in the
+ * unfiltered chart), so colours hold while the picker changes; the rest take the colours left free, by rank. "Others"
+ * is always grey. A picker chart drawing more than ten series repeats colours.
+ */
+function getSeriesColors(
+	names: ReadonlyArray<string>,
+	canonicalColors?: ReadonlyMap<string, string>
+): Map<string, string> {
+	const colors = new Map<string, string>()
+	const used = new Set<string>()
+	for (const name of names) {
+		const color = name === 'Others' ? OTHERS_COLOR : canonicalColors?.get(name)
+		if (color === undefined) continue
+		colors.set(name, color)
+		used.add(color)
+	}
+	let paletteIndex = 0
+	for (const name of names) {
+		if (colors.has(name)) continue
+		while (paletteIndex < CHART_COLORS.length && used.has(chartColor(paletteIndex))) paletteIndex++
+		colors.set(name, chartColor(paletteIndex))
+		paletteIndex++
+	}
+	return colors
+}
+
+/** The canonical colours: the top ranked series of the unfiltered chart, one palette colour each. */
+function getCanonicalSeriesColors(rankedNames: ReadonlyArray<string>): Map<string, string> {
+	const topNames: Array<string> = []
+	for (const name of rankedNames) {
+		if (topNames.length === CHART_SERIES_LIMIT) break
+		if (name !== 'Others') topNames.push(name)
+	}
+	return getSeriesColors(topNames)
 }
 
 function getSeriesColor(colors: Map<string, string>, seriesName: string): string {
@@ -503,7 +531,7 @@ function createChainSeriesUniverseFromRankedNames(
 	for (let index = 0; index < rankedEntityNames.length; index++) {
 		const entity = rankedEntityNames[index]
 		if (entity === undefined) continue
-		if (index < MAX_BREAKDOWN_SERIES) {
+		if (index < CHART_SERIES_LIMIT) {
 			topEntityNames.push(entity)
 		} else {
 			otherEntityNames.push(entity)
@@ -517,13 +545,7 @@ function createChainSeriesUniverseFromRankedNames(
 	}
 
 	const topSeriesNames = otherEntityNames.length > 0 ? [...topEntityNames, 'Others'] : topEntityNames
-	const topColors = getNDistinctColors(topSeriesNames.length || 1)
-	const topColorBySeriesName = new Map<string, string>()
-	for (let index = 0; index < topSeriesNames.length; index++) {
-		const name = topSeriesNames[index]
-		if (name === undefined) continue
-		topColorBySeriesName.set(name, canonicalColorBySeriesName?.get(name) ?? getPaletteColor(topColors, index))
-	}
+	const topColorBySeriesName = getSeriesColors(topSeriesNames, canonicalColorBySeriesName)
 
 	return {
 		rankedEntityNames,
@@ -548,19 +570,9 @@ function getCachedCanonicalSeriesOrder(chartData: MultiSeriesTimeSeriesDataset, 
 function cacheCanonicalSeriesColors(
 	chartData: MultiSeriesTimeSeriesDataset,
 	cacheKey: string,
-	rankedEntityNames: Array<string>,
-	topColorBySeriesName: Map<string, string>
+	rankedEntityNames: Array<string>
 ) {
-	const colorBySeriesName = new Map(topColorBySeriesName)
-	for (let index = 0; index < rankedEntityNames.length; index++) {
-		const name = rankedEntityNames[index]
-		if (name === undefined) continue
-		// The default top-N retains its authored palette. Overflow peers use a stable
-		// rank-derived hue without generating an O(n²) distinct palette for 2k+ series.
-		if (!colorBySeriesName.has(name)) {
-			colorBySeriesName.set(name, `hsl(${formatFixedNumber((index * 137.508) % 360, 2)}, 68%, 48%)`)
-		}
-	}
+	const colorBySeriesName = getCanonicalSeriesColors(rankedEntityNames)
 	let datasetCache = canonicalSeriesColorsCache.get(chartData)
 	if (!datasetCache) {
 		datasetCache = new Map()
@@ -602,12 +614,7 @@ function createStableColorChainSeriesUniverse({
 		selectedNames: hasFullSelection ? selectedNames : chartData.dimensions.slice(1),
 		tieBreakByDatasetOrder
 	})
-	const canonicalColors = cacheCanonicalSeriesColors(
-		chartData,
-		cacheKey,
-		fullUniverse.rankedEntityNames,
-		fullUniverse.topColorBySeriesName
-	)
+	const canonicalColors = cacheCanonicalSeriesColors(chartData, cacheKey, fullUniverse.rankedEntityNames)
 	return hasFullSelection
 		? fullUniverse
 		: createRankedSeriesUniverse({
@@ -1013,7 +1020,6 @@ function buildRankedLatestValues({
 }
 
 const latestValueSeriesColorsCache = new WeakMap<MultiSeriesTimeSeriesDataset, Map<string, Map<string, string>>>()
-let latestValueColors: Array<string> | null = null
 
 function getLatestValueSeriesColors({
 	chartData,
@@ -1029,21 +1035,7 @@ function getLatestValueSeriesColors({
 	}
 	let colorBySeriesName = datasetCache.get(cacheKey)
 	if (!colorBySeriesName) {
-		const colors = (latestValueColors ??= getNDistinctColors(MAX_TREEMAP_ITEMS + 1))
-		colorBySeriesName = new Map<string, string>()
-		let peerIndex = 0
-		for (let dimensionIndex = 1; dimensionIndex < chartData.dimensions.length; dimensionIndex++) {
-			const name = chartData.dimensions[dimensionIndex]
-			if (name === undefined) continue
-			if (name === 'Others') continue
-			const colorIndex = peerIndex < MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS ? peerIndex : peerIndex + 1
-			colorBySeriesName.set(
-				name,
-				colors[colorIndex] ?? `hsl(${formatFixedNumber((peerIndex * 137.508) % 360, 2)}, 68%, 48%)`
-			)
-			peerIndex++
-		}
-		colorBySeriesName.set('Others', getPaletteColor(colors, MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS))
+		colorBySeriesName = getCanonicalSeriesColors(chartData.dimensions.slice(1))
 		datasetCache.set(cacheKey, colorBySeriesName)
 	}
 	return colorBySeriesName
@@ -1052,8 +1044,12 @@ function getLatestValueSeriesColors({
 function decorateLatestValues(
 	values: Array<{ name: string; value: number }>,
 	total: number,
-	colorBySeriesName: Map<string, string>
+	canonicalColors: Map<string, string>
 ): Array<ChainsByAdapterLatestValueDatum> {
+	const colorBySeriesName = getSeriesColors(
+		values.map((item) => item.name),
+		canonicalColors
+	)
 	const data: Array<ChainsByAdapterLatestValueDatum> = []
 	for (const item of values) {
 		data.push({
@@ -1409,13 +1405,7 @@ function createProtocolSeriesUniverseFromRankedNames(
 		otherEntityNames.unshift('Others')
 	}
 	const topSeriesNames = otherEntityNames.length > 0 ? [...topEntityNames, 'Others'] : topEntityNames
-	const topColors = getNDistinctColors(topSeriesNames.length || 1)
-	const topColorBySeriesName = new Map<string, string>()
-	for (let index = 0; index < topSeriesNames.length; index++) {
-		const name = topSeriesNames[index]
-		if (name === undefined) continue
-		topColorBySeriesName.set(name, canonicalColorBySeriesName?.get(name) ?? getPaletteColor(topColors, index))
-	}
+	const topColorBySeriesName = getSeriesColors(topSeriesNames, canonicalColorBySeriesName)
 
 	return {
 		rankedEntityNames: orderedSeriesNames,
@@ -1452,12 +1442,7 @@ function createStableColorProtocolSeriesUniverse({
 		protocolNames: hasFullSelection ? protocolNames : chartData.dimensions.slice(1),
 		state
 	})
-	const canonicalColors = cacheCanonicalSeriesColors(
-		chartData,
-		cacheKey,
-		fullUniverse.rankedEntityNames,
-		fullUniverse.topColorBySeriesName
-	)
+	const canonicalColors = cacheCanonicalSeriesColors(chartData, cacheKey, fullUniverse.rankedEntityNames)
 	return hasFullSelection
 		? fullUniverse
 		: createProtocolBreakdownSeriesUniverse({

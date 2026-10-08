@@ -1,19 +1,10 @@
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 
 export interface ApiUsageDay {
 	date: string
 	totalRequests: number
 	routes?: Record<string, number>
-}
-
-export interface ApiUsageChartColors {
-	routes: Array<string>
-	others: string
-	split: string
-	muted: string
-	axis: string
-	tooltipBg: string
-	tooltipBorder: string
 }
 
 const TOP_ROUTES = 6
@@ -40,7 +31,6 @@ export function buildApiUsageChartData(
 	windowDays: number,
 	routeSeries: Array<string>,
 	selectedRoutes: Array<string>,
-	colors: ApiUsageChartColors,
 	fetchedAt: number | null
 ): { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> } {
 	if (sortedStats.length === 0 || fetchedAt === null) {
@@ -85,15 +75,13 @@ export function buildApiUsageChartData(
 	}
 
 	const canonicalIndex = new Map(routeSeries.map((name, index) => [name, index]))
+	// A route keeps the colour of its rank among all routes, so deselecting one leaves the others' colours alone.
 	const charts = seriesNames.map((name, index) => ({
 		type: 'bar' as const,
 		name,
 		stack: 'routes',
 		encode: { x: 0, y: index + 1 },
-		color:
-			name === 'Others'
-				? colors.others
-				: (colors.routes[(canonicalIndex.get(name) ?? index) % colors.routes.length] ?? colors.routes[0]),
+		color: name === 'Others' ? OTHERS_COLOR : chartColor(canonicalIndex.get(name) ?? index),
 		large: false
 	}))
 

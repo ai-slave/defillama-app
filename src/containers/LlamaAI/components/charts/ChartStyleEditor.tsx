@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { type ReactNode, useMemo, useState } from 'react'
+import { chartColor } from '~/constants/colors'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
@@ -10,7 +11,6 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
-import { getNDistinctColors } from '~/utils'
 
 const ALL_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
 const SERIES_TYPES = ['line', 'bar', 'area'] as const
@@ -287,7 +287,6 @@ export function ChartStyleEditor({
 	const availableTypes = useMemo(() => compatibleTypes(config.axes?.x?.type), [config])
 	// hbar (single series) & pie color per category, not per series — offer a picker per bar/slice.
 	const perCategory = draft.type === 'pie' || (draft.type === 'hbar' && (draft.series?.length ?? 1) <= 1)
-	const categoryPalette = useMemo(() => getNDistinctColors(categories.length), [categories.length])
 	const canReorder = !perCategory && (draft.series?.length ?? 0) > 1
 	const hasHallmarks = caps.showHallmarks && (draft.hallmarks?.length ?? 0) > 0
 	const canEditHallmarks = draft.axes?.x?.type === 'time'
@@ -431,7 +430,7 @@ export function ChartStyleEditor({
 									<label key={cat} className="flex items-center gap-2">
 										<input
 											type="color"
-											value={draft.seriesColors?.[cat] ?? categoryPalette[i] ?? '#2563eb'}
+											value={draft.seriesColors?.[cat] ?? chartColor(i)}
 											onChange={(e) =>
 												update((d) => {
 													d.seriesColors = { ...d.seriesColors, [cat]: e.target.value }
@@ -452,7 +451,7 @@ export function ChartStyleEditor({
 									<div key={seriesOrder[i]} className="flex flex-wrap items-center gap-2">
 										<input
 											type="color"
-											value={s.styling?.color ?? '#2563eb'}
+											value={s.styling?.color ?? chartColor(i)}
 											onChange={(e) =>
 												update((d) => {
 													updateItemAt(d.series, i, (item) => {

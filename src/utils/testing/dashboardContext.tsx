@@ -4,6 +4,7 @@ import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardIte
 import type { DashboardMode } from '~/containers/ProDashboard/dashboardTypes'
 import { ProDashboardContexts as C } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, StreamItemReadinessContext } from '~/containers/ProDashboard/queries'
+import { getDashboardEntityColors } from '~/containers/ProDashboard/utils/colorManager'
 
 type Value<K extends keyof typeof C> = NonNullable<ContextType<(typeof C)[K]>>
 
@@ -145,7 +146,11 @@ export function DashboardTestProvider({ children, ...state }: DashboardTestState
 																			...state.ui
 																		}}
 																	>
-																		{children}
+																		<C.EntityColors.Provider
+																			value={getDashboardEntityColors(state.variables?.resolvedItems ?? items)}
+																		>
+																			{children}
+																		</C.EntityColors.Provider>
 																	</C.UI.Provider>
 																</C.History.Provider>
 															</C.Annotations.Provider>

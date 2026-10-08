@@ -9,23 +9,17 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { downloadCSV } from '~/utils/download'
 import type { QueryRetry } from '~/utils/query'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
-import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
+import {
+	useDashboardEntityColors,
+	useProDashboardCatalog,
+	useProDashboardEditorActions,
+	useProDashboardTime
+} from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
-import {
-	type Chain,
-	type ChartConfig,
-	type DashboardGrouping,
-	getDashboardChartValueSymbol,
-	type Protocol
-} from '../types'
+import { type ChartConfig, type DashboardGrouping, getDashboardChartValueSymbol } from '../types'
 import { ProMeta } from '../ui'
-import {
-	DASHBOARD_CHART_GROUPING,
-	generateChartColor,
-	getCsvPeriodCells,
-	getCsvPeriodHeaders,
-	getItemIconUrl
-} from '../utils'
+import { DASHBOARD_CHART_GROUPING, getCsvPeriodCells, getCsvPeriodHeaders, getItemIconUrl } from '../utils'
+import { getChartEntityKey } from '../utils/colorManager'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { useCardHeightScale, scaledPx } from './cardHeightContext'
 import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
@@ -139,6 +133,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const entityColors = useDashboardEntityColors()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const chartQuery = useChartData(
@@ -158,32 +153,19 @@ export function ChartCard({ chart }: ChartCardProps) {
 
 	const presentation = getSingleMetricPresentation(chart)
 	const { details: chartTypeDetails, isGroupable, grouping, metricTitle } = presentation
-	const { itemName, itemIconUrl, chartColor } = useMemo(() => {
-		let itemName: string
-		let itemIconUrl: string | undefined
-		let itemInfo: Chain | Protocol | undefined
-		let itemIdentifier: string
+	const { itemName, itemIconUrl } = useMemo(() => {
 		if (chart.subjectType === 'protocol') {
-			itemInfo = getProtocolInfo(chart.protocol)
-			itemName = itemInfo?.name || chart.protocol
-			itemIconUrl = getItemIconUrl('protocol', itemInfo, chart.protocol)
-			itemIdentifier = chart.protocol
-		} else {
-			itemInfo = getChainInfo(chart.chain)
-			itemName = chart.chain
-			itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
-			itemIdentifier = chart.chain
+			const itemInfo = getProtocolInfo(chart.protocol)
+			return {
+				itemName: itemInfo?.name || chart.protocol,
+				itemIconUrl: getItemIconUrl('protocol', itemInfo, chart.protocol)
+			}
 		}
+		return { itemName: chart.chain, itemIconUrl: getItemIconUrl('chain', getChainInfo(chart.chain), chart.chain) }
+	}, [chart, getChainInfo, getProtocolInfo])
+	const chartColor = chart.color ?? entityColors[getChartEntityKey(chart)]
 
-		const chartColor = chart.color || generateChartColor(itemIdentifier, chartTypeDetails.color)
-
-		return { itemName, itemIconUrl, chartColor }
-	}, [chart, chartTypeDetails, getChainInfo, getProtocolInfo])
-
-	const chartDataset = useMemo(
-		() => buildSingleMetricChartDataset(chartState.data, metricTitle, presentation.cumulative),
-		[chartState.data, metricTitle, presentation.cumulative]
-	)
+	const chartDataset = buildSingleMetricChartDataset(chartState.data, metricTitle, presentation.cumulative)
 
 	const handleCsvExport = () => {
 		if (chartDataset.source.length === 0) return

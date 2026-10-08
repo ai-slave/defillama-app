@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
-import { purple } from '~/constants/colors'
+import { chartColor, purple } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatUsd } from '~/utils/numberFormat'
-import { getChainOverviewPaletteColor } from './constants'
 import { useSmolChartHover } from './useSmolChartHover'
 
-const POSITIVE_BAR_COLOR = getChainOverviewPaletteColor(0)
+const POSITIVE_BAR_COLOR = chartColor(0)
 
 export function SmolBarChart({
 	series,

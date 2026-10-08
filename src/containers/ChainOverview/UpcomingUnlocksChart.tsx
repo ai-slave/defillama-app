@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
+import { chartColor } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
-import { getChainOverviewPaletteColor } from './constants'
 import type { HomepageUnlockChartEntry } from './types'
 import { useSmolChartHover } from './useSmolChartHover'
 
-const BAR_COLOR = getChainOverviewPaletteColor(0)
-const HOVERED_BAR_COLOR = getChainOverviewPaletteColor(1)
+const BAR_COLOR = chartColor(0)
+const HOVERED_BAR_COLOR = chartColor(1)
 
 export function UpcomingUnlocksChart({
 	data,

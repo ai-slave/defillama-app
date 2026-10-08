@@ -393,7 +393,9 @@ Every chart draws through the renderer for its shape in [`src/components/ECharts
 | Inflow against outflow per category     | `NetflowChart`                                         |
 
 - Renderers own the instance, resize, theme, tooltip surface, grid geometry and export, so a page never calls `echarts.init` (`raw-echarts-init`). When no renderer fits, extend the closest one.
-- Series colors come from `CHART_COLORS` (`src/constants/colors.ts`) and `getNDistinctColors` (`src/utils/index.tsx`). Series colors are data, not design tokens, and never change in bulk.
+- Categorical series colors come from the one palette in [`src/constants/colors.ts`](src/constants/colors.ts): `chartColor(rank)` / `chartColors(n)`, brand blue first, each color at 3:1 or more on every chart background in both modes. Series take colors by rank in the chart; a Pro dashboard gives each entity one color across its cards, in order of first appearance. Never add a hex list, a color generator or a name hash.
+- A chart that can draw more than `CHART_SERIES_LIMIT` (10) series folds the rest into one "Others" series in `OTHERS_COLOR`, unless a picker chooses the series (see `docs/charts.md`). Treemap children are `childColors(parent, n)`.
+- Colors that carry meaning stay with their meaning: up/down and supply/borrow on the data ramps (Yields included), risk on the status ramps, and brand colors that come with the data (stablecoins, partner dashboards).
 - Chart chrome (axis labels, gridlines, legends, dataZoom, PNG export framing, candlestick colors) reads the `--chart-*` tokens through `useChartTheme(isThemeDark)` or `getChartTheme(isDark)` in [`chartTheme.ts`](src/components/ECharts/shared/chartTheme.ts), because canvas cannot read `var()`. Never read `--chart-*` by hand or fork chrome on `isDark`.
 - HTML tooltips use the `.defillama-echarts-tooltip` recipe in `src/tailwind.css`.
 - Cartesian geometry comes from [`chartSpacing.ts`](src/components/ECharts/shared/chartSpacing.ts) (`chartGrid()`). Never copy grid, legend or slider offsets, and never pad a chart body in the DOM.

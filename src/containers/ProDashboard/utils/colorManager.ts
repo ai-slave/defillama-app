@@ -1,123 +1,50 @@
-export const EXTENDED_COLOR_PALETTE = [
-	'#cc3e6d',
-	'#4691ce',
-	'#4cae4f',
-	'#c98e36',
-	'#972da9',
-	'#2d9ba9',
-	'#cc5f3e',
-	'#4051b5',
-	'#8bc34b',
-	'#cba63a',
-	'#673ab6',
-	'#29998e',
-	'#cc473e',
-	'#3394c1',
-	'#c0ce46',
-	'#c97636',
-	'#633ecc',
-	'#30b575',
-	'#b9315f',
-	'#3175b9',
-	'#ccb23e',
-	'#65258d',
-	'#298c99',
-	'#cb3a3a',
-	'#3e9fcc',
-	'#7bcb3a',
-	'#b63ecc',
-	'#2a9d5a',
-	'#cc683e',
-	'#3e72cc',
-	'#c9b136',
-	'#9836c9',
-	'#36bbc9',
-	'#c94e36',
-	'#3acba6',
-	'#b034c5'
-] satisfies readonly [string, ...Array<string>]
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
+import type { ChartConfig } from '../types'
 
-export const COLOR_PALETTE_2 = [
-	'#cc5f3e',
-	'#3e9fcc',
-	'#972da9',
-	'#4cae4f',
-	'#994529',
-	'#cc3e6d',
-	'#326abd',
-	'#8bc34b',
-	'#673ab6',
-	'#9f512d',
-	'#ce468e',
-	'#298c99',
-	'#c0ce46',
-	'#b034c5',
-	'#a36666',
-	'#b9315f',
-	'#4691ce',
-	'#30b575',
-	'#633ecc',
-	'#ca8e3f',
-	'#cc4c3e',
-	'#4295cd',
-	'#2e8a56',
-	'#8942cd',
-	'#ba8c4f',
-	'#cba63a',
-	'#3394c1',
-	'#299929',
-	'#6d3ecc',
-	'#c98e36',
-	'#8a7d6a',
-	'#3175b9',
-	'#7bcb3a',
-	'#65258d',
-	'#cd8742',
-	'#c95d36',
-	'#3680c9',
-	'#36c936'
-] satisfies readonly [string, ...Array<string>]
-
-export function getPaletteColor(palette: ReadonlyArray<string>, index: number): string {
-	const color = palette[index % palette.length]
-	if (color === undefined) throw new Error('Dashboard color palette must not be empty')
-	return color
+/** A protocol and a chain can share a name, so the subject type is part of the key. */
+export function getChartEntityKey(chart: ChartConfig): string {
+	return chart.subjectType === 'protocol' ? `protocol:${chart.protocol}` : `chain:${chart.chain}`
 }
 
-function simpleHash(str: string): number {
-	let hash = 0
-	let prime = 31
-
-	for (let i = 0; i < str.length; i++) {
-		hash = (hash * prime + str.charCodeAt(i) * (i + 1)) >>> 0
+/**
+ * The colour of every protocol and chain the dashboard's chart cards draw, so an entity looks the same on every
+ * card. Entities take the palette in order of first appearance, so no two share a colour until there are more than
+ * the palette holds. Derived from the items alone, so the server and the client agree.
+ */
+export function getDashboardEntityColors(items: ReadonlyArray<DashboardItemConfig>): Record<string, string> {
+	const colors: Record<string, string> = {}
+	let count = 0
+	const add = (chart: ChartConfig) => {
+		const key = getChartEntityKey(chart)
+		if (colors[key] === undefined) colors[key] = chartColor(count++)
 	}
-
-	return hash
-}
-
-export const generateConsistentChartColor = (
-	itemName: string,
-	fallbackColor: string,
-	itemType: 'protocol' | 'chain' = 'protocol',
-	useConsistentColors = true
-): string => {
-	if (!useConsistentColors || !itemName || itemName === 'unknown') {
-		return fallbackColor
+	for (const item of items) {
+		if (item.kind === 'chart') add(item)
+		else if (item.kind === 'multi') for (const chart of item.items) add(chart)
 	}
-
-	const hash = simpleHash(`${itemType}-${itemName}`)
-
-	const colorIndex = hash % EXTENDED_COLOR_PALETTE.length
-
-	return getPaletteColor(EXTENDED_COLOR_PALETTE, colorIndex)
+	return colors
 }
 
-export const colorManager = {
-	getItemColor: (itemName: string, itemType: 'protocol' | 'chain', fallbackColor?: string) => {
-		return generateConsistentChartColor(itemName, fallbackColor || '#8884d8', itemType, true)
+/**
+ * Series colours of a combined card, by item id. Each series takes its entity's dashboard colour while those stay
+ * distinct in the card; when an entity repeats (one protocol, several metrics) or the palette has wrapped, the card
+ * colours its series by rank instead. A colour the user chose always wins.
+ */
+export function getMultiChartSeriesColors(
+	items: ReadonlyArray<ChartConfig>,
+	entityColors: Record<string, string>
+): Record<string, string> {
+	const dashboardColors = items.map((item) => entityColors[getChartEntityKey(item)])
+	const distinct = new Set(dashboardColors).size === dashboardColors.length
+	const colors: Record<string, string> = {}
+	for (const [index, item] of items.entries()) {
+		colors[item.id] = item.color ?? (distinct ? dashboardColors[index] : chartColor(index))
 	}
+	return colors
 }
 
+/** Stablecoin brand colours, kept over the palette because readers know them. */
 export const STABLECOIN_TOKEN_COLORS: Record<string, string> = {
 	USDT: '#009393',
 	Tether: '#009393',
@@ -135,5 +62,5 @@ export const STABLECOIN_TOKEN_COLORS: Record<string, string> = {
 	'PayPal USD': '#0070E0',
 	USDTB: '#C0C0C0',
 	FDUSD: '#00D395',
-	Others: '#FF1493'
+	Others: OTHERS_COLOR
 }

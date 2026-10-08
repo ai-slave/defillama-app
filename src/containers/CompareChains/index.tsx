@@ -10,6 +10,7 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
+import { chartColor } from '~/constants/colors'
 import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -17,7 +18,6 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { FailedDataNote } from '~/ui/ScopeNote'
 import { LoadingIndicator, PanelStatus } from '~/ui/Status'
-import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import {
 	buildCompareChainAdapterQueryKey,
@@ -169,8 +169,6 @@ export const buildCompareChainsChartData = (
 		return { dataset: { source: [], dimensions: ['timestamp'] }, charts: [], showTotalInTooltip: false }
 	}
 
-	const colors = getNDistinctColors(selectedCharts.length * chainsData.length)
-	let colorIndex = 0
 	const seriesNames: Array<string> = []
 	const seriesConfigs: Array<MultiSeriesChartSeriesConfig> = []
 	const seriesData: Array<{ entries: Array<[number, number]>; dateInMs: boolean; dimensionIndex: number }> = []
@@ -187,16 +185,13 @@ export const buildCompareChainsChartData = (
 			const name = `${chainData.chain} - ${targetChart.name}`
 			seriesNames.push(name)
 			const dimensionIndex = seriesNames.length
-			const color = colors[colorIndex]
-			if (color == null) throw new Error(`Missing comparison chart color at index ${colorIndex}`)
 			seriesConfigs.push({
 				type: targetChart.type,
 				name,
 				encode: { x: 0, y: dimensionIndex },
 				stack: name,
-				color
+				color: chartColor(seriesConfigs.length)
 			})
-			colorIndex++
 
 			const chartEntries = chainData[targetChart.key]
 			seriesData.push({ entries: chartEntries ?? [], dateInMs, dimensionIndex })

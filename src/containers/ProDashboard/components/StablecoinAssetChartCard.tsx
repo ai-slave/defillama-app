@@ -3,13 +3,13 @@ import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSer
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { CHART_COLORS } from '~/constants/colors'
 import { filterChartDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/filterChartDataset'
 import { useStablecoinAssetChartData } from '~/containers/ProDashboard/components/datasets/StablecoinAssetDataset/useStablecoinAssetChartData'
 import {
 	STABLECOIN_DOLLAR_CHART_OPTIONS,
 	STABLECOIN_PERCENT_CHART_OPTIONS
 } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
-import { colorManager } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
 import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -40,7 +40,7 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 }
 
 const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
-	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
+	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: CHART_COLORS[0] }
 ]
 const EMPTY_SERIES: Array<string> = []
 
@@ -62,49 +62,19 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	)
 
 	const chartRead = useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
-	const {
-		presentation,
-		chainsUnique,
-		stablecoinName,
-		stablecoinSymbol,
-		isInactive,
-		prepareCsvDataset,
-		isLoading,
-		readFailed
-	} = chartRead
+	const { presentation, stablecoinName, stablecoinSymbol, isInactive, prepareCsvDataset, isLoading, readFailed } =
+		chartRead
 
-	const chainColors = useMemo(() => {
-		const colors: Record<string, string> = {}
-		for (const chain of chainsUnique) {
-			colors[chain] = colorManager.getItemColor(chain, 'chain')
-		}
-		return colors
-	}, [chainsUnique])
 	const chainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			presentation.chartType === 'chainMcaps'
-				? presentation.charts.map((chart) => {
-						const { color, ...chartWithoutColor } = chart
-						const resolvedColor = chainColors[chart.name] ?? color
-						return {
-							...chartWithoutColor,
-							...(resolvedColor ? { color: resolvedColor } : {}),
-							hideAreaStyle: true
-						}
-					})
+				? presentation.charts.map((chart) => ({ ...chart, hideAreaStyle: true }))
 				: [],
-		[presentation, chainColors]
+		[presentation]
 	)
 	const chainDominanceCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
-		() =>
-			presentation.chartType === 'chainDominance'
-				? presentation.charts.map((chart) => {
-						const { color, ...chartWithoutColor } = chart
-						const resolvedColor = chainColors[chart.name] ?? color
-						return { ...chartWithoutColor, ...(resolvedColor ? { color: resolvedColor } : {}) }
-					})
-				: [],
-		[presentation, chainColors]
+		() => (presentation.chartType === 'chainDominance' ? presentation.charts : []),
+		[presentation]
 	)
 	const runtimeSeries = useMemo(
 		() =>
@@ -283,7 +253,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				>
 					<PieChart
 						chartData={chainsCirculatingValues}
-						stackColors={{ ...piePresentation.stackColors, ...chainColors }}
+						stackColors={piePresentation.stackColors}
 						valueSymbol={stablecoinSymbol}
 						exportButtons="hidden"
 						height={chartHeight}

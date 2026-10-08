@@ -18,9 +18,9 @@ import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from '.
 import { EarnApyCell, EmptyCell, ExitCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
 
 const STABILITY_RATING_STYLES: Record<string, string> = {
-	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
+	stable: 'bg-data-up-tint text-data-up',
 	mixed: 'bg-surface-elevated-1 text-secondary',
-	volatile: 'bg-(--apy-very)/10 text-(--yield-negative-text)'
+	volatile: 'bg-data-down-tint text-data-down'
 }
 
 function ApyStabilityIndicator({

@@ -1,8 +1,9 @@
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { isRwaTotalSeriesLabel, type RWAPositionalChartDataset } from './chartDataset'
 
 export const RWA_OTHERS_SERIES_LABEL = 'Others'
 /** Time series and Share show this many groups; the rest fold into Others. */
-export const RWA_MAX_CHART_SERIES = 10
+export const RWA_MAX_CHART_SERIES = CHART_SERIES_LIMIT
 
 type SeriesColumn = { name: string; index: number }
 

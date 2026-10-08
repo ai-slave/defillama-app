@@ -7,17 +7,19 @@ export type ChartColorKey = 'accent' | 'gold' | 'action' | 'intrinsic' | 'chartF
 /** The measured line's identity, shared with the metrics picker so its locked stand-in matches exactly. */
 export const VERIFIED_APY_SERIES = { key: 'verifiedApy', label: 'Verified Base' } as const
 
+// Ramp steps from src/styles/primitives.css, [light, dark]: emerald and crimson -11 are the app's up/down
+// text steps (--text-data-up/down), amber, violet and blue use step 9 in light and 11 in dark so lines
+// keep 3:1 on both cards; neutrals are the shared Others grey and the neutral-6/7 fill.
 export const CHART_PALETTE: Record<ChartColorKey, readonly [light: string, dark: string]> = {
-	accent: ['#089981', '#22ab94'],
-	gold: ['#f57f17', '#ffa726'],
-	action: ['#2962ff', '#3179f5'],
-	chartFill: ['#c2c8cf', '#515c6b'],
-	warn: ['#f23645', '#f7525f'],
-	mag: ['#7e8aa0', '#7e8aa0'],
-	// Its own hue: intrinsic sits under the verified line, which owns the blue. Dark step is
-	// violet-500; #a78bfa fell outside the dark lightness band (L 0.71 vs 0.48-0.67).
-	intrinsic: ['#7c3aed', '#8b5cf6'],
-	verified: ['#3b82f6', '#3b82f6']
+	accent: ['#016d3c', '#12b167'],
+	gold: ['#9f5a00', '#de841d'],
+	action: ['#1f67d2', '#599aff'],
+	chartFill: ['#c6c6c6', '#414345'],
+	warn: ['#bd0a31', '#ff686f'],
+	mag: ['#8a8d8f', '#8a8d8f'],
+	// Its own hue: intrinsic sits under the verified line, which owns the blue.
+	intrinsic: ['#7d4dd7', '#a884ff'],
+	verified: ['#1f67d2', '#599aff']
 }
 
 function ms(date: string): number {

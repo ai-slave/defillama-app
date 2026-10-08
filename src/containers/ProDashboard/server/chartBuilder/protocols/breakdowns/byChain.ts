@@ -1,9 +1,9 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchChainChart, fetchChainsTvlOverview } from '~/containers/Chains/api'
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { mapWithConcurrency } from '~/utils/async'
 import {
-	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
 	filterOutToday,
 	normalizeDailyPairs,
@@ -99,8 +99,7 @@ async function getAllProtocolsTopChainsTvlData(
 		])
 
 		const topSeriesRaw: Array<ChartSeries> = []
-		let colorIndex = 0
-		for (const chainResponse of chainResponses) {
+		for (const [rank, chainResponse] of chainResponses.entries()) {
 			const { name, data: j } = chainResponse
 			const adjustedTvl = processAdjustedTvl(j)
 			const normalized = filterOutToday(
@@ -109,13 +108,7 @@ async function getAllProtocolsTopChainsTvlData(
 					'last'
 				)
 			)
-			const color = BREAKDOWN_COLOR_PALETTE[colorIndex % BREAKDOWN_COLOR_PALETTE.length]
-			colorIndex++
-			topSeriesRaw.push({
-				name,
-				data: normalized,
-				...(color === undefined ? {} : { color })
-			})
+			topSeriesRaw.push({ name, data: normalized, color: chartColor(rank) })
 		}
 
 		if (hasScopedFilter) {
@@ -147,7 +140,7 @@ async function getAllProtocolsTopChainsTvlData(
 		const othersCount = Math.max(0, ranked.length - includedTopCount)
 		const hasOthers = othersCount > 0 && othersData.some(([, v]) => v > 0)
 		const finalSeries = [...alignedTopSeries]
-		if (hasOthers) finalSeries.push({ name: `Others (${othersCount} chains)`, data: othersData, color: '#999999' })
+		if (hasOthers) finalSeries.push({ name: `Others (${othersCount} chains)`, data: othersData, color: OTHERS_COLOR })
 
 		return {
 			series: finalSeries,

@@ -16,12 +16,10 @@
  * picture of whichever rows the table happens to be filtered to.
  */
 import * as React from 'react'
+import { CHART_SERIES_LIMIT } from '~/constants/colors'
 import { applySlippageHaircut, sumLadders, venueEntries, type DepthCurveVenue } from './depthCurve'
 import { DepthCurveBody } from './DepthCurveBody'
 import type { ExchangeDepthLadder, ExchangePairModel } from './models'
-
-/** Named venues in the chart; the rest fold into one "Others" curve. */
-const NAMED_VENUES = 12
 
 /** What one exact book promised a $10k fill would cost against what those fills paid,
  *  keyed by venue slug. `symbol` is the only book the discount may be applied to. */
@@ -76,7 +74,7 @@ export function TokenDepthChart({
 	symbol: string
 }) {
 	const venues = React.useMemo(() => tokenDepthVenues(pairs, slippage), [pairs, slippage])
-	const entries = React.useMemo(() => venueEntries(venues, NAMED_VENUES), [venues])
+	const entries = React.useMemo(() => venueEntries(venues, CHART_SERIES_LIMIT), [venues])
 
 	// Nothing measured for this token: no panel rather than an empty frame.
 	if (entries.length === 0) return null

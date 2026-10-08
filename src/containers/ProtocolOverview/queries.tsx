@@ -3,7 +3,7 @@ import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import type { BlockExplorersResponse } from '~/api/types'
 import { V2_SERVER_URL } from '~/constants'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api.types'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
@@ -780,9 +780,7 @@ export const getProtocolOverviewPageData = async ({
 	for (let index = 0; index < availableCharts.length; index++) {
 		const chart = availableCharts[index]
 		if (chart === undefined) continue
-		const color = CHART_COLORS[index]
-		if (!color) throw new Error(`Missing protocol chart color at index ${index}`)
-		chartColors[chart] = color
+		chartColors[chart] = chartColor(index)
 	}
 
 	const { hallmarks, rangeHallmarks } = buildProtocolOverviewHallmarks({

@@ -4,7 +4,7 @@ import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_COLORS, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type {
 	StablecoinVolumeBreakdownChartPoint,
 	StablecoinVolumeChartKind,
@@ -67,7 +67,7 @@ const buildCharts = (
 			type: 'bar',
 			name,
 			encode: { x: 'timestamp', y: name },
-			color: name === OTHERS_NAME ? '#AAAAAA' : (CHART_COLORS[colorIndex] ?? CHART_COLORS[0]),
+			color: name === OTHERS_NAME ? OTHERS_COLOR : chartColor(colorIndex),
 			barMinWidth: 1,
 			barMaxWidth: 24,
 			...(stacked ? { stack: 'stablecoin-volume', large: false } : {})

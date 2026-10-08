@@ -4,6 +4,7 @@ import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } fr
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react'
+import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
@@ -47,7 +48,7 @@ function HBarChart({
 	title: _title,
 	valueSymbol = '$',
 	height = '360px',
-	color = '#1f77b4',
+	color = CHART_COLORS[0],
 	colors,
 	logos,
 	series,

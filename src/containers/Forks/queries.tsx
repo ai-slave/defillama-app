@@ -1,7 +1,8 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { resolveProtocolParamFromMetadata } from '~/containers/ProtocolOverview/server/routes'
 import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
-import { getNDistinctColors, slug } from '~/utils'
+import { slug } from '~/utils'
 import { fetchForkMetrics, fetchForkProtocolBreakdownChart } from './api'
 import type { IForkProtocolBreakdownChart } from './api.types'
 import { getForkToOriginalTvlPercent } from './tvl'
@@ -52,13 +53,8 @@ export async function getForksListPageData(): Promise<ForkOverviewPageData | nul
 			}
 		}
 
-		const forkColors: Record<string, string> = { Others: '#AAAAAA' }
-		const sortedColors = getNDistinctColors(sortedForks.length)
-		for (let index = 0; index < sortedForks.length; index++) {
-			const forkName = sortedForks[index]
-			const color = sortedColors[index]
-			if (forkName !== undefined && color !== undefined) forkColors[forkName] = color
-		}
+		const forkColors: Record<string, string> = { Others: OTHERS_COLOR }
+		for (const [index, forkName] of sortedForks.entries()) forkColors[forkName] = chartColor(index)
 
 		const protocolsByName = new Map<string, (typeof fetchedProtocols)[number]>()
 		for (const protocol of fetchedProtocols) protocolsByName.set(protocol.name, protocol)

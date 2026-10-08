@@ -1,4 +1,4 @@
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor, childColors } from '~/constants/colors'
 import { roundNumber } from '~/utils/numberFormat'
 
 export type TokenUsageTreemapNode = {
@@ -26,39 +26,6 @@ function getProtocolSelectionKey(categoryName: string, protocolName: string): st
 
 function toShare(value: number, total: number): number {
 	return roundNumber((value / total) * 100, 2)
-}
-
-function hexToRgb(hex: string): [red: number, green: number, blue: number] {
-	const normalized = hex.replace('#', '')
-	const expanded =
-		normalized.length === 3
-			? normalized
-					.split('')
-					.map((char) => `${char}${char}`)
-					.join('')
-			: normalized
-	const int = Number.parseInt(expanded, 16)
-	return [(int >> 16) & 255, (int >> 8) & 255, int & 255]
-}
-
-const CHART_COLOR_RGB = new Array<[number, number, number] | undefined>(CHART_COLORS.length)
-
-function deriveChildColors(
-	parentColor: string,
-	[red, green, blue]: [number, number, number],
-	count: number
-): Array<string> {
-	if (count <= 1) return [parentColor]
-
-	const colors = new Array<string>(count)
-	for (let index = 0; index < count; index++) {
-		const ratio = 0.12 + (index / (count - 1)) * 0.34
-		const mixedRed = Math.round(red + (255 - red) * ratio)
-		const mixedGreen = Math.round(green + (255 - green) * ratio)
-		const mixedBlue = Math.round(blue + (255 - blue) * ratio)
-		colors[index] = `rgb(${mixedRed}, ${mixedGreen}, ${mixedBlue})`
-	}
-	return colors
 }
 
 // Builds a category -> protocol treemap tree from token usage rows.
@@ -107,10 +74,8 @@ export function buildTokenUsageTreemapTreeData(
 	const treeData = new Array<TokenUsageTreemapNode>(parentRows.length)
 	for (let parentIndex = 0; parentIndex < parentRows.length; parentIndex++) {
 		const row = parentRows[parentIndex]
-		const colorIndex = parentIndex % CHART_COLORS.length
-		const parentColor = CHART_COLORS[colorIndex]
-		const parentRgb = CHART_COLOR_RGB[colorIndex] ?? (CHART_COLOR_RGB[colorIndex] = hexToRgb(parentColor))
-		const childColors = deriveChildColors(parentColor, parentRgb, row.childRows.length)
+		const parentColor = chartColor(parentIndex)
+		const colors = childColors(parentColor, row.childRows.length)
 		const parentPath = `${rootLabel}/${row.parentLabel}`
 		const parentShare = toShare(row.parentTotal, total)
 
@@ -122,7 +87,7 @@ export function buildTokenUsageTreemapTreeData(
 				path: `${parentPath}/${childLabel}`,
 				selectorKey: getProtocolSelectionKey(row.parentLabel, childLabel),
 				value: [childValue, toShare(childValue, row.parentTotal), toShare(childValue, total)],
-				itemStyle: { color: childColors[childIndex] }
+				itemStyle: { color: colors[childIndex] }
 			}
 		}
 

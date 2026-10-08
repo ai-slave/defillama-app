@@ -3,6 +3,7 @@ import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { chartColor } from '~/constants/colors'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -68,13 +69,6 @@ function MetronomeIncomeStatement() {
 }
 
 const PROTO_COLORS: Record<string, string> = { Metronome: '#fb923c', Vesper: '#a78bfa', Odyssey: '#60a5fa' }
-const PIE_COLORS = ['#6366f1', '#22d3ee', '#34d399', '#fbbf24', '#f472b6', '#fb923c', '#a78bfa']
-
-function getPieColor(index: number): string {
-	const color = PIE_COLORS[index % PIE_COLORS.length]
-	if (color === undefined) throw new Error('Expected the income pipeline color palette to be non-empty')
-	return color
-}
 
 function sumUsd<Row>(rows: Array<Row> | undefined, getValue: (row: Row) => number): number {
 	if (!rows) return 0
@@ -336,7 +330,7 @@ export default function Revenue() {
 						height="320px"
 						showLegend
 						legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
-						stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, getPieColor(i)]))}
+						stackColors={Object.fromEntries(up.pie.map((p, i) => [p.name, chartColor(i)]))}
 					/>
 				)}
 			</div>

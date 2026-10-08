@@ -26,7 +26,6 @@ export function useMetricAvailability(
 				metric,
 				title: chartTypeInfo?.title || metric,
 				chartType: chartTypeInfo?.chartType || 'line',
-				color: chartTypeInfo?.color || '#8884d8',
 				availableCount,
 				totalCount: selectedItems.length,
 				isValid

@@ -1,3 +1,4 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchChainChart } from '~/containers/Chains/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
@@ -5,7 +6,6 @@ import { fetchCategoryChart } from '~/containers/ProtocolTaxonomy/api'
 import { mapWithConcurrency } from '~/utils/async'
 import {
 	alignSeries,
-	BREAKDOWN_COLOR_PALETTE,
 	filterOutToday,
 	normalizeDailyPairs,
 	sumSeriesByTimestamp,
@@ -266,14 +266,11 @@ export const getTvlBreakdownData = async (
 	}
 	const allTimestamps = Array.from(timestampSet).sort((a, b) => a - b)
 
-	const alignedProtocolSeries: Array<ChartSeries> = protocolSeries.map((s, idx) => {
-		const color = BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
-		return {
-			name: s.name,
-			data: alignSeries(allTimestamps, s.data),
-			...(color !== undefined ? { color } : {})
-		}
-	})
+	const alignedProtocolSeries: Array<ChartSeries> = protocolSeries.map((s, idx) => ({
+		name: s.name,
+		data: alignSeries(allTimestamps, s.data),
+		color: chartColor(idx)
+	}))
 
 	const alignedTotal = alignSeries(allTimestamps, totalSeries)
 	const topSumPerTs = alignSeries(
@@ -300,7 +297,7 @@ export const getTvlBreakdownData = async (
 		series.push({
 			name: `Others (${othersCount} ${othersEntityLabel})`,
 			data: othersData,
-			color: '#999999'
+			color: OTHERS_COLOR
 		})
 	}
 

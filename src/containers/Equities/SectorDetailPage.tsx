@@ -8,6 +8,7 @@ import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Tab
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -21,7 +22,6 @@ import {
 	getSelectionChip
 } from './aggregateData'
 import {
-	categoryColor,
 	ChangeValue,
 	EquitiesPageHeader,
 	formatMetric,
@@ -377,7 +377,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 							<Suspense fallback={<ChartPanelBodyFallback />}>
 								<PieChart
 									chartData={concentrationData}
-									stackColors={{ 'Top 10': categoryColor(0), 'Other companies': categoryColor(1) }}
+									stackColors={{ 'Top 10': chartColor(0), 'Other companies': OTHERS_COLOR }}
 									valueSymbol="%"
 									radius={['55%', '78%']}
 									height="220px"
@@ -456,12 +456,12 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 									{
 										name: sector.sector,
 										values: valuationComparisonRows.map(([, value, median]) => (value / median) * 100),
-										color: categoryColor(0)
+										color: chartColor(0)
 									},
 									{
 										name: 'Market',
 										values: valuationComparisonRows.map(() => 100),
-										color: categoryColor(1)
+										color: chartColor(1)
 									}
 								]}
 								valueSymbol=""

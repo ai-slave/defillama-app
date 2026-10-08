@@ -7,6 +7,7 @@ import { type paginatedTableFeatures, usePaginatedTable } from '~/components/Tab
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { chartColor } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -23,7 +24,6 @@ import {
 } from './aggregateData'
 import {
 	AggregateTreemap,
-	categoryColor,
 	ChangeValue,
 	EquitiesPageHeader,
 	formatMetric,
@@ -296,7 +296,7 @@ function SectorsReadyPage({
 						<HBarChart
 							categories={performanceRows.map(({ row }) => row.sector)}
 							values={performanceRows.map(({ value }) => value)}
-							color={categoryColor(0)}
+							color={chartColor(0)}
 							valueSymbol="%"
 							height="420px"
 							showValueLabels

@@ -1,3 +1,4 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { fetchAdapterChainChartDataByProtocolBreakdown } from '~/containers/AdapterMetrics/api'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
@@ -5,7 +6,7 @@ import { stableCacheKey } from '~/server/api/cacheKey'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
 import { cachedResult } from '~/server/api/resultCache'
 import { mapWithConcurrency } from '~/utils/async'
-import { BREAKDOWN_COLOR_PALETTE, toSlug, type ChartSeries, type ProtocolBreakdownData } from '~/utils/breakdowns'
+import { toSlug, type ChartSeries, type ProtocolBreakdownData } from '~/utils/breakdowns'
 import { DIMENSIONS_API_METRIC_CONFIG, type AdapterChartBuilderMetric } from './config'
 
 type DimensionsBreakdownParams = {
@@ -39,12 +40,6 @@ const PROTOCOL_BASE_STALE_MS = 20 * 60 * 1000
 const PROTOCOL_LOOKUP_CACHE_MS = 60 * 60 * 1000
 const PROTOCOL_RANKING_WINDOW_DAYS = 7
 let protocolLookupCache: { data: ProtocolLookup; timestamp: number } | null = null
-
-const getBreakdownColor = (index: number): string => {
-	const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
-	if (color === undefined) throw new Error('Breakdown color palette must not be empty')
-	return color
-}
 
 const buildEmptyBreakdown = (
 	chainsArray: Array<string>,
@@ -434,7 +429,7 @@ export const getAdapterMetricProtocolSeries = async ({
 		series.push({
 			name: protocol,
 			data: alignedData,
-			color: getBreakdownColor(i)
+			color: chartColor(i)
 		})
 	}
 
@@ -457,7 +452,7 @@ export const getAdapterMetricProtocolSeries = async ({
 		series.push({
 			name: `Others (${othersCount} ${othersEntityLabel})`,
 			data: othersData,
-			color: '#999999'
+			color: OTHERS_COLOR
 		})
 	}
 	addApiRoutePhase('adapter_protocol_project', Date.now() - projectionStartedAt)

@@ -2,7 +2,7 @@ import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo } from 'react'
 import type { PieTooltipParams } from '~/components/ECharts/PieChart/types'
 import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
-import { CHART_COLORS } from '~/constants/colors'
+import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatPercent } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
@@ -20,8 +20,6 @@ interface PieChartAdapterProps {
 	onReady?: (instance: echarts.ECharts | null) => void
 	height: string
 }
-
-const TOP_N_SLICES = 12
 
 export function PieChartAdapter({ config, result, classified, onReady, height }: PieChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
@@ -75,7 +73,7 @@ export function PieChartAdapter({ config, result, classified, onReady, height }:
 			</Suspense>
 			{truncated > 0 ? (
 				<p className="body-sm text-tertiary">
-					Top {TOP_N_SLICES} slices. {truncated} folded into Other.
+					Top {CHART_SERIES_LIMIT} slices. {truncated} folded into Other.
 				</p>
 			) : null}
 		</div>
@@ -97,23 +95,24 @@ export function buildSqlPieData(
 		totals.set(name, (totals.get(name) ?? 0) + value)
 	}
 
+	// A query's own "Other" category joins the folded tail, so the chart draws one Other slice, last.
+	const existingOther = totals.get('Other')
+	totals.delete('Other')
 	const entries = [...totals.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-	const top = entries.slice(0, TOP_N_SLICES)
-	const rest = entries.slice(TOP_N_SLICES)
+	const top = entries.slice(0, CHART_SERIES_LIMIT)
+	const rest = entries.slice(CHART_SERIES_LIMIT)
 	const chartData = top.map(([name, value]) => ({ name, value }))
-	if (rest.length > 0) {
-		let otherValue = 0
+	if (rest.length > 0 || existingOther !== undefined) {
+		let otherValue = existingOther ?? 0
 		for (const [, value] of rest) otherValue += value
-		const existingOther = chartData.find((item) => item.name === 'Other')
-		if (existingOther) existingOther.value += otherValue
-		else chartData.push({ name: 'Other', value: otherValue })
+		chartData.push({ name: 'Other', value: otherValue })
 	}
 
 	const configuredColors = new Map(Object.entries(seriesColors))
 	const colorEntries = new Array<[string, string]>(chartData.length)
 	for (let index = 0; index < chartData.length; index++) {
 		const name = chartData[index].name
-		colorEntries[index] = [name, configuredColors.get(name) ?? CHART_COLORS[index % CHART_COLORS.length]]
+		colorEntries[index] = [name, configuredColors.get(name) ?? (name === 'Other' ? OTHERS_COLOR : chartColor(index))]
 	}
 	return { chartData, stackColors: Object.fromEntries(colorEntries), truncated: rest.length }
 }

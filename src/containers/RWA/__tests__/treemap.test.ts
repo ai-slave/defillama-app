@@ -148,19 +148,19 @@ describe('buildRwaNestedTreemapTreeData', () => {
 				name: 'Ethereum',
 				path: 'Chain/Ethereum',
 				value: [110, 73.33, 73.33],
-				itemStyle: { color: '#2b7aca' },
+				itemStyle: { color: CHART_COLORS[0] },
 				children: [
 					{
 						name: 'Alpha',
 						path: 'Chain/Ethereum/Alpha',
 						value: [60, 54.55, 40],
-						itemStyle: { color: '#163f69' }
+						itemStyle: { color: CHART_COLORS[0] }
 					},
 					{
 						name: 'Beta',
 						path: 'Chain/Ethereum/Beta',
 						value: [50, 45.45, 33.33],
-						itemStyle: { color: '#6ca5e0' }
+						itemStyle: { color: '#578ce1' }
 					}
 				]
 			},
@@ -168,13 +168,13 @@ describe('buildRwaNestedTreemapTreeData', () => {
 				name: 'Base',
 				path: 'Chain/Base',
 				value: [40, 26.67, 26.67],
-				itemStyle: { color: '#ca2b4c' },
+				itemStyle: { color: CHART_COLORS[1] },
 				children: [
 					{
 						name: 'Alpha',
 						path: 'Chain/Base/Alpha',
 						value: [40, 100, 26.67],
-						itemStyle: { color: '#ca2b4c' }
+						itemStyle: { color: CHART_COLORS[1] }
 					}
 				]
 			}

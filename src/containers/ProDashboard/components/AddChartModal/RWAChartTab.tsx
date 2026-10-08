@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { VirtualizedSelect, type VirtualizedSelectOption } from '~/components/Select/VirtualizedSelect'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
 	useRWAAssetsList,
@@ -317,9 +317,7 @@ function OverviewPreview({
 
 	const pieColors = useMemo(() => {
 		const colors: Record<string, string> = {}
-		for (const [idx, item] of pieData.entries()) {
-			colors[item.name] = CHART_COLORS[idx % CHART_COLORS.length] ?? CHART_COLORS[0]
-		}
+		for (const [idx, item] of pieData.entries()) colors[item.name] = chartColor(idx)
 		return colors
 	}, [pieData])
 

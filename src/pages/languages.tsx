@@ -12,11 +12,11 @@ import type {
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { SERVER_URL } from '~/constants'
+import { chartColor } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -37,7 +37,9 @@ function buildDataset(langs: Record<string, Record<string, number>>): {
 		for (const lang in tvlByLang) keysSet.add(lang)
 	}
 	entries.sort((a, b) => Number(a[0]) - Number(b[0]))
-	const keys = Array.from(keysSet)
+	// Largest first by the latest day, so series colours and the stack follow rank.
+	const latest = entries.at(-1)?.[1] ?? {}
+	const keys = Array.from(keysSet).sort((a, b) => (latest[b] ?? 0) - (latest[a] ?? 0))
 
 	const source = new Array<Array<number>>(entries.length)
 	for (let i = 0; i < entries.length; i++) {
@@ -73,10 +75,9 @@ export const getStaticProps = withPerformanceLogging('languages', async () => {
 	const { dataset: tvlDataset, keys: langsUnique } = buildDataset(data.chart)
 	const { dataset: osDataset, keys: osUnique } = buildDataset(data.sumDailySolanaOpenSourceTvls)
 
-	const allColors = getNDistinctColors(langsUnique.length)
 	const colors = {}
 	for (let i = 0; i < langsUnique.length; i++) {
-		colors[langsUnique[i]] = allColors[i]
+		colors[langsUnique[i]] = chartColor(i)
 	}
 
 	const tvlCharts = buildCharts(langsUnique, colors, 'A')
@@ -84,9 +85,8 @@ export const getStaticProps = withPerformanceLogging('languages', async () => {
 	const osColors = Object.assign({}, sourceTypeColor)
 	const missingOsKeys = osUnique.filter((k) => !osColors[k])
 	if (missingOsKeys.length > 0) {
-		const fallback = getNDistinctColors(missingOsKeys.length)
 		for (let i = 0; i < missingOsKeys.length; i++) {
-			osColors[missingOsKeys[i]] = fallback[i]
+			osColors[missingOsKeys[i]] = chartColor(i)
 		}
 		console.log(`[languages] Missing sourceTypeColor for keys: ${missingOsKeys.join(', ')}`)
 	}

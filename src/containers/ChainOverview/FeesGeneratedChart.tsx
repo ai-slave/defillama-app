@@ -1,11 +1,11 @@
+import { chartColor } from '~/constants/colors'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { slug } from '~/utils'
 import { formatCompactNumber } from '~/utils/numberFormat'
-import { getChainOverviewPaletteColor } from './constants'
 import { useSmolChartHover } from './useSmolChartHover'
 
-const BAR_COLOR = getChainOverviewPaletteColor(0)
-const HOVERED_BAR_COLOR = getChainOverviewPaletteColor(1)
+const BAR_COLOR = chartColor(0)
+const HOVERED_BAR_COLOR = chartColor(1)
 
 export function FeesGeneratedChart({ series }: { series: Array<[string, number, string]> }) {
 	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(series.length)

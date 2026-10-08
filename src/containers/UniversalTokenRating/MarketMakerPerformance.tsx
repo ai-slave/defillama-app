@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Select } from '~/components/Select/Select'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -28,8 +28,6 @@ const CRITERIA = [
 	{ key: 'mm_depth_pct', label: 'Market Maker Depth (as a % of total depth)' },
 	{ key: 'mm_uptime_sla', label: 'Market Maker Uptime / KPI Adherence' }
 ] as const
-
-const ALL_OTHERS_COLOR = '#284ca3'
 
 function usd(value: number | null | undefined): string {
 	return value == null ? 'N/A' : `$${formatNumber(Math.round(value))}`
@@ -173,7 +171,7 @@ function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit)
 		name: entry.name,
 		type: 'bar',
 		stack: 'providers',
-		color: CHART_COLORS[index % CHART_COLORS.length],
+		color: chartColor(index),
 		data: entry.dailyBreakdown.map((point) => [
 			Date.parse(point.date),
 			unit === 'percent' ? (point.percentage ?? 0) : (point.value ?? 0)
@@ -185,7 +183,7 @@ function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit)
 			name: 'All Others',
 			type: 'bar',
 			stack: 'providers',
-			color: ALL_OTHERS_COLOR,
+			color: OTHERS_COLOR,
 			data: metric.dailyBreakdown.map((point) => [
 				Date.parse(point.date),
 				unit === 'percent' ? (point.allOthersPercentage ?? 0) : (point.allOthers ?? 0)

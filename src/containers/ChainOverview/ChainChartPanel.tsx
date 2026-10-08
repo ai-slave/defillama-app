@@ -26,7 +26,7 @@ import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getChainSeriesName } from './chartPresentation'
-import { type ChainChartLabels, chainCharts, chainOverviewChartColors } from './constants'
+import { type ChainChartLabels, chainCharts, getChainChartColors } from './constants'
 import type { ChainOverviewChartData, IChainOverviewData } from './types'
 
 const ChainCoreChart = lazy(() => import('~/containers/ChainOverview/Chart'))
@@ -111,14 +111,16 @@ export function ChainChartPanel({
 }: ChainChartPanelProps) {
 	const router = useRouter()
 	const isClient = useIsClient()
+	const chartColors = useMemo(() => getChainChartColors(toggledCharts), [toggledCharts])
 	const chartRenderModel = useMemo(
 		() => ({
 			chartData: finalCharts,
+			chartColors,
 			valueSymbol,
 			// Deferred together with the rows, so labels never pair old rows with a new grouping.
 			groupBy
 		}),
-		[finalCharts, valueSymbol, groupBy]
+		[finalCharts, chartColors, valueSymbol, groupBy]
 	)
 	const deferredChartRenderModel = useDeferredValue(chartRenderModel)
 
@@ -132,10 +134,10 @@ export function ChainChartPanel({
 			chainName: metadata.name,
 			geckoId: chainGeckoId,
 			toggledMetrics: toggledCharts,
-			chartColors: chainOverviewChartColors,
+			chartColors,
 			groupBy
 		})
-	}, [metadata.name, chainGeckoId, toggledCharts, groupBy])
+	}, [metadata.name, chainGeckoId, toggledCharts, chartColors, groupBy])
 
 	const canAddToDashboard = metadata.name !== 'All' && multiChart && toggledCharts.length > 0 && denomination === 'USD'
 
@@ -166,12 +168,12 @@ export function ChainChartPanel({
 			byCategory.get(CHAIN_CATEGORY_BY_METRIC.get(chart) ?? 'Other')!.push({
 				key: chart,
 				label: getChainMetricLabel(chart, chainTokenInfo?.token_symbol),
-				color: chainOverviewChartColors[chart],
+				color: chartColors[chart],
 				active: toggledCharts.includes(chart)
 			})
 		}
 		return Array.from(byCategory, ([label, options]) => ({ label, options }))
-	}, [charts, chainTokenInfo?.token_symbol, toggledCharts])
+	}, [charts, chainTokenInfo?.token_symbol, toggledCharts, chartColors])
 
 	const handleToggleMetric = useCallback(
 		(option: ChainMetricOption) => {
@@ -231,7 +233,7 @@ export function ChainChartPanel({
 								<span
 									className={metricChipStyles}
 									style={{
-										borderColor: chainOverviewChartColors[tchart]
+										borderColor: chartColors[tchart]
 									}}
 								>
 									<span>{selectedChartLabel(tchart)}</span>
@@ -298,6 +300,7 @@ export function ChainChartPanel({
 						) : null}
 						<ChainCoreChart
 							chartData={deferredChartRenderModel.chartData}
+							chartColors={deferredChartRenderModel.chartColors}
 							valueSymbol={deferredChartRenderModel.valueSymbol}
 							isThemeDark={darkMode}
 							groupBy={deferredChartRenderModel.groupBy}

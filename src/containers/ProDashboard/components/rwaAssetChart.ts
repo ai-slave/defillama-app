@@ -1,5 +1,5 @@
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import type { RWAOverviewChartMetric } from '../types'
 
@@ -24,7 +24,7 @@ export function buildProRwaAssetChartSeries(
 			type: 'line',
 			name,
 			encode: { x: 0, y: dimensionIndex },
-			color: CHART_COLORS[charts.length]
+			color: chartColor(charts.length)
 		})
 	}
 	return charts

@@ -9,7 +9,7 @@ type AxisExtent = {
 }
 
 type AxisBuilderContext = {
-	chartColors: Record<ChainChartLabels, string>
+	chartColors: Partial<Record<ChainChartLabels, string>>
 	chartsInSeries: Set<ChainChartLabels>
 	themeText: string
 }
@@ -109,7 +109,7 @@ export function buildChainYAxis({
 }: {
 	allYAxis: Array<[ChainChartLabels, number | undefined]>
 	baseYAxis: MultiSeriesYAxisOption
-	chartColors: Record<ChainChartLabels, string>
+	chartColors: Partial<Record<ChainChartLabels, string>>
 	chartsInSeries: Set<ChainChartLabels>
 	themeText: string
 }) {

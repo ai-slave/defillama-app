@@ -7,8 +7,8 @@ import { useMemo } from 'react'
  * directly, so values are resolved via getComputedStyle at call time and
  * re-resolved when the theme flips.
  *
- * Series colors are NOT part of this: they come from CHART_COLORS /
- * getNDistinctColors and are intentionally not theme tokens.
+ * Series colors are NOT part of this: they come from the one palette in
+ * src/constants/colors.ts and pass 3:1 in both modes, so they are not theme tokens.
  *
  * The fallbacks below are the exact literals the chart configs used before
  * tokenization — if a token is missing or this runs before the stylesheet

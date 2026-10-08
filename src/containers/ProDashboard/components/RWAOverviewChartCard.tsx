@@ -1,5 +1,5 @@
 import { lazy, type ReactNode, Suspense, useMemo } from 'react'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -86,11 +86,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 
 	const pieColors = useMemo(() => {
 		const colors: Record<string, string> = {}
-		for (const [idx, item] of pieData.entries()) {
-			const color = CHART_COLORS[idx % CHART_COLORS.length]
-			if (color === undefined) throw new Error(`Missing RWA chart color at index ${idx}`)
-			colors[item.name] = color
-		}
+		for (const [idx, item] of pieData.entries()) colors[item.name] = chartColor(idx)
 		return colors
 	}, [pieData])
 

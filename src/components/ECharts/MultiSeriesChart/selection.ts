@@ -1,7 +1,8 @@
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
+import { CHART_SERIES_LIMIT, OTHERS_COLOR } from '~/constants/colors'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from './types'
 
-export const DEFAULT_ADDITIVE_SERIES_LIMIT = 30
+export const DEFAULT_ADDITIVE_SERIES_LIMIT = CHART_SERIES_LIMIT
 const REMAINDER_SERIES_NAME = 'Others'
 
 function readNumericValue(value: MultiSeriesChartDataset['source'][number][number]): number | null | undefined {
@@ -217,7 +218,7 @@ function projectShareChart({
 	const outputCharts = drawnCharts.map((chart, index) => ({ ...chart, encode: { x: 0, y: index + 1 } }))
 	if (hasRemainder) {
 		const template = charts.find((chart) => chart.name === REMAINDER_SERIES_NAME) ?? drawnCharts[0]!
-		outputCharts.push({ ...template, name: REMAINDER_SERIES_NAME, encode: { x: 0, y: width }, color: '#AAAAAA' })
+		outputCharts.push({ ...template, name: REMAINDER_SERIES_NAME, encode: { x: 0, y: width }, color: OTHERS_COLOR })
 	}
 	return {
 		dataset: {
@@ -324,7 +325,7 @@ export function buildSelectedAdditiveChart({
 				...template,
 				name: REMAINDER_SERIES_NAME,
 				encode: { x: 0, y: outputCharts.length + 1 },
-				color: '#AAAAAA'
+				color: OTHERS_COLOR
 			})
 		}
 	}

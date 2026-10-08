@@ -3,7 +3,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
-import { CHART_COLORS } from '~/constants/colors'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -153,6 +153,7 @@ export function AggregateTreemap({
 }
 
 export function sectorColor(sectorSlug: string): string {
+	if (sectorSlug === 'unknown') return OTHERS_COLOR
 	const index = [
 		'technology',
 		'financial-services',
@@ -164,27 +165,9 @@ export function sectorColor(sectorSlug: string): string {
 		'energy',
 		'basic-materials',
 		'utilities',
-		'real-estate',
-		'unknown'
+		'real-estate'
 	].indexOf(sectorSlug)
-	return CHART_COLORS[index < 0 ? 0 : index % CHART_COLORS.length]
-}
-
-export function categoryColor(index: number): string {
-	return CHART_COLORS[Math.abs(index) % CHART_COLORS.length]
-}
-
-export function treemapChildColors(parentColor: string, count: number): Array<string> {
-	if (count <= 1) return [parentColor]
-
-	const red = parseInt(parentColor.slice(1, 3), 16)
-	const green = parseInt(parentColor.slice(3, 5), 16)
-	const blue = parseInt(parentColor.slice(5, 7), 16)
-
-	return Array.from({ length: count }, (_, index) => {
-		const ratio = 0.12 + (index / (count - 1)) * 0.34
-		return `rgb(${Math.round(red + (255 - red) * ratio)}, ${Math.round(green + (255 - green) * ratio)}, ${Math.round(blue + (255 - blue) * ratio)})`
-	})
+	return chartColor(Math.max(index, 0))
 }
 
 export function ReturnMatrix({

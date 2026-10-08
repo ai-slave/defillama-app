@@ -1,3 +1,4 @@
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchStablecoinChartAllApi, fetchStablecoinDominanceAllApi } from '~/containers/Stablecoins/api'
 import type { StablecoinDominanceChartPoint } from '~/containers/Stablecoins/api.types'
@@ -6,7 +7,6 @@ import { stableCacheKey } from '~/server/api/cacheKey'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
 import { cachedJsonResult, cachedResult, type CachedJsonPayload } from '~/server/api/resultCache'
 import {
-	BREAKDOWN_COLOR_PALETTE,
 	buildAlignedTopAndOthers,
 	filterOutToday,
 	normalizeDailyPairs,
@@ -124,10 +124,11 @@ async function getStablecoinByChainBreakdownData({
 
 	candidates.sort((a, b) => b.lastValue - a.lastValue)
 	const picked = topN === null ? candidates : candidates.slice(0, Math.min(topN, candidates.length))
-	const pickedSeries: Array<ChartSeries> = picked.map((entry, index) => {
-		const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
-		return { name: entry.name, data: entry.data, ...(color === undefined ? {} : { color }) }
-	})
+	const pickedSeries: Array<ChartSeries> = picked.map((entry, index) => ({
+		name: entry.name,
+		data: entry.data,
+		color: chartColor(index)
+	}))
 	let scopedTotalPairs = base.totalPairs
 	if (includeSet || allowedCategoryNames !== null) {
 		const totalsByTimestamp = new Map<number, number>()
@@ -150,7 +151,7 @@ async function getStablecoinByChainBreakdownData({
 				break
 			}
 		}
-		if (hasOthers) finalSeries.push({ name: `Others (${othersCount} chains)`, data: othersData, color: '#999999' })
+		if (hasOthers) finalSeries.push({ name: `Others (${othersCount} chains)`, data: othersData, color: OTHERS_COLOR })
 	}
 	addApiRoutePhase('stablecoin_project', Date.now() - projectStartedAt)
 

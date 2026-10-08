@@ -12,10 +12,10 @@ import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesTimeSeriesRow
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { chartColor } from '~/constants/colors'
 import { PROTOCOL_LIST_ADDITIVE_TVL_KEYS, type ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import { buildExtraTvlCharts, buildTvlChart } from '~/containers/ProtocolOverview/tvlChart'
-import { getNDistinctColors } from '~/utils'
 import { getCompareProtocolExtraTvlKeys, getCompareProtocolTvlSettings } from './requestPlan'
 
 export type CompareProtocolTvlCharts = {
@@ -79,7 +79,6 @@ export function buildCompareProtocolsChartData({
 }) {
 	const tvlSettings = getCompareProtocolTvlSettings(extraTvlEnabled)
 	const seriesNames = protocolCharts.map((protocol) => protocol.name)
-	const distinctColors = getNDistinctColors(protocolCharts.length)
 	const rowMap = new Map<number, MultiSeriesTimeSeriesRow>()
 	for (const [seriesIndex, protocol] of protocolCharts.entries()) {
 		for (const [timestamp, value] of composeProtocolTvlChart({ ...protocol, extraTvlEnabled: tvlSettings })) {
@@ -95,14 +94,12 @@ export function buildCompareProtocolsChartData({
 	const source = Array.from(rowMap.values()).sort((a, b) => a[0] - b[0])
 	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (const [index, protocolName] of seriesNames.entries()) {
-		const color = distinctColors[index]
-		if (color === undefined) throw new Error(`Compare protocol palette is missing color ${index}`)
 		charts.push({
 			type: 'line',
 			name: protocolName,
 			encode: { x: 0, y: index + 1 },
 			stack: protocolName,
-			color
+			color: chartColor(index)
 		})
 	}
 

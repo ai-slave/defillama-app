@@ -31,6 +31,13 @@ Draw every chart with the shared renderer for its shape; `MultiSeriesChart` hand
 - Pass a picker its URL keys and options and let it read its own selection. The `src/components/Select/query.ts` header lists the URL rules.
 - A local selection's `scope` names the entity and the chart, such as `${chain}:pie`, so a page that stays mounted while the entity changes starts from the default. The `src/components/Select/localSelection.ts` header lists the local rules.
 
+## Series colors and Others
+
+- Series take `chartColor(rank)` from `src/constants/colors.ts` in the order the chart ranks them. A series that keeps its place while a picker changes keeps its color.
+- A chart without a picker draws at most `CHART_SERIES_LIMIT` (10) named series plus one "Others" in `OTHERS_COLOR`, summed per point and drawn last. With a picker, the default selection is the top 10 and the rest fold into "Others"; a user who picks more gets repeating colors.
+- A treemap's children are `childColors(parent, n)`; a treemap does not fold, because every tile carries its label.
+- Up/down, supply/borrow, risk tiers and brand colors that come with the data keep their meaning-based colors.
+
 ## Share views
 
 - A share view measures every value against the whole population the page's URL filters select.

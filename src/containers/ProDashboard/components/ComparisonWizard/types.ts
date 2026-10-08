@@ -39,7 +39,6 @@ export interface MetricWithAvailability {
 	metric: string
 	title: string
 	chartType: string
-	color: string
 	availableCount: number
 	totalCount: number
 	isValid: boolean

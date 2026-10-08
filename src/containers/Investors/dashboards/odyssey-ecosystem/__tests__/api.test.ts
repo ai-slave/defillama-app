@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { assignColors, chartToModel, defaultZoomOptions, zoomStartPct, type ChartData } from '../api'
+import { chartToModel, defaultZoomOptions, zoomStartPct, type ChartData } from '../api'
 
 describe('Odyssey chart API contracts', () => {
 	test('aligns date and series arrays while preserving missing observations', () => {
@@ -20,7 +20,7 @@ describe('Odyssey chart API contracts', () => {
 		])
 	})
 
-	test('builds deterministic zoom and color configuration', () => {
+	test('builds deterministic zoom configuration', () => {
 		const dates = ['2026-01-01', '2026-02-01', '2026-03-01']
 		expect(zoomStartPct(dates, '2026-02-01')).toBe(50)
 		expect(defaultZoomOptions(50)).toEqual({
@@ -30,6 +30,5 @@ describe('Odyssey chart API contracts', () => {
 			]
 		})
 		expect(defaultZoomOptions(0)).toBeUndefined()
-		expect(Object.keys(assignColors(['Z', 'A']))).toEqual(['A', 'Z'])
 	})
 })

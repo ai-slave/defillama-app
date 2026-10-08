@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
-import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
 import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp, type ApiUnixSeconds } from '../../api.types'
 
 const BASE = '/api/public/odyssey-ecosystem'
@@ -77,15 +76,6 @@ export function defaultZoomOptions(start: number) {
 			{ start, end: 100 }
 		]
 	}
-}
-
-export function assignColors(names: Array<string>): Record<string, string> {
-	const colors = {}
-	const sorted = names.toSorted()
-	for (let i = 0; i < sorted.length; i++) {
-		colors[sorted[i]] = EXTENDED_COLOR_PALETTE[i % EXTENDED_COLOR_PALETTE.length]
-	}
-	return colors
 }
 
 /* ──────────────────────────── metadata ──────────────────────────── */

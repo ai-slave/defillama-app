@@ -12,6 +12,7 @@ import {
 	getComposerGrouping,
 	type MultiChartInputSeries
 } from '../multiChartSeries'
+import { useComposerSeriesColors } from './useComposerSeriesColors'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -26,18 +27,16 @@ interface CombinedChartPreviewProps {
 
 export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProps) {
 	const { getProtocolInfo } = useProDashboardCatalog()
+	const colors = useComposerSeriesColors(composerItems, true)
 
 	const previewGrouping = getComposerGrouping(composerItems)
 	const chartView = useMemo(() => {
 		const series: Array<MultiChartInputSeries> = []
-		let colorIndex = 0
-
 		for (const item of composerItems) {
 			if (item.data.length > 0) {
 				const displayName =
 					item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
-				series.push(buildComposerPreviewSeries(item, previewGrouping, displayName, colorIndex))
-				colorIndex++
+				series.push(buildComposerPreviewSeries(item, previewGrouping, displayName, colors[item.id]))
 			}
 		}
 
@@ -47,7 +46,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 			showPercentage: false,
 			stackSeries: false
 		})
-	}, [getProtocolInfo, composerItems, previewGrouping])
+	}, [getProtocolInfo, composerItems, previewGrouping, colors])
 
 	const anyLoading = composerItems.some((item) => item.isLoading)
 

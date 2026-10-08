@@ -16,13 +16,14 @@ import {
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { useLocalSelectionWithRemainder } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { chartColor, OTHERS_COLOR } from '~/constants/colors'
 import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
-import { getNDistinctColors, slug } from '~/utils'
+import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
 import type { IAdapterBreakdownChartData } from './api.types'
@@ -37,12 +38,6 @@ const EMPTY_PROTOCOL_BREAKDOWN_DATASET: MultiSeriesTimeSeriesDataset = {
 type ProtocolBreakdownChartPresentation = {
 	dataset: MultiSeriesTimeSeriesDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
-}
-
-function getPaletteColor(colors: Array<string>, index: number): string {
-	const color = colors[index]
-	if (color === undefined) throw new Error(`Protocol breakdown palette is missing color ${index}`)
-	return color
 }
 
 export function buildProtocolBreakdownChartPresentation({
@@ -112,7 +107,6 @@ export function buildProtocolBreakdownChartPresentation({
 		}
 	}
 
-	const colors = getNDistinctColors(seriesNames.length)
 	const chartType: 'line' | 'bar' = isCumulative ? 'line' : 'bar'
 	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (let index = 0; index < seriesNames.length; index++) {
@@ -123,7 +117,7 @@ export function buildProtocolBreakdownChartPresentation({
 			name,
 			encode: { x: 0, y: index + 1 },
 			stack: 'chartType',
-			color: getPaletteColor(colors, index)
+			color: name === 'Others' ? OTHERS_COLOR : chartColor(index)
 		})
 	}
 

@@ -10,6 +10,7 @@ import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
 import { getProDashboardChartTypeConfig } from '../types'
+import { getChartEntityKey, getDashboardEntityColors, getMultiChartSeriesColors } from '../utils/colorManager'
 import { buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
 import { TextCard } from './TextCard'
 import UnifiedTable from './UnifiedTable'
@@ -41,9 +42,9 @@ const generateFakeChartData = (baseValue: number, volatility = 0.1): MultiSeries
 function DemoChartCard({ chart }: { chart: ChartConfig }) {
 	const chartTypeDetails = getProDashboardChartTypeConfig(chart.type) ?? {
 		title: chart.type.toUpperCase(),
-		color: '#2172E5',
 		chartType: 'area'
 	}
+	const color = DEMO_ENTITY_COLORS[getChartEntityKey(chart)]
 	const itemName = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
 
 	const dataset = React.useMemo<MultiSeriesChartDataset>(
@@ -68,12 +69,12 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 				type: chartTypeDetails.chartType === 'bar' ? 'bar' : 'line',
 				name: 'Value',
 				encode: { x: 'timestamp', y: 'Value' },
-				color: chartTypeDetails.color,
+				color,
 				stack: 'value',
 				large: false
 			}
 		],
-		[chartTypeDetails.chartType, chartTypeDetails.color]
+		[chartTypeDetails.chartType, color]
 	)
 
 	return (
@@ -103,14 +104,6 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 	)
 }
 
-const DEMO_CHART_COLORS = ['#2172E5', '#5CCA93', '#F2994A'] as const
-
-const getDemoChartColor = (index: number): string => {
-	const color = DEMO_CHART_COLORS[index % DEMO_CHART_COLORS.length]
-	if (!color) throw new Error('Demo chart color palette must not be empty')
-	return color
-}
-
 const normalizeDemoBaseType = (chartType: string): MultiChartInputSeries['baseType'] => {
 	if (chartType === 'bar' || chartType === 'area') return chartType
 	return 'line'
@@ -118,6 +111,7 @@ const normalizeDemoBaseType = (chartType: string): MultiChartInputSeries['baseTy
 
 function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 	const chartView = React.useMemo(() => {
+		const colors = getMultiChartSeriesColors(multi.items, DEMO_ENTITY_COLORS)
 		const series: Array<MultiChartInputSeries> = multi.items.map((item, index) => {
 			const fakeData = generateFakeChartData(
 				30_000_000 + index * 10_000_000, // Different base values for each series
@@ -139,7 +133,7 @@ function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 				name: `${item.subjectType === 'protocol' ? item.protocol : item.chain} ${chartType.title}`,
 				baseType: normalizeDemoBaseType(chartType.chartType),
 				data,
-				color: getDemoChartColor(index),
+				color: colors[item.id],
 				metricType: item.type
 			}
 		})
@@ -374,6 +368,16 @@ const demoMultiCharts: Array<MultiChartConfig> = [
 		colSpan: 2
 	}
 ]
+
+// The demo colours its entities like a dashboard would, in the order the cards appear on the page.
+const DEMO_ENTITY_COLORS = getDashboardEntityColors([
+	...demoCharts.slice(0, 2),
+	demoMultiCharts[0],
+	...demoCharts.slice(2, 4),
+	demoMultiCharts[1],
+	...demoCharts.slice(4),
+	demoMultiCharts[2]
+])
 
 const demoTextCard: TextConfig = {
 	id: 'demo-text-intro',

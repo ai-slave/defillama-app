@@ -4,6 +4,7 @@ import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/co
 import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
+import { CHART_SERIES_LIMIT, chartColor, OTHERS_COLOR } from '~/constants/colors'
 import { ADAPTER_DATA_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchProtocolChainBreakdownData } from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
@@ -174,7 +175,7 @@ export function ChainBreakdownChart({
 	subtitle,
 	protocol = DEX,
 	valueSymbol = '$',
-	limit = 12
+	limit = CHART_SERIES_LIMIT
 }: {
 	metric: Metric
 	title: string
@@ -211,12 +212,14 @@ export function ChainBreakdownChart({
 			if (existing) chains[index] = merged
 			else chains.push(merged)
 		}
-		return chains.sort((a, b) => {
+		chains.sort((a, b) => {
 			const aOthers = a.name.startsWith('Others'),
 				bOthers = b.name.startsWith('Others')
 			if (aOthers !== bOthers) return aOthers ? 1 : -1
 			return total(b) - total(a)
 		})
+		// Chains take the palette by their rank in this legend, not the server's ranking.
+		return chains.map((s, rank) => ({ ...s, color: s.name.startsWith('Others') ? OTHERS_COLOR : chartColor(rank) }))
 	}, [data, networkFee.data])
 	const chartSeries = useMemo(() => aggregate(series, view, true), [series, view])
 	return (

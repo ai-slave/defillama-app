@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
+import { chartColor } from '~/constants/colors'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -43,32 +44,30 @@ const TAB_OPTIONS = [
 const LINEAR_PERP_OI: SeriesSpec = {
 	key: 'total_linear_perp_oi',
 	label: 'USD perp OI',
-	color: '#e48b52',
+	color: chartColor(3),
 	type: 'line',
 	right: true
 }
 const INVERSE_PERP_OI: SeriesSpec = {
 	key: 'total_inverse_perp_oi',
 	label: 'COIN perp OI',
-	color: '#d76184',
+	color: chartColor(4),
 	type: 'line',
 	right: true
 }
-
-const LIQUIDITY_COLORS = { spot: '#5c9cf5', perp: '#9b7cf7', cex: '#9b7cf7', dex: '#33b38f' }
 
 const ACTIVE_LIQUIDITY: Record<'spot' | 'linear_perp', SeriesSpec> = {
 	spot: {
 		key: 'total_spot_active_liquidity',
 		label: 'Spot liquidity',
-		color: LIQUIDITY_COLORS.spot,
+		color: chartColor(0),
 		type: 'line',
 		right: true
 	},
 	linear_perp: {
 		key: 'total_linear_perp_active_liquidity',
 		label: 'Perp liquidity',
-		color: LIQUIDITY_COLORS.perp,
+		color: chartColor(1),
 		type: 'line',
 		right: true
 	}
@@ -80,28 +79,28 @@ const ACTIVE_LIQUIDITY: Record<'spot' | 'linear_perp', SeriesSpec> = {
 // COIN perps carry no liquidity line because no band is computed for them.
 const TAB_SERIES: Record<DirectoryOverviewTab, Array<SeriesSpec>> = {
 	total: [
-		{ key: 'total_spot_volume', label: 'Spot volume', color: '#5c9cf5', type: 'bar', stack: 'volume' },
-		{ key: 'total_linear_perp_volume', label: 'USD perp volume', color: '#9b7cf7', type: 'bar', stack: 'volume' },
-		{ key: 'total_inverse_perp_volume', label: 'COIN perp volume', color: '#33b38f', type: 'bar', stack: 'volume' },
+		{ key: 'total_spot_volume', label: 'Spot volume', color: chartColor(0), type: 'bar', stack: 'volume' },
+		{ key: 'total_linear_perp_volume', label: 'USD perp volume', color: chartColor(1), type: 'bar', stack: 'volume' },
+		{ key: 'total_inverse_perp_volume', label: 'COIN perp volume', color: chartColor(2), type: 'bar', stack: 'volume' },
 		LINEAR_PERP_OI,
 		INVERSE_PERP_OI,
 		ACTIVE_LIQUIDITY.spot,
 		ACTIVE_LIQUIDITY.linear_perp
 	],
 	spot: [
-		{ key: 'cex_spot_volume', label: 'CEX', color: '#9b7cf7', type: 'bar', stack: 'volume' },
-		{ key: 'dex_spot_volume', label: 'DEX', color: '#33b38f', type: 'bar', stack: 'volume' },
+		{ key: 'cex_spot_volume', label: 'CEX', color: chartColor(1), type: 'bar', stack: 'volume' },
+		{ key: 'dex_spot_volume', label: 'DEX', color: chartColor(2), type: 'bar', stack: 'volume' },
 		ACTIVE_LIQUIDITY.spot
 	],
 	linear_perp: [
-		{ key: 'cex_linear_perp_volume', label: 'CEX', color: '#9b7cf7', type: 'bar', stack: 'volume' },
-		{ key: 'dex_linear_perp_volume', label: 'DEX', color: '#33b38f', type: 'bar', stack: 'volume' },
+		{ key: 'cex_linear_perp_volume', label: 'CEX', color: chartColor(1), type: 'bar', stack: 'volume' },
+		{ key: 'dex_linear_perp_volume', label: 'DEX', color: chartColor(2), type: 'bar', stack: 'volume' },
 		LINEAR_PERP_OI,
 		ACTIVE_LIQUIDITY.linear_perp
 	],
 	inverse_perp: [
-		{ key: 'cex_inverse_perp_volume', label: 'CEX', color: '#9b7cf7', type: 'bar', stack: 'volume' },
-		{ key: 'dex_inverse_perp_volume', label: 'DEX', color: '#33b38f', type: 'bar', stack: 'volume' },
+		{ key: 'cex_inverse_perp_volume', label: 'CEX', color: chartColor(1), type: 'bar', stack: 'volume' },
+		{ key: 'dex_inverse_perp_volume', label: 'DEX', color: chartColor(2), type: 'bar', stack: 'volume' },
 		INVERSE_PERP_OI
 	]
 }
