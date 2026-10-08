@@ -8,6 +8,7 @@ import { FEATURES_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
+import { fieldErrorTexts } from '~/utils/testing/fieldErrors'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../AppMetadataContext'
@@ -106,7 +107,7 @@ async function typeName(value: string) {
 		field.dispatchEvent(new Event('input', { bubbles: true }))
 	})
 }
-const errorTexts = () => [...document.querySelectorAll('[role="dialog"] .text-error')].map((node) => node.textContent)
+const errorTexts = () => fieldErrorTexts(document.querySelector('[role="dialog"]')!)
 async function waitFor(check: () => void) {
 	await waitForUi(async () => {
 		await act(async () => {

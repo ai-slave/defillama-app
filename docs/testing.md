@@ -48,6 +48,7 @@ Mock only at boundaries:
 - Assert calls only for `fetch`, navigation, emitted events, and callbacks the test supplies.
 - Assert a request's URL, headers or body only where our own logic chose them: a filter, a cursor, a branch on user input. A fixed endpoint, an auth or secret header, or a body that is the input as JSON is a copy of the code. It cannot catch a wrong env var, a missing key or a broken upstream, and it fails only on intended changes.
 - Accessibility semantics (labels, roles, focus, expanded state) are behavior. Assert them.
+- Read field errors with `fieldErrorTexts` from `src/utils/testing/fieldErrors.ts` (the invalid control's error description), never by the error colour class: a request failure in the same colour is not a field error.
 - A colour or series cap is a design value, not behavior. Assert which role a series gets through the constants (`chartColor(rank)`, `OTHERS_COLOR`, `CHART_UP`) and size fold tests from `CHART_SERIES_LIMIT`; to test a colour transform (brightening, mixing), pass fixed input colours. A palette hex or a literal cap in a test fails on every palette change and catches nothing.
 - A test of an action that removes, swaps or disables the focused control asserts where focus lands, and covers the opposite edge: the last item removed, the only row, the end page.
 - Tests read results through the public API, never through getters that expose internal state.
