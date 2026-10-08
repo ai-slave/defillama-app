@@ -32,6 +32,7 @@ import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 
 // Keyboard hints under the edit box.
@@ -51,16 +52,13 @@ function StreamingChartPlaceholder() {
 }
 
 // Every state of a generated image takes the finished image's frame (max-w-sm, its aspect ratio or square).
-const IMAGE_FRAME =
-	'relative my-2 w-full max-w-sm overflow-hidden rounded-lg border border-medium bg-surface-elevated-2'
+// The frame has no fill of its own: a Skeleton fills it while loading, and the image or the error fill replaces it.
+const IMAGE_FRAME = 'relative my-2 w-full max-w-sm overflow-hidden rounded-lg border border-medium'
 
 function StreamingImagePlaceholder() {
 	return (
 		<div className={`${IMAGE_FRAME} flex items-center justify-center`} style={{ aspectRatio: '1 / 1' }}>
-			<div
-				aria-hidden="true"
-				className="absolute inset-0 bg-linear-to-br from-brand-muted to-transparent motion-safe:animate-pulse"
-			/>
+			<Skeleton className="absolute inset-0" />
 			<div role="status" className="relative flex flex-col items-center gap-1.5 body-sm text-tertiary">
 				<Icon name="image-plus" height={20} width={20} />
 				<p>Generating image…</p>
@@ -96,7 +94,7 @@ function GeneratedImageBlock({
 			<div
 				role="img"
 				aria-label={prompt ? `Failed to load generated image for prompt: ${prompt}` : 'Failed to load generated image'}
-				className={`${IMAGE_FRAME} flex flex-col items-center justify-center gap-2 p-6 text-center text-secondary`}
+				className={`${IMAGE_FRAME} flex flex-col items-center justify-center gap-2 bg-surface-elevated-2 p-6 text-center text-secondary`}
 				style={{ aspectRatio: aspect ?? '1 / 1' }}
 			>
 				<Icon name="alert-triangle" height={20} width={20} className="text-data-down" />
@@ -117,12 +115,7 @@ function GeneratedImageBlock({
 	const style = aspect ? { aspectRatio: aspect } : undefined
 	const content = (
 		<>
-			{!loaded ? (
-				<div
-					aria-hidden="true"
-					className="absolute inset-0 bg-linear-to-br from-brand-muted to-transparent motion-safe:animate-pulse"
-				/>
-			) : null}
+			{!loaded ? <Skeleton className="absolute inset-0" /> : null}
 			<img
 				src={url}
 				alt={prompt || 'Generated image'}

@@ -1,9 +1,9 @@
 import { useId } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
-import { proInputStyles } from '../../ui'
 import { ChartCreationModeToggle } from './ChartCreationModeToggle'
 
 /** The combined card's optional name, asked only while the series combine into one chart. */
@@ -14,7 +14,7 @@ export function ComposerNameField({ value, onChange }: { value: string; onChange
 			<label htmlFor={id} className="mb-1 block label-sm text-secondary">
 				Card name (optional)
 			</label>
-			<input id={id} type="text" value={value} onChange={(e) => onChange(e.target.value)} className={proInputStyles} />
+			<Input id={id} type="text" value={value} onChange={(e) => onChange(e.target.value)} className="w-full" />
 		</div>
 	)
 }

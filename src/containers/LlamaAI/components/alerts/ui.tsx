@@ -4,7 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { TAG_GROUP_BUTTON_SIZES, TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 
 const settingsIntegrationsLinkClass =
@@ -30,8 +30,6 @@ export function SettingsIntegrationsLink() {
 		</BasicLink>
 	)
 }
-
-export const alertInputClass = `${inputStyles} w-full`
 
 export const alertFieldLabelClass = 'label-sm text-secondary'
 

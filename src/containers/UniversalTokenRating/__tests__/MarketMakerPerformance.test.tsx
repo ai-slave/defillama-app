@@ -3,8 +3,11 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { MarketMakerPerformance } from '../MarketMakerPerformance'
+
+// The provider picker is the shared Select, which reads the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
 
 describe('MarketMakerPerformance', () => {
 	test('says the data is not disclosed when no provider data exists', () => {

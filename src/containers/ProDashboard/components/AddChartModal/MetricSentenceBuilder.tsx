@@ -15,6 +15,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldInputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
@@ -466,13 +467,16 @@ export function MetricSentenceBuilder({
 				return (
 					<div className="max-h-[320px] w-full overflow-y-auto overscroll-contain" data-metric-token="true">
 						<div className="sticky top-0 border-b border-subtle bg-surface p-1.5">
-							<input
-								value={searchTerm}
-								onChange={(event) => setSearchTerm(event.target.value)}
-								aria-label="Search metrics"
-								placeholder="Search metrics…"
-								className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-md focus:ring-1 focus:ring-brand focus:outline-hidden"
-							/>
+							<div className="relative">
+								<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+								<Input
+									value={searchTerm}
+									onChange={(event) => setSearchTerm(event.target.value)}
+									aria-label="Search metrics"
+									placeholder="Search metrics…"
+									className={searchFieldInputPlacementStyles}
+								/>
+							</div>
 						</div>
 						<div className="p-1.5">
 							{baseMetricTypes.length === 0 ? (
@@ -546,12 +550,15 @@ export function MetricSentenceBuilder({
 									</div>
 								) : null}
 								<div className="rounded-lg border border-dashed border-medium bg-surface p-2.5 shadow-inner">
-									<Combobox
-										autoFocus
-										placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
-										className="mb-1.5 w-full rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-md focus:ring-1 focus:ring-brand focus:outline-hidden"
-										aria-label="Search"
-									/>
+									<div className="relative mb-1.5">
+										<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+										<Combobox
+											autoFocus
+											placeholder={subjectTab === 'chain' ? 'Search chains…' : 'Search protocols…'}
+											className={searchFieldInputStyles}
+											aria-label={subjectTab === 'chain' ? 'Search chains' : 'Search protocols'}
+										/>
+									</div>
 									{subjectTab === 'chain' ? (
 										filteredChainOptions.length > 0 ? (
 											<ComboboxList ref={chainListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">

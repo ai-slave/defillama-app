@@ -6,6 +6,7 @@ import { NEWSLETTERS, type NewsletterKey, useNewsletterSubscription } from '~/ho
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 
 const initialSelected: Record<NewsletterKey, boolean> = {
 	newsletter: true,
@@ -260,16 +261,9 @@ export default function NewslettersPage() {
 									</p>
 								</div>
 
-								<label className="flex flex-col gap-2">
-									<span className="label-md text-primary">Email address</span>
-									<input
-										type="email"
-										required
-										value={email}
-										onChange={onEmailChange}
-										placeholder="you@example.com"
-										className="h-12 rounded-lg border border-medium bg-surface px-3 body-md text-primary outline-hidden transition-colors placeholder:text-tertiary focus-visible:border-link"
-									/>
+								<label className="flex flex-col gap-1.5">
+									<span className="label-sm text-secondary">Email address</span>
+									<Input type="email" required value={email} onChange={onEmailChange} placeholder="you@example.com" />
 								</label>
 
 								<Button

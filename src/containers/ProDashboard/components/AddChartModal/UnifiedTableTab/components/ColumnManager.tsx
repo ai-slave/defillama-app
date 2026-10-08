@@ -43,6 +43,7 @@ import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/
 import { LazySubscribeProModal } from '~/containers/Subscription/shared/SubscribeCards/LazySubscribeProModal'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { codeInputStyles, Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { type CustomColumnDraft, EMPTY_CUSTOM_COLUMN_DRAFT } from '../hooks/useUnifiedTableWizard'
@@ -663,17 +664,12 @@ export function ColumnManager({
 
 				<div className="border-b border-subtle p-2">
 					<div className="relative">
-						<Icon
-							name="search"
-							width={12}
-							height={12}
-							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-tertiary"
-						/>
-						<input
+						<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+						<Input
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label="Search columns"
 							placeholder="Search columns…"
-							className="w-full rounded-md border border-medium py-1.5 pr-2.5 pl-8 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+							className={searchFieldInputPlacementStyles}
 						/>
 					</div>
 				</div>
@@ -776,14 +772,13 @@ export function ColumnManager({
 						<div className="flex flex-col gap-1">
 							<label className="flex flex-col gap-1 label-sm text-secondary">
 								Column name
-								<input
+								<Input
 									type="text"
 									value={customName}
 									onChange={(e) => setDraft({ ...draft, name: e.target.value })}
 									placeholder="e.g., TVL to market cap"
 									aria-invalid={customName.trim() !== '' && nameError !== null}
 									aria-describedby={nameError && (customName || customExpression) ? `${fieldId}-name-error` : undefined}
-									className="rounded-md border border-medium px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 								/>
 							</label>
 							{/* The save button stays disabled until the name is valid; say why once the reader has typed something. */}
@@ -808,13 +803,8 @@ export function ColumnManager({
 									onKeyDown={handleExpressionKeyDown}
 									onFocus={() => customExpression && setShowAutocomplete(true)}
 									placeholder="e.g., tvl / mcap, fees24h * 365"
-									className={`w-full rounded-md border px-2 py-1.5 pr-8 mono-sm text-primary placeholder:text-tertiary focus:outline-hidden ${
-										customExpression && !expressionValidation.isValid
-											? 'border-error'
-											: customExpression && expressionValidation.isValid
-												? 'border-success'
-												: 'border-medium focus:border-brand'
-									}`}
+									aria-invalid={Boolean(customExpression) && !expressionValidation.isValid}
+									className={`${codeInputStyles} w-full pr-8`}
 								/>
 								{customExpression ? (
 									<div className="absolute top-1/2 right-2 -translate-y-1/2">

@@ -15,6 +15,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { ChartPanelBody, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverRowStyles } from '~/ui/Popover'
@@ -478,15 +479,15 @@ function GrowthReadout({
 								)
 							})}
 						</div>
-						<label className="flex flex-col gap-1.5 border-t border-subtle px-3 py-3 body-sm text-secondary">
+						<label className="flex flex-col gap-1.5 border-t border-subtle px-3 py-3 label-sm text-secondary">
 							Or pick a day
-							<input
+							<Input
 								type="date"
 								value={anchoredOn ?? ''}
 								{...(firstDay ? { min: firstDay } : {})}
 								{...(lastDay ? { max: lastDay } : {})}
 								onChange={(event) => setQuery({ growthFrom: event.target.value || undefined, [rangeKey]: undefined })}
-								className={readoutFieldStyles}
+								className="cursor-pointer dark:scheme-dark"
 							/>
 						</label>
 					</PopoverSurface>

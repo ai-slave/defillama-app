@@ -1,11 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
-import { AuthDialogHeader, authInputStyles } from '~/auth/AuthDialog'
+import { AuthDialogHeader } from '~/auth/AuthDialog'
 import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
+import { oneTimeCodeInputStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
 export function VerifyEmailDialog({
@@ -112,10 +113,11 @@ export function VerifyEmailDialog({
 									maxLength={6}
 									required
 									placeholder="000000"
-									className={`${authInputStyles} text-center body-lg tracking-[0.4em] placeholder:tracking-normal`}
+									className={`${oneTimeCodeInputStyles} w-full`}
 									value={otp}
 									// Read-only rather than disabled while a request runs, so the field keeps focus.
 									readOnly={pending}
+									aria-busy={pending || undefined}
 									aria-invalid={verifyFailure !== null}
 									aria-describedby={error ? errorId : undefined}
 									onChange={(event) => {

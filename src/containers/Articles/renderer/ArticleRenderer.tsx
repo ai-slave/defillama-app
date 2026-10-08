@@ -574,7 +574,7 @@ function ActivePill() {
 	return (
 		<span
 			aria-hidden
-			className="pointer-events-none absolute top-1/2 right-0 h-5 w-1 -translate-y-1/2 rounded-[2px] bg-tertiary"
+			className="pointer-events-none absolute top-1/2 right-0 h-5 w-1 -translate-y-1/2 rounded-[2px] bg-border-strong"
 		/>
 	)
 }

@@ -95,7 +95,7 @@ export function MultiSelectCombobox({
 		>
 			<span
 				ref={anchorRef}
-				className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-lg border border-medium bg-page focus-within:border-brand"
+				className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-lg border border-medium bg-page bg-clip-padding focus-within:border-brand not-focus-within:hover:border-strong"
 			>
 				{selectedValues.length > 0 ? (
 					<div className="flex flex-wrap items-center gap-1 pl-1">

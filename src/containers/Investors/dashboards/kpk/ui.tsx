@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
@@ -224,7 +225,7 @@ export function LedgerTile({
 		<div className="flex min-w-0 flex-col gap-2 border-t border-subtle p-5 text-center first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
 			<span className="label-sm tracking-wider text-secondary uppercase">{label}</span>
 			{value == null ? (
-				<div className="mx-auto h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
+				<Skeleton className="mx-auto h-8 w-28" />
 			) : (
 				<span
 					className={`flex mono-xl tracking-tight tabular-nums ${suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'} ${valueClass ?? 'text-primary'}`}
@@ -621,7 +622,7 @@ export function DataTable<Row extends object>({
 	freeze?: 'column' | 'panes'
 	empty?: string
 } & RowIdentity<Row>) {
-	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
+	if (!rows) return <Skeleton className="h-24" />
 	if (rows.length === 0) return <div className="px-2 py-4 body-sm text-secondary">{empty}</div>
 
 	const footerRows: Array<FooterRow> = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]

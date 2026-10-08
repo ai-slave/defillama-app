@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon as SharedIcon } from '~/ui/Icon'
+import { codeInputStyles } from '~/ui/Input'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -131,6 +132,8 @@ export function ArticleEditorHeader({
 				{slugEditing ? (
 					<input
 						autoFocus
+						aria-label="Article slug"
+						placeholder="article-slug"
 						value={slugDraft}
 						onChange={(event) => setSlugDraft(event.target.value)}
 						onBlur={commitSlugEdit}
@@ -144,7 +147,7 @@ export function ArticleEditorHeader({
 								cancelSlugEdit()
 							}
 						}}
-						className="w-[24ch] rounded-sm border border-medium bg-page px-1.5 py-0.5 mono-sm text-primary"
+						className={`${codeInputStyles} w-[24ch]`}
 					/>
 				) : (
 					<Button

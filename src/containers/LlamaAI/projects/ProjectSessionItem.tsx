@@ -64,6 +64,7 @@ export function ProjectSessionItem({
 						type="text"
 						name="newTitle"
 						aria-label="Session title"
+						placeholder="Session title"
 						defaultValue={s.title}
 						autoFocus
 						readOnly={isBusy}

@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
 import { useId } from 'react'
 import { useAuthContext } from '~/auth'
-import { authInputStyles } from '~/auth/AuthDialog'
 import { OtpRequestError } from '~/auth/emailVerification'
 import type { GoogleLinkChallenge, SignInFlowStore } from '~/auth/signInFlowStore'
 import { refreshNowSeconds, useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { oneTimeCodeInputStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 
 export function GoogleLinkForm({
@@ -117,6 +117,7 @@ export function GoogleLinkForm({
 					name="code"
 					// Read-only rather than disabled while a request runs, so the field keeps focus.
 					readOnly={pending}
+					aria-busy={pending || undefined}
 					aria-describedby={error ? errorId : undefined}
 					inputMode="numeric"
 					autoComplete="one-time-code"
@@ -124,12 +125,12 @@ export function GoogleLinkForm({
 					maxLength={6}
 					required
 					placeholder="000000"
-					className={`${authInputStyles} text-center body-lg tracking-[0.4em] placeholder:tracking-normal`}
+					className={`${oneTimeCodeInputStyles} peer w-full`}
 					onInput={(event) => {
 						event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 6)
 					}}
 				/>
-				<span className="mt-1 hidden body-sm text-data-down peer-user-invalid:block">Enter the 6-digit code.</span>
+				<span className="mt-1 hidden body-sm text-error peer-user-invalid:block">Enter the 6-digit code.</span>
 			</label>
 			<Button
 				type="submit"

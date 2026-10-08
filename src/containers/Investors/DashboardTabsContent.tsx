@@ -7,6 +7,7 @@ import {
 	useProDashboardDashboard,
 	useProDashboardItemsState
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
+import { Skeleton } from '~/ui/Skeleton'
 import type { DashboardTabConfig } from './dashboardTypes'
 
 const NOOP = () => {}
@@ -24,7 +25,8 @@ const SKELETON_WIDTHS = [
 
 const PLACEHOLDER_COLS = ['', '', '', '', '']
 
-export function SkeletonTable() {
+/** The loading table; `still` when it is the backdrop of a "Coming Soon" note, which waits for nothing. */
+export function SkeletonTable({ still }: { still?: boolean }) {
 	return (
 		<div className="relative overflow-hidden rounded-lg border border-subtle bg-surface">
 			<div className="flex flex-col">
@@ -32,7 +34,7 @@ export function SkeletonTable() {
 					{PLACEHOLDER_COLS.map((_, i) => (
 						// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 						<div key={i} className="flex-1 px-4 py-3.5">
-							<div className="h-2.5 w-16 rounded-full bg-tertiary opacity-40" />
+							<Skeleton className="h-2.5 w-16 rounded-full" still={still} />
 						</div>
 					))}
 				</div>
@@ -41,12 +43,11 @@ export function SkeletonTable() {
 						// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 						key={r}
 						className="flex border-b border-subtle last:border-b-0"
-						style={{ opacity: Math.max(0.15, 0.7 - r * 0.08) }}
 					>
 						{widths.map((w, c) => (
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							<div key={c} className="flex-1 px-4 py-3.5">
-								<div className={`${w} h-3 rounded-full bg-tertiary`} />
+								<Skeleton className={`${w} h-3 rounded-full`} still={still} />
 							</div>
 						))}
 					</div>
@@ -60,7 +61,7 @@ export function SkeletonTable() {
 function ComingSoonSection({ label }: { label: string }) {
 	return (
 		<div className="relative">
-			<SkeletonTable />
+			<SkeletonTable still />
 			<div className="absolute inset-0 flex items-center justify-center">
 				<span className="rounded-full border border-medium bg-surface px-5 py-2.5 title-md tracking-wide text-secondary shadow-lg">
 					{label} — Coming Soon

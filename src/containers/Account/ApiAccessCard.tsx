@@ -4,9 +4,9 @@ import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Switch } from '~/ui/Switch'
 import { formatNumber, formatFixedNumber, formatPercent } from '~/utils/numberFormat'
 import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
-import { ToggleSwitch } from './ToggleSwitch'
 
 const API_CREDITS_LIMIT = 1_000_000
 
@@ -175,11 +175,13 @@ export function ApiAccessCard({
 							Allow extra usage charges{' '}
 							<span className="text-tertiary">({overage.enabled ? 'Enabled' : 'Disabled'})</span>
 						</span>
-						<ToggleSwitch
+						<Switch
+							label="Allow extra usage charges"
+							hideLabel
+							value="overage"
 							checked={overage.enabled}
-							onClick={overage.onToggle}
-							disabled={overage.isPending}
-							aria-label="Allow extra usage charges"
+							onChange={overage.onToggle}
+							isLoading={overage.isPending}
 						/>
 					</div>
 					<p className="body-sm text-tertiary">

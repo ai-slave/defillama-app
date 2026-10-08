@@ -1,7 +1,7 @@
 import { useAuthContext } from '~/auth'
 import { PROMO_EMAILS_TEXT } from '~/containers/Subscription/constants'
 import { Icon } from '~/ui/Icon'
-import { ToggleSwitch } from './ToggleSwitch'
+import { Switch } from '~/ui/Switch'
 
 export function SettingsCard() {
 	const { user, setPromotionalEmails, loaders } = useAuthContext()
@@ -24,11 +24,13 @@ export function SettingsCard() {
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center justify-between">
 						<span className="body-md text-primary">Receive promotional emails</span>
-						<ToggleSwitch
+						<Switch
+							label="Receive promotional emails"
+							hideLabel
+							value="promo-emails"
 							checked={promoEmailsOn}
-							onClick={handleTogglePromoEmails}
-							disabled={loaders.setPromotionalEmails}
-							aria-label="Receive promotional emails"
+							onChange={handleTogglePromoEmails}
+							isLoading={loaders.setPromotionalEmails}
 						/>
 					</div>
 					<p className="max-w-[400px] body-sm text-tertiary">{PROMO_EMAILS_TEXT}</p>

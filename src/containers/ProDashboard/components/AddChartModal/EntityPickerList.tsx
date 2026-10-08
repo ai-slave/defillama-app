@@ -4,6 +4,7 @@ import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingIndicator } from '~/ui/Status'
 import { getItemIconUrl } from '../../utils'
 
@@ -103,17 +104,13 @@ export function EntityPickerList({
 		<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-subtle">
 			<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2">
 				<div className="relative flex-1">
-					<Icon
-						name="search"
-						width={14}
-						height={14}
-						className="absolute top-1/2 left-2.5 -translate-y-1/2 text-tertiary"
-					/>
-					<input
+					<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+					<Input
 						ref={searchRef}
 						onInput={(e) => setSearch(e.currentTarget.value)}
-						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}...`}
-						className="w-full rounded-md border border-medium bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 body-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						aria-label={`Search ${mode === 'chain' ? 'chains' : 'protocols'}`}
+						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}…`}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</div>
 				{selectedEntities.length > 0 ? (

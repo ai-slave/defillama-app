@@ -6,8 +6,11 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard, SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { StaleText } from '~/ui/StaleText'
+import { Tooltip } from '~/ui/Tooltip'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
 export function SubscribeLayout({
@@ -48,29 +51,31 @@ export function SubscribeLayout({
 							{/* No sign-in here: signed out, the page's own "Sign in to continue" step is the one call to action. */}
 							{isAuthenticated ? (
 								<Ariakit.MenuProvider open={isMenuOpen} setOpen={setIsMenuOpen}>
-									<Ariakit.MenuButton className="flex size-8 items-center justify-center rounded-lg text-secondary transition-colors hover:bg-hover-row hover:text-primary">
-										<Icon name="menu" height={18} width={18} />
-									</Ariakit.MenuButton>
-									<Ariakit.Menu
-										className="z-50 min-w-[180px] rounded-lg border border-medium bg-overlay py-2 shadow-xl backdrop-blur-md"
-										gutter={8}
+									<Tooltip
+										// In place: a portal would render it outside this page\'s theme-dark scope.
+										portal={false}
+										content="Account menu"
+										render={
+											<Ariakit.MenuButton
+												aria-label="Account menu"
+												render={<Button variant="ghost" size="md" square />}
+											/>
+										}
 									>
-										<Ariakit.MenuItem
-											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 label-md text-primary transition-colors hover:bg-hover-row focus:bg-hover-row focus:outline-hidden"
-											render={<BasicLink href="/" />}
-										>
-											<Icon name="arrow-left" height={14} width={14} className="text-tertiary" />
+										<Icon name="menu" className="size-4" aria-hidden="true" />
+									</Tooltip>
+									{/* Portaled like every menu (an in-place drawer would be positioned inside a blurred or sticky header), so it
+									    carries this page's always-dark scope itself. */}
+									<MenuSurface variant="actions" className="theme-dark" aria-label="Account menu">
+										<MenuItem render={<BasicLink href="/" />} className="border-b border-subtle">
+											<Icon name="arrow-left" className="size-3.5 text-tertiary" aria-hidden="true" />
 											Return to Main Page
-										</Ariakit.MenuItem>
-										<div className="my-1 h-px bg-border-subtle" />
-										<Ariakit.MenuItem
-											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 label-md text-primary transition-colors hover:bg-hover-row focus:bg-hover-row focus:outline-hidden"
-											onClick={logout}
-										>
-											<Icon name="x" height={14} width={14} className="text-error" />
+										</MenuItem>
+										<MenuItem onClick={logout}>
+											<Icon name="x" className="size-3.5 text-tertiary" aria-hidden="true" />
 											Logout
-										</Ariakit.MenuItem>
-									</Ariakit.Menu>
+										</MenuItem>
+									</MenuSurface>
 								</Ariakit.MenuProvider>
 							) : null}
 						</div>

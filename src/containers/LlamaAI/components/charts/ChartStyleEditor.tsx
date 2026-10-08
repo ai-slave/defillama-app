@@ -410,6 +410,7 @@ export function ChartStyleEditor({
 						<Input
 							className="w-full"
 							aria-label="Chart title"
+							placeholder="Chart title"
 							value={draft.title}
 							onChange={(e) => update((d) => (d.title = e.target.value))}
 						/>
@@ -465,6 +466,7 @@ export function ChartStyleEditor({
 										<Input
 											className="min-w-48 flex-1"
 											aria-label={`Series ${i + 1} name`}
+											placeholder="Series name"
 											value={s.name}
 											onChange={(e) => update((d) => updateItemAt(d.series, i, (item) => (item.name = e.target.value)))}
 										/>

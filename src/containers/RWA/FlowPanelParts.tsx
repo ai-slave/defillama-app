@@ -1,3 +1,4 @@
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent } from '~/utils/numberFormat'
 import type { IRWAAssetFlowSummary, RWAChainFlowSummary } from './api.types'
@@ -14,11 +15,9 @@ const LOW_COVERAGE_THRESHOLD = 0.5
 
 export function RWAFlowValueShimmer({ label = 'Loading flow value' }: { label?: string }) {
 	return (
-		<span
-			role="status"
-			aria-label={label}
-			className="inline-block h-3 w-12 animate-pulse rounded-sm bg-surface-elevated-2"
-		/>
+		<span role="status" aria-label={label} className="inline-block">
+			<Skeleton className="h-3 w-12" />
+		</span>
 	)
 }
 

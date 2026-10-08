@@ -20,6 +20,13 @@ import { PRO_RWA_ASSETS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQ
 import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
+import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
@@ -200,12 +207,16 @@ export function RWAAssetsDataset({ chain }: { chain?: string }) {
 							}}
 							smol
 						/>
-						<input
-							type="text"
-							placeholder="Search assets..."
-							onInput={(event) => setProjectName(event.currentTarget.value)}
-							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
-						/>
+						<div className={searchFieldInlineWrapperStyles}>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
+								type="text"
+								aria-label="Search assets"
+								placeholder="Search assets…"
+								onInput={(event) => setProjectName(event.currentTarget.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

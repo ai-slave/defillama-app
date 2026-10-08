@@ -4,12 +4,13 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 
 /* ----------------------------------------------------------------------------
    Switch — an on/off toggle with a visible or screen-reader label.
-   40x24 rounded-full track, 16px knob; on = bg-brand, off = elevated-2.
+   40x24 rounded-full track, 16px bg-knob knob; on = bg-brand, off = elevated-2.
    Label is label-sm at gap-2. `hideLabel` keeps the label for assistive tech
    only, for rows whose visible text sits outside the control; `describedBy`
    points the input at that row's description. `disabled` is announced with
    aria-disabled and keeps focus, so a control that is pending or gated does
    not drop the keyboard user; `isLoading` adds a spinner and the same activation guard.
+   Enter toggles like Space, so a switch inside a form never submits it.
 ---------------------------------------------------------------------------- */
 
 export function Switch({
@@ -48,6 +49,12 @@ export function Switch({
 				value={value}
 				checked={checked}
 				onChange={disabled || isLoading ? (event) => event.preventDefault() : onChange}
+				// Enter flips a switch, as Space does; on a native checkbox it would submit the form around it.
+				onKeyDown={(event) => {
+					if (event.key !== 'Enter') return
+					event.preventDefault()
+					if (!disabled && !isLoading) event.currentTarget.click()
+				}}
 				aria-busy={isLoading}
 				aria-describedby={describedBy}
 				className="peer absolute size-[1em] opacity-[0.00001]"
@@ -56,7 +63,7 @@ export function Switch({
 				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${disabled ? 'bg-disabled' : checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
 			>
 				<span
-					className={`block size-4 rounded-full shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${disabled ? 'bg-current text-disabled' : 'bg-white'} ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
+					className={`block size-4 rounded-full shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${disabled ? 'bg-current text-disabled' : 'bg-knob'} ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
 				/>
 				{isLoading ? (
 					<span

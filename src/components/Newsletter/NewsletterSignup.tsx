@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { type ChangeEvent, type FormEvent, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { useAuthContext } from '~/auth'
-import { ToggleSwitch } from '~/containers/Account/ToggleSwitch'
 import { isWalletEmail } from '~/containers/Account/utils'
 import { useIsClient } from '~/hooks/useIsClient'
 import {
@@ -14,6 +13,7 @@ import { Button } from '~/ui/Button'
 import { keepFocus, pageContent } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
+import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface NewsletterSignupProps {
@@ -241,11 +241,13 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							<div key={key} className="flex flex-col gap-1">
 								<div className="flex items-center justify-between gap-4">
 									<span className="body-md text-primary">{label}</span>
-									<ToggleSwitch
+									<Switch
+										label={`Subscribe to ${label}`}
+										hideLabel
+										value={key}
 										checked={selected[key]}
-										onClick={() => toggle(key)}
+										onChange={() => toggle(key)}
 										disabled={isPending}
-										aria-label={`Subscribe to ${label}`}
 									/>
 								</div>
 								<p className="max-w-[400px] body-sm text-tertiary">{description}</p>

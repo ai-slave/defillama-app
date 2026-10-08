@@ -1,6 +1,12 @@
 import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { CSVExportButton } from '../../CSVExportButton'
 
@@ -48,14 +54,15 @@ export function YieldsTableHeader({
 	return (
 		<div className="mb-3 text-primary">
 			<div className="mb-3 flex items-center justify-end gap-4">
-				<div className="flex items-center gap-2">
-					<input
+				<div className={searchFieldInlineWrapperStyles}>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Input
 						type="text"
 						aria-label="Search pools"
 						placeholder="Search pools…"
 						value={poolName}
 						onChange={(e) => setPoolName(e.target.value)}
-						className="w-full rounded-md border border-medium bg-surface px-3 py-1.5 body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+						className={searchFieldInputPlacementStyles}
 					/>
 				</div>
 			</div>

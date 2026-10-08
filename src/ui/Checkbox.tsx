@@ -16,8 +16,11 @@ import type { ComponentProps, ReactNode } from 'react'
    (it submits the form around it). Never pass Ariakit's `clickOnEnter`.
    Keyboard focus on the hidden input draws the ring and row wash on the
    label (`has-focus-visible:`), so callers never track focus. A disabled
-   checkbox dims to 60% with the not-allowed cursor, like Button; its reason
-   stays in visible text.
+   checkbox takes the disabled colors with the not-allowed cursor, like
+   Button; its reason stays in visible text. `isLoading` is the pending state
+   of a toggle that saves: the box keeps its look and its keyboard focus
+   (aria-disabled, not a native disabled that would drop focus), shows the
+   progress cursor and ignores clicks, like a pending Button.
 ---------------------------------------------------------------------------- */
 
 const CHECKBOX_WRAPPER_VARIANTS = {
@@ -38,7 +41,7 @@ const CHECKBOX_WRAPPER_VARIANTS = {
 } as const
 
 const CHECKBOX_INDICATOR_STYLES =
-	'grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-strong bg-transparent text-transparent group-hover:border-medium data-[checked=true]:border-brand data-[checked=true]:bg-brand data-[checked=true]:text-on-brand group-has-disabled:border-disabled group-has-disabled:data-[checked=true]:border-disabled group-has-disabled:data-[checked=true]:bg-disabled group-has-disabled:data-[checked=true]:text-disabled'
+	'grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-strong bg-transparent text-transparent data-[checked=true]:border-brand data-[checked=true]:bg-brand data-[checked=true]:text-on-brand group-has-disabled:border-disabled group-has-disabled:data-[checked=true]:border-disabled group-has-disabled:data-[checked=true]:bg-disabled group-has-disabled:data-[checked=true]:text-disabled'
 
 /** Controlled only: the caller owns `checked` and updates it in onChange. The hidden input's own keyboard focus draws
     the ring on the label (has-focus-visible). */
@@ -46,16 +49,23 @@ interface CheckboxProps extends Omit<ComponentProps<'input'>, 'checked' | 'defau
 	checked: boolean
 	children?: ReactNode
 	variant: keyof typeof CHECKBOX_WRAPPER_VARIANTS
+	isLoading?: boolean
 }
 
-export function Checkbox({ ref, children, variant, ...props }: CheckboxProps) {
+export function Checkbox({ ref, children, variant, isLoading, ...props }: CheckboxProps) {
 	return (
 		<label
 			// A disabled box reads as disabled the way a disabled Button does.
-			className={`${CHECKBOX_WRAPPER_VARIANTS[variant]} has-disabled:cursor-not-allowed has-disabled:text-disabled`}
+			className={`${CHECKBOX_WRAPPER_VARIANTS[variant]} has-disabled:cursor-not-allowed has-disabled:text-disabled has-aria-busy:cursor-progress`}
 		>
 			<Ariakit.VisuallyHidden>
-				<Ariakit.Checkbox {...props} ref={ref} />
+				<Ariakit.Checkbox
+					{...props}
+					ref={ref}
+					disabled={props.disabled || isLoading}
+					accessibleWhenDisabled={isLoading}
+					aria-busy={isLoading || undefined}
+				/>
 			</Ariakit.VisuallyHidden>
 			{/* mt-px centres the 14px box on body-sm's 16px first line. */}
 			<CheckboxIndicator checked={props.checked} className={variant === 'consent' ? 'mt-px' : undefined} />

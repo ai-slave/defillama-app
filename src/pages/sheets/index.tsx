@@ -3,8 +3,11 @@ import Head from 'next/head'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard, SEO } from '~/components/SEO'
 import SheetsContainer from '~/containers/Sheets'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { StaleText } from '~/ui/StaleText'
+import { Tooltip } from '~/ui/Tooltip'
 import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
 export default function Sheets() {
@@ -52,19 +55,23 @@ export default function Sheets() {
 
 						<nav aria-label="Sheets navigation" className="sm:hidden">
 							<Ariakit.MenuProvider placement="bottom-end">
-								<Ariakit.MenuButton
-									aria-label="Open navigation menu"
-									className="flex size-11 items-center justify-center rounded-lg text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+								<Tooltip
+									// In place: a portal would render it outside this page\'s theme-dark scope.
+									portal={false}
+									content="Open navigation menu"
+									render={
+										<Ariakit.MenuButton
+											aria-label="Open navigation menu"
+											render={<Button variant="ghost" size="md" square />}
+										/>
+									}
 								>
-									<Icon name="menu" height={20} width={20} />
-								</Ariakit.MenuButton>
-								<Ariakit.Menu
-									aria-label="Sheets navigation"
-									className="z-50 min-w-[220px] rounded-lg border border-medium bg-overlay py-1.5"
-									gutter={8}
-								>
-									<Ariakit.MenuItem
-										className="flex min-h-11 cursor-pointer items-center px-4 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary focus:bg-hover-row focus:text-primary focus:outline-hidden"
+									<Icon name="menu" className="size-4" aria-hidden="true" />
+								</Tooltip>
+								{/* Portaled like every menu (an in-place drawer would be positioned inside a blurred or sticky header), so it
+								    carries this page's always-dark scope itself. */}
+								<MenuSurface variant="actions" className="theme-dark" aria-label="Sheets navigation">
+									<MenuItem
 										render={
 											<BasicLink
 												href="https://docs.llama.fi/spreadsheet-functions/function-reference"
@@ -73,9 +80,8 @@ export default function Sheets() {
 										}
 									>
 										Functions Reference
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
-										className="flex min-h-11 cursor-pointer items-center px-4 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary focus:bg-hover-row focus:text-primary focus:outline-hidden"
+									</MenuItem>
+									<MenuItem
 										render={
 											<BasicLink
 												href="https://docs.llama.fi/spreadsheet-functions/templates"
@@ -84,14 +90,9 @@ export default function Sheets() {
 										}
 									>
 										Templates
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
-										className="flex min-h-11 cursor-pointer items-center px-4 label-md text-secondary transition-colors hover:bg-hover-row hover:text-primary focus:bg-hover-row focus:text-primary focus:outline-hidden"
-										render={<BasicLink href="/" />}
-									>
-										Return to Main Page
-									</Ariakit.MenuItem>
-								</Ariakit.Menu>
+									</MenuItem>
+									<MenuItem render={<BasicLink href="/" />}>Return to Main Page</MenuItem>
+								</MenuSurface>
 							</Ariakit.MenuProvider>
 						</nav>
 					</div>

@@ -4,6 +4,7 @@ import { buildAlignedCartesianChartModel, type CartesianChartModel } from '~/com
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { Skeleton } from '~/ui/Skeleton'
 import { formatUsd } from '~/utils/numberFormat'
 import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
 import { useEcosystemData, type ChartData } from './ecosystemApi'
@@ -169,11 +170,7 @@ function KpiCard({ label, value }: { label: string; value?: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
 			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			{value ? (
-				<span className="mono-xl text-primary">{value}</span>
-			) : (
-				<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
-			)}
+			{value ? <span className="mono-xl text-primary">{value}</span> : <Skeleton className="h-8 w-24" />}
 		</div>
 	)
 }
@@ -182,11 +179,7 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	return (
 		<div className="flex items-center gap-2 rounded-full border border-medium bg-surface px-3 py-1">
 			<span className="label-sm text-secondary">{label}</span>
-			{value ? (
-				<span className="title-md text-primary">{value}</span>
-			) : (
-				<span className="inline-block h-4 w-12 animate-pulse rounded-sm bg-tertiary opacity-20" />
-			)}
+			{value ? <span className="title-md text-primary">{value}</span> : <Skeleton className="h-4 w-12" />}
 		</div>
 	)
 }

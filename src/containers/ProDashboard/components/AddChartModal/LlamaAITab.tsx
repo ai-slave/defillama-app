@@ -6,6 +6,7 @@ import { AI_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { queryReadFailed } from '~/utils/query'
@@ -108,14 +109,17 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<input
-				ref={searchRef}
-				type="search"
-				aria-label="Search saved charts"
-				placeholder="Search saved charts…"
-				onInput={(e) => setSearchQuery(e.currentTarget.value)}
-				className="w-full rounded-md border border-medium bg-surface-elevated-1 px-3 py-2 body-md text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
-			/>
+			<div className="relative">
+				<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+				<Input
+					ref={searchRef}
+					type="search"
+					aria-label="Search saved charts"
+					placeholder="Search saved charts…"
+					onInput={(e) => setSearchQuery(e.currentTarget.value)}
+					className={searchFieldInputPlacementStyles}
+				/>
+			</div>
 
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 				{filteredCharts.map((chart) => {

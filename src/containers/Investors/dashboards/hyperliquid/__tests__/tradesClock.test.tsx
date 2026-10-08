@@ -7,6 +7,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import Trades from '../Trades'
 
+// The depth picker is the shared Select, which reads the router.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
+
 const http = installFixtureFetch()
 
 class FakeWebSocket extends EventTarget {

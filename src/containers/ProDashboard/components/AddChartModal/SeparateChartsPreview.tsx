@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { Button } from '~/ui/Button'
+import { Skeleton } from '~/ui/Skeleton'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { DASHBOARD_CHART_GROUPING } from '../../utils'
@@ -43,7 +44,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 							<span className="truncate body-sm text-secondary">{series.name}</span>
 							<div className="h-[120px]">
 								{chartView.charts.length > 0 ? (
-									<Suspense fallback={<div className="size-full animate-pulse rounded-sm bg-surface" />}>
+									<Suspense fallback={<Skeleton className="size-full" />}>
 										<MultiSeriesChart
 											dataset={chartView.dataset}
 											charts={chartView.charts}

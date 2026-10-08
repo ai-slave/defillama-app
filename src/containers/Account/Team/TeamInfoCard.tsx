@@ -53,6 +53,7 @@ export function TeamInfoCard() {
 							<Input
 								type="text"
 								aria-label="Team name"
+								placeholder="Team name"
 								readOnly={updateTeamMutation.isPending}
 								name="name"
 								defaultValue={team.name}
@@ -70,12 +71,12 @@ export function TeamInfoCard() {
 							<Button
 								type="submit"
 								variant="primary"
-								size="sm"
+								size="md"
 								pendingLabel={updateTeamMutation.isPending ? 'Saving…' : null}
 							>
 								Save
 							</Button>
-							<Button variant="ghost" size="sm" disabled={updateTeamMutation.isPending} onClick={closeEditor}>
+							<Button variant="ghost" size="md" disabled={updateTeamMutation.isPending} onClick={closeEditor}>
 								Cancel
 							</Button>
 						</form>

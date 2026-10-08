@@ -120,7 +120,8 @@ function token(label: string) {
 	if (!button) throw new Error(`No "${label}" token`)
 	return button
 }
-const subjectSearch = () => document.querySelector<HTMLInputElement>('[role="dialog"] input[aria-label="Search"]')
+const subjectSearch = () =>
+	document.querySelector<HTMLInputElement>('[role="dialog"] input[aria-label="Search chains"]')
 
 test('opening the subject token puts the cursor in the subject search', async () => {
 	await renderBuilder()

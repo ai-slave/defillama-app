@@ -1,3 +1,5 @@
+import { Input, textareaStyles } from '~/ui/Input'
+
 interface TextTabProps {
 	textTitle: string
 	textContent: string
@@ -15,13 +17,13 @@ export function TextTab({ textTitle, textContent, onTextTitleChange, onTextConte
 				<label htmlFor={titleInputId} className="mb-1.5 block label-md text-secondary md:mb-2">
 					Card name (optional)
 				</label>
-				<input
+				<Input
 					id={titleInputId}
 					type="text"
 					value={textTitle}
 					onChange={(e) => onTextTitleChange(e.target.value)}
 					placeholder="Optional"
-					className="w-full rounded-md border border-medium bg-surface-elevated-1 px-3 py-2 body-md text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden md:body-lg"
+					className="w-full"
 				/>
 			</div>
 			<div>
@@ -32,9 +34,9 @@ export function TextTab({ textTitle, textContent, onTextTitleChange, onTextConte
 					id={contentInputId}
 					value={textContent}
 					onChange={(e) => onTextContentChange(e.target.value)}
-					placeholder="Enter markdown content..."
+					placeholder="Enter markdown content…"
 					rows={8}
-					className="md:rows-12 w-full resize-none rounded-md border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden md:body-md"
+					className={`${textareaStyles} w-full resize-none`}
 				/>
 				<div className="mt-1.5 body-sm text-tertiary md:mt-2">
 					Supports markdown: **bold**, *italic*, # headers, - lists, `code`, [links](url)

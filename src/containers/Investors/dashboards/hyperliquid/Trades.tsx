@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Select } from '~/components/Select/Select'
+import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	pushBounded,
@@ -26,6 +28,7 @@ interface BookLevel {
 
 const BOOK_LEVELS = 15
 const MAX_TRADES = 300
+const SIG_FIG_OPTIONS = ['2', '3', '4', '5']
 
 function formatTime(ts: number) {
 	const d = new Date(ts)
@@ -115,7 +118,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 
 			{bids.length === 0 && asks.length === 0 ? (
 				<div className="flex flex-1 items-center justify-center py-10 body-md text-secondary">
-					Waiting for order book data...
+					Waiting for order book data…
 				</div>
 			) : null}
 		</div>
@@ -242,7 +245,11 @@ export default function Trades() {
 	const { book: snapshotBook } = useHyperliquidL2Book(coin, nSigFigs)
 
 	const coinOptions = useMemo(
-		() => markets.toSorted((a, b) => b.dayNtlVlm - a.dayNtlVlm).map((market) => market.name),
+		() =>
+			(markets.length > 0
+				? markets.toSorted((a, b) => b.dayNtlVlm - a.dayNtlVlm).map((market) => market.name)
+				: ['BTC', 'ETH', 'SOL']
+			).map((name) => ({ value: name, label: name })),
 		[markets]
 	)
 
@@ -356,29 +363,23 @@ export default function Trades() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-3">
-				<select
-					value={coin}
-					onChange={(e) => setCoin(e.target.value)}
-					className="rounded-lg border border-medium bg-surface px-3 py-2 label-md text-primary outline-hidden"
-				>
-					{(coinOptions.length > 0 ? coinOptions : ['BTC', 'ETH', 'SOL']).map((value) => (
-						<option key={value} value={value}>
-							{value}
-						</option>
-					))}
-				</select>
+				<VirtualizedSelect
+					variant="chip"
+					label="Market"
+					options={coinOptions}
+					selectedValue={coin}
+					placeholder="Select market…"
+					onChange={(option) => setCoin(option.value)}
+				/>
 
-				<select
-					value={nSigFigs}
-					onChange={(e) => setNSigFigs(Number(e.target.value))}
-					className="rounded-lg border border-medium bg-surface px-3 py-2 label-md text-primary outline-hidden"
-				>
-					{[2, 3, 4, 5].map((value) => (
-						<option key={value} value={value}>
-							Depth nSigFigs: {value}
-						</option>
-					))}
-				</select>
+				<Select
+					label="Depth nSigFigs"
+					allValues={SIG_FIG_OPTIONS}
+					selectedValues={String(nSigFigs)}
+					setSelectedValues={(value) => setNSigFigs(Number(value))}
+					variant="filter"
+					size="md"
+				/>
 
 				<div className="ml-auto flex items-center gap-1.5">
 					<div className={`size-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error'}`} />

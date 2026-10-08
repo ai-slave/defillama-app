@@ -29,6 +29,13 @@ import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPICo
 import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDateTime } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
@@ -317,12 +324,16 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							}}
 							smol
 						/>
-						<input
-							type="text"
-							placeholder="Search CEXs..."
-							onInput={(event) => setVenueName(event.currentTarget.value)}
-							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
-						/>
+						<div className={searchFieldInlineWrapperStyles}>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
+								type="text"
+								aria-label="Search CEXs"
+								placeholder="Search CEXs…"
+								onInput={(event) => setVenueName(event.currentTarget.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

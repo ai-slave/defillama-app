@@ -1,3 +1,5 @@
+import { Skeleton } from '~/ui/Skeleton'
+
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface p-4">
@@ -31,7 +33,7 @@ export function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
 			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
+			<Skeleton className="h-8 w-24" />
 		</div>
 	)
 }

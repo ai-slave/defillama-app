@@ -38,6 +38,7 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 					autoFocus
 					value={renameDraft}
 					aria-label={`Rename ${variable.label}`}
+					placeholder="Parameter name"
 					maxLength={DASHBOARD_VARIABLE_LABEL_MAX_LENGTH}
 					className="w-36"
 					onChange={(event) => setRenameDraft(event.target.value)}
@@ -45,7 +46,7 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 						if (event.key === 'Escape') setRenameDraft(null)
 					}}
 				/>
-				<Button type="submit" size="sm" square variant="ghost" aria-label="Save parameter name">
+				<Button type="submit" size="md" square variant="ghost" aria-label="Save parameter name">
 					<Icon name="check" height={14} width={14} />
 				</Button>
 				<Tooltip
@@ -53,7 +54,7 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 					render={
 						<Button
 							type="button"
-							size="sm"
+							size="md"
 							square
 							variant="ghost"
 							aria-label="Cancel rename"

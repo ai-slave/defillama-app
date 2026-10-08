@@ -12,6 +12,13 @@ import {
 import * as React from 'react'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
+import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { CSVExportButton } from '../../CSVExportButton'
@@ -133,12 +140,16 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 							}}
 							smol
 						/>
-						<input
-							type="text"
-							placeholder="Search stablecoins..."
-							onInput={(e) => setProjectName(e.currentTarget.value)}
-							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
-						/>
+						<div className={searchFieldInlineWrapperStyles}>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
+								type="text"
+								aria-label="Search stablecoins"
+								placeholder="Search stablecoins…"
+								onInput={(e) => setProjectName(e.currentTarget.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -52,7 +52,8 @@ export function InlineTextField({
 	const failed = status === 'error'
 	const blocked = disabled && !saving
 	const wrapperClassName = `relative flex min-w-0 flex-col ${className ?? ''}`.trim()
-	const statusClassName = `${saving ? 'pr-5 opacity-70' : ''} ${failed ? 'ring-1 ring-error' : ''}`
+	// The spinner marks saving; the error text and an error outline mark a failed save.
+	const statusClassName = saving ? 'pr-5' : ''
 	const statusAffordances = (
 		<>
 			{saving ? (
@@ -86,7 +87,7 @@ export function InlineTextField({
 								setDraft(value)
 								setEditing(true)
 							}}
-							className={`${className ?? ''} min-w-0 rounded-sm text-left transition-colors duration-120 ease-out-quart hover:bg-hover-row ${statusClassName} ${value ? '' : 'text-tertiary italic'}`
+							className={`${className ?? ''} min-w-0 rounded-sm text-left transition-colors duration-120 ease-out-quart hover:bg-hover-row ${statusClassName} ${failed ? 'ring-1 ring-error' : ''} ${value ? '' : 'text-tertiary italic'}`
 								.replace(/\s+/g, ' ')
 								.trim()}
 						/>
@@ -113,7 +114,7 @@ export function InlineTextField({
 		setEditing(false)
 	}
 	const fieldClassName =
-		`${className ?? ''} min-w-0 rounded-sm border border-medium bg-transparent px-1 outline-hidden focus:border-link ${statusClassName}`
+		`${className ?? ''} min-w-0 rounded-sm border border-medium bg-transparent px-1 outline-hidden not-focus:not-disabled:not-aria-disabled:not-aria-invalid:hover:border-strong focus:border-brand aria-invalid:border-error disabled:border-disabled disabled:text-disabled ${statusClassName}`
 			.replace(/\s+/g, ' ')
 			.trim()
 	const shared = {
@@ -123,6 +124,7 @@ export function InlineTextField({
 		disabled: blocked,
 		autoFocus: true,
 		'aria-busy': saving || undefined,
+		'aria-invalid': failed || undefined,
 		onChange: (event: { target: { value: string } }) => setDraft(event.target.value),
 		onBlur: commit,
 		className: fieldClassName

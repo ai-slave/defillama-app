@@ -15,7 +15,7 @@ import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButto
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, textareaStyles } from '~/ui/Input'
+import { fieldFrameInputStyles, fieldFrameStyles, Input, textareaStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
@@ -387,15 +387,15 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 					<span className="label-md text-primary">Public URL</span>
 					{/* Input has no prefix slot, so the wrapper draws the Input recipe's border and focus; the prefix and the
 					    value each take the recipe's type (text-base, sm:body-sm): the base layer sets every input to text-sm. */}
-					<div className="flex min-h-8 items-center rounded-lg border border-medium bg-page px-3 focus-within:border-brand has-[[aria-invalid=true]]:border-error">
-						<span className="shrink-0 body-lg text-tertiary sm:body-sm">/research/authors/</span>
+					<div className={fieldFrameStyles}>
+						<span className="shrink-0 text-tertiary">/research/authors/</span>
 						<input
 							type="text"
 							maxLength={SLUG_MAX}
 							value={state.slug}
 							onChange={(e) => update({ slug: e.target.value })}
 							aria-invalid={slugError ? true : undefined}
-							className="min-w-0 flex-1 bg-transparent py-0.5 body-lg text-primary focus:outline-hidden sm:body-sm"
+							className={fieldFrameInputStyles}
 							spellCheck={false}
 							autoCapitalize="none"
 							autoCorrect="off"

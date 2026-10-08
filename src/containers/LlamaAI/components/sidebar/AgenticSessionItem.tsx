@@ -28,7 +28,7 @@ import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -216,7 +216,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				className="group relative -mx-2 flex flex-wrap items-center gap-1 rounded-md bg-hover-row px-1 py-0.5"
 				style={style}
 			>
-				<input
+				<Input
 					type="text"
 					name="newTitle"
 					onKeyDown={(event) => {
@@ -226,17 +226,20 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						}
 					}}
 					aria-label="Session title"
+					placeholder="Session title"
 					defaultValue={session.title}
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
-					className={`${inputStyles} min-w-0 flex-1 truncate`}
+					aria-invalid={updateTitle.error ? true : undefined}
+					className="min-w-0 flex-1 truncate"
 					// Read-only, not disabled, while saving: a disabled field drops focus to the page, and the rename could no
 					// longer hand it back to its button.
 					readOnly={updateTitle.isPending}
+					aria-busy={updateTitle.isPending || undefined}
 				/>
 				<div className="flex items-center justify-center gap-1">
 					<Button
-						size="sm"
+						size="md"
 						variant="primary"
 						type="submit"
 						aria-label={updateTitle.isPending ? 'Saving session title' : 'Save session title'}
@@ -249,7 +252,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						render={
 							<Button
 								type="button"
-								size="sm"
+								size="md"
 								variant="ghost"
 								square
 								aria-label="Cancel session rename"

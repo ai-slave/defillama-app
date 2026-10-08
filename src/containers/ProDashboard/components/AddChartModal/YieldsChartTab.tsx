@@ -8,6 +8,7 @@ import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -362,21 +363,21 @@ export function YieldsChartTab({
 						<div className="flex flex-col">
 							<span className="mb-1 block label-sm text-secondary">TVL Range</span>
 							<div className="flex gap-1">
-								<input
+								<Input
 									type="number"
 									aria-label="Minimum TVL"
 									placeholder="Min"
 									value={minTvl ?? ''}
 									onChange={(e) => onMinTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full min-w-0"
 								/>
-								<input
+								<Input
 									type="number"
 									aria-label="Maximum TVL"
 									placeholder="Max"
 									value={maxTvl ?? ''}
 									onChange={(e) => onMaxTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full min-w-0"
 								/>
 							</div>
 						</div>
@@ -448,17 +449,12 @@ export function YieldsChartTab({
 							<div className="flex items-center justify-between border-b border-subtle bg-surface px-3 py-2 label-sm">
 								<div className="flex items-center gap-3">
 									<div className="relative">
-										<Icon
-											name="search"
-											width={12}
-											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-tertiary"
-										/>
-										<input
+										<Icon name="search" width={16} height={16} className={searchFieldIconStyles} />
+										<Input
 											onInput={(e) => setPoolSearch(e.currentTarget.value)}
 											placeholder="Search pools…"
 											aria-label="Search pools"
-											className="w-36 rounded-md border border-medium bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 label-sm transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-48"
+											className="w-36 pl-8 sm:w-48"
 										/>
 									</div>
 									<span className="label-sm text-tertiary">
@@ -636,7 +632,7 @@ export function YieldsChartTab({
 										const isLoading = borrowChartLoading && BORROW_CHART_TYPES.has(type.value)
 										return {
 											value: type.value,
-											label: isLoading ? `${type.label}...` : type.label,
+											label: isLoading ? `${type.label}…` : type.label,
 											disabled: !type.available || isLoading
 										}
 									})}

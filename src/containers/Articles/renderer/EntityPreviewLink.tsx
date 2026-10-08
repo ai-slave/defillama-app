@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
+import { Skeleton } from '~/ui/Skeleton'
 import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -91,8 +92,8 @@ function PreviewBody({
 	if (loading && !preview) {
 		return (
 			<span className="block px-3 pb-3">
-				<span className="block h-3 w-2/3 animate-pulse rounded-sm bg-border-medium" />
-				<span className="mt-2 block h-3 w-1/2 animate-pulse rounded-sm bg-border-medium" />
+				<Skeleton className="h-3 w-2/3" />
+				<Skeleton className="mt-2 h-3 w-1/2" />
 			</span>
 		)
 	}

@@ -176,25 +176,6 @@ function formatRelative(iso: string): string {
 
 function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: boolean }) {
 	const tone = EVENT_TONES[type] ?? 'text-secondary'
-	const ringTone = (() => {
-		switch (type) {
-			case 'publish':
-			case 'create':
-				return 'bg-success'
-			case 'unpublish':
-			case 'pending_save':
-				return 'bg-warning'
-			case 'delete':
-				return 'bg-error'
-			case 'restore_pending':
-				return 'bg-link'
-			case 'discard_pending':
-				return 'bg-tertiary'
-			default:
-				return 'bg-tertiary'
-		}
-	})()
-	const ringClass = `size-2 rounded-full ${ringTone}`
 	const isFilled = type === 'publish' || type === 'create'
 	const isHollow = type === 'save' || type === 'discard_pending'
 	const isSquare = type === 'delete'
@@ -208,7 +189,7 @@ function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: 
 			}`}
 		>
 			{isFilled ? (
-				<span className={ringClass} />
+				<span className="size-2 rounded-full bg-success" />
 			) : isHollow ? (
 				<span className={`size-2 rounded-full ring-1 ring-inset ${tone.replace('text-', 'ring-')}`} />
 			) : isSquare ? (
@@ -234,7 +215,7 @@ function StatusBadge({ label, tone }: { label: string; tone: 'live' | 'pending' 
 		<span className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px label-xs ${styles}`}>
 			<span
 				aria-hidden
-				className={`size-1 rounded-full ${tone === 'live' ? 'bg-success' : 'animate-pulse bg-warning'}`}
+				className={`size-1 rounded-full ${tone === 'live' ? 'bg-success' : 'bg-warning motion-safe:animate-pulse'}`}
 			/>
 			{label}
 		</span>

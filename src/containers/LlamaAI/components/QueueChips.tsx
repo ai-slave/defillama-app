@@ -75,6 +75,7 @@ function QueueChipEditor({
 				key={id}
 				autoFocus
 				name="message"
+				aria-label="Queued message"
 				defaultValue={initialMessage}
 				onChange={(event) => onDraftChange(event.currentTarget.value)}
 				className={`${textareaStyles} w-full resize-none`}

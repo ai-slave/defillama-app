@@ -1,11 +1,7 @@
 import type { RefObject } from 'react'
 import { Select } from '~/components/Select/Select'
-import { Button } from '~/ui/Button'
-import { keepFocus } from '~/ui/focus'
-import { Icon } from '~/ui/Icon'
+import { SearchField } from '~/ui/SearchField'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { Tooltip } from '~/ui/Tooltip'
-import { proInputStyles } from '../ui'
 import {
 	isMyDashboardsSort,
 	MY_DASHBOARDS_SORT_OPTIONS,
@@ -38,46 +34,14 @@ export function MyDashboardsControls({
 
 	return (
 		<div className="flex flex-wrap items-center gap-2">
-			<div className="relative w-full max-w-xs min-w-0">
-				<Icon
-					name="search"
-					height={14}
-					width={14}
-					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-tertiary"
-				/>
-				<input
-					ref={ref}
-					type="text"
-					aria-label="Search my dashboards"
-					value={query}
-					onChange={(event) => onQueryChange(event.target.value)}
-					placeholder="Search my dashboards…"
-					className={`${proInputStyles} pr-8 pl-8`}
-				/>
-				{query ? (
-					<Tooltip
-						content="Clear search"
-						render={
-							<Button
-								variant="ghost"
-								size="sm"
-								square
-								aria-label="Clear search"
-								// The button leaves with the text it clears; focus goes back to the search box.
-								onClick={() =>
-									keepFocus(
-										() => onQueryChange(''),
-										() => ref.current
-									)
-								}
-								className="absolute top-1/2 right-1.5 -translate-y-1/2"
-							/>
-						}
-					>
-						<Icon name="x" height={16} width={16} />
-					</Tooltip>
-				) : null}
-			</div>
+			<SearchField
+				ref={ref}
+				label="Search my dashboards"
+				value={query}
+				onChange={onQueryChange}
+				placeholder="Search my dashboards…"
+				className="w-full max-w-xs min-w-0"
+			/>
 
 			<SegmentedControl
 				variant="default"

@@ -1,5 +1,6 @@
 import { useId, useMemo, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createMetricConfig } from '../../dashboardConfig/classicChartConfig'
@@ -140,12 +141,12 @@ export function MetricTab(props: MetricTabProps) {
 							</div>
 						</div>
 						<div className="mt-2 space-y-1.5">
-							<input
+							<Input
 								id={nameId}
 								type="text"
 								value={metricLabel}
 								onChange={(e) => onLabelChange(e.target.value)}
-								className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+								className="w-full"
 								maxLength={64}
 							/>
 							<div className="flex items-center justify-between body-sm text-tertiary">

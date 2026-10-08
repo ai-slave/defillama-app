@@ -3,10 +3,10 @@ import { Select } from '~/components/Select/Select'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { ProBadge, ProMeta } from '../../../ui'
-import { proInputStyles } from '../../../ui/styles'
 import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
 import { ProCardHeader } from '../../ProCardHeader'
 import type { ActiveFilterChip } from '../utils/filterChips'
@@ -77,27 +77,30 @@ function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) 
 		)
 	}
 	return (
-		<input
-			type="search"
-			autoFocus
-			defaultValue={retainedQuery}
-			aria-label="Search table rows"
-			placeholder="Search rows…"
-			className={`${proInputStyles} w-64`}
-			onInput={(event) => {
-				valueRef.current = event.currentTarget.value
-				onSearchChange(valueRef.current)
-			}}
-			onBlur={(event) => {
-				if (valueRef.current) return
-				collapse(event.relatedTarget === null)
-			}}
-			onKeyDown={(event) => {
-				if (event.key !== 'Escape') return
-				event.stopPropagation()
-				collapse(true)
-			}}
-		/>
+		<div className="relative w-64">
+			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+			<Input
+				type="search"
+				autoFocus
+				defaultValue={retainedQuery}
+				aria-label="Search table rows"
+				placeholder="Search rows…"
+				className={searchFieldInputPlacementStyles}
+				onInput={(event) => {
+					valueRef.current = event.currentTarget.value
+					onSearchChange(valueRef.current)
+				}}
+				onBlur={(event) => {
+					if (valueRef.current) return
+					collapse(event.relatedTarget === null)
+				}}
+				onKeyDown={(event) => {
+					if (event.key !== 'Escape') return
+					event.stopPropagation()
+					collapse(true)
+				}}
+			/>
+		</div>
 	)
 }
 

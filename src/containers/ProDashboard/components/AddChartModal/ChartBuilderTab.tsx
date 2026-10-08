@@ -15,8 +15,10 @@ import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Skeleton } from '~/ui/Skeleton'
 import { formatUsd } from '~/utils/numberFormat'
 import { queryReadFailed } from '~/utils/query'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -526,12 +528,12 @@ export function ChartBuilderTab({
 				<label htmlFor={nameId} className="mb-1 block label-sm text-secondary">
 					Card name (optional)
 				</label>
-				<input
+				<Input
 					id={nameId}
 					type="text"
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
-					className="w-full rounded-md border border-medium bg-surface-elevated-1 px-2 py-1.5 body-md text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full"
 				/>
 			</div>
 
@@ -808,9 +810,7 @@ export function ChartBuilderTab({
 							</div>
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
-								<Suspense
-									fallback={<div className="size-full animate-pulse rounded-md border border-subtle bg-surface" />}
-								>
+								<Suspense fallback={<Skeleton className="size-full rounded-md" />}>
 									{chartBuilder.chartType === 'treemap' ? (
 										<BuilderTreemapChart data={treemapData} height="450px" />
 									) : (

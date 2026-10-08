@@ -114,7 +114,7 @@ describe('TokenUsageDataset CSV export', () => {
 		await render()
 
 		await waitForUi(() => expect(container.querySelectorAll('tbody tr').length).toBeGreaterThan(0))
-		const search = container.querySelector<HTMLInputElement>('input[placeholder="Search protocols..."]')
+		const search = container.querySelector<HTMLInputElement>('input[aria-label="Search protocols"]')
 		if (!search) throw new Error('Expected protocol search input')
 		search.value = 'Keep'
 		await act(async () => search.dispatchEvent(new InputEvent('input', { bubbles: true })))

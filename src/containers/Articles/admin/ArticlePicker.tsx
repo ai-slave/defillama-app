@@ -8,6 +8,7 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 
@@ -88,15 +89,14 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
-				<div
-					className={`relative flex items-center rounded-md border bg-page ${error ? 'border-error-strong' : 'border-medium'}`}
-				>
-					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
+				<div className="relative">
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
 					<Ariakit.Combobox
 						ref={inputRef}
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 body-md text-primary placeholder:text-tertiary"
+						aria-invalid={error ? true : undefined}
+						className={`${searchFieldInputStyles} pr-9`}
 					/>
 					{value ? (
 						<Button
@@ -113,7 +113,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 								)
 							}
 							aria-label="Clear selection"
-							className="absolute right-2"
+							className="absolute top-1/2 right-1.5 -translate-y-1/2"
 						>
 							<Icon name="x" className="size-4" />
 						</Button>

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { codeTextareaStyles, Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
@@ -144,18 +145,13 @@ export function CopyDashboardLinkButton({
 						<div className="flex flex-col gap-1.5">
 							<p className="label-sm text-secondary">Share Link</p>
 							<div className="flex gap-2">
-								<input
-									type="text"
-									value={shareUrl}
-									readOnly
-									className="flex-1 rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-sm"
-								/>
+								<Input type="text" value={shareUrl} readOnly aria-label="Share link" className="min-w-0 flex-1" />
 								<Tooltip
 									content={copied === 'link' ? 'Copied' : 'Copy link'}
 									render={
 										<Button
 											type="button"
-											size="sm"
+											size="md"
 											square
 											variant="secondary"
 											ref={(node) => {
@@ -189,14 +185,14 @@ export function CopyDashboardLinkButton({
 									aria-label="Embed code"
 									spellCheck={false}
 									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 resize-none rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 mono-sm"
+									className={`${codeTextareaStyles} min-w-0 flex-1 resize-none`}
 								/>
 								<Tooltip
 									content={copied === 'embed' ? 'Copied' : 'Copy embed code'}
 									render={
 										<Button
 											type="button"
-											size="sm"
+											size="md"
 											square
 											variant="secondary"
 											onClick={() => {

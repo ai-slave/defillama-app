@@ -30,6 +30,7 @@ import {
 	DialogToolbar,
 	useRefusal
 } from '~/ui/Dialog'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
@@ -362,12 +363,13 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 					>
 						<label className="flex shrink-0 flex-col gap-1">
 							<span className="label-sm text-secondary">Card name (optional)</span>
-							<input
+							<Input
 								type="text"
 								value={name}
 								readOnly={savePending}
+								aria-busy={savePending || undefined}
 								onChange={(e) => setName(e.target.value)}
-								className="shrink-0 rounded-md border border-medium bg-page px-3 py-2 body-md text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+								className="shrink-0"
 							/>
 						</label>
 
@@ -439,20 +441,21 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 							</span>
 							<label className="flex items-center gap-2 label-sm text-tertiary">
 								Rows to display
-								<input
+								<Input
 									type="number"
 									min={SQL_SNAPSHOT_ROW_CAP_MIN}
 									max={SQL_SNAPSHOT_ROW_CAP_MAX}
 									step={1}
 									value={rowCap}
 									readOnly={savePending}
+									aria-busy={savePending || undefined}
 									onChange={(e) => {
 										const next = Number(e.target.value)
 										if (Number.isFinite(next)) setRowCap(next)
 									}}
 									onBlur={() => setRowCap((prev) => clampRowCap(prev))}
 									title={`How many query result rows the card can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The card keeps a preview of the query result and refreshes it when requested.`}
-									className="w-20 rounded-md border border-medium bg-page px-2 py-1 body-sm text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-20"
 								/>
 							</label>
 						</div>

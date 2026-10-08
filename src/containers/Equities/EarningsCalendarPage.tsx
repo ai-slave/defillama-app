@@ -89,9 +89,8 @@ function WindowBar({ drift }: { drift: number }) {
 	return (
 		<span className="flex min-w-20 items-center gap-2">
 			<span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated-2">
-				<span className="absolute top-0 bottom-0 left-1/2 w-px bg-secondary" />
 				<span
-					className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-secondary"
+					className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-border-strong"
 					style={{ width: `${width}%` }}
 				/>
 			</span>

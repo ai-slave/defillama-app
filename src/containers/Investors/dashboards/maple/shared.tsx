@@ -4,6 +4,7 @@ import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChar
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { PaginatedTableInstance, PaginationFeatures } from '~/components/Table/features/contracts'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { Skeleton } from '~/ui/Skeleton'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
 export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')
@@ -45,7 +46,7 @@ export function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
 			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
+			<Skeleton className="h-8 w-24" />
 		</div>
 	)
 }

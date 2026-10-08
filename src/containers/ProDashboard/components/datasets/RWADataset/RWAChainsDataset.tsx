@@ -20,6 +20,13 @@ import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetch
 import { PRO_RWA_CHAINS_TABLE_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
+import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
@@ -236,12 +243,16 @@ export function RWAChainsDataset() {
 							}}
 							smol
 						/>
-						<input
-							type="text"
-							placeholder="Search chains..."
-							onInput={(e) => setChainName(e.currentTarget.value)}
-							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
-						/>
+						<div className={searchFieldInlineWrapperStyles}>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
+								type="text"
+								aria-label="Search chains"
+								placeholder="Search chains…"
+								onInput={(e) => setChainName(e.currentTarget.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

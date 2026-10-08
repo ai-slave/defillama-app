@@ -2,6 +2,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { VirtualizedSelect } from '~/components/Select/VirtualizedSelect'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import {
@@ -154,13 +155,13 @@ export default function Rates() {
 		}
 		return Array.from(assetMap.values())
 			.sort((a, b) => b.totalSize - a.totalSize)
-			.map((a) => a.symbol)
+			.map((a) => ({ value: a.symbol, label: a.symbol }))
 	}, [reserves])
 
 	const [selectedAsset, setSelectedAsset] = useState<string>('')
 	const [selectedWindow, setSelectedWindow] = useState<TimeWindow>('LAST_MONTH')
 
-	const activeAsset = selectedAsset || assetOptions[0] || ''
+	const activeAsset = selectedAsset || assetOptions[0]?.value || ''
 
 	const assetReserves = useMemo(() => reserves.filter((r) => r.symbol === activeAsset), [reserves, activeAsset])
 
@@ -246,17 +247,14 @@ export default function Rates() {
 		<div className="flex flex-col gap-6">
 			{/* Controls bar — asset selector + time window, left-aligned */}
 			<div className="flex flex-wrap items-center gap-3">
-				<select
-					value={activeAsset}
-					onChange={(e) => setSelectedAsset(e.target.value)}
-					className="rounded-md border border-medium bg-surface px-3 py-1.5 label-md text-primary outline-hidden transition-colors focus:border-brand"
-				>
-					{assetOptions.map((a) => (
-						<option key={a} value={a}>
-							{a}
-						</option>
-					))}
-				</select>
+				<VirtualizedSelect
+					variant="chip"
+					label="Asset"
+					options={assetOptions}
+					selectedValue={activeAsset || null}
+					placeholder="Select asset…"
+					onChange={(option) => setSelectedAsset(option.value)}
+				/>
 
 				<SegmentedControl<TimeWindow>
 					variant="default"

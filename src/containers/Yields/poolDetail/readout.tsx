@@ -69,4 +69,4 @@ export function ReadoutCell({
 	)
 }
 
-export const readoutFieldStyles = tw`h-8 rounded-md border border-medium bg-surface px-3 mono-md text-primary focus:border-brand focus:outline-hidden`
+export const readoutFieldStyles = tw`h-8 rounded-md border border-medium bg-surface px-3 mono-md text-primary focus-within:border-brand focus:outline-hidden`

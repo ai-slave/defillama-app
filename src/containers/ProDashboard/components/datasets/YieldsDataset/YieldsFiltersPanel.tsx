@@ -3,6 +3,7 @@ import { VirtualizedMultiSelect } from '~/components/Select/VirtualizedSelect'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { Button } from '~/ui/Button'
 import { keepFocus } from '~/ui/focus'
+import { Input } from '~/ui/Input'
 import { formatNumber } from '~/utils/numberFormat'
 
 const EMPTY_CATEGORIES: Array<string> = []
@@ -104,22 +105,22 @@ export function YieldsFiltersPanel({
 						<div>
 							<p className="mb-2 label-sm text-secondary">Total APY range</p>
 							<div className="flex items-center gap-2">
-								<input
+								<Input
 									type="number"
 									aria-label="Minimum total APY"
 									placeholder="Min %"
 									value={localFilters.apyMin || ''}
 									onChange={(e) => updateFilter('apyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+									className="min-w-0 flex-1"
 								/>
 								<span className="text-tertiary">-</span>
-								<input
+								<Input
 									type="number"
 									aria-label="Maximum total APY"
 									placeholder="Max %"
 									value={localFilters.apyMax || ''}
 									onChange={(e) => updateFilter('apyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+									className="min-w-0 flex-1"
 								/>
 							</div>
 						</div>
@@ -127,22 +128,22 @@ export function YieldsFiltersPanel({
 						<div>
 							<p className="mb-2 label-sm text-secondary">Base APY range</p>
 							<div className="flex items-center gap-2">
-								<input
+								<Input
 									type="number"
 									aria-label="Minimum base APY"
 									placeholder="Min %"
 									value={localFilters.baseApyMin || ''}
 									onChange={(e) => updateFilter('baseApyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+									className="min-w-0 flex-1"
 								/>
 								<span className="text-tertiary">-</span>
-								<input
+								<Input
 									type="number"
 									aria-label="Maximum base APY"
 									placeholder="Max %"
 									value={localFilters.baseApyMax || ''}
 									onChange={(e) => updateFilter('baseApyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+									className="min-w-0 flex-1"
 								/>
 							</div>
 						</div>
@@ -185,22 +186,22 @@ export function YieldsFiltersPanel({
 						<div>
 							<p className="mb-2 label-sm text-secondary">TVL range (USD)</p>
 							<div className="flex items-center gap-2">
-								<input
+								<Input
 									type="text"
 									aria-label="Minimum TVL"
 									placeholder="Min"
 									value={formatNumber(localFilters.tvlMin, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMin', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+									className="min-w-0 flex-1"
 								/>
 								<span className="text-tertiary">-</span>
-								<input
+								<Input
 									type="text"
 									aria-label="Maximum TVL"
 									placeholder="Max"
 									value={formatNumber(localFilters.tvlMax, { maximumFractionDigits: 0 }) ?? ''}
 									onChange={(e) => updateFilter('tvlMax', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border border-medium bg-page px-2 py-1.5 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+									className="min-w-0 flex-1"
 								/>
 							</div>
 						</div>

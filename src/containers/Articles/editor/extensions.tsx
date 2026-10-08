@@ -15,6 +15,7 @@ import { common, createLowlight } from 'lowlight'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { codeInputStyles, Input } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { getArticleEntityRoute } from '../entityLinks'
@@ -186,7 +187,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes, e
 			<span
 				aria-hidden
 				className={`pointer-events-none absolute top-2 bottom-2 left-0 w-px transition-colors duration-150 ${
-					selected ? 'bg-link' : 'bg-border-medium group-focus-within:bg-tertiary group-hover:bg-tertiary'
+					selected ? 'bg-link' : 'bg-border-medium group-focus-within:bg-border-strong group-hover:bg-border-strong'
 				}`}
 			/>
 
@@ -362,7 +363,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							id={`${fieldId}-label`}
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 mono-sm text-primary"
+							className={`${codeInputStyles} min-w-0 flex-1`}
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
@@ -374,7 +375,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 mono-sm text-primary placeholder:text-tertiary"
+							className={`${codeInputStyles} min-w-0 flex-1`}
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
@@ -384,12 +385,12 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 						>
 							Title
 						</label>
-						<input
+						<Input
 							id={`${fieldId}-title`}
 							value={title}
 							onChange={(e) => updateAttributes({ title: e.target.value })}
 							placeholder="Source title"
-							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 mono-sm text-primary placeholder:text-tertiary"
+							className="min-w-0 flex-1"
 						/>
 					</div>
 				</div>

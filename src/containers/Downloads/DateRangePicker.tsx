@@ -167,10 +167,10 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled, t
 							</p>
 						) : null}
 						<div className="flex justify-end gap-1.5 pt-1">
-							<Button type="button" variant="secondary" size="sm" onClick={handleClear}>
+							<Button type="button" variant="secondary" size="md" onClick={handleClear}>
 								Clear
 							</Button>
-							<Button type="submit" variant="primary" size="sm" disabled={!customFrom || !customTo}>
+							<Button type="submit" variant="primary" size="md" disabled={!customFrom || !customTo}>
 								Apply
 							</Button>
 						</div>

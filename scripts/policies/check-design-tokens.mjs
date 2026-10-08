@@ -520,6 +520,35 @@ function matchNeutralHoverOnHuedControl(content) {
 	return found.length > 0 ? found : null
 }
 
+// A native field whose className draws its own border, fill or radius instead of the Input recipe (design.md →
+// "Forms and controls"): its outline, hover, radius, fill, focus and error states drift from every other field.
+// Checkbox, radio, range and file inputs are not text fields.
+const FIELD_RECIPES =
+	/\b(?:inputStyles|textareaStyles|codeInputStyles|codeTextareaStyles|oneTimeCodeInputStyles|fieldFrameInputStyles|searchFieldInputStyles)\b/
+function matchHandBuiltField(content) {
+	const found = []
+	for (const tag of openingTags(content, ['input', 'textarea', 'select'])) {
+		if (/\btype=["'{]+(?:checkbox|radio|range|file|hidden|color|submit|button)\b/.test(tag)) continue
+		const className = tag.match(/className=(\{[^]*?\}(?=\s+[\w-]+=|\s*\/?>)|"[^"]*")/)?.[1]
+		if (!className || FIELD_RECIPES.test(className)) continue
+		if (/(?<![\w:-])border(?![\w-])|(?<![\w:-])rounded-(?:sm|md|lg)(?![\w-])/.test(className))
+			found.push(tag.slice(0, 60))
+	}
+	return found.length > 0 ? found : null
+}
+
+// A hand-rolled loading placeholder: a pulsing neutral block instead of Skeleton (src/ui/Skeleton.tsx), often filled
+// with a text tier at an opacity. A pulsing status dot in a hued color is not a placeholder and does not count.
+const NEUTRAL_PULSE_FILL =
+	/(?<![\w-])bg-(?:primary|secondary|tertiary|surface-elevated-[12]|border-(?:subtle|medium|strong)|hover-row)(?![\w-])/
+function matchHandRolledSkeleton(content) {
+	const found = []
+	for (const [literal] of content.matchAll(/(['"`])(?:(?!\1)[^\\\n]|\\.)*\1/g)) {
+		if (/\banimate-pulse\b/.test(literal) && NEUTRAL_PULSE_FILL.test(literal)) found.push(literal.slice(0, 80))
+	}
+	return found.length > 0 ? found : null
+}
+
 function matchChartToolbarAutoMargin(content) {
 	// Inside a ChartPanelToolbar, an ml-auto group or a last-of-type:mr-auto hack decides left vs right by
 	// hand, and the left side jumps right once the row wraps. The toolbar's `leading` slot owns that split.
@@ -715,6 +744,28 @@ const RULES = [
 		match: matchPinnedButtonHeightInDialog,
 		uiOwned: true,
 		skipTests: true
+	},
+	{
+		id: 'hand-built-field',
+		description:
+			'native input, textarea or select with its own border, fill or radius — use Input, inputStyles, textareaStyles or codeInputStyles from src/ui/Input.tsx (one outline, hover, radius, fill, focus, error and type), or Select for a pick',
+		match: matchHandBuiltField,
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'hand-rolled-skeleton',
+		description:
+			'pulsing neutral block as a loading placeholder — use Skeleton from src/ui/Skeleton.tsx, which owns the fill and the reduced-motion rule',
+		match: matchHandRolledSkeleton,
+		uiOwned: true,
+		skipTests: true
+	},
+	{
+		id: 'text-tier-fill',
+		description:
+			'text color token used as a background (bg-primary/secondary/tertiary) — fills take a surface, border or status token: bg-surface-elevated-2 for an empty bar, bg-border-medium/strong for a rule or marker',
+		pattern: /(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)*bg-(?:primary|secondary|tertiary)(?![\w-])/g
 	},
 	{
 		id: 'hand-rolled-spinner',

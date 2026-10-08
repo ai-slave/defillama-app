@@ -33,6 +33,7 @@ import { BlockContent, toMentionQuote } from '~/containers/Articles/landing/Rese
 import { chunkMentions } from '~/containers/Articles/landing/utils'
 import type { SocialMention, TrustedLogo } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
@@ -467,18 +468,14 @@ function SortableLogoRow({
 			</div>
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
-				<label className="flex items-center gap-1.5 label-sm text-secondary">
-					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. It is only
-					    disabled while the save runs, so it keeps its look like a pending Button. */}
-					<Ariakit.Checkbox
-						checked={logo.enabled}
-						onChange={(e) => onToggle(e.target.checked)}
-						disabled={togglePending}
-						accessibleWhenDisabled
-						className="size-4 accent-link aria-disabled:cursor-progress"
-					/>
+				<Checkbox
+					variant="inline-sm"
+					checked={logo.enabled}
+					onChange={(e) => onToggle(e.target.checked)}
+					isLoading={togglePending}
+				>
 					Enabled
-				</label>
+				</Checkbox>
 				<Button as={BasicLink} variant="secondary" size="sm" href={`/research/admin/trusted-by/logos/${logo.id}`}>
 					Edit
 				</Button>
@@ -564,18 +561,14 @@ function SortableMentionRow({
 			</div>
 
 			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
-				<label className="flex items-center gap-1.5 label-sm text-secondary">
-					{/* Focusable while its toggle saves: a native disabled box would drop the focus it holds. It is only
-					    disabled while the save runs, so it keeps its look like a pending Button. */}
-					<Ariakit.Checkbox
-						checked={mention.enabled}
-						onChange={(e) => onToggle(e.target.checked)}
-						disabled={togglePending}
-						accessibleWhenDisabled
-						className="size-4 accent-link aria-disabled:cursor-progress"
-					/>
+				<Checkbox
+					variant="inline-sm"
+					checked={mention.enabled}
+					onChange={(e) => onToggle(e.target.checked)}
+					isLoading={togglePending}
+				>
 					Enabled
-				</label>
+				</Checkbox>
 				<Button as={BasicLink} variant="secondary" size="sm" href={`/research/admin/trusted-by/mentions/${mention.id}`}>
 					Edit
 				</Button>

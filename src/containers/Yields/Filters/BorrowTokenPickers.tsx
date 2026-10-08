@@ -63,7 +63,7 @@ function TokenSearchField({
 
 	return (
 		<>
-			<div className="hover-wash flex min-h-8 w-full min-w-0 items-center rounded-lg border border-medium bg-page body-sm text-primary focus-within:border-brand sm:w-56">
+			<div className="hover-wash flex min-h-8 w-full min-w-0 items-center rounded-lg border border-medium bg-page bg-clip-padding body-sm text-primary focus-within:border-brand sm:w-56">
 				<button
 					type="button"
 					onClick={() => setOpen(true)}

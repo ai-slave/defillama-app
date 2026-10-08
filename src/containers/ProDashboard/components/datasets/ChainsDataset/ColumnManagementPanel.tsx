@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface Column {
@@ -64,19 +65,14 @@ export function ColumnManagementPanel({
 			</div>
 
 			<div className="relative mb-3">
-				<Icon
-					name="search"
-					height={14}
-					width={14}
-					className="absolute top-1/2 left-3 -translate-y-1/2 transform text-tertiary"
-				/>
-				<input
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Input
 					ref={searchRef}
 					type="text"
 					aria-label="Search columns"
 					placeholder="Search columns…"
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border border-medium bg-page py-2 pr-3 pl-9 body-md text-primary transition-colors placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+					className={searchFieldInputPlacementStyles}
 				/>
 			</div>
 

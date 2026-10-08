@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/com
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
 import { TablePager } from '~/containers/Investors/TablePager'
+import { Skeleton } from '~/ui/Skeleton'
 import {
 	formatPercent,
 	formatUsd,
@@ -93,7 +94,7 @@ function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4">
 			<span className="label-sm tracking-wide text-secondary">{label}</span>
-			<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
+			<Skeleton className="h-8 w-24" />
 		</div>
 	)
 }

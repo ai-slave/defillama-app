@@ -43,5 +43,5 @@ test('clearing the selection moves focus to the search instead of dropping it', 
 		clear.click()
 	})
 	expect(container.textContent).not.toContain('2 selected')
-	expect(document.activeElement).toBe(container.querySelector('input[placeholder="Search chains..."]'))
+	expect(document.activeElement).toBe(container.querySelector('input[aria-label="Search chains"]'))
 })

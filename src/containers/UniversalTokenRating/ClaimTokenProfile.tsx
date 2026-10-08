@@ -8,7 +8,7 @@ import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { keepFocus, neighbourRowControl, takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { Input, inputStyles } from '~/ui/Input'
+import { fieldFrameInputStyles, fieldFrameStyles, Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -131,16 +131,16 @@ function CellInput({
 	}
 	if (column.type === 'percent' || column.type === 'months') {
 		return (
-			<span className={`${inputStyles} flex w-full items-center gap-1`}>
+			<label className={`${fieldFrameStyles} w-full`}>
 				<input
 					aria-label={column.label}
 					value={value}
 					onChange={(event) => onChange(event.target.value)}
 					inputMode={column.type === 'months' ? 'numeric' : 'decimal'}
-					className="w-full min-w-0 bg-transparent focus:outline-hidden"
+					className={fieldFrameInputStyles}
 				/>
 				<span className="shrink-0 text-tertiary">{column.type === 'percent' ? '%' : 'months'}</span>
-			</span>
+			</label>
 		)
 	}
 	return (

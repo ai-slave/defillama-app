@@ -20,6 +20,7 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles, searchFieldIconStyles } from '~/ui/Input'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 
@@ -294,9 +295,9 @@ function MyArticlesContent() {
 					{Array.from({ length: 6 }).map((_, i) => (
 						// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 						<li key={i} className="flex items-center gap-3 px-4 py-3.5">
-							<span className="size-1.5 shrink-0 rounded-full bg-border-medium" />
-							<span className="h-3.5 w-2/3 animate-pulse rounded-sm bg-border-medium" />
-							<span className="ml-auto h-3 w-20 animate-pulse rounded-sm bg-border-medium" />
+							<Skeleton className="size-1.5 shrink-0 rounded-full" />
+							<Skeleton className="h-3.5 w-2/3" />
+							<Skeleton className="ml-auto h-3 w-20" />
 						</li>
 					))}
 				</ul>

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
+import { Skeleton } from '~/ui/Skeleton'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import type { PageAssetMarket } from '../pageAssetMarket'
@@ -65,14 +66,14 @@ function AssetRow({
 			</span>
 			<span className="ml-auto title-md text-primary tabular-nums">
 				{showSkeleton ? (
-					<span className="inline-block h-3.5 w-14 animate-pulse rounded-sm bg-surface-elevated-2 align-middle" />
+					<Skeleton className="inline-block h-3.5 w-14 align-middle" />
 				) : (
 					formatAssetPrice(market?.price ?? null)
 				)}
 			</span>
 			<span className="w-[52px] shrink-0 text-right body-sm tabular-nums">
 				{showSkeleton ? (
-					<span className="inline-block h-3 w-9 animate-pulse rounded-sm bg-surface-elevated-2 align-middle" />
+					<Skeleton className="inline-block h-3 w-9 align-middle" />
 				) : change != null ? (
 					<PercentChange percent={change} fontWeight={600} />
 				) : null}

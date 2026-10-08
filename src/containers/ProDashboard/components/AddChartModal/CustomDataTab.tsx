@@ -7,6 +7,7 @@ import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Icon } from '~/ui/Icon'
+import { codeTextareaStyles, Input } from '~/ui/Input'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { CustomDataRows, SqlSnapshotValue } from '../../types'
@@ -174,12 +175,12 @@ function CustomDataForm({
 			>
 				<label className="flex flex-col gap-1">
 					<span className="label-sm text-secondary">Card name (optional)</span>
-					<input
+					<Input
 						type="text"
 						value={customData.name}
 						onChange={(event) => onNameChange(event.target.value)}
 						maxLength={80}
-						className="w-full rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 body-sm text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full"
 					/>
 				</label>
 
@@ -201,7 +202,7 @@ function CustomDataForm({
 						onChange={(event) => handleTextChange(event.target.value)}
 						placeholder={'date,value\n2026-01-01,10'}
 						aria-label="Paste CSV"
-						className="min-h-[160px] w-full flex-1 resize-none rounded-sm border border-medium bg-surface-elevated-1 px-2 py-1.5 mono-sm text-primary placeholder:text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className={`${codeTextareaStyles} min-h-[160px] w-full flex-1 resize-none`}
 					/>
 				</label>
 

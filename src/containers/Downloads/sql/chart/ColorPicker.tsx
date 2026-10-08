@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useState } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
+import { codeInputStyles } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
 
 interface ColorPickerProps {
@@ -58,7 +59,7 @@ export function ColorPicker({ name, value, fallback, onChange }: ColorPickerProp
 								if (HEX_RE.test(draft.trim())) onChange(draft.trim())
 							}}
 							placeholder="#2f73c6"
-							className="w-20 rounded-sm border border-medium bg-page px-1.5 py-0.5 mono-sm text-primary focus:border-brand focus:outline-hidden"
+							className={`${codeInputStyles} w-24`}
 						/>
 						<Button variant="link" onClick={() => onChange(null)}>
 							Reset

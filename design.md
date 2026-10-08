@@ -52,6 +52,7 @@ Class composition:
 | `bg-brand-faint`                                               | Lightest brand wash (blue step 2)                                                                                                                                                              |
 | `bg-{role}-faint` / `bg-{role}-tint` / `bg-{role}-tint-strong` | Tints on ramp steps 2, 3 and 4 for `brand`, `error`, `warning`, `success`, `data-up`, `data-down`: banners, badges, soft buttons; a tinted control rests on `tint` and hovers to `tint-strong` |
 | `bg-disabled`                                                  | A disabled filled control or field                                                                                                                                                             |
+| `bg-knob`                                                      | A switch knob, white on either track in both modes                                                                                                                                             |
 | `bg-page-glass` / `bg-surface-glass`                           | A frosted sticky bar over scrolling content, with `backdrop-blur`                                                                                                                              |
 | `bg-veil`                                                      | A veil over content that is loading                                                                                                                                                            |
 | `bg-on-brand-control` / `-hover`                               | A control sitting on the brand-blue header                                                                                                                                                     |
@@ -77,7 +78,7 @@ Class composition:
 | `border-very-subtle`                           | Faint separation wider than a hairline; never a 1px divider                                 |
 | `border-subtle`                                | Card and panel outlines, row and section dividers                                           |
 | `border-medium`                                | Controls, inputs, overlays, chips and badges; never page cards or dividers                  |
-| `border-strong`                                | High-emphasis outlines and unchecked checkboxes                                             |
+| `border-strong`                                | High-emphasis outlines, unchecked checkboxes and a hovered field                            |
 | `border-brand`                                 | Focus, active and brand outlines                                                            |
 | `border-{role}-muted` / `border-{role}-strong` | Hued borders on ramp steps 7 and 8; a destructive control's outline is `border-error-muted` |
 | `border-disabled`                              | A disabled outlined control or field                                                        |
@@ -354,6 +355,7 @@ Caveats, loading and errors:
 Forms and controls:
 
 - Every field has a visible label above it (`label-sm text-secondary`). A placeholder is an example, never the label, and a screen-reader-only label is not enough.
+- Every text field is the `Input` recipe (`inputStyles`, `textareaStyles`, `codeInputStyles` for code and hex values); a field that draws its own border, fill, radius or focus drifts from it (`hand-built-field`). Its outline is `border-medium` like the controls beside it, so the field is identified by what it carries: a visible label, or a search icon with a placeholder. A field and the buttons in its row share one height: buttons beside an input are `md`.
 - A disabled button says why in visible text nearby, never only in a tooltip or `title=`.
 - Controls revealed on hover also show on focus of their group (`group-hover/x:opacity-100 group-focus-within/x:opacity-100`), and the group takes `tabIndex={-1}` so a tap focuses it; or the control shows itself on focus and on touch (`focus-visible:opacity-100 pointer-coarse:opacity-100`). Never gate them by width: a tablet cannot hover and a narrow desktop window can.
 - Anchor a floating control to the element it floats over (`absolute bottom-[calc(100%+8px)]` inside it), never at a fixed offset from the viewport or its scroller.

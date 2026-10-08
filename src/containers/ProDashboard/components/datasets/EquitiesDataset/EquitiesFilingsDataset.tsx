@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
@@ -22,6 +23,12 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashbo
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { getProEquitiesFilingsCacheKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
@@ -137,13 +144,12 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	const [selectedForm, setSelectedForm] = useState<string>('All')
 
 	const { data, isLoading, error } = useEquitiesFilingsData(ticker)
-	const filingForms = useMemo(() => {
-		if (!data) return []
+	const formOptions = useMemo(() => {
 		const forms = new Set<string>()
-		for (const filing of data) {
+		for (const filing of data ?? []) {
 			if (filing.form) forms.add(filing.form)
 		}
-		return Array.from(forms).sort()
+		return ['All', ...Array.from(forms).sort()]
 	}, [data])
 
 	const filteredData = useMemo(() => {
@@ -214,21 +220,22 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<label className="flex items-center gap-2 label-md">
-							<span className="text-secondary">Form</span>
-							<select
-								value={selectedForm}
-								onChange={(e) => setSelectedForm(e.currentTarget.value)}
-								className="rounded-md border border-medium bg-page px-2 py-1 label-md text-primary"
-							>
-								<option value="All">All</option>
-								{filingForms.map((form) => (
-									<option key={form} value={form}>
-										{form}
-									</option>
-								))}
-							</select>
-						</label>
+						<Select
+							heading="Form"
+							variant="filter"
+							size="md"
+							allValues={formOptions}
+							selectedValues={selectedForm}
+							setSelectedValues={setSelectedForm}
+							label={
+								<>
+									<span className="text-tertiary">Form:</span>
+									<span className="truncate">{selectedForm}</span>
+								</>
+							}
+							labelType="none"
+							triggerProps={{ 'aria-label': 'Filter filings by form' }}
+						/>
 						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
@@ -248,12 +255,16 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							}}
 							smol
 						/>
-						<input
-							type="text"
-							placeholder="Search filings..."
-							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border border-medium bg-page px-3 py-1.5 body-md text-primary transition-colors focus:border-brand focus:outline-hidden"
-						/>
+						<div className={searchFieldInlineWrapperStyles}>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
+								type="text"
+								aria-label="Search filings"
+								placeholder="Search filings…"
+								onInput={(e) => setSearchValue(e.currentTarget.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

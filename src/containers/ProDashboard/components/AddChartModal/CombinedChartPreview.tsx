@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Skeleton } from '~/ui/Skeleton'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { getProDashboardChartTypeConfig } from '../../types'
@@ -85,9 +86,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 
 	return (
 		<div className="size-full">
-			<Suspense
-				fallback={<div className="h-[450px] w-full animate-pulse rounded-md border border-subtle bg-surface" />}
-			>
+			<Suspense fallback={<Skeleton className="h-[450px] w-full rounded-md" />}>
 				<MultiSeriesChart
 					dataset={chartView.dataset}
 					charts={chartView.charts}

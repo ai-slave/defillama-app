@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import { CHART_COLORS } from '~/constants/colors'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -455,20 +456,15 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 						</div>
 					) : (
 						<div className="flex flex-col gap-3 p-4">
-							<label className="flex flex-wrap items-center gap-2 label-md">
-								Provider
-								<select
-									className="min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 body-sm"
-									value={provider?.name ?? ''}
-									onChange={(event) => setProviderName(event.target.value)}
-								>
-									{rows.map((entry) => (
-										<option key={entry.name} value={entry.name}>
-											{entry.name}
-										</option>
-									))}
-								</select>
-							</label>
+							<Select
+								label="Provider"
+								allValues={rows.map((entry) => entry.name)}
+								selectedValues={provider?.name ?? ''}
+								setSelectedValues={setProviderName}
+								variant="filter"
+								size="md"
+								className="self-start"
+							/>
 							<div className="max-h-[360px] overflow-auto rounded-lg border border-subtle">
 								<table className="w-full min-w-[620px] body-sm">
 									<thead className="sticky top-0 bg-surface">

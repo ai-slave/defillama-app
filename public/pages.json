@@ -80,6 +80,15 @@
       "tab": "Protocols"
     },
     {
+      "name": "Top Protocols",
+      "route": "/top-protocols",
+      "category": "Total Value Locked",
+      "description": "Overview of top protocols with the highest TVL by chain on each category",
+      "tab": "Protocols",
+      "oldCategory": "Market Overview",
+      "oldName": "Top Protocols"
+    },
+    {
       "name": "Forks",
       "route": "/forks",
       "category": "Total Value Locked",
@@ -88,15 +97,6 @@
       "tab": "Protocols",
       "oldCategory": "Market Overview",
       "oldName": "Forks"
-    },
-    {
-      "name": "Top Protocols",
-      "route": "/top-protocols",
-      "category": "Total Value Locked",
-      "description": "Overview of top protocols with the highest TVL by chain on each category",
-      "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Top Protocols"
     },
     {
       "name": "Pool2 TVL by Protocol",
@@ -767,30 +767,6 @@
       "oldName": "Investors"
     },
     {
-      "name": "Treasuries",
-      "route": "/treasuries",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols",
-      "oldName": "Treasuries"
-    },
-    {
-      "name": "Net Project Treasury",
-      "route": "/net-project-treasury",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, excluding its own token",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols"
-    },
-    {
-      "name": "Treasury: Entities",
-      "route": "/entities",
-      "category": "Treasury",
-      "description": "Treasury by entity",
-      "totalTrackedKey": "treasury.entities"
-    },
-    {
       "name": "Unlocks: Overview",
       "route": "/unlocks",
       "category": "Unlocks",
@@ -814,6 +790,30 @@
       "tab": "Protocols",
       "oldCategory": "Unlocks",
       "oldName": "Calendar"
+    },
+    {
+      "name": "Treasuries",
+      "route": "/treasuries",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols",
+      "oldName": "Treasuries"
+    },
+    {
+      "name": "Net Project Treasury",
+      "route": "/net-project-treasury",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, excluding its own token",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols"
+    },
+    {
+      "name": "Treasury: Entities",
+      "route": "/entities",
+      "category": "Treasury",
+      "description": "Treasury by entity",
+      "totalTrackedKey": "treasury.entities"
     },
     {
       "name": "Recently Listed Protocols",
@@ -884,6 +884,16 @@
       "oldName": "Watchlist"
     },
     {
+      "name": "Crypto Cards",
+      "route": "/crypto-cards",
+      "category": "Tools",
+      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability",
+      "searchKeywords": [
+        "card",
+        "cards"
+      ]
+    },
+    {
       "name": "Sheets",
       "route": "/sheets",
       "category": "Tools",
@@ -903,16 +913,6 @@
       "description": "Directory of all protocols websites on DefiLlama",
       "tab": "Protocols",
       "oldName": "Directory"
-    },
-    {
-      "name": "Crypto Cards",
-      "route": "/crypto-cards",
-      "category": "Tools",
-      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability",
-      "searchKeywords": [
-        "card",
-        "cards"
-      ]
     },
     {
       "name": "Yields: Watchlist",
@@ -942,6 +942,13 @@
       "description": "Download transaction data across different time periods by bridge",
       "oldCategory": "Bridges",
       "oldName": "Transactions"
+    },
+    {
+      "name": "Rewards",
+      "route": "/rewards",
+      "category": "Tools",
+      "description": "Explore protocol rewards, points, referral programs, and trading contests",
+      "tab": "Protocols"
     },
     {
       "name": "Token Holder Profit and Loss",
@@ -985,13 +992,6 @@
       "route": "/roundup",
       "category": "Tools",
       "description": "Recent round-up of the most important news in the ecosystem"
-    },
-    {
-      "name": "Rewards",
-      "route": "/rewards",
-      "category": "Tools",
-      "description": "Explore protocol rewards, points, referral programs, and trading contests",
-      "tab": "Protocols"
     },
     {
       "name": "ChainList",

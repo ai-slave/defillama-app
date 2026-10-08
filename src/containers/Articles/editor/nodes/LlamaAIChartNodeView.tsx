@@ -80,7 +80,7 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 			<span
 				aria-hidden
 				className={`pointer-events-none absolute top-2 bottom-2 left-0 w-px transition-colors duration-150 ${
-					selected ? 'bg-link' : 'bg-border-medium group-focus-within:bg-tertiary group-hover:bg-tertiary'
+					selected ? 'bg-link' : 'bg-border-medium group-focus-within:bg-border-strong group-hover:bg-border-strong'
 				}`}
 			/>
 

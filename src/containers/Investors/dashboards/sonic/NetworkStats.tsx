@@ -188,7 +188,7 @@ export default function NetworkStats() {
 							<span className="title-sm tracking-wider text-secondary uppercase">Total S Burned</span>
 							{stream.connected && (
 								<span className="flex items-center gap-1.5 body-sm text-success">
-									<span className="inline-block size-1.5 animate-pulse rounded-full bg-success" />
+									<span className="inline-block size-1.5 rounded-full bg-success motion-safe:animate-pulse" />
 									Live
 								</span>
 							)}

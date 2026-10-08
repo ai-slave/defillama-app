@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Skeleton } from '~/ui/Skeleton'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -25,11 +26,7 @@ export function KpiCard({
 					</Tooltip>
 				)}
 			</span>
-			{value != null ? (
-				<span className="mono-xl text-primary">{value}</span>
-			) : (
-				<div className="h-7 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
-			)}
+			{value != null ? <span className="mono-xl text-primary">{value}</span> : <Skeleton className="h-7 w-24" />}
 			{sub && <span className="body-sm text-secondary">{sub}</span>}
 		</div>
 	)

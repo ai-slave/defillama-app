@@ -6,6 +6,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { pageContent, passFocusOnLeave } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { textareaStyles } from '~/ui/Input'
 import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardRatingDecision } from '../dashboardTypes'
 
@@ -100,10 +101,11 @@ function RatingForm({ sessionId, mode, prompt, onSubmit }: RatingProps) {
 					<textarea
 						id={feedbackId}
 						name="feedback"
-						placeholder="Share your thoughts about the AI-generated dashboard..."
+						placeholder="Share your thoughts about the AI-generated dashboard…"
 						rows={3}
-						className="w-full rounded-md border border-medium bg-page p-2 text-primary placeholder:text-tertiary read-only:border-disabled read-only:bg-disabled read-only:text-disabled focus:border-brand focus:outline-hidden"
+						className={`${textareaStyles} w-full`}
 						readOnly={submission.isPending}
+						aria-busy={submission.isPending || undefined}
 					/>
 				</div>
 			) : null}

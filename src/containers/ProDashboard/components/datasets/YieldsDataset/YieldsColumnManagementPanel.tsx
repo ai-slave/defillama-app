@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, YIELDS_IDENTITY_COLUMN_ID, type YieldColumnId } from './columns'
@@ -224,15 +225,15 @@ export function YieldsColumnManagementPanel({
 				</Tooltip>
 			</div>
 			<div className="relative mb-3">
-				<Icon name="search" className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-tertiary" />
-				<input
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Input
 					ref={searchRef}
 					type="text"
 					aria-label="Search columns"
 					placeholder="Search columns…"
 					value={searchTerm}
 					onChange={(event) => setSearchTerm(event.currentTarget.value)}
-					className="w-full rounded-md border border-medium bg-surface py-2 pr-3 pl-9 body-md text-primary placeholder:text-tertiary"
+					className={searchFieldInputPlacementStyles}
 				/>
 			</div>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

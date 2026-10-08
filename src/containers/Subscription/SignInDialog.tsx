@@ -5,7 +5,6 @@ import { type ReactNode, useCallback, useEffect, useId, useRef, useState, useSyn
 import { type PromotionalEmailsValue, useAuthContext } from '~/auth'
 import {
 	AuthDialogHeader,
-	authInputStyles,
 	authProviderButtonStyles,
 	authWalletPickerStyles,
 	authProviderIconSlotStyles,
@@ -24,6 +23,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -205,7 +205,7 @@ export function SignInFlow({
 }
 
 function FieldError({ children }: { children: ReactNode }) {
-	return <span className="mt-1 hidden body-sm text-data-down peer-user-invalid:block">{children}</span>
+	return <span className="mt-1 hidden body-sm text-error peer-user-invalid:block">{children}</span>
 }
 
 /** The Turnstile widget and its failure state. Key it by spent token: a submitted attempt mounts a fresh widget.
@@ -278,36 +278,39 @@ function PasswordField({
 			<label htmlFor={id} className={`${fieldLabelCls} col-start-1 row-start-1`}>
 				{label}
 			</label>
-			<div className="relative col-span-2 row-start-2">
-				<input
-					id={id}
-					type={visible ? 'text' : 'password'}
-					name={name}
-					required
-					readOnly={readOnly}
-					autoComplete={autoComplete}
-					minLength={minLength}
-					className={`${authInputStyles} pr-10`}
-				/>
-				{/* sm, centred: an md square grows to 44px in a phone sheet and would hang out of the 40px field.
-				    touch-target keeps its 44px hit area. */}
-				<Tooltip
-					content={visible ? 'Hide password' : 'Show password'}
-					render={
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							square
-							className="absolute top-1/2 right-2 -translate-y-1/2"
-							onClick={() => setVisible((value) => !value)}
-							aria-label={visible ? 'Hide password' : 'Show password'}
-						/>
-					}
-				>
-					<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
-				</Tooltip>
-				<FieldError>{error}</FieldError>
+			{/* The eye centres on the field alone, so the error sits outside the field's box and shows through :has. */}
+			<div className="group/password col-span-2 row-start-2">
+				<div className="relative flex">
+					<Input
+						id={id}
+						type={visible ? 'text' : 'password'}
+						name={name}
+						required
+						readOnly={readOnly}
+						autoComplete={autoComplete}
+						minLength={minLength}
+						className="w-full pr-10"
+					/>
+					{/* sm, centred: an md square is as tall as the field and would sit on its border. touch-target keeps
+					    its 44px hit area. */}
+					<Tooltip
+						content={visible ? 'Hide password' : 'Show password'}
+						render={
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								square
+								className="absolute top-1/2 right-2 -translate-y-1/2"
+								onClick={() => setVisible((value) => !value)}
+								aria-label={visible ? 'Hide password' : 'Show password'}
+							/>
+						}
+					>
+						<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
+					</Tooltip>
+				</div>
+				<span className="mt-1 hidden body-sm text-error group-has-[input:user-invalid]/password:block">{error}</span>
 			</div>
 			{action ? <div className="col-start-2 row-start-1 mb-1.5 body-sm">{action}</div> : null}
 		</div>
@@ -519,13 +522,13 @@ function AuthScreen({
 				>
 					<label className="flex flex-col">
 						<span className={fieldLabelCls}>Email</span>
-						<input
+						<Input
 							type="email"
 							autoComplete="username"
 							readOnly={isPending}
 							name="email"
 							required
-							className={authInputStyles}
+							className="peer w-full"
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>
@@ -539,14 +542,14 @@ function AuthScreen({
 					/>
 					<label className="flex flex-col">
 						<span className={fieldLabelCls}>Confirm password</span>
-						<input
+						<Input
 							type="password"
 							name="passwordConfirm"
 							required
 							minLength={8}
 							readOnly={isPending}
 							autoComplete="new-password"
-							className={authInputStyles}
+							className="peer w-full"
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
 						/>
 						<FieldError>Passwords must match and contain at least 8 characters.</FieldError>
@@ -614,13 +617,13 @@ function AuthScreen({
 							Email
 							{lastMethod === 'email' ? <LastUsedChip /> : null}
 						</span>
-						<input
+						<Input
 							type="email"
 							autoComplete="username"
 							readOnly={isPending}
 							name="email"
 							required
-							className={authInputStyles}
+							className="peer w-full"
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>
@@ -805,14 +808,14 @@ function ForgotPasswordScreen({
 				>
 					<label className="flex flex-col">
 						<span className={fieldLabelCls}>Email</span>
-						<input
+						<Input
 							type="email"
 							name="email"
 							autoComplete="email"
 							defaultValue={initialEmail}
 							required
 							readOnly={reset.isPending}
-							className={authInputStyles}
+							className="peer w-full"
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>

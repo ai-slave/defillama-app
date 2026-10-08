@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { isValidAnnotationDate } from '../dashboardConfig/migrate'
@@ -14,9 +15,6 @@ import {
 import { useProDashboardAnnotations } from '../ProDashboardAPIContext'
 import { ProBadge } from '../ui'
 import { generateItemId } from '../utils/dashboardUtils'
-
-const INPUT_STYLES =
-	'min-w-0 rounded-md border border-medium bg-surface-elevated-1 px-2.5 py-1.5 body-sm text-primary placeholder:text-tertiary focus-visible:border-brand focus-visible:outline-hidden read-only:cursor-not-allowed read-only:opacity-60'
 
 export function AnnotationsPopover() {
 	const { annotations, setAnnotations } = useProDashboardAnnotations()
@@ -103,24 +101,26 @@ export function AnnotationsPopover() {
 						}}
 					>
 						<div className="flex gap-2">
-							<input
+							<Input
 								ref={dateInputRef}
 								type="date"
 								aria-label="Annotation date"
-								className={`${INPUT_STYLES} shrink-0`}
+								className="min-w-0 shrink-0 cursor-pointer dark:scheme-dark"
 								value={date}
 								// Adding the last allowed annotation from this field locks it; read-only keeps its focus.
 								readOnly={atLimit}
+								aria-disabled={atLimit || undefined}
 								onChange={(event) => setDate(event.target.value)}
 							/>
-							<input
+							<Input
 								type="text"
 								aria-label="Annotation label"
 								placeholder="Label"
-								className={`${INPUT_STYLES} flex-1`}
+								className="min-w-0 flex-1"
 								value={label}
 								maxLength={DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH}
 								readOnly={atLimit}
+								aria-disabled={atLimit || undefined}
 								onChange={(event) => setLabel(event.target.value)}
 							/>
 						</div>

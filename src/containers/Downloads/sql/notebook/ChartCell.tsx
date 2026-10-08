@@ -1,3 +1,4 @@
+import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../chartConfig'
@@ -39,18 +40,17 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 						Add a SQL cell and run it first — chart cells visualize prior cell output.
 					</span>
 				) : (
-					<select
-						value={cell.source}
-						onChange={(e) => onSourceChange(e.target.value)}
-						className="rounded-sm border border-medium bg-page px-1.5 py-0.5 mono-sm text-primary outline-hidden focus:border-brand"
-					>
-						<option value="">— pick cell —</option>
-						{availableSources.map((s) => (
-							<option key={s.cellId} value={s.name}>
-								{s.name} · {describeShape(s)}
-							</option>
-						))}
-					</select>
+					<Select
+						heading="Source cell"
+						allValues={availableSources.map((s) => ({ key: s.name, name: `${s.name} · ${describeShape(s)}` }))}
+						selectedValues={cell.source}
+						setSelectedValues={onSourceChange}
+						label={cell.source || 'Pick a cell'}
+						labelType="none"
+						variant="filter"
+						size="sm"
+						triggerProps={{ 'aria-label': 'Source cell' }}
+					/>
 				)}
 				{selected && !selected.hasRun ? (
 					<span className="inline-flex items-center gap-1 text-warning">

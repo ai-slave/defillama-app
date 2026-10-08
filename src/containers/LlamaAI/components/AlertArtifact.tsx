@@ -29,7 +29,6 @@ import {
 import type { DeliveryChannel, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 import {
 	alertFieldLabelClass,
-	alertInputClass,
 	PriceInput,
 	SegmentedToggle,
 	PRICE_OPERATOR_OPTIONS,
@@ -45,7 +44,7 @@ import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { takeLostFocus } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Input, inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Skeleton } from '~/ui/Skeleton'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -406,12 +405,12 @@ export function AlertArtifact({
 				</>
 			) : (
 				<>
-					<input
+					<Input
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
 						placeholder="Alert title"
 						aria-label="Alert title"
-						className={alertInputClass}
+						className="w-full"
 					/>
 
 					{prompt ? (

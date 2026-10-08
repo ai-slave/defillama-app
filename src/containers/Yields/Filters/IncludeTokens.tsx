@@ -157,7 +157,7 @@ export function IncludeTokens({
 	return (
 		<>
 			<div
-				className="hover-wash hidden min-h-8 w-full items-center rounded-lg border border-medium bg-page body-sm text-primary focus-within:border-brand data-[alwaysdisplay=true]:flex sm:flex sm:w-auto sm:min-w-56"
+				className="hover-wash hidden min-h-8 w-full items-center rounded-lg border border-medium bg-page bg-clip-padding body-sm text-primary focus-within:border-brand data-[alwaysdisplay=true]:flex sm:flex sm:w-auto sm:min-w-56"
 				{...props}
 			>
 				<button

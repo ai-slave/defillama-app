@@ -98,6 +98,9 @@
 	/* The seam between joined buttons on a brand fill (a split button). */
 	--border-on-brand-seam: color-mix(in srgb, var(--text-on-brand) 25%, transparent);
 
+	/* A switch knob: white on both the brand and the neutral track, in both modes. */
+	--bg-knob: #ffffff;
+
 	/* Disabled controls: one neutral look for every variant. */
 	--bg-disabled: var(--neutral-3);
 	--border-disabled: var(--neutral-5);
@@ -361,6 +364,9 @@ html.dark,
 }
 @utility bg-veil {
 	background-color: var(--bg-veil);
+}
+@utility bg-knob {
+	background-color: var(--bg-knob);
 }
 @utility bg-on-brand-control {
 	background-color: var(--bg-on-brand-control);

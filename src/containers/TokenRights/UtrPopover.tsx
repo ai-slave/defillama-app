@@ -52,7 +52,7 @@ function AxisRow({
 			{grade ? <GradeBadge score={null} grade={grade} className="shrink-0" /> : <span className="w-10 shrink-0" />}
 			<span aria-hidden className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-elevated-1">
 				<span
-					className={`block h-full rounded-full ${grade ? utrGradeColor(grade).solid : 'bg-tertiary'}`}
+					className={`block h-full rounded-full ${grade ? utrGradeColor(grade).solid : 'bg-border-strong'}`}
 					style={{ width: `${fill}%` }}
 				/>
 			</span>

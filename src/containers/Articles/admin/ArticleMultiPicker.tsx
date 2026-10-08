@@ -8,6 +8,7 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { keepFocus, neighbourRowControl } from '~/ui/focus'
 import { Icon } from '~/ui/Icon'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { popoverMeasuredRowStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
@@ -94,13 +95,13 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 				setInputValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
-				<div className="relative flex items-center rounded-md border border-medium bg-page">
-					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
+				<div className="relative">
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} aria-hidden="true" />
 					<Ariakit.Combobox
 						ref={inputRef}
 						placeholder="Search articles by title…"
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-3 pl-9 body-md text-primary placeholder:text-tertiary"
+						className={searchFieldInputStyles}
 					/>
 				</div>
 				<ComboboxSurface
