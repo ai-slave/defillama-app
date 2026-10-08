@@ -180,7 +180,7 @@ export function EntityPickerList({
 										/>
 									) : null}
 
-									<span className={`truncate ${isSelected ? 'font-medium text-brand' : 'text-pro-text-primary'}`}>
+									<span className={`truncate ${isSelected ? 'font-medium text-link' : 'text-pro-text-primary'}`}>
 										{entity.label}
 									</span>
 								</button>

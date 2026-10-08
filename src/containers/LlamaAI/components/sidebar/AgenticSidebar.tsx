@@ -40,7 +40,7 @@ import { formatUsd } from '~/utils/numberFormat'
 
 /* One row recipe for every sidebar list item: 32px, body-sm, hover wash, brand tint when active. */
 export const SIDEBAR_ROW_SURFACE =
-	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-within:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-within:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 export const SIDEBAR_ROW = `${SIDEBAR_ROW_SURFACE} px-2 py-1.5`
 export const SIDEBAR_WELL =
 	'flex items-center justify-center rounded-lg border border-dashed border-medium p-4 text-center body-sm text-tertiary'

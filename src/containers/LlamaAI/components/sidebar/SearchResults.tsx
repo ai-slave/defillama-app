@@ -8,7 +8,7 @@ function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
 	const colorClass =
 		type === 'user_message'
-			? 'bg-brand-muted text-link-on-tint'
+			? 'bg-brand-muted text-link'
 			: type === 'session_title'
 				? 'bg-ai-mention/10 text-ai-mention'
 				: 'bg-surface-elevated-2 text-secondary'

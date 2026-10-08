@@ -200,7 +200,7 @@ export function DashboardDiscovery({
 			<div className="flex flex-col gap-1">
 				{!isBrowseMode ? (
 					<nav className="flex items-center gap-1 body-md">
-						<BasicLink href="/pro?tab=discover" shallow className="text-pro-accent hover:underline">
+						<BasicLink href="/pro?tab=discover" shallow className="text-link hover:underline">
 							Discover
 						</BasicLink>
 						<Icon name="chevron-right" height={14} width={14} className="text-pro-text-label" />

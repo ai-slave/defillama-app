@@ -73,11 +73,11 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 										height={13}
 										width={13}
 										name={option.icon}
-										className={active ? 'text-brand' : 'text-pro-text-tertiary'}
+										className={active ? 'text-link' : 'text-pro-text-tertiary'}
 									/>
 								) : null}
 								<span className="title-sm text-pro-text-primary">{option.label}</span>
-								{active ? <Icon name="check" height={11} width={11} className="text-brand" /> : null}
+								{active ? <Icon name="check" height={11} width={11} className="text-link" /> : null}
 							</span>
 							<p className="body-sm text-pro-text-secondary">{option.description}</p>
 						</button>

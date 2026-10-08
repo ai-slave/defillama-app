@@ -5,9 +5,7 @@ export function SqlChartUpsell() {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
 			<Icon name="file-lock-2" height={32} width={32} className="text-pro-text-tertiary" />
-			<span className="rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 label-xs text-brand">
-				API plan
-			</span>
+			<span className="rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 label-xs text-link">API plan</span>
 			<h3 className="heading-xs text-pro-text-primary">Author charts from SQL</h3>
 			<p className="max-w-md body-md text-pro-text-secondary">
 				Write SQL against any DefiLlama dataset, pick a chart and pin it to your dashboard. Available with an active API

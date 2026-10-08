@@ -32,7 +32,7 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 		<>
 			<div className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-6 text-center">
 				<div className="flex size-12 items-center justify-center rounded-full bg-brand/10">
-					<Icon name="file-lock-2" height={24} width={24} className="text-brand" />
+					<Icon name="file-lock-2" height={24} width={24} className="text-link" />
 				</div>
 				<div className="space-y-2">
 					<h3 className="heading-xs text-pro-text-primary">{featureName}</h3>

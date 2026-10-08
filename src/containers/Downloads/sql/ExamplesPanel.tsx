@@ -45,9 +45,9 @@ function CollapsedExamplesRail({
 				type="button"
 				onClick={onExpand}
 				aria-label={`Playbook · ${EXAMPLE_QUERIES.length} queries`}
-				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 label-sm text-pro-text-tertiary transition-colors hover:text-brand"
+				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 label-sm text-pro-text-tertiary transition-colors hover:text-link"
 			>
-				<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary transition-colors group-hover:text-brand" />
+				<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary transition-colors group-hover:text-link" />
 				<span className="tracking-widest uppercase [writing-mode:vertical-rl]" style={{ transform: 'rotate(180deg)' }}>
 					Playbook
 				</span>
@@ -298,7 +298,7 @@ function PlaybookItem({
 				</span>
 				<span
 					className={`truncate label-sm transition-colors ${
-						isBusy ? 'text-brand' : 'text-pro-text-primary group-hover/item:text-brand'
+						isBusy ? 'text-link' : 'text-pro-text-primary group-hover/item:text-link'
 					}`}
 				>
 					{example.title}
@@ -307,8 +307,8 @@ function PlaybookItem({
 					name="arrow-right"
 					className={`size-3 transition-all duration-200 ${
 						isBusy
-							? 'translate-x-0 text-brand opacity-100'
-							: '-translate-x-1 text-pro-text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-brand group-hover/item:opacity-100'
+							? 'translate-x-0 text-link opacity-100'
+							: '-translate-x-1 text-pro-text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-link group-hover/item:opacity-100'
 					}`}
 				/>
 			</Tooltip>

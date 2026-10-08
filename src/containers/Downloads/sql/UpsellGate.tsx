@@ -187,7 +187,7 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 				<header className="flex flex-col gap-5">
 					<div className="flex items-center gap-2">
 						<span aria-hidden className="inline-block size-1.5 rounded-full bg-sub-brand-primary" />
-						<span className="label-xs tracking-[0.18em] text-sub-brand-primary uppercase">API plan</span>
+						<span className="label-xs tracking-[0.18em] text-link uppercase">API plan</span>
 					</div>
 					<h2 className="heading-lg tracking-tight text-balance text-pro-text-primary">{heading}</h2>
 					<p className="max-w-xl body-lg text-pro-text-secondary">{copy}</p>
@@ -221,7 +221,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 		<div className="flex flex-col gap-6 rounded-xl border border-sub-brand-primary/30 bg-surface p-6 shadow-sm lg:sticky lg:top-4">
 			<div className="flex items-center gap-2">
 				<span aria-hidden className="inline-block size-1.5 rounded-full bg-sub-brand-primary" />
-				<span className="label-xs tracking-[0.18em] text-sub-brand-primary uppercase">API plan</span>
+				<span className="label-xs tracking-[0.18em] text-link uppercase">API plan</span>
 			</div>
 
 			<div className="flex flex-col gap-1.5">
@@ -239,7 +239,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 				<ul className="flex flex-col gap-2.5">
 					{PLAN_INCLUDES.map((item) => (
 						<li key={item} className="flex items-start gap-2.5 body-md">
-							<Icon name="check" className="mt-0.5 size-3.5 shrink-0 text-sub-brand-primary" />
+							<Icon name="check" className="mt-0.5 size-3.5 shrink-0 text-link" />
 							<span className="text-pro-text-primary">{item}</span>
 						</li>
 					))}
@@ -279,7 +279,7 @@ function FeatureTile({
 			<span className="mono-sm-bold text-pro-text-tertiary/70 tabular-nums">{String(index).padStart(2, '0')}</span>
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-center gap-2">
-					<Icon name={icon} className="size-3.5 text-sub-brand-primary" />
+					<Icon name={icon} className="size-3.5 text-link" />
 					<span className="title-md text-pro-text-primary">{title}</span>
 				</div>
 				<p className="body-md text-pro-text-secondary">{body}</p>
@@ -325,7 +325,7 @@ function TabStrip({ id }: { id: string }) {
 					</span>
 					<Icon
 						name={tab.kind === 'notebook' ? 'layers' : 'file-text'}
-						className={`size-3 shrink-0 text-pro-text-tertiary ${tab.kind === 'notebook' ? 'group-aria-selected:text-sub-brand-primary' : 'group-aria-selected:text-pro-text-secondary'}`}
+						className={`size-3 shrink-0 text-pro-text-tertiary ${tab.kind === 'notebook' ? 'group-aria-selected:text-link' : 'group-aria-selected:text-pro-text-secondary'}`}
 					/>
 					<span className="min-w-0 flex-1 truncate text-left mono-sm">{tab.label}</span>
 					<span
@@ -536,7 +536,7 @@ function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md'
 
 function CellTypeBadge({ kind }: { kind: 'sql' | 'md' | 'chart' }) {
 	const map = {
-		sql: { label: 'SQL', cls: 'bg-sub-brand-primary/15 text-sub-brand-primary' },
+		sql: { label: 'SQL', cls: 'bg-sub-brand-primary/15 text-link' },
 		md: { label: 'MD', cls: 'bg-pro-ai-300/15 text-pro-ai-300' },
 		chart: { label: 'CHART', cls: 'bg-pro-premium-300/15 text-pro-premium-300' }
 	}[kind]
@@ -577,7 +577,7 @@ function QueryBody() {
 		<div className="flex flex-col">
 			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-pro-app-bg/30 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
-					<Icon name="file-text" className="size-3.5 shrink-0 text-sub-brand-primary" />
+					<Icon name="file-text" className="size-3.5 shrink-0 text-link" />
 					<span className="truncate mono-sm text-pro-text-secondary">fees-vs-revenue.sql</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 body-sm">
@@ -809,7 +809,7 @@ const BAR_TONES = [
 ]
 
 function KW({ children }: { children: ReactNode }) {
-	return <span className="font-semibold text-sub-brand-primary">{children}</span>
+	return <span className="font-semibold text-link">{children}</span>
 }
 
 function NUM({ children }: { children: ReactNode }) {

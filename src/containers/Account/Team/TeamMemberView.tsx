@@ -21,9 +21,7 @@ function ReadOnlyMemberRow({ member, isCurrentUser }: { member: TeamMember; isCu
 				<div className="flex items-center gap-2">
 					<span className="truncate body-md text-sub-text-primary">{member.email}</span>
 					{member.isAdmin && (
-						<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 label-xs text-sub-brand-primary">
-							Admin
-						</span>
+						<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 label-xs text-link">Admin</span>
 					)}
 					{isCurrentUser && <span className="shrink-0 body-xs text-sub-text-muted">(you)</span>}
 				</div>

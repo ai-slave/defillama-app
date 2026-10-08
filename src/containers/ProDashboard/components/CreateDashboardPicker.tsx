@@ -246,7 +246,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						onClick={() => setView({ mode: 'scratch', from: null })}
 						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
 					>
-						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
+						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="file-plus" height={20} width={20} />
 						</div>
 						<div>
@@ -264,7 +264,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						onClick={() => setView({ mode: 'comparison', from: null })}
 						className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
 					>
-						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
+						<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link">
 							<Icon name="bar-chart-2" height={20} width={20} />
 						</div>
 						<div>

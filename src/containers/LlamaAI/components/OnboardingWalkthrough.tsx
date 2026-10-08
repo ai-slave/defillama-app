@@ -141,7 +141,7 @@ const TONE_VAR = {
 	warning: 'var(--color-warning)',
 	success: 'var(--color-success)'
 } as const
-const TONE_TEXT = { brand: 'text-brand', warning: 'text-warning', success: 'text-success' } as const
+const TONE_TEXT = { brand: 'text-link', warning: 'text-warning', success: 'text-success' } as const
 
 interface OnboardingWalkthroughProps {
 	isAlertsModalOpen: boolean

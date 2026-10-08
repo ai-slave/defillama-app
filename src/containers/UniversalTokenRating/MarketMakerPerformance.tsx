@@ -106,7 +106,7 @@ function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProv
 		<Panel padding="none">
 			<PanelHeader>
 				<PanelTitle as="h3">Performance Summary</PanelTitle>
-				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link-on-tint">
+				<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link">
 					Prev. 30D
 				</span>
 			</PanelHeader>
@@ -384,7 +384,7 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 			<Tabs<UptimeView> value={mode} values={UPTIME_VIEWS} onValueChange={setMode}>
 				<PanelHeader>
 					<PanelTitle as="h3">Uptime Calculations</PanelTitle>
-					<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link-on-tint">
+					<span className="rounded-full border border-medium bg-brand-muted px-2 py-0.5 body-xs text-link">
 						Prev. 30D
 					</span>
 					<SegmentedControl

@@ -7,7 +7,9 @@
 
    Mode handling: light values on :root, dark overrides under html.dark.
    Never create *-light/*-dark suffixed pairs: the mode lives in the
-   selector, not the token name.
+   selector, not the token name. A token mapped to a ramp step
+   (var(--blue-11)) needs no dark override: the ramps in primitives.css
+   flip with the mode.
 ---------------------------------------------------------------------------- */
 
 :root {
@@ -22,7 +24,7 @@
 	   shadow carries elevation; dark mode carries it with surface lift, so
 	   the dark value equals bg-surface-elevated-1. */
 	--bg-overlay: #ffffff;
-	--bg-brand: var(--blue-500);
+	--bg-brand: var(--blue-9);
 	--bg-brand-muted: #1f67d21f;
 	--bg-brand-faint: #1f67d20f;
 	/* Dialog and drawer backdrop. */
@@ -31,45 +33,42 @@
 	/* Text */
 	--text-primary: #090b0c;
 	--text-secondary: #484848;
-	--text-tertiary: #6f6f6f; /* raised in light mode to meet AA */
+	/* Colored and tertiary text sit on ramp step 11: AA on every surface,
+	   hover wash and tint (steps 1–4 of any hue). */
+	--text-tertiary: var(--neutral-11);
 	--text-disabled: #dedede;
-	--text-link: #1853a8;
+	--text-link: var(--blue-11);
 	--text-on-brand: #ffffff;
-	--text-data-up: #32933f;
-	--text-data-down: #b53b35;
-	--text-data-up-alt: var(--blue-500);
-	--text-data-down-alt: var(--violet-500);
+	--text-data-up: var(--emerald-11);
+	--text-data-down: var(--crimson-11);
+	--text-data-up-alt: var(--blue-11);
+	--text-data-down-alt: var(--violet-11);
 	--text-verified: #3b82f6; /* The verified-yields mark; brighter than bg-brand, 3.7:1 on white (a filled glyph, not text) */
-	--text-warning: #a15d23;
+	--text-warning: var(--amber-11);
 
 	/* Feedback on the reader's own action (validation, destructive rows,
 	   toasts). Same values as the data and warning tones. */
 	--success: var(--text-data-up);
 	--error: var(--text-data-down);
 	--warning: var(--text-warning);
+	/* A destructive control's own states: hover and focus tint, and its outline. */
+	--bg-error-muted: var(--crimson-3);
+	--border-error-muted: var(--crimson-7);
 
 	/* Stroke (alpha-based: layers correctly on any surface) */
 	--border-very-subtle: #090b0c08;
 	--border-subtle: #090b0c0f;
 	--border-medium: #090b0c1f;
 	--border-strong: #090b0c82;
-	--border-brand: var(--blue-500);
+	--border-brand: var(--blue-9);
 
-	/* Hover washes, deliberately asymmetric across modes: brand-tinted in
-	   light, a white lift in dark. Focus-visible may keep the wash; the
-	   focus ring is the indicator. */
-	--hover-row: #1f67d21f; /* popover, menu and table rows */
-	--hover-card: #1f67d20f; /* interactive cards */
-
-	/* Link-colored text ON a brand-tinted background (selected pills and
-	   segments). Light text-link passes AA there (6.2:1); dark text-link is
-	   only 4.2:1 on bg-brand-muted over bg-surface, so dark mode lifts it. */
-	--text-link-on-tint: var(--text-link);
-
-	/* Error-colored text ON an error-tinted background (pool exploit banner).
-	   Light text-data-down passes AA there; dark mode lifts red-500, which
-	   is only 4.2:1 on error/10 over surface. */
-	--text-error-on-tint: var(--error);
+	/* Neutral hover washes: a dark wash in light, a white lift in dark. Brand
+	   blue marks selection only, so a hovered destructive or selected control
+	   keeps its own hue. The light wash is the strongest that keeps text-link
+	   at AA on a hovered bg-brand-muted pill. Focus-visible may keep the wash;
+	   the focus ring is the indicator. */
+	--hover-row: #090b0c0f; /* popover, menu and table rows */
+	--hover-card: #090b0c08; /* interactive cards */
 
 	/* Chips */
 	--chip-bg: #dedede;
@@ -84,8 +83,8 @@
 	--chart-text: rgba(0, 0, 0, 1); /* titles, legend & dataZoom text, always-on tooltips */
 	/* Axis labels use the tertiary tier, quieter than full ink. */
 	--chart-axis-label: #6f6f6f;
-	/* Matches Table/SortIcon: text-brand when active, text-tertiary/50 otherwise. */
-	--chart-legend-page-active: var(--bg-brand);
+	/* Matches Table/SortIcon: text-link when active, text-tertiary/50 otherwise. */
+	--chart-legend-page-active: var(--text-link);
 	--chart-legend-page-inactive: #6f6f6f80;
 	--chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
 	--chart-area-gradient-to: rgba(255, 255, 255, 0.2); /* bottom stop of series area fades */
@@ -116,7 +115,7 @@ html.dark {
 	--bg-page: #090b0c;
 	--bg-surface: #131516;
 	--bg-surface-elevated-1: #181a1b;
-	--bg-surface-elevated-2: var(--neutral-800);
+	--bg-surface-elevated-2: var(--neutral-4);
 	--bg-overlay: #181a1b;
 	--bg-brand-muted: #1f67d233;
 	/* One alpha step below muted. */
@@ -125,18 +124,8 @@ html.dark {
 	/* Text */
 	--text-primary: #ffffff;
 	--text-secondary: #c6c6c6;
-	--text-tertiary: var(--neutral-500);
 	--text-disabled: #2f3336;
-	--text-link: #4b86db;
-	--text-data-up: var(--green-500);
-	--text-data-down: var(--red-500);
-	/* Blue and violet 500 are ~3.4:1 on dark surfaces, under AA for text,
-	   so dark mode lifts the text pair (blue matches dark text-link; violet
-	   ~5.5:1). Chart fills stay on the 500s. */
-	--text-data-up-alt: #4b86db;
-	--text-data-down-alt: #a674ec;
 	--text-verified: #3b82f6;
-	--text-warning: #ffa455;
 
 	/* Stroke */
 	--border-very-subtle: #ffffff08;
@@ -149,11 +138,9 @@ html.dark {
 
 	--hover-row: #ffffff0f;
 	--hover-card: #ffffff08;
-	--text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
-	--text-error-on-tint: #ec7a73; /* ~6:1 on error/10 over surface (AA) */
 
 	/* Chips */
-	--chip-bg: var(--neutral-800);
+	--chip-bg: var(--neutral-4);
 	--chip-text: #c6c6c6;
 
 	/* Chart chrome */
@@ -203,8 +190,6 @@ html.dark {
 	--color-tertiary: var(--text-tertiary);
 	--color-disabled: var(--text-disabled);
 	--color-link: var(--text-link);
-	--color-link-on-tint: var(--text-link-on-tint);
-	--color-error-on-tint: var(--text-error-on-tint);
 	--color-data-up: var(--text-data-up);
 	--color-data-down: var(--text-data-down);
 	--color-data-up-alt: var(--text-data-up-alt);
@@ -248,6 +233,12 @@ html.dark {
 @utility bg-border-strong {
 	background-color: var(--border-strong);
 }
+@utility bg-error-muted {
+	background-color: var(--bg-error-muted);
+}
+@utility border-error-muted {
+	border-color: var(--border-error-muted);
+}
 @utility bg-screen-dim {
 	background-color: var(--bg-screen-dim);
 }
@@ -271,10 +262,9 @@ html.dark {
 /* Hover/focus wash that PAINTS OVER the resting background instead of
    replacing it (background-image stacks on background-color). Use on any
    interactive element whose resting bg is tinted or opaque (bg-brand-muted
-   pills, elevated triggers) — hover:bg-hover-row REPLACES the background,
-   which in light mode is identical to bg-brand-muted (both #1f67d21f) and
-   in dark mode strips the brand tint. Transparent-resting elements (popover
-   and table rows) may keep hover:bg-hover-row. */
+   pills, elevated triggers) — hover:bg-hover-row REPLACES the background
+   and strips the tint. Transparent-resting elements (popover and table
+   rows) may keep hover:bg-hover-row. */
 .hover-wash:not(:disabled):not([aria-disabled='true']):hover,
 .hover-wash:not(:disabled):not([aria-disabled='true']):focus-visible {
 	background-image: linear-gradient(var(--hover-row), var(--hover-row));

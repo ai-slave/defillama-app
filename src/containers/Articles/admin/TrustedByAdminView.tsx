@@ -544,7 +544,7 @@ function SortableMentionRow({
 			</Ariakit.Button>
 
 			{slotLabel ? (
-				<span className="inline-flex shrink-0 items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link-on-tint uppercase">
+				<span className="inline-flex shrink-0 items-center rounded-full bg-brand-muted px-2 py-0.5 label-xs tracking-[0.18em] text-link uppercase">
 					{slotLabel}
 				</span>
 			) : (

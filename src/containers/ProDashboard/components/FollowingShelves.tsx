@@ -102,7 +102,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 				<div className="min-w-0 flex-1">
 					<BasicLink
 						href={`/authors/${author.slug}`}
-						className="block truncate title-lg text-pro-text-primary hover:text-pro-accent"
+						className="block truncate title-lg text-pro-text-primary hover:text-link"
 					>
 						{author.displayName}
 					</BasicLink>
@@ -130,7 +130,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					{hasMore ? (
 						<BasicLink
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-pro-cards-border body-md text-pro-text-secondary transition-colors hover:border-pro-accent/40 hover:text-pro-accent md:snap-align-none"
+							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-pro-cards-border body-md text-pro-text-secondary transition-colors hover:border-pro-accent/40 hover:text-link md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />

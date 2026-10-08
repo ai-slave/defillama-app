@@ -533,6 +533,20 @@ const RULES = [
 			/(?<![\w-])(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}|black|white)(?:\/(?:\d{1,3}|\[[^\]]+\]))?(?![\w-])/g
 	},
 	{
+		id: 'brand-fill-as-text',
+		description:
+			'text-brand colors text with the brand fill, which fails AA in dark mode; links, selected labels and carets use text-link (design.md → Color ramps)',
+		pattern: /(?<![\w-])(?:[\w\-[\]&=.'*@():>]+:)*!?text-brand(?![\w-])/g
+	},
+	{
+		id: 'opacity-color-modifier',
+		description:
+			'a /NN opacity modifier on a color utility; use the ramp step or token for that role (tints, borders and text tiers in design.md → Color ramps)',
+		pattern:
+			/(?<![\w-])(?:bg|text|border(?:-[trblxyse])?|from|to|via|ring|fill|stroke|divide|outline|decoration|placeholder|shadow|caret|accent)-(?!(?:xs|sm|base|lg|xl|\dxl)\/)(?:[a-z][\w-]*|\([^)\s]*\)|\[[^\]\s]*\])\/(?:\d{1,3}|\[[^\]\s]+\])(?![\w-])/g,
+		skipTests: true
+	},
+	{
 		id: 'arbitrary-color-function',
 		description: 'arbitrary rgb()/hsl()/oklch() color in a utility class (same contract as hex-in-classname)',
 		pattern:

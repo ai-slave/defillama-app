@@ -52,7 +52,7 @@ export function SelectTypeStep() {
 						>
 							<div
 								className={`flex size-16 items-center justify-center rounded-lg transition-colors ${
-									isSelected ? 'bg-brand-muted text-link-on-tint' : 'text-secondary'
+									isSelected ? 'bg-brand-muted text-link' : 'text-secondary'
 								}`}
 							>
 								<Icon name={option.icon} height={32} width={32} />

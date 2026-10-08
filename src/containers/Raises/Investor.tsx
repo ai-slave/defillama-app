@@ -106,7 +106,7 @@ export function InvestorContainer({
 				<span>Are we missing any funding round?</span>{' '}
 				<a
 					href="https://airtable.com/shrON6sFMgyFGulaq"
-					className="font-medium text-brand underline"
+					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
 				>

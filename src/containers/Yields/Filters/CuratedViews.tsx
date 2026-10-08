@@ -270,7 +270,7 @@ export function CuratedViews({
 												key={item}
 												className={`inline-flex items-center rounded-full border px-2.5 py-0.5 whitespace-nowrap ${
 													group.tone === 'accent'
-														? 'border-brand bg-brand-muted label-sm text-link-on-tint'
+														? 'border-brand bg-brand-muted label-sm text-link'
 														: 'border-medium bg-surface-elevated-1 label-sm text-secondary'
 												}`}
 											>

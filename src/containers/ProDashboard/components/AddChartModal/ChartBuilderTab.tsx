@@ -735,7 +735,7 @@ export function ChartBuilderTab({
 										key={option.value}
 										className={`relative flex cursor-pointer flex-col items-center gap-0.5 rounded-md border p-1 text-center transition-colors has-focus-visible:focus-ring ${
 											chartBuilder.chartType === option.value
-												? 'border-brand bg-brand-muted text-link-on-tint'
+												? 'border-brand bg-brand-muted text-link'
 												: 'border-medium text-secondary hover:bg-hover-row hover:text-primary'
 										}`}
 									>

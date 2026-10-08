@@ -10,11 +10,7 @@ function FaqAnswer({ text, onStartTrial }: { text: string; onStartTrial?: () => 
 	return (
 		<>
 			{text.slice(0, idx)}
-			<button
-				type="button"
-				onClick={onStartTrial}
-				className="text-sub-brand-primary underline dark:text-sub-brand-secondary"
-			>
+			<button type="button" onClick={onStartTrial} className="text-link underline dark:text-sub-brand-secondary">
 				{phrase}
 			</button>
 			{text.slice(idx + phrase.length)}

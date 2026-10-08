@@ -587,7 +587,7 @@ export function ColumnManager({
 				<div className="mb-2 flex items-center justify-between label-sm">
 					<div className="flex items-center gap-2">
 						<h4 className="title-sm text-pro-text-primary">Selected</h4>
-						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-brand">{selectedColumns.length}</span>
+						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-link">{selectedColumns.length}</span>
 					</div>
 					{selectedColumns.length > 0 ? (
 						<Button variant="link" onClick={handleClearAll}>
@@ -630,7 +630,7 @@ export function ColumnManager({
 					</div>
 					<DragOverlay>
 						{activeColumn ? (
-							<div className="rounded-md border border-brand bg-brand/20 px-2 py-1 label-sm text-brand shadow-lg">
+							<div className="rounded-md border border-brand bg-brand/20 px-2 py-1 label-sm text-link shadow-lg">
 								{activeColumn.header}
 							</div>
 						) : null}
@@ -736,7 +736,7 @@ export function ColumnManager({
 							name={!hasActiveSubscription ? 'file-lock-2' : customColumnExpanded ? 'minus' : 'plus'}
 							width={14}
 							height={14}
-							className="text-brand"
+							className="text-link"
 						/>
 						<span className="title-sm text-pro-text-primary">
 							{editingId ? 'Edit custom column' : 'Custom column'}
@@ -1031,7 +1031,7 @@ function SortableChip({
 			<span className="max-w-[80px] truncate font-medium text-pro-text-primary" title={label}>
 				{label}
 			</span>
-			{isFirst ? <Icon name="pin" width={8} height={8} className="text-brand" /> : null}
+			{isFirst ? <Icon name="pin" width={8} height={8} className="text-link" /> : null}
 			<Tooltip
 				content={`Hide ${label}`}
 				render={
@@ -1107,12 +1107,12 @@ function SortingSection({
 									popover.setOpen(false)
 								}}
 								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-									!currentSortColumn ? 'bg-brand/10 text-brand' : 'text-pro-text-secondary'
+									!currentSortColumn ? 'bg-brand/10 text-link' : 'text-pro-text-secondary'
 								}`}
 							>
 								<span>No sorting</span>
 								{!currentSortColumn ? (
-									<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-brand" />
+									<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-link" />
 								) : null}
 							</button>
 							{selectableColumns.map((col) => {
@@ -1126,13 +1126,11 @@ function SortingSection({
 											popover.setOpen(false)
 										}}
 										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left label-sm transition-colors ${
-											isActive ? 'bg-brand/10 text-brand' : 'text-pro-text-secondary'
+											isActive ? 'bg-brand/10 text-link' : 'text-pro-text-secondary'
 										}`}
 									>
 										<span className="truncate">{col.header}</span>
-										{isActive ? (
-											<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-brand" />
-										) : null}
+										{isActive ? <Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-link" /> : null}
 									</button>
 								)
 							})}

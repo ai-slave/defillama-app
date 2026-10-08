@@ -159,7 +159,7 @@ export const getToolLabel = (name: string | undefined | null): string =>
 /** Icon hue by what the tool does; the class carries both themes so icons never hardcode a hex. */
 export type ToolTone = 'brand' | 'accent' | 'success' | 'warning' | 'error' | 'neutral'
 export const TOOL_TONE_CLASS: Record<ToolTone, string> = {
-	brand: 'text-brand',
+	brand: 'text-link',
 	accent: 'text-ai-mention',
 	success: 'text-success',
 	warning: 'text-warning',

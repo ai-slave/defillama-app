@@ -13,9 +13,6 @@
 	--shadow-sub-google-deep: 0 4px 16px rgb(33 115 70 / 0.2);
 	--shadow-sub-purple-glow: 0 0 24px rgb(92 92 249 / 0.2);
 	--shadow-sub-blue-glow: 0 0 24px rgb(31 103 210 / 0.25);
-	--shadow-sub-purple-glow-strong: 0px 0px 32px 0px rgb(92 92 249 / 0.5);
-	--shadow-sub-purple-aura: 0 0 150px 75px rgb(92 92 249 / 0.15), 0 0 75px 25px rgb(123 123 255 / 0.1);
-	--shadow-sub-focus-ring: 0 0 0 3px color-mix(in srgb, var(--bg-brand) 15%, transparent);
 	--shadow-sub-brand-ring: 0 0 0 2px color-mix(in oklch, var(--sub-brand-primary) 10%, transparent);
 
 	/* Gentle bob for the floating chips on the mobile-app landing hero */
@@ -79,8 +76,6 @@
 	--color-sub-surface-dark: var(--sub-surface-dark);
 	--color-sub-surface-page: var(--sub-surface-page);
 	--color-sub-surface-panel: var(--sub-surface-panel);
-	--color-sub-surface-slate-10: var(--sub-surface-slate-10);
-	--color-sub-surface-slate-50: var(--sub-surface-slate-50);
 	--color-sub-text-muted: var(--sub-text-muted);
 	--color-sub-text-primary: var(--sub-text-primary);
 	--color-sub-text-secondary: var(--sub-text-secondary);
@@ -131,9 +126,7 @@
 		--sub-surface-dark: #131516;
 		--sub-surface-dark-deep: #090e13;
 		--sub-surface-dark-section: #151a1d;
-		--sub-surface-dark-row: #181a1b;
 
-		--sub-surface-slate-10: #f8fafd;
 		--sub-surface-slate-25: #f5f7fb;
 		--sub-surface-slate-50: #e7eff8;
 
@@ -150,18 +143,6 @@
 		--sub-icon-muted: #8c9aaf;
 
 		/* Chart palette */
-		--sub-chart-1: var(--sub-brand-primary);
-		--sub-chart-2: #22c55e;
-		--sub-chart-3: #f59e0b;
-		--sub-chart-4: #38bdf8;
-		--sub-chart-5: #f97316;
-		--sub-chart-6: #a855f7;
-		--sub-chart-7: #14b8a6;
-		--sub-chart-others: #64748b;
-		--sub-chart-split: rgba(0, 0, 0, 0.06);
-		--sub-chart-axis: var(--sub-border-slate-100);
-		--sub-chart-tooltip-bg: var(--sub-surface-dark);
-		--sub-chart-tooltip-border: var(--sub-border-strong);
 
 		--sub-grid-image-light:
 			linear-gradient(to right, rgba(9, 11, 12, 0.14) 1px, transparent 1px),
@@ -218,9 +199,6 @@
 		--sub-success: #65efa4;
 		--sub-border: #2f3336;
 		--sub-overlay: #090b0ccc;
-
-		--sub-chart-split: rgba(255, 255, 255, 0.06);
-		--sub-chart-axis: var(--sub-border-strong);
 
 		--sub-mobile-table-border: var(--sub-dark-card);
 		--sub-mobile-table-header-bg: var(--sub-surface-dark-section);

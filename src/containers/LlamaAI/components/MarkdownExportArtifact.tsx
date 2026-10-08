@@ -73,7 +73,7 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 			className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3 text-left not-aria-disabled:hover:bg-hover-row aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 		>
 			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-muted">
-				<Icon name="file-text" className="size-5 text-link-on-tint" />
+				<Icon name="file-text" className="size-5 text-link" />
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="m-0 truncate label-md text-primary">{mdExport.title}</span>

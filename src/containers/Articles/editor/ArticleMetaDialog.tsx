@@ -498,7 +498,7 @@ function MetaSheet({
 								<span className="label-sm text-secondary">Editorial</span>
 								<div className="flex flex-wrap gap-1.5">
 									{article.editorialTags.filter(isEditorialTagSlug).map((slug) => (
-										<span key={slug} className="rounded-full bg-brand-muted px-2 py-0.5 label-sm text-link-on-tint">
+										<span key={slug} className="rounded-full bg-brand-muted px-2 py-0.5 label-sm text-link">
 											{EDITORIAL_TAGS[slug].label}
 										</span>
 									))}
@@ -671,7 +671,7 @@ function MetaSheet({
 											) : (
 												<span
 													aria-hidden
-													className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-muted label-sm text-link-on-tint"
+													className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-muted label-sm text-link"
 												>
 													{entry.profile.displayName.slice(0, 2).toUpperCase()}
 												</span>

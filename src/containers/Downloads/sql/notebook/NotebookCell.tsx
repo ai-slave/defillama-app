@@ -211,7 +211,7 @@ function CellTypeBadge({ type }: { type: CellType }) {
 	const label = type === 'sql' ? 'SQL' : type === 'markdown' ? 'MD' : 'CHART'
 	const tone =
 		type === 'sql'
-			? 'bg-brand/15 text-brand'
+			? 'bg-brand/15 text-link'
 			: type === 'markdown'
 				? 'bg-pro-ai-300/15 text-pro-ai-300'
 				: 'bg-pro-premium-300/15 text-pro-premium-300'

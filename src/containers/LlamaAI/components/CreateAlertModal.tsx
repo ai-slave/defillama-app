@@ -109,13 +109,13 @@ function AlertTypeCard({
 			<Ariakit.Radio id={id} value={value} aria-label={title} aria-description={description} className="sr-only" />
 			<span
 				className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${
-					active ? 'bg-brand-muted text-link-on-tint' : 'bg-page text-secondary'
+					active ? 'bg-brand-muted text-link' : 'bg-page text-secondary'
 				}`}
 			>
 				<Icon name={icon} className="size-3.5" />
 			</span>
 			<span className="flex min-w-0 flex-col gap-0.5">
-				<span className={`label-md ${active ? 'text-link-on-tint' : 'text-primary'}`}>{title}</span>
+				<span className={`label-md ${active ? 'text-link' : 'text-primary'}`}>{title}</span>
 				<span className="body-sm text-secondary">{description}</span>
 			</span>
 		</label>

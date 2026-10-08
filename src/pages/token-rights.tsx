@@ -814,7 +814,7 @@ function getStatusPillClassName(tone: StatusPillTone, extraClassName = '') {
 		tone === 'positive'
 			? 'border-success/40 bg-success/10 text-success'
 			: tone === 'negative'
-				? 'border-error/40 bg-error/10 text-error-on-tint'
+				? 'border-error/40 bg-error/10 text-error'
 				: tone === 'pending'
 					? 'border-warning/40 bg-warning/10 text-warning'
 					: 'border-medium bg-page text-secondary'

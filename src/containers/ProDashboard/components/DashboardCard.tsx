@@ -49,7 +49,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="relative z-10 inline-flex max-w-full items-center gap-1.5 body-sm text-pro-text-tertiary transition-colors hover:text-pro-accent"
+			className="relative z-10 inline-flex max-w-full items-center gap-1.5 body-sm text-pro-text-tertiary transition-colors hover:text-link"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element

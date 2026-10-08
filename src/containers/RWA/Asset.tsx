@@ -108,9 +108,7 @@ function ClassificationItem({ label, value, positive, description }: Classificat
 			}`}
 		>
 			<p className="flex flex-col gap-1">
-				<span
-					className={`font-medium ${isBoolean ? (positive ? 'text-success' : 'text-error-on-tint') : 'text-secondary'}`}
-				>
+				<span className={`font-medium ${isBoolean ? (positive ? 'text-success' : 'text-error') : 'text-secondary'}`}>
 					{label}
 				</span>
 				{description ? <span className="body-sm text-secondary">{description}</span> : null}
@@ -118,7 +116,7 @@ function ClassificationItem({ label, value, positive, description }: Classificat
 			{isBoolean ? (
 				<Icon
 					name={positive ? 'check-circle' : 'x'}
-					className={`size-5 shrink-0 ${positive ? 'text-success' : 'text-error-on-tint'}`}
+					className={`size-5 shrink-0 ${positive ? 'text-success' : 'text-error'}`}
 				/>
 			) : (
 				<span className="font-medium">{displayValue}</span>

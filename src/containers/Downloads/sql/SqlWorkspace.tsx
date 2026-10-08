@@ -1296,11 +1296,11 @@ function SavedQueriesTab({
 								) : (
 									<Icon
 										name="arrow-right"
-										className="size-3.5 shrink-0 text-pro-text-tertiary transition-colors group-hover:text-brand"
+										className="size-3.5 shrink-0 text-pro-text-tertiary transition-colors group-hover:text-link"
 									/>
 								)}
 								<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-									<span className="truncate title-md text-pro-text-primary transition-colors group-hover:text-brand">
+									<span className="truncate title-md text-pro-text-primary transition-colors group-hover:text-link">
 										{q.name}
 									</span>
 									<span className="truncate mono-sm text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>

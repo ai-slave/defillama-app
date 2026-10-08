@@ -44,7 +44,7 @@ export function FilterBuilderDialog({ appliedCount, children }: { appliedCount: 
 			>
 				<span>Filters</span>
 				{appliedCount > 0 ? (
-					<span className="min-w-4 rounded-full bg-brand-muted px-1 text-center label-xs text-link-on-tint">
+					<span className="min-w-4 rounded-full bg-brand-muted px-1 text-center label-xs text-link">
 						{appliedCount}
 					</span>
 				) : null}

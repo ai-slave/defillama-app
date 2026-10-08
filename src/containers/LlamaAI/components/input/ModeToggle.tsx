@@ -28,11 +28,7 @@ export function ModeUsage({
 	const { isAuthenticated } = useAuthContext()
 	const signedOut = !usage && !isAuthenticated
 	if (feature === 'fact_checked' && (usage?.period === 'blocked' || signedOut)) {
-		return (
-			<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link-on-tint uppercase">
-				Pro
-			</span>
-		)
+		return <span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link uppercase">Pro</span>
 	}
 	if (feature === 'research' && (usage?.period === 'biweekly' || signedOut)) {
 		return <span className="body-sm text-tertiary tabular-nums">{usage ? usage.remainingUsage : 1} free</span>

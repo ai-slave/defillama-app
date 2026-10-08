@@ -10,7 +10,7 @@ import { Tooltip } from './Tooltip'
    Variants (required, with `size`):
    - default:    the padded, tinted control for chart periods, denominations,
                  table metric and period filters, and view modes. Selected is
-                 bg-brand-muted + text-link-on-tint; unselected is
+                 bg-brand-muted + text-link; unselected is
                  text-secondary, text-primary on hover.
    - responsive: `default` that stretches its segments to the row below `sm`.
                  Use it in the phone filter menu (under a body-sm row label);
@@ -63,7 +63,7 @@ export const TAG_GROUP_VARIANTS = {
 		container:
 			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	mode: {
 		container: 'body-sm grid shrink-0 auto-cols-fr gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
@@ -73,20 +73,20 @@ export const TAG_GROUP_VARIANTS = {
 	chips: {
 		container: 'flex w-fit max-w-full flex-wrap items-center gap-1.5',
 		button:
-			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
 	field: {
 		container:
 			'body-sm flex w-full flex-nowrap items-center gap-0.5 rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	responsive: {
 		container:
 			'body-sm flex w-fit max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	solid: {
 		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',

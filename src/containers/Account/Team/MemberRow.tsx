@@ -34,7 +34,7 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 					<div className="flex items-center gap-2">
 						<span className="truncate body-md text-sub-text-primary">{member.email}</span>
 						{isAdminMember && (
-							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 label-xs text-sub-brand-primary">
+							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 label-xs text-link">
 								Admin
 							</span>
 						)}

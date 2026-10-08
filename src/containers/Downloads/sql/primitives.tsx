@@ -59,8 +59,8 @@ const KIND_LABEL: Record<FineKind, string> = {
 
 const KIND_TONE: Record<FineKind, string> = {
 	date: 'text-pro-premium-300',
-	int: 'text-brand',
-	float: 'text-brand',
+	int: 'text-link',
+	float: 'text-link',
 	text: 'text-pro-success-300',
 	bool: 'text-pro-ai-300',
 	list: 'text-pro-ai-300',

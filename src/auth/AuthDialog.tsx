@@ -54,7 +54,7 @@ export function LastUsedCorner() {
 
 export function LastUsedChip() {
 	return (
-		<span className="shrink-0 rounded-full bg-brand-muted px-2 py-0.5 label-xs whitespace-nowrap text-link-on-tint">
+		<span className="shrink-0 rounded-full bg-brand-muted px-2 py-0.5 label-xs whitespace-nowrap text-link">
 			Last used
 		</span>
 	)

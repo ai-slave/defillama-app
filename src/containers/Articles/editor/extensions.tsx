@@ -319,7 +319,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 	return (
 		<NodeViewWrapper
 			as="span"
-			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border bg-brand-muted align-baseline mono-sm text-link-on-tint ${
+			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border bg-brand-muted align-baseline mono-sm text-link ${
 				selected ? 'border-brand' : 'border-medium'
 			}`}
 		>

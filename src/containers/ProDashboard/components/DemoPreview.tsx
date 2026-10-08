@@ -489,7 +489,7 @@ export function DemoPreview() {
 									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 body-md text-pro-text-secondary"
 								>
 									<div className="align-center flex gap-2">
-										<Icon name={feature.icon} height={32} width={32} className="shrink-0 text-brand" />
+										<Icon name={feature.icon} height={32} width={32} className="shrink-0 text-link" />
 										<span className="heading-xs whitespace-nowrap">{feature.title}</span>
 									</div>
 								</div>
@@ -522,7 +522,7 @@ export function DemoPreview() {
 									</li>
 								</ul>
 								<Link href={createAccountHref}>
-									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 label-md text-brand transition-colors hover:bg-brand hover:text-on-brand">
+									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 label-md text-link transition-colors hover:bg-brand hover:text-on-brand">
 										Create Free Account
 									</span>
 								</Link>
@@ -532,12 +532,12 @@ export function DemoPreview() {
 								<h3 className="mb-3 bg-linear-to-r from-brand to-purple-600 bg-clip-text heading-sm text-transparent">
 									Pro
 								</h3>
-								<div className="mb-6 heading-lg text-brand">
+								<div className="mb-6 heading-lg text-link">
 									$49<span className="body-lg text-pro-text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left body-md">
 									<li className="flex items-start gap-2">
-										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-brand" />
+										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-link" />
 										<span className="font-semibold text-pro-text-primary">Everything in Free, plus:</span>
 									</li>
 									<li className="flex items-start gap-2">

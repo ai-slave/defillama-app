@@ -12,7 +12,7 @@ The system is not frozen. When a new pattern, a new requirement or a clearly bet
 
 Tokens come in three tiers, and components use only tier 2 and tier 3:
 
-1. **Primitives** (`src/styles/primitives.css`): raw ramp values such as `--blue-500`. Components never use them. They are not registered as Tailwind colors, because names like `blue` and `neutral` would override Tailwind's own palettes.
+1. **Primitives** (`src/styles/primitives.css`): the generated color ramps (`--blue-1` … `--blue-12`, see [Color ramps](#color-ramps)) and the fixed `*-500` chart accents. Components never use them. They are not registered as Tailwind colors, because names like `blue` and `neutral` would override Tailwind's own palettes.
 2. **Semantics** (`src/styles/semantics.css`): role tokens such as `--bg-surface` and `--text-data-up`, light values on `:root` and dark values under `html.dark`, registered as utilities (`bg-surface`, `text-primary`, `border-subtle`).
 3. **Domain tokens**: only when a value differs from every semantic, such as the Yields text accents in `src/tailwind.css`. A token that would alias a semantic binds the semantic instead.
 
@@ -59,14 +59,12 @@ Class composition:
 | `text-secondary`                          | Supporting text and resting interactive text                                               |
 | `text-tertiary`                           | Qualifiers: units, suffixes, timestamps, counts, placeholders, empty and missing values    |
 | `text-disabled`                           | Disabled controls only                                                                     |
-| `text-link`                               | Links                                                                                      |
-| `text-link-on-tint`                       | Link-colored text on `bg-brand-muted` (selected pills and segments)                        |
+| `text-link`                               | Links, selected labels on `bg-brand-muted`, active sort carets                             |
 | `text-on-brand`                           | Text on `bg-brand`                                                                         |
 | `text-data-up` / `text-data-down`         | Positive and negative movement                                                             |
 | `text-data-up-alt` / `text-data-down-alt` | A second axis of meaning in chart contexts                                                 |
 | `text-warning`                            | Warnings                                                                                   |
 | `text-error` / `text-success`             | Feedback on the reader's own action: validation, destructive rows, failed and done actions |
-| `text-error-on-tint`                      | Error text on an error-tinted background                                                   |
 | `text-verified`                           | The verified mark on yields                                                                |
 
 | Border               | Use                                                                        |
@@ -76,6 +74,7 @@ Class composition:
 | `border-medium`      | Controls, inputs, overlays, chips and badges; never page cards or dividers |
 | `border-strong`      | High-emphasis outlines and unchecked checkboxes                            |
 | `border-brand`       | Focus, active and brand outlines                                           |
+| `border-error-muted` | A destructive control's outline                                            |
 
 | State                                | Use                                                                                |
 | ------------------------------------ | ---------------------------------------------------------------------------------- |
@@ -92,9 +91,10 @@ Usage rules:
 - Surfaces step `page → surface → elevated-1 → elevated-2`. Cards sit on `bg-surface`; elevation steps are for nested emphasis, never page-level fills.
 - Floating overlays use `bg-overlay`, not a ladder step: light mode carries their elevation with shadow, dark mode with surface lift.
 - Text tiers are text-only: never `bg-primary`.
-- Use solid colors for text and fills, translucent ones for borders, dividers and hover washes.
+- Use solid colors for text and fills, translucent ones for borders, dividers and hover washes. Translucency lives in a token; never put a `/NN` opacity modifier on a color utility (`opacity-color-modifier`), use the ramp step for that role.
 - Movement uses `text-data-up`/`text-data-down`, with a sign or arrow where the direction matters. A price drop is never `text-error`.
 - Brand blue and every other palette value come only from tokens, never from a literal.
+- `bg-brand` is a fill. Blue text is `text-link`, never `text-brand`, which fails AA in dark mode (`brand-fill-as-text`).
 - Do not add a token for a one-off value. When a role is missing, add it to `semantics.css` with its rule here.
 
 Text tiers: if removing the text would change what the reader knows or can do, it is `text-secondary` or above; if it only qualifies something beside it, it is `text-tertiary`.
@@ -106,7 +106,8 @@ Text tiers: if removing the text would change what the reader knows or can do, i
 Hover has two mechanisms, picked by the resting background:
 
 - `hover:bg-hover-row` replaces the background, so it goes only on elements that rest transparent.
-- `hover-wash` stacks the wash over the resting color and skips disabled elements, so it goes on anything tinted or opaque. Never put `hover:bg-hover-row` on `bg-brand-muted`: in light mode they are the same value, and in dark mode it strips the tint.
+- `hover-wash` stacks the wash over the resting color and skips disabled elements, so it goes on anything tinted or opaque. Never put `hover:bg-hover-row` on `bg-brand-muted`: it replaces the tint.
+- A control's hover, focus and pressed states come from its own hue. Neutral controls take the neutral wash; destructive buttons and menu rows tint with `bg-error-muted`; a selected control keeps `bg-brand-muted` under the wash. Brand blue marks selection and primary actions, never a hover.
 - A trigger resting on `bg-surface-elevated-1` may hover to `bg-surface-elevated-2` instead. Never combine that step with a wash.
 
 Focus and selection:
@@ -121,6 +122,24 @@ Partner and border colors:
 
 - A partner's brand color travels with its data. Set it as a CSS variable on the element (`style={{ '--card-accent': brandColor }}`) and read it from one shared class (`hover:border-(--card-accent)/20`, or `shadow-(color:--card-accent)` for a shadow), as `src/pages/investors.tsx` does. It becomes a product-theme token only when it must change between modes, like `--sl-kpk-mint` in `src/styles/themes/pro.css`.
 - Every width-only border or divide utility (`border`, `border-t`, `divide-y`) needs a color source, or it renders `currentColor`, near-white in dark mode (`implicit-border-color`).
+
+## Color ramps
+
+Every color role comes from a 12-step ramp per hue: neutral, blue (brand), emerald (up, success), crimson (down, error), amber (warning) and violet. [`scripts/generate-color-ramps.mjs`](scripts/generate-color-ramps.mjs) solves each step in OKLCH so it has the same WCAG contrast against the canvas in every hue, then writes hex into `primitives.css`, light on `:root` and dark under `html.dark`. Edit the generator's inputs and rerun it; never hand-edit the generated hex. The neutral surfaces and the brand fill are pinned to their shipped values.
+
+| Step | Role                                   | Step | Role                         |
+| ---- | -------------------------------------- | ---- | ---------------------------- |
+| 1–2  | Page, surface and elevated panel       | 7–8  | Border and strong border     |
+| 3    | Hover and tint (banners, soft buttons) | 9    | Solid fill (white text)      |
+| 4    | Selected tint, hover on a tint         | 10   | Solid fill hover             |
+| 5    | Pressed                                | 11   | Colored text                 |
+| 6    | Divider                                | 12   | High-contrast text on a tint |
+
+- Because steps line up across hues, the pairs are guaranteed: step 11 text passes AA on steps 1–4 of any hue, and white text passes on every step 9.
+- A semantic token maps to a step once (`--text-link: var(--blue-11)`) and needs no dark override: the ramp flips with the mode.
+- A tinted control uses its hue's steps: rest on 3, hover on 4, text on 11, border on 7. That is how `ProButton` and the destructive states are built.
+- Colors ship as hex, so browsers, chart canvases and exports render the same value.
+- Fixed chart accents (`--green-500`, `--red-500`, …) stay outside the ramps until the chart palettes move onto them.
 
 ## Typography
 
@@ -284,7 +303,7 @@ Icons:
 - Affordance indicators (chevrons, resting sort carets, help circles, drag handles) are `text-tertiary`; never ship an icon that inherits whatever tier surrounds it.
 - An icon beside a label in the same control inherits `currentColor`, so it moves with its label on hover and active.
 - An icon-only action (copy, close, download, settings, pagination) rests on `text-secondary` and turns `text-primary` on hover and focus, never dimmed with opacity.
-- Status icons use the status tokens (`text-warning`, `text-data-down`); empty-state illustrations are `text-tertiary`; the active sort caret is `text-brand`.
+- Status icons use the status tokens (`text-warning`, `text-data-down`); empty-state illustrations are `text-tertiary`; the active sort caret is `text-link`.
 - An icon beside a label is 14px (`size-3.5`); an icon-only control's icon is 16px (`size-4`). Never mix the two in one role.
 - An icon-only control carries `aria-label` plus a `Tooltip` that renders as the control (`render={<Button … />}`), never one wrapped around it, so the tooltip describes the focusable control and a tap keeps the control's action. Exceptions, named by what sits beside them: a field's clear ✕ (the field's label names it), a row's expand chevron and a disclosure chevron beside its own label (`aria-expanded` says what it does), and a composer's send arrow. Never put data in a native `title=`: touch cannot reach it.
 
@@ -357,7 +376,7 @@ Chart data contracts: `docs/charts.md`.
 
 - ProDashboard, Account and Subscription, Downloads, Articles, Investors, Sheets, LlamaAI and Yields follow the same rules as every page and keep their own look through their product themes in `src/styles/themes/`. They get audited and improved like any other page: UX, structure, component reuse and accessibility.
 - Shared components they use keep their own variants, never page-local style forks or a product variant. Repointing a product's palette onto the core tokens is optional.
-- Pro's controls are the app's `Button`, `SegmentedControl` and `Select`. `ProButton` exists only for Pro's create and generate CTAs: the soft blue `primary` tint and the soft purple `ai` tint, never solid purple. Pro keeps its card and panel surface tokens.
+- Pro's controls are the app's `Button`, `SegmentedControl` and `Select`. `ProButton` exists only for Pro's create and generate CTAs: the soft blue `primary` tint and the soft violet `ai` tint (ramp step 3, step 4 on hover, step 11 text), never solid purple. Pro keeps its card and panel surface tokens.
 - Research's internal pages (editor, admin, mine, profile) use the default colours and controls; the public research pages keep their editorial look (below).
 - Product tokens and utilities stay inside their surfaces (`product-token-leak`, `product-utility-leak`). The surface map is `PRODUCT_SURFACE_PREFIXES` in `scripts/policies/check-design-tokens.mjs`, counted in its own `product` bucket.
 - LlamaAI's theme exceptions are listed in `src/styles/themes/llamaai.css`.
@@ -370,14 +389,15 @@ Chart data contracts: `docs/charts.md`.
 
 [`scripts/policies/check-design-tokens.mjs`](scripts/policies/check-design-tokens.mjs) is a ratchet: it counts each rule's matches against `scripts/policies/design-token-baseline.json`, in separate `core` and `product` buckets, and fails when a count rises or falls.
 
-| Group             | Rules                                                                                                                                                                                                                 |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Color             | `hex-in-classname`, `dark-hex-variant`, `arbitrary-color-function`, `builtin-palette-color`, `interim-token`, `prefixed-design-token`, `product-token-leak`, `product-utility-leak`, `implicit-border-color`          |
-| Type              | `arbitrary-font-size`, `raw-type-pair`, `raw-type-size`, `conflicting-named-typography`, `unknown-named-typography`, `off-scale-mono-weight`, `ascii-ellipsis`                                                        |
-| Spacing and shape | `arbitrary-spacing`, `arbitrary-standard-radius`, `arbitrary-shadow`, `explicit-thin-scrollbar`, `deprecated-tailwind-spelling`                                                                                       |
-| Surfaces          | `raw-popover-surface`, `surface-chrome-override`, `menu-item-color-class`, `raw-dialog-surface`, `arbitrary-dialog-width`, `dialog-button-pinned-height`, `hand-rolled-spinner`, `raw-scope-note`, `raw-echarts-init` |
-| Toolbars          | `toolbar-justify-override`, `chart-toolbar-auto-margin`                                                                                                                                                               |
+| Group             | Rules                                                                                                                                                                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Color             | `hex-in-classname`, `dark-hex-variant`, `arbitrary-color-function`, `builtin-palette-color`, `brand-fill-as-text`, `opacity-color-modifier`, `interim-token`, `prefixed-design-token`, `product-token-leak`, `product-utility-leak`, `implicit-border-color` |
+| Type              | `arbitrary-font-size`, `raw-type-pair`, `raw-type-size`, `conflicting-named-typography`, `unknown-named-typography`, `off-scale-mono-weight`, `ascii-ellipsis`                                                                                               |
+| Spacing and shape | `arbitrary-spacing`, `arbitrary-standard-radius`, `arbitrary-shadow`, `explicit-thin-scrollbar`, `deprecated-tailwind-spelling`                                                                                                                              |
+| Surfaces          | `raw-popover-surface`, `surface-chrome-override`, `menu-item-color-class`, `raw-dialog-surface`, `arbitrary-dialog-width`, `dialog-button-pinned-height`, `hand-rolled-spinner`, `raw-scope-note`, `raw-echarts-init`                                        |
+| Toolbars          | `toolbar-justify-override`, `chart-toolbar-auto-margin`                                                                                                                                                                                                      |
 
 - After removing debt, run `bun scripts/policies/check-design-tokens.mjs --update` in the same change. Run it only when nothing fails and the counts dropped, because it rewrites rising counts too.
+- [`scripts/policies/check-color-contrast.mjs`](scripts/policies/check-color-contrast.mjs) resolves the semantic tokens through the ramps in both modes and fails when a text token drops below 4.5:1 on any surface, hover wash or tint, or a ramp breaks its pair rules.
 - [`scripts/policies/check-focus-handoff.ts`](scripts/policies/check-focus-handoff.ts) refuses the shapes that drop keyboard focus to the page when a control disables itself.
 - [`scripts/policies/check-column-pickers.ts`](scripts/policies/check-column-pickers.ts) fails a Columns picker that does not keep the identity column out of its options.

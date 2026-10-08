@@ -232,7 +232,7 @@ export function YieldFilters({
 					<span className="flex items-center gap-1.5">
 						Filters
 						{activeFilterCount > 0 ? (
-							<span className="rounded-full bg-brand-muted px-1.5 label-xs text-link-on-tint">{activeFilterCount}</span>
+							<span className="rounded-full bg-brand-muted px-1.5 label-xs text-link">{activeFilterCount}</span>
 						) : null}
 					</span>
 				}

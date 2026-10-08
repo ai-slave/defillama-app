@@ -136,7 +136,7 @@ export function PreviewStep() {
 									key={metric}
 									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 label-sm transition-colors has-focus-visible:focus-ring ${
 										isSelected
-											? 'border-brand bg-brand-muted text-link-on-tint'
+											? 'border-brand bg-brand-muted text-link'
 											: 'border-medium text-secondary hover:border-brand/40'
 									}`}
 								>
@@ -206,7 +206,7 @@ export function PreviewStep() {
 						</div>
 						<div className="flex items-start justify-between gap-3">
 							<span className="shrink-0 text-tertiary">Output</span>
-							<span className="min-w-0 text-right font-medium text-brand">
+							<span className="min-w-0 text-right font-medium text-link">
 								{outputSummary(metricCardsCount, state.selectedMetrics.length, state.includeTable)}
 							</span>
 						</div>

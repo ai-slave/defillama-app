@@ -126,7 +126,7 @@ export function CitationRowsTable({
 									<td
 										key={c}
 										ref={isCited ? centerCitedCell : null}
-										className={`${DATA_TABLE_CELL} ${isCited ? 'bg-brand-muted font-medium text-link-on-tint' : ''}`}
+										className={`${DATA_TABLE_CELL} ${isCited ? 'bg-brand-muted font-medium text-link' : ''}`}
 									>
 										{isCited ? (
 											<span className="inline-flex items-center gap-1">

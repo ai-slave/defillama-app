@@ -126,7 +126,7 @@ function ProviderManageNotice({ provider }: { provider: string | null }) {
 					href="https://subscriptions.llamapay.io/"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="underline hover:text-sub-brand-primary"
+					className="underline hover:text-link"
 				>
 					LlamaPay
 				</a>
@@ -215,9 +215,7 @@ function PricingCardCta({
 		if (!isCurrentPlan) return null
 		return (
 			<>
-				<p className="mt-4 text-center label-lg text-sub-brand-primary sm:label-md dark:text-sub-brand-secondary">
-					Current plan
-				</p>
+				<p className="mt-4 text-center label-lg text-link sm:label-md dark:text-sub-brand-secondary">Current plan</p>
 				<p className="text-center body-sm text-sub-text-cool-muted dark:text-sub-text-muted">
 					{isTeamProvided
 						? `Your ${card.title} plan is provided through your team. Ask your team admin about plan changes.`
@@ -236,7 +234,7 @@ function PricingCardCta({
 	if (isCurrentPlan) {
 		return (
 			<>
-				<p className="mt-4 text-center label-lg text-sub-brand-primary sm:label-md dark:text-sub-brand-secondary">
+				<p className="mt-4 text-center label-lg text-link sm:label-md dark:text-sub-brand-secondary">
 					{isTrial ? 'Current plan (trial)' : 'Current plan'}
 				</p>
 				{isCancelPending ? (
@@ -574,9 +572,7 @@ export function PricingCard({
 							cryptoError={cryptoError}
 						/>
 						{isLowerTier ? (
-							<p className="text-center label-sm text-sub-brand-primary dark:text-sub-brand-secondary">
-								Included in your plan
-							</p>
+							<p className="text-center label-sm text-link dark:text-sub-brand-secondary">Included in your plan</p>
 						) : null}
 					</div>
 				</div>

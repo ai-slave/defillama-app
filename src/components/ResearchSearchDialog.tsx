@@ -198,7 +198,7 @@ function ResultMetadata({ item, compact = false }: { item: ResearchSearchItem; c
 
 	return (
 		<span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-			<span className="rounded-md bg-brand-faint px-1.5 py-0.5 label-xs text-link-on-tint">{item.typeLabel}</span>
+			<span className="rounded-md bg-brand-faint px-1.5 py-0.5 label-xs text-link">{item.typeLabel}</span>
 			{publishedLabel ? (
 				<time dateTime={item.publishedAt ?? undefined} className="body-sm text-tertiary">
 					{publishedLabel}
@@ -256,8 +256,8 @@ function FeaturedResult({ item, label, onSelect }: { item: ResearchSearchItem; l
 			<ResultVisual item={item} featured />
 			<span className="flex min-w-0 flex-col justify-center gap-2 py-0.5 sm:py-1">
 				<span className="flex items-center justify-between gap-2">
-					<span className="label-sm text-link-on-tint">{label}</span>
-					<Icon name="arrow-up-right" className="size-4 shrink-0 text-link-on-tint" aria-hidden />
+					<span className="label-sm text-link">{label}</span>
+					<Icon name="arrow-up-right" className="size-4 shrink-0 text-link" aria-hidden />
 				</span>
 				<span className="line-clamp-3 heading-xs text-primary transition-colors group-hover:text-link sm:line-clamp-2">
 					{item.title}

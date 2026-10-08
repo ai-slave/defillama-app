@@ -95,7 +95,7 @@ export function MobileToolsPopover({
 				>
 					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-secondary" />
 					<span className="flex-1">Quick</span>
-					{mode === 'quick' ? <Icon name="check" height={14} width={14} className="shrink-0 text-brand" /> : null}
+					{mode === 'quick' ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
 				</Ariakit.MenuItemRadio>
 
 				<Ariakit.MenuItemRadio
@@ -118,7 +118,7 @@ export function MobileToolsPopover({
 					<span className="flex items-center gap-1.5">
 						<ModeUsage usage={factCheckedUsage} feature="fact_checked" />
 						{mode === 'fact_checked' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-brand" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-link" />
 						) : null}
 					</span>
 				</Ariakit.MenuItemRadio>
@@ -136,7 +136,7 @@ export function MobileToolsPopover({
 					<span className="flex-1">Research</span>
 					<span className="flex items-center gap-1.5">
 						<ModeUsage usage={researchUsage} feature="research" />
-						{mode === 'research' ? <Icon name="check" height={14} width={14} className="shrink-0 text-brand" /> : null}
+						{mode === 'research' ? <Icon name="check" height={14} width={14} className="shrink-0 text-link" /> : null}
 					</span>
 				</Ariakit.MenuItemRadio>
 

@@ -401,7 +401,7 @@ function DemoFrame({
 				</div>
 				<div className="flex shrink-0 items-center gap-2">
 					<span className="hidden label-sm text-primary min-[390px]:inline">Acme Protocol</span>
-					<span className="flex size-7 items-center justify-center rounded-full bg-brand-muted label-xs text-link-on-tint">
+					<span className="flex size-7 items-center justify-center rounded-full bg-brand-muted label-xs text-link">
 						AC
 					</span>
 					<Tooltip
@@ -1032,7 +1032,7 @@ function SourceRegister({
 		<div className="overflow-hidden rounded-xl border border-medium bg-surface dark:bg-surface-elevated-1">
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-subtle px-5 py-4 sm:px-6">
 				<div className="flex items-center gap-3">
-					<span className="flex size-8 items-center justify-center rounded-full bg-brand-muted label-sm text-link-on-tint">
+					<span className="flex size-8 items-center justify-center rounded-full bg-brand-muted label-sm text-link">
 						AC
 					</span>
 					<div className="min-w-0">

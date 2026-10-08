@@ -284,14 +284,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 																{disabled ? (
 																	<LoadingSpinner size={18} />
 																) : (
-																	<Icon name="file-text" className="size-5 text-brand" />
+																	<Icon name="file-text" className="size-5 text-link" />
 																)}
 															</div>
-															<span className="font-medium text-brand group-hover:underline">{dataset.name}</span>
+															<span className="font-medium text-link group-hover:underline">{dataset.name}</span>
 														</div>
 														<Icon
 															name="arrow-up-right"
-															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
+															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
 														/>
 													</div>
 													<p className="body-md text-pro-text-secondary">{dataset.description}</p>
@@ -316,7 +316,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							>
 								<div className="flex items-start gap-3">
 									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/15">
-										<Icon name="layers" className="size-5 text-brand" />
+										<Icon name="layers" className="size-5 text-link" />
 									</div>
 									<div className="flex flex-col gap-0.5">
 										<p className="font-medium text-pro-text-primary">Combine multiple metrics</p>
@@ -351,14 +351,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 																{disabled ? (
 																	<LoadingSpinner size={18} />
 																) : (
-																	<Icon name="bar-chart-2" className="size-5 text-brand" />
+																	<Icon name="bar-chart-2" className="size-5 text-link" />
 																)}
 															</div>
-															<span className="font-medium text-brand group-hover:underline">{dataset.name}</span>
+															<span className="font-medium text-link group-hover:underline">{dataset.name}</span>
 														</div>
 														<Icon
 															name="arrow-up-right"
-															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
+															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-link"
 														/>
 													</div>
 													<p className="body-md text-pro-text-secondary">{dataset.description}</p>
@@ -372,7 +372,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 									{category === 'RWA' ? (
 										<p className="body-md text-pro-text-secondary">
 											Download more RWA data from the{' '}
-											<a href="https://defillama.com/rwa" className="text-brand underline hover:opacity-80">
+											<a href="https://defillama.com/rwa" className="text-link underline hover:opacity-80">
 												RWA overview
 											</a>
 											.
@@ -444,7 +444,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans on the{' '}
 							<a
 								href="https://defillama.com/subscription"
-								className="text-brand underline hover:opacity-80"
+								className="text-link underline hover:opacity-80"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -456,7 +456,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							Yes, DefiLlama data is available through both a free and paid{' '}
 							<a
 								href="https://api-docs.defillama.com/"
-								className="text-brand underline hover:opacity-80"
+								className="text-link underline hover:opacity-80"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -468,7 +468,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							You can contact us by email, a support form, or live support on the{' '}
 							<a
 								href="https://defillama.com/support"
-								className="text-brand underline hover:opacity-80"
+								className="text-link underline hover:opacity-80"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
@@ -606,7 +606,7 @@ function RecentDownloadsStrip({
 											{style.label}
 										</span>
 										{i === 0 ? (
-											<span className="ml-auto rounded-sm bg-brand/15 px-1 py-px label-sm tracking-wide text-brand uppercase">
+											<span className="ml-auto rounded-sm bg-brand/15 px-1 py-px label-sm tracking-wide text-link uppercase">
 												New
 											</span>
 										) : null}
@@ -616,7 +616,7 @@ function RecentDownloadsStrip({
 										<RelativeTime className="truncate" value={preset.createdAt} input="milliseconds" />
 										<Icon
 											name="arrow-up-right"
-											className="size-3 shrink-0 -translate-x-1 text-pro-text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-brand group-hover:opacity-100"
+											className="size-3 shrink-0 -translate-x-1 text-pro-text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-link group-hover:opacity-100"
 										/>
 									</span>
 								</button>
@@ -723,7 +723,7 @@ function SavedDownloadsContent({
 function SavedEmptyState() {
 	return (
 		<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-subtle px-6 py-12 text-center">
-			<div className="flex size-14 items-center justify-center rounded-full bg-brand/10 text-brand">
+			<div className="flex size-14 items-center justify-center rounded-full bg-brand/10 text-link">
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"

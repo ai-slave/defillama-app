@@ -88,7 +88,7 @@ function ComparisonPlanHead({
 					) : null}
 				</div>
 				{isCurrentPlan || isLowerTier ? (
-					<p className="flex min-h-8 items-center justify-center label-xs text-sub-brand-primary md:label-sm dark:text-sub-brand-secondary">
+					<p className="flex min-h-8 items-center justify-center label-xs text-link md:label-sm dark:text-sub-brand-secondary">
 						{isCurrentPlan ? 'Current plan' : 'Unlocked'}
 					</p>
 				) : hideAction ? null : (

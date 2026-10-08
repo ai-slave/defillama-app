@@ -4,8 +4,8 @@
 
    Pro's card, panel and text surface tokens, separate from the design
    system's tokens in semantics.css. Pro's controls are the app's Button,
-   SegmentedControl and Select; only ProButton's create/generate tints read
-   the pro-info and pro-ai colours here. `pro-dashboard`
+   SegmentedControl and Select; ProButton's create and generate tints are
+   the pro-create and pro-generate tokens below. `pro-dashboard`
    and `.investors-dashboard` re-scope the --pro-* base tokens (defined at
    :root at the bottom of this file) with the product's own values; never
    rewrite those names' callsites to semantic utilities — the alias→semantic
@@ -115,8 +115,15 @@
 	--color-sl-kpk-mint: var(--sl-kpk-mint);
 	--color-sl-kpk-benchmark: var(--sl-kpk-benchmark);
 
-	--color-pro-ai-100: oklch(0.935 0.02 286); /* Grayish/off-white */
-	--color-pro-ai-200: oklch(0.78 0.12 283.45); /* Muted purple */
+	/* ProButton tints on the color ramps: step 3 rest, step 4 hover, step 11
+	   text, so the label passes AA in both states and both modes. */
+	--color-pro-create: var(--blue-3);
+	--color-pro-create-hover: var(--blue-4);
+	--color-pro-on-create: var(--blue-11);
+	--color-pro-generate: var(--violet-3);
+	--color-pro-generate-hover: var(--violet-4);
+	--color-pro-on-generate: var(--violet-11);
+
 	--color-pro-ai-300: oklch(0.612 0.213 278.1); /* Vibrant purple */
 	--color-pro-ai-400: oklch(0.41 0.13 279.09); /* Deep purple */
 
@@ -143,40 +150,19 @@
 	--pro-text-secondary: #2d2d2d;
 	--pro-text-tertiary: #4a4a4a;
 
-	--pro-panel-bg: #ffffff;
-	--pro-panel-raised: #f0f0f0;
 	--pro-hover-fill: #e0e0e0;
-	--pro-glass-fill: rgba(255, 255, 255, 0.95);
-
-	--pro-divider: rgba(0, 0, 0, 0.3);
-	--pro-border: rgba(0, 0, 0, 0.3);
-	--pro-glass-border: rgba(0, 0, 0, 0.3);
 
 	html.dark & {
 		--pro-text-primary: var(--text-primary);
 		--pro-text-secondary: var(--text-secondary);
 		--pro-text-tertiary: var(--text-tertiary);
 
-		--pro-panel-bg: #070e0f;
-		--pro-panel-raised: #0a1011;
 		--pro-hover-fill: #0d1516;
-		--pro-glass-fill: rgba(7, 14, 15, 0.7);
-
-		--pro-divider: rgba(255, 255, 255, 0.1);
-		--pro-border: rgba(255, 255, 255, 0.2);
-		--pro-glass-border: rgba(255, 255, 255, 0.3);
 	}
 }
 
 .investors-dashboard {
-	--pro-panel-bg: #ffffff;
-	--pro-panel-raised: #f5f6f8;
 	--pro-hover-fill: #ebedf0;
-	--pro-glass-fill: rgba(255, 255, 255, 0.92);
-
-	--pro-divider: rgba(0, 0, 0, 0.06);
-	--pro-border: rgba(0, 0, 0, 0.08);
-	--pro-glass-border: rgba(33, 114, 229, 0.12);
 
 	--pro-app-bg: #f0f2f5;
 	--pro-cards-bg: #ffffff;
@@ -225,14 +211,7 @@
 	--color-sl-kpk-benchmark: var(--sl-kpk-benchmark);
 
 	html.dark & {
-		--pro-panel-bg: #08090c;
-		--pro-panel-raised: #0c0e13;
 		--pro-hover-fill: #12141a;
-		--pro-glass-fill: rgba(8, 9, 12, 0.85);
-
-		--pro-divider: rgba(255, 255, 255, 0.04);
-		--pro-border: rgba(255, 255, 255, 0.06);
-		--pro-glass-border: rgba(33, 114, 229, 0.1);
 
 		--pro-app-bg: #060709;
 		--pro-cards-bg: #0c0e13;
@@ -280,39 +259,6 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 		background: var(--sl-sidebar-bg);
 		border-right: 1px solid var(--sl-sidebar-border);
 		box-shadow: var(--sl-card-shadow);
-	}
-
-	& .sl-tab-active {
-		background-color: var(--sl-accent-muted);
-		color: var(--sl-accent);
-		border-left: 2px solid var(--sl-accent);
-	}
-
-	& .sl-tab-inactive {
-		color: var(--text-secondary);
-		border-left: 2px solid transparent;
-		&:hover {
-			color: var(--text-primary);
-			background-color: var(--sl-accent-muted);
-		}
-	}
-
-	& .sl-powered-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		padding: 4px 10px;
-		border: 1px solid rgba(33, 114, 229, 0.15);
-		border-radius: 6px;
-		background: rgba(33, 114, 229, 0.05);
-	}
-
-	& .sl-powered-brand {
-		background: linear-gradient(135deg, #2172e5 0%, #5b9bf0 50%, #2172e5 100%);
-		background-size: 200% auto;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
 	}
 
 	& [data-umami-event='csv-download'],

@@ -91,7 +91,7 @@ function UploadStatus({
 			</span>
 			<div aria-hidden="true" className="flex items-center gap-1.5 body-sm text-secondary">
 				{upload.status === 'done' ? (
-					<Icon name="check" height={14} width={14} className="text-brand" />
+					<Icon name="check" height={14} width={14} className="text-link" />
 				) : upload.status === 'pending' ? (
 					<Icon name="clock" height={14} width={14} />
 				) : (

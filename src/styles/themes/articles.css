@@ -36,14 +36,11 @@
 		--research-wash: rgb(0 0 0 / 0.05);
 		--research-wash-strong: rgb(0 0 0 / 0.12);
 		--research-line: rgb(0 0 0 / 0.2);
-		--research-error: #dc2626;
 
 		/* Statics (media overlays, always-light chips, warning ring) */
 		--research-white: #ffffff;
 		--research-black: #000000;
-		--research-backdrop: rgb(0 0 0 / 0.6);
 		--research-backdrop-soft: rgb(0 0 0 / 0.4);
-		--research-warning-bright: #f59e0b;
 	}
 
 	html.dark {
@@ -58,7 +55,6 @@
 		--research-wash: rgb(255 255 255 / 0.05);
 		--research-wash-strong: rgb(255 255 255 / 0.12);
 		--research-line: rgb(255 255 255 / 0.2);
-		--research-error: #f87171;
 	}
 }
 
@@ -87,18 +83,11 @@
 	--color-research-wash: var(--research-wash);
 	--color-research-wash-strong: var(--research-wash-strong);
 	--color-research-line: var(--research-line);
-	--color-research-error: var(--research-error);
 	--color-research-white: var(--research-white);
 	--color-research-black: var(--research-black);
-	--color-research-backdrop: var(--research-backdrop);
 	--color-research-backdrop-soft: var(--research-backdrop-soft);
-	--color-research-warning-bright: var(--research-warning-bright);
 
 	/* Effect shadows for the editor/landing */
-	--shadow-article-dialog: 0 30px 80px -20px rgb(0 0 0 / 0.5);
-	--shadow-publish: 0 4px 12px -4px rgb(16 185 129 / 0.4);
-	--shadow-publish-hover: 0 6px 16px -4px rgb(16 185 129 / 0.55);
-	--shadow-danger: 0 4px 12px -4px rgb(220 38 38 / 0.45);
 	--shadow-research-glow: 0 0 20px -5px rgb(35 123 255 / 0.1);
 	--shadow-research-glow-md: 0 0 25px -5px rgb(35 123 255 / 0.2);
 	--shadow-research-glow-strong: 0 0 25px -5px rgb(35 123 255 / 0.25);

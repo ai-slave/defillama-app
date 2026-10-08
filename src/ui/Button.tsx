@@ -12,18 +12,20 @@ import { LoadingSpinner } from './Loaders'
                   a dismissible banner's single CTA, an empty state's CTA and
                   a repeated cell's Run may also be primary)
    - outline:     border-brand + text-link
-   - destructive: border-error + text-error for irreversible actions
+   - destructive: border-error-muted + text-error for irreversible actions;
+                  hover and focus tint in its own red (bg-error-muted), never
+                  the neutral row wash
    - ghostDestructive: a quiet icon-only delete in a dense row (trash on a
-                  saved query, draft or preset); turns error red on hover,
-                  focus and touch screens. Red marks data loss only: unpin,
+                  saved query, draft or preset); turns error red, on the
+                  red wash, on hover, focus and touch screens. Red marks data loss only: unpin,
                   clear a selection or remove a filter stay ghost
    - ghost:       borderless quiet trigger; `data-active` gives it the
-                  brand-muted fill and text-link-on-tint
+                  brand-muted fill and text-link
    - filter:      rounded-full brand-border pill; `data-active` tints it.
                   Metrics-directory category filters and removable
                   active-filter pills (label + x) use `filter` size="sm";
                   never hand-roll the pill classes
-   - toggle:      elevated neutral fill, brand border/tint/text-link-on-tint
+   - toggle:      elevated neutral fill, brand border/tint/text-link
                   when `data-active`: toolbar filters and selectable options
    - metricBrowse: dashed brand pill in the home metrics browse toolbar
    - overlay:     opaque surface with a border and shadow, for a rail scroll
@@ -131,19 +133,19 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 		'border border-transparent bg-brand text-on-brand not-disabled:not-aria-disabled:hover:brightness-110 not-disabled:not-aria-disabled:focus-visible:brightness-110 focus-visible:focus-ring-on-brand',
 	outline: 'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
 	destructive:
-		'border border-error text-error not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
+		'border border-error-muted text-error not-disabled:not-aria-disabled:hover:bg-error-muted focus-visible:bg-error-muted',
 	ghost:
-		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint text-secondary not-disabled:not-aria-disabled:hover:text-primary focus-visible:text-primary',
+		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link text-secondary not-disabled:not-aria-disabled:hover:text-primary focus-visible:text-primary',
 	filter: 'hover-wash border border-brand text-primary data-[active=true]:bg-brand-muted',
 	toggle:
-		'hover-wash border border-medium bg-surface-elevated-1 text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint',
+		'hover-wash border border-medium bg-surface-elevated-1 text-primary data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link',
 	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary',
 	// Hidden until the pointer enters the rail or the arrow takes focus. A disabled arrow (at the rail's end) stays
 	// hidden there too, because the disabled opacity-60 would otherwise outrank opacity-0.
 	overlay:
 		'hover-wash border border-medium bg-surface text-primary shadow-overlay-sm opacity-0 transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 aria-disabled:not-group-hover/rail:not-focus-visible:opacity-0',
 	ghostDestructive:
-		'hover-wash border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:text-error focus-visible:text-error'
+		'border border-transparent text-secondary pointer-coarse:text-error not-disabled:not-aria-disabled:hover:bg-error-muted not-disabled:not-aria-disabled:hover:text-error focus-visible:bg-error-muted focus-visible:text-error'
 }
 
 const LINK_CLASSES =

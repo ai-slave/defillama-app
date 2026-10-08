@@ -30,7 +30,7 @@ const highlightFormula = (formula: string) => {
 				if (part.startsWith('='))
 					return (
 						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
-						<span key={i} className="text-brand">
+						<span key={i} className="text-link">
 							{part}
 						</span>
 					)
@@ -302,7 +302,7 @@ function ShowcaseSection({
 				className={`grid grid-cols-1 items-center gap-8 md:gap-15 ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
 			>
 				<div className={reversed ? 'md:order-2' : ''}>
-					<p className="mb-3 title-md tracking-[2px] text-brand uppercase">{overline}</p>
+					<p className="mb-3 title-md tracking-[2px] text-link uppercase">{overline}</p>
 					<h2 className="mb-3.5 text-[28px] leading-[1.25] font-bold tracking-[-0.02em]">{heading}</h2>
 					<p className="mb-6 body-md text-sub-text-soft">{description}</p>
 					<ul className="flex flex-col gap-3">
@@ -442,7 +442,7 @@ function TemplatesSection() {
 						</div>
 						<h3 className="title-md">{tpl.title}</h3>
 						<p className="body-md text-sub-text-muted">{tpl.desc}</p>
-						<span className="mt-auto flex items-center gap-1 label-md text-brand">View template &rarr;</span>
+						<span className="mt-auto flex items-center gap-1 label-md text-link">View template &rarr;</span>
 					</a>
 				))}
 			</div>
@@ -471,7 +471,7 @@ export default function SheetsContainer() {
 		<>
 			<section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-4 pt-12 pb-15 sm:px-6 md:grid-cols-2 md:gap-15 md:px-8 md:pt-20">
 				<div className="flex flex-col gap-5">
-					<h2 className="text-2xl font-bold tracking-[-0.02em] text-brand">DefiLlama Sheets</h2>
+					<h2 className="text-2xl font-bold tracking-[-0.02em] text-link">DefiLlama Sheets</h2>
 					<h1 className="text-[clamp(32px,4vw,48px)] leading-[1.15] font-extrabold tracking-[-0.03em]">
 						Your spreadsheet, powered by DeFi data
 					</h1>

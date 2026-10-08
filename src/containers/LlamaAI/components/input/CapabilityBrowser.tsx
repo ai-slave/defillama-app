@@ -100,7 +100,7 @@ export function BrowserContent({
 							<Icon name={cap.icon} className="size-3.5 shrink-0" />
 							<span className="truncate">{cap.name}</span>
 							{cap.badge ? (
-								<span className="ml-auto shrink-0 rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link-on-tint uppercase">
+								<span className="ml-auto shrink-0 rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">
 									{cap.badge}
 								</span>
 							) : null}
@@ -120,7 +120,7 @@ export function BrowserContent({
 							<Icon name={activeCategory.icon} height={14} width={14} className="text-secondary" />
 							<h3 className="label-md text-primary">{activeCategory.name}</h3>
 							{activeCategory.badge ? (
-								<span className="rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link-on-tint uppercase">
+								<span className="rounded-sm bg-brand-muted px-1.5 py-px label-xs tracking-wide text-link uppercase">
 									{activeCategory.badge}
 								</span>
 							) : null}

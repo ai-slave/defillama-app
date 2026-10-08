@@ -64,6 +64,9 @@ jobs:
       - name: Check design-token policy
         run: bun scripts/policies/check-design-tokens.mjs
 
+      - name: Check color contrast policy
+        run: bun scripts/policies/check-color-contrast.mjs
+
       - name: Prepare build artifacts
         # Runs metadata pull, dataset cache, llms.txt, and robots.txt via build:metadata.
         # Requires secrets.API_KEY so production metadata refresh can run; do not set NODE_ENV=development here

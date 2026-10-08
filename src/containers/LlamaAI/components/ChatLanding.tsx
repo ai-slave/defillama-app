@@ -271,7 +271,7 @@ function Capability({
 				<Icon name={cap.icon} height={14} width={14} />
 				{cap.name}
 				{cap.badge ? (
-					<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link-on-tint uppercase">
+					<span className="rounded-sm bg-brand-muted px-1 py-px label-xs tracking-wide text-link uppercase">
 						{cap.badge}
 					</span>
 				) : null}
@@ -286,7 +286,7 @@ function Capability({
 				className="w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
-					<Icon name={cap.icon} height={14} width={14} className="text-brand" />
+					<Icon name={cap.icon} height={14} width={14} className="text-link" />
 					<Ariakit.PopoverHeading className="label-md text-primary">{cap.name}</Ariakit.PopoverHeading>
 					<Ariakit.PopoverDismiss
 						render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}

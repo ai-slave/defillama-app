@@ -427,8 +427,8 @@ function AddCellBar({
 function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; variant: 'between' | 'end' }) {
 	const triggerCls =
 		variant === 'between'
-			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-subtle bg-pro-app-bg text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand/50 hover:text-brand aria-expanded:opacity-100 aria-expanded:border-brand/50 aria-expanded:text-brand'
-			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-brand'
+			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-subtle bg-pro-app-bg text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand/50 hover:text-link aria-expanded:opacity-100 aria-expanded:border-brand/50 aria-expanded:text-link'
+			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 label-sm text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-link'
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton className={triggerCls} aria-label="Add cell">

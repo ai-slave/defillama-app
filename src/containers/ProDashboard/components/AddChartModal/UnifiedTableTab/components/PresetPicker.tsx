@@ -32,7 +32,7 @@ export function PresetPicker({
 					>
 						<span className="title-md text-pro-text-primary">{preset.name}</span>
 						{preset.description ? <span className="body-sm text-pro-text-secondary">{preset.description}</span> : null}
-						{isActive ? <span className="rounded-sm bg-brand/10 px-2 py-0.5 label-sm text-brand">Active</span> : null}
+						{isActive ? <span className="rounded-sm bg-brand/10 px-2 py-0.5 label-sm text-link">Active</span> : null}
 					</button>
 				)
 			})}

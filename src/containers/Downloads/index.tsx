@@ -88,9 +88,9 @@ function ModeBand({ mode }: { mode: DownloadsMode }) {
 			{isSql ? null : (
 				<div aria-hidden className="hidden shrink-0 items-center sm:ml-auto sm:flex">
 					<span className="rounded-md border border-subtle bg-surface px-2.5 py-1 mono-sm tracking-tight">
-						<span className="font-semibold text-sub-brand-primary">SELECT</span>
+						<span className="font-semibold text-link">SELECT</span>
 						<span className="text-pro-text-tertiary"> * </span>
-						<span className="font-semibold text-sub-brand-primary">FROM</span>
+						<span className="font-semibold text-link">FROM</span>
 						<span className="text-pro-text-secondary"> chains</span>
 					</span>
 				</div>

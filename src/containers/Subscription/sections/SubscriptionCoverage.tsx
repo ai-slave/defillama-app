@@ -212,9 +212,7 @@ export function CoveragePricingContent({
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<h3 className="heading-sm text-sub-text-primary">{card.title}</h3>
 					{card.recommendedLabel ? (
-						<span className="rounded-sm bg-brand-muted px-2 py-1 label-sm text-link-on-tint">
-							{card.recommendedLabel}
-						</span>
+						<span className="rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">{card.recommendedLabel}</span>
 					) : null}
 				</div>
 				<p className="body-md text-sub-text-secondary">{card.subtitle}</p>
@@ -225,7 +223,7 @@ export function CoveragePricingContent({
 							<span className="body-lg text-sub-text-primary">{card.priceUnit}</span>
 						</p>
 						{card.key === 'pro' && isTrialAvailable ? (
-							<span className="w-fit rounded-sm bg-brand-muted px-2 py-1 label-sm text-link-on-tint">
+							<span className="w-fit rounded-sm bg-brand-muted px-2 py-1 label-sm text-link">
 								7-day free trial available
 							</span>
 						) : card.priceSecondary ? (

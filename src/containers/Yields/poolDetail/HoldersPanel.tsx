@@ -102,7 +102,7 @@ export function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: n
 				<Tooltip
 					content="Entered Top 10"
 					render={<span aria-label="Entered Top 10" />}
-					className="ml-auto w-fit rounded-full bg-brand-muted px-1.5 py-0.5 label-sm whitespace-nowrap text-link-on-tint"
+					className="ml-auto w-fit rounded-full bg-brand-muted px-1.5 py-0.5 label-sm whitespace-nowrap text-link"
 				>
 					Entered
 				</Tooltip>

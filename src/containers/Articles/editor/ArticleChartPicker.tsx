@@ -460,7 +460,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 											disabled={limitReached}
 											checked={checked}
 											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-												checked ? 'bg-brand-muted text-link-on-tint' : 'text-primary hover:bg-hover-row'
+												checked ? 'bg-brand-muted text-link' : 'text-primary hover:bg-hover-row'
 											}`}
 										>
 											<CheckboxIndicator checked={checked} />

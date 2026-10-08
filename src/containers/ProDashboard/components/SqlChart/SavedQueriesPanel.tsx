@@ -80,7 +80,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 										{isBusy ? <LoadingSpinner size={10} /> : null}
 										<span
 											className={`truncate body-sm transition-colors ${
-												isBusy ? 'text-brand' : 'text-primary group-hover/apply:text-brand'
+												isBusy ? 'text-link' : 'text-primary group-hover/apply:text-link'
 											}`}
 										>
 											{query.name}

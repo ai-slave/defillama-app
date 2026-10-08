@@ -318,7 +318,7 @@ export function PoolDetailView({
 				>
 					<Icon name="alert-triangle-filled" height={20} width={20} className="mt-px shrink-0 text-error" />
 					<span className="flex flex-col">
-						<span className="font-semibold text-error-on-tint">Exploit or ongoing incident</span>
+						<span className="font-semibold text-error">Exploit or ongoing incident</span>
 						<span>
 							This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme
 							caution.

@@ -678,7 +678,7 @@ export function MetricSentenceBuilder({
 		<div className="flex flex-col gap-2.5 sm:gap-3">
 			<div className="rounded-lg border border-pro-cards-border bg-linear-to-br from-pro-cards-bg via-pro-cards-bg to-pro-cards-bg p-2.5 shadow-sm sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
-					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/12 text-brand sm:size-8">
+					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/12 text-link sm:size-8">
 						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
 					</div>
 					<div className="min-w-0">

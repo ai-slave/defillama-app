@@ -480,7 +480,7 @@ export function YieldsChartTab({
 									aria-pressed={sortColumn === 'tvl'}
 									onClick={() => toggleSort('tvl')}
 									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'tvl' ? 'text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
+										sortColumn === 'tvl' ? 'text-link' : 'text-pro-text-tertiary hover:text-pro-text-primary'
 									}`}
 								>
 									TVL
@@ -496,7 +496,7 @@ export function YieldsChartTab({
 									aria-pressed={sortColumn === 'apy'}
 									onClick={() => toggleSort('apy')}
 									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'apy' ? 'text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
+										sortColumn === 'apy' ? 'text-link' : 'text-pro-text-tertiary hover:text-pro-text-primary'
 									}`}
 								>
 									APY
@@ -564,7 +564,7 @@ export function YieldsChartTab({
 														) : null}
 														<div className="min-w-0">
 															<div
-																className={`truncate font-medium ${isSelected ? 'text-brand' : 'text-pro-text-primary'}`}
+																className={`truncate font-medium ${isSelected ? 'text-link' : 'text-pro-text-primary'}`}
 															>
 																{pool.pool}
 															</div>
@@ -575,7 +575,7 @@ export function YieldsChartTab({
 													</div>
 
 													<div
-														className={`text-right font-medium ${isSelected ? 'text-brand' : 'text-pro-text-primary'}`}
+														className={`text-right font-medium ${isSelected ? 'text-link' : 'text-pro-text-primary'}`}
 													>
 														{formatUsd(pool.tvl, {
 															compact: true,
@@ -585,7 +585,7 @@ export function YieldsChartTab({
 													</div>
 
 													<div className="text-right">
-														<div className={`font-medium ${isSelected ? 'text-brand' : 'text-pro-text-primary'}`}>
+														<div className={`font-medium ${isSelected ? 'text-link' : 'text-pro-text-primary'}`}>
 															{formatPercent(pool.apy, {
 																input: 'percent',
 																minimumFractionDigits: 2,

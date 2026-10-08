@@ -115,9 +115,7 @@ function TableChip({
 			>
 				<Icon
 					name="chevron-right"
-					className={`size-3 shrink-0 text-pro-text-tertiary transition-transform ${
-						open ? 'rotate-90 text-brand' : ''
-					}`}
+					className={`size-3 shrink-0 text-pro-text-tertiary transition-transform ${open ? 'rotate-90 text-link' : ''}`}
 				/>
 				<span className="max-w-[180px] truncate font-mono">{table.name}</span>
 				<span className="text-pro-text-tertiary tabular-nums">· {formatDownloadRowCount(table.rowCount)}</span>

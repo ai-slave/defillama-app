@@ -19,9 +19,6 @@
 	/* Always-dark surfaces (image lightbox, terminal, code) */
 	--ai-ink: #111214;
 	--ai-ink-raised: #1e2028;
-	--ai-ink-hover: #282c36;
-	--ai-ink-line: #222428;
-	--ai-on-ink: #d1d5db;
 	--ai-on-ink-muted: #8b8d93;
 
 	/* Statics */
@@ -50,7 +47,6 @@
 	/* Status */
 	--ai-warning: #d97706;
 	--ai-warning-bright: #f59e0b;
-	--ai-error: #dc2626;
 	--ai-terminal: #00ff41;
 }
 
@@ -63,15 +59,11 @@ html.dark {
 	--ai-gold-tint: #252218;
 
 	--ai-warning: #fbbf24;
-	--ai-error: #f87171;
 }
 
 @theme inline {
 	--color-ai-ink: var(--ai-ink);
 	--color-ai-ink-raised: var(--ai-ink-raised);
-	--color-ai-ink-hover: var(--ai-ink-hover);
-	--color-ai-ink-line: var(--ai-ink-line);
-	--color-ai-on-ink: var(--ai-on-ink);
 	--color-ai-on-ink-muted: var(--ai-on-ink-muted);
 	--color-ai-white: var(--ai-white);
 	--color-ai-black: var(--ai-black);
@@ -88,16 +80,8 @@ html.dark {
 	--color-ai-research-bright: var(--ai-research-bright);
 	--color-ai-research: var(--ai-research);
 	--color-ai-mention: var(--ai-mention);
-	--color-ai-warning: var(--ai-warning);
-	--color-ai-warning-bright: var(--ai-warning-bright);
-	--color-ai-error: var(--ai-error);
 	--color-ai-terminal: var(--ai-terminal);
 
-	--shadow-ai-modal: 0 24px 64px rgb(0 0 0 / 0.7);
-	--shadow-ai-overlay: 0 12px 40px rgb(0 0 0 / 0.5);
-	--shadow-ai-gold-glow: 0 4px 16px -4px rgb(232 168 71 / 0.45);
-	--shadow-ai-gold-btn: 0 2px 0 rgb(146 89 15 / 0.18), 0 8px 20px -6px rgb(253 224 169 / 0.55);
-	--shadow-ai-gold-btn-hover: 0 2px 0 rgb(146 89 15 / 0.22), 0 12px 28px -6px rgb(253 224 169 / 0.75);
 	--shadow-ai-gold-ring: 0 0 20px rgb(253 224 169 / 0.3);
 	--shadow-ai-gold-ring-hover: 0 0 28px rgb(253 224 169 / 0.5);
 	--shadow-ai-focus-gold: 0 0 0 3px rgb(201 154 74 / 0.1);
@@ -113,13 +97,10 @@ html.dark {
 	--shadow-ai-gold-spark: 0 2px 8px rgb(253 224 169 / 0.4);
 	--shadow-ai-gold-glow-lg: 0 12px 48px rgb(253 224 169 / 0.6);
 	--shadow-ai-gold-cta: 0px 0px 30px 0px rgb(253 224 169 / 0.5), 0px 0px 1px 2px rgb(255 255 255 / 0.1);
-	--shadow-ai-terminal: 0 0 10px rgb(0 255 65 / 0.45);
 	--shadow-ai-terminal-glow: 0 0 40px rgb(0 255 65 / 0.08);
-	--shadow-ai-terminal-inset: inset 0 0 30px rgb(0 255 65 / 0.03);
 
 	--drop-shadow-ai-gold: 0 0 20px rgb(253 224 169 / 0.4);
 	--drop-shadow-ai-terminal: 0 0 6px rgb(0 255 65 / 0.5);
-	--drop-shadow-ai-terminal-soft: 0 0 4px rgb(0 255 65 / 0.3);
 
 	/* Keyframes live in styles/llamaai.css (fadeIn, llama*) */
 	--animate-ai-fade-in: fadeIn 0.25s ease-out;

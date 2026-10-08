@@ -176,41 +176,6 @@
 }
 
 /* Light mode uses the warning ambers; dark overrides every property below. */
-.llamaai-glow-text {
-	background: linear-gradient(
-		93.94deg,
-		var(--ai-warning) 24.73%,
-		var(--ai-warning-bright) 57.42%,
-		var(--ai-warning) 99.73%
-	);
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	text-shadow: 0px 0px 20px color-mix(in srgb, var(--ai-warning) 40%, transparent);
-	text-decoration: underline;
-	text-decoration-color: var(--ai-warning);
-	transition: text-shadow 0.2s ease;
-}
-
-.llamaai-glow-text:hover {
-	text-shadow: 0px 0px 30px color-mix(in srgb, var(--ai-warning) 60%, transparent);
-}
-
-.dark .llamaai-glow-text {
-	background: var(--ai-gold-gradient);
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	text-shadow: 0px 0px 20px color-mix(in srgb, var(--ai-gold-bright) 50%, transparent);
-	text-decoration: underline;
-	text-decoration-color: var(--ai-gold-bright);
-	transition: text-shadow 0.2s ease;
-}
-
-.dark .llamaai-glow-text:hover {
-	text-shadow: 0px 0px 30px color-mix(in srgb, var(--ai-gold-bright) 80%, transparent);
-}
-
 /* A new timeline row: fade in with a 4px rise. */
 @keyframes llamaStepEnter {
 	from {
@@ -238,9 +203,5 @@
 		--animate-enabled: paused;
 		--star-1-animation: none;
 		--star-2-animation: none;
-	}
-	.llamaai-glow-text,
-	.dark .llamaai-glow-text {
-		transition: none;
 	}
 }

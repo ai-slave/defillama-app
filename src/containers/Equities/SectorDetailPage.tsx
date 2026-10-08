@@ -266,7 +266,7 @@ export function SectorDetailPage({ state }: { state: EquitiesPageDataState<IEqui
 				crumb={`Sectors / ${sector.sector}`}
 				title={sector.sector}
 				meta={
-					<span className="rounded-md border border-brand bg-brand-muted px-2 py-1 label-sm text-link-on-tint">
+					<span className="rounded-md border border-brand bg-brand-muted px-2 py-1 label-sm text-link">
 						#{sector.rank} by market cap
 					</span>
 				}

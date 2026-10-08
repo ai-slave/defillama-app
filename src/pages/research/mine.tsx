@@ -336,14 +336,14 @@ function MyArticlesContent() {
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-[0.12em] text-link-on-tint uppercase"
+													className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-[0.12em] text-link uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
 												</span>
 											) : null}
 											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-wide text-link-on-tint uppercase">
+												<span className="rounded-sm bg-brand-muted px-1.5 py-0.5 label-xs tracking-wide text-link uppercase">
 													Co-author
 												</span>
 											) : null}

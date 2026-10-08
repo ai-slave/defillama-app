@@ -76,7 +76,7 @@ export function ProjectsGrid() {
 		return (
 			<div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-4 py-12 text-center">
 				<div className="flex size-16 items-center justify-center rounded-full bg-brand/12">
-					<Icon name="folder-plus" height={28} width={28} className="text-brand" />
+					<Icon name="folder-plus" height={28} width={28} className="text-link" />
 				</div>
 				<div className="flex flex-col gap-2">
 					<h1 className="heading-lg text-primary">Projects are a paid feature</h1>
@@ -224,7 +224,7 @@ export function ProjectsGrid() {
 						<li key={p.id}>
 							<div className="group hover-wash-card relative flex size-full flex-col gap-2 rounded-lg border border-subtle bg-surface p-3 text-left">
 								<header className="flex items-center gap-2">
-									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
+									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link">
 										<Icon name="folder" height={14} width={14} />
 									</div>
 									<div className="min-w-0 flex-1">

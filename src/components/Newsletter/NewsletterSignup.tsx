@@ -146,7 +146,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 					<div className="flex flex-col gap-4 @5xl:flex-row @5xl:items-center @5xl:justify-between @5xl:gap-8">
 						<div className="flex flex-col gap-1">
 							<span className="flex items-center gap-2 title-lg text-primary">
-								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-sub-brand-primary" />
+								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-link" />
 								Subscribe to the DefiLlama Newsletter
 							</span>
 							<span className="max-w-md body-md text-secondary">
@@ -290,7 +290,7 @@ function NewsletterSuccess({
 	if (layout === 'strip') {
 		return (
 			<div role="status" className="flex items-center gap-2 body-md text-primary">
-				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-sub-brand-primary" />
+				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-link" />
 				<span>Subscribed to selected newsletters.</span>
 			</div>
 		)
@@ -299,7 +299,7 @@ function NewsletterSuccess({
 	return (
 		<div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
 			<div className="flex size-12 items-center justify-center rounded-full bg-sub-brand-primary/8">
-				<Icon name="check-circle" height={28} width={28} className="text-sub-brand-primary" />
+				<Icon name="check-circle" height={28} width={28} className="text-link" />
 			</div>
 			<div className="flex flex-col gap-1">
 				<span className="label-lg text-sub-text-primary">You are subscribed</span>

@@ -63,7 +63,7 @@ export function useModalFieldBinding(field: DashboardBindableField, kind: Dashbo
 export function BoundParameterChip({ label, onUnbind }: { label: string; onUnbind: () => void }) {
 	return (
 		<div className="flex flex-wrap items-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 body-sm text-pro-text-secondary">
-			<Icon name="link" height={12} width={12} className="text-brand" />
+			<Icon name="link" height={12} width={12} className="text-link" />
 			<span className="text-pro-text-primary">Bound to {label}</span>
 			<Button variant="link" onClick={onUnbind} data-umami-event="dashboard-parameter-unbind" className="ml-auto">
 				Unbind

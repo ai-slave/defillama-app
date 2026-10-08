@@ -4,13 +4,13 @@ type TokenRightsChipVariant = 'overview' | 'details'
 const CHIP_TONE_CLASSES: Record<TokenRightsChipVariant, Record<TokenRightsChipTone, string>> = {
 	overview: {
 		positive: 'border-success/30 bg-success/10 text-success',
-		negative: 'border-error/30 bg-error/10 text-error-on-tint',
+		negative: 'border-error/30 bg-error/10 text-error',
 		warning: 'border-warning/30 bg-warning/10 text-warning',
 		neutral: 'border-medium bg-surface text-secondary'
 	},
 	details: {
 		positive: 'border-success/30 bg-success/10 text-success',
-		negative: 'border-error/30 bg-error/10 text-error-on-tint',
+		negative: 'border-error/30 bg-error/10 text-error',
 		warning: 'border-warning/30 bg-warning/10 text-warning',
 		neutral: 'border-medium bg-surface-elevated-1 text-secondary'
 	}

@@ -342,19 +342,19 @@ function DashboardPageContent({
 
 					<div className="mx-auto flex flex-wrap items-center justify-center gap-4">
 						<div className="flex items-center gap-2 body-md">
-							<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-pro-accent" />
+							<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-link" />
 							<span>Customizable Charts</span>
 						</div>
 						<div className="flex items-center gap-2 body-md">
-							<Icon name="activity" height={16} width={16} className="shrink-0 text-pro-accent" />
+							<Icon name="activity" height={16} width={16} className="shrink-0 text-link" />
 							<span>Multiple Dashboards</span>
 						</div>
 						<div className="flex items-center gap-2 body-md">
-							<Icon name="percent" height={16} width={16} className="shrink-0 text-pro-accent" />
+							<Icon name="percent" height={16} width={16} className="shrink-0 text-link" />
 							<span>Advanced Analytics</span>
 						</div>
 						<div className="flex items-center gap-2 body-md">
-							<Icon name="layers" height={16} width={16} className="shrink-0 text-pro-accent" />
+							<Icon name="layers" height={16} width={16} className="shrink-0 text-link" />
 							<span>Multi-Charts</span>
 						</div>
 					</div>

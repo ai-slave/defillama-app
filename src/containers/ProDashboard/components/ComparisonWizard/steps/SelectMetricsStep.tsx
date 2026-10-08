@@ -44,7 +44,7 @@ export function SelectMetricsStep() {
 			) : (
 				<>
 					<div className="flex items-center gap-3 rounded-lg border border-subtle px-4 py-2.5">
-						<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link-on-tint">
+						<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link">
 							<Icon name="bar-chart-2" height={18} width={18} />
 						</div>
 						<div className="flex min-w-0 flex-col items-start">

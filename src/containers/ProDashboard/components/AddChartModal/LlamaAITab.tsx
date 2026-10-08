@@ -137,7 +137,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 								>
 									{chart.title}
 								</button>
-								{selected ? <Icon name="check" height={16} width={16} className="shrink-0 text-brand" /> : null}
+								{selected ? <Icon name="check" height={16} width={16} className="shrink-0 text-link" /> : null}
 								<Tooltip
 									content="Delete chart"
 									render={
