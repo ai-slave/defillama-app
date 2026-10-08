@@ -102,7 +102,7 @@ function InterviewCard({ article }: { article: ArticleDocument }) {
 						/>
 					) : null}
 					<div className="grid">
-						<span className="text-sm font-semibold text-primary">{interviewee}</span>
+						<span className="title-md text-primary">{interviewee}</span>
 						{firstInterviewee?.role ? <span className="text-[11px] text-tertiary">{firstInterviewee.role}</span> : null}
 					</div>
 				</div>

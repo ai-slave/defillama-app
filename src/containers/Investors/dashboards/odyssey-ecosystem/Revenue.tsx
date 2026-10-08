@@ -96,7 +96,7 @@ function SubSectionCard({
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
 				<div>
-					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
+					<h3 className="title-md text-pro-text-primary">{title}</h3>
 					{subtitle && <p className="mt-0.5 text-xs text-pro-text-secondary">{subtitle}</p>}
 				</div>
 				{total != null && (
@@ -324,7 +324,7 @@ export default function Revenue() {
 			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
 				<div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
 					<div>
-						<div className="text-xs font-medium tracking-wide text-pro-text-label uppercase">Pipeline Total</div>
+						<div className="label-sm tracking-wide text-pro-text-label uppercase">Pipeline Total</div>
 						<div className="mt-1 text-3xl font-bold text-pro-text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
 					</div>
 					{up.asOf && <span className="text-[11px] text-pro-text-secondary">As of {up.asOf}</span>}
@@ -452,7 +452,7 @@ export default function Revenue() {
 						<div key={r.asset} className="rounded-md border border-pro-cards-border/60 p-3">
 							<div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 								<div>
-									<span className="text-sm font-semibold text-pro-text-primary">{r.asset}</span>
+									<span className="title-md text-pro-text-primary">{r.asset}</span>
 									<span className="ml-2 text-xs text-pro-text-secondary">
 										{formatPercent(r.annualRatePct, { input: 'percent' })} APR · debt {fmtUsd(r.totalDebtUsd)}
 									</span>

@@ -37,9 +37,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					</span>
 				)}
 				<div className="min-w-0">
-					<p className="truncate text-sm font-semibold text-pro-text-primary group-hover:text-pro-accent">
-						{author.displayName}
-					</p>
+					<p className="truncate title-md text-pro-text-primary group-hover:text-pro-accent">{author.displayName}</p>
 					<p className="truncate text-xs text-pro-text-tertiary">@{author.slug}</p>
 				</div>
 			</div>

@@ -118,9 +118,7 @@ export function IncomeStatementChartTab({
 			</div>
 
 			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
-					Preview
-				</h4>
+				<h4 className="border-b border-pro-cards-border px-3 py-2 label-sm text-pro-text-secondary">Preview</h4>
 				{hasSelection ? (
 					<div className="bg-pro-cards-bg p-3">
 						{isLoading ? (

@@ -362,7 +362,7 @@ export function SqlChartModal({ editItem, placement, isOpen, onClose, onClosed, 
 						className={`min-h-0 flex-col gap-3 p-4 max-lg:flex-1 max-lg:overflow-y-auto lg:flex lg:pb-0 ${pane === 'query' ? 'flex' : 'hidden'}`}
 					>
 						<label className="flex shrink-0 flex-col gap-1">
-							<span className="text-xs font-medium text-pro-text-secondary">Card name (optional)</span>
+							<span className="label-sm text-pro-text-secondary">Card name (optional)</span>
 							<input
 								type="text"
 								value={name}

@@ -76,7 +76,7 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 										className={active ? 'text-brand' : 'text-pro-text-tertiary'}
 									/>
 								) : null}
-								<span className="text-xs font-semibold text-pro-text-primary">{option.label}</span>
+								<span className="title-sm text-pro-text-primary">{option.label}</span>
 								{active ? <Icon name="check" height={11} width={11} className="text-brand" /> : null}
 							</span>
 							<p className="text-xs leading-tight text-pro-text-secondary">{option.description}</p>

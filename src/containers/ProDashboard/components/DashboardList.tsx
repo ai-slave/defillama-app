@@ -37,7 +37,7 @@ export function DashboardList({
 			) : dashboards.length === 0 ? (
 				<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
 					<Icon name="layers" height={32} width={32} className="text-pro-text-tertiary" />
-					<h2 className="text-center text-base font-semibold text-pro-text-primary">No dashboards yet</h2>
+					<h2 className="text-center title-lg text-pro-text-primary">No dashboards yet</h2>
 					<p className="text-center text-sm text-pro-text-secondary">Create your first dashboard to get started</p>
 					<ProButton type="button" variant="primary" size="lg" onClick={onCreateNew}>
 						<Icon name="plus" height={16} width={16} />

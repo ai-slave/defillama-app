@@ -258,9 +258,7 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 					{outputs.map((o) => (
 						<div key={o.key} className="flex items-baseline justify-between gap-3">
 							<span className="text-xs text-secondary">{humanizeColumn(o.key)}</span>
-							<span className="text-xs font-medium text-secondary tabular-nums">
-								{formatOutputValue(o.key, o.value)}
-							</span>
+							<span className="label-sm text-secondary tabular-nums">{formatOutputValue(o.key, o.value)}</span>
 						</div>
 					))}
 				</div>

@@ -508,7 +508,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													<span className="relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-surface">
 														<img src={entityLogo(s)} alt="" className="size-full object-cover" />
 													</span>
-													<span className="truncate text-xs font-medium text-primary">{s.name}</span>
+													<span className="truncate label-sm text-primary">{s.name}</span>
 													<span className="font-jetbrains text-[9px] tracking-[0.16em] text-tertiary uppercase">
 														{s.entityType}
 													</span>

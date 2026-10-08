@@ -276,7 +276,7 @@ export function LedgerTile({
 export function SectionHeader({ title, children }: { title: string; children?: React.ReactNode }) {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
-			<h2 className="text-sm font-semibold text-pro-text-primary">{title}</h2>
+			<h2 className="title-md text-pro-text-primary">{title}</h2>
 			{children}
 		</div>
 	)

@@ -255,15 +255,13 @@ export function BorrowedChartTab({
 			</div>
 
 			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
-				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
-					Preview
-				</h4>
+				<h4 className="border-b border-pro-cards-border px-3 py-2 label-sm text-pro-text-secondary">Preview</h4>
 
 				{hasProtocolSelection ? (
 					<div className="bg-pro-cards-bg p-3">
 						<div className="mb-3 flex flex-wrap items-start justify-between gap-2">
 							<div>
-								<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">{previewTitle}</h3>
+								<h3 className="mb-1 title-md text-pro-text-primary">{previewTitle}</h3>
 								<p className="text-xs text-pro-text-secondary">Borrowed chart</p>
 							</div>
 							{activeChartType === 'tokensBorrowedPie' && pieSeriesNames.length > 1 ? (

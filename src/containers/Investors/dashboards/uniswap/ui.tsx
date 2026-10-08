@@ -280,7 +280,7 @@ export function KpiGrid({
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-tertiary uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-tertiary uppercase">{children}</h2>
 }
 
 export function PageLoader() {
@@ -346,7 +346,7 @@ export function ChartCard({
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0 flex-1 basis-60">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
+					<h3 className="title-md text-pro-text-primary">{title}</h3>
 					{variants ? (
 						<div className="mt-0.5 grid">
 							{variants.map((text) => (

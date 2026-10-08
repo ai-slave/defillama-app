@@ -895,7 +895,7 @@ function Section({ title, description, children }: { title: string; description:
 	return (
 		<section className="grid gap-6 border-t border-medium py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
 			<div>
-				<h2 className="text-base font-semibold text-primary">{title}</h2>
+				<h2 className="title-lg text-primary">{title}</h2>
 				<p className="mt-1.5 text-sm leading-relaxed text-secondary">{description}</p>
 			</div>
 			<div className="grid min-w-0 gap-5">{children}</div>

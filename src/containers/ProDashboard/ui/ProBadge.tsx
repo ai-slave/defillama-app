@@ -3,7 +3,7 @@ import { tw } from '~/ui/tw'
 
 export type ProBadgeTone = 'neutral' | 'success' | 'premium' | 'info' | 'warning'
 
-const PRO_BADGE_BASE = tw`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium`
+const PRO_BADGE_BASE = tw`inline-flex items-center gap-1 rounded-md px-2 py-0.5 label-sm`
 
 const PRO_BADGE_TONES: Record<ProBadgeTone, string> = {
 	neutral: tw`bg-surface-elevated-1/60 text-pro-text-label`,

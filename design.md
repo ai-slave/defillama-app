@@ -147,7 +147,7 @@ Named styles live in [`src/styles/typography.css`](src/styles/typography.css). E
 - Mono has two weights: 400 for figures and 700 for the number a block exists to show; never 500, 600 or 800 (`off-scale-mono-weight`).
 - `title-*` never goes on a button; buttons use the Button recipe's `label-*`.
 - Table headers use `table-header`, and cells inherit 14px Inter. An entity name in a cell is `label-md`, plus `text-link hover:underline` when it has a page.
-- Never pair a raw size with a weight (`text-sm font-semibold`): pick the named style for the role (`raw-type-pair`).
+- Never pair a raw size with a weight (`text-sm font-semibold`): pick the named style for the role (`raw-type-pair`). Six pairs render the same as a named style: `text-base`/`text-sm`/`text-xs` with `font-semibold` are `title-lg`/`title-md`/`title-sm`, `text-xs font-medium` is `label-sm`, and `text-xs`/`text-base` with `font-normal` are `body-sm`/`body-lg`. Any other pair changes the line height or weight when it moves onto the ramp; `text-sm font-medium` is 20px tall, `label-md` 17px.
 - Never combine a named style with another named style, or with a conflicting `text-*`, `font-*` or `leading-*` utility, in the same variant scope (`conflicting-named-typography`).
 - Only the styles in the table exist; any other `heading-*`, `title-*`, `label-*`, `body-*` or `mono-*` class renders unstyled (`unknown-named-typography`).
 - Never set an arbitrary font size, `leading-[…]` or `tracking-[…]` (`arbitrary-font-size`); vertical rhythm belongs to containers.

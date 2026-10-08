@@ -143,7 +143,7 @@ export default function Tokenomics() {
 							<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 								<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 									<div className="min-w-0">
-										<h3 className="text-sm font-semibold text-pro-text-primary">
+										<h3 className="title-md text-pro-text-primary">
 											{protocolChart.title ?? 'FLR by Protocol (Monthly)'}
 										</h3>
 										{protocolChart.subtitle && (
@@ -189,7 +189,7 @@ export default function Tokenomics() {
 			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 				<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 					<div className="min-w-0">
-						<h3 className="text-sm font-semibold text-pro-text-primary">{b.burnTitle}</h3>
+						<h3 className="title-md text-pro-text-primary">{b.burnTitle}</h3>
 						<p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">
 							FLR removed from supply by transaction fees, net of the FTSO/FDC voter gas refund. Daily and cumulative.
 						</p>
@@ -310,7 +310,7 @@ export default function Tokenomics() {
 					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 						<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 							<div className="min-w-0">
-								<h3 className="text-sm font-semibold text-pro-text-primary">{fire.title}</h3>
+								<h3 className="title-md text-pro-text-primary">{fire.title}</h3>
 								<p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">
 									{fire.subtitle ?? 'Daily fees collected by source and cumulative total.'}
 								</p>

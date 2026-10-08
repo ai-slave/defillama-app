@@ -100,11 +100,11 @@ export function SectionCard({
 						placeholder="Section title"
 						maxLength={SECTION_TITLE_MAX_LENGTH}
 						autoFocus={editing.autoFocusTitle}
-						className="text-base font-semibold text-pro-text-primary"
+						className="title-lg text-pro-text-primary"
 						onCommit={(title) => editing.onUpdate({ title: title || 'Section' })}
 					/>
 				) : (
-					<h2 id={headingId} className="truncate text-base font-semibold text-pro-text-primary">
+					<h2 id={headingId} className="truncate title-lg text-pro-text-primary">
 						{section.title}
 					</h2>
 				)}

@@ -94,7 +94,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				</span>
 			</div>
 			<div className="flex flex-1 flex-col gap-1.5">
-				<span className="text-xs font-semibold tracking-wider uppercase" style={{ color }}>
+				<span className="title-sm tracking-wider uppercase" style={{ color }}>
 					{source}
 				</span>
 				<span className="text-sm leading-snug font-medium text-pro-text-primary transition-colors group-hover:text-sl-accent">
@@ -136,9 +136,7 @@ function PaperCard({
 				<span className="text-sm font-bold text-sl-accent">{icon}</span>
 			</div>
 			<div className="flex flex-1 flex-col gap-1">
-				<span className="text-sm font-semibold text-pro-text-primary transition-colors group-hover:text-sl-accent">
-					{title}
-				</span>
+				<span className="title-md text-pro-text-primary transition-colors group-hover:text-sl-accent">{title}</span>
 				<span className="text-xs leading-relaxed text-pro-text-secondary">{description}</span>
 			</div>
 			<svg

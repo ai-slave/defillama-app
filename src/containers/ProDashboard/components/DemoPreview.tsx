@@ -82,7 +82,7 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-accent text-xs text-on-brand">
 					{itemName.charAt(0).toUpperCase()}
 				</div>
-				<h2 className="text-base font-semibold">
+				<h2 className="title-lg">
 					{itemName} {chartTypeDetails.title}
 				</h2>
 			</div>
@@ -169,7 +169,7 @@ function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 
 	return (
 		<div className="flex min-h-[400px] flex-col p-1 md:min-h-[416px]">
-			<h2 className="p-1 text-base font-semibold md:p-3">{multi.name}</h2>
+			<h2 className="p-1 title-lg md:p-3">{multi.name}</h2>
 			<div className="flex-1">
 				<React.Suspense fallback={null}>
 					<MultiSeriesChart
@@ -503,7 +503,7 @@ export function DemoPreview() {
 								<h3 className="mb-3 text-2xl font-bold text-secondary dark:text-pro-text-primary">Free Account</h3>
 								<div className="mb-6 text-3xl font-bold text-gray-800 dark:text-pro-text-primary">
 									$0
-									<span className="text-base font-normal text-secondary dark:text-pro-text-secondary">/month</span>
+									<span className="body-lg text-secondary dark:text-pro-text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">
@@ -533,7 +533,7 @@ export function DemoPreview() {
 									Pro
 								</h3>
 								<div className="mb-6 text-4xl font-bold text-brand">
-									$49<span className="text-base font-normal text-pro-text-secondary">/month</span>
+									$49<span className="body-lg text-pro-text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">

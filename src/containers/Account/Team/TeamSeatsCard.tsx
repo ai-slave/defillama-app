@@ -94,7 +94,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					</span>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					<span className="text-sm font-semibold text-sub-text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
+					<span className="title-md text-sub-text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
 					{isMonthly && active && !isCanceling && (
 						<Button
 							type="button"
@@ -198,7 +198,7 @@ function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscriptio
 			{rows.map((row) => (
 				<div key={row.id} className="flex flex-wrap items-center justify-between gap-2">
 					<span className="label-md text-sub-text-primary">{row.label}</span>
-					<span className="text-sm font-semibold text-sub-text-primary">{row.value}</span>
+					<span className="title-md text-sub-text-primary">{row.value}</span>
 				</div>
 			))}
 		</div>

@@ -45,7 +45,7 @@ function KpiCard({
 }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<div className="flex items-baseline gap-2">
 				<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
 				{change && (
@@ -68,7 +68,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 const protocolColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TopProtocolEntry>()
@@ -441,7 +441,7 @@ export default function Ecosystem() {
 										>
 											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
 											<span className="min-w-0 flex-1 truncate text-sm text-pro-text-primary">{coin.name}</span>
-											<span className="shrink-0 text-sm font-semibold text-pro-text-primary">{coin.formatted}</span>
+											<span className="shrink-0 title-md text-pro-text-primary">{coin.formatted}</span>
 											<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
 												{formatPercent(coin.pct, { input: 'percent' })}
 											</span>

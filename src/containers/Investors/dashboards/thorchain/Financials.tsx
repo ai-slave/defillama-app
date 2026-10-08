@@ -230,7 +230,7 @@ export default function Financials() {
 					/>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-							<h3 className="mb-3 text-sm font-semibold text-pro-text-primary">
+							<h3 className="mb-3 title-md text-pro-text-primary">
 								{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}
 							</h3>
 							<ApiTable table={affiliate.leaderboard} maxHeight="360px" />

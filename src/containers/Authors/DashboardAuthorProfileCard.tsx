@@ -128,8 +128,8 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 	return (
 		<div className="mt-4 grid gap-2 border-t border-subtle pt-4">
 			<div className="flex items-center justify-between gap-2">
-				<span className="text-xs font-medium text-primary">Profile completeness</span>
-				<span className="text-xs font-semibold text-link tabular-nums">
+				<span className="label-sm text-primary">Profile completeness</span>
+				<span className="title-sm text-link tabular-nums">
 					{formatPercent(percent, { input: 'percent', maximumFractionDigits: 0 })}
 				</span>
 			</div>
@@ -323,7 +323,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 						<div className="grid gap-3 md:grid-cols-2">
 							{SOCIALS.map((social) => (
 								<label key={social.id} className="grid gap-1.5">
-									<span className="text-xs font-medium text-secondary">{social.label}</span>
+									<span className="label-sm text-secondary">{social.label}</span>
 									<Input
 										value={state.socials[social.id] || ''}
 										maxLength={SOCIAL_VALUE_MAX}
@@ -359,7 +359,7 @@ function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAut
 							</div>
 						)}
 						<div className="min-w-0">
-							<p className="truncate text-sm font-semibold text-primary">{displayName}</p>
+							<p className="truncate title-md text-primary">{displayName}</p>
 							<p className="truncate text-xs text-secondary">@{state.slug || 'handle'}</p>
 						</div>
 					</div>

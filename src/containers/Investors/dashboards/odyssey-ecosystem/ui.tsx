@@ -17,7 +17,7 @@ export function KpiCard({
 }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="flex items-center gap-0.5 text-xs font-medium tracking-wide text-pro-text-label">
+			<span className="flex items-center gap-0.5 label-sm tracking-wide text-pro-text-label">
 				{label}
 				{info && (
 					<Tooltip content={info} className="cursor-help text-pro-text-secondary">
@@ -54,7 +54,7 @@ export function ChartCard({
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 export function ChartSkeleton({ title, height = 'h-[350px]' }: { title: string; height?: string }) {

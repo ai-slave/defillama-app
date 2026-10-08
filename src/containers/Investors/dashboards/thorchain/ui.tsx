@@ -222,7 +222,7 @@ export function KpiGrid({
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-tertiary uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-tertiary uppercase">{children}</h2>
 }
 
 // Single KPI that degrades to a placeholder when the backend hasn't shipped the
@@ -312,7 +312,7 @@ export function ChartCard({
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
+					<h3 className="title-md text-pro-text-primary">{title}</h3>
 					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>}
 				</div>
 				<div className="flex min-w-0 items-center gap-3">

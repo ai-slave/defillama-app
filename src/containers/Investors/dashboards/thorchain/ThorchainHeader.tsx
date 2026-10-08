@@ -73,7 +73,7 @@ export default function ThorchainHeader() {
 				</defs>
 			</svg>
 			<div className="leading-tight">
-				<span className="text-sm font-semibold text-pro-text-primary">{data?.projectName ?? 'THORChain'}</span>
+				<span className="title-md text-pro-text-primary">{data?.projectName ?? 'THORChain'}</span>
 			</div>
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINK_LABELS).map(([key, label]) => {

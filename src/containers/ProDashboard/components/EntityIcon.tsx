@@ -28,7 +28,7 @@ export function EntityIcon({
 					onError={() => setFailedSrc(src)}
 				/>
 			) : (
-				<span aria-hidden="true" className="text-xs font-semibold text-pro-text-secondary">
+				<span aria-hidden="true" className="title-sm text-pro-text-secondary">
 					{name?.charAt(0).toUpperCase() ?? ''}
 				</span>
 			)}

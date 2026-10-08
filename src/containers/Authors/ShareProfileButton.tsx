@@ -23,7 +23,7 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 			<PopoverSurface variant="panel" heading="Share profile" gutter={8} className="w-70">
 				<div className="flex flex-col gap-3 p-3">
 					<div className="flex flex-col gap-1.5">
-						<p className="text-xs font-medium text-secondary">Profile link</p>
+						<p className="label-sm text-secondary">Profile link</p>
 						<div className="flex gap-2">
 							<input
 								type="text"
@@ -36,7 +36,7 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 					</div>
 
 					<div className="flex flex-col gap-1.5">
-						<p className="text-xs font-medium text-secondary">Share on</p>
+						<p className="label-sm text-secondary">Share on</p>
 						<div className="flex gap-2">
 							<ExternalLinkButton
 								href={`https://x.com/intent/tweet?text=${text}&url=${url}`}

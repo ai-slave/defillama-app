@@ -40,7 +40,7 @@ export default function Stablecoins() {
 					<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-pro-cards-bg via-transparent to-transparent" />
 				</div>
 				<div className="absolute inset-0 flex items-center justify-center">
-					<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 text-sm font-semibold tracking-wide text-pro-text-secondary shadow-lg">
+					<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 title-md tracking-wide text-pro-text-secondary shadow-lg">
 						Stablecoins — Coming Soon
 					</span>
 				</div>

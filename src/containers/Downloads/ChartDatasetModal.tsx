@@ -1020,7 +1020,7 @@ export function ChartDatasetModal({
 								maxSelections={MAX_PARAMS}
 							/>
 						) : (
-							<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary">
+							<span className="flex items-center gap-1.5 rounded-md border border-subtle bg-hover-row px-2.5 py-1.5 label-sm text-pro-text-secondary">
 								<Icon name="layers" className="size-3.5" />
 								{selectedParams.length} protocols
 							</span>

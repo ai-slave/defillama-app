@@ -325,7 +325,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 										</p>
 									</div>
 								</div>
-								<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand shadow-sm transition-transform group-hover:translate-x-0.5">
+								<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 label-sm text-on-brand shadow-sm transition-transform group-hover:translate-x-0.5">
 									Open builder
 									<Icon name="arrow-up-right" className="size-3.5" />
 								</span>
@@ -611,7 +611,7 @@ function RecentDownloadsStrip({
 											</span>
 										) : null}
 									</span>
-									<span className="truncate text-xs font-medium text-pro-text-primary">{preset.name}</span>
+									<span className="truncate label-sm text-pro-text-primary">{preset.name}</span>
 									<span className="flex items-center justify-between gap-2 label-sm text-pro-text-tertiary tabular-nums">
 										<RelativeTime className="truncate" value={preset.createdAt} input="milliseconds" />
 										<Icon
@@ -738,7 +738,7 @@ function SavedEmptyState() {
 				</svg>
 			</div>
 			<div className="flex flex-col gap-1.5">
-				<h3 className="text-base font-semibold text-pro-text-primary">Pin your first preset</h3>
+				<h3 className="title-lg text-pro-text-primary">Pin your first preset</h3>
 				<p className="max-w-sm text-sm text-pro-text-secondary">
 					Save any dataset or chart configuration to run it again from here.
 				</p>

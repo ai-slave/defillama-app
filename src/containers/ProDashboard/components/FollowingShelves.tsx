@@ -153,7 +153,7 @@ export function FollowingShelves() {
 		return (
 			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
 				<Icon name="users" height={32} width={32} className="text-pro-text-tertiary" />
-				<h2 className="text-center text-base font-semibold text-pro-text-primary">You're not following anyone yet</h2>
+				<h2 className="text-center title-lg text-pro-text-primary">You're not following anyone yet</h2>
 				<p className="text-center text-sm text-pro-text-secondary">
 					Follow authors and their public dashboards will show up here.
 				</p>

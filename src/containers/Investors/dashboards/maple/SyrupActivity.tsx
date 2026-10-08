@@ -326,7 +326,7 @@ export default function SyrupActivity() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h3 className="mb-3 text-sm font-semibold tracking-wide text-pro-text-label uppercase">Syrup Protocol</h3>
+				<h3 className="mb-3 title-md tracking-wide text-pro-text-label uppercase">Syrup Protocol</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{protocolKpis ? (
 						<>
@@ -347,7 +347,7 @@ export default function SyrupActivity() {
 			</div>
 
 			<div>
-				<h3 className="mb-3 text-sm font-semibold tracking-wide text-pro-text-label uppercase">stSyrup Activity</h3>
+				<h3 className="mb-3 title-md tracking-wide text-pro-text-label uppercase">stSyrup Activity</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{activityKpis ? (
 						<>
@@ -403,7 +403,7 @@ export default function SyrupActivity() {
 			{isLoading ? <CardSkeleton title="Recent stSyrup Transactions" /> : <TxTable data={txRows} />}
 
 			<div>
-				<h3 className="mb-3 text-sm font-semibold tracking-wide text-pro-text-label uppercase">Drip Rewards</h3>
+				<h3 className="mb-3 title-md tracking-wide text-pro-text-label uppercase">Drip Rewards</h3>
 				<div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					{dripKpis ? (
 						<>

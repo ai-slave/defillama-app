@@ -378,7 +378,7 @@ function WelcomeOnboardingSteps({ onSignIn }: { onSignIn: () => void }) {
 	return (
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">
-				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple/25 bg-sub-purple/8 px-3 py-1 text-xs font-medium tracking-wide text-sub-purple-soft">
+				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple/25 bg-sub-purple/8 px-3 py-1 label-sm tracking-wide text-sub-purple-soft">
 					<Icon name="check-circle" height={13} width={13} />
 					{planName} activated
 				</span>

@@ -145,7 +145,7 @@ function InfoIcon() {
 function KpiCard({ label, value, tooltip }: { label: string; value: string | number | null; tooltip?: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="flex items-center gap-1 text-xs font-medium tracking-wide text-pro-text-label">
+			<span className="flex items-center gap-1 label-sm tracking-wide text-pro-text-label">
 				{label}
 				{tooltip && (
 					<Tooltip className="cursor-help" content={tooltip}>
@@ -161,7 +161,7 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string | num
 function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
 		</div>
 	)

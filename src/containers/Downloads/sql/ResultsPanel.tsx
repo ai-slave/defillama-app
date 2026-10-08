@@ -82,7 +82,7 @@ export function ResultsPanel({
 			<div className="flex flex-col gap-2">
 				<div className="flex flex-wrap items-center justify-between gap-2">
 					<div className="flex items-baseline gap-2">
-						<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Results</h3>
+						<h3 className="title-md tracking-tight text-pro-text-primary">Results</h3>
 						<span className="text-xs text-pro-text-tertiary tabular-nums">
 							{formatNumber(result.rows.length)} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
 							{result.columns.length === 1 ? '' : 's'}
@@ -90,7 +90,7 @@ export function ResultsPanel({
 						</span>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
-						{viewToggleLabel ? <span className="text-xs font-medium text-secondary">{viewToggleLabel}</span> : null}
+						{viewToggleLabel ? <span className="label-sm text-secondary">{viewToggleLabel}</span> : null}
 						<SegmentedControl
 							semantics="tabs"
 							label="Results view"

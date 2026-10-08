@@ -50,14 +50,14 @@ function ChartCard({
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 type AADimension = 'byProtocol' | 'byNetwork' | 'byAsset'
@@ -511,15 +511,11 @@ function TreasurySection({ data }: { data: FinData }) {
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
 							<span className="text-xs text-pro-text-label">Total Treasury Assets</span>
-							<span className="text-sm font-semibold text-pro-text-primary">
-								{data.treasuryKpis.totalAssets.formatted}
-							</span>
+							<span className="title-md text-pro-text-primary">{data.treasuryKpis.totalAssets.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
 							<span className="text-xs text-pro-text-label">Buyback Threshold</span>
-							<span className="text-sm font-semibold text-pro-text-primary">
-								{data.treasuryKpis.buybackThreshold.formatted}
-							</span>
+							<span className="title-md text-pro-text-primary">{data.treasuryKpis.buybackThreshold.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
 							<span className="text-xs text-pro-text-label">Current vs Threshold</span>
@@ -538,19 +534,15 @@ function TreasurySection({ data }: { data: FinData }) {
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
 							<span className="text-xs text-pro-text-label">USDS Spent</span>
-							<span className="text-sm font-semibold text-pro-text-primary">
-								{data.buybackKpis.usdsSpent.formatted}
-							</span>
+							<span className="title-md text-pro-text-primary">{data.buybackKpis.usdsSpent.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between border-b border-pro-cards-border py-2">
 							<span className="text-xs text-pro-text-label">SPK Bought</span>
-							<span className="text-sm font-semibold text-pro-text-primary">
-								{data.buybackKpis.spkBought.formatted}
-							</span>
+							<span className="title-md text-pro-text-primary">{data.buybackKpis.spkBought.formatted}</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
 							<span className="text-xs text-pro-text-label">Avg Price</span>
-							<span className="text-sm font-semibold text-pro-text-primary">{data.buybackKpis.avgPrice.formatted}</span>
+							<span className="title-md text-pro-text-primary">{data.buybackKpis.avgPrice.formatted}</span>
 						</div>
 					</div>
 				</div>
@@ -637,9 +629,9 @@ export default function Financials() {
 							<table className="w-full">
 								<thead>
 									<tr className="border-b border-pro-cards-border">
-										<th className="pb-2 text-left text-xs font-semibold text-pro-text-label uppercase">Product</th>
-										<th className="pb-2 text-right text-xs font-semibold text-pro-text-label uppercase">Revenue</th>
-										<th className="pb-2 text-right text-xs font-semibold text-pro-text-label uppercase">Share</th>
+										<th className="pb-2 text-left title-sm text-pro-text-label uppercase">Product</th>
+										<th className="pb-2 text-right title-sm text-pro-text-label uppercase">Revenue</th>
+										<th className="pb-2 text-right title-sm text-pro-text-label uppercase">Share</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -652,9 +644,7 @@ export default function Financials() {
 												/>
 												{item.name}
 											</td>
-											<td className="py-2.5 text-right text-sm font-semibold text-pro-text-primary">
-												{item.formatted}
-											</td>
+											<td className="py-2.5 text-right title-md text-pro-text-primary">{item.formatted}</td>
 											<td className="py-2.5 text-right text-sm text-pro-text-label">
 												{formatPercent(item.pct, { input: 'percent' })}
 											</td>

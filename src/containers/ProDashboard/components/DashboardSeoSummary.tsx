@@ -51,7 +51,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 						>
 							{dashboard.data.dashboardName || 'Untitled Dashboard'}
 						</h1>
-						<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-success-400/20 bg-pro-success-100 px-2 py-1 text-xs font-medium text-pro-success-400 dark:bg-pro-success-300/12 dark:text-pro-success-200">
+						<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-success-400/20 bg-pro-success-100 px-2 py-1 label-sm text-pro-success-400 dark:bg-pro-success-300/12 dark:text-pro-success-200">
 							<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
 							Public
 						</p>
@@ -102,7 +102,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 
 			<div className="border-t border-pro-cards-border px-4 py-4 md:px-5">
 				<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-					<h2 className="text-sm font-semibold text-pro-text-primary">Dashboard contents</h2>
+					<h2 className="title-md text-pro-text-primary">Dashboard contents</h2>
 					<p className="text-xs text-pro-text-label">
 						{formatNumber(seo.itemCount ?? 0)} {seo.itemCount === 1 ? 'card' : 'cards'}
 					</p>
@@ -114,7 +114,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 								key={item.id}
 								className="grid grid-cols-[2rem_minmax(0,1fr)] gap-2 border-t border-pro-cards-border py-2.5 first:border-t-0 md:[&:nth-child(2)]:border-t-0"
 							>
-								<span className="pt-0.5 text-xs font-medium text-pro-text-label tabular-nums">
+								<span className="pt-0.5 label-sm text-pro-text-label tabular-nums">
 									{String(index + 1).padStart(2, '0')}
 								</span>
 								{item.href ? (

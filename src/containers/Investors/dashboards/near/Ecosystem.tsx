@@ -158,7 +158,7 @@ function buildSupplyModel(chart: ChartData | undefined): CartesianChartModel | u
 function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
 	return (
 		<div className="flex flex-col gap-2 rounded-xl border border-pro-cards-border bg-pro-cards-bg p-5 transition-all hover:border-sl-accent/20 hover:shadow-md">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-3xl font-bold tracking-tight text-pro-text-primary">{value}</span>
 			<span className="text-xs text-pro-text-secondary">{description}</span>
 		</div>
@@ -168,7 +168,7 @@ function StatCard({ label, value, description }: { label: string; value: string;
 function KpiCard({ label, value }: { label: string; value?: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			{value ? (
 				<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
 			) : (
@@ -181,9 +181,9 @@ function KpiCard({ label, value }: { label: string; value?: string }) {
 function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	return (
 		<div className="flex items-center gap-2 rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1">
-			<span className="text-xs font-medium text-pro-text-label">{label}</span>
+			<span className="label-sm text-pro-text-label">{label}</span>
 			{value ? (
-				<span className="text-sm font-semibold text-pro-text-primary">{value}</span>
+				<span className="title-md text-pro-text-primary">{value}</span>
 			) : (
 				<span className="inline-block h-4 w-12 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			)}

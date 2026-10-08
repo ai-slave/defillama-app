@@ -545,7 +545,7 @@ export function StablecoinsChartTab({
 
 			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
 				<div className="flex flex-wrap items-center justify-between gap-2 border-b border-pro-cards-border px-3 py-2">
-					<h4 className="text-xs font-medium text-pro-text-secondary">Preview</h4>
+					<h4 className="label-sm text-pro-text-secondary">Preview</h4>
 					{stablecoinMode === 'chain' && chainChartType === 'pie' && chainPieSeriesNames.length > 1 ? (
 						<SelectWithCombobox
 							size="sm"
@@ -592,7 +592,7 @@ export function StablecoinsChartTab({
 				{(stablecoinMode === 'chain' && hasChainSelection) || (stablecoinMode === 'asset' && hasAssetSelection) ? (
 					<div className="bg-pro-cards-bg p-3">
 						<div className="mb-3">
-							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
+							<h3 className="mb-1 title-md text-pro-text-primary">
 								{stablecoinMode === 'chain'
 									? `${selectedStablecoinChain === 'All' ? 'All chains' : selectedStablecoinChain} - ${chartTypeLabel}`
 									: `${stablecoinName || selectedStablecoinAsset}${stablecoinSymbol ? ` (${stablecoinSymbol})` : ''} - ${chartTypeLabel}`}

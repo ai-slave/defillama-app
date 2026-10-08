@@ -333,7 +333,7 @@ function MyArticlesContent() {
 									<Link href={`/research/edit/${article.id}`} className="grid min-w-0 gap-1">
 										<div className="flex min-w-0 flex-wrap items-center gap-2">
 											<StatusDot status={article.status} />
-											<h3 className="truncate text-base font-semibold tracking-tight text-primary group-hover:text-link">
+											<h3 className="truncate title-lg tracking-tight text-primary group-hover:text-link">
 												{article.title || 'Untitled'}
 											</h3>
 											{scheduled ? (

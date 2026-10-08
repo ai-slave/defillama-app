@@ -30,11 +30,9 @@ export function PresetPicker({
 							isActive ? 'border-brand bg-brand/10' : 'border-pro-cards-border hover:border-brand'
 						}`}
 					>
-						<span className="text-sm font-semibold text-pro-text-primary">{preset.name}</span>
+						<span className="title-md text-pro-text-primary">{preset.name}</span>
 						{preset.description ? <span className="text-xs text-pro-text-secondary">{preset.description}</span> : null}
-						{isActive ? (
-							<span className="rounded-sm bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">Active</span>
-						) : null}
+						{isActive ? <span className="rounded-sm bg-brand/10 px-2 py-0.5 label-sm text-brand">Active</span> : null}
 					</button>
 				)
 			})}

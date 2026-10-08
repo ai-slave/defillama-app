@@ -142,7 +142,7 @@ export function CopyDashboardLinkButton({
 							{copied === 'link' ? 'Link copied' : copied === 'embed' ? 'Embed code copied' : ''}
 						</span>
 						<div className="flex flex-col gap-1.5">
-							<p className="text-xs font-medium text-pro-text-label">Share Link</p>
+							<p className="label-sm text-pro-text-label">Share Link</p>
 							<div className="flex gap-2">
 								<input
 									type="text"
@@ -180,7 +180,7 @@ export function CopyDashboardLinkButton({
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<p className="text-xs font-medium text-pro-text-label">Embed dashboard</p>
+							<p className="label-sm text-pro-text-label">Embed dashboard</p>
 							<div className="flex gap-2">
 								<textarea
 									value={embedSnippet}
@@ -218,7 +218,7 @@ export function CopyDashboardLinkButton({
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<p className="text-xs font-medium text-pro-text-label">Share on</p>
+							<p className="label-sm text-pro-text-label">Share on</p>
 							<div className="flex gap-2">
 								<Button
 									type="button"

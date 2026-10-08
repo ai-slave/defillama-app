@@ -111,7 +111,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h3 className="text-sm font-semibold text-pro-text-primary">Fee Switch</h3>
+				<h3 className="title-md text-pro-text-primary">Fee Switch</h3>
 				<span
 					className={`rounded-full px-2 py-0.5 label-sm ${
 						isActive ? 'bg-success/15 text-success' : 'bg-sl-btn-inactive-bg text-pro-text-tertiary'

@@ -420,7 +420,7 @@ function ExampleShowcase() {
 						className="block size-full object-cover object-top transition-transform duration-700 group-hover:scale-105 dark:hidden"
 					/>
 					<div className="absolute inset-0 flex items-center justify-center bg-linear-to-t from-ai-black/50 via-ai-black/0 to-ai-black/0 opacity-0 transition-all duration-500 group-hover:opacity-100">
-						<span className="flex translate-y-4 items-center gap-2 rounded-full bg-linear-to-r from-ai-gold-bright to-ai-gold-bright px-5 py-2.5 text-sm font-semibold text-ai-on-gold shadow-ai-halo-bright transition-all duration-500 group-hover:translate-y-0">
+						<span className="flex translate-y-4 items-center gap-2 rounded-full bg-linear-to-r from-ai-gold-bright to-ai-gold-bright px-5 py-2.5 title-md text-ai-on-gold shadow-ai-halo-bright transition-all duration-500 group-hover:translate-y-0">
 							View full conversation
 							<Icon name="arrow-up-right" height={14} width={14} />
 						</span>

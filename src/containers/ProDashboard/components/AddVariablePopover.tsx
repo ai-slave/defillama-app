@@ -169,7 +169,7 @@ export function AddVariablePopover() {
 					/>
 					{compatibleTargets.length > 0 ? (
 						<Ariakit.RadioProvider value={effectiveBindMode} setValue={(mode) => setBindMode(mode as BindMode)}>
-							<p id={bindGroupId} className="text-xs font-medium text-pro-text-secondary">
+							<p id={bindGroupId} className="label-sm text-pro-text-secondary">
 								Bind cards
 							</p>
 							<Ariakit.RadioGroup aria-labelledby={bindGroupId} className="flex flex-col gap-1.5">

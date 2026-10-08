@@ -83,7 +83,7 @@ function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<Boo
 
 				{midPrice > 0 && (
 					<div className="my-1 flex items-center justify-center gap-2 border-y border-pro-cards-border py-2">
-						<span className="text-sm font-semibold text-pro-text-primary">
+						<span className="title-md text-pro-text-primary">
 							{formatUsd(midPrice, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 						</span>
 						<span className="text-[10px] text-pro-text-label">

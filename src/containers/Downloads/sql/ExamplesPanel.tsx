@@ -113,7 +113,7 @@ function ExpandedExamplesPanel({
 		<aside className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3 rounded-md border border-subtle bg-surface p-3">
 			<header className="flex items-baseline justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Playbook</h3>
+					<h3 className="title-md tracking-tight text-pro-text-primary">Playbook</h3>
 					<span className="text-[11px] text-pro-text-tertiary tabular-nums">{EXAMPLE_QUERIES.length}</span>
 				</div>
 				<div className="flex items-center gap-1">

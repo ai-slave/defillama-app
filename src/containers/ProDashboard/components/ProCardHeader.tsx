@@ -39,7 +39,7 @@ export function ProCardHeader({
 				{title || icon || badge ? (
 					<div className="flex min-w-0 items-center gap-1.5">
 						{icon}
-						{title ? <Title className="truncate text-sm font-semibold text-pro-text-primary">{title}</Title> : null}
+						{title ? <Title className="truncate title-md text-pro-text-primary">{title}</Title> : null}
 						{badge}
 					</div>
 				) : null}

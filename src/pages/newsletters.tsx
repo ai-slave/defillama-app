@@ -136,7 +136,7 @@ export default function NewslettersPage() {
 				<div className="mx-auto flex w-full max-w-7xl flex-col gap-7 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
 					<header className="flex flex-col gap-5 border-b border-medium pb-6">
 						<div className="flex max-w-3xl flex-col gap-3">
-							<p className="flex items-center gap-2 text-sm font-semibold text-link">
+							<p className="flex items-center gap-2 title-md text-link">
 								<Icon name="mail-rounded" height={20} width={20} aria-hidden />
 								DefiLlama newsletters
 							</p>
@@ -213,9 +213,7 @@ export default function NewslettersPage() {
 											<span className="flex min-w-0 flex-col gap-3">
 												<span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
 													<span className="flex min-w-0 flex-wrap items-center gap-3">
-														<span className="text-xs font-semibold tracking-[0.14em] text-link uppercase">
-															{details.eyebrow}
-														</span>
+														<span className="title-sm tracking-[0.14em] text-link uppercase">{details.eyebrow}</span>
 													</span>
 													<span
 														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors ${

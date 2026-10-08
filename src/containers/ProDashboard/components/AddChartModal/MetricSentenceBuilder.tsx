@@ -684,7 +684,7 @@ export function MetricSentenceBuilder({
 						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
 					</div>
 					<div className="min-w-0">
-						<div className="text-xs font-semibold text-pro-text-primary">Metric sentence builder</div>
+						<div className="title-sm text-pro-text-primary">Metric sentence builder</div>
 						<div className="text-xs text-pro-text-tertiary">Create metrics based on natural language</div>
 					</div>
 				</div>

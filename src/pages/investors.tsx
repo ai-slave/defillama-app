@@ -410,7 +410,7 @@ const PROJECT_CARD_CONTENT = {
 
 function ProjectFallbackIcon({ name }: { name: string }) {
 	return (
-		<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted text-sm font-semibold text-sl-accent">
+		<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted title-md text-sl-accent">
 			{name.slice(0, 1)}
 		</span>
 	)
@@ -437,7 +437,7 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 			<div className="flex flex-1 flex-col gap-3 p-4">
 				<div className="flex items-center gap-2.5">
 					{content?.icon ?? <ProjectFallbackIcon name={project.name} />}
-					<span className="text-base font-semibold text-pro-text-primary">{project.name}</span>
+					<span className="title-lg text-pro-text-primary">{project.name}</span>
 				</div>
 				<p className="text-xs leading-relaxed text-pro-text-secondary">
 					{content?.description ?? `Verified metrics and reporting for ${project.name}.`}
@@ -547,9 +547,7 @@ export default function InvestorsPage() {
 				</section>
 
 				<section className="ir-rise relative mt-10 w-full max-w-[968px] [animation-delay:280ms]">
-					<h2 className="text-xs font-medium tracking-[0.06em] text-pro-text-secondary uppercase">
-						Explore dashboards
-					</h2>
+					<h2 className="label-sm tracking-[0.06em] text-pro-text-secondary uppercase">Explore dashboards</h2>
 					<div className="mt-4 grid auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
 						{getInvestorsProjects(site.landingProjectIds).map((project) => (
 							<ProjectCard key={project.id} project={project} />

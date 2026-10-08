@@ -179,11 +179,11 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 						/>
 					) : null}
 					<div className="flex flex-col items-end">
-						<span className="text-sm font-semibold text-sub-text-primary">{totalLabel}</span>
+						<span className="title-md text-sub-text-primary">{totalLabel}</span>
 						<span className="text-[10px] text-sub-text-muted">Total requests</span>
 					</div>
 					<div className="flex flex-col items-end">
-						<span className="text-sm font-semibold text-sub-text-primary">{avgLabel}</span>
+						<span className="title-md text-sub-text-primary">{avgLabel}</span>
 						<span className="text-[10px] text-sub-text-muted">Avg/day</span>
 					</div>
 				</div>

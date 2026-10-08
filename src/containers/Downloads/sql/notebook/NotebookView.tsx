@@ -264,7 +264,7 @@ export function NotebookView({
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">{tab.title}</h3>
+					<h3 className="title-md tracking-tight text-pro-text-primary">{tab.title}</h3>
 					<span className="text-[11px] text-pro-text-tertiary tabular-nums">
 						{cells.length} cell{cells.length === 1 ? '' : 's'}
 						{hasRunnableSql ? ` · ${runnableSqlCount} SQL` : ''}

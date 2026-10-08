@@ -630,7 +630,7 @@ export function ColumnManager({
 					</div>
 					<DragOverlay>
 						{activeColumn ? (
-							<div className="rounded-md border border-brand bg-brand/20 px-2 py-1 text-xs font-medium text-brand shadow-lg">
+							<div className="rounded-md border border-brand bg-brand/20 px-2 py-1 label-sm text-brand shadow-lg">
 								{activeColumn.header}
 							</div>
 						) : null}
@@ -743,7 +743,7 @@ export function ColumnManager({
 							{!hasActiveSubscription ? <span className="ml-1 body-sm text-pro-text-tertiary">(Pro)</span> : null}
 						</span>
 						{customColumns.length > 0 ? (
-							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-500">
+							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 label-sm text-purple-500">
 								{customColumns.length}
 							</span>
 						) : null}
@@ -937,7 +937,7 @@ export function ColumnManager({
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
-										<span className="truncate text-xs font-medium text-pro-text-primary">{col.name}</span>
+										<span className="truncate label-sm text-pro-text-primary">{col.name}</span>
 										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 label-xs uppercase">
 											{col.format}
 										</span>

@@ -294,7 +294,7 @@ function FeatureTile({
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-center gap-2">
 					<Icon name={icon} className="size-3.5 text-sub-brand-primary" />
-					<span className="text-sm font-semibold text-pro-text-primary">{title}</span>
+					<span className="title-md text-pro-text-primary">{title}</span>
 				</div>
 				<p className="text-[13px] leading-relaxed text-pro-text-secondary">{body}</p>
 			</div>

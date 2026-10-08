@@ -376,7 +376,7 @@ export function ReportHighlightControls({
 								<img src={sponsorLogo.url} alt="" className="h-5 max-w-24 object-contain" />
 							</div>
 						) : null}
-						<span className="text-sm font-semibold text-primary">{article.title}</span>
+						<span className="title-md text-primary">{article.title}</span>
 					</div>
 					<p className="line-clamp-4 text-sm leading-relaxed text-secondary">
 						{previewText || 'No highlight text, report description, excerpt, or subtitle set.'}

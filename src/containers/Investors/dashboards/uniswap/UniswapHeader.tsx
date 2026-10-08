@@ -47,7 +47,7 @@ export default function UniswapHeader() {
 		<header className="flex items-center gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
 			<UniswapLogo />
 			<div className="leading-tight">
-				<span className="text-sm font-semibold text-pro-text-primary">{data?.projectName ?? 'Uniswap'}</span>
+				<span className="title-md text-pro-text-primary">{data?.projectName ?? 'Uniswap'}</span>
 			</div>
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINK_LABELS).map(([key, label]) => {

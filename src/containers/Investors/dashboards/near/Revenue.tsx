@@ -44,7 +44,7 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string; tool
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="flex items-center gap-1">
-				<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+				<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 				{tooltip && (
 					<span className="group relative cursor-help">
 						<svg className="size-3.5 text-pro-text-label" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +73,7 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 const walletColumnHelper = createColumnHelper<typeof displayTableFeatures, WalletEntry>()

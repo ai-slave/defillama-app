@@ -606,7 +606,7 @@ export function AlertArtifact({
 						isCapHit ? (
 							<div className="flex flex-col items-center gap-1.5">
 								<p className="m-0 body-sm text-secondary">{getUpsellCopy(null)}</p>
-								<BasicLink href="/subscription" className="text-xs font-medium text-link hover:underline">
+								<BasicLink href="/subscription" className="label-sm text-link hover:underline">
 									Upgrade to Pro
 								</BasicLink>
 							</div>

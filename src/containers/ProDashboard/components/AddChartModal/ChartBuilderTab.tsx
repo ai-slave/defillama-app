@@ -523,7 +523,7 @@ export function ChartBuilderTab({
 			/>
 
 			<div className={`mb-1 lg:block ${pane === 'configure' ? 'block' : 'hidden'}`}>
-				<label htmlFor={nameId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
+				<label htmlFor={nameId} className="mb-1 block label-sm text-pro-text-secondary">
 					Card name (optional)
 				</label>
 				<input
@@ -539,7 +539,7 @@ export function ChartBuilderTab({
 				<div
 					className={`w-full space-y-1.5 overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 max-lg:min-h-0 max-lg:flex-1 lg:block lg:max-h-[calc(100vh-200px)] lg:w-[320px] lg:shrink-0 xl:w-[360px] ${pane === 'configure' ? 'block' : 'hidden'}`}
 				>
-					<h3 className="text-xs font-semibold text-pro-text-primary">Chart configuration</h3>
+					<h3 className="title-sm text-pro-text-primary">Chart configuration</h3>
 
 					<div>
 						<VirtualizedSelect
@@ -553,7 +553,7 @@ export function ChartBuilderTab({
 					</div>
 
 					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Mode</h4>
+						<h4 className="mb-1 label-sm text-pro-text-secondary">Mode</h4>
 						<SegmentedControl
 							label="Grouping mode"
 							options={MODE_OPTIONS}
@@ -566,7 +566,7 @@ export function ChartBuilderTab({
 					</div>
 
 					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Filters</h4>
+						<h4 className="mb-1 label-sm text-pro-text-secondary">Filters</h4>
 
 						{isChainsMode ? null : isProtocolUnsupportedMetric ? (
 							<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
@@ -720,7 +720,7 @@ export function ChartBuilderTab({
 					</div>
 
 					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Chart type</h4>
+						<h4 className="mb-1 label-sm text-pro-text-secondary">Chart type</h4>
 						<Ariakit.RadioProvider
 							orientation="both"
 							value={chartBuilder.chartType}
@@ -762,7 +762,7 @@ export function ChartBuilderTab({
 					) : null}
 
 					<div className="border-t border-pro-cards-border pt-1.5">
-						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Display value as</h4>
+						<h4 className="mb-1 label-sm text-pro-text-secondary">Display value as</h4>
 						<SegmentedControl
 							label="Display value as"
 							options={hasExactRemainder ? DISPLAY_OPTIONS : DISPLAY_OPTIONS.slice(0, 1)}
@@ -778,7 +778,7 @@ export function ChartBuilderTab({
 					className={`min-h-0 flex-1 flex-col overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-3 lg:flex ${pane === 'preview' ? 'flex' : 'hidden'}`}
 				>
 					<div className="mb-2 flex shrink-0 items-center justify-between">
-						<h3 className="text-xs font-semibold text-pro-text-primary">Preview</h3>
+						<h3 className="title-sm text-pro-text-primary">Preview</h3>
 						<div className="flex items-center gap-1 text-xs text-pro-text-tertiary">
 							<span>ⓘ</span>
 							<span>Updates as you configure</span>

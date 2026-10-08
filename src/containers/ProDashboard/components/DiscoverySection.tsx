@@ -28,7 +28,7 @@ export function DiscoveryShelfHeading({
 	return (
 		<div className="flex items-end justify-between gap-3">
 			<div className="flex min-w-0 flex-col gap-0.5">
-				<h3 className="text-base font-semibold text-pro-text-primary">{title}</h3>
+				<h3 className="title-lg text-pro-text-primary">{title}</h3>
 				{subtitle ? <p className="text-xs text-pro-text-tertiary">{subtitle}</p> : null}
 			</div>
 			{seeAllHref ? (

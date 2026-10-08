@@ -59,7 +59,7 @@ function MobileAppPromotion() {
 
 			<div className="relative m-auto flex w-full max-w-md flex-col items-center gap-6 text-center">
 				<div className="flex flex-col items-center gap-3">
-					<span className="flex items-center gap-2 rounded-full border border-sub-brand-primary/25 bg-sub-brand-primary/10 px-3 py-1 text-xs font-semibold tracking-wide text-sub-brand-primary uppercase dark:text-sub-brand-softest">
+					<span className="flex items-center gap-2 rounded-full border border-sub-brand-primary/25 bg-sub-brand-primary/10 px-3 py-1 title-sm tracking-wide text-sub-brand-primary uppercase dark:text-sub-brand-softest">
 						<span className="size-1.5 rounded-full bg-sub-live shadow-sub-live" />
 						Now on iOS and Android
 					</span>

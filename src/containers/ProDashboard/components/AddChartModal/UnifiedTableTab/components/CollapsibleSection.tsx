@@ -25,9 +25,9 @@ export function CollapsibleSection({ title, badge, children, className = '' }: C
 					) : (
 						<Icon name="chevron-right" height={16} width={16} className="text-pro-text-tertiary" />
 					)}
-					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
+					<h3 className="title-md text-pro-text-primary">{title}</h3>
 					{badge !== undefined ? (
-						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-xs font-medium text-brand">{badge}</span>
+						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 label-sm text-brand">{badge}</span>
 					) : null}
 				</div>
 			</button>

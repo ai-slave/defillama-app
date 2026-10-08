@@ -360,7 +360,7 @@ export function YieldsChartTab({
 						/>
 
 						<div className="flex flex-col">
-							<span className="mb-1 block text-xs font-medium text-pro-text-secondary">TVL Range</span>
+							<span className="mb-1 block label-sm text-pro-text-secondary">TVL Range</span>
 							<div className="flex gap-1">
 								<input
 									type="number"
@@ -396,7 +396,7 @@ export function YieldsChartTab({
 										/>
 									) : null}
 									<div className="min-w-0">
-										<p className="text-sm font-semibold text-pro-text-primary">{selectedYieldPool.name}</p>
+										<p className="title-md text-pro-text-primary">{selectedYieldPool.name}</p>
 										<div className="flex flex-wrap items-center gap-x-2 text-xs text-pro-text-tertiary">
 											<span>{selectedYieldPool.project}</span>
 											<span>•</span>
@@ -473,7 +473,7 @@ export function YieldsChartTab({
 								) : null}
 							</div>
 
-							<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-pro-cards-border px-3 py-2 text-xs font-medium sm:grid-cols-[1fr_100px_100px_80px]">
+							<div className="grid grid-cols-[1fr_72px_72px] gap-2 border-b border-pro-cards-border px-3 py-2 label-sm sm:grid-cols-[1fr_100px_100px_80px]">
 								<p className="text-pro-text-tertiary">Pool</p>
 								<button
 									type="button"
@@ -625,7 +625,7 @@ export function YieldsChartTab({
 					{/* Chart Preview */}
 					<div className="overflow-hidden rounded-lg border border-pro-cards-border">
 						<div className="flex items-center justify-between border-b border-pro-cards-border bg-pro-cards-bg px-3 py-2">
-							<span className="text-xs font-medium text-pro-text-secondary">
+							<span className="label-sm text-pro-text-secondary">
 								{selectedYieldPool ? selectedYieldPool.name : 'Preview'}
 							</span>
 						</div>

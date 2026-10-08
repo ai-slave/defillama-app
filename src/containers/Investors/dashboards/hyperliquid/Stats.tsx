@@ -68,7 +68,7 @@ const renderItem = (coin: string, i: number) => (
 	<span
 		key={`${coin}-${i}`}
 		data-coin={coin}
-		className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-pro-cards-border px-4 text-xs font-medium text-pro-text-primary transition-colors duration-300"
+		className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-pro-cards-border px-4 label-sm text-pro-text-primary transition-colors duration-300"
 	>
 		<span className="shrink-0 text-pro-text-label">{coin}</span>
 		<span data-price className="shrink-0 overflow-hidden font-jetbrains whitespace-nowrap tabular-nums">
@@ -205,7 +205,7 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-2xl font-semibold text-pro-text-primary">{value != null ? value : '—'}</span>
 			{helper ? <span className="text-[11px] text-pro-text-label">{helper}</span> : null}
 		</div>

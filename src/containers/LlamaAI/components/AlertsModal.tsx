@@ -506,7 +506,7 @@ const AlertRow = memo(function AlertRow({ alert, markEdited }: AlertRowProps) {
 							<button
 								type="button"
 								onClick={rearmIntoEditor}
-								className="mr-1 hidden items-center gap-1 rounded-lg bg-warning/10 px-2 py-1 text-xs font-medium text-warning not-disabled:not-aria-disabled:hover:bg-warning/20 sm:flex"
+								className="mr-1 hidden items-center gap-1 rounded-lg bg-warning/10 px-2 py-1 label-sm text-warning not-disabled:not-aria-disabled:hover:bg-warning/20 sm:flex"
 							>
 								<Icon name="repeat" className="size-3" />
 								Re-arm

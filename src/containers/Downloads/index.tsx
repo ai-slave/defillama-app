@@ -84,7 +84,7 @@ function ModeBand({ mode }: { mode: DownloadsMode }) {
 	return (
 		<div className="flex flex-col gap-3 rounded-xl border border-sub-brand-primary/25 bg-linear-to-br from-sub-brand-primary/8 to-surface p-3 sm:flex-row sm:items-center sm:gap-5 sm:p-4">
 			<div className="flex flex-col gap-0.5">
-				<span className="text-sm font-semibold tracking-tight text-pro-text-primary">{title}</span>
+				<span className="title-md tracking-tight text-pro-text-primary">{title}</span>
 				<span className="text-xs leading-relaxed text-pro-text-secondary">{subtitle}</span>
 			</div>
 			{isSql ? null : (

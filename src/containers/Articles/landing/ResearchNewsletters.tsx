@@ -31,7 +31,7 @@ function SectionLink({ url, title, onClick }: SectionLinkProps) {
 	return (
 		<Link
 			href={url}
-			className="inline-flex min-h-11 items-center gap-x-2 text-xs font-medium uppercase"
+			className="inline-flex min-h-11 items-center gap-x-2 label-sm uppercase"
 			rel={isExternal ? 'noopener noreferrer' : undefined}
 			target={isExternal ? '_blank' : undefined}
 			style={{ color: '#237BFF' }}

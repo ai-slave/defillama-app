@@ -529,7 +529,7 @@ export function UnifiedTableTab({
 						{recommendedPresets.length > 0 ? (
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
-									<h4 className="text-xs font-semibold text-pro-text-secondary">Recommended data views</h4>
+									<h4 className="title-sm text-pro-text-secondary">Recommended data views</h4>
 									<p className="text-xs text-pro-text-tertiary">Based on your filters</p>
 								</div>
 								<PresetPicker
@@ -540,7 +540,7 @@ export function UnifiedTableTab({
 							</div>
 						) : null}
 						<div className="flex flex-col gap-2">
-							<h4 className="text-xs font-semibold text-pro-text-secondary">All data views</h4>
+							<h4 className="title-sm text-pro-text-secondary">All data views</h4>
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
@@ -586,7 +586,7 @@ export function UnifiedTableTab({
 				<div className="flex flex-col gap-5">
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
-							<h5 className="text-xs font-semibold tracking-wide text-pro-text-secondary uppercase">Active filters</h5>
+							<h5 className="title-sm tracking-wide text-pro-text-secondary uppercase">Active filters</h5>
 							<span className="text-xs text-pro-text-tertiary">
 								{activeFilterCount > 0 ? `${activeFilterCount} applied` : 'None'}
 							</span>
@@ -596,7 +596,7 @@ export function UnifiedTableTab({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="text-xs font-semibold text-pro-text-secondary">Filter presets</h5>
+							<h5 className="title-sm text-pro-text-secondary">Filter presets</h5>
 							<p className="text-xs text-pro-text-tertiary">Start from curated combinations.</p>
 						</div>
 						<PresetSelector currentFilters={filters ?? {}} onApplyPreset={handleApplyPreset} />
@@ -604,7 +604,7 @@ export function UnifiedTableTab({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="text-xs font-semibold text-pro-text-secondary">Scope</h5>
+							<h5 className="title-sm text-pro-text-secondary">Scope</h5>
 							<p className="text-xs text-pro-text-tertiary">
 								Choose which chains, categories, protocols, or oracles to focus on.
 							</p>
@@ -620,7 +620,7 @@ export function UnifiedTableTab({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="text-xs font-semibold text-pro-text-secondary">Metric & flag filters</h5>
+							<h5 className="title-sm text-pro-text-secondary">Metric & flag filters</h5>
 							<p className="text-xs text-pro-text-tertiary">
 								Add filters for TVL, volume, fees, revenue, and other metrics.
 							</p>
@@ -787,7 +787,7 @@ export function UnifiedTableTab({
 						{heroCard.tags.map((tag) => (
 							<span
 								key={tag}
-								className="rounded-full px-2.5 py-1 text-xs font-medium text-pro-text-secondary transition-colors group-hover:bg-brand/10 group-hover:text-brand"
+								className="rounded-full px-2.5 py-1 label-sm text-pro-text-secondary transition-colors group-hover:bg-brand/10 group-hover:text-brand"
 							>
 								{tag}
 							</span>
@@ -838,7 +838,7 @@ export function UnifiedTableTab({
 									<div className="min-w-0 flex-1">
 										<span className="text-sm font-medium text-pro-text-primary">
 											{card.label}
-											{isProLocked ? <span className="ml-1 text-xs font-normal opacity-60">(Pro)</span> : null}
+											{isProLocked ? <span className="ml-1 body-sm opacity-60">(Pro)</span> : null}
 										</span>
 										<p className="mt-0.5 line-clamp-1 text-xs text-pro-text-secondary">{card.description}</p>
 									</div>
@@ -907,7 +907,7 @@ export function UnifiedTableTab({
 								<span className="flex items-center gap-2">
 									<span className="truncate">{tab.label}</span>
 									{tab.badge ? (
-										<span className="max-w-[160px] truncate rounded-full bg-pro-cards-border px-2 py-0.5 text-xs font-medium text-pro-text-tertiary max-sm:hidden">
+										<span className="max-w-[160px] truncate rounded-full bg-pro-cards-border px-2 py-0.5 label-sm text-pro-text-tertiary max-sm:hidden">
 											{tab.badge}
 										</span>
 									) : null}

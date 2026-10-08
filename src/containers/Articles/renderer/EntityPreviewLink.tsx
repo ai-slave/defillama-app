@@ -436,7 +436,7 @@ export function EntityPreviewLink({
 						)}
 					</span>
 					<div className="flex min-w-0 flex-col">
-						<span className="truncate text-sm font-semibold text-primary">{entity.label}</span>
+						<span className="truncate title-md text-primary">{entity.label}</span>
 						<span className="truncate text-xs text-tertiary">{typeLabel}</span>
 					</div>
 				</div>

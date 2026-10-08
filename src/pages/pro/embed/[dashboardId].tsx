@@ -115,7 +115,7 @@ function EmbeddedCard({ itemId, dashboardHref }: { itemId: string; dashboardHref
 	if (!item || !rawItem || item.kind === 'section') {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center">
-				<p className="text-base font-semibold">Card not found</p>
+				<p className="title-lg">Card not found</p>
 				<p className="text-sm text-pro-text-secondary">This card is no longer part of the dashboard.</p>
 				<a href={dashboardHref} target="_blank" rel="noreferrer" className="text-sm text-link hover:underline">
 					Open the dashboard

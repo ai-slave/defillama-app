@@ -173,7 +173,7 @@ function CustomDataForm({
 				className={`min-h-0 flex-col gap-3 overflow-y-auto max-lg:flex-1 lg:flex ${pane === 'configure' ? 'flex' : 'hidden'}`}
 			>
 				<label className="flex flex-col gap-1">
-					<span className="text-xs font-medium text-pro-text-secondary">Card name (optional)</span>
+					<span className="label-sm text-pro-text-secondary">Card name (optional)</span>
 					<input
 						type="text"
 						value={customData.name}
@@ -184,7 +184,7 @@ function CustomDataForm({
 				</label>
 
 				<label className="flex flex-col gap-1">
-					<span className="text-xs font-medium text-pro-text-secondary">CSV file</span>
+					<span className="label-sm text-pro-text-secondary">CSV file</span>
 					<input
 						type="file"
 						accept=".csv,text/csv"
@@ -195,7 +195,7 @@ function CustomDataForm({
 				</label>
 
 				<label className="flex min-h-0 flex-1 flex-col gap-1">
-					<span className="text-xs font-medium text-pro-text-secondary">Or paste CSV</span>
+					<span className="label-sm text-pro-text-secondary">Or paste CSV</span>
 					<textarea
 						value={customData.csvText}
 						onChange={(event) => handleTextChange(event.target.value)}

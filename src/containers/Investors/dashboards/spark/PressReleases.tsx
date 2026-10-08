@@ -72,13 +72,13 @@ function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 			<div className="flex flex-1 flex-col gap-3 p-5">
 				{/* Meta */}
 				<div className="flex flex-wrap items-center gap-2">
-					<time className="text-xs font-medium text-pro-text-label">
+					<time className="label-sm text-pro-text-label">
 						<RelativeTime value={Number(post.publishedAt)} input="milliseconds" />
 					</time>
 					{post.categories && post.categories.length > 0 && (
 						<>
 							<span className="text-xs text-pro-text-label">•</span>
-							<span className="rounded-md bg-sl-accent-muted px-2 py-0.5 text-xs font-semibold tracking-wide text-sl-accent uppercase">
+							<span className="rounded-md bg-sl-accent-muted px-2 py-0.5 title-sm tracking-wide text-sl-accent uppercase">
 								{post.categories[0]}
 							</span>
 						</>
@@ -176,7 +176,7 @@ export default function PressReleases() {
 
 								{/* Content */}
 								<div className="flex flex-1 flex-col gap-2 p-4">
-									<time className="text-xs font-medium text-pro-text-label">
+									<time className="label-sm text-pro-text-label">
 										<RelativeTime value={Number(post.publishedAt)} input="milliseconds" />
 									</time>
 									<h3 className="line-clamp-2 text-base leading-snug font-bold text-pro-text-primary transition-colors group-hover:text-sl-accent">

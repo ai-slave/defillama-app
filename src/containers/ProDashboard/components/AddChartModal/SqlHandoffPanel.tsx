@@ -11,7 +11,7 @@ export function SqlHandoffPanel({ onOpenSqlEditor }: SqlHandoffPanelProps) {
 	const leave = useDialogLeave()
 	return (
 		<div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<h3 className="text-base font-semibold text-pro-text-primary">SQL cards are built in the SQL editor</h3>
+			<h3 className="title-lg text-pro-text-primary">SQL cards are built in the SQL editor</h3>
 			<p className="text-sm text-pro-text-secondary">
 				The editor gives you the schema browser, ready-made examples and live results while you write the query.
 			</p>

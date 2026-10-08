@@ -39,7 +39,7 @@ export function SectionLabel({ label, count, action }: { label: string; count?: 
 	return (
 		<div className="flex items-baseline justify-between gap-2">
 			<div className="flex items-baseline gap-2">
-				<h3 className="text-xs font-semibold tracking-tight text-pro-text-primary">{label}</h3>
+				<h3 className="title-sm tracking-tight text-pro-text-primary">{label}</h3>
 				{count !== undefined ? <span className="text-[11px] text-pro-text-tertiary tabular-nums">{count}</span> : null}
 			</div>
 			{action ? <div className="shrink-0">{action}</div> : null}

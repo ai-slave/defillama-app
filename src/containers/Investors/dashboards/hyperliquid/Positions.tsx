@@ -73,7 +73,7 @@ const PORTFOLIO_CHART_OPTIONS = createSingleSeriesChartOptions('$')
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-2xl font-semibold text-pro-text-primary">{value ?? '—'}</span>
 			{helper ? <span className="text-[11px] text-pro-text-label">{helper}</span> : null}
 		</div>
@@ -527,7 +527,7 @@ export default function Positions() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="text-xs font-medium tracking-wide text-pro-text-label">Vault:</div>
+				<div className="label-sm tracking-wide text-pro-text-label">Vault:</div>
 				<SegmentedControl<VaultFilter>
 					variant="default"
 					size="md"
@@ -552,7 +552,7 @@ export default function Positions() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="text-xs font-medium tracking-wide text-pro-text-label">Portfolio Window:</div>
+				<div className="label-sm tracking-wide text-pro-text-label">Portfolio Window:</div>
 				<SegmentedControl<typeof portfolioWindow>
 					variant="default"
 					size="md"
@@ -566,7 +566,7 @@ export default function Positions() {
 			<PortfolioTrend points={portfolio.points} window={portfolioWindow} />
 
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="text-xs font-medium tracking-wide text-pro-text-label">Funding Window:</div>
+				<div className="label-sm tracking-wide text-pro-text-label">Funding Window:</div>
 				<SegmentedControl<typeof fundingWindow>
 					variant="default"
 					size="md"

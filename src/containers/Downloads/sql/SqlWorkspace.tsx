@@ -1300,7 +1300,7 @@ function SavedQueriesTab({
 									/>
 								)}
 								<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-									<span className="truncate text-sm font-semibold text-pro-text-primary transition-colors group-hover:text-brand">
+									<span className="truncate title-md text-pro-text-primary transition-colors group-hover:text-brand">
 										{q.name}
 									</span>
 									<span className="truncate font-mono text-xs text-pro-text-tertiary">{firstNonEmptyLine(q.sql)}</span>

@@ -370,7 +370,7 @@ function AuthorHero({
 						{isOwnProfile ? (
 							<BasicLink
 								href="/account?tab=profile"
-								className="inline-flex items-center gap-1.5 rounded-md border border-link/30 bg-research-tint px-3 py-2 text-xs font-medium text-link transition-colors hover:border-link/60 hover:bg-research-tint-hover"
+								className="inline-flex items-center gap-1.5 rounded-md border border-link/30 bg-research-tint px-3 py-2 label-sm text-link transition-colors hover:border-link/60 hover:bg-research-tint-hover"
 							>
 								<Icon name="settings" className="size-3.5" />
 								Edit profile
@@ -384,7 +384,7 @@ function AuthorHero({
 								href={value}
 								target="_blank"
 								rel="noreferrer noopener"
-								className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-page px-3 py-2 text-xs font-medium text-secondary transition-colors hover:border-link/50 hover:text-link"
+								className="inline-flex items-center gap-1.5 rounded-md border border-medium bg-page px-3 py-2 label-sm text-secondary transition-colors hover:border-link/50 hover:text-link"
 								{...(key === 'website'
 									? {
 											'data-umami-event': 'author-website-click',
@@ -453,7 +453,7 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 	if (isOwnProfile) {
 		return (
 			<div className="grid justify-items-start gap-3 rounded-md border border-dashed border-medium bg-surface p-8">
-				<p className="text-base font-semibold text-primary">Your profile is live, but it has no dashboards yet</p>
+				<p className="title-lg text-primary">Your profile is live, but it has no dashboards yet</p>
 				<p className="max-w-lg text-sm leading-6 text-tertiary">
 					Build a dashboard and make it public to start collecting views, likes, and followers here.
 				</p>
@@ -465,7 +465,7 @@ function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 	}
 	return (
 		<div className="grid gap-2 rounded-md border border-dashed border-medium bg-surface p-8">
-			<p className="text-base font-semibold text-primary">No public dashboards yet</p>
+			<p className="title-lg text-primary">No public dashboards yet</p>
 			<p className="max-w-lg text-sm leading-6 text-tertiary">
 				When this author publishes a dashboard, it will appear here with its tags, activity, and latest update.
 			</p>

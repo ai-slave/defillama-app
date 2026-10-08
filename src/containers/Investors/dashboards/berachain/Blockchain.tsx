@@ -12,7 +12,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-2xl font-semibold text-pro-text-primary">{value ?? '—'}</span>
 		</div>
 	)
@@ -28,7 +28,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 function SectionHeader({ title }: { title: string }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{title}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{title}</h2>
 }
 
 const TRANSACTIONS_CHART = [

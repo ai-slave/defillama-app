@@ -79,7 +79,7 @@ function SocialLink({ kind, value }: { kind: string; value: string }) {
 			href={href}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-research-heading/15 px-3 text-xs font-medium text-research-heading/70 transition-colors hover:border-research-accent-strong/40 hover:text-research-accent-strong dark:border-white/15 dark:text-on-brand/70 dark:hover:border-white/40 dark:hover:text-research-ink"
+			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-research-heading/15 px-3 label-sm text-research-heading/70 transition-colors hover:border-research-accent-strong/40 hover:text-research-accent-strong dark:border-white/15 dark:text-on-brand/70 dark:hover:border-white/40 dark:hover:text-research-ink"
 		>
 			<span>{kind.replace(/-/g, ' ')}</span>
 			<Icon name="arrow-up-right" className="size-3" />
@@ -509,7 +509,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 						{rest.length > 0 ? (
 							<section className="grid gap-4">
 								<div className="flex items-baseline justify-between gap-2 border-b border-medium pb-3">
-									<h2 className="text-sm font-semibold tracking-[0.16em] text-tertiary uppercase">Archive</h2>
+									<h2 className="title-md tracking-[0.16em] text-tertiary uppercase">Archive</h2>
 									<p className="font-jetbrains text-xs text-tertiary">
 										{filteredArchive.length} {filteredArchive.length === 1 ? 'note' : 'notes'}
 									</p>

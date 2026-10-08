@@ -111,7 +111,7 @@ function timeAgo(ts: number): string {
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: number | null }) {
@@ -185,7 +185,7 @@ export default function NetworkStats() {
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<div className="flex items-center gap-3">
-							<span className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">Total S Burned</span>
+							<span className="title-sm tracking-wider text-pro-text-label uppercase">Total S Burned</span>
 							{stream.connected && (
 								<span className="flex items-center gap-1.5 text-[11px] text-success">
 									<span className="inline-block size-1.5 animate-pulse rounded-full bg-success" />
@@ -210,9 +210,7 @@ export default function NetworkStats() {
 									className="flex items-baseline gap-1.5 rounded-md border border-pro-cards-border px-3 py-1.5"
 								>
 									<span className="text-xs text-pro-text-label">{key}</span>
-									<span className="text-sm font-semibold text-pro-text-primary tabular-nums">
-										{formatBurnValue(w.burned_s)} S
-									</span>
+									<span className="title-md text-pro-text-primary tabular-nums">{formatBurnValue(w.burned_s)} S</span>
 								</div>
 							)
 						})}
@@ -225,20 +223,20 @@ export default function NetworkStats() {
 				<SectionHeader>Network</SectionHeader>
 				<div className="grid grid-cols-3 gap-4">
 					<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-						<span className="text-xs font-medium tracking-wide text-pro-text-label">Latest Block</span>
+						<span className="label-sm tracking-wide text-pro-text-label">Latest Block</span>
 						<span className="text-2xl font-semibold text-pro-text-primary tabular-nums">
 							{liveBlock ? formatNumber(liveBlock) : '—'}
 						</span>
 					</div>
 					{data.network.gasPrice && (
 						<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-							<span className="text-xs font-medium tracking-wide text-pro-text-label">Gas Price</span>
+							<span className="label-sm tracking-wide text-pro-text-label">Gas Price</span>
 							<span className="text-2xl font-semibold text-pro-text-primary">{data.network.gasPrice.formatted}</span>
 						</div>
 					)}
 					{data.network.price && (
 						<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-							<span className="text-xs font-medium tracking-wide text-pro-text-label">S Price</span>
+							<span className="label-sm tracking-wide text-pro-text-label">S Price</span>
 							<span className="text-2xl font-semibold text-pro-text-primary">{data.network.price.formatted}</span>
 						</div>
 					)}
@@ -253,19 +251,11 @@ export default function NetworkStats() {
 						<table className="w-full">
 							<thead>
 								<tr className="border-b border-pro-cards-border">
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
-										Block
-									</th>
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
-										Txs
-									</th>
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
-										Gas Used
-									</th>
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
-										Burned
-									</th>
-									<th className="hidden px-4 py-3 text-right text-xs font-semibold tracking-wide text-pro-text-label uppercase sm:table-cell">
+									<th className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase">Block</th>
+									<th className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase">Txs</th>
+									<th className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase">Gas Used</th>
+									<th className="px-4 py-3 text-left title-sm tracking-wide text-pro-text-label uppercase">Burned</th>
+									<th className="hidden px-4 py-3 text-right title-sm tracking-wide text-pro-text-label uppercase sm:table-cell">
 										Time
 									</th>
 								</tr>
@@ -355,7 +345,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex items-center justify-between px-4 py-3">
 			<span className="text-sm text-pro-text-label">{label}</span>
-			<span className="text-sm font-semibold text-pro-text-primary tabular-nums">{value}</span>
+			<span className="title-md text-pro-text-primary tabular-nums">{value}</span>
 		</div>
 	)
 }

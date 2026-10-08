@@ -20,9 +20,7 @@ export function PreviewPaywall() {
 			/>
 			<div className="absolute inset-x-0 bottom-0 z-50 border-t border-subtle bg-overlay px-6 py-5">
 				<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-					<p className="text-sm font-semibold text-pro-text-primary">
-						This is a preview — subscribe to download full datasets
-					</p>
+					<p className="title-md text-pro-text-primary">This is a preview — subscribe to download full datasets</p>
 					<p className="text-xs text-pro-text-tertiary">
 						Get access to all rows, all columns, and unlimited CSV downloads
 					</p>

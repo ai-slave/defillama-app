@@ -56,7 +56,7 @@ function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
 			}}
 		>
 			<label className="grid gap-1.5">
-				<span className="text-xs font-medium text-secondary">Alt text</span>
+				<span className="label-sm text-secondary">Alt text</span>
 				<textarea
 					value={draft}
 					onChange={(event) => setDraft(event.target.value)}
@@ -89,7 +89,7 @@ function LinkForm({ href, save }: { href: string; save: (href: string) => void }
 			}}
 		>
 			<label className="grid gap-1.5">
-				<span className="text-xs font-medium text-secondary">Image link</span>
+				<span className="label-sm text-secondary">Image link</span>
 				<Input
 					type="text"
 					inputMode="url"
@@ -135,7 +135,7 @@ function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) =
 			}}
 		>
 			<label className="grid gap-1.5">
-				<span className="text-xs font-medium text-secondary">Headline</span>
+				<span className="label-sm text-secondary">Headline</span>
 				<Input
 					value={draft.headline}
 					onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
@@ -144,7 +144,7 @@ function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) =
 				/>
 			</label>
 			<label className="grid gap-1.5">
-				<span className="text-xs font-medium text-secondary">Credit</span>
+				<span className="label-sm text-secondary">Credit</span>
 				<Input
 					value={draft.credit}
 					onChange={(event) => setDraft({ ...draft, credit: event.target.value })}
@@ -153,7 +153,7 @@ function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) =
 				/>
 			</label>
 			<label className="grid gap-1.5">
-				<span className="text-xs font-medium text-secondary">Copyright</span>
+				<span className="label-sm text-secondary">Copyright</span>
 				<Input
 					value={draft.copyright}
 					onChange={(event) => setDraft({ ...draft, copyright: event.target.value })}
@@ -217,14 +217,14 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 					<div className="flex aspect-[4/3] w-full items-center justify-center bg-page text-tertiary">
 						<div className="flex flex-col items-center gap-2">
 							<Icon name="image-plus" className="size-7" />
-							<span className="text-xs font-medium">{isUploading ? 'Uploading…' : 'Image'}</span>
+							<span className="label-sm">{isUploading ? 'Uploading…' : 'Image'}</span>
 						</div>
 					</div>
 				)}
 				{isUploading ? (
 					<div
 						role="status"
-						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/40 text-xs font-medium text-secondary"
+						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/40 label-sm text-secondary"
 					>
 						<span className="rounded-md bg-surface/95 px-3 py-1.5 shadow-sm">Uploading…</span>
 					</div>

@@ -56,7 +56,7 @@ export const getColumns = (
 			enableSorting: false,
 			cell: ({ row }) => {
 				const value = row.original.category
-				return <span className="text-xs font-medium text-pro-text-primary">{value || 'Unknown'}</span>
+				return <span className="label-sm text-pro-text-primary">{value || 'Unknown'}</span>
 			}
 		}
 	]
@@ -90,7 +90,7 @@ export const getColumns = (
 		cell: ({ row }) => {
 			const value = row.original.amountUsd
 			return (
-				<span className="text-sm font-semibold">
+				<span className="title-md">
 					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</span>
 			)

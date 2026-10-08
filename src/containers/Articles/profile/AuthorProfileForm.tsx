@@ -215,7 +215,7 @@ function Section({ title, description, children }: { title: string; description:
 	return (
 		<section className="grid gap-6 border-t border-medium py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
 			<div>
-				<h2 className="text-base font-semibold text-primary">{title}</h2>
+				<h2 className="title-lg text-primary">{title}</h2>
 				<p className="mt-1.5 text-sm leading-relaxed text-secondary">{description}</p>
 			</div>
 			{/* content-start: the description column can be taller, and a stretched grid would pad out every field. */}
@@ -436,7 +436,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 				<div className="grid gap-3 sm:grid-cols-2">
 					{PRESET_SOCIALS.map((kind) => (
 						<label key={kind.id} className="grid gap-1.5">
-							<span className="text-xs font-medium text-secondary">{kind.label}</span>
+							<span className="label-sm text-secondary">{kind.label}</span>
 							<Input
 								type="text"
 								maxLength={SOCIAL_VALUE_MAX}

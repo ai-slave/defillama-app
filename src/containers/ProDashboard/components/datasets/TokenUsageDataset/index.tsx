@@ -241,7 +241,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 									<div className="mt-2">
 										<div className="mb-1 flex items-center justify-between">
 											<span className="text-xs text-pro-text-tertiary">Share</span>
-											<span className="text-xs font-medium">
+											<span className="label-sm">
 												{totalAmount > 0
 													? `${formatPercent(stats.total / totalAmount, { input: 'fraction', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
 													: '0%'}

@@ -104,7 +104,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 					{heroCard.tags.map((tag) => (
 						<span
 							key={tag}
-							className="rounded-full px-2.5 py-1 text-xs font-medium text-pro-text-secondary transition-colors group-hover:bg-brand/10 group-hover:text-brand"
+							className="rounded-full px-2.5 py-1 label-sm text-pro-text-secondary transition-colors group-hover:bg-brand/10 group-hover:text-brand"
 						>
 							{tag}
 						</span>
@@ -113,9 +113,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 			</button>
 
 			<div className="mt-4">
-				<span className="mb-2.5 block text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
-					Other datasets
-				</span>
+				<span className="mb-2.5 block label-sm tracking-wide text-pro-text-secondary uppercase">Other datasets</span>
 				<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 					{otherCards.map((card) => (
 						<button

@@ -226,7 +226,7 @@ function GradientWord({ children }: { children: React.ReactNode }) {
 }
 
 function SectionEyebrow({ children }: { children: React.ReactNode }) {
-	return <span className="text-xs font-semibold tracking-[0.18em] text-sub-purple uppercase">{children}</span>
+	return <span className="title-sm tracking-[0.18em] text-sub-purple uppercase">{children}</span>
 }
 
 function HeroPhone() {
@@ -273,7 +273,7 @@ function Hero({ protocols, chains }: { protocols: number; chains: number }) {
 	return (
 		<Section className="relative flex flex-col items-center gap-14 pt-14 pb-20 md:gap-20 md:pt-24 md:pb-28">
 			<div className="flex flex-col items-center gap-6">
-				<span className="flex items-center gap-2 rounded-full border border-sub-border bg-sub-surface-panel px-3.5 py-1.5 text-xs font-medium text-sub-text-secondary dark:bg-sub-dark-card">
+				<span className="flex items-center gap-2 rounded-full border border-sub-border bg-sub-surface-panel px-3.5 py-1.5 label-sm text-sub-text-secondary dark:bg-sub-dark-card">
 					<span className="size-1.5 rounded-full bg-sub-live shadow-sub-live" />
 					Now on iOS and Android
 				</span>

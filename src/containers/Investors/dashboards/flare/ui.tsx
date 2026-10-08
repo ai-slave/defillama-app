@@ -65,7 +65,7 @@ export function ChartCard({
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0">
-					<h3 className="flex items-center gap-1 text-sm font-semibold text-pro-text-primary">
+					<h3 className="flex items-center gap-1 title-md text-pro-text-primary">
 						{title}
 						{titleTooltip && (
 							<Tooltip content={titleTooltip} className="-my-2 -mr-2 cursor-help p-2" aria-label={titleTooltip}>
@@ -83,7 +83,7 @@ export function ChartCard({
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 export function NarrativeCallout({ children }: { children: React.ReactNode }) {

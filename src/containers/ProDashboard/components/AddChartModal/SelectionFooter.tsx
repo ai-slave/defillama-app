@@ -11,7 +11,7 @@ export function ComposerNameField({ value, onChange }: { value: string; onChange
 	const id = useId()
 	return (
 		<div className="shrink-0">
-			<label htmlFor={id} className="mb-1 block text-xs font-medium text-pro-text-secondary">
+			<label htmlFor={id} className="mb-1 block label-sm text-pro-text-secondary">
 				Card name (optional)
 			</label>
 			<input id={id} type="text" value={value} onChange={(e) => onChange(e.target.value)} className={proInputStyles} />

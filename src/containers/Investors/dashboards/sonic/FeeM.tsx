@@ -27,7 +27,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
 		</div>
 	)
@@ -43,7 +43,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
+	return <h2 className="title-sm tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 function getTreemapValue(value: unknown): number {
@@ -275,7 +275,7 @@ export default function FeeM() {
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
 					chain.
 				</p>
-				<h3 className="mt-4 text-xs font-semibold tracking-wider text-pro-text-label uppercase">Fee Distribution</h3>
+				<h3 className="mt-4 title-sm tracking-wider text-pro-text-label uppercase">Fee Distribution</h3>
 				<div className="mt-3 flex h-10 overflow-hidden rounded-lg">
 					<div className="flex items-center justify-center" style={{ width: '90%', background: '#3b5d88' }}>
 						<span className="text-sm font-bold text-on-brand">90%</span>

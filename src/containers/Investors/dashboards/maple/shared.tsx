@@ -35,7 +35,7 @@ export function CardSkeleton({ title }: { title: string }) {
 export function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<span className="text-2xl font-semibold text-pro-text-primary">{value ?? '—'}</span>
 		</div>
 	)
@@ -44,7 +44,7 @@ export function KpiCard({ label, value }: { label: string; value: string | numbe
 export function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
-			<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
+			<span className="label-sm tracking-wide text-pro-text-label">{label}</span>
 			<div className="h-8 w-24 animate-pulse rounded-sm bg-tertiary opacity-20" />
 		</div>
 	)

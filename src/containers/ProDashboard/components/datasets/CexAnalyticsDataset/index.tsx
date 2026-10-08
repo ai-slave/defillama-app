@@ -232,7 +232,7 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
 				{cards.map((card) => (
 					<div key={card.label} className="rounded-lg border border-pro-cards-border p-3">
-						<p className="text-xs font-medium tracking-wide text-pro-text-tertiary uppercase">{card.label}</p>
+						<p className="label-sm tracking-wide text-pro-text-tertiary uppercase">{card.label}</p>
 						<p className="mt-2 text-2xl font-semibold text-pro-text-primary">{card.value}</p>
 					</div>
 				))}

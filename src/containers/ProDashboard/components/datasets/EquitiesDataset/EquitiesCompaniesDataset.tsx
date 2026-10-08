@@ -45,7 +45,7 @@ const columns = columnHelper.columns([
 		id: 'ticker',
 		header: 'Ticker',
 		enableSorting: false,
-		cell: (info) => <span className="block truncate text-sm font-semibold">{info.getValue()}</span>,
+		cell: (info) => <span className="block truncate title-md">{info.getValue()}</span>,
 		size: 100,
 		maxSize: 100
 	}),
