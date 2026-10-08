@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { resolveApy, resolveVariant, stabilityRatingFromScore } from '~/containers/Yields/data/apy'
-import { getReferralUrls } from '~/containers/Yields/data/server/raiseValuations'
+import { getReferralUrls, withReferral } from '~/containers/Yields/data/server/raiseValuations'
 import {
 	hasVerifiedEarnPool,
 	readYieldsExploits,
@@ -166,7 +166,7 @@ async function buildBorrowOnlyProps(
 		stability: null,
 		details: {
 			poolTokenAddress: market.pool_token?.address ?? null,
-			url: (protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined) ?? market.url ?? null,
+			url: withReferral(market.url, protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined),
 			protocolName: market.protocol,
 			assets: []
 		}
@@ -384,7 +384,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 				stabilityScore != null ? { score: stabilityScore, rating: stabilityRatingFromScore(stabilityScore) } : null,
 			details: {
 				poolTokenAddress: pool.pool_token?.address ?? null,
-				url: (protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined) ?? pool.url ?? null,
+				url: withReferral(pool.url, protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined),
 				protocolName: pool.protocol,
 				assets: assetSymbols(pool)
 			}

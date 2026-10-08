@@ -15,7 +15,7 @@ import {
 	parseNumber,
 	parseTriState
 } from './query'
-import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
+import { getRaiseValuationsUsd, getReferralUrls, withReferral } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { ApyComponent, ApyWindow, EnrichedLoopRow, LoopTableRow, Token } from './types'
 
@@ -124,7 +124,7 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 
 		const loopRow = toLoopTableRow(row, window, components, loopCount)
 		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
-		if (referralUrl) loopRow.url = referralUrl
+		if (referralUrl) loopRow.url = withReferral(loopRow.url, referralUrl)
 		const depeg = depegByPool.get(row.id)
 		if (depeg) {
 			loopRow.pegDeviation = depeg.deviation_pct

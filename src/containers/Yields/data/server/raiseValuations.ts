@@ -107,6 +107,7 @@ export function buildRaiseValuationsUsd(
 // A protocol-slug → referral URL map from the same protocols-lite blob. Mirrors the
 // protocol pages' website link (ProtocolOverview prefers `referralUrl` over `url`): a
 // protocol's own referral link wins, else it inherits its parent's (e.g. GMX markets).
+// Rows apply it through `withReferral`, which keeps the pool's own link when it can.
 export function buildReferralUrls(
 	protocols: Array<ProtocolIdentity>,
 	protocolsLite: Pick<ProtocolsResponse, 'protocols' | 'parentProtocols'>
@@ -131,6 +132,43 @@ export function buildReferralUrls(
 		if (referralUrl) result.set(slug, referralUrl)
 	}
 	return result
+}
+
+// Carry a protocol's query-param referral onto the pool's own URL so the outbound link still
+// opens the pool. A referral on another host, in the path, on a page the pool is not under, or
+// against a bare homepage URL replaces the pool URL as before. Hash-routed apps (`#/?ref=x`)
+// take it in the hash.
+export function withReferral(url: string | null | undefined, referralUrl: string | undefined): string | null {
+	if (!referralUrl) return url ?? null
+	if (!url) return referralUrl
+	let pool: URL
+	let ref: URL
+	try {
+		pool = new URL(url)
+		ref = new URL(referralUrl)
+	} catch {
+		return referralUrl
+	}
+	if (pool.host.replace(/^www\./, '') !== ref.host.replace(/^www\./, '')) return referralUrl
+	const poolHashRoute = pool.hash.startsWith('#/')
+	if (pool.pathname === '/' && !pool.search && !poolHashRoute) return referralUrl
+
+	const refHashQuery = ref.hash.indexOf('?')
+	const inHash = refHashQuery !== -1
+	if (inHash ? !poolHashRoute : !ref.search) return referralUrl
+
+	// A referral on its own page (`/referrals/?ref=x`) may only register there, so it merges
+	// only into pools under that page. A homepage referral is read app-wide.
+	const route = (u: URL) => (inHash ? u.hash.slice(1).split('?')[0] : u.pathname).replace(/\/+$/, '')
+	const refRoute = route(ref)
+	const poolRoute = route(pool)
+	if (refRoute && poolRoute !== refRoute && !poolRoute.startsWith(`${refRoute}/`)) return referralUrl
+
+	// Append the referral's raw query: re-serializing through URLSearchParams would re-encode the
+	// pool's own params (`:` → `%3A`, `%20` → `+`).
+	if (inHash) pool.hash = `${pool.hash}${pool.hash.includes('?') ? '&' : '?'}${ref.hash.slice(refHashQuery + 1)}`
+	else pool.search = pool.search ? `${pool.search}&${ref.search.slice(1)}` : ref.search
+	return pool.toString()
 }
 
 // Raises + protocols-lite are slow-moving external APIs (not the Yields snapshot), so the

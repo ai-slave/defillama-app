@@ -32,7 +32,7 @@ import {
 	type TokenFilterInput,
 	UNCATEGORIZED
 } from './query'
-import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
+import { getRaiseValuationsUsd, getReferralUrls, withReferral } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { DepegRow, EarnPageRow, EnrichedEarnRow, Token } from './types'
 import { lockEarnRows } from './verifiedGate'
@@ -231,7 +231,7 @@ async function buildPreparedEarn(
 			tokenDirectory
 		)
 		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
-		if (referralUrl) pageRow.url = referralUrl
+		if (referralUrl) pageRow.url = withReferral(pageRow.url, referralUrl)
 		if (riskCovered.has(row.id)) pageRow.hasRiskData = true
 		if (exploitedPoolIds.has(row.id)) pageRow.exploited = true
 		pageRows.push(pageRow)

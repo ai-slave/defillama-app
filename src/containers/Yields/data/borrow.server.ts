@@ -16,7 +16,7 @@ import {
 	parseTriState,
 	UNCATEGORIZED
 } from './query'
-import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
+import { getRaiseValuationsUsd, getReferralUrls, withReferral } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import { TOKEN_PAGE_BORROW_QUERY } from './tokenPageQuery'
 import type {
@@ -147,10 +147,10 @@ function decorateRouteTableRow(
 	riskCovered: Set<string>
 ): RouteTableRow {
 	const routeRow = toRouteTableRow(row, window, components)
-	// Outbound link: the protocol's referral URL wins over the leg's own URL (site-wide
-	// ref-link policy, same preference as the protocol pages' website link).
+	// Outbound link: the protocol's referral rides on the leg's own URL when it can, else
+	// replaces it (site-wide ref-link policy, see `withReferral`).
 	const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
-	if (referralUrl) routeRow.url = referralUrl
+	if (referralUrl) routeRow.url = withReferral(routeRow.url, referralUrl)
 	const collateralDepeg = depegByPool.get(row.collateral.id)
 	const borrowDepeg = depegByPool.get(row.borrow.id)
 	const worst =
@@ -232,10 +232,10 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 		if (!matchesBorrow([row.tokenKeys?.borrow_token])) continue
 
 		const marketRow = toMarketTableRow(row, window, components)
-		// Outbound link: the protocol's referral URL wins over the market's own URL (site-wide
-		// ref-link policy, same preference as the protocol pages' website link).
+		// Outbound link: the protocol's referral rides on the market's own URL when it can, else
+		// replaces it (site-wide ref-link policy, see `withReferral`).
 		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
-		if (referralUrl) marketRow.url = referralUrl
+		if (referralUrl) marketRow.url = withReferral(marketRow.url, referralUrl)
 		const depeg = depegByPool.get(row.id)
 		if (depeg) {
 			marketRow.pegDeviation = depeg.deviation_pct
