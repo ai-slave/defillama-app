@@ -10,7 +10,6 @@ import {
 	decideEarlierUpgrade,
 	forgetPendingUpgrade,
 	isFinished,
-	type PendingUpgrade,
 	readPendingUpgrade,
 	savePendingUpgrade,
 	type UnderWayStatus,
@@ -51,8 +50,6 @@ export type CheckoutSession =
 	| { kind: 'paidUpgrade'; clientSecret: string; pricing: UpgradePricing | null; awaitingVerification: boolean }
 	// An earlier upgrade payment from this browser may still be moving money, so no new one is created.
 	| { kind: 'pendingUpgrade'; status: UnderWayStatus; stale: boolean }
-	// An earlier upgrade intent from this browser can still be paid but is too old or for another plan to resume.
-	| { kind: 'openUpgrade'; plan: PendingUpgrade['plan']; interval: PendingUpgrade['interval']; stale: boolean }
 
 // The return page confirms a purchase only once the subscription reads as the plan bought here. The base only parses
 // the relative path; the query merges with any the caller's path already has.
@@ -138,8 +135,6 @@ export function useStripeCheckout() {
 							}
 						case 'underWay':
 							return { kind: 'pendingUpgrade', status: decision.status, stale: decision.stale }
-						case 'hold':
-							return { kind: 'openUpgrade', plan: record.plan, interval: record.interval, stale: decision.stale }
 						case 'forget':
 							forgetPendingUpgrade(userId, record.clientSecret)
 					}

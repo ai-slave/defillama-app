@@ -64,9 +64,6 @@ const UNDER_WAY_STEPS: Record<UnderWayStatus, { title: string; justPaid: string;
 	}
 }
 
-const PLAN_NAMES = { api: 'API', llamafeed: 'Pro' } as const
-const INTERVAL_NAMES = { month: 'monthly', year: 'yearly' } as const
-
 type UpgradeOutcome = UnderWayStatus | 'canceled'
 
 type UpgradePayment = {
@@ -175,18 +172,7 @@ export function StripeCheckoutModal({ checkout }: { checkout: StripeCheckout }) 
 		pending: false
 	}
 	let content: ReactNode
-	if (result?.kind === 'openUpgrade') {
-		content = (
-			<OutcomeStep
-				title="Earlier upgrade still open"
-				description={
-					result.stale
-						? 'An upgrade payment you started over a day ago can still be paid, and its price may be out of date. Contact support to cancel it before upgrading again.'
-						: `Your ${PLAN_NAMES[result.plan]} ${INTERVAL_NAMES[result.interval]} upgrade from earlier can still be paid. Finish that upgrade, or contact support to cancel it before choosing another plan.`
-				}
-			/>
-		)
-	} else if (result?.kind === 'pendingUpgrade') {
+	if (result?.kind === 'pendingUpgrade') {
 		content = (
 			<OutcomeStep
 				title={UNDER_WAY_STEPS[result.status].title}

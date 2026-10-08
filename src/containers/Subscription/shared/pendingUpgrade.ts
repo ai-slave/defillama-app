@@ -9,9 +9,8 @@ export interface UpgradePricing {
 
 /* A browser-local record of the upgrade PaymentIntent this browser has open, written when the backend creates the
    intent. While it could still take money, no tab of this browser offers a new upgrade payment: a payable intent is
-   resumed, so it succeeds at most once, and one too old or for another plan to resume holds new upgrades until
-   support cancels it, since the frontend cannot. The record is dropped only on facts about that intent (see
-   `isFinished`), never on a plan, an interval or a return URL.
+   resumed, so it succeeds at most once. One too old or for another plan to resume is left to the backend, which
+   cancels any earlier payable upgrade intent before it creates a new one.
 
    It narrows duplicate payments; it does not prevent them. It knows nothing of other devices, of storage that is
    blocked or cleared, of an intent whose create response was lost, or of a browser without Web Locks racing its
@@ -43,12 +42,11 @@ type EarlierUpgradeDecision =
 	| { kind: 'forget' }
 	| { kind: 'resume'; awaitingVerification: boolean }
 	| { kind: 'underWay'; status: UnderWayStatus; stale: boolean }
-	| { kind: 'hold'; stale: boolean }
 
 /* What an upgrade opening does about the intent this browser already has open. `status` is Stripe's for that intent,
    and `targetApplied` whether its target plan shows, read only when it succeeded. An intent under way stays guarded
    whatever the plan reads, since it can still succeed. A payable one is resumed only while its amount is fresh and
-   the opening is for its plan; otherwise a second intent could be paid too. */
+   the opening is for its plan; otherwise it is forgotten and the backend cancels it when it creates the new one. */
 export function decideEarlierUpgrade(
 	earlier: PendingUpgrade,
 	status: PaymentIntent.Status,
@@ -59,8 +57,7 @@ export function decideEarlierUpgrade(
 	if (isFinished(status, targetApplied)) return { kind: 'forget' }
 	const age = now - earlier.createdAt
 	if (isUnderWay(status)) return { kind: 'underWay', status, stale: age > WEEK_MS }
-	const stale = age >= DAY_MS
-	if (stale || earlier.plan !== opening.plan || earlier.interval !== opening.interval) return { kind: 'hold', stale }
+	if (age >= DAY_MS || earlier.plan !== opening.plan || earlier.interval !== opening.interval) return { kind: 'forget' }
 	return { kind: 'resume', awaitingVerification: status === 'requires_action' }
 }
 

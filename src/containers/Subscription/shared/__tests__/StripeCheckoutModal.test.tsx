@@ -524,7 +524,14 @@ test('a confirmation nobody can check keeps the upgrade pending and says to chec
 
 test.each([
 	['canceled', 'canceled', {}, monthlyApi],
-	['paid with the plan applied', 'succeeded', {}, { ...monthlyApi, billing_interval: 'year' } as Subscription]
+	['paid with the plan applied', 'succeeded', {}, { ...monthlyApi, billing_interval: 'year' } as Subscription],
+	[
+		'payable but over a day old',
+		'requires_payment_method',
+		{ createdAt: Date.now() - 25 * 60 * 60 * 1000 },
+		monthlyApi
+	],
+	['payable but for another plan', 'requires_action', { interval: 'month' }, monthlyApi]
 ])('an earlier upgrade payment that is %s gives way to a new one', async (_case, status, earlier, current) => {
 	localStorage.setItem(pendingKey, earlierIntent({ createdAt: Date.now(), ...earlier }))
 	session.serve({ '/subscription/create': paidUpgrade, '/subscription/status': { subscription: current } })
@@ -539,39 +546,6 @@ test.each([
 		await caller.cleanup()
 	}
 })
-
-test.each([
-	[
-		'over a day old',
-		'requires_payment_method',
-		{ createdAt: Date.now() - 25 * 60 * 60 * 1000 },
-		'An upgrade payment you started over a day ago can still be paid, and its price may be out of date. Contact support to cancel it before upgrading again.'
-	],
-	[
-		'for another plan',
-		'requires_action',
-		{ interval: 'month' },
-		'Your API monthly upgrade from earlier can still be paid. Finish that upgrade, or contact support to cancel it before choosing another plan.'
-	]
-])(
-	'an earlier upgrade payment that can still be paid but is %s holds new upgrades',
-	async (_case, status, earlier, description) => {
-		const record = earlierIntent({ createdAt: Date.now(), ...earlier })
-		localStorage.setItem(pendingKey, record)
-		session.serve({ '/subscription/create': paidUpgrade })
-		stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status } })
-		const caller = await mountCaller(upgrade)
-		try {
-			await waitForUi(() => expect(dialogTitled('Earlier upgrade still open')).toBeTruthy())
-			expect(dialog()!.textContent).toContain(description)
-			expect(buttonNamed('Complete upgrade')).toBeUndefined()
-			expect(creates()).toBe(0)
-			expect(localStorage.getItem(pendingKey)).toBe(record)
-		} finally {
-			await caller.cleanup()
-		}
-	}
-)
 
 // Another tab can sign in as someone else while this click's checkout waits on its lock or the earlier payment.
 const otherAccountToken = `e30.${btoa(JSON.stringify({ id: 'other-user', exp: 4_102_444_800 }))}.signature`

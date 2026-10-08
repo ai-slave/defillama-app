@@ -50,14 +50,14 @@ test.each([
 		2 * HOUR,
 		{ kind: 'resume', awaitingVerification: true }
 	],
-	['declined a day ago', 'requires_payment_method', false, samePlan, 24 * HOUR, { kind: 'hold', stale: true }],
+	['declined a day ago', 'requires_payment_method', false, samePlan, 24 * HOUR, { kind: 'forget' }],
 	[
 		'waiting for the bank, opening another interval',
 		'requires_action',
 		false,
 		{ plan: 'api', interval: 'month' },
 		2 * HOUR,
-		{ kind: 'hold', stale: false }
+		{ kind: 'forget' }
 	],
 	[
 		'unconfirmed, opening another plan',
@@ -65,7 +65,7 @@ test.each([
 		false,
 		{ plan: 'llamafeed', interval: 'year' },
 		2 * HOUR,
-		{ kind: 'hold', stale: false }
+		{ kind: 'forget' }
 	]
 ] as const)('an earlier upgrade intent that is %s', (_case, status, targetApplied, opening, ageMs, decision) => {
 	expect(decideEarlierUpgrade(earlier(ageMs), status, targetApplied, opening, now)).toEqual(decision)
