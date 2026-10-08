@@ -33,7 +33,7 @@ function ShareRow({ label, share, value, color }: { label: string; share: number
 			<span className="ml-auto flex shrink-0 items-center gap-3">
 				<span className="h-1.5 w-28 overflow-hidden rounded-full bg-surface-elevated-1">
 					<span
-						className={`block h-full rounded-full${color ? '' : ' bg-tertiary'}`}
+						className={`block h-full rounded-full${color ? '' : ' bg-border-strong'}`}
 						style={{ width: `${share}%`, backgroundColor: color }}
 					/>
 				</span>

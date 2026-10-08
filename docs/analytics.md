@@ -23,6 +23,7 @@ Product analytics go to Umami. `src/utils/analytics/umami.ts` sends events, `src
 ## Checks
 
 - **Names are a contract:** event names, property keys, experiment ids and metric strings feed Umami reports and the experiment rollup. Renaming or removing one breaks a report, so it needs the report owner's agreement.
+- **No personal data:** an event or `data-umami-event-<key>` never carries what identifies a reader: an email, a name they typed, a wallet address or free text they wrote. Count the action without the value. The opaque account id is the one exception, since `useUmamiIdentityTracker` already links it. Public entity names, such as a protocol, an exchange or an author byline, are not personal data.
 - **The tracker loads late:** `_app.tsx` loads it with `lazyOnload`. `trackUmamiEvent` silently drops an event sent before then and never throws.
 - **Local sends nothing:** the tracker only sends from the hosts in `data-domains` (`src/containers/Investors/umamiScript.ts`), so localhost and preview deployments report no events. Prove an event with a test.
 - **The site cohort rides along:** `addABTag` adds the global A/B group as Umami's `tag` on every payload through `window.umamiABBeforeSend`. An event needs no group field for a site-wide comparison.

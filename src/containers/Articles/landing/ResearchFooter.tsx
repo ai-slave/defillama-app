@@ -207,12 +207,11 @@ function FooterMediaKit() {
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		if (!canSubmit) return
-		const submittedEmail = trimmedEmail
 		mutation.mutate(
-			{ email: submittedEmail },
+			{ email: trimmedEmail },
 			{
 				onSuccess: () => {
-					trackUmamiEvent('research-media-kit-email-sent', { email: submittedEmail })
+					trackUmamiEvent('research-media-kit-email-sent')
 					setIsSent(true)
 				}
 			}
